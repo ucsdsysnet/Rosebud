@@ -603,12 +603,12 @@ always @ (posedge clk)
 riscv_axi_wrapper #(
     .DATA_WIDTH(64),
     .ADDR_WIDTH(16),
-    .ID_WIDTH(8),
-    .PIPELINE_OUTPUT(0),
     .IMEM_SIZE_BYTES(8192),
     .DMEM_SIZE_BYTES(32768),
-    .CONTROL_BIT_LOC(16),
-    .STAT_ADDR_WIDTH(1)
+    .STAT_ADDR_WIDTH(1),
+    .ID_WIDTH(8),
+    .PIPELINE_OUTPUT(1),
+    .INTERLEAVE(0)
 )
 riscv0 (
     .clk(clk),
@@ -654,7 +654,6 @@ riscv0 (
     .s_axi_rvalid(tx_axis_tvalid),
     .s_axi_rready(tx_axis_tready),
 
-    .dmem_access_err(dmem_access_err),
     .status_update()
 );
 

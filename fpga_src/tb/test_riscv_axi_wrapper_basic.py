@@ -52,12 +52,12 @@ def bench():
     ADDR_WIDTH = 16
     STRB_WIDTH = (DATA_WIDTH/8)
     ID_WIDTH = 8
-    PIPELINE_OUTPUT = 0
+    PIPELINE_OUTPUT = 1
     IMEM_SIZE_BYTES = 8192
     DMEM_SIZE_BYTES = 32768
     CONTROL_BIT_LOC = 16
     STAT_ADDR_WIDTH = 1
-    INTERLEAVE      = 0
+    INTERLEAVE      = 1
 
     # Inputs
     clk = Signal(bool(0))
