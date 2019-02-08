@@ -607,8 +607,8 @@ riscv_axi_wrapper #(
     .DMEM_SIZE_BYTES(32768),
     .STAT_ADDR_WIDTH(1),
     .ID_WIDTH(8),
-    .PIPELINE_OUTPUT(1),
-    .INTERLEAVE(0)
+    .PIPELINE_OUTPUT(0),
+    .INTERLEAVE(1)
 )
 riscv0 (
     .clk(clk),

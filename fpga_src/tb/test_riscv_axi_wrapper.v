@@ -35,7 +35,7 @@ module test_riscv_axi_wrapper;
 parameter DATA_WIDTH      = 64;
 parameter ADDR_WIDTH      = 16;
 parameter ID_WIDTH        = 8;
-parameter PIPELINE_OUTPUT = 1;
+parameter PIPELINE_OUTPUT = 0;
 parameter IMEM_SIZE_BYTES = 8192;
 parameter DMEM_SIZE_BYTES = 32768;
 parameter STAT_ADDR_WIDTH = 1;
