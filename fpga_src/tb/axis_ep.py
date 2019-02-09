@@ -1,1 +1,1 @@
-../lib/eth/tb/axis_ep.py
+../lib/axis/tb/axis_ep.py
