@@ -1,6 +1,6 @@
 /*
 
-Copyright (c) 2014-2018 Alex Forencich
+Copyright (c) 2015-2018 Alex Forencich
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -27,66 +27,73 @@ THE SOFTWARE.
 `timescale 1ns / 1ps
 
 /*
- * FPGA core logic
+ * Testbench for eth_mac_10g
  */
-module fpga_core
-(
-    /*
-     * Clock: 156.25MHz
-     * Synchronous reset
-     */
-    input  wire       clk,
-    input  wire       rst,
+module test_full_riscv_sys;
 
-    /*
-     * GPIO
-     */
-    output wire [1:0] sfp_1_led,
-    output wire [1:0] sfp_2_led,
-    output wire [1:0] sma_led,
+// Parameters
+parameter DATA_WIDTH = 64;
+parameter CTRL_WIDTH = (DATA_WIDTH/8);
+parameter AXI_ADDR_WIDTH = 16;
 
-    /*
-     * Ethernet: QSFP28
-     */
-    input  wire        sfp_1_tx_clk,
-    input  wire        sfp_1_tx_rst,
-    output wire [63:0] sfp_1_txd,
-    output wire [7:0]  sfp_1_txc,
-    input  wire        sfp_1_rx_clk,
-    input  wire        sfp_1_rx_rst,
-    input  wire [63:0] sfp_1_rxd,
-    input  wire [7:0]  sfp_1_rxc,
-    input  wire        sfp_2_tx_clk,
-    input  wire        sfp_2_tx_rst,
-    output wire [63:0] sfp_2_txd,
-    output wire [7:0]  sfp_2_txc,
-    input  wire        sfp_2_rx_clk,
-    input  wire        sfp_2_rx_rst,
-    input  wire [63:0] sfp_2_rxd,
-    input  wire [7:0]  sfp_2_rxc
-);
+// Inputs
+reg clk = 0;
+reg rst = 0;
+reg [7:0] current_test = 0;
 
-assign sfp_2_txd = 64'h0707070707070707;
-assign sfp_2_txc = 8'hff;
+reg rx_clk = 0;
+reg rx_rst = 0;
+reg tx_clk = 0;
+reg tx_rst = 0;
+reg [DATA_WIDTH-1:0] xgmii_rxd = 0;
+reg [CTRL_WIDTH-1:0] xgmii_rxc = 0;
 
+// Outputs
+wire [DATA_WIDTH-1:0] xgmii_txd;
+wire [CTRL_WIDTH-1:0] xgmii_txc;
+
+// Internal wire
 reg go;
 
+initial begin
+    // myhdl integration
+    $from_myhdl(
+        clk,
+        rst,
+        current_test,
+        rx_clk,
+        rx_rst,
+        tx_clk,
+        tx_rst,
+        xgmii_rxd,
+        xgmii_rxc
+    );
+    $to_myhdl(
+        xgmii_txd,
+        xgmii_txc
+    );
+
+    // dump file
+    $dumpfile("test_full_riscv_sys.lxt");
+    $dumpvars(0, test_full_riscv_sys);
+end
+
 full_riscv_sys sys (
-  .rx_clk(sfp_1_rx_clk),
-  .rx_rst(sfp_1_rx_rst),
-  .tx_clk(sfp_1_tx_clk),
-  .tx_rst(sfp_1_tx_rst),
+  .rx_clk(rx_clk),
+  .rx_rst(rx_rst),
+  .tx_clk(tx_clk),
+  .tx_rst(tx_rst),
   .logic_clk(clk),
   .logic_rst(rst),
   .go(go),
 
-  .xgmii_rxd(sfp_1_rxd),
-  .xgmii_rxc(sfp_1_rxc),
+  .xgmii_rxd(xgmii_rxd),
+  .xgmii_rxc(xgmii_rxc),
   .ifg_delay(8'd12),
 
   // Outputs
-  .xgmii_txd(sfp_1_txd),
-  .xgmii_txc(sfp_1_txc),
+  .xgmii_txd(xgmii_txd),
+  .xgmii_txc(xgmii_txc),
 
   .m_axis_tx_desc_status_tag(),
   .m_axis_tx_desc_status_valid(),
@@ -105,13 +112,12 @@ full_riscv_sys sys (
   .rx_fifo_good_frame()
 );
 
-// some delay before enabling the system
 reg [19:0] counter;
 always @(posedge clk)
   if (rst) begin
     go      <= 1'b0;
     counter <= 20'd0;
-  end else if (counter < 20'd100000) begin
+  end else if (counter < 20'd1000) begin
     counter <= counter + 20'd1;
   end else begin
     go <= 1'b1;

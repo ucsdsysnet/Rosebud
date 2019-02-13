@@ -68,15 +68,25 @@ module riscv_axi_wrapper # (
 //////////////////////// CORE RESET COMMAND /////////////////////////
 /////////////////////////////////////////////////////////////////////
 reg  core_reset;
-wire reset_cmd = (&s_axi_awaddr[ADDR_WIDTH-1:STRB_WIDTH]) 
-                 && s_axi_awvalid && s_axi_wstrb[STRB_WIDTH-1];
+wire reset_cmd_addr = (&s_axi_awaddr[ADDR_WIDTH-1:STRB_WIDTH]) && s_axi_awvalid;
+wire reset_cmd_strb = s_axi_wstrb[STRB_WIDTH-1];
+reg  reset_addr_received;
 
 always @ (posedge clk)
-    if (rst)
-        core_reset <= 1'b1;
-    else if (reset_cmd)
-        core_reset <= s_axi_wdata[0];
-
+    if (rst) begin
+        core_reset          <= 1'b1;
+        reset_addr_received <= 1'b0;
+    end else if (reset_cmd_addr) begin
+        if (reset_cmd_strb) // if both come together no need to raise reset_addr_received
+            core_reset <= s_axi_wdata[0];
+        else 
+            reset_addr_received <= 1'b1;
+    end else if (reset_addr_received) begin
+        if (reset_cmd_strb) begin
+            core_reset <= s_axi_wdata[0];
+            reset_addr_received <= 1'b0;
+        end
+    end
 
 /////////////////////////////////////////////////////////////////////
 /////////////////// READ AND WRITE INTERFACES ///////////////////////

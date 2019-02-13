@@ -173,7 +173,7 @@ mem_2rw #(
 ) dmem (
   .clk(clk),
   .ena(dmem_v && (!io_not_mem)),
-  .rena(dmem_v && (!io_not_mem)),
+  .rena(!(|dmem_line_write_mask)),
   .wena(dmem_line_write_mask),
   .addra(dmem_addr[DMEM_ADDR_WIDTH-1:LINE_ADDR_BITS]),
   .dina(dmem_data_in),

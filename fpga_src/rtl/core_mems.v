@@ -31,6 +31,12 @@ always @ (posedge clk)
 
 assign doutb = mem_out;
 
+// For now before adding PCI-e DMA master for instructions
+initial begin
+    $readmemh("../../c_code/test.hex", mem);
+end 
+
+
 endmodule
 
 
@@ -65,7 +71,7 @@ integer i;
 always @ (posedge clk)
   if (ena) begin
     for (i = 0; i < BYTES_PER_LINE; i = i + 1) 
-      if (wena[i] == 1'b1) 
+      if (wena[i]) 
         mem[addra][i*8 +: 8]  <= dina[i*8 +: 8];
     if (rena)
       mem_out_a <= mem[addra];
@@ -74,7 +80,7 @@ always @ (posedge clk)
 always @ (posedge clk)
   if (enb) begin
     for (i = 0; i < BYTES_PER_LINE; i = i + 1) 
-      if (wenb[i] == 1'b1)
+      if (wenb[i])
         mem[addrb][i*8 +: 8]  <= dinb[i*8 +: 8];
     if (renb)
       mem_out_b <= mem[addrb];
@@ -82,5 +88,17 @@ always @ (posedge clk)
 
 assign douta = mem_out_a;
 assign doutb = mem_out_b;
+
+// For now before adding PCI-e DMA master for init
+integer j;
+initial begin
+    // two nested loops for smaller number of iterations per loop
+    // workaround for synthesizer complaints about large loop counts
+    for (i = 0; i < 2**(ADDR_WIDTH); i = i + 2**((ADDR_WIDTH-1)/2)) begin
+        for (j = i; j < i + 2**((ADDR_WIDTH-1)/2); j = j + 1) begin
+            mem[j] = {LINE_SIZE{1'b0}};
+        end
+    end
+end
 
 endmodule
