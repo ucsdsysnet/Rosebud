@@ -15,7 +15,7 @@ object GenSmallAndProductive extends App{
           resetVector = 0x000000000,
           cmdForkOnSecondStage = false,
           cmdForkPersistence = false,
-          prediction = NONE, //STATIC, // DYNAMIC_TARGET, // NONE,
+          prediction = NONE, // STATIC, // DYNAMIC_TARGET, // NONE,
           catchAccessFault = false,
           compressedGen = false,
           busLatencyMin = 1
@@ -23,7 +23,7 @@ object GenSmallAndProductive extends App{
         new DBusSimplePlugin(
           catchAddressMisaligned = false,
           catchAccessFault = false,
-          earlyInjection = false
+          earlyInjection = true
         ),
         // new CsrPlugin(CsrPluginConfig.smallest),
         new DecoderSimplePlugin(
@@ -38,7 +38,10 @@ object GenSmallAndProductive extends App{
           separatedAddSub = false,
           executeInsertion = false
         ),
-        new LightShifterPlugin,
+        new FullBarrelShifterPlugin(
+          earlyInjection = true
+        ),
+        // new LightShifterPlugin,
         new HazardSimplePlugin(
           bypassExecute           = true,
           bypassMemory            = true,

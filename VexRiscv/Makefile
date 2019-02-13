@@ -1,5 +1,8 @@
 build:
 	sbt "runMain vexriscv.demo.GenSmallAndProductive"
 
+edit:
+	vim src/main/scala/vexriscv/demo/GenSmallAndPerformant.scala
+
 copy:
-	cp VexRiscv.v ../verilog-ethernet/example/ExaNIC_X10/fpga/rtl/
+	cp VexRiscv.v ../fpga_src/rtl/
