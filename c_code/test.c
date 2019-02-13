@@ -1,24 +1,26 @@
 int main(void){
-volatile int * a = (volatile int *) 0x00800;
-volatile int * b = (volatile int *) 0x01000;
-volatile int * stat = (volatile int *) 0x08000;
-char c;
+volatile unsigned int * a = (volatile unsigned int *) 0x00100;
+volatile unsigned int * stat = (volatile unsigned int *) 0x08000;
+unsigned int* b;
+unsigned int c;
+unsigned int flag;
+unsigned int d;
+int i;
 
-*stat = 0xFFFFFFFF;
-for (int i=0; i<100; i++) {
-	b[i] = *(((char*)&a[i])+3) + 2;
-	c = *(((char*)stat)+1);
-	c--;
-	*(((char*)stat)+1) = c;
-	// b[i] = a[i] + 2;
-	// *(((short*)&b[i])+1) = i*2;
-	// c = *(((char*)&b[i])+2);
-	// c = c + 5;
-	// *(((char*)&b[i])+3) = c;
-
+while(1){
+	for (i=0; i<32; i+=2){
+		if (a[i]!=0){
+			c = a[i];
+		  flag = c | 0xFFFF0000;
+			b = (unsigned int*)(a[i+1]);
+			*stat = *stat & (~flag);
+			*a = 0;
+			b[6] = b[6]+0x05050505;
+			b[7] = b[7]+0x05050505;
+			*stat = *stat | c;
+		}
+	}
 }
-
-while(1){}
 
 return 1;
 }

@@ -5,21 +5,31 @@ test.o:     file format elf32-littleriscv
 Disassembly of section .text.startup:
 
 00000000 <main>:
-   0:	000015b7          	lui	a1,0x1
-   4:	80058793          	addi	a5,a1,-2048 # 800 <main+0x800>
-   8:	fff00693          	li	a3,-1
-   c:	00008737          	lui	a4,0x8
-  10:	00d72023          	sw	a3,0(a4) # 8000 <main+0x8000>
-  14:	00078513          	mv	a0,a5
-  18:	000086b7          	lui	a3,0x8
-  1c:	99058593          	addi	a1,a1,-1648
-  20:	0037c703          	lbu	a4,3(a5)
-  24:	00a78633          	add	a2,a5,a0
-  28:	00478793          	addi	a5,a5,4
-  2c:	00270713          	addi	a4,a4,2
-  30:	00e62023          	sw	a4,0(a2)
-  34:	0016c703          	lbu	a4,1(a3) # 8001 <main+0x8001>
-  38:	fff70713          	addi	a4,a4,-1
-  3c:	00e680a3          	sb	a4,1(a3)
-  40:	feb790e3          	bne	a5,a1,20 <main+0x20>
-  44:	0000006f          	j	44 <main+0x44>
+   0:	050508b7          	lui	a7,0x5050
+   4:	00008637          	lui	a2,0x8
+   8:	ffff0e37          	lui	t3,0xffff0
+   c:	50588893          	addi	a7,a7,1285 # 5050505 <main+0x5050505>
+  10:	18000313          	li	t1,384
+  14:	10000793          	li	a5,256
+  18:	0007a703          	lw	a4,0(a5)
+  1c:	04070463          	beqz	a4,64 <main+0x64>
+  20:	0007a803          	lw	a6,0(a5)
+  24:	0047a683          	lw	a3,4(a5)
+  28:	00062583          	lw	a1,0(a2) # 8000 <main+0x8000>
+  2c:	01c86733          	or	a4,a6,t3
+  30:	fff74713          	not	a4,a4
+  34:	00b77733          	and	a4,a4,a1
+  38:	00e62023          	sw	a4,0(a2)
+  3c:	10002023          	sw	zero,256(zero) # 100 <main+0x100>
+  40:	0186a503          	lw	a0,24(a3)
+  44:	01c6a583          	lw	a1,28(a3)
+  48:	01150533          	add	a0,a0,a7
+  4c:	011585b3          	add	a1,a1,a7
+  50:	00a6ac23          	sw	a0,24(a3)
+  54:	00b6ae23          	sw	a1,28(a3)
+  58:	00062703          	lw	a4,0(a2)
+  5c:	01076733          	or	a4,a4,a6
+  60:	00e62023          	sw	a4,0(a2)
+  64:	00878793          	addi	a5,a5,8
+  68:	fa6798e3          	bne	a5,t1,18 <main+0x18>
+  6c:	fa9ff06f          	j	14 <main+0x14>
