@@ -248,7 +248,7 @@ wire [DATA_WIDTH-1:0] data_dma_wr_data = ram_cmd_wr_data;
 
 // Signals to second port of the local IMEM of the core (just write)
 // or status registers
-wire [STRB_WIDTH-1:0] ins_dma_we      = ram_cmd_wr_strb & {STRB_WIDTH{imem_wr_en}};
+wire [STRB_WIDTH-1:0] ins_dma_wen     = ram_cmd_wr_strb & {STRB_WIDTH{imem_wr_en}};
 wire [ADDR_WIDTH-1:0] ins_dma_addr    = {1'b0,ram_cmd_wr_addr[ADDR_WIDTH-2:0]};
 wire [DATA_WIDTH-1:0] ins_dma_wr_data = ram_cmd_wr_data;
 wire [ADDR_WIDTH-1:0] stat_rd_addr    = {1'b0,ram_cmd_rd_addr[ADDR_WIDTH-2:0]};
@@ -325,7 +325,7 @@ riscvcore #(
     .data_dma_wr_data(data_dma_wr_data),
     .data_dma_rd_data(data_dma_rd_data),
     
-    .ins_dma_we(ins_dma_we),
+    .ins_dma_wen(ins_dma_wen),
     .ins_dma_addr(ins_dma_addr),
     .ins_dma_wr_data(ins_dma_wr_data),
     

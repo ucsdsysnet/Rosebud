@@ -12,22 +12,43 @@ object GenSmallAndProductive extends App{
     config = VexRiscvConfig(
       plugins = List(
         new IBusSimplePlugin(
-          resetVector = 0x000000000,
+          resetVector = 0x00000000l,
           cmdForkOnSecondStage = false,
           cmdForkPersistence = false,
           prediction = NONE, // STATIC, // DYNAMIC_TARGET, // NONE,
-          catchAccessFault = false,
+          catchAccessFault = true,
           compressedGen = false,
           busLatencyMin = 1
         ),
         new DBusSimplePlugin(
-          catchAddressMisaligned = false,
-          catchAccessFault = false,
+          catchAddressMisaligned = true,
+          catchAccessFault = true,
           earlyInjection = true
         ),
-        // new CsrPlugin(CsrPluginConfig.smallest),
+        new CsrPlugin(
+          config = CsrPluginConfig(
+            catchIllegalAccess = false,
+            mvendorid      = null,
+            marchid        = null,
+            mimpid         = null,
+            mhartid        = null,
+            misaExtensionsInit = 66,
+            misaAccess     = CsrAccess.NONE,
+            mtvecAccess    = CsrAccess.NONE,
+            mtvecInit      = 0x00000200l,
+            mepcAccess     = CsrAccess.READ_WRITE,
+            mscratchGen    = false,
+            mcauseAccess   = CsrAccess.READ_ONLY,
+            mbadaddrAccess = CsrAccess.READ_ONLY,
+            mcycleAccess   = CsrAccess.NONE,
+            minstretAccess = CsrAccess.NONE,
+            ecallGen       = false,
+            wfiGenAsWait   = false,
+            ucycleAccess   = CsrAccess.NONE
+          )
+        ),        
         new DecoderSimplePlugin(
-          catchIllegalInstruction = false
+          catchIllegalInstruction = true
         ),
         new RegFilePlugin(
           regFileReadyKind = plugin.ASYNC,
@@ -36,7 +57,7 @@ object GenSmallAndProductive extends App{
         new IntAluPlugin,
         new SrcPlugin(
           separatedAddSub = false,
-          executeInsertion = false
+          executeInsertion = true
         ),
         new FullBarrelShifterPlugin(
           earlyInjection = true
@@ -53,7 +74,7 @@ object GenSmallAndProductive extends App{
         ),
         new BranchPlugin(
           earlyBranch = true,
-          catchAddressMisaligned = false
+          catchAddressMisaligned = true
         ),
         new YamlPlugin("cpu0.yaml")
       )

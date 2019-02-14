@@ -1,5 +1,9 @@
 SECTIONS
 {
   . = 0x00000;
-  .text : { *(.text) }
+  .text : { *(.text.startup);
+              . = 0x00200;
+            *(.text.except);}
+
+
 }

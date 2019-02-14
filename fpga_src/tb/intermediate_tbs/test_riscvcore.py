@@ -24,18 +24,21 @@ def bench():
     current_test       = Signal(intbv(0)[8:])
 
     data_dma_en        = Signal(bool(0))
-    data_dma_we        = Signal(intbv(0)[8:])
-    data_dma_addr      = Signal(intbv(0)[15:])
+    data_dma_ren       = Signal(bool(0))
+    data_dma_wen       = Signal(intbv(0)[8:])
+    data_dma_addr      = Signal(intbv(0)[16:])
     data_dma_wr_data   = Signal(intbv(0)[64:])
-    data_dma_read_data = Signal(intbv(0)[64:])
+    data_dma_rd_data = Signal(intbv(0)[64:])
     
-    ins_dma_wen        = Signal(bool(0))
-    ins_dma_addr       = Signal(intbv(0)[13:])
+    ins_dma_wen         = Signal(intbv(0)[8:])
+    ins_dma_addr       = Signal(intbv(0)[16:])
     ins_dma_data       = Signal(intbv(0)[64:])
     
-    stat_update        = Signal(bool(0))
     stat_rd_en         = Signal(bool(0))
+    stat_rd_addr       = Signal(intbv(0)[16:])
     stat_rd_data       = Signal(intbv(0)[32:])
+    
+    stat_update        = Signal(bool(0))
 
     # DUT
     if os.system(build_cmd):
@@ -48,10 +51,11 @@ def bench():
         current_test=current_test,
     
         data_dma_en = data_dma_en,
-        data_dma_we = data_dma_we,
+        data_dma_ren = data_dma_ren,
+        data_dma_wen = data_dma_wen,
         data_dma_addr = data_dma_addr,
         data_dma_wr_data = data_dma_wr_data,
-        data_dma_read_data = data_dma_read_data,
+        data_dma_rd_data = data_dma_rd_data,
 
         ins_dma_wen = ins_dma_wen,
         ins_dma_addr = ins_dma_addr,
@@ -59,6 +63,8 @@ def bench():
 
         stat_rd_en = stat_rd_en,
         stat_rd_data = stat_rd_data,
+        stat_rd_addr = stat_rd_addr,
+
         stat_update = stat_update
     )
 
@@ -80,13 +86,13 @@ def bench():
         yield clk.posedge
         print("writing values to Dmem")
         data_dma_en.next = 1
-        data_dma_we.next = 0xFF
+        data_dma_wen.next = 0xFF
         for i in range (0,100,2):
             data_dma_addr.next    = 0x800 + i*4
             data_dma_wr_data.next = (i << 24) + ((i+1) << 56);
             yield clk.posedge
         data_dma_en.next = 0
-        data_dma_we.next = 0x0
+        data_dma_wen.next = 0x0
         yield clk.posedge
         yield delay(100)
         yield clk.posedge
@@ -95,11 +101,13 @@ def bench():
         yield clk.posedge
         print("reading values from Dmem")
         data_dma_en.next = 1
-        data_dma_we.next = 0x0
+        data_dma_ren.next = 1
+        data_dma_wen.next = 0x0
         for i in range (0,100,2):
             data_dma_addr.next    = 0x800 + i*4
             yield clk.posedge
         data_dma_en.next = 0
+        data_dma_ren.next = 0
         yield clk.posedge
         yield delay(100)
         yield clk.posedge
@@ -110,16 +118,18 @@ def bench():
         yield delay(100)
         yield clk.posedge
 
-        data = open("../../c_code/test.bin", "rb")
+        data = open("../../c_code/interrupt_test.bin", "rb")
         addr = 0
         while True:
             b = bytearray(data.read(8))
-            if (len(b)<8):
+            if (len(b)==0):
                 break;
             d = 0
-            for i in range (0,8):
+            mask = 0
+            for i in range (0,len(b)):
               d |= b[i] << i*8
-            ins_dma_wen.next = 1
+              mask |= 1 << i
+            ins_dma_wen.next = mask
             ins_dma_addr.next = addr
             ins_dma_data.next = d 
             yield clk.posedge
@@ -129,30 +139,41 @@ def bench():
         core_reset.next = 0
         yield clk.posedge
 
-        cycles = 0
+        yield delay(20000)
 
-        while (1):
-            while (stat_update == 0) and (cycles < 2500):
-                yield clk.posedge
-                cycles+=1
-            stat_rd_en.next = 1
-            yield clk.posedge
-            cycles+=1
-            stat_rd_en.next = 0
-            if cycles >= 2500:
-                break
-
-        # yield delay(20000)
         yield clk.posedge
 
+        yield clk.posedge
+        print("writing values to Dmem out of range")
+        # data_dma_en.next = 1
+        # data_dma_wen.next = 0xFF
+        # ins_dma_wen.next = 0xFF
+        stat_rd_en.next = 1
+        for i in range (0,10,2):
+            # data_dma_addr.next    = 0x8000 + i*4
+            # data_dma_wr_data.next = (i << 24) + ((i+1) << 56);
+            # ins_dma_addr.next    = 0x4000 + i*4
+            # ins_dma_data.next = (i << 24) + ((i+1) << 56);
+            stat_rd_addr.next = 0x7000 + i*4 
+            yield clk.posedge
+        # data_dma_en.next = 0
+        # data_dma_wen.next = 0x0
+        # ins_dma_wen.next = 0x0
+        stat_rd_en.next = 0
+        yield clk.posedge
+        yield delay(100)
+        yield clk.posedge
+       
         yield clk.posedge
         print("reading core written values from Dmem")
         data_dma_en.next = 1
-        data_dma_we.next = 0x0
+        data_dma_ren.next = 1
+        data_dma_wen.next = 0x0
         for i in range (0,100,2):
             data_dma_addr.next    = 0x1000 + i*4
             yield clk.posedge
         data_dma_en.next = 0
+        data_dma_ren.next = 0
         yield clk.posedge
         
         yield delay(100)
