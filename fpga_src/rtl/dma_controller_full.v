@@ -124,7 +124,7 @@ parameter FIFO_ADDR_WIDTH = $clog2(CORE_COUNT * SLOT_COUNT);
     
 wire [FIFO_WIDTH-1:0] rx_desc;
 wire [FIFO_WIDTH-1:0] dma_rx_desc;
-wire                  dma_rx_desc_valid = 1'b0;
+wire                  dma_rx_desc_valid;
 wire [FIFO_WIDTH-1:0] rx_desc_fifo_data;
 wire                  rx_desc_fifo_ready;
 wire                  rx_desc_fifo_v;
@@ -419,6 +419,7 @@ always @ (*)
     if (read_flags == (1<<k))
       read_flag_bin = k;
 
+reg [SLOT_NO_WIDTH-1:0] read_slot_r;
 reg m_axi_rvalid_r;
 reg read_flags_not_zero;
 reg [ID_WIDTH-1:0] m_axi_rid_r;
@@ -432,6 +433,7 @@ always @ (posedge clk)
     read_flags_not_zero <= |read_flags;
     m_axi_rid_r         <= m_axi_rid;
     read_pkt_len        <= m_axi_rdata[31:16];
+    read_slot_r         <= read_flag_bin;
   end
 
 wire [ADDR_WIDTH-1:0] read_slot_addr = {m_axi_rid_r[CORE_NO_WIDTH-1:0],
@@ -461,6 +463,18 @@ assign s_axis_tx_desc_len   = s_axis_tx_desc_len_reg;
 assign s_axis_tx_desc_valid = s_axis_tx_desc_valid_reg;
 assign s_axis_tx_desc_tag   = 0;
 assign s_axis_tx_desc_user  = 0;
+
+reg [CORE_NO_WIDTH-1:0] tx_desc_core_no_latched;
+reg [SLOT_NO_WIDTH-1:0] tx_desc_slot_no_latched;
+
+always @ (posedge clk) 
+    if (s_axis_tx_desc_valid) begin
+      tx_desc_core_no_latched   <= m_axi_rid_r[CORE_NO_WIDTH-1:0];
+      tx_desc_slot_no_latched   <= read_slot_r;
+    end
+
+assign dma_rx_desc = {tx_desc_core_no_latched, tx_desc_slot_no_latched};
+assign dma_rx_desc_valid = pkt_sent_out_valid;
     
 // enable tx and rx after go arrives
 always @ (posedge clk)
