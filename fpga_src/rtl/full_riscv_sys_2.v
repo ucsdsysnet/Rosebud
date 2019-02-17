@@ -32,10 +32,10 @@ THE SOFTWARE.
 module full_riscv_sys # (
   // Parameters
   parameter S_COUNT = 2,
-  parameter M_COUNT = 1,
+  parameter M_COUNT = 8,
   parameter FORWARD_ID = 1,
   parameter M_REGIONS = 1,
-  parameter M_BASE_ADDR = {16'h3000, 16'h2000, 16'h1000, 16'h0000},
+  parameter M_BASE_ADDR = {19'h70000, 19'h60000, 19'h50000, 19'h40000,19'h30000, 19'h20000, 19'h10000, 19'h00000},
   parameter M_ADDR_WIDTH = {M_COUNT{{M_REGIONS{32'd16}}}},
   parameter M_CONNECT_READ = {M_COUNT{{S_COUNT{1'b1}}}},
   parameter M_CONNECT_WRITE = {M_COUNT{{S_COUNT{1'b1}}}},
@@ -44,7 +44,7 @@ module full_riscv_sys # (
   parameter DATA_WIDTH = 64,
   parameter CTRL_WIDTH = (DATA_WIDTH/8),
   parameter AXI_DATA_WIDTH = 64,
-  parameter AXI_ADDR_WIDTH = 16,
+  parameter AXI_ADDR_WIDTH = 19,
   parameter AXI_STRB_WIDTH = (AXI_DATA_WIDTH/8),
   parameter AXI_ID_WIDTH = 8,
   parameter AXI_MAX_BURST_LEN = 16,
@@ -105,7 +105,16 @@ module full_riscv_sys # (
   output tx_fifo_good_frame,
   output rx_fifo_overflow,
   output rx_fifo_bad_frame,
-  output rx_fifo_good_frame
+  output rx_fifo_good_frame,
+
+  input  [6:0]  inject_rx_desc,
+  input         inject_rx_desc_valid,
+  output        inject_rx_desc_ready,
+
+  input  [3:0]  slot_addr_wr_no,
+  input  [6:0]  slot_addr_wr_data,
+  input         slot_addr_wr_valid
+
 );
 
 // Internal wires
@@ -569,12 +578,34 @@ dma_controller # (
     .pkt_sent_to_core_len(m_axis_rx_desc_status_len),
     .pkt_sent_out_valid(m_axis_tx_desc_status_valid),
 
-    .core_msg(status_update)
+    .core_msg({7'd0,status_update}),
+
+    .drop_list(0),
+    .drop_list_valid(1'b0),
+    .max_pkt_len(0),
+    .max_pkt_len_valid(1'b0),
+    
+    .inject_rx_desc(inject_rx_desc),
+    .inject_rx_desc_valid(inject_rx_desc_valid),
+    .inject_rx_desc_ready(inject_rx_desc_ready),
+    
+    .slot_addr_wr_no(slot_addr_wr_no),
+    .slot_addr_wr_data(slot_addr_wr_data),
+    .slot_addr_wr_valid(slot_addr_wr_valid),
+    
+    .core_status_rd_addr(0),
+    .core_status_rd_valid(1'b0),
+    .core_status(),
+    .core_status_valid(),
+    
+    .err(),
+    .err_type()
+
 );
 
 riscv_axi_wrapper #(
     .DATA_WIDTH(AXI_DATA_WIDTH),
-    .ADDR_WIDTH(AXI_ADDR_WIDTH),
+    .ADDR_WIDTH(AXI_ADDR_WIDTH-3),
     .ID_WIDTH(AXI_ID_WIDTH),
     .PIPELINE_OUTPUT(PIPELINE_OUTPUT),
     .IMEM_SIZE_BYTES(IMEM_SIZE_BYTES),

@@ -10,6 +10,7 @@ module dma_controller # (
 (
     input  wire                   clk,
     input  wire                   rst,
+    input  wire                   go,
 
     /*
      * AXI master interface
@@ -73,11 +74,12 @@ module dma_controller # (
     output wire                   rx_enable,
     output wire                   rx_abort,
 
-    input  wire                   rx_fifo_good_frame,
-    input  wire                   core_status_update,
-    input  wire                   pkt_sent_valid,
-    input  wire [LEN_WIDTH-1:0]   pkt_sent_len,
-    input  wire                   go
+    input  wire                   incoming_pkt_ready,
+    input  wire                   core_msg,
+    input  wire                   pkt_sent_to_core_valid,
+    input  wire [LEN_WIDTH-1:0]   pkt_sent_to_core_len,
+
+    input  wire                   pkt_sent_out_valid
 
 );
 
@@ -90,8 +92,8 @@ always @ (posedge clk)
     rx_fifo_good_frame_r <= 1'b0;
     go_r                 <= 1'b0;
   end else begin
-    core_status_update_r <= core_status_update;
-    rx_fifo_good_frame_r <= rx_fifo_good_frame;
+    core_status_update_r <= core_msg;
+    rx_fifo_good_frame_r <= incoming_pkt_ready;
     go_r                 <= go;
   end
 
@@ -135,7 +137,7 @@ always @ (posedge clk)
   end else begin
     if (s_axis_rx_desc_valid_reg) begin
       s_axis_rx_desc_valid_reg <= 1'b0;
-    end else if (rx_fifo_good_frame && (!rx_fifo_good_frame_r)) begin
+    end else if (incoming_pkt_ready && (!rx_fifo_good_frame_r)) begin
       s_axis_rx_desc_addr_reg   <= slot_addr;
       s_axis_rx_desc_len_reg    <= 20'd1000;
       s_axis_rx_desc_valid_reg  <= 1'b1;
@@ -154,7 +156,7 @@ always @ (posedge clk)
     m_axi_arvalid_reg <= 1'b0;
     rd_req_attempt    <= 1'b0;
   end else begin
-    if (core_status_update && (!core_status_update_r)) begin
+    if (core_msg && (!core_status_update_r)) begin
       m_axi_araddr_reg  <= 16'h8000;
       m_axi_arvalid_reg <= 1'b1;
       rd_req_attempt    <= 1'b1;
@@ -200,7 +202,7 @@ always @ (posedge clk)
       m_axi_awaddr_reg  <= 16'hFFF8;
       m_axi_awvalid_reg <= 1'b1;
       awr_req_attempt   <= 1'b1;
-    end else if (pkt_sent_valid) begin
+    end else if (pkt_sent_to_core_valid) begin
       m_axi_awaddr_reg  <= trigger_addr;
       m_axi_awvalid_reg <= 1'b1;
       awr_req_attempt   <= 1'b1;
@@ -231,9 +233,9 @@ always @ (posedge clk)
       m_axi_wlast_reg  <= 1'b1;
       wr_req_attempt   <= 1'b1;
     end
-    else if (pkt_sent_valid) begin
+    else if (pkt_sent_to_core_valid) begin
       m_axi_wvalid_reg <= 1'b1;
-      m_axi_wdata_reg  <= {16'd0,core_slot_addr,pkt_sent_len[15:0],slot_flag};
+      m_axi_wdata_reg  <= {16'd0,core_slot_addr,pkt_sent_to_core_len[15:0],slot_flag};
       m_axi_wstrb_reg  <= 8'hFF;
       m_axi_wlast_reg  <= 1'b1;
       wr_req_attempt   <= 1'b1;
