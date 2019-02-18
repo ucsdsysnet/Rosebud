@@ -334,7 +334,7 @@ always @ (posedge clk)
     awr_req_attempt   <= 1'b0;
   end else begin
     if (go && (!go_r)) begin
-      m_axi_awaddr_reg  <= 19'h0FFF8;
+      m_axi_awaddr_reg  <= 19'h3FFF8;
       m_axi_awvalid_reg <= 1'b1;
       awr_req_attempt   <= 1'b1;
     end

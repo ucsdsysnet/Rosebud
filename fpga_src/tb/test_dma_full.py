@@ -182,7 +182,6 @@ def bench():
 
     @instance
     def check():
-        print("fuck start")
         yield delay(100)
         yield clk.posedge
         tx_rst.next = 1
@@ -199,7 +198,7 @@ def bench():
         yield clk.posedge
         yield clk.posedge
         
-        inject_rx_desc.next = 0      
+        inject_rx_desc.next = (3<<4) + 2      
         inject_rx_desc_valid.next = 1
         yield clk.posedge
         inject_rx_desc_valid.next = 0
@@ -209,10 +208,18 @@ def bench():
         slot_addr_wr_data.next = 0x40
         slot_addr_wr_valid.next = 1   
         yield clk.posedge
+        slot_addr_wr_no.next   = 1   
+        slot_addr_wr_data.next = 0x44
+        yield clk.posedge
+        slot_addr_wr_no.next   = 2   
+        slot_addr_wr_data.next = 0x48
+        yield clk.posedge
+        slot_addr_wr_no.next   = 3   
+        slot_addr_wr_data.next = 0x4C
+        yield clk.posedge
         slot_addr_wr_valid.next = 0   
         yield clk.posedge
 
-        print ("wrote PCIe stuff")
         # testbench stimulus
 
         yield delay(10000)
