@@ -60,7 +60,6 @@ wire [CTRL_WIDTH-1:0] xgmii_txc;
 wire                  inject_rx_desc_ready;
 
 // Internal wire
-reg go = 0;
 
 initial begin
     // myhdl integration
@@ -99,7 +98,6 @@ full_riscv_sys sys (
   .tx_rst(tx_rst),
   .logic_clk(clk),
   .logic_rst(rst),
-  .go(go),
 
   .xgmii_rxd(xgmii_rxd),
   .xgmii_rxc(xgmii_rxc),
@@ -133,16 +131,5 @@ full_riscv_sys sys (
   .slot_addr_wr_data(slot_addr_wr_data),
   .slot_addr_wr_valid(slot_addr_wr_valid)
 );
-
-reg [19:0] counter;
-always @(posedge clk)
-  if (rst) begin
-    go      <= 1'b0;
-    counter <= 20'd0;
-  end else if (counter < 20'd1000) begin
-    counter <= counter + 20'd1;
-  end else begin
-    go <= 1'b1;
-  end
 
 endmodule

@@ -31,7 +31,7 @@ THE SOFTWARE.
  */
 module full_riscv_sys # (
   // Parameters
-  parameter S_COUNT = 2,
+  parameter S_COUNT = 3,
   parameter M_COUNT = 8,
   parameter FORWARD_ID = 1,
   parameter M_REGIONS = 1,
@@ -81,7 +81,6 @@ module full_riscv_sys # (
   input tx_rst,
   input logic_clk,
   input logic_rst,
-  input go,
 
   input[DATA_WIDTH-1:0] xgmii_rxd,
   input[CTRL_WIDTH-1:0] xgmii_rxc,
@@ -509,7 +508,6 @@ dma_controller # (
 (
     .clk(logic_clk),
     .rst(logic_rst),
-    .go(go),
 
     /*
      * AXI master interface
@@ -569,10 +567,6 @@ dma_controller # (
     .s_axis_rx_desc_valid(s_axis_rx_desc_valid),
     .s_axis_rx_desc_ready(s_axis_rx_desc_ready),
 
-    .tx_enable(tx_enable),
-    .rx_enable(rx_enable),
-    .rx_abort(rx_abort),
-
     .incoming_pkt_ready(rx_fifo_good_frame),
     .pkt_sent_to_core_valid(m_axis_rx_desc_status_valid),
     .pkt_sent_to_core_len(m_axis_rx_desc_status_len),
@@ -602,6 +596,60 @@ dma_controller # (
     .err_type()
 
 );
+
+temp_pcie # (
+    .DATA_WIDTH(AXI_DATA_WIDTH),
+    .ADDR_WIDTH(AXI_ADDR_WIDTH),
+    .ID_WIDTH(AXI_ID_WIDTH),
+    .LEN_WIDTH(LEN_WIDTH),
+    .TAG_WIDTH(TAG_WIDTH),
+    .RISCV_CORES(M_COUNT)
+) temp_pcie_master (
+    .clk(logic_clk),
+    .rst(logic_rst),
+
+    .m_axi_awid(m_axi_awid[2*AXI_ID_WIDTH +: AXI_ID_WIDTH]),
+    .m_axi_awaddr(m_axi_awaddr[2*AXI_ADDR_WIDTH +: AXI_ADDR_WIDTH]),
+    .m_axi_awlen(m_axi_awlen[2*8 +: 8]),
+    .m_axi_awsize(m_axi_awsize[2*3 +: 3]),
+    .m_axi_awburst(m_axi_awburst[2*2 +: 2]),
+    .m_axi_awlock(m_axi_awlock[2]),
+    .m_axi_awcache(m_axi_awcache[2*4 +: 4]),
+    .m_axi_awprot(m_axi_awprot[2*3 +: 3]),
+    .m_axi_awvalid(m_axi_awvalid[2]),
+    .m_axi_awready(m_axi_awready[2]),
+    .m_axi_wdata(m_axi_wdata[2*AXI_DATA_WIDTH +: AXI_DATA_WIDTH]),
+    .m_axi_wstrb(m_axi_wstrb[2*AXI_STRB_WIDTH +: AXI_STRB_WIDTH]),
+    .m_axi_wlast(m_axi_wlast[2]),
+    .m_axi_wvalid(m_axi_wvalid[2]),
+    .m_axi_wready(m_axi_wready[2]),
+    .m_axi_bid(m_axi_bid[2*AXI_ID_WIDTH +: AXI_ID_WIDTH]),
+    .m_axi_bresp(m_axi_bresp[2*2 +: 2]),
+    .m_axi_bvalid(m_axi_bvalid[2]),
+    .m_axi_bready(m_axi_bready[2]),
+    .m_axi_arid(m_axi_arid[2*AXI_ID_WIDTH +: AXI_ID_WIDTH]),
+    .m_axi_araddr(m_axi_araddr[2*AXI_ADDR_WIDTH +: AXI_ADDR_WIDTH]),
+    .m_axi_arlen(m_axi_arlen[2*8 +: 8]),
+    .m_axi_arsize(m_axi_arsize[2*3 +: 3]),
+    .m_axi_arburst(m_axi_arburst[2*2 +: 2]),
+    .m_axi_arlock(m_axi_arlock[2]),
+    .m_axi_arcache(m_axi_arcache[2*4 +: 4]),
+    .m_axi_arprot(m_axi_arprot[2*3 +: 3]),
+    .m_axi_arvalid(m_axi_arvalid[2]),
+    .m_axi_arready(m_axi_arready[2]),
+    .m_axi_rid(m_axi_rid[2*AXI_ID_WIDTH +: AXI_ID_WIDTH]),
+    .m_axi_rdata(m_axi_rdata[2*AXI_DATA_WIDTH +: AXI_DATA_WIDTH]),
+    .m_axi_rresp(m_axi_rresp[2*2 +: 2]),
+    .m_axi_rlast(m_axi_rlast[2]),
+    .m_axi_rvalid(m_axi_rvalid[2]),
+    .m_axi_rready(m_axi_rready[2]),
+
+    .tx_enable(tx_enable),
+    .rx_enable(rx_enable),
+    .rx_abort(rx_abort)
+);
+
+
 
 genvar i;
 generate

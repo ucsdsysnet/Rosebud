@@ -33,6 +33,7 @@ testbench = 'test_dma_full'
 
 srcs = []
 
+srcs.append("../rtl/temp_pcie.v")
 srcs.append("../rtl/simple_fifo.v")
 srcs.append("../rtl/full_riscv_sys_2.v")
 srcs.append("../rtl/dma_controller_full.v")

@@ -22,7 +22,6 @@ module dma_controller # (
 (
     input  wire                      clk,
     input  wire                      rst,
-    input  wire                      go,
 
     /*
      * AXI master interface
@@ -81,11 +80,6 @@ module dma_controller # (
     output wire [TAG_WIDTH-1:0]      s_axis_rx_desc_tag,
     output wire                      s_axis_rx_desc_valid,
     input  wire                      s_axis_rx_desc_ready,
-
-    // Enable of RX and TX chains
-    output wire                      tx_enable,
-    output wire                      rx_enable,
-    output wire                      rx_abort,
 
     // Messages from MAC
     input  wire                      incoming_pkt_ready,
@@ -326,19 +320,13 @@ assign trigger_addr = {rx_desc_core_no_latched,
                     rx_desc_slot_no_latched, 1'b0};
 
 wire trigger_send_valid = pkt_sent_to_core_valid;
-reg go_r;
 
 always @ (posedge clk)
   if (rst) begin 
     m_axi_awvalid_reg <= 1'b0;
     awr_req_attempt   <= 1'b0;
   end else begin
-    if (go && (!go_r)) begin
-      m_axi_awaddr_reg  <= 19'h3FFF8;
-      m_axi_awvalid_reg <= 1'b1;
-      awr_req_attempt   <= 1'b1;
-    end
-    else if (trigger_send_valid) begin
+    if (trigger_send_valid) begin
       m_axi_awaddr_reg  <= trigger_addr;
       m_axi_awid_reg    <= rx_desc_core_no_latched;
       m_axi_awvalid_reg <= 1'b1;
@@ -374,14 +362,7 @@ always @ (posedge clk)
     m_axi_wvalid_reg <= 1'b0;
     wr_req_attempt   <= 1'b0;
   end else begin
-    if (go && (!go_r)) begin
-      m_axi_wvalid_reg <= 1'b1;
-      m_axi_wdata_reg  <= 64'd0;
-      m_axi_wstrb_reg  <= 8'h80;
-      m_axi_wlast_reg  <= 1'b1;
-      wr_req_attempt   <= 1'b1;
-    end
-    else if (trigger_send_valid) begin
+    if (trigger_send_valid) begin
       m_axi_wvalid_reg <= 1'b1;
       m_axi_wdata_reg  <= {16'd0,core_slot_addr,pkt_sent_to_core_len[15:0],slot_flag};
       m_axi_wstrb_reg  <= 8'hFF;
@@ -475,30 +456,5 @@ always @ (posedge clk)
 
 assign dma_rx_desc = {tx_desc_core_no_latched, tx_desc_slot_no_latched};
 assign dma_rx_desc_valid = pkt_sent_out_valid;
-    
-// enable tx and rx after go arrives
-always @ (posedge clk)
-  if (rst)
-    go_r <= 1'b0;
-  else
-    go_r <= go;
-
-reg tx_enable_reg;
-reg rx_enable_reg;
-reg rx_abort_reg;
-always @ (posedge clk)
-  if (rst) begin 
-    tx_enable_reg = 1'b0;
-    rx_enable_reg = 1'b0;
-    rx_abort_reg  = 1'b0;
-  end else if (go && (!go_r)) begin
-    tx_enable_reg = 1'b1;
-    rx_enable_reg = 1'b1;
-    rx_abort_reg  = 1'b0;
-  end
-
-assign tx_enable = tx_enable_reg;
-assign rx_enable = rx_enable_reg;
-assign rx_abort  = rx_abort_reg;
 
 endmodule
