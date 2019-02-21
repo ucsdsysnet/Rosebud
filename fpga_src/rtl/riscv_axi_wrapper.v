@@ -61,7 +61,8 @@ module riscv_axi_wrapper # (
     output wire                   s_axi_rvalid,
     input  wire                   s_axi_rready,
     
-    output wire                   status_update
+    output  [63:0]                core_msg_data,
+    output                        core_msg_valid
 );
 
 /////////////////////////////////////////////////////////////////////
@@ -254,7 +255,8 @@ wire [DATA_WIDTH-1:0] ins_dma_wr_data = ram_cmd_wr_data;
 wire [ADDR_WIDTH-1:0] stat_rd_addr    = {1'b0,ram_cmd_rd_addr[ADDR_WIDTH-2:0]};
 
 // MUX between read ports (DMEM/status reg)
-wire [31:0] stat_rd_data;
+wire [63:0] stat_rd_data;
+wire stat_rd_ready;
 wire [DATA_WIDTH-1:0] data_dma_rd_data;
 
 // Remembering the last command, according to 1 cycle delay of memories 
@@ -265,11 +267,10 @@ always @(posedge clk)
     dmem_was_read <= 1'b0;
   else if (!read_reject) // don't update if read didn't go through
       dmem_was_read <= (dmem_op==DMEM_READ);
-assign ram_rd_resp_data = dmem_was_read ? data_dma_rd_data : 
-                        {{DATA_WIDTH-32{1'b0}}, stat_rd_data};
+assign ram_rd_resp_data = dmem_was_read ? data_dma_rd_data : stat_rd_data;
 
 // If we accepted a read we latch the next values for id and last.
-wire read_accepted = (dmem_op==DMEM_READ) || stat_rd_en;
+wire read_accepted = (dmem_op==DMEM_READ) || (stat_rd_en && stat_rd_ready);
 always @(posedge clk)
     if (rst)
         ram_rd_resp_last <= 1'b0;
@@ -332,8 +333,10 @@ riscvcore #(
     .stat_rd_en(stat_rd_en),
     .stat_rd_addr(stat_rd_addr),
     .stat_rd_data(stat_rd_data),
+    .stat_rd_ready(stat_rd_ready),
     
-    .status_update(status_update)
+    .core_msg_data(core_msg_data),
+    .core_msg_valid(core_msg_valid)
 );
 
 endmodule

@@ -35,8 +35,9 @@ srcs = []
 
 srcs.append("../rtl/temp_pcie.v")
 srcs.append("../rtl/simple_fifo.v")
-srcs.append("../rtl/full_riscv_sys_2.v")
-srcs.append("../rtl/dma_controller_full.v")
+srcs.append("../rtl/core_msg_arbiter.v")
+srcs.append("../rtl/full_riscv_sys.v")
+srcs.append("../rtl/dma_controller.v")
 srcs.append("../rtl/eth_interface.v")
 srcs.append("../rtl/core_mems.v")
 srcs.append("../rtl/VexRiscv.v")
@@ -202,6 +203,16 @@ def bench():
         inject_rx_desc.next = (3<<4) + 2      
         inject_rx_desc_valid.next = 1
         yield clk.posedge
+        inject_rx_desc.next = (7<<4) + 0      
+        yield clk.posedge
+        inject_rx_desc.next = (0<<4) + 1
+        yield clk.posedge
+        inject_rx_desc.next = (1<<4) + 15      
+        yield clk.posedge
+        inject_rx_desc.next = (2<<4) + 14      
+        yield clk.posedge
+        inject_rx_desc.next = (5<<4) + 2      
+        yield clk.posedge
         inject_rx_desc_valid.next = 0
         yield clk.posedge
 
@@ -217,6 +228,42 @@ def bench():
         yield clk.posedge
         slot_addr_wr_no.next   = 3   
         slot_addr_wr_data.next = 0x4C
+        yield clk.posedge
+        slot_addr_wr_no.next   = 4   
+        slot_addr_wr_data.next = 0x50
+        yield clk.posedge
+        slot_addr_wr_no.next   = 5   
+        slot_addr_wr_data.next = 0x54
+        yield clk.posedge
+        slot_addr_wr_no.next   = 6   
+        slot_addr_wr_data.next = 0x58
+        yield clk.posedge
+        slot_addr_wr_no.next   = 7   
+        slot_addr_wr_data.next = 0x5C
+        yield clk.posedge
+        slot_addr_wr_no.next   = 8   
+        slot_addr_wr_data.next = 0x60
+        yield clk.posedge
+        slot_addr_wr_no.next   = 9   
+        slot_addr_wr_data.next = 0x64
+        yield clk.posedge
+        slot_addr_wr_no.next   = 10   
+        slot_addr_wr_data.next = 0x68
+        yield clk.posedge
+        slot_addr_wr_no.next   = 11   
+        slot_addr_wr_data.next = 0x6C
+        yield clk.posedge
+        slot_addr_wr_no.next   = 12   
+        slot_addr_wr_data.next = 0x70
+        yield clk.posedge
+        slot_addr_wr_no.next   = 13   
+        slot_addr_wr_data.next = 0x74
+        yield clk.posedge
+        slot_addr_wr_no.next   = 14   
+        slot_addr_wr_data.next = 0x78
+        yield clk.posedge
+        slot_addr_wr_no.next   = 15   
+        slot_addr_wr_data.next = 0x7C
         yield clk.posedge
         slot_addr_wr_valid.next = 0   
         yield clk.posedge
@@ -240,31 +287,42 @@ def bench():
         
         print ("send data over LAN")
         xgmii_source.send(b'\x55\x55\x55\x55\x55\x55\x55\xD5'+bytearray(axis_frame))
+        yield delay(1000)
         yield clk.posedge
-        yield delay(10000)
+        xgmii_source.send(b'\x55\x55\x55\x55\x55\x55\x55\xD5'+bytearray(axis_frame))
+        yield delay(1000)
+        yield clk.posedge
+        xgmii_source.send(b'\x55\x55\x55\x55\x55\x55\x55\xD5'+bytearray(axis_frame))
+        yield delay(1000)
+        yield clk.posedge
+        xgmii_source.send(b'\x55\x55\x55\x55\x55\x55\x55\xD5'+bytearray(axis_frame))
+        yield delay(1000)
+        yield clk.posedge
+        # # yield delay(10000)
 
         print ("send data from LAN")
-        yield xgmii_sink.wait()
-        rx_frame = xgmii_sink.recv()
+        for i in range (0,4):
+          yield xgmii_sink.wait()
+          rx_frame = xgmii_sink.recv()
        
-        assert rx_frame.data[0:8] == bytearray(b'\x55\x55\x55\x55\x55\x55\x55\xD5')
-        data = rx_frame.data
-        for i in range(0, len(data), 16):
-            print(" ".join(("{:02x}".format(c) for c in bytearray(data[i:i+16]))))
-        eth_frame = eth_ep.EthFrame()
-        eth_frame.parse_axis_fcs(rx_frame.data[8:])
+          assert rx_frame.data[0:8] == bytearray(b'\x55\x55\x55\x55\x55\x55\x55\xD5')
+          data = rx_frame.data
+          for i in range(0, len(data), 16):
+              print(" ".join(("{:02x}".format(c) for c in bytearray(data[i:i+16]))))
+        # eth_frame = eth_ep.EthFrame()
+        # eth_frame.parse_axis_fcs(rx_frame.data[8:])
 
-        print(hex(eth_frame.eth_fcs))
-        print(hex(eth_frame.calc_fcs()))
+        # print(hex(eth_frame.eth_fcs))
+        # print(hex(eth_frame.calc_fcs()))
 
-        assert len(eth_frame.payload.data) == 46
-        assert eth_frame.eth_fcs == eth_frame.calc_fcs()
-        assert eth_frame.eth_dest_mac == test_frame.eth_dest_mac
-        assert eth_frame.eth_src_mac == test_frame.eth_src_mac
-        assert eth_frame.eth_type == test_frame.eth_type
+        # assert len(eth_frame.payload.data) == 46
+        # assert eth_frame.eth_fcs == eth_frame.calc_fcs()
+        # assert eth_frame.eth_dest_mac == test_frame.eth_dest_mac
+        # assert eth_frame.eth_src_mac == test_frame.eth_src_mac
+        # assert eth_frame.eth_type == test_frame.eth_type
         # assert eth_frame.payload.data.index(test_frame.payload.data) == 0
 
-        yield delay(1000)
+        yield delay(10000)
         yield clk.posedge
 
         raise StopSimulation

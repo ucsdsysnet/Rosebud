@@ -26,9 +26,11 @@ module riscvcore #(
 
     input                   stat_rd_en,
     input  [ADDR_WIDTH-1:0] stat_rd_addr,
-    output [31:0]           stat_rd_data,
+    output [63:0]           stat_rd_data,
+    output                  stat_rd_ready,
 
-    output                  status_update
+    output  [63:0]          core_msg_data,
+    output                  core_msg_valid
 );
 
 // External memory access out of bound detection
@@ -96,7 +98,7 @@ always @ (posedge clk)
         dmem_access_err <= dmem_access_err || 
             (dmem_v && (((!io_not_mem) && (|dmem_addr[31:DMEM_ADDR_WIDTH]))
                        || (io_not_mem && ((|dmem_addr[31:ADDR_WIDTH]) || 
-                                          (|dmem_addr[ADDR_WIDTH-2:STAT_ADDR_WIDTH])))));
+                                          (|dmem_addr[ADDR_WIDTH-2:STAT_ADDR_WIDTH+3])))));
     end
 
 // Conversion from core dmem_byte_count to normal byte mask
@@ -109,21 +111,23 @@ assign dmem_word_write_mask = ((!dmem_wr_en) || (!dmem_v)) ? 5'h0 :
 // memory mapped status registers and read/write from core
 reg  status_ren_r;
 
-reg [31:0] status_reg [0:(2**STAT_ADDR_WIDTH)-1];
-reg [31:0] stat_read, stat_internal_read;
-reg stat_update;
+reg [63:0] status_reg [0:(2**STAT_ADDR_WIDTH)-1];
+reg [63:0] stat_read;
+reg [31:0] stat_internal_read;
 
 integer i;
+wire [7:0]  status_write_mask = {4'd0, dmem_word_write_mask[3:0]} << {dmem_addr[2], 2'd0};
+wire [63:0] status_data_in    = {32'd0, dmem_wr_data} << {dmem_addr[2], 5'd0};
 
 always @ (posedge clk)
     if (core_reset)
         for (i = 0; i < 2**STAT_ADDR_WIDTH; i = i + 1)
-            status_reg[i] <= 0;
+            status_reg[i] <= 64'd0;
     else if (status_wen)
-        for (i = 0; i < 4; i = i + 1) 
-            if (dmem_word_write_mask[i] == 1'b1) 
-                status_reg[dmem_addr[STAT_ADDR_WIDTH-1+2:2]][i*8 +: 8] 
-                            <= dmem_wr_data[i*8 +: 8];
+        for (i = 0; i < 8; i = i + 1) 
+            if (status_write_mask[i] == 1'b1) 
+                status_reg[dmem_addr[STAT_ADDR_WIDTH-1+3:3]][i*8 +: 8] 
+                            <= status_data_in[i*8 +: 8];
 
 always @ (posedge clk)
     if (core_reset)
@@ -131,13 +135,14 @@ always @ (posedge clk)
     else
         status_ren_r <= status_ren;
 
+// One read port, if core is reading the ready signal is not asserted for dma read
 always @ (posedge clk)
     if (status_ren)
-        stat_internal_read <= status_reg[dmem_addr[STAT_ADDR_WIDTH-1+2:2]];
+        stat_internal_read <= status_reg[dmem_addr[STAT_ADDR_WIDTH-1+3:3]] >> dmem_addr[2];
+    else if (stat_rd_en)
+        stat_read          <= status_reg[stat_rd_addr[STAT_ADDR_WIDTH-1+3:3]];
 
-always @ (posedge clk)
-    if (stat_rd_en)
-        stat_read <= status_reg[stat_rd_addr[STAT_ADDR_WIDTH-1+2:2]];
+assign stat_rd_ready = !status_ren;
 
 
 /// Conversion from 32-bit values to longer line size
@@ -181,17 +186,28 @@ end else begin
     assign imem_read_data = imem_data_out_shifted[31:0];
 end
 
-// If stat read and new stat write happen at the same cycle stat_update stays high
-always @ (posedge clk)
-    if (core_reset)
-        stat_update <= 1'b0;
-    else if (status_wen)
-        stat_update <= 1'b1;
-    else if (stat_rd_en)
-        stat_update <= 1'b0;
+// When core writes to both parts of first status_reg, core sends the message out
+reg msg_valid;
+reg msg_state;
 
+always @ (posedge clk)
+    if (core_reset) begin
+        msg_state <= 1'b0;
+        msg_valid <= 1'b0;
+    end else if ((msg_state == 1'b0) && status_wen && (dmem_addr[STAT_ADDR_WIDTH-1+3:2] == 0)) begin
+        msg_state <= 1'b1;
+        msg_valid <= 1'b0;
+    end else if ((msg_state == 1'b1) && status_wen && (dmem_addr[STAT_ADDR_WIDTH-1+3:2] == 1)) begin
+        msg_state <= 1'b0;
+        msg_valid <= 1'b1;
+    end else begin
+        msg_state <= msg_state;
+        msg_valid <= 1'b0;
+    end
+
+assign core_msg_data  = status_reg[0];
+assign core_msg_valid = msg_valid;
 assign stat_rd_data  = stat_read;
-assign status_update = stat_update;
 
 // Memory units
 mem_2rw #(

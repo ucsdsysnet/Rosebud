@@ -31,11 +31,11 @@ THE SOFTWARE.
  */
 module full_riscv_sys # (
   // Parameters
-  parameter S_COUNT = 2,
-  parameter M_COUNT = 1,
+  parameter S_COUNT = 3,
+  parameter M_COUNT = 8,
   parameter FORWARD_ID = 1,
   parameter M_REGIONS = 1,
-  parameter M_BASE_ADDR = {16'h3000, 16'h2000, 16'h1000, 16'h0000},
+  parameter M_BASE_ADDR = {19'h70000, 19'h60000, 19'h50000, 19'h40000,19'h30000, 19'h20000, 19'h10000, 19'h00000},
   parameter M_ADDR_WIDTH = {M_COUNT{{M_REGIONS{32'd16}}}},
   parameter M_CONNECT_READ = {M_COUNT{{S_COUNT{1'b1}}}},
   parameter M_CONNECT_WRITE = {M_COUNT{{S_COUNT{1'b1}}}},
@@ -44,10 +44,10 @@ module full_riscv_sys # (
   parameter DATA_WIDTH = 64,
   parameter CTRL_WIDTH = (DATA_WIDTH/8),
   parameter AXI_DATA_WIDTH = 64,
-  parameter AXI_ADDR_WIDTH = 16,
+  parameter AXI_ADDR_WIDTH = 19,
   parameter AXI_STRB_WIDTH = (AXI_DATA_WIDTH/8),
   parameter AXI_ID_WIDTH = 8,
-  parameter AXI_MAX_BURST_LEN = 16,
+  parameter AXI_MAX_BURST_LEN = 8,
   parameter AXIS_DATA_WIDTH = AXI_DATA_WIDTH,
   parameter AXIS_KEEP_ENABLE = (AXIS_DATA_WIDTH>8),
   parameter AXIS_KEEP_WIDTH = (AXIS_DATA_WIDTH/8),
@@ -81,7 +81,6 @@ module full_riscv_sys # (
   input tx_rst,
   input logic_clk,
   input logic_rst,
-  input go,
 
   input[DATA_WIDTH-1:0] xgmii_rxd,
   input[CTRL_WIDTH-1:0] xgmii_rxc,
@@ -105,7 +104,16 @@ module full_riscv_sys # (
   output tx_fifo_good_frame,
   output rx_fifo_overflow,
   output rx_fifo_bad_frame,
-  output rx_fifo_good_frame
+  output rx_fifo_good_frame,
+
+  input  [6:0]  inject_rx_desc,
+  input         inject_rx_desc_valid,
+  output        inject_rx_desc_ready,
+
+  input  [3:0]  slot_addr_wr_no,
+  input  [6:0]  slot_addr_wr_data,
+  input         slot_addr_wr_valid
+
 );
 
 // Internal wires
@@ -237,7 +245,14 @@ wire                      mc_axi_rvalid;
 wire s_axis_tx_desc_ready;
 wire s_axis_rx_desc_ready;
 
-wire status_update;
+wire [M_COUNT-1:0] core_msg_valid;
+wire [64*M_COUNT-1:0] core_msg_data;
+
+wire [63:0] msg_data;
+wire        msg_valid;
+wire        msg_ready;
+wire [$clog2(M_COUNT)-1:0] msg_core_no;
+
 
 // connection to master controller
 assign m_axi_awid[1*AXI_ID_WIDTH +: AXI_ID_WIDTH] = {1'b1,mc_axi_awid};
@@ -500,7 +515,6 @@ dma_controller # (
 (
     .clk(logic_clk),
     .rst(logic_rst),
-    .go(go),
 
     /*
      * AXI master interface
@@ -560,69 +574,166 @@ dma_controller # (
     .s_axis_rx_desc_valid(s_axis_rx_desc_valid),
     .s_axis_rx_desc_ready(s_axis_rx_desc_ready),
 
-    .tx_enable(tx_enable),
-    .rx_enable(rx_enable),
-    .rx_abort(rx_abort),
-
     .incoming_pkt_ready(rx_fifo_good_frame),
     .pkt_sent_to_core_valid(m_axis_rx_desc_status_valid),
     .pkt_sent_to_core_len(m_axis_rx_desc_status_len),
     .pkt_sent_out_valid(m_axis_tx_desc_status_valid),
 
-    .core_msg(status_update)
+    .drop_list(0),
+    .drop_list_valid(1'b0),
+    .max_pkt_len(0),
+    .max_pkt_len_valid(1'b0),
+    
+    .inject_rx_desc(inject_rx_desc),
+    .inject_rx_desc_valid(inject_rx_desc_valid),
+    .inject_rx_desc_ready(inject_rx_desc_ready),
+    
+    .slot_addr_wr_no(slot_addr_wr_no),
+    .slot_addr_wr_data(slot_addr_wr_data),
+    .slot_addr_wr_valid(slot_addr_wr_valid),
+    
+    .core_status_rd_addr(0),
+    .core_status_rd_valid(1'b0),
+    .core_status(),
+    .core_status_valid(),
+    
+    .err(),
+    .err_type(),
+    
+    .msg_data(msg_data),
+    .msg_core_no(msg_core_no),
+    .msg_valid(msg_valid),
+    .msg_ready(msg_ready)
+
 );
 
-riscv_axi_wrapper #(
+temp_pcie # (
     .DATA_WIDTH(AXI_DATA_WIDTH),
     .ADDR_WIDTH(AXI_ADDR_WIDTH),
     .ID_WIDTH(AXI_ID_WIDTH),
-    .PIPELINE_OUTPUT(PIPELINE_OUTPUT),
-    .IMEM_SIZE_BYTES(IMEM_SIZE_BYTES),
-    .DMEM_SIZE_BYTES(DMEM_SIZE_BYTES),
-    .STAT_ADDR_WIDTH(STAT_ADDR_WIDTH),
-    .INTERLEAVE(INTERLEAVE)
-)
-RISCV (
+    .LEN_WIDTH(LEN_WIDTH),
+    .TAG_WIDTH(TAG_WIDTH),
+    .RISCV_CORES(M_COUNT)
+) temp_pcie_master (
     .clk(logic_clk),
     .rst(logic_rst),
-    .s_axi_awid(s_axi_awid),
-    .s_axi_awaddr(s_axi_awaddr),
-    .s_axi_awlen(s_axi_awlen),
-    .s_axi_awsize(s_axi_awsize),
-    .s_axi_awburst(s_axi_awburst),
-    .s_axi_awlock(s_axi_awlock),
-    .s_axi_awcache(s_axi_awcache),
-    .s_axi_awprot(s_axi_awprot),
-    .s_axi_awvalid(s_axi_awvalid),
-    .s_axi_awready(s_axi_awready),
-    .s_axi_wdata(s_axi_wdata),
-    .s_axi_wstrb(s_axi_wstrb),
-    .s_axi_wlast(s_axi_wlast),
-    .s_axi_wvalid(s_axi_wvalid),
-    .s_axi_wready(s_axi_wready),
-    .s_axi_bid(s_axi_bid),
-    .s_axi_bresp(s_axi_bresp),
-    .s_axi_bvalid(s_axi_bvalid),
-    .s_axi_bready(s_axi_bready),
-    .s_axi_arid(s_axi_arid),
-    .s_axi_araddr(s_axi_araddr),
-    .s_axi_arlen(s_axi_arlen),
-    .s_axi_arsize(s_axi_arsize),
-    .s_axi_arburst(s_axi_arburst),
-    .s_axi_arlock(s_axi_arlock),
-    .s_axi_arcache(s_axi_arcache),
-    .s_axi_arprot(s_axi_arprot),
-    .s_axi_arvalid(s_axi_arvalid),
-    .s_axi_arready(s_axi_arready),
-    .s_axi_rid(s_axi_rid),
-    .s_axi_rdata(s_axi_rdata),
-    .s_axi_rresp(s_axi_rresp),
-    .s_axi_rlast(s_axi_rlast),
-    .s_axi_rvalid(s_axi_rvalid),
-    .s_axi_rready(s_axi_rready),
 
-    .status_update(status_update)
+    .m_axi_awid(m_axi_awid[2*AXI_ID_WIDTH +: AXI_ID_WIDTH]),
+    .m_axi_awaddr(m_axi_awaddr[2*AXI_ADDR_WIDTH +: AXI_ADDR_WIDTH]),
+    .m_axi_awlen(m_axi_awlen[2*8 +: 8]),
+    .m_axi_awsize(m_axi_awsize[2*3 +: 3]),
+    .m_axi_awburst(m_axi_awburst[2*2 +: 2]),
+    .m_axi_awlock(m_axi_awlock[2]),
+    .m_axi_awcache(m_axi_awcache[2*4 +: 4]),
+    .m_axi_awprot(m_axi_awprot[2*3 +: 3]),
+    .m_axi_awvalid(m_axi_awvalid[2]),
+    .m_axi_awready(m_axi_awready[2]),
+    .m_axi_wdata(m_axi_wdata[2*AXI_DATA_WIDTH +: AXI_DATA_WIDTH]),
+    .m_axi_wstrb(m_axi_wstrb[2*AXI_STRB_WIDTH +: AXI_STRB_WIDTH]),
+    .m_axi_wlast(m_axi_wlast[2]),
+    .m_axi_wvalid(m_axi_wvalid[2]),
+    .m_axi_wready(m_axi_wready[2]),
+    .m_axi_bid(m_axi_bid[2*AXI_ID_WIDTH +: AXI_ID_WIDTH]),
+    .m_axi_bresp(m_axi_bresp[2*2 +: 2]),
+    .m_axi_bvalid(m_axi_bvalid[2]),
+    .m_axi_bready(m_axi_bready[2]),
+    .m_axi_arid(m_axi_arid[2*AXI_ID_WIDTH +: AXI_ID_WIDTH]),
+    .m_axi_araddr(m_axi_araddr[2*AXI_ADDR_WIDTH +: AXI_ADDR_WIDTH]),
+    .m_axi_arlen(m_axi_arlen[2*8 +: 8]),
+    .m_axi_arsize(m_axi_arsize[2*3 +: 3]),
+    .m_axi_arburst(m_axi_arburst[2*2 +: 2]),
+    .m_axi_arlock(m_axi_arlock[2]),
+    .m_axi_arcache(m_axi_arcache[2*4 +: 4]),
+    .m_axi_arprot(m_axi_arprot[2*3 +: 3]),
+    .m_axi_arvalid(m_axi_arvalid[2]),
+    .m_axi_arready(m_axi_arready[2]),
+    .m_axi_rid(m_axi_rid[2*AXI_ID_WIDTH +: AXI_ID_WIDTH]),
+    .m_axi_rdata(m_axi_rdata[2*AXI_DATA_WIDTH +: AXI_DATA_WIDTH]),
+    .m_axi_rresp(m_axi_rresp[2*2 +: 2]),
+    .m_axi_rlast(m_axi_rlast[2]),
+    .m_axi_rvalid(m_axi_rvalid[2]),
+    .m_axi_rready(m_axi_rready[2]),
+
+    .tx_enable(tx_enable),
+    .rx_enable(rx_enable),
+    .rx_abort(rx_abort)
 );
 
- 
+
+
+genvar i;
+generate
+  for (i=0; i<M_COUNT; i=i+1)
+    riscv_axi_wrapper #(
+        .DATA_WIDTH(AXI_DATA_WIDTH),
+        .ADDR_WIDTH(AXI_ADDR_WIDTH-3),
+        .ID_WIDTH(AXI_ID_WIDTH),
+        .PIPELINE_OUTPUT(PIPELINE_OUTPUT),
+        .IMEM_SIZE_BYTES(IMEM_SIZE_BYTES),
+        .DMEM_SIZE_BYTES(DMEM_SIZE_BYTES),
+        .STAT_ADDR_WIDTH(STAT_ADDR_WIDTH),
+        .INTERLEAVE(INTERLEAVE)
+    )
+    RISCV (
+        .clk(logic_clk),
+        .rst(logic_rst),
+        .s_axi_awid(s_axi_awid[AXI_ID_WIDTH*i +: AXI_ID_WIDTH]),
+        .s_axi_awaddr(s_axi_awaddr[AXI_ADDR_WIDTH*i +: AXI_ADDR_WIDTH]),
+        .s_axi_awlen(s_axi_awlen[8*i +: 8]),
+        .s_axi_awsize(s_axi_awsize[3*i +: 3]),
+        .s_axi_awburst(s_axi_awburst[2*i +: 2]),
+        .s_axi_awlock(s_axi_awlock[i]),
+        .s_axi_awcache(s_axi_awcache[4*i +: 4]),
+        .s_axi_awprot(s_axi_awprot[3*i +: 3]),
+        .s_axi_awvalid(s_axi_awvalid[i]),
+        .s_axi_awready(s_axi_awready[i]),
+        .s_axi_wdata(s_axi_wdata[AXI_DATA_WIDTH*i +: AXI_DATA_WIDTH]),
+        .s_axi_wstrb(s_axi_wstrb[AXI_STRB_WIDTH*i +: AXI_STRB_WIDTH]),
+        .s_axi_wlast(s_axi_wlast[i]),
+        .s_axi_wvalid(s_axi_wvalid[i]),
+        .s_axi_wready(s_axi_wready[i]),
+        .s_axi_bid(s_axi_bid[AXI_ID_WIDTH*i +: AXI_ID_WIDTH]),
+        .s_axi_bresp(s_axi_bresp[2*i +: 2]),
+        .s_axi_bvalid(s_axi_bvalid[i]),
+        .s_axi_bready(s_axi_bready[i]),
+        .s_axi_arid(s_axi_arid[AXI_ID_WIDTH*i +: AXI_ID_WIDTH]),
+        .s_axi_araddr(s_axi_araddr[AXI_ADDR_WIDTH*i +: AXI_ADDR_WIDTH]),
+        .s_axi_arlen(s_axi_arlen[8*i +: 8]),
+        .s_axi_arsize(s_axi_arsize[3*i +: 3]),
+        .s_axi_arburst(s_axi_arburst[2*i +: 2]),
+        .s_axi_arlock(s_axi_arlock[i]),
+        .s_axi_arcache(s_axi_arcache[4*i +: 4]),
+        .s_axi_arprot(s_axi_arprot[3*i +: 3]),
+        .s_axi_arvalid(s_axi_arvalid[i]),
+        .s_axi_arready(s_axi_arready[i]),
+        .s_axi_rid(s_axi_rid[AXI_ID_WIDTH*i +: AXI_ID_WIDTH]),
+        .s_axi_rdata(s_axi_rdata[AXI_DATA_WIDTH*i +: AXI_DATA_WIDTH]),
+        .s_axi_rresp(s_axi_rresp[2*i +: 2]),
+        .s_axi_rlast(s_axi_rlast[i]),
+        .s_axi_rvalid(s_axi_rvalid[i]),
+        .s_axi_rready(s_axi_rready[i]),
+    
+        .core_msg_data(core_msg_data[i*64 +: 64]),
+        .core_msg_valid(core_msg_valid[i])
+    );
+endgenerate
+    
+core_msg_arbiter # (
+  .CORE_COUNT(M_COUNT),
+  .CORE_FIFO_ADDR_SIZE(2),
+  .SHARED_FIFO_ADDR_SIZE(4)
+) msg_arbiter (
+    .clk(logic_clk),
+    .rst(logic_rst),
+
+    .core_msg_data(core_msg_data),
+    .core_msg_valid(core_msg_valid),
+
+    .msg_data(msg_data),
+    .msg_valid(msg_valid),
+    .msg_core_no(msg_core_no),
+    .msg_ready(msg_ready)
+);
+
+
 endmodule
