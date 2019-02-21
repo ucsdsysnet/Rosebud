@@ -205,22 +205,13 @@ def bench():
         axis_frame = test_frame.build_axis_fcs()
         
         print ("send data over LAN")
-        xgmii_source.send(b'\x55\x55\x55\x55\x55\x55\x55\xD5'+bytearray(axis_frame))
-        # yield delay(1000)
-        yield clk.posedge
-        xgmii_source.send(b'\x55\x55\x55\x55\x55\x55\x55\xD5'+bytearray(axis_frame))
-        # yield delay(1000)
-        yield clk.posedge
-        xgmii_source.send(b'\x55\x55\x55\x55\x55\x55\x55\xD5'+bytearray(axis_frame))
-        # yield delay(1000)
-        yield clk.posedge
-        xgmii_source.send(b'\x55\x55\x55\x55\x55\x55\x55\xD5'+bytearray(axis_frame))
-        # yield delay(1000)
-        yield clk.posedge
-        # # yield delay(10000)
+        for i in range (0,10):
+          xgmii_source.send(b'\x55\x55\x55\x55\x55\x55\x55\xD5'+bytearray(axis_frame))
+          # yield delay(1000)
+          yield clk.posedge
 
         print ("send data from LAN")
-        for i in range (0,4):
+        for i in range (0,8):
           yield xgmii_sink.wait()
           rx_frame = xgmii_sink.recv()
        

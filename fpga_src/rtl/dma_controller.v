@@ -370,7 +370,7 @@ always @ (posedge clk)
     end else if (msg_valid) begin // add check for errors here
       s_axis_tx_desc_addr_reg   <= read_slot_addr;
       s_axis_tx_desc_len_reg    <= {4'd0, read_pkt_len};
-      s_axis_tx_desc_valid_reg  <= 1'b1;
+      s_axis_tx_desc_valid_reg  <= (read_pkt_len!=16'd0); // drop packet
     end
   end
 
@@ -380,6 +380,8 @@ assign s_axis_tx_desc_valid = s_axis_tx_desc_valid_reg;
 assign s_axis_tx_desc_tag   = 0;
 assign s_axis_tx_desc_user  = 0;
 
+// There is 1 cycle difference, but if ready is asserted it would stay asserted. 
+// And we are latching. 
 assign msg_ready = s_axis_tx_desc_ready;
 
 reg [CORE_NO_WIDTH-1:0] tx_desc_core_no_latched;

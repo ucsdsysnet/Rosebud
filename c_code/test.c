@@ -23,6 +23,8 @@ while(1){
 			a[i] = 0;
 			b[6] = b[6]+0x05050505;
 			b[7] = b[7]+0x05050505;
+			if (slot==1)
+				len = 0;
 			*stat = (int)len;
 			*((unsigned char*)stat+3) = slot;
 			*(stat+1) = (unsigned int)b+10;
