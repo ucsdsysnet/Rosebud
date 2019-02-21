@@ -14,10 +14,11 @@ while(1){
 		  flag = c | 0xFFFF0000;
 			b = (unsigned int*)(a[i+1]);
 			*stat = *stat & (~flag);
-			*a = 0;
+			a[i] = 0;
 			b[6] = b[6]+0x05050505;
 			b[7] = b[7]+0x05050505;
 			*stat = *stat | c;
+			*(stat+1) = 0;
 		}
 	}
 }
