@@ -177,21 +177,18 @@ always @ (posedge clk) begin
       rx_desc_core_1hot_r[i] <= 1'b1; // Might need to push one hot after reg to meet timing
 end
 
-reg [SLOT_NO_WIDTH-1:0] read_flag_bin;
 reg [SLOT_ADDR_EFF-1:0] slot_addr_mem [0:SLOT_COUNT];
 reg [SLOT_ADDR_EFF-1:0] rx_desc_slot_addr;
-reg [SLOT_ADDR_EFF-1:0] tx_desc_slot_addr;
 always @ (posedge clk) begin
   if (slot_addr_wr_valid)
     slot_addr_mem[slot_addr_wr_no] <= slot_addr_wr_data;
   rx_desc_slot_addr <= slot_addr_mem[rx_desc_slot];
-  tx_desc_slot_addr <= slot_addr_mem[read_flag_bin];
 end
 
 wire drop = |(rx_desc_core_1hot_r & drop_list_r);
 wire [ADDR_WIDTH-1:0] rx_desc_addr = {rx_desc_core_r , 
                     {(CORE_LEAD_ZERO-SLOT_ADDR_WIDTH){1'b0}}, 
-                    rx_desc_slot_addr, {SLOT_LEAD_ZERO-4{1'b0}},4'hA};
+                    rx_desc_slot_addr, {(SLOT_LEAD_ZERO-4){1'b0}},4'hA};
 
 reg [LEN_WIDTH-1:0] max_pkt_len_r;
 always @ (posedge clk)
@@ -259,9 +256,8 @@ reg awr_req_attempt;
 
 wire [ADDR_WIDTH-1:0] trigger_addr;
 assign trigger_addr = {trigger_fifo_core_no, 
-                    {(CORE_LEAD_ZERO  - 9){1'b0}} , 1'b1, {(5 - SLOT_NO_WIDTH){1'b0}},
-                    trigger_fifo_slot_no, 3'd0};
-
+                    {(CORE_LEAD_ZERO  - 9){1'b0}} , 1'b1, 
+                    {(5 - SLOT_NO_WIDTH){1'b0}}, trigger_fifo_slot_no, 3'd0};
 
 reg [CORE_COUNT+1-1:0] trigger_counter;
 assign trigger_sent = trigger_accepted; 
@@ -273,7 +269,8 @@ always @ (posedge clk)
   else if (~trigger_sent && pkt_sent_to_core_valid)
     trigger_counter <= trigger_counter + 1'd1;
  
-wire trigger_send_valid = (pkt_sent_to_core_valid || (trigger_counter>0)) && trigger_fifo_v;
+wire trigger_send_valid = (pkt_sent_to_core_valid || (trigger_counter>0)) 
+                          && trigger_fifo_v;
 
 always @ (posedge clk)
   if (rst) begin 
@@ -309,8 +306,10 @@ reg [DATA_WIDTH-1:0]  m_axi_wdata_reg;
 reg [STRB_WIDTH-1:0]  m_axi_wstrb_reg;
 reg                   m_axi_wlast_reg;
 
-wire [15:0] slot_flag = (16'd1 << trigger_fifo_slot_no);
-wire [15:0] core_slot_addr = {trigger_fifo_slot_addr, {SLOT_LEAD_ZERO{1'b0}}};
+wire [23:0] core_slot_addr = {{(24-SLOT_LEAD_ZERO-SLOT_ADDR_EFF){1'b0}},
+                              trigger_fifo_slot_addr, {SLOT_LEAD_ZERO{1'b0}}};
+wire [7:0]  core_slot_no   = {{(8-SLOT_NO_WIDTH){1'b0}}, trigger_fifo_slot_no};
+wire [7:0]  incoming_port  = 8'd0;
 
 always @ (posedge clk)
   if (rst) begin 
@@ -321,7 +320,8 @@ always @ (posedge clk)
     trigger_accepted <= 1'b0;
     if (trigger_send_valid && !wr_req_attempt) begin
       m_axi_wvalid_reg <= 1'b1;
-      m_axi_wdata_reg  <= {16'd0,core_slot_addr,pkt_sent_to_core_len[15:0],slot_flag};
+      m_axi_wdata_reg  <= {8'd0, core_slot_addr, core_slot_no,
+                           incoming_port, pkt_sent_to_core_len[15:0]};
       m_axi_wstrb_reg  <= 8'hFF;
       m_axi_wlast_reg  <= 1'b1;
       wr_req_attempt   <= 1'b1;
@@ -348,32 +348,13 @@ always @ (posedge clk)
     write_resp_err <= (m_axi_bresp!=2'b00);
 
 // decode core_messages and send read desc
+wire [15:0] read_pkt_len = msg_data[15:0];
+wire [7:0]  out_port     = msg_data[23:16];
+wire [7:0]  read_slot_no = msg_data[31:24];
+wire [7:0]  core_errs    = msg_data[63:48];
 
-wire [SLOT_COUNT-1:0] read_flags = msg_data[SLOT_COUNT-1:0];
-
-integer k;
-always @ (*)
-  for (k=0; k<SLOT_COUNT; k=k+1)
-    if (read_flags == (1<<k))
-      read_flag_bin = k;
-
-reg msg_valid_r;
-reg [CORE_NO_WIDTH-1:0] msg_core_no_r;
-reg [15:0] read_pkt_len;
-reg [SLOT_NO_WIDTH-1:0] read_slot_r;
-always @ (posedge clk)
-  if (rst) begin
-    msg_valid_r   <= 1'b0;
-  end else begin
-    msg_valid_r   <= msg_valid;
-    msg_core_no_r <= msg_core_no;
-    read_pkt_len  <= msg_data[31:16];
-    read_slot_r   <= read_flag_bin;
-  end
-
-wire [ADDR_WIDTH-1:0] read_slot_addr = {msg_core_no_r,
-                      {(CORE_LEAD_ZERO-SLOT_ADDR_WIDTH){1'b0}},
-                      tx_desc_slot_addr, {(SLOT_LEAD_ZERO-4){1'b0}}, 4'hA};
+wire [ADDR_WIDTH-1:0] read_slot_addr = {msg_core_no,
+                      msg_data[32+CORE_LEAD_ZERO-1:32]};
 
 // send tx desc
 reg [ADDR_WIDTH-1:0]  s_axis_tx_desc_addr_reg;
@@ -386,7 +367,7 @@ always @ (posedge clk)
   end else begin
     if (s_axis_tx_desc_valid_reg) begin
       s_axis_tx_desc_valid_reg <= 1'b0;
-    end else if (msg_valid_r) begin // check for errors here
+    end else if (msg_valid) begin // add check for errors here
       s_axis_tx_desc_addr_reg   <= read_slot_addr;
       s_axis_tx_desc_len_reg    <= {4'd0, read_pkt_len};
       s_axis_tx_desc_valid_reg  <= 1'b1;
@@ -399,16 +380,16 @@ assign s_axis_tx_desc_valid = s_axis_tx_desc_valid_reg;
 assign s_axis_tx_desc_tag   = 0;
 assign s_axis_tx_desc_user  = 0;
 
-// There is one cycle difference, but since we are buffering it's fine
 assign msg_ready = s_axis_tx_desc_ready;
 
 reg [CORE_NO_WIDTH-1:0] tx_desc_core_no_latched;
 reg [SLOT_NO_WIDTH-1:0] tx_desc_slot_no_latched;
 
+// Latch core and slot number of core message to add to read desc fifo
 always @ (posedge clk) 
     if (s_axis_tx_desc_valid) begin
-      tx_desc_core_no_latched   <= msg_core_no_r;
-      tx_desc_slot_no_latched   <= read_slot_r;
+      tx_desc_core_no_latched   <= msg_core_no;
+      tx_desc_slot_no_latched   <= read_slot_no;
     end
 
 assign dma_rx_desc = {tx_desc_core_no_latched, tx_desc_slot_no_latched};

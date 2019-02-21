@@ -5,20 +5,27 @@ unsigned int* b;
 unsigned int c;
 unsigned int flag;
 unsigned int d;
+unsigned short len;
+unsigned char port;
+unsigned char slot;
 int i;
 
 while(1){
 	for (i=0; i<32; i+=2){
 		if (a[i]!=0){
-			c = a[i];
-		  flag = c | 0xFFFF0000;
+			len  = *((unsigned short *)&a[i]);
+			port = *(((unsigned char *)&a[i])+2);
+			slot = *(((unsigned char *)&a[i])+3);
+			// c = a[i];
+		  // flag = c | 0xFFFF0000;
 			b = (unsigned int*)(a[i+1]);
-			*stat = *stat & (~flag);
+			// *stat = *stat & (~flag);
 			a[i] = 0;
 			b[6] = b[6]+0x05050505;
 			b[7] = b[7]+0x05050505;
-			*stat = *stat | c;
-			*(stat+1) = 0;
+			*stat = (int)len;
+			*((unsigned char*)stat+3) = slot;
+			*(stat+1) = (unsigned int)b+10;
 		}
 	}
 }
