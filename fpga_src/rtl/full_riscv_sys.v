@@ -104,16 +104,7 @@ module full_riscv_sys # (
   output tx_fifo_good_frame,
   output rx_fifo_overflow,
   output rx_fifo_bad_frame,
-  output rx_fifo_good_frame,
-
-  input  [6:0]  inject_rx_desc,
-  input         inject_rx_desc_valid,
-  output        inject_rx_desc_ready,
-
-  input  [3:0]  slot_addr_wr_no,
-  input  [6:0]  slot_addr_wr_data,
-  input         slot_addr_wr_valid
-
+  output rx_fifo_good_frame
 );
 
 // Internal wires
@@ -225,6 +216,14 @@ wire [3:0]                mc_axi_arcache;
 wire [2:0]                mc_axi_arprot;
 wire                      mc_axi_arvalid;
 wire                      mc_axi_rready;
+  
+wire  [3:0]  slot_addr_wr_no;
+wire  [6:0]  slot_addr_wr_data;
+wire         slot_addr_wr_valid;
+  
+wire [6:0]  inject_rx_desc;
+wire        inject_rx_desc_valid;
+wire        inject_rx_desc_ready;
 
 wire tx_enable;
 wire rx_enable;
@@ -653,7 +652,15 @@ temp_pcie # (
     .m_axi_rlast(m_axi_rlast[2]),
     .m_axi_rvalid(m_axi_rvalid[2]),
     .m_axi_rready(m_axi_rready[2]),
-
+    
+    .slot_addr_wr_no(slot_addr_wr_no),
+    .slot_addr_wr_data(slot_addr_wr_data),
+    .slot_addr_wr_valid(slot_addr_wr_valid),
+    
+    .inject_rx_desc(inject_rx_desc),
+    .inject_rx_desc_valid(inject_rx_desc_valid),
+    .inject_rx_desc_ready(inject_rx_desc_ready),
+ 
     .tx_enable(tx_enable),
     .rx_enable(rx_enable),
     .rx_abort(rx_abort)

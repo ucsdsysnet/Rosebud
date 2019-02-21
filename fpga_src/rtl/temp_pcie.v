@@ -51,6 +51,14 @@ module temp_pcie # (
     input  wire                   m_axi_rvalid,
     output wire                   m_axi_rready,
 
+    output wire  [3:0]            slot_addr_wr_no,
+    output wire  [6:0]            slot_addr_wr_data,
+    output wire                   slot_addr_wr_valid,
+    
+    output wire [6:0]             inject_rx_desc,
+    output wire                   inject_rx_desc_valid,
+    input  wire                   inject_rx_desc_ready,
+
     // Enable of RX and TX chains
     output wire                      tx_enable,
     output wire                      rx_enable,
@@ -164,5 +172,51 @@ always @ (posedge clk)
 assign tx_enable = go; 
 assign rx_enable = go; 
 assign rx_abort  = go; 
+
+
+reg [4:0] slot_addr_counter;
+reg slot_addr_valid;
+reg [6:0] next_slot_addr;
+always @ (posedge clk)
+  if (rst) begin
+    slot_addr_counter <= 5'h1f;
+    slot_addr_valid   <= 1'b0;
+    next_slot_addr    <= 7'h3C; 
+  end else 
+    if ((slot_addr_counter<5'h0F)||(slot_addr_counter==5'h1f)) begin
+      slot_addr_counter <= slot_addr_counter + 5'd1;
+      slot_addr_valid   <= 1'b1;
+      next_slot_addr    <= next_slot_addr + 7'h04;
+    end else
+      slot_addr_valid  <= 1'b0;
+
+assign slot_addr_wr_no = slot_addr_counter[3:0];
+assign slot_addr_wr_valid = slot_addr_valid;
+assign slot_addr_wr_data = next_slot_addr;
+
+reg desc_valid;
+reg [2:0] core_no;
+reg [3:0] slot_no;
+reg not_started;
+always @ (posedge clk)
+  if (rst) begin
+    core_no     <= 3'h0;
+    slot_no     <= 4'h0;
+    desc_valid  <= 1'b0;
+    not_started <= 1'b1;
+  end else begin
+    if (not_started) begin
+      not_started <= 1'b0;
+      desc_valid  <= 1'b1;
+    end else if (desc_valid) begin
+      core_no     <= core_no + 4'd1;
+      if (core_no==3'h7)
+        slot_no   <= slot_no + 4'd1;
+      if ((core_no == 4'h7) && (slot_no == 4'hf))
+        desc_valid <= 1'b0;
+    end
+  end
+assign inject_rx_desc = {core_no,slot_no};
+assign inject_rx_desc_valid = desc_valid;
 
 endmodule

@@ -116,12 +116,6 @@ def bench():
 
     xgmii_rxd = Signal(intbv(0x0707070707070707)[DATA_WIDTH:])
     xgmii_rxc = Signal(intbv(0xff)[CTRL_WIDTH:])
-
-    inject_rx_desc = Signal(intbv(0)[7:])
-    inject_rx_desc_valid = Signal(bool(0))
-    slot_addr_wr_no = Signal(intbv(0)[4:])
-    slot_addr_wr_data = Signal(intbv(0)[7:])
-    slot_addr_wr_valid = Signal(bool(0))
     
     # Outputs
     xgmii_txd = Signal(intbv(0x0707070707070707)[DATA_WIDTH:])
@@ -166,14 +160,7 @@ def bench():
         xgmii_rxd=xgmii_rxd,
         xgmii_rxc=xgmii_rxc,
         xgmii_txd=xgmii_txd,
-        xgmii_txc=xgmii_txc,
-
-        inject_rx_desc=inject_rx_desc,
-        inject_rx_desc_valid=inject_rx_desc_valid,
-        slot_addr_wr_no=slot_addr_wr_no,
-        slot_addr_wr_data=slot_addr_wr_data,
-        slot_addr_wr_valid=slot_addr_wr_valid,
-        inject_rx_desc_ready=inject_rx_desc_ready
+        xgmii_txc=xgmii_txc
     )
 
     @always(delay(4))
@@ -200,73 +187,73 @@ def bench():
         yield clk.posedge
         yield clk.posedge
         
-        inject_rx_desc.next = (3<<4) + 2      
-        inject_rx_desc_valid.next = 1
-        yield clk.posedge
-        inject_rx_desc.next = (7<<4) + 0      
-        yield clk.posedge
-        inject_rx_desc.next = (0<<4) + 1
-        yield clk.posedge
-        inject_rx_desc.next = (1<<4) + 15      
-        yield clk.posedge
-        inject_rx_desc.next = (2<<4) + 14      
-        yield clk.posedge
-        inject_rx_desc.next = (5<<4) + 2      
-        yield clk.posedge
-        inject_rx_desc_valid.next = 0
-        yield clk.posedge
+        # inject_rx_desc.next = (3<<4) + 2      
+        # inject_rx_desc_valid.next = 1
+        # yield clk.posedge
+        # inject_rx_desc.next = (7<<4) + 0      
+        # yield clk.posedge
+        # inject_rx_desc.next = (0<<4) + 1
+        # yield clk.posedge
+        # inject_rx_desc.next = (1<<4) + 15      
+        # yield clk.posedge
+        # inject_rx_desc.next = (2<<4) + 14      
+        # yield clk.posedge
+        # inject_rx_desc.next = (5<<4) + 2      
+        # yield clk.posedge
+        # inject_rx_desc_valid.next = 0
+        # yield clk.posedge
 
-        slot_addr_wr_no.next   = 0   
-        slot_addr_wr_data.next = 0x40
-        slot_addr_wr_valid.next = 1   
-        yield clk.posedge
-        slot_addr_wr_no.next   = 1   
-        slot_addr_wr_data.next = 0x44
-        yield clk.posedge
-        slot_addr_wr_no.next   = 2   
-        slot_addr_wr_data.next = 0x48
-        yield clk.posedge
-        slot_addr_wr_no.next   = 3   
-        slot_addr_wr_data.next = 0x4C
-        yield clk.posedge
-        slot_addr_wr_no.next   = 4   
-        slot_addr_wr_data.next = 0x50
-        yield clk.posedge
-        slot_addr_wr_no.next   = 5   
-        slot_addr_wr_data.next = 0x54
-        yield clk.posedge
-        slot_addr_wr_no.next   = 6   
-        slot_addr_wr_data.next = 0x58
-        yield clk.posedge
-        slot_addr_wr_no.next   = 7   
-        slot_addr_wr_data.next = 0x5C
-        yield clk.posedge
-        slot_addr_wr_no.next   = 8   
-        slot_addr_wr_data.next = 0x60
-        yield clk.posedge
-        slot_addr_wr_no.next   = 9   
-        slot_addr_wr_data.next = 0x64
-        yield clk.posedge
-        slot_addr_wr_no.next   = 10   
-        slot_addr_wr_data.next = 0x68
-        yield clk.posedge
-        slot_addr_wr_no.next   = 11   
-        slot_addr_wr_data.next = 0x6C
-        yield clk.posedge
-        slot_addr_wr_no.next   = 12   
-        slot_addr_wr_data.next = 0x70
-        yield clk.posedge
-        slot_addr_wr_no.next   = 13   
-        slot_addr_wr_data.next = 0x74
-        yield clk.posedge
-        slot_addr_wr_no.next   = 14   
-        slot_addr_wr_data.next = 0x78
-        yield clk.posedge
-        slot_addr_wr_no.next   = 15   
-        slot_addr_wr_data.next = 0x7C
-        yield clk.posedge
-        slot_addr_wr_valid.next = 0   
-        yield clk.posedge
+        # slot_addr_wr_no.next   = 0   
+        # slot_addr_wr_data.next = 0x40
+        # slot_addr_wr_valid.next = 1   
+        # yield clk.posedge
+        # slot_addr_wr_no.next   = 1   
+        # slot_addr_wr_data.next = 0x44
+        # yield clk.posedge
+        # slot_addr_wr_no.next   = 2   
+        # slot_addr_wr_data.next = 0x48
+        # yield clk.posedge
+        # slot_addr_wr_no.next   = 3   
+        # slot_addr_wr_data.next = 0x4C
+        # yield clk.posedge
+        # slot_addr_wr_no.next   = 4   
+        # slot_addr_wr_data.next = 0x50
+        # yield clk.posedge
+        # slot_addr_wr_no.next   = 5   
+        # slot_addr_wr_data.next = 0x54
+        # yield clk.posedge
+        # slot_addr_wr_no.next   = 6   
+        # slot_addr_wr_data.next = 0x58
+        # yield clk.posedge
+        # slot_addr_wr_no.next   = 7   
+        # slot_addr_wr_data.next = 0x5C
+        # yield clk.posedge
+        # slot_addr_wr_no.next   = 8   
+        # slot_addr_wr_data.next = 0x60
+        # yield clk.posedge
+        # slot_addr_wr_no.next   = 9   
+        # slot_addr_wr_data.next = 0x64
+        # yield clk.posedge
+        # slot_addr_wr_no.next   = 10   
+        # slot_addr_wr_data.next = 0x68
+        # yield clk.posedge
+        # slot_addr_wr_no.next   = 11   
+        # slot_addr_wr_data.next = 0x6C
+        # yield clk.posedge
+        # slot_addr_wr_no.next   = 12   
+        # slot_addr_wr_data.next = 0x70
+        # yield clk.posedge
+        # slot_addr_wr_no.next   = 13   
+        # slot_addr_wr_data.next = 0x74
+        # yield clk.posedge
+        # slot_addr_wr_no.next   = 14   
+        # slot_addr_wr_data.next = 0x78
+        # yield clk.posedge
+        # slot_addr_wr_no.next   = 15   
+        # slot_addr_wr_data.next = 0x7C
+        # yield clk.posedge
+        # slot_addr_wr_valid.next = 0   
+        # yield clk.posedge
 
         # testbench stimulus
 

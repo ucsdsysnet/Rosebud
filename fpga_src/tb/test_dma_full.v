@@ -48,16 +48,9 @@ reg tx_rst = 0;
 reg [DATA_WIDTH-1:0] xgmii_rxd = 0;
 reg [CTRL_WIDTH-1:0] xgmii_rxc = 0;
 
-reg [6:0]  inject_rx_desc = 0;
-reg        inject_rx_desc_valid = 0;
-reg [3:0]  slot_addr_wr_no = 0;
-reg [6:0]  slot_addr_wr_data = 0;
-reg        slot_addr_wr_valid = 0;
-
 // Outputs
 wire [DATA_WIDTH-1:0] xgmii_txd;
 wire [CTRL_WIDTH-1:0] xgmii_txc;
-wire                  inject_rx_desc_ready;
 
 // Internal wire
 
@@ -72,18 +65,11 @@ initial begin
         tx_clk,
         tx_rst,
         xgmii_rxd,
-        xgmii_rxc,
-
-        inject_rx_desc,
-        inject_rx_desc_valid,
-        slot_addr_wr_no,
-        slot_addr_wr_data,
-        slot_addr_wr_valid
+        xgmii_rxc
     );
     $to_myhdl(
         xgmii_txd,
-        xgmii_txc,
-        inject_rx_desc_ready
+        xgmii_txc
     );
 
     // dump file
@@ -121,15 +107,7 @@ full_riscv_sys sys (
   .tx_fifo_good_frame(),
   .rx_fifo_overflow(),
   .rx_fifo_bad_frame(),
-  .rx_fifo_good_frame(),
-
-  .inject_rx_desc(inject_rx_desc),
-  .inject_rx_desc_valid(inject_rx_desc_valid),
-  .inject_rx_desc_ready(inject_rx_desc_ready),
-  
-  .slot_addr_wr_no(slot_addr_wr_no),
-  .slot_addr_wr_data(slot_addr_wr_data),
-  .slot_addr_wr_valid(slot_addr_wr_valid)
+  .rx_fifo_good_frame()
 );
 
 endmodule
