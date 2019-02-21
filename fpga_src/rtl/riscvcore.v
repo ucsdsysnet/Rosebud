@@ -115,10 +115,11 @@ reg [63:0] status_reg [0:(2**STAT_ADDR_WIDTH)-1];
 reg [63:0] stat_read;
 reg [31:0] stat_internal_read;
 
-integer i;
+// Conversion from core 32 bit to 64bit status registers
 wire [7:0]  status_write_mask = {4'd0, dmem_word_write_mask[3:0]} << {dmem_addr[2], 2'd0};
 wire [63:0] status_data_in    = {32'd0, dmem_wr_data} << {dmem_addr[2], 5'd0};
 
+integer i;
 always @ (posedge clk)
     if (core_reset)
         for (i = 0; i < 2**STAT_ADDR_WIDTH; i = i + 1)
@@ -186,7 +187,8 @@ end else begin
     assign imem_read_data = imem_data_out_shifted[31:0];
 end
 
-// When core writes to both parts of first status_reg, core sends the message out
+// When core writes to both parts of first status_reg, core sends out 
+// the status register 0 as the message
 reg msg_valid;
 reg msg_state;
 
@@ -194,10 +196,12 @@ always @ (posedge clk)
     if (core_reset) begin
         msg_state <= 1'b0;
         msg_valid <= 1'b0;
-    end else if ((msg_state == 1'b0) && status_wen && (dmem_addr[STAT_ADDR_WIDTH-1+3:2] == 0)) begin
+    end else if ((msg_state == 1'b0) && status_wen && 
+                 (dmem_addr[STAT_ADDR_WIDTH-1+3:2] == 0)) begin
         msg_state <= 1'b1;
         msg_valid <= 1'b0;
-    end else if ((msg_state == 1'b1) && status_wen && (dmem_addr[STAT_ADDR_WIDTH-1+3:2] == 1)) begin
+    end else if ((msg_state == 1'b1) && status_wen && 
+                 (dmem_addr[STAT_ADDR_WIDTH-1+3:2] == 1)) begin
         msg_state <= 1'b0;
         msg_valid <= 1'b1;
     end else begin
@@ -207,7 +211,7 @@ always @ (posedge clk)
 
 assign core_msg_data  = status_reg[0];
 assign core_msg_valid = msg_valid;
-assign stat_rd_data  = stat_read;
+assign stat_rd_data   = stat_read;
 
 // Memory units
 mem_2rw #(

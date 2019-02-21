@@ -23,6 +23,7 @@ wire [CORE_COUNT-1:0]    msg_fifo_valid;
 wire [CORE_COUNT-1:0] msg_fifo_ready;
 reg  [CORE_COUNT-1:0] msg_fifo_pop;
 
+// A message fifo for each core 
 genvar j;
 generate 
     for (j=0; j<CORE_COUNT; j=j+1)
@@ -43,6 +44,7 @@ generate
         );
 endgenerate 
 
+// msg_transmitted shows succefull handshake, used for wait before asserting valid
 wire msg_transmitted = msg_valid && msg_ready;
 reg msg_transmitted_r, msg_transmitted_rr;
 always@ (posedge clk)
@@ -57,17 +59,27 @@ always@ (posedge clk)
 // Core select
 reg  [CORE_NO_WIDTH-1:0] turn;
 
-// We are interested in edge of ready to change the turn. That's when a packet is accepted. 
+// Everytime a message is received we give the turn to the next core. 
+// Meaning that core would have the highest priority among the rest if it has 
+// a valid message.
 always @ (posedge clk)
   if (rst)
     turn <= {CORE_NO_WIDTH{1'b0}};
   else if (msg_transmitted && !msg_transmitted_r)
     turn <= turn + {{(CORE_NO_WIDTH-1){1'b0}},1'b1};
 
-// barrel shifter
-// After the output is valid we do not want to update the highest priority
+// To change the highest priority the valid bits are circled around using a 
+// barrel shifter. After the output is valid (at least one valid bit) we latch
+// the value and send that message out. Also if a message is sent out we reset 
+// the search.
 reg [CORE_COUNT-1:0] rotated_valid_bits;
 wire found_one = |(rotated_valid_bits);
+reg found_one_r;
+always @ (posedge clk)
+  if (rst) 
+    found_one_r <= 1'b0;
+  else
+    found_one_r <= found_one;
 
 always@(posedge clk)
   if (rst)
@@ -75,6 +87,7 @@ always@(posedge clk)
   else if ((!found_one) || (msg_transmitted_r && !msg_transmitted_rr))
     rotated_valid_bits <= ({msg_fifo_valid,msg_fifo_valid} >> turn);
 
+// A priority encoder
 integer i;
 reg [CORE_NO_WIDTH-1:0] core_sel_penc;
 always@(*) begin
@@ -84,22 +97,13 @@ always@(*) begin
       core_sel_penc = i;
 end
 
+// Getting back the actual core number before rotation
 reg [CORE_NO_WIDTH-1:0] core_sel;
 always @ (posedge clk)
     core_sel <= core_sel_penc + turn;
 
-reg [63:0] msg_data_reg;
-always @ (posedge clk)
-    msg_data_reg <= msg_fifo_data[core_sel*64 +: 64];
-    
-reg found_one_r;
-always @ (posedge clk)
-  if (rst) 
-    found_one_r <= 1'b0;
-  else
-    found_one_r <= found_one;
 // When msg is transmitted next cycle count has new value, another cycle
-// rotated_valid_bits has new value, another cycle core_sel has new value and 
+// rotated_valid_bits have new value, another cycle core_sel has new value and 
 // finally msg_data_reg is valid, so there is 3 cycles of non-valid output
 reg arbiter_valid;
 always @ (posedge clk)
@@ -110,11 +114,16 @@ always @ (posedge clk)
   else 
     arbiter_valid <= found_one_r;
 
+reg [63:0] msg_data_reg;
+always @ (posedge clk)
+    msg_data_reg <= msg_fifo_data[core_sel*64 +: 64];
+ 
 // core_sel stays fixed from one cycle before valid, so no need to latch it
 assign msg_valid     = arbiter_valid;
 assign msg_data      = msg_data_reg;
 assign msg_core_no   = core_sel;
 
+// selecting the fifo to pop from
 integer k;
 always @ (*) begin
     for (k=0; k<CORE_COUNT; k=k+1)
