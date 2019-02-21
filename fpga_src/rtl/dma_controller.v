@@ -191,7 +191,7 @@ end
 wire drop = |(rx_desc_core_1hot_r & drop_list_r);
 wire [ADDR_WIDTH-1:0] rx_desc_addr = {rx_desc_core_r , 
                     {(CORE_LEAD_ZERO-SLOT_ADDR_WIDTH){1'b0}}, 
-                    rx_desc_slot_addr, {SLOT_LEAD_ZERO-4{1'b0}},4'h8};
+                    rx_desc_slot_addr, {SLOT_LEAD_ZERO-4{1'b0}},4'hA};
 
 reg [LEN_WIDTH-1:0] max_pkt_len_r;
 always @ (posedge clk)
@@ -373,7 +373,7 @@ always @ (posedge clk)
 
 wire [ADDR_WIDTH-1:0] read_slot_addr = {msg_core_no_r,
                       {(CORE_LEAD_ZERO-SLOT_ADDR_WIDTH){1'b0}},
-                      tx_desc_slot_addr, {(SLOT_LEAD_ZERO-4){1'b0}}, 4'd8};
+                      tx_desc_slot_addr, {(SLOT_LEAD_ZERO-4){1'b0}}, 4'hA};
 
 // send tx desc
 reg [ADDR_WIDTH-1:0]  s_axis_tx_desc_addr_reg;

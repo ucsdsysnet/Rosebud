@@ -181,7 +181,7 @@ sync_reset_125mhz_inst (
 // Divide by 8 to get output frequency of 125 MHz
 MMCME3_BASE #(
     .BANDWIDTH("OPTIMIZED"),
-    .CLKOUT0_DIVIDE_F(4),
+    .CLKOUT0_DIVIDE_F(5),
     .CLKOUT0_DUTY_CYCLE(0.5),
     .CLKOUT0_PHASE(0),
     .CLKOUT1_DIVIDE(1),

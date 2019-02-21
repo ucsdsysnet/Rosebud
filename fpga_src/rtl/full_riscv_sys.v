@@ -61,7 +61,7 @@ module full_riscv_sys # (
   parameter LEN_WIDTH = 20,
   parameter TAG_WIDTH = 8,
   parameter ENABLE_SG = 0,
-  parameter ENABLE_UNALIGNED = 0, //1,
+  parameter ENABLE_UNALIGNED = 1,
   parameter IMEM_SIZE_BYTES = 8192,
   parameter DMEM_SIZE_BYTES = 32768,
   parameter INTERLEAVE      = 1,

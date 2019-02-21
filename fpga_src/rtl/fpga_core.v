@@ -69,8 +69,6 @@ module fpga_core
 assign sfp_2_txd = 64'h0707070707070707;
 assign sfp_2_txc = 8'hff;
 
-reg go;
-
 full_riscv_sys sys (
   .rx_clk(sfp_1_rx_clk),
   .rx_rst(sfp_1_rx_rst),
@@ -78,7 +76,6 @@ full_riscv_sys sys (
   .tx_rst(sfp_1_tx_rst),
   .logic_clk(clk),
   .logic_rst(rst),
-  .go(go),
 
   .xgmii_rxd(sfp_1_rxd),
   .xgmii_rxc(sfp_1_rxc),
@@ -104,17 +101,5 @@ full_riscv_sys sys (
   .rx_fifo_bad_frame(),
   .rx_fifo_good_frame()
 );
-
-// some delay before enabling the system
-reg [19:0] counter;
-always @(posedge clk)
-  if (rst) begin
-    go      <= 1'b0;
-    counter <= 20'd0;
-  end else if (counter < 20'd100000) begin
-    counter <= counter + 20'd1;
-  end else begin
-    go <= 1'b1;
-  end
 
 endmodule
