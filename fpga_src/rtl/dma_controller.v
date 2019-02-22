@@ -8,6 +8,7 @@ module dma_controller # (
     parameter SLOT_ADDR_WIDTH      = CORE_ADDR_WIDTH-1,
     parameter SLOT_ADDR_EFF        = SLOT_ADDR_WIDTH-SLOT_LEAD_ZERO,
     parameter DESC_WIDTH           = CORE_NO_WIDTH+SLOT_NO_WIDTH,
+    parameter DEF_MAX_PKT_LEN      = 16'd2048,
 
     parameter CORE_NO_WIDTH        = $clog2(CORE_COUNT),
     parameter SLOT_NO_WIDTH        = $clog2(SLOT_COUNT),
@@ -194,7 +195,7 @@ wire [ADDR_WIDTH-1:0] rx_desc_addr = {rx_desc_core_r ,
 reg [LEN_WIDTH-1:0] max_pkt_len_r;
 always @ (posedge clk)
   if (rst) 
-    max_pkt_len_r <= 16'd1024; 
+    max_pkt_len_r <= DEF_MAX_PKT_LEN; 
   else if (max_pkt_len_valid)
     max_pkt_len_r <= max_pkt_len;
 

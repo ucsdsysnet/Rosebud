@@ -81,6 +81,7 @@ module full_riscv_sys # (
   parameter SHARED_FIFO_ADDR_SIZE = 4,
   // temp PCI-e parameters. 
   // There are additional 8 leading zeros for these values
+  parameter SLOT_ADDR_EFF = CORE_ADDR_WIDTH-1-SLOT_LEAD_ZERO,
   parameter FIRST_SLOT_ADDR = 7'h40,
   parameter SLOT_ADDR_STEP  = 7'h08
 )(
@@ -557,10 +558,11 @@ dma_controller # (
     .SLOT_LEAD_ZERO(SLOT_LEAD_ZERO),
     .RX_WRITE_OFFSET(RX_WRITE_OFFSET),
     .CORE_ADDR_WIDTH(CORE_ADDR_WIDTH),
-    .SLOT_ADDR_EFF(CORE_ADDR_WIDTH-1-SLOT_LEAD_ZERO),
+    .SLOT_ADDR_EFF(SLOT_ADDR_EFF),
     .DESC_WIDTH(DESC_WIDTH),
     .CORE_FLAG_SIZE(SLOT_COUNT+8),
-    .ERR_FLAG_SIZE(M_COUNT+2)
+    .ERR_FLAG_SIZE(M_COUNT+2),
+    .DEF_MAX_PKT_LEN({{(LEN_WIDTH-SLOT_ADDR_EFF){1'b0}},SLOT_ADDR_STEP}<<SLOT_LEAD_ZERO)
 ) controller 
 (
     .clk(logic_clk),
@@ -665,7 +667,7 @@ temp_pcie # (
     .TAG_WIDTH(TAG_WIDTH),
     .RISCV_CORES(M_COUNT),
     .RISCV_SLOTS(SLOT_COUNT),
-    .SLOT_ADDR_EFF(CORE_ADDR_WIDTH-1-SLOT_LEAD_ZERO),
+    .SLOT_ADDR_EFF(SLOT_ADDR_EFF),
     .FIRST_SLOT_ADDR(FIRST_SLOT_ADDR),
     .SLOT_ADDR_STEP(SLOT_ADDR_STEP)
 ) temp_pcie_master (
