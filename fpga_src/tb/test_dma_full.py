@@ -75,73 +75,72 @@ def bench():
     # Parameters
     DATA_WIDTH = 64
     CTRL_WIDTH = (DATA_WIDTH/8)
-    AXI_DATA_WIDTH = 64
     AXI_ADDR_WIDTH = 16
-    AXI_STRB_WIDTH = (AXI_DATA_WIDTH/8)
-    AXI_ID_WIDTH = 8
-    AXI_MAX_BURST_LEN = 16
-    AXIS_DATA_WIDTH = AXI_DATA_WIDTH
-    AXIS_KEEP_ENABLE = (AXIS_DATA_WIDTH>8)
-    AXIS_KEEP_WIDTH = (AXIS_DATA_WIDTH/8)
-    AXIS_ID_ENABLE = 1
-    AXIS_ID_WIDTH = 8
-    AXIS_DEST_ENABLE = 0
-    AXIS_DEST_WIDTH = 8
-    AXIS_USER_ENABLE = 1
-    AXIS_USER_WIDTH = 1
-    LEN_WIDTH = 20
-    TAG_WIDTH = 8
-    ENABLE_SG = 0
-    ENABLE_UNALIGNED = 0 #1
-    IMEM_SIZE_BYTES = 8192
-    DMEM_SIZE_BYTES = 32768
-    INTERLEAVE      = 1
-    PIPELINE_OUTPUT = 0
-    STAT_ADDR_WIDTH = 1
-    ENABLE_PADDING = 1
-    ENABLE_DIC = 1
-    MIN_FRAME_LENGTH = 64
-    TX_FRAME_FIFO = 1
-    TX_DROP_WHEN_FULL = 0
-    RX_FRAME_FIFO = 1
 
     # Inputs
     clk = Signal(bool(0))
     rst = Signal(bool(0))
-    tx_clk = Signal(bool(0))
-    tx_rst = Signal(bool(0))
-    rx_clk = Signal(bool(0))
-    rx_rst = Signal(bool(0))
-    current_test = Signal(intbv(0)[8:])
+    tx_clk_0 = Signal(bool(0))
+    tx_rst_0 = Signal(bool(0))
+    rx_clk_0 = Signal(bool(0))
+    rx_rst_0 = Signal(bool(0))
+    tx_clk_1 = Signal(bool(0))
+    tx_rst_1 = Signal(bool(0))
+    rx_clk_1 = Signal(bool(0))
+    rx_rst_1 = Signal(bool(0))
 
-    xgmii_rxd = Signal(intbv(0x0707070707070707)[DATA_WIDTH:])
-    xgmii_rxc = Signal(intbv(0xff)[CTRL_WIDTH:])
+    xgmii_rxd_0 = Signal(intbv(0x0707070707070707)[DATA_WIDTH:])
+    xgmii_rxc_0 = Signal(intbv(0xff)[CTRL_WIDTH:])
+    xgmii_rxd_1 = Signal(intbv(0x0707070707070707)[DATA_WIDTH:])
+    xgmii_rxc_1 = Signal(intbv(0xff)[CTRL_WIDTH:])
     
     # Outputs
-    xgmii_txd = Signal(intbv(0x0707070707070707)[DATA_WIDTH:])
-    xgmii_txc = Signal(intbv(0xff)[CTRL_WIDTH:])
-    inject_rx_desc_ready = Signal(bool(0))
+    xgmii_txd_0 = Signal(intbv(0x0707070707070707)[DATA_WIDTH:])
+    xgmii_txc_0 = Signal(intbv(0xff)[CTRL_WIDTH:])
+    xgmii_txd_1 = Signal(intbv(0x0707070707070707)[DATA_WIDTH:])
+    xgmii_txc_1 = Signal(intbv(0xff)[CTRL_WIDTH:])
 
     # sources and sinks
-    xgmii_source = xgmii_ep.XGMIISource()
+    xgmii_source_0 = xgmii_ep.XGMIISource()
 
-    xgmii_source_logic = xgmii_source.create_logic(
+    xgmii_source_logic_0 = xgmii_source_0.create_logic(
         clk,
         rst,
-        txd=xgmii_rxd,
-        txc=xgmii_rxc,
-        name='xgmii_source'
+        txd=xgmii_rxd_0,
+        txc=xgmii_rxc_0,
+        name='xgmii_source_0'
     )
 
-    xgmii_sink = xgmii_ep.XGMIISink()
+    xgmii_sink_0 = xgmii_ep.XGMIISink()
 
-    xgmii_sink_logic = xgmii_sink.create_logic(
+    xgmii_sink_logic_0 = xgmii_sink_0.create_logic(
         clk,
         rst,
-        rxd=xgmii_txd,
-        rxc=xgmii_txc,
-        name='xgmii_sink'
+        rxd=xgmii_txd_0,
+        rxc=xgmii_txc_0,
+        name='xgmii_sink_0'
     )
+    
+    xgmii_source_1 = xgmii_ep.XGMIISource()
+
+    xgmii_source_logic_1 = xgmii_source_1.create_logic(
+        clk,
+        rst,
+        txd=xgmii_rxd_1,
+        txc=xgmii_rxc_1,
+        name='xgmii_source_1'
+    )
+
+    xgmii_sink_1 = xgmii_ep.XGMIISink()
+
+    xgmii_sink_logic_1 = xgmii_sink_1.create_logic(
+        clk,
+        rst,
+        rxd=xgmii_txd_1,
+        rxc=xgmii_txc_1,
+        name='xgmii_sink_1'
+    )
+
 
     # DUT
     if os.system(build_cmd):
@@ -151,34 +150,47 @@ def bench():
         "vvp -m myhdl %s.vvp -lxt2" % testbench,
         clk=clk,
         rst=rst,
-        rx_clk=rx_clk,
-        rx_rst=rx_rst,
-        tx_clk=tx_clk,
-        tx_rst=tx_rst,
-        current_test=current_test,
+        rx_clk_0=rx_clk_0,
+        rx_rst_0=rx_rst_0,
+        tx_clk_0=tx_clk_0,
+        tx_rst_0=tx_rst_0,
+        rx_clk_1=rx_clk_1,
+        rx_rst_1=rx_rst_1,
+        tx_clk_1=tx_clk_1,
+        tx_rst_1=tx_rst_1,
 
-        xgmii_rxd=xgmii_rxd,
-        xgmii_rxc=xgmii_rxc,
-        xgmii_txd=xgmii_txd,
-        xgmii_txc=xgmii_txc
+        xgmii_rxd_0=xgmii_rxd_0,
+        xgmii_rxc_0=xgmii_rxc_0,
+        xgmii_txd_0=xgmii_txd_0,
+        xgmii_txc_0=xgmii_txc_0,
+        xgmii_rxd_1=xgmii_rxd_1,
+        xgmii_rxc_1=xgmii_rxc_1,
+        xgmii_txd_1=xgmii_txd_1,
+        xgmii_txc_1=xgmii_txc_1
     )
 
     @always(delay(4))
     def clkgen():
         clk.next = not clk
-        tx_clk.next = not tx_clk
-        rx_clk.next = not rx_clk
+        tx_clk_0.next = not tx_clk_0
+        rx_clk_0.next = not rx_clk_0
+        tx_clk_1.next = not tx_clk_1
+        rx_clk_1.next = not rx_clk_1
 
     @instance
     def check():
         yield delay(100)
         yield clk.posedge
-        tx_rst.next = 1
-        rx_rst.next = 1
+        tx_rst_0.next = 1
+        rx_rst_0.next = 1
+        tx_rst_1.next = 1
+        rx_rst_1.next = 1
         rst.next = 1
         yield clk.posedge
-        tx_rst.next = 0
-        rx_rst.next = 0
+        tx_rst_0.next = 0
+        rx_rst_0.next = 0
+        tx_rst_1.next = 0
+        rx_rst_1.next = 0
         rst.next = 0
         yield clk.posedge
         yield delay(100)
@@ -192,8 +204,6 @@ def bench():
         yield delay(10000)
         yield clk.posedge
 
-        current_test.next = 1
-
         test_data = b'\x11\x22\x33\x44\x11\x22\x33\x44'
 
         test_frame = eth_ep.EthFrame()
@@ -206,14 +216,14 @@ def bench():
         
         print ("send data over LAN")
         for i in range (0,10):
-          xgmii_source.send(b'\x55\x55\x55\x55\x55\x55\x55\xD5'+bytearray(axis_frame))
+          xgmii_source_0.send(b'\x55\x55\x55\x55\x55\x55\x55\xD5'+bytearray(axis_frame))
           # yield delay(1000)
           yield clk.posedge
 
         print ("send data from LAN")
         for i in range (0,10):
-          yield xgmii_sink.wait()
-          rx_frame = xgmii_sink.recv()
+          yield xgmii_sink_0.wait()
+          rx_frame = xgmii_sink_0.recv()
        
           assert rx_frame.data[0:8] == bytearray(b'\x55\x55\x55\x55\x55\x55\x55\xD5')
           data = rx_frame.data

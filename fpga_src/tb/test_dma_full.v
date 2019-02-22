@@ -39,18 +39,27 @@ parameter AXI_ADDR_WIDTH = 16;
 // Inputs
 reg clk = 0;
 reg rst = 0;
-reg [7:0] current_test = 0;
 
-reg rx_clk = 0;
-reg rx_rst = 0;
-reg tx_clk = 0;
-reg tx_rst = 0;
-reg [DATA_WIDTH-1:0] xgmii_rxd = 0;
-reg [CTRL_WIDTH-1:0] xgmii_rxc = 0;
+reg rx_clk_0 = 0;
+reg rx_rst_0 = 0;
+reg tx_clk_0 = 0;
+reg tx_rst_0 = 0;
+reg [DATA_WIDTH-1:0] xgmii_rxd_0 = 0;
+reg [CTRL_WIDTH-1:0] xgmii_rxc_0 = 0;
+
+reg rx_clk_1 = 0;
+reg rx_rst_1 = 0;
+reg tx_clk_1 = 0;
+reg tx_rst_1 = 0;
+reg [DATA_WIDTH-1:0] xgmii_rxd_1 = 0;
+reg [CTRL_WIDTH-1:0] xgmii_rxc_1 = 0;
 
 // Outputs
-wire [DATA_WIDTH-1:0] xgmii_txd;
-wire [CTRL_WIDTH-1:0] xgmii_txc;
+wire [DATA_WIDTH-1:0] xgmii_txd_0;
+wire [CTRL_WIDTH-1:0] xgmii_txc_0;
+
+wire [DATA_WIDTH-1:0] xgmii_txd_1;
+wire [CTRL_WIDTH-1:0] xgmii_txc_1;
 
 // Internal wire
 
@@ -59,17 +68,24 @@ initial begin
     $from_myhdl(
         clk,
         rst,
-        current_test,
-        rx_clk,
-        rx_rst,
-        tx_clk,
-        tx_rst,
-        xgmii_rxd,
-        xgmii_rxc
+        rx_clk_0,
+        rx_rst_0,
+        tx_clk_0,
+        tx_rst_0,
+        rx_clk_1,
+        rx_rst_1,
+        tx_clk_1,
+        tx_rst_1,
+        xgmii_rxd_0,
+        xgmii_rxc_0,
+        xgmii_rxd_1,
+        xgmii_rxc_1
     );
     $to_myhdl(
-        xgmii_txd,
-        xgmii_txc
+        xgmii_txd_0,
+        xgmii_txc_0,
+        xgmii_txd_1,
+        xgmii_txc_1
     );
 
     // dump file
@@ -78,19 +94,19 @@ initial begin
 end
 
 full_riscv_sys sys (
-  .rx_clk(rx_clk),
-  .rx_rst(rx_rst),
-  .tx_clk(tx_clk),
-  .tx_rst(tx_rst),
+  .rx_clk({rx_clk_1,rx_clk_0}),
+  .rx_rst({rx_rst_1,rx_rst_0}),
+  .tx_clk({tx_clk_1,tx_clk_0}),
+  .tx_rst({tx_rst_1,tx_rst_0}),
   .logic_clk(clk),
   .logic_rst(rst),
 
-  .xgmii_rxd(xgmii_rxd),
-  .xgmii_rxc(xgmii_rxc),
+  .xgmii_rxd({xgmii_rxd_1,xgmii_rxd_0}),
+  .xgmii_rxc({xgmii_rxc_1,xgmii_rxc_0}),
 
   // Outputs
-  .xgmii_txd(xgmii_txd),
-  .xgmii_txc(xgmii_txc)
+  .xgmii_txd({xgmii_txd_1,xgmii_txd_0}),
+  .xgmii_txc({xgmii_txc_1,xgmii_txc_0})
 );
 
 endmodule
