@@ -219,17 +219,21 @@ def bench():
           xgmii_source_0.send(b'\x55\x55\x55\x55\x55\x55\x55\xD5'+bytearray(axis_frame))
           # yield delay(1000)
           yield clk.posedge
+          xgmii_source_1.send(b'\x55\x55\x55\x55\x55\x55\x55\xD5'+bytearray(axis_frame))
+          # yield delay(1000)
+          yield clk.posedge
 
         print ("send data from LAN")
         for i in range (0,10):
-          yield xgmii_sink_0.wait()
-          rx_frame = xgmii_sink_0.recv()
+          yield xgmii_sink_1.wait()
+          rx_frame = xgmii_sink_1.recv()
        
           assert rx_frame.data[0:8] == bytearray(b'\x55\x55\x55\x55\x55\x55\x55\xD5')
           data = rx_frame.data
           for i in range(0, len(data), 16):
               print(" ".join(("{:02x}".format(c) for c in bytearray(data[i:i+16]))))
-        # eth_frame = eth_ep.EthFrame()
+        
+                # eth_frame = eth_ep.EthFrame()
         # eth_frame.parse_axis_fcs(rx_frame.data[8:])
 
         # print(hex(eth_frame.eth_fcs))

@@ -1,36 +1,47 @@
+inline void process (unsigned short* len, unsigned char* port, unsigned int* data);
+#define SLOT_COUNT 16
 int main(void){
-volatile unsigned int * a = (volatile unsigned int *) 0x00100;
-volatile unsigned int * stat = (volatile unsigned int *) 0x08000;
-unsigned int* b;
-unsigned int c;
-unsigned int flag;
-unsigned int d;
-unsigned short len;
-unsigned char port;
-unsigned char slot;
-int i;
-
-while(1){
-	for (i=0; i<32; i+=2){
-		if (a[i]!=0){
-			len  = *((unsigned short *)&a[i]);
-			port = *(((unsigned char *)&a[i])+2);
-			slot = *(((unsigned char *)&a[i])+3);
-			// c = a[i];
-		  // flag = c | 0xFFFF0000;
-			b = (unsigned int*)(a[i+1]);
-			// *stat = *stat & (~flag);
-			a[i] = 0;
-			b[6] = b[6]+0x05050505;
-			b[7] = b[7]+0x05050505;
-			if (slot==1)
-				len = 0;
-			*stat = (int)len;
-			*((unsigned char*)stat+3) = slot;
-			*(stat+1) = (unsigned int)b+10;
-		}
-	}
+  volatile unsigned int * trigger = (volatile unsigned int *) 0x00100;
+  volatile unsigned int * stat    = (volatile unsigned int *) 0x08000;
+  unsigned int* data;
+  unsigned int c;
+  unsigned short len;
+  unsigned char port;
+  unsigned char slot;
+  int i;
+  
+  while(1){
+  	for (i=0; i<2*SLOT_COUNT; i+=2){
+  		if (trigger[i]!=0){
+  			len  = *((unsigned short*)&trigger[i]);
+  			port = *(((unsigned char*)&trigger[i])+2);
+  			slot = *(((unsigned char*)&trigger[i])+3);
+  			data = (unsigned int*)(trigger[i+1]);
+  			trigger[i] = 0;
+  			process (&len,&port,data);
+  			// Order of writing to stat is important, last two should 
+  			// be to stat and then stat+1 and it should not happen before that. 
+  			// there is 10 byte offset when DMA writes and we did not change it,
+  			// so that would be the start address of packet. 
+  			*(stat+1) = (unsigned int)data+10;
+  			*stat = (int)len;
+  			*((unsigned char*)stat+2) = port;
+  			*((unsigned char*)stat+3) = slot;
+  			*((unsigned char*)stat+7) = 0; // no error
+  		}
+  	}
+  }
+  
+  return 1;
 }
 
-return 1;
+inline void process (unsigned short * len, unsigned char * port, unsigned int* data) {
+	data[6] = data[6]+0x05050505;
+	data[7] = data[7]+0x05050505;
+	if (*port==0)
+		*port = 1;
+	else
+		*len = 0;
+	return;
 }
+

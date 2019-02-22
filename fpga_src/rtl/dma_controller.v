@@ -1,24 +1,26 @@
 module dma_controller # (
-    parameter DATA_WIDTH      = 64,   
-    parameter CORE_COUNT      = 16,
-    parameter SLOT_COUNT      = 16,
-    parameter SLOT_LEAD_ZERO  = 8,
-    parameter RX_WRITE_OFFSET = 8'h0A,
-    parameter CORE_ADDR_WIDTH = 16,
-    parameter SLOT_ADDR_WIDTH = CORE_ADDR_WIDTH-1,
-    parameter SLOT_ADDR_EFF   = SLOT_ADDR_WIDTH-SLOT_LEAD_ZERO,
-    parameter DESC_WIDTH      = CORE_NO_WIDTH+SLOT_NO_WIDTH,
+    parameter DATA_WIDTH           = 64,   
+    parameter CORE_COUNT           = 16,
+    parameter SLOT_COUNT           = 16,
+    parameter SLOT_LEAD_ZERO       = 8,
+    parameter RX_WRITE_OFFSET      = 8'h0A,
+    parameter CORE_ADDR_WIDTH      = 16,
+    parameter SLOT_ADDR_WIDTH      = CORE_ADDR_WIDTH-1,
+    parameter SLOT_ADDR_EFF        = SLOT_ADDR_WIDTH-SLOT_LEAD_ZERO,
+    parameter DESC_WIDTH           = CORE_NO_WIDTH+SLOT_NO_WIDTH,
 
-    parameter CORE_NO_WIDTH   = $clog2(CORE_COUNT),
-    parameter SLOT_NO_WIDTH   = $clog2(SLOT_COUNT),
-    parameter ADDR_WIDTH      = CORE_ADDR_WIDTH+CORE_NO_WIDTH,
-    parameter STRB_WIDTH      = (DATA_WIDTH/8),
-    parameter ID_WIDTH        = 8,
-    parameter LEN_WIDTH       = 16,
-    parameter TAG_WIDTH       = 8,
+    parameter CORE_NO_WIDTH        = $clog2(CORE_COUNT),
+    parameter SLOT_NO_WIDTH        = $clog2(SLOT_COUNT),
+    parameter ADDR_WIDTH           = CORE_ADDR_WIDTH+CORE_NO_WIDTH,
+    parameter STRB_WIDTH           = (DATA_WIDTH/8),
+    parameter ID_WIDTH             = 8,
+    parameter LEN_WIDTH            = 16,
+    parameter TAG_WIDTH            = 8,
     
-    parameter CORE_FLAG_SIZE  = SLOT_COUNT+8,
-    parameter ERR_FLAG_SIZE   = CORE_COUNT+2
+    parameter CORE_FLAG_SIZE       = SLOT_COUNT+8,
+    parameter ERR_FLAG_SIZE        = CORE_COUNT+2,
+
+    parameter DESC_FIFO_ADDR_WIDTH = $clog2(CORE_COUNT * SLOT_COUNT)
 )
 (
     input  wire                      clk,
@@ -118,24 +120,22 @@ module dma_controller # (
     input  wire [CORE_NO_WIDTH-1:0]  msg_core_no,
     output wire                      msg_ready
 );
-   
 
-parameter FIFO_ADDR_WIDTH = $clog2(CORE_COUNT * SLOT_COUNT);
-    
+// rx desc generation
 wire [DESC_WIDTH-1:0] rx_desc;
 wire [DESC_WIDTH-1:0] dma_rx_desc;
-wire                       dma_rx_desc_valid;
+wire                  dma_rx_desc_valid;
 wire [DESC_WIDTH-1:0] rx_desc_fifo_data;
-wire                       rx_desc_fifo_ready;
-wire                       rx_desc_fifo_v;
-wire                       rx_desc_fifo_pop;
+wire                  rx_desc_fifo_ready;
+wire                  rx_desc_fifo_v;
+wire                  rx_desc_fifo_pop;
 
 assign inject_rx_desc_ready = !dma_rx_desc_valid && rx_desc_fifo_ready;
 assign rx_desc              = dma_rx_desc_valid ? dma_rx_desc : inject_rx_desc;
-wire rx_desc_fifo_err       = dma_rx_desc_valid && !rx_desc_fifo_ready;
+wire   rx_desc_fifo_err     = (dma_rx_desc_valid || inject_rx_desc_valid) && !rx_desc_fifo_ready;
 
 simple_fifo # (
-  .ADDR_WIDTH(FIFO_ADDR_WIDTH),
+  .ADDR_WIDTH(DESC_FIFO_ADDR_WIDTH),
   .DATA_WIDTH(DESC_WIDTH)
 ) rx_desc_fifo (
   .clk(clk),
@@ -194,48 +194,81 @@ wire [ADDR_WIDTH-1:0] rx_desc_addr = {rx_desc_core_r ,
 reg [LEN_WIDTH-1:0] max_pkt_len_r;
 always @ (posedge clk)
   if (rst) 
-    max_pkt_len_r <= 16'd1024; // {LEN_WIDTH{1'b0}};
+    max_pkt_len_r <= 16'd1024; 
   else if (max_pkt_len_valid)
     max_pkt_len_r <= max_pkt_len;
 
-wire ready_to_send = rx_desc_fifo_v_r && (!drop) && s_axis_rx_desc_ready[0];
-reg [9:0] rx_pkt_counter;
+wire [2-1:0] ready_to_send;
+assign ready_to_send[0] = rx_desc_fifo_v_r && (!drop) && s_axis_rx_desc_ready[0];
+assign ready_to_send[1] = rx_desc_fifo_v_r && (!drop) && s_axis_rx_desc_ready[1];
+
+reg [9:0] rx_pkt_counter [0:1];
 always @ (posedge clk)
   if (rst)
-    rx_pkt_counter <= 10'd0;
-  else if (ready_to_send && !incoming_pkt_ready[0] && (rx_pkt_counter>0))
-    rx_pkt_counter <= rx_pkt_counter - 10'd1;
-  else if (~ready_to_send && incoming_pkt_ready[0])
-    rx_pkt_counter <= rx_pkt_counter + 10'd1;
-    
-assign s_axis_rx_desc_tag   = {2*TAG_WIDTH{1'b0}};
-assign s_axis_rx_desc_len[LEN_WIDTH-1:0]   = max_pkt_len_r;
-assign s_axis_rx_desc_addr[ADDR_WIDTH-1:0]  = rx_desc_addr;
-assign s_axis_rx_desc_valid[0] = ready_to_send && ((rx_pkt_counter>0) || incoming_pkt_ready[0]);
-assign s_axis_rx_desc_valid[1] = 1'b0;
+    rx_pkt_counter[0] <= 10'd0;
+  else if (ready_to_send[0] && !incoming_pkt_ready[0] && (rx_pkt_counter[0]>0) && !in_port_sel)
+    rx_pkt_counter[0] <= rx_pkt_counter[0] - 10'd1;
+  else if ((~ready_to_send[0] || in_port_sel) && incoming_pkt_ready[0])
+    rx_pkt_counter[0] <= rx_pkt_counter[0] + 10'd1;
 
-assign rx_desc_fifo_pop = (rx_desc_fifo_v_r && drop) || (s_axis_rx_desc_valid);
+always @ (posedge clk)
+  if (rst)
+    rx_pkt_counter[1] <= 10'd0;
+  else if (ready_to_send[1] && !incoming_pkt_ready[1] && (rx_pkt_counter[1]>0) && in_port_sel)
+    rx_pkt_counter[1] <= rx_pkt_counter[1] - 10'd1;
+  else if ((~ready_to_send[1] || !in_port_sel) && incoming_pkt_ready[1])
+    rx_pkt_counter[1] <= rx_pkt_counter[1] + 10'd1;
 
-// trigger fifo
+wire [2-1:0] can_receive;
+assign can_receive[0] = ready_to_send[0] && ((rx_pkt_counter[0]>0) || incoming_pkt_ready[0]);
+assign can_receive[1] = ready_to_send[1] && ((rx_pkt_counter[1]>0) || incoming_pkt_ready[1]);
+
+reg in_port_sel, last_in_port_sel;
+
+always @ (*) begin
+  in_port_sel = last_in_port_sel;
+  if (last_in_port_sel && can_receive[0])
+    in_port_sel = 1'b0;
+  else if (!last_in_port_sel && can_receive[1])
+    in_port_sel = 1'b1;
+end   
+
+always @ (posedge clk) 
+  if (rst)
+    last_in_port_sel <= 1'b1;
+  else if (|s_axis_rx_desc_valid)
+    last_in_port_sel <= in_port_sel;
+
+assign s_axis_rx_desc_tag      = {2*TAG_WIDTH{1'b0}};
+assign s_axis_rx_desc_len      = {max_pkt_len_r,max_pkt_len_r};
+assign s_axis_rx_desc_addr     = {rx_desc_addr,rx_desc_addr};
+
+assign s_axis_rx_desc_valid[0] = can_receive[0] && !in_port_sel;
+assign s_axis_rx_desc_valid[1] = can_receive[1] && in_port_sel;
+
+assign rx_desc_fifo_pop = (rx_desc_fifo_v_r && drop) || (|s_axis_rx_desc_valid);
+
+// trigger fifo, saving port, core, slot and slot address after sending rx_desc
 wire trigger_fifo_ready, trigger_fifo_v;
 wire [CORE_NO_WIDTH-1:0] trigger_fifo_core_no;
 wire [SLOT_NO_WIDTH-1:0] trigger_fifo_slot_no;
 wire [SLOT_ADDR_EFF-1:0] trigger_fifo_slot_addr;
-wire trigger_sent;
+wire                     trigger_fifo_port_no;
+reg  trigger_accepted;
 simple_fifo # (
   .ADDR_WIDTH($clog2(2*CORE_COUNT)),
-  .DATA_WIDTH(CORE_NO_WIDTH+SLOT_NO_WIDTH+SLOT_ADDR_EFF)
+  .DATA_WIDTH(1+CORE_NO_WIDTH+SLOT_NO_WIDTH+SLOT_ADDR_EFF)
 ) trigger_fifo (
   .clk(clk),
   .rst(rst),
 
-  .din_valid(s_axis_rx_desc_valid[0]),
-  .din({rx_desc_core_r,rx_desc_slot_r,rx_desc_slot_addr}),
+  .din_valid(|s_axis_rx_desc_valid),
+  .din({s_axis_rx_desc_valid[1], rx_desc_core_r,rx_desc_slot_r,rx_desc_slot_addr}),
   .din_ready(trigger_fifo_ready),
  
   .dout_valid(trigger_fifo_v),
-  .dout({trigger_fifo_core_no, trigger_fifo_slot_no, trigger_fifo_slot_addr}),
-  .dout_ready(trigger_sent)
+  .dout({trigger_fifo_port_no,trigger_fifo_core_no, trigger_fifo_slot_no, trigger_fifo_slot_addr}),
+  .dout_ready(trigger_accepted)
 );
  
 // There is no read operation
@@ -250,6 +283,47 @@ assign m_axi_araddr  = {ADDR_WIDTH{1'b0}};
 assign m_axi_arvalid = 1'b0;  
 assign m_axi_rready  = 1'b0;
 
+// packet_sent_to_core fifo, saving len of packets sent to cores by each port
+wire [LEN_WIDTH-1:0] len_fifo_data[0:1];
+wire [2-1:0]         len_fifo_v;
+wire [2-1:0]         len_fifo_ready;
+reg sent_trigger_port;
+
+// Pop happens one cycle after data is latched, but since we cannot
+// take data next cycle it is ok for valid to remain high
+simple_fifo # (
+  .ADDR_WIDTH($clog2(CORE_COUNT)),
+  .DATA_WIDTH(LEN_WIDTH)
+) len_fifo_0 (
+  .clk(clk),
+  .rst(rst),
+
+  .din_valid(pkt_sent_to_core_valid[0]),
+  .din(pkt_sent_to_core_len[0*LEN_WIDTH +: LEN_WIDTH]),
+  .din_ready(len_fifo_ready[0]),
+ 
+  .dout_valid(len_fifo_v[0]),
+  .dout(len_fifo_data[0]),
+  .dout_ready(trigger_accepted && !sent_trigger_port)
+);
+
+simple_fifo # (
+  .ADDR_WIDTH($clog2(CORE_COUNT)),
+  .DATA_WIDTH(LEN_WIDTH)
+) len_fifo_1 (
+  .clk(clk),
+  .rst(rst),
+
+  .din_valid(pkt_sent_to_core_valid[1]),
+  .din(pkt_sent_to_core_len[1*LEN_WIDTH +: LEN_WIDTH]),
+  .din_ready(len_fifo_ready[1]),
+ 
+  .dout_valid(len_fifo_v[1]),
+  .dout(len_fifo_data[1]),
+  .dout_ready(trigger_accepted && sent_trigger_port)
+);
+
+
 // write trigger
 reg [ADDR_WIDTH-1:0]  m_axi_awaddr_reg;
 reg [ID_WIDTH-1:0]  m_axi_awid_reg;
@@ -261,25 +335,16 @@ assign trigger_addr = {trigger_fifo_core_no,
                     {(CORE_ADDR_WIDTH  - 9){1'b0}} , 1'b1, 
                     {(5 - SLOT_NO_WIDTH){1'b0}}, trigger_fifo_slot_no, 3'd0};
 
-reg [CORE_COUNT+1-1:0] trigger_counter;
-assign trigger_sent = trigger_accepted; 
-always @ (posedge clk)
-  if (rst)
-    trigger_counter <= {(CORE_COUNT+1){1'b0}};
-  else if (trigger_sent && !pkt_sent_to_core_valid[0]) // && (trigger_counter>0))
-    trigger_counter <= trigger_counter - 1'd1;
-  else if (~trigger_sent && pkt_sent_to_core_valid[0])
-    trigger_counter <= trigger_counter + 1'd1;
- 
-wire trigger_send_valid = (pkt_sent_to_core_valid[0] || (trigger_counter>0)) 
-                          && trigger_fifo_v;
+wire [2-1:0] trigger_send_valid;
+assign trigger_send_valid[0] = trigger_fifo_v && !trigger_fifo_port_no && len_fifo_v[0];
+assign trigger_send_valid[1] = trigger_fifo_v && trigger_fifo_port_no  && len_fifo_v[1];
 
 always @ (posedge clk)
   if (rst) begin 
     m_axi_awvalid_reg <= 1'b0;
     awr_req_attempt   <= 1'b0;
   end else begin
-    if (trigger_send_valid && !awr_req_attempt) begin
+    if ((|trigger_send_valid) && !awr_req_attempt) begin
       m_axi_awaddr_reg  <= trigger_addr;
       m_axi_awid_reg    <= trigger_fifo_core_no;
       m_axi_awvalid_reg <= 1'b1;
@@ -303,7 +368,6 @@ assign m_axi_awvalid = m_axi_awvalid_reg;
 
 reg wr_req_attempt;
 reg m_axi_wvalid_reg;
-reg trigger_accepted;
 reg [DATA_WIDTH-1:0]  m_axi_wdata_reg;
 reg [STRB_WIDTH-1:0]  m_axi_wstrb_reg;
 reg                   m_axi_wlast_reg;
@@ -311,7 +375,8 @@ reg                   m_axi_wlast_reg;
 wire [23:0] core_slot_addr = {{(24-SLOT_LEAD_ZERO-SLOT_ADDR_EFF){1'b0}},
                               trigger_fifo_slot_addr, {SLOT_LEAD_ZERO{1'b0}}};
 wire [7:0]  core_slot_no   = {{(8-SLOT_NO_WIDTH){1'b0}}, trigger_fifo_slot_no};
-wire [7:0]  incoming_port  = 8'd0;
+wire [7:0]  incoming_port  = {7'd0,trigger_fifo_port_no};
+wire [15:0] trigger_pkt_len  = trigger_fifo_port_no ? len_fifo_data[1]:len_fifo_data[0];
 
 always @ (posedge clk)
   if (rst) begin 
@@ -320,18 +385,19 @@ always @ (posedge clk)
     trigger_accepted <= 1'b0;
   end else begin
     trigger_accepted <= 1'b0;
-    if (trigger_send_valid && !wr_req_attempt) begin
-      m_axi_wvalid_reg <= 1'b1;
-      m_axi_wdata_reg  <= {8'd0, core_slot_addr, core_slot_no,
-                           incoming_port, pkt_sent_to_core_len[15:0]};
-      m_axi_wstrb_reg  <= 8'hFF;
-      m_axi_wlast_reg  <= 1'b1;
-      wr_req_attempt   <= 1'b1;
-      trigger_accepted <= 1'b1;
+    if (|trigger_send_valid && !wr_req_attempt) begin
+      m_axi_wvalid_reg  <= 1'b1;
+      m_axi_wdata_reg   <= {8'd0, core_slot_addr, core_slot_no,
+                            incoming_port, trigger_pkt_len};
+      m_axi_wstrb_reg   <= 8'hFF;
+      m_axi_wlast_reg   <= 1'b1;
+      wr_req_attempt    <= 1'b1;
+      trigger_accepted  <= 1'b1;
+      sent_trigger_port <= trigger_fifo_port_no;
     end
     else if (wr_req_attempt && m_axi_wready) begin
-      m_axi_wvalid_reg <= 1'b0;
-      wr_req_attempt   <= 1'b0;
+      m_axi_wvalid_reg  <= 1'b0;
+      wr_req_attempt    <= 1'b0;
     end
   end
 
@@ -361,6 +427,7 @@ wire [ADDR_WIDTH-1:0] read_slot_addr = {msg_core_no,
 // send tx desc
 reg [ADDR_WIDTH-1:0]  s_axis_tx_desc_addr_reg;
 reg [LEN_WIDTH-1:0]   s_axis_tx_desc_len_reg;
+reg                   s_axis_tx_out_port_reg;
 reg                   s_axis_tx_desc_valid_reg;
 
 always @ (posedge clk)
@@ -371,33 +438,41 @@ always @ (posedge clk)
       s_axis_tx_desc_valid_reg <= 1'b0;
     end else if (msg_valid) begin // add check for errors here
       s_axis_tx_desc_addr_reg   <= read_slot_addr;
-      s_axis_tx_desc_len_reg    <= {4'd0, read_pkt_len};
+      s_axis_tx_desc_len_reg    <= {{(LEN_WIDTH-16){1'b0}},read_pkt_len};
       s_axis_tx_desc_valid_reg  <= (read_pkt_len!=16'd0); // drop packet
+      s_axis_tx_out_port_reg    <= out_port[0];
     end
   end
 
-assign s_axis_tx_desc_addr[ADDR_WIDTH-1:0]  = s_axis_tx_desc_addr_reg;
-assign s_axis_tx_desc_len[LEN_WIDTH-1:0]   = s_axis_tx_desc_len_reg;
-assign s_axis_tx_desc_valid[0] = s_axis_tx_desc_valid_reg;
-assign s_axis_tx_desc_valid[1] = 1'b0;
-assign s_axis_tx_desc_tag   = 0;
-assign s_axis_tx_desc_user  = 0;
+assign s_axis_tx_desc_addr     = {s_axis_tx_desc_addr_reg,s_axis_tx_desc_addr_reg};
+assign s_axis_tx_desc_len      = {s_axis_tx_desc_len_reg,s_axis_tx_desc_len_reg};
+assign s_axis_tx_desc_valid[0] = s_axis_tx_desc_valid_reg && !s_axis_tx_out_port_reg;
+assign s_axis_tx_desc_valid[1] = s_axis_tx_desc_valid_reg && s_axis_tx_out_port_reg;
+assign s_axis_tx_desc_tag      = {(2*TAG_WIDTH){1'b0}};
+assign s_axis_tx_desc_user     = 2'd0;
 
 // There is 1 cycle difference, but if ready is asserted it would stay asserted. 
 // And we are latching. 
-assign msg_ready = s_axis_tx_desc_ready[0];
+assign msg_ready = (s_axis_tx_desc_ready[0] && !out_port[0]) ||
+                   (s_axis_tx_desc_ready[1] &&  out_port[0]);
 
-reg [CORE_NO_WIDTH-1:0] tx_desc_core_no_latched;
-reg [SLOT_NO_WIDTH-1:0] tx_desc_slot_no_latched;
+reg [CORE_NO_WIDTH-1:0] tx_desc_core_no_latched [0:1];
+reg [SLOT_NO_WIDTH-1:0] tx_desc_slot_no_latched [0:1];
 
 // Latch core and slot number of core message to add to read desc fifo
-always @ (posedge clk) 
-    if (s_axis_tx_desc_valid) begin
-      tx_desc_core_no_latched   <= msg_core_no;
-      tx_desc_slot_no_latched   <= read_slot_no;
-    end
-
-assign dma_rx_desc = {tx_desc_core_no_latched, tx_desc_slot_no_latched};
-assign dma_rx_desc_valid = pkt_sent_out_valid[0];
+always @ (posedge clk) begin
+  if (s_axis_tx_desc_valid[0]) begin
+    tx_desc_core_no_latched[0] <= msg_core_no;
+    tx_desc_slot_no_latched[0] <= read_slot_no;
+  end
+  if (s_axis_tx_desc_valid[1]) begin
+    tx_desc_core_no_latched[1] <= msg_core_no;
+    tx_desc_slot_no_latched[1] <= read_slot_no;
+  end
+end
+assign dma_rx_desc = pkt_sent_out_valid[1] ? 
+       {tx_desc_core_no_latched[1], tx_desc_slot_no_latched[1]}:
+       {tx_desc_core_no_latched[0], tx_desc_slot_no_latched[0]};
+assign dma_rx_desc_valid = |pkt_sent_out_valid;
 
 endmodule

@@ -67,24 +67,26 @@ module fpga_core
     input  wire [7:0]  sfp_2_rxc
 );
 
-assign sfp_2_txd = 64'h0707070707070707;
-assign sfp_2_txc = 8'hff;
+// assign sfp_2_txd = 64'h0707070707070707;
+// assign sfp_2_txc = 8'hff;
+assign sfp_1_led = 0;
+assign sfp_2_led = 0;
+assign sma_led   = 0;
 
 full_riscv_sys sys (
-  .rx_clk(sfp_1_rx_clk),
-  .rx_rst(sfp_1_rx_rst),
-  .tx_clk(sfp_1_tx_clk),
-  .tx_rst(sfp_1_tx_rst),
+  .rx_clk({sfp_2_rx_clk,sfp_1_rx_clk}),
+  .rx_rst({sfp_2_rx_rst,sfp_1_rx_rst}),
+  .tx_clk({sfp_2_tx_clk,sfp_1_tx_clk}),
+  .tx_rst({sfp_2_tx_rst,sfp_1_tx_rst}),
   .logic_clk(clk),
   .logic_rst(rst),
 
-  .xgmii_rxd(sfp_1_rxd),
-  .xgmii_rxc(sfp_1_rxc),
+  .xgmii_rxd({sfp_2_rxd,sfp_1_rxd}),
+  .xgmii_rxc({sfp_2_rxc,sfp_1_rxc}),
 
   // Outputs
-  .xgmii_txd(sfp_1_txd),
-  .xgmii_txc(sfp_1_txc)
-
+  .xgmii_txd({sfp_2_txd,sfp_1_txd}),
+  .xgmii_txc({sfp_2_txc,sfp_1_txc})
 );
 
 endmodule

@@ -35,17 +35,25 @@ module full_riscv_sys # (
   parameter IMEM_SIZE_BYTES = 8192,
   parameter DMEM_SIZE_BYTES = 32768,
   parameter STAT_ADDR_WIDTH = 1,
-  parameter SLOT_COUNT      = 16,
+  parameter SLOT_COUNT      = 4,
   parameter INTERLEAVE      = 1,
   parameter PIPELINE_OUTPUT = 0,
   // interconnect parameters
   parameter S_COUNT         = 4,
-  parameter M_COUNT         = 16,
+  parameter M_COUNT         = 32,
   parameter M_REGIONS       = 1,
-  parameter M_BASE_ADDR     = {20'hf0000, 20'he0000, 20'hd0000, 20'hc0000,
-                               20'hb0000, 20'ha0000, 20'h90000, 20'h80000,
-                               20'h70000, 20'h60000, 20'h50000, 20'h40000,
-                               20'h30000, 20'h20000, 20'h10000, 20'h00000},
+  parameter M_BASE_ADDR     = {21'h1f0000, 21'h1e0000, 21'h1d0000, 21'h1c0000,
+                               21'h1b0000, 21'h1a0000, 21'h190000, 21'h180000,
+                               21'h170000, 21'h160000, 21'h150000, 21'h140000,
+                               21'h130000, 21'h120000, 21'h110000, 21'h100000,
+                               21'h0f0000, 21'h0e0000, 21'h0d0000, 21'h0c0000,
+                               21'h0b0000, 21'h0a0000, 21'h090000, 21'h080000,
+                               21'h070000, 21'h060000, 21'h050000, 21'h040000,
+                               21'h030000, 21'h020000, 21'h010000, 21'h000000},
+  // parameter M_BASE_ADDR     = {20'hf0000, 20'he0000, 20'hd0000, 20'hc0000,
+  //                              20'hb0000, 20'ha0000, 20'h90000, 20'h80000,
+  //                              20'h70000, 20'h60000, 20'h50000, 20'h40000,
+  //                              20'h30000, 20'h20000, 20'h10000, 20'h00000},
   // parameter M_BASE_ADDR     = {19'h70000, 19'h60000, 19'h50000, 19'h40000,
   //                              19'h30000, 19'h20000, 19'h10000, 19'h00000},
   parameter M_ADDR_WIDTH    = {M_COUNT{{M_REGIONS{CORE_ADDR_WIDTH}}}},
@@ -74,7 +82,7 @@ module full_riscv_sys # (
   // temp PCI-e parameters. 
   // There are additional 8 leading zeros for these values
   parameter FIRST_SLOT_ADDR = 7'h40,
-  parameter SLOT_ADDR_STEP  = 7'h04
+  parameter SLOT_ADDR_STEP  = 7'h08
 )(
   // Inputs
   input [2-1:0] rx_clk,
@@ -715,7 +723,8 @@ temp_pcie # (
 
 genvar i;
 generate
-  for (i=0; i<M_COUNT; i=i+1)
+  for (i=0; i<M_COUNT; i=i+1) begin
+    // (* keep_hierarchy = "yes" *)
     riscv_axi_wrapper #(
         .DATA_WIDTH(AXI_DATA_WIDTH),
         .ADDR_WIDTH(AXI_ADDR_WIDTH-$clog2(M_COUNT)),
@@ -768,6 +777,7 @@ generate
         .core_msg_data(core_msg_data[i*64 +: 64]),
         .core_msg_valid(core_msg_valid[i])
     );
+  end
 endgenerate
     
 core_msg_arbiter # (
