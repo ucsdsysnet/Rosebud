@@ -35,7 +35,7 @@ module full_riscv_sys # (
   parameter IMEM_SIZE_BYTES = 8192,
   parameter DMEM_SIZE_BYTES = 32768,
   parameter STAT_ADDR_WIDTH = 1,
-  parameter SLOT_COUNT      = 8,
+  parameter SLOT_COUNT      = 16,
   parameter INTERLEAVE      = 1,
   parameter PIPELINE_OUTPUT = 0,
   // interconnect parameters
@@ -62,7 +62,8 @@ module full_riscv_sys # (
   parameter AXI_ADDR_WIDTH    = CORE_ADDR_WIDTH+$clog2(M_COUNT),
   parameter AXI_STRB_WIDTH    = (AXI_DATA_WIDTH/8),
   parameter AXI_ID_WIDTH      = 8,
-  parameter AXI_MAX_BURST_LEN = 8,
+  parameter AXI_CORE_ID_WIDTH = AXI_ID_WIDTH+$clog2(S_COUNT),
+  parameter AXI_MAX_BURST_LEN = 2,
   parameter DESC_WIDTH        = $clog2(M_COUNT)+$clog2(SLOT_COUNT),
   parameter SLOT_LEAD_ZERO    = 8,
   parameter RX_WRITE_OFFSET   = 8'h0A,
@@ -179,7 +180,7 @@ wire [S_COUNT*2-1:0] m_axi_rresp;
 wire [S_COUNT-1:0] m_axi_rlast;
 wire [S_COUNT-1:0] m_axi_rvalid;
 
-wire [M_COUNT*AXI_ID_WIDTH-1:0] s_axi_awid;
+wire [M_COUNT*AXI_CORE_ID_WIDTH-1:0] s_axi_awid;
 wire [M_COUNT*AXI_ADDR_WIDTH-1:0] s_axi_awaddr;
 wire [M_COUNT*8-1:0] s_axi_awlen;
 wire [M_COUNT*3-1:0] s_axi_awsize;
@@ -193,7 +194,7 @@ wire [M_COUNT*AXI_STRB_WIDTH-1:0] s_axi_wstrb;
 wire [M_COUNT-1:0] s_axi_wlast;
 wire [M_COUNT-1:0] s_axi_wvalid;
 wire [M_COUNT-1:0] s_axi_bready;
-wire [M_COUNT*AXI_ID_WIDTH-1:0] s_axi_arid;
+wire [M_COUNT*AXI_CORE_ID_WIDTH-1:0] s_axi_arid;
 wire [M_COUNT*AXI_ADDR_WIDTH-1:0] s_axi_araddr;
 wire [M_COUNT*8-1:0] s_axi_arlen;
 wire [M_COUNT*3-1:0] s_axi_arsize;
@@ -205,11 +206,11 @@ wire [M_COUNT-1:0] s_axi_arvalid;
 wire [M_COUNT-1:0] s_axi_rready;
 wire [M_COUNT-1:0] s_axi_awready;
 wire [M_COUNT-1:0] s_axi_wready;
-wire [M_COUNT*AXI_ID_WIDTH-1:0] s_axi_bid;
+wire [M_COUNT*AXI_CORE_ID_WIDTH-1:0] s_axi_bid;
 wire [M_COUNT*2-1:0] s_axi_bresp;
 wire [M_COUNT-1:0] s_axi_bvalid;
 wire [M_COUNT-1:0] s_axi_arready;
-wire [M_COUNT*AXI_ID_WIDTH-1:0] s_axi_rid;
+wire [M_COUNT*AXI_CORE_ID_WIDTH-1:0] s_axi_rid;
 wire [M_COUNT*AXI_DATA_WIDTH-1:0] s_axi_rdata;
 wire [M_COUNT*2-1:0] s_axi_rresp;
 wire [M_COUNT-1:0] s_axi_rlast;
@@ -442,18 +443,20 @@ eth_dma_0 (
     .ifg_delay(ifg_delay)
 );
 
-axi_interconnect #
-// axi_crossbar #
+// axi_interconnect #
+axi_crossbar #
 (
     .S_COUNT(S_COUNT),
     .M_COUNT(M_COUNT),
     .DATA_WIDTH(AXI_DATA_WIDTH),
     .ADDR_WIDTH(AXI_ADDR_WIDTH),
     .STRB_WIDTH(AXI_STRB_WIDTH),
-    .ID_WIDTH(AXI_ID_WIDTH),
+    .S_ID_WIDTH(AXI_ID_WIDTH),
     .M_REGIONS(M_REGIONS),
     .M_BASE_ADDR(M_BASE_ADDR),
     .M_ADDR_WIDTH(M_ADDR_WIDTH)
+    // .S_THREADS({S_COUNT{32'd4}}),
+    // .S_ACCEPT({S_COUNT{32'd32}})
 )
 interconnect (
     .clk(logic_clk),
@@ -728,7 +731,7 @@ generate
     riscv_axi_wrapper #(
         .DATA_WIDTH(AXI_DATA_WIDTH),
         .ADDR_WIDTH(AXI_ADDR_WIDTH-$clog2(M_COUNT)),
-        .ID_WIDTH(AXI_ID_WIDTH),
+        .ID_WIDTH(AXI_CORE_ID_WIDTH),
         .PIPELINE_OUTPUT(PIPELINE_OUTPUT),
         .IMEM_SIZE_BYTES(IMEM_SIZE_BYTES),
         .DMEM_SIZE_BYTES(DMEM_SIZE_BYTES),
@@ -738,7 +741,7 @@ generate
     RISCV (
         .clk(logic_clk),
         .rst(logic_rst),
-        .s_axi_awid(s_axi_awid[AXI_ID_WIDTH*i +: AXI_ID_WIDTH]),
+        .s_axi_awid(s_axi_awid[AXI_CORE_ID_WIDTH*i +: AXI_CORE_ID_WIDTH]),
         .s_axi_awaddr(s_axi_awaddr[AXI_ADDR_WIDTH*i +: AXI_ADDR_WIDTH-$clog2(M_COUNT)]),
         .s_axi_awlen(s_axi_awlen[8*i +: 8]),
         .s_axi_awsize(s_axi_awsize[3*i +: 3]),
@@ -753,11 +756,11 @@ generate
         .s_axi_wlast(s_axi_wlast[i]),
         .s_axi_wvalid(s_axi_wvalid[i]),
         .s_axi_wready(s_axi_wready[i]),
-        .s_axi_bid(s_axi_bid[AXI_ID_WIDTH*i +: AXI_ID_WIDTH]),
+        .s_axi_bid(s_axi_bid[AXI_CORE_ID_WIDTH*i +: AXI_CORE_ID_WIDTH]),
         .s_axi_bresp(s_axi_bresp[2*i +: 2]),
         .s_axi_bvalid(s_axi_bvalid[i]),
         .s_axi_bready(s_axi_bready[i]),
-        .s_axi_arid(s_axi_arid[AXI_ID_WIDTH*i +: AXI_ID_WIDTH]),
+        .s_axi_arid(s_axi_arid[AXI_CORE_ID_WIDTH*i +: AXI_CORE_ID_WIDTH]),
         .s_axi_araddr(s_axi_araddr[AXI_ADDR_WIDTH*i +: AXI_ADDR_WIDTH-$clog2(M_COUNT)]),
         .s_axi_arlen(s_axi_arlen[8*i +: 8]),
         .s_axi_arsize(s_axi_arsize[3*i +: 3]),
@@ -767,7 +770,7 @@ generate
         .s_axi_arprot(s_axi_arprot[3*i +: 3]),
         .s_axi_arvalid(s_axi_arvalid[i]),
         .s_axi_arready(s_axi_arready[i]),
-        .s_axi_rid(s_axi_rid[AXI_ID_WIDTH*i +: AXI_ID_WIDTH]),
+        .s_axi_rid(s_axi_rid[AXI_CORE_ID_WIDTH*i +: AXI_CORE_ID_WIDTH]),
         .s_axi_rdata(s_axi_rdata[AXI_DATA_WIDTH*i +: AXI_DATA_WIDTH]),
         .s_axi_rresp(s_axi_rresp[2*i +: 2]),
         .s_axi_rlast(s_axi_rlast[i]),
