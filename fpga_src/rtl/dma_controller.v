@@ -7,7 +7,7 @@ module dma_controller # (
     parameter CORE_ADDR_WIDTH = 16,
     parameter SLOT_ADDR_WIDTH = CORE_ADDR_WIDTH-1,
     parameter SLOT_ADDR_EFF   = SLOT_ADDR_WIDTH-SLOT_LEAD_ZERO,
-    parameter DESC_FIFO_WIDTH = CORE_NO_WIDTH+SLOT_NO_WIDTH,
+    parameter DESC_WIDTH      = CORE_NO_WIDTH+SLOT_NO_WIDTH,
 
     parameter CORE_NO_WIDTH   = $clog2(CORE_COUNT),
     parameter SLOT_NO_WIDTH   = $clog2(SLOT_COUNT),
@@ -66,27 +66,27 @@ module dma_controller # (
     /*
      * Transmit descriptor output
      */
-    output wire [ADDR_WIDTH-1:0]     s_axis_tx_desc_addr,  
-    output wire [LEN_WIDTH-1:0]      s_axis_tx_desc_len,   
-    output wire [TAG_WIDTH-1:0]      s_axis_tx_desc_tag,   
-    output wire                      s_axis_tx_desc_user,  
-    output wire                      s_axis_tx_desc_valid, 
-    input  wire                      s_axis_tx_desc_ready, 
+    output wire [2*ADDR_WIDTH-1:0]   s_axis_tx_desc_addr,  
+    output wire [2*LEN_WIDTH-1:0]    s_axis_tx_desc_len,   
+    output wire [2*TAG_WIDTH-1:0]    s_axis_tx_desc_tag,   
+    output wire [2-1:0]              s_axis_tx_desc_user,  
+    output wire [2-1:0]              s_axis_tx_desc_valid, 
+    input  wire [2-1:0]              s_axis_tx_desc_ready, 
 
     /*
      * Receive descriptor output
      */
-    output wire [ADDR_WIDTH-1:0]     s_axis_rx_desc_addr,
-    output wire [LEN_WIDTH-1:0]      s_axis_rx_desc_len,
-    output wire [TAG_WIDTH-1:0]      s_axis_rx_desc_tag,
-    output wire                      s_axis_rx_desc_valid,
-    input  wire                      s_axis_rx_desc_ready,
+    output wire [2*ADDR_WIDTH-1:0]   s_axis_rx_desc_addr,
+    output wire [2*LEN_WIDTH-1:0]    s_axis_rx_desc_len,
+    output wire [2*TAG_WIDTH-1:0]    s_axis_rx_desc_tag,
+    output wire [2-1:0]              s_axis_rx_desc_valid,
+    input  wire [2-1:0]              s_axis_rx_desc_ready,
 
     // Messages from MAC
-    input  wire                      incoming_pkt_ready,
-    input  wire                      pkt_sent_to_core_valid,
-    input  wire [LEN_WIDTH-1:0]      pkt_sent_to_core_len,
-    input  wire                      pkt_sent_out_valid,
+    input  wire [2-1:0]              incoming_pkt_ready,
+    input  wire [2*LEN_WIDTH-1:0]    pkt_sent_to_core_len,
+    input  wire [2-1:0]              pkt_sent_to_core_valid,
+    input  wire [2-1:0]              pkt_sent_out_valid,
     
     // Configuration
     input  wire [CORE_COUNT-1:0]     drop_list,
@@ -94,7 +94,7 @@ module dma_controller # (
     input  wire [LEN_WIDTH-1:0]      max_pkt_len,
     input  wire                      max_pkt_len_valid,
 
-    input  wire [DESC_FIFO_WIDTH-1:0]     inject_rx_desc,
+    input  wire [DESC_WIDTH-1:0]     inject_rx_desc,
     input  wire                      inject_rx_desc_valid,
     output wire                      inject_rx_desc_ready,
 
@@ -122,10 +122,10 @@ module dma_controller # (
 
 parameter FIFO_ADDR_WIDTH = $clog2(CORE_COUNT * SLOT_COUNT);
     
-wire [DESC_FIFO_WIDTH-1:0] rx_desc;
-wire [DESC_FIFO_WIDTH-1:0] dma_rx_desc;
+wire [DESC_WIDTH-1:0] rx_desc;
+wire [DESC_WIDTH-1:0] dma_rx_desc;
 wire                       dma_rx_desc_valid;
-wire [DESC_FIFO_WIDTH-1:0] rx_desc_fifo_data;
+wire [DESC_WIDTH-1:0] rx_desc_fifo_data;
 wire                       rx_desc_fifo_ready;
 wire                       rx_desc_fifo_v;
 wire                       rx_desc_fifo_pop;
@@ -136,7 +136,7 @@ wire rx_desc_fifo_err       = dma_rx_desc_valid && !rx_desc_fifo_ready;
 
 simple_fifo # (
   .ADDR_WIDTH(FIFO_ADDR_WIDTH),
-  .DATA_WIDTH(DESC_FIFO_WIDTH)
+  .DATA_WIDTH(DESC_WIDTH)
 ) rx_desc_fifo (
   .clk(clk),
   .rst(rst),
@@ -162,7 +162,7 @@ always @ (posedge clk) begin
   rx_desc_fifo_v_r  <= rx_desc_fifo_v & !rx_desc_fifo_pop;
 end
 
-wire [CORE_NO_WIDTH-1:0] rx_desc_core = rx_desc_fifo_data[DESC_FIFO_WIDTH-1:SLOT_NO_WIDTH];
+wire [CORE_NO_WIDTH-1:0] rx_desc_core = rx_desc_fifo_data[DESC_WIDTH-1:SLOT_NO_WIDTH];
 wire [SLOT_NO_WIDTH-1:0] rx_desc_slot = rx_desc_fifo_data[SLOT_NO_WIDTH-1:0];
 
 reg [CORE_COUNT-1:0] rx_desc_core_1hot_r;
@@ -198,20 +198,21 @@ always @ (posedge clk)
   else if (max_pkt_len_valid)
     max_pkt_len_r <= max_pkt_len;
 
-wire ready_to_send = rx_desc_fifo_v_r && (!drop) && s_axis_rx_desc_ready;
+wire ready_to_send = rx_desc_fifo_v_r && (!drop) && s_axis_rx_desc_ready[0];
 reg [9:0] rx_pkt_counter;
 always @ (posedge clk)
   if (rst)
     rx_pkt_counter <= 10'd0;
-  else if (ready_to_send && !incoming_pkt_ready && (rx_pkt_counter>0))
+  else if (ready_to_send && !incoming_pkt_ready[0] && (rx_pkt_counter>0))
     rx_pkt_counter <= rx_pkt_counter - 10'd1;
-  else if (~ready_to_send && incoming_pkt_ready)
+  else if (~ready_to_send && incoming_pkt_ready[0])
     rx_pkt_counter <= rx_pkt_counter + 10'd1;
     
-assign s_axis_rx_desc_tag   = {TAG_WIDTH{1'b0}};
-assign s_axis_rx_desc_len   = max_pkt_len_r;
-assign s_axis_rx_desc_addr  = rx_desc_addr;
-assign s_axis_rx_desc_valid = ready_to_send && ((rx_pkt_counter>0) || incoming_pkt_ready);
+assign s_axis_rx_desc_tag   = {2*TAG_WIDTH{1'b0}};
+assign s_axis_rx_desc_len[LEN_WIDTH-1:0]   = max_pkt_len_r;
+assign s_axis_rx_desc_addr[ADDR_WIDTH-1:0]  = rx_desc_addr;
+assign s_axis_rx_desc_valid[0] = ready_to_send && ((rx_pkt_counter>0) || incoming_pkt_ready[0]);
+assign s_axis_rx_desc_valid[1] = 1'b0;
 
 assign rx_desc_fifo_pop = (rx_desc_fifo_v_r && drop) || (s_axis_rx_desc_valid);
 
@@ -228,7 +229,7 @@ simple_fifo # (
   .clk(clk),
   .rst(rst),
 
-  .din_valid(s_axis_rx_desc_valid),
+  .din_valid(s_axis_rx_desc_valid[0]),
   .din({rx_desc_core_r,rx_desc_slot_r,rx_desc_slot_addr}),
   .din_ready(trigger_fifo_ready),
  
@@ -265,12 +266,12 @@ assign trigger_sent = trigger_accepted;
 always @ (posedge clk)
   if (rst)
     trigger_counter <= {(CORE_COUNT+1){1'b0}};
-  else if (trigger_sent && !pkt_sent_to_core_valid) // && (trigger_counter>0))
+  else if (trigger_sent && !pkt_sent_to_core_valid[0]) // && (trigger_counter>0))
     trigger_counter <= trigger_counter - 1'd1;
-  else if (~trigger_sent && pkt_sent_to_core_valid)
+  else if (~trigger_sent && pkt_sent_to_core_valid[0])
     trigger_counter <= trigger_counter + 1'd1;
  
-wire trigger_send_valid = (pkt_sent_to_core_valid || (trigger_counter>0)) 
+wire trigger_send_valid = (pkt_sent_to_core_valid[0] || (trigger_counter>0)) 
                           && trigger_fifo_v;
 
 always @ (posedge clk)
@@ -375,15 +376,16 @@ always @ (posedge clk)
     end
   end
 
-assign s_axis_tx_desc_addr  = s_axis_tx_desc_addr_reg;
-assign s_axis_tx_desc_len   = s_axis_tx_desc_len_reg;
-assign s_axis_tx_desc_valid = s_axis_tx_desc_valid_reg;
+assign s_axis_tx_desc_addr[ADDR_WIDTH-1:0]  = s_axis_tx_desc_addr_reg;
+assign s_axis_tx_desc_len[LEN_WIDTH-1:0]   = s_axis_tx_desc_len_reg;
+assign s_axis_tx_desc_valid[0] = s_axis_tx_desc_valid_reg;
+assign s_axis_tx_desc_valid[1] = 1'b0;
 assign s_axis_tx_desc_tag   = 0;
 assign s_axis_tx_desc_user  = 0;
 
 // There is 1 cycle difference, but if ready is asserted it would stay asserted. 
 // And we are latching. 
-assign msg_ready = s_axis_tx_desc_ready;
+assign msg_ready = s_axis_tx_desc_ready[0];
 
 reg [CORE_NO_WIDTH-1:0] tx_desc_core_no_latched;
 reg [SLOT_NO_WIDTH-1:0] tx_desc_slot_no_latched;
@@ -396,6 +398,6 @@ always @ (posedge clk)
     end
 
 assign dma_rx_desc = {tx_desc_core_no_latched, tx_desc_slot_no_latched};
-assign dma_rx_desc_valid = pkt_sent_out_valid;
+assign dma_rx_desc_valid = pkt_sent_out_valid[0];
 
 endmodule
