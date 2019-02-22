@@ -138,6 +138,7 @@ assign m_axi_awprot  = 3'b010;
 assign m_axi_awlen   = 8'd0;
 assign m_axi_awsize  = 3'b011;
 assign m_axi_awburst = 2'b01;
+assign m_axi_awid    = {ID_WIDTH{1'b0}};
 assign m_axi_awaddr  = m_axi_awaddr_reg;
 assign m_axi_awvalid = m_axi_awvalid_reg;
 

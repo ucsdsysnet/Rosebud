@@ -343,6 +343,7 @@ always @ (posedge clk)
   if (rst) begin 
     m_axi_awvalid_reg <= 1'b0;
     awr_req_attempt   <= 1'b0;
+    m_axi_awid_reg    <= {ID_WIDTH{1'b0}};
   end else begin
     if ((|trigger_send_valid) && !awr_req_attempt) begin
       m_axi_awaddr_reg  <= trigger_addr;

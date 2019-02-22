@@ -70,15 +70,15 @@ module fpga (
 
 wire clk_100mhz_ibufg;
 wire clk_125mhz_mmcm_out;
-wire clk_250mhzmhz_mmcm_out;
+wire clk_200mhzmhz_mmcm_out;
 
 // Internal 125 MHz clock
 wire clk_125mhz_int;
 wire rst_125mhz_int;
 
-// Internal 250mhz MHz clock
-wire clk_250mhzmhz_int;
-wire rst_250mhzmhz_int;
+// Internal 200mhz MHz clock
+wire clk_200mhzmhz_int;
+wire rst_200mhzmhz_int;
 
 // Internal 156.25 MHz clock
 wire clk_156mhz_int;
@@ -174,7 +174,7 @@ sync_reset_125mhz_inst (
 );
 
 // MMCM instance
-// 100 MHz in, 250mhz MHz out
+// 100 MHz in, 200mhz MHz out
 // PFD range: 10 MHz to 500 MHz
 // VCO range: 600 MHz to 1440 MHz
 // M = 10, D = 1 sets Fvco = 1000 MHz (in range)
@@ -215,7 +215,7 @@ clk_mmcm_inst2 (
     .CLKFBIN(mmcm_clkfb2),
     .RST(mmcm_rst),
     .PWRDWN(1'b0),
-    .CLKOUT0(clk_250mhzmhz_mmcm_out),
+    .CLKOUT0(clk_200mhzmhz_mmcm_out),
     .CLKOUT0B(),
     .CLKOUT1(),
     .CLKOUT1B(),
@@ -232,18 +232,18 @@ clk_mmcm_inst2 (
 );
 
 BUFG
-clk_250mhzmhz_bufg_inst (
-    .I(clk_250mhzmhz_mmcm_out),
-    .O(clk_250mhzmhz_int)
+clk_200mhzmhz_bufg_inst (
+    .I(clk_200mhzmhz_mmcm_out),
+    .O(clk_200mhzmhz_int)
 );
 
 sync_reset #(
     .N(4)
 )
-sync_reset_250mhzmhz_inst (
-    .clk(clk_250mhzmhz_int),
+sync_reset_200mhzmhz_inst (
+    .clk(clk_200mhzmhz_int),
     .rst(~mmcm_locked2),
-    .sync_reset_out(rst_250mhzmhz_int)
+    .sync_reset_out(rst_200mhzmhz_int)
 );
 
 
@@ -546,8 +546,8 @@ core_inst (
      * Clock: 156.25 MHz
      * Synchronous reset
      */
-    .clk(clk_250mhzmhz_int),
-    .rst(rst_250mhzmhz_int),
+    .clk(clk_200mhzmhz_int),
+    .rst(rst_200mhzmhz_int),
     /*
      * GPIO
      */
