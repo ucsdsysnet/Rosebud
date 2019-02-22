@@ -211,7 +211,7 @@ def bench():
           yield clk.posedge
 
         print ("send data from LAN")
-        for i in range (0,8):
+        for i in range (0,10):
           yield xgmii_sink.wait()
           rx_frame = xgmii_sink.recv()
        

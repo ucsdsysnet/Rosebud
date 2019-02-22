@@ -1,23 +1,24 @@
 module dma_controller # (
-    parameter DATA_WIDTH = 64,   
-    parameter ADDR_WIDTH = CORE_LEAD_ZERO+CORE_NO_WIDTH,
-    parameter ID_WIDTH   = 8,
-    parameter LEN_WIDTH  = 20,
-    parameter TAG_WIDTH  = 8,
-    parameter CORE_COUNT = 8,
-    parameter SLOT_COUNT = 16,
-    parameter SLOT_ADDR_WIDTH = 15,
+    parameter DATA_WIDTH      = 64,   
+    parameter CORE_COUNT      = 16,
+    parameter SLOT_COUNT      = 16,
     parameter SLOT_LEAD_ZERO  = 8,
-    parameter CORE_LEAD_ZERO  = 16,
-    
-    parameter STRB_WIDTH = (DATA_WIDTH/8),
-    parameter CORE_NO_WIDTH = $clog2(CORE_COUNT),
-    parameter SLOT_NO_WIDTH = $clog2(SLOT_COUNT),
-    parameter CORE_FLAG_SIZE = SLOT_COUNT+4,
-    parameter ERR_FLAG_SIZE = CORE_COUNT+2,
-    parameter FIFO_WIDTH = CORE_NO_WIDTH + SLOT_NO_WIDTH,
-    parameter SLOT_ADDR_EFF = SLOT_ADDR_WIDTH-SLOT_LEAD_ZERO
+    parameter RX_WRITE_OFFSET = 8'h0A,
+    parameter CORE_ADDR_WIDTH = 16,
+    parameter SLOT_ADDR_WIDTH = CORE_ADDR_WIDTH-1,
+    parameter SLOT_ADDR_EFF   = SLOT_ADDR_WIDTH-SLOT_LEAD_ZERO,
+    parameter DESC_FIFO_WIDTH = CORE_NO_WIDTH+SLOT_NO_WIDTH,
 
+    parameter CORE_NO_WIDTH   = $clog2(CORE_COUNT),
+    parameter SLOT_NO_WIDTH   = $clog2(SLOT_COUNT),
+    parameter ADDR_WIDTH      = CORE_ADDR_WIDTH+CORE_NO_WIDTH,
+    parameter STRB_WIDTH      = (DATA_WIDTH/8),
+    parameter ID_WIDTH        = 8,
+    parameter LEN_WIDTH       = 16,
+    parameter TAG_WIDTH       = 8,
+    
+    parameter CORE_FLAG_SIZE  = SLOT_COUNT+8,
+    parameter ERR_FLAG_SIZE   = CORE_COUNT+2
 )
 (
     input  wire                      clk,
@@ -93,7 +94,7 @@ module dma_controller # (
     input  wire [LEN_WIDTH-1:0]      max_pkt_len,
     input  wire                      max_pkt_len_valid,
 
-    input  wire [FIFO_WIDTH-1:0]     inject_rx_desc,
+    input  wire [DESC_FIFO_WIDTH-1:0]     inject_rx_desc,
     input  wire                      inject_rx_desc_valid,
     output wire                      inject_rx_desc_ready,
 
@@ -121,13 +122,13 @@ module dma_controller # (
 
 parameter FIFO_ADDR_WIDTH = $clog2(CORE_COUNT * SLOT_COUNT);
     
-wire [FIFO_WIDTH-1:0] rx_desc;
-wire [FIFO_WIDTH-1:0] dma_rx_desc;
-wire                  dma_rx_desc_valid;
-wire [FIFO_WIDTH-1:0] rx_desc_fifo_data;
-wire                  rx_desc_fifo_ready;
-wire                  rx_desc_fifo_v;
-wire                  rx_desc_fifo_pop;
+wire [DESC_FIFO_WIDTH-1:0] rx_desc;
+wire [DESC_FIFO_WIDTH-1:0] dma_rx_desc;
+wire                       dma_rx_desc_valid;
+wire [DESC_FIFO_WIDTH-1:0] rx_desc_fifo_data;
+wire                       rx_desc_fifo_ready;
+wire                       rx_desc_fifo_v;
+wire                       rx_desc_fifo_pop;
 
 assign inject_rx_desc_ready = !dma_rx_desc_valid && rx_desc_fifo_ready;
 assign rx_desc              = dma_rx_desc_valid ? dma_rx_desc : inject_rx_desc;
@@ -135,7 +136,7 @@ wire rx_desc_fifo_err       = dma_rx_desc_valid && !rx_desc_fifo_ready;
 
 simple_fifo # (
   .ADDR_WIDTH(FIFO_ADDR_WIDTH),
-  .DATA_WIDTH(FIFO_WIDTH)
+  .DATA_WIDTH(DESC_FIFO_WIDTH)
 ) rx_desc_fifo (
   .clk(clk),
   .rst(rst),
@@ -161,7 +162,7 @@ always @ (posedge clk) begin
   rx_desc_fifo_v_r  <= rx_desc_fifo_v & !rx_desc_fifo_pop;
 end
 
-wire [CORE_NO_WIDTH-1:0] rx_desc_core = rx_desc_fifo_data[FIFO_WIDTH-1:SLOT_NO_WIDTH];
+wire [CORE_NO_WIDTH-1:0] rx_desc_core = rx_desc_fifo_data[DESC_FIFO_WIDTH-1:SLOT_NO_WIDTH];
 wire [SLOT_NO_WIDTH-1:0] rx_desc_slot = rx_desc_fifo_data[SLOT_NO_WIDTH-1:0];
 
 reg [CORE_COUNT-1:0] rx_desc_core_1hot_r;
@@ -187,13 +188,13 @@ end
 
 wire drop = |(rx_desc_core_1hot_r & drop_list_r);
 wire [ADDR_WIDTH-1:0] rx_desc_addr = {rx_desc_core_r , 
-                    {(CORE_LEAD_ZERO-SLOT_ADDR_WIDTH){1'b0}}, 
-                    rx_desc_slot_addr, {(SLOT_LEAD_ZERO-4){1'b0}},4'hA};
+                    {(CORE_ADDR_WIDTH-SLOT_ADDR_WIDTH){1'b0}}, 
+                    rx_desc_slot_addr, RX_WRITE_OFFSET};
 
 reg [LEN_WIDTH-1:0] max_pkt_len_r;
 always @ (posedge clk)
   if (rst) 
-    max_pkt_len_r <= 1000; // {LEN_WIDTH{1'b0}};
+    max_pkt_len_r <= 16'd1024; // {LEN_WIDTH{1'b0}};
   else if (max_pkt_len_valid)
     max_pkt_len_r <= max_pkt_len;
 
@@ -243,8 +244,8 @@ assign m_axi_arprot  = 3'b010;
 assign m_axi_arlen   = 8'd0;
 assign m_axi_arsize  = 3'b011;
 assign m_axi_arburst = 2'b01;
-assign m_axi_arid    = 8'd0;  
-assign m_axi_araddr  = 18'd0; 
+assign m_axi_arid    = {ID_WIDTH{1'b0}};  
+assign m_axi_araddr  = {ADDR_WIDTH{1'b0}}; 
 assign m_axi_arvalid = 1'b0;  
 assign m_axi_rready  = 1'b0;
 
@@ -256,7 +257,7 @@ reg awr_req_attempt;
 
 wire [ADDR_WIDTH-1:0] trigger_addr;
 assign trigger_addr = {trigger_fifo_core_no, 
-                    {(CORE_LEAD_ZERO  - 9){1'b0}} , 1'b1, 
+                    {(CORE_ADDR_WIDTH  - 9){1'b0}} , 1'b1, 
                     {(5 - SLOT_NO_WIDTH){1'b0}}, trigger_fifo_slot_no, 3'd0};
 
 reg [CORE_COUNT+1-1:0] trigger_counter;
@@ -354,7 +355,7 @@ wire [7:0]  read_slot_no = msg_data[31:24];
 wire [7:0]  core_errs    = msg_data[63:48];
 
 wire [ADDR_WIDTH-1:0] read_slot_addr = {msg_core_no,
-                      msg_data[32+CORE_LEAD_ZERO-1:32]};
+                      msg_data[32+CORE_ADDR_WIDTH-1:32]};
 
 // send tx desc
 reg [ADDR_WIDTH-1:0]  s_axis_tx_desc_addr_reg;

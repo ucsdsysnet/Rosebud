@@ -30,49 +30,53 @@ THE SOFTWARE.
  * Testbench for axi_dma
  */
 module full_riscv_sys # (
-  // Parameters
-  parameter S_COUNT = 3,
-  parameter M_COUNT = 8,
-  parameter FORWARD_ID = 1,
-  parameter M_REGIONS = 1,
-  parameter M_BASE_ADDR = {19'h70000, 19'h60000, 19'h50000, 19'h40000,19'h30000, 19'h20000, 19'h10000, 19'h00000},
-  parameter M_ADDR_WIDTH = {M_COUNT{{M_REGIONS{32'd16}}}},
-  parameter M_CONNECT_READ = {M_COUNT{{S_COUNT{1'b1}}}},
-  parameter M_CONNECT_WRITE = {M_COUNT{{S_COUNT{1'b1}}}},
-  parameter M_SECURE = {M_COUNT{1'b0}},
-  
-  parameter DATA_WIDTH = 64,
-  parameter CTRL_WIDTH = (DATA_WIDTH/8),
-  parameter AXI_DATA_WIDTH = 64,
-  parameter AXI_ADDR_WIDTH = 19,
-  parameter AXI_STRB_WIDTH = (AXI_DATA_WIDTH/8),
-  parameter AXI_ID_WIDTH = 8,
-  parameter AXI_MAX_BURST_LEN = 8,
-  parameter AXIS_DATA_WIDTH = AXI_DATA_WIDTH,
-  parameter AXIS_KEEP_ENABLE = (AXIS_DATA_WIDTH>8),
-  parameter AXIS_KEEP_WIDTH = (AXIS_DATA_WIDTH/8),
-  parameter AXIS_LAST_ENABLE = 1,
-  parameter AXIS_ID_ENABLE = 1,
-  parameter AXIS_ID_WIDTH = 8,
-  parameter AXIS_DEST_ENABLE = 0,
-  parameter AXIS_DEST_WIDTH = 8,
-  parameter AXIS_USER_ENABLE = 1,
-  parameter AXIS_USER_WIDTH = 1,
-  parameter LEN_WIDTH = 16,
-  parameter TAG_WIDTH = 8,
-  parameter ENABLE_SG = 0,
-  parameter ENABLE_UNALIGNED = 1,
+  // riscv core parameters
+  parameter CORE_ADDR_WIDTH = 16,
   parameter IMEM_SIZE_BYTES = 8192,
   parameter DMEM_SIZE_BYTES = 32768,
+  parameter STAT_ADDR_WIDTH = 1,
+  parameter SLOT_COUNT      = 16,
   parameter INTERLEAVE      = 1,
   parameter PIPELINE_OUTPUT = 0,
-  parameter STAT_ADDR_WIDTH = 1,
-  parameter ENABLE_PADDING = 1,
-  parameter ENABLE_DIC = 1,
-  parameter MIN_FRAME_LENGTH = 64,
-  parameter TX_FRAME_FIFO = 1,
+  // interconnect parameters
+  parameter S_COUNT         = 3,
+  parameter M_COUNT         = 16,
+  parameter M_REGIONS       = 1,
+  parameter M_BASE_ADDR     = {20'hf0000, 20'he0000, 20'hd0000, 20'hc0000,
+                               20'hb0000, 20'ha0000, 20'h90000, 20'h80000,
+                               20'h70000, 20'h60000, 20'h50000, 20'h40000,
+                               20'h30000, 20'h20000, 20'h10000, 20'h00000},
+  // parameter M_BASE_ADDR     = {19'h70000, 19'h60000, 19'h50000, 19'h40000,
+  //                              19'h30000, 19'h20000, 19'h10000, 19'h00000},
+  parameter M_ADDR_WIDTH    = {M_COUNT{{M_REGIONS{CORE_ADDR_WIDTH}}}},
+  parameter M_CONNECT_READ  = {M_COUNT{{S_COUNT{1'b1}}}},
+  parameter M_CONNECT_WRITE = {M_COUNT{{S_COUNT{1'b1}}}},
+  // AXI DMA paramaters
+  parameter AXI_DATA_WIDTH    = 64,
+  parameter AXI_ADDR_WIDTH    = CORE_ADDR_WIDTH+$clog2(M_COUNT),
+  parameter AXI_STRB_WIDTH    = (AXI_DATA_WIDTH/8),
+  parameter AXI_ID_WIDTH      = 8,
+  parameter AXI_MAX_BURST_LEN = 8,
+  parameter DESC_WIDTH        = $clog2(M_COUNT)+$clog2(SLOT_COUNT),
+  parameter SLOT_LEAD_ZERO    = 8,
+  parameter RX_WRITE_OFFSET   = 8'h0A,
+  // eth interface parameters 
+  parameter DATA_WIDTH        = 64,
+  parameter CTRL_WIDTH        = (DATA_WIDTH/8),
+  parameter AXIS_USER_WIDTH   = 1,
+  parameter LEN_WIDTH         = 16,
+  parameter TAG_WIDTH         = 8,
+  parameter ENABLE_UNALIGNED  = 1,
+  parameter ENABLE_PADDING    = 1,
+  parameter MIN_FRAME_LENGTH  = 64,
   parameter TX_DROP_WHEN_FULL = 0,
-  parameter RX_FRAME_FIFO = 1
+  // Aribter parameters
+  parameter CORE_FIFO_ADDR_SIZE   = 2,
+  parameter SHARED_FIFO_ADDR_SIZE = 4,
+  // temp PCI-e parameters. 
+  // There are additional 8 leading zeros for these values
+  parameter FIRST_SLOT_ADDR = 7'h40,
+  parameter SLOT_ADDR_STEP  = 7'h04
 )(
   // Inputs
   input rx_clk,
@@ -84,28 +88,31 @@ module full_riscv_sys # (
 
   input[DATA_WIDTH-1:0] xgmii_rxd,
   input[CTRL_WIDTH-1:0] xgmii_rxc,
-  input[7:0] ifg_delay,
 
   // Outputs
   output [DATA_WIDTH-1:0] xgmii_txd,
-  output [CTRL_WIDTH-1:0] xgmii_txc,
+  output [CTRL_WIDTH-1:0] xgmii_txc
 
-  output [TAG_WIDTH-1:0] m_axis_tx_desc_status_tag,
-  output m_axis_tx_desc_status_valid,
-  output [LEN_WIDTH-1:0] m_axis_rx_desc_status_len,
-  output [TAG_WIDTH-1:0] m_axis_rx_desc_status_tag,
-  output [AXIS_USER_WIDTH-1:0] m_axis_rx_desc_status_user,
-  output m_axis_rx_desc_status_valid,
-
-  output rx_error_bad_frame,
-  output rx_error_bad_fcs,
-  output tx_fifo_overflow,
-  output tx_fifo_bad_frame,
-  output tx_fifo_good_frame,
-  output rx_fifo_overflow,
-  output rx_fifo_bad_frame,
-  output rx_fifo_good_frame
 );
+
+wire[7:0] ifg_delay = 8'd12;
+
+// eth status 
+wire [TAG_WIDTH-1:0] m_axis_tx_desc_status_tag;
+wire m_axis_tx_desc_status_valid;
+wire [LEN_WIDTH-1:0] m_axis_rx_desc_status_len;
+wire [TAG_WIDTH-1:0] m_axis_rx_desc_status_tag;
+wire [AXIS_USER_WIDTH-1:0] m_axis_rx_desc_status_user;
+wire m_axis_rx_desc_status_valid;
+
+wire rx_error_bad_frame;
+wire rx_error_bad_fcs;
+wire tx_fifo_overflow;
+wire tx_fifo_bad_frame;
+wire tx_fifo_good_frame;
+wire rx_fifo_overflow;
+wire rx_fifo_bad_frame;
+wire rx_fifo_good_frame;
 
 // Internal wires
 wire [S_COUNT*AXI_ID_WIDTH-1:0] m_axi_awid;
@@ -216,14 +223,15 @@ wire [3:0]                mc_axi_arcache;
 wire [2:0]                mc_axi_arprot;
 wire                      mc_axi_arvalid;
 wire                      mc_axi_rready;
+
+
+wire  [$clog2(SLOT_COUNT)-1:0]                slot_addr_wr_no;
+wire  [CORE_ADDR_WIDTH-1-SLOT_LEAD_ZERO-1:0]  slot_addr_wr_data;
+wire                                          slot_addr_wr_valid;
   
-wire  [3:0]  slot_addr_wr_no;
-wire  [6:0]  slot_addr_wr_data;
-wire         slot_addr_wr_valid;
-  
-wire [6:0]  inject_rx_desc;
-wire        inject_rx_desc_valid;
-wire        inject_rx_desc_ready;
+wire [DESC_WIDTH-1:0]  inject_rx_desc;
+wire                   inject_rx_desc_valid;
+wire                   inject_rx_desc_ready;
 
 wire tx_enable;
 wire rx_enable;
@@ -254,7 +262,7 @@ wire [$clog2(M_COUNT)-1:0] msg_core_no;
 
 
 // connection to master controller
-assign m_axi_awid[1*AXI_ID_WIDTH +: AXI_ID_WIDTH] = {1'b1,mc_axi_awid};
+assign m_axi_awid[1*AXI_ID_WIDTH +: AXI_ID_WIDTH] = mc_axi_awid;
 assign m_axi_awaddr[1*AXI_ADDR_WIDTH +: AXI_ADDR_WIDTH] = mc_axi_awaddr;
 assign m_axi_awlen[1*8 +: 8] =  mc_axi_awlen;
 assign m_axi_awsize[1*3 +: 3] = mc_axi_awsize;
@@ -299,14 +307,10 @@ eth_interface #(
     .AXI_MAX_BURST_LEN(AXI_MAX_BURST_LEN),
     .LEN_WIDTH(LEN_WIDTH),
     .TAG_WIDTH(TAG_WIDTH),
-    .ENABLE_SG(ENABLE_SG),
     .ENABLE_UNALIGNED(ENABLE_UNALIGNED),
     .ENABLE_PADDING(ENABLE_PADDING),
-    .ENABLE_DIC(ENABLE_DIC),
     .MIN_FRAME_LENGTH(MIN_FRAME_LENGTH),
-    .TX_FRAME_FIFO(TX_FRAME_FIFO),
-    .TX_DROP_WHEN_FULL(TX_DROP_WHEN_FULL),
-    .RX_FRAME_FIFO(RX_FRAME_FIFO)  
+    .TX_DROP_WHEN_FULL(TX_DROP_WHEN_FULL)
 )
 eth_dma (
     .logic_clk(logic_clk),
@@ -404,14 +408,11 @@ axi_interconnect #
     .ADDR_WIDTH(AXI_ADDR_WIDTH),
     .STRB_WIDTH(AXI_STRB_WIDTH),
     .ID_WIDTH(AXI_ID_WIDTH),
-    // .S_ID_WIDTH(AXI_ID_WIDTH),
-    .FORWARD_ID(FORWARD_ID),
     .M_REGIONS(M_REGIONS),
     .M_BASE_ADDR(M_BASE_ADDR),
     .M_ADDR_WIDTH(M_ADDR_WIDTH),
     .M_CONNECT_READ(M_CONNECT_READ),
-    .M_CONNECT_WRITE(M_CONNECT_WRITE),
-    .M_SECURE(M_SECURE)
+    .M_CONNECT_WRITE(M_CONNECT_WRITE)
 )
 interconnect (
     .clk(logic_clk),
@@ -507,9 +508,18 @@ interconnect (
 dma_controller # (
     .DATA_WIDTH(AXI_DATA_WIDTH),   
     .ADDR_WIDTH(AXI_ADDR_WIDTH),
-    .ID_WIDTH(AXI_ID_WIDTH)  ,
+    .ID_WIDTH(AXI_ID_WIDTH),
     .LEN_WIDTH(LEN_WIDTH),
-    .TAG_WIDTH(TAG_WIDTH)
+    .TAG_WIDTH(TAG_WIDTH),
+    .CORE_COUNT(M_COUNT),
+    .SLOT_COUNT(SLOT_COUNT), 
+    .SLOT_LEAD_ZERO(SLOT_LEAD_ZERO),
+    .RX_WRITE_OFFSET(RX_WRITE_OFFSET),
+    .CORE_ADDR_WIDTH(CORE_ADDR_WIDTH),
+    .SLOT_ADDR_EFF(CORE_ADDR_WIDTH-1-SLOT_LEAD_ZERO),
+    .DESC_FIFO_WIDTH(DESC_WIDTH),
+    .CORE_FLAG_SIZE(SLOT_COUNT+8),
+    .ERR_FLAG_SIZE(M_COUNT+2)
 ) controller 
 (
     .clk(logic_clk),
@@ -612,7 +622,11 @@ temp_pcie # (
     .ID_WIDTH(AXI_ID_WIDTH),
     .LEN_WIDTH(LEN_WIDTH),
     .TAG_WIDTH(TAG_WIDTH),
-    .RISCV_CORES(M_COUNT)
+    .RISCV_CORES(M_COUNT),
+    .RISCV_SLOTS(SLOT_COUNT),
+    .SLOT_ADDR_EFF(CORE_ADDR_WIDTH-1-SLOT_LEAD_ZERO),
+    .FIRST_SLOT_ADDR(FIRST_SLOT_ADDR),
+    .SLOT_ADDR_STEP(SLOT_ADDR_STEP)
 ) temp_pcie_master (
     .clk(logic_clk),
     .rst(logic_rst),
@@ -666,14 +680,12 @@ temp_pcie # (
     .rx_abort(rx_abort)
 );
 
-
-
 genvar i;
 generate
   for (i=0; i<M_COUNT; i=i+1)
     riscv_axi_wrapper #(
         .DATA_WIDTH(AXI_DATA_WIDTH),
-        .ADDR_WIDTH(AXI_ADDR_WIDTH-3),
+        .ADDR_WIDTH(AXI_ADDR_WIDTH-$clog2(M_COUNT)),
         .ID_WIDTH(AXI_ID_WIDTH),
         .PIPELINE_OUTPUT(PIPELINE_OUTPUT),
         .IMEM_SIZE_BYTES(IMEM_SIZE_BYTES),
@@ -685,7 +697,7 @@ generate
         .clk(logic_clk),
         .rst(logic_rst),
         .s_axi_awid(s_axi_awid[AXI_ID_WIDTH*i +: AXI_ID_WIDTH]),
-        .s_axi_awaddr(s_axi_awaddr[AXI_ADDR_WIDTH*i +: AXI_ADDR_WIDTH-3]),
+        .s_axi_awaddr(s_axi_awaddr[AXI_ADDR_WIDTH*i +: AXI_ADDR_WIDTH-$clog2(M_COUNT)]),
         .s_axi_awlen(s_axi_awlen[8*i +: 8]),
         .s_axi_awsize(s_axi_awsize[3*i +: 3]),
         .s_axi_awburst(s_axi_awburst[2*i +: 2]),
@@ -704,7 +716,7 @@ generate
         .s_axi_bvalid(s_axi_bvalid[i]),
         .s_axi_bready(s_axi_bready[i]),
         .s_axi_arid(s_axi_arid[AXI_ID_WIDTH*i +: AXI_ID_WIDTH]),
-        .s_axi_araddr(s_axi_araddr[AXI_ADDR_WIDTH*i +: AXI_ADDR_WIDTH-3]),
+        .s_axi_araddr(s_axi_araddr[AXI_ADDR_WIDTH*i +: AXI_ADDR_WIDTH-$clog2(M_COUNT)]),
         .s_axi_arlen(s_axi_arlen[8*i +: 8]),
         .s_axi_arsize(s_axi_arsize[3*i +: 3]),
         .s_axi_arburst(s_axi_arburst[2*i +: 2]),
@@ -727,8 +739,8 @@ endgenerate
     
 core_msg_arbiter # (
   .CORE_COUNT(M_COUNT),
-  .CORE_FIFO_ADDR_SIZE(2),
-  .SHARED_FIFO_ADDR_SIZE(4)
+  .CORE_FIFO_ADDR_SIZE(CORE_FIFO_ADDR_SIZE),
+  .SHARED_FIFO_ADDR_SIZE(SHARED_FIFO_ADDR_SIZE)
 ) msg_arbiter (
     .clk(logic_clk),
     .rst(logic_rst),
@@ -741,6 +753,5 @@ core_msg_arbiter # (
     .msg_core_no(msg_core_no),
     .msg_ready(msg_ready)
 );
-
 
 endmodule

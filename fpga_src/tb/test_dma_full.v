@@ -87,27 +87,10 @@ full_riscv_sys sys (
 
   .xgmii_rxd(xgmii_rxd),
   .xgmii_rxc(xgmii_rxc),
-  .ifg_delay(8'd12),
 
   // Outputs
   .xgmii_txd(xgmii_txd),
-  .xgmii_txc(xgmii_txc),
-
-  .m_axis_tx_desc_status_tag(),
-  .m_axis_tx_desc_status_valid(),
-  .m_axis_rx_desc_status_len(),
-  .m_axis_rx_desc_status_tag(),
-  .m_axis_rx_desc_status_user(),
-  .m_axis_rx_desc_status_valid(),
-
-  .rx_error_bad_frame(),
-  .rx_error_bad_fcs(),
-  .tx_fifo_overflow(),
-  .tx_fifo_bad_frame(),
-  .tx_fifo_good_frame(),
-  .rx_fifo_overflow(),
-  .rx_fifo_bad_frame(),
-  .rx_fifo_good_frame()
+  .xgmii_txc(xgmii_txc)
 );
 
 endmodule
