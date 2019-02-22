@@ -232,7 +232,7 @@ def bench():
         # assert eth_frame.eth_type == test_frame.eth_type
         # assert eth_frame.payload.data.index(test_frame.payload.data) == 0
 
-        yield delay(10000)
+        yield delay(1000)
         yield clk.posedge
 
         raise StopSimulation

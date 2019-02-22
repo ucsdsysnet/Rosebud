@@ -132,6 +132,12 @@ always @ (posedge clk)
     end
   end
 
+assign m_axi_awlock  = 1'b0;
+assign m_axi_awcache = 4'd3;
+assign m_axi_awprot  = 3'b010;
+assign m_axi_awlen   = 8'd0;
+assign m_axi_awsize  = 3'b011;
+assign m_axi_awburst = 2'b01;
 assign m_axi_awaddr  = m_axi_awaddr_reg;
 assign m_axi_awvalid = m_axi_awvalid_reg;
 
@@ -225,5 +231,17 @@ always @ (posedge clk)
   end
 assign inject_rx_desc = {core_no,slot_no};
 assign inject_rx_desc_valid = desc_valid;
+
+// There is no read operations
+assign m_axi_arlock  = 1'b0;
+assign m_axi_arcache = 4'd3;
+assign m_axi_arprot  = 3'b010;
+assign m_axi_arlen   = 8'd0;
+assign m_axi_arsize  = 3'b011;
+assign m_axi_arburst = 2'b01;
+assign m_axi_arid    = {ID_WIDTH{1'b0}};  
+assign m_axi_araddr  = {ADDR_WIDTH{1'b0}}; 
+assign m_axi_arvalid = 1'b0;  
+assign m_axi_rready  = 1'b0;
 
 endmodule

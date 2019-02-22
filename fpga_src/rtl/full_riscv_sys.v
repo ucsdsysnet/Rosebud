@@ -39,7 +39,7 @@ module full_riscv_sys # (
   parameter INTERLEAVE      = 1,
   parameter PIPELINE_OUTPUT = 0,
   // interconnect parameters
-  parameter S_COUNT         = 3,
+  parameter S_COUNT         = 4,
   parameter M_COUNT         = 16,
   parameter M_REGIONS       = 1,
   parameter M_BASE_ADDR     = {20'hf0000, 20'he0000, 20'hd0000, 20'hc0000,
@@ -49,8 +49,6 @@ module full_riscv_sys # (
   // parameter M_BASE_ADDR     = {19'h70000, 19'h60000, 19'h50000, 19'h40000,
   //                              19'h30000, 19'h20000, 19'h10000, 19'h00000},
   parameter M_ADDR_WIDTH    = {M_COUNT{{M_REGIONS{CORE_ADDR_WIDTH}}}},
-  parameter M_CONNECT_READ  = {M_COUNT{{S_COUNT{1'b1}}}},
-  parameter M_CONNECT_WRITE = {M_COUNT{{S_COUNT{1'b1}}}},
   // AXI DMA paramaters
   parameter AXI_DATA_WIDTH    = 64,
   parameter AXI_ADDR_WIDTH    = CORE_ADDR_WIDTH+$clog2(M_COUNT),
@@ -79,40 +77,62 @@ module full_riscv_sys # (
   parameter SLOT_ADDR_STEP  = 7'h04
 )(
   // Inputs
-  input rx_clk,
-  input rx_rst,
-  input tx_clk,
-  input tx_rst,
+  input [2-1:0] rx_clk,
+  input [2-1:0] rx_rst,
+  input [2-1:0] tx_clk,
+  input [2-1:0] tx_rst,
   input logic_clk,
   input logic_rst,
 
-  input[DATA_WIDTH-1:0] xgmii_rxd,
-  input[CTRL_WIDTH-1:0] xgmii_rxc,
+  input[2*DATA_WIDTH-1:0] xgmii_rxd,
+  input[2*CTRL_WIDTH-1:0] xgmii_rxc,
 
   // Outputs
-  output [DATA_WIDTH-1:0] xgmii_txd,
-  output [CTRL_WIDTH-1:0] xgmii_txc
+  output [2*DATA_WIDTH-1:0] xgmii_txd,
+  output [2*CTRL_WIDTH-1:0] xgmii_txc
 
 );
 
+parameter ETH0_LOC = 0;
+parameter ETH1_LOC = 1;
+parameter CTRL_LOC = 2;
+parameter PCI_LOC  = 3;
+
+// eth conncections
 wire[7:0] ifg_delay = 8'd12;
 
-// eth status 
-wire [TAG_WIDTH-1:0] m_axis_tx_desc_status_tag;
-wire m_axis_tx_desc_status_valid;
-wire [LEN_WIDTH-1:0] m_axis_rx_desc_status_len;
-wire [TAG_WIDTH-1:0] m_axis_rx_desc_status_tag;
-wire [AXIS_USER_WIDTH-1:0] m_axis_rx_desc_status_user;
-wire m_axis_rx_desc_status_valid;
+wire [2*TAG_WIDTH-1:0] m_axis_tx_desc_status_tag;
+wire [2-1:0] m_axis_tx_desc_status_valid;
+wire [2*LEN_WIDTH-1:0] m_axis_rx_desc_status_len;
+wire [2*TAG_WIDTH-1:0] m_axis_rx_desc_status_tag;
+wire [2*AXIS_USER_WIDTH-1:0] m_axis_rx_desc_status_user;
+wire [2-1:0]m_axis_rx_desc_status_valid;
 
-wire rx_error_bad_frame;
-wire rx_error_bad_fcs;
-wire tx_fifo_overflow;
-wire tx_fifo_bad_frame;
-wire tx_fifo_good_frame;
-wire rx_fifo_overflow;
-wire rx_fifo_bad_frame;
-wire rx_fifo_good_frame;
+wire [2-1:0] rx_error_bad_frame;
+wire [2-1:0] rx_error_bad_fcs;
+wire [2-1:0] tx_fifo_overflow;
+wire [2-1:0] tx_fifo_bad_frame;
+wire [2-1:0] tx_fifo_good_frame;
+wire [2-1:0] rx_fifo_overflow;
+wire [2-1:0] rx_fifo_bad_frame;
+wire [2-1:0] rx_fifo_good_frame;
+
+wire [2*AXI_ADDR_WIDTH-1:0] s_axis_tx_desc_addr;
+wire [2*LEN_WIDTH-1:0] s_axis_tx_desc_len;
+wire [2*TAG_WIDTH-1:0] s_axis_tx_desc_tag;
+wire [2*AXIS_USER_WIDTH-1:0] s_axis_tx_desc_user;
+wire [2-1:0] s_axis_tx_desc_valid;
+wire [2-1:0] s_axis_tx_desc_ready;
+
+wire [2*AXI_ADDR_WIDTH-1:0] s_axis_rx_desc_addr;
+wire [2*LEN_WIDTH-1:0] s_axis_rx_desc_len;
+wire [2*TAG_WIDTH-1:0] s_axis_rx_desc_tag;
+wire [2-1:0] s_axis_rx_desc_valid;
+wire [2-1:0] s_axis_rx_desc_ready;
+
+wire [2-1:0] tx_enable; 
+wire [2-1:0] rx_enable;
+wire [2-1:0] rx_abort;
 
 // Internal wires
 wire [S_COUNT*AXI_ID_WIDTH-1:0] m_axi_awid;
@@ -139,7 +159,6 @@ wire [S_COUNT*4-1:0] m_axi_arcache;
 wire [S_COUNT*3-1:0] m_axi_arprot;
 wire [S_COUNT-1:0] m_axi_arvalid;
 wire [S_COUNT-1:0] m_axi_rready;
-
 wire [S_COUNT-1:0] m_axi_awready;
 wire [S_COUNT-1:0] m_axi_wready;
 wire [S_COUNT*AXI_ID_WIDTH-1:0] m_axi_bid;
@@ -152,7 +171,7 @@ wire [S_COUNT*2-1:0] m_axi_rresp;
 wire [S_COUNT-1:0] m_axi_rlast;
 wire [S_COUNT-1:0] m_axi_rvalid;
 
-wire [M_COUNT*(AXI_ID_WIDTH)-1:0] s_axi_awid;
+wire [M_COUNT*AXI_ID_WIDTH-1:0] s_axi_awid;
 wire [M_COUNT*AXI_ADDR_WIDTH-1:0] s_axi_awaddr;
 wire [M_COUNT*8-1:0] s_axi_awlen;
 wire [M_COUNT*3-1:0] s_axi_awsize;
@@ -166,7 +185,7 @@ wire [M_COUNT*AXI_STRB_WIDTH-1:0] s_axi_wstrb;
 wire [M_COUNT-1:0] s_axi_wlast;
 wire [M_COUNT-1:0] s_axi_wvalid;
 wire [M_COUNT-1:0] s_axi_bready;
-wire [M_COUNT*(AXI_ID_WIDTH)-1:0] s_axi_arid;
+wire [M_COUNT*AXI_ID_WIDTH-1:0] s_axi_arid;
 wire [M_COUNT*AXI_ADDR_WIDTH-1:0] s_axi_araddr;
 wire [M_COUNT*8-1:0] s_axi_arlen;
 wire [M_COUNT*3-1:0] s_axi_arsize;
@@ -176,54 +195,17 @@ wire [M_COUNT*4-1:0] s_axi_arcache;
 wire [M_COUNT*3-1:0] s_axi_arprot;
 wire [M_COUNT-1:0] s_axi_arvalid;
 wire [M_COUNT-1:0] s_axi_rready;
-
 wire [M_COUNT-1:0] s_axi_awready;
 wire [M_COUNT-1:0] s_axi_wready;
-wire [M_COUNT*(AXI_ID_WIDTH)-1:0] s_axi_bid;
+wire [M_COUNT*AXI_ID_WIDTH-1:0] s_axi_bid;
 wire [M_COUNT*2-1:0] s_axi_bresp;
 wire [M_COUNT-1:0] s_axi_bvalid;
 wire [M_COUNT-1:0] s_axi_arready;
-wire [M_COUNT*(AXI_ID_WIDTH)-1:0] s_axi_rid;
+wire [M_COUNT*AXI_ID_WIDTH-1:0] s_axi_rid;
 wire [M_COUNT*AXI_DATA_WIDTH-1:0] s_axi_rdata;
 wire [M_COUNT*2-1:0] s_axi_rresp;
 wire [M_COUNT-1:0] s_axi_rlast;
 wire [M_COUNT-1:0] s_axi_rvalid;
-
-wire [AXI_ADDR_WIDTH-1:0] s_axis_tx_desc_addr;
-wire [LEN_WIDTH-1:0] s_axis_tx_desc_len;
-wire [TAG_WIDTH-1:0] s_axis_tx_desc_tag;
-wire [AXIS_USER_WIDTH-1:0] s_axis_tx_desc_user;
-wire s_axis_tx_desc_valid;
-wire [AXI_ADDR_WIDTH-1:0] s_axis_rx_desc_addr;
-wire [LEN_WIDTH-1:0] s_axis_rx_desc_len;
-wire [TAG_WIDTH-1:0] s_axis_rx_desc_tag;
-wire s_axis_rx_desc_valid;
-
-wire [AXI_ID_WIDTH-1:0]   mc_axi_awid;
-wire [AXI_ADDR_WIDTH-1:0] mc_axi_awaddr;
-wire [7:0]                mc_axi_awlen;
-wire [2:0]                mc_axi_awsize;
-wire [1:0]                mc_axi_awburst;
-wire                      mc_axi_awlock;
-wire [3:0]                mc_axi_awcache;
-wire [2:0]                mc_axi_awprot;
-wire                      mc_axi_awvalid;
-wire [AXI_DATA_WIDTH-1:0] mc_axi_wdata;
-wire [AXI_STRB_WIDTH-1:0] mc_axi_wstrb;
-wire                      mc_axi_wlast;
-wire                      mc_axi_wvalid;
-wire                      mc_axi_bready;
-wire [AXI_ID_WIDTH-1:0]   mc_axi_arid;
-wire [AXI_ADDR_WIDTH-1:0] mc_axi_araddr;
-wire [7:0]                mc_axi_arlen;
-wire [2:0]                mc_axi_arsize;
-wire [1:0]                mc_axi_arburst;
-wire                      mc_axi_arlock;
-wire [3:0]                mc_axi_arcache;
-wire [2:0]                mc_axi_arprot;
-wire                      mc_axi_arvalid;
-wire                      mc_axi_rready;
-
 
 wire  [$clog2(SLOT_COUNT)-1:0]                slot_addr_wr_no;
 wire  [CORE_ADDR_WIDTH-1-SLOT_LEAD_ZERO-1:0]  slot_addr_wr_data;
@@ -233,24 +215,6 @@ wire [DESC_WIDTH-1:0]  inject_rx_desc;
 wire                   inject_rx_desc_valid;
 wire                   inject_rx_desc_ready;
 
-wire tx_enable;
-wire rx_enable;
-wire rx_abort;
-
-wire                      mc_axi_awready;
-wire                      mc_axi_wready;
-wire [AXI_ID_WIDTH-1:0]   mc_axi_bid;
-wire [1:0]                mc_axi_bresp;
-wire                      mc_axi_bvalid;
-wire                      mc_axi_arready;
-wire [AXI_ID_WIDTH-1:0]   mc_axi_rid;
-wire [AXI_DATA_WIDTH-1:0] mc_axi_rdata;
-wire [1:0]                mc_axi_rresp;
-wire                      mc_axi_rlast;
-wire                      mc_axi_rvalid;
-
-wire s_axis_tx_desc_ready;
-wire s_axis_rx_desc_ready;
 
 wire [M_COUNT-1:0] core_msg_valid;
 wire [64*M_COUNT-1:0] core_msg_data;
@@ -260,44 +224,9 @@ wire        msg_valid;
 wire        msg_ready;
 wire [$clog2(M_COUNT)-1:0] msg_core_no;
 
-
-// connection to master controller
-assign m_axi_awid[1*AXI_ID_WIDTH +: AXI_ID_WIDTH] = mc_axi_awid;
-assign m_axi_awaddr[1*AXI_ADDR_WIDTH +: AXI_ADDR_WIDTH] = mc_axi_awaddr;
-assign m_axi_awlen[1*8 +: 8] =  mc_axi_awlen;
-assign m_axi_awsize[1*3 +: 3] = mc_axi_awsize;
-assign m_axi_awburst[1*2 +: 2] = mc_axi_awburst;
-assign m_axi_awlock[1] = mc_axi_awlock;
-assign m_axi_awcache[1*4 +: 4] = mc_axi_awcache;
-assign m_axi_awprot[1*3 +: 3] = mc_axi_awprot;
-assign m_axi_awvalid[1] = mc_axi_awvalid;
-assign m_axi_wdata[1*AXI_DATA_WIDTH +: AXI_DATA_WIDTH] = mc_axi_wdata;
-assign m_axi_wstrb[1*AXI_STRB_WIDTH +: AXI_STRB_WIDTH] =  mc_axi_wstrb;
-assign m_axi_wlast[1] = mc_axi_wlast;
-assign m_axi_wvalid[1] = mc_axi_wvalid;
-assign m_axi_bready[1] = mc_axi_bready;
-assign m_axi_arid[1*AXI_ID_WIDTH +: AXI_ID_WIDTH] = mc_axi_arid;
-assign m_axi_araddr[1*AXI_ADDR_WIDTH +: AXI_ADDR_WIDTH] = mc_axi_araddr;
-assign m_axi_arlen[1*8 +: 8] = mc_axi_arlen;
-assign m_axi_arsize[1*3 +: 3] = mc_axi_arsize;
-assign m_axi_arburst[1*2 +: 2] = mc_axi_arburst;
-assign m_axi_arlock[1] = mc_axi_arlock;
-assign m_axi_arcache[1*4 +: 4] = mc_axi_arcache;
-assign m_axi_arprot[1*3 +: 3] = mc_axi_arprot;
-assign m_axi_arvalid[1] = mc_axi_arvalid;
-assign m_axi_rready[1] = mc_axi_rready;
-
-assign mc_axi_awready = m_axi_awready[1];
-assign mc_axi_wready  = m_axi_wready[1];
-assign mc_axi_bid     = m_axi_bid[1*AXI_ID_WIDTH +: AXI_ID_WIDTH];
-assign mc_axi_bresp   = m_axi_bresp[1*2 +: 2];
-assign mc_axi_bvalid  = m_axi_bvalid[1];
-assign mc_axi_arready = m_axi_arready[1];
-assign mc_axi_rid     = m_axi_rid[1*AXI_ID_WIDTH +: AXI_ID_WIDTH];
-assign mc_axi_rdata   = m_axi_rdata[1*AXI_DATA_WIDTH +: AXI_DATA_WIDTH];
-assign mc_axi_rresp   = m_axi_rresp[1*2 +: 2];
-assign mc_axi_rlast   = m_axi_rlast[1];
-assign mc_axi_rvalid  = m_axi_rvalid[1];
+wire tx_enable_out;
+wire rx_enable_out;
+wire rx_abort_out;
 
 eth_interface #(
     .DATA_WIDTH(DATA_WIDTH),
@@ -312,90 +241,196 @@ eth_interface #(
     .MIN_FRAME_LENGTH(MIN_FRAME_LENGTH),
     .TX_DROP_WHEN_FULL(TX_DROP_WHEN_FULL)
 )
-eth_dma (
+eth_dma_1 (
     .logic_clk(logic_clk),
     .logic_rst(logic_rst),
-    .rx_clk(rx_clk),
-    .rx_rst(rx_rst),
-    .tx_clk(tx_clk),
-    .tx_rst(tx_rst),
+    .rx_clk(rx_clk[1]),
+    .rx_rst(rx_rst[1]),
+    .tx_clk(tx_clk[1]),
+    .tx_rst(tx_rst[1]),
 
-    .s_axis_tx_desc_addr(s_axis_tx_desc_addr),
-    .s_axis_tx_desc_len(s_axis_tx_desc_len),
-    .s_axis_tx_desc_tag(s_axis_tx_desc_tag),
-    .s_axis_tx_desc_user(s_axis_tx_desc_user),
-    .s_axis_tx_desc_valid(s_axis_tx_desc_valid),
-    .s_axis_tx_desc_ready(s_axis_tx_desc_ready),
+    .s_axis_tx_desc_addr(s_axis_tx_desc_addr[1*AXI_ADDR_WIDTH +: AXI_ADDR_WIDTH]),
+    .s_axis_tx_desc_len(s_axis_tx_desc_len[1*LEN_WIDTH +: LEN_WIDTH]),
+    .s_axis_tx_desc_tag(s_axis_tx_desc_tag[1*TAG_WIDTH +: TAG_WIDTH]),
+    .s_axis_tx_desc_user(s_axis_tx_desc_user[1*AXIS_USER_WIDTH +: AXIS_USER_WIDTH]),
+    .s_axis_tx_desc_valid(s_axis_tx_desc_valid[1]),
+    .s_axis_tx_desc_ready(s_axis_tx_desc_ready[1]),
 
-    .m_axis_tx_desc_status_tag(m_axis_tx_desc_status_tag),
-    .m_axis_tx_desc_status_valid(m_axis_tx_desc_status_valid),
+    .m_axis_tx_desc_status_tag(m_axis_tx_desc_status_tag[1*TAG_WIDTH +: TAG_WIDTH]),
+    .m_axis_tx_desc_status_valid(m_axis_tx_desc_status_valid[1]),
 
-    .s_axis_rx_desc_addr(s_axis_rx_desc_addr),
-    .s_axis_rx_desc_len(s_axis_rx_desc_len),
-    .s_axis_rx_desc_tag(s_axis_rx_desc_tag),
-    .s_axis_rx_desc_valid(s_axis_rx_desc_valid),
-    .s_axis_rx_desc_ready(s_axis_rx_desc_ready),
+    .s_axis_rx_desc_addr(s_axis_rx_desc_addr[1*AXI_ADDR_WIDTH +: AXI_ADDR_WIDTH]),
+    .s_axis_rx_desc_len(s_axis_rx_desc_len[1*LEN_WIDTH +: LEN_WIDTH]),
+    .s_axis_rx_desc_tag(s_axis_rx_desc_tag[1*TAG_WIDTH +: TAG_WIDTH]),
+    .s_axis_rx_desc_valid(s_axis_rx_desc_valid[1]),
+    .s_axis_rx_desc_ready(s_axis_rx_desc_ready[1]),
 
-    .m_axis_rx_desc_status_len(m_axis_rx_desc_status_len),
-    .m_axis_rx_desc_status_tag(m_axis_rx_desc_status_tag),
-    .m_axis_rx_desc_status_user(m_axis_rx_desc_status_user),
-    .m_axis_rx_desc_status_valid(m_axis_rx_desc_status_valid),
+    .m_axis_rx_desc_status_len(m_axis_rx_desc_status_len[1*LEN_WIDTH +: LEN_WIDTH]),
+    .m_axis_rx_desc_status_tag(m_axis_rx_desc_status_tag[1*TAG_WIDTH +: TAG_WIDTH]),
+    .m_axis_rx_desc_status_user(m_axis_rx_desc_status_user[1*AXIS_USER_WIDTH +: AXIS_USER_WIDTH]),
+    .m_axis_rx_desc_status_valid(m_axis_rx_desc_status_valid[1]),
 
-    .m_axi_awid(m_axi_awid[0 +: AXI_ID_WIDTH]),
-    .m_axi_awaddr(m_axi_awaddr[0 +: AXI_ADDR_WIDTH]),
-    .m_axi_awlen(m_axi_awlen[0 +: 8]),
-    .m_axi_awsize(m_axi_awsize[0 +: 3]),
-    .m_axi_awburst(m_axi_awburst[0 +: 2]),
-    .m_axi_awlock(m_axi_awlock[0]),
-    .m_axi_awcache(m_axi_awcache[0 +: 4]),
-    .m_axi_awprot(m_axi_awprot[0 +: 3]),
-    .m_axi_awvalid(m_axi_awvalid[0]),
-    .m_axi_awready(m_axi_awready[0]),
-    .m_axi_wdata(m_axi_wdata[0 +: AXI_DATA_WIDTH]),
-    .m_axi_wstrb(m_axi_wstrb[0 +: AXI_STRB_WIDTH]),
-    .m_axi_wlast(m_axi_wlast[0]),
-    .m_axi_wvalid(m_axi_wvalid[0]),
-    .m_axi_wready(m_axi_wready[0]),
-    .m_axi_bid(m_axi_bid[0 +: AXI_ID_WIDTH]),
-    .m_axi_bresp(m_axi_bresp[0 +: 2]),
-    .m_axi_bvalid(m_axi_bvalid[0]),
-    .m_axi_bready(m_axi_bready[0]),
-    .m_axi_arid(m_axi_arid[0 +: AXI_ID_WIDTH]),
-    .m_axi_araddr(m_axi_araddr[0 +: AXI_ADDR_WIDTH]),
-    .m_axi_arlen(m_axi_arlen[0 +: 8]),
-    .m_axi_arsize(m_axi_arsize[0 +: 3]),
-    .m_axi_arburst(m_axi_arburst[0 +: 2]),
-    .m_axi_arlock(m_axi_arlock[0]),
-    .m_axi_arcache(m_axi_arcache[0 +: 4]),
-    .m_axi_arprot(m_axi_arprot[0 +: 3]),
-    .m_axi_arvalid(m_axi_arvalid[0]),
-    .m_axi_arready(m_axi_arready[0]),
-    .m_axi_rid(m_axi_rid[0 +: AXI_ID_WIDTH]),
-    .m_axi_rdata(m_axi_rdata[0 +: AXI_DATA_WIDTH]),
-    .m_axi_rresp(m_axi_rresp[0 +: 2]),
-    .m_axi_rlast(m_axi_rlast[0]),
-    .m_axi_rvalid(m_axi_rvalid[0]),
-    .m_axi_rready(m_axi_rready[0]),
+    .m_axi_awid(m_axi_awid[ETH1_LOC*AXI_ID_WIDTH +: AXI_ID_WIDTH]),
+    .m_axi_awaddr(m_axi_awaddr[ETH1_LOC*AXI_ADDR_WIDTH +: AXI_ADDR_WIDTH]),
+    .m_axi_awlen(m_axi_awlen[ETH1_LOC*8 +: 8]),
+    .m_axi_awsize(m_axi_awsize[ETH1_LOC*3 +: 3]),
+    .m_axi_awburst(m_axi_awburst[ETH1_LOC*2 +: 2]),
+    .m_axi_awlock(m_axi_awlock[ETH1_LOC]),
+    .m_axi_awcache(m_axi_awcache[ETH1_LOC*4 +: 4]),
+    .m_axi_awprot(m_axi_awprot[ETH1_LOC*3 +: 3]),
+    .m_axi_awvalid(m_axi_awvalid[ETH1_LOC]),
+    .m_axi_awready(m_axi_awready[ETH1_LOC]),
+    .m_axi_wdata(m_axi_wdata[ETH1_LOC*AXI_DATA_WIDTH +: AXI_DATA_WIDTH]),
+    .m_axi_wstrb(m_axi_wstrb[ETH1_LOC*AXI_STRB_WIDTH +: AXI_STRB_WIDTH]),
+    .m_axi_wlast(m_axi_wlast[ETH1_LOC]),
+    .m_axi_wvalid(m_axi_wvalid[ETH1_LOC]),
+    .m_axi_wready(m_axi_wready[ETH1_LOC]),
+    .m_axi_bid(m_axi_bid[ETH1_LOC*AXI_ID_WIDTH +: AXI_ID_WIDTH]),
+    .m_axi_bresp(m_axi_bresp[ETH1_LOC*2 +: 2]),
+    .m_axi_bvalid(m_axi_bvalid[ETH1_LOC]),
+    .m_axi_bready(m_axi_bready[ETH1_LOC]),
+    .m_axi_arid(m_axi_arid[ETH1_LOC*AXI_ID_WIDTH +: AXI_ID_WIDTH]),
+    .m_axi_araddr(m_axi_araddr[ETH1_LOC*AXI_ADDR_WIDTH +: AXI_ADDR_WIDTH]),
+    .m_axi_arlen(m_axi_arlen[ETH1_LOC*8 +: 8]),
+    .m_axi_arsize(m_axi_arsize[ETH1_LOC*3 +: 3]),
+    .m_axi_arburst(m_axi_arburst[ETH1_LOC*2 +: 2]),
+    .m_axi_arlock(m_axi_arlock[ETH1_LOC]),
+    .m_axi_arcache(m_axi_arcache[ETH1_LOC*4 +: 4]),
+    .m_axi_arprot(m_axi_arprot[ETH1_LOC*3 +: 3]),
+    .m_axi_arvalid(m_axi_arvalid[ETH1_LOC]),
+    .m_axi_arready(m_axi_arready[ETH1_LOC]),
+    .m_axi_rid(m_axi_rid[ETH1_LOC*AXI_ID_WIDTH +: AXI_ID_WIDTH]),
+    .m_axi_rdata(m_axi_rdata[ETH1_LOC*AXI_DATA_WIDTH +: AXI_DATA_WIDTH]),
+    .m_axi_rresp(m_axi_rresp[ETH1_LOC*2 +: 2]),
+    .m_axi_rlast(m_axi_rlast[ETH1_LOC]),
+    .m_axi_rvalid(m_axi_rvalid[ETH1_LOC]),
+    .m_axi_rready(m_axi_rready[ETH1_LOC]),
 
-    .xgmii_rxd(xgmii_rxd),
-    .xgmii_rxc(xgmii_rxc),
-    .xgmii_txd(xgmii_txd),
-    .xgmii_txc(xgmii_txc),
+    .xgmii_rxd(xgmii_rxd[1*DATA_WIDTH +: DATA_WIDTH]),
+    .xgmii_rxc(xgmii_rxc[1*CTRL_WIDTH +: CTRL_WIDTH]),
+    .xgmii_txd(xgmii_txd[1*DATA_WIDTH +: DATA_WIDTH]),
+    .xgmii_txc(xgmii_txc[1*CTRL_WIDTH +: CTRL_WIDTH]),
     
-    .rx_error_bad_frame(rx_error_bad_frame),
-    .rx_error_bad_fcs(rx_error_bad_fcs),
+    .rx_error_bad_frame(rx_error_bad_frame[1]),
+    .rx_error_bad_fcs(rx_error_bad_fcs[1]),
     
-    .tx_fifo_overflow(tx_fifo_overflow),
-    .tx_fifo_bad_frame(tx_fifo_bad_frame),
-    .tx_fifo_good_frame(tx_fifo_good_frame),
+    .tx_fifo_overflow(tx_fifo_overflow[1]),
+    .tx_fifo_bad_frame(tx_fifo_bad_frame[1]),
+    .tx_fifo_good_frame(tx_fifo_good_frame[1]),
     
-    .rx_fifo_overflow(rx_fifo_overflow),
-    .rx_fifo_bad_frame(rx_fifo_bad_frame),
-    .rx_fifo_good_frame(rx_fifo_good_frame),
+    .rx_fifo_overflow(rx_fifo_overflow[1]),
+    .rx_fifo_bad_frame(rx_fifo_bad_frame[1]),
+    .rx_fifo_good_frame(rx_fifo_good_frame[1]),
 
-    .tx_enable(tx_enable),
-    .rx_enable(rx_enable),
-    .rx_abort(rx_abort),
+    .tx_enable(tx_enable[1]),
+    .rx_enable(rx_enable[1]),
+    .rx_abort(rx_abort[1]),
+
+    .ifg_delay(ifg_delay)
+);
+
+assign tx_enable = {tx_enable_out, tx_enable_out};
+assign rx_enable = {rx_enable_out, rx_enable_out};
+assign rx_abort  = {rx_abort_out,  rx_abort_out};
+
+eth_interface #(
+    .DATA_WIDTH(DATA_WIDTH),
+    .AXI_DATA_WIDTH(AXI_DATA_WIDTH),
+    .AXI_ADDR_WIDTH(AXI_ADDR_WIDTH),
+    .AXI_ID_WIDTH(AXI_ID_WIDTH),
+    .AXI_MAX_BURST_LEN(AXI_MAX_BURST_LEN),
+    .LEN_WIDTH(LEN_WIDTH),
+    .TAG_WIDTH(TAG_WIDTH),
+    .ENABLE_UNALIGNED(ENABLE_UNALIGNED),
+    .ENABLE_PADDING(ENABLE_PADDING),
+    .MIN_FRAME_LENGTH(MIN_FRAME_LENGTH),
+    .TX_DROP_WHEN_FULL(TX_DROP_WHEN_FULL)
+)
+eth_dma_0 (
+    .logic_clk(logic_clk),
+    .logic_rst(logic_rst),
+    .rx_clk(rx_clk[0]),
+    .rx_rst(rx_rst[0]),
+    .tx_clk(tx_clk[0]),
+    .tx_rst(tx_rst[0]),
+
+    .s_axis_tx_desc_addr(s_axis_tx_desc_addr[0*AXI_ADDR_WIDTH +: AXI_ADDR_WIDTH]),
+    .s_axis_tx_desc_len(s_axis_tx_desc_len[0*LEN_WIDTH +: LEN_WIDTH]),
+    .s_axis_tx_desc_tag(s_axis_tx_desc_tag[0*TAG_WIDTH +: TAG_WIDTH]),
+    .s_axis_tx_desc_user(s_axis_tx_desc_user[0*AXIS_USER_WIDTH +: AXIS_USER_WIDTH]),
+    .s_axis_tx_desc_valid(s_axis_tx_desc_valid[0]),
+    .s_axis_tx_desc_ready(s_axis_tx_desc_ready[0]),
+
+    .m_axis_tx_desc_status_tag(m_axis_tx_desc_status_tag[0*TAG_WIDTH +: TAG_WIDTH]),
+    .m_axis_tx_desc_status_valid(m_axis_tx_desc_status_valid[0]),
+
+    .s_axis_rx_desc_addr(s_axis_rx_desc_addr[0*AXI_ADDR_WIDTH +: AXI_ADDR_WIDTH]),
+    .s_axis_rx_desc_len(s_axis_rx_desc_len[0*LEN_WIDTH +: LEN_WIDTH]),
+    .s_axis_rx_desc_tag(s_axis_rx_desc_tag[0*TAG_WIDTH +: TAG_WIDTH]),
+    .s_axis_rx_desc_valid(s_axis_rx_desc_valid[0]),
+    .s_axis_rx_desc_ready(s_axis_rx_desc_ready[0]),
+
+    .m_axis_rx_desc_status_len(m_axis_rx_desc_status_len[0*LEN_WIDTH +: LEN_WIDTH]),
+    .m_axis_rx_desc_status_tag(m_axis_rx_desc_status_tag[0*TAG_WIDTH +: TAG_WIDTH]),
+    .m_axis_rx_desc_status_user(m_axis_rx_desc_status_user[0*AXIS_USER_WIDTH +: AXIS_USER_WIDTH]),
+    .m_axis_rx_desc_status_valid(m_axis_rx_desc_status_valid[0]),
+
+    .m_axi_awid(m_axi_awid[ETH0_LOC*AXI_ID_WIDTH +: AXI_ID_WIDTH]),
+    .m_axi_awaddr(m_axi_awaddr[ETH0_LOC*AXI_ADDR_WIDTH +: AXI_ADDR_WIDTH]),
+    .m_axi_awlen(m_axi_awlen[ETH0_LOC*8 +: 8]),
+    .m_axi_awsize(m_axi_awsize[ETH0_LOC*3 +: 3]),
+    .m_axi_awburst(m_axi_awburst[ETH0_LOC*2 +: 2]),
+    .m_axi_awlock(m_axi_awlock[ETH0_LOC]),
+    .m_axi_awcache(m_axi_awcache[ETH0_LOC*4 +: 4]),
+    .m_axi_awprot(m_axi_awprot[ETH0_LOC*3 +: 3]),
+    .m_axi_awvalid(m_axi_awvalid[ETH0_LOC]),
+    .m_axi_awready(m_axi_awready[ETH0_LOC]),
+    .m_axi_wdata(m_axi_wdata[ETH0_LOC*AXI_DATA_WIDTH +: AXI_DATA_WIDTH]),
+    .m_axi_wstrb(m_axi_wstrb[ETH0_LOC*AXI_STRB_WIDTH +: AXI_STRB_WIDTH]),
+    .m_axi_wlast(m_axi_wlast[ETH0_LOC]),
+    .m_axi_wvalid(m_axi_wvalid[ETH0_LOC]),
+    .m_axi_wready(m_axi_wready[ETH0_LOC]),
+    .m_axi_bid(m_axi_bid[ETH0_LOC*AXI_ID_WIDTH +: AXI_ID_WIDTH]),
+    .m_axi_bresp(m_axi_bresp[ETH0_LOC*2 +: 2]),
+    .m_axi_bvalid(m_axi_bvalid[ETH0_LOC]),
+    .m_axi_bready(m_axi_bready[ETH0_LOC]),
+    .m_axi_arid(m_axi_arid[ETH0_LOC*AXI_ID_WIDTH +: AXI_ID_WIDTH]),
+    .m_axi_araddr(m_axi_araddr[ETH0_LOC*AXI_ADDR_WIDTH +: AXI_ADDR_WIDTH]),
+    .m_axi_arlen(m_axi_arlen[ETH0_LOC*8 +: 8]),
+    .m_axi_arsize(m_axi_arsize[ETH0_LOC*3 +: 3]),
+    .m_axi_arburst(m_axi_arburst[ETH0_LOC*2 +: 2]),
+    .m_axi_arlock(m_axi_arlock[ETH0_LOC]),
+    .m_axi_arcache(m_axi_arcache[ETH0_LOC*4 +: 4]),
+    .m_axi_arprot(m_axi_arprot[ETH0_LOC*3 +: 3]),
+    .m_axi_arvalid(m_axi_arvalid[ETH0_LOC]),
+    .m_axi_arready(m_axi_arready[ETH0_LOC]),
+    .m_axi_rid(m_axi_rid[ETH0_LOC*AXI_ID_WIDTH +: AXI_ID_WIDTH]),
+    .m_axi_rdata(m_axi_rdata[ETH0_LOC*AXI_DATA_WIDTH +: AXI_DATA_WIDTH]),
+    .m_axi_rresp(m_axi_rresp[ETH0_LOC*2 +: 2]),
+    .m_axi_rlast(m_axi_rlast[ETH0_LOC]),
+    .m_axi_rvalid(m_axi_rvalid[ETH0_LOC]),
+    .m_axi_rready(m_axi_rready[ETH0_LOC]),
+
+    .xgmii_rxd(xgmii_rxd[0*DATA_WIDTH +: DATA_WIDTH]),
+    .xgmii_rxc(xgmii_rxc[0*CTRL_WIDTH +: CTRL_WIDTH]),
+    .xgmii_txd(xgmii_txd[0*DATA_WIDTH +: DATA_WIDTH]),
+    .xgmii_txc(xgmii_txc[0*CTRL_WIDTH +: CTRL_WIDTH]),
+    
+    .rx_error_bad_frame(rx_error_bad_frame[0]),
+    .rx_error_bad_fcs(rx_error_bad_fcs[0]),
+    
+    .tx_fifo_overflow(tx_fifo_overflow[0]),
+    .tx_fifo_bad_frame(tx_fifo_bad_frame[0]),
+    .tx_fifo_good_frame(tx_fifo_good_frame[0]),
+    
+    .rx_fifo_overflow(rx_fifo_overflow[0]),
+    .rx_fifo_bad_frame(rx_fifo_bad_frame[0]),
+    .rx_fifo_good_frame(rx_fifo_good_frame[0]),
+
+    .tx_enable(tx_enable[0]),
+    .rx_enable(rx_enable[0]),
+    .rx_abort(rx_abort[0]),
+
     .ifg_delay(ifg_delay)
 );
 
@@ -410,9 +445,7 @@ axi_interconnect #
     .ID_WIDTH(AXI_ID_WIDTH),
     .M_REGIONS(M_REGIONS),
     .M_BASE_ADDR(M_BASE_ADDR),
-    .M_ADDR_WIDTH(M_ADDR_WIDTH),
-    .M_CONNECT_READ(M_CONNECT_READ),
-    .M_CONNECT_WRITE(M_CONNECT_WRITE)
+    .M_ADDR_WIDTH(M_ADDR_WIDTH)
 )
 interconnect (
     .clk(logic_clk),
@@ -528,41 +561,41 @@ dma_controller # (
     /*
      * AXI master interface
      */
-    .m_axi_awid(mc_axi_awid),
-    .m_axi_awaddr(mc_axi_awaddr),
-    .m_axi_awlen(mc_axi_awlen),
-    .m_axi_awsize(mc_axi_awsize),
-    .m_axi_awburst(mc_axi_awburst),
-    .m_axi_awlock(mc_axi_awlock),
-    .m_axi_awcache(mc_axi_awcache),
-    .m_axi_awprot(mc_axi_awprot),
-    .m_axi_awvalid(mc_axi_awvalid),
-    .m_axi_awready(mc_axi_awready),
-    .m_axi_wdata(mc_axi_wdata),
-    .m_axi_wstrb(mc_axi_wstrb),
-    .m_axi_wlast(mc_axi_wlast),
-    .m_axi_wvalid(mc_axi_wvalid),
-    .m_axi_wready(mc_axi_wready),
-    .m_axi_bid(mc_axi_bid),
-    .m_axi_bresp(mc_axi_bresp),
-    .m_axi_bvalid(mc_axi_bvalid),
-    .m_axi_bready(mc_axi_bready),
-    .m_axi_arid(mc_axi_arid),
-    .m_axi_araddr(mc_axi_araddr),
-    .m_axi_arlen(mc_axi_arlen),
-    .m_axi_arsize(mc_axi_arsize),
-    .m_axi_arburst(mc_axi_arburst),
-    .m_axi_arlock(mc_axi_arlock),
-    .m_axi_arcache(mc_axi_arcache),
-    .m_axi_arprot(mc_axi_arprot),
-    .m_axi_arvalid(mc_axi_arvalid),
-    .m_axi_arready(mc_axi_arready),
-    .m_axi_rid(mc_axi_rid),
-    .m_axi_rdata(mc_axi_rdata),
-    .m_axi_rresp(mc_axi_rresp),
-    .m_axi_rlast(mc_axi_rlast),
-    .m_axi_rvalid(mc_axi_rvalid),
-    .m_axi_rready(mc_axi_rready),
+    .m_axi_awid(m_axi_awid[CTRL_LOC*AXI_ID_WIDTH +: AXI_ID_WIDTH]),
+    .m_axi_awaddr(m_axi_awaddr[CTRL_LOC*AXI_ADDR_WIDTH +: AXI_ADDR_WIDTH]),
+    .m_axi_awlen(m_axi_awlen[CTRL_LOC*8 +: 8]),
+    .m_axi_awsize(m_axi_awsize[CTRL_LOC*3 +: 3]),
+    .m_axi_awburst(m_axi_awburst[CTRL_LOC*2 +: 2]),
+    .m_axi_awlock(m_axi_awlock[CTRL_LOC]),
+    .m_axi_awcache(m_axi_awcache[CTRL_LOC*4 +: 4]),
+    .m_axi_awprot(m_axi_awprot[CTRL_LOC*3 +: 3]),
+    .m_axi_awvalid(m_axi_awvalid[CTRL_LOC]),
+    .m_axi_awready(m_axi_awready[CTRL_LOC]),
+    .m_axi_wdata(m_axi_wdata[CTRL_LOC*AXI_DATA_WIDTH +: AXI_DATA_WIDTH]),
+    .m_axi_wstrb(m_axi_wstrb[CTRL_LOC*AXI_STRB_WIDTH +: AXI_STRB_WIDTH]),
+    .m_axi_wlast(m_axi_wlast[CTRL_LOC]),
+    .m_axi_wvalid(m_axi_wvalid[CTRL_LOC]),
+    .m_axi_wready(m_axi_wready[CTRL_LOC]),
+    .m_axi_bid(m_axi_bid[CTRL_LOC*AXI_ID_WIDTH +: AXI_ID_WIDTH]),
+    .m_axi_bresp(m_axi_bresp[CTRL_LOC*2 +: 2]),
+    .m_axi_bvalid(m_axi_bvalid[CTRL_LOC]),
+    .m_axi_bready(m_axi_bready[CTRL_LOC]),
+    .m_axi_arid(m_axi_arid[CTRL_LOC*AXI_ID_WIDTH +: AXI_ID_WIDTH]),
+    .m_axi_araddr(m_axi_araddr[CTRL_LOC*AXI_ADDR_WIDTH +: AXI_ADDR_WIDTH]),
+    .m_axi_arlen(m_axi_arlen[CTRL_LOC*8 +: 8]),
+    .m_axi_arsize(m_axi_arsize[CTRL_LOC*3 +: 3]),
+    .m_axi_arburst(m_axi_arburst[CTRL_LOC*2 +: 2]),
+    .m_axi_arlock(m_axi_arlock[CTRL_LOC]),
+    .m_axi_arcache(m_axi_arcache[CTRL_LOC*4 +: 4]),
+    .m_axi_arprot(m_axi_arprot[CTRL_LOC*3 +: 3]),
+    .m_axi_arvalid(m_axi_arvalid[CTRL_LOC]),
+    .m_axi_arready(m_axi_arready[CTRL_LOC]),
+    .m_axi_rid(m_axi_rid[CTRL_LOC*AXI_ID_WIDTH +: AXI_ID_WIDTH]),
+    .m_axi_rdata(m_axi_rdata[CTRL_LOC*AXI_DATA_WIDTH +: AXI_DATA_WIDTH]),
+    .m_axi_rresp(m_axi_rresp[CTRL_LOC*2 +: 2]),
+    .m_axi_rlast(m_axi_rlast[CTRL_LOC]),
+    .m_axi_rvalid(m_axi_rvalid[CTRL_LOC]),
+    .m_axi_rready(m_axi_rready[CTRL_LOC]),
  
     /*
      * Transmit descriptor output
@@ -631,41 +664,41 @@ temp_pcie # (
     .clk(logic_clk),
     .rst(logic_rst),
 
-    .m_axi_awid(m_axi_awid[2*AXI_ID_WIDTH +: AXI_ID_WIDTH]),
-    .m_axi_awaddr(m_axi_awaddr[2*AXI_ADDR_WIDTH +: AXI_ADDR_WIDTH]),
-    .m_axi_awlen(m_axi_awlen[2*8 +: 8]),
-    .m_axi_awsize(m_axi_awsize[2*3 +: 3]),
-    .m_axi_awburst(m_axi_awburst[2*2 +: 2]),
-    .m_axi_awlock(m_axi_awlock[2]),
-    .m_axi_awcache(m_axi_awcache[2*4 +: 4]),
-    .m_axi_awprot(m_axi_awprot[2*3 +: 3]),
-    .m_axi_awvalid(m_axi_awvalid[2]),
-    .m_axi_awready(m_axi_awready[2]),
-    .m_axi_wdata(m_axi_wdata[2*AXI_DATA_WIDTH +: AXI_DATA_WIDTH]),
-    .m_axi_wstrb(m_axi_wstrb[2*AXI_STRB_WIDTH +: AXI_STRB_WIDTH]),
-    .m_axi_wlast(m_axi_wlast[2]),
-    .m_axi_wvalid(m_axi_wvalid[2]),
-    .m_axi_wready(m_axi_wready[2]),
-    .m_axi_bid(m_axi_bid[2*AXI_ID_WIDTH +: AXI_ID_WIDTH]),
-    .m_axi_bresp(m_axi_bresp[2*2 +: 2]),
-    .m_axi_bvalid(m_axi_bvalid[2]),
-    .m_axi_bready(m_axi_bready[2]),
-    .m_axi_arid(m_axi_arid[2*AXI_ID_WIDTH +: AXI_ID_WIDTH]),
-    .m_axi_araddr(m_axi_araddr[2*AXI_ADDR_WIDTH +: AXI_ADDR_WIDTH]),
-    .m_axi_arlen(m_axi_arlen[2*8 +: 8]),
-    .m_axi_arsize(m_axi_arsize[2*3 +: 3]),
-    .m_axi_arburst(m_axi_arburst[2*2 +: 2]),
-    .m_axi_arlock(m_axi_arlock[2]),
-    .m_axi_arcache(m_axi_arcache[2*4 +: 4]),
-    .m_axi_arprot(m_axi_arprot[2*3 +: 3]),
-    .m_axi_arvalid(m_axi_arvalid[2]),
-    .m_axi_arready(m_axi_arready[2]),
-    .m_axi_rid(m_axi_rid[2*AXI_ID_WIDTH +: AXI_ID_WIDTH]),
-    .m_axi_rdata(m_axi_rdata[2*AXI_DATA_WIDTH +: AXI_DATA_WIDTH]),
-    .m_axi_rresp(m_axi_rresp[2*2 +: 2]),
-    .m_axi_rlast(m_axi_rlast[2]),
-    .m_axi_rvalid(m_axi_rvalid[2]),
-    .m_axi_rready(m_axi_rready[2]),
+    .m_axi_awid(m_axi_awid[PCI_LOC*AXI_ID_WIDTH +: AXI_ID_WIDTH]),
+    .m_axi_awaddr(m_axi_awaddr[PCI_LOC*AXI_ADDR_WIDTH +: AXI_ADDR_WIDTH]),
+    .m_axi_awlen(m_axi_awlen[PCI_LOC*8 +: 8]),
+    .m_axi_awsize(m_axi_awsize[PCI_LOC*3 +: 3]),
+    .m_axi_awburst(m_axi_awburst[PCI_LOC*2 +: 2]),
+    .m_axi_awlock(m_axi_awlock[PCI_LOC]),
+    .m_axi_awcache(m_axi_awcache[PCI_LOC*4 +: 4]),
+    .m_axi_awprot(m_axi_awprot[PCI_LOC*3 +: 3]),
+    .m_axi_awvalid(m_axi_awvalid[PCI_LOC]),
+    .m_axi_awready(m_axi_awready[PCI_LOC]),
+    .m_axi_wdata(m_axi_wdata[PCI_LOC*AXI_DATA_WIDTH +: AXI_DATA_WIDTH]),
+    .m_axi_wstrb(m_axi_wstrb[PCI_LOC*AXI_STRB_WIDTH +: AXI_STRB_WIDTH]),
+    .m_axi_wlast(m_axi_wlast[PCI_LOC]),
+    .m_axi_wvalid(m_axi_wvalid[PCI_LOC]),
+    .m_axi_wready(m_axi_wready[PCI_LOC]),
+    .m_axi_bid(m_axi_bid[PCI_LOC*AXI_ID_WIDTH +: AXI_ID_WIDTH]),
+    .m_axi_bresp(m_axi_bresp[PCI_LOC*2 +: 2]),
+    .m_axi_bvalid(m_axi_bvalid[PCI_LOC]),
+    .m_axi_bready(m_axi_bready[PCI_LOC]),
+    .m_axi_arid(m_axi_arid[PCI_LOC*AXI_ID_WIDTH +: AXI_ID_WIDTH]),
+    .m_axi_araddr(m_axi_araddr[PCI_LOC*AXI_ADDR_WIDTH +: AXI_ADDR_WIDTH]),
+    .m_axi_arlen(m_axi_arlen[PCI_LOC*8 +: 8]),
+    .m_axi_arsize(m_axi_arsize[PCI_LOC*3 +: 3]),
+    .m_axi_arburst(m_axi_arburst[PCI_LOC*2 +: 2]),
+    .m_axi_arlock(m_axi_arlock[PCI_LOC]),
+    .m_axi_arcache(m_axi_arcache[PCI_LOC*4 +: 4]),
+    .m_axi_arprot(m_axi_arprot[PCI_LOC*3 +: 3]),
+    .m_axi_arvalid(m_axi_arvalid[PCI_LOC]),
+    .m_axi_arready(m_axi_arready[PCI_LOC]),
+    .m_axi_rid(m_axi_rid[PCI_LOC*AXI_ID_WIDTH +: AXI_ID_WIDTH]),
+    .m_axi_rdata(m_axi_rdata[PCI_LOC*AXI_DATA_WIDTH +: AXI_DATA_WIDTH]),
+    .m_axi_rresp(m_axi_rresp[PCI_LOC*2 +: 2]),
+    .m_axi_rlast(m_axi_rlast[PCI_LOC]),
+    .m_axi_rvalid(m_axi_rvalid[PCI_LOC]),
+    .m_axi_rready(m_axi_rready[PCI_LOC]),
     
     .slot_addr_wr_no(slot_addr_wr_no),
     .slot_addr_wr_data(slot_addr_wr_data),
@@ -675,9 +708,9 @@ temp_pcie # (
     .inject_rx_desc_valid(inject_rx_desc_valid),
     .inject_rx_desc_ready(inject_rx_desc_ready),
  
-    .tx_enable(tx_enable),
-    .rx_enable(rx_enable),
-    .rx_abort(rx_abort)
+    .tx_enable(tx_enable_out),
+    .rx_enable(rx_enable_out),
+    .rx_abort(rx_abort_out)
 );
 
 genvar i;

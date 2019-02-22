@@ -56,6 +56,7 @@ module fpga_core
     input  wire        sfp_1_rx_rst,
     input  wire [63:0] sfp_1_rxd,
     input  wire [7:0]  sfp_1_rxc,
+
     input  wire        sfp_2_tx_clk,
     input  wire        sfp_2_tx_rst,
     output wire [63:0] sfp_2_txd,
@@ -79,27 +80,11 @@ full_riscv_sys sys (
 
   .xgmii_rxd(sfp_1_rxd),
   .xgmii_rxc(sfp_1_rxc),
-  .ifg_delay(8'd12),
 
   // Outputs
   .xgmii_txd(sfp_1_txd),
-  .xgmii_txc(sfp_1_txc),
+  .xgmii_txc(sfp_1_txc)
 
-  .m_axis_tx_desc_status_tag(),
-  .m_axis_tx_desc_status_valid(),
-  .m_axis_rx_desc_status_len(),
-  .m_axis_rx_desc_status_tag(),
-  .m_axis_rx_desc_status_user(),
-  .m_axis_rx_desc_status_valid(),
-
-  .rx_error_bad_frame(),
-  .rx_error_bad_fcs(),
-  .tx_fifo_overflow(),
-  .tx_fifo_bad_frame(),
-  .tx_fifo_good_frame(),
-  .rx_fifo_overflow(),
-  .rx_fifo_bad_frame(),
-  .rx_fifo_good_frame()
 );
 
 endmodule
