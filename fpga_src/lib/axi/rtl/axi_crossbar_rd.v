@@ -307,7 +307,7 @@ generate
         );
 
         // read response mux
-        wire [S_ID_WIDTH-1:0]  m_axi_rid_mux    = {decerr_m_axi_rid_reg, int_m_axi_rid} >> r_grant_encoded*S_ID_WIDTH;
+        wire [M_ID_WIDTH-1:0]  m_axi_rid_mux    = {decerr_m_axi_rid_reg, int_m_axi_rid} >> r_grant_encoded*M_ID_WIDTH;
         wire [DATA_WIDTH-1:0]  m_axi_rdata_mux  = {{DATA_WIDTH{1'b0}}, int_m_axi_rdata} >> r_grant_encoded*DATA_WIDTH;
         wire [1:0]             m_axi_rresp_mux  = {2'b11, int_m_axi_rresp} >> r_grant_encoded*2;
         wire                   m_axi_rlast_mux  = {decerr_m_axi_rlast_reg, int_m_axi_rlast} >> r_grant_encoded;
@@ -432,7 +432,7 @@ generate
         );
 
         // address mux
-        wire [M_ID_WIDTH-1:0]   s_axi_arid_mux     = int_s_axi_arid[a_grant_encoded*M_ID_WIDTH +: M_ID_WIDTH] | (a_grant_encoded << M_ID_WIDTH);
+        wire [S_ID_WIDTH-1:0]   s_axi_arid_mux     = int_s_axi_arid[a_grant_encoded*S_ID_WIDTH +: S_ID_WIDTH] | (a_grant_encoded << S_ID_WIDTH);
         wire [ADDR_WIDTH-1:0]   s_axi_araddr_mux   = int_s_axi_araddr[a_grant_encoded*ADDR_WIDTH +: ADDR_WIDTH];
         wire [7:0]              s_axi_arlen_mux    = int_s_axi_arlen[a_grant_encoded*8 +: 8];
         wire [2:0]              s_axi_arsize_mux   = int_s_axi_arsize[a_grant_encoded*3 +: 3];

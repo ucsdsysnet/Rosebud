@@ -351,7 +351,7 @@ generate
         );
 
         // write response mux
-        wire [S_ID_WIDTH-1:0]  m_axi_bid_mux    = {decerr_m_axi_bid_reg, int_m_axi_bid} >> b_grant_encoded*S_ID_WIDTH;
+        wire [M_ID_WIDTH-1:0]  m_axi_bid_mux    = {decerr_m_axi_bid_reg, int_m_axi_bid} >> b_grant_encoded*M_ID_WIDTH;
         wire [1:0]             m_axi_bresp_mux  = {2'b11, int_m_axi_bresp} >> b_grant_encoded*2;
         wire [BUSER_WIDTH-1:0] m_axi_buser_mux  = {{BUSER_WIDTH{1'b0}}, int_m_axi_buser} >> b_grant_encoded*BUSER_WIDTH;
         wire                   m_axi_bvalid_mux = ({decerr_m_axi_bvalid_reg, int_m_axi_bvalid} >> b_grant_encoded) && b_grant_valid;
@@ -489,7 +489,7 @@ generate
         );
 
         // address mux
-        wire [M_ID_WIDTH-1:0]   s_axi_awid_mux     = int_s_axi_awid[a_grant_encoded*M_ID_WIDTH +: M_ID_WIDTH] | (a_grant_encoded << M_ID_WIDTH);
+        wire [S_ID_WIDTH-1:0]   s_axi_awid_mux     = int_s_axi_awid[a_grant_encoded*S_ID_WIDTH +: S_ID_WIDTH] | (a_grant_encoded << S_ID_WIDTH);
         wire [ADDR_WIDTH-1:0]   s_axi_awaddr_mux   = int_s_axi_awaddr[a_grant_encoded*ADDR_WIDTH +: ADDR_WIDTH];
         wire [7:0]              s_axi_awlen_mux    = int_s_axi_awlen[a_grant_encoded*8 +: 8];
         wire [2:0]              s_axi_awsize_mux   = int_s_axi_awsize[a_grant_encoded*3 +: 3];
