@@ -78,8 +78,9 @@ always @ (posedge clk)
         core_reset          <= 1'b1;
         reset_addr_received <= 1'b0;
     end else if (reset_cmd_addr) begin
-        if (reset_cmd_strb) // if both come together no need to raise reset_addr_received
+        if (reset_cmd_strb)
             core_reset <= s_axi_wdata[0];
+            // if both come together no need to raise reset_addr_received
         else 
             reset_addr_received <= 1'b1;
     end else if (reset_addr_received) begin
@@ -88,6 +89,18 @@ always @ (posedge clk)
             reset_addr_received <= 1'b0;
         end
     end
+
+// latching reset to avoid out of bound for imem write
+reg reset_r;
+always @ (posedge clk)
+  if (rst)
+    reset_r  <= 1'b0;
+  else 
+    if (reset_cmd_strb && (reset_cmd_addr || reset_addr_received))
+      reset_r  <= 1'b1;
+    else
+      reset_r  <= 1'b0;
+
 
 /////////////////////////////////////////////////////////////////////
 /////////////////// READ AND WRITE INTERFACES ///////////////////////
@@ -194,7 +207,10 @@ axi_ram_rd_if_inst (
 wire read_reject = ram_rd_resp_valid && (!ram_rd_resp_ready);
 
 // Separation of dmem and imem/stat on dma port based on address. 
-wire imem_wr_en = ram_cmd_wr_addr[ADDR_WIDTH-1] && ram_cmd_wr_en;
+// If we receive full reset command in single cycle the core would reset from next cycle
+// and the out of bound error would happen during reset being high. If not, reset_addr_received
+// would deassert the imem_wr_en
+wire imem_wr_en = ram_cmd_wr_addr[ADDR_WIDTH-1] && ram_cmd_wr_en && (!reset_r);
 wire stat_rd_en = ram_cmd_rd_addr[ADDR_WIDTH-1] && ram_cmd_rd_en && (!read_reject);
 
 wire dmem_wr_en = (~ram_cmd_wr_addr[ADDR_WIDTH-1]) && ram_cmd_wr_en;
