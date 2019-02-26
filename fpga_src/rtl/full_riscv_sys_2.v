@@ -35,7 +35,7 @@ module full_riscv_sys # (
   parameter IMEM_SIZE_BYTES = 8192,
   parameter DMEM_SIZE_BYTES = 32768,
   parameter STAT_ADDR_WIDTH = 1,
-  parameter SLOT_COUNT      = 16,
+  parameter SLOT_COUNT      = 8,
   parameter INTERLEAVE      = 1,
   parameter PIPELINE_OUTPUT = 0,
   // interconnect parameters
@@ -63,7 +63,7 @@ module full_riscv_sys # (
   parameter AXI_STRB_WIDTH    = (AXI_DATA_WIDTH/8),
   parameter AXI_ID_WIDTH      = 8,
   parameter AXI_CORE_ID_WIDTH = AXI_ID_WIDTH+$clog2(S_COUNT),
-  parameter AXI_MAX_BURST_LEN = 2,
+  parameter AXI_MAX_BURST_LEN = 8,
   parameter DESC_WIDTH        = $clog2(M_COUNT)+$clog2(SLOT_COUNT),
   parameter SLOT_LEAD_ZERO    = 8,
   parameter RX_WRITE_OFFSET   = 8'h0A,
@@ -82,6 +82,7 @@ module full_riscv_sys # (
   parameter SHARED_FIFO_ADDR_SIZE = 4,
   // temp PCI-e parameters. 
   // There are additional 8 leading zeros for these values
+  parameter SLOT_ADDR_EFF = CORE_ADDR_WIDTH-1-SLOT_LEAD_ZERO,
   parameter FIRST_SLOT_ADDR = 7'h40,
   parameter SLOT_ADDR_STEP  = 7'h08
 )(
@@ -455,8 +456,6 @@ axi_crossbar #
     .M_REGIONS(M_REGIONS),
     .M_BASE_ADDR(M_BASE_ADDR),
     .M_ADDR_WIDTH(M_ADDR_WIDTH)
-    // .S_THREADS({S_COUNT{32'd4}}),
-    // .S_ACCEPT({S_COUNT{32'd32}})
 )
 interconnect (
     .clk(logic_clk),
@@ -560,10 +559,11 @@ dma_controller # (
     .SLOT_LEAD_ZERO(SLOT_LEAD_ZERO),
     .RX_WRITE_OFFSET(RX_WRITE_OFFSET),
     .CORE_ADDR_WIDTH(CORE_ADDR_WIDTH),
-    .SLOT_ADDR_EFF(CORE_ADDR_WIDTH-1-SLOT_LEAD_ZERO),
+    .SLOT_ADDR_EFF(SLOT_ADDR_EFF),
     .DESC_WIDTH(DESC_WIDTH),
     .CORE_FLAG_SIZE(SLOT_COUNT+8),
-    .ERR_FLAG_SIZE(M_COUNT+2)
+    .ERR_FLAG_SIZE(M_COUNT+2),
+    .DEF_MAX_PKT_LEN({{(LEN_WIDTH-SLOT_ADDR_EFF){1'b0}},SLOT_ADDR_STEP}<<SLOT_LEAD_ZERO)
 ) controller 
 (
     .clk(logic_clk),
@@ -668,7 +668,7 @@ temp_pcie # (
     .TAG_WIDTH(TAG_WIDTH),
     .RISCV_CORES(M_COUNT),
     .RISCV_SLOTS(SLOT_COUNT),
-    .SLOT_ADDR_EFF(CORE_ADDR_WIDTH-1-SLOT_LEAD_ZERO),
+    .SLOT_ADDR_EFF(SLOT_ADDR_EFF),
     .FIRST_SLOT_ADDR(FIRST_SLOT_ADDR),
     .SLOT_ADDR_STEP(SLOT_ADDR_STEP)
 ) temp_pcie_master (

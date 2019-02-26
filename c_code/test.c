@@ -43,7 +43,7 @@ inline void process (unsigned short* len, unsigned char* port, unsigned int *off
 	if (*port==0)
 		*port = 1;
 	else
-		*len = 0;
+		*port = 0;
 	return;
 }
 

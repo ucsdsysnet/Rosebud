@@ -148,35 +148,54 @@ reg [2:0] state_reg = STATE_IDLE, state_next;
 
 reg match;
 reg trans_start;
-reg [CL_S_INT_THREADS-1:0] trans_start_thread;
 reg trans_complete;
-reg [CL_S_INT_THREADS-1:0] trans_complete_thread;
 
 reg [$clog2(S_ACCEPT+1)-1:0] trans_count_reg = 0;
 wire trans_limit = trans_count_reg >= S_ACCEPT && !trans_complete;
 
+// transfer ID thread tracking
 reg [ID_WIDTH-1:0] thread_id_reg[S_INT_THREADS-1:0];
 reg [CL_M_COUNT-1:0] thread_m_reg[S_INT_THREADS-1:0];
 reg [3:0] thread_region_reg[S_INT_THREADS-1:0];
 reg [$clog2(S_ACCEPT+1)-1:0] thread_count_reg[S_INT_THREADS-1:0];
 
-initial begin
-    for (i = 0; i < S_INT_THREADS; i = i + 1) begin
-        thread_count_reg[i] <= 0;
-    end
-end
-
 wire [S_INT_THREADS-1:0] thread_active;
 wire [S_INT_THREADS-1:0] thread_match;
 wire [S_INT_THREADS-1:0] thread_cpl_match;
+wire [S_INT_THREADS-1:0] thread_trans_start;
+wire [S_INT_THREADS-1:0] thread_trans_complete;
 
 generate
     genvar n;
 
     for (n = 0; n < S_INT_THREADS; n = n + 1) begin
+        initial begin
+            thread_count_reg[n] <= 0;
+        end
+
         assign thread_active[n] = thread_count_reg[n] != 0;
         assign thread_match[n] = thread_active[n] && thread_id_reg[n] == s_axi_aid;
         assign thread_cpl_match[n] = thread_active[n] && thread_id_reg[n] == s_cpl_id;
+        assign thread_trans_start[n] = (thread_match[n] || (!thread_active[n] && !thread_match && !(thread_trans_start & ({S_INT_THREADS{1'b1}} >> (S_INT_THREADS-n))))) && trans_start;
+        assign thread_trans_complete[n] = thread_cpl_match[n] && trans_complete;
+
+        always @(posedge clk) begin
+            if (rst) begin
+                thread_count_reg[n] <= 0;
+            end else begin
+                if (thread_trans_start[n] && !thread_trans_complete[n]) begin
+                    thread_count_reg[n] <= thread_count_reg[n] + 1;
+                end else if (!thread_trans_start[n] && thread_trans_complete[n]) begin
+                    thread_count_reg[n] <= thread_count_reg[n] - 1;
+                end
+            end
+
+            if (thread_trans_start[n]) begin
+                thread_id_reg[n] <= s_axi_aid;
+                thread_m_reg[n] <= m_select_next;
+                thread_region_reg[n] <= m_axi_aregion_next;
+            end
+        end
     end
 endgenerate
 
@@ -237,7 +256,9 @@ always @* begin
                 end
 
                 if (match) begin
-                    if (!trans_limit) begin
+                    // address decode successful
+                    if (!trans_limit && (thread_match || !(&thread_active))) begin
+                        // transaction limit not reached
                         m_axi_avalid_next = 1'b1;
                         m_decerr_next = 1'b0;
                         m_wc_valid_next = WC_OUTPUT;
@@ -245,10 +266,11 @@ always @* begin
                         trans_start = 1'b1;
                         state_next = STATE_DECODE;
                     end else begin
+                        // transaction limit reached; block in idle
                         state_next = STATE_IDLE;
                     end
                 end else begin
-                    // TODO handle decode error
+                    // decode error
                     m_axi_avalid_next = 1'b0;
                     m_decerr_next = 1'b1;
                     m_wc_valid_next = WC_OUTPUT;
@@ -282,10 +304,6 @@ always @(posedge clk) begin
         m_rc_valid_reg <= 1'b0;
 
         trans_count_reg <= 0;
-
-        for (i = 0; i < S_INT_THREADS; i = i + 1) begin
-            thread_count_reg[i] <= 0;
-        end
     end else begin
         state_reg <= state_next;
         s_axi_aready_reg <= s_axi_aready_next;
@@ -298,33 +316,11 @@ always @(posedge clk) begin
         end else if (!trans_start && trans_complete) begin
             trans_count_reg <= trans_count_reg - 1;
         end
-
-        if (trans_start_thread == trans_complete_thread) begin
-            if (trans_start && !trans_complete) begin
-                thread_count_reg[trans_start_thread] <= thread_count_reg[trans_start_thread] + 1;
-            end
-            if (!trans_start && trans_complete) begin
-                thread_count_reg[trans_complete_thread] <= thread_count_reg[trans_complete_thread] - 1;
-            end
-        end else begin
-            if (trans_start) begin
-                thread_count_reg[trans_start_thread] <= thread_count_reg[trans_start_thread] + 1;
-            end
-            if (trans_complete) begin
-                thread_count_reg[trans_complete_thread] <= thread_count_reg[trans_complete_thread] - 1;
-            end
-        end
     end
 
     m_axi_aregion_reg <= m_axi_aregion_next;
     m_select_reg <= m_select_next;
     m_decerr_reg <= m_decerr_next;
-
-    if (trans_start) begin
-        thread_id_reg[trans_start_thread] <= s_axi_aid;
-        thread_m_reg[trans_start_thread] <= m_select_next;
-        thread_region_reg[trans_start_thread] <= m_axi_aregion_next;
-    end
 end
 
 endmodule
