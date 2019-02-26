@@ -37,9 +37,10 @@ int main(void){
 }
 
 inline void process (unsigned short* len, unsigned char* port, unsigned int *offset, unsigned int* data) {
-	data[6] = data[6]+0x05050505;
-	data[7] = data[7]+0x05050505;
-	*offset = 6;
+	// change sender's mac address
+	data[4] = data[4]+0x05050505;
+	// data[7] = data[7]+0x05050505;
+	// *offset = 6;
 	if (*port==0)
 		*port = 1;
 	else
