@@ -247,10 +247,17 @@ always @ (*)
     2'b01: dmem_op = DMEM_READ;
     2'b10: dmem_op = DMEM_WRITE;
     2'b11: 
-      if (INTERLEAVE || dmem_switch)
-        dmem_op = ~dmem_last_op;
+      if (INTERLEAVE || dmem_switch) begin
+        // ram_rd_resp_ready is asserted 2 cycles after rd_en, hence
+        // there could be a cycle of DMEM_IDLE after rd_en, and in the 
+        // following cycle both rd_en and wr_en being asserted.
+        if (dmem_last_op==DMEM_IDLE)
+          dmem_op = DMEM_WRITE; 
+        else 
+          dmem_op = ~dmem_last_op;
+      end 
       else 
-        dmem_op =  dmem_last_op;
+          dmem_op =  dmem_last_op;
   endcase
 
 // Signals to second port of the local DMEM of the core

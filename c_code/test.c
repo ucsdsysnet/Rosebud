@@ -1,5 +1,5 @@
 inline void process (unsigned short* len, unsigned char* port, unsigned int* offset, unsigned int* data);
-#define SLOT_COUNT 16
+#define SLOT_COUNT 8
 int main(void){
   volatile unsigned int * trigger = (volatile unsigned int *) 0x00100;
   volatile unsigned int * stat    = (volatile unsigned int *) 0x08000;
@@ -10,6 +10,9 @@ int main(void){
   unsigned char slot;
 	unsigned int offset=10;
   int i;
+
+  // volatile unsigned int * seen_first = (volatile unsigned int *) 0x00304;
+	// *seen_first = 0;
   
   while(1){
   	for (i=0; i<2*SLOT_COUNT; i+=2){
@@ -37,14 +40,23 @@ int main(void){
 }
 
 inline void process (unsigned short* len, unsigned char* port, unsigned int *offset, unsigned int* data) {
+  // volatile unsigned char * saved_MAC_byte = (volatile unsigned char *) 0x00300;
+  // volatile unsigned int * seen_first = (volatile unsigned int *) 0x00304;
 	// change sender's mac address
-	data[4] = data[4]+0x05050505;
+	// data[6] = data[6]+0x05050505;
 	// data[7] = data[7]+0x05050505;
 	// *offset = 6;
-	if (*port==0)
+	if (*port==0){
 		*port = 1;
-	else
+		// if (*seen_first)
+		// * ((unsigned char*)(&data[3])+3) = 0xEE; //*saved_MAC_byte;
+	} else {
 		*port = 0;
+		// *saved_MAC_byte = *((unsigned char*)(&data[5])+1);
+		// *seen_first = 1;
+		// * ((unsigned char*)(&data[5])+1) = 0xEE;
+	}
+
 	return;
 }
 

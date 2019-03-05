@@ -1,7 +1,6 @@
 module core_msg_arbiter # (
   parameter CORE_COUNT=8,
   parameter CORE_FIFO_ADDR_SIZE=2,
-  parameter SHARED_FIFO_ADDR_SIZE=4,
 
   parameter CORE_NO_WIDTH=$clog2(CORE_COUNT)
 )(
@@ -22,11 +21,12 @@ wire [CORE_COUNT-1:0]    msg_fifo_valid;
 
 wire [CORE_COUNT-1:0] msg_fifo_ready;
 reg  [CORE_COUNT-1:0] msg_fifo_pop;
+wire [CORE_COUNT-1:0] core_msg_fifo_err;
 
 // A message fifo for each core 
 genvar j;
 generate 
-    for (j=0; j<CORE_COUNT; j=j+1)
+    for (j=0; j<CORE_COUNT; j=j+1) begin
         simple_fifo # (
           .ADDR_WIDTH(CORE_FIFO_ADDR_SIZE),
           .DATA_WIDTH(64)
@@ -42,6 +42,8 @@ generate
           .dout(msg_fifo_data[j*64 +: 64]),
           .dout_ready(msg_fifo_pop[j])
         );
+        assign core_msg_fifo_err[j] = core_msg_valid[j] && !msg_fifo_ready[j];
+    end
 endgenerate 
 
 // msg_transmitted shows succefull handshake, used for wait before asserting valid

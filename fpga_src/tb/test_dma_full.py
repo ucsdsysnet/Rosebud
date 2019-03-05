@@ -205,7 +205,7 @@ def bench():
         yield delay(10000)
         yield clk.posedge
 
-        test_data = b'\x11\x22\x33\x44\x11\x22\x33\x44'
+        test_data = b'\x11\x22\x33\x44\x11\x22\x33\x44\x11\x22\x33\x44\x11\x22\x33\x44\x11\x22\x33\x44\x11\x22\x33\x44\x11\x22\x33\x44\x11\x22\x33\x44\x11\x22\x33\x44\x11\x22\x33\x44\x11\x22\x33\x44\x11\x22'
 
         test_frame = eth_ep.EthFrame()
         test_frame.eth_dest_mac = 0xDAD1D2D3D4D5
@@ -216,21 +216,22 @@ def bench():
         axis_frame = test_frame.build_axis_fcs()
         
         print ("send data over LAN")
-        for i in range (0,10):
+        for i in range (0,200):
           xgmii_source_0.send(b'\x55\x55\x55\x55\x55\x55\x55\xD5'+bytearray(axis_frame))
-          # yield delay(1000)
+          # yield delay(200)
           yield clk.posedge
           xgmii_source_1.send(b'\x55\x55\x55\x55\x55\x55\x55\xD5'+bytearray(axis_frame))
-          # yield delay(1000)
+          # yield delay(40)
           yield clk.posedge
 
         print ("send data from LAN")
-        for i in range (0,10):
-          yield xgmii_sink_1.wait()
-          rx_frame = xgmii_sink_1.recv()
+        for j in range (0,200):
+          yield xgmii_sink_0.wait()
+          rx_frame = xgmii_sink_0.recv()
        
           assert rx_frame.data[0:8] == bytearray(b'\x55\x55\x55\x55\x55\x55\x55\xD5')
           data = rx_frame.data
+          print ("packet number:",j)
           for i in range(0, len(data), 16):
               print(" ".join(("{:02x}".format(c) for c in bytearray(data[i:i+16]))))
         

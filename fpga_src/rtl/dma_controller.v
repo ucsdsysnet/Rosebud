@@ -271,6 +271,8 @@ simple_fifo # (
   .dout({trigger_fifo_port_no,trigger_fifo_core_no, trigger_fifo_slot_no, trigger_fifo_slot_addr}),
   .dout_ready(trigger_accepted)
 );
+
+wire trigger_fifo_err = (|s_axis_rx_desc_valid) && !trigger_fifo_ready;
  
 // There is no read operation
 assign m_axi_arlock  = 1'b0;
@@ -308,6 +310,8 @@ simple_fifo # (
   .dout_ready(trigger_accepted && !sent_trigger_port)
 );
 
+wire len_fifo_0_err = (pkt_sent_to_core_valid[0]) && !len_fifo_ready[0];
+
 simple_fifo # (
   .ADDR_WIDTH($clog2(CORE_COUNT)),
   .DATA_WIDTH(LEN_WIDTH)
@@ -324,6 +328,7 @@ simple_fifo # (
   .dout_ready(trigger_accepted && sent_trigger_port)
 );
 
+wire len_fifo_1_err = (pkt_sent_to_core_valid[1]) && !len_fifo_ready[1];
 
 // write trigger
 reg [ADDR_WIDTH-1:0]  m_axi_awaddr_reg;
@@ -438,7 +443,7 @@ always @ (posedge clk)
   end else begin
     if (s_axis_tx_desc_valid_reg) begin
       s_axis_tx_desc_valid_reg <= 1'b0;
-    end else if (msg_valid) begin // add check for errors here
+    end else if (msg_valid && msg_ready) begin // add check for errors here
       s_axis_tx_desc_addr_reg   <= read_slot_addr;
       s_axis_tx_desc_len_reg    <= {{(LEN_WIDTH-16){1'b0}},read_pkt_len};
       s_axis_tx_desc_valid_reg  <= (read_pkt_len!=16'd0); // drop packet
@@ -446,17 +451,32 @@ always @ (posedge clk)
     end
   end
 
+reg [1:0] tx_busy;
+
 assign s_axis_tx_desc_addr     = {s_axis_tx_desc_addr_reg,s_axis_tx_desc_addr_reg};
 assign s_axis_tx_desc_len      = {s_axis_tx_desc_len_reg,s_axis_tx_desc_len_reg};
-assign s_axis_tx_desc_valid[0] = s_axis_tx_desc_valid_reg && !s_axis_tx_out_port_reg;
-assign s_axis_tx_desc_valid[1] = s_axis_tx_desc_valid_reg && s_axis_tx_out_port_reg;
+assign s_axis_tx_desc_valid[0] = s_axis_tx_desc_valid_reg && !s_axis_tx_out_port_reg; 
+assign s_axis_tx_desc_valid[1] = s_axis_tx_desc_valid_reg && s_axis_tx_out_port_reg;  
 assign s_axis_tx_desc_tag      = {(2*TAG_WIDTH){1'b0}};
 assign s_axis_tx_desc_user     = 2'd0;
 
-// There is 1 cycle difference, but if ready is asserted it would stay asserted. 
-// And we are latching. 
-assign msg_ready = (s_axis_tx_desc_ready[0] && !out_port[0]) ||
-                   (s_axis_tx_desc_ready[1] &&  out_port[0]);
+always @ (posedge clk)
+  if (rst) begin
+    tx_busy <= 2'b00;
+  end else begin
+    if (s_axis_tx_desc_valid[0])
+      tx_busy[0] <= 1'b1;
+    else if (pkt_sent_out_valid[0])
+      tx_busy[0] <= 1'b0;
+    if (s_axis_tx_desc_valid[1])
+      tx_busy[1] <= 1'b1;
+    else if (pkt_sent_out_valid[1])
+      tx_busy[1] <= 1'b0;
+  end
+
+// s_axis_tx_desc_ready is not checked since we are wautubg fir pkt_sent_out_valid
+assign msg_ready = ((!tx_busy[0]||pkt_sent_out_valid[0]) && !out_port[0]) ||
+                   ((!tx_busy[1]||pkt_sent_out_valid[1]) &&  out_port[0]);
 
 reg [CORE_NO_WIDTH-1:0] tx_desc_core_no_latched [0:1];
 reg [SLOT_NO_WIDTH-1:0] tx_desc_slot_no_latched [0:1];
