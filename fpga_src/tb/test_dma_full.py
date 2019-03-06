@@ -105,8 +105,8 @@ def bench():
     xgmii_source_0 = xgmii_ep.XGMIISource()
 
     xgmii_source_logic_0 = xgmii_source_0.create_logic(
-        clk,
-        rst,
+        clk=rx_clk_0,
+        rst=rx_rst_0,
         txd=xgmii_rxd_0,
         txc=xgmii_rxc_0,
         name='xgmii_source_0'
@@ -115,8 +115,8 @@ def bench():
     xgmii_sink_0 = xgmii_ep.XGMIISink()
 
     xgmii_sink_logic_0 = xgmii_sink_0.create_logic(
-        clk,
-        rst,
+        clk=tx_clk_0,
+        rst=tx_rst_0,
         rxd=xgmii_txd_0,
         rxc=xgmii_txc_0,
         name='xgmii_sink_0'
@@ -125,8 +125,8 @@ def bench():
     xgmii_source_1 = xgmii_ep.XGMIISource()
 
     xgmii_source_logic_1 = xgmii_source_1.create_logic(
-        clk,
-        rst,
+        clk=rx_clk_1,
+        rst=rx_rst_1,
         txd=xgmii_rxd_1,
         txc=xgmii_rxc_1,
         name='xgmii_source_1'
@@ -135,13 +135,12 @@ def bench():
     xgmii_sink_1 = xgmii_ep.XGMIISink()
 
     xgmii_sink_logic_1 = xgmii_sink_1.create_logic(
-        clk,
-        rst,
+        clk=tx_clk_1,
+        rst=tx_rst_1,
         rxd=xgmii_txd_1,
         rxc=xgmii_txc_1,
         name='xgmii_sink_1'
     )
-
 
     # DUT
     if os.system(build_cmd):
@@ -170,9 +169,12 @@ def bench():
         xgmii_txc_1=xgmii_txc_1
     )
 
-    @always(delay(4))
+    @always(delay(25))
     def clkgen():
         clk.next = not clk
+
+    @always(delay(32))
+    def clkgen2():
         tx_clk_0.next = not tx_clk_0
         rx_clk_0.next = not rx_clk_0
         tx_clk_1.next = not tx_clk_1
@@ -180,21 +182,28 @@ def bench():
 
     @instance
     def check():
-        yield delay(100)
+        yield delay(1000)
         yield clk.posedge
+        rst.next = 1
+        yield clk.posedge
+        yield tx_clk_0.posedge
         tx_rst_0.next = 1
         rx_rst_0.next = 1
         tx_rst_1.next = 1
         rx_rst_1.next = 1
-        rst.next = 1
+        yield tx_clk_0.posedge
         yield clk.posedge
+        yield tx_clk_0.posedge
+        yield clk.posedge
+        rst.next = 0
+        yield clk.posedge
+        yield tx_clk_0.posedge
         tx_rst_0.next = 0
         rx_rst_0.next = 0
         tx_rst_1.next = 0
         rx_rst_1.next = 0
-        rst.next = 0
-        yield clk.posedge
-        yield delay(100)
+        yield tx_clk_0.posedge
+        yield delay(1000)
         yield clk.posedge
         yield clk.posedge
         yield clk.posedge
@@ -202,40 +211,55 @@ def bench():
         
         # testbench stimulus
 
-        yield delay(10000)
+        yield delay(50000)
         yield clk.posedge
 
         test_data = b'\x11\x22\x33\x44\x11\x22\x33\x44\x11\x22\x33\x44\x11\x22\x33\x44\x11\x22\x33\x44\x11\x22\x33\x44\x11\x22\x33\x44\x11\x22\x33\x44\x11\x22\x33\x44\x11\x22\x33\x44\x11\x22\x33\x44\x11\x22'
-
         test_frame = eth_ep.EthFrame()
         test_frame.eth_dest_mac = 0xDAD1D2D3D4D5
         test_frame.eth_src_mac = 0x5A5152535455
         test_frame.eth_type = 0x8000
-        test_frame.payload = test_data
-        test_frame.update_fcs()
-        axis_frame = test_frame.build_axis_fcs()
-        
         print ("send data over LAN")
-        for i in range (0,200):
-          xgmii_source_0.send(b'\x55\x55\x55\x55\x55\x55\x55\xD5'+bytearray(axis_frame))
-          # yield delay(200)
-          yield clk.posedge
-          xgmii_source_1.send(b'\x55\x55\x55\x55\x55\x55\x55\xD5'+bytearray(axis_frame))
-          # yield delay(40)
-          yield clk.posedge
 
+        for i in range (0,500):
+          # test_data = test_data + bytes([(i*2)%256])
+          test_frame.payload = test_data
+          test_frame.update_fcs()
+          axis_frame = test_frame.build_axis_fcs()
+          xgmii_source_0.send(b'\x55\x55\x55\x55\x55\x55\x55\xD5'+bytearray(axis_frame))
+          # yield rx_clk_0.posedge
+
+          # test_data = test_data + bytes([((i*2)+1)%256])
+          test_frame.payload = test_data
+          test_frame.update_fcs()
+          axis_frame = test_frame.build_axis_fcs()
+          xgmii_source_1.send(b'\x55\x55\x55\x55\x55\x55\x55\xD5'+bytearray(axis_frame))
+          # yield rx_clk_1.posedge
+
+        lengths = []
         print ("send data from LAN")
-        for j in range (0,200):
+        for j in range (0,500):
           yield xgmii_sink_0.wait()
           rx_frame = xgmii_sink_0.recv()
-       
-          assert rx_frame.data[0:8] == bytearray(b'\x55\x55\x55\x55\x55\x55\x55\xD5')
           data = rx_frame.data
-          print ("packet number:",j)
+          print ("packet number from port 0:",j)
           for i in range(0, len(data), 16):
               print(" ".join(("{:02x}".format(c) for c in bytearray(data[i:i+16]))))
-        
-                # eth_frame = eth_ep.EthFrame()
+          assert rx_frame.data[0:8] == bytearray(b'\x55\x55\x55\x55\x55\x55\x55\xD5')
+          lengths.append(len(data))
+
+          yield xgmii_sink_1.wait()
+          rx_frame = xgmii_sink_1.recv()
+          data = rx_frame.data
+          print ("packet number from port 1:",j)
+          for i in range(0, len(data), 16):
+              print(" ".join(("{:02x}".format(c) for c in bytearray(data[i:i+16]))))
+          assert rx_frame.data[0:8] == bytearray(b'\x55\x55\x55\x55\x55\x55\x55\xD5')
+          lengths.append(len(data))
+
+        print ("lengths: " , sorted(lengths))
+
+        # eth_frame = eth_ep.EthFrame()
         # eth_frame.parse_axis_fcs(rx_frame.data[8:])
 
         # print(hex(eth_frame.eth_fcs))

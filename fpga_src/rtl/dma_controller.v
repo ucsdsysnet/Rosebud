@@ -430,6 +430,8 @@ wire [7:0]  core_errs    = msg_data[63:48];
 
 wire [ADDR_WIDTH-1:0] read_slot_addr = {msg_core_no,
                       msg_data[32+CORE_ADDR_WIDTH-1:32]};
+reg  [CORE_NO_WIDTH-1:0] msg_core_no_r;
+reg  [SLOT_NO_WIDTH-1:0] read_slot_no_r;
 
 // send tx desc
 reg [ADDR_WIDTH-1:0]  s_axis_tx_desc_addr_reg;
@@ -448,10 +450,10 @@ always @ (posedge clk)
       s_axis_tx_desc_len_reg    <= {{(LEN_WIDTH-16){1'b0}},read_pkt_len};
       s_axis_tx_desc_valid_reg  <= (read_pkt_len!=16'd0); // drop packet
       s_axis_tx_out_port_reg    <= out_port[0];
+      msg_core_no_r             <= msg_core_no;
+      read_slot_no_r            <= read_slot_no[SLOT_NO_WIDTH-1:0];
     end
   end
-
-reg [1:0] tx_busy;
 
 assign s_axis_tx_desc_addr     = {s_axis_tx_desc_addr_reg,s_axis_tx_desc_addr_reg};
 assign s_axis_tx_desc_len      = {s_axis_tx_desc_len_reg,s_axis_tx_desc_len_reg};
@@ -460,41 +462,52 @@ assign s_axis_tx_desc_valid[1] = s_axis_tx_desc_valid_reg && s_axis_tx_out_port_
 assign s_axis_tx_desc_tag      = {(2*TAG_WIDTH){1'b0}};
 assign s_axis_tx_desc_user     = 2'd0;
 
-always @ (posedge clk)
-  if (rst) begin
-    tx_busy <= 2'b00;
-  end else begin
-    if (s_axis_tx_desc_valid[0])
-      tx_busy[0] <= 1'b1;
-    else if (pkt_sent_out_valid[0])
-      tx_busy[0] <= 1'b0;
-    if (s_axis_tx_desc_valid[1])
-      tx_busy[1] <= 1'b1;
-    else if (pkt_sent_out_valid[1])
-      tx_busy[1] <= 1'b0;
-  end
+// // There is 1 cycle difference, but if ready is asserted it would stay assertet.
+// // And we are latching.   
+assign msg_ready = (s_axis_tx_desc_ready[0] && !out_port[0]) ||
+                   (s_axis_tx_desc_ready[1] &&  out_port[0]);
 
-// s_axis_tx_desc_ready is not checked since we are wautubg fir pkt_sent_out_valid
-assign msg_ready = ((!tx_busy[0]||pkt_sent_out_valid[0]) && !out_port[0]) ||
-                   ((!tx_busy[1]||pkt_sent_out_valid[1]) &&  out_port[0]);
+wire [CORE_NO_WIDTH-1:0] tx_desc_core_no_latched_0;
+wire [SLOT_NO_WIDTH-1:0] tx_desc_slot_no_latched_0;
+wire [CORE_NO_WIDTH-1:0] tx_desc_core_no_latched_1;
+wire [SLOT_NO_WIDTH-1:0] tx_desc_slot_no_latched_1;
+wire tx_desc_fifo_0_v, tx_desc_fifo_1_v;
 
-reg [CORE_NO_WIDTH-1:0] tx_desc_core_no_latched [0:1];
-reg [SLOT_NO_WIDTH-1:0] tx_desc_slot_no_latched [0:1];
+simple_fifo # (
+  .ADDR_WIDTH(1),
+  .DATA_WIDTH(CORE_NO_WIDTH+SLOT_NO_WIDTH)
+) tx_desc_fifo_0 (
+  .clk(clk),
+  .rst(rst),
 
-// Latch core and slot number of core message to add to read desc fifo
-always @ (posedge clk) begin
-  if (s_axis_tx_desc_valid[0]) begin
-    tx_desc_core_no_latched[0] <= msg_core_no;
-    tx_desc_slot_no_latched[0] <= read_slot_no;
-  end
-  if (s_axis_tx_desc_valid[1]) begin
-    tx_desc_core_no_latched[1] <= msg_core_no;
-    tx_desc_slot_no_latched[1] <= read_slot_no;
-  end
-end
+  .din_valid(s_axis_tx_desc_valid[0]),
+  .din({msg_core_no_r,read_slot_no_r}),
+  .din_ready(),
+ 
+  .dout_valid(tx_desc_fifo_0_v),
+  .dout({tx_desc_core_no_latched_0,tx_desc_slot_no_latched_0}),
+  .dout_ready(pkt_sent_out_valid[0])
+);
+ 
+simple_fifo # (
+  .ADDR_WIDTH(1),
+  .DATA_WIDTH(CORE_NO_WIDTH+SLOT_NO_WIDTH)
+) tx_desc_fifo_1 (
+  .clk(clk),
+  .rst(rst),
+
+  .din_valid(s_axis_tx_desc_valid[1]),
+  .din({msg_core_no_r,read_slot_no_r}),
+  .din_ready(),
+ 
+  .dout_valid(tx_desc_fifo_1_v),
+  .dout({tx_desc_core_no_latched_1,tx_desc_slot_no_latched_1}),
+  .dout_ready(pkt_sent_out_valid[1])
+);
+ 
 assign dma_rx_desc = pkt_sent_out_valid[1] ? 
-       {tx_desc_core_no_latched[1], tx_desc_slot_no_latched[1]}:
-       {tx_desc_core_no_latched[0], tx_desc_slot_no_latched[0]};
+       {tx_desc_core_no_latched_1, tx_desc_slot_no_latched_1}:
+       {tx_desc_core_no_latched_0, tx_desc_slot_no_latched_0};
 assign dma_rx_desc_valid = |pkt_sent_out_valid;
 
 endmodule

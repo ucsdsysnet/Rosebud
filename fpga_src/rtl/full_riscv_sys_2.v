@@ -63,7 +63,7 @@ module full_riscv_sys # (
   parameter AXI_STRB_WIDTH    = (AXI_DATA_WIDTH/8),
   parameter AXI_ID_WIDTH      = 8,
   parameter AXI_CORE_ID_WIDTH = AXI_ID_WIDTH+$clog2(S_COUNT),
-  parameter AXI_MAX_BURST_LEN = 4,
+  parameter AXI_MAX_BURST_LEN = 8,
   parameter DESC_WIDTH        = $clog2(M_COUNT)+$clog2(SLOT_COUNT),
   parameter SLOT_LEAD_ZERO    = 8,
   parameter RX_WRITE_OFFSET   = 8'h0A,

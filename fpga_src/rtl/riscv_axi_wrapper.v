@@ -295,9 +295,10 @@ assign ram_rd_resp_data = dmem_was_read ? data_dma_rd_data : stat_rd_data;
 // If we accepted a read we latch the next values for id and last.
 wire read_accepted = (dmem_op==DMEM_READ) || (stat_rd_en && stat_rd_ready);
 always @(posedge clk)
-    if (rst)
+    if (rst) begin
         ram_rd_resp_last <= 1'b0;
-    else if (read_accepted) begin
+        ram_rd_resp_id   <= {ID_WIDTH{1'b0}};
+    end else if (read_accepted) begin
         ram_rd_resp_id   <= ram_cmd_rd_id;
         ram_rd_resp_last <= ram_cmd_rd_last;
     end

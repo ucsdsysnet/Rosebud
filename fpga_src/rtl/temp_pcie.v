@@ -77,7 +77,7 @@ always @(posedge clk)
   if (rst) begin
     start_n <= 1'b0;
     counter <= 20'd0;
-  end else if (counter < 20'd1000) begin
+  end else if (counter < 20'd100) begin
     counter <= counter + 20'd1;
   end else begin
     start_n <= 1'b1;
