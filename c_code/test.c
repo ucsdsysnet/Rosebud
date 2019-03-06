@@ -8,7 +8,7 @@ int main(void){
   unsigned short len;
   unsigned char port;
   unsigned char slot;
-	unsigned int offset=10;
+	unsigned int offset=8; //10;
   int i;
 
   // volatile unsigned int * seen_first = (volatile unsigned int *) 0x00304;

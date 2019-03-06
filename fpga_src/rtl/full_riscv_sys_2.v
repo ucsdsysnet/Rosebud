@@ -66,7 +66,7 @@ module full_riscv_sys # (
   parameter AXI_MAX_BURST_LEN = 8,
   parameter DESC_WIDTH        = $clog2(M_COUNT)+$clog2(SLOT_COUNT),
   parameter SLOT_LEAD_ZERO    = 8,
-  parameter RX_WRITE_OFFSET   = 8'h0A,
+  parameter RX_WRITE_OFFSET   = 8'h08, // A,
   // eth interface parameters 
   parameter DATA_WIDTH        = 64,
   parameter CTRL_WIDTH        = (DATA_WIDTH/8),

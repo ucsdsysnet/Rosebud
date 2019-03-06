@@ -214,14 +214,16 @@ def bench():
         yield delay(50000)
         yield clk.posedge
 
-        test_data = b'\x11\x22\x33\x44\x11\x22\x33\x44\x11\x22\x33\x44\x11\x22\x33\x44\x11\x22\x33\x44\x11\x22\x33\x44\x11\x22\x33\x44\x11\x22\x33\x44\x11\x22\x33\x44\x11\x22\x33\x44\x11\x22\x33\x44\x11\x22'
+        test_data = bytes([x%256 for x in range(250)])
+        # b'\x11\x22\x33\x44\x11\x22\x33\x44\x11\x22\x33\x44\x11\x22\x33\x44\x11\x22\x33\x44\x11\x22\x33\x44\x11\x22\x33\x44\x11\x22\x33\x44\x11\x22\x33\x44\x11\x22\x33\x44\x11\x22\x33\x44\x11\x22'
+
         test_frame = eth_ep.EthFrame()
         test_frame.eth_dest_mac = 0xDAD1D2D3D4D5
         test_frame.eth_src_mac = 0x5A5152535455
         test_frame.eth_type = 0x8000
         print ("send data over LAN")
 
-        for i in range (0,500):
+        for i in range (0,10):
           # test_data = test_data + bytes([(i*2)%256])
           test_frame.payload = test_data
           test_frame.update_fcs()
@@ -238,7 +240,7 @@ def bench():
 
         lengths = []
         print ("send data from LAN")
-        for j in range (0,500):
+        for j in range (0,10):
           yield xgmii_sink_0.wait()
           rx_frame = xgmii_sink_0.recv()
           data = rx_frame.data

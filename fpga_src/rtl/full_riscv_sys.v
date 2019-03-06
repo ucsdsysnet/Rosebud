@@ -65,7 +65,7 @@ module full_riscv_sys # (
   parameter AXI_MAX_BURST_LEN = 8,
   parameter DESC_WIDTH        = $clog2(M_COUNT)+$clog2(SLOT_COUNT),
   parameter SLOT_LEAD_ZERO    = 8,
-  parameter RX_WRITE_OFFSET   = 8'h0A,
+  parameter RX_WRITE_OFFSET   = 8'h08, //A,
   // eth interface parameters 
   parameter DATA_WIDTH        = 64,
   parameter CTRL_WIDTH        = (DATA_WIDTH/8),
@@ -77,7 +77,7 @@ module full_riscv_sys # (
   parameter MIN_FRAME_LENGTH  = 64,
   parameter TX_DROP_WHEN_FULL = 0,
   // Aribter parameters
-  parameter CORE_FIFO_ADDR_SIZE   = 2,
+  parameter CORE_FIFO_ADDR_SIZE   = 3,
   parameter SHARED_FIFO_ADDR_SIZE = 4,
   // temp PCI-e parameters. 
   // There are additional 8 leading zeros for these values
@@ -784,8 +784,7 @@ endgenerate
     
 core_msg_arbiter # (
   .CORE_COUNT(M_COUNT),
-  .CORE_FIFO_ADDR_SIZE(CORE_FIFO_ADDR_SIZE),
-  .SHARED_FIFO_ADDR_SIZE(SHARED_FIFO_ADDR_SIZE)
+  .CORE_FIFO_ADDR_SIZE(CORE_FIFO_ADDR_SIZE)
 ) msg_arbiter (
     .clk(logic_clk),
     .rst(logic_rst),
