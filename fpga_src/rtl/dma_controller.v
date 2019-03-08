@@ -332,7 +332,6 @@ wire len_fifo_1_err = (pkt_sent_to_core_valid[1]) && !len_fifo_ready[1];
 
 // write trigger
 reg [ADDR_WIDTH-1:0]  m_axi_awaddr_reg;
-reg [ID_WIDTH-1:0]  m_axi_awid_reg;
 reg m_axi_awvalid_reg;
 reg awr_req_attempt;
 
@@ -349,12 +348,10 @@ always @ (posedge clk)
   if (rst) begin 
     m_axi_awvalid_reg <= 1'b0;
     awr_req_attempt   <= 1'b0;
-    m_axi_awid_reg    <= {ID_WIDTH{1'b0}};
     m_axi_awaddr_reg  <= {ADDR_WIDTH{1'b0}};
   end else begin
-    if ((|trigger_send_valid) && !awr_req_attempt) begin
+    if ((|trigger_send_valid) && !awr_req_attempt && !wr_req_attempt) begin
       m_axi_awaddr_reg  <= trigger_addr;
-      m_axi_awid_reg    <= trigger_fifo_core_no;
       m_axi_awvalid_reg <= 1'b1;
       awr_req_attempt   <= 1'b1;
     end
@@ -371,7 +368,6 @@ assign m_axi_awlen   = 8'd0;
 assign m_axi_awsize  = 3'b011;
 assign m_axi_awburst = 2'b01;
 assign m_axi_awid    = {ID_WIDTH{1'b0}};  
-// assign m_axi_awid    = m_axi_awid_reg;
 assign m_axi_awaddr  = m_axi_awaddr_reg;
 assign m_axi_awvalid = m_axi_awvalid_reg;
 
@@ -394,7 +390,7 @@ always @ (posedge clk)
     trigger_accepted <= 1'b0;
   end else begin
     trigger_accepted <= 1'b0;
-    if (|trigger_send_valid && !wr_req_attempt) begin
+    if (|trigger_send_valid && !wr_req_attempt && !awr_req_attempt) begin
       m_axi_wvalid_reg  <= 1'b1;
       m_axi_wdata_reg   <= {8'd0, core_slot_addr, core_slot_no,
                             incoming_port, trigger_pkt_len};

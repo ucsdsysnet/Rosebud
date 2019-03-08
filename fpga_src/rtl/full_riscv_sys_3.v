@@ -83,7 +83,10 @@ module full_riscv_sys # (
   // There are additional 8 leading zeros for these values
   parameter SLOT_ADDR_EFF = CORE_ADDR_WIDTH-1-SLOT_LEAD_ZERO,
   parameter FIRST_SLOT_ADDR = 7'h40,
-  parameter SLOT_ADDR_STEP  = 7'h08
+  parameter SLOT_ADDR_STEP  = 7'h08,
+  // AXI masters FIFO parameters
+  parameter AXI_WRITE_FIFO_DEPTH = 32,
+  parameter AXI_READ_FIFO_DEPTH  = 32
 )(
   // Inputs
   input [2-1:0] rx_clk,
@@ -102,6 +105,7 @@ module full_riscv_sys # (
 
 );
 
+`define FIFOED_MASTERS
 parameter ETH0_LOC = 0;
 parameter ETH1_LOC = 1;
 parameter CTRL_LOC = 2;
@@ -179,6 +183,42 @@ wire [S_COUNT*AXI_DATA_WIDTH-1:0] m_axi_rdata;
 wire [S_COUNT*2-1:0] m_axi_rresp;
 wire [S_COUNT-1:0] m_axi_rlast;
 wire [S_COUNT-1:0] m_axi_rvalid;
+
+wire [S_COUNT*AXI_ID_WIDTH-1:0] fifoed_m_axi_awid;
+wire [S_COUNT*AXI_ADDR_WIDTH-1:0] fifoed_m_axi_awaddr;
+wire [S_COUNT*8-1:0] fifoed_m_axi_awlen;
+wire [S_COUNT*3-1:0] fifoed_m_axi_awsize;
+wire [S_COUNT*2-1:0] fifoed_m_axi_awburst;
+wire [S_COUNT-1:0] fifoed_m_axi_awlock;
+wire [S_COUNT*4-1:0] fifoed_m_axi_awcache;
+wire [S_COUNT*3-1:0] fifoed_m_axi_awprot;
+wire [S_COUNT-1:0] fifoed_m_axi_awvalid;
+wire [S_COUNT*AXI_DATA_WIDTH-1:0] fifoed_m_axi_wdata;
+wire [S_COUNT*AXI_STRB_WIDTH-1:0] fifoed_m_axi_wstrb;
+wire [S_COUNT-1:0] fifoed_m_axi_wlast;
+wire [S_COUNT-1:0] fifoed_m_axi_wvalid;
+wire [S_COUNT-1:0] fifoed_m_axi_bready;
+wire [S_COUNT*AXI_ID_WIDTH-1:0] fifoed_m_axi_arid;
+wire [S_COUNT*AXI_ADDR_WIDTH-1:0] fifoed_m_axi_araddr;
+wire [S_COUNT*8-1:0] fifoed_m_axi_arlen;
+wire [S_COUNT*3-1:0] fifoed_m_axi_arsize;
+wire [S_COUNT*2-1:0] fifoed_m_axi_arburst;
+wire [S_COUNT-1:0] fifoed_m_axi_arlock;
+wire [S_COUNT*4-1:0] fifoed_m_axi_arcache;
+wire [S_COUNT*3-1:0] fifoed_m_axi_arprot;
+wire [S_COUNT-1:0] fifoed_m_axi_arvalid;
+wire [S_COUNT-1:0] fifoed_m_axi_rready;
+wire [S_COUNT-1:0] fifoed_m_axi_awready;
+wire [S_COUNT-1:0] fifoed_m_axi_wready;
+wire [S_COUNT*AXI_ID_WIDTH-1:0] fifoed_m_axi_bid;
+wire [S_COUNT*2-1:0] fifoed_m_axi_bresp;
+wire [S_COUNT-1:0] fifoed_m_axi_bvalid;
+wire [S_COUNT-1:0] fifoed_m_axi_arready;
+wire [S_COUNT*AXI_ID_WIDTH-1:0] fifoed_m_axi_rid;
+wire [S_COUNT*AXI_DATA_WIDTH-1:0] fifoed_m_axi_rdata;
+wire [S_COUNT*2-1:0] fifoed_m_axi_rresp;
+wire [S_COUNT-1:0] fifoed_m_axi_rlast;
+wire [S_COUNT-1:0] fifoed_m_axi_rvalid;
 
 wire [M_COUNT*AXI_CORE_ID_WIDTH-1:0] s_axi_awid;
 wire [M_COUNT*AXI_ADDR_WIDTH-1:0] s_axi_awaddr;
@@ -460,48 +500,49 @@ axi_crossbar_0
 interconnect (
     .aclk(logic_clk),
     .aresetn(~logic_rst),
-    .s_axi_awid(m_axi_awid),
-    .s_axi_awaddr(m_axi_awaddr),
-    .s_axi_awlen(m_axi_awlen),
-    .s_axi_awsize(m_axi_awsize),
-    .s_axi_awburst(m_axi_awburst),
-    .s_axi_awlock(m_axi_awlock),
-    .s_axi_awcache(m_axi_awcache),
-    .s_axi_awprot(m_axi_awprot),
+    .s_axi_awid(fifoed_m_axi_awid),
+    .s_axi_awaddr(fifoed_m_axi_awaddr),
+    .s_axi_awlen(fifoed_m_axi_awlen),
+    .s_axi_awsize(fifoed_m_axi_awsize),
+    .s_axi_awburst(fifoed_m_axi_awburst),
+    .s_axi_awlock(fifoed_m_axi_awlock),
+    .s_axi_awcache(fifoed_m_axi_awcache),
+    .s_axi_awprot(fifoed_m_axi_awprot),
     .s_axi_awqos(),
     // .s_axi_awuser(),
-    .s_axi_awvalid(m_axi_awvalid),
-    .s_axi_awready(m_axi_awready),
-    .s_axi_wdata(m_axi_wdata),
-    .s_axi_wstrb(m_axi_wstrb),
-    .s_axi_wlast(m_axi_wlast),
+    .s_axi_awvalid(fifoed_m_axi_awvalid),
+    .s_axi_awready(fifoed_m_axi_awready),
+    .s_axi_wdata(fifoed_m_axi_wdata),
+    .s_axi_wstrb(fifoed_m_axi_wstrb),
+    .s_axi_wlast(fifoed_m_axi_wlast),
     // .s_axi_wuser(),
-    .s_axi_wvalid(m_axi_wvalid),
-    .s_axi_wready(m_axi_wready),
-    .s_axi_bid(m_axi_bid),
-    .s_axi_bresp(m_axi_bresp),
+    .s_axi_wvalid(fifoed_m_axi_wvalid),
+    .s_axi_wready(fifoed_m_axi_wready),
+    .s_axi_bid(fifoed_m_axi_bid),
+    .s_axi_bresp(fifoed_m_axi_bresp),
     // .s_axi_buser(),
-    .s_axi_bvalid(m_axi_bvalid),
-    .s_axi_bready(m_axi_bready),
-    .s_axi_arid(m_axi_arid),
-    .s_axi_araddr(m_axi_araddr),
-    .s_axi_arlen(m_axi_arlen),
-    .s_axi_arsize(m_axi_arsize),
-    .s_axi_arburst(m_axi_arburst),
-    .s_axi_arlock(m_axi_arlock),
-    .s_axi_arcache(m_axi_arcache),
-    .s_axi_arprot(m_axi_arprot),
+    .s_axi_bvalid(fifoed_m_axi_bvalid),
+    .s_axi_bready(fifoed_m_axi_bready),
+    .s_axi_arid(fifoed_m_axi_arid),
+    .s_axi_araddr(fifoed_m_axi_araddr),
+    .s_axi_arlen(fifoed_m_axi_arlen),
+    .s_axi_arsize(fifoed_m_axi_arsize),
+    .s_axi_arburst(fifoed_m_axi_arburst),
+    .s_axi_arlock(fifoed_m_axi_arlock),
+    .s_axi_arcache(fifoed_m_axi_arcache),
+    .s_axi_arprot(fifoed_m_axi_arprot),
     .s_axi_arqos(),
     // .s_axi_aruser(),
-    .s_axi_arvalid(m_axi_arvalid),
-    .s_axi_arready(m_axi_arready),
-    .s_axi_rid(m_axi_rid),
-    .s_axi_rdata(m_axi_rdata),
-    .s_axi_rresp(m_axi_rresp),
-    .s_axi_rlast(m_axi_rlast),
+    .s_axi_arvalid(fifoed_m_axi_arvalid),
+    .s_axi_arready(fifoed_m_axi_arready),
+    .s_axi_rid(fifoed_m_axi_rid),
+    .s_axi_rdata(fifoed_m_axi_rdata),
+    .s_axi_rresp(fifoed_m_axi_rresp),
+    .s_axi_rlast(fifoed_m_axi_rlast),
     // .s_axi_ruser(),
-    .s_axi_rvalid(m_axi_rvalid),
-    .s_axi_rready(m_axi_rready),
+    .s_axi_rvalid(fifoed_m_axi_rvalid),
+    .s_axi_rready(fifoed_m_axi_rready),
+
     .m_axi_awid(s_axi_awid),
     .m_axi_awaddr(s_axi_awaddr),
     .m_axi_awlen(s_axi_awlen),
@@ -798,5 +839,154 @@ core_msg_arbiter # (
     .msg_core_no(msg_core_no),
     .msg_ready(msg_ready)
 );
+
+`ifdef FIFOED_MASTERS
+
+    // A fifo after each master's AXI output 
+    genvar j;
+    generate
+      for (j=0; j<S_COUNT; j=j+1) begin
+        axi_fifo # (
+        .DATA_WIDTH(AXI_DATA_WIDTH),
+        .ADDR_WIDTH(AXI_ADDR_WIDTH),
+        .ID_WIDTH(AXI_ID_WIDTH),
+        .WRITE_FIFO_DEPTH(AXI_WRITE_FIFO_DEPTH),
+        .READ_FIFO_DEPTH(AXI_READ_FIFO_DEPTH)
+        ) axi_masters_fifo (
+            .clk(logic_clk),
+            .rst(logic_rst),
+    
+            .s_axi_awid    (m_axi_awid[j*AXI_ID_WIDTH +: AXI_ID_WIDTH]),
+            .s_axi_awaddr  (m_axi_awaddr[j*AXI_ADDR_WIDTH +: AXI_ADDR_WIDTH]),
+            .s_axi_awlen   (m_axi_awlen[j*8 +: 8]),
+            .s_axi_awsize  (m_axi_awsize[j*3 +: 3]),
+            .s_axi_awburst (m_axi_awburst[j*2 +: 2]),
+            .s_axi_awlock  (m_axi_awlock[j]),
+            .s_axi_awcache (m_axi_awcache[j*4 +: 4]),
+            .s_axi_awprot  (m_axi_awprot[j*3 +: 3]),
+            .s_axi_awqos   (),
+            .s_axi_awregion(),
+            .s_axi_awuser  (),
+            .s_axi_awvalid (m_axi_awvalid[j]),
+            .s_axi_awready (m_axi_awready[j]),
+            .s_axi_wdata   (m_axi_wdata[j*AXI_DATA_WIDTH +: AXI_DATA_WIDTH]),
+            .s_axi_wstrb   (m_axi_wstrb[j*AXI_STRB_WIDTH +: AXI_STRB_WIDTH]),
+            .s_axi_wlast   (m_axi_wlast[j]),
+            .s_axi_wuser   (),
+            .s_axi_wvalid  (m_axi_wvalid[j]),
+            .s_axi_wready  (m_axi_wready[j]),
+            .s_axi_bid     (m_axi_bid[j*AXI_ID_WIDTH +: AXI_ID_WIDTH]),
+            .s_axi_bresp   (m_axi_bresp[j*2 +: 2]),
+            .s_axi_buser   (),
+            .s_axi_bvalid  (m_axi_bvalid[j]),
+            .s_axi_bready  (m_axi_bready[j]),
+            .s_axi_arid    (m_axi_arid[j*AXI_ID_WIDTH +: AXI_ID_WIDTH]),
+            .s_axi_araddr  (m_axi_araddr[j*AXI_ADDR_WIDTH +: AXI_ADDR_WIDTH]),
+            .s_axi_arlen   (m_axi_arlen[j*8 +: 8]),
+            .s_axi_arsize  (m_axi_arsize[j*3 +: 3]),
+            .s_axi_arburst (m_axi_arburst[j*2 +: 2]),
+            .s_axi_arlock  (m_axi_arlock[j]),
+            .s_axi_arcache (m_axi_arcache[j*4 +: 4]),
+            .s_axi_arprot  (m_axi_arprot[j*3 +: 3]),
+            .s_axi_arqos   (),
+            .s_axi_arregion(),
+            .s_axi_aruser  (),
+            .s_axi_arvalid (m_axi_arvalid[j]),
+            .s_axi_arready (m_axi_arready[j]),
+            .s_axi_rid     (m_axi_rid[j*AXI_ID_WIDTH +: AXI_ID_WIDTH]),
+            .s_axi_rdata   (m_axi_rdata[j*AXI_DATA_WIDTH +: AXI_DATA_WIDTH]),
+            .s_axi_rresp   (m_axi_rresp[j*2 +: 2]),
+            .s_axi_rlast   (m_axi_rlast[j]),
+            .s_axi_ruser   (),
+            .s_axi_rvalid  (m_axi_rvalid[j]),
+            .s_axi_rready  (m_axi_rready[j]),
+    
+            .m_axi_awid    (fifoed_m_axi_awid[j*AXI_ID_WIDTH +: AXI_ID_WIDTH]),
+            .m_axi_awaddr  (fifoed_m_axi_awaddr[j*AXI_ADDR_WIDTH +: AXI_ADDR_WIDTH]),
+            .m_axi_awlen   (fifoed_m_axi_awlen[j*8 +: 8]),
+            .m_axi_awsize  (fifoed_m_axi_awsize[j*3 +: 3]),
+            .m_axi_awburst (fifoed_m_axi_awburst[j*2 +: 2]),
+            .m_axi_awlock  (fifoed_m_axi_awlock[j]),
+            .m_axi_awcache (fifoed_m_axi_awcache[j*4 +: 4]),
+            .m_axi_awprot  (fifoed_m_axi_awprot[j*3 +: 3]),
+            .m_axi_awqos   (),
+            .m_axi_awregion(),
+            .m_axi_awuser  (),
+            .m_axi_awvalid (fifoed_m_axi_awvalid[j]),
+            .m_axi_awready (fifoed_m_axi_awready[j]),
+            .m_axi_wdata   (fifoed_m_axi_wdata[j*AXI_DATA_WIDTH +: AXI_DATA_WIDTH]),
+            .m_axi_wstrb   (fifoed_m_axi_wstrb[j*AXI_STRB_WIDTH +: AXI_STRB_WIDTH]),
+            .m_axi_wlast   (fifoed_m_axi_wlast[j]),
+            .m_axi_wuser   (),
+            .m_axi_wvalid  (fifoed_m_axi_wvalid[j]),
+            .m_axi_wready  (fifoed_m_axi_wready[j]),
+            .m_axi_bid     (fifoed_m_axi_bid[j*AXI_ID_WIDTH +: AXI_ID_WIDTH]),
+            .m_axi_bresp   (fifoed_m_axi_bresp[j*2 +: 2]),
+            .m_axi_buser   (),
+            .m_axi_bvalid  (fifoed_m_axi_bvalid[j]),
+            .m_axi_bready  (fifoed_m_axi_bready[j]),
+            .m_axi_arid    (fifoed_m_axi_arid[j*AXI_ID_WIDTH +: AXI_ID_WIDTH]),
+            .m_axi_araddr  (fifoed_m_axi_araddr[j*AXI_ADDR_WIDTH +: AXI_ADDR_WIDTH]),
+            .m_axi_arlen   (fifoed_m_axi_arlen[j*8 +: 8]),
+            .m_axi_arsize  (fifoed_m_axi_arsize[j*3 +: 3]),
+            .m_axi_arburst (fifoed_m_axi_arburst[j*2 +: 2]),
+            .m_axi_arlock  (fifoed_m_axi_arlock[j]),
+            .m_axi_arcache (fifoed_m_axi_arcache[j*4 +: 4]),
+            .m_axi_arprot  (fifoed_m_axi_arprot[j*3 +: 3]),
+            .m_axi_arqos   (),
+            .m_axi_arregion(),
+            .m_axi_aruser  (),
+            .m_axi_arvalid (fifoed_m_axi_arvalid[j]),
+            .m_axi_arready (fifoed_m_axi_arready[j]),
+            .m_axi_rid     (fifoed_m_axi_rid[j*AXI_ID_WIDTH +: AXI_ID_WIDTH]),
+            .m_axi_rdata   (fifoed_m_axi_rdata[j*AXI_DATA_WIDTH +: AXI_DATA_WIDTH]),
+            .m_axi_rresp   (fifoed_m_axi_rresp[j*2 +: 2]),
+            .m_axi_rlast   (fifoed_m_axi_rlast[j]),
+            .m_axi_ruser   (),
+            .m_axi_rvalid  (fifoed_m_axi_rvalid[j]),
+            .m_axi_rready  (fifoed_m_axi_rready[j])
+        );
+      end
+    endgenerate
+
+`else
+
+    assign fifoed_m_axi_awid    = m_axi_awid; 
+    assign fifoed_m_axi_awaddr  = m_axi_awaddr; 
+    assign fifoed_m_axi_awlen   = m_axi_awlen; 
+    assign fifoed_m_axi_awsize  = m_axi_awsize; 
+    assign fifoed_m_axi_awburst = m_axi_awburst; 
+    assign fifoed_m_axi_awlock  = m_axi_awlock; 
+    assign fifoed_m_axi_awcache = m_axi_awcache; 
+    assign fifoed_m_axi_awprot  = m_axi_awprot; 
+    assign fifoed_m_axi_awvalid = m_axi_awvalid; 
+    assign        m_axi_awready = fifoed_m_axi_awready; 
+    assign fifoed_m_axi_wdata   = m_axi_wdata; 
+    assign fifoed_m_axi_wstrb   = m_axi_wstrb; 
+    assign fifoed_m_axi_wlast   = m_axi_wlast; 
+    assign fifoed_m_axi_wvalid  = m_axi_wvalid; 
+    assign        m_axi_wready  = fifoed_m_axi_wready; 
+    assign        m_axi_bid     = fifoed_m_axi_bid; 
+    assign        m_axi_bresp   = fifoed_m_axi_bresp; 
+    assign        m_axi_bvalid  = fifoed_m_axi_bvalid; 
+    assign fifoed_m_axi_bready  = m_axi_bready; 
+    assign fifoed_m_axi_arid    = m_axi_arid; 
+    assign fifoed_m_axi_araddr  = m_axi_araddr; 
+    assign fifoed_m_axi_arlen   = m_axi_arlen; 
+    assign fifoed_m_axi_arsize  = m_axi_arsize; 
+    assign fifoed_m_axi_arburst = m_axi_arburst; 
+    assign fifoed_m_axi_arlock  = m_axi_arlock; 
+    assign fifoed_m_axi_arcache = m_axi_arcache; 
+    assign fifoed_m_axi_arprot  = m_axi_arprot; 
+    assign fifoed_m_axi_arvalid = m_axi_arvalid; 
+    assign        m_axi_arready = fifoed_m_axi_arready; 
+    assign        m_axi_rid     = fifoed_m_axi_rid; 
+    assign        m_axi_rdata   = fifoed_m_axi_rdata; 
+    assign        m_axi_rresp   = fifoed_m_axi_rresp; 
+    assign        m_axi_rlast   = fifoed_m_axi_rlast; 
+    assign        m_axi_rvalid  = fifoed_m_axi_rvalid; 
+    assign fifoed_m_axi_rready  = m_axi_rready;   
+
+`endif
 
 endmodule

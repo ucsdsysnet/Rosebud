@@ -32,7 +32,7 @@ import xgmii_ep
 
 testbench = 'test_dma_full'
 
-pkt_on_each_port = 5
+pkt_on_each_port = 200
 srcs = []
 
 srcs.append("../rtl/temp_pcie.v")
@@ -265,8 +265,8 @@ def bench():
           print ("packet number from port 0:",j)
           for i in range(0, len(data), 16):
               print(" ".join(("{:02x}".format(c) for c in bytearray(data[i:i+16]))))
-          assert rx_frame.data[0:8] == bytearray(b'\x55\x55\x55\x55\x55\x55\x55\xD5')
-          # assert rx_frame.data[0:22] == start_data_2[0:22]
+          # assert rx_frame.data[0:8] == bytearray(b'\x55\x55\x55\x55\x55\x55\x55\xD5')
+          assert rx_frame.data[0:22] == start_data_2[0:22]
           lengths.append(len(data)-8)
 
           yield xgmii_sink_1.wait()
@@ -275,8 +275,8 @@ def bench():
           print ("packet number from port 1:",j)
           for i in range(0, len(data), 16):
               print(" ".join(("{:02x}".format(c) for c in bytearray(data[i:i+16]))))
-          assert rx_frame.data[0:8] == bytearray(b'\x55\x55\x55\x55\x55\x55\x55\xD5')
-          # assert rx_frame.data[0:22] == start_data_1[0:22]
+          # assert rx_frame.data[0:8] == bytearray(b'\x55\x55\x55\x55\x55\x55\x55\xD5')
+          assert rx_frame.data[0:22] == start_data_1[0:22]
           lengths.append(len(data)-8)
 
         # print ("Very last packet:")

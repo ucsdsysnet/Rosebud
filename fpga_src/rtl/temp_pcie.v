@@ -95,41 +95,27 @@ reg core_rst_done;
 reg [ADDR_WIDTH-1:0]  m_axi_awaddr_reg;
 reg m_axi_awvalid_reg;
 reg awr_req_attempt;
-reg write_done;
-reg start_write;
 
 always @ (posedge clk)
   if (rst) begin 
     m_axi_awvalid_reg <= 1'b0;
     awr_req_attempt   <= 1'b0;
     core_sel          <= {CORE_NO_WIDTH{1'b0}};
-    core_rst_done     <= 1'b0;
-    start_write       <= 1'b0;
+    core_rst_done     <= 1'b1;
     m_axi_awaddr_reg  <= {ADDR_WIDTH{1'b0}};
   end else begin
-    if (start_n && (!start_r)) begin
+    if (start_n && (!start_r))
+      core_rst_done   <= 1'b0;
+    if (!awr_req_attempt && !wr_req_attempt && (!core_rst_done)) begin
       m_axi_awaddr_reg  <= {core_sel,16'hFFF8};
       m_axi_awvalid_reg <= 1'b1;
       awr_req_attempt   <= 1'b1;
       core_sel          <= core_sel + 1'b1;
-      start_write       <= 1'b1;
-    end else begin
-      if (start_write) 
-        start_write <= 1'b0;
-      if (awr_req_attempt && m_axi_awready) begin
-        m_axi_awvalid_reg <= 1'b0;
-        awr_req_attempt   <= 1'b0;
-      end
-      if (write_done)
-        if (!core_rst_done) begin
-          m_axi_awaddr_reg  <= {core_sel,16'hFFF8};
-          m_axi_awvalid_reg <= 1'b1;
-          awr_req_attempt   <= 1'b1;
-          core_sel <= core_sel + 1'b1;
-          start_write <= 1'b1;
-          if (core_sel == {CORE_NO_WIDTH{1'b1}})
-            core_rst_done <= 1'b1;
-        end
+      if (core_sel == {CORE_NO_WIDTH{1'b1}})
+        core_rst_done   <= 1'b1;
+    end else if (awr_req_attempt && m_axi_awready) begin
+      m_axi_awvalid_reg <= 1'b0;
+      awr_req_attempt   <= 1'b0;
     end
   end
 
@@ -153,20 +139,16 @@ always @ (posedge clk)
   if (rst) begin 
     m_axi_wvalid_reg <= 1'b0;
     wr_req_attempt   <= 1'b0;
-    write_done       <= 1'b0;
   end else begin
-    if (write_done)
-      write_done <= 1'b0;
-    if (start_write) begin
+    if (!wr_req_attempt && !awr_req_attempt && (!core_rst_done)) begin
       m_axi_wvalid_reg <= 1'b1;
       m_axi_wdata_reg  <= 64'd0;
       m_axi_wstrb_reg  <= 8'h80;
       m_axi_wlast_reg  <= 1'b1;
       wr_req_attempt   <= 1'b1;
     end else if (wr_req_attempt && m_axi_wready) begin
-        m_axi_wvalid_reg <= 1'b0;
-        wr_req_attempt   <= 1'b0;
-        write_done       <= 1'b1;
+      m_axi_wvalid_reg <= 1'b0;
+      wr_req_attempt   <= 1'b0;
     end
   end
 assign m_axi_wvalid = m_axi_wvalid_reg;
@@ -180,7 +162,7 @@ reg go;
 always @ (posedge clk)
   if (rst)
     go <= 1'b0;
-  else if (core_rst_done && write_done)
+  else if (!wr_req_attempt && !awr_req_attempt && core_rst_done) 
     go <= 1'b1;
 
 assign tx_enable = go; 
