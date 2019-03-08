@@ -105,7 +105,7 @@ module full_riscv_sys # (
 
 );
 
-`define FIFOED_MASTERS
+// `define FIFOED_MASTERS
 parameter ETH0_LOC = 0;
 parameter ETH1_LOC = 1;
 parameter CTRL_LOC = 2;

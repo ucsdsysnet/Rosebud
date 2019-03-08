@@ -249,31 +249,52 @@ assign s_axis_rx_desc_valid[1] = can_receive[1] && in_port_sel;
 
 assign rx_desc_fifo_pop = (rx_desc_fifo_v_r && drop) || (|s_axis_rx_desc_valid);
 
-// trigger fifo, saving port, core, slot and slot address after sending rx_desc
-wire trigger_fifo_ready, trigger_fifo_v;
-wire [CORE_NO_WIDTH-1:0] trigger_fifo_core_no;
-wire [SLOT_NO_WIDTH-1:0] trigger_fifo_slot_no;
-wire [SLOT_ADDR_EFF-1:0] trigger_fifo_slot_addr;
-wire                     trigger_fifo_port_no;
+// trigger fifos per port. saving core, slot and slot address after sending rx_desc
+wire [2-1:0] trigger_fifo_v;
+wire [2-1:0] trigger_fifo_ready;
+wire [CORE_NO_WIDTH-1:0] trigger_fifo_core_no [0:1];
+wire [SLOT_NO_WIDTH-1:0] trigger_fifo_slot_no [0:1];
+wire [SLOT_ADDR_EFF-1:0] trigger_fifo_slot_addr [0:1];
+wire [2-1:0] trigger_fifo_err;
 reg  trigger_accepted;
+reg sent_trigger_port;
+
 simple_fifo # (
   .ADDR_WIDTH($clog2(2*CORE_COUNT)),
-  .DATA_WIDTH(1+CORE_NO_WIDTH+SLOT_NO_WIDTH+SLOT_ADDR_EFF)
-) trigger_fifo (
+  .DATA_WIDTH(CORE_NO_WIDTH+SLOT_NO_WIDTH+SLOT_ADDR_EFF)
+) trigger_fifo_0 (
   .clk(clk),
   .rst(rst),
 
-  .din_valid(|s_axis_rx_desc_valid),
-  .din({s_axis_rx_desc_valid[1], rx_desc_core_r,rx_desc_slot_r,rx_desc_slot_addr}),
-  .din_ready(trigger_fifo_ready),
+  .din_valid(s_axis_rx_desc_valid[0]),
+  .din({rx_desc_core_r,rx_desc_slot_r,rx_desc_slot_addr}),
+  .din_ready(trigger_fifo_ready[0]),
  
-  .dout_valid(trigger_fifo_v),
-  .dout({trigger_fifo_port_no,trigger_fifo_core_no, trigger_fifo_slot_no, trigger_fifo_slot_addr}),
-  .dout_ready(trigger_accepted)
+  .dout_valid(trigger_fifo_v[0]),
+  .dout({trigger_fifo_core_no[0], trigger_fifo_slot_no[0], trigger_fifo_slot_addr[0]}),
+  .dout_ready(trigger_accepted && !sent_trigger_port)
 );
 
-wire trigger_fifo_err = (|s_axis_rx_desc_valid) && !trigger_fifo_ready;
+assign trigger_fifo_err[0] = s_axis_rx_desc_valid[0] && !trigger_fifo_ready[0];
+
+simple_fifo # (
+  .ADDR_WIDTH($clog2(2*CORE_COUNT)),
+  .DATA_WIDTH(CORE_NO_WIDTH+SLOT_NO_WIDTH+SLOT_ADDR_EFF)
+) trigger_fifo_1 (
+  .clk(clk),
+  .rst(rst),
+
+  .din_valid(s_axis_rx_desc_valid[1]),
+  .din({rx_desc_core_r,rx_desc_slot_r,rx_desc_slot_addr}),
+  .din_ready(trigger_fifo_ready[1]),
  
+  .dout_valid(trigger_fifo_v[1]),
+  .dout({trigger_fifo_core_no[1], trigger_fifo_slot_no[1], trigger_fifo_slot_addr[1]}),
+  .dout_ready(trigger_accepted && sent_trigger_port)
+);
+
+assign trigger_fifo_err[1] = s_axis_rx_desc_valid[1] && !trigger_fifo_ready[1];
+  
 // There is no read operation
 assign m_axi_arlock  = 1'b0;
 assign m_axi_arcache = 4'd3;
@@ -290,7 +311,6 @@ assign m_axi_rready  = 1'b0;
 wire [LEN_WIDTH-1:0] len_fifo_data[0:1];
 wire [2-1:0]         len_fifo_v;
 wire [2-1:0]         len_fifo_ready;
-reg sent_trigger_port;
 
 // Pop happens one cycle after data is latched, but since we cannot
 // take data next cycle it is ok for valid to remain high
@@ -331,18 +351,39 @@ simple_fifo # (
 wire len_fifo_1_err = (pkt_sent_to_core_valid[1]) && !len_fifo_ready[1];
 
 // write trigger
+
+// Selecting trigger for one of the ports
+reg trigger_port_sel, last_trigger_port_sel;
+always @ (*) begin
+  trigger_port_sel = last_trigger_port_sel;
+  if (last_trigger_port_sel && trigger_fifo_v[0])
+    trigger_port_sel = 1'b0;
+  else if (!last_trigger_port_sel && trigger_fifo_v[1])
+    trigger_port_sel = 1'b1;
+end   
+
+always @ (posedge clk) 
+  if (rst)
+    last_trigger_port_sel <= 1'b1;
+  else if (|trigger_fifo_v)
+    last_trigger_port_sel <= trigger_port_sel;
+
+wire [CORE_NO_WIDTH-1:0] trigger_fifo_core_no_s   = trigger_fifo_core_no[trigger_port_sel]; 
+wire [SLOT_NO_WIDTH-1:0] trigger_fifo_slot_no_s   = trigger_fifo_slot_no[trigger_port_sel]; 
+wire [SLOT_ADDR_EFF-1:0] trigger_fifo_slot_addr_s = trigger_fifo_slot_addr[trigger_port_sel];
+
 reg [ADDR_WIDTH-1:0]  m_axi_awaddr_reg;
 reg m_axi_awvalid_reg;
 reg awr_req_attempt;
 
 wire [ADDR_WIDTH-1:0] trigger_addr;
-assign trigger_addr = {trigger_fifo_core_no, 
+assign trigger_addr = {trigger_fifo_core_no_s, 
                     {(CORE_ADDR_WIDTH  - 9){1'b0}} , 1'b1, 
-                    {(5 - SLOT_NO_WIDTH){1'b0}}, trigger_fifo_slot_no, 3'd0};
+                    {(5 - SLOT_NO_WIDTH){1'b0}}, trigger_fifo_slot_no_s, 3'd0};
 
 wire [2-1:0] trigger_send_valid;
-assign trigger_send_valid[0] = trigger_fifo_v && !trigger_fifo_port_no && len_fifo_v[0];
-assign trigger_send_valid[1] = trigger_fifo_v && trigger_fifo_port_no  && len_fifo_v[1];
+assign trigger_send_valid[0] = trigger_fifo_v[0] && !trigger_port_sel && len_fifo_v[0]; 
+assign trigger_send_valid[1] = trigger_fifo_v[1] &&  trigger_port_sel && len_fifo_v[1];
 
 always @ (posedge clk)
   if (rst) begin 
@@ -378,10 +419,10 @@ reg [STRB_WIDTH-1:0]  m_axi_wstrb_reg;
 reg                   m_axi_wlast_reg;
 
 wire [23:0] core_slot_addr = {{(24-SLOT_LEAD_ZERO-SLOT_ADDR_EFF){1'b0}},
-                              trigger_fifo_slot_addr, {SLOT_LEAD_ZERO{1'b0}}};
-wire [7:0]  core_slot_no   = {{(8-SLOT_NO_WIDTH){1'b0}}, trigger_fifo_slot_no};
-wire [7:0]  incoming_port  = {7'd0,trigger_fifo_port_no};
-wire [15:0] trigger_pkt_len  = trigger_fifo_port_no ? len_fifo_data[1]:len_fifo_data[0];
+                              trigger_fifo_slot_addr_s, {SLOT_LEAD_ZERO{1'b0}}};
+wire [7:0]  core_slot_no   = {{(8-SLOT_NO_WIDTH){1'b0}}, trigger_fifo_slot_no_s};
+wire [7:0]  incoming_port  = {7'd0,trigger_port_sel};
+wire [15:0] trigger_pkt_len  = len_fifo_data[trigger_port_sel];
 
 always @ (posedge clk)
   if (rst) begin 
@@ -398,7 +439,7 @@ always @ (posedge clk)
       m_axi_wlast_reg   <= 1'b1;
       wr_req_attempt    <= 1'b1;
       trigger_accepted  <= 1'b1;
-      sent_trigger_port <= trigger_fifo_port_no;
+      sent_trigger_port <= trigger_port_sel;
     end
     else if (wr_req_attempt && m_axi_wready) begin
       m_axi_wvalid_reg  <= 1'b0;

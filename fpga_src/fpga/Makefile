@@ -77,6 +77,7 @@ XDC_FILES = fpga.xdc
 # IP
 XCI_FILES =  ip/gtwizard_ultrascale_0.xci
 XCI_FILES += ip/axi_crossbar_0.xci
+XCI_FILES += ip/axi_data_fifo.xci
 
 include ../common/vivado.mk
 
