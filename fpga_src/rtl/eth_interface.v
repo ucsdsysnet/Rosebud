@@ -45,11 +45,11 @@ module eth_interface #
     parameter ENABLE_PADDING = 1,
     parameter ENABLE_DIC = 1,
     parameter MIN_FRAME_LENGTH = 64,
-    parameter TX_FIFO_ADDR_WIDTH = 12-$clog2(AXI_STRB_WIDTH),
+    parameter TX_FIFO_ADDR_WIDTH = 14-$clog2(AXI_STRB_WIDTH),
     parameter TX_FRAME_FIFO = 1,
     parameter TX_DROP_BAD_FRAME = TX_FRAME_FIFO,
     parameter TX_DROP_WHEN_FULL = 0,
-    parameter RX_FIFO_ADDR_WIDTH = 12-$clog2(AXI_STRB_WIDTH),
+    parameter RX_FIFO_ADDR_WIDTH = 15-$clog2(AXI_STRB_WIDTH),
     parameter RX_FRAME_FIFO = 1,
     parameter RX_DROP_BAD_FRAME = RX_FRAME_FIFO,
     parameter RX_DROP_WHEN_FULL = RX_FRAME_FIFO

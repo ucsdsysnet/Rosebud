@@ -25,12 +25,14 @@ THE SOFTWARE.
 
 from myhdl import *
 import os
+import random
 
 import eth_ep
 import xgmii_ep
 
 testbench = 'test_dma_full'
 
+pkt_on_each_port = 5
 srcs = []
 
 srcs.append("../rtl/temp_pcie.v")
@@ -58,6 +60,9 @@ srcs.append("../lib/axi/rtl/axi_crossbar.v")
 # srcs.append("../lib/axi/rtl/axi_dma_desc_mux.v")
 srcs.append("../lib/axi/rtl/axi_ram_rd_if.v")
 srcs.append("../lib/axi/rtl/axi_ram_wr_if.v")
+srcs.append("../lib/axi/rtl/axi_fifo_rd.v")
+srcs.append("../lib/axi/rtl/axi_fifo_wr.v")
+srcs.append("../lib/axi/rtl/axi_fifo.v")
 srcs.append("../lib/axis/rtl/axis_async_fifo.v")
 srcs.append("../lib/axis/rtl/axis_adapter.v")
 srcs.append("../lib/eth/rtl/eth_mac_10g.v")
@@ -214,33 +219,46 @@ def bench():
         yield delay(50000)
         yield clk.posedge
 
-        test_data = bytes([x%256 for x in range(250)])
+        test_data   = bytes([x%256 for x in range(1950-4)])
+        test_data_2 = bytes([x%256 for x in range(10,10+50-2)])
         # b'\x11\x22\x33\x44\x11\x22\x33\x44\x11\x22\x33\x44\x11\x22\x33\x44\x11\x22\x33\x44\x11\x22\x33\x44\x11\x22\x33\x44\x11\x22\x33\x44\x11\x22\x33\x44\x11\x22\x33\x44\x11\x22\x33\x44\x11\x22'
 
         test_frame = eth_ep.EthFrame()
         test_frame.eth_dest_mac = 0xDAD1D2D3D4D5
         test_frame.eth_src_mac = 0x5A5152535455
         test_frame.eth_type = 0x8000
-        print ("send data over LAN")
+        test_frame.payload = bytes([x%256 for x in range(46)])
+        test_frame.update_fcs()
+        axis_frame = test_frame.build_axis_fcs()
+        start_data_1 = bytearray(b'\x55\x55\x55\x55\x55\x55\x55\xD5' + bytearray(axis_frame))
+        
+        test_frame_2 = eth_ep.EthFrame()
+        test_frame_2.eth_dest_mac = 0x5A5152535455
+        test_frame_2.eth_src_mac = 0xDAD1D2D3D4D5
+        test_frame_2.eth_type = 0x8000
+        test_frame_2.payload = bytes([x%256 for x in range(46)])
+        test_frame_2.update_fcs()
+        axis_frame_2 = test_frame_2.build_axis_fcs()
+        start_data_2 = bytearray(b'\x55\x55\x55\x55\x55\x55\x55\xD5' + bytearray(axis_frame_2))
 
-        for i in range (0,10):
-          # test_data = test_data + bytes([(i*2)%256])
-          test_frame.payload = test_data
+        for i in range (0,pkt_on_each_port):
+          test_frame.payload = bytes([x%256 for x in range(random.randrange(1980))])
           test_frame.update_fcs()
           axis_frame = test_frame.build_axis_fcs()
           xgmii_source_0.send(b'\x55\x55\x55\x55\x55\x55\x55\xD5'+bytearray(axis_frame))
           # yield rx_clk_0.posedge
+          # yield delay(random.randrange(100))
 
-          # test_data = test_data + bytes([((i*2)+1)%256])
-          test_frame.payload = test_data
-          test_frame.update_fcs()
-          axis_frame = test_frame.build_axis_fcs()
-          xgmii_source_1.send(b'\x55\x55\x55\x55\x55\x55\x55\xD5'+bytearray(axis_frame))
+          test_frame_2.payload = bytes([x%256 for x in range(10,10+random.randrange(300))])
+          test_frame_2.update_fcs()
+          axis_frame_2 = test_frame_2.build_axis_fcs()
+          xgmii_source_1.send(b'\x55\x55\x55\x55\x55\x55\x55\xD5'+bytearray(axis_frame_2))
           # yield rx_clk_1.posedge
+          # yield delay(random.randrange(100))
 
         lengths = []
         print ("send data from LAN")
-        for j in range (0,10):
+        for j in range (0,pkt_on_each_port):
           yield xgmii_sink_0.wait()
           rx_frame = xgmii_sink_0.recv()
           data = rx_frame.data
@@ -248,7 +266,8 @@ def bench():
           for i in range(0, len(data), 16):
               print(" ".join(("{:02x}".format(c) for c in bytearray(data[i:i+16]))))
           assert rx_frame.data[0:8] == bytearray(b'\x55\x55\x55\x55\x55\x55\x55\xD5')
-          lengths.append(len(data))
+          # assert rx_frame.data[0:22] == start_data_2[0:22]
+          lengths.append(len(data)-8)
 
           yield xgmii_sink_1.wait()
           rx_frame = xgmii_sink_1.recv()
@@ -257,9 +276,13 @@ def bench():
           for i in range(0, len(data), 16):
               print(" ".join(("{:02x}".format(c) for c in bytearray(data[i:i+16]))))
           assert rx_frame.data[0:8] == bytearray(b'\x55\x55\x55\x55\x55\x55\x55\xD5')
-          lengths.append(len(data))
+          # assert rx_frame.data[0:22] == start_data_1[0:22]
+          lengths.append(len(data)-8)
 
-        print ("lengths: " , sorted(lengths))
+        # print ("Very last packet:")
+        # for i in range(0, len(data), 16):
+        #     print(" ".join(("{:02x}".format(c) for c in bytearray(data[i:i+16]))))
+        print ("lengths: " , lengths)
 
         # eth_frame = eth_ep.EthFrame()
         # eth_frame.parse_axis_fcs(rx_frame.data[8:])

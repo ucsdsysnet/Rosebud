@@ -105,6 +105,7 @@ always @ (posedge clk)
     core_sel          <= {CORE_NO_WIDTH{1'b0}};
     core_rst_done     <= 1'b0;
     start_write       <= 1'b0;
+    m_axi_awaddr_reg  <= {ADDR_WIDTH{1'b0}};
   end else begin
     if (start_n && (!start_r)) begin
       m_axi_awaddr_reg  <= {core_sel,16'hFFF8};

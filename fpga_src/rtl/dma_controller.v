@@ -350,6 +350,7 @@ always @ (posedge clk)
     m_axi_awvalid_reg <= 1'b0;
     awr_req_attempt   <= 1'b0;
     m_axi_awid_reg    <= {ID_WIDTH{1'b0}};
+    m_axi_awaddr_reg  <= {ADDR_WIDTH{1'b0}};
   end else begin
     if ((|trigger_send_valid) && !awr_req_attempt) begin
       m_axi_awaddr_reg  <= trigger_addr;
@@ -369,7 +370,8 @@ assign m_axi_awprot  = 3'b010;
 assign m_axi_awlen   = 8'd0;
 assign m_axi_awsize  = 3'b011;
 assign m_axi_awburst = 2'b01;
-assign m_axi_awid    = m_axi_awid_reg;
+assign m_axi_awid    = {ID_WIDTH{1'b0}};  
+// assign m_axi_awid    = m_axi_awid_reg;
 assign m_axi_awaddr  = m_axi_awaddr_reg;
 assign m_axi_awvalid = m_axi_awvalid_reg;
 
