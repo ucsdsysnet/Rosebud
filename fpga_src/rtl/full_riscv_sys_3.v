@@ -35,7 +35,7 @@ module full_riscv_sys # (
   parameter IMEM_SIZE_BYTES = 8192,
   parameter DMEM_SIZE_BYTES = 32768,
   parameter STAT_ADDR_WIDTH = 1,
-  parameter SLOT_COUNT      = 8,
+  parameter SLOT_COUNT      = 12,
   parameter INTERLEAVE      = 1,
   parameter PIPELINE_OUTPUT = 1,
   // interconnect parameters
@@ -79,10 +79,11 @@ module full_riscv_sys # (
   parameter TX_DROP_WHEN_FULL = 0,
   // Aribter parameters
   parameter CORE_FIFO_ADDR_SIZE   = 3,
+  parameter CORE_NO_WIDTH         = $clog2(M_COUNT),
   // temp PCI-e parameters. 
   // There are additional 8 leading zeros for these values
   parameter SLOT_ADDR_EFF = CORE_ADDR_WIDTH-1-SLOT_LEAD_ZERO,
-  parameter FIRST_SLOT_ADDR = 7'h40,
+  parameter FIRST_SLOT_ADDR = 7'h20,
   parameter SLOT_ADDR_STEP  = 7'h08,
   // AXI masters FIFO parameters
   parameter AXI_WRITE_FIFO_DEPTH = 32,
@@ -105,7 +106,7 @@ module full_riscv_sys # (
 
 );
 
-`define FIFOED_MASTERS
+// `define FIFOED_MASTERS
 parameter ETH0_LOC = 0;
 parameter ETH1_LOC = 1;
 parameter CTRL_LOC = 2;
@@ -268,10 +269,10 @@ wire                   inject_rx_desc_ready;
 wire [M_COUNT-1:0] core_msg_valid;
 wire [64*M_COUNT-1:0] core_msg_data;
 
-wire [63:0] msg_data;
-wire        msg_valid;
-wire        msg_ready;
-wire [$clog2(M_COUNT)-1:0] msg_core_no;
+wire [2*64-1:0]            msg_data;
+wire [2-1:0]               msg_valid;
+wire [2-1:0]               msg_ready;
+wire [2*CORE_NO_WIDTH-1:0] msg_core_no;
 
 wire tx_enable_out;
 wire rx_enable_out;
@@ -609,6 +610,7 @@ dma_controller # (
 (
     .clk(logic_clk),
     .rst(logic_rst),
+    .go(tx_enable_out),
 
     /*
      * AXI master interface
@@ -669,6 +671,7 @@ dma_controller # (
     .s_axis_rx_desc_ready(s_axis_rx_desc_ready),
 
     .incoming_pkt_ready(rx_fifo_good_frame),
+    .incoming_pkt_drop(rx_fifo_overflow),
     .pkt_sent_to_core_valid(m_axis_rx_desc_status_valid),
     .pkt_sent_to_core_len(m_axis_rx_desc_status_len),
     .pkt_sent_out_valid(m_axis_tx_desc_status_valid),
@@ -823,21 +826,43 @@ generate
     );
   end
 endgenerate
-    
+
+reg [M_COUNT-1:0] msg_port;
+integer k;
+always @ (*)
+  for (k=0; k<M_COUNT; k=k+1)
+    msg_port[k] = core_msg_data[k*64+16];
+
 core_msg_arbiter # (
   .CORE_COUNT(M_COUNT),
   .CORE_FIFO_ADDR_SIZE(CORE_FIFO_ADDR_SIZE)
-) msg_arbiter (
+) msg_arbiter_0 (
     .clk(logic_clk),
     .rst(logic_rst),
 
     .core_msg_data(core_msg_data),
-    .core_msg_valid(core_msg_valid),
+    .core_msg_valid(core_msg_valid & (~msg_port)),
 
-    .msg_data(msg_data),
-    .msg_valid(msg_valid),
-    .msg_core_no(msg_core_no),
-    .msg_ready(msg_ready)
+    .msg_data(msg_data[0*64 +: 64]),
+    .msg_valid(msg_valid[0]),
+    .msg_core_no(msg_core_no[0*CORE_NO_WIDTH +: CORE_NO_WIDTH]),
+    .msg_ready(msg_ready[0])
+);
+
+core_msg_arbiter # (
+  .CORE_COUNT(M_COUNT),
+  .CORE_FIFO_ADDR_SIZE(CORE_FIFO_ADDR_SIZE)
+) msg_arbiter_1 (
+    .clk(logic_clk),
+    .rst(logic_rst),
+
+    .core_msg_data(core_msg_data),
+    .core_msg_valid(core_msg_valid & msg_port),
+
+    .msg_data(msg_data[1*64 +: 64]),
+    .msg_valid(msg_valid[1]),
+    .msg_core_no(msg_core_no[1*CORE_NO_WIDTH +: CORE_NO_WIDTH]),
+    .msg_ready(msg_ready[1])
 );
 
 `ifdef FIFOED_MASTERS

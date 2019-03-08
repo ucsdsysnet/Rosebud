@@ -32,7 +32,6 @@ import xgmii_ep
 
 testbench = 'test_dma_full'
 
-pkt_on_each_port = 200
 srcs = []
 
 srcs.append("../rtl/temp_pcie.v")
@@ -57,7 +56,6 @@ srcs.append("../lib/axi/rtl/axi_crossbar_addr.v")
 srcs.append("../lib/axi/rtl/axi_crossbar_wr.v")
 srcs.append("../lib/axi/rtl/axi_crossbar_rd.v")
 srcs.append("../lib/axi/rtl/axi_crossbar.v")
-# srcs.append("../lib/axi/rtl/axi_dma_desc_mux.v")
 srcs.append("../lib/axi/rtl/axi_ram_rd_if.v")
 srcs.append("../lib/axi/rtl/axi_ram_wr_if.v")
 srcs.append("../lib/axi/rtl/axi_fifo_rd.v")
@@ -105,6 +103,25 @@ def bench():
     xgmii_txc_0 = Signal(intbv(0xff)[CTRL_WIDTH:])
     xgmii_txd_1 = Signal(intbv(0x0707070707070707)[DATA_WIDTH:])
     xgmii_txc_1 = Signal(intbv(0xff)[CTRL_WIDTH:])
+
+
+    test_frame_1 = eth_ep.EthFrame()
+    test_frame_1.eth_dest_mac = 0xDAD1D2D3D4D5
+    test_frame_1.eth_src_mac = 0x5A5152535455
+    test_frame_1.eth_type = 0x8000
+    test_frame_1.payload = bytes([x%256 for x in range(46)])
+    test_frame_1.update_fcs()
+    axis_frame = test_frame_1.build_axis_fcs()
+    start_data_1 = bytearray(b'\x55\x55\x55\x55\x55\x55\x55\xD5' + bytearray(axis_frame))
+
+    test_frame_2 = eth_ep.EthFrame()
+    test_frame_2.eth_dest_mac = 0x5A5152535455
+    test_frame_2.eth_src_mac = 0xDAD1D2D3D4D5
+    test_frame_2.eth_type = 0x8000
+    test_frame_2.payload = bytes([x%256 for x in range(46)])
+    test_frame_2.update_fcs()
+    axis_frame_2 = test_frame_2.build_axis_fcs()
+    start_data_2 = bytearray(b'\x55\x55\x55\x55\x55\x55\x55\xD5' + bytearray(axis_frame_2))
 
     # sources and sinks
     xgmii_source_0 = xgmii_ep.XGMIISource()
@@ -184,6 +201,26 @@ def bench():
         rx_clk_0.next = not rx_clk_0
         tx_clk_1.next = not tx_clk_1
         rx_clk_1.next = not rx_clk_1
+    
+    def port1():
+        for i in range (0,1000):
+          # test_frame_1.payload = bytes([x%256 for x in range(random.randrange(1980))])
+          test_frame_1.payload = bytes([x%256 for x in range(1946)])
+          test_frame_1.update_fcs()
+          axis_frame = test_frame_1.build_axis_fcs()
+          xgmii_source_0.send(b'\x55\x55\x55\x55\x55\x55\x55\xD5'+bytearray(axis_frame))
+          # yield rx_clk_0.posedge
+          yield delay(random.randrange(200))
+
+    def port2():
+        for i in range (0,200):
+          # test_frame_2.payload = bytes([x%256 for x in range(10,10+random.randrange(300))])
+          test_frame_2.payload = bytes([x%256 for x in range(48)])
+          test_frame_2.update_fcs()
+          axis_frame_2 = test_frame_2.build_axis_fcs()
+          xgmii_source_1.send(b'\x55\x55\x55\x55\x55\x55\x55\xD5'+bytearray(axis_frame_2))
+          # yield rx_clk_1.posedge
+          yield delay(random.randrange(50000))
 
     @instance
     def check():
@@ -208,57 +245,16 @@ def bench():
         tx_rst_1.next = 0
         rx_rst_1.next = 0
         yield tx_clk_0.posedge
-        yield delay(1000)
-        yield clk.posedge
-        yield clk.posedge
+        yield delay(2000)
         yield clk.posedge
         yield clk.posedge
         
-        # testbench stimulus
-
-        yield delay(50000)
-        yield clk.posedge
-
-        test_data   = bytes([x%256 for x in range(1950-4)])
-        test_data_2 = bytes([x%256 for x in range(10,10+50-2)])
-        # b'\x11\x22\x33\x44\x11\x22\x33\x44\x11\x22\x33\x44\x11\x22\x33\x44\x11\x22\x33\x44\x11\x22\x33\x44\x11\x22\x33\x44\x11\x22\x33\x44\x11\x22\x33\x44\x11\x22\x33\x44\x11\x22\x33\x44\x11\x22'
-
-        test_frame = eth_ep.EthFrame()
-        test_frame.eth_dest_mac = 0xDAD1D2D3D4D5
-        test_frame.eth_src_mac = 0x5A5152535455
-        test_frame.eth_type = 0x8000
-        test_frame.payload = bytes([x%256 for x in range(46)])
-        test_frame.update_fcs()
-        axis_frame = test_frame.build_axis_fcs()
-        start_data_1 = bytearray(b'\x55\x55\x55\x55\x55\x55\x55\xD5' + bytearray(axis_frame))
-        
-        test_frame_2 = eth_ep.EthFrame()
-        test_frame_2.eth_dest_mac = 0x5A5152535455
-        test_frame_2.eth_src_mac = 0xDAD1D2D3D4D5
-        test_frame_2.eth_type = 0x8000
-        test_frame_2.payload = bytes([x%256 for x in range(46)])
-        test_frame_2.update_fcs()
-        axis_frame_2 = test_frame_2.build_axis_fcs()
-        start_data_2 = bytearray(b'\x55\x55\x55\x55\x55\x55\x55\xD5' + bytearray(axis_frame_2))
-
-        for i in range (0,pkt_on_each_port):
-          test_frame.payload = bytes([x%256 for x in range(random.randrange(1980))])
-          test_frame.update_fcs()
-          axis_frame = test_frame.build_axis_fcs()
-          xgmii_source_0.send(b'\x55\x55\x55\x55\x55\x55\x55\xD5'+bytearray(axis_frame))
-          # yield rx_clk_0.posedge
-          # yield delay(random.randrange(100))
-
-          test_frame_2.payload = bytes([x%256 for x in range(10,10+random.randrange(300))])
-          test_frame_2.update_fcs()
-          axis_frame_2 = test_frame_2.build_axis_fcs()
-          xgmii_source_1.send(b'\x55\x55\x55\x55\x55\x55\x55\xD5'+bytearray(axis_frame_2))
-          # yield rx_clk_1.posedge
-          # yield delay(random.randrange(100))
+        yield port1(),None
+        yield port2(),None
 
         lengths = []
         print ("send data from LAN")
-        for j in range (0,pkt_on_each_port):
+        for j in range (0,200):
           yield xgmii_sink_0.wait()
           rx_frame = xgmii_sink_0.recv()
           data = rx_frame.data
@@ -269,6 +265,7 @@ def bench():
           assert rx_frame.data[0:22] == start_data_2[0:22]
           lengths.append(len(data)-8)
 
+        for j in range (0,1000):
           yield xgmii_sink_1.wait()
           rx_frame = xgmii_sink_1.recv()
           data = rx_frame.data
@@ -279,6 +276,7 @@ def bench():
           assert rx_frame.data[0:22] == start_data_1[0:22]
           lengths.append(len(data)-8)
 
+ 
         # print ("Very last packet:")
         # for i in range(0, len(data), 16):
         #     print(" ".join(("{:02x}".format(c) for c in bytearray(data[i:i+16]))))
@@ -292,10 +290,10 @@ def bench():
 
         # assert len(eth_frame.payload.data) == 46
         # assert eth_frame.eth_fcs == eth_frame.calc_fcs()
-        # assert eth_frame.eth_dest_mac == test_frame.eth_dest_mac
-        # assert eth_frame.eth_src_mac == test_frame.eth_src_mac
-        # assert eth_frame.eth_type == test_frame.eth_type
-        # assert eth_frame.payload.data.index(test_frame.payload.data) == 0
+        # assert eth_frame.eth_dest_mac == test_frame_1.eth_dest_mac
+        # assert eth_frame.eth_src_mac == test_frame_1.eth_src_mac
+        # assert eth_frame.eth_type == test_frame_1.eth_type
+        # assert eth_frame.payload.data.index(test_frame_1.payload.data) == 0
 
         yield delay(1000)
         yield clk.posedge

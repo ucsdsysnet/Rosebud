@@ -207,9 +207,9 @@ always @ (posedge clk)
       desc_valid  <= 1'b1;
     end else if (desc_valid) begin
       core_no     <= core_no + {{(CORE_NO_WIDTH-1){1'b0}},1'b1};
-      if (&core_no)
+      if (core_no==(RISCV_CORES-1))
         slot_no   <= slot_no + {{(SLOT_NO_WIDTH-1){1'b0}},1'b1};
-      if ((&core_no) && (&slot_no))
+      if ((core_no==(RISCV_CORES-1)) && (slot_no==(RISCV_SLOTS-1)))
         desc_valid <= 1'b0;
     end
   end

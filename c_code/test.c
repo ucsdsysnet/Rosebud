@@ -1,5 +1,5 @@
 inline void process (unsigned short* len, unsigned char* port, unsigned int* offset, unsigned int* data);
-#define SLOT_COUNT 8
+#define SLOT_COUNT 12
 int main(void){
   volatile unsigned int * trigger = (volatile unsigned int *) 0x00100;
   volatile unsigned int * stat    = (volatile unsigned int *) 0x08000;
