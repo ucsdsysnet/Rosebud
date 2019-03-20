@@ -85,7 +85,8 @@ wire [1:0] s_axi_rresp;
 wire s_axi_rlast;
 wire s_axi_rvalid;
 
-wire status_update;
+wire  [63:0] core_msg_data;
+wire core_msg_valid;
 
 initial begin
     // myhdl integration
@@ -129,7 +130,8 @@ initial begin
         s_axi_rresp,
         s_axi_rlast,
         s_axi_rvalid,
-        status_update
+        core_msg_data,
+        core_msg_valid
     );
 
     // dump file
@@ -185,20 +187,8 @@ UUT (
     .s_axi_rlast(s_axi_rlast),
     .s_axi_rvalid(s_axi_rvalid),
     .s_axi_rready(s_axi_rready),
-    .status_update(status_update)
+    .core_msg_data(core_msg_data),
+    .core_msg_valid(core_msg_valid)
 );
-
-integer i,j;
-
-initial begin
-    // two nested loops for smaller number of iterations per loop
-    // workaround for synthesizer complaints about large loop counts
-    for (i = 0; i < 2**(ADDR_WIDTH-1); i = i + 2**((ADDR_WIDTH-1)/2)) begin
-        for (j = i; j < i + 2**((ADDR_WIDTH-1)/2); j = j + 1) begin
-            UUT.core.dmem.mem[j] = 0;
-        end
-    end
-end
-
 
 endmodule

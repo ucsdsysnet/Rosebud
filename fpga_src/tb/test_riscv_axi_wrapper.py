@@ -25,6 +25,7 @@ THE SOFTWARE.
 
 from myhdl import *
 import os
+import random
 
 import axi
 
@@ -100,7 +101,8 @@ def bench():
     s_axi_rresp = Signal(intbv(0)[2:])
     s_axi_rlast = Signal(bool(0))
     s_axi_rvalid = Signal(bool(0))
-    status_update = Signal(bool(0))
+    core_msg_data = Signal(intbv(0)[64:])
+    core_msg_valid = Signal(bool(0))
 
     # AXI4 master
     axi_master_inst = axi.AXIMaster()
@@ -148,6 +150,11 @@ def bench():
         name='master'
     )
 
+
+    sent_data = []
+    recv_data = []
+    pkt_sizes = []
+
     # DUT
     if os.system(build_cmd):
         raise Exception("Error running build command")
@@ -191,7 +198,8 @@ def bench():
         s_axi_rlast=s_axi_rlast,
         s_axi_rvalid=s_axi_rvalid,
         s_axi_rready=s_axi_rready,
-        status_update=status_update
+        core_msg_data=core_msg_data,
+        core_msg_valid=core_msg_valid
     )
 
     @always(delay(4))
@@ -211,6 +219,38 @@ def bench():
             axi_master_pause.next = False
             yield clk.posedge
 
+    def writer():
+        a = 400*[0]
+        for i in range (0,400,4):
+            a[i+3] = (i>>2)
+        
+        for i in range (100):
+            addr = 0x800
+            for j in range (8):
+                a = [x%256 for x in range(random.randrange(1500))]
+                pkt_sizes.append(len(a))
+                axi_master_inst.init_write(addr, bytes(a))
+                yield axi_master_inst.wait()
+                yield clk.posedge
+                sent_data.append(bytes(a))
+                # a = [(4+x)%256 for x in a]
+                addr += 0x400
+
+    def reader():
+        yield delay(random.randrange(100))
+        count = 0
+        for k in range (100):
+            raddr = 0x800
+            for l in range (8):
+                axi_master_inst.init_read(raddr, pkt_sizes[count])
+                yield axi_master_inst.wait()
+                data = axi_master_inst.get_read_data()
+                yield clk.posedge
+                recv_data.append(data[1])
+                raddr += 0x400
+                yield delay(random.randrange(40))
+                count += 1
+
     @instance
     def check():
         yield delay(100)
@@ -226,6 +266,8 @@ def bench():
 
         yield clk.posedge
         print("test 1: read and write")
+
+        # 1 line memory access check
 
         addr = 8
         test_data = b'\x11\x22\x33\x44\x11\x22\x33\x44'
@@ -244,52 +286,45 @@ def bench():
         assert data[0] == addr
         assert data[1] == test_data
 
-        yield delay(100)
-        axi_master_inst.init_write(0x8000, bytearray(open("../../c_code/test.bin", "rb").read()))
-        yield axi_master_inst.wait()
-        yield clk.posedge
-        axi_master_inst.init_read(0x8000, 4)
-        yield axi_master_inst.wait()
-        yield clk.posedge
-        data = axi_master_inst.get_read_data()
-        yield clk.posedge
-        axi_master_inst.init_read(0x8004, 4)
-        yield axi_master_inst.wait()
-        yield clk.posedge
-        data = axi_master_inst.get_read_data()
-        yield clk.posedge
-        a = 400*[0]
-        for i in range (0,400,4):
-            a[i+3] = (i>>2)
-        axi_master_inst.init_write(0x800, bytes(a))
-        yield axi_master_inst.wait()
-        yield clk.posedge
-        # core reset
+        # yield delay(100)
+        # axi_master_inst.init_write(0x8000, bytearray(open("../../c_code/test.bin", "rb").read()))
+        # yield axi_master_inst.wait()
+        # yield clk.posedge
+        # axi_master_inst.init_read(0x8000, 4)
+        # yield axi_master_inst.wait()
+        # yield clk.posedge
+        # data = axi_master_inst.get_read_data()
+        # yield clk.posedge
+        # axi_master_inst.init_read(0x8004, 4)
+        # yield axi_master_inst.wait()
+        # yield clk.posedge
+        # data = axi_master_inst.get_read_data()
+        # yield clk.posedge
+        
+        # reset the core
         yield delay(100)
         yield clk.posedge
         axi_master_inst.init_write(0xffff, b'\x00')
         yield axi_master_inst.wait()
         yield clk.posedge
-        cycles = 0
-        while (1):
-            while (status_update == 0) and (cycles < 2500):
-                yield clk.posedge
-                cycles+=1
-            axi_master_inst.init_read(0x8000, 4)
-            yield axi_master_inst.wait()
-            yield clk.posedge
-            data = axi_master_inst.get_read_data()
-            if cycles >= 2500:
-                break
-        
-        yield clk.posedge
-        axi_master_inst.init_read(0x1000, 400)
-        yield axi_master_inst.wait()
-        yield clk.posedge
-        data = axi_master_inst.get_read_data()
 
-        yield delay(100)
+        yield writer(),None
+        yield reader(),None
 
+        # axi_master_inst.init_write(0x100, b'\x90\x01\x00\x00\x00\x08\x00\x00') #b'\x00\x00\x08\x00\x00\x00\x01\x90')
+        # yield axi_master_inst.wait()
+        # yield clk.posedge
+        # while (core_msg_valid == 0):
+        #     yield clk.posedge
+        # print("core msg data:", core_msg_data)
+       
+        yield delay(50000)
+        # print()
+        # print ("sent data:",sent_data)
+        # print()
+        # print ("recv data:",recv_data)
+
+        assert sent_data == recv_data
         raise StopSimulation
 
     return instances()

@@ -146,6 +146,28 @@ localparam [2:0]
 
 reg [2:0] state_reg = STATE_IDLE, state_next;
 
+reg s_axi_aready_reg = 0, s_axi_aready_next;
+
+reg [3:0] m_axi_aregion_reg = 4'd0, m_axi_aregion_next;
+reg [CL_M_COUNT-1:0] m_select_reg = {CL_M_COUNT{1'b0}}, m_select_next;
+reg m_axi_avalid_reg = 1'b0, m_axi_avalid_next;
+reg m_decerr_reg = 1'b0, m_decerr_next;
+reg m_wc_valid_reg = 1'b0, m_wc_valid_next;
+reg m_rc_valid_reg = 1'b0, m_rc_valid_next;
+
+assign s_axi_aready = s_axi_aready_reg;
+
+assign m_axi_aregion = m_axi_aregion_reg;
+assign m_select = m_select_reg;
+assign m_axi_avalid = m_axi_avalid_reg;
+
+assign m_wc_select = m_select_reg;
+assign m_wc_decerr = m_decerr_reg;
+assign m_wc_valid = m_wc_valid_reg;
+
+assign m_rc_decerr = m_decerr_reg;
+assign m_rc_valid = m_rc_valid_reg;
+
 reg match;
 reg trans_start;
 reg trans_complete;
@@ -176,7 +198,7 @@ generate
 
         assign thread_active[n] = thread_count_reg[n] != 0;
         assign thread_match[n] = thread_active[n] && thread_id_reg[n] == s_axi_aid;
-        assign thread_match_dest[n] = thread_match[n] && thread_m_reg[n] == m_select_next;
+        assign thread_match_dest[n] = thread_match[n] && thread_m_reg[n] == m_select_next && (M_REGIONS < 2 || thread_region_reg[n] == m_axi_aregion_next);
         assign thread_cpl_match[n] = thread_active[n] && thread_id_reg[n] == s_cpl_id;
         assign thread_trans_start[n] = (thread_match[n] || (!thread_active[n] && !thread_match && !(thread_trans_start & ({S_INT_THREADS{1'b1}} >> (S_INT_THREADS-n))))) && trans_start;
         assign thread_trans_complete[n] = thread_cpl_match[n] && trans_complete;
@@ -200,28 +222,6 @@ generate
         end
     end
 endgenerate
-
-reg s_axi_aready_reg = 0, s_axi_aready_next;
-
-reg [3:0] m_axi_aregion_reg = 4'd0, m_axi_aregion_next;
-reg [CL_M_COUNT-1:0] m_select_reg = {CL_M_COUNT{1'b0}}, m_select_next;
-reg m_axi_avalid_reg = 1'b0, m_axi_avalid_next;
-reg m_decerr_reg = 1'b0, m_decerr_next;
-reg m_wc_valid_reg = 1'b0, m_wc_valid_next;
-reg m_rc_valid_reg = 1'b0, m_rc_valid_next;
-
-assign s_axi_aready = s_axi_aready_reg;
-
-assign m_axi_aregion = m_axi_aregion_reg;
-assign m_select = m_select_reg;
-assign m_axi_avalid = m_axi_avalid_reg;
-
-assign m_wc_select = m_select_reg;
-assign m_wc_decerr = m_decerr_reg;
-assign m_wc_valid = m_wc_valid_reg;
-
-assign m_rc_decerr = m_decerr_reg;
-assign m_rc_valid = m_rc_valid_reg;
 
 always @* begin
     state_next = STATE_IDLE;
