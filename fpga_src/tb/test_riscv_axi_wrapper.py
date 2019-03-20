@@ -248,7 +248,7 @@ def bench():
                 yield clk.posedge
                 recv_data.append(data[1])
                 raddr += 0x400
-                yield delay(random.randrange(40))
+                yield delay(random.randrange(100))
                 count += 1
 
     @instance
@@ -317,8 +317,9 @@ def bench():
         # while (core_msg_valid == 0):
         #     yield clk.posedge
         # print("core msg data:", core_msg_data)
-       
-        yield delay(50000)
+      
+        while (len(recv_data)<800):
+            yield clk.posedge
         # print()
         # print ("sent data:",sent_data)
         # print()
