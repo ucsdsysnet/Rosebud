@@ -98,7 +98,6 @@ distclean: clean
 %.runs/impl_1/%_routed.dcp: %.runs/synth_1/%.dcp
 	echo "open_project $*.xpr" > run_impl.tcl
 	echo "set_property AUTO_INCREMENTAL_CHECKPOINT 1 [get_runs impl_1]" >> run_impl.tcl
-	echo "set_property OPTIONS.hierarchical true [get_report_config -of_objects [get_runs impl_1] impl_1_place_report_utilization_0]" >> run_impl.tcl
 	echo "reset_run impl_1" >> run_impl.tcl
 	echo "launch_runs impl_1" >> run_impl.tcl
 	echo "wait_on_run impl_1" >> run_impl.tcl
@@ -109,6 +108,8 @@ distclean: clean
 %.bit: %.runs/impl_1/%_routed.dcp
 	echo "open_project $*.xpr" > generate_bit.tcl
 	echo "open_run impl_1" >> generate_bit.tcl
+	echo "write_debug_probes debug_probes.ltx" >> generate_bit.tcl
+	echo "report_utilization -hierarchical  -file fpga/fpga_utilization_hierarchy_placed.rpt" >> generate_bit.tcl
 	echo "write_bitstream -force $*.bit" >> generate_bit.tcl
 	echo "exit" >> generate_bit.tcl
 	vivado -mode batch -source generate_bit.tcl
