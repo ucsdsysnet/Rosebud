@@ -32,6 +32,9 @@ import axi
 module = 'riscv_axi_wrapper'
 testbench = 'test_%s' % module
 
+
+test_count = 100
+
 srcs = []
 
 srcs.append("../rtl/core_mems.v")
@@ -224,22 +227,23 @@ def bench():
         for i in range (0,400,4):
             a[i+3] = (i>>2)
         
-        for i in range (100):
+        for i in range (test_count):
             addr = 0x800
             for j in range (8):
-                a = [x%256 for x in range(random.randrange(1500))]
+                bias = random.randrange (256)
+                a = [(bias+x)%256 for x in range(random.randrange(1500))]
                 pkt_sizes.append(len(a))
                 axi_master_inst.init_write(addr, bytes(a))
                 yield axi_master_inst.wait()
                 yield clk.posedge
                 sent_data.append(bytes(a))
                 # a = [(4+x)%256 for x in a]
-                addr += 0x400
+                addr += 0x800
 
     def reader():
         yield delay(random.randrange(100))
         count = 0
-        for k in range (100):
+        for k in range (test_count):
             raddr = 0x800
             for l in range (8):
                 axi_master_inst.init_read(raddr, pkt_sizes[count])
@@ -247,7 +251,7 @@ def bench():
                 data = axi_master_inst.get_read_data()
                 yield clk.posedge
                 recv_data.append(data[1])
-                raddr += 0x400
+                raddr += 0x800
                 yield delay(random.randrange(100))
                 count += 1
 
@@ -318,14 +322,23 @@ def bench():
         #     yield clk.posedge
         # print("core msg data:", core_msg_data)
       
-        while (len(recv_data)<800):
+        while (len(recv_data)<(8*test_count)):
             yield clk.posedge
         # print()
+        # print("sent data len:", len(sent_data))
         # print ("sent data:",sent_data)
         # print()
+        # print("recv data len:", len(recv_data))
         # print ("recv data:",recv_data)
 
-        assert sent_data == recv_data
+        for i in range (8*test_count):
+            if (sent_data[i]!=recv_data[i]):
+                print ("test",i,"failed",len(sent_data[i]),len(recv_data[i]))
+                print ("sent data:",sent_data[i])
+                print ("recv data:",recv_data[i])
+                print ()
+
+        assert sorted(sent_data) == sorted(recv_data)
         raise StopSimulation
 
     return instances()
