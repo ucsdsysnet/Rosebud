@@ -32,7 +32,6 @@ import axi
 module = 'riscv_axi_wrapper'
 testbench = 'test_%s' % module
 
-
 test_count = 100
 
 srcs = []
@@ -157,6 +156,7 @@ def bench():
     sent_data = []
     recv_data = []
     pkt_sizes = []
+    read_pkts = []
 
     # DUT
     if os.system(build_cmd):
@@ -221,6 +221,15 @@ def bench():
             yield clk.posedge
             axi_master_pause.next = False
             yield clk.posedge
+    
+    def short_pause_master():
+        axi_master_pause.next = True
+        waits = random.randrange(12)
+        for h in range (waits):
+            yield clk.posedge
+        axi_master_pause.next = False
+        yield clk.posedge
+
 
     def writer():
         a = 400*[0]
@@ -232,28 +241,37 @@ def bench():
             for j in range (8):
                 bias = random.randrange (256)
                 a = [(bias+x)%256 for x in range(random.randrange(1500))]
-                pkt_sizes.append(len(a))
+                while (len(read_pkts) < ((i*8)+j+1-8)):
+                    yield clk.posedge
                 axi_master_inst.init_write(addr, bytes(a))
                 yield axi_master_inst.wait()
                 yield clk.posedge
+                pkt_sizes.append(len(a))
                 sent_data.append(bytes(a))
                 # a = [(4+x)%256 for x in a]
                 addr += 0x800
+                if ((i*8+j)%10==0):
+                  yield short_pause_master()
 
     def reader():
         yield delay(random.randrange(100))
-        count = 0
+        read_count = 0
         for k in range (test_count):
             raddr = 0x800
             for l in range (8):
-                axi_master_inst.init_read(raddr, pkt_sizes[count])
+                while ((len(pkt_sizes)-1)<read_count):
+                    yield clk.posedge
+                axi_master_inst.init_read(raddr, pkt_sizes[read_count])
                 yield axi_master_inst.wait()
                 data = axi_master_inst.get_read_data()
                 yield clk.posedge
                 recv_data.append(data[1])
+                read_pkts.append('1')
                 raddr += 0x800
                 yield delay(random.randrange(100))
-                count += 1
+                read_count += 1
+                # if ((k*8+l)%10==2):
+                #   yield short_pause_master()
 
     @instance
     def check():
@@ -338,7 +356,7 @@ def bench():
                 print ("recv data:",recv_data[i])
                 print ()
 
-        assert sorted(sent_data) == sorted(recv_data)
+        assert sent_data == recv_data
         raise StopSimulation
 
     return instances()
