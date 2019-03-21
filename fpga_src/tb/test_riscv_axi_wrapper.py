@@ -108,7 +108,13 @@ def bench():
 
     # AXI4 master
     axi_master_inst = axi.AXIMaster()
-    axi_master_pause = Signal(bool(False))
+    axi_master_pause  = Signal(bool(False))
+    axi_master_awpause= Signal(bool(False))
+    axi_master_wpause = Signal(bool(False))
+    axi_master_bpause = Signal(bool(False))
+    axi_master_arpause= Signal(bool(False))
+    axi_master_rpause = Signal(bool(False))
+
 
     axi_master_logic = axi_master_inst.create_logic(
         clk,
@@ -149,6 +155,11 @@ def bench():
         m_axi_rvalid=s_axi_rvalid,
         m_axi_rready=s_axi_rready,
         pause=axi_master_pause,
+        awpause=axi_master_awpause,
+        wpause=axi_master_wpause,
+        bpause=axi_master_bpause,
+        arpause=axi_master_arpause,
+        rpause=axi_master_rpause,
         name='master'
     )
 
@@ -222,12 +233,29 @@ def bench():
             axi_master_pause.next = False
             yield clk.posedge
     
-    def short_pause_master():
-        axi_master_pause.next = True
-        waits = random.randrange(12)
-        for h in range (waits):
+    def write_short_pause():
+        axi_master_awpause.next = True
+        axi_master_wpause.next = True
+        axi_master_bpause.next = True
+        for h in range (random.randrange(12)):
             yield clk.posedge
-        axi_master_pause.next = False
+        axi_master_awpause.next = False
+        axi_master_wpause.next = False
+        axi_master_bpause.next = False
+        yield clk.posedge
+
+    def ar_short_pause():
+        axi_master_arpause.next = True
+        for h in range (random.randrange(12)):
+            yield clk.posedge
+        axi_master_arpause.next = False
+        yield clk.posedge
+
+    def read_short_pause():
+        axi_master_rpause.next = True
+        for h in range (random.randrange(12)):
+            yield clk.posedge
+        axi_master_rpause.next = False
         yield clk.posedge
 
 
@@ -251,7 +279,7 @@ def bench():
                 # a = [(4+x)%256 for x in a]
                 addr += 0x800
                 if ((i*8+j)%10==0):
-                  yield short_pause_master()
+                  yield write_short_pause()
 
     def reader():
         yield delay(random.randrange(100))
@@ -270,8 +298,10 @@ def bench():
                 raddr += 0x800
                 yield delay(random.randrange(100))
                 read_count += 1
-                # if ((k*8+l)%10==2):
-                #   yield short_pause_master()
+                if ((k*8+l)%10==2):
+                  yield read_short_pause()
+                if ((k*8+l)%10==4):
+                  yield ar_short_pause()
 
     @instance
     def check():
