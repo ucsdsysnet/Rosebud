@@ -124,7 +124,7 @@ localparam WIDTH       = USER_OFFSET + (USER_ENABLE ? USER_WIDTH : 0);
 reg [ADDR_WIDTH:0] wr_ptr_reg = {ADDR_WIDTH+1{1'b0}}, wr_ptr_next;
 reg [ADDR_WIDTH:0] wr_ptr_cur_reg = {ADDR_WIDTH+1{1'b0}}, wr_ptr_cur_next;
 reg [ADDR_WIDTH:0] wr_ptr_gray_reg = {ADDR_WIDTH+1{1'b0}}, wr_ptr_gray_next;
-reg [ADDR_WIDTH:0] wr_ptr_temp_gray_reg = {ADDR_WIDTH+1{1'b0}}, wr_ptr_temp_gray_next;
+reg [ADDR_WIDTH:0] wr_ptr_sync_gray_reg = {ADDR_WIDTH+1{1'b0}}, wr_ptr_sync_gray_next;
 reg [ADDR_WIDTH:0] wr_ptr_cur_gray_reg = {ADDR_WIDTH+1{1'b0}}, wr_ptr_cur_gray_next;
 reg [ADDR_WIDTH:0] wr_addr_reg = {ADDR_WIDTH+1{1'b0}};
 reg [ADDR_WIDTH:0] rd_ptr_reg = {ADDR_WIDTH+1{1'b0}}, rd_ptr_next;
@@ -143,7 +143,6 @@ reg wr_ptr_update_sync2_reg = 1'b0;
 reg wr_ptr_update_sync3_reg = 1'b0;
 reg wr_ptr_update_ack_sync1_reg = 1'b0;
 reg wr_ptr_update_ack_sync2_reg = 1'b0;
-reg wr_ptr_update_ack_sync3_reg = 1'b0;
 
 reg s_rst_sync1_reg = 1'b1;
 reg s_rst_sync2_reg = 1'b1;
@@ -263,7 +262,7 @@ always @* begin
     wr_ptr_next = wr_ptr_reg;
     wr_ptr_cur_next = wr_ptr_cur_reg;
     wr_ptr_gray_next = wr_ptr_gray_reg;
-    wr_ptr_temp_gray_next = wr_ptr_temp_gray_reg;
+    wr_ptr_sync_gray_next = wr_ptr_sync_gray_reg;
     wr_ptr_cur_gray_next = wr_ptr_cur_gray_reg;
 
     wr_ptr_update_valid_next = wr_ptr_update_valid_reg;
@@ -271,11 +270,11 @@ always @* begin
 
     if (FRAME_FIFO && wr_ptr_update_valid_reg) begin
         // have updated pointer to sync
-        if (wr_ptr_update_next == wr_ptr_update_ack_sync3_reg) begin
+        if (wr_ptr_update_next == wr_ptr_update_ack_sync2_reg) begin
             // no sync in progress; sync update
             wr_ptr_update_valid_next = 1'b0;
-            wr_ptr_temp_gray_next = wr_ptr_gray_reg;
-            wr_ptr_update_next = !wr_ptr_update_ack_sync3_reg;
+            wr_ptr_sync_gray_next = wr_ptr_gray_reg;
+            wr_ptr_update_next = !wr_ptr_update_ack_sync2_reg;
         end
     end
 
@@ -313,11 +312,11 @@ always @* begin
                     wr_ptr_next = wr_ptr_cur_reg + 1;
                     wr_ptr_gray_next = wr_ptr_next ^ (wr_ptr_next >> 1);
 
-                    if (wr_ptr_update_next == wr_ptr_update_ack_sync3_reg) begin
+                    if (wr_ptr_update_next == wr_ptr_update_ack_sync2_reg) begin
                         // no sync in progress; sync update
                         wr_ptr_update_valid_next = 1'b0;
-                        wr_ptr_temp_gray_next = wr_ptr_gray_next;
-                        wr_ptr_update_next = !wr_ptr_update_ack_sync3_reg;
+                        wr_ptr_sync_gray_next = wr_ptr_gray_next;
+                        wr_ptr_update_next = !wr_ptr_update_ack_sync2_reg;
                     end else begin
                         // sync in progress; flag it for later
                         wr_ptr_update_valid_next = 1'b1;
@@ -335,7 +334,7 @@ always @(posedge s_clk) begin
         wr_ptr_reg <= {ADDR_WIDTH+1{1'b0}};
         wr_ptr_cur_reg <= {ADDR_WIDTH+1{1'b0}};
         wr_ptr_gray_reg <= {ADDR_WIDTH+1{1'b0}};
-        wr_ptr_temp_gray_reg <= {ADDR_WIDTH+1{1'b0}};
+        wr_ptr_sync_gray_reg <= {ADDR_WIDTH+1{1'b0}};
         wr_ptr_cur_gray_reg <= {ADDR_WIDTH+1{1'b0}};
 
         wr_ptr_update_valid_reg <= 1'b0;
@@ -349,7 +348,7 @@ always @(posedge s_clk) begin
         wr_ptr_reg <= wr_ptr_next;
         wr_ptr_cur_reg <= wr_ptr_cur_next;
         wr_ptr_gray_reg <= wr_ptr_gray_next;
-        wr_ptr_temp_gray_reg <= wr_ptr_temp_gray_next;
+        wr_ptr_sync_gray_reg <= wr_ptr_sync_gray_next;
         wr_ptr_cur_gray_reg <= wr_ptr_cur_gray_next;
 
         wr_ptr_update_valid_reg <= wr_ptr_update_valid_next;
@@ -379,13 +378,11 @@ always @(posedge s_clk) begin
         rd_ptr_gray_sync2_reg <= {ADDR_WIDTH+1{1'b0}};
         wr_ptr_update_ack_sync1_reg <= 1'b0;
         wr_ptr_update_ack_sync2_reg <= 1'b0;
-        wr_ptr_update_ack_sync3_reg <= 1'b0;
     end else begin
         rd_ptr_gray_sync1_reg <= rd_ptr_gray_reg;
         rd_ptr_gray_sync2_reg <= rd_ptr_gray_sync1_reg;
         wr_ptr_update_ack_sync1_reg <= wr_ptr_update_sync3_reg;
         wr_ptr_update_ack_sync2_reg <= wr_ptr_update_ack_sync1_reg;
-        wr_ptr_update_ack_sync3_reg <= wr_ptr_update_ack_sync2_reg;
     end
 end
 
@@ -400,7 +397,7 @@ always @(posedge m_clk) begin
         if (!FRAME_FIFO) begin
             wr_ptr_gray_sync1_reg <= wr_ptr_gray_reg;
         end else if (wr_ptr_update_sync2_reg ^ wr_ptr_update_sync3_reg) begin
-            wr_ptr_gray_sync1_reg <= wr_ptr_temp_gray_reg;
+            wr_ptr_gray_sync1_reg <= wr_ptr_sync_gray_reg;
         end
         wr_ptr_gray_sync2_reg <= wr_ptr_gray_sync1_reg;
         wr_ptr_update_sync1_reg <= wr_ptr_update_reg;

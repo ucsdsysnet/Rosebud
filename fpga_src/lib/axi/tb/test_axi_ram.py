@@ -43,7 +43,7 @@ build_cmd = "iverilog -o %s.vvp %s" % (testbench, src)
 def bench():
 
     # Parameters
-    DATA_WIDTH = 64
+    DATA_WIDTH = 32
     ADDR_WIDTH = 16
     STRB_WIDTH = (DATA_WIDTH/8)
     ID_WIDTH = 8
@@ -146,7 +146,6 @@ def bench():
         "vvp -m myhdl %s.vvp -lxt2" % testbench,
         clk=clk,
         rst=rst,
-        pause=axi_master_pause,
         current_test=current_test,
         s_axi_awid=s_axi_awid,
         s_axi_awaddr=s_axi_awaddr,
@@ -219,8 +218,8 @@ def bench():
         print("test 1: read and write")
         current_test.next = 1
 
-        addr = 8
-        test_data = b'\x11\x22\x33\x44\x11\x22\x33\x44'
+        addr = 4
+        test_data = b'\x11\x22\x33\x44'
 
         axi_master_inst.init_write(addr, test_data)
 

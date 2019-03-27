@@ -32,7 +32,7 @@ THE SOFTWARE.
 module test_axi_ram;
 
 // Parameters
-parameter DATA_WIDTH = 64;
+parameter DATA_WIDTH = 32;
 parameter ADDR_WIDTH = 16;
 parameter STRB_WIDTH = (DATA_WIDTH/8);
 parameter ID_WIDTH = 8;
@@ -42,8 +42,6 @@ parameter PIPELINE_OUTPUT = 0;
 reg clk = 0;
 reg rst = 0;
 reg [7:0] current_test = 0;
-
-reg pause;
 
 reg [ID_WIDTH-1:0] s_axi_awid = 0;
 reg [ADDR_WIDTH-1:0] s_axi_awaddr = 0;
@@ -89,7 +87,6 @@ initial begin
         clk,
         rst,
         current_test,
-        pause,
         s_axi_awid,
         s_axi_awaddr,
         s_axi_awlen,

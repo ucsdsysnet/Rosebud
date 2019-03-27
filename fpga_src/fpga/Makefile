@@ -68,12 +68,10 @@ SYN_FILES += /lib/axi/rtl/axi_crossbar_wr.v
 SYN_FILES += /lib/axi/rtl/axi_crossbar_rd.v
 SYN_FILES += /lib/axi/rtl/axi_crossbar.v
 SYN_FILES += lib/axi/rtl/axi_interconnect.v
-# SYN_FILES += lib/axis/rtl/arbiter.v
-# SYN_FILES += lib/axis/rtl/priority_encoder.v
 
 # XDC files
 XDC_FILES = fpga.xdc
-XDC_FILES += axis_async_fifo.tcl
+XDC_FILES += lib/axis/syn/axis_async_fifo.tcl
 
 # IP
 XCI_FILES =  ip/gtwizard_ultrascale_0.xci
