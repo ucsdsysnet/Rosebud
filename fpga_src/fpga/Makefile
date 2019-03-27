@@ -9,9 +9,9 @@ SYN_FILES = rtl/fpga.v
 SYN_FILES += rtl/fpga_core.v
 SYN_FILES += rtl/riscvcore.v
 SYN_FILES += rtl/VexRiscv.v
-SYN_FILES += rtl/dma_controller_2.v
+SYN_FILES += rtl/dma_controller.v
 SYN_FILES += rtl/eth_interface.v
-SYN_FILES += rtl/full_riscv_sys_3.v
+SYN_FILES += rtl/full_riscv_sys_2.v
 SYN_FILES += rtl/core_mems.v
 SYN_FILES += rtl/core_msg_arbiter.v
 SYN_FILES += rtl/temp_pcie.v
@@ -73,12 +73,15 @@ SYN_FILES += lib/axi/rtl/axi_interconnect.v
 
 # XDC files
 XDC_FILES = fpga.xdc
+XDC_FILES += axis_async_fifo.tcl
 
 # IP
 XCI_FILES =  ip/gtwizard_ultrascale_0.xci
 XCI_FILES += ip/axi_crossbar_0.xci
 XCI_FILES += ip/axi_data_fifo.xci
-XCI_FILES += ip/ila_0.xci
+XCI_FILES += ip/ila_2x64.xci
+XCI_FILES += ip/ila_4x64.xci
+XCI_FILES += ip/ila_8x64.xci
 
 include ../common/vivado.mk
 

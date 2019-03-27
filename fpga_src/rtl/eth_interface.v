@@ -160,16 +160,20 @@ module eth_interface #
     input  wire                       tx_enable,
     input  wire                       rx_enable,
     input  wire                       rx_abort,
-    input  wire [7:0]                 ifg_delay
+    input  wire [7:0]                 ifg_delay,
+
+    output wire                      tx_axis_tvalid,
+    output wire                      tx_axis_tready,
+    output wire                      tx_axis_tlast
 );
 
 localparam KEEP_WIDTH = CTRL_WIDTH;
 
 wire [AXI_DATA_WIDTH-1:0] tx_axis_tdata;
 wire [AXI_STRB_WIDTH-1:0] tx_axis_tkeep;
-wire                      tx_axis_tvalid;
-wire                      tx_axis_tready;
-wire                      tx_axis_tlast;
+// wire                      tx_axis_tvalid;
+// wire                      tx_axis_tready;
+// wire                      tx_axis_tlast;
 wire                      tx_axis_tuser;
 
 wire [AXI_DATA_WIDTH-1:0] rx_axis_tdata;
@@ -356,6 +360,100 @@ tx_fifo (
     .m_status_overflow(),
     .m_status_bad_frame(),
     .m_status_good_frame()
+);
+
+wire trigger_out, trigger_out_ack;
+
+reg [15:0] stall_cnt = 0;
+
+always @(posedge logic_clk) begin
+    if (logic_rst) begin
+        stall_cnt <= 0;
+    end else begin
+        if (tx_axis_tready) begin
+            stall_cnt <= 0;
+        end else begin
+            stall_cnt <= stall_cnt + 1;
+        end
+    end
+end
+
+ila_4x64 debugger1 (
+  .clk    (logic_clk),
+
+  .trig_out(trigger_out),
+  .trig_out_ack(trigger_out_ack),
+  .trig_in (1'b0),
+  .trig_in_ack(),
+
+  .probe0 ({
+    tx_axis_tkeep,
+    tx_axis_tvalid,
+    tx_axis_tready,
+    tx_axis_tlast,
+    s_axis_tx_desc_addr,
+    s_axis_tx_desc_len,
+    stall_cnt
+    }),
+  
+  .probe1 (tx_axis_tdata),
+
+  .probe2 ({
+    m_axi_arid,
+    m_axi_araddr,
+    m_axi_arlen,
+    m_axi_arsize,
+    m_axi_arburst,
+    m_axi_arvalid,
+    m_axi_arready,
+    m_axi_rid,
+    m_axi_rresp,
+    m_axi_rlast,
+    m_axi_rvalid,
+    m_axi_rready,
+    tx_fifo_overflow,
+    tx_fifo_bad_frame,
+    tx_fifo_good_frame,
+    m_axis_tx_desc_status_valid,
+    s_axis_tx_desc_valid,
+    s_axis_tx_desc_ready
+    }),
+  
+  .probe3({tx_fifo.wr_ptr_reg, tx_fifo.wr_ptr_cur_reg, 
+           tx_fifo.wr_ptr_gray_reg, tx_fifo.wr_ptr_cur_gray_reg, 
+           tx_fifo.full_cur, tx_fifo.full_wr, tx_fifo.full, tx_fifo.empty})
+
+  // .probe3 (m_axi_rdata)
+
+);
+
+ila_4x64 debugger2 (
+  .clk    (tx_clk),
+  
+	.trig_out(),
+  .trig_out_ack(1'b0),
+  .trig_in (trigger_out),
+  .trig_in_ack(trigger_out_ack),
+
+  .probe0 ({
+    tx_adapt_axis_tkeep,
+    tx_adapt_axis_tvalid,
+    tx_adapt_axis_tready,
+    tx_adapt_axis_tlast,
+    stall_cnt
+    }),
+
+  .probe1 (tx_adapt_axis_tdata),
+
+  .probe2 ({
+    tx_fifo_axis_tkeep,
+    tx_fifo_axis_tvalid,
+    tx_fifo_axis_tready,
+    tx_fifo_axis_tlast,
+    tx_fifo.rd_ptr_reg, tx_fifo.rd_ptr_gray_reg}),
+
+  .probe3 (tx_fifo_axis_tdata)
+
 );
 
 axis_adapter #(

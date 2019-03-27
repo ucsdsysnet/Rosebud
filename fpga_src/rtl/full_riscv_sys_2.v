@@ -277,6 +277,9 @@ wire [2*CORE_NO_WIDTH-1:0] msg_core_no;
 wire tx_enable_out;
 wire rx_enable_out;
 wire rx_abort_out;
+wire [2-1:0] tx_axis_tvalid;
+wire [2-1:0] tx_axis_tready;
+wire [2-1:0] tx_axis_tlast;
 
 eth_interface #(
     .DATA_WIDTH(DATA_WIDTH),
@@ -376,7 +379,12 @@ eth_dma_1 (
     .rx_enable(rx_enable[1]),
     .rx_abort(rx_abort[1]),
 
-    .ifg_delay(ifg_delay)
+    .ifg_delay(ifg_delay),
+
+    .tx_axis_tvalid(tx_axis_tvalid[1]),
+    .tx_axis_tready(tx_axis_tready[1]),
+    .tx_axis_tlast(tx_axis_tlast[1])
+
 );
 
 assign tx_enable = {tx_enable_out, tx_enable_out};
@@ -481,7 +489,12 @@ eth_dma_0 (
     .rx_enable(rx_enable[0]),
     .rx_abort(rx_abort[0]),
 
-    .ifg_delay(ifg_delay)
+    .ifg_delay(ifg_delay),
+
+    .tx_axis_tvalid(tx_axis_tvalid[0]),
+    .tx_axis_tready(tx_axis_tready[0]),
+    .tx_axis_tlast(tx_axis_tlast[0])
+
 );
 
 // axi_interconnect #
@@ -1012,5 +1025,121 @@ core_msg_arbiter # (
     assign fifoed_m_axi_rready  = m_axi_rready;   
 
 `endif
+
+reg [15:0] stall_cnt = 0;
+
+always @(posedge logic_clk) begin
+    if (logic_rst) begin
+        stall_cnt <= 0;
+    end else begin
+        if (s_axis_tx_desc_ready[1]) begin
+            stall_cnt <= 0;
+        end else begin
+            stall_cnt <= stall_cnt + 1;
+        end
+    end
+end
+
+/* 
+
+ila_8x64 debugger (
+  .clk    (logic_clk),
+	
+  .trig_out(),
+  .trig_out_ack(1'b0),
+  .trig_in (1'b0),
+  .trig_in_ack(),
+
+  .probe0 ({
+    s_axis_tx_desc_addr[1*AXI_ADDR_WIDTH +: AXI_ADDR_WIDTH],
+    s_axis_tx_desc_len[1*LEN_WIDTH +: LEN_WIDTH],
+    s_axis_tx_desc_valid[1],
+    s_axis_tx_desc_ready[1],
+    m_axi_bid[ETH1_LOC*AXI_ID_WIDTH +: AXI_ID_WIDTH],
+		stall_cnt}),
+  
+  .probe1 ({
+    m_axi_arid[ETH1_LOC*AXI_ID_WIDTH +: AXI_ID_WIDTH],
+    m_axi_araddr[ETH1_LOC*AXI_ADDR_WIDTH +: AXI_ADDR_WIDTH],
+    m_axi_arlen[ETH1_LOC*8 +: 8],
+    m_axi_arsize[ETH1_LOC*3 +: 3],
+    m_axi_arburst[ETH1_LOC*2 +: 2],
+    m_axi_arvalid[ETH1_LOC],
+    m_axi_arready[ETH1_LOC],
+    m_axi_rid[ETH1_LOC*AXI_ID_WIDTH +: AXI_ID_WIDTH],
+    m_axi_rresp[ETH1_LOC*2 +: 2],
+    m_axi_rlast[ETH1_LOC],
+    m_axi_rvalid[ETH1_LOC],
+    m_axi_rready[ETH1_LOC],
+    tx_axis_tvalid[1],
+    tx_axis_tready[1],
+    tx_axis_tlast[1],
+    tx_axis_tvalid[0],
+    tx_axis_tready[0],
+    tx_axis_tlast[0]}),
+
+  .probe2 ({s_axi_rid[63:0]}),
+  // .probe2 ({
+  //   s_axis_tx_desc_addr[0*AXI_ADDR_WIDTH +: AXI_ADDR_WIDTH],
+  //   s_axis_tx_desc_len[0*LEN_WIDTH +: LEN_WIDTH],
+  //   s_axis_tx_desc_valid[0],
+  //   s_axis_tx_desc_ready[0],
+  //   m_axi_bresp[ETH1_LOC*2 +: 2],
+  //   m_axi_bvalid[ETH1_LOC],
+  //   m_axi_bready[ETH1_LOC],
+  //   s_axi_rlast}),
+  
+  .probe3 ({
+    m_axi_arid[ETH0_LOC*AXI_ID_WIDTH +: AXI_ID_WIDTH],
+    m_axi_araddr[ETH0_LOC*AXI_ADDR_WIDTH +: AXI_ADDR_WIDTH],
+    m_axi_arlen[ETH0_LOC*8 +: 8],
+    m_axi_arsize[ETH0_LOC*3 +: 3],
+    m_axi_arburst[ETH0_LOC*2 +: 2],
+    m_axi_arvalid[ETH0_LOC],
+    m_axi_arready[ETH0_LOC],
+    m_axi_rid[ETH0_LOC*AXI_ID_WIDTH +: AXI_ID_WIDTH],
+    m_axi_rresp[ETH0_LOC*2 +: 2],
+    m_axi_rlast[ETH0_LOC],
+    m_axi_rvalid[ETH0_LOC],
+    m_axi_rready[ETH0_LOC]}),
+
+  .probe4 ({
+    s_axis_rx_desc_addr[1*AXI_ADDR_WIDTH +: AXI_ADDR_WIDTH],
+    s_axis_rx_desc_len[1*LEN_WIDTH +: LEN_WIDTH],
+    s_axis_rx_desc_valid[1],
+    s_axis_rx_desc_ready[1],
+    m_axis_rx_desc_status_len[1*LEN_WIDTH +: LEN_WIDTH],
+    m_axis_rx_desc_status_valid[1]}),
+
+  .probe5 ({
+    s_axis_rx_desc_addr[0*AXI_ADDR_WIDTH +: AXI_ADDR_WIDTH],
+    s_axis_rx_desc_len[0*LEN_WIDTH +: LEN_WIDTH],
+    s_axis_rx_desc_valid[0],
+    s_axis_rx_desc_ready[0],
+    m_axis_rx_desc_status_len[0*LEN_WIDTH +: LEN_WIDTH],
+    m_axis_rx_desc_status_valid[0]}),
+ 
+  .probe6 ({
+    s_axi_arvalid,
+    s_axi_arready,
+    s_axi_rvalid,
+    s_axi_rready}),
+
+  .probe7 ({s_axi_rid[127:64]})
+  // .probe7 ({
+  //   m_axi_awid[ETH1_LOC*AXI_ID_WIDTH +: AXI_ID_WIDTH],
+  //   m_axi_awaddr[ETH1_LOC*AXI_ADDR_WIDTH +: AXI_ADDR_WIDTH],
+  //   m_axi_awlen[ETH1_LOC*8 +: 8],
+  //   m_axi_awsize[ETH1_LOC*3 +: 3],
+  //   m_axi_awburst[ETH1_LOC*2 +: 2],
+  //   m_axi_awvalid[ETH1_LOC],
+  //   m_axi_awready[ETH1_LOC],
+  //   m_axi_wstrb[ETH1_LOC*AXI_STRB_WIDTH +: AXI_STRB_WIDTH],
+  //   m_axi_wlast[ETH1_LOC],
+  //   m_axi_wvalid[ETH1_LOC],
+  //   m_axi_wready[ETH1_LOC]})
+
+);
+*/ 
 
 endmodule
