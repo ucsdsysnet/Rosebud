@@ -378,83 +378,83 @@ always @(posedge logic_clk) begin
     end
 end
 
-ila_4x64 debugger1 (
-  .clk    (logic_clk),
-
-  .trig_out(trigger_out),
-  .trig_out_ack(trigger_out_ack),
-  .trig_in (1'b0),
-  .trig_in_ack(),
-
-  .probe0 ({
-    tx_axis_tkeep,
-    tx_axis_tvalid,
-    tx_axis_tready,
-    tx_axis_tlast,
-    s_axis_tx_desc_addr,
-    s_axis_tx_desc_len,
-    stall_cnt
-    }),
-  
-  .probe1 (tx_axis_tdata),
-
-  .probe2 ({
-    m_axi_arid,
-    m_axi_araddr,
-    m_axi_arlen,
-    m_axi_arsize,
-    m_axi_arburst,
-    m_axi_arvalid,
-    m_axi_arready,
-    m_axi_rid,
-    m_axi_rresp,
-    m_axi_rlast,
-    m_axi_rvalid,
-    m_axi_rready,
-    tx_fifo_overflow,
-    tx_fifo_bad_frame,
-    tx_fifo_good_frame,
-    m_axis_tx_desc_status_valid,
-    s_axis_tx_desc_valid,
-    s_axis_tx_desc_ready
-    }),
-  
-  .probe3({tx_fifo.wr_ptr_reg, tx_fifo.wr_ptr_cur_reg, 
-           tx_fifo.wr_ptr_gray_reg, tx_fifo.wr_ptr_cur_gray_reg, 
-           tx_fifo.full_cur, tx_fifo.full_wr, tx_fifo.full, tx_fifo.empty})
-
-  // .probe3 (m_axi_rdata)
-
-);
-
-ila_4x64 debugger2 (
-  .clk    (tx_clk),
-  
-	.trig_out(),
-  .trig_out_ack(1'b0),
-  .trig_in (trigger_out),
-  .trig_in_ack(trigger_out_ack),
-
-  .probe0 ({
-    tx_adapt_axis_tkeep,
-    tx_adapt_axis_tvalid,
-    tx_adapt_axis_tready,
-    tx_adapt_axis_tlast,
-    stall_cnt
-    }),
-
-  .probe1 (tx_adapt_axis_tdata),
-
-  .probe2 ({
-    tx_fifo_axis_tkeep,
-    tx_fifo_axis_tvalid,
-    tx_fifo_axis_tready,
-    tx_fifo_axis_tlast,
-    tx_fifo.rd_ptr_reg, tx_fifo.rd_ptr_gray_reg}),
-
-  .probe3 (tx_fifo_axis_tdata)
-
-);
+// ila_4x64 debugger1 (
+//   .clk    (logic_clk),
+// 
+//   .trig_out(trigger_out),
+//   .trig_out_ack(trigger_out_ack),
+//   .trig_in (1'b0),
+//   .trig_in_ack(),
+// 
+//   .probe0 ({
+//     tx_axis_tkeep,
+//     tx_axis_tvalid,
+//     tx_axis_tready,
+//     tx_axis_tlast,
+//     s_axis_tx_desc_addr,
+//     s_axis_tx_desc_len,
+//     stall_cnt
+//     }),
+//   
+//   .probe1 (tx_axis_tdata),
+// 
+//   .probe2 ({
+//     m_axi_arid,
+//     m_axi_araddr,
+//     m_axi_arlen,
+//     m_axi_arsize,
+//     m_axi_arburst,
+//     m_axi_arvalid,
+//     m_axi_arready,
+//     m_axi_rid,
+//     m_axi_rresp,
+//     m_axi_rlast,
+//     m_axi_rvalid,
+//     m_axi_rready,
+//     tx_fifo_overflow,
+//     tx_fifo_bad_frame,
+//     tx_fifo_good_frame,
+//     m_axis_tx_desc_status_valid,
+//     s_axis_tx_desc_valid,
+//     s_axis_tx_desc_ready
+//     }),
+//   
+//   .probe3({tx_fifo.wr_ptr_reg, tx_fifo.wr_ptr_cur_reg, 
+//            tx_fifo.wr_ptr_gray_reg, tx_fifo.wr_ptr_cur_gray_reg, 
+//            tx_fifo.full_cur, tx_fifo.full_wr, tx_fifo.full, tx_fifo.empty})
+// 
+//   // .probe3 (m_axi_rdata)
+// 
+// );
+// 
+// ila_4x64 debugger2 (
+//   .clk    (tx_clk),
+//   
+// 	.trig_out(),
+//   .trig_out_ack(1'b0),
+//   .trig_in (trigger_out),
+//   .trig_in_ack(trigger_out_ack),
+// 
+//   .probe0 ({
+//     tx_adapt_axis_tkeep,
+//     tx_adapt_axis_tvalid,
+//     tx_adapt_axis_tready,
+//     tx_adapt_axis_tlast,
+//     stall_cnt
+//     }),
+// 
+//   .probe1 (tx_adapt_axis_tdata),
+// 
+//   .probe2 ({
+//     tx_fifo_axis_tkeep,
+//     tx_fifo_axis_tvalid,
+//     tx_fifo_axis_tready,
+//     tx_fifo_axis_tlast,
+//     tx_fifo.rd_ptr_reg, tx_fifo.rd_ptr_gray_reg}),
+// 
+//   .probe3 (tx_fifo_axis_tdata)
+// 
+// );
 
 axis_adapter #(
     .S_DATA_WIDTH(DATA_WIDTH),

@@ -30,14 +30,14 @@ import random
 import eth_ep
 import xgmii_ep
 
-testbench = 'test_dma_full'
+testbench = 'test_riscv_full'
 
 srcs = []
 
 srcs.append("../rtl/temp_pcie.v")
 srcs.append("../rtl/simple_fifo.v")
 srcs.append("../rtl/core_msg_arbiter.v")
-srcs.append("../rtl/full_riscv_sys_2.v")
+srcs.append("../rtl/full_riscv_sys.v")
 srcs.append("../rtl/dma_controller.v")
 srcs.append("../rtl/eth_interface.v")
 srcs.append("../rtl/core_mems.v")

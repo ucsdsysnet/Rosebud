@@ -29,7 +29,7 @@ THE SOFTWARE.
 /*
  * Testbench for eth_mac_10g
  */
-module test_dma_full;
+module test_riscv_full;
 
 // Parameters
 parameter DATA_WIDTH = 64;
@@ -89,8 +89,8 @@ initial begin
     );
 
     // dump file
-    $dumpfile("test_dma_full.lxt");
-    $dumpvars(0, test_dma_full);
+    $dumpfile("test_riscv_full.lxt");
+    $dumpvars(0, test_riscv_full);
 end
 
 full_riscv_sys sys (

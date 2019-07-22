@@ -35,7 +35,7 @@ module full_riscv_sys # (
   parameter IMEM_SIZE_BYTES = 8192,
   parameter DMEM_SIZE_BYTES = 32768,
   parameter STAT_ADDR_WIDTH = 1,
-  parameter SLOT_COUNT      = 8,
+  parameter SLOT_COUNT      = 12,
   parameter INTERLEAVE      = 1,
   parameter PIPELINE_OUTPUT = 0,
   // interconnect parameters
@@ -62,28 +62,32 @@ module full_riscv_sys # (
   parameter AXI_ADDR_WIDTH    = CORE_ADDR_WIDTH+$clog2(M_COUNT),
   parameter AXI_STRB_WIDTH    = (AXI_DATA_WIDTH/8),
   parameter AXI_ID_WIDTH      = 8,
-  parameter AXI_MAX_BURST_LEN = 8,
+  parameter AXI_CORE_ID_WIDTH = AXI_ID_WIDTH+$clog2(S_COUNT),
+  parameter AXI_MAX_BURST_LEN = 16, //8,
   parameter DESC_WIDTH        = $clog2(M_COUNT)+$clog2(SLOT_COUNT),
   parameter SLOT_LEAD_ZERO    = 8,
-  parameter RX_WRITE_OFFSET   = 8'h08, //A,
+  parameter RX_WRITE_OFFSET   = 8'h08, // A,
   // eth interface parameters 
   parameter DATA_WIDTH        = 64,
   parameter CTRL_WIDTH        = (DATA_WIDTH/8),
   parameter AXIS_USER_WIDTH   = 1,
   parameter LEN_WIDTH         = 16,
   parameter TAG_WIDTH         = 8,
-  parameter ENABLE_UNALIGNED  = 1,
+  parameter ENABLE_UNALIGNED  = 0, //1,
   parameter ENABLE_PADDING    = 1,
   parameter MIN_FRAME_LENGTH  = 64,
   parameter TX_DROP_WHEN_FULL = 0,
   // Aribter parameters
   parameter CORE_FIFO_ADDR_SIZE   = 3,
-  parameter SHARED_FIFO_ADDR_SIZE = 4,
+  parameter CORE_NO_WIDTH         = $clog2(M_COUNT),
   // temp PCI-e parameters. 
   // There are additional 8 leading zeros for these values
   parameter SLOT_ADDR_EFF = CORE_ADDR_WIDTH-1-SLOT_LEAD_ZERO,
-  parameter FIRST_SLOT_ADDR = 7'h40,
-  parameter SLOT_ADDR_STEP  = 7'h08
+  parameter FIRST_SLOT_ADDR = 7'h20,
+  parameter SLOT_ADDR_STEP  = 7'h08,
+  // AXI masters FIFO parameters
+  parameter AXI_WRITE_FIFO_DEPTH = 32,
+  parameter AXI_READ_FIFO_DEPTH  = 32
 )(
   // Inputs
   input [2-1:0] rx_clk,
@@ -102,6 +106,7 @@ module full_riscv_sys # (
 
 );
 
+// `define FIFOED_MASTERS
 parameter ETH0_LOC = 0;
 parameter ETH1_LOC = 1;
 parameter CTRL_LOC = 2;
@@ -180,7 +185,43 @@ wire [S_COUNT*2-1:0] m_axi_rresp;
 wire [S_COUNT-1:0] m_axi_rlast;
 wire [S_COUNT-1:0] m_axi_rvalid;
 
-wire [M_COUNT*AXI_ID_WIDTH-1:0] s_axi_awid;
+wire [S_COUNT*AXI_ID_WIDTH-1:0] fifoed_m_axi_awid;
+wire [S_COUNT*AXI_ADDR_WIDTH-1:0] fifoed_m_axi_awaddr;
+wire [S_COUNT*8-1:0] fifoed_m_axi_awlen;
+wire [S_COUNT*3-1:0] fifoed_m_axi_awsize;
+wire [S_COUNT*2-1:0] fifoed_m_axi_awburst;
+wire [S_COUNT-1:0] fifoed_m_axi_awlock;
+wire [S_COUNT*4-1:0] fifoed_m_axi_awcache;
+wire [S_COUNT*3-1:0] fifoed_m_axi_awprot;
+wire [S_COUNT-1:0] fifoed_m_axi_awvalid;
+wire [S_COUNT*AXI_DATA_WIDTH-1:0] fifoed_m_axi_wdata;
+wire [S_COUNT*AXI_STRB_WIDTH-1:0] fifoed_m_axi_wstrb;
+wire [S_COUNT-1:0] fifoed_m_axi_wlast;
+wire [S_COUNT-1:0] fifoed_m_axi_wvalid;
+wire [S_COUNT-1:0] fifoed_m_axi_bready;
+wire [S_COUNT*AXI_ID_WIDTH-1:0] fifoed_m_axi_arid;
+wire [S_COUNT*AXI_ADDR_WIDTH-1:0] fifoed_m_axi_araddr;
+wire [S_COUNT*8-1:0] fifoed_m_axi_arlen;
+wire [S_COUNT*3-1:0] fifoed_m_axi_arsize;
+wire [S_COUNT*2-1:0] fifoed_m_axi_arburst;
+wire [S_COUNT-1:0] fifoed_m_axi_arlock;
+wire [S_COUNT*4-1:0] fifoed_m_axi_arcache;
+wire [S_COUNT*3-1:0] fifoed_m_axi_arprot;
+wire [S_COUNT-1:0] fifoed_m_axi_arvalid;
+wire [S_COUNT-1:0] fifoed_m_axi_rready;
+wire [S_COUNT-1:0] fifoed_m_axi_awready;
+wire [S_COUNT-1:0] fifoed_m_axi_wready;
+wire [S_COUNT*AXI_ID_WIDTH-1:0] fifoed_m_axi_bid;
+wire [S_COUNT*2-1:0] fifoed_m_axi_bresp;
+wire [S_COUNT-1:0] fifoed_m_axi_bvalid;
+wire [S_COUNT-1:0] fifoed_m_axi_arready;
+wire [S_COUNT*AXI_ID_WIDTH-1:0] fifoed_m_axi_rid;
+wire [S_COUNT*AXI_DATA_WIDTH-1:0] fifoed_m_axi_rdata;
+wire [S_COUNT*2-1:0] fifoed_m_axi_rresp;
+wire [S_COUNT-1:0] fifoed_m_axi_rlast;
+wire [S_COUNT-1:0] fifoed_m_axi_rvalid;
+
+wire [M_COUNT*AXI_CORE_ID_WIDTH-1:0] s_axi_awid;
 wire [M_COUNT*AXI_ADDR_WIDTH-1:0] s_axi_awaddr;
 wire [M_COUNT*8-1:0] s_axi_awlen;
 wire [M_COUNT*3-1:0] s_axi_awsize;
@@ -194,7 +235,7 @@ wire [M_COUNT*AXI_STRB_WIDTH-1:0] s_axi_wstrb;
 wire [M_COUNT-1:0] s_axi_wlast;
 wire [M_COUNT-1:0] s_axi_wvalid;
 wire [M_COUNT-1:0] s_axi_bready;
-wire [M_COUNT*AXI_ID_WIDTH-1:0] s_axi_arid;
+wire [M_COUNT*AXI_CORE_ID_WIDTH-1:0] s_axi_arid;
 wire [M_COUNT*AXI_ADDR_WIDTH-1:0] s_axi_araddr;
 wire [M_COUNT*8-1:0] s_axi_arlen;
 wire [M_COUNT*3-1:0] s_axi_arsize;
@@ -206,11 +247,11 @@ wire [M_COUNT-1:0] s_axi_arvalid;
 wire [M_COUNT-1:0] s_axi_rready;
 wire [M_COUNT-1:0] s_axi_awready;
 wire [M_COUNT-1:0] s_axi_wready;
-wire [M_COUNT*AXI_ID_WIDTH-1:0] s_axi_bid;
+wire [M_COUNT*AXI_CORE_ID_WIDTH-1:0] s_axi_bid;
 wire [M_COUNT*2-1:0] s_axi_bresp;
 wire [M_COUNT-1:0] s_axi_bvalid;
 wire [M_COUNT-1:0] s_axi_arready;
-wire [M_COUNT*AXI_ID_WIDTH-1:0] s_axi_rid;
+wire [M_COUNT*AXI_CORE_ID_WIDTH-1:0] s_axi_rid;
 wire [M_COUNT*AXI_DATA_WIDTH-1:0] s_axi_rdata;
 wire [M_COUNT*2-1:0] s_axi_rresp;
 wire [M_COUNT-1:0] s_axi_rlast;
@@ -228,14 +269,17 @@ wire                   inject_rx_desc_ready;
 wire [M_COUNT-1:0] core_msg_valid;
 wire [64*M_COUNT-1:0] core_msg_data;
 
-wire [63:0] msg_data;
-wire        msg_valid;
-wire        msg_ready;
-wire [$clog2(M_COUNT)-1:0] msg_core_no;
+wire [2*64-1:0]            msg_data;
+wire [2-1:0]               msg_valid;
+wire [2-1:0]               msg_ready;
+wire [2*CORE_NO_WIDTH-1:0] msg_core_no;
 
 wire tx_enable_out;
 wire rx_enable_out;
 wire rx_abort_out;
+wire [2-1:0] tx_axis_tvalid;
+wire [2-1:0] tx_axis_tready;
+wire [2-1:0] tx_axis_tlast;
 
 eth_interface #(
     .DATA_WIDTH(DATA_WIDTH),
@@ -335,7 +379,12 @@ eth_dma_1 (
     .rx_enable(rx_enable[1]),
     .rx_abort(rx_abort[1]),
 
-    .ifg_delay(ifg_delay)
+    .ifg_delay(ifg_delay),
+
+    .tx_axis_tvalid(tx_axis_tvalid[1]),
+    .tx_axis_tready(tx_axis_tready[1]),
+    .tx_axis_tlast(tx_axis_tlast[1])
+
 );
 
 assign tx_enable = {tx_enable_out, tx_enable_out};
@@ -440,18 +489,23 @@ eth_dma_0 (
     .rx_enable(rx_enable[0]),
     .rx_abort(rx_abort[0]),
 
-    .ifg_delay(ifg_delay)
+    .ifg_delay(ifg_delay),
+
+    .tx_axis_tvalid(tx_axis_tvalid[0]),
+    .tx_axis_tready(tx_axis_tready[0]),
+    .tx_axis_tlast(tx_axis_tlast[0])
+
 );
 
-axi_interconnect #
-// axi_crossbar #
+// axi_interconnect #
+axi_crossbar #
 (
     .S_COUNT(S_COUNT),
     .M_COUNT(M_COUNT),
     .DATA_WIDTH(AXI_DATA_WIDTH),
     .ADDR_WIDTH(AXI_ADDR_WIDTH),
     .STRB_WIDTH(AXI_STRB_WIDTH),
-    .ID_WIDTH(AXI_ID_WIDTH),
+    .S_ID_WIDTH(AXI_ID_WIDTH),
     .M_REGIONS(M_REGIONS),
     .M_BASE_ADDR(M_BASE_ADDR),
     .M_ADDR_WIDTH(M_ADDR_WIDTH)
@@ -459,48 +513,49 @@ axi_interconnect #
 interconnect (
     .clk(logic_clk),
     .rst(logic_rst),
-    .s_axi_awid(m_axi_awid),
-    .s_axi_awaddr(m_axi_awaddr),
-    .s_axi_awlen(m_axi_awlen),
-    .s_axi_awsize(m_axi_awsize),
-    .s_axi_awburst(m_axi_awburst),
-    .s_axi_awlock(m_axi_awlock),
-    .s_axi_awcache(m_axi_awcache),
-    .s_axi_awprot(m_axi_awprot),
+    .s_axi_awid(fifoed_m_axi_awid),
+    .s_axi_awaddr(fifoed_m_axi_awaddr),
+    .s_axi_awlen(fifoed_m_axi_awlen),
+    .s_axi_awsize(fifoed_m_axi_awsize),
+    .s_axi_awburst(fifoed_m_axi_awburst),
+    .s_axi_awlock(fifoed_m_axi_awlock),
+    .s_axi_awcache(fifoed_m_axi_awcache),
+    .s_axi_awprot(fifoed_m_axi_awprot),
     .s_axi_awqos(),
     .s_axi_awuser(),
-    .s_axi_awvalid(m_axi_awvalid),
-    .s_axi_awready(m_axi_awready),
-    .s_axi_wdata(m_axi_wdata),
-    .s_axi_wstrb(m_axi_wstrb),
-    .s_axi_wlast(m_axi_wlast),
+    .s_axi_awvalid(fifoed_m_axi_awvalid),
+    .s_axi_awready(fifoed_m_axi_awready),
+    .s_axi_wdata(fifoed_m_axi_wdata),
+    .s_axi_wstrb(fifoed_m_axi_wstrb),
+    .s_axi_wlast(fifoed_m_axi_wlast),
     .s_axi_wuser(),
-    .s_axi_wvalid(m_axi_wvalid),
-    .s_axi_wready(m_axi_wready),
-    .s_axi_bid(m_axi_bid),
-    .s_axi_bresp(m_axi_bresp),
+    .s_axi_wvalid(fifoed_m_axi_wvalid),
+    .s_axi_wready(fifoed_m_axi_wready),
+    .s_axi_bid(fifoed_m_axi_bid),
+    .s_axi_bresp(fifoed_m_axi_bresp),
     .s_axi_buser(),
-    .s_axi_bvalid(m_axi_bvalid),
-    .s_axi_bready(m_axi_bready),
-    .s_axi_arid(m_axi_arid),
-    .s_axi_araddr(m_axi_araddr),
-    .s_axi_arlen(m_axi_arlen),
-    .s_axi_arsize(m_axi_arsize),
-    .s_axi_arburst(m_axi_arburst),
-    .s_axi_arlock(m_axi_arlock),
-    .s_axi_arcache(m_axi_arcache),
-    .s_axi_arprot(m_axi_arprot),
+    .s_axi_bvalid(fifoed_m_axi_bvalid),
+    .s_axi_bready(fifoed_m_axi_bready),
+    .s_axi_arid(fifoed_m_axi_arid),
+    .s_axi_araddr(fifoed_m_axi_araddr),
+    .s_axi_arlen(fifoed_m_axi_arlen),
+    .s_axi_arsize(fifoed_m_axi_arsize),
+    .s_axi_arburst(fifoed_m_axi_arburst),
+    .s_axi_arlock(fifoed_m_axi_arlock),
+    .s_axi_arcache(fifoed_m_axi_arcache),
+    .s_axi_arprot(fifoed_m_axi_arprot),
     .s_axi_arqos(),
     .s_axi_aruser(),
-    .s_axi_arvalid(m_axi_arvalid),
-    .s_axi_arready(m_axi_arready),
-    .s_axi_rid(m_axi_rid),
-    .s_axi_rdata(m_axi_rdata),
-    .s_axi_rresp(m_axi_rresp),
-    .s_axi_rlast(m_axi_rlast),
+    .s_axi_arvalid(fifoed_m_axi_arvalid),
+    .s_axi_arready(fifoed_m_axi_arready),
+    .s_axi_rid(fifoed_m_axi_rid),
+    .s_axi_rdata(fifoed_m_axi_rdata),
+    .s_axi_rresp(fifoed_m_axi_rresp),
+    .s_axi_rlast(fifoed_m_axi_rlast),
     .s_axi_ruser(),
-    .s_axi_rvalid(m_axi_rvalid),
-    .s_axi_rready(m_axi_rready),
+    .s_axi_rvalid(fifoed_m_axi_rvalid),
+    .s_axi_rready(fifoed_m_axi_rready),
+
     .m_axi_awid(s_axi_awid),
     .m_axi_awaddr(s_axi_awaddr),
     .m_axi_awlen(s_axi_awlen),
@@ -567,6 +622,7 @@ dma_controller # (
 (
     .clk(logic_clk),
     .rst(logic_rst),
+    .go(tx_enable_out),
 
     /*
      * AXI master interface
@@ -627,6 +683,7 @@ dma_controller # (
     .s_axis_rx_desc_ready(s_axis_rx_desc_ready),
 
     .incoming_pkt_ready(rx_fifo_good_frame),
+    .incoming_pkt_drop(rx_fifo_overflow),
     .pkt_sent_to_core_valid(m_axis_rx_desc_status_valid),
     .pkt_sent_to_core_len(m_axis_rx_desc_status_len),
     .pkt_sent_out_valid(m_axis_tx_desc_status_valid),
@@ -730,7 +787,7 @@ generate
     riscv_axi_wrapper #(
         .DATA_WIDTH(AXI_DATA_WIDTH),
         .ADDR_WIDTH(AXI_ADDR_WIDTH-$clog2(M_COUNT)),
-        .ID_WIDTH(AXI_ID_WIDTH),
+        .ID_WIDTH(AXI_CORE_ID_WIDTH),
         .PIPELINE_OUTPUT(PIPELINE_OUTPUT),
         .IMEM_SIZE_BYTES(IMEM_SIZE_BYTES),
         .DMEM_SIZE_BYTES(DMEM_SIZE_BYTES),
@@ -740,7 +797,7 @@ generate
     RISCV (
         .clk(logic_clk),
         .rst(logic_rst),
-        .s_axi_awid(s_axi_awid[AXI_ID_WIDTH*i +: AXI_ID_WIDTH]),
+        .s_axi_awid(s_axi_awid[AXI_CORE_ID_WIDTH*i +: AXI_CORE_ID_WIDTH]),
         .s_axi_awaddr(s_axi_awaddr[AXI_ADDR_WIDTH*i +: AXI_ADDR_WIDTH-$clog2(M_COUNT)]),
         .s_axi_awlen(s_axi_awlen[8*i +: 8]),
         .s_axi_awsize(s_axi_awsize[3*i +: 3]),
@@ -755,11 +812,11 @@ generate
         .s_axi_wlast(s_axi_wlast[i]),
         .s_axi_wvalid(s_axi_wvalid[i]),
         .s_axi_wready(s_axi_wready[i]),
-        .s_axi_bid(s_axi_bid[AXI_ID_WIDTH*i +: AXI_ID_WIDTH]),
+        .s_axi_bid(s_axi_bid[AXI_CORE_ID_WIDTH*i +: AXI_CORE_ID_WIDTH]),
         .s_axi_bresp(s_axi_bresp[2*i +: 2]),
         .s_axi_bvalid(s_axi_bvalid[i]),
         .s_axi_bready(s_axi_bready[i]),
-        .s_axi_arid(s_axi_arid[AXI_ID_WIDTH*i +: AXI_ID_WIDTH]),
+        .s_axi_arid(s_axi_arid[AXI_CORE_ID_WIDTH*i +: AXI_CORE_ID_WIDTH]),
         .s_axi_araddr(s_axi_araddr[AXI_ADDR_WIDTH*i +: AXI_ADDR_WIDTH-$clog2(M_COUNT)]),
         .s_axi_arlen(s_axi_arlen[8*i +: 8]),
         .s_axi_arsize(s_axi_arsize[3*i +: 3]),
@@ -769,7 +826,7 @@ generate
         .s_axi_arprot(s_axi_arprot[3*i +: 3]),
         .s_axi_arvalid(s_axi_arvalid[i]),
         .s_axi_arready(s_axi_arready[i]),
-        .s_axi_rid(s_axi_rid[AXI_ID_WIDTH*i +: AXI_ID_WIDTH]),
+        .s_axi_rid(s_axi_rid[AXI_CORE_ID_WIDTH*i +: AXI_CORE_ID_WIDTH]),
         .s_axi_rdata(s_axi_rdata[AXI_DATA_WIDTH*i +: AXI_DATA_WIDTH]),
         .s_axi_rresp(s_axi_rresp[2*i +: 2]),
         .s_axi_rlast(s_axi_rlast[i]),
@@ -781,21 +838,308 @@ generate
     );
   end
 endgenerate
-    
+
+reg [M_COUNT-1:0] msg_port;
+integer k;
+always @ (*)
+  for (k=0; k<M_COUNT; k=k+1)
+    msg_port[k] = core_msg_data[k*64+16];
+
 core_msg_arbiter # (
   .CORE_COUNT(M_COUNT),
   .CORE_FIFO_ADDR_SIZE(CORE_FIFO_ADDR_SIZE)
-) msg_arbiter (
+) msg_arbiter_0 (
     .clk(logic_clk),
     .rst(logic_rst),
 
     .core_msg_data(core_msg_data),
-    .core_msg_valid(core_msg_valid),
+    .core_msg_valid(core_msg_valid & (~msg_port)),
 
-    .msg_data(msg_data),
-    .msg_valid(msg_valid),
-    .msg_core_no(msg_core_no),
-    .msg_ready(msg_ready)
+    .msg_data(msg_data[0*64 +: 64]),
+    .msg_valid(msg_valid[0]),
+    .msg_core_no(msg_core_no[0*CORE_NO_WIDTH +: CORE_NO_WIDTH]),
+    .msg_ready(msg_ready[0])
 );
+
+core_msg_arbiter # (
+  .CORE_COUNT(M_COUNT),
+  .CORE_FIFO_ADDR_SIZE(CORE_FIFO_ADDR_SIZE)
+) msg_arbiter_1 (
+    .clk(logic_clk),
+    .rst(logic_rst),
+
+    .core_msg_data(core_msg_data),
+    .core_msg_valid(core_msg_valid & msg_port),
+
+    .msg_data(msg_data[1*64 +: 64]),
+    .msg_valid(msg_valid[1]),
+    .msg_core_no(msg_core_no[1*CORE_NO_WIDTH +: CORE_NO_WIDTH]),
+    .msg_ready(msg_ready[1])
+);
+
+`ifdef FIFOED_MASTERS
+
+    // A fifo after each master's AXI output 
+    genvar j;
+    generate
+      for (j=0; j<S_COUNT; j=j+1) begin
+        axi_fifo # (
+        .DATA_WIDTH(AXI_DATA_WIDTH),
+        .ADDR_WIDTH(AXI_ADDR_WIDTH),
+        .ID_WIDTH(AXI_ID_WIDTH),
+        .WRITE_FIFO_DEPTH(AXI_WRITE_FIFO_DEPTH),
+        .READ_FIFO_DEPTH(AXI_READ_FIFO_DEPTH)
+        ) axi_masters_fifo (
+            .clk(logic_clk),
+            .rst(logic_rst),
+    
+            .s_axi_awid    (m_axi_awid[j*AXI_ID_WIDTH +: AXI_ID_WIDTH]),
+            .s_axi_awaddr  (m_axi_awaddr[j*AXI_ADDR_WIDTH +: AXI_ADDR_WIDTH]),
+            .s_axi_awlen   (m_axi_awlen[j*8 +: 8]),
+            .s_axi_awsize  (m_axi_awsize[j*3 +: 3]),
+            .s_axi_awburst (m_axi_awburst[j*2 +: 2]),
+            .s_axi_awlock  (m_axi_awlock[j]),
+            .s_axi_awcache (m_axi_awcache[j*4 +: 4]),
+            .s_axi_awprot  (m_axi_awprot[j*3 +: 3]),
+            .s_axi_awqos   (),
+            .s_axi_awregion(),
+            .s_axi_awuser  (),
+            .s_axi_awvalid (m_axi_awvalid[j]),
+            .s_axi_awready (m_axi_awready[j]),
+            .s_axi_wdata   (m_axi_wdata[j*AXI_DATA_WIDTH +: AXI_DATA_WIDTH]),
+            .s_axi_wstrb   (m_axi_wstrb[j*AXI_STRB_WIDTH +: AXI_STRB_WIDTH]),
+            .s_axi_wlast   (m_axi_wlast[j]),
+            .s_axi_wuser   (),
+            .s_axi_wvalid  (m_axi_wvalid[j]),
+            .s_axi_wready  (m_axi_wready[j]),
+            .s_axi_bid     (m_axi_bid[j*AXI_ID_WIDTH +: AXI_ID_WIDTH]),
+            .s_axi_bresp   (m_axi_bresp[j*2 +: 2]),
+            .s_axi_buser   (),
+            .s_axi_bvalid  (m_axi_bvalid[j]),
+            .s_axi_bready  (m_axi_bready[j]),
+            .s_axi_arid    (m_axi_arid[j*AXI_ID_WIDTH +: AXI_ID_WIDTH]),
+            .s_axi_araddr  (m_axi_araddr[j*AXI_ADDR_WIDTH +: AXI_ADDR_WIDTH]),
+            .s_axi_arlen   (m_axi_arlen[j*8 +: 8]),
+            .s_axi_arsize  (m_axi_arsize[j*3 +: 3]),
+            .s_axi_arburst (m_axi_arburst[j*2 +: 2]),
+            .s_axi_arlock  (m_axi_arlock[j]),
+            .s_axi_arcache (m_axi_arcache[j*4 +: 4]),
+            .s_axi_arprot  (m_axi_arprot[j*3 +: 3]),
+            .s_axi_arqos   (),
+            .s_axi_arregion(),
+            .s_axi_aruser  (),
+            .s_axi_arvalid (m_axi_arvalid[j]),
+            .s_axi_arready (m_axi_arready[j]),
+            .s_axi_rid     (m_axi_rid[j*AXI_ID_WIDTH +: AXI_ID_WIDTH]),
+            .s_axi_rdata   (m_axi_rdata[j*AXI_DATA_WIDTH +: AXI_DATA_WIDTH]),
+            .s_axi_rresp   (m_axi_rresp[j*2 +: 2]),
+            .s_axi_rlast   (m_axi_rlast[j]),
+            .s_axi_ruser   (),
+            .s_axi_rvalid  (m_axi_rvalid[j]),
+            .s_axi_rready  (m_axi_rready[j]),
+    
+            .m_axi_awid    (fifoed_m_axi_awid[j*AXI_ID_WIDTH +: AXI_ID_WIDTH]),
+            .m_axi_awaddr  (fifoed_m_axi_awaddr[j*AXI_ADDR_WIDTH +: AXI_ADDR_WIDTH]),
+            .m_axi_awlen   (fifoed_m_axi_awlen[j*8 +: 8]),
+            .m_axi_awsize  (fifoed_m_axi_awsize[j*3 +: 3]),
+            .m_axi_awburst (fifoed_m_axi_awburst[j*2 +: 2]),
+            .m_axi_awlock  (fifoed_m_axi_awlock[j]),
+            .m_axi_awcache (fifoed_m_axi_awcache[j*4 +: 4]),
+            .m_axi_awprot  (fifoed_m_axi_awprot[j*3 +: 3]),
+            .m_axi_awqos   (),
+            .m_axi_awregion(),
+            .m_axi_awuser  (),
+            .m_axi_awvalid (fifoed_m_axi_awvalid[j]),
+            .m_axi_awready (fifoed_m_axi_awready[j]),
+            .m_axi_wdata   (fifoed_m_axi_wdata[j*AXI_DATA_WIDTH +: AXI_DATA_WIDTH]),
+            .m_axi_wstrb   (fifoed_m_axi_wstrb[j*AXI_STRB_WIDTH +: AXI_STRB_WIDTH]),
+            .m_axi_wlast   (fifoed_m_axi_wlast[j]),
+            .m_axi_wuser   (),
+            .m_axi_wvalid  (fifoed_m_axi_wvalid[j]),
+            .m_axi_wready  (fifoed_m_axi_wready[j]),
+            .m_axi_bid     (fifoed_m_axi_bid[j*AXI_ID_WIDTH +: AXI_ID_WIDTH]),
+            .m_axi_bresp   (fifoed_m_axi_bresp[j*2 +: 2]),
+            .m_axi_buser   (),
+            .m_axi_bvalid  (fifoed_m_axi_bvalid[j]),
+            .m_axi_bready  (fifoed_m_axi_bready[j]),
+            .m_axi_arid    (fifoed_m_axi_arid[j*AXI_ID_WIDTH +: AXI_ID_WIDTH]),
+            .m_axi_araddr  (fifoed_m_axi_araddr[j*AXI_ADDR_WIDTH +: AXI_ADDR_WIDTH]),
+            .m_axi_arlen   (fifoed_m_axi_arlen[j*8 +: 8]),
+            .m_axi_arsize  (fifoed_m_axi_arsize[j*3 +: 3]),
+            .m_axi_arburst (fifoed_m_axi_arburst[j*2 +: 2]),
+            .m_axi_arlock  (fifoed_m_axi_arlock[j]),
+            .m_axi_arcache (fifoed_m_axi_arcache[j*4 +: 4]),
+            .m_axi_arprot  (fifoed_m_axi_arprot[j*3 +: 3]),
+            .m_axi_arqos   (),
+            .m_axi_arregion(),
+            .m_axi_aruser  (),
+            .m_axi_arvalid (fifoed_m_axi_arvalid[j]),
+            .m_axi_arready (fifoed_m_axi_arready[j]),
+            .m_axi_rid     (fifoed_m_axi_rid[j*AXI_ID_WIDTH +: AXI_ID_WIDTH]),
+            .m_axi_rdata   (fifoed_m_axi_rdata[j*AXI_DATA_WIDTH +: AXI_DATA_WIDTH]),
+            .m_axi_rresp   (fifoed_m_axi_rresp[j*2 +: 2]),
+            .m_axi_rlast   (fifoed_m_axi_rlast[j]),
+            .m_axi_ruser   (),
+            .m_axi_rvalid  (fifoed_m_axi_rvalid[j]),
+            .m_axi_rready  (fifoed_m_axi_rready[j])
+        );
+      end
+    endgenerate
+
+`else
+
+    assign fifoed_m_axi_awid    = m_axi_awid; 
+    assign fifoed_m_axi_awaddr  = m_axi_awaddr; 
+    assign fifoed_m_axi_awlen   = m_axi_awlen; 
+    assign fifoed_m_axi_awsize  = m_axi_awsize; 
+    assign fifoed_m_axi_awburst = m_axi_awburst; 
+    assign fifoed_m_axi_awlock  = m_axi_awlock; 
+    assign fifoed_m_axi_awcache = m_axi_awcache; 
+    assign fifoed_m_axi_awprot  = m_axi_awprot; 
+    assign fifoed_m_axi_awvalid = m_axi_awvalid; 
+    assign        m_axi_awready = fifoed_m_axi_awready; 
+    assign fifoed_m_axi_wdata   = m_axi_wdata; 
+    assign fifoed_m_axi_wstrb   = m_axi_wstrb; 
+    assign fifoed_m_axi_wlast   = m_axi_wlast; 
+    assign fifoed_m_axi_wvalid  = m_axi_wvalid; 
+    assign        m_axi_wready  = fifoed_m_axi_wready; 
+    assign        m_axi_bid     = fifoed_m_axi_bid; 
+    assign        m_axi_bresp   = fifoed_m_axi_bresp; 
+    assign        m_axi_bvalid  = fifoed_m_axi_bvalid; 
+    assign fifoed_m_axi_bready  = m_axi_bready; 
+    assign fifoed_m_axi_arid    = m_axi_arid; 
+    assign fifoed_m_axi_araddr  = m_axi_araddr; 
+    assign fifoed_m_axi_arlen   = m_axi_arlen; 
+    assign fifoed_m_axi_arsize  = m_axi_arsize; 
+    assign fifoed_m_axi_arburst = m_axi_arburst; 
+    assign fifoed_m_axi_arlock  = m_axi_arlock; 
+    assign fifoed_m_axi_arcache = m_axi_arcache; 
+    assign fifoed_m_axi_arprot  = m_axi_arprot; 
+    assign fifoed_m_axi_arvalid = m_axi_arvalid; 
+    assign        m_axi_arready = fifoed_m_axi_arready; 
+    assign        m_axi_rid     = fifoed_m_axi_rid; 
+    assign        m_axi_rdata   = fifoed_m_axi_rdata; 
+    assign        m_axi_rresp   = fifoed_m_axi_rresp; 
+    assign        m_axi_rlast   = fifoed_m_axi_rlast; 
+    assign        m_axi_rvalid  = fifoed_m_axi_rvalid; 
+    assign fifoed_m_axi_rready  = m_axi_rready;   
+
+`endif
+
+reg [15:0] stall_cnt = 0;
+
+always @(posedge logic_clk) begin
+    if (logic_rst) begin
+        stall_cnt <= 0;
+    end else begin
+        if (s_axis_tx_desc_ready[1]) begin
+            stall_cnt <= 0;
+        end else begin
+            stall_cnt <= stall_cnt + 1;
+        end
+    end
+end
+
+/* 
+
+ila_8x64 debugger (
+  .clk    (logic_clk),
+	
+  .trig_out(),
+  .trig_out_ack(1'b0),
+  .trig_in (1'b0),
+  .trig_in_ack(),
+
+  .probe0 ({
+    s_axis_tx_desc_addr[1*AXI_ADDR_WIDTH +: AXI_ADDR_WIDTH],
+    s_axis_tx_desc_len[1*LEN_WIDTH +: LEN_WIDTH],
+    s_axis_tx_desc_valid[1],
+    s_axis_tx_desc_ready[1],
+    m_axi_bid[ETH1_LOC*AXI_ID_WIDTH +: AXI_ID_WIDTH],
+		stall_cnt}),
+  
+  .probe1 ({
+    m_axi_arid[ETH1_LOC*AXI_ID_WIDTH +: AXI_ID_WIDTH],
+    m_axi_araddr[ETH1_LOC*AXI_ADDR_WIDTH +: AXI_ADDR_WIDTH],
+    m_axi_arlen[ETH1_LOC*8 +: 8],
+    m_axi_arsize[ETH1_LOC*3 +: 3],
+    m_axi_arburst[ETH1_LOC*2 +: 2],
+    m_axi_arvalid[ETH1_LOC],
+    m_axi_arready[ETH1_LOC],
+    m_axi_rid[ETH1_LOC*AXI_ID_WIDTH +: AXI_ID_WIDTH],
+    m_axi_rresp[ETH1_LOC*2 +: 2],
+    m_axi_rlast[ETH1_LOC],
+    m_axi_rvalid[ETH1_LOC],
+    m_axi_rready[ETH1_LOC],
+    tx_axis_tvalid[1],
+    tx_axis_tready[1],
+    tx_axis_tlast[1],
+    tx_axis_tvalid[0],
+    tx_axis_tready[0],
+    tx_axis_tlast[0]}),
+
+  .probe2 ({s_axi_rid[63:0]}),
+  // .probe2 ({
+  //   s_axis_tx_desc_addr[0*AXI_ADDR_WIDTH +: AXI_ADDR_WIDTH],
+  //   s_axis_tx_desc_len[0*LEN_WIDTH +: LEN_WIDTH],
+  //   s_axis_tx_desc_valid[0],
+  //   s_axis_tx_desc_ready[0],
+  //   m_axi_bresp[ETH1_LOC*2 +: 2],
+  //   m_axi_bvalid[ETH1_LOC],
+  //   m_axi_bready[ETH1_LOC],
+  //   s_axi_rlast}),
+  
+  .probe3 ({
+    m_axi_arid[ETH0_LOC*AXI_ID_WIDTH +: AXI_ID_WIDTH],
+    m_axi_araddr[ETH0_LOC*AXI_ADDR_WIDTH +: AXI_ADDR_WIDTH],
+    m_axi_arlen[ETH0_LOC*8 +: 8],
+    m_axi_arsize[ETH0_LOC*3 +: 3],
+    m_axi_arburst[ETH0_LOC*2 +: 2],
+    m_axi_arvalid[ETH0_LOC],
+    m_axi_arready[ETH0_LOC],
+    m_axi_rid[ETH0_LOC*AXI_ID_WIDTH +: AXI_ID_WIDTH],
+    m_axi_rresp[ETH0_LOC*2 +: 2],
+    m_axi_rlast[ETH0_LOC],
+    m_axi_rvalid[ETH0_LOC],
+    m_axi_rready[ETH0_LOC]}),
+
+  .probe4 ({
+    s_axis_rx_desc_addr[1*AXI_ADDR_WIDTH +: AXI_ADDR_WIDTH],
+    s_axis_rx_desc_len[1*LEN_WIDTH +: LEN_WIDTH],
+    s_axis_rx_desc_valid[1],
+    s_axis_rx_desc_ready[1],
+    m_axis_rx_desc_status_len[1*LEN_WIDTH +: LEN_WIDTH],
+    m_axis_rx_desc_status_valid[1]}),
+
+  .probe5 ({
+    s_axis_rx_desc_addr[0*AXI_ADDR_WIDTH +: AXI_ADDR_WIDTH],
+    s_axis_rx_desc_len[0*LEN_WIDTH +: LEN_WIDTH],
+    s_axis_rx_desc_valid[0],
+    s_axis_rx_desc_ready[0],
+    m_axis_rx_desc_status_len[0*LEN_WIDTH +: LEN_WIDTH],
+    m_axis_rx_desc_status_valid[0]}),
+ 
+  .probe6 ({
+    s_axi_arvalid,
+    s_axi_arready,
+    s_axi_rvalid,
+    s_axi_rready}),
+
+  .probe7 ({s_axi_rid[127:64]})
+  // .probe7 ({
+  //   m_axi_awid[ETH1_LOC*AXI_ID_WIDTH +: AXI_ID_WIDTH],
+  //   m_axi_awaddr[ETH1_LOC*AXI_ADDR_WIDTH +: AXI_ADDR_WIDTH],
+  //   m_axi_awlen[ETH1_LOC*8 +: 8],
+  //   m_axi_awsize[ETH1_LOC*3 +: 3],
+  //   m_axi_awburst[ETH1_LOC*2 +: 2],
+  //   m_axi_awvalid[ETH1_LOC],
+  //   m_axi_awready[ETH1_LOC],
+  //   m_axi_wstrb[ETH1_LOC*AXI_STRB_WIDTH +: AXI_STRB_WIDTH],
+  //   m_axi_wlast[ETH1_LOC],
+  //   m_axi_wvalid[ETH1_LOC],
+  //   m_axi_wready[ETH1_LOC]})
+
+);
+*/ 
 
 endmodule
