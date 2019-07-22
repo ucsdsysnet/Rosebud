@@ -70,8 +70,11 @@ module riscv_axis_dma # (
   output wire                      pkt_sent
 );
 
-  // A pipeline register for the input and converting to 
-  // native memory interface based on start address in tuser
+  ////////////////////////////////////////////////////////////////////////////////
+  ///////////////////////// WRITE FROM AXIS TO MEM ///////////////////////////////
+  ////////////////////////////////////////////////////////////////////////////////
+
+  // A pipeline register for the input from AXIS 
   reg                      wr_data_en;
   reg  [DATA_WIDTH-1:0]    wr_data;
   reg  [STRB_WIDTH-1:0]    wr_strb;
@@ -82,20 +85,6 @@ module riscv_axis_dma # (
   reg  [ADDR_WIDTH-1:0]    next_wr_addr;
   reg                      wr_first_pkt;
   wire                     wr_ready;
-
-  // Latch the start address, incoming port and slot for creating descriptor
-  reg [ADDR_WIDTH-1:0]    wr_start_addr;
-  reg [PORT_WIDTH-1:0]    incoming_port;
-  reg [DEST_WIDTH_IN-1:0] wr_slot;
-  reg [LEN_WIDTH-1:0]     wr_pkt_len;
-
-  always @ (posedge clk)
-    if (rst) begin
-      wr_data_en <= 1'b0;
-    end else begin
-      wr_data_en <= (s_axis_tvalid && s_axis_tready) ||
-                    (wr_data_en && (~wr_ready));
-    end
   
   always @ (posedge clk) 
     if (s_axis_tvalid && s_axis_tready) begin
@@ -105,36 +94,62 @@ module riscv_axis_dma # (
       wr_dest <= s_axis_tdest;
       wr_user <= s_axis_tuser;
     end
-  
+
+  // Simple valid_ready control. If we can write out we can read in.
+  // So axis_ready is connected to mem ready and write en to mem
+  // is asserted when there is new data or stays asserted if it was 
+  // not taken
+  always @ (posedge clk)
+    if (rst)
+      wr_data_en <= 1'b0;
+    else
+      wr_data_en <= (s_axis_tvalid && s_axis_tready) ||
+                    (wr_data_en && (~wr_ready));
+
   assign s_axis_tready = wr_ready;
-  
+
+  // First packet is when there is new data and can be accpted 
+  // (wr_ready is s_axis_tready). It can happen if there was 
+  // no data last cycle, or if there was and it was last data.
+  // Also if the data cannot go out it keeps its first_pkt state 
   always @ (posedge clk)
     if (rst)
       wr_first_pkt <= 1'b0;
-    else
+    else 
       wr_first_pkt <= ((((~wr_data_en) || (wr_data_en && wr_last))
                        && s_axis_tvalid && wr_ready) 
                        || (wr_first_pkt && (~wr_ready)));
   
   wire wr_last_pkt = wr_data_en && wr_ready && wr_last;
-  reg  wr_last_pkt_r;
+  reg  wr_last_pkt_r;  // Used for enquing the descriptor FIFO
+  always @ (posedge clk)
+    wr_last_pkt_r  <= wr_last_pkt;
+ 
+  // For first data, Latch the start address, incoming port and slot 
+  // for creating descriptor
+  reg [ADDR_WIDTH-1:0]    wr_start_addr;
+  reg [PORT_WIDTH-1:0]    incoming_port;
+  reg [DEST_WIDTH_IN-1:0] wr_slot;
+  reg [LEN_WIDTH-1:0]     wr_pkt_len;
 
-  always @ (posedge clk) begin
-    wr_last_pkt_r   <= wr_last_pkt;
-    if (wr_data_en && wr_ready)
-      next_wr_addr    <= wr_addr + STRB_WIDTH;
+  always @ (posedge clk)
     if (wr_first_pkt) begin
       wr_start_addr <= {wr_dest,{LEAD_ZERO{1'b0}}};
       wr_slot       <= wr_dest;
       incoming_port <= wr_user;
     end
-  end
+  
+  // Calculating the write address
+  always @ (posedge clk)
+    if (wr_data_en && wr_ready)
+      next_wr_addr <= wr_addr + STRB_WIDTH;
   
   assign wr_addr = wr_first_pkt ? {wr_dest,{LEAD_ZERO{1'b0}}} : next_wr_addr;
 
+  
+  // count number of bytes in the last data 
   reg [$clog2(STRB_WIDTH)-1:0] one_count;
   integer i;
-  
   always @ (*) begin
     one_count = STRB_WIDTH;
     for (i=STRB_WIDTH-1; i>=0; i=i-1)
@@ -142,6 +157,7 @@ module riscv_axis_dma # (
         one_count = i;
   end
 
+  // Calculate total bytes 
   always @ (posedge clk)
     if (rst)
         wr_pkt_len <= 0;
@@ -159,7 +175,9 @@ module riscv_axis_dma # (
         wr_pkt_len <= wr_pkt_len + STRB_WIDTH;
     end
     
-  wire desc_fifo_ready, desc_v, desc_deque;
+  // Descriptor FIFO. One cycle after last data is transmitted
+  // the descriptor is ready to be enqued 
+  wire desc_fifo_ready;
   wire [ADDR_WIDTH-1:0]    base_addr;
   wire [PORT_WIDTH-1:0]    pkt_port;
   wire [DEST_WIDTH_IN-1:0] pkt_slot;
@@ -176,13 +194,12 @@ module riscv_axis_dma # (
     .din({wr_start_addr, incoming_port, wr_slot, wr_pkt_len}),
     .din_ready(desc_fifo_ready),
    
-    .dout_valid(desc_v),
+    .dout_valid(recv_desc_valid),
     .dout({base_addr, pkt_port, pkt_slot, pkt_len}),
-    .dout_ready(desc_deque)
+    .dout_ready(recv_desc_ready)
   );
-  
-  assign recv_desc_valid = desc_v;
-  assign desc_deque = recv_desc_ready;
+
+  // Making the desired descriptor 
   assign recv_desc  = {base_addr, 
                     {(8-PORT_WIDTH){1'b0}},pkt_port,
                     {(8-DEST_WIDTH_IN){1'b0}},pkt_slot,
@@ -195,9 +212,12 @@ module riscv_axis_dma # (
   assign mem_wr_last = wr_last_pkt;
   assign wr_ready    = mem_wr_ready;
 
-  // READ PORTION
+  ////////////////////////////////////////////////////////////////////////////////
+  ///////////////////////// READ FROM MEM TO AIXS ////////////////////////////////
+  ////////////////////////////////////////////////////////////////////////////////
   
-  // STATES
+  // State machine to have an init state between idle and processing to calculate
+  // offset and so. 
   localparam IDLE = 2'b00;
   localparam INIT = 2'b01;
   localparam PROC = 2'b10;
@@ -246,19 +266,19 @@ module riscv_axis_dma # (
                             m_axis_tready && m_axis_tlast);
 
   // Calculating offset, number of words and final tkeep in INIT state
-
   reg [ADDR_WIDTH-1:0]          alligned_rd_addr;
   reg [MASK_BITS-1:0]           rd_offset;
   reg [LEN_WIDTH-MASK_BITS-1:0] rd_word_count;
   reg [STRB_WIDTH-1:0]          rd_final_tkeep;
 
-  wire [1:0]            extra_words = (remainder_bytes == 0) ? 2'd0: 
-                                      (remainder_bytes[MASK_BITS] + 2'd1); 
-  // 0 becomes 0 due to dropping the MSB. 
-  wire [MASK_BITS-1:0] tkeep_zeros  = STRB_WIDTH - 
-                                      send_len[MASK_BITS-1:0];
+  wire [1:0] extra_words = (remainder_bytes == 0) ? 2'd0: 
+                           (remainder_bytes[MASK_BITS] + 2'd1); 
+  
+  // number of 0s in last tkeep. 0 becomes 0 due to dropping the MSB. 
+  wire [MASK_BITS-1:0] tkeep_zeros  = STRB_WIDTH - send_len[MASK_BITS-1:0];
 
-  // Add tuser and tdest or mayybe last always block is enough
+  // Initialize offset, word_count, final tkeep and strat address. Also when 
+  // a data was recieved address and remainig words are updated.
   always @ (posedge clk) begin
     if (rst) begin
       rd_offset        <= 0;
@@ -275,7 +295,6 @@ module riscv_axis_dma # (
       rd_word_count    <= send_len[LEN_WIDTH-1:MASK_BITS] + extra_words;
       rd_final_tkeep   <= {{(STRB_WIDTH-1){1'b0}},{STRB_WIDTH{1'b1}}} >> tkeep_zeros;
       alligned_rd_addr <= {send_base_addr[ADDR_WIDTH-1:MASK_BITS],{MASK_BITS{1'b0}}};
-    
     end 
     else if (mem_rd_en && mem_rd_ready) begin
       rd_word_count    <= rd_word_count - 1; 
@@ -283,15 +302,11 @@ module riscv_axis_dma # (
     end
   end
 
-  // PROC state, 2 pipeline registers for data and selecting the output 
-  // based on offset
-  reg  [DATA_WIDTH-1:0] read_reg_1;
-  reg  [DATA_WIDTH-1:0] read_reg_2;
-  reg read_reg_1_v, read_reg_2_v;
-
+  // During processing there are 2 pipeline registers for data and output data 
+  // is selected based on offset. data left is for last 2 words in pipe. 
+  // Depending on the offset and the remainder bytes they should be transfered 
+  // in one or two.
   reg [1:0] data_left;
-  // data left is for last 2 words in pipe. Depending on the offset 
-  // they should be transfered in one transaction or two. 
   always @ (posedge clk)
     if (rst)
       data_left <= 2'd0;
@@ -310,22 +325,30 @@ module riscv_axis_dma # (
     else if ((data_left>2'd0) && (!(m_axis_tvalid && !m_axis_tready)))
         data_left <= data_left - 2'd1;
 
-  // 2 pipe registers with valid. There is no need for individual ready signals 
+  // 2 pipe registers with valid. There is no need for individual ready signals.
+  reg  [DATA_WIDTH-1:0] read_reg_1;
+  reg  [DATA_WIDTH-1:0] read_reg_2;
+  reg read_reg_1_v, read_reg_2_v;
   always @ (posedge clk) begin
     if (rst) begin
       read_reg_1_v <= 1'b0;
       read_reg_2_v <= 1'b0;
-    end 
+    end
     // since mem_rd_data_ready is high when m_axis_tready,
-    // is asserted, it means the data can go out and I would have 
-    // space on read_reg_2
+    // is asserted, it means the data can go out and pipe can go forward
+    // This covers when mem is ready and axis is ready or not. Also if 
+    // its the first word coming in. 
     if (mem_rd_data_v && mem_rd_data_ready) begin
       read_reg_1   <= mem_rd_data;
       read_reg_1_v <= 1'b1;
       read_reg_2   <= read_reg_1;
       read_reg_2_v <= read_reg_1_v;
     end 
-    // emptying the pipe if it's not blocked by axis
+    // After loading data is done and the last 1 or 2 words are being sent 
+    // (based on the rx_offset and remainder_bytes two registers might be 
+    // 1 or 2 data values), the pipe is being emptied if it's not blocked by axis
+    // This case does not depend on input memory any more and just waits to 
+    // be emptied over axis. 
     else if ((data_left!=2'd0) && (!(m_axis_tvalid && !m_axis_tready))) begin
       read_reg_1_v <= 1'b0;
       read_reg_2   <= read_reg_1;
@@ -333,6 +356,15 @@ module riscv_axis_dma # (
       // otherwise both registers become not valid 
       read_reg_2_v <= (data_left==2'd2);
     end
+    // If data was sent but no new data received we deassert the valid
+    // of second stage not to repeat the same data. We cannot move the 
+    // pipe forward since in case of having offset we need both 
+    // registers to be valid for send and cannot insert a non_valid gap.
+    // This is case is when mem is not ready but axis is.
+    else if (m_axis_tvalid && m_axis_tready) begin
+      read_reg_2_v <= 1'b0;
+    end
+    // If both of mem and axis are not ready there is no change.
   end
 
   // If I'm not ready to get data then I deassert my address valid too. 

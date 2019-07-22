@@ -384,15 +384,70 @@ def bench():
         # yield clk.posedge
         # send_desc_valid.next = 0
         yield clk.posedge
-   
+        yield clk.posedge
+        yield clk.posedge
+        yield clk.posedge
+        mem_rd_ready.next = 1
+        yield clk.posedge
+        mem_rd_ready.next = 0
+        yield clk.posedge
+        mem_rd_ready.next = 1
+        yield clk.posedge
+        mem_rd_ready.next = 0
+        yield clk.posedge
+        mem_rd_ready.next = 1
+        yield clk.posedge
         yield sink.wait()
+
         rx_frame = sink.recv()
         yield clk.posedge
         yield sink.wait()
+
         rx_frame = sink.recv()
+        yield clk.posedge
+        sink_pause.next = True
+        yield clk.posedge
+        sink_pause.next = False
+        yield clk.posedge
+        sink_pause.next = True
+        yield clk.posedge
+        sink_pause.next = False
+        yield clk.posedge
+        sink_pause.next = True
+        yield clk.posedge
+        sink_pause.next = False
+        yield clk.posedge
+        sink_pause.next = True
+        yield clk.posedge
+        sink_pause.next = False
+        yield clk.posedge
+        yield sink.wait()
+        
+        rx_frame = sink.recv()
+        yield clk.posedge
+        sink_pause.next = True
+        mem_rd_ready.next = 0
+        yield clk.posedge
+        sink_pause.next = False
+        yield clk.posedge
+        mem_rd_ready.next = 1
+        sink_pause.next = True
+        yield clk.posedge
+        sink_pause.next = False
+        yield clk.posedge
+        sink_pause.next = True
+        mem_rd_ready.next = 0
+        yield clk.posedge
+        sink_pause.next = False
+        mem_rd_ready.next = 1
+        yield clk.posedge
+        sink_pause.next = True
+        yield clk.posedge
+        sink_pause.next = False
+        yield clk.posedge
+        yield sink.wait()
 
         yield delay(100)
-
 
         # assert rx_frame == test_frame
 

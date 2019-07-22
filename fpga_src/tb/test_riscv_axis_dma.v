@@ -60,7 +60,10 @@ wire                      pkt_sent;
 
 // inside testbench
 wire [DATA_WIDTH-1:0]    mem_rd_data;
+wire [DATA_WIDTH-1:0]    sel_mem_rd_data;
+reg  [DATA_WIDTH-1:0]    mem_rd_data_r;
 reg                      mem_rd_data_v = 0;
+reg                      mem_rd_data_ready_r;
 
 initial begin
     // myhdl integration
@@ -155,7 +158,7 @@ riscv_axis_dma # (
   .mem_rd_addr      (mem_rd_addr),
   .mem_rd_last      (mem_rd_last),
   .mem_rd_ready     (mem_rd_ready),
-  .mem_rd_data      (mem_rd_data),
+  .mem_rd_data      (sel_mem_rd_data),
   .mem_rd_data_v    (mem_rd_data_v),
   .mem_rd_data_ready(mem_rd_data_ready),
   
@@ -185,12 +188,20 @@ mem_1r1w #(
   .doutb(mem_rd_data)
 );
 
+always @ (posedge clk) begin
+  mem_rd_data_ready_r <= mem_rd_data_ready;
+  if (mem_rd_data_v)
+    mem_rd_data_r <= mem_rd_data;
+end
+
+assign sel_mem_rd_data = (!mem_rd_data_ready_r) ? mem_rd_data_r : mem_rd_data;
+
 always @ (posedge clk)
   if (rst)
     mem_rd_data_v <= 1'b0;
   else
-    mem_rd_data_v <= mem_rd_en;
-  
+    mem_rd_data_v <= (mem_rd_en && mem_rd_ready) || (mem_rd_data_v && !mem_rd_data_ready);
+
 integer i,j;
 initial begin
     for (i = 0; i < 2**(ADDR_WIDTH); i = i + 2**((ADDR_WIDTH-1)/2)) begin
