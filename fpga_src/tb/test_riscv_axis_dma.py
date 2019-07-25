@@ -25,15 +25,15 @@ def bench():
     ADDR_WIDTH       = 16   
     STRB_WIDTH       = (DATA_WIDTH/8)
     PORT_COUNT       = 4
-    SLOT_COUNT       = 4
+    RECV_DESC_DEPTH  = 4
     INTERLEAVE       = 0
     LEN_WIDTH        = 16
-    LEAD_ZERO        = 8
+    ADDR_LEAD_ZERO   = 8
     PORT_WIDTH       = 2
-    DEST_WIDTH_IN    = ADDR_WIDTH-LEAD_ZERO
+    DEST_WIDTH_IN    = ADDR_WIDTH-ADDR_LEAD_ZERO
     DEST_WIDTH_OUT   = PORT_WIDTH
     USER_WIDTH_IN    = PORT_WIDTH
-    USER_WIDTH_OUT   = ADDR_WIDTH-LEAD_ZERO
+    USER_WIDTH_OUT   = ADDR_WIDTH-ADDR_LEAD_ZERO
 
     # Inputs
     clk = Signal(bool(0))

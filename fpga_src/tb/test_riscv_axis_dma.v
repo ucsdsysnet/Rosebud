@@ -9,15 +9,15 @@ parameter DATA_WIDTH       = 64;
 parameter ADDR_WIDTH       = 16;   
 parameter STRB_WIDTH       = (DATA_WIDTH/8);
 parameter PORT_COUNT       = 4;
-parameter SLOT_COUNT       = 4;
+parameter RECV_DESC_DEPTH  = 4;
 parameter INTERLEAVE       = 0;
 parameter LEN_WIDTH        = 16;
-parameter LEAD_ZERO        = 8;
+parameter ADDR_LEAD_ZERO   = 8;
 parameter PORT_WIDTH       = $clog2(PORT_COUNT);
-parameter DEST_WIDTH_IN    = ADDR_WIDTH-LEAD_ZERO;
+parameter DEST_WIDTH_IN    = ADDR_WIDTH-ADDR_LEAD_ZERO;
 parameter DEST_WIDTH_OUT   = PORT_WIDTH;
 parameter USER_WIDTH_IN    = PORT_WIDTH;
-parameter USER_WIDTH_OUT   = ADDR_WIDTH-LEAD_ZERO;
+parameter USER_WIDTH_OUT   = ADDR_WIDTH-ADDR_LEAD_ZERO;
 
 // Inputs
 reg clk = 0;
@@ -118,10 +118,10 @@ riscv_axis_dma # (
   .ADDR_WIDTH     (ADDR_WIDTH),       
   .STRB_WIDTH     (STRB_WIDTH),    
   .PORT_COUNT     (PORT_COUNT),       
-  .SLOT_COUNT     (SLOT_COUNT),       
+  .RECV_DESC_DEPTH(RECV_DESC_DEPTH),       
   .INTERLEAVE     (INTERLEAVE),       
   .LEN_WIDTH      (LEN_WIDTH),        
-  .LEAD_ZERO      (LEAD_ZERO),
+  .ADDR_LEAD_ZERO (ADDR_LEAD_ZERO),
   .PORT_WIDTH     (PORT_WIDTH),      
   .DEST_WIDTH_IN  (DEST_WIDTH_IN),   
   .DEST_WIDTH_OUT (DEST_WIDTH_OUT),  

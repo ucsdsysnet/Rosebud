@@ -3,15 +3,15 @@ module riscv_axis_dma # (
   parameter ADDR_WIDTH       = 16,   
   parameter STRB_WIDTH       = (DATA_WIDTH/8),
   parameter PORT_COUNT       = 4,
-  parameter SLOT_COUNT       = 4,
+  parameter RECV_DESC_DEPTH  = 8,
   parameter INTERLEAVE       = 0,
   parameter LEN_WIDTH        = 16,
-  parameter LEAD_ZERO        = 8,
+  parameter ADDR_LEAD_ZERO   = 8,
   parameter PORT_WIDTH       = $clog2(PORT_COUNT),
-  parameter DEST_WIDTH_IN    = ADDR_WIDTH-LEAD_ZERO,
+  parameter DEST_WIDTH_IN    = ADDR_WIDTH-ADDR_LEAD_ZERO,
   parameter DEST_WIDTH_OUT   = PORT_WIDTH,
   parameter USER_WIDTH_IN    = PORT_WIDTH,
-  parameter USER_WIDTH_OUT   = ADDR_WIDTH-LEAD_ZERO
+  parameter USER_WIDTH_OUT   = ADDR_WIDTH-ADDR_LEAD_ZERO
 )(
   input  wire                      clk,
   input  wire                      rst,
@@ -131,10 +131,11 @@ module riscv_axis_dma # (
   reg [PORT_WIDTH-1:0]    incoming_port;
   reg [DEST_WIDTH_IN-1:0] wr_slot;
   reg [LEN_WIDTH-1:0]     wr_pkt_len;
-
+  
+  wire [ADDR_WIDTH-1:0] full_addr = {wr_dest,{(ADDR_LEAD_ZERO){1'b0}}};
   always @ (posedge clk)
     if (wr_first_pkt) begin
-      wr_start_addr <= {wr_dest,{LEAD_ZERO{1'b0}}};
+      wr_start_addr <= full_addr;
       wr_slot       <= wr_dest;
       incoming_port <= wr_user;
     end
@@ -144,8 +145,7 @@ module riscv_axis_dma # (
     if (wr_data_en && wr_ready)
       next_wr_addr <= wr_addr + STRB_WIDTH;
   
-  assign wr_addr = wr_first_pkt ? {wr_dest,{LEAD_ZERO{1'b0}}} : next_wr_addr;
-
+  assign wr_addr = wr_first_pkt ? full_addr : next_wr_addr;
   
   // count number of bytes in the last data 
   reg [$clog2(STRB_WIDTH)-1:0] one_count;
@@ -184,7 +184,7 @@ module riscv_axis_dma # (
   wire [LEN_WIDTH-1:0]     pkt_len;
   
   simple_fifo # (
-    .ADDR_WIDTH($clog2(SLOT_COUNT)),
+    .ADDR_WIDTH($clog2(RECV_DESC_DEPTH)),
     .DATA_WIDTH(ADDR_WIDTH+PORT_WIDTH+DEST_WIDTH_IN+LEN_WIDTH)
   ) recvd_desc_fifo (
     .clk(clk),
@@ -230,12 +230,12 @@ module riscv_axis_dma # (
       state_r <= IDLE;
     else
       state_r <= state_n;
-  
+
   always @ (*) begin
     state_n = state_r;
     case (state_r)
       IDLE: if (send_desc_valid) state_n = INIT;
-      INIT: state_n = PROC;
+      INIT: if (to_drop) state_n = IDLE; else state_n = PROC;
       PROC: if (pkt_sent) state_n = IDLE;
       ERR:  state_n = ERR;
     endcase
@@ -247,7 +247,8 @@ module riscv_axis_dma # (
   reg [PORT_WIDTH-1:0]     send_port;
   reg [USER_WIDTH_OUT-1:0] send_orig_addr;
   reg [MASK_BITS:0]        remainder_bytes;
-  
+  reg                      to_drop; 
+
   localparam MASK_BITS = $clog2(STRB_WIDTH);
   
   always @ (posedge clk)
@@ -259,11 +260,12 @@ module riscv_axis_dma # (
       // Lower bits of base_addr and send_len
       remainder_bytes <= send_desc[MASK_BITS+31:32] +
                          send_desc[MASK_BITS-1:0];
+      to_drop         <= (send_desc[LEN_WIDTH-1:0]==0);
     end
   
   assign send_desc_ready = (state_r == IDLE);
-  assign pkt_sent        = (m_axis_tvalid && 
-                            m_axis_tready && m_axis_tlast);
+  assign pkt_sent        = (to_drop&&(state_r==INIT)) || 
+                    (m_axis_tvalid && m_axis_tready && m_axis_tlast);
 
   // Calculating offset, number of words and final tkeep in INIT state
   reg [ADDR_WIDTH-1:0]          alligned_rd_addr;
