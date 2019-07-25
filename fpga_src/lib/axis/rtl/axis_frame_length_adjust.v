@@ -31,14 +31,24 @@ THE SOFTWARE.
  */
 module axis_frame_length_adjust #
 (
+    // Width of AXI stream interfaces in bits
     parameter DATA_WIDTH = 8,
+    // Propagate tkeep signal
+    // If disabled, tkeep assumed to be 1'b1
     parameter KEEP_ENABLE = (DATA_WIDTH>8),
+    // tkeep signal width (words per cycle)
     parameter KEEP_WIDTH = (DATA_WIDTH/8),
+    // Propagate tid signal
     parameter ID_ENABLE = 0,
+    // tid signal width
     parameter ID_WIDTH = 8,
+    // Propagate tdest signal
     parameter DEST_ENABLE = 0,
+    // tdest signal width
     parameter DEST_WIDTH = 8,
+    // Propagate tuser signal
     parameter USER_ENABLE = 1,
+    // tuser signal width
     parameter USER_WIDTH = 1
 )
 (
@@ -111,6 +121,8 @@ reg store_last_word;
 
 reg [15:0] frame_ptr_reg = 16'd0, frame_ptr_next;
 
+reg [DATA_WIDTH-1:0] s_axis_tdata_masked;
+
 // frame length counters
 reg [15:0] short_counter_reg = 16'd0, short_counter_next = 16'd0;
 reg [15:0] long_counter_reg = 16'd0, long_counter_next = 16'd0;
@@ -175,13 +187,21 @@ always @* begin
     status_frame_length_next = status_frame_length_reg;
     status_frame_original_length_next = status_frame_original_length_reg;
 
+    if (KEEP_ENABLE) begin
+        for (i = 0; i < KEEP_WIDTH; i = i + 1) begin
+            s_axis_tdata_masked[i*DATA_WORD_WIDTH +: DATA_WORD_WIDTH] = s_axis_tkeep[i] ? s_axis_tdata[i*DATA_WORD_WIDTH +: DATA_WORD_WIDTH] : {DATA_WORD_WIDTH{1'b0}};
+        end
+    end else begin
+        s_axis_tdata_masked = s_axis_tdata;
+    end
+
     case (state_reg)
         STATE_IDLE: begin
             // idle state
             // accept data next cycle if output register ready next cycle
             s_axis_tready_next = m_axis_tready_int_early && (!status_valid_reg || status_ready);
 
-            m_axis_tdata_int = s_axis_tdata;
+            m_axis_tdata_int = s_axis_tdata_masked;
             m_axis_tkeep_int = s_axis_tkeep;
             m_axis_tvalid_int = s_axis_tvalid;
             m_axis_tlast_int = s_axis_tlast;
@@ -279,7 +299,7 @@ always @* begin
             // accept data next cycle if output register ready next cycle
             s_axis_tready_next = m_axis_tready_int_early;
 
-            m_axis_tdata_int = s_axis_tdata;
+            m_axis_tdata_int = s_axis_tdata_masked;
             m_axis_tkeep_int = s_axis_tkeep;
             m_axis_tvalid_int = s_axis_tvalid;
             m_axis_tlast_int = s_axis_tlast;

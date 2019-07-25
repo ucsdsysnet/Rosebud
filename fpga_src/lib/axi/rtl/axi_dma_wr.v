@@ -192,6 +192,8 @@ reg [LEN_WIDTH-1:0] op_word_count_reg = {LEN_WIDTH{1'b0}}, op_word_count_next;
 reg [LEN_WIDTH-1:0] tr_word_count_reg = {LEN_WIDTH{1'b0}}, tr_word_count_next;
 
 reg [OFFSET_WIDTH-1:0] offset_reg = {OFFSET_WIDTH{1'b0}}, offset_next;
+reg [AXI_STRB_WIDTH-1:0] strb_offset_mask_reg = {AXI_STRB_WIDTH{1'b1}}, strb_offset_mask_next;
+reg zero_offset_reg = 1'b1, zero_offset_next;
 reg [OFFSET_WIDTH-1:0] last_cycle_offset_reg = {OFFSET_WIDTH{1'b0}}, last_cycle_offset_next;
 reg [LEN_WIDTH-1:0] length_reg = {LEN_WIDTH{1'b0}}, length_next;
 reg [CYCLE_COUNT_WIDTH-1:0] input_cycle_count_reg = {CYCLE_COUNT_WIDTH{1'b0}}, input_cycle_count_next;
@@ -247,7 +249,7 @@ reg [AXIS_KEEP_WIDTH_INT-1:0] shift_axis_tkeep;
 reg shift_axis_tvalid;
 reg shift_axis_tlast;
 reg shift_axis_input_tready;
-reg shift_axis_extra_cycle;
+reg shift_axis_extra_cycle_reg = 1'b0;
 
 // internal datapath
 reg  [AXI_DATA_WIDTH-1:0] m_axi_wdata_int;
@@ -283,9 +285,7 @@ wire [AXI_ADDR_WIDTH-1:0] addr_plus_max_burst = addr_reg + AXI_MAX_BURST_SIZE;
 wire [AXI_ADDR_WIDTH-1:0] addr_plus_count = addr_reg + op_word_count_reg;
 
 always @* begin
-    shift_axis_extra_cycle = save_axis_tlast_reg & ((save_axis_tkeep_reg >> (AXIS_KEEP_WIDTH_INT-offset_reg)) != 0);
-
-    if (!ENABLE_UNALIGNED || offset_reg == 0) begin
+    if (!ENABLE_UNALIGNED || zero_offset_reg) begin
         // passthrough if no overlap
         shift_axis_tdata = s_axis_write_data_tdata;
         shift_axis_tkeep = s_axis_write_data_tkeep;
@@ -298,7 +298,7 @@ always @* begin
         shift_axis_tvalid = s_axis_write_data_tvalid;
         shift_axis_tlast = 1'b0;
         shift_axis_input_tready = 1'b1;
-    end else if (shift_axis_extra_cycle) begin
+    end else if (shift_axis_extra_cycle_reg) begin
         shift_axis_tdata = {s_axis_write_data_tdata, save_axis_tdata_reg} >> ((AXIS_KEEP_WIDTH_INT-offset_reg)*AXIS_WORD_SIZE);
         shift_axis_tkeep = {{AXIS_KEEP_WIDTH_INT{1'b0}}, save_axis_tkeep_reg} >> (AXIS_KEEP_WIDTH_INT-offset_reg);
         shift_axis_tvalid = 1'b1;
@@ -308,7 +308,7 @@ always @* begin
         shift_axis_tdata = {s_axis_write_data_tdata, save_axis_tdata_reg} >> ((AXIS_KEEP_WIDTH_INT-offset_reg)*AXIS_WORD_SIZE);
         shift_axis_tkeep = {s_axis_write_data_tkeep, save_axis_tkeep_reg} >> (AXIS_KEEP_WIDTH_INT-offset_reg);
         shift_axis_tvalid = s_axis_write_data_tvalid;
-        shift_axis_tlast = (s_axis_write_data_tlast && ((s_axis_write_data_tkeep >> (AXIS_KEEP_WIDTH_INT-offset_reg)) == 0));
+        shift_axis_tlast = (s_axis_write_data_tlast && ((s_axis_write_data_tkeep & ({AXIS_KEEP_WIDTH_INT{1'b1}} << (AXIS_KEEP_WIDTH_INT-offset_reg))) == 0));
         shift_axis_input_tready = 1'b1;
     end
 end
@@ -344,6 +344,8 @@ always @* begin
 
     addr_next = addr_reg;
     offset_next = offset_reg;
+    strb_offset_mask_next = strb_offset_mask_reg;
+    zero_offset_next = zero_offset_reg;
     last_cycle_offset_next = last_cycle_offset_reg;
     length_next = length_reg;
     op_word_count_next = op_word_count_reg;
@@ -379,10 +381,14 @@ always @* begin
             if (ENABLE_UNALIGNED) begin
                 addr_next = s_axis_write_desc_addr;
                 offset_next = s_axis_write_desc_addr & OFFSET_MASK;
+                strb_offset_mask_next = {AXI_STRB_WIDTH{1'b1}} << (s_axis_write_desc_addr & OFFSET_MASK);
+                zero_offset_next = (s_axis_write_desc_addr & OFFSET_MASK) == 0;
                 last_cycle_offset_next = offset_next + (s_axis_write_desc_len & OFFSET_MASK);
             end else begin
                 addr_next = s_axis_write_desc_addr & ADDR_MASK;
                 offset_next = 0;
+                strb_offset_mask_next = {AXI_STRB_WIDTH{1'b1}};
+                zero_offset_next = 1'b1;
                 last_cycle_offset_next = offset_next + (s_axis_write_desc_len & OFFSET_MASK);
             end
             tag_next = s_axis_write_desc_tag;
@@ -484,13 +490,10 @@ always @* begin
                 output_cycle_count_next = output_cycle_count_reg - 1;
                 output_last_cycle_next = output_cycle_count_next == 0;
                 first_cycle_next = 1'b0;
+                strb_offset_mask_next = {AXI_STRB_WIDTH{1'b1}};
 
                 m_axi_wdata_int = shift_axis_tdata;
-                if (first_cycle_reg) begin
-                    m_axi_wstrb_int = {AXI_STRB_WIDTH{1'b1}} << offset_reg;
-                end else begin
-                    m_axi_wstrb_int = {AXI_STRB_WIDTH{1'b1}};
-                end
+                m_axi_wstrb_int = strb_offset_mask_reg;
                 m_axi_wvalid_int = 1'b1;
 
                 if (AXIS_LAST_ENABLE && s_axis_write_data_tlast) begin
@@ -505,7 +508,7 @@ always @* begin
                     if (AXIS_KEEP_ENABLE) begin
                         cycle_size = AXIS_KEEP_WIDTH_INT;
                         for (i = AXIS_KEEP_WIDTH_INT-1; i >= 0; i = i - 1) begin
-                            if (!shift_axis_tkeep[i] && (!first_cycle_reg || i >= offset_reg)) begin
+                            if (~shift_axis_tkeep & strb_offset_mask_reg & (1 << i)) begin
                                 cycle_size = i;
                             end
                         end
@@ -518,15 +521,15 @@ always @* begin
 
                         // no more data to transfer, finish operation
                         if (last_transfer_reg && last_cycle_offset_reg > 0) begin
-                            if (AXIS_KEEP_ENABLE && cycle_size < last_cycle_offset_reg) begin
-                                m_axi_wstrb_int = m_axi_wstrb_int & {AXI_STRB_WIDTH{1'b1}} >> (AXI_STRB_WIDTH - cycle_size);
+                            if (AXIS_KEEP_ENABLE && !(shift_axis_tkeep & ~({AXI_STRB_WIDTH{1'b1}} >> (AXI_STRB_WIDTH - last_cycle_offset_reg)))) begin
+                                m_axi_wstrb_int = strb_offset_mask_reg & shift_axis_tkeep;
                                 if (first_cycle_reg) begin
                                     length_next = length_reg + (cycle_size - offset_reg);
                                 end else begin
                                     length_next = length_reg + cycle_size;
                                 end
                             end else begin
-                                m_axi_wstrb_int = m_axi_wstrb_int & {AXI_STRB_WIDTH{1'b1}} >> (AXI_STRB_WIDTH - last_cycle_offset_reg);
+                                m_axi_wstrb_int = strb_offset_mask_reg & {AXI_STRB_WIDTH{1'b1}} >> (AXI_STRB_WIDTH - last_cycle_offset_reg);
                                 if (first_cycle_reg) begin
                                     length_next = length_reg + (last_cycle_offset_reg - offset_reg);
                                 end else begin
@@ -534,8 +537,8 @@ always @* begin
                                 end
                             end
                         end else begin
-                            if (AXIS_KEEP_ENABLE && cycle_size < AXI_STRB_WIDTH) begin
-                                m_axi_wstrb_int = m_axi_wstrb_int & {AXI_STRB_WIDTH{1'b1}} >> (AXI_STRB_WIDTH - cycle_size);
+                            if (AXIS_KEEP_ENABLE) begin
+                                m_axi_wstrb_int = strb_offset_mask_reg & shift_axis_tkeep;
                                 if (first_cycle_reg) begin
                                     length_next = length_reg + (cycle_size - offset_reg);
                                 end else begin
@@ -558,8 +561,8 @@ always @* begin
                         state_next = STATE_IDLE;
                     end else begin
                         // more cycles left in burst, finish burst
-                        if (AXIS_KEEP_ENABLE && cycle_size < AXI_STRB_WIDTH) begin
-                            m_axi_wstrb_int = m_axi_wstrb_int & {AXI_STRB_WIDTH{1'b1}} >> (AXI_STRB_WIDTH - cycle_size);
+                        if (AXIS_KEEP_ENABLE) begin
+                            m_axi_wstrb_int = strb_offset_mask_reg & shift_axis_tkeep;
                             if (first_cycle_reg) begin
                                 length_next = length_reg + (cycle_size - offset_reg);
                             end else begin
@@ -599,7 +602,7 @@ always @* begin
                     end else begin
                         // no more data to transfer, finish operation
                         if (last_cycle_offset_reg > 0) begin
-                            m_axi_wstrb_int = m_axi_wstrb_int & {AXI_STRB_WIDTH{1'b1}} >> (AXI_STRB_WIDTH - last_cycle_offset_reg);
+                            m_axi_wstrb_int = strb_offset_mask_reg & {AXI_STRB_WIDTH{1'b1}} >> (AXI_STRB_WIDTH - last_cycle_offset_reg);
                             if (first_cycle_reg) begin
                                 length_next = length_reg + (last_cycle_offset_reg - offset_reg);
                             end else begin
@@ -717,6 +720,7 @@ always @(posedge clk) begin
         m_axi_awvalid_reg <= 1'b0;
         m_axi_bready_reg <= 1'b0;
         save_axis_tlast_reg <= 1'b0;
+        shift_axis_extra_cycle_reg <= 1'b0;
 
         status_fifo_wr_ptr_reg <= 0;
         status_fifo_rd_ptr_reg <= 0;
@@ -731,8 +735,10 @@ always @(posedge clk) begin
         // datapath
         if (flush_save) begin
             save_axis_tlast_reg <= 1'b0;
+            shift_axis_extra_cycle_reg <= 1'b0;
         end else if (transfer_in_save) begin
             save_axis_tlast_reg <= s_axis_write_data_tlast;
+            shift_axis_extra_cycle_reg <= s_axis_write_data_tlast & ((s_axis_write_data_tkeep >> (AXIS_KEEP_WIDTH_INT-offset_reg)) != 0);
         end
 
         if (status_fifo_we) begin
@@ -752,6 +758,8 @@ always @(posedge clk) begin
 
     addr_reg <= addr_next;
     offset_reg <= offset_next;
+    strb_offset_mask_reg <= strb_offset_mask_next;
+    zero_offset_reg <= zero_offset_next;
     last_cycle_offset_reg <= last_cycle_offset_next;
     length_reg <= length_next;
     op_word_count_reg <= op_word_count_next;

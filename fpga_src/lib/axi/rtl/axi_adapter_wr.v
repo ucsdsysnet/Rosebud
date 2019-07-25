@@ -173,6 +173,7 @@ reg [2:0] burst_size_reg = 3'd0, burst_size_next;
 reg [7:0] master_burst_reg = 8'd0, master_burst_next;
 reg [2:0] master_burst_size_reg = 3'd0, master_burst_size_next;
 reg burst_active_reg = 1'b0, burst_active_next;
+reg first_transfer_reg = 1'b0, first_transfer_next;
 
 reg s_axi_awready_reg = 1'b0, s_axi_awready_next;
 reg s_axi_wready_reg = 1'b0, s_axi_wready_next;
@@ -240,7 +241,7 @@ always @* begin
     master_burst_next = master_burst_reg;
     master_burst_size_next = master_burst_size_reg;
     burst_active_next = burst_active_reg;
-
+    first_transfer_next = first_transfer_reg;
 
     s_axi_awready_next = 1'b0;
     s_axi_wready_next = 1'b0;
@@ -480,7 +481,7 @@ always @* begin
                 // idle state; wait for new burst
                 s_axi_awready_next = !m_axi_awvalid;
 
-                s_axi_bresp_next = 2'd0;
+                first_transfer_next = 1'b1;
 
                 if (s_axi_awready && s_axi_awvalid) begin
                     s_axi_awready_next = 1'b0;
@@ -541,7 +542,7 @@ always @* begin
                     addr_next = addr_reg + (1 << master_burst_size_reg);
                     if (master_burst_reg == 0) begin
                         s_axi_wready_next = 1'b0;
-                        m_axi_bready_next = !s_axi_bvalid;
+                        m_axi_bready_next = !s_axi_bvalid && !s_axi_awvalid;
                         m_axi_wlast_int = 1'b1;
                         state_next = STATE_RESP;
                     end else if (addr_next[burst_size_reg] != addr_reg[burst_size_reg]) begin
@@ -568,7 +569,7 @@ always @* begin
                     if (master_burst_reg == 0) begin
                         // burst on master interface finished; transfer response
                         s_axi_wready_next = 1'b0;
-                        m_axi_bready_next = !s_axi_bvalid;
+                        m_axi_bready_next = !s_axi_bvalid && !m_axi_awvalid;
                         m_axi_wlast_int = 1'b1;
                         state_next = STATE_RESP;
                     end else if (addr_next[burst_size_reg] != addr_reg[burst_size_reg]) begin
@@ -583,11 +584,13 @@ always @* begin
             end
             STATE_RESP: begin
                 // resp state; transfer write response
-                m_axi_bready_next = !s_axi_bvalid;
+                m_axi_bready_next = !s_axi_bvalid && !m_axi_awvalid;
 
                 if (m_axi_bready && m_axi_bvalid) begin
+                    first_transfer_next = 1'b0;
                     m_axi_bready_next = 1'b0;
-                    if (m_axi_bresp != 0) begin
+                    s_axi_bid_next = id_reg;
+                    if (first_transfer_reg || m_axi_bresp != 0) begin
                         s_axi_bresp_next = m_axi_bresp;
                     end
                     if (burst_active_reg) begin
@@ -611,8 +614,6 @@ always @* begin
                             m_axi_awlen_next = burst_reg;
                             m_axi_awsize_next = burst_size_reg;
                         end
-                        m_axi_awlen_next = master_burst_next;
-                        m_axi_awsize_next = master_burst_size_reg;
                         m_axi_awvalid_next = 1'b1;
                         state_next = STATE_DATA;
                     end else begin
@@ -656,6 +657,7 @@ always @(posedge clk) begin
     master_burst_reg <= master_burst_next;
     master_burst_size_reg <= master_burst_size_next;
     burst_active_reg <= burst_active_next;
+    first_transfer_reg <= first_transfer_next;
 
     s_axi_bid_reg <= s_axi_bid_next;
     s_axi_bresp_reg <= s_axi_bresp_next;
