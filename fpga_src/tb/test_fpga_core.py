@@ -34,6 +34,9 @@ testbench = 'test_fpga_core'
 
 srcs = []
 
+srcs.append("../ip/ila_8x64_stub.v")
+srcs.append("../ip/ila_4x64_stub.v")
+
 srcs.append("../rtl/simple_fifo.v")
 srcs.append("../rtl/loaded_desc_fifo.v")
 # srcs.append("../rtl/core_msg_arbiter.v")
@@ -73,8 +76,10 @@ def bench():
     CTRL_WIDTH = (DATA_WIDTH/8)
     AXI_ADDR_WIDTH = 16
 
-    SEND_COUNT_0 = 10
-    SEND_COUNT_1 = 4
+    SEND_COUNT_0 = 100
+    SEND_COUNT_1 = 100
+    SIZE_0       = 184 - 18 + 4
+    SIZE_1       = 64 - 18
 
     # Inputs
     clk = Signal(bool(0))
@@ -104,7 +109,7 @@ def bench():
     test_frame_1.eth_dest_mac = 0xDAD1D2D3D4D5
     test_frame_1.eth_src_mac = 0x5A5152535455
     test_frame_1.eth_type = 0x8000
-    test_frame_1.payload = bytes([x%256 for x in range(46)])
+    test_frame_1.payload = bytes([x%256 for x in range(SIZE_0)])
     test_frame_1.update_fcs()
     axis_frame = test_frame_1.build_axis_fcs()
     start_data_1 = bytearray(b'\x55\x55\x55\x55\x55\x55\x55\xD5' + bytearray(axis_frame))
@@ -113,7 +118,7 @@ def bench():
     test_frame_2.eth_dest_mac = 0x5A5152535455
     test_frame_2.eth_src_mac = 0xDAD1D2D3D4D5
     test_frame_2.eth_type = 0x8000
-    test_frame_2.payload = bytes([x%256 for x in range(46)])
+    test_frame_2.payload = bytes([x%256 for x in range(SIZE_1)])
     test_frame_2.update_fcs()
     axis_frame_2 = test_frame_2.build_axis_fcs()
     start_data_2 = bytearray(b'\x55\x55\x55\x55\x55\x55\x55\xD5' + bytearray(axis_frame_2))
@@ -200,22 +205,24 @@ def bench():
     def port1():
         for i in range (0,SEND_COUNT_0):
           # test_frame_1.payload = bytes([x%256 for x in range(random.randrange(1980))])
-          test_frame_1.payload = bytes([x%256 for x in range(1946)])
+          test_frame_1.payload = bytes([x%256 for x in range(SIZE_0)]) # range(random.randrange(1500))])
           test_frame_1.update_fcs()
           axis_frame = test_frame_1.build_axis_fcs()
           xgmii_source_0.send(b'\x55\x55\x55\x55\x55\x55\x55\xD5'+bytearray(axis_frame))
+          yield rx_clk_0.posedge
           # yield rx_clk_0.posedge
-          yield delay(random.randrange(200))
+          # yield delay(random.randrange(200))
 
     def port2():
         for i in range (0,SEND_COUNT_1):
           # test_frame_2.payload = bytes([x%256 for x in range(10,10+random.randrange(300))])
-          test_frame_2.payload = bytes([x%256 for x in range(48)])
+          test_frame_2.payload = bytes([x%256 for x in range(SIZE_1)]) # range(random.randrange(1500))])           
           test_frame_2.update_fcs()
           axis_frame_2 = test_frame_2.build_axis_fcs()
           xgmii_source_1.send(b'\x55\x55\x55\x55\x55\x55\x55\xD5'+bytearray(axis_frame_2))
+          yield rx_clk_1.posedge
           # yield rx_clk_1.posedge
-          yield delay(random.randrange(50000))
+          # yield delay(random.randrange(50000))
 
     @instance
     def check():
@@ -249,16 +256,17 @@ def bench():
 
         lengths = []
         print ("send data from LAN")
-        # for j in range (0,SEND_COUNT_1):
-        #   yield xgmii_sink_0.wait()
-        #   rx_frame = xgmii_sink_0.recv()
-        #   data = rx_frame.data
-        #   print ("packet number from port 0:",j)
-        #   for i in range(0, len(data), 16):
-        #       print(" ".join(("{:02x}".format(c) for c in bytearray(data[i:i+16]))))
-        #   # assert rx_frame.data[0:8] == bytearray(b'\x55\x55\x55\x55\x55\x55\x55\xD5')
-        #   assert rx_frame.data[0:22] == start_data_2[0:22]
-        #   lengths.append(len(data)-8)
+        for j in range (0,SEND_COUNT_1):
+          yield xgmii_sink_0.wait()
+          rx_frame = xgmii_sink_0.recv()
+          data = rx_frame.data
+          print ("packet number from port 0:",j)
+          for i in range(0, len(data), 16):
+              print(" ".join(("{:02x}".format(c) for c in bytearray(data[i:i+16]))))
+          # assert rx_frame.data[0:8] == bytearray(b'\x55\x55\x55\x55\x55\x55\x55\xD5')
+          # assert rx_frame.data[0:22] == start_data_2[0:22]
+          assert rx_frame.data == start_data_2
+          lengths.append(len(data)-8)
 
         for j in range (0,SEND_COUNT_0):
           yield xgmii_sink_1.wait()
@@ -268,7 +276,8 @@ def bench():
           for i in range(0, len(data), 16):
               print(" ".join(("{:02x}".format(c) for c in bytearray(data[i:i+16]))))
           # assert rx_frame.data[0:8] == bytearray(b'\x55\x55\x55\x55\x55\x55\x55\xD5')
-          assert rx_frame.data[0:22] == start_data_1[0:22]
+          # assert rx_frame.data[0:22] == start_data_1[0:22]
+          assert rx_frame.data == start_data_1
           lengths.append(len(data)-8)
 
  
