@@ -82,8 +82,8 @@ parameter SLOT_START_ADDR = 8'h20;
 parameter SLOT_ADDR_STEP  = 8'h08;
 parameter AXIS_DATA_WIDTH = 64;
 parameter AXIS_STRB_WIDTH = AXIS_DATA_WIDTH/8;
-parameter TX_FIFO_DEPTH   = 16384;
-parameter RX_FIFO_DEPTH   = 16384;
+parameter TX_FIFO_DEPTH   = 32768;
+parameter RX_FIFO_DEPTH   = 32768;
 parameter AXIS_DEST_IN    = $clog2(CORE_COUNT)+CORE_ADDR_WIDTH-CORE_LEAD_ZERO;
 parameter AXIS_DEST_OUT   = $clog2(2); //output ports
 parameter AXIS_USER_IN    = AXIS_DEST_OUT;
@@ -97,6 +97,7 @@ parameter LEN_WIDTH       = 16;
 parameter INTERLEAVE      = 1;
 parameter CTRL_DEST_WIDTH = $clog2(CORE_COUNT);
 parameter CTRL_USER_WIDTH = $clog2(CORE_COUNT);
+parameter ENABLE_ILA      = 0;
 
 // ETH interfaces
 parameter ETH0_LOC = 0;
@@ -111,6 +112,10 @@ wire [2-1:0] rx_axis_tvalid, rx_axis_tready, rx_axis_tlast;
 wire [2-1:0] rx_fifo_overflow;
 wire [2-1:0] rx_fifo_good_frame;
 wire [7:0] ifg_delay = 8'd12;
+    
+wire [2-1:0] tx_fifo_overflow;
+wire [2-1:0] tx_fifo_bad_frame;
+wire [2-1:0] tx_fifo_good_frame;
 
 eth_mac_10g_fifo #
 (
@@ -163,9 +168,9 @@ eth_mac_10g_fifo #
     .rx_fifo_overflow(rx_fifo_overflow[ETH0_LOC]),
     .rx_fifo_good_frame(rx_fifo_good_frame[ETH0_LOC]),
     .tx_error_underflow(),
-    .tx_fifo_overflow(),
-    .tx_fifo_bad_frame(),
-    .tx_fifo_good_frame(),
+    .tx_fifo_overflow(tx_fifo_overflow[ETH0_LOC]),
+    .tx_fifo_bad_frame(tx_fifo_bad_frame[ETH0_LOC]),
+    .tx_fifo_good_frame(tx_fifo_good_frame[ETH0_LOC]),
     .rx_error_bad_frame(),
     .rx_error_bad_fcs(),
     .rx_fifo_bad_frame(),
@@ -237,9 +242,9 @@ eth_mac_10g_fifo #
     .rx_fifo_overflow(rx_fifo_overflow[ETH1_LOC]),
     .rx_fifo_good_frame(rx_fifo_good_frame[ETH1_LOC]),
     .tx_error_underflow(),
-    .tx_fifo_overflow(),
-    .tx_fifo_bad_frame(),
-    .tx_fifo_good_frame(),
+    .tx_fifo_overflow(tx_fifo_overflow[ETH1_LOC]),
+    .tx_fifo_bad_frame(tx_fifo_bad_frame[ETH1_LOC]),
+    .tx_fifo_good_frame(tx_fifo_good_frame[ETH1_LOC]),
     .rx_error_bad_frame(),
     .rx_error_bad_fcs(),
     .rx_fifo_bad_frame(),
@@ -293,7 +298,8 @@ simple_scheduler # (
   .SLOT_START_ADDR(SLOT_START_ADDR),
   .SLOT_ADDR_STEP(SLOT_ADDR_STEP),  
   .EFF_ADDR_WIDTH(CORE_ADDR_WIDTH-CORE_LEAD_ZERO),
-  .DEST_WIDTH_OUT($clog2(2)) //output ports
+  .DEST_WIDTH_OUT($clog2(2)), //output ports
+  .ENABLE_ILA(ENABLE_ILA)
 ) scheduler (
   .clk(clk),
   .rst(rst),
@@ -313,6 +319,9 @@ simple_scheduler # (
   
   .rx_fifo_overflow(rx_fifo_overflow),
   .rx_fifo_good_frame(rx_fifo_good_frame),
+  .tx_fifo_overflow(tx_fifo_overflow),
+  .tx_fifo_bad_frame(tx_fifo_bad_frame),
+  .tx_fifo_good_frame(tx_fifo_good_frame),
 
   // DATA lines to/from cores
   .data_m_axis_tdata(sched_rx_axis_tdata),
@@ -602,7 +611,50 @@ generate
         .core_msg_valid(core_msg_valid[i])
     );
   end
+
 endgenerate
+
+if (ENABLE_ILA) begin
+  reg [63:0] useful_tdest_h, useful_tdest_l;
+  integer k;
+  always @ (*)
+    for (k=0; k<8; k=k+1) begin
+      useful_tdest_h[k*8+:8]=data_s_axis_tdest[96+(k*12)+:8];
+      useful_tdest_l[k*8+:8]=data_s_axis_tdest[k*12+:8];
+    end
+
+  ila_8x64 debugger3 (
+    .clk    (clk),
+ 
+    .trig_out(),
+    .trig_out_ack(1'b0),
+    .trig_in (1'b0),
+    .trig_in_ack(),
+ 
+    .probe0 ({
+      data_s_axis_tvalid,
+      data_s_axis_tready,
+      data_s_axis_tlast,
+      data_s_axis_tuser
+    }),
+
+    .probe1 ({
+      data_m_axis_tvalid,
+      data_m_axis_tready,
+      data_m_axis_tlast,
+      data_m_axis_tdest
+    }),
+        
+    .probe2 (data_m_axis_tkeep[63:0]),
+    .probe3 (data_m_axis_tkeep[127:64]),
+
+    .probe4 (data_s_axis_tkeep[63:0]),
+    .probe5 (data_s_axis_tkeep[127:64]),
+    .probe6 (useful_tdest_l),
+    .probe7 (useful_tdest_h)
+
+  );
+end
 
 // later my arbiter and broadcast and input to cores
 

@@ -12,8 +12,6 @@ module riscv_axis_wrapper # (
     parameter IMEM_SIZE_BYTES = 8192,
     parameter DMEM_SIZE_BYTES = 32768,
     parameter COHERENT_START  = 16'h6FFF,
-    // parameter ID_WIDTH        = 8,
-    // parameter PIPELINE_OUTPUT = 0,
     parameter INTERLEAVE      = 0,
     parameter RECV_DESC_DEPTH = 8,
     parameter SEND_DESC_DEPTH = 8,
@@ -70,42 +68,6 @@ module riscv_axis_wrapper # (
     output wire                      ctrl_m_axis_tlast,
     output wire [CORE_ID_WIDTH-1:0]  ctrl_m_axis_tuser,
 
-    // input  wire [ID_WIDTH-1:0]    s_axi_awid,
-    // input  wire [ADDR_WIDTH-1:0]  s_axi_awaddr,
-    // input  wire [7:0]             s_axi_awlen,
-    // input  wire [2:0]             s_axi_awsize,
-    // input  wire [1:0]             s_axi_awburst,
-    // input  wire                   s_axi_awlock,
-    // input  wire [3:0]             s_axi_awcache,
-    // input  wire [2:0]             s_axi_awprot,
-    // input  wire                   s_axi_awvalid,
-    // output wire                   s_axi_awready,
-    // input  wire [DATA_WIDTH-1:0]  s_axi_wdata,
-    // input  wire [STRB_WIDTH-1:0]  s_axi_wstrb,
-    // input  wire                   s_axi_wlast,
-    // input  wire                   s_axi_wvalid,
-    // output wire                   s_axi_wready,
-    // output wire [ID_WIDTH-1:0]    s_axi_bid,
-    // output wire [1:0]             s_axi_bresp,
-    // output wire                   s_axi_bvalid,
-    // input  wire                   s_axi_bready,
-    // input  wire [ID_WIDTH-1:0]    s_axi_arid,
-    // input  wire [ADDR_WIDTH-1:0]  s_axi_araddr,
-    // input  wire [7:0]             s_axi_arlen,
-    // input  wire [2:0]             s_axi_arsize,
-    // input  wire [1:0]             s_axi_arburst,
-    // input  wire                   s_axi_arlock,
-    // input  wire [3:0]             s_axi_arcache,
-    // input  wire [2:0]             s_axi_arprot,
-    // input  wire                   s_axi_arvalid,
-    // output wire                   s_axi_arready,
-    // output wire [ID_WIDTH-1:0]    s_axi_rid,
-    // output wire [DATA_WIDTH-1:0]  s_axi_rdata,
-    // output wire [1:0]             s_axi_rresp,
-    // output wire                   s_axi_rlast,
-    // output wire                   s_axi_rvalid,
-    // input  wire                   s_axi_rready,
-    
     // Core messages output  
     output  [63:0]                core_msg_data,
     output                        core_msg_valid
@@ -127,41 +89,8 @@ always @ (posedge clk)
 
 assign ctrl_s_axis_tready = 1;
 
-// wire reset_cmd_addr = (&s_axi_awaddr[ADDR_WIDTH-1:STRB_WIDTH]) && s_axi_awvalid;
-// wire reset_cmd_strb = s_axi_wstrb[STRB_WIDTH-1];
-// reg  reset_addr_received;
-// 
-// always @ (posedge clk)
-//     if (rst) begin
-//         core_reset          <= 1'b1;
-//         reset_addr_received <= 1'b0;
-//     end else if (reset_cmd_addr) begin
-//         if (reset_cmd_strb)
-//             core_reset <= s_axi_wdata[0];
-//             // if both come together no need to raise reset_addr_received
-//         else 
-//             reset_addr_received <= 1'b1;
-//     end else if (reset_addr_received) begin
-//         if (reset_cmd_strb) begin
-//             core_reset <= s_axi_wdata[0];
-//             reset_addr_received <= 1'b0;
-//         end
-//     end
-// 
-// // latching reset to avoid out of bound for imem write
-// reg reset_r;
-// always @ (posedge clk)
-//   if (rst)
-//     reset_r  <= 1'b0;
-//   else 
-//     if (reset_cmd_strb && (reset_cmd_addr || reset_addr_received))
-//       reset_r  <= 1'b1;
-//     else
-//       reset_r  <= 1'b0;
-
-
 /////////////////////////////////////////////////////////////////////
-/////////////////// READ AND WRITE INTERFACES ///////////////////////
+/////////// AXIS TO NATIVE MEM INTERFACE WITH DESCRIPTORS ///////////
 /////////////////////////////////////////////////////////////////////
 wire                   ram_cmd_wr_en;
 wire [ADDR_WIDTH-1:0]  ram_cmd_wr_addr;
@@ -303,12 +232,8 @@ assign ctrl_m_axis_tlast  = 1'b1;
 // if rd_resp is not ready we should deassert read requests
 wire read_reject = ram_rd_resp_valid && (!ram_rd_resp_ready);
 
-// Separation of dmem and imem/stat on dma port based on address. 
-// If we receive full reset command in single cycle the core would reset from next cycle
-// and the out of bound error would happen during reset being high. If not, reset_addr_received
-// would deassert the imem_wr_en
-wire imem_wr_en = ram_cmd_wr_addr[ADDR_WIDTH-1] && ram_cmd_wr_en; //  && (!reset_r);
-// wire stat_rd_en = ram_cmd_rd_addr[ADDR_WIDTH-1] && ram_cmd_rd_en && (!read_reject);
+// Separation of dmem and imem on dma port based on address. 
+wire imem_wr_en = ram_cmd_wr_addr[ADDR_WIDTH-1] && ram_cmd_wr_en;
 
 wire dmem_wr_en = (~ram_cmd_wr_addr[ADDR_WIDTH-1]) && ram_cmd_wr_en;
 wire dmem_rd_en = (~ram_cmd_rd_addr[ADDR_WIDTH-1]) && ram_cmd_rd_en && (!read_reject);
@@ -372,33 +297,8 @@ wire [DATA_WIDTH-1:0] data_dma_wr_data = ram_cmd_wr_data;
 wire [STRB_WIDTH-1:0] ins_dma_wen     = ram_cmd_wr_strb & {STRB_WIDTH{imem_wr_en}};
 wire [ADDR_WIDTH-1:0] ins_dma_addr    = {1'b0,ram_cmd_wr_addr[ADDR_WIDTH-2:0]};
 wire [DATA_WIDTH-1:0] ins_dma_wr_data = ram_cmd_wr_data;
-// wire [ADDR_WIDTH-1:0] stat_rd_addr    = {1'b0,ram_cmd_rd_addr[ADDR_WIDTH-2:0]};
-
-// MUX between read ports (DMEM/status reg)
-// wire [63:0] stat_rd_data;
-// wire stat_rd_ready;
 wire [DATA_WIDTH-1:0] data_dma_rd_data;
 
-// // Remembering the last command, according to 1 cycle delay of memories 
-// // shows which data should be used 
-// reg dmem_was_read;
-// always @(posedge clk)
-//   if (rst)
-//     dmem_was_read <= 1'b0;
-//   else if (!read_reject) // don't update if read didn't go through
-//       dmem_was_read <= (dmem_op==DMEM_READ);
-// // assign ram_rd_resp_data = dmem_was_read ? data_dma_rd_data : stat_rd_data;
-
-// If we accepted a read we latch the next values for id and last.
-wire read_accepted = (dmem_op==DMEM_READ);// || (stat_rd_en && stat_rd_ready);
-// always @(posedge clk)
-//     if (rst) begin
-//         ram_rd_resp_last <= 1'b0;
-//         ram_rd_resp_id   <= {ID_WIDTH{1'b0}};
-//     end else if (read_accepted) begin
-//         ram_rd_resp_id   <= ram_cmd_rd_id;
-//         ram_rd_resp_last <= ram_cmd_rd_last;
-//     end
 assign ram_rd_resp_data = data_dma_rd_data;
 
 /////////////////////////////////////////////////////////////////////
@@ -412,6 +312,7 @@ assign ram_rd_resp_data = data_dma_rd_data;
 // read enable signal for both memories the data would not change.
 reg read_rejected;
 reg read_accepted_r; 
+wire read_accepted = (dmem_op==DMEM_READ);
 always @(posedge clk) 
   if(rst) begin
     read_accepted_r <= 1'b0;
@@ -452,10 +353,6 @@ riscvcore #(
     .ins_dma_addr(ins_dma_addr),
     .ins_dma_wr_data(ins_dma_wr_data),
     
-    // .stat_rd_en(stat_rd_en),
-    // .stat_rd_addr(stat_rd_addr),
-    // .stat_rd_data(stat_rd_data),
-    // .stat_rd_ready(stat_rd_ready),
     .in_desc(recv_desc),
     .in_desc_valid(recv_desc_valid),
     .in_desc_taken(recv_desc_ready),

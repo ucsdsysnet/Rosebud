@@ -69,7 +69,10 @@ VexRiscv core (
       .externalInterrupt(interrupt)
 );
 
-// Memory/desc addressing and out of bound detection
+///////////////////////////////////////////////////////////////////////////
+///////////////////// READ AND WRITE DESCRIPTORS //////////////////////////
+///////////////////////////////////////////////////////////////////////////
+
 // read desc is mapped to 0 and 4, write desc is mapped to 8 and 12
 wire io_not_mem = dmem_addr[ADDR_WIDTH-1];
 wire desc_wen = io_not_mem && dmem_v &&   dmem_wr_en &&    dmem_addr[3];
@@ -78,6 +81,8 @@ reg [63:0] out_desc_data;
 reg [31:0] stat_internal_read;
 reg out_desc_low_v, out_desc_high_v;
 reg in_desc_low_read, in_desc_high_read;
+
+wire [4:0] dmem_word_write_mask;
 
 // Byte writable out_desc
 wire [7:0]  out_desc_write_mask = {4'd0, dmem_word_write_mask[3:0]} << {dmem_addr[2], 2'd0};
@@ -88,8 +93,6 @@ always @ (posedge clk)
         if (out_desc_write_mask[i] == 1'b1) 
             out_desc_data[i*8 +: 8] <= out_desc_data_in[i*8 +: 8];
 
-// support byte write for out_desc
-// core done /outgoing descriptor 
 always @ (posedge clk) begin
     if (core_reset) begin
             out_desc_high_v <= 1'b0;
@@ -139,7 +142,6 @@ always @ (posedge clk) begin
     end
 end
 
-// later add packet drop!
 assign in_desc_taken = in_desc_high_read && in_desc_low_read;
 
 reg  desc_ren_r;
@@ -149,18 +151,22 @@ always @ (posedge clk)
     else
         desc_ren_r <= desc_ren;
 
+///////////////////////////////////////////////////////////////////////////
+///////////////////// CORE BROADCAST MESSAGING ////////////////////////////
+///////////////////////////////////////////////////////////////////////////
 // Any write after the coherent point would become a message
 assign core_msg_data  = {dmem_addr, dmem_wr_data};
 assign core_msg_valid = dmem_v && dmem_wr_en && (dmem_addr >= COHERENT_START);
 
 // Conversion from core dmem_byte_count to normal byte mask
-wire [4:0] dmem_word_write_mask;
 assign dmem_word_write_mask = ((!dmem_wr_en) || (!dmem_v)) ? 5'h0 : 
 								     			 	  (dmem_byte_count == 2'd0) ? (5'd1  << dmem_addr[1:0]) :
                               (dmem_byte_count == 2'd1) ? (5'd11 << dmem_addr[1:0]) :
                               5'h0f;
 
-/// Conversion from 32-bit values to longer line size
+///////////////////////////////////////////////////////////////////////////
+/////////////////////// WORD LENGTH ADJUSTMENT ////////////////////////////
+///////////////////////////////////////////////////////////////////////////
 wire [DATA_WIDTH-1:0] imem_data_out;
 wire [DATA_WIDTH-1:0] dmem_data_in, dmem_data_out; 
 wire [STRB_WIDTH-1:0] dmem_line_write_mask;
@@ -201,8 +207,9 @@ end else begin
     assign imem_read_data = imem_data_out_shifted[31:0];
 end
 
-
-// Memory units
+///////////////////////////////////////////////////////////////////////////
+//////////////////////////// MEMORY UNITS /////////////////////////////////
+///////////////////////////////////////////////////////////////////////////
 mem_2rw #(
   .BYTES_PER_LINE(STRB_WIDTH),
   .ADDR_WIDTH(DMEM_ADDR_WIDTH-LINE_ADDR_BITS)    
@@ -238,7 +245,10 @@ mem_1r1w #(
   .doutb(imem_data_out)
 );
 
-// Address error catching 
+///////////////////////////////////////////////////////////////////////////
+/////////////////////// ADDRESS ERROR CATCHING ////////////////////////////
+///////////////////////////////////////////////////////////////////////////
+
 always @ (posedge clk)
     if (core_reset) begin
 		    dmem_read_ready <= 1'b0;
@@ -273,65 +283,3 @@ always @ (posedge clk)
         interrupt <= interrupt || out_of_bound;
 
 endmodule
-    
-  // parameter STAT_ADDR_WIDTH = 1,
-    // input                   stat_rd_en,
-    // input  [ADDR_WIDTH-1:0] stat_rd_addr,
-    // output [63:0]           stat_rd_data,
-    // output                  stat_rd_ready,
-
-
-// // When core writes to both parts of first status_reg, core sends out 
-// // the status register 0 as the message
-// reg msg_valid;
-// reg msg_state;
-// 
-// always @ (posedge clk)
-//     if (core_reset) begin
-//         msg_state <= 1'b0;
-//         msg_valid <= 1'b0;
-//     end else if ((msg_state == 1'b0) && desc_wen && 
-//                  (dmem_addr[STAT_ADDR_WIDTH-1+3:2] == 0)) begin
-//         msg_state <= 1'b1;
-//         msg_valid <= 1'b0;
-//     end else if ((msg_state == 1'b1) && desc_wen && 
-//                  (dmem_addr[STAT_ADDR_WIDTH-1+3:2] == 1)) begin
-//         msg_state <= 1'b0;
-//         msg_valid <= 1'b1;
-//     end else begin
-//         msg_state <= msg_state;
-//         msg_valid <= 1'b0;
-//     end
-// 
-// assign stat_rd_data   = stat_read;
-
-// reg [63:0] status_reg [0:(2**STAT_ADDR_WIDTH)-1];
-// reg [63:0] stat_read;
-// 
-// // Conversion from core 32 bit to 64bit status registers
-// wire [7:0]  status_write_mask = {4'd0, dmem_word_write_mask[3:0]} << {dmem_addr[2], 2'd0};
-// wire [63:0] status_data_in    = {32'd0, dmem_wr_data} << {dmem_addr[2], 5'd0};
-// 
-// integer i;
-// always @ (posedge clk)
-//     if (core_reset)
-//         for (i = 0; i < 2**STAT_ADDR_WIDTH; i = i + 1)
-//             status_reg[i] <= 64'd0;
-//     else if (desc_wen)
-//         for (i = 0; i < 8; i = i + 1) 
-//             if (status_write_mask[i] == 1'b1) 
-//                 status_reg[dmem_addr[STAT_ADDR_WIDTH-1+3:3]][i*8 +: 8] 
-//                             <= status_data_in[i*8 +: 8];
-// 
-// 
-// // One read port, if core is reading the ready signal is not asserted for dma read
-// always @ (posedge clk)
-//     if (desc_ren)
-//         stat_internal_read <= status_reg[dmem_addr[STAT_ADDR_WIDTH-1+3:3]] >> dmem_addr[2];
-//     else if (stat_rd_en)
-//         stat_read          <= status_reg[stat_rd_addr[STAT_ADDR_WIDTH-1+3:3]];
-// 
-// assign stat_rd_ready = !desc_ren;
-
-
-

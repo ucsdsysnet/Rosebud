@@ -117,9 +117,9 @@ module riscv_axis_dma # (
       wr_first_pkt <= 1'b0;
     else 
       wr_first_pkt <= ((((~wr_data_en) || (wr_data_en && wr_last))
-                       && s_axis_tvalid && wr_ready) 
-                       || (wr_first_pkt && (~wr_ready)));
-  
+                        && s_axis_tvalid && wr_ready)
+                        || (wr_first_pkt && (~wr_ready)));
+
   wire wr_last_pkt = wr_data_en && wr_ready && wr_last;
   reg  wr_last_pkt_r;  // Used for enquing the descriptor FIFO
   always @ (posedge clk)
@@ -148,7 +148,7 @@ module riscv_axis_dma # (
   assign wr_addr = wr_first_pkt ? full_addr : next_wr_addr;
   
   // count number of bytes in the last data 
-  reg [$clog2(STRB_WIDTH)-1:0] one_count;
+  reg [$clog2(STRB_WIDTH):0] one_count;
   integer i;
   always @ (*) begin
     one_count = STRB_WIDTH;
@@ -224,6 +224,7 @@ module riscv_axis_dma # (
   localparam ERR  = 2'b11;
   
   reg [1:0] state_r, state_n;
+  reg       to_drop; 
 
   always @ (posedge clk)
     if (rst)
@@ -242,14 +243,13 @@ module riscv_axis_dma # (
   end
   
   // Parsing the descriptor
+  localparam MASK_BITS = $clog2(STRB_WIDTH);
   reg [ADDR_WIDTH-1:0]     send_base_addr;
   reg [LEN_WIDTH-1:0]      send_len;
   reg [PORT_WIDTH-1:0]     send_port;
   reg [USER_WIDTH_OUT-1:0] send_orig_addr;
   reg [MASK_BITS:0]        remainder_bytes;
-  reg                      to_drop; 
 
-  localparam MASK_BITS = $clog2(STRB_WIDTH);
   
   always @ (posedge clk)
     if (send_desc_ready && send_desc_valid) begin
@@ -312,7 +312,7 @@ module riscv_axis_dma # (
   always @ (posedge clk)
     if (rst)
       data_left <= 2'd0;
-    else if (state_r !== PROC)
+    else if (state_r != PROC)
       data_left <= 2'd0;
     else if ((rd_word_count == 0) && mem_rd_data_ready && mem_rd_data_v)
       if (rd_offset == 0)

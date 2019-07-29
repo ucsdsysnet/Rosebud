@@ -12,7 +12,8 @@ module simple_scheduler # (
   parameter USER_WIDTH_IN   = DEST_WIDTH_OUT,
   parameter USER_WIDTH_OUT  = DEST_WIDTH_IN,
   parameter CTRL_DEST_WIDTH = $clog2(CORE_COUNT),
-  parameter CTRL_USER_WIDTH = $clog2(CORE_COUNT)
+  parameter CTRL_USER_WIDTH = $clog2(CORE_COUNT),
+  parameter ENABLE_ILA      = 0
 ) (
   input                              clk,
   input                              rst,
@@ -26,6 +27,9 @@ module simple_scheduler # (
   
   input  wire [2-1:0]                rx_fifo_overflow,
   input  wire [2-1:0]                rx_fifo_good_frame,
+  input  wire [2-1:0]                tx_fifo_overflow,
+  input  wire [2-1:0]                tx_fifo_bad_frame,
+  input  wire [2-1:0]                tx_fifo_good_frame,
 
   output wire [2*DATA_WIDTH-1:0]     tx_axis_tdata,
   output wire [2*STRB_WIDTH-1:0]     tx_axis_tkeep,
@@ -71,9 +75,9 @@ module simple_scheduler # (
   reg  [DEST_WIDTH_IN-1:0] dest_r_1;
   reg  [1:0] dest_r_v;
   
-  wire push_ready, rx_desc_pop; // maybe used for error catching
-  wire [USER_WIDTH_OUT-1:0] rx_desc_data, rx_desc_returned;
-  wire rx_desc_v, rx_desc_returned_v;
+  wire rx_desc_pop; // maybe used for error catching
+  wire [USER_WIDTH_OUT-1:0] rx_desc_data; // , rx_desc_returned;
+  wire rx_desc_v; // , rx_desc_returned_v;
 
   assign sending_last_word[0] = rx_axis_tvalid[0] && rx_axis_tlast[0] && rx_axis_tready[0];
   assign sending_last_word[1] = rx_axis_tvalid[1] && rx_axis_tlast[1] && rx_axis_tready[1];
@@ -97,6 +101,8 @@ module simple_scheduler # (
     end 
   end
 
+  wire [1:0] stall;
+
   assign data_m_axis_tdata  = rx_axis_tdata;
   assign data_m_axis_tkeep  = rx_axis_tkeep;
   assign data_m_axis_tvalid = rx_axis_tvalid & dest_r_v; 
@@ -107,61 +113,12 @@ module simple_scheduler # (
   
   assign tx_axis_tdata      = data_s_axis_tdata;
   assign tx_axis_tkeep      = data_s_axis_tkeep;
-  assign tx_axis_tvalid     = data_s_axis_tvalid; 
+  assign tx_axis_tvalid     = data_s_axis_tvalid;  
   assign tx_axis_tlast      = data_s_axis_tlast;
-  assign data_s_axis_tready = tx_axis_tready & (~stall);
+  assign data_s_axis_tready = tx_axis_tready;
 
   // no further use for data_s_axis_tdest after its at correct port
-  // read the descriptor from the core packet
-  // If both tlast arrive at the same time one of them is blocked for a cycle.
-  // Next time this happens the other port would be stalled for a cycle.
-  wire [1:0] freed_desc_push;
-  reg last_pushed;
-  assign freed_desc_push[0] =(data_s_axis_tvalid[0] && data_s_axis_tlast[0] && tx_axis_tready[0]);
-  assign freed_desc_push[1] =(data_s_axis_tvalid[1] && data_s_axis_tlast[1] && tx_axis_tready[1]);
-
-  always @ (posedge clk)
-    if (rst)
-      last_pushed <= 1'b1;
-    else if (&freed_desc_push)
-      last_pushed <= ~last_pushed;
-   
-  reg sel_freed_desc_push;
-  reg [1:0] stall;
-
-  always @ (*) begin
-    stall <= 2'd0;
-    if (freed_desc_push[0] && !freed_desc_push[1])
-      sel_freed_desc_push = 1'b0;
-    else if (!freed_desc_push[0] && freed_desc_push[1])
-      sel_freed_desc_push = 1'b1;
-    if (freed_desc_push[0] && freed_desc_push[1]) begin
-      sel_freed_desc_push = ~last_pushed;
-      stall               = last_pushed ? 2'b10 : 2'b01;
-    end
-  end
-
-  // We care about core sent data if the len is 0
-  assign ctrl_s_axis_tready = !core_msg_desc_v;
-  reg [USER_WIDTH_OUT-1:0] core_msg_desc;
-  reg core_msg_desc_v;
-  
-  always @ (posedge clk)  
-    if (rst)
-      core_msg_desc_v <= 1'b0;
-    else if (core_msg_desc_v && (!rx_desc_returned_v) && push_ready)
-      core_msg_desc_v <= 1'b0;
-    else
-      core_msg_desc_v <= ((ctrl_s_axis_tdata[LEN_WIDTH-1:0]==0) && ctrl_s_axis_tvalid);
-  
-  always @ (posedge clk)  
-    if (ctrl_s_axis_tvalid)
-      core_msg_desc <= {ctrl_s_axis_tuser,ctrl_s_axis_tdata[15+EFF_ADDR_WIDTH:16]};
-      
-  wire [USER_WIDTH_OUT-1:0] in_desc = rx_desc_returned_v ? rx_desc_returned : core_msg_desc;
-  assign rx_desc_returned   = data_s_axis_tuser[sel_freed_desc_push*USER_WIDTH_OUT +: USER_WIDTH_OUT];
-  assign rx_desc_returned_v = (|freed_desc_push); 
-  
+ 
   loaded_desc_fifo # (
     .CORE_COUNT(CORE_COUNT),
     .SLOT_COUNT(SLOT_COUNT),
@@ -172,9 +129,9 @@ module simple_scheduler # (
     .clk(clk),
     .rst(rst),
   
-    .din_valid(rx_desc_returned_v || core_msg_desc_v),
-    .din(in_desc),
-    .din_ready(push_ready),
+    .din_valid(ctrl_s_axis_tvalid), 
+    .din({ctrl_s_axis_tuser,ctrl_s_axis_tdata[15+EFF_ADDR_WIDTH:16]}),
+    .din_ready(ctrl_s_axis_tready),
    
     .dout_valid(rx_desc_v),
     .dout(rx_desc_data),
@@ -194,5 +151,113 @@ module simple_scheduler # (
   assign ctrl_m_axis_tlast  = 1'b1;
   assign ctrl_m_axis_tvalid = (core_rst_counter < CORE_COUNT);
   assign ctrl_m_axis_tdest  = core_rst_counter[CTRL_DEST_WIDTH-1:0];
+ 
+
+if (ENABLE_ILA) begin
+  wire trig_out_1, trig_out_2;
+  wire ack_1, ack_2;
+
+  reg [15:0] rx_count_0, rx_count_1, tx_count_0, tx_count_1;
+  always @ (posedge clk)
+    if (rst) begin
+        rx_count_0 <= 16'd0;
+        rx_count_1 <= 16'd0;
+        tx_count_0 <= 16'd0;
+        tx_count_1 <= 16'd0;
+    end else begin
+      if (rx_axis_tlast[0] && rx_axis_tvalid[0])
+        rx_count_0 <= 16'd0;
+      else if (rx_axis_tvalid[0])
+        rx_count_0 <= rx_count_0 + 16'd1;
+
+      if (rx_axis_tlast[1] && rx_axis_tvalid[1])
+        rx_count_1 <= 16'd0;
+      else if (rx_axis_tvalid[1])
+        rx_count_1 <= rx_count_1 + 16'd1;
+
+      if (tx_axis_tlast[0] && tx_axis_tvalid[0])
+        tx_count_0 <= 16'd0;
+      else if (tx_axis_tvalid[0])
+        tx_count_0 <= tx_count_0 + 16'd1;
+
+      if (tx_axis_tlast[1] && tx_axis_tvalid[1])
+        tx_count_1 <= 16'd0;
+      else if (tx_axis_tvalid[1])
+        tx_count_1 <= tx_count_1 + 16'd1;
+    end
+
+  ila_4x64 debugger1 (
+    .clk    (clk),
+ 
+    .trig_out(trig_out_1),
+    .trig_out_ack(ack_1),
+    .trig_in (trig_out_2),
+    .trig_in_ack(ack_2),
+ 
+    .probe0 ({
+       rx_axis_tkeep,
+       data_m_axis_tdest,
+       data_m_axis_tuser,
+       rx_axis_tvalid, 
+       rx_axis_tready, 
+       rx_axis_tlast,
+       rx_fifo_overflow,
+       rx_fifo_good_frame,
+       tx_fifo_overflow,
+       sending_last_word,
+       tx_fifo_good_frame
+    }),
+    
+    .probe1 ({
+       ctrl_s_axis_tdata[31:0],
+       rx_count_0,
+       ctrl_m_axis_tdest,
+       ctrl_s_axis_tuser,
+       ctrl_m_axis_tvalid,
+       ctrl_m_axis_tready,
+       ctrl_m_axis_tlast,
+       ctrl_s_axis_tvalid,
+       ctrl_s_axis_tready,
+       ctrl_s_axis_tlast,
+       dest_r_v
+     
+     }),
   
+    .probe2 (rx_axis_tdata[63:0]),
+
+    .probe3 (rx_axis_tdata[127:64])
+  );
+
+  ila_8x64 debugger2 (
+    .clk    (clk),
+ 
+    .trig_out(trig_out_2),
+    .trig_out_ack(ack_2),
+    .trig_in (trig_out_1),
+    .trig_in_ack(ack_1),
+   
+    .probe0 ({
+       data_s_axis_tkeep,
+       data_s_axis_tuser,
+       rx_desc_data,
+       data_s_axis_tdest,
+       data_s_axis_tvalid, 
+       data_s_axis_tready, 
+       data_s_axis_tlast,
+       rx_desc_v, 
+       rx_desc_pop
+     }),
+  
+    .probe1 (ctrl_m_axis_tdata),
+    
+    .probe2 (data_s_axis_tdata[63:0]),
+
+    .probe3 (data_s_axis_tdata[127:64]),
+    
+    .probe4 (tx_count_1), .probe5 (tx_count_0), 
+    .probe6 (rx_count_1), .probe7 (rx_count_0)
+ 
+  );
+end
+
 endmodule
