@@ -164,8 +164,8 @@ assign core_msg_valid = dmem_v && dmem_wr_en &&
       (dmem_addr >= COHERENT_START) && (dmem_addr < (1 << DMEM_ADDR_WIDTH));
 // Conversion from core dmem_byte_count to normal byte mask
 assign dmem_word_write_mask = ((!dmem_wr_en) || (!dmem_v)) ? 5'h0 : 
-								     			 	  (dmem_byte_count == 2'd0) ? (5'd1  << dmem_addr[1:0]) :
-                              (dmem_byte_count == 2'd1) ? (5'd11 << dmem_addr[1:0]) :
+								     			 	  (dmem_byte_count == 2'd0) ? (5'h01 << dmem_addr[1:0]) :
+                              (dmem_byte_count == 2'd1) ? (5'h03 << dmem_addr[1:0]) :
                               5'h0f;
 
 ///////////////////////////////////////////////////////////////////////////

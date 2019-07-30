@@ -2,7 +2,6 @@ inline void process (unsigned short* len, unsigned char* port, unsigned int* off
 int main(void){
   volatile unsigned int * rd_desc    = (volatile unsigned int *) 0x08000;
   volatile unsigned int * wr_desc    = (volatile unsigned int *) 0x08008;
-	volatile unsigned short * sh_test  = (volatile unsigned short *) 0x0700A;
   unsigned int* data;
   unsigned short len;
   unsigned char port;
@@ -21,7 +20,6 @@ int main(void){
   		data = (unsigned int*)(*(rd_desc+1));
 			offset = 0;
 
-			*sh_test += 1;
 
   		process (&len, &port, &offset, data);
   		// Order of writing to stat is important, last two should 
@@ -40,6 +38,7 @@ int main(void){
 }
 
 inline void process (unsigned short* len, unsigned char* port, unsigned int *offset, unsigned int* data) {
+	volatile unsigned short * sh_test  = (volatile unsigned short *) 0x0700A;
   // volatile unsigned char * saved_MAC_byte = (volatile unsigned char *) 0x00300;
   // volatile unsigned int * seen_first = (volatile unsigned int *) 0x00304;
 	// change sender's mac address
@@ -48,10 +47,12 @@ inline void process (unsigned short* len, unsigned char* port, unsigned int *off
 	// *offset = 6;
 	if (*port==0){
 		*port = 1;
+		*sh_test += 1;
 		// if (*seen_first)
 		// * ((unsigned char*)(&data[3])+3) = 0xEE; //*saved_MAC_byte;
 	} else {
 		*port = 0;
+		*(sh_test+1) += 1;
 		// *len = 0;
 		// *saved_MAC_byte = *((unsigned char*)(&data[5])+1);
 		// *seen_first = 1;
