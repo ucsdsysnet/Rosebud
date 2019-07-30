@@ -651,10 +651,10 @@ axis_arb_mux #
     .s_axis_tkeep(),
     .s_axis_tvalid(core_msg_out_valid),
     .s_axis_tready(core_msg_out_ready),
-    .s_axis_tlast(1'b1),
-    .s_axis_tid(),
-    .s_axis_tdest(),
-    .s_axis_tuser(),
+    .s_axis_tlast({CORE_COUNT{1'b1}}),
+    .s_axis_tid(0),
+    .s_axis_tdest(0),
+    .s_axis_tuser(0),
 
     /*
      * AXI Stream output
@@ -669,45 +669,20 @@ axis_arb_mux #
     .m_axis_tuser()
 );
 
-axis_broadcast #
-(
-    .M_COUNT(CORE_COUNT),
-    .DATA_WIDTH(CORE_MSG_WIDTH),
-    .KEEP_ENABLE(0),
-    .LAST_ENABLE(0),
-    .ID_ENABLE(0),
-    .DEST_ENABLE(0),
-    .USER_ENABLE(0)
-) core_msg_broadcaster
-(
-    .clk(clk),
-    .rst(rst),
+// Broadcast the arbitted core messages. Since cores always accept
+// the last cycle's core_msg_out_ready is the sender, so no broadcast to sender
+reg [CORE_COUNT-1:0] core_msg_out_ready_r;
+always @ (posedge clk)
+  if (rst)
+    core_msg_out_ready_r <= {CORE_COUNT{1'b1}};
+  else
+    core_msg_out_ready_r <= ~core_msg_out_ready;
 
-    /*
-     * AXI input
-     */
-    .s_axis_tdata(core_msg_merged_data),
-    .s_axis_tkeep(0),
-    .s_axis_tvalid(core_msg_merged_valid),
-    .s_axis_tready(core_msg_merged_ready),
-    .s_axis_tlast(1'b1),
-    .s_axis_tid(0),
-    .s_axis_tdest(0),
-    .s_axis_tuser(0),
+assign core_msg_in_data = {CORE_COUNT{core_msg_merged_data}};
+assign core_msg_in_valid = {CORE_COUNT{core_msg_merged_valid}} & core_msg_out_ready_r;
+assign core_msg_merged_ready = 1'b1;
 
-    /*
-     * AXI outputs
-     */
-    .m_axis_tdata(core_msg_in_data),
-    .m_axis_tkeep(),
-    .m_axis_tvalid(core_msg_in_valid),
-    .m_axis_tready({CORE_COUNT{1'b1}}),
-    .m_axis_tlast(),
-    .m_axis_tid(),
-    .m_axis_tdest(),
-    .m_axis_tuser()
-);
-
+// ILA
 if (ENABLE_ILA) begin
   reg [63:0] useful_tdest_h, useful_tdest_l;
   integer k;

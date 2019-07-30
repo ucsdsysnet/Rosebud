@@ -2,6 +2,7 @@ inline void process (unsigned short* len, unsigned char* port, unsigned int* off
 int main(void){
   volatile unsigned int * rd_desc    = (volatile unsigned int *) 0x08000;
   volatile unsigned int * wr_desc    = (volatile unsigned int *) 0x08008;
+	volatile unsigned short * sh_test  = (volatile unsigned short *) 0x0700A;
   unsigned int* data;
   unsigned short len;
   unsigned char port;
@@ -10,7 +11,7 @@ int main(void){
 
   // volatile unsigned int * seen_first = (volatile unsigned int *) 0x00304;
 	// *seen_first = 0;
-  
+ 
   while(1){
 		if((*rd_desc)!=0){
   		len  = *((unsigned short*)rd_desc);
@@ -19,6 +20,9 @@ int main(void){
 			asm volatile("" ::: "memory");
   		data = (unsigned int*)(*(rd_desc+1));
 			offset = 0;
+
+			*sh_test += 1;
+
   		process (&len, &port, &offset, data);
   		// Order of writing to stat is important, last two should 
   		// be to stat and then stat+1 and it should not happen before that. 
