@@ -9,30 +9,32 @@ module riscvcore #(
   parameter IMEM_ADDR_WIDTH = $clog2(IMEM_SIZE_BYTES),
   parameter DMEM_ADDR_WIDTH = $clog2(DMEM_SIZE_BYTES)
 )(
-    input                   clk,
-    input                   core_reset,
+    input                        clk,
+    input                        rst,
 
-    input                   data_dma_en,
-    input                   data_dma_ren,
-    input  [STRB_WIDTH-1:0] data_dma_wen,
-    input  [ADDR_WIDTH-1:0] data_dma_addr,
-    input  [DATA_WIDTH-1:0] data_dma_wr_data,
-    output [DATA_WIDTH-1:0] data_dma_rd_data,
+    input                        data_dma_en,
+    input                        data_dma_ren,
+    input  [STRB_WIDTH-1:0]      data_dma_wen,
+    input  [ADDR_WIDTH-1:0]      data_dma_addr,
+    input  [DATA_WIDTH-1:0]      data_dma_wr_data,
+    output [DATA_WIDTH-1:0]      data_dma_rd_data,
 
-    input  [STRB_WIDTH-1:0] ins_dma_wen,
-    input  [ADDR_WIDTH-1:0] ins_dma_addr,
-    input  [DATA_WIDTH-1:0] ins_dma_wr_data,
+    input  [STRB_WIDTH-1:0]      ins_dma_wen,
+    input  [ADDR_WIDTH-1:0]      ins_dma_addr,
+    input  [DATA_WIDTH-1:0]      ins_dma_wr_data,
 
-    input  [63:0]           in_desc,
-    input                   in_desc_valid,
-    output                  in_desc_taken,
+    input  [63:0]                in_desc,
+    input                        in_desc_valid,
+    output                       in_desc_taken,
 
-    output [63:0]           out_desc,
-    output                  out_desc_valid,
-    input                   out_desc_taken,
+    output [63:0]                out_desc,
+    output                       out_desc_valid,
+    input                        out_desc_taken,
 
-    output [63:0]           core_msg_data,
-    output                  core_msg_valid
+    output [31:0]                core_msg_data,
+    output [DMEM_ADDR_WIDTH-1:0] core_msg_addr,
+    output [3:0]                 core_msg_strb,
+    output                       core_msg_valid
 );
 
 // Core to memory signals
@@ -43,10 +45,12 @@ reg  dmem_read_ready, imem_read_ready;
 reg  imem_access_err, dmem_access_err, desc_access_err;
 wire [1:0] dmem_byte_count;
 reg interrupt;
+wire io_not_mem = dmem_addr[ADDR_WIDTH-1];
+wire [4:0] dmem_word_write_mask;
 
 VexRiscv core (
       .clk(clk),
-      .reset(core_reset),
+      .reset(rst),
 
       .iBus_cmd_valid(imem_v),
       .iBus_cmd_ready(1'b1),
@@ -74,7 +78,6 @@ VexRiscv core (
 ///////////////////////////////////////////////////////////////////////////
 
 // read desc is mapped to 0 and 4, write desc is mapped to 8 and 12
-wire io_not_mem = dmem_addr[ADDR_WIDTH-1];
 wire desc_wen = io_not_mem && dmem_v &&   dmem_wr_en &&    dmem_addr[3];
 wire desc_ren = io_not_mem && dmem_v && (!dmem_wr_en) && (!dmem_addr[3]);
 reg [63:0] out_desc_data;
@@ -82,7 +85,6 @@ reg [31:0] stat_internal_read;
 reg out_desc_low_v, out_desc_high_v;
 reg in_desc_low_read, in_desc_high_read;
 
-wire [4:0] dmem_word_write_mask;
 
 // Byte writable out_desc
 wire [7:0]  out_desc_write_mask = {4'd0, dmem_word_write_mask[3:0]} << {dmem_addr[2], 2'd0};
@@ -94,7 +96,7 @@ always @ (posedge clk)
             out_desc_data[i*8 +: 8] <= out_desc_data_in[i*8 +: 8];
 
 always @ (posedge clk) begin
-    if (core_reset) begin
+    if (rst) begin
             out_desc_high_v <= 1'b0;
             out_desc_low_v  <= 1'b0;
     end else begin
@@ -116,7 +118,7 @@ assign out_desc_valid = out_desc_high_v && out_desc_low_v;
 
 // pkt received/incoming descriptor
 always @ (posedge clk) begin
-    if (core_reset) begin
+    if (rst) begin
             in_desc_high_read  <= 1'b0;
             in_desc_low_read   <= 1'b0;
     end
@@ -146,7 +148,7 @@ assign in_desc_taken = in_desc_high_read && in_desc_low_read;
 
 reg  desc_ren_r;
 always @ (posedge clk)
-    if (core_reset)
+    if (rst)
         desc_ren_r <= 1'b0;
     else
         desc_ren_r <= desc_ren;
@@ -155,9 +157,11 @@ always @ (posedge clk)
 ///////////////////// CORE BROADCAST MESSAGING ////////////////////////////
 ///////////////////////////////////////////////////////////////////////////
 // Any write after the coherent point would become a message
-assign core_msg_data  = {dmem_addr, dmem_wr_data};
-assign core_msg_valid = dmem_v && dmem_wr_en && (dmem_addr >= COHERENT_START);
-
+assign core_msg_data  = dmem_wr_data;
+assign core_msg_addr  = dmem_addr[DMEM_ADDR_WIDTH-1:0];
+assign core_msg_strb  = dmem_word_write_mask[3:0];
+assign core_msg_valid = dmem_v && dmem_wr_en && 
+      (dmem_addr >= COHERENT_START) && (dmem_addr < (1 << DMEM_ADDR_WIDTH));
 // Conversion from core dmem_byte_count to normal byte mask
 assign dmem_word_write_mask = ((!dmem_wr_en) || (!dmem_v)) ? 5'h0 : 
 								     			 	  (dmem_byte_count == 2'd0) ? (5'd1  << dmem_addr[1:0]) :
@@ -250,7 +254,7 @@ mem_1r1w #(
 ///////////////////////////////////////////////////////////////////////////
 
 always @ (posedge clk)
-    if (core_reset) begin
+    if (rst) begin
 		    dmem_read_ready <= 1'b0;
 		    imem_read_ready <= 1'b0;
         imem_access_err <= 1'b0;
@@ -259,15 +263,15 @@ always @ (posedge clk)
 		end else begin
 			  dmem_read_ready <= dmem_v;
 		    imem_read_ready <= imem_v;
-        imem_access_err <= imem_access_err || 
-                           (imem_v && (|imem_addr[31:IMEM_ADDR_WIDTH]));
-        dmem_access_err <= dmem_access_err || 
-            (dmem_v && (((!io_not_mem) && (|dmem_addr[31:DMEM_ADDR_WIDTH]))
-                       || (io_not_mem && ((|dmem_addr[31:ADDR_WIDTH]) || 
-                                          (|dmem_addr[ADDR_WIDTH-2:4])))));
-        desc_access_err <= desc_access_err || 
-                          (io_not_mem && dmem_v && dmem_wr_en && !dmem_addr[3])|| 
-                          (io_not_mem && dmem_v && !dmem_wr_en && dmem_addr[3]);
+        imem_access_err <= imem_access_err || (imem_v && 
+                                (imem_addr >= (1 << IMEM_ADDR_WIDTH)));
+
+        dmem_access_err <= dmem_access_err || (dmem_v && 
+                                ((!io_not_mem && (dmem_addr >= (1 << DMEM_ADDR_WIDTH)))
+                                || (dmem_addr >= ((1 << (ADDR_WIDTH-1))+16))));
+                       
+        desc_access_err <= desc_access_err || (io_not_mem && dmem_v && 
+            ((dmem_wr_en && !dmem_addr[3]) || (!dmem_wr_en && dmem_addr[3])));
 
     end
 
@@ -277,7 +281,7 @@ wire out_of_bound = (data_dma_en && (|data_dma_addr[ADDR_WIDTH-1:DMEM_ADDR_WIDTH
 
 // If an error occures the interrupt line stays high until core is reset
 always @ (posedge clk)
-    if (core_reset)
+    if (rst)
         interrupt <= 1'b0;
     else 
         interrupt <= interrupt || out_of_bound;

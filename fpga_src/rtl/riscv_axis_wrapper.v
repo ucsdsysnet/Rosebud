@@ -15,6 +15,7 @@ module riscv_axis_wrapper # (
     parameter INTERLEAVE      = 0,
     parameter RECV_DESC_DEPTH = 8,
     parameter SEND_DESC_DEPTH = 8,
+    parameter MSG_FIFO_DEPTH  = 16,
     parameter PORT_COUNT      = 4,
     parameter LEN_WIDTH       = 16,
     parameter ADDR_LEAD_ZERO  = 8,
@@ -25,11 +26,13 @@ module riscv_axis_wrapper # (
     parameter DEST_WIDTH_IN   = CORE_ID_WIDTH+ADDR_WIDTH-ADDR_LEAD_ZERO,
     parameter DEST_WIDTH_OUT  = PORT_WIDTH,
     parameter USER_WIDTH_IN   = PORT_WIDTH,
-    parameter USER_WIDTH_OUT  = CORE_ID_WIDTH+ADDR_WIDTH-ADDR_LEAD_ZERO
+    parameter USER_WIDTH_OUT  = CORE_ID_WIDTH+ADDR_WIDTH-ADDR_LEAD_ZERO,
+    parameter DMEM_ADDR_WIDTH = $clog2(DMEM_SIZE_BYTES),
+    parameter MSG_WIDTH       = 4+DMEM_ADDR_WIDTH+32
 )
 (
-    input  wire                   clk,
-    input  wire                   rst,
+    input  wire                      clk,
+    input  wire                      rst,
 
     // ---------------- DATA CHANNEL --------------- // 
     // Incoming data
@@ -68,9 +71,15 @@ module riscv_axis_wrapper # (
     output wire                      ctrl_m_axis_tlast,
     output wire [CORE_ID_WIDTH-1:0]  ctrl_m_axis_tuser,
 
+    // ------------- CORE MSG CHANNEL -------------- // 
     // Core messages output  
-    output  [63:0]                core_msg_data,
-    output                        core_msg_valid
+    output wire [MSG_WIDTH-1:0]      core_msg_out_data,
+    output wire                      core_msg_out_valid,
+    input  wire                      core_msg_out_ready,
+
+    // Core messages input
+    input  wire [MSG_WIDTH-1:0]      core_msg_in_data,
+    input  wire                      core_msg_in_valid
 );
 
 assign data_m_axis_tuser[USER_WIDTH_OUT-1:USER_WIDTH_OUT-CORE_ID_WIDTH] = CORE_ID; 
@@ -225,6 +234,48 @@ simple_fifo # (
 
 assign ctrl_m_axis_tlast  = 1'b1;
 
+// A FIFO for outgoing core messages
+wire [31:0]                core_msg_data;
+wire [DMEM_ADDR_WIDTH-1:0] core_msg_addr;
+wire [3:0]                 core_msg_strb;
+wire                       core_msg_valid;
+
+simple_fifo # (
+  .ADDR_WIDTH($clog2(MSG_FIFO_DEPTH)),
+  .DATA_WIDTH(MSG_WIDTH)
+) core_msg_out_fifo (
+  .clk(clk),
+  .rst(rst),
+
+  .din_valid(core_msg_valid),
+  .din({core_msg_strb, core_msg_addr, core_msg_data}),
+  .din_ready(),
+ 
+  .dout_valid(core_msg_out_valid),
+  .dout(core_msg_out_data),
+  .dout_ready(core_msg_out_ready)
+);
+
+// Register and width convert incoming core msg
+reg [DMEM_ADDR_WIDTH-1:0] core_msg_in_addr_r;
+reg [31:0]                core_msg_in_data_r;
+reg [3:0]                 core_msg_in_strb_r;
+reg                       core_msg_in_v_r;
+
+always @ (posedge clk) begin
+  core_msg_in_addr_r <= core_msg_in_data[31+DMEM_ADDR_WIDTH:32];
+  core_msg_in_data_r <= core_msg_in_data[31:0];
+  core_msg_in_strb_r <= core_msg_in_data[MSG_WIDTH-1:MSG_WIDTH-4];
+  if (rst)
+    core_msg_in_v_r  <= 1'b0;
+  else
+    core_msg_in_v_r  <= core_msg_in_valid;
+end
+
+wire [7:0]  core_msg_write_mask = {4'd0, core_msg_in_strb_r[3:0]} << {core_msg_in_addr_r[2], 2'd0};
+wire [63:0] core_msg_write_data  = {32'd0, core_msg_in_data_r} << {core_msg_in_addr_r[2], 5'd0};
+
+
 /////////////////////////////////////////////////////////////////////
 /////////////// SPLITTER AND ARBITER FOR DMEM ACCESS ////////////////
 /////////////////////////////////////////////////////////////////////
@@ -240,7 +291,7 @@ wire dmem_rd_en = (~ram_cmd_rd_addr[ADDR_WIDTH-1]) && ram_cmd_rd_en && (!read_re
 
 // Arbiter for DMEM. We cannot read and write in the same cycle.
 // This can be done interleaved or full write after full read based on 
-// INTERLEAVE parameter.
+// INTERLEAVE parameter. Also incoming core messages have higher priority.
 
 // DMEM_WRITE and DMEM_READ are bitwise invert
 localparam DMEM_IDLE  = 2'b00;
@@ -264,7 +315,10 @@ always @ (posedge clk)
   end
 
 always @ (*)
-  case ({dmem_wr_en,dmem_rd_en})
+  //core msg is processed, no requests from DMA engine
+  if (core_msg_in_v_r)
+    dmem_op = DMEM_IDLE; 
+  else case ({dmem_wr_en,dmem_rd_en})
     2'b00: dmem_op = DMEM_IDLE;
     2'b01: dmem_op = DMEM_READ;
     2'b10: dmem_op = DMEM_WRITE;
@@ -283,14 +337,15 @@ always @ (*)
   endcase
 
 // Signals to second port of the local DMEM of the core
-wire                  data_dma_en   = dmem_wr_en || dmem_rd_en;
-wire [ADDR_WIDTH-1:0] data_dma_addr =  (dmem_op==DMEM_WRITE) ? 
-                      {1'b0,ram_cmd_wr_addr[ADDR_WIDTH-2:0]} : 
-                      {1'b0,ram_cmd_rd_addr[ADDR_WIDTH-2:0]};
+wire                  data_dma_en   = dmem_wr_en || dmem_rd_en || core_msg_in_v_r;
+wire [ADDR_WIDTH-1:0] data_dma_addr = core_msg_in_v_r ? 
+                                  {{(ADDR_WIDTH - DMEM_ADDR_WIDTH){1'b0}}, core_msg_in_addr_r} : 
+                               ((dmem_op==DMEM_WRITE) ? {1'b0,ram_cmd_wr_addr[ADDR_WIDTH-2:0]} : 
+                                                        {1'b0,ram_cmd_rd_addr[ADDR_WIDTH-2:0]});
 wire                  data_dma_ren   = (dmem_op==DMEM_READ); 
-wire [STRB_WIDTH-1:0] data_dma_wen   = (dmem_op==DMEM_WRITE) ? 
-                      ram_cmd_wr_strb : {STRB_WIDTH{1'b0}};
-wire [DATA_WIDTH-1:0] data_dma_wr_data = ram_cmd_wr_data;
+wire [STRB_WIDTH-1:0] data_dma_wen   = core_msg_in_v_r ? core_msg_write_mask : 
+                                ((dmem_op==DMEM_WRITE) ? ram_cmd_wr_strb : {STRB_WIDTH{1'b0}});
+wire [DATA_WIDTH-1:0] data_dma_wr_data = core_msg_in_v_r ? core_msg_write_data : ram_cmd_wr_data;
 
 // Signals to second port of the local IMEM of the core (just write)
 // or status registers
@@ -340,7 +395,7 @@ riscvcore #(
   .COHERENT_START(COHERENT_START)
 ) core (
     .clk(clk),
-    .core_reset(core_reset),
+    .rst(core_reset),
 
     .data_dma_en(data_dma_en),
     .data_dma_ren(data_dma_ren),
@@ -362,6 +417,8 @@ riscvcore #(
     .out_desc_taken(send_desc_ready),
  
     .core_msg_data(core_msg_data),
+    .core_msg_addr(core_msg_addr),
+    .core_msg_strb(core_msg_strb),
     .core_msg_valid(core_msg_valid)
 );
 

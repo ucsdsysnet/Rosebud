@@ -50,6 +50,7 @@ srcs.append("../rtl/fpga_core.v")
 
 srcs.append("../lib/axis/rtl/axis_switch.v")
 srcs.append("../lib/axis/rtl/axis_arb_mux.v")
+srcs.append("../lib/axis/rtl/axis_broadcast.v")
 srcs.append("../lib/axis/rtl/axis_register.v")
 srcs.append("../lib/axis/rtl/arbiter.v")
 srcs.append("../lib/axis/rtl/priority_encoder.v")
@@ -78,7 +79,7 @@ def bench():
 
     SEND_COUNT_0 = 100
     SEND_COUNT_1 = 100
-    SIZE_0       = 184 - 18 + 4
+    SIZE_0       = 188 - 18 
     SIZE_1       = 64 - 18
 
     # Inputs
@@ -122,7 +123,7 @@ def bench():
     test_frame_2.update_fcs()
     axis_frame_2 = test_frame_2.build_axis_fcs()
     start_data_2 = bytearray(b'\x55\x55\x55\x55\x55\x55\x55\xD5' + bytearray(axis_frame_2))
-
+  
     # sources and sinks
     xgmii_source_0 = xgmii_ep.XGMIISource()
 
@@ -205,7 +206,7 @@ def bench():
     def port1():
         for i in range (0,SEND_COUNT_0):
           # test_frame_1.payload = bytes([x%256 for x in range(random.randrange(1980))])
-          test_frame_1.payload = bytes([x%256 for x in range(SIZE_0)]) # range(random.randrange(1500))])
+          test_frame_1.payload = bytes([x%256 for x in range(SIZE_0)])
           test_frame_1.update_fcs()
           axis_frame = test_frame_1.build_axis_fcs()
           xgmii_source_0.send(b'\x55\x55\x55\x55\x55\x55\x55\xD5'+bytearray(axis_frame))
@@ -216,7 +217,7 @@ def bench():
     def port2():
         for i in range (0,SEND_COUNT_1):
           # test_frame_2.payload = bytes([x%256 for x in range(10,10+random.randrange(300))])
-          test_frame_2.payload = bytes([x%256 for x in range(SIZE_1)]) # range(random.randrange(1500))])           
+          test_frame_2.payload = bytes([x%256 for x in range(SIZE_1)])
           test_frame_2.update_fcs()
           axis_frame_2 = test_frame_2.build_axis_fcs()
           xgmii_source_1.send(b'\x55\x55\x55\x55\x55\x55\x55\xD5'+bytearray(axis_frame_2))
@@ -263,9 +264,8 @@ def bench():
           print ("packet number from port 0:",j)
           for i in range(0, len(data), 16):
               print(" ".join(("{:02x}".format(c) for c in bytearray(data[i:i+16]))))
-          # assert rx_frame.data[0:8] == bytearray(b'\x55\x55\x55\x55\x55\x55\x55\xD5')
-          # assert rx_frame.data[0:22] == start_data_2[0:22]
-          assert rx_frame.data == start_data_2
+          assert rx_frame.data[0:22] == start_data_2[0:22]
+          assert rx_frame.data[22:-4] == start_data_2[22:-4]
           lengths.append(len(data)-8)
 
         for j in range (0,SEND_COUNT_0):
@@ -275,12 +275,11 @@ def bench():
           print ("packet number from port 1:",j)
           for i in range(0, len(data), 16):
               print(" ".join(("{:02x}".format(c) for c in bytearray(data[i:i+16]))))
-          # assert rx_frame.data[0:8] == bytearray(b'\x55\x55\x55\x55\x55\x55\x55\xD5')
-          # assert rx_frame.data[0:22] == start_data_1[0:22]
-          assert rx_frame.data == start_data_1
+          assert rx_frame.data[0:22] == start_data_1[0:22]
+          assert rx_frame.data[22:-4] == start_data_1[22:-4]
           lengths.append(len(data)-8)
 
- 
+       
         # print ("Very last packet:")
         # for i in range(0, len(data), 16):
         #     print(" ".join(("{:02x}".format(c) for c in bytearray(data[i:i+16]))))

@@ -93,6 +93,8 @@ parameter DMEM_SIZE_BYTES = 32768;
 parameter COHERENT_START  = 16'h6FFF;
 parameter RECV_DESC_DEPTH = 8;
 parameter SEND_DESC_DEPTH = 8;
+parameter MSG_FIFO_DEPTH  = 16;
+parameter CORE_MSG_WIDTH  = 4+$clog2(DMEM_SIZE_BYTES)+32;
 parameter LEN_WIDTH       = 16;
 parameter INTERLEAVE      = 1;
 parameter CTRL_DEST_WIDTH = $clog2(CORE_COUNT);
@@ -547,8 +549,12 @@ axis_arb_mux #
 );
 
 
-wire [CORE_COUNT-1:0] core_msg_valid;
-wire [64*CORE_COUNT-1:0] core_msg_data;
+wire [CORE_COUNT-1:0] core_msg_in_valid;
+wire [CORE_MSG_WIDTH*CORE_COUNT-1:0] core_msg_in_data;
+
+wire [CORE_COUNT-1:0] core_msg_out_valid;
+wire [CORE_COUNT-1:0] core_msg_out_ready;
+wire [CORE_MSG_WIDTH*CORE_COUNT-1:0] core_msg_out_data;
 
 genvar i;
 generate
@@ -563,6 +569,7 @@ generate
         .INTERLEAVE(INTERLEAVE),
         .RECV_DESC_DEPTH(RECV_DESC_DEPTH),
         .SEND_DESC_DEPTH(SEND_DESC_DEPTH),
+        .MSG_FIFO_DEPTH(MSG_FIFO_DEPTH),
         .PORT_COUNT(2),
         .LEN_WIDTH(LEN_WIDTH),
         .ADDR_LEAD_ZERO(CORE_LEAD_ZERO),
@@ -607,12 +614,99 @@ generate
         .ctrl_m_axis_tlast(ctrl_m_axis_tlast[i]),
         .ctrl_m_axis_tuser(ctrl_m_axis_tuser[CTRL_USER_WIDTH*i +: CTRL_USER_WIDTH]),
    
-        .core_msg_data(core_msg_data[i*64 +: 64]),
-        .core_msg_valid(core_msg_valid[i])
+        // ------------- CORE MSG CHANNEL -------------- // 
+        // Core messages output  
+        .core_msg_out_data(core_msg_out_data[CORE_MSG_WIDTH*i +: CORE_MSG_WIDTH]),
+        .core_msg_out_valid(core_msg_out_valid[i]),
+        .core_msg_out_ready(core_msg_out_ready[i]),
+
+        // Core messages input
+        .core_msg_in_data(core_msg_in_data[CORE_MSG_WIDTH*i +: CORE_MSG_WIDTH]),
+        .core_msg_in_valid(core_msg_in_valid[i])
     );
   end
 
 endgenerate
+
+// core message broadcast system
+wire core_msg_merged_valid;
+wire core_msg_merged_ready;
+wire [CORE_MSG_WIDTH-1:0] core_msg_merged_data;
+
+axis_arb_mux #
+(
+    .S_COUNT(CORE_COUNT),
+    .DATA_WIDTH(CORE_MSG_WIDTH),
+    .USER_ENABLE(0),
+    .KEEP_ENABLE(0)
+) cores_to_broadcaster
+(
+    .clk(clk),
+    .rst(rst),
+
+    /*
+     * AXI Stream inputs
+     */
+    .s_axis_tdata(core_msg_out_data),
+    .s_axis_tkeep(),
+    .s_axis_tvalid(core_msg_out_valid),
+    .s_axis_tready(core_msg_out_ready),
+    .s_axis_tlast(1'b1),
+    .s_axis_tid(),
+    .s_axis_tdest(),
+    .s_axis_tuser(),
+
+    /*
+     * AXI Stream output
+     */
+    .m_axis_tdata(core_msg_merged_data),
+    .m_axis_tkeep(),
+    .m_axis_tvalid(core_msg_merged_valid),
+    .m_axis_tready(core_msg_merged_ready),
+    .m_axis_tlast(),
+    .m_axis_tid(),
+    .m_axis_tdest(),
+    .m_axis_tuser()
+);
+
+axis_broadcast #
+(
+    .M_COUNT(CORE_COUNT),
+    .DATA_WIDTH(CORE_MSG_WIDTH),
+    .KEEP_ENABLE(0),
+    .LAST_ENABLE(0),
+    .ID_ENABLE(0),
+    .DEST_ENABLE(0),
+    .USER_ENABLE(0)
+) core_msg_broadcaster
+(
+    .clk(clk),
+    .rst(rst),
+
+    /*
+     * AXI input
+     */
+    .s_axis_tdata(core_msg_merged_data),
+    .s_axis_tkeep(0),
+    .s_axis_tvalid(core_msg_merged_valid),
+    .s_axis_tready(core_msg_merged_ready),
+    .s_axis_tlast(1'b1),
+    .s_axis_tid(0),
+    .s_axis_tdest(0),
+    .s_axis_tuser(0),
+
+    /*
+     * AXI outputs
+     */
+    .m_axis_tdata(core_msg_in_data),
+    .m_axis_tkeep(),
+    .m_axis_tvalid(core_msg_in_valid),
+    .m_axis_tready({CORE_COUNT{1'b1}}),
+    .m_axis_tlast(),
+    .m_axis_tid(),
+    .m_axis_tdest(),
+    .m_axis_tuser()
+);
 
 if (ENABLE_ILA) begin
   reg [63:0] useful_tdest_h, useful_tdest_l;
@@ -655,7 +749,5 @@ if (ENABLE_ILA) begin
 
   );
 end
-
-// later my arbiter and broadcast and input to cores
 
 endmodule
