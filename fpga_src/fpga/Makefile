@@ -14,6 +14,7 @@ SYN_FILES += rtl/core_msg_arbiter.v
 SYN_FILES += rtl/simple_fifo.v
 SYN_FILES += rtl/simple_scheduler.v
 SYN_FILES += rtl/loaded_desc_fifo.v
+SYN_FILES += rtl/max_finder_tree.v
 SYN_FILES += rtl/riscv_axis_dma.v 
 SYN_FILES += rtl/riscv_axis_wrapper.v 
 SYN_FILES += rtl/sync_reset.v
