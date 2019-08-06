@@ -394,7 +394,8 @@ axis_switch #
     .M_TOP({{4'd15,CORE_END}, {4'd14,CORE_END}, {4'd13,CORE_END}, {4'd12,CORE_END},
             {4'd11,CORE_END}, {4'd10,CORE_END}, {4'd9, CORE_END}, {4'd8, CORE_END},
             {4'd7, CORE_END}, {4'd6, CORE_END}, {4'd5, CORE_END}, {4'd4, CORE_END},
-            {4'd3, CORE_END}, {4'd2, CORE_END}, {4'd1, CORE_END}, {4'd0, CORE_END}})
+            {4'd3, CORE_END}, {4'd2, CORE_END}, {4'd1, CORE_END}, {4'd0, CORE_END}}),
+    .M_REG_TYPE(2)
 ) data_in_sw
 (
     .clk(clk),
