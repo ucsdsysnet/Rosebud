@@ -74,34 +74,37 @@ module simple_scheduler # (
   // Adding tdest and tuser to input data from eth, dest based on 
   // rx_desc_fifo and stamp the incoming port
   reg  [PORT_COUNT*DEST_WIDTH_IN-1:0] dest_r;
-  wire [USER_WIDTH_IN-1:0] selected_port;
+  wire [USER_WIDTH_IN-1:0] selected_port_enc;
   wire [PORT_COUNT-1:0] sending_last_word;
   reg  [PORT_COUNT-1:0] dest_r_v;
-  wire [PORT_COUNT-1:0] loading_dest;
+  wire [PORT_COUNT-1:0] selected_port;
 
+  wire selected_port_v;
   wire rx_desc_pop; // maybe used for error catching
   wire [DEST_WIDTH_IN-1:0] rx_desc_data; 
   wire rx_desc_v; 
 
   assign sending_last_word = rx_axis_tvalid & rx_axis_tlast & rx_axis_tready;
+  assign rx_desc_pop = selected_port_v;
+  wire [PORT_COUNT-1:0] desc_req = (~(dest_r_v|selected_port))|sending_last_word;
   
   arbiter # (.PORTS(PORT_COUNT),.TYPE("ROUND_ROBIN")) port_selector (
     .clk(clk),
     .rst(rst),
     
-    .request((~(dest_r_v|loading_dest))|sending_last_word),
+    .request(desc_req),
     .acknowledge({PORT_COUNT{1'b0}}),
     
-    .grant(loading_dest),
-    .grant_valid(rx_desc_pop),
-    .grant_encoded(selected_port)
+    .grant(selected_port),
+    .grant_valid(selected_port_v),
+    .grant_encoded(selected_port_enc)
     );
 
   always @ (posedge clk) begin
     dest_r_v <= dest_r_v & (~sending_last_word);
-    if (rx_desc_pop) begin
-      dest_r_v[selected_port] <= rx_desc_v;
-      dest_r[selected_port*DEST_WIDTH_IN +: DEST_WIDTH_IN] <= rx_desc_data;
+    if (selected_port_v) begin
+      dest_r_v[selected_port_enc] <= rx_desc_v;
+      dest_r[selected_port_enc*DEST_WIDTH_IN +: DEST_WIDTH_IN] <= rx_desc_data;
     end
     if (rst)
       dest_r_v <= {PORT_COUNT{1'b0}};
@@ -139,7 +142,7 @@ module simple_scheduler # (
   assign ctrl_s_axis_tready = | rx_desc_slot_accept;
   assign rx_desc_v          = | rx_desc_slot_v;
   assign rx_desc_data       = {selected_desc, rx_desc_slot[selected_desc]};
-  
+
   genvar i;
   generate 
     for (i=0;i<CORE_COUNT;i=i+1) begin

@@ -75,6 +75,7 @@ assign sma_led   = 0;
 
 // RISCV system parameters
 parameter CORE_COUNT      = 16;
+parameter PORT_COUNT      = 2;
 parameter CORE_ADDR_WIDTH = 16;
 parameter CORE_LEAD_ZERO  = 8;
 parameter SLOT_COUNT      = 8;
@@ -85,7 +86,7 @@ parameter AXIS_STRB_WIDTH = AXIS_DATA_WIDTH/8;
 parameter TX_FIFO_DEPTH   = 32768;
 parameter RX_FIFO_DEPTH   = 32768;
 parameter AXIS_DEST_IN    = $clog2(CORE_COUNT)+CORE_ADDR_WIDTH-CORE_LEAD_ZERO;
-parameter AXIS_DEST_OUT   = $clog2(2); //output ports
+parameter AXIS_DEST_OUT   = $clog2(PORT_COUNT);
 parameter AXIS_USER_IN    = AXIS_DEST_OUT;
 parameter AXIS_USER_OUT   = AXIS_DEST_IN;
 parameter IMEM_SIZE_BYTES = 8192;
@@ -152,7 +153,7 @@ eth_mac_10g_fifo #
     .tx_axis_tvalid(tx_axis_tvalid[ETH0_LOC]),
     .tx_axis_tready(tx_axis_tready[ETH0_LOC]),
     .tx_axis_tlast(tx_axis_tlast[ETH0_LOC]),
-    .tx_axis_tuser(0),
+    .tx_axis_tuser(1'b0),
 
     /*
      * AXI output
@@ -185,12 +186,12 @@ eth_mac_10g_fifo #
     /*
      * PTP not used
      */
-    .ptp_ts_96(0),
-    .m_axis_rx_ptp_ts_ready(0),
-    .m_axis_tx_ptp_ts_ready(0),
-    .s_axis_tx_ptp_ts_tag (0),
-    .s_axis_tx_ptp_ts_valid (0),
-    .ptp_sample_clk (0)
+    .ptp_ts_96(96'd0),
+    .m_axis_rx_ptp_ts_ready(1'b0),
+    .m_axis_tx_ptp_ts_ready(1'b0),
+    .s_axis_tx_ptp_ts_tag (16'd0),
+    .s_axis_tx_ptp_ts_valid (1'b0),
+    .ptp_sample_clk (1'b0)
 );
 
 eth_mac_10g_fifo #
@@ -226,7 +227,7 @@ eth_mac_10g_fifo #
     .tx_axis_tvalid(tx_axis_tvalid[ETH1_LOC]),
     .tx_axis_tready(tx_axis_tready[ETH1_LOC]),
     .tx_axis_tlast(tx_axis_tlast[ETH1_LOC]),
-    .tx_axis_tuser(0),
+    .tx_axis_tuser(1'b0),
 
     /*
      * AXI output
@@ -259,26 +260,26 @@ eth_mac_10g_fifo #
     /*
      * PTP not used
      */
-    .ptp_ts_96(0),
-    .m_axis_rx_ptp_ts_ready(0),
-    .m_axis_tx_ptp_ts_ready(0),
-    .s_axis_tx_ptp_ts_tag (0),
-    .s_axis_tx_ptp_ts_valid (0),
-    .ptp_sample_clk (0)
+    .ptp_ts_96(96'd0),
+    .m_axis_rx_ptp_ts_ready(1'b0),
+    .m_axis_tx_ptp_ts_ready(1'b0),
+    .s_axis_tx_ptp_ts_tag (16'd0),
+    .s_axis_tx_ptp_ts_valid (1'b0),
+    .ptp_sample_clk (1'b0)
 );
 
 // Scheduler 
-wire [2*AXIS_DATA_WIDTH-1:0] sched_tx_axis_tdata;
-wire [2*AXIS_STRB_WIDTH-1:0] sched_tx_axis_tkeep;
-wire [2*AXIS_DEST_OUT-1:0]   sched_tx_axis_tdest;
-wire [2*AXIS_USER_OUT-1:0]   sched_tx_axis_tuser;
-wire [2-1:0] sched_tx_axis_tvalid, sched_tx_axis_tready, sched_tx_axis_tlast;
+wire [PORT_COUNT*AXIS_DATA_WIDTH-1:0] sched_tx_axis_tdata;
+wire [PORT_COUNT*AXIS_STRB_WIDTH-1:0] sched_tx_axis_tkeep;
+wire [PORT_COUNT*AXIS_DEST_OUT-1:0]   sched_tx_axis_tdest;
+wire [PORT_COUNT*AXIS_USER_OUT-1:0]   sched_tx_axis_tuser;
+wire [PORT_COUNT-1:0] sched_tx_axis_tvalid, sched_tx_axis_tready, sched_tx_axis_tlast;
 
-wire [2*AXIS_DATA_WIDTH-1:0] sched_rx_axis_tdata;
-wire [2*AXIS_STRB_WIDTH-1:0] sched_rx_axis_tkeep;
-wire [2*AXIS_DEST_IN-1:0]    sched_rx_axis_tdest;
-wire [2*AXIS_USER_IN-1:0]    sched_rx_axis_tuser;
-wire [2-1:0] sched_rx_axis_tvalid, sched_rx_axis_tready, sched_rx_axis_tlast;
+wire [PORT_COUNT*AXIS_DATA_WIDTH-1:0] sched_rx_axis_tdata;
+wire [PORT_COUNT*AXIS_STRB_WIDTH-1:0] sched_rx_axis_tkeep;
+wire [PORT_COUNT*AXIS_DEST_IN-1:0]    sched_rx_axis_tdest;
+wire [PORT_COUNT*AXIS_USER_IN-1:0]    sched_rx_axis_tuser;
+wire [PORT_COUNT-1:0] sched_rx_axis_tvalid, sched_rx_axis_tready, sched_rx_axis_tlast;
     
 wire [AXIS_DATA_WIDTH-1:0] sched_ctrl_m_axis_tdata;
 wire                       sched_ctrl_m_axis_tvalid;
@@ -294,13 +295,14 @@ wire [CTRL_USER_WIDTH-1:0] sched_ctrl_s_axis_tuser;
 
 simple_scheduler # (
   .CORE_COUNT(CORE_COUNT),
+  .PORT_COUNT(PORT_COUNT),
   .DATA_WIDTH(AXIS_DATA_WIDTH),
   .LEN_WIDTH(LEN_WIDTH),
   .SLOT_COUNT(SLOT_COUNT),
   .SLOT_START_ADDR(SLOT_START_ADDR),
   .SLOT_ADDR_STEP(SLOT_ADDR_STEP),  
   .EFF_ADDR_WIDTH(CORE_ADDR_WIDTH-CORE_LEAD_ZERO),
-  .DEST_WIDTH_OUT($clog2(2)), //output ports
+  .DEST_WIDTH_OUT($clog2(PORT_COUNT)), 
   .ENABLE_ILA(ENABLE_ILA)
 ) scheduler (
   .clk(clk),
@@ -377,24 +379,32 @@ wire [CORE_COUNT*AXIS_DATA_WIDTH-1:0] ctrl_m_axis_tdata;
 wire [CORE_COUNT*CTRL_USER_WIDTH-1:0] ctrl_m_axis_tuser;
 wire [CORE_COUNT-1:0] ctrl_m_axis_tvalid, ctrl_m_axis_tready, ctrl_m_axis_tlast;
 
-parameter CORE_START = {(CORE_ADDR_WIDTH-CORE_LEAD_ZERO){1'b0}};
-parameter CORE_END   = {(CORE_ADDR_WIDTH-CORE_LEAD_ZERO){1'b1}};
+function [CORE_COUNT*AXIS_DEST_IN-1:0] data_in_base_addrs (input [31:0] lead_zero);
+    integer i;
+    begin
+        for (i=0;i<CORE_COUNT;i=i+1)
+            data_in_base_addrs[i*AXIS_DEST_IN +: AXIS_DEST_IN] = i << lead_zero;
+    end
+endfunction
+
+function [CORE_COUNT*AXIS_DEST_IN-1:0] data_in_top_addrs (input [31:0] lead_one);
+    integer i;
+    begin
+        for (i=0;i<CORE_COUNT;i=i+1)
+            data_in_top_addrs[i*AXIS_DEST_IN +: AXIS_DEST_IN] = (i << lead_one) | ((2**lead_one)-1);
+    end
+endfunction
 
 axis_switch #
 (
-    .S_COUNT(2),
+    .S_COUNT(PORT_COUNT),
     .M_COUNT(CORE_COUNT),
     .DATA_WIDTH(AXIS_DATA_WIDTH),
     .DEST_WIDTH(AXIS_DEST_IN),
     .USER_WIDTH(AXIS_USER_IN),
-    .M_BASE({{4'd15,CORE_START}, {4'd14,CORE_START}, {4'd13,CORE_START}, {4'd12,CORE_START},
-             {4'd11,CORE_START}, {4'd10,CORE_START}, {4'd9, CORE_START}, {4'd8, CORE_START},
-             {4'd7, CORE_START}, {4'd6, CORE_START}, {4'd5, CORE_START}, {4'd4, CORE_START},
-             {4'd3, CORE_START}, {4'd2, CORE_START}, {4'd1, CORE_START}, {4'd0, CORE_START}}),
-    .M_TOP({{4'd15,CORE_END}, {4'd14,CORE_END}, {4'd13,CORE_END}, {4'd12,CORE_END},
-            {4'd11,CORE_END}, {4'd10,CORE_END}, {4'd9, CORE_END}, {4'd8, CORE_END},
-            {4'd7, CORE_END}, {4'd6, CORE_END}, {4'd5, CORE_END}, {4'd4, CORE_END},
-            {4'd3, CORE_END}, {4'd2, CORE_END}, {4'd1, CORE_END}, {4'd0, CORE_END}}),
+    .M_BASE(data_in_base_addrs(CORE_ADDR_WIDTH-CORE_LEAD_ZERO)),
+    .M_TOP(data_in_top_addrs(CORE_ADDR_WIDTH-CORE_LEAD_ZERO)),
+    .S_REG_TYPE(2),
     .M_REG_TYPE(2)
 ) data_in_sw
 (
@@ -409,7 +419,7 @@ axis_switch #
     .s_axis_tvalid(sched_rx_axis_tvalid),
     .s_axis_tready(sched_rx_axis_tready),
     .s_axis_tlast(sched_rx_axis_tlast),
-    .s_axis_tid(0),
+    .s_axis_tid({PORT_COUNT{8'd0}}),
     .s_axis_tdest(sched_rx_axis_tdest),
     .s_axis_tuser(sched_rx_axis_tuser),
 
@@ -426,15 +436,23 @@ axis_switch #
     .m_axis_tuser(data_s_axis_tuser)
 );
 
+function [PORT_COUNT*AXIS_DEST_OUT-1:0] data_out_addrs (input [31:0] lead_zero);
+    integer i;
+    begin
+        for (i=0;i<PORT_COUNT;i=i+1)
+            data_out_addrs[i*AXIS_DEST_OUT +: AXIS_DEST_OUT] = i << lead_zero;
+    end
+endfunction
+
 axis_switch #
 (
     .S_COUNT(CORE_COUNT),
-    .M_COUNT(2),
+    .M_COUNT(PORT_COUNT),
     .DATA_WIDTH(AXIS_DATA_WIDTH),
     .DEST_WIDTH(AXIS_DEST_OUT),
     .USER_WIDTH(AXIS_USER_OUT),
-    .M_BASE({1'b1,1'b0}),
-    .M_TOP({1'b1,1'b0})
+    .M_BASE(data_out_addrs(0)),
+    .M_TOP(data_out_addrs(0))
 ) data_out_sw
 (
     .clk(clk),
@@ -448,7 +466,7 @@ axis_switch #
     .s_axis_tvalid(data_m_axis_tvalid),
     .s_axis_tready(data_m_axis_tready),
     .s_axis_tlast(data_m_axis_tlast),
-    .s_axis_tid(0),
+    .s_axis_tid({CORE_COUNT{8'd0}}),
     .s_axis_tdest(data_m_axis_tdest),
     .s_axis_tuser(data_m_axis_tuser),
 
@@ -466,6 +484,14 @@ axis_switch #
 
 );
 
+function [CORE_COUNT*CTRL_DEST_WIDTH-1:0] ctrl_in_addrs (input [31:0] lead_zero);
+    integer i;
+    begin
+        for (i=0;i<CORE_COUNT;i=i+1)
+            ctrl_in_addrs[i*CTRL_DEST_WIDTH +: CTRL_DEST_WIDTH] = i << lead_zero;
+    end
+endfunction
+
 axis_switch #
 (
     .S_COUNT(1),
@@ -474,14 +500,8 @@ axis_switch #
     .DEST_WIDTH(CTRL_DEST_WIDTH),
     .USER_ENABLE(0),
     .KEEP_ENABLE(0),
-    .M_BASE({4'd15,4'd14,4'd13,4'd12,
-             4'd11,4'd10,4'd9, 4'd8, 
-             4'd7, 4'd6, 4'd5, 4'd4, 
-             4'd3, 4'd2, 4'd1, 4'd0}),
-    .M_TOP({4'd15,4'd14,4'd13,4'd12,
-            4'd11,4'd10,4'd9, 4'd8, 
-            4'd7, 4'd6, 4'd5, 4'd4, 
-            4'd3, 4'd2, 4'd1, 4'd0})
+    .M_BASE(ctrl_in_addrs(0)),
+    .M_TOP(ctrl_in_addrs(0))
 ) ctrl_in_sw
 (
     .clk(clk),
@@ -495,7 +515,7 @@ axis_switch #
     .s_axis_tvalid(sched_ctrl_m_axis_tvalid),
     .s_axis_tready(sched_ctrl_m_axis_tready),
     .s_axis_tlast(sched_ctrl_m_axis_tlast),
-    .s_axis_tid(0),
+    .s_axis_tid(8'd0),
     .s_axis_tdest(sched_ctrl_m_axis_tdest),
     .s_axis_tuser(),
 
@@ -571,7 +591,7 @@ generate
         .RECV_DESC_DEPTH(RECV_DESC_DEPTH),
         .SEND_DESC_DEPTH(SEND_DESC_DEPTH),
         .MSG_FIFO_DEPTH(MSG_FIFO_DEPTH),
-        .PORT_COUNT(2),
+        .PORT_COUNT(PORT_COUNT),
         .LEN_WIDTH(LEN_WIDTH),
         .ADDR_LEAD_ZERO(CORE_LEAD_ZERO),
         .CORE_ID(i),
@@ -653,9 +673,9 @@ axis_arb_mux #
     .s_axis_tvalid(core_msg_out_valid),
     .s_axis_tready(core_msg_out_ready),
     .s_axis_tlast({CORE_COUNT{1'b1}}),
-    .s_axis_tid(0),
-    .s_axis_tdest(0),
-    .s_axis_tuser(0),
+    .s_axis_tid({CORE_COUNT{8'd0}}),
+    .s_axis_tdest({CORE_COUNT{8'd0}}),
+    .s_axis_tuser({CORE_COUNT{1'b0}}),
 
     /*
      * AXI Stream output

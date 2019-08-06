@@ -14,8 +14,8 @@ wire [ADDR_WIDTH-1:0] int_ptr [0:PORT_COUNT-2];
 wire                  cmp_res [0:PORT_COUNT-2];
 
 function [ADDR_WIDTH:0] l_offset (input [ADDR_WIDTH-1:0] stage);
-  begin: lfunc
-    integer i;
+  integer i;
+  begin
     l_offset = 0;
     for (i=1;i<=stage;i=i+1)
       l_offset = l_offset + PORT_COUNT/(2**i);
@@ -23,8 +23,8 @@ function [ADDR_WIDTH:0] l_offset (input [ADDR_WIDTH-1:0] stage);
 endfunction
 
 function [ADDR_WIDTH:0] r_offset (input [ADDR_WIDTH-1:0] stage);
-  begin: rfunc
-    integer i;
+  integer i;
+  begin
     r_offset = 0;
     for (i=1;i<stage;i=i+1)
       r_offset = r_offset + PORT_COUNT/(2**i);

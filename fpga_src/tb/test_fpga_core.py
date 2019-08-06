@@ -78,7 +78,7 @@ def bench():
 
     SEND_COUNT_0 = 100
     SEND_COUNT_1 = 100
-    SIZE_0       = 188 - 18 
+    SIZE_0       = 64 - 18 
     SIZE_1       = 64 - 18
 
     # Inputs
