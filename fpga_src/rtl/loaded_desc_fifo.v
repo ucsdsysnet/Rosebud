@@ -1,11 +1,10 @@
 module loaded_desc_fifo # (
-  parameter CORE_COUNT        = 16,
   parameter SLOT_COUNT        = 8,
+  parameter SLOT_ADDR_WIDTH   = 8,
   parameter START_ADDR        = 8'h20,
   parameter ADDR_STEP         = 8'h08,
-  parameter SLOT_ADDR_WIDTH   = 8,
-  parameter ADDR_WIDTH        = $clog2(CORE_COUNT*SLOT_COUNT),
-  parameter DATA_WIDTH        = $clog2(CORE_COUNT)+SLOT_ADDR_WIDTH,
+  parameter DATA_WIDTH        = SLOT_ADDR_WIDTH,
+  parameter ADDR_WIDTH        = $clog2(SLOT_COUNT),
   parameter ALMOST_FULL_DIST  = 2, 
   parameter ALMOST_EMPTY_DIST = 2
 )(
@@ -13,7 +12,7 @@ module loaded_desc_fifo # (
   input rst,
 
   input                		din_valid,
-  input [DATA_WIDTH-1:0]  din,
+  input  [DATA_WIDTH-1:0] din,
   output               		din_ready,
  
   output               		dout_valid,
@@ -85,14 +84,9 @@ assign almost_empty = item_count_r <= ALMOST_EMPTY_THRESH;
 assign item_count   = item_count_r;
 
 integer i,j;
-reg [SLOT_ADDR_WIDTH-1:0] slot_addr;
-initial begin
+initial
   for (i=0; i<SLOT_COUNT; i=i+1)
-    for (j=0; j<CORE_COUNT; j=j+1) begin
-      slot_addr = START_ADDR + (i*ADDR_STEP);
-      mem[i*CORE_COUNT+j] = {j,slot_addr};
-    end
-end
+    mem[i] = START_ADDR + (i*ADDR_STEP);
 
 endmodule
 

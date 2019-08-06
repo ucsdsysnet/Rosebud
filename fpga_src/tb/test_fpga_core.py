@@ -39,6 +39,7 @@ srcs.append("../ip/ila_4x64_stub.v")
 
 srcs.append("../rtl/simple_fifo.v")
 srcs.append("../rtl/loaded_desc_fifo.v")
+srcs.append("../rtl/max_finder_tree.v")
 srcs.append("../rtl/core_mems.v")
 srcs.append("../rtl/riscv_axis_dma.v")
 srcs.append("../rtl/VexRiscv.v")

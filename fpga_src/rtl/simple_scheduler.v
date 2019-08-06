@@ -13,6 +13,7 @@ module simple_scheduler # (
   parameter USER_WIDTH_OUT  = DEST_WIDTH_IN,
   parameter CTRL_DEST_WIDTH = $clog2(CORE_COUNT),
   parameter CTRL_USER_WIDTH = $clog2(CORE_COUNT),
+  parameter DESC_CNT_WIDTH  = $clog2(SLOT_COUNT)+1,
   parameter ENABLE_ILA      = 0
 ) (
   input                              clk,
@@ -118,25 +119,54 @@ module simple_scheduler # (
   assign data_s_axis_tready = tx_axis_tready;
 
   // no further use for data_s_axis_tdest after its at correct port
- 
-  loaded_desc_fifo # (
-    .CORE_COUNT(CORE_COUNT),
-    .SLOT_COUNT(SLOT_COUNT),
-    .START_ADDR(SLOT_START_ADDR),
-    .ADDR_STEP(SLOT_ADDR_STEP),
-    .SLOT_ADDR_WIDTH(EFF_ADDR_WIDTH)
-  ) rx_desc_fifo (
-    .clk(clk),
-    .rst(rst),
+
+  wire [EFF_ADDR_WIDTH-1:0]  rx_desc_slot  [0:CORE_COUNT-1];
+  wire [CTRL_DEST_WIDTH-1:0] selected_desc;
+  wire [CORE_COUNT-1:0]      rx_desc_slot_v;
+  wire [CORE_COUNT-1:0]      rx_desc_slot_pop;
+  wire [CORE_COUNT-1:0]      rx_desc_slot_accept;
   
-    .din_valid(ctrl_s_axis_tvalid), 
-    .din({ctrl_s_axis_tuser,ctrl_s_axis_tdata[15+EFF_ADDR_WIDTH:16]}),
-    .din_ready(ctrl_s_axis_tready),
-   
-    .dout_valid(rx_desc_v),
-    .dout(rx_desc_data),
-    .dout_ready(rx_desc_pop)
+  wire [CORE_COUNT*DESC_CNT_WIDTH-1:0] rx_desc_count;
+        
+  assign ctrl_s_axis_tready = | rx_desc_slot_accept;
+  assign rx_desc_v          = | rx_desc_slot_v;
+  assign rx_desc_data       = {selected_desc, rx_desc_slot[selected_desc]};
+  
+  genvar i;
+  generate 
+    for (i=0;i<CORE_COUNT;i=i+1) begin
+      loaded_desc_fifo # (
+        .SLOT_COUNT(SLOT_COUNT),
+        .START_ADDR(SLOT_START_ADDR),
+        .ADDR_STEP(SLOT_ADDR_STEP),
+        .SLOT_ADDR_WIDTH(EFF_ADDR_WIDTH)
+      ) rx_desc_fifo (
+        .clk(clk),
+        .rst(rst),
+      
+        .din_valid(ctrl_s_axis_tvalid && (ctrl_s_axis_tuser==i)), 
+        .din(ctrl_s_axis_tdata[15+EFF_ADDR_WIDTH:16]),
+        .din_ready(rx_desc_slot_accept[i]),
+       
+        .dout_valid(rx_desc_slot_v[i]),
+        .dout(rx_desc_slot[i]),
+        .dout_ready(rx_desc_slot_pop[i]),
+        
+        .item_count(rx_desc_count[i*DESC_CNT_WIDTH +: DESC_CNT_WIDTH])
+      );
+      assign rx_desc_slot_pop [i] = rx_desc_pop && (selected_desc==i);
+    end
+  endgenerate
+
+  max_finder_tree # (
+    .PORT_COUNT(CORE_COUNT),
+    .DATA_WIDTH(DESC_CNT_WIDTH)
+  ) core_selector ( 
+    .values(rx_desc_count),
+    .max_val(),
+    .max_ptr(selected_desc)
   );
+
  
   // Core reset command
   reg [CTRL_DEST_WIDTH:0] core_rst_counter;
