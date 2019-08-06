@@ -8,6 +8,31 @@ module max_finder_tree # (
   output wire [ADDR_WIDTH-1:0]            max_ptr
 );
 
+localparam CEIL_PORT_CNT = (2**$clog2(PORT_COUNT));
+localparam PADDING       = CEIL_PORT_CNT - PORT_COUNT;
+
+max_finder_tree_pow_of_2 # (
+  .PORT_COUNT(CEIL_PORT_CNT),
+  .DATA_WIDTH(DATA_WIDTH),
+  .ADDR_WIDTH(ADDR_WIDTH)
+) max_finder ( 
+  .values({{PADDING*DATA_WIDTH{1'b0}},values}),
+  .max_val(max_val),
+  .max_ptr(max_ptr)
+);
+
+endmodule
+
+module max_finder_tree_pow_of_2 # (
+  parameter PORT_COUNT = 16,
+  parameter DATA_WIDTH = 8,
+  parameter ADDR_WIDTH = $clog2(PORT_COUNT)
+) ( 
+  input  wire [PORT_COUNT*DATA_WIDTH-1:0] values,
+  output wire [DATA_WIDTH-1:0]            max_val,
+  output wire [ADDR_WIDTH-1:0]            max_ptr
+);
+
 // intermediate signals
 wire [DATA_WIDTH-1:0] int_max [0:PORT_COUNT-2];
 wire [ADDR_WIDTH-1:0] int_ptr [0:PORT_COUNT-2];
