@@ -90,7 +90,7 @@ module riscv_axis_dma # (
   reg                      wr_first_pkt;
   wire                     wr_ready;
   
-  wire [ADDR_WIDTH-1:0] full_addr = {s_axis_tdest,{(ADDR_LEAD_ZERO-4){1'b0}},4'hA};
+  wire [ADDR_WIDTH-1:0] full_addr = {s_axis_tdest,{(ADDR_LEAD_ZERO-4){1'b0}},4'h2};
   reg  [ADDR_WIDTH-1:0] full_addr_r; 
   reg  [MASK_BITS:0]    wr_offset;
 
@@ -159,7 +159,8 @@ module riscv_axis_dma # (
     else 
       wr_first_pkt <= ((((~wr_data_en) || (wr_data_en && wr_last))
                         && s_axis_tvalid && wr_ready)
-                        || (wr_first_pkt && (~wr_ready)));
+                        || (wr_first_pkt && (~wr_ready))) 
+                        && !(extra_cycle && wr_data_en && wr_ready);
 
   // If there is need for extra cycle the wr_last_pkt would be asserted then
   wire wr_last_pkt = wr_data_en && ((wr_last && !extra_cycle) || (extra_cycle_r));
@@ -186,7 +187,8 @@ module riscv_axis_dma # (
     if (wr_data_en && wr_ready)
       next_wr_addr <= wr_addr + STRB_WIDTH;
   
-  assign wr_addr = wr_first_pkt ? {full_addr_r[ADDR_WIDTH-1:MASK_BITS],{MASK_BITS{1'b0}}} : next_wr_addr;
+  wire [ADDR_WIDTH-1:0] wr_aligned_addr = {full_addr_r[ADDR_WIDTH-1:MASK_BITS],{MASK_BITS{1'b0}}};
+  assign wr_addr = wr_first_pkt ? wr_aligned_addr : next_wr_addr;
   
   // count number of bytes in the last data 
   // It can accept zeros in the input strb
@@ -204,7 +206,7 @@ module riscv_axis_dma # (
     if (rst)
         wr_pkt_len <= 0;
     else if (wr_data_en && wr_ready) begin 
-      if (wr_first_pkt && !extra_cycle_r)
+      if (wr_first_pkt)
         wr_pkt_len <= one_count;
       else
         wr_pkt_len <= wr_pkt_len + one_count;
