@@ -59,7 +59,7 @@ all: fpga
 fpga: $(FPGA_TOP).bit
 
 tmpclean:
-	-rm -rf *.log *.jou *.cache *.hw *.ip_user_files *.runs *.xpr *.html *.xml *.sim *.srcs *.str .Xil defines.v
+	-rm -rf *.log *.jou *.cache *.hw *.ip_user_files *.runs *.xpr *.html *.xml *.sim *.srcs *.str .Xil defines.v rev
 	-rm -rf create_project.tcl run_synth.tcl run_impl.tcl generate_bit.tcl
 
 clean: tmpclean

@@ -74,7 +74,7 @@ assign sfp_2_led = 0;
 assign sma_led   = 0;
 
 // RISCV system parameters
-parameter CORE_COUNT      = 3;
+parameter CORE_COUNT      = 16;
 parameter PORT_COUNT      = 2;
 parameter CORE_ADDR_WIDTH = 16;
 parameter CORE_LEAD_ZERO  = 8;
