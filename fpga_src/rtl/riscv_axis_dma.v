@@ -83,27 +83,33 @@ module riscv_axis_dma # (
   reg  [STRB_WIDTH-1:0]    wr_strb_2;
   reg                      wr_last;
   reg                      extra_cycle_r;
-  reg  [DEST_WIDTH_IN-1:0] wr_dest;
-  reg  [USER_WIDTH_IN-1:0] wr_user;
   wire [ADDR_WIDTH-1:0]    wr_addr;
   reg  [ADDR_WIDTH-1:0]    next_wr_addr;
   reg                      wr_first_pkt;
   wire                     wr_ready;
   
   wire [ADDR_WIDTH-1:0] full_addr = {s_axis_tdest,{(ADDR_LEAD_ZERO-4){1'b0}},4'h2};
-  reg  [ADDR_WIDTH-1:0] full_addr_r; 
-  reg  [MASK_BITS:0]    wr_offset;
 
-  // Register the inputs when data is accepted
+  // For first data, Latch the start address, incoming port and slot 
+  // for creating descriptor
+  reg [ADDR_WIDTH-1:0]    wr_start_addr;
+  reg [PORT_WIDTH-1:0]    incoming_port;
+  reg  [MASK_BITS:0]      wr_offset;
+  reg [DEST_WIDTH_IN-1:0] wr_slot;
+  
+  wire latch_info = (((~wr_data_en) || (wr_last_pkt && wr_ready)) 
+                      && s_axis_tvalid && s_axis_tready);
+
+  // Latch metadata in first cycle
   // Also move forward the pipeline when data is sent
   always @ (posedge clk) begin
-    if (s_axis_tvalid && s_axis_tready) begin
-      wr_dest     <= s_axis_tdest;
-      wr_user     <= s_axis_tuser;
-      full_addr_r <= full_addr;
-      wr_offset   <= {1'b1,{MASK_BITS{1'b0}}} - {1'b0,full_addr[MASK_BITS-1:0]};
+    if (latch_info) begin
+      wr_start_addr <= full_addr;
+      wr_offset     <= {1'b1,{MASK_BITS{1'b0}}} - {1'b0, full_addr[MASK_BITS-1:0]};
+      wr_slot       <= s_axis_tdest;
+      incoming_port <= s_axis_tuser;
     end
-
+  
     if (extra_cycle && wr_data_en && wr_ready) begin
       wr_strb_1 <= {STRB_WIDTH{1'b0}};
       wr_last   <= 1'b0;
@@ -157,37 +163,20 @@ module riscv_axis_dma # (
     if (rst)
       wr_first_pkt <= 1'b0;
     else 
-      wr_first_pkt <= ((((~wr_data_en) || (wr_data_en && wr_last_pkt))
-                        && s_axis_tvalid && wr_ready)
-                        || (wr_first_pkt && (~wr_ready))) 
-                        && !(extra_cycle && wr_data_en && wr_ready);
-
+      wr_first_pkt <= latch_info || (wr_first_pkt && !wr_ready);
+      
   // If there is need for extra cycle the wr_last_pkt would be asserted then
   wire wr_last_pkt = wr_data_en && ((wr_last && !extra_cycle) || (extra_cycle_r));
   reg  wr_last_pkt_r;  // Used for enquing the descriptor FIFO
   always @ (posedge clk)
     wr_last_pkt_r  <= wr_last_pkt && wr_ready;
- 
-  // For first data, Latch the start address, incoming port and slot 
-  // for creating descriptor
-  reg [ADDR_WIDTH-1:0]    wr_start_addr;
-  reg [PORT_WIDTH-1:0]    incoming_port;
-  reg [DEST_WIDTH_IN-1:0] wr_slot;
-  reg [LEN_WIDTH-1:0]     wr_pkt_len;
-  
-  always @ (posedge clk)
-    if (wr_first_pkt) begin
-      wr_start_addr <= full_addr_r;
-      wr_slot       <= wr_dest;
-      incoming_port <= wr_user;
-    end
   
   // Calculating the write address
   always @ (posedge clk)
     if (wr_data_en && wr_ready)
       next_wr_addr <= wr_addr + STRB_WIDTH;
   
-  wire [ADDR_WIDTH-1:0] wr_aligned_addr = {full_addr_r[ADDR_WIDTH-1:MASK_BITS],{MASK_BITS{1'b0}}};
+  wire [ADDR_WIDTH-1:0] wr_aligned_addr = {wr_start_addr[ADDR_WIDTH-1:MASK_BITS],{MASK_BITS{1'b0}}};
   assign wr_addr = wr_first_pkt ? wr_aligned_addr : next_wr_addr;
   
   // count number of bytes in the last data 
@@ -202,6 +191,7 @@ module riscv_axis_dma # (
   end
 
   // Calculate total bytes 
+  reg [LEN_WIDTH-1:0] wr_pkt_len;
   always @ (posedge clk)
     if (rst)
         wr_pkt_len <= 0;
