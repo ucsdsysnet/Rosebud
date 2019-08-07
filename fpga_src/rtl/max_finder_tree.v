@@ -71,9 +71,12 @@ generate
     assign int_ptr [k/2] = cmp_res[k/2] ?  
                        {{(ADDR_WIDTH-1){1'b0}},1'b1} : {{(ADDR_WIDTH-1){1'b0}},1'b0};
   end
+      
 
   for (stage=1; stage < ADDR_WIDTH; stage = stage+1) begin
-    for (j=0; j<(PORT_COUNT/(2*stage)); j=j+2) begin
+    for (j=0; j<(PORT_COUNT/(2**stage)); j=j+2) begin
+      // initial
+      //   $display("%d %d %d %d", stage, j, r_offset(stage), l_offset(stage));
       greater_than # (.DATA_WIDTH(DATA_WIDTH)) intermediate_stage (
         .inp_A(int_max[r_offset(stage)+j+1]),
         .inp_B(int_max[r_offset(stage)+j]),
@@ -89,6 +92,7 @@ generate
   end
 
 endgenerate
+
 
 assign max_val = int_max [PORT_COUNT-2];
 assign max_ptr = int_ptr [PORT_COUNT-2]; 
