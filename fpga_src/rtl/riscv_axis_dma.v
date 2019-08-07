@@ -11,7 +11,8 @@ module riscv_axis_dma # (
   parameter DEST_WIDTH_IN    = ADDR_WIDTH-ADDR_LEAD_ZERO,
   parameter DEST_WIDTH_OUT   = PORT_WIDTH,
   parameter USER_WIDTH_IN    = PORT_WIDTH,
-  parameter USER_WIDTH_OUT   = ADDR_WIDTH-ADDR_LEAD_ZERO
+  parameter USER_WIDTH_OUT   = ADDR_WIDTH-ADDR_LEAD_ZERO,
+  parameter MASK_BITS        = $clog2(STRB_WIDTH)
 )(
   input  wire                      clk,
   input  wire                      rst,
@@ -76,9 +77,12 @@ module riscv_axis_dma # (
 
   // A pipeline register for the input from AXIS 
   reg                      wr_data_en;
-  reg  [DATA_WIDTH-1:0]    wr_data;
-  reg  [STRB_WIDTH-1:0]    wr_strb;
+  reg  [DATA_WIDTH-1:0]    wr_data_1;
+  reg  [STRB_WIDTH-1:0]    wr_strb_1;
+  reg  [DATA_WIDTH-1:0]    wr_data_2;
+  reg  [STRB_WIDTH-1:0]    wr_strb_2;
   reg                      wr_last;
+  reg                      extra_cycle_r;
   reg  [DEST_WIDTH_IN-1:0] wr_dest;
   reg  [USER_WIDTH_IN-1:0] wr_user;
   wire [ADDR_WIDTH-1:0]    wr_addr;
@@ -86,27 +90,64 @@ module riscv_axis_dma # (
   reg                      wr_first_pkt;
   wire                     wr_ready;
   
-  always @ (posedge clk) 
+  wire [ADDR_WIDTH-1:0] full_addr = {s_axis_tdest,{(ADDR_LEAD_ZERO-4){1'b0}},4'hA};
+  reg  [ADDR_WIDTH-1:0] full_addr_r; 
+  reg  [MASK_BITS:0]    wr_offset;
+
+  // Register the inputs when data is accepted
+  // Also move forward the pipeline when data is sent
+  always @ (posedge clk) begin
     if (s_axis_tvalid && s_axis_tready) begin
-      wr_data <= s_axis_tdata;
-      wr_strb <= s_axis_tkeep;
-      wr_last <= s_axis_tlast;
-      wr_dest <= s_axis_tdest;
-      wr_user <= s_axis_tuser;
+      wr_dest     <= s_axis_tdest;
+      wr_user     <= s_axis_tuser;
+      full_addr_r <= full_addr;
+      wr_offset   <= {1'b1,{MASK_BITS{1'b0}}} - {1'b0,full_addr[MASK_BITS-1:0]};
     end
+
+    if (extra_cycle && wr_data_en && wr_ready) begin
+      wr_strb_1 <= {STRB_WIDTH{1'b0}};
+      wr_last   <= 1'b0;
+    end else if (s_axis_tvalid && s_axis_tready) begin
+      wr_data_1 <= s_axis_tdata;
+      wr_strb_1 <= s_axis_tkeep;
+      wr_last   <= s_axis_tlast;
+    end
+
+    if (wr_data_en && wr_ready) begin
+      wr_data_2 <= wr_data_1;
+      extra_cycle_r <= extra_cycle;
+    end
+
+    // invalidate the data in last stage
+    if (wr_last_pkt && wr_ready) 
+      wr_strb_2 <= {STRB_WIDTH{1'b0}};
+    else if (wr_data_en && wr_ready) 
+      wr_strb_2 <= wr_strb_1;
+
+    if (rst) begin
+      wr_last <= 1'b0;
+      extra_cycle_r <= 1'b0;
+      wr_strb_1 <= {STRB_WIDTH{1'b0}};
+      wr_strb_2 <= {STRB_WIDTH{1'b0}};
+    end
+  end
+  
+  wire extra_cycle = wr_last && (|(wr_strb_1 >> wr_offset));
 
   // Simple valid_ready control. If we can write out we can read in.
   // So axis_ready is connected to mem ready and write en to mem
   // is asserted when there is new data or stays asserted if it was 
-  // not taken
+  // not taken. Also if the data is taken but it needs extra cycle 
+  // it stays valid.
   always @ (posedge clk)
     if (rst)
       wr_data_en <= 1'b0;
     else
       wr_data_en <= (s_axis_tvalid && s_axis_tready) ||
-                    (wr_data_en && (~wr_ready));
+                    (wr_data_en && (~wr_ready)) || 
+                    (wr_data_en && wr_ready && extra_cycle);
 
-  assign s_axis_tready = wr_ready;
+  assign s_axis_tready = wr_ready & (~extra_cycle);
 
   // First packet is when there is new data and can be accpted 
   // (wr_ready is s_axis_tready). It can happen if there was 
@@ -120,10 +161,11 @@ module riscv_axis_dma # (
                         && s_axis_tvalid && wr_ready)
                         || (wr_first_pkt && (~wr_ready)));
 
-  wire wr_last_pkt = wr_data_en && wr_ready && wr_last;
+  // If there is need for extra cycle the wr_last_pkt would be asserted then
+  wire wr_last_pkt = wr_data_en && ((wr_last && !extra_cycle) || (extra_cycle_r));
   reg  wr_last_pkt_r;  // Used for enquing the descriptor FIFO
   always @ (posedge clk)
-    wr_last_pkt_r  <= wr_last_pkt;
+    wr_last_pkt_r  <= wr_last_pkt && wr_ready;
  
   // For first data, Latch the start address, incoming port and slot 
   // for creating descriptor
@@ -132,10 +174,9 @@ module riscv_axis_dma # (
   reg [DEST_WIDTH_IN-1:0] wr_slot;
   reg [LEN_WIDTH-1:0]     wr_pkt_len;
   
-  wire [ADDR_WIDTH-1:0] full_addr = {wr_dest,{(ADDR_LEAD_ZERO){1'b0}}};
   always @ (posedge clk)
     if (wr_first_pkt) begin
-      wr_start_addr <= full_addr;
+      wr_start_addr <= full_addr_r;
       wr_slot       <= wr_dest;
       incoming_port <= wr_user;
     end
@@ -145,34 +186,28 @@ module riscv_axis_dma # (
     if (wr_data_en && wr_ready)
       next_wr_addr <= wr_addr + STRB_WIDTH;
   
-  assign wr_addr = wr_first_pkt ? full_addr : next_wr_addr;
+  assign wr_addr = wr_first_pkt ? {full_addr_r[ADDR_WIDTH-1:MASK_BITS],{MASK_BITS{1'b0}}} : next_wr_addr;
   
   // count number of bytes in the last data 
+  // It can accept zeros in the input strb
   reg [$clog2(STRB_WIDTH):0] one_count;
   integer i;
   always @ (*) begin
     one_count = STRB_WIDTH;
     for (i=STRB_WIDTH-1; i>=0; i=i-1)
-      if (!wr_strb[i])
-        one_count = i;
+      if (!mem_wr_strb[i])
+        one_count = one_count-1;
   end
 
   // Calculate total bytes 
   always @ (posedge clk)
     if (rst)
         wr_pkt_len <= 0;
-    else if (wr_first_pkt) begin
-      if(!wr_ready)
-        wr_pkt_len <= 0;
-      else if (wr_ready && wr_last)
+    else if (wr_data_en && wr_ready) begin 
+      if (wr_first_pkt && !extra_cycle_r)
         wr_pkt_len <= one_count;
-      else if (wr_ready)
-        wr_pkt_len <= STRB_WIDTH;
-    end else if (wr_data_en && wr_ready) begin
-      if (wr_last)
-        wr_pkt_len <= wr_pkt_len + one_count;
       else
-        wr_pkt_len <= wr_pkt_len + STRB_WIDTH;
+        wr_pkt_len <= wr_pkt_len + one_count;
     end
     
   // Descriptor FIFO. One cycle after last data is transmitted
@@ -206,11 +241,11 @@ module riscv_axis_dma # (
                     {(16-LEN_WIDTH){1'b0}},pkt_len};
 
   assign mem_wr_en   = wr_data_en;
-  assign mem_wr_strb = wr_strb;
   assign mem_wr_addr = wr_addr;
-  assign mem_wr_data = wr_data;
   assign mem_wr_last = wr_last_pkt;
   assign wr_ready    = mem_wr_ready;
+  assign mem_wr_data = {wr_data_1,wr_data_2} >> {wr_offset,3'd0};
+  assign mem_wr_strb = {wr_strb_1,wr_strb_2} >> wr_offset;
 
   ////////////////////////////////////////////////////////////////////////////////
   ///////////////////////// READ FROM MEM TO AIXS ////////////////////////////////
@@ -243,7 +278,6 @@ module riscv_axis_dma # (
   end
   
   // Parsing the descriptor
-  localparam MASK_BITS = $clog2(STRB_WIDTH);
   reg [ADDR_WIDTH-1:0]     send_base_addr;
   reg [LEN_WIDTH-1:0]      send_len;
   reg [PORT_WIDTH-1:0]     send_port;
