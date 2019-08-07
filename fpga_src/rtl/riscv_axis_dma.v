@@ -157,7 +157,7 @@ module riscv_axis_dma # (
     if (rst)
       wr_first_pkt <= 1'b0;
     else 
-      wr_first_pkt <= ((((~wr_data_en) || (wr_data_en && wr_last))
+      wr_first_pkt <= ((((~wr_data_en) || (wr_data_en && wr_last_pkt))
                         && s_axis_tvalid && wr_ready)
                         || (wr_first_pkt && (~wr_ready))) 
                         && !(extra_cycle && wr_data_en && wr_ready);
