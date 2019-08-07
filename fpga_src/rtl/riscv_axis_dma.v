@@ -75,33 +75,23 @@ module riscv_axis_dma # (
   ///////////////////////// WRITE FROM AXIS TO MEM ///////////////////////////////
   ////////////////////////////////////////////////////////////////////////////////
 
-  // A pipeline register for the input from AXIS 
-  reg                      wr_data_en;
-  reg  [DATA_WIDTH-1:0]    wr_data_1;
-  reg  [STRB_WIDTH-1:0]    wr_strb_1;
-  reg  [DATA_WIDTH-1:0]    wr_data_2;
-  reg  [STRB_WIDTH-1:0]    wr_strb_2;
-  reg                      wr_last;
-  reg                      extra_cycle_r;
-  wire [ADDR_WIDTH-1:0]    wr_addr;
-  reg  [ADDR_WIDTH-1:0]    next_wr_addr;
-  reg                      wr_first_pkt;
-  wire                     wr_ready;
-  
   wire [ADDR_WIDTH-1:0] full_addr = {s_axis_tdest,{(ADDR_LEAD_ZERO-4){1'b0}},4'h2};
 
   // For first data, Latch the start address, incoming port and slot 
   // for creating descriptor
   reg [ADDR_WIDTH-1:0]    wr_start_addr;
   reg [PORT_WIDTH-1:0]    incoming_port;
-  reg  [MASK_BITS:0]      wr_offset;
+  reg [MASK_BITS:0]       wr_offset;
   reg [DEST_WIDTH_IN-1:0] wr_slot;
+  reg                     wr_strb_left;
   
+  // First packet is when there is new data and can be accpted. It can happen if 
+  // there was no data last cycle, or if there was and it was last data.
+  // (Timing wise it is logic between 4 registers and wr_ready and s_axis_tvalid)
   wire latch_info = (((~wr_data_en) || (wr_last_pkt && wr_ready)) 
                       && s_axis_tvalid && s_axis_tready);
 
   // Latch metadata in first cycle
-  // Also move forward the pipeline when data is sent
   always @ (posedge clk) begin
     if (latch_info) begin
       wr_start_addr <= full_addr;
@@ -110,6 +100,38 @@ module riscv_axis_dma # (
       incoming_port <= s_axis_tuser;
     end
   
+    // To improve timing do part of logic in the previous cycle
+    if (extra_cycle && wr_data_en && wr_ready) 
+      wr_strb_left <= 1'b0;
+    else if (latch_info)
+      wr_strb_left <= |(s_axis_tkeep >> ({1'b1,{MASK_BITS{1'b0}}} - 
+                                         {1'b0, full_addr[MASK_BITS-1:0]}));
+    else if (s_axis_tvalid && s_axis_tready)
+      wr_strb_left <= |(s_axis_tkeep >> wr_offset);
+  end
+
+  // Output signals and a two_stage pipeline register for the input from AXIS 
+  reg                   wr_data_en;
+  reg                   wr_last;
+  wire                  wr_ready;
+  reg  [ADDR_WIDTH-1:0] next_wr_addr;
+  wire [ADDR_WIDTH-1:0] wr_addr;
+  reg                   wr_first_pkt;
+  reg                   extra_cycle_r;
+
+  reg  [DATA_WIDTH-1:0] wr_data_1;
+  reg  [DATA_WIDTH-1:0] wr_data_2;
+  reg  [STRB_WIDTH-1:0] wr_strb_1;
+  reg  [STRB_WIDTH-1:0] wr_strb_2;
+ 
+  wire extra_cycle = wr_last && wr_strb_left;
+  // wire extra_cycle = wr_last && (|(wr_strb_1 >> wr_offset));  
+
+  // Move forward the pipeline when data is received and can be sent
+  // Extra cycle_r is when the data is read from second stage as extra
+  // cycle.
+  always @ (posedge clk) begin
+    // Stall if in extra cycle, and devalidate the first stage
     if (extra_cycle && wr_data_en && wr_ready) begin
       wr_strb_1 <= {STRB_WIDTH{1'b0}};
       wr_last   <= 1'b0;
@@ -119,8 +141,9 @@ module riscv_axis_dma # (
       wr_last   <= s_axis_tlast;
     end
 
+    // If data is accepted 
     if (wr_data_en && wr_ready) begin
-      wr_data_2 <= wr_data_1;
+      wr_data_2     <= wr_data_1;
       extra_cycle_r <= extra_cycle;
     end
 
@@ -131,15 +154,13 @@ module riscv_axis_dma # (
       wr_strb_2 <= wr_strb_1;
 
     if (rst) begin
-      wr_last <= 1'b0;
+      wr_last       <= 1'b0;
       extra_cycle_r <= 1'b0;
-      wr_strb_1 <= {STRB_WIDTH{1'b0}};
-      wr_strb_2 <= {STRB_WIDTH{1'b0}};
+      wr_strb_1     <= {STRB_WIDTH{1'b0}};
+      wr_strb_2     <= {STRB_WIDTH{1'b0}};
     end
   end
   
-  wire extra_cycle = wr_last && (|(wr_strb_1 >> wr_offset));
-
   // Simple valid_ready control. If we can write out we can read in.
   // So axis_ready is connected to mem ready and write en to mem
   // is asserted when there is new data or stays asserted if it was 
@@ -155,10 +176,8 @@ module riscv_axis_dma # (
 
   assign s_axis_tready = wr_ready & (~extra_cycle);
 
-  // First packet is when there is new data and can be accpted 
-  // (wr_ready is s_axis_tready). It can happen if there was 
-  // no data last cycle, or if there was and it was last data.
-  // Also if the data cannot go out it keeps its first_pkt state 
+  // wr_first_pkt aligns with wr_data_1, which is one cycle after latch_info.
+  // Also if data cannot go out it keeps its first_pkt state 
   always @ (posedge clk)
     if (rst)
       wr_first_pkt <= 1'b0;
@@ -166,10 +185,8 @@ module riscv_axis_dma # (
       wr_first_pkt <= latch_info || (wr_first_pkt && !wr_ready);
       
   // If there is need for extra cycle the wr_last_pkt would be asserted then
+  // (Timing wise it is a logic between 4 registers)
   wire wr_last_pkt = wr_data_en && ((wr_last && !extra_cycle) || (extra_cycle_r));
-  reg  wr_last_pkt_r;  // Used for enquing the descriptor FIFO
-  always @ (posedge clk)
-    wr_last_pkt_r  <= wr_last_pkt && wr_ready;
   
   // Calculating the write address
   always @ (posedge clk)
@@ -191,16 +208,14 @@ module riscv_axis_dma # (
   end
 
   // Calculate total bytes 
-  reg [LEN_WIDTH-1:0] wr_pkt_len;
+  reg  [LEN_WIDTH-1:0] wr_pkt_len;
+  wire [LEN_WIDTH-1:0] next_wr_pkt_len = wr_first_pkt ? one_count : wr_pkt_len + one_count;
+
   always @ (posedge clk)
     if (rst)
         wr_pkt_len <= 0;
-    else if (wr_data_en && wr_ready) begin 
-      if (wr_first_pkt)
-        wr_pkt_len <= one_count;
-      else
-        wr_pkt_len <= wr_pkt_len + one_count;
-    end
+    else if (wr_data_en && wr_ready) 
+        wr_pkt_len <= next_wr_pkt_len;
     
   // Descriptor FIFO. One cycle after last data is transmitted
   // the descriptor is ready to be enqued 
@@ -217,8 +232,8 @@ module riscv_axis_dma # (
     .clk(clk),
     .rst(rst),
   
-    .din_valid(wr_last_pkt_r),
-    .din({wr_start_addr, incoming_port, wr_slot, wr_pkt_len}),
+    .din_valid(wr_last_pkt && wr_ready),
+    .din({wr_start_addr, incoming_port, wr_slot, next_wr_pkt_len}),
     .din_ready(desc_fifo_ready),
    
     .dout_valid(recv_desc_valid),
