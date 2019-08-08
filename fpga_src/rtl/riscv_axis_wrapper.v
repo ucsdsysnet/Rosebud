@@ -9,81 +9,78 @@
 module riscv_axis_wrapper # (
     parameter DATA_WIDTH      = 64,   
     parameter ADDR_WIDTH      = 16,
+    parameter SLOT_COUNT      = 8,
     parameter IMEM_SIZE_BYTES = 8192,
     parameter DMEM_SIZE_BYTES = 32768,
     parameter COHERENT_START  = 16'h6FFF,
-    parameter INTERLEAVE      = 0,
+    parameter INTERLEAVE      = 1,
     parameter RECV_DESC_DEPTH = 8,
     parameter SEND_DESC_DEPTH = 8,
     parameter MSG_FIFO_DEPTH  = 16,
     parameter PORT_COUNT      = 4,
     parameter LEN_WIDTH       = 16,
-    parameter ADDR_LEAD_ZERO  = 8,
-    parameter PORT_WIDTH      = $clog2(PORT_COUNT),
-    parameter STRB_WIDTH      = (DATA_WIDTH/8),
     parameter CORE_ID         = 0,
     parameter CORE_ID_WIDTH   = 4, 
-    parameter DEST_WIDTH_IN   = CORE_ID_WIDTH+ADDR_WIDTH-ADDR_LEAD_ZERO,
-    parameter DEST_WIDTH_OUT  = PORT_WIDTH,
-    parameter USER_WIDTH_IN   = PORT_WIDTH,
-    parameter USER_WIDTH_OUT  = CORE_ID_WIDTH+ADDR_WIDTH-ADDR_LEAD_ZERO,
+    parameter SLOT_START_ADDR = 16'h200A,
+    parameter SLOT_ADDR_STEP  = 16'h0800,
+
+    parameter STRB_WIDTH      = (DATA_WIDTH/8),
+    parameter SLOT_WIDTH      = $clog2(SLOT_COUNT+1),
+    parameter PORT_WIDTH      = $clog2(PORT_COUNT),
+    parameter ID_SLOT_WIDTH   = CORE_ID_WIDTH+SLOT_WIDTH,
     parameter DMEM_ADDR_WIDTH = $clog2(DMEM_SIZE_BYTES),
-    parameter MSG_WIDTH       = 4+DMEM_ADDR_WIDTH+32,
-    parameter SLOT_WIDTH      = DEST_WIDTH_IN-CORE_ID_WIDTH
+    parameter MSG_WIDTH       = 4+DMEM_ADDR_WIDTH+32
 )
 (
-    input  wire                      clk,
-    input  wire                      rst,
+    input  wire                     clk,
+    input  wire                     rst,
 
     // ---------------- DATA CHANNEL --------------- // 
     // Incoming data
-    input  wire [DATA_WIDTH-1:0]     data_s_axis_tdata,
-    input  wire [STRB_WIDTH-1:0]     data_s_axis_tkeep,
-    input  wire                      data_s_axis_tvalid,
-    output wire                      data_s_axis_tready,
-    input  wire                      data_s_axis_tlast,
-    // tdest is the MSB of start address
-    input  wire [DEST_WIDTH_IN-1:0]  data_s_axis_tdest,
-    // tuser is the incoming port 
-    input  wire [USER_WIDTH_IN-1:0]  data_s_axis_tuser,
+    input  wire [DATA_WIDTH-1:0]    data_s_axis_tdata,
+    input  wire [STRB_WIDTH-1:0]    data_s_axis_tkeep,
+    input  wire                     data_s_axis_tvalid,
+    output wire                     data_s_axis_tready,
+    input  wire                     data_s_axis_tlast,
+    input  wire [ID_SLOT_WIDTH-1:0] data_s_axis_tdest,
+    input  wire [PORT_WIDTH-1:0]    data_s_axis_tuser,
   
     // Outgoing data
-    output wire [DATA_WIDTH-1:0]     data_m_axis_tdata,
-    output wire [STRB_WIDTH-1:0]     data_m_axis_tkeep,
-    output wire                      data_m_axis_tvalid,
-    input  wire                      data_m_axis_tready,
-    output wire                      data_m_axis_tlast,
-    output wire [DEST_WIDTH_OUT-1:0] data_m_axis_tdest,
-    // tuser is the MSB of original slot start address
-    output wire [USER_WIDTH_OUT-1:0] data_m_axis_tuser,
+    output wire [DATA_WIDTH-1:0]    data_m_axis_tdata,
+    output wire [STRB_WIDTH-1:0]    data_m_axis_tkeep,
+    output wire                     data_m_axis_tvalid,
+    input  wire                     data_m_axis_tready,
+    output wire                     data_m_axis_tlast,
+    output wire [PORT_WIDTH-1:0]    data_m_axis_tdest,
+    output wire [ID_SLOT_WIDTH-1:0] data_m_axis_tuser,
   
     // ---------------- CTRL CHANNEL --------------- // 
     // Incoming control
-    input  wire [DATA_WIDTH-1:0]     ctrl_s_axis_tdata,
-    input  wire                      ctrl_s_axis_tvalid,
-    output wire                      ctrl_s_axis_tready,
-    input  wire                      ctrl_s_axis_tlast,
-    input  wire [CORE_ID_WIDTH-1:0]  ctrl_s_axis_tdest,
+    input  wire [DATA_WIDTH-1:0]    ctrl_s_axis_tdata,
+    input  wire                     ctrl_s_axis_tvalid,
+    output wire                     ctrl_s_axis_tready,
+    input  wire                     ctrl_s_axis_tlast,
+    input  wire [CORE_ID_WIDTH-1:0] ctrl_s_axis_tdest,
   
     // Outgoing control
-    output wire [DATA_WIDTH-1:0]     ctrl_m_axis_tdata,
-    output wire                      ctrl_m_axis_tvalid,
-    input  wire                      ctrl_m_axis_tready,
-    output wire                      ctrl_m_axis_tlast,
-    output wire [CORE_ID_WIDTH-1:0]  ctrl_m_axis_tuser,
+    output wire [DATA_WIDTH-1:0]    ctrl_m_axis_tdata,
+    output wire                     ctrl_m_axis_tvalid,
+    input  wire                     ctrl_m_axis_tready,
+    output wire                     ctrl_m_axis_tlast,
+    output wire [CORE_ID_WIDTH-1:0] ctrl_m_axis_tuser,
 
     // ------------- CORE MSG CHANNEL -------------- // 
     // Core messages output  
-    output wire [MSG_WIDTH-1:0]      core_msg_out_data,
-    output wire                      core_msg_out_valid,
-    input  wire                      core_msg_out_ready,
+    output wire [MSG_WIDTH-1:0]     core_msg_out_data,
+    output wire                     core_msg_out_valid,
+    input  wire                     core_msg_out_ready,
 
     // Core messages input
-    input  wire [MSG_WIDTH-1:0]      core_msg_in_data,
-    input  wire                      core_msg_in_valid
+    input  wire [MSG_WIDTH-1:0]     core_msg_in_data,
+    input  wire                     core_msg_in_valid
 );
 
-assign data_m_axis_tuser[USER_WIDTH_OUT-1:USER_WIDTH_OUT-CORE_ID_WIDTH] = CORE_ID; 
+assign data_m_axis_tuser [SLOT_WIDTH +: CORE_ID_WIDTH] = CORE_ID; 
 assign ctrl_m_axis_tuser = CORE_ID;
 
 /////////////////////////////////////////////////////////////////////
@@ -98,6 +95,51 @@ always @ (posedge clk)
         core_reset <= ctrl_s_axis_tdata[0];
 
 assign ctrl_s_axis_tready = 1;
+
+/////////////////////////////////////////////////////////////////////
+/////////// EXTRACTING BASE ADDR FROM/FOR INCOMING DATA /////////////
+/////////////////////////////////////////////////////////////////////
+
+// Internal lookup table for slot addresses
+reg [ADDR_WIDTH-1:0] slot_addr [0:SLOT_COUNT-1];
+integer j;
+
+initial begin
+  for (j=0;j<SLOT_COUNT;j=j+1)
+    slot_addr[j] = SLOT_START_ADDR + (j*SLOT_ADDR_STEP);
+end
+
+wire has_header = (data_s_axis_tdest[SLOT_WIDTH-1:0]=={SLOT_WIDTH{1'b0}});
+
+// Pipeline register to load from slot LUT or packet header
+reg  [DATA_WIDTH-1:0] s_axis_tdata;
+reg  [STRB_WIDTH-1:0] s_axis_tkeep;
+reg                   s_axis_tvalid;
+wire                  s_axis_tready;
+reg                   s_axis_tlast;
+reg  [SLOT_WIDTH-1:0] s_axis_tdest;
+reg  [PORT_WIDTH-1:0] s_axis_tuser;
+reg  [ADDR_WIDTH-1:0] s_base_addr;
+
+assign data_s_axis_tready = s_axis_tready;
+always @ (posedge clk) begin
+  if (data_s_axis_tvalid && data_s_axis_tready) begin
+    s_axis_tdata  <= data_s_axis_tdata;
+    s_axis_tkeep  <= data_s_axis_tkeep; 
+    s_axis_tlast  <= data_s_axis_tlast;
+    s_axis_tdest  <= data_s_axis_tdest[SLOT_WIDTH-1:0];  
+    s_axis_tuser  <= data_s_axis_tuser;  
+    s_base_addr   <= has_header ? data_s_axis_tdata[ADDR_WIDTH-1:0] : 
+                     slot_addr[data_s_axis_tdest[SLOT_WIDTH-1:0]-1] ;
+  end
+
+  // If there is data and ready is asserted pipeline can move. 
+  // If there is data in pipe but ready is not asserted valid stays asserted.
+  s_axis_tvalid <= ((data_s_axis_tvalid && data_s_axis_tready) || 
+                    (s_axis_tvalid && (!s_axis_tready)));
+  if (rst)
+    s_axis_tvalid <= 1'b0;
+end
 
 /////////////////////////////////////////////////////////////////////
 /////////// AXIS TO NATIVE MEM INTERFACE WITH DESCRIPTORS ///////////
@@ -118,22 +160,22 @@ wire                   ram_rd_resp_valid;
 wire [DATA_WIDTH-1:0]  ram_rd_resp_data;
 wire                   ram_rd_resp_ready;
   
-wire                     recv_desc_valid;
-wire                     recv_desc_ready;
-wire [LEN_WIDTH-1:0]     recv_desc_len;
-wire [SLOT_WIDTH-1:0]    recv_desc_tdest;
-wire [USER_WIDTH_IN-1:0] recv_desc_tuser;
-wire [ADDR_WIDTH-1:0]    recv_desc_addr;
+wire                   recv_desc_valid;
+wire                   recv_desc_ready;
+wire [LEN_WIDTH-1:0]   recv_desc_len;
+wire [SLOT_WIDTH-1:0]  recv_desc_tdest;
+wire [PORT_WIDTH-1:0]  recv_desc_tuser;
+wire [ADDR_WIDTH-1:0]  recv_desc_addr;
 
-wire                     recv_desc_valid_fifoed;
-wire                     recv_desc_ready_fifoed;
-wire [63:0]              recv_desc_fifoed;
+wire                   recv_desc_valid_fifoed;
+wire                   recv_desc_ready_fifoed;
+wire [63:0]            recv_desc_fifoed;
 
-wire                     send_desc_valid;
-wire                     send_desc_ready;
-wire [63:0]              send_desc;
+wire                   send_desc_valid;
+wire                   send_desc_ready;
+wire [63:0]            send_desc;
 
-wire                     pkt_sent;
+wire                   pkt_sent;
 
 wire [63:0] send_desc_fifoed;
 wire send_desc_valid_fifoed, send_desc_ready_fifoed;
@@ -143,22 +185,22 @@ axis_dma # (
   .ADDR_WIDTH     (ADDR_WIDTH),       
   .LEN_WIDTH      (LEN_WIDTH),        
   .DEST_WIDTH_IN  (SLOT_WIDTH),   
-  .USER_WIDTH_IN  (USER_WIDTH_IN),   
-  .DEST_WIDTH_OUT (DEST_WIDTH_OUT),  
-  .USER_WIDTH_OUT (USER_WIDTH_OUT-CORE_ID_WIDTH)  
+  .USER_WIDTH_IN  (PORT_WIDTH),   
+  .DEST_WIDTH_OUT (PORT_WIDTH),  
+  .USER_WIDTH_OUT (SLOT_WIDTH)  
 ) axis_dma_inst (
   .clk(clk),
   .rst(rst),
 
-  .s_axis_tdata (data_s_axis_tdata),
-  .s_axis_tkeep (data_s_axis_tkeep),
-  .s_axis_tvalid(data_s_axis_tvalid),
-  .s_axis_tready(data_s_axis_tready),
-  .s_axis_tlast (data_s_axis_tlast),
-  .s_axis_tdest (data_s_axis_tdest[SLOT_WIDTH-1:0]),
-  .s_axis_tuser (data_s_axis_tuser),
+  .s_axis_tdata (s_axis_tdata),
+  .s_axis_tkeep (s_axis_tkeep),
+  .s_axis_tvalid(s_axis_tvalid),
+  .s_axis_tready(s_axis_tready),
+  .s_axis_tlast (s_axis_tlast),
+  .s_axis_tdest (s_axis_tdest),
+  .s_axis_tuser (s_axis_tuser),
 
-  .wr_base_addr ({data_s_axis_tdest[SLOT_WIDTH-1:0],{(ADDR_LEAD_ZERO-4){1'b0}},4'h2}),
+  .wr_base_addr (s_base_addr),
 
   .m_axis_tdata (data_m_axis_tdata),
   .m_axis_tkeep (data_m_axis_tkeep),
@@ -166,7 +208,7 @@ axis_dma # (
   .m_axis_tready(data_m_axis_tready),
   .m_axis_tlast (data_m_axis_tlast),
   .m_axis_tdest (data_m_axis_tdest),
-  .m_axis_tuser (data_m_axis_tuser[USER_WIDTH_OUT-CORE_ID_WIDTH-1:0]),
+  .m_axis_tuser (data_m_axis_tuser[SLOT_WIDTH-1:0]),
   
   .mem_wr_en   (ram_cmd_wr_en),
   .mem_wr_strb (ram_cmd_wr_strb),
@@ -194,7 +236,7 @@ axis_dma # (
   .send_desc_ready(send_desc_ready_fifoed),
   .send_desc_addr(send_desc_fifoed[ADDR_WIDTH+31:32]),
   .send_desc_len(send_desc_fifoed[LEN_WIDTH-1:0]),
-  .send_desc_tdest(send_desc_fifoed[DEST_WIDTH_OUT+23:24]),
+  .send_desc_tdest(send_desc_fifoed[PORT_WIDTH+23:24]),
   .send_desc_tuser(send_desc_fifoed[SLOT_WIDTH+15:16]),
 
   .pkt_sent       (pkt_sent)
@@ -203,7 +245,7 @@ axis_dma # (
 
 // A FIFO for received descriptor
 wire [63:0] recv_desc = {recv_desc_addr,
-                        {(8-USER_WIDTH_IN){1'b0}},recv_desc_tuser,
+                        {(8-PORT_WIDTH){1'b0}},recv_desc_tuser,
                         {(8-SLOT_WIDTH){1'b0}},recv_desc_tdest,
                         {(16-LEN_WIDTH){1'b0}},recv_desc_len};
 

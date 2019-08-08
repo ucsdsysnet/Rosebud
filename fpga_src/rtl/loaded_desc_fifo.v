@@ -1,10 +1,7 @@
 module loaded_desc_fifo # (
-  parameter SLOT_COUNT        = 8,
-  parameter SLOT_ADDR_WIDTH   = 8,
-  parameter START_ADDR        = 8'h20,
-  parameter ADDR_STEP         = 8'h08,
-  parameter DATA_WIDTH        = SLOT_ADDR_WIDTH,
-  parameter ADDR_WIDTH        = $clog2(SLOT_COUNT),
+  parameter SLOT_COUNT = 8,
+  parameter DATA_WIDTH = $clog2(SLOT_COUNT+1),
+  parameter ADDR_WIDTH = $clog2(SLOT_COUNT),
   parameter ALMOST_FULL_DIST  = 2, 
   parameter ALMOST_EMPTY_DIST = 2
 )(
@@ -86,7 +83,7 @@ assign item_count   = item_count_r;
 integer i,j;
 initial
   for (i=0; i<SLOT_COUNT; i=i+1)
-    mem[i] = START_ADDR + (i*ADDR_STEP);
+    mem[i] = i+1;
 
 endmodule
 

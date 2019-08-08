@@ -77,30 +77,28 @@ assign sma_led   = 0;
 parameter CORE_COUNT      = 16;
 parameter PORT_COUNT      = 2;
 parameter CORE_ADDR_WIDTH = 16;
-parameter CORE_LEAD_ZERO  = 8;
 parameter SLOT_COUNT      = 8;
-parameter SLOT_START_ADDR = 8'h20;
-parameter SLOT_ADDR_STEP  = 8'h08;
+parameter SLOT_START_ADDR = 16'h2000;
+parameter SLOT_ADDR_STEP  = 16'h0800;
 parameter AXIS_DATA_WIDTH = 64;
-parameter AXIS_STRB_WIDTH = AXIS_DATA_WIDTH/8;
 parameter TX_FIFO_DEPTH   = 32768;
 parameter RX_FIFO_DEPTH   = 32768;
-parameter AXIS_DEST_IN    = $clog2(CORE_COUNT)+CORE_ADDR_WIDTH-CORE_LEAD_ZERO;
-parameter AXIS_DEST_OUT   = $clog2(PORT_COUNT);
-parameter AXIS_USER_IN    = AXIS_DEST_OUT;
-parameter AXIS_USER_OUT   = AXIS_DEST_IN;
-parameter IMEM_SIZE_BYTES = 8192;
-parameter DMEM_SIZE_BYTES = 32768;
-parameter COHERENT_START  = 16'h6FFF;
 parameter RECV_DESC_DEPTH = 8;
 parameter SEND_DESC_DEPTH = 8;
 parameter MSG_FIFO_DEPTH  = 16;
-parameter CORE_MSG_WIDTH  = 4+$clog2(DMEM_SIZE_BYTES)+32;
+parameter IMEM_SIZE_BYTES = 8192;
+parameter DMEM_SIZE_BYTES = 32768;
+parameter COHERENT_START  = 16'h6FFF;
 parameter LEN_WIDTH       = 16;
 parameter INTERLEAVE      = 1;
-parameter CTRL_DEST_WIDTH = $clog2(CORE_COUNT);
-parameter CTRL_USER_WIDTH = $clog2(CORE_COUNT);
 parameter ENABLE_ILA      = 0;
+
+parameter CORE_WIDTH      = $clog2(CORE_COUNT);
+parameter PORT_WIDTH      = $clog2(PORT_COUNT);
+parameter SLOT_WIDTH      = $clog2(SLOT_COUNT+1);
+parameter ID_SLOT_WIDTH   = CORE_WIDTH+SLOT_WIDTH;
+parameter AXIS_STRB_WIDTH = AXIS_DATA_WIDTH/8;
+parameter CORE_MSG_WIDTH  = 4+$clog2(DMEM_SIZE_BYTES)+32;
 
 // ETH interfaces
 parameter ETH0_LOC = 0;
@@ -271,38 +269,34 @@ eth_mac_10g_fifo #
 // Scheduler 
 wire [PORT_COUNT*AXIS_DATA_WIDTH-1:0] sched_tx_axis_tdata;
 wire [PORT_COUNT*AXIS_STRB_WIDTH-1:0] sched_tx_axis_tkeep;
-wire [PORT_COUNT*AXIS_DEST_OUT-1:0]   sched_tx_axis_tdest;
-wire [PORT_COUNT*AXIS_USER_OUT-1:0]   sched_tx_axis_tuser;
+wire [PORT_COUNT*PORT_WIDTH-1:0]      sched_tx_axis_tdest;
+wire [PORT_COUNT*ID_SLOT_WIDTH-1:0]   sched_tx_axis_tuser;
 wire [PORT_COUNT-1:0] sched_tx_axis_tvalid, sched_tx_axis_tready, sched_tx_axis_tlast;
 
 wire [PORT_COUNT*AXIS_DATA_WIDTH-1:0] sched_rx_axis_tdata;
 wire [PORT_COUNT*AXIS_STRB_WIDTH-1:0] sched_rx_axis_tkeep;
-wire [PORT_COUNT*AXIS_DEST_IN-1:0]    sched_rx_axis_tdest;
-wire [PORT_COUNT*AXIS_USER_IN-1:0]    sched_rx_axis_tuser;
+wire [PORT_COUNT*ID_SLOT_WIDTH-1:0]   sched_rx_axis_tdest;
+wire [PORT_COUNT*PORT_WIDTH-1:0]      sched_rx_axis_tuser;
 wire [PORT_COUNT-1:0] sched_rx_axis_tvalid, sched_rx_axis_tready, sched_rx_axis_tlast;
     
 wire [AXIS_DATA_WIDTH-1:0] sched_ctrl_m_axis_tdata;
 wire                       sched_ctrl_m_axis_tvalid;
 wire                       sched_ctrl_m_axis_tready;
 wire                       sched_ctrl_m_axis_tlast;
-wire [CTRL_DEST_WIDTH-1:0] sched_ctrl_m_axis_tdest;
+wire [CORE_WIDTH-1:0]      sched_ctrl_m_axis_tdest;
 
 wire [AXIS_DATA_WIDTH-1:0] sched_ctrl_s_axis_tdata;
 wire                       sched_ctrl_s_axis_tvalid;
 wire                       sched_ctrl_s_axis_tready;
 wire                       sched_ctrl_s_axis_tlast;
-wire [CTRL_USER_WIDTH-1:0] sched_ctrl_s_axis_tuser;
+wire [CORE_WIDTH-1:0]      sched_ctrl_s_axis_tuser;
 
 simple_scheduler # (
-  .CORE_COUNT(CORE_COUNT),
   .PORT_COUNT(PORT_COUNT),
+  .CORE_COUNT(CORE_COUNT),
+  .SLOT_COUNT(SLOT_COUNT),
   .DATA_WIDTH(AXIS_DATA_WIDTH),
   .LEN_WIDTH(LEN_WIDTH),
-  .SLOT_COUNT(SLOT_COUNT),
-  .SLOT_START_ADDR(SLOT_START_ADDR),
-  .SLOT_ADDR_STEP(SLOT_ADDR_STEP),  
-  .EFF_ADDR_WIDTH(CORE_ADDR_WIDTH-CORE_LEAD_ZERO),
-  .DEST_WIDTH_OUT($clog2(PORT_COUNT)), 
   .ENABLE_ILA(ENABLE_ILA)
 ) scheduler (
   .clk(clk),
@@ -361,37 +355,37 @@ simple_scheduler # (
 // Data channel switch
 wire [CORE_COUNT*AXIS_DATA_WIDTH-1:0] data_s_axis_tdata;
 wire [CORE_COUNT*AXIS_STRB_WIDTH-1:0] data_s_axis_tkeep;
-wire [CORE_COUNT*AXIS_DEST_IN-1:0]    data_s_axis_tdest;
-wire [CORE_COUNT*AXIS_USER_IN-1:0]    data_s_axis_tuser;
+wire [CORE_COUNT*ID_SLOT_WIDTH-1:0]   data_s_axis_tdest;
+wire [CORE_COUNT*PORT_WIDTH-1:0]      data_s_axis_tuser;
 wire [CORE_COUNT-1:0] data_s_axis_tvalid, data_s_axis_tready, data_s_axis_tlast;
 
 wire [CORE_COUNT*AXIS_DATA_WIDTH-1:0] data_m_axis_tdata;
 wire [CORE_COUNT*AXIS_STRB_WIDTH-1:0] data_m_axis_tkeep;
-wire [CORE_COUNT*AXIS_DEST_OUT-1:0]   data_m_axis_tdest;
-wire [CORE_COUNT*AXIS_USER_OUT-1:0]   data_m_axis_tuser;
+wire [CORE_COUNT*PORT_WIDTH-1:0]      data_m_axis_tdest;
+wire [CORE_COUNT*ID_SLOT_WIDTH-1:0]   data_m_axis_tuser;
 wire [CORE_COUNT-1:0] data_m_axis_tvalid, data_m_axis_tready, data_m_axis_tlast;
 
 wire [CORE_COUNT*AXIS_DATA_WIDTH-1:0] ctrl_s_axis_tdata;
-wire [CORE_COUNT*CTRL_DEST_WIDTH-1:0] ctrl_s_axis_tdest;
+wire [CORE_COUNT*CORE_WIDTH-1:0] ctrl_s_axis_tdest;
 wire [CORE_COUNT-1:0] ctrl_s_axis_tvalid, ctrl_s_axis_tready, ctrl_s_axis_tlast;
 
 wire [CORE_COUNT*AXIS_DATA_WIDTH-1:0] ctrl_m_axis_tdata;
-wire [CORE_COUNT*CTRL_USER_WIDTH-1:0] ctrl_m_axis_tuser;
+wire [CORE_COUNT*CORE_WIDTH-1:0] ctrl_m_axis_tuser;
 wire [CORE_COUNT-1:0] ctrl_m_axis_tvalid, ctrl_m_axis_tready, ctrl_m_axis_tlast;
 
-function [CORE_COUNT*AXIS_DEST_IN-1:0] data_in_base_addrs (input [31:0] lead_zero);
+function [CORE_COUNT*ID_SLOT_WIDTH-1:0] data_in_base_addrs (input [31:0] lead_zero);
     integer i;
     begin
         for (i=0;i<CORE_COUNT;i=i+1)
-            data_in_base_addrs[i*AXIS_DEST_IN +: AXIS_DEST_IN] = i << lead_zero;
+            data_in_base_addrs[i*ID_SLOT_WIDTH +: ID_SLOT_WIDTH] = i << lead_zero;
     end
 endfunction
 
-function [CORE_COUNT*AXIS_DEST_IN-1:0] data_in_top_addrs (input [31:0] lead_one);
+function [CORE_COUNT*ID_SLOT_WIDTH-1:0] data_in_top_addrs (input [31:0] lead_one);
     integer i;
     begin
         for (i=0;i<CORE_COUNT;i=i+1)
-            data_in_top_addrs[i*AXIS_DEST_IN +: AXIS_DEST_IN] = (i << lead_one) | ((2**lead_one)-1);
+            data_in_top_addrs[i*ID_SLOT_WIDTH +: ID_SLOT_WIDTH] = (i << lead_one) | ((2**lead_one)-1);
     end
 endfunction
 
@@ -400,10 +394,10 @@ axis_switch #
     .S_COUNT(PORT_COUNT),
     .M_COUNT(CORE_COUNT),
     .DATA_WIDTH(AXIS_DATA_WIDTH),
-    .DEST_WIDTH(AXIS_DEST_IN),
-    .USER_WIDTH(AXIS_USER_IN),
-    .M_BASE(data_in_base_addrs(CORE_ADDR_WIDTH-CORE_LEAD_ZERO)),
-    .M_TOP(data_in_top_addrs(CORE_ADDR_WIDTH-CORE_LEAD_ZERO)),
+    .DEST_WIDTH(ID_SLOT_WIDTH),
+    .USER_WIDTH(PORT_WIDTH),
+    .M_BASE(data_in_base_addrs(SLOT_WIDTH)),
+    .M_TOP(data_in_top_addrs(SLOT_WIDTH)),
     .S_REG_TYPE(2),
     .M_REG_TYPE(2)
 ) data_in_sw
@@ -436,11 +430,11 @@ axis_switch #
     .m_axis_tuser(data_s_axis_tuser)
 );
 
-function [PORT_COUNT*AXIS_DEST_OUT-1:0] data_out_addrs (input [31:0] lead_zero);
+function [PORT_COUNT*PORT_WIDTH-1:0] data_out_addrs (input [31:0] lead_zero);
     integer i;
     begin
         for (i=0;i<PORT_COUNT;i=i+1)
-            data_out_addrs[i*AXIS_DEST_OUT +: AXIS_DEST_OUT] = i << lead_zero;
+            data_out_addrs[i*PORT_WIDTH +: PORT_WIDTH] = i << lead_zero;
     end
 endfunction
 
@@ -449,8 +443,8 @@ axis_switch #
     .S_COUNT(CORE_COUNT),
     .M_COUNT(PORT_COUNT),
     .DATA_WIDTH(AXIS_DATA_WIDTH),
-    .DEST_WIDTH(AXIS_DEST_OUT),
-    .USER_WIDTH(AXIS_USER_OUT),
+    .DEST_WIDTH(PORT_WIDTH),
+    .USER_WIDTH(ID_SLOT_WIDTH),
     .M_BASE(data_out_addrs(0)),
     .M_TOP(data_out_addrs(0))
 ) data_out_sw
@@ -484,11 +478,11 @@ axis_switch #
 
 );
 
-function [CORE_COUNT*CTRL_DEST_WIDTH-1:0] ctrl_in_addrs (input [31:0] lead_zero);
+function [CORE_COUNT*CORE_WIDTH-1:0] ctrl_in_addrs (input [31:0] lead_zero);
     integer i;
     begin
         for (i=0;i<CORE_COUNT;i=i+1)
-            ctrl_in_addrs[i*CTRL_DEST_WIDTH +: CTRL_DEST_WIDTH] = i << lead_zero;
+            ctrl_in_addrs[i*CORE_WIDTH +: CORE_WIDTH] = i << lead_zero;
     end
 endfunction
 
@@ -497,7 +491,7 @@ axis_switch #
     .S_COUNT(1),
     .M_COUNT(CORE_COUNT),
     .DATA_WIDTH(AXIS_DATA_WIDTH),
-    .DEST_WIDTH(CTRL_DEST_WIDTH),
+    .DEST_WIDTH(CORE_WIDTH),
     .USER_ENABLE(0),
     .KEEP_ENABLE(0),
     .M_BASE(ctrl_in_addrs(0)),
@@ -537,7 +531,7 @@ axis_arb_mux #
 (
     .S_COUNT(CORE_COUNT),
     .DATA_WIDTH(AXIS_DATA_WIDTH),
-    .USER_WIDTH(CTRL_USER_WIDTH),
+    .USER_WIDTH(CORE_WIDTH),
     .KEEP_ENABLE(0)
 ) ctrl_out_sw
 (
@@ -584,6 +578,7 @@ generate
     riscv_axis_wrapper #(
         .DATA_WIDTH(AXIS_DATA_WIDTH),
         .ADDR_WIDTH(CORE_ADDR_WIDTH),
+        .SLOT_COUNT(SLOT_COUNT),
         .IMEM_SIZE_BYTES(IMEM_SIZE_BYTES),
         .DMEM_SIZE_BYTES(DMEM_SIZE_BYTES),
         .COHERENT_START(COHERENT_START),
@@ -593,9 +588,10 @@ generate
         .MSG_FIFO_DEPTH(MSG_FIFO_DEPTH),
         .PORT_COUNT(PORT_COUNT),
         .LEN_WIDTH(LEN_WIDTH),
-        .ADDR_LEAD_ZERO(CORE_LEAD_ZERO),
         .CORE_ID(i),
-        .CORE_ID_WIDTH($clog2(CORE_COUNT))
+        .CORE_ID_WIDTH(CORE_WIDTH),
+        .SLOT_START_ADDR(SLOT_START_ADDR),
+        .SLOT_ADDR_STEP(SLOT_ADDR_STEP)
     )
     RISCV (
         .clk(clk),
@@ -608,8 +604,8 @@ generate
         .data_s_axis_tvalid(data_s_axis_tvalid[i]),
         .data_s_axis_tready(data_s_axis_tready[i]),
         .data_s_axis_tlast(data_s_axis_tlast[i]),
-        .data_s_axis_tdest(data_s_axis_tdest[AXIS_DEST_IN*i +: AXIS_DEST_IN]),
-        .data_s_axis_tuser(data_s_axis_tuser[AXIS_USER_IN*i +: AXIS_USER_IN]),
+        .data_s_axis_tdest(data_s_axis_tdest[ID_SLOT_WIDTH*i +: ID_SLOT_WIDTH]),
+        .data_s_axis_tuser(data_s_axis_tuser[PORT_WIDTH*i +: PORT_WIDTH]),
   
         // Outgoing data
         .data_m_axis_tdata(data_m_axis_tdata[AXIS_DATA_WIDTH*i +: AXIS_DATA_WIDTH]),
@@ -617,8 +613,8 @@ generate
         .data_m_axis_tvalid(data_m_axis_tvalid[i]),
         .data_m_axis_tready(data_m_axis_tready[i]),
         .data_m_axis_tlast(data_m_axis_tlast[i]),
-        .data_m_axis_tdest(data_m_axis_tdest[AXIS_DEST_OUT*i +: AXIS_DEST_OUT]),
-        .data_m_axis_tuser(data_m_axis_tuser[AXIS_USER_OUT*i +: AXIS_USER_OUT]),
+        .data_m_axis_tdest(data_m_axis_tdest[PORT_WIDTH*i +: PORT_WIDTH]),
+        .data_m_axis_tuser(data_m_axis_tuser[ID_SLOT_WIDTH*i +: ID_SLOT_WIDTH]),
   
         // ---------------- CTRL CHANNEL --------------- // 
         // Incoming control
@@ -626,14 +622,14 @@ generate
         .ctrl_s_axis_tvalid(ctrl_s_axis_tvalid[i]),
         .ctrl_s_axis_tready(ctrl_s_axis_tready[i]),
         .ctrl_s_axis_tlast(ctrl_s_axis_tlast[i]),
-        .ctrl_s_axis_tdest(ctrl_s_axis_tdata[CTRL_DEST_WIDTH*i +: CTRL_DEST_WIDTH]),
+        .ctrl_s_axis_tdest(ctrl_s_axis_tdata[CORE_WIDTH*i +: CORE_WIDTH]),
   
         // Outgoing control
         .ctrl_m_axis_tdata(ctrl_m_axis_tdata[AXIS_DATA_WIDTH*i +: AXIS_DATA_WIDTH]),
         .ctrl_m_axis_tvalid(ctrl_m_axis_tvalid[i]),
         .ctrl_m_axis_tready(ctrl_m_axis_tready[i]),
         .ctrl_m_axis_tlast(ctrl_m_axis_tlast[i]),
-        .ctrl_m_axis_tuser(ctrl_m_axis_tuser[CTRL_USER_WIDTH*i +: CTRL_USER_WIDTH]),
+        .ctrl_m_axis_tuser(ctrl_m_axis_tuser[CORE_WIDTH*i +: CORE_WIDTH]),
    
         // ------------- CORE MSG CHANNEL -------------- // 
         // Core messages output  
