@@ -62,12 +62,18 @@ module riscv_axis_dma # (
   // Output receive descriptor
   output wire                      recv_desc_valid,
   input  wire                      recv_desc_ready,
-  output wire [63:0]               recv_desc,
+  output wire [ADDR_WIDTH-1:0]     recv_desc_addr,
+  output wire [LEN_WIDTH-1:0]      recv_desc_len,
+  output wire [DEST_WIDTH_IN-1:0]  recv_desc_tdest,
+  output wire [USER_WIDTH_IN-1:0]  recv_desc_tuser,
 
   // Input send descriptor
   input  wire                      send_desc_valid,
   output wire                      send_desc_ready,
-  input  wire [63:0]               send_desc,
+  input  wire [ADDR_WIDTH-1:0]     send_desc_addr,
+  input  wire [LEN_WIDTH-1:0]      send_desc_len,
+  input  wire [DEST_WIDTH_OUT-1:0] send_desc_tdest,
+  input  wire [USER_WIDTH_OUT-1:0] send_desc_tuser,
   output wire                      pkt_sent
 );
 
@@ -81,6 +87,19 @@ module riscv_axis_dma # (
   localparam WR_IDLE = 1'b0;
   localparam WR_PROC = 1'b1;
   reg wr_state_n, wr_state_r;
+  
+  // wr signals
+  reg [ADDR_WIDTH-1:0]    wr_start_addr;
+  reg [USER_WIDTH_IN-1:0] wr_tuser;
+  reg [MASK_BITS:0]       wr_offset;
+  reg [DEST_WIDTH_IN-1:0] wr_tdest;
+  reg                     wr_strb_left;
+  reg                     wr_data_en;
+  reg                     wr_last;
+  wire                    wr_last_pkt;
+  wire                    wr_ready;
+  wire                    extra_cycle;
+  reg                     extra_cycle_r;
 
   always @ (*) begin
     wr_state_n = wr_state_r;
@@ -96,15 +115,6 @@ module riscv_axis_dma # (
     else
       wr_state_r <= wr_state_n;
  
-  // For first data, Latch the start address, incoming port and slot 
-  // for creating descriptor
-  reg [ADDR_WIDTH-1:0]    wr_start_addr;
-  reg [PORT_WIDTH-1:0]    incoming_port;
-  reg [MASK_BITS:0]       wr_offset;
-  reg [DEST_WIDTH_IN-1:0] wr_slot;
-  reg                     wr_strb_left;
-  
-  wire desc_block = recv_desc_valid && !recv_desc_ready;
   // First packet is when there is new data and can be accpted. It can happen if 
   // there was no data last cycle, or if there was and it was last data.
   // (Timing wise it is logic between 4 registers and wr_ready and s_axis_tvalid)
@@ -116,8 +126,8 @@ module riscv_axis_dma # (
     if (latch_info) begin
       wr_start_addr <= full_addr;
       wr_offset     <= {1'b1,{MASK_BITS{1'b0}}} - {1'b0, full_addr[MASK_BITS-1:0]};
-      wr_slot       <= s_axis_tdest;
-      incoming_port <= s_axis_tuser;
+      wr_tdest      <= s_axis_tdest;
+      wr_tuser      <= s_axis_tuser;
     end
   
     // To improve timing do part of logic in the previous cycle
@@ -130,21 +140,13 @@ module riscv_axis_dma # (
       wr_strb_left <= |(s_axis_tkeep >> wr_offset);
   end
 
-  // Output signals and a two_stage pipeline register for the input from AXIS 
-  reg                   wr_data_en;
-  reg                   wr_last;
-  wire                  wr_ready;
-  reg  [ADDR_WIDTH-1:0] next_wr_addr;
-  wire [ADDR_WIDTH-1:0] wr_addr;
-  reg                   wr_first_pkt;
-  reg                   extra_cycle_r;
-
+  // two_stage pipeline register for the input from AXIS 
   reg  [DATA_WIDTH-1:0] wr_data_1;
   reg  [DATA_WIDTH-1:0] wr_data_2;
   reg  [STRB_WIDTH-1:0] wr_strb_1;
   reg  [STRB_WIDTH-1:0] wr_strb_2;
  
-  wire extra_cycle = wr_last && wr_strb_left;
+  assign extra_cycle = wr_last && wr_strb_left;
 
   // Move forward the pipeline when data is received and can be sent
   // Extra cycle_r is when the data is read from second stage as extra
@@ -193,11 +195,13 @@ module riscv_axis_dma # (
 
   // If we have an extra cycle we don't accept new data. Also if 
   // descriptor is blocked we don't accept last word of an incoming packet.
+  wire desc_block = recv_desc_valid && !recv_desc_ready;
   assign s_axis_tready = wr_ready && (!extra_cycle) && 
                         (!(s_axis_tlast && desc_block));
    
   // wr_first_pkt aligns with wr_data_1, which is one cycle after latch_info.
   // Also if data cannot go out it keeps its first_pkt state 
+  reg wr_first_pkt;
   always @ (posedge clk)
     if (rst)
       wr_first_pkt <= 1'b0;
@@ -206,9 +210,11 @@ module riscv_axis_dma # (
       
   // If there is need for extra cycle the wr_last_pkt would be asserted then
   // (Timing wise it is a logic between 4 registers)
-  wire wr_last_pkt = wr_data_en && ((wr_last && !extra_cycle) || (extra_cycle_r));
+  assign wr_last_pkt = wr_data_en && ((wr_last && !extra_cycle) || (extra_cycle_r));
   
   // Calculating the write address
+  reg  [ADDR_WIDTH-1:0] next_wr_addr;
+  wire [ADDR_WIDTH-1:0] wr_addr;
   always @ (posedge clk)
     if (wr_data_en && wr_ready)
       next_wr_addr <= wr_addr + STRB_WIDTH;
@@ -238,26 +244,31 @@ module riscv_axis_dma # (
         wr_pkt_len <= next_wr_pkt_len;
 
   // Making the desired descriptor 
-  reg [63:0] recv_desc_r;
+  reg [LEN_WIDTH-1:0]     recv_desc_len_r;
+  reg [DEST_WIDTH_IN-1:0] recv_desc_tdest_r;
+  reg [USER_WIDTH_IN-1:0] recv_desc_tuser_r;
+  reg [ADDR_WIDTH-1:0]    recv_desc_addr_r;
   reg        recv_desc_v_r;
   always @ (posedge clk) begin
     // if desc cannot be taken pipeline blocks before accepting 
     // last word of incoming packet, so wr_last_pkt means we're clear
     if (wr_last_pkt && wr_ready) begin
-      recv_desc_r <= {wr_start_addr, 
-                      {(8-PORT_WIDTH){1'b0}},incoming_port,
-                      {(8-DEST_WIDTH_IN){1'b0}},wr_slot,
-                      {(16-LEN_WIDTH){1'b0}},next_wr_pkt_len};
-      recv_desc_v_r <= 1'b1;
+      recv_desc_len_r   <= next_wr_pkt_len;
+      recv_desc_tdest_r <= wr_tdest;
+      recv_desc_tuser_r <= wr_tuser;
+      recv_desc_addr_r  <= wr_start_addr;
+      recv_desc_v_r     <= 1'b1;
     end else if (recv_desc_v_r && recv_desc_ready)
-      recv_desc_v_r <= 1'b0;
-
+      recv_desc_v_r     <= 1'b0;
     if (rst)
-      recv_desc_v_r <= 1'b0;
+      recv_desc_v_r     <= 1'b0;
   end
 
-  assign recv_desc       = recv_desc_r;
   assign recv_desc_valid = recv_desc_v_r;
+  assign recv_desc_len   = recv_desc_len_r;
+  assign recv_desc_tdest = recv_desc_tdest_r;
+  assign recv_desc_tuser = recv_desc_tuser_r;
+  assign recv_desc_addr  = recv_desc_addr_r;
   
   assign mem_wr_en   = wr_data_en;
   assign mem_wr_addr = wr_addr;
@@ -306,14 +317,14 @@ module riscv_axis_dma # (
   
   always @ (posedge clk)
     if (send_desc_ready && send_desc_valid) begin
-      send_base_addr  <= send_desc[ADDR_WIDTH+31:32];
-      send_len        <= send_desc[LEN_WIDTH-1:0];
-      send_port       <= send_desc[PORT_WIDTH+23:24];
-      send_orig_addr  <= send_desc[USER_WIDTH_OUT+15:16];
+      send_base_addr  <= send_desc_addr;
+      send_len        <= send_desc_len;
+      send_port       <= send_desc_tdest;
+      send_orig_addr  <= send_desc_tuser;
       // Lower bits of base_addr and send_len
-      remainder_bytes <= send_desc[MASK_BITS+31:32] +
-                         send_desc[MASK_BITS-1:0];
-      to_drop         <= (send_desc[LEN_WIDTH-1:0]==0);
+      remainder_bytes <= send_desc_addr[MASK_BITS-1:0] +
+                         send_desc_len[MASK_BITS-1:0];
+      to_drop         <= (send_desc_len==0);
     end
   
   assign send_desc_ready = (rd_state_r == RD_IDLE);

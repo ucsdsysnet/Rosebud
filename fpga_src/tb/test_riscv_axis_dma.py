@@ -52,7 +52,10 @@ def bench():
     mem_rd_data     = Signal(intbv(0)[DATA_WIDTH:])
     mem_rd_data_v   = Signal(bool(0))
     send_desc_valid = Signal(bool(0))
-    send_desc       = Signal(intbv(0)[64:])
+    send_desc_addr  = Signal(intbv(0)[ADDR_WIDTH:])
+    send_desc_len   = Signal(intbv(0)[LEN_WIDTH:])
+    send_desc_tdest = Signal(intbv(0)[DEST_WIDTH_OUT:]) 
+    send_desc_tuser = Signal(intbv(0)[USER_WIDTH_OUT:]) 
  
     # Outputs
     mem_wr_en         = Signal(bool(0))
@@ -60,8 +63,11 @@ def bench():
     mem_wr_strb       = Signal(intbv(1)[STRB_WIDTH:])
     mem_wr_addr       = Signal(intbv(0)[ADDR_WIDTH:])
     mem_wr_data       = Signal(intbv(0)[DATA_WIDTH:])
-    recv_desc_valid    = Signal(bool(0))
-    recv_desc          = Signal(intbv(0)[64:])
+    recv_desc_valid   = Signal(bool(0))
+    recv_desc_addr    = Signal(intbv(0)[ADDR_WIDTH:])
+    recv_desc_len     = Signal(intbv(0)[LEN_WIDTH:])
+    recv_desc_tdest   = Signal(intbv(0)[DEST_WIDTH_IN:])
+    recv_desc_tuser   = Signal(intbv(0)[USER_WIDTH_IN:])
     s_axis_tready     = Signal(bool(0))
     m_axis_tdata      = Signal(intbv(0)[DATA_WIDTH:])
     m_axis_tkeep      = Signal(intbv(0)[STRB_WIDTH:])
@@ -136,7 +142,10 @@ def bench():
         mem_rd_data=mem_rd_data,  
         mem_rd_data_v=mem_rd_data_v,   
         send_desc_valid=send_desc_valid, 
-        send_desc=send_desc,
+        send_desc_addr=send_desc_addr,
+        send_desc_len=send_desc_len,
+        send_desc_tdest=send_desc_tdest,
+        send_desc_tuser=send_desc_tuser,
         
         mem_wr_en=mem_wr_en,
         mem_wr_strb=mem_wr_strb,
@@ -144,7 +153,10 @@ def bench():
         mem_wr_data=mem_wr_data,
         mem_wr_last=mem_wr_last,
         recv_desc_valid=recv_desc_valid,
-        recv_desc=recv_desc,
+        recv_desc_addr=recv_desc_addr,
+        recv_desc_len=recv_desc_len,
+        recv_desc_tdest=recv_desc_tdest,
+        recv_desc_tuser=recv_desc_tuser,
         s_axis_tready=s_axis_tready,
         m_axis_tdata=m_axis_tdata,  
         m_axis_tkeep=m_axis_tkeep,    
@@ -324,7 +336,10 @@ def bench():
         yield delay(100)
 
         yield clk.posedge
-        send_desc.next = 0x0000010003010100
+        send_desc_addr.next  = 0x00000100 
+        send_desc_tdest.next = 0x03 
+        send_desc_tuser.next = 0x01 
+        send_desc_len.next   = 0x0100
         send_desc_valid.next = 1
         yield clk.posedge
         send_desc_valid.next = 0
@@ -335,7 +350,10 @@ def bench():
         yield delay(100)
 
         yield clk.posedge
-        send_desc.next = 0x0000010003010001
+        send_desc_addr.next  = 0x00000100 
+        send_desc_tdest.next = 0x03 
+        send_desc_tuser.next = 0x01 
+        send_desc_len.next   = 0x0001
         send_desc_valid.next = 1
         yield clk.posedge
         send_desc_valid.next = 0
@@ -346,7 +364,10 @@ def bench():
         yield delay(100)
 
         yield clk.posedge
-        send_desc.next = 0x000001000301000B
+        send_desc_addr.next  = 0x00000100 
+        send_desc_tdest.next = 0x03 
+        send_desc_tuser.next = 0x01 
+        send_desc_len.next   = 0x000B
         send_desc_valid.next = 1
         yield clk.posedge
         send_desc_valid.next = 0
@@ -357,7 +378,10 @@ def bench():
         yield delay(100)
 
         yield clk.posedge
-        send_desc.next = 0x000001030301000B
+        send_desc_addr.next  = 0x00000103
+        send_desc_tdest.next = 0x03 
+        send_desc_tuser.next = 0x01 
+        send_desc_len.next   = 0x000B
         send_desc_valid.next = 1
         yield clk.posedge
         send_desc_valid.next = 0
@@ -368,7 +392,10 @@ def bench():
         yield delay(100)
 
         yield clk.posedge
-        send_desc.next = 0x000001060301000B
+        send_desc_addr.next  = 0x00000106 
+        send_desc_tdest.next = 0x03 
+        send_desc_tuser.next = 0x01 
+        send_desc_len.next   = 0x000B
         send_desc_valid.next = 1
         yield clk.posedge
         send_desc_valid.next = 0
@@ -379,7 +406,10 @@ def bench():
         yield delay(100)
 
         yield clk.posedge
-        send_desc.next = 0x000001060301001B
+        send_desc_addr.next  = 0x00000106
+        send_desc_tdest.next = 0x03 
+        send_desc_tuser.next = 0x01 
+        send_desc_len.next   = 0x001B
         send_desc_valid.next = 1
         # yield clk.posedge
         # send_desc_valid.next = 0

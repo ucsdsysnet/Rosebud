@@ -34,7 +34,10 @@ reg                      recv_desc_ready = 0;
 reg                      m_axis_tready = 0;
 reg                      mem_rd_ready = 1;
 reg                      send_desc_valid = 0;
-reg [63:0]               send_desc = 0;
+reg [ADDR_WIDTH-1:0]     send_desc_addr = 0;
+reg [LEN_WIDTH-1:0]      send_desc_len = 0;
+reg [DEST_WIDTH_OUT-1:0] send_desc_tdest = 0;
+reg [USER_WIDTH_OUT-1:0] send_desc_tuser = 0;
 
 // Outputs
 wire                      mem_wr_en;
@@ -43,7 +46,10 @@ wire [ADDR_WIDTH-1:0]     mem_wr_addr;
 wire [DATA_WIDTH-1:0]     mem_wr_data;
 wire                      mem_wr_last;
 wire                      recv_desc_valid;
-wire [63:0]               recv_desc;
+wire [ADDR_WIDTH-1:0]     recv_desc_addr;
+wire [LEN_WIDTH-1:0]      recv_desc_len;
+wire [DEST_WIDTH_IN-1:0]  recv_desc_tdest;
+wire [USER_WIDTH_IN-1:0]  recv_desc_tuser;
 wire                      s_axis_tready;
 wire [DATA_WIDTH-1:0]     m_axis_tdata;
 wire [STRB_WIDTH-1:0]     m_axis_tkeep;
@@ -83,7 +89,10 @@ initial begin
         // mem_rd_data,
         // mem_rd_data_v,
         send_desc_valid,
-        send_desc
+        send_desc_addr,
+        send_desc_len,
+        send_desc_tdest,
+        send_desc_tuser
     );
     $to_myhdl(
         mem_wr_en,
@@ -92,7 +101,10 @@ initial begin
         mem_wr_addr,
         mem_wr_data,
         recv_desc_valid,
-        recv_desc,
+        recv_desc_addr,
+        recv_desc_len,
+        recv_desc_tdest,
+        recv_desc_tuser,
         s_axis_tready,
         m_axis_tdata,
         m_axis_tkeep,
@@ -164,11 +176,18 @@ riscv_axis_dma # (
   
   .recv_desc_valid(recv_desc_valid),
   .recv_desc_ready(recv_desc_ready),
-  .recv_desc      (recv_desc),
+  .recv_desc_addr (recv_desc_addr),
+  .recv_desc_len  (recv_desc_len),
+  .recv_desc_tdest(recv_desc_tdest),
+  .recv_desc_tuser(recv_desc_tuser),
 
   .send_desc_valid(send_desc_valid),
   .send_desc_ready(send_desc_ready),
-  .send_desc      (send_desc),
+  .send_desc_addr (send_desc_addr),
+  .send_desc_len  (send_desc_len),
+  .send_desc_tdest(send_desc_tdest),
+  .send_desc_tuser(send_desc_tuser),
+
   .pkt_sent       (pkt_sent)
 
 );
@@ -210,6 +229,5 @@ initial begin
         end
     end
 end
-
 
 endmodule

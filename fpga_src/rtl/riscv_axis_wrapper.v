@@ -28,7 +28,8 @@ module riscv_axis_wrapper # (
     parameter USER_WIDTH_IN   = PORT_WIDTH,
     parameter USER_WIDTH_OUT  = CORE_ID_WIDTH+ADDR_WIDTH-ADDR_LEAD_ZERO,
     parameter DMEM_ADDR_WIDTH = $clog2(DMEM_SIZE_BYTES),
-    parameter MSG_WIDTH       = 4+DMEM_ADDR_WIDTH+32
+    parameter MSG_WIDTH       = 4+DMEM_ADDR_WIDTH+32,
+    parameter SLOT_WIDTH      = DEST_WIDTH_IN-CORE_ID_WIDTH
 )
 (
     input  wire                      clk,
@@ -117,18 +118,22 @@ wire                   ram_rd_resp_valid;
 wire [DATA_WIDTH-1:0]  ram_rd_resp_data;
 wire                   ram_rd_resp_ready;
   
-wire                   recv_desc_valid;
-wire                   recv_desc_ready;
-wire [63:0]            recv_desc;
+wire                     recv_desc_valid;
+wire                     recv_desc_ready;
+wire [LEN_WIDTH-1:0]     recv_desc_len;
+wire [SLOT_WIDTH-1:0]    recv_desc_tdest;
+wire [USER_WIDTH_IN-1:0] recv_desc_tuser;
+wire [ADDR_WIDTH-1:0]    recv_desc_addr;
 
-wire                   recv_desc_valid_fifoed;
-wire                   recv_desc_ready_fifoed;
-wire [63:0]            recv_desc_fifoed;
+wire                     recv_desc_valid_fifoed;
+wire                     recv_desc_ready_fifoed;
+wire [63:0]              recv_desc_fifoed;
 
-wire                   send_desc_valid;
-wire                   send_desc_ready;
-wire [63:0]            send_desc;
-wire                   pkt_sent;
+wire                     send_desc_valid;
+wire                     send_desc_ready;
+wire [63:0]              send_desc;
+
+wire                     pkt_sent;
 
 wire [63:0] send_desc_fifoed;
 wire send_desc_valid_fifoed, send_desc_ready_fifoed;
@@ -143,7 +148,7 @@ riscv_axis_dma # (
   .LEN_WIDTH      (LEN_WIDTH),        
   .ADDR_LEAD_ZERO (ADDR_LEAD_ZERO),
   .PORT_WIDTH     (PORT_WIDTH),      
-  .DEST_WIDTH_IN  (DEST_WIDTH_IN-CORE_ID_WIDTH),   
+  .DEST_WIDTH_IN  (SLOT_WIDTH),   
   .DEST_WIDTH_OUT (DEST_WIDTH_OUT),  
   .USER_WIDTH_IN  (USER_WIDTH_IN),   
   .USER_WIDTH_OUT (USER_WIDTH_OUT-CORE_ID_WIDTH)  
@@ -156,7 +161,7 @@ riscv_axis_dma # (
   .s_axis_tvalid(data_s_axis_tvalid),
   .s_axis_tready(data_s_axis_tready),
   .s_axis_tlast (data_s_axis_tlast),
-  .s_axis_tdest (data_s_axis_tdest[DEST_WIDTH_IN-CORE_ID_WIDTH-1:0]),
+  .s_axis_tdest (data_s_axis_tdest[SLOT_WIDTH-1:0]),
   .s_axis_tuser (data_s_axis_tuser),
 
   .m_axis_tdata (data_m_axis_tdata),
@@ -184,17 +189,28 @@ riscv_axis_dma # (
   
   .recv_desc_valid(recv_desc_valid),
   .recv_desc_ready(recv_desc_ready),
-  .recv_desc      (recv_desc),
+  .recv_desc_len  (recv_desc_len),
+  .recv_desc_tdest(recv_desc_tdest),
+  .recv_desc_tuser(recv_desc_tuser),
+  .recv_desc_addr (recv_desc_addr),
 
   .send_desc_valid(send_desc_valid_fifoed),
   .send_desc_ready(send_desc_ready_fifoed),
-  .send_desc      (send_desc_fifoed),
+  .send_desc_addr(send_desc_fifoed[ADDR_WIDTH+31:32]),
+  .send_desc_len(send_desc_fifoed[LEN_WIDTH-1:0]),
+  .send_desc_tdest(send_desc_fifoed[DEST_WIDTH_OUT+23:24]),
+  .send_desc_tuser(send_desc_fifoed[SLOT_WIDTH+15:16]),
 
   .pkt_sent       (pkt_sent)
 
 );
 
 // A FIFO for received descriptor
+wire [63:0] recv_desc = {recv_desc_addr,
+                        {(8-USER_WIDTH_IN){1'b0}},recv_desc_tuser,
+                        {(8-SLOT_WIDTH){1'b0}},recv_desc_tdest,
+                        {(16-LEN_WIDTH){1'b0}},recv_desc_len};
+
 simple_fifo # (
   .ADDR_WIDTH($clog2(RECV_DESC_DEPTH)),
   .DATA_WIDTH(64)
