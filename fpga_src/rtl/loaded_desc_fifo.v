@@ -70,9 +70,6 @@ assign full  = full_r;
 assign din_ready  = ~full_r; // & ~rst;
 assign dout_valid = ~empty_r;
 
-assign din_ready  = ~full & ~rst;
-assign dout_valid = ~empty;
-
 assign item_count   = item_count_r;
 
 integer i,j;
