@@ -138,21 +138,15 @@ wire                     pkt_sent;
 wire [63:0] send_desc_fifoed;
 wire send_desc_valid_fifoed, send_desc_ready_fifoed;
 
-riscv_axis_dma # (
+axis_dma # (
   .DATA_WIDTH     (DATA_WIDTH),
   .ADDR_WIDTH     (ADDR_WIDTH),       
-  .STRB_WIDTH     (STRB_WIDTH),    
-  .PORT_COUNT     (PORT_COUNT),       
-  .RECV_DESC_DEPTH(RECV_DESC_DEPTH),       
-  .INTERLEAVE     (INTERLEAVE),       
   .LEN_WIDTH      (LEN_WIDTH),        
-  .ADDR_LEAD_ZERO (ADDR_LEAD_ZERO),
-  .PORT_WIDTH     (PORT_WIDTH),      
   .DEST_WIDTH_IN  (SLOT_WIDTH),   
-  .DEST_WIDTH_OUT (DEST_WIDTH_OUT),  
   .USER_WIDTH_IN  (USER_WIDTH_IN),   
+  .DEST_WIDTH_OUT (DEST_WIDTH_OUT),  
   .USER_WIDTH_OUT (USER_WIDTH_OUT-CORE_ID_WIDTH)  
-) axis_dma (
+) axis_dma_inst (
   .clk(clk),
   .rst(rst),
 
@@ -163,6 +157,8 @@ riscv_axis_dma # (
   .s_axis_tlast (data_s_axis_tlast),
   .s_axis_tdest (data_s_axis_tdest[SLOT_WIDTH-1:0]),
   .s_axis_tuser (data_s_axis_tuser),
+
+  .wr_base_addr ({data_s_axis_tdest[SLOT_WIDTH-1:0],{(ADDR_LEAD_ZERO-4){1'b0}},4'h2}),
 
   .m_axis_tdata (data_m_axis_tdata),
   .m_axis_tkeep (data_m_axis_tkeep),

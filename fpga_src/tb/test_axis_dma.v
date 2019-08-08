@@ -2,22 +2,17 @@
 
 `timescale 1ns / 1ps
 
-module test_riscv_axis_dma;
+module test_axis_dma;
 
 // Parameters
 parameter DATA_WIDTH       = 64;
 parameter ADDR_WIDTH       = 16;   
-parameter STRB_WIDTH       = (DATA_WIDTH/8);
-parameter PORT_COUNT       = 4;
-parameter RECV_DESC_DEPTH  = 4;
-parameter INTERLEAVE       = 0;
 parameter LEN_WIDTH        = 16;
-parameter ADDR_LEAD_ZERO   = 8;
-parameter PORT_WIDTH       = $clog2(PORT_COUNT);
-parameter DEST_WIDTH_IN    = ADDR_WIDTH-ADDR_LEAD_ZERO;
-parameter DEST_WIDTH_OUT   = PORT_WIDTH;
-parameter USER_WIDTH_IN    = PORT_WIDTH;
-parameter USER_WIDTH_OUT   = ADDR_WIDTH-ADDR_LEAD_ZERO;
+parameter DEST_WIDTH_IN    = 8; 
+parameter DEST_WIDTH_OUT   = 4; 
+parameter USER_WIDTH_IN    = 4; 
+parameter USER_WIDTH_OUT   = 8; 
+parameter STRB_WIDTH       = (DATA_WIDTH/8);
 
 // Inputs
 reg clk = 0;
@@ -29,6 +24,7 @@ reg                      s_axis_tvalid = 0;
 reg                      s_axis_tlast = 0;
 reg [DEST_WIDTH_IN-1:0]  s_axis_tdest = 0;
 reg [USER_WIDTH_IN-1:0]  s_axis_tuser = 0;
+reg [ADDR_WIDTH-1:0]     wr_base_addr = 0;
 reg                      mem_wr_ready = 0;
 reg                      recv_desc_ready = 0;
 reg                      m_axis_tready = 0;
@@ -92,7 +88,8 @@ initial begin
         send_desc_addr,
         send_desc_len,
         send_desc_tdest,
-        send_desc_tuser
+        send_desc_tuser,
+        wr_base_addr
     );
     $to_myhdl(
         mem_wr_en,
@@ -121,20 +118,14 @@ initial begin
     );
 
     // dump file
-    $dumpfile("test_riscv_axis_dma.lxt");
-    $dumpvars(0, test_riscv_axis_dma);
+    $dumpfile("test_axis_dma.lxt");
+    $dumpvars(0, test_axis_dma);
 end
 
-riscv_axis_dma # (
+axis_dma # (
   .DATA_WIDTH     (DATA_WIDTH),
   .ADDR_WIDTH     (ADDR_WIDTH),       
-  .STRB_WIDTH     (STRB_WIDTH),    
-  .PORT_COUNT     (PORT_COUNT),       
-  .RECV_DESC_DEPTH(RECV_DESC_DEPTH),       
-  .INTERLEAVE     (INTERLEAVE),       
   .LEN_WIDTH      (LEN_WIDTH),        
-  .ADDR_LEAD_ZERO (ADDR_LEAD_ZERO),
-  .PORT_WIDTH     (PORT_WIDTH),      
   .DEST_WIDTH_IN  (DEST_WIDTH_IN),   
   .DEST_WIDTH_OUT (DEST_WIDTH_OUT),  
   .USER_WIDTH_IN  (USER_WIDTH_IN),   
@@ -150,6 +141,8 @@ riscv_axis_dma # (
   .s_axis_tlast (s_axis_tlast),
   .s_axis_tdest (s_axis_tdest),
   .s_axis_tuser (s_axis_tuser),
+  
+  .wr_base_addr (wr_base_addr),
 
   .m_axis_tdata (m_axis_tdata),
   .m_axis_tkeep (m_axis_tkeep),

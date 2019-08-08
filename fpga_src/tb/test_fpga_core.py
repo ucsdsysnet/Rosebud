@@ -41,7 +41,7 @@ srcs.append("../rtl/simple_fifo.v")
 srcs.append("../rtl/loaded_desc_fifo.v")
 srcs.append("../rtl/max_finder_tree.v")
 srcs.append("../rtl/core_mems.v")
-srcs.append("../rtl/riscv_axis_dma.v")
+srcs.append("../rtl/axis_dma.v")
 srcs.append("../rtl/VexRiscv.v")
 srcs.append("../rtl/riscvcore.v")
 srcs.append("../rtl/riscv_axis_wrapper.v")
@@ -78,8 +78,8 @@ def bench():
 
     SEND_COUNT_0 = 100
     SEND_COUNT_1 = 100
-    SIZE_0       = 64 - 18 
-    SIZE_1       = 64 - 18
+    SIZE_0       = 185 - 18 
+    SIZE_1       = 182 - 18
 
     # Inputs
     clk = Signal(bool(0))

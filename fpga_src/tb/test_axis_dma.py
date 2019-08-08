@@ -4,7 +4,7 @@ import os
 
 import axis_ep
 
-module = 'riscv_axis_dma'
+module = 'axis_dma'
 testbench = 'test_%s' % module
 
 srcs = []
@@ -23,17 +23,12 @@ def bench():
     # Parameters
     DATA_WIDTH       = 64
     ADDR_WIDTH       = 16   
-    STRB_WIDTH       = (DATA_WIDTH/8)
-    PORT_COUNT       = 4
-    RECV_DESC_DEPTH  = 4
-    INTERLEAVE       = 0
     LEN_WIDTH        = 16
-    ADDR_LEAD_ZERO   = 8
-    PORT_WIDTH       = 2
-    DEST_WIDTH_IN    = ADDR_WIDTH-ADDR_LEAD_ZERO
-    DEST_WIDTH_OUT   = PORT_WIDTH
-    USER_WIDTH_IN    = PORT_WIDTH
-    USER_WIDTH_OUT   = ADDR_WIDTH-ADDR_LEAD_ZERO
+    DEST_WIDTH_IN    = 8 
+    DEST_WIDTH_OUT   = 4 
+    USER_WIDTH_IN    = 4 
+    USER_WIDTH_OUT   = 8 
+    STRB_WIDTH       = (DATA_WIDTH/8)
 
     # Inputs
     clk = Signal(bool(0))
@@ -45,8 +40,9 @@ def bench():
     s_axis_tlast    = Signal(bool(0))
     s_axis_tdest    = Signal(intbv(0)[DEST_WIDTH_IN:])
     s_axis_tuser    = Signal(intbv(0)[USER_WIDTH_IN:]) 
+    wr_base_addr    = Signal(intbv(0)[ADDR_WIDTH:])
     mem_wr_ready    = Signal(bool(0)) 
-    recv_desc_ready  = Signal(bool(0))
+    recv_desc_ready = Signal(bool(0))
     m_axis_tready   = Signal(bool(0))
     mem_rd_ready    = Signal(bool(1))
     mem_rd_data     = Signal(intbv(0)[DATA_WIDTH:])
@@ -135,6 +131,7 @@ def bench():
         s_axis_tlast=s_axis_tlast, 
         s_axis_tdest=s_axis_tdest, 
         s_axis_tuser=s_axis_tuser, 
+        wr_base_addr=wr_base_addr,
         mem_wr_ready=mem_wr_ready,
         recv_desc_ready=recv_desc_ready,
         m_axis_tready=m_axis_tready,
@@ -193,6 +190,8 @@ def bench():
         yield clk.posedge
         print("test 1: test packet")
 
+        wr_base_addr.next = 0x080A
+        yield clk.posedge
         test_frame = axis_ep.AXIStreamFrame(
             b'\xDA\xD1\xD2\xD3\xD4\xD5' +
             b'\x5A\x51\x52\x53\x54\x55' +

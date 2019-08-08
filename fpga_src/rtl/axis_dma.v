@@ -1,17 +1,12 @@
-module riscv_axis_dma # (
+module axis_dma # (
   parameter DATA_WIDTH       = 64,   
   parameter ADDR_WIDTH       = 16,   
-  parameter STRB_WIDTH       = (DATA_WIDTH/8),
-  parameter PORT_COUNT       = 4,
-  parameter RECV_DESC_DEPTH  = 8,
-  parameter INTERLEAVE       = 0,
   parameter LEN_WIDTH        = 16,
-  parameter ADDR_LEAD_ZERO   = 8,
-  parameter PORT_WIDTH       = $clog2(PORT_COUNT),
-  parameter DEST_WIDTH_IN    = ADDR_WIDTH-ADDR_LEAD_ZERO,
-  parameter DEST_WIDTH_OUT   = PORT_WIDTH,
-  parameter USER_WIDTH_IN    = PORT_WIDTH,
-  parameter USER_WIDTH_OUT   = ADDR_WIDTH-ADDR_LEAD_ZERO,
+  parameter DEST_WIDTH_IN    = 8, 
+  parameter USER_WIDTH_OUT   = 8,
+  parameter DEST_WIDTH_OUT   = 2, 
+  parameter USER_WIDTH_IN    = 2, 
+  parameter STRB_WIDTH       = (DATA_WIDTH/8),
   parameter MASK_BITS        = $clog2(STRB_WIDTH)
 )(
   input  wire                      clk,
@@ -24,10 +19,10 @@ module riscv_axis_dma # (
   input  wire                      s_axis_tvalid,
   output wire                      s_axis_tready,
   input  wire                      s_axis_tlast,
-  // tdest is the MSB of start address
   input  wire [DEST_WIDTH_IN-1:0]  s_axis_tdest,
-  // tuser is the incoming port 
   input  wire [USER_WIDTH_IN-1:0]  s_axis_tuser,
+
+  input  wire [ADDR_WIDTH-1:0]     wr_base_addr,
   
   // Outgoing data
   output wire [DATA_WIDTH-1:0]     m_axis_tdata,
@@ -36,7 +31,6 @@ module riscv_axis_dma # (
   input  wire                      m_axis_tready,
   output wire                      m_axis_tlast,
   output wire [DEST_WIDTH_OUT-1:0] m_axis_tdest,
-  // tuser is the MSB of original slot start address
   output wire [USER_WIDTH_OUT-1:0] m_axis_tuser,
 
   // -------------- MEMORY INTERFACE -------------- // 
@@ -74,6 +68,7 @@ module riscv_axis_dma # (
   input  wire [LEN_WIDTH-1:0]      send_desc_len,
   input  wire [DEST_WIDTH_OUT-1:0] send_desc_tdest,
   input  wire [USER_WIDTH_OUT-1:0] send_desc_tuser,
+  
   output wire                      pkt_sent
 );
 
@@ -81,8 +76,6 @@ module riscv_axis_dma # (
   ///////////////////////// WRITE FROM AXIS TO MEM ///////////////////////////////
   ////////////////////////////////////////////////////////////////////////////////
 
-  wire [ADDR_WIDTH-1:0] full_addr = {s_axis_tdest,{(ADDR_LEAD_ZERO-4){1'b0}},4'h2};
-  
   // Write state machine
   localparam WR_IDLE = 1'b0;
   localparam WR_PROC = 1'b1;
@@ -124,8 +117,8 @@ module riscv_axis_dma # (
   // Latch metadata in first cycle
   always @ (posedge clk) begin
     if (latch_info) begin
-      wr_start_addr <= full_addr;
-      wr_offset     <= {1'b1,{MASK_BITS{1'b0}}} - {1'b0, full_addr[MASK_BITS-1:0]};
+      wr_start_addr <= wr_base_addr;
+      wr_offset     <= {1'b1,{MASK_BITS{1'b0}}} - {1'b0, wr_base_addr[MASK_BITS-1:0]};
       wr_tdest      <= s_axis_tdest;
       wr_tuser      <= s_axis_tuser;
     end
@@ -135,7 +128,7 @@ module riscv_axis_dma # (
       wr_strb_left <= 1'b0;
     else if (latch_info)
       wr_strb_left <= |(s_axis_tkeep >> ({1'b1,{MASK_BITS{1'b0}}} - 
-                                         {1'b0, full_addr[MASK_BITS-1:0]}));
+                                         {1'b0, wr_base_addr[MASK_BITS-1:0]}));
     else if (s_axis_tvalid && s_axis_tready)
       wr_strb_left <= |(s_axis_tkeep >> wr_offset);
   end
@@ -310,8 +303,8 @@ module riscv_axis_dma # (
   // Parsing the descriptor
   reg [ADDR_WIDTH-1:0]     send_base_addr;
   reg [LEN_WIDTH-1:0]      send_len;
-  reg [PORT_WIDTH-1:0]     send_port;
-  reg [USER_WIDTH_OUT-1:0] send_orig_addr;
+  reg [DEST_WIDTH_OUT-1:0] send_tdest;
+  reg [USER_WIDTH_OUT-1:0] send_tuser;
   reg [MASK_BITS:0]        remainder_bytes;
 
   
@@ -319,8 +312,8 @@ module riscv_axis_dma # (
     if (send_desc_ready && send_desc_valid) begin
       send_base_addr  <= send_desc_addr;
       send_len        <= send_desc_len;
-      send_port       <= send_desc_tdest;
-      send_orig_addr  <= send_desc_tuser;
+      send_tdest      <= send_desc_tdest;
+      send_tuser      <= send_desc_tuser;
       // Lower bits of base_addr and send_len
       remainder_bytes <= send_desc_addr[MASK_BITS-1:0] +
                          send_desc_len[MASK_BITS-1:0];
@@ -444,7 +437,7 @@ module riscv_axis_dma # (
   assign m_axis_tvalid = read_reg_2_v;
   assign m_axis_tlast  = (data_left == 2'd1);
   assign m_axis_tkeep  = m_axis_tlast ? rd_final_tkeep : {STRB_WIDTH{1'b1}};
-  assign m_axis_tdest  = send_port;
-  assign m_axis_tuser  = send_orig_addr;
+  assign m_axis_tdest  = send_tdest;
+  assign m_axis_tuser  = send_tuser;
 
 endmodule
