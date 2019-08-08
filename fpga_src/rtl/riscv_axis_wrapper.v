@@ -121,6 +121,10 @@ wire                   recv_desc_valid;
 wire                   recv_desc_ready;
 wire [63:0]            recv_desc;
 
+wire                   recv_desc_valid_fifoed;
+wire                   recv_desc_ready_fifoed;
+wire [63:0]            recv_desc_fifoed;
+
 wire                   send_desc_valid;
 wire                   send_desc_ready;
 wire [63:0]            send_desc;
@@ -190,12 +194,29 @@ riscv_axis_dma # (
 
 );
 
-// A FIFO for send descriptor
+// A FIFO for received descriptor
+simple_fifo # (
+  .ADDR_WIDTH($clog2(RECV_DESC_DEPTH)),
+  .DATA_WIDTH(64)
+) recvd_desc_fifo (
+  .clk(clk),
+  .rst(rst),
 
+  .din_valid(recv_desc_valid),
+  .din(recv_desc),
+  .din_ready(recv_desc_ready),
+ 
+  .dout_valid(recv_desc_valid_fifoed),
+  .dout(recv_desc_fifoed),
+  .dout_ready(recv_desc_ready_fifoed)
+);
+
+
+// A FIFO for send descriptor
 simple_fifo # (
   .ADDR_WIDTH($clog2(SEND_DESC_DEPTH)),
   .DATA_WIDTH(64)
-) recvd_desc_fifo (
+) send_desc_fifo (
   .clk(clk),
   .rst(rst),
 
@@ -408,9 +429,9 @@ riscvcore #(
     .ins_dma_addr(ins_dma_addr),
     .ins_dma_wr_data(ins_dma_wr_data),
     
-    .in_desc(recv_desc),
-    .in_desc_valid(recv_desc_valid),
-    .in_desc_taken(recv_desc_ready),
+    .in_desc(recv_desc_fifoed),
+    .in_desc_valid(recv_desc_valid_fifoed),
+    .in_desc_taken(recv_desc_ready_fifoed),
 
     .out_desc(send_desc),
     .out_desc_valid(send_desc_valid),

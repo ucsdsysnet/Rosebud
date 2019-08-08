@@ -76,7 +76,26 @@ module riscv_axis_dma # (
   ////////////////////////////////////////////////////////////////////////////////
 
   wire [ADDR_WIDTH-1:0] full_addr = {s_axis_tdest,{(ADDR_LEAD_ZERO-4){1'b0}},4'h2};
+  
+  // Write state machine
+  localparam WR_IDLE = 1'b0;
+  localparam WR_PROC = 1'b1;
+  reg wr_state_n, wr_state_r;
 
+  always @ (*) begin
+    wr_state_n = wr_state_r;
+    if ((wr_state_r == WR_IDLE) && s_axis_tvalid && s_axis_tready)
+      wr_state_n = WR_PROC;
+    else if ((wr_state_r == WR_PROC) && wr_last_pkt && wr_ready && (!s_axis_tvalid))
+      wr_state_n = WR_IDLE;
+  end 
+
+  always @ (posedge clk)
+    if (rst)
+      wr_state_r <= WR_IDLE;
+    else
+      wr_state_r <= wr_state_n;
+ 
   // For first data, Latch the start address, incoming port and slot 
   // for creating descriptor
   reg [ADDR_WIDTH-1:0]    wr_start_addr;
@@ -85,10 +104,11 @@ module riscv_axis_dma # (
   reg [DEST_WIDTH_IN-1:0] wr_slot;
   reg                     wr_strb_left;
   
+  wire desc_block = recv_desc_valid && !recv_desc_ready;
   // First packet is when there is new data and can be accpted. It can happen if 
   // there was no data last cycle, or if there was and it was last data.
   // (Timing wise it is logic between 4 registers and wr_ready and s_axis_tvalid)
-  wire latch_info = (((~wr_data_en) || (wr_last_pkt && wr_ready)) 
+  wire latch_info = (((wr_state_r==WR_IDLE) || (wr_last_pkt && wr_ready)) 
                       && s_axis_tvalid && s_axis_tready);
 
   // Latch metadata in first cycle
@@ -125,7 +145,6 @@ module riscv_axis_dma # (
   reg  [STRB_WIDTH-1:0] wr_strb_2;
  
   wire extra_cycle = wr_last && wr_strb_left;
-  // wire extra_cycle = wr_last && (|(wr_strb_1 >> wr_offset));  
 
   // Move forward the pipeline when data is received and can be sent
   // Extra cycle_r is when the data is read from second stage as extra
@@ -161,21 +180,22 @@ module riscv_axis_dma # (
     end
   end
   
-  // Simple valid_ready control. If we can write out we can read in.
-  // So axis_ready is connected to mem ready and write en to mem
-  // is asserted when there is new data or stays asserted if it was 
-  // not taken. Also if the data is taken but it needs extra cycle 
-  // it stays valid.
+  // If data was accepted it can be written the next cycle. 
+  // If there is an extra cycle it would be valid after current data is taken.
+  // If current data is not taken enable stays asserted.
   always @ (posedge clk)
     if (rst)
       wr_data_en <= 1'b0;
     else
       wr_data_en <= (s_axis_tvalid && s_axis_tready) ||
-                    (wr_data_en && (~wr_ready)) || 
-                    (wr_data_en && wr_ready && extra_cycle);
+                    (wr_data_en && wr_ready && extra_cycle) ||
+                    (wr_data_en && (~wr_ready));
 
-  assign s_axis_tready = wr_ready & (~extra_cycle);
-
+  // If we have an extra cycle we don't accept new data. Also if 
+  // descriptor is blocked we don't accept last word of an incoming packet.
+  assign s_axis_tready = wr_ready && (!extra_cycle) && 
+                        (!(s_axis_tlast && desc_block));
+   
   // wr_first_pkt aligns with wr_data_1, which is one cycle after latch_info.
   // Also if data cannot go out it keeps its first_pkt state 
   always @ (posedge clk)
@@ -216,37 +236,29 @@ module riscv_axis_dma # (
         wr_pkt_len <= 0;
     else if (wr_data_en && wr_ready) 
         wr_pkt_len <= next_wr_pkt_len;
-    
-  // Descriptor FIFO. One cycle after last data is transmitted
-  // the descriptor is ready to be enqued 
-  wire desc_fifo_ready;
-  wire [ADDR_WIDTH-1:0]    base_addr;
-  wire [PORT_WIDTH-1:0]    pkt_port;
-  wire [DEST_WIDTH_IN-1:0] pkt_slot;
-  wire [LEN_WIDTH-1:0]     pkt_len;
-  
-  simple_fifo # (
-    .ADDR_WIDTH($clog2(RECV_DESC_DEPTH)),
-    .DATA_WIDTH(ADDR_WIDTH+PORT_WIDTH+DEST_WIDTH_IN+LEN_WIDTH)
-  ) recvd_desc_fifo (
-    .clk(clk),
-    .rst(rst),
-  
-    .din_valid(wr_last_pkt && wr_ready),
-    .din({wr_start_addr, incoming_port, wr_slot, next_wr_pkt_len}),
-    .din_ready(desc_fifo_ready),
-   
-    .dout_valid(recv_desc_valid),
-    .dout({base_addr, pkt_port, pkt_slot, pkt_len}),
-    .dout_ready(recv_desc_ready)
-  );
 
   // Making the desired descriptor 
-  assign recv_desc  = {base_addr, 
-                    {(8-PORT_WIDTH){1'b0}},pkt_port,
-                    {(8-DEST_WIDTH_IN){1'b0}},pkt_slot,
-                    {(16-LEN_WIDTH){1'b0}},pkt_len};
+  reg [63:0] recv_desc_r;
+  reg        recv_desc_v_r;
+  always @ (posedge clk) begin
+    // if desc cannot be taken pipeline blocks before accepting 
+    // last word of incoming packet, so wr_last_pkt means we're clear
+    if (wr_last_pkt && wr_ready) begin
+      recv_desc_r <= {wr_start_addr, 
+                      {(8-PORT_WIDTH){1'b0}},incoming_port,
+                      {(8-DEST_WIDTH_IN){1'b0}},wr_slot,
+                      {(16-LEN_WIDTH){1'b0}},next_wr_pkt_len};
+      recv_desc_v_r <= 1'b1;
+    end else if (recv_desc_v_r && recv_desc_ready)
+      recv_desc_v_r <= 1'b0;
 
+    if (rst)
+      recv_desc_v_r <= 1'b0;
+  end
+
+  assign recv_desc       = recv_desc_r;
+  assign recv_desc_valid = recv_desc_v_r;
+  
   assign mem_wr_en   = wr_data_en;
   assign mem_wr_addr = wr_addr;
   assign mem_wr_last = wr_last_pkt;
@@ -260,27 +272,27 @@ module riscv_axis_dma # (
   
   // State machine to have an init state between idle and processing to calculate
   // offset and so. 
-  localparam IDLE = 2'b00;
-  localparam INIT = 2'b01;
-  localparam PROC = 2'b10;
-  localparam ERR  = 2'b11;
+  localparam RD_IDLE = 2'b00;
+  localparam RD_INIT = 2'b01;
+  localparam RD_PROC = 2'b10;
+  localparam RD_ERR  = 2'b11;
   
-  reg [1:0] state_r, state_n;
+  reg [1:0] rd_state_r, rd_state_n;
   reg       to_drop; 
 
   always @ (posedge clk)
     if (rst)
-      state_r <= IDLE;
+      rd_state_r <= RD_IDLE;
     else
-      state_r <= state_n;
+      rd_state_r <= rd_state_n;
 
   always @ (*) begin
-    state_n = state_r;
-    case (state_r)
-      IDLE: if (send_desc_valid) state_n = INIT;
-      INIT: if (to_drop) state_n = IDLE; else state_n = PROC;
-      PROC: if (pkt_sent) state_n = IDLE;
-      ERR:  state_n = ERR;
+    rd_state_n = rd_state_r;
+    case (rd_state_r)
+      RD_IDLE: if (send_desc_valid) rd_state_n = RD_INIT;
+      RD_INIT: if (to_drop) rd_state_n = RD_IDLE; else rd_state_n = RD_PROC;
+      RD_PROC: if (pkt_sent) rd_state_n = RD_IDLE;
+      RD_ERR:  rd_state_n = RD_ERR;
     endcase
   end
   
@@ -304,11 +316,11 @@ module riscv_axis_dma # (
       to_drop         <= (send_desc[LEN_WIDTH-1:0]==0);
     end
   
-  assign send_desc_ready = (state_r == IDLE);
-  assign pkt_sent        = (to_drop&&(state_r==INIT)) || 
+  assign send_desc_ready = (rd_state_r == RD_IDLE);
+  assign pkt_sent        = (to_drop&&(rd_state_r==RD_INIT)) || 
                     (m_axis_tvalid && m_axis_tready && m_axis_tlast);
 
-  // Calculating offset, number of words and final tkeep in INIT state
+  // Calculating offset, number of words and final tkeep in RD_INIT state
   reg [ADDR_WIDTH-1:0]          alligned_rd_addr;
   reg [MASK_BITS-1:0]           rd_offset;
   reg [LEN_WIDTH-MASK_BITS-1:0] rd_word_count;
@@ -328,12 +340,12 @@ module riscv_axis_dma # (
       rd_word_count    <= 0;
       rd_final_tkeep   <= {STRB_WIDTH{1'b1}};
     end
-    if (state_r==IDLE) begin
+    if (rd_state_r==RD_IDLE) begin
       rd_offset        <= 0;
       rd_word_count    <= 0;
       rd_final_tkeep   <= {STRB_WIDTH{1'b1}};
     end 
-    else if (state_r==INIT) begin
+    else if (rd_state_r==RD_INIT) begin
       rd_offset        <= send_base_addr[MASK_BITS-1:0];
       rd_word_count    <= send_len[LEN_WIDTH-1:MASK_BITS] + extra_words;
       rd_final_tkeep   <= {{(STRB_WIDTH-1){1'b0}},{STRB_WIDTH{1'b1}}} >> tkeep_zeros;
@@ -353,7 +365,7 @@ module riscv_axis_dma # (
   always @ (posedge clk)
     if (rst)
       data_left <= 2'd0;
-    else if (state_r != PROC)
+    else if (rd_state_r != RD_PROC)
       data_left <= 2'd0;
     else if ((rd_word_count == 0) && mem_rd_data_ready && mem_rd_data_v)
       if (rd_offset == 0)
