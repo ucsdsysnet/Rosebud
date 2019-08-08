@@ -261,6 +261,10 @@ def bench():
         recv_desc_ready.next = 1
         yield clk.posedge
         yield clk.posedge
+        yield clk.posedge
+        yield clk.posedge
+        yield clk.posedge
+        yield clk.posedge
         recv_desc_ready.next = 0
         yield clk.posedge
         yield delay(100)
@@ -301,24 +305,62 @@ def bench():
         yield clk.posedge
         yield clk.posedge
         yield clk.posedge
+        yield clk.posedge
+        yield clk.posedge
+        yield clk.posedge
+        yield clk.posedge
+        yield clk.posedge
+        yield clk.posedge
+        yield clk.posedge
+        yield clk.posedge
+        yield clk.posedge
+        yield clk.posedge
+        yield clk.posedge
+        yield clk.posedge
         recv_desc_ready.next = 0
         yield clk.posedge
         yield delay(100)
  
         print("test 2: back to back smallest packets")
         test_frame = axis_ep.AXIStreamFrame(
-            b'\x00\x01\x02\x03\x04\x05\x06\x07\x08',
+            b'\x02',
+            id=0,
+            dest=0x0A,
+            user=0x4
+        )
+        source.send(test_frame)
+        test_frame = axis_ep.AXIStreamFrame(
+            b'\x03',
+            id=0,
+            dest=0x09,
+            user=0x3
+        )
+        source.send(test_frame)
+        test_frame = axis_ep.AXIStreamFrame(
+            b'\x04',
             id=0,
             dest=0x08,
             user=0x2
         )
         source.send(test_frame)
-        source.send(test_frame)
-        source.send(test_frame)
+        test_frame = axis_ep.AXIStreamFrame(
+            b'\x05',
+            id=0,
+            dest=0x07,
+            user=0x1
+        )
         source.send(test_frame)
         yield delay(100)
         yield clk.posedge
         recv_desc_ready.next = 1
+        yield clk.posedge
+        yield clk.posedge
+        yield clk.posedge
+        yield clk.posedge
+        yield clk.posedge
+        yield clk.posedge
+        yield clk.posedge
+        yield clk.posedge
         yield clk.posedge
         yield clk.posedge
         yield clk.posedge
@@ -355,6 +397,14 @@ def bench():
         yield delay(100)
         yield clk.posedge
         recv_desc_ready.next = 1
+        yield clk.posedge
+        yield clk.posedge
+        yield clk.posedge
+        yield clk.posedge
+        yield clk.posedge
+        yield clk.posedge
+        yield clk.posedge
+        yield clk.posedge
         yield clk.posedge
         yield clk.posedge
         yield clk.posedge
