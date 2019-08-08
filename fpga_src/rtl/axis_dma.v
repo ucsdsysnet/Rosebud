@@ -98,7 +98,7 @@ module axis_dma # (
     wr_state_n = wr_state_r;
     if ((wr_state_r == WR_IDLE) && s_axis_tvalid && s_axis_tready)
       wr_state_n = WR_PROC;
-    else if ((wr_state_r == WR_PROC) && wr_last_pkt && wr_ready && (!s_axis_tvalid))
+    else if ((wr_state_r == WR_PROC) && wr_last_pkt && wr_ready && (!(s_axis_tvalid && s_axis_tready)))
       wr_state_n = WR_IDLE;
   end 
 

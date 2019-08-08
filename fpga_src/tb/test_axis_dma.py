@@ -235,6 +235,16 @@ def bench():
          
         print("test 2: back to back")
         source.send(test_frame)
+        test_frame = axis_ep.AXIStreamFrame(
+            b'\xDA\xD1\xD2\xD3\xD4\xD5' +
+            b'\x5A\x51\x52\x53\x54\x55' +
+            b'\x80\x00' +
+            b'\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f\x10',
+            id=0,
+            dest=0x07,
+            user=0x1
+        )
+
         source.send(test_frame)
         yield clk.posedge
         mem_wr_ready.next = 1
@@ -259,12 +269,30 @@ def bench():
         test_frame = axis_ep.AXIStreamFrame(
             b'\x00\x01\x02\x03\x04\x05\x06',
             id=0,
-            dest=0x08,
+            dest=0x07,
+            user=0x4
+        )
+        source.send(test_frame)
+        test_frame = axis_ep.AXIStreamFrame(
+            b'\x00\x01\x02\x03\x04\x05\x06',
+            id=0,
+            dest=0x06,
+            user=0x3
+        )
+        source.send(test_frame)
+        test_frame = axis_ep.AXIStreamFrame(
+            b'\x00\x01\x02\x03\x04\x05\x06',
+            id=0,
+            dest=0x05,
             user=0x2
         )
         source.send(test_frame)
-        source.send(test_frame)
-        source.send(test_frame)
+        test_frame = axis_ep.AXIStreamFrame(
+            b'\x00\x01\x02\x03\x04\x05\x06',
+            id=0,
+            dest=0x03,
+            user=0x1
+        )
         source.send(test_frame)
         yield delay(100)
         yield clk.posedge
