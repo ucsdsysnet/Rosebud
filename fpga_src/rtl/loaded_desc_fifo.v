@@ -1,9 +1,7 @@
 module loaded_desc_fifo # (
   parameter SLOT_COUNT = 8,
   parameter DATA_WIDTH = $clog2(SLOT_COUNT+1),
-  parameter ADDR_WIDTH = $clog2(SLOT_COUNT),
-  parameter ALMOST_FULL_DIST  = 2, 
-  parameter ALMOST_EMPTY_DIST = 2
+  parameter ADDR_WIDTH = $clog2(SLOT_COUNT)
 )(
   input clk,
   input rst,
@@ -18,18 +16,12 @@ module loaded_desc_fifo # (
 
   output [ADDR_WIDTH:0]   item_count,
   output                  full,
-  output                  empty,
-  output                  almost_full,
-  output                  almost_empty
+  output                  empty
 );
-
-localparam ALMOST_FULL_THRESH  = 2**ADDR_WIDTH + ALMOST_FULL_DIST;
-localparam ALMOST_EMPTY_THRESH = ALMOST_EMPTY_DIST;
 
 reg [DATA_WIDTH-1:0] mem [0:(2**ADDR_WIDTH)-1];
 reg [ADDR_WIDTH-1:0] rptr, wptr;
 reg [ADDR_WIDTH:0]   item_count_r;
-reg enque_r, deque_r;
 
 wire enque = din_valid  & din_ready;
 wire deque = dout_valid & dout_ready;
@@ -52,13 +44,15 @@ assign dout = mem[rptr];
 
 // Latching last transaction to know FIFO is full or empty
 // Starting with full state after the reset. 
+reg full_r, empty_r;
+
 always @ (posedge clk)
 	if (rst) begin
-		enque_r <= 1'b1;
-		deque_r <= 1'b0;
+    full_r  <= 1'b1;
+    empty_r <= 1'b0;
 	end else if (enque | deque) begin
-		enque_r <= enque;
-		deque_r <= deque;
+    full_r  <= ((wptr + {{(ADDR_WIDTH-1){1'b0}},1'b1}) == rptr) && enque;
+    empty_r <= ((rptr + {{(ADDR_WIDTH-1){1'b0}},1'b1}) == wptr) && deque;
 	end
 
 always @ (posedge clk)
@@ -70,14 +64,15 @@ always @ (posedge clk)
     else if (!enque && deque)
       item_count_r <= item_count_r - {{(ADDR_WIDTH){1'b0}},1'b1};
 
-assign empty = (rptr == wptr) & deque_r;
-assign full  = (rptr == wptr) & enque_r;
+assign empty = empty_r; 
+assign full  = full_r; 
+
+assign din_ready  = ~full_r; // & ~rst;
+assign dout_valid = ~empty_r;
 
 assign din_ready  = ~full & ~rst;
 assign dout_valid = ~empty;
 
-assign almost_full  = item_count_r >= ALMOST_FULL_THRESH;
-assign almost_empty = item_count_r <= ALMOST_EMPTY_THRESH;
 assign item_count   = item_count_r;
 
 integer i,j;
