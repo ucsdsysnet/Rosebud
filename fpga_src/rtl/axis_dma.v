@@ -113,7 +113,7 @@ module axis_dma # (
   // (Timing wise it is logic between 4 registers and wr_ready and s_axis_tvalid)
   wire latch_info = (((wr_state_r==WR_IDLE) || (wr_last_pkt && wr_ready)) 
                       && s_axis_tvalid && s_axis_tready);
-
+  
   // Latch metadata in first cycle
   always @ (posedge clk) begin
     if (latch_info) begin
@@ -236,16 +236,26 @@ module axis_dma # (
     else if (wr_data_en && wr_ready) 
         wr_pkt_len <= next_wr_pkt_len;
 
-  // Making the desired descriptor 
+  // Remember a descriptor is ready and is waiting for ready
+  reg desc_late_write;
+  always @ (posedge clk) begin
+    if (rst) 
+      desc_late_write <= 1'b0;
+    else if (wr_last_pkt && wr_ready && desc_block)
+      desc_late_write <= 1'b1;
+    else if (recv_desc_ready)
+      desc_late_write <= 1'b0;
+  end
+
+  // Latching the descriptor 
   reg [LEN_WIDTH-1:0]     recv_desc_len_r;
   reg [DEST_WIDTH_IN-1:0] recv_desc_tdest_r;
   reg [USER_WIDTH_IN-1:0] recv_desc_tuser_r;
   reg [ADDR_WIDTH-1:0]    recv_desc_addr_r;
   reg        recv_desc_v_r;
   always @ (posedge clk) begin
-    // if desc cannot be taken pipeline blocks before accepting 
-    // last word of incoming packet, so wr_last_pkt means we're clear
-    if (wr_last_pkt && wr_ready) begin
+    if ((wr_last_pkt && wr_ready && (!desc_block)) 
+        || (desc_late_write && recv_desc_ready)) begin
       recv_desc_len_r   <= next_wr_pkt_len;
       recv_desc_tdest_r <= wr_tdest;
       recv_desc_tuser_r <= wr_tuser;
