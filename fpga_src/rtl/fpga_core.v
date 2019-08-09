@@ -482,7 +482,7 @@ function [CORE_COUNT*CORE_WIDTH-1:0] ctrl_in_addrs (input [31:0] lead_zero);
     integer i;
     begin
         for (i=0;i<CORE_COUNT;i=i+1)
-            ctrl_in_addrs[i*CORE_WIDTH +: CORE_WIDTH] = i << lead_zero;
+            ctrl_in_addrs[i*CORE_WIDTH +: CORE_WIDTH] = i; //  << lead_zero;
     end
 endfunction
 
@@ -622,7 +622,7 @@ generate
         .ctrl_s_axis_tvalid(ctrl_s_axis_tvalid[i]),
         .ctrl_s_axis_tready(ctrl_s_axis_tready[i]),
         .ctrl_s_axis_tlast(ctrl_s_axis_tlast[i]),
-        .ctrl_s_axis_tdest(ctrl_s_axis_tdata[CORE_WIDTH*i +: CORE_WIDTH]),
+        .ctrl_s_axis_tdest(ctrl_s_axis_tdest[CORE_WIDTH*i +: CORE_WIDTH]),
   
         // Outgoing control
         .ctrl_m_axis_tdata(ctrl_m_axis_tdata[AXIS_DATA_WIDTH*i +: AXIS_DATA_WIDTH]),
