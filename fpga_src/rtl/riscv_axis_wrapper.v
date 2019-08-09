@@ -307,28 +307,13 @@ simple_fifo # (
   .dout_ready(data_out_desc_ready)
 );
 
-wire data_arbiter_v;
-wire data_arbiter_select;
-wire [1:0] data_arbiter_grant;
-
-arbiter # (.PORTS(2),.TYPE("ROUND_ROBIN"),.BLOCK("REQUEST")) data_arbiter (
-  .clk(clk),
-  .rst(rst),
-  
-  .request({data_out_desc_valid,ctrl_in_valid}),
-  .acknowledge(2'b0),
-  
-  .grant(data_arbiter_grant),
-  .grant_valid(data_arbiter_v),
-  .grant_encoded(data_arbiter_select)
-  );
-
-assign send_desc_valid_fifoed = data_arbiter_v;
-assign send_desc_fifoed       = data_arbiter_select ? data_out_desc : ctrl_in_desc;
-
-assign data_out_desc_ready    = send_desc_ready_fifoed && data_arbiter_grant[1];
-assign ctrl_in_raedy          = send_desc_ready_fifoed && data_arbiter_grant[0];
-
+// Simple arbiter among the 2 FIFOs, priority to messages from controller 
+wire   data_select            = ctrl_in_valid;
+assign send_desc_valid_fifoed = ctrl_in_valid || data_out_desc_valid;
+assign send_desc_fifoed       = data_select ? ctrl_in_desc : data_out_desc;
+assign data_out_desc_ready    = send_desc_ready_fifoed && (!data_select);
+assign ctrl_in_ready          = send_desc_ready_fifoed &&   data_select ;
+ 
 /////////////////////////////////////////////////////////////////////
 /////////////// CTRL OUT DESCRIPTOR FIFOS AND ARBITER ///////////////
 /////////////////////////////////////////////////////////////////////
@@ -382,29 +367,14 @@ simple_fifo # (
   .dout_ready(pkt_sent_ready)
 );
 
-wire ctrl_arbiter_v;
-wire ctrl_arbiter_select;
-wire [1:0] ctrl_arbiter_grant;
-
-arbiter # (.PORTS(2),.TYPE("ROUND_ROBIN"),.BLOCK("REQUEST")) ctrl_arbiter (
-  .clk(clk),
-  .rst(rst),
-  
-  .request({pkt_sent_v,ctrl_send_valid_fifoed}),
-  .acknowledge(2'b0),
-  
-  .grant(ctrl_arbiter_grant),
-  .grant_valid(ctrl_arbiter_v),
-  .grant_encoded(ctrl_arbiter_select)
-  );
-
-assign ctrl_m_axis_tvalid = ctrl_arbiter_v;
-assign ctrl_m_axis_tdata  = ctrl_arbiter_select ? pkt_sent_desc : ctrl_send_data_fifoed;
-
-assign ctrl_m_axis_tlast  = 1'b1;
-assign pkt_sent_ready     = ctrl_m_axis_tready && ctrl_arbiter_grant [1];
-assign ctrl_send_ready_fifoed = ctrl_m_axis_tready && ctrl_arbiter_grant[0];
-
+// Simple arbiter among the 2 FIFOs, priority to releasing a desc
+wire   ctrl_select            = pkt_sent_v;
+assign ctrl_m_axis_tvalid     = pkt_sent_v || ctrl_send_valid_fifoed; 
+assign ctrl_m_axis_tdata      = ctrl_select ? pkt_sent_desc : ctrl_send_data_fifoed;
+assign ctrl_m_axis_tlast      = 1'b1;
+assign ctrl_send_ready_fifoed = ctrl_m_axis_tready && (!ctrl_select);
+assign pkt_sent_ready         = ctrl_m_axis_tready &&   ctrl_select ;
+ 
 /////////////////////////////////////////////////////////////////////
 /////////////////////// BROADCAST MESSAGING /////////////////////////
 /////////////////////////////////////////////////////////////////////
