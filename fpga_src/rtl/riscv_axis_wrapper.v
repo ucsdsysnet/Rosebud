@@ -489,9 +489,9 @@ riscvcore #(
     .in_desc_valid(recv_desc_valid_fifoed),
     .in_desc_taken(recv_desc_ready_fifoed),
 
-    .dir_desc(send_desc),
-    .dir_desc_valid(send_desc_valid),
-    .dir_desc_ready(send_desc_ready),
+    .data_desc(send_desc),
+    .data_desc_valid(send_desc_valid),
+    .data_desc_ready(send_desc_ready),
     
     .ctrl_desc(),
     .ctrl_desc_valid(),
