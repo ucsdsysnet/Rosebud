@@ -2,7 +2,9 @@ inline void process (unsigned short* len, unsigned char* port, unsigned int* off
 int main(void){
   volatile unsigned int * rd_desc    = (volatile unsigned int *) 0x8040;
   volatile unsigned int * wr_desc    = (volatile unsigned int *) 0x8000;
+  volatile unsigned int * wr_desc_ctrl = (volatile unsigned int *) 0x8008;
   volatile unsigned char * wr_desc_send = (volatile unsigned char *) 0x8038;
+  volatile unsigned char * wr_desc_ctrl_send = (volatile unsigned char *) 0x8039;
   volatile unsigned char * rd_desc_done = (volatile unsigned char *) 0x803c;
 
   unsigned int* data;
@@ -29,12 +31,13 @@ int main(void){
   		// be to stat and then stat+1 and it should not happen before that. 
   		// there is 10 byte offset when DMA writes and we did not change it,
   		// so that would be the start address of packet. 
-  		*wr_desc = (int)len;
-  		*((unsigned char*)wr_desc+2) = slot;
-  		*((unsigned char*)wr_desc+3) = port;
-  		*(wr_desc+1) = ((unsigned int)data)+offset;
+  		*wr_desc_ctrl = (int)len;
+  		*((unsigned char*)wr_desc_ctrl+2) = slot;
+  		*((unsigned char*)wr_desc_ctrl+3) = port;
+  		*(wr_desc_ctrl+1) = ((unsigned int)data)+offset;
+  		*((unsigned char*)wr_desc_ctrl+7) = 1;
 			asm volatile("" ::: "memory");
-			* wr_desc_send = 1;
+			* wr_desc_ctrl_send = 1;
   	}
   }
   

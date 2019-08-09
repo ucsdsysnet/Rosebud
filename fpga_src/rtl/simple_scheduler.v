@@ -134,9 +134,10 @@ module simple_scheduler # (
   // Since slots start from 1, SLOT WIDTH is already 1 bit extra
   wire [CORE_COUNT*SLOT_WIDTH-1:0] rx_desc_count;
         
-  assign ctrl_s_axis_tready = | rx_desc_slot_accept;
   assign rx_desc_v          = | rx_desc_slot_v;
   assign rx_desc_data       = {selected_desc, rx_desc_slot[selected_desc]};
+
+  wire [7:0] msg_type = ctrl_s_axis_tdata[DATA_WIDTH-1:DATA_WIDTH-8];
 
   genvar i;
   generate 
@@ -147,7 +148,7 @@ module simple_scheduler # (
         .clk(clk),
         .rst(rst),
       
-        .din_valid(ctrl_s_axis_tvalid && (ctrl_s_axis_tuser==i)), 
+        .din_valid(ctrl_s_axis_tvalid && (ctrl_s_axis_tuser==i) && (msg_type==0)),
         .din(ctrl_s_axis_tdata[LEN_WIDTH+SLOT_WIDTH-1:LEN_WIDTH]),
         .din_ready(rx_desc_slot_accept[i]),
        
@@ -170,6 +171,32 @@ module simple_scheduler # (
     .max_ptr(selected_desc)
   );
 
+  // Loop back ready desc 
+  wire loopback_in_ready;
+  wire [CORE_ID_WIDTH-1:0] loopback_dest;
+  wire [DATA_WIDTH-1:0]    loopback_data;
+  wire                     loopback_valid;
+  wire                     loopback_ready;
+
+  simple_fifo # (
+    .ADDR_WIDTH($clog2(4*CORE_COUNT)),
+    .DATA_WIDTH(DATA_WIDTH+CORE_ID_WIDTH)
+  ) desc_loopback (
+    .clk(clk),
+    .rst(rst),
+  
+    .din_valid(ctrl_s_axis_tvalid && (msg_type==1)),
+    .din({ctrl_s_axis_tuser,ctrl_s_axis_tdata}),
+    .din_ready(loopback_in_ready),
+   
+    .dout_valid(loopback_valid),
+    .dout({loopback_dest,loopback_data}),
+    .dout_ready(loopback_ready)
+  );
+
+  assign ctrl_s_axis_tready = ((|rx_desc_slot_accept) && (msg_type==0)) ||
+                                 (loopback_in_ready && (msg_type==1));
+
   // Core reset command
   reg [CORE_ID_WIDTH:0] core_rst_counter;
   always @ (posedge clk)
@@ -179,11 +206,15 @@ module simple_scheduler # (
       if (ctrl_m_axis_tvalid && ctrl_m_axis_tready)
         core_rst_counter <= core_rst_counter + 1;
         
-  assign ctrl_m_axis_tdata  = 64'hFFFFFFFF_FFFFFFFE;
+  wire core_reset_in_prog = (core_rst_counter < CORE_COUNT); 
+
+  // making the descriptor type to be 0, so core would send out. 
+  assign ctrl_m_axis_tdata  = core_reset_in_prog ? 64'hFFFFFFFF_FFFFFFFE : {8'd0,loopback_data[DATA_WIDTH-9:0]};
   assign ctrl_m_axis_tlast  = 1'b1;
-  assign ctrl_m_axis_tvalid = (core_rst_counter < CORE_COUNT);
-  assign ctrl_m_axis_tdest  = core_rst_counter[CORE_ID_WIDTH-1:0];
- 
+  assign ctrl_m_axis_tvalid = core_reset_in_prog || loopback_valid;
+  assign ctrl_m_axis_tdest  = core_reset_in_prog ? core_rst_counter[CORE_ID_WIDTH-1:0] : loopback_dest;
+
+  assign loopback_ready = (!core_reset_in_prog) && ctrl_m_axis_tready;
 
 if (ENABLE_ILA) begin
   wire trig_out_1, trig_out_2;

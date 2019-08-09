@@ -311,7 +311,7 @@ wire data_arbiter_v;
 wire data_arbiter_select;
 wire [1:0] data_arbiter_grant;
 
-arbiter # (.PORTS(2),.TYPE("PRIORITY"),.BLOCK("REQUEST")) data_arbiter (
+arbiter # (.PORTS(2),.TYPE("ROUND_ROBIN"),.BLOCK("REQUEST")) data_arbiter (
   .clk(clk),
   .rst(rst),
   
@@ -386,7 +386,7 @@ wire ctrl_arbiter_v;
 wire ctrl_arbiter_select;
 wire [1:0] ctrl_arbiter_grant;
 
-arbiter # (.PORTS(2),.TYPE("PRIORITY"),.BLOCK("REQUEST")) ctrl_arbiter (
+arbiter # (.PORTS(2),.TYPE("ROUND_ROBIN"),.BLOCK("REQUEST")) ctrl_arbiter (
   .clk(clk),
   .rst(rst),
   
