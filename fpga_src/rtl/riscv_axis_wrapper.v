@@ -88,14 +88,13 @@ assign ctrl_m_axis_tuser = CORE_ID;
 //////////////////////// CORE RESET COMMAND /////////////////////////
 /////////////////////////////////////////////////////////////////////
 reg  core_reset;
-wire reset_cmd = ctrl_s_axis_tvalid && (&ctrl_s_axis_tdata[DATA_WIDTH-1:DATA_WIDTH-ADDR_WIDTH]);
+wire reset_cmd = ctrl_s_axis_tvalid && (&ctrl_s_axis_tdata[DATA_WIDTH-1:DATA_WIDTH-8]);
+
 always @ (posedge clk)
     if (rst) 
         core_reset <= 1'b1;
     else if (reset_cmd)
         core_reset <= ctrl_s_axis_tdata[0];
-
-assign ctrl_s_axis_tready = 1;
 
 /////////////////////////////////////////////////////////////////////
 /////////// EXTRACTING BASE ADDR FROM/FOR INCOMING DATA /////////////
@@ -165,14 +164,6 @@ wire [SLOT_WIDTH-1:0]  recv_desc_tdest;
 wire [PORT_WIDTH-1:0]  recv_desc_tuser;
 wire [ADDR_WIDTH-1:0]  recv_desc_addr;
 
-wire                   recv_desc_valid_fifoed;
-wire                   recv_desc_ready_fifoed;
-wire [63:0]            recv_desc_fifoed;
-
-wire                   send_desc_valid;
-wire                   send_desc_ready;
-wire [63:0]            send_desc;
-
 wire                   pkt_sent;
 
 wire [63:0] send_desc_fifoed;
@@ -241,7 +232,13 @@ axis_dma # (
 
 );
 
-// A FIFO for received descriptor
+/////////////////////////////////////////////////////////////////////
+/////////////////// DATA IN DESCRIPTOR FIFO /////////////////////////
+/////////////////////////////////////////////////////////////////////
+// A desc FIFO for received data
+wire recv_desc_valid_fifoed, recv_desc_ready_fifoed;
+wire [63:0] recv_desc_fifoed;
+
 wire [63:0] recv_desc = {recv_desc_addr,
                         {(8-PORT_WIDTH){1'b0}},recv_desc_tuser,
                         {(8-SLOT_WIDTH){1'b0}},recv_desc_tdest,
@@ -250,7 +247,7 @@ wire [63:0] recv_desc = {recv_desc_addr,
 simple_fifo # (
   .ADDR_WIDTH($clog2(RECV_DESC_DEPTH)),
   .DATA_WIDTH(64)
-) recvd_desc_fifo (
+) recvd_data_fifo (
   .clk(clk),
   .rst(rst),
 
@@ -263,22 +260,99 @@ simple_fifo # (
   .dout_ready(recv_desc_ready_fifoed)
 );
 
+/////////////////////////////////////////////////////////////////////
+/////////////// DATA OUT DESCRIPTOR FIFOS AND ARBITER ///////////////
+/////////////////////////////////////////////////////////////////////
 
-// A FIFO for send descriptor
+// A desc FIFO for send data based on scheduler message
+wire ctrl_in_valid, ctrl_in_ready;
+wire [63:0] ctrl_in_desc;
+
 simple_fifo # (
-  .ADDR_WIDTH($clog2(SEND_DESC_DEPTH)),
+  .ADDR_WIDTH($clog2(RECV_DESC_DEPTH)),
   .DATA_WIDTH(64)
-) send_desc_fifo (
+) recvd_ctrl_fifo (
   .clk(clk),
   .rst(rst),
 
-  .din_valid(send_desc_valid),
-  .din(send_desc),
-  .din_ready(send_desc_ready),
+  .din_valid(ctrl_s_axis_tvalid && !reset_cmd),
+  .din(ctrl_s_axis_tdata),
+  .din_ready(ctrl_s_axis_tready),
  
-  .dout_valid(send_desc_valid_fifoed),
-  .dout(send_desc_fifoed),
-  .dout_ready(send_desc_ready_fifoed)
+  .dout_valid(ctrl_in_valid),
+  .dout(ctrl_in_desc),
+  .dout_ready(ctrl_in_ready)
+);
+
+// A desc FIFO for send data from core
+wire data_send_valid, data_send_ready;
+wire [63:0] data_send_desc;
+
+wire data_out_desc_valid, data_out_desc_ready;
+wire [63:0] data_out_desc;
+
+simple_fifo # (
+  .ADDR_WIDTH($clog2(SEND_DESC_DEPTH)),
+  .DATA_WIDTH(64)
+) send_data_fifo (
+  .clk(clk),
+  .rst(rst),
+
+  .din_valid(data_send_valid),
+  .din(data_send_desc),
+  .din_ready(data_send_ready),
+ 
+  .dout_valid(data_out_desc_valid),
+  .dout(data_out_desc),
+  .dout_ready(data_out_desc_ready)
+);
+
+wire data_arbiter_v;
+wire data_arbiter_select;
+wire [1:0] data_arbiter_grant;
+
+arbiter # (.PORTS(2),.TYPE("PRIORITY"),.BLOCK("REQUEST")) data_arbiter (
+  .clk(clk),
+  .rst(rst),
+  
+  .request({data_out_desc_valid,ctrl_in_valid}),
+  .acknowledge(2'b0),
+  
+  .grant(data_arbiter_grant),
+  .grant_valid(data_arbiter_v),
+  .grant_encoded(data_arbiter_select)
+  );
+
+assign send_desc_valid_fifoed = data_arbiter_v;
+assign send_desc_fifoed       = data_arbiter_select ? data_out_desc : ctrl_in_desc;
+
+assign data_out_desc_ready    = send_desc_ready_fifoed && data_arbiter_grant[1];
+assign ctrl_in_raedy          = send_desc_ready_fifoed && data_arbiter_grant[0];
+
+/////////////////////////////////////////////////////////////////////
+/////////////// CTRL OUT DESCRIPTOR FIFOS AND ARBITER ///////////////
+/////////////////////////////////////////////////////////////////////
+// A desc FIFO for msgs to scheduler
+wire ctrl_send_valid, ctrl_send_ready;
+wire [63:0] ctrl_send_data;
+
+wire ctrl_send_valid_fifoed, ctrl_send_ready_fifoed;
+wire [63:0] ctrl_send_data_fifoed;
+
+simple_fifo # (
+  .ADDR_WIDTH($clog2(SEND_DESC_DEPTH)),
+  .DATA_WIDTH(64)
+) send_ctrl_fifo (
+  .clk(clk),
+  .rst(rst),
+
+  .din_valid(ctrl_send_valid),
+  .din(ctrl_send_data),
+  .din_ready(ctrl_send_ready),
+ 
+  .dout_valid(ctrl_send_valid_fifoed),
+  .dout(ctrl_send_data_fifoed),
+  .dout_ready(ctrl_send_ready_fifoed)
 );
 
 // Latch the output descriptor and send it to controller when 
@@ -289,10 +363,13 @@ always @ (posedge clk)
         latched_send_desc   <= send_desc_fifoed;
 
 // A FIFO for outgoing control messages
+wire pkt_sent_v, pkt_sent_ready;
+wire [63:0] pkt_sent_desc;
+
 simple_fifo # (
   .ADDR_WIDTH($clog2(SEND_DESC_DEPTH)),
   .DATA_WIDTH(64)
-) ctrl_msg_fifo (
+) pkt_sent_fifo (
   .clk(clk),
   .rst(rst),
 
@@ -300,13 +377,37 @@ simple_fifo # (
   .din(latched_send_desc),
   .din_ready(),
  
-  .dout_valid(ctrl_m_axis_tvalid),
-  .dout(ctrl_m_axis_tdata),
-  .dout_ready(ctrl_m_axis_tready)
+  .dout_valid(pkt_sent_v),
+  .dout(pkt_sent_desc),
+  .dout_ready(pkt_sent_ready)
 );
 
-assign ctrl_m_axis_tlast  = 1'b1;
+wire ctrl_arbiter_v;
+wire ctrl_arbiter_select;
+wire [1:0] ctrl_arbiter_grant;
 
+arbiter # (.PORTS(2),.TYPE("PRIORITY"),.BLOCK("REQUEST")) ctrl_arbiter (
+  .clk(clk),
+  .rst(rst),
+  
+  .request({pkt_sent_v,ctrl_send_valid_fifoed}),
+  .acknowledge(2'b0),
+  
+  .grant(ctrl_arbiter_grant),
+  .grant_valid(ctrl_arbiter_v),
+  .grant_encoded(ctrl_arbiter_select)
+  );
+
+assign ctrl_m_axis_tvalid = ctrl_arbiter_v;
+assign ctrl_m_axis_tdata  = ctrl_arbiter_select ? pkt_sent_desc : ctrl_send_data_fifoed;
+
+assign ctrl_m_axis_tlast  = 1'b1;
+assign pkt_sent_ready     = ctrl_m_axis_tready && ctrl_arbiter_grant [1];
+assign ctrl_send_ready_fifoed = ctrl_m_axis_tready && ctrl_arbiter_grant[0];
+
+/////////////////////////////////////////////////////////////////////
+/////////////////////// BROADCAST MESSAGING /////////////////////////
+/////////////////////////////////////////////////////////////////////
 // A FIFO for outgoing core messages
 wire [31:0]                core_msg_data;
 wire [DMEM_ADDR_WIDTH-1:0] core_msg_addr;
@@ -347,7 +448,6 @@ end
 
 wire [7:0]  core_msg_write_mask = {4'd0, core_msg_in_strb_r[3:0]} << {core_msg_in_addr_r[2], 2'd0};
 wire [63:0] core_msg_write_data  = {32'd0, core_msg_in_data_r} << {core_msg_in_addr_r[2], 5'd0};
-
 
 /////////////////////////////////////////////////////////////////////
 /////////////// SPLITTER AND ARBITER FOR DMEM ACCESS ////////////////
@@ -489,13 +589,13 @@ riscvcore #(
     .in_desc_valid(recv_desc_valid_fifoed),
     .in_desc_taken(recv_desc_ready_fifoed),
 
-    .data_desc(send_desc),
-    .data_desc_valid(send_desc_valid),
-    .data_desc_ready(send_desc_ready),
+    .data_desc(data_send_desc),
+    .data_desc_valid(data_send_valid),
+    .data_desc_ready(data_send_ready),
     
-    .ctrl_desc(),
-    .ctrl_desc_valid(),
-    .ctrl_desc_ready(1'b1),
+    .ctrl_desc(ctrl_send_data),
+    .ctrl_desc_valid(ctrl_send_valid),
+    .ctrl_desc_ready(ctrl_send_ready),
 
     .slot_ptr(s_slot_ptr), 
     .slot_addr(slot_addr),
