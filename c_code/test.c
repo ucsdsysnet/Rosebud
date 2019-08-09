@@ -1,7 +1,10 @@
 inline void process (unsigned short* len, unsigned char* port, unsigned int* offset, unsigned int* data);
 int main(void){
-  volatile unsigned int * rd_desc    = (volatile unsigned int *) 0x08000;
-  volatile unsigned int * wr_desc    = (volatile unsigned int *) 0x08008;
+  volatile unsigned int * rd_desc    = (volatile unsigned int *) 0x8040;
+  volatile unsigned int * wr_desc    = (volatile unsigned int *) 0x8000;
+  volatile unsigned char * wr_desc_send = (volatile unsigned char *) 0x8038;
+  volatile unsigned char * rd_desc_done = (volatile unsigned char *) 0x803c;
+
   unsigned int* data;
   unsigned short len;
   unsigned char port;
@@ -16,10 +19,10 @@ int main(void){
   		len  = *((unsigned short*)rd_desc);
   		slot = *(((unsigned char*)rd_desc)+2);
   		port = *(((unsigned char*)rd_desc)+3);
-			asm volatile("" ::: "memory");
   		data = (unsigned int*)(*(rd_desc+1));
+			asm volatile("" ::: "memory");
+			* rd_desc_done = 1;
 			offset = 0;
-
 
   		process (&len, &port, &offset, data);
   		// Order of writing to stat is important, last two should 
@@ -29,8 +32,9 @@ int main(void){
   		*wr_desc = (int)len;
   		*((unsigned char*)wr_desc+2) = slot;
   		*((unsigned char*)wr_desc+3) = port;
-			asm volatile("" ::: "memory");
   		*(wr_desc+1) = ((unsigned int)data)+offset;
+			asm volatile("" ::: "memory");
+			* wr_desc_send = 1;
   	}
   }
   

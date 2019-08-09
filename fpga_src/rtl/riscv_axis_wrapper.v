@@ -25,7 +25,8 @@ module riscv_axis_wrapper # (
     parameter SLOT_ADDR_STEP  = 16'h0800,
 
     parameter STRB_WIDTH      = (DATA_WIDTH/8),
-    parameter SLOT_WIDTH      = $clog2(SLOT_COUNT+1),
+    parameter SLOT_WIDTH      = $clog2(SLOT_COUNT+1), 
+    parameter SLOT_PTR_WIDTH  = $clog2(SLOT_COUNT), 
     parameter PORT_WIDTH      = $clog2(PORT_COUNT),
     parameter ID_SLOT_WIDTH   = CORE_ID_WIDTH+SLOT_WIDTH,
     parameter DMEM_ADDR_WIDTH = $clog2(DMEM_SIZE_BYTES),
@@ -100,28 +101,22 @@ assign ctrl_s_axis_tready = 1;
 /////////// EXTRACTING BASE ADDR FROM/FOR INCOMING DATA /////////////
 /////////////////////////////////////////////////////////////////////
 
-// Internal lookup table for slot addresses
-reg [ADDR_WIDTH-1:0] slot_addr [0:SLOT_COUNT-1];
-integer j;
-
-initial begin
-  for (j=0;j<SLOT_COUNT;j=j+1)
-    slot_addr[j] = SLOT_START_ADDR + (j*SLOT_ADDR_STEP);
-end
-
-wire has_header = (data_s_axis_tdest[SLOT_WIDTH-1:0]=={SLOT_WIDTH{1'b0}});
-
 // Pipeline register to load from slot LUT or packet header
-reg  [DATA_WIDTH-1:0] s_axis_tdata;
-reg  [STRB_WIDTH-1:0] s_axis_tkeep;
-reg                   s_axis_tvalid;
-wire                  s_axis_tready;
-reg                   s_axis_tlast;
-reg  [SLOT_WIDTH-1:0] s_axis_tdest;
-reg  [PORT_WIDTH-1:0] s_axis_tuser;
-reg  [ADDR_WIDTH-1:0] s_base_addr;
+reg  [DATA_WIDTH-1:0]     s_axis_tdata;
+reg  [STRB_WIDTH-1:0]     s_axis_tkeep;
+reg                       s_axis_tvalid;
+wire                      s_axis_tready;
+reg                       s_axis_tlast;
+reg  [SLOT_WIDTH-1:0]     s_axis_tdest;
+reg  [PORT_WIDTH-1:0]     s_axis_tuser;
+
+reg                       s_has_header; 
+wire [ADDR_WIDTH-1:0]     s_base_addr;
+reg  [SLOT_PTR_WIDTH-1:0] s_slot_ptr;
+wire [ADDR_WIDTH-1:0]     slot_addr;
 
 assign data_s_axis_tready = s_axis_tready;
+
 always @ (posedge clk) begin
   if (data_s_axis_tvalid && data_s_axis_tready) begin
     s_axis_tdata  <= data_s_axis_tdata;
@@ -129,8 +124,8 @@ always @ (posedge clk) begin
     s_axis_tlast  <= data_s_axis_tlast;
     s_axis_tdest  <= data_s_axis_tdest[SLOT_WIDTH-1:0];  
     s_axis_tuser  <= data_s_axis_tuser;  
-    s_base_addr   <= has_header ? data_s_axis_tdata[ADDR_WIDTH-1:0] : 
-                     slot_addr[data_s_axis_tdest[SLOT_WIDTH-1:0]-1] ;
+    s_has_header  <= data_s_axis_tdest[SLOT_WIDTH-1:0]=={SLOT_WIDTH{1'b0}};
+    s_slot_ptr    <= data_s_axis_tdest[SLOT_WIDTH-1:0]-1;
   end
 
   // If there is data and ready is asserted pipeline can move. 
@@ -140,6 +135,9 @@ always @ (posedge clk) begin
   if (rst)
     s_axis_tvalid <= 1'b0;
 end
+    
+// We wanna use LUTS instead of BRAM or REGS
+assign s_base_addr = s_has_header ? s_axis_tdata[ADDR_WIDTH-1:0] : slot_addr;
 
 /////////////////////////////////////////////////////////////////////
 /////////// AXIS TO NATIVE MEM INTERFACE WITH DESCRIPTORS ///////////
@@ -467,7 +465,11 @@ riscvcore #(
   .ADDR_WIDTH(ADDR_WIDTH),
   .IMEM_SIZE_BYTES(IMEM_SIZE_BYTES),
   .DMEM_SIZE_BYTES(DMEM_SIZE_BYTES),    
-  .COHERENT_START(COHERENT_START)
+  .COHERENT_START(COHERENT_START),
+  .MAX_SLOT_COUNT(SLOT_COUNT),
+  .CORE_ID(CORE_ID),
+  .SLOT_START_ADDR(SLOT_START_ADDR),
+  .SLOT_ADDR_STEP(SLOT_ADDR_STEP)
 ) core (
     .clk(clk),
     .rst(core_reset),
@@ -487,9 +489,16 @@ riscvcore #(
     .in_desc_valid(recv_desc_valid_fifoed),
     .in_desc_taken(recv_desc_ready_fifoed),
 
-    .out_desc(send_desc),
-    .out_desc_valid(send_desc_valid),
-    .out_desc_taken(send_desc_ready),
+    .dir_desc(send_desc),
+    .dir_desc_valid(send_desc_valid),
+    .dir_desc_ready(send_desc_ready),
+    
+    .ctrl_desc(),
+    .ctrl_desc_valid(),
+    .ctrl_desc_ready(1'b1),
+
+    .slot_ptr(s_slot_ptr), 
+    .slot_addr(slot_addr),
  
     .core_msg_data(core_msg_data),
     .core_msg_addr(core_msg_addr),
