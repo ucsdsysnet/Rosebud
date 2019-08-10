@@ -4,6 +4,7 @@ module simple_fifo # (
 )(
   input clk,
   input rst,
+  input clear,
 
   input                		din_valid,
   input  [DATA_WIDTH-1:0] din,
@@ -26,7 +27,7 @@ wire enque = din_valid  & din_ready;
 wire deque = dout_valid & dout_ready;
 
 always @ (posedge clk)
-	if (rst) begin
+	if (rst || clear) begin
 		wptr <= {ADDR_WIDTH{1'b0}};
 		rptr <= {ADDR_WIDTH{1'b0}};
 	end else begin
@@ -45,7 +46,7 @@ assign dout = mem[rptr];
 reg full_r, empty_r;
 
 always @ (posedge clk)
-	if (rst) begin
+	if (rst || clear) begin
     full_r  <= 1'b0;
     empty_r <= 1'b1;
 	end else if (enque | deque) begin
@@ -54,7 +55,7 @@ always @ (posedge clk)
 	end
 
 always @ (posedge clk)
-	if (rst)
+	if (rst || clear)
     item_count_r <= {(ADDR_WIDTH+1){1'b0}};
   else 
     if (enque && !deque)

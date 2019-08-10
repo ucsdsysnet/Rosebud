@@ -129,6 +129,7 @@ module simple_scheduler # (
   wire [CORE_ID_WIDTH-1:0] selected_desc;
   wire [CORE_COUNT-1:0]    rx_desc_slot_v;
   wire [CORE_COUNT-1:0]    rx_desc_slot_pop;
+  wire [CORE_COUNT-1:0]    rx_desc_slot_accept_temp;
   wire [CORE_COUNT-1:0]    rx_desc_slot_accept;
   
   // Since slots start from 1, SLOT WIDTH is already 1 bit extra
@@ -139,18 +140,45 @@ module simple_scheduler # (
 
   wire [7:0] msg_type = ctrl_s_axis_tdata[DATA_WIDTH-1:DATA_WIDTH-8];
 
+  // Slot descriptor loader module 
+  wire [CORE_COUNT-1:0] desc_fifo_clear, loader_valid, busy_by_loader;
+  wire [SLOT_WIDTH-1:0] loader_slot;
+  wire                  loader_ready;
+
+  slot_fifo_loader # (
+    .MAX_SLOT_COUNT(SLOT_COUNT),
+    .DEST_COUNT(CORE_COUNT)
+  ) slot_loader (
+    .clk(clk),
+    .rst(rst),
+  
+    .req_valid(ctrl_s_axis_tvalid && (msg_type==4)),
+    .req_dest(ctrl_s_axis_tuser),
+    .slot_count(ctrl_s_axis_tdata[SLOT_WIDTH-1:0]),
+    .req_ready(loader_ready),
+  
+    .clear_fifo(desc_fifo_clear),
+    .out_slot_valid(loader_valid),
+    .out_slot(loader_slot)
+  );
+
+  assign busy_by_loader = loader_valid | desc_fifo_clear;
+
+  // Slot descriptor fifos
   genvar i;
   generate 
     for (i=0;i<CORE_COUNT;i=i+1) begin
-      loaded_desc_fifo # (
-        .SLOT_COUNT(SLOT_COUNT)
+      simple_fifo # (
+        .DATA_WIDTH(SLOT_WIDTH),
+        .ADDR_WIDTH($clog2(SLOT_COUNT))
       ) rx_desc_fifo (
         .clk(clk),
         .rst(rst),
+        .clear(desc_fifo_clear[i]),
       
-        .din_valid(ctrl_s_axis_tvalid && (ctrl_s_axis_tuser==i) && (msg_type==0)),
-        .din(ctrl_s_axis_tdata[LEN_WIDTH+SLOT_WIDTH-1:LEN_WIDTH]),
-        .din_ready(rx_desc_slot_accept[i]),
+        .din_valid((ctrl_s_axis_tvalid && (ctrl_s_axis_tuser==i) && (msg_type==0)) || loader_valid[i]),
+        .din(loader_valid[i] ? loader_slot : ctrl_s_axis_tdata[LEN_WIDTH+SLOT_WIDTH-1:LEN_WIDTH]),
+        .din_ready(rx_desc_slot_accept_temp[i]),
        
         .dout_valid(rx_desc_slot_v[i]),
         .dout(rx_desc_slot[i]),
@@ -158,7 +186,10 @@ module simple_scheduler # (
         
         .item_count(rx_desc_count[i*SLOT_WIDTH +: SLOT_WIDTH])
       );
-      assign rx_desc_slot_pop [i] = rx_desc_pop && (selected_desc==i);
+      // If there is no data in any fifo max_finder would return 0, meaning first core is selected.
+      // but since rx_desc_v is zero (all fifoes are not-valid) this ready is not used
+      assign rx_desc_slot_pop[i]    = rx_desc_pop && (selected_desc==i);
+      assign rx_desc_slot_accept[i] = rx_desc_slot_accept_temp[i] && (!busy_by_loader[i]);
     end
   endgenerate
 
@@ -184,6 +215,7 @@ module simple_scheduler # (
   ) desc_loopback (
     .clk(clk),
     .rst(rst),
+    .clear(1'b0),
   
     .din_valid(ctrl_s_axis_tvalid && (msg_type==1)),
     .din({ctrl_s_axis_tuser,ctrl_s_axis_tdata}),
@@ -194,8 +226,9 @@ module simple_scheduler # (
     .dout_ready(loopback_ready)
   );
 
-  assign ctrl_s_axis_tready = ((|rx_desc_slot_accept) && (msg_type==0)) ||
-                                 (loopback_in_ready && (msg_type==1));
+  assign ctrl_s_axis_tready = ((|(rx_desc_slot_accept & (1<<ctrl_s_axis_tuser))) && (msg_type==0)) ||
+                                 (loopback_in_ready && (msg_type==1)) || 
+                                 (loader_ready && (msg_type==4));
 
   // Core reset command
   reg [CORE_ID_WIDTH:0] core_rst_counter;
@@ -216,7 +249,7 @@ module simple_scheduler # (
 
   assign loopback_ready = (!core_reset_in_prog) && ctrl_m_axis_tready;
 
-if (ENABLE_ILA) begin
+if (ENABLE_ILA) begin // NOT UP TO DATE TO THE LATEST CODE
   wire trig_out_1, trig_out_2;
   wire ack_1, ack_2;
 

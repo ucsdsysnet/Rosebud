@@ -40,6 +40,7 @@ srcs.append("../ip/ila_4x64_stub.v")
 srcs.append("../rtl/simple_fifo.v")
 srcs.append("../rtl/loaded_desc_fifo.v")
 srcs.append("../rtl/max_finder_tree.v")
+srcs.append("../rtl/slot_fifo_loader.v")
 srcs.append("../rtl/core_mems.v")
 srcs.append("../rtl/axis_dma.v")
 srcs.append("../rtl/VexRiscv.v")
@@ -78,8 +79,8 @@ def bench():
 
     SEND_COUNT_0 = 100
     SEND_COUNT_1 = 100
-    SIZE_0       = 185 - 18 
-    SIZE_1       = 182 - 18
+    SIZE_0       = 72 - 18 
+    SIZE_1       = 73 - 18
 
     # Inputs
     clk = Signal(bool(0))

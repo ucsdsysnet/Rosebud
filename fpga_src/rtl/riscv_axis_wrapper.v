@@ -250,6 +250,7 @@ simple_fifo # (
 ) recvd_data_fifo (
   .clk(clk),
   .rst(rst),
+  .clear(1'b0),
 
   .din_valid(recv_desc_valid),
   .din(recv_desc),
@@ -274,6 +275,7 @@ simple_fifo # (
 ) recvd_ctrl_fifo (
   .clk(clk),
   .rst(rst),
+  .clear(1'b0),
 
   .din_valid(ctrl_s_axis_tvalid && !reset_cmd),
   .din(ctrl_s_axis_tdata),
@@ -297,6 +299,7 @@ simple_fifo # (
 ) send_data_fifo (
   .clk(clk),
   .rst(rst),
+  .clear(1'b0),
 
   .din_valid(data_send_valid),
   .din(data_send_desc),
@@ -330,6 +333,7 @@ simple_fifo # (
 ) send_ctrl_fifo (
   .clk(clk),
   .rst(rst),
+  .clear(1'b0),
 
   .din_valid(ctrl_send_valid),
   .din(ctrl_send_data),
@@ -357,6 +361,7 @@ simple_fifo # (
 ) pkt_sent_fifo (
   .clk(clk),
   .rst(rst),
+  .clear(1'b0),
 
   .din_valid(pkt_sent),
   .din(latched_send_desc),
@@ -390,6 +395,7 @@ simple_fifo # (
 ) core_msg_out_fifo (
   .clk(clk),
   .rst(rst),
+  .clear(1'b0),
 
   .din_valid(core_msg_valid),
   .din({core_msg_strb, core_msg_addr, core_msg_data}),

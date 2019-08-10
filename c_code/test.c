@@ -24,15 +24,21 @@ int main(void){
   unsigned char slot;
 	int offset; 
 
-  // volatile unsigned int * seen_first = (volatile unsigned int *) 0x00304;
-	// *seen_first = 0;
+	// Read core ID
 	unsigned int id = *core_id;
 
+	// set the slot addresses
 	for (int i=1; i<=slot_count; i++){
 		*wr_slot_addr = (i<<24) + 0x200A + ((i-1)<<11);
 		asm volatile("" ::: "memory");
 		*update_slot  = 1;
 	}
+  
+	// Tell number of available slots to the scheduler  
+  *wr_desc_ctrl = slot_count;
+  *(wr_desc_ctrl+1) = 4<<24;
+  asm volatile("" ::: "memory");
+  * wr_desc_ctrl_send = 1;
  
   while(1){
 		if((*rd_desc)!=0){
