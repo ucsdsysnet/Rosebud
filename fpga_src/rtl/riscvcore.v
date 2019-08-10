@@ -6,7 +6,7 @@ module riscvcore #(
   parameter COHERENT_START  = 16'h6FFF,
   parameter CORE_ID         = 0,
   parameter MAX_SLOT_COUNT  = 8,
-  parameter SLOT_START_ADDR = 16'h200A,
+  parameter SLOT_START_ADDR = 16'h2000,
   parameter SLOT_ADDR_STEP  = 16'h0800,
   parameter STRB_WIDTH      = DATA_WIDTH/8,
   parameter LINE_ADDR_BITS  = $clog2(STRB_WIDTH),

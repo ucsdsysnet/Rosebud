@@ -21,7 +21,7 @@ module riscv_axis_wrapper # (
     parameter LEN_WIDTH       = 16,
     parameter CORE_ID         = 0,
     parameter CORE_ID_WIDTH   = 4, 
-    parameter SLOT_START_ADDR = 16'h200A,
+    parameter SLOT_START_ADDR = 16'h2000,
     parameter SLOT_ADDR_STEP  = 16'h0800,
 
     parameter STRB_WIDTH      = (DATA_WIDTH/8),

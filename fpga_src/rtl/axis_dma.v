@@ -339,6 +339,7 @@ module axis_dma # (
   reg [MASK_BITS-1:0]           rd_offset;
   reg [LEN_WIDTH-MASK_BITS-1:0] rd_word_count;
   reg [STRB_WIDTH-1:0]          rd_final_tkeep;
+  reg                           rd_len_is_int;
 
   wire [1:0] extra_words = (remainder_bytes == 0) ? 2'd0: 
                            (remainder_bytes[MASK_BITS] + 2'd1); 
@@ -353,17 +354,20 @@ module axis_dma # (
       rd_offset        <= 0;
       rd_word_count    <= 0;
       rd_final_tkeep   <= {STRB_WIDTH{1'b1}};
+      rd_len_is_int    <= 1'b1;
     end
     if (rd_state_r==RD_IDLE) begin
       rd_offset        <= 0;
       rd_word_count    <= 0;
       rd_final_tkeep   <= {STRB_WIDTH{1'b1}};
+      rd_len_is_int    <= 1'b1;
     end 
     else if (rd_state_r==RD_INIT) begin
       rd_offset        <= send_base_addr[MASK_BITS-1:0];
       rd_word_count    <= send_len[LEN_WIDTH-1:MASK_BITS] + extra_words;
       rd_final_tkeep   <= {{(STRB_WIDTH-1){1'b0}},{STRB_WIDTH{1'b1}}} >> tkeep_zeros;
       alligned_rd_addr <= {send_base_addr[ADDR_WIDTH-1:MASK_BITS],{MASK_BITS{1'b0}}};
+      rd_len_is_int    <= (send_len[MASK_BITS-1:0]==0);
     end 
     else if (mem_rd_en && mem_rd_ready) begin
       rd_word_count    <= rd_word_count - 1; 
@@ -382,14 +386,20 @@ module axis_dma # (
     else if (rd_state_r != RD_PROC)
       data_left <= 2'd0;
     else if ((rd_word_count == 0) && mem_rd_data_ready && mem_rd_data_v)
+      // Both pipeline stages are full
       if (rd_offset == 0)
         data_left <= 2'd2;
-      // If the remainder bytes don't cause overflow to next word, 
-      // It means there are 2 words left to be sent. 
-      else if (!remainder_bytes[MASK_BITS])
-        data_left <= 2'd2;
-      else 
+      // If len was multiple of word width, offset would cover the data in 
+      // the last pipeline stage and data can be read out in single cycle
+      else if (rd_len_is_int)
         data_left <= 2'd1;
+      // If there was overflow from offset and LSB of len, offset would cover 
+      // the data in the last pipeline stage 
+      else if (remainder_bytes[MASK_BITS])
+        data_left <= 2'd1;
+      // There is more data than offset in the second pipeline stage
+      else 
+        data_left <= 2'd2;
     // If data/empty register is sent out reduce remaining
     else if ((data_left>2'd0) && (!(m_axis_tvalid && !m_axis_tready)))
         data_left <= data_left - 2'd1;
