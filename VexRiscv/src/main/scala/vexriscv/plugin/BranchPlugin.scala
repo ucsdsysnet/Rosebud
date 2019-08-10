@@ -55,6 +55,7 @@ class BranchPlugin(earlyBranch : Boolean,
                    fenceiGenAsAJump : Boolean = false,
                    fenceiGenAsANop : Boolean = false) extends Plugin[VexRiscv] with PredictionInterface{
 
+
   def catchAddressMisalignedForReal = catchAddressMisaligned && !pipeline(RVC_GEN)
   lazy val branchStage = if(earlyBranch) pipeline.execute else pipeline.memory
 
@@ -83,10 +84,14 @@ class BranchPlugin(earlyBranch : Boolean,
     decodePrediction
   }
 
+  def hasHazardOnBranch = if(earlyBranch) pipeline.service(classOf[HazardService]).hazardOnExecuteRS else False
+
   override def setup(pipeline: VexRiscv): Unit = {
     import Riscv._
     import pipeline.config._
     import IntAluPlugin._
+
+    assert(earlyBranch || withMemoryStage, "earlyBranch must be true when memory stage is disabled!")
 
     val bActions = List[(Stageable[_ <: BaseType],Any)](
       SRC1_CTRL         -> Src1CtrlEnum.RS,
@@ -197,12 +202,9 @@ class BranchPlugin(earlyBranch : Boolean,
     //Apply branchs (JAL,JALR, Bxx)
     branchStage plug new Area {
       import branchStage._
-      jumpInterface.valid := arbitration.isValid && !arbitration.isStuckByOthers && input(BRANCH_DO)
+      jumpInterface.valid := arbitration.isValid && input(BRANCH_DO) && !hasHazardOnBranch
       jumpInterface.payload := input(BRANCH_CALC)
-
-      when(jumpInterface.valid) {
-        stages(indexOf(branchStage) - 1).arbitration.flushAll := True
-      }
+      arbitration.flushNext setWhen(jumpInterface.valid)
 
       if(catchAddressMisalignedForReal) {
         branchExceptionPort.valid := arbitration.isValid  && input(BRANCH_DO) && jumpInterface.payload(1)
@@ -265,7 +267,7 @@ class BranchPlugin(earlyBranch : Boolean,
         default{
           branch_src1 := input(PC)
           branch_src2 := ((input(BRANCH_CTRL) === BranchCtrlEnum.JAL) ? imm.j_sext | imm.b_sext).asUInt
-          when(input(PREDICTION_HAD_BRANCHED) && ! missAlignedTarget){
+          when(input(PREDICTION_HAD_BRANCHED)){ //Assume the predictor never predict missaligned stuff, this avoid the need to know if the instruction should branch or not
             branch_src2 := (if(pipeline(RVC_GEN)) Mux(input(IS_RVC), B(2), B(4)) else B(4)).asUInt.resized
           }
         }
@@ -279,12 +281,9 @@ class BranchPlugin(earlyBranch : Boolean,
     val branchStage = if(earlyBranch) execute else memory
     branchStage plug new Area {
       import branchStage._
-      jumpInterface.valid := arbitration.isValid && !arbitration.isStuckByOthers && input(BRANCH_DO)
+      jumpInterface.valid := arbitration.isValid && input(BRANCH_DO) && !hasHazardOnBranch
       jumpInterface.payload := input(BRANCH_CALC)
-
-      when(jumpInterface.valid) {
-        stages(indexOf(branchStage) - 1).arbitration.flushAll := True
-      }
+      arbitration.flushNext setWhen(jumpInterface.valid)
 
       if(catchAddressMisalignedForReal) {
         val unalignedJump = input(BRANCH_DO) && input(BRANCH_CALC)(1)
@@ -358,13 +357,10 @@ class BranchPlugin(earlyBranch : Boolean,
           input(PC)
       }
 
-      jumpInterface.valid := arbitration.isValid && !arbitration.isStuckByOthers && predictionMissmatch //Probably just isValid instead of isFiring is better
+      jumpInterface.valid := arbitration.isValid && predictionMissmatch && !hasHazardOnBranch
       jumpInterface.payload := (input(BRANCH_DO) ? input(BRANCH_CALC) | input(NEXT_PC))
+      arbitration.flushNext setWhen(jumpInterface.valid)
 
-
-      when(jumpInterface.valid) {
-        stages(indexOf(branchStage) - 1).arbitration.flushAll := True
-      }
 
       if(catchAddressMisalignedForReal) {
         branchExceptionPort.valid := arbitration.isValid && input(BRANCH_DO) && input(BRANCH_CALC)(1)

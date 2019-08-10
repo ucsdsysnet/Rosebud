@@ -65,7 +65,6 @@ object BrieyConfig{
             memDataWidth = 32,
             catchIllegalAccess = true,
             catchAccessFault = true,
-            catchMemoryTranslationMiss = true,
             asyncTagMemory = false,
             twoCycleRam = true,
             twoCycleCache = true
@@ -89,8 +88,7 @@ object BrieyConfig{
             memDataWidth      = 32,
             catchAccessError  = true,
             catchIllegal      = true,
-            catchUnaligned    = true,
-            catchMemoryTranslationMiss = true
+            catchUnaligned    = true
           ),
           memoryTranslatorPortConfig = null
           //            memoryTranslatorPortConfig = MemoryTranslatorPortConfig(
@@ -258,10 +256,12 @@ class Briey(config: BrieyConfig) extends Component{
     )
 
     val gpioACtrl = Apb3Gpio(
-      gpioWidth = 32
+      gpioWidth = 32,
+      withReadSync = true
     )
     val gpioBCtrl = Apb3Gpio(
-      gpioWidth = 32
+      gpioWidth = 32,
+      withReadSync = true
     )
     val timerCtrl = PinsecTimerCtrl()
 

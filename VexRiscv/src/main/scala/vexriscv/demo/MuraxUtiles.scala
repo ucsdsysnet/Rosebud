@@ -12,7 +12,7 @@ import vexriscv.plugin.{DBusSimpleBus, IBusSimpleBus}
 
 class MuraxMasterArbiter(pipelinedMemoryBusConfig : PipelinedMemoryBusConfig) extends Component{
   val io = new Bundle{
-    val iBus = slave(IBusSimpleBus(false))
+    val iBus = slave(IBusSimpleBus(null))
     val dBus = slave(DBusSimpleBus())
     val masterBus = master(PipelinedMemoryBus(pipelinedMemoryBusConfig))
   }
@@ -162,4 +162,9 @@ class MuraxApb3Timer extends Component{
   interruptCtrl.io.inputs(0) := timerA.io.full
   interruptCtrl.io.inputs(1) := timerB.io.full
   io.interrupt := interruptCtrl.io.pendings.orR
+}
+
+
+object MuraxApb3TimerGen extends App{
+  SpinalVhdl(new MuraxApb3Timer())
 }

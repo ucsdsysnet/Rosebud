@@ -28,7 +28,7 @@ case class Masked(value : BigInt,care : BigInt){
   def mergeOneBitDifSmaller(x: Masked) = {
     val bit = value - x.value
     val ret = new Masked(value &~ bit, care & ~bit)
-//    ret.isPrime = isPrime || x.isPrime
+    //    ret.isPrime = isPrime || x.isPrime
     isPrime = false
     x.isPrime = false
     ret
@@ -44,7 +44,10 @@ case class Masked(value : BigInt,care : BigInt){
   def toString(bitCount : Int) = (0 until bitCount).map(i => if(care.testBit(i)) (if(value.testBit(i)) "1" else "0") else "-").reverseIterator.reduce(_+_)
 }
 
-class DecoderSimplePlugin(catchIllegalInstruction : Boolean = false, forceLegalInstructionComputation : Boolean = false) extends Plugin[VexRiscv] with DecoderService {
+class DecoderSimplePlugin(catchIllegalInstruction : Boolean = false,
+                          throwIllegalInstruction : Boolean = false,
+                          assertIllegalInstruction : Boolean = false,
+                          forceLegalInstructionComputation : Boolean = false) extends Plugin[VexRiscv] with DecoderService {
   override def add(encoding: Seq[(MaskedLiteral, Seq[(Stageable[_ <: BaseType], Any)])]): Unit = encoding.foreach(e => this.add(e._1,e._2))
   override def add(key: MaskedLiteral, values: Seq[(Stageable[_ <: BaseType], Any)]): Unit = {
     val instructionModel = encodings.getOrElseUpdate(key,ArrayBuffer[(Stageable[_ <: BaseType], BaseType)]())
@@ -66,8 +69,8 @@ class DecoderSimplePlugin(catchIllegalInstruction : Boolean = false, forceLegalI
     }
   }
 
-  val defaults = mutable.HashMap[Stageable[_ <: BaseType], BaseType]()
-  val encodings = mutable.HashMap[MaskedLiteral,ArrayBuffer[(Stageable[_ <: BaseType], BaseType)]]()
+  val defaults = mutable.LinkedHashMap[Stageable[_ <: BaseType], BaseType]()
+  val encodings = mutable.LinkedHashMap[MaskedLiteral,ArrayBuffer[(Stageable[_ <: BaseType], BaseType)]]()
   var decodeExceptionPort : Flow[ExceptionCause] = null
 
 
@@ -78,79 +81,112 @@ class DecoderSimplePlugin(catchIllegalInstruction : Boolean = false, forceLegalI
     }
   }
 
+  val detectLegalInstructions = catchIllegalInstruction || throwIllegalInstruction || forceLegalInstructionComputation || assertIllegalInstruction
+
+  object ASSERT_ERROR extends Stageable(Bool)
+
   override def build(pipeline: VexRiscv): Unit = {
     import pipeline.config._
     import pipeline.decode._
 
     val stageables = (encodings.flatMap(_._2.map(_._1)) ++ defaults.map(_._1)).toSet.toList
 
-    var offset = 0
-    var defaultValue, defaultCare = BigInt(0)
-    val offsetOf = mutable.HashMap[Stageable[_ <: BaseType],Int]()
+    val stupidDecoder = false
+    if(stupidDecoder){
+      if (detectLegalInstructions) insert(LEGAL_INSTRUCTION) := False
+      for(stageable <- stageables){
+        if(defaults.contains(stageable)){
+          insert(stageable).assignFrom(defaults(stageable))
+        } else {
+          insert(stageable).assignDontCare()
+        }
+      }
+      for((key, tasks) <- encodings){
+        when(input(INSTRUCTION) === key){
+          if (detectLegalInstructions) insert(LEGAL_INSTRUCTION) := True
+          for((stageable, value) <- tasks){
+            insert(stageable).assignFrom(value)
+          }
+        }
+      }
+    } else {
+      var offset = 0
+      var defaultValue, defaultCare = BigInt(0)
+      val offsetOf = mutable.LinkedHashMap[Stageable[_ <: BaseType], Int]()
 
-    //Build defaults value and field offset map
-    stageables.foreach(e => {
-      defaults.get(e) match {
-        case Some(value) => {
-          value.head.source match {
+      //Build defaults value and field offset map
+      stageables.foreach(e => {
+        defaults.get(e) match {
+          case Some(value) => {
+            value.head.source match {
+              case literal: EnumLiteral[_] => literal.fixEncoding(e.dataType.asInstanceOf[SpinalEnumCraft[_]].getEncoding)
+              case _ =>
+            }
+            defaultValue += value.head.source.asInstanceOf[Literal].getValue << offset
+            defaultCare += ((BigInt(1) << e.dataType.getBitsWidth) - 1) << offset
+
+          }
+          case _ =>
+        }
+        offsetOf(e) = offset
+        offset += e.dataType.getBitsWidth
+      })
+
+      //Build spec
+      val spec = encodings.map { case (key, values) =>
+        var decodedValue = defaultValue
+        var decodedCare = defaultCare
+        for ((e, literal) <- values) {
+          literal.head.source match {
             case literal: EnumLiteral[_] => literal.fixEncoding(e.dataType.asInstanceOf[SpinalEnumCraft[_]].getEncoding)
             case _ =>
           }
-          defaultValue += value.head.source .asInstanceOf[Literal].getValue << offset
-          defaultCare += ((BigInt(1) << e.dataType.getBitsWidth) - 1) << offset
-
+          val offset = offsetOf(e)
+          decodedValue |= literal.head.source.asInstanceOf[Literal].getValue << offset
+          decodedCare |= ((BigInt(1) << e.dataType.getBitsWidth) - 1) << offset
         }
-        case _ =>
+        (Masked(key.value, key.careAbout), Masked(decodedValue, decodedCare))
       }
-      offsetOf(e) = offset
-      offset += e.dataType.getBitsWidth
-    })
 
-    //Build spec
-    val spec = encodings.map { case (key, values) =>
-      var decodedValue = defaultValue
-      var decodedCare = defaultCare
-      for((e, literal) <- values){
-        literal.head.source  match{
-          case literal : EnumLiteral[_] => literal.fixEncoding(e.dataType.asInstanceOf[SpinalEnumCraft[_]].getEncoding)
-          case _ =>
-        }
-        val offset = offsetOf(e)
-        decodedValue |= literal.head.source.asInstanceOf[Literal].getValue << offset
-        decodedCare  |= ((BigInt(1) << e.dataType.getBitsWidth)-1) << offset
+
+      // logic implementation
+      val decodedBits = Bits(stageables.foldLeft(0)(_ + _.dataType.getBitsWidth) bits)
+      decodedBits := Symplify(input(INSTRUCTION), spec, decodedBits.getWidth)
+      if (detectLegalInstructions) insert(LEGAL_INSTRUCTION) := Symplify.logicOf(input(INSTRUCTION), SymplifyBit.getPrimeImplicantsByTrueAndDontCare(spec.unzip._1.toSeq, Nil, 32))
+      if (throwIllegalInstruction) {
+        input(LEGAL_INSTRUCTION) //Fill the request for later (prePopTask)
+        Component.current.addPrePopTask(() => arbitration.isValid clearWhen(!input(LEGAL_INSTRUCTION)))
       }
-      (Masked(key.value,key.careAbout),Masked(decodedValue,decodedCare))
+      if(assertIllegalInstruction){
+        val reg = RegInit(False) setWhen(arbitration.isValid) clearWhen(arbitration.isRemoved || !arbitration.isStuck)
+        insert(ASSERT_ERROR) := arbitration.isValid || reg
+      }
+
+      //Unpack decodedBits and insert fields in the pipeline
+      offset = 0
+      stageables.foreach(e => {
+        insert(e).assignFromBits(decodedBits(offset, e.dataType.getBitsWidth bits))
+        //            insert(e).assignFromBits(RegNext(decodedBits(offset, e.dataType.getBitsWidth bits)))
+        offset += e.dataType.getBitsWidth
+      })
     }
-
-
-
-    // logic implementation
-    val decodedBits = Bits(stageables.foldLeft(0)(_ + _.dataType.getBitsWidth) bits)
-    decodedBits := Symplify(input(INSTRUCTION),spec, decodedBits.getWidth)
-    if(catchIllegalInstruction || forceLegalInstructionComputation) insert(LEGAL_INSTRUCTION) := Symplify.logicOf(input(INSTRUCTION), SymplifyBit.getPrimeImplicantsByTrueAndDontCare(spec.unzip._1.toSeq, Nil, 32))
-
-
-    //Unpack decodedBits and insert fields in the pipeline
-    offset = 0
-    stageables.foreach(e => {
-      insert(e).assignFromBits(decodedBits(offset, e.dataType.getBitsWidth bits))
-//            insert(e).assignFromBits(RegNext(decodedBits(offset, e.dataType.getBitsWidth bits)))
-      offset += e.dataType.getBitsWidth
-    })
-
 
     if(catchIllegalInstruction){
       decodeExceptionPort.valid := arbitration.isValid && input(INSTRUCTION_READY) && !input(LEGAL_INSTRUCTION) // ?? HalitIt to alow decoder stage to wait valid data from 2 stages cache cache ??
       decodeExceptionPort.code := 2
-      decodeExceptionPort.badAddr.assignDontCare()
+      decodeExceptionPort.badAddr := input(INSTRUCTION).asUInt
+    }
+    if(assertIllegalInstruction){
+      pipeline.stages.tail.foreach(s => s.output(ASSERT_ERROR) clearWhen(s.arbitration.isRemoved))
+      assert(!pipeline.stages.last.output(ASSERT_ERROR))
     }
   }
 
   def bench(toplevel : VexRiscv): Unit ={
     toplevel.rework{
       import toplevel.config._
-      toplevel.getAllIo.foreach{io =>
-        if(io.isInput) io.assignDontCare()
+      toplevel.getAllIo.toList.foreach{io =>
+        if(io.isInput) { io.assignDontCare()}
         io.setAsDirectionLess()
       }
       toplevel.decode.input(INSTRUCTION).removeAssignments()
@@ -158,7 +194,7 @@ class DecoderSimplePlugin(catchIllegalInstruction : Boolean = false, forceLegalI
       val stageables = encodings.flatMap(_._2.map(_._1)).toSet
       stageables.foreach(e => out(RegNext(RegNext(toplevel.decode.insert(e)).setName(e.getName()))))
       if(catchIllegalInstruction) out(RegNext(RegNext(toplevel.decode.insert(LEGAL_INSTRUCTION)).setName(LEGAL_INSTRUCTION.getName())))
-    //  toplevel.getAdditionalNodesRoot.clear()
+      //  toplevel.getAdditionalNodesRoot.clear()
     }
   }
 }
@@ -173,8 +209,8 @@ object DecodingBench extends App{
 
 
 object Symplify{
-  val cache = mutable.HashMap[Bits,mutable.HashMap[Masked,Bool]]()
-  def getCache(addr : Bits) = cache.getOrElseUpdate(addr,mutable.HashMap[Masked,Bool]())
+  val cache = mutable.LinkedHashMap[Bits,mutable.LinkedHashMap[Masked,Bool]]()
+  def getCache(addr : Bits) = cache.getOrElseUpdate(addr,mutable.LinkedHashMap[Masked,Bool]())
 
   //Generate terms logic for the given input
   def logicOf(input : Bits,terms : Seq[Masked]) = terms.map(t => getCache(input).getOrElseUpdate(t,t === input)).asBits.orR
@@ -327,14 +363,14 @@ object SymplifyBit{
 
   def main(args: Array[String]) {
     {
-//      val default = Masked(0, 0xF)
-//      val primeImplicants = List(4, 8, 10, 11, 12, 15).map(v => Masked(v, 0xF))
-//      val dcImplicants = List(9, 14).map(v => Masked(v, 0xF).setPrime(false))
-//      val reducedPrimeImplicants = getPrimeImplicantsByTrueAndDontCare(primeImplicants, dcImplicants, 4)
-//      println("UUT")
-//      println(reducedPrimeImplicants.map(_.toString(4)).mkString("\n"))
-//      println("REF")
-//      println("-100\n10--\n1--0\n1-1-")
+      //      val default = Masked(0, 0xF)
+      //      val primeImplicants = List(4, 8, 10, 11, 12, 15).map(v => Masked(v, 0xF))
+      //      val dcImplicants = List(9, 14).map(v => Masked(v, 0xF).setPrime(false))
+      //      val reducedPrimeImplicants = getPrimeImplicantsByTrueAndDontCare(primeImplicants, dcImplicants, 4)
+      //      println("UUT")
+      //      println(reducedPrimeImplicants.map(_.toString(4)).mkString("\n"))
+      //      println("REF")
+      //      println("-100\n10--\n1--0\n1-1-")
     }
 
     {
