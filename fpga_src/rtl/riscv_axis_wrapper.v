@@ -100,6 +100,28 @@ always @ (posedge clk)
 /////////// EXTRACTING BASE ADDR FROM/FOR INCOMING DATA /////////////
 /////////////////////////////////////////////////////////////////////
 
+// Internal lookup table for slot addresses
+reg  [ADDR_WIDTH-1:0]     slot_addr_lut [0:SLOT_COUNT-1];
+wire [ADDR_WIDTH-1:0]     slot_wr_addr;
+wire [SLOT_PTR_WIDTH-1:0] slot_wr_ptr;
+wire                      slot_wr_valid;
+wire                      slot_wr_ready;
+reg  [SLOT_PTR_WIDTH-1:0] s_slot_ptr;
+wire [ADDR_WIDTH-1:0]     slot_addr;
+integer j;
+
+initial begin
+  for (j=0;j<SLOT_COUNT;j=j+1)
+    slot_addr_lut[j] = SLOT_START_ADDR + (j*SLOT_ADDR_STEP);
+end
+
+always @ (posedge clk)
+  if (slot_wr_valid)
+    slot_addr_lut[slot_wr_ptr] <= slot_wr_addr;
+assign slot_wr_ready = 1'b1;
+
+assign slot_addr = slot_addr_lut[s_slot_ptr]; 
+ 
 // Pipeline register to load from slot LUT or packet header
 reg  [DATA_WIDTH-1:0]     s_axis_tdata;
 reg  [STRB_WIDTH-1:0]     s_axis_tkeep;
@@ -111,8 +133,6 @@ reg  [PORT_WIDTH-1:0]     s_axis_tuser;
 
 reg                       s_has_header; 
 wire [ADDR_WIDTH-1:0]     s_base_addr;
-reg  [SLOT_PTR_WIDTH-1:0] s_slot_ptr;
-wire [ADDR_WIDTH-1:0]     slot_addr;
 
 assign data_s_axis_tready = s_axis_tready;
 
@@ -542,10 +562,8 @@ riscvcore #(
   .IMEM_SIZE_BYTES(IMEM_SIZE_BYTES),
   .DMEM_SIZE_BYTES(DMEM_SIZE_BYTES),    
   .COHERENT_START(COHERENT_START),
-  .MAX_SLOT_COUNT(SLOT_COUNT),
-  .CORE_ID(CORE_ID),
-  .SLOT_START_ADDR(SLOT_START_ADDR),
-  .SLOT_ADDR_STEP(SLOT_ADDR_STEP)
+  .SLOT_PTR_WIDTH(SLOT_PTR_WIDTH),
+  .CORE_ID(CORE_ID)
 ) core (
     .clk(clk),
     .rst(core_reset),
@@ -573,8 +591,10 @@ riscvcore #(
     .ctrl_desc_valid(ctrl_send_valid),
     .ctrl_desc_ready(ctrl_send_ready),
 
-    .slot_ptr(s_slot_ptr), 
-    .slot_addr(slot_addr),
+    .slot_wr_ptr(slot_wr_ptr), 
+    .slot_wr_addr(slot_wr_addr),
+    .slot_wr_valid(slot_wr_valid),
+    .slot_wr_ready(slot_wr_ready),
  
     .core_msg_data(core_msg_data),
     .core_msg_addr(core_msg_addr),

@@ -5,15 +5,11 @@ module riscvcore #(
   parameter DMEM_SIZE_BYTES = 32768,
   parameter COHERENT_START  = 16'h6FFF,
   parameter CORE_ID         = 0,
-  parameter MAX_SLOT_COUNT  = 8,
-  parameter SLOT_START_ADDR = 16'h2000,
-  parameter SLOT_ADDR_STEP  = 16'h0800,
+  parameter SLOT_PTR_WIDTH  = 3,
   parameter STRB_WIDTH      = DATA_WIDTH/8,
   parameter LINE_ADDR_BITS  = $clog2(STRB_WIDTH),
   parameter IMEM_ADDR_WIDTH = $clog2(IMEM_SIZE_BYTES),
-  parameter DMEM_ADDR_WIDTH = $clog2(DMEM_SIZE_BYTES),
-  parameter SLOT_WIDTH      = $clog2(MAX_SLOT_COUNT+1),
-  parameter SLOT_PTR_WIDTH  = $clog2(MAX_SLOT_COUNT)
+  parameter DMEM_ADDR_WIDTH = $clog2(DMEM_SIZE_BYTES)
 )(
     input                        clk,
     input                        rst,
@@ -41,8 +37,10 @@ module riscvcore #(
     output                       ctrl_desc_valid,
     input                        ctrl_desc_ready,
 
-    input  [SLOT_PTR_WIDTH-1:0]  slot_ptr, 
-    output [ADDR_WIDTH-1:0]      slot_addr,
+    output [SLOT_PTR_WIDTH-1:0]  slot_wr_ptr, 
+    output [ADDR_WIDTH-1:0]      slot_wr_addr,
+    output                       slot_wr_valid,
+    input                        slot_wr_ready,
 
     output [31:0]                core_msg_data,
     output [DMEM_ADDR_WIDTH-1:0] core_msg_addr,
@@ -134,17 +132,6 @@ reg [63:0] setting_data_r;
 reg [31:0] slot_info_data_r;
 reg data_desc_v_r, ctrl_desc_v_r;
 
-// Internal lookup table for slot addresses
-reg [ADDR_WIDTH-1:0] slot_addr_lut [0:MAX_SLOT_COUNT-1];
-integer j;
-
-initial begin
-  for (j=0;j<MAX_SLOT_COUNT;j=j+1)
-    slot_addr_lut[j] = SLOT_START_ADDR + (j*SLOT_ADDR_STEP);
-end
-
-assign slot_addr = slot_addr_lut[slot_ptr]; 
-
 // Byte writable data_desc
 wire [7:0]  wr_desc_mask = {4'd0, dmem_word_write_mask[3:0]} << {dmem_addr[2], 2'd0};
 wire [63:0] wr_desc_din  = {32'd0, dmem_wr_data} << {dmem_addr[2], 5'd0};
@@ -173,8 +160,6 @@ always @ (posedge clk) begin
                 slot_info_data_r[i*8 +: 8] <= wr_desc_din[i*8 +: 8];
 end
 
-wire [SLOT_PTR_WIDTH-1:0] wr_slot_ptr = slot_info_data_r[31:24]-1;
-
 always @ (posedge clk) begin
     if (rst) begin
             data_desc_v_r <= 1'b0;
@@ -192,11 +177,12 @@ always @ (posedge clk) begin
 
         if (setting_apply && strb_asserted)
           setting_r <= setting_data_r;
-
-        if (slot_wen && strb_asserted)
-          slot_addr_lut[wr_slot_ptr] <= slot_info_data_r[ADDR_WIDTH-1:0]; 
     end
 end
+
+assign slot_wr_addr    = slot_info_data_r[ADDR_WIDTH-1:0]; 
+assign slot_wr_ptr     = slot_info_data_r[31:24] - 1;
+assign slot_wr_valid   = slot_wen && strb_asserted;
 
 assign data_desc       = data_desc_data_r;
 assign ctrl_desc       = ctrl_desc_data_r;
@@ -247,7 +233,7 @@ always @ (posedge clk) begin
         io_read_data <= CORE_ID;
  
     if (stat_ren)
-        io_read_data <= {16'd0,7'd0,ctrl_desc_ready,7'd0,data_desc_ready};
+        io_read_data <= {8'd0,7'd0,slot_wr_ready,7'd0,ctrl_desc_ready,7'd0,data_desc_ready};
  
     if (setting_ren)
         if (dmem_addr[2]) 
