@@ -24,6 +24,15 @@ int main(void){
   unsigned char port;
   unsigned char slot;
 	int offset; 
+ 
+	// Test setting register
+	*(((unsigned char *)wr_setting)+2) = 1;
+  * setting_apply = 1;
+  asm volatile("" ::: "memory");
+	while (*((unsigned short *)(((unsigned char *)rd_setting)+1))!=256);
+
+	// test stat readback
+	while (*(((unsigned char *)rd_stat)+3)!=1);
 
 	// Read core ID
 	unsigned int id = *core_id;

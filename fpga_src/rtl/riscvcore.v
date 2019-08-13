@@ -169,6 +169,7 @@ always @ (posedge clk) begin
     if (rst) begin
             data_desc_v_r <= 1'b0;
             ctrl_desc_v_r <= 1'b0;
+            setting_r     <= 64'd0;
     end else begin
         if (send_data_desc && strb_asserted)
             data_desc_v_r <= 1'b1;
@@ -222,7 +223,7 @@ always @ (posedge clk)
     if (rst)
         io_ren_r <= 1'b0;
     else
-        io_ren_r <= in_desc_ren || stat_ren || id_ren;
+        io_ren_r <= in_desc_ren || stat_ren || id_ren || setting_ren;
 
 always @ (posedge clk) begin
     if (in_desc_ren)
