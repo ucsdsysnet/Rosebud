@@ -47,6 +47,7 @@ srcs.append("../rtl/VexRiscv.v")
 srcs.append("../rtl/riscvcore.v")
 srcs.append("../rtl/riscv_axis_wrapper.v")
 srcs.append("../rtl/simple_scheduler.v")
+srcs.append("../rtl/simple_sync_sig.v")
 srcs.append("../rtl/fpga_core.v")
 
 srcs.append("../lib/axis/rtl/axis_switch.v")
@@ -83,8 +84,10 @@ def bench():
     SIZE_1       = 73 - 18
 
     # Inputs
-    clk = Signal(bool(0))
-    rst = Signal(bool(0))
+    sys_clk  = Signal(bool(0))
+    sys_rst  = Signal(bool(0))
+    core_clk = Signal(bool(0))
+    core_rst = Signal(bool(0))
     tx_clk_0 = Signal(bool(0))
     tx_rst_0 = Signal(bool(0))
     rx_clk_0 = Signal(bool(0))
@@ -171,8 +174,10 @@ def bench():
 
     dut = Cosimulation(
         "vvp -m myhdl %s.vvp -lxt2" % testbench,
-        clk=clk,
-        rst=rst,
+        sys_clk=sys_clk,
+        sys_rst=sys_rst,
+        core_clk=core_clk,
+        core_rst=core_rst,
         rx_clk_0=rx_clk_0,
         rx_rst_0=rx_rst_0,
         tx_clk_0=tx_clk_0,
@@ -194,7 +199,11 @@ def bench():
 
     @always(delay(25))
     def clkgen():
-        clk.next = not clk
+        sys_clk.next = not sys_clk
+    
+    @always(delay(27))
+    def clkgen3():
+        core_clk.next = not core_clk
 
     @always(delay(32))
     def clkgen2():
@@ -228,20 +237,24 @@ def bench():
     @instance
     def check():
         yield delay(1000)
-        yield clk.posedge
-        rst.next = 1
-        yield clk.posedge
+        yield sys_clk.posedge
+        sys_rst.next = 1
+        yield core_clk.posedge
+        core_rst.next = 1
+        yield sys_clk.posedge
         yield tx_clk_0.posedge
         tx_rst_0.next = 1
         rx_rst_0.next = 1
         tx_rst_1.next = 1
         rx_rst_1.next = 1
         yield tx_clk_0.posedge
-        yield clk.posedge
+        yield sys_clk.posedge
         yield tx_clk_0.posedge
-        yield clk.posedge
-        rst.next = 0
-        yield clk.posedge
+        yield sys_clk.posedge
+        sys_rst.next = 0
+        yield core_clk.posedge
+        core_rst.next = 0
+        yield sys_clk.posedge
         yield tx_clk_0.posedge
         tx_rst_0.next = 0
         rx_rst_0.next = 0
@@ -249,8 +262,8 @@ def bench():
         rx_rst_1.next = 0
         yield tx_clk_0.posedge
         yield delay(2000)
-        yield clk.posedge
-        yield clk.posedge
+        yield sys_clk.posedge
+        yield sys_clk.posedge
         
         yield port1(),None
         yield port2(),None
@@ -299,7 +312,7 @@ def bench():
         # assert eth_frame.payload.data.index(test_frame_1.payload.data) == 0
 
         yield delay(1000)
-        yield clk.posedge
+        yield sys_clk.posedge
 
         raise StopSimulation
 

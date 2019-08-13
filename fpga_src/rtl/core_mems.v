@@ -3,13 +3,13 @@ module mem_1r1w # (
   parameter ADDR_WIDTH     = 11,
   parameter LINE_SIZE      = 8*BYTES_PER_LINE
 )( 
-  input clk,
-
+  input                       clka,
   input                       ena,
   input  [BYTES_PER_LINE-1:0] wea,
   input  [ADDR_WIDTH-1:0]     addra,
   input  [LINE_SIZE-1 :0]     dina,
 
+  input                       clkb,
   input                       enb,
   input  [ADDR_WIDTH-1:0]     addrb,
   output [LINE_SIZE-1 :0]     doutb
@@ -19,13 +19,13 @@ reg [LINE_SIZE-1:0] mem [0:(2**ADDR_WIDTH)-1];
 reg [LINE_SIZE-1:0] mem_out;
 integer i;
 
-always @ (posedge clk)
+always @ (posedge clka)
   if (ena)
     for (i = 0; i < BYTES_PER_LINE; i = i + 1) 
       if (wea[i] == 1'b1) 
         mem[addra][i*8 +: 8]  <= dina[i*8 +: 8];
 
-always @ (posedge clk)
+always @ (posedge clkb)
   if (enb)
     mem_out <= mem[addrb];
 
@@ -46,8 +46,7 @@ module mem_2rw # (
   parameter LINE_SIZE      = 8*BYTES_PER_LINE
 )(
 
-  input clk,
-
+  input                       clka,
   input                       ena,
   input                       rena,
   input  [BYTES_PER_LINE-1:0] wena,
@@ -55,6 +54,7 @@ module mem_2rw # (
   input  [LINE_SIZE-1     :0] dina,
   output [LINE_SIZE-1     :0] douta,
 
+  input                       clkb,
   input                       enb,
   input                       renb,
   input  [BYTES_PER_LINE-1:0] wenb,
@@ -68,7 +68,7 @@ reg [LINE_SIZE-1:0] mem_out_a;
 reg [LINE_SIZE-1:0] mem_out_b;
 integer i;
 
-always @ (posedge clk)
+always @ (posedge clka)
   if (ena) begin
     for (i = 0; i < BYTES_PER_LINE; i = i + 1) 
       if (wena[i]) 
@@ -77,7 +77,7 @@ always @ (posedge clk)
       mem_out_a <= mem[addra];
   end
 
-always @ (posedge clk)
+always @ (posedge clkb)
   if (enb) begin
     for (i = 0; i < BYTES_PER_LINE; i = i + 1) 
       if (wenb[i])

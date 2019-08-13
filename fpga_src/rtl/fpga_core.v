@@ -35,8 +35,10 @@ module fpga_core
      * Clock: 156.25MHz
      * Synchronous reset
      */
-    input  wire       clk,
-    input  wire       rst,
+    input  wire       sys_clk,
+    input  wire       sys_rst,
+    input  wire       core_clk,
+    input  wire       core_rst,
 
     /*
      * GPIO
@@ -132,8 +134,8 @@ eth_mac_10g_fifo #
     .rx_rst(sfp_1_rx_rst),
     .tx_clk(sfp_1_tx_clk),
     .tx_rst(sfp_1_tx_rst),
-    .logic_clk(clk),
-    .logic_rst(rst),
+    .logic_clk(sys_clk),
+    .logic_rst(sys_rst),
 
     /*
      * XGMII interface
@@ -206,8 +208,8 @@ eth_mac_10g_fifo #
     .rx_rst(sfp_2_rx_rst),
     .tx_clk(sfp_2_tx_clk),
     .tx_rst(sfp_2_tx_rst),
-    .logic_clk(clk),
-    .logic_rst(rst),
+    .logic_clk(sys_clk),
+    .logic_rst(sys_rst),
 
     /*
      * XGMII interface
@@ -299,8 +301,8 @@ simple_scheduler # (
   .LEN_WIDTH(LEN_WIDTH),
   .ENABLE_ILA(ENABLE_ILA)
 ) scheduler (
-  .clk(clk),
-  .rst(rst),
+  .clk(sys_clk),
+  .rst(sys_rst),
 
   // Data line to/from Eth interfaces
   .tx_axis_tdata(tx_axis_tdata),
@@ -402,8 +404,8 @@ axis_switch #
     .M_REG_TYPE(2)
 ) data_in_sw
 (
-    .clk(clk),
-    .rst(rst),
+    .clk(sys_clk),
+    .rst(sys_rst),
 
     /*
      * AXI Stream inputs
@@ -446,11 +448,12 @@ axis_switch #
     .DEST_WIDTH(PORT_WIDTH),
     .USER_WIDTH(ID_SLOT_WIDTH),
     .M_BASE(data_out_addrs(0)),
-    .M_TOP(data_out_addrs(0))
+    .M_TOP(data_out_addrs(0)),
+    .S_REG_TYPE(2)
 ) data_out_sw
 (
-    .clk(clk),
-    .rst(rst),
+    .clk(sys_clk),
+    .rst(sys_rst),
 
     /*
      * AXI Stream inputs
@@ -498,8 +501,8 @@ axis_switch #
     .M_TOP(ctrl_in_addrs(0))
 ) ctrl_in_sw
 (
-    .clk(clk),
-    .rst(rst),
+    .clk(sys_clk),
+    .rst(sys_rst),
 
     /*
      * AXI Stream inputs
@@ -535,8 +538,8 @@ axis_arb_mux #
     .KEEP_ENABLE(0)
 ) ctrl_out_sw
 (
-    .clk(clk),
-    .rst(rst),
+    .clk(sys_clk),
+    .rst(sys_rst),
 
     /*
      * AXI Stream inputs
@@ -593,9 +596,11 @@ generate
         .SLOT_START_ADDR(SLOT_START_ADDR),
         .SLOT_ADDR_STEP(SLOT_ADDR_STEP)
     )
-    RISCV (
-        .clk(clk),
-        .rst(rst),
+    core_wrapper (
+        .sys_clk(sys_clk),
+        .sys_rst(sys_rst),
+        .core_clk(core_clk),
+        .core_rst(core_rst),
 
         // ---------------- DATA CHANNEL --------------- // 
         // Incoming data
@@ -658,14 +663,14 @@ axis_arb_mux #
     .KEEP_ENABLE(0)
 ) cores_to_broadcaster
 (
-    .clk(clk),
-    .rst(rst),
+    .clk(core_clk),
+    .rst(core_rst),
 
     /*
      * AXI Stream inputs
      */
     .s_axis_tdata(core_msg_out_data),
-    .s_axis_tkeep(),
+    .s_axis_tkeep({CORE_COUNT{6'd0}}),
     .s_axis_tvalid(core_msg_out_valid),
     .s_axis_tready(core_msg_out_ready),
     .s_axis_tlast({CORE_COUNT{1'b1}}),
@@ -689,8 +694,8 @@ axis_arb_mux #
 // Broadcast the arbitted core messages. Since cores always accept
 // the last cycle's core_msg_out_ready is the sender, so no broadcast to sender
 reg [CORE_COUNT-1:0] core_msg_out_ready_r;
-always @ (posedge clk)
-  if (rst)
+always @ (posedge core_clk)
+  if (core_rst)
     core_msg_out_ready_r <= {CORE_COUNT{1'b1}};
   else
     core_msg_out_ready_r <= ~core_msg_out_ready;
@@ -710,7 +715,7 @@ if (ENABLE_ILA) begin
     end
 
   ila_8x64 debugger3 (
-    .clk    (clk),
+    .clk    (sys_clk),
  
     .trig_out(),
     .trig_out_ack(1'b0),

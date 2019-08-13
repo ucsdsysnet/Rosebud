@@ -15,6 +15,7 @@ int main(void){
   volatile unsigned char * setting_apply = (volatile unsigned char *) 0x803A;
   volatile unsigned char * update_slot   = (volatile unsigned char *) 0x803B;
   volatile unsigned char * rd_desc_done = (volatile unsigned char *) 0x803C;
+  volatile unsigned char * err_clear = (volatile unsigned char *) 0x803D;
 
 	const unsigned int slot_count = 8;
 

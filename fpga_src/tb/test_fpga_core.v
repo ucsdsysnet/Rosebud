@@ -36,8 +36,10 @@ parameter DATA_WIDTH = 64;
 parameter CTRL_WIDTH = (DATA_WIDTH/8);
 
 // Inputs
-reg clk = 0;
-reg rst = 0;
+reg sys_clk = 0;
+reg sys_rst = 0;
+reg core_clk = 0;
+reg core_rst = 0;
 
 reg rx_clk_0 = 0;
 reg rx_rst_0 = 0;
@@ -65,8 +67,10 @@ wire [CTRL_WIDTH-1:0] xgmii_txc_1;
 initial begin
     // myhdl integration
     $from_myhdl(
-        clk,
-        rst,
+        sys_clk,
+        sys_rst,
+        core_clk,
+        core_rst,
         rx_clk_0,
         rx_rst_0,
         tx_clk_0,
@@ -94,8 +98,10 @@ end
 
 
 fpga_core UUT(
-    .clk(clk),
-    .rst(rst),
+    .sys_clk(sys_clk),
+    .sys_rst(sys_rst),
+    .core_clk(core_clk),
+    .core_rst(core_rst),
 
     .sfp_1_led(),
     .sfp_2_led(),

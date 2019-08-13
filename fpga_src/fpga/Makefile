@@ -17,6 +17,7 @@ SYN_FILES += rtl/loaded_desc_fifo.v
 SYN_FILES += rtl/max_finder_tree.v
 SYN_FILES += rtl/axis_dma.v 
 SYN_FILES += rtl/riscv_axis_wrapper.v 
+SYN_FILES += rtl/simple_sync_sig.v
 SYN_FILES += rtl/sync_reset.v
 SYN_FILES += rtl/sync_signal.v
 
@@ -84,6 +85,7 @@ SYN_FILES += lib/eth/rtl/eth_arb_mux.v
 # XDC files
 XDC_FILES = fpga.xdc
 XDC_FILES += lib/axis/syn/axis_async_fifo.tcl
+XDC_FILES += rtl/simple_sync_sig.tcl
 
 # IP
 XCI_FILES =  ip/gtwizard_ultrascale_0.xci

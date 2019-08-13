@@ -70,15 +70,20 @@ module fpga (
 
 wire clk_100mhz_ibufg;
 wire clk_125mhz_mmcm_out;
-wire clk_200mhzmhz_mmcm_out;
+wire clk_200mhz_mmcm_out;
+wire clk_183mhz_mmcm_out;
 
 // Internal 125 MHz clock
 wire clk_125mhz_int;
 wire rst_125mhz_int;
 
 // Internal 200mhz MHz clock
-wire clk_200mhzmhz_int;
-wire rst_200mhzmhz_int;
+wire clk_200mhz_int;
+wire rst_200mhz_int;
+
+// Internal 183mhz MHz clock
+wire clk_183mhz_int;
+wire rst_183mhz_int;
 
 // Internal 156.25 MHz clock
 wire clk_156mhz_int;
@@ -111,7 +116,7 @@ MMCME3_BASE #(
     .CLKOUT0_DIVIDE_F(8),
     .CLKOUT0_DUTY_CYCLE(0.5),
     .CLKOUT0_PHASE(0),
-    .CLKOUT1_DIVIDE(1),
+    .CLKOUT1_DIVIDE(5),
     .CLKOUT1_DUTY_CYCLE(0.5),
     .CLKOUT1_PHASE(0),
     .CLKOUT2_DIVIDE(1),
@@ -144,7 +149,7 @@ clk_mmcm_inst (
     .PWRDWN(1'b0),
     .CLKOUT0(clk_125mhz_mmcm_out),
     .CLKOUT0B(),
-    .CLKOUT1(),
+    .CLKOUT1(clk_200mhz_mmcm_out),
     .CLKOUT1B(),
     .CLKOUT2(),
     .CLKOUT2B(),
@@ -173,6 +178,22 @@ sync_reset_125mhz_inst (
     .sync_reset_out(rst_125mhz_int)
 );
 
+BUFG
+clk_200mhz_bufg_inst (
+    .I(clk_200mhz_mmcm_out),
+    .O(clk_200mhz_int)
+);
+
+sync_reset #(
+    .N(4)
+)
+sync_reset_200mhz_inst (
+    .clk(clk_200mhz_int),
+    .rst(~mmcm_locked),
+    .sync_reset_out(rst_200mhz_int)
+);
+
+
 // MMCM instance
 // 100 MHz in, 200mhz MHz out
 // PFD range: 10 MHz to 500 MHz
@@ -181,7 +202,7 @@ sync_reset_125mhz_inst (
 // Divide by 8 to get output frequency of 125 MHz
 MMCME3_BASE #(
     .BANDWIDTH("OPTIMIZED"),
-    .CLKOUT0_DIVIDE_F(5),
+    .CLKOUT0_DIVIDE_F(6),
     .CLKOUT0_DUTY_CYCLE(0.5),
     .CLKOUT0_PHASE(0),
     .CLKOUT1_DIVIDE(1),
@@ -202,7 +223,7 @@ MMCME3_BASE #(
     .CLKOUT6_DIVIDE(1),
     .CLKOUT6_DUTY_CYCLE(0.5),
     .CLKOUT6_PHASE(0),
-    .CLKFBOUT_MULT_F(10),
+    .CLKFBOUT_MULT_F(11),
     .CLKFBOUT_PHASE(0),
     .DIVCLK_DIVIDE(1),
     .REF_JITTER1(0.010),
@@ -215,7 +236,7 @@ clk_mmcm_inst2 (
     .CLKFBIN(mmcm_clkfb2),
     .RST(mmcm_rst),
     .PWRDWN(1'b0),
-    .CLKOUT0(clk_200mhzmhz_mmcm_out),
+    .CLKOUT0(clk_183mhz_mmcm_out),
     .CLKOUT0B(),
     .CLKOUT1(),
     .CLKOUT1B(),
@@ -232,20 +253,19 @@ clk_mmcm_inst2 (
 );
 
 BUFG
-clk_200mhzmhz_bufg_inst (
-    .I(clk_200mhzmhz_mmcm_out),
-    .O(clk_200mhzmhz_int)
+clk_183mhz_bufg_inst (
+    .I(clk_183mhz_mmcm_out),
+    .O(clk_183mhz_int)
 );
 
 sync_reset #(
     .N(4)
 )
-sync_reset_200mhzmhz_inst (
-    .clk(clk_200mhzmhz_int),
+sync_reset_183mhz_inst (
+    .clk(clk_183mhz_int),
     .rst(~mmcm_locked2),
-    .sync_reset_out(rst_200mhzmhz_int)
+    .sync_reset_out(rst_183mhz_int)
 );
-
 
 // GPIO
 wire [1:0] sfp_1_led_int;
@@ -546,8 +566,10 @@ core_inst (
      * Clock: 156.25 MHz
      * Synchronous reset
      */
-    .clk(clk_200mhzmhz_int),
-    .rst(rst_200mhzmhz_int),
+    .sys_clk(clk_200mhz_int),
+    .sys_rst(rst_200mhz_int),
+    .core_clk(clk_183mhz_int),
+    .core_rst(rst_183mhz_int),
     /*
      * GPIO
      */
