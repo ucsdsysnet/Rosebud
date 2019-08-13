@@ -1,9 +1,11 @@
 inline void process (unsigned short* len, unsigned char* port, unsigned int* offset, unsigned int* data);
 int main(void){
+
   volatile unsigned int  * rd_desc      = (volatile unsigned int *) 0x8040;
   volatile unsigned int  * rd_setting   = (volatile unsigned int *) 0x8048;
   volatile unsigned int  * rd_stat      = (volatile unsigned int *) 0x8050;
   volatile unsigned int  * core_id      = (volatile unsigned int *) 0x8054;
+  volatile unsigned int  * timer_32     = (volatile unsigned int *) 0x8058;
 
   volatile unsigned int  * wr_desc      = (volatile unsigned int *) 0x8000;
   volatile unsigned int  * wr_desc_ctrl = (volatile unsigned int *) 0x8008;
@@ -16,6 +18,7 @@ int main(void){
   volatile unsigned char * update_slot   = (volatile unsigned char *) 0x803B;
   volatile unsigned char * rd_desc_done = (volatile unsigned char *) 0x803C;
   volatile unsigned char * err_clear = (volatile unsigned char *) 0x803D;
+  volatile unsigned char * rst_timer = (volatile unsigned char *) 0x803E;
 
 	const unsigned int slot_count = 8;
 
@@ -24,7 +27,8 @@ int main(void){
   unsigned char port;
   unsigned char slot;
 	int offset; 
- 
+	unsigned int start_time, end_time;
+
 	// Test setting register
 	*(((unsigned char *)wr_setting)+2) = 1;
   * setting_apply = 1;
@@ -52,6 +56,8 @@ int main(void){
  
   while(1){
 		if((*rd_desc)!=0){
+			start_time = (* timer_32);
+
   		len  = *((unsigned short*)rd_desc);
   		slot = *(((unsigned char*)rd_desc)+2);
   		port = *(((unsigned char*)rd_desc)+3);
@@ -73,6 +79,12 @@ int main(void){
   		*((unsigned char*)wr_desc_ctrl+7) = 1;
 			asm volatile("" ::: "memory");
 			* wr_desc_ctrl_send = 1;
+
+			end_time = (* timer_32);
+			* wr_setting = (end_time - start_time); 
+			* setting_apply = 1;
+			* rst_timer = 1;
+
   	}
   }
   

@@ -53,6 +53,7 @@ module riscvcore #(
     output                       interrupt_in_ack
 );
 
+
 // Core to memory signals
 wire [31:0] imem_read_data, dmem_wr_data, dmem_read_data; 
 wire [31:0] imem_addr, dmem_addr;
@@ -109,7 +110,7 @@ localparam SETTING_STRB   = 7'b0111010;//;
 localparam SLOT_LUT_STRB  = 7'b0111011;//;
 localparam RD_DESC_STRB   = 7'b0111100;//;
 localparam ERR_CLEAR_STRB = 7'b0111101;//;
-// localparam RESERVED_1  = 7'b0111110;//;
+localparam RESET_TIMER    = 7'b0111110;//;
 // localparam RESERVED_1  = 7'b0111111;//;
 
 localparam IO_BYTE_ACCESS = 4'b0111;//??;
@@ -128,6 +129,7 @@ wire setting_apply  = io_write && (dmem_addr[6:0]==SETTING_STRB);
 wire slot_wen       = io_write && (dmem_addr[6:0]==SLOT_LUT_STRB);
 wire rd_desc_done   = io_write && (dmem_addr[6:0]==RD_DESC_STRB);
 wire error_clear    = io_write && (dmem_addr[6:0]==ERR_CLEAR_STRB);
+wire reset_timer    = io_write && (dmem_addr[6:0]==RESET_TIMER);
 
 reg [63:0] setting_r;
 
@@ -203,11 +205,12 @@ localparam RD_DESC_ADDR    = 4'b1000;//???;
 localparam RD_SETTING_ADDR = 4'b1001;//???;
 localparam RD_STAT_ADDR    = 5'b10100;//??;
 localparam RD_ID_ADDR      = 5'b10101;//??;
-// localparam RESERVED_8   = 4'b1011;//???;
+localparam RD_TIMER_ADDR   = 5'b10110;//??;
+// localparam RESERVED_4   = 5'b10111;//???;
 // localparam RESERVED_32  = 2'b11;//?????;
 
 localparam IO_READ_ADDRS   = 1'b1;//??????;
-localparam IO_SPACE        = 64+24;
+localparam IO_SPACE        = 64+32;
 
 wire io_read  = io_not_mem && dmem_v && (!dmem_wr_en) && ext_dmem_ready;
 
@@ -215,15 +218,18 @@ wire in_desc_ren    = io_read  && (dmem_addr[6:3]==RD_DESC_ADDR);
 wire setting_ren    = io_read  && (dmem_addr[6:3]==RD_SETTING_ADDR);
 wire stat_ren       = io_read  && (dmem_addr[6:2]==RD_STAT_ADDR);
 wire id_ren         = io_read  && (dmem_addr[6:2]==RD_ID_ADDR);
+wire timer_ren      = io_read  && (dmem_addr[6:2]==RD_TIMER_ADDR);
 
 reg [31:0] io_read_data;
 reg        io_ren_r;
+reg [31:0] internal_timer;
 
 always @ (posedge clk)
     if (rst)
         io_ren_r <= 1'b0;
     else
-        io_ren_r <= in_desc_ren || stat_ren || id_ren || setting_ren;
+        io_ren_r <= in_desc_ren || stat_ren || id_ren ||
+                    setting_ren || timer_ren;
 
 always @ (posedge clk) begin
     if (in_desc_ren)
@@ -247,9 +253,21 @@ always @ (posedge clk) begin
             io_read_data <= setting_r[63:32];
         else
             io_read_data <= setting_r[31:0];
+
+    if (timer_ren)
+        io_read_data <= internal_timer;
 end
 
 assign in_desc_taken = rd_desc_done && strb_asserted;
+
+///////////////////////////////////////////////////////////////////////////
+//////////////////////// INTERNAL 32-BIT TIMER ////////////////////////////
+///////////////////////////////////////////////////////////////////////////
+always @ (posedge clk)
+  if (rst || reset_timer)
+    internal_timer <= 32'd0;
+  else
+    internal_timer <= internal_timer + 32'd1;
 
 ///////////////////////////////////////////////////////////////////////////
 /////////////////////// WORD LENGTH ADJUSTMENT ////////////////////////////
