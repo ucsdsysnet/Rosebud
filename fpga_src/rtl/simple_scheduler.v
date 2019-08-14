@@ -10,7 +10,10 @@ module simple_scheduler # (
   parameter CORE_ID_WIDTH   = $clog2(CORE_COUNT),
   parameter PORT_WIDTH      = $clog2(PORT_COUNT),
   parameter ID_SLOT_WIDTH   = CORE_ID_WIDTH+SLOT_WIDTH,
-  parameter STRB_WIDTH      = DATA_WIDTH/8
+  parameter STRB_WIDTH      = DATA_WIDTH/8,
+  parameter LVL1_SW_PORTS   = CORE_COUNT,
+  parameter LVL2_SW_PORTS   = CORE_COUNT/LVL1_SW_PORTS,
+  parameter LVL1_BITS       = $clog2(LVL1_SW_PORTS)
 ) (
   input                                     clk,
   input                                     rst,
@@ -193,14 +196,29 @@ module simple_scheduler # (
     end
   endgenerate
 
+  reg [CORE_COUNT*SLOT_WIDTH-1:0] reordered_rx_desc_count;
+  wire [CORE_ID_WIDTH-1:0] reordered_selected_desc;
+  integer k,l;
+  always @ (*)
+    for (k=0; k<LVL2_SW_PORTS; k=k+1)
+      for (l=0; l<LVL1_SW_PORTS; l=l+1)
+        reordered_rx_desc_count[(k*LVL1_SW_PORTS+l)*SLOT_WIDTH +: SLOT_WIDTH] = 
+                  rx_desc_count[(l*LVL2_SW_PORTS+k)*SLOT_WIDTH +: SLOT_WIDTH];
+
   max_finder_tree # (
     .PORT_COUNT(CORE_COUNT),
     .DATA_WIDTH(SLOT_WIDTH)
   ) core_selector ( 
-    .values(rx_desc_count),
+    .values(reordered_rx_desc_count),
     .max_val(),
-    .max_ptr(selected_desc)
+    .max_ptr(reordered_selected_desc)
   );
+
+  if (LVL2_SW_PORTS==1)
+    assign selected_desc = reordered_selected_desc;
+  else 
+    assign selected_desc = {reordered_selected_desc[LVL1_BITS-1:0],
+                           reordered_selected_desc[CORE_ID_WIDTH-1:LVL1_BITS]};
 
   // Loop back ready desc 
   wire loopback_in_ready;

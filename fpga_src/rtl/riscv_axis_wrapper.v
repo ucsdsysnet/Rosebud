@@ -83,6 +83,7 @@ module riscv_axis_wrapper # (
 
     // Core messages input
     input  wire [MSG_WIDTH-1:0]     core_msg_in_data,
+    input  wire [CORE_ID_WIDTH-1:0] core_msg_in_user,
     input  wire                     core_msg_in_valid
 );
 
@@ -556,7 +557,7 @@ always @ (posedge core_clk) begin
   if (core_rst)
     core_msg_in_v_r  <= 1'b0;
   else
-    core_msg_in_v_r  <= core_msg_in_valid;
+    core_msg_in_v_r  <= core_msg_in_valid && (core_msg_in_user!=CORE_ID);
 end
 
 wire [7:0]  core_msg_write_mask = {4'd0, core_msg_in_strb_r[3:0]} << {core_msg_in_addr_r[2], 2'd0};

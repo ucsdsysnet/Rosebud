@@ -94,7 +94,8 @@ parameter COHERENT_START  = 16'h6FFF;
 parameter LEN_WIDTH       = 16;
 parameter INTERLEAVE      = 1;
 parameter HOST_PORT       = 4;
-parameter LVL1_SW_PORTS   = 16;
+parameter LVL1_SW_PORTS   = 4;
+parameter CORE_MSG_LVL1   = 16;
 parameter ENABLE_ILA      = 0;
 
 parameter CORE_WIDTH      = $clog2(CORE_COUNT);
@@ -104,6 +105,7 @@ parameter ID_SLOT_WIDTH   = CORE_WIDTH+SLOT_WIDTH;
 parameter AXIS_STRB_WIDTH = AXIS_DATA_WIDTH/8;
 parameter CORE_MSG_WIDTH  = 4+$clog2(DMEM_SIZE_BYTES)+32;
 parameter LVL2_SW_PORTS   = CORE_COUNT/LVL1_SW_PORTS;
+parameter CORE_MSG_LVL2   = CORE_COUNT/CORE_MSG_LVL1;
 
 parameter LVL1_DEST_BITS  = $clog2(LVL1_SW_PORTS);
 parameter DATA_DEST_LVL2  = ID_SLOT_WIDTH-LVL1_DEST_BITS;
@@ -306,6 +308,7 @@ simple_scheduler # (
   .SLOT_COUNT(SLOT_COUNT),
   .DATA_WIDTH(AXIS_DATA_WIDTH),
   .LEN_WIDTH(LEN_WIDTH),
+  .LVL1_SW_PORTS(LVL1_SW_PORTS),
   .ENABLE_ILA(ENABLE_ILA)
 ) scheduler (
   .clk(sys_clk),
@@ -478,7 +481,9 @@ axis_switch #
     .DATA_WIDTH(AXIS_DATA_WIDTH),
     .DEST_WIDTH(CORE_WIDTH),
     .USER_ENABLE(0),
-    .KEEP_ENABLE(0)
+    .KEEP_ENABLE(0),
+    .S_REG_TYPE(2),
+    .M_REG_TYPE(2)
 ) ctrl_in_sw_lvl1
 (
     .clk(sys_clk),
@@ -769,21 +774,23 @@ endgenerate
 
 
 // Core internal messaging
-wire [LVL1_SW_PORTS*CORE_MSG_WIDTH-1:0] int_core_msg_out_data;
-wire [LVL1_SW_PORTS-1:0]                int_core_msg_out_valid;
-wire [LVL1_SW_PORTS-1:0]                int_core_msg_out_ready;
+wire [CORE_MSG_LVL1*CORE_MSG_WIDTH-1:0] int_core_msg_out_data;
+wire [CORE_MSG_LVL1*CORE_WIDTH-1:0]     int_core_msg_out_user;
+wire [CORE_MSG_LVL1-1:0]                int_core_msg_out_valid;
+wire [CORE_MSG_LVL1-1:0]                int_core_msg_out_ready;
 
 wire [CORE_MSG_WIDTH-1:0] core_msg_merged_data;
+wire [CORE_WIDTH-1:0]     core_msg_merged_user;
 wire                      core_msg_merged_valid;
 wire                      core_msg_merged_ready;
 
 axis_arb_mux #
 (
-    .S_COUNT(LVL1_SW_PORTS),
+    .S_COUNT(CORE_MSG_LVL1),
     .DATA_WIDTH(CORE_MSG_WIDTH),
-    .USER_ENABLE(0),
+    .USER_WIDTH(CORE_WIDTH),
     .KEEP_ENABLE(0)
-) cores_to_broadcaster
+) cores_to_broadcaster_lvl1
 (
     .clk(core_clk),
     .rst(core_rst),
@@ -792,13 +799,13 @@ axis_arb_mux #
      * AXI Stream inputs
      */
     .s_axis_tdata(int_core_msg_out_data),
-    .s_axis_tkeep({LVL1_SW_PORTS{6'd0}}),
+    .s_axis_tkeep({CORE_MSG_LVL1{6'd0}}),
     .s_axis_tvalid(int_core_msg_out_valid),
     .s_axis_tready(int_core_msg_out_ready),
-    .s_axis_tlast({LVL1_SW_PORTS{1'b1}}),
-    .s_axis_tid({LVL1_SW_PORTS{8'd0}}),
-    .s_axis_tdest({LVL1_SW_PORTS{8'd0}}),
-    .s_axis_tuser({LVL1_SW_PORTS{1'b0}}),
+    .s_axis_tlast({CORE_MSG_LVL1{1'b1}}),
+    .s_axis_tid({CORE_MSG_LVL1{8'd0}}),
+    .s_axis_tdest({CORE_MSG_LVL1{8'd0}}),
+    .s_axis_tuser(int_core_msg_out_user),
 
     /*
      * AXI Stream output
@@ -810,36 +817,74 @@ axis_arb_mux #
     .m_axis_tlast(),
     .m_axis_tid(),
     .m_axis_tdest(),
-    .m_axis_tuser()
+    .m_axis_tuser(core_msg_merged_user)
 );
 
-// Broadcast the arbitted core messages. Since cores always accept
-// the last cycle's core_msg_out_ready is the sender, so no broadcast to sender
-// Must be updated for 2 level 
-wire [CORE_COUNT-1:0] core_msg_in_valid;
+// Broadcast the arbitted core messages.
 wire [CORE_COUNT*CORE_MSG_WIDTH-1:0] core_msg_in_data;
-reg [CORE_COUNT-1:0] core_msg_out_ready_r;
-always @ (posedge core_clk)
-  if (core_rst)
-    core_msg_out_ready_r <= {CORE_COUNT{1'b1}};
-  else
-    core_msg_out_ready_r <= ~core_msg_out_ready;
+wire [CORE_COUNT*CORE_WIDTH-1:0]     core_msg_in_user;
+wire [CORE_COUNT-1:0]                core_msg_in_valid;
 
-assign core_msg_in_data = {CORE_COUNT{core_msg_merged_data}};
-assign core_msg_in_valid = {CORE_COUNT{core_msg_merged_valid}} & core_msg_out_ready_r;
+assign core_msg_in_data  = {CORE_COUNT{core_msg_merged_data}};
+assign core_msg_in_user  = {CORE_COUNT{core_msg_merged_user}};
+assign core_msg_in_valid = {CORE_COUNT{core_msg_merged_valid}}; 
 assign core_msg_merged_ready = 1'b1;
-
 
 // lvl2 
 wire [CORE_COUNT*CORE_MSG_WIDTH-1:0] core_msg_out_data;
 wire [CORE_COUNT-1:0]                core_msg_out_valid;
 wire [CORE_COUNT-1:0]                core_msg_out_ready;
 
-// if (LVL2_SW_PORTS == 1) begin
-  assign int_core_msg_out_valid = core_msg_out_valid;
-  assign int_core_msg_out_data  = core_msg_out_data;
-  assign core_msg_out_ready     = int_core_msg_out_ready;
-// end
+genvar k;
+generate
+  if (CORE_MSG_LVL2 == 1) begin
+
+    assign int_core_msg_out_valid = core_msg_out_valid;
+    assign int_core_msg_out_data  = core_msg_out_data;
+    assign int_core_msg_out_user  = ctrl_m_axis_tuser;
+    assign core_msg_out_ready     = int_core_msg_out_ready;
+
+  end else begin
+
+    for (k=0; k<CORE_MSG_LVL1; k=k+1) begin
+      axis_arb_mux #
+      (
+          .S_COUNT(CORE_MSG_LVL1),
+          .DATA_WIDTH(CORE_MSG_WIDTH),
+          .USER_WIDTH(CORE_WIDTH),
+          .KEEP_ENABLE(0)
+      ) cores_to_broadcaster_lvl2
+      (
+          .clk(core_clk),
+          .rst(core_rst),
+      
+          /*
+           * AXI Stream inputs
+           */
+          .s_axis_tdata(core_msg_out_data[k*CORE_MSG_LVL2*CORE_MSG_WIDTH +: CORE_MSG_LVL2*CORE_MSG_WIDTH]),
+          .s_axis_tkeep({CORE_MSG_LVL2{6'd0}}),
+          .s_axis_tvalid(core_msg_out_valid[k*CORE_MSG_LVL2 +: CORE_MSG_LVL2]),
+          .s_axis_tready(core_msg_out_ready[k*CORE_MSG_LVL2 +: CORE_MSG_LVL2]),
+          .s_axis_tlast({CORE_MSG_LVL2{1'b1}}),
+          .s_axis_tid({CORE_MSG_LVL2{8'd0}}),
+          .s_axis_tdest({CORE_MSG_LVL2{8'd0}}),
+          .s_axis_tuser(ctrl_m_axis_tuser[k*CORE_MSG_LVL2*CORE_WIDTH +: CORE_MSG_LVL2*CORE_WIDTH]),
+      
+          /*
+           * AXI Stream output
+           */
+          .m_axis_tdata(int_core_msg_out_data[k*CORE_MSG_WIDTH +: CORE_MSG_WIDTH]),
+          .m_axis_tkeep(),
+          .m_axis_tvalid(int_core_msg_out_valid[k]),
+          .m_axis_tready(int_core_msg_out_ready[k]),
+          .m_axis_tlast(),
+          .m_axis_tid(),
+          .m_axis_tdest(),
+          .m_axis_tuser(int_core_msg_out_user[k*CORE_WIDTH +: CORE_WIDTH])
+      );
+    end
+  end
+endgenerate 
 
 genvar i;
 generate
@@ -911,6 +956,7 @@ generate
 
         // Core messages input
         .core_msg_in_data(core_msg_in_data[CORE_MSG_WIDTH*i +: CORE_MSG_WIDTH]),
+        .core_msg_in_user(core_msg_in_user[CORE_WIDTH*i +: CORE_WIDTH]),
         .core_msg_in_valid(core_msg_in_valid[i])
     );
   end
