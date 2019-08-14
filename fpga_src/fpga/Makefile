@@ -20,8 +20,9 @@ SYN_FILES += rtl/riscv_axis_wrapper.v
 SYN_FILES += rtl/simple_sync_sig.v
 SYN_FILES += rtl/sync_reset.v
 SYN_FILES += rtl/sync_signal.v
+SYN_FILES += rtl/axis_switch.v
 
-SYN_FILES += lib/axis/rtl/axis_switch.v
+# SYN_FILES += lib/axis/rtl/axis_switch.v
 SYN_FILES += lib/axis/rtl/axis_arb_mux.v
 SYN_FILES += lib/axis/rtl/axis_register.v
 SYN_FILES += lib/axis/rtl/arbiter.v

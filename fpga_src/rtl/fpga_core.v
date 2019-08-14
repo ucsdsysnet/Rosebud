@@ -376,22 +376,6 @@ wire [CORE_COUNT*AXIS_DATA_WIDTH-1:0] ctrl_m_axis_tdata;
 wire [CORE_COUNT*CORE_WIDTH-1:0] ctrl_m_axis_tuser;
 wire [CORE_COUNT-1:0] ctrl_m_axis_tvalid, ctrl_m_axis_tready, ctrl_m_axis_tlast;
 
-function [CORE_COUNT*ID_SLOT_WIDTH-1:0] data_in_base_addrs (input [31:0] lead_zero);
-    integer i;
-    begin
-        for (i=0;i<CORE_COUNT;i=i+1)
-            data_in_base_addrs[i*ID_SLOT_WIDTH +: ID_SLOT_WIDTH] = i << lead_zero;
-    end
-endfunction
-
-function [CORE_COUNT*ID_SLOT_WIDTH-1:0] data_in_top_addrs (input [31:0] lead_one);
-    integer i;
-    begin
-        for (i=0;i<CORE_COUNT;i=i+1)
-            data_in_top_addrs[i*ID_SLOT_WIDTH +: ID_SLOT_WIDTH] = (i << lead_one) | ((2**lead_one)-1);
-    end
-endfunction
-
 axis_switch #
 (
     .S_COUNT(PORT_COUNT),
@@ -399,8 +383,6 @@ axis_switch #
     .DATA_WIDTH(AXIS_DATA_WIDTH),
     .DEST_WIDTH(ID_SLOT_WIDTH),
     .USER_WIDTH(PORT_WIDTH),
-    .M_BASE(data_in_base_addrs(SLOT_WIDTH)),
-    .M_TOP(data_in_top_addrs(SLOT_WIDTH)),
     .S_REG_TYPE(2),
     .M_REG_TYPE(2)
 ) data_in_sw
@@ -433,14 +415,6 @@ axis_switch #
     .m_axis_tuser(data_s_axis_tuser)
 );
 
-function [PORT_COUNT*PORT_WIDTH-1:0] data_out_addrs (input [31:0] lead_zero);
-    integer i;
-    begin
-        for (i=0;i<PORT_COUNT;i=i+1)
-            data_out_addrs[i*PORT_WIDTH +: PORT_WIDTH] = i << lead_zero;
-    end
-endfunction
-
 axis_switch #
 (
     .S_COUNT(CORE_COUNT),
@@ -448,8 +422,6 @@ axis_switch #
     .DATA_WIDTH(AXIS_DATA_WIDTH),
     .DEST_WIDTH(PORT_WIDTH),
     .USER_WIDTH(ID_SLOT_WIDTH),
-    .M_BASE(data_out_addrs(0)),
-    .M_TOP(data_out_addrs(0)),
     .S_REG_TYPE(2)
 ) data_out_sw
 (
@@ -482,14 +454,6 @@ axis_switch #
 
 );
 
-function [CORE_COUNT*CORE_WIDTH-1:0] ctrl_in_addrs (input [31:0] lead_zero);
-    integer i;
-    begin
-        for (i=0;i<CORE_COUNT;i=i+1)
-            ctrl_in_addrs[i*CORE_WIDTH +: CORE_WIDTH] = i; //  << lead_zero;
-    end
-endfunction
-
 axis_switch #
 (
     .S_COUNT(1),
@@ -497,9 +461,7 @@ axis_switch #
     .DATA_WIDTH(AXIS_DATA_WIDTH),
     .DEST_WIDTH(CORE_WIDTH),
     .USER_ENABLE(0),
-    .KEEP_ENABLE(0),
-    .M_BASE(ctrl_in_addrs(0)),
-    .M_TOP(ctrl_in_addrs(0))
+    .KEEP_ENABLE(0)
 ) ctrl_in_sw
 (
     .clk(sys_clk),
