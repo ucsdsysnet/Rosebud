@@ -1,118 +1,53 @@
-inline void process (unsigned short* len, unsigned char* port, unsigned int* offset, unsigned int* data);
+#include "core.h"
+
 int main(void){
 
-  volatile unsigned int  * rd_desc      = (volatile unsigned int *) 0x8040;
-  volatile unsigned int  * rd_setting   = (volatile unsigned int *) 0x8048;
-  volatile unsigned int  * rd_stat      = (volatile unsigned int *) 0x8050;
-  volatile unsigned int  * core_id      = (volatile unsigned int *) 0x8054;
-  volatile unsigned int  * timer_32     = (volatile unsigned int *) 0x8058;
-
-  volatile unsigned int  * wr_desc      = (volatile unsigned int *) 0x8000;
-  volatile unsigned int  * wr_desc_ctrl = (volatile unsigned int *) 0x8008;
-  volatile unsigned int  * wr_setting   = (volatile unsigned int *) 0x8010;
-  volatile unsigned int  * wr_slot_addr = (volatile unsigned int *) 0x8018;
-
-  volatile unsigned char * wr_desc_send = (volatile unsigned char *) 0x8038;
-  volatile unsigned char * wr_desc_ctrl_send = (volatile unsigned char *) 0x8039;
-  volatile unsigned char * setting_apply = (volatile unsigned char *) 0x803A;
-  volatile unsigned char * update_slot   = (volatile unsigned char *) 0x803B;
-  volatile unsigned char * rd_desc_done = (volatile unsigned char *) 0x803C;
-  volatile unsigned char * err_clear = (volatile unsigned char *) 0x803D;
-  volatile unsigned char * rst_timer = (volatile unsigned char *) 0x803E;
-
-	const unsigned int slot_count = 8;
+	volatile unsigned short * sh_test  = (volatile unsigned short *) 0x0700A;
 
   unsigned int* data;
   unsigned short len;
   unsigned char port;
   unsigned char slot;
-	int offset; 
 	unsigned int start_time, end_time;
+	unsigned int setting_high, setting_low;
+	int offset; 
+	
+	write_setting (0,1<<16);	
+	read_setting (&setting_high, &setting_low);
+	while ((setting_low >> 16)!=1);
 
-	// Test setting register
-	*(((unsigned char *)wr_setting)+2) = 1;
-  * setting_apply = 1;
-  asm volatile("" ::: "memory");
-	while (*((unsigned short *)(((unsigned char *)rd_setting)+1))!=256);
+	while (!core_msg_ready);
 
-	// test stat readback
-	while (*(((unsigned char *)rd_stat)+3)!=1);
+	unsigned int id = core_id();
 
-	// Read core ID
-	unsigned int id = *core_id;
+	init_slots(8, 0x200A, 2048);
 
-	// set the slot addresses
-	for (int i=1; i<=slot_count; i++){
-		*wr_slot_addr = (i<<24) + 0x200A + ((i-1)<<11);
-		asm volatile("" ::: "memory");
-		*update_slot  = 1;
-	}
-  
-	// Tell number of available slots to the scheduler  
-  *wr_desc_ctrl = slot_count;
-  *(wr_desc_ctrl+1) = 4<<24;
-  asm volatile("" ::: "memory");
-  * wr_desc_ctrl_send = 1;
- 
-  while(1){
-		if((*rd_desc)!=0){
-			start_time = (* timer_32);
-
-  		len  = *((unsigned short*)rd_desc);
-  		slot = *(((unsigned char*)rd_desc)+2);
-  		port = *(((unsigned char*)rd_desc)+3);
-  		data = (unsigned int*)(*(rd_desc+1));
-			asm volatile("" ::: "memory");
-			* rd_desc_done = 1;
+	while (1){
+		if (in_pkt_ready()){
+	 		
+			start_time = read_timer();
+			read_in_pkt(&len, &slot, &port, &data);
 			offset = 0;
+	
+			if (port==0){
+				port = 1;
+				*sh_test += 1;
+			} else {
+				port = 0;
+				*(sh_test+1) += 1;
+			}
 
-  		process (&len, &port, &offset, data);
-  		// Order of writing to stat is important, last two should 
-  		// be to stat and then stat+1 and it should not happen before that. 
-  		// there is 10 byte offset when DMA writes and we did not change it,
-  		// so that would be the start address of packet. 
-  		*wr_desc_ctrl = (int)len;
-  		*((unsigned char*)wr_desc_ctrl+2) = slot;
-  		*((unsigned char*)wr_desc_ctrl+3) = port;
-  		*(wr_desc_ctrl+1) = ((unsigned int)data)+offset;
-  		*((unsigned char*)wr_desc_ctrl+6) = (char)id;
-  		*((unsigned char*)wr_desc_ctrl+7) = 1;
-			asm volatile("" ::: "memory");
-			* wr_desc_ctrl_send = 1;
+			data = (unsigned int *)(((unsigned int)data)+offset);
+			// pkt_send(&len, &slot, &port, data);
+			pkt_done_msg(&len, &slot, &port, data);
 
-			end_time = (* timer_32);
-			* wr_setting = (end_time - start_time); 
-			* setting_apply = 1;
-			* rst_timer = 1;
+	 		end_time = read_timer();
+			write_setting (0,end_time-start_time);
+			reset_timer();
 
   	}
   }
   
   return 1;
-}
-
-inline void process (unsigned short* len, unsigned char* port, unsigned int *offset, unsigned int* data) {
-	volatile unsigned short * sh_test  = (volatile unsigned short *) 0x0700A;
-  // volatile unsigned char * saved_MAC_byte = (volatile unsigned char *) 0x00300;
-  // volatile unsigned int * seen_first = (volatile unsigned int *) 0x00304;
-	// change sender's mac address
-	// data[6] = data[6]+0x05050505;
-	// data[7] = data[7]+0x05050505;
-	// *offset = 6;
-	if (*port==0){
-		*port = 1;
-		*sh_test += 1;
-		// if (*seen_first)
-		// * ((unsigned char*)(&data[3])+3) = 0xEE; //*saved_MAC_byte;
-	} else {
-		*port = 0;
-		*(sh_test+1) += 1;
-		// *len = 0;
-		// *saved_MAC_byte = *((unsigned char*)(&data[5])+1);
-		// *seen_first = 1;
-		// * ((unsigned char*)(&data[5])+1) = 0xEE;
-	}
-	// *offset = -4;
-	return;
 }
 
