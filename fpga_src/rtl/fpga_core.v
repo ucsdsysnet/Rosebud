@@ -94,6 +94,7 @@ parameter COHERENT_START  = 16'h6FFF;
 parameter LEN_WIDTH       = 16;
 parameter INTERLEAVE      = 1;
 parameter HOST_PORT       = 4;
+parameter LVL1_SW_PORTS   = 16;
 parameter ENABLE_ILA      = 0;
 
 parameter CORE_WIDTH      = $clog2(CORE_COUNT);
@@ -102,6 +103,11 @@ parameter SLOT_WIDTH      = $clog2(SLOT_COUNT+1);
 parameter ID_SLOT_WIDTH   = CORE_WIDTH+SLOT_WIDTH;
 parameter AXIS_STRB_WIDTH = AXIS_DATA_WIDTH/8;
 parameter CORE_MSG_WIDTH  = 4+$clog2(DMEM_SIZE_BYTES)+32;
+parameter LVL2_SW_PORTS   = CORE_COUNT/LVL1_SW_PORTS;
+
+parameter LVL1_DEST_BITS  = $clog2(LVL1_SW_PORTS);
+parameter DATA_DEST_LVL2  = ID_SLOT_WIDTH-LVL1_DEST_BITS;
+parameter CTRL_DEST_LVL2  = CORE_WIDTH-LVL1_DEST_BITS;
 
 // ETH interfaces
 parameter ETH0_LOC = 0;
@@ -355,37 +361,48 @@ simple_scheduler # (
   .ctrl_s_axis_tuser(sched_ctrl_s_axis_tuser)
 );
 
+// Switches
+
+// Level 1
+wire [LVL1_SW_PORTS*AXIS_DATA_WIDTH-1:0] int_data_s_axis_tdata;
+wire [LVL1_SW_PORTS*AXIS_STRB_WIDTH-1:0] int_data_s_axis_tkeep;
+wire [LVL1_SW_PORTS*ID_SLOT_WIDTH-1:0]   int_data_s_axis_tdest;
+wire [LVL1_SW_PORTS*PORT_WIDTH-1:0]      int_data_s_axis_tuser;
+wire [LVL1_SW_PORTS-1:0]                 int_data_s_axis_tvalid, 
+                                         int_data_s_axis_tready, 
+                                         int_data_s_axis_tlast;
+
+wire [LVL1_SW_PORTS*AXIS_DATA_WIDTH-1:0] int_data_m_axis_tdata;
+wire [LVL1_SW_PORTS*AXIS_STRB_WIDTH-1:0] int_data_m_axis_tkeep;
+wire [LVL1_SW_PORTS*PORT_WIDTH-1:0]      int_data_m_axis_tdest;
+wire [LVL1_SW_PORTS*ID_SLOT_WIDTH-1:0]   int_data_m_axis_tuser;
+wire [LVL1_SW_PORTS-1:0]                 int_data_m_axis_tvalid, 
+                                         int_data_m_axis_tready, 
+                                         int_data_m_axis_tlast;
+
+wire [LVL1_SW_PORTS*AXIS_DATA_WIDTH-1:0] int_ctrl_s_axis_tdata;
+wire [LVL1_SW_PORTS*CORE_WIDTH-1:0]      int_ctrl_s_axis_tdest;
+wire [LVL1_SW_PORTS-1:0]                 int_ctrl_s_axis_tvalid, 
+                                         int_ctrl_s_axis_tready, 
+                                         int_ctrl_s_axis_tlast;
+
+wire [LVL1_SW_PORTS*AXIS_DATA_WIDTH-1:0] int_ctrl_m_axis_tdata;
+wire [LVL1_SW_PORTS*CORE_WIDTH-1:0]      int_ctrl_m_axis_tuser;
+wire [LVL1_SW_PORTS-1:0]                 int_ctrl_m_axis_tvalid, 
+                                         int_ctrl_m_axis_tready, 
+                                         int_ctrl_m_axis_tlast;
+
 // Data channel switch
-wire [CORE_COUNT*AXIS_DATA_WIDTH-1:0] data_s_axis_tdata;
-wire [CORE_COUNT*AXIS_STRB_WIDTH-1:0] data_s_axis_tkeep;
-wire [CORE_COUNT*ID_SLOT_WIDTH-1:0]   data_s_axis_tdest;
-wire [CORE_COUNT*PORT_WIDTH-1:0]      data_s_axis_tuser;
-wire [CORE_COUNT-1:0] data_s_axis_tvalid, data_s_axis_tready, data_s_axis_tlast;
-
-wire [CORE_COUNT*AXIS_DATA_WIDTH-1:0] data_m_axis_tdata;
-wire [CORE_COUNT*AXIS_STRB_WIDTH-1:0] data_m_axis_tkeep;
-wire [CORE_COUNT*PORT_WIDTH-1:0]      data_m_axis_tdest;
-wire [CORE_COUNT*ID_SLOT_WIDTH-1:0]   data_m_axis_tuser;
-wire [CORE_COUNT-1:0] data_m_axis_tvalid, data_m_axis_tready, data_m_axis_tlast;
-
-wire [CORE_COUNT*AXIS_DATA_WIDTH-1:0] ctrl_s_axis_tdata;
-wire [CORE_COUNT*CORE_WIDTH-1:0] ctrl_s_axis_tdest;
-wire [CORE_COUNT-1:0] ctrl_s_axis_tvalid, ctrl_s_axis_tready, ctrl_s_axis_tlast;
-
-wire [CORE_COUNT*AXIS_DATA_WIDTH-1:0] ctrl_m_axis_tdata;
-wire [CORE_COUNT*CORE_WIDTH-1:0] ctrl_m_axis_tuser;
-wire [CORE_COUNT-1:0] ctrl_m_axis_tvalid, ctrl_m_axis_tready, ctrl_m_axis_tlast;
-
 axis_switch #
 (
     .S_COUNT(PORT_COUNT),
-    .M_COUNT(CORE_COUNT),
+    .M_COUNT(LVL1_SW_PORTS),
     .DATA_WIDTH(AXIS_DATA_WIDTH),
     .DEST_WIDTH(ID_SLOT_WIDTH),
     .USER_WIDTH(PORT_WIDTH),
     .S_REG_TYPE(2),
     .M_REG_TYPE(2)
-) data_in_sw
+) data_in_sw_lvl1
 (
     .clk(sys_clk),
     .rst(sys_rst),
@@ -405,25 +422,25 @@ axis_switch #
     /*
      * AXI Stream outputs
      */
-    .m_axis_tdata(data_s_axis_tdata),
-    .m_axis_tkeep(data_s_axis_tkeep),
-    .m_axis_tvalid(data_s_axis_tvalid),
-    .m_axis_tready(data_s_axis_tready),
-    .m_axis_tlast(data_s_axis_tlast),
+    .m_axis_tdata(int_data_s_axis_tdata),
+    .m_axis_tkeep(int_data_s_axis_tkeep),
+    .m_axis_tvalid(int_data_s_axis_tvalid),
+    .m_axis_tready(int_data_s_axis_tready),
+    .m_axis_tlast(int_data_s_axis_tlast),
     .m_axis_tid(),
-    .m_axis_tdest(data_s_axis_tdest),
-    .m_axis_tuser(data_s_axis_tuser)
+    .m_axis_tdest(int_data_s_axis_tdest),
+    .m_axis_tuser(int_data_s_axis_tuser)
 );
 
 axis_switch #
 (
-    .S_COUNT(CORE_COUNT),
+    .S_COUNT(LVL1_SW_PORTS),
     .M_COUNT(PORT_COUNT),
     .DATA_WIDTH(AXIS_DATA_WIDTH),
     .DEST_WIDTH(PORT_WIDTH),
     .USER_WIDTH(ID_SLOT_WIDTH),
     .S_REG_TYPE(2)
-) data_out_sw
+) data_out_sw_lvl1
 (
     .clk(sys_clk),
     .rst(sys_rst),
@@ -431,14 +448,14 @@ axis_switch #
     /*
      * AXI Stream inputs
      */
-    .s_axis_tdata(data_m_axis_tdata),
-    .s_axis_tkeep(data_m_axis_tkeep),
-    .s_axis_tvalid(data_m_axis_tvalid),
-    .s_axis_tready(data_m_axis_tready),
-    .s_axis_tlast(data_m_axis_tlast),
-    .s_axis_tid({CORE_COUNT{8'd0}}),
-    .s_axis_tdest(data_m_axis_tdest),
-    .s_axis_tuser(data_m_axis_tuser),
+    .s_axis_tdata(int_data_m_axis_tdata),
+    .s_axis_tkeep(int_data_m_axis_tkeep),
+    .s_axis_tvalid(int_data_m_axis_tvalid),
+    .s_axis_tready(int_data_m_axis_tready),
+    .s_axis_tlast(int_data_m_axis_tlast),
+    .s_axis_tid({LVL1_SW_PORTS{8'd0}}),
+    .s_axis_tdest(int_data_m_axis_tdest),
+    .s_axis_tuser(int_data_m_axis_tuser),
 
     /*
      * AXI Stream outputs
@@ -457,12 +474,12 @@ axis_switch #
 axis_switch #
 (
     .S_COUNT(1),
-    .M_COUNT(CORE_COUNT),
+    .M_COUNT(LVL1_SW_PORTS),
     .DATA_WIDTH(AXIS_DATA_WIDTH),
     .DEST_WIDTH(CORE_WIDTH),
     .USER_ENABLE(0),
     .KEEP_ENABLE(0)
-) ctrl_in_sw
+) ctrl_in_sw_lvl1
 (
     .clk(sys_clk),
     .rst(sys_rst),
@@ -482,24 +499,24 @@ axis_switch #
     /*
      * AXI Stream outputs
      */
-    .m_axis_tdata(ctrl_s_axis_tdata),
+    .m_axis_tdata(int_ctrl_s_axis_tdata),
     .m_axis_tkeep(),
-    .m_axis_tvalid(ctrl_s_axis_tvalid),
-    .m_axis_tready(ctrl_s_axis_tready),
-    .m_axis_tlast(ctrl_s_axis_tlast),
+    .m_axis_tvalid(int_ctrl_s_axis_tvalid),
+    .m_axis_tready(int_ctrl_s_axis_tready),
+    .m_axis_tlast(int_ctrl_s_axis_tlast),
     .m_axis_tid(),
-    .m_axis_tdest(ctrl_s_axis_tdest),
+    .m_axis_tdest(int_ctrl_s_axis_tdest),
     .m_axis_tuser()
 );
 
 
 axis_arb_mux #
 (
-    .S_COUNT(CORE_COUNT),
+    .S_COUNT(LVL1_SW_PORTS),
     .DATA_WIDTH(AXIS_DATA_WIDTH),
     .USER_WIDTH(CORE_WIDTH),
     .KEEP_ENABLE(0)
-) ctrl_out_sw
+) ctrl_out_sw_lvl1
 (
     .clk(sys_clk),
     .rst(sys_rst),
@@ -507,14 +524,14 @@ axis_arb_mux #
     /*
      * AXI Stream inputs
      */
-    .s_axis_tdata(ctrl_m_axis_tdata),
+    .s_axis_tdata(int_ctrl_m_axis_tdata),
     .s_axis_tkeep(),
-    .s_axis_tvalid(ctrl_m_axis_tvalid),
-    .s_axis_tready(ctrl_m_axis_tready),
-    .s_axis_tlast(ctrl_m_axis_tlast),
+    .s_axis_tvalid(int_ctrl_m_axis_tvalid),
+    .s_axis_tready(int_ctrl_m_axis_tready),
+    .s_axis_tlast(int_ctrl_m_axis_tlast),
     .s_axis_tid(),
     .s_axis_tdest(),
-    .s_axis_tuser(ctrl_m_axis_tuser),
+    .s_axis_tuser(int_ctrl_m_axis_tuser),
 
     /*
      * AXI Stream output
@@ -529,13 +546,300 @@ axis_arb_mux #
     .m_axis_tuser(sched_ctrl_s_axis_tuser)
 );
 
+// Level 2 Switches
 
+wire [CORE_COUNT*AXIS_DATA_WIDTH-1:0] data_s_axis_tdata;
+wire [CORE_COUNT*AXIS_STRB_WIDTH-1:0] data_s_axis_tkeep;
+wire [CORE_COUNT*DATA_DEST_LVL2-1:0]  data_s_axis_tdest;
+wire [CORE_COUNT*PORT_WIDTH-1:0]      data_s_axis_tuser;
+wire [CORE_COUNT-1:0]                 data_s_axis_tvalid, 
+                                      data_s_axis_tready, 
+                                      data_s_axis_tlast;
+
+wire [CORE_COUNT*AXIS_DATA_WIDTH-1:0] data_m_axis_tdata;
+wire [CORE_COUNT*AXIS_STRB_WIDTH-1:0] data_m_axis_tkeep;
+wire [CORE_COUNT*PORT_WIDTH-1:0]      data_m_axis_tdest;
+wire [CORE_COUNT*ID_SLOT_WIDTH-1:0]   data_m_axis_tuser;
+wire [CORE_COUNT-1:0]                 data_m_axis_tvalid, 
+                                      data_m_axis_tready, 
+                                      data_m_axis_tlast;
+
+wire [CORE_COUNT*AXIS_DATA_WIDTH-1:0] ctrl_s_axis_tdata;
+wire [CORE_COUNT-1:0]                 ctrl_s_axis_tvalid, 
+                                      ctrl_s_axis_tready, 
+                                      ctrl_s_axis_tlast;
+
+wire [CORE_COUNT*AXIS_DATA_WIDTH-1:0] ctrl_m_axis_tdata;
+wire [CORE_COUNT*CORE_WIDTH-1:0]      ctrl_m_axis_tuser;
+wire [CORE_COUNT-1:0]                 ctrl_m_axis_tvalid, 
+                                      ctrl_m_axis_tready, 
+                                      ctrl_m_axis_tlast;
+
+genvar j;
+generate 
+  if (LVL2_SW_PORTS == 1) begin
+    assign data_s_axis_tdata      = int_data_s_axis_tdata;
+    assign data_s_axis_tkeep      = int_data_s_axis_tkeep;
+    assign data_s_axis_tuser      = int_data_s_axis_tuser;
+    assign data_s_axis_tvalid     = int_data_s_axis_tvalid;
+    assign data_s_axis_tlast      = int_data_s_axis_tlast;
+    assign int_data_s_axis_tready = data_s_axis_tready;
+    
+    for (j=0; j<LVL1_SW_PORTS; j=j+1) 
+      assign data_s_axis_tdest[j*DATA_DEST_LVL2 +: DATA_DEST_LVL2] = 
+         int_data_s_axis_tdest[j*ID_SLOT_WIDTH +: DATA_DEST_LVL2];
+
+    assign int_data_m_axis_tdata  = data_m_axis_tdata;
+    assign int_data_m_axis_tkeep  = data_m_axis_tkeep;
+    assign int_data_m_axis_tdest  = data_m_axis_tdest;
+    assign int_data_m_axis_tuser  = data_m_axis_tuser;
+    assign int_data_m_axis_tvalid = data_m_axis_tvalid;
+    assign int_data_m_axis_tlast  = data_m_axis_tlast;
+    assign data_m_axis_tready     = int_data_m_axis_tready;
+  
+    assign ctrl_s_axis_tdata      = int_ctrl_s_axis_tdata;
+    assign ctrl_s_axis_tvalid     = int_ctrl_s_axis_tvalid; 
+    assign ctrl_s_axis_tlast      = int_ctrl_s_axis_tlast;
+    assign int_ctrl_s_axis_tready = ctrl_s_axis_tready;
+  
+    assign int_ctrl_m_axis_tdata  = ctrl_m_axis_tdata;
+    assign int_ctrl_m_axis_tuser  = ctrl_m_axis_tuser;
+    assign int_ctrl_m_axis_tvalid = ctrl_m_axis_tvalid;
+    assign int_ctrl_m_axis_tlast  = ctrl_m_axis_tlast;
+    assign ctrl_m_axis_tready     = int_ctrl_m_axis_tready;
+  
+  end else begin
+
+    for (j=0; j<LVL1_SW_PORTS; j=j+1) begin
+      // Data channel switch
+      axis_switch #
+      (
+          .S_COUNT(1),
+          .M_COUNT(LVL2_SW_PORTS),
+          .DATA_WIDTH(AXIS_DATA_WIDTH),
+          .DEST_WIDTH(DATA_DEST_LVL2),
+          .USER_WIDTH(PORT_WIDTH),
+          .M_REG_TYPE(2)
+      ) data_in_sw_lvl2
+      (
+          .clk(sys_clk),
+          .rst(sys_rst),
+      
+          /*
+           * AXI Stream inputs
+           */
+          .s_axis_tdata(int_data_s_axis_tdata[j*AXIS_DATA_WIDTH +: AXIS_DATA_WIDTH]),
+          .s_axis_tkeep(int_data_s_axis_tkeep[j*AXIS_STRB_WIDTH +: AXIS_STRB_WIDTH]),
+          .s_axis_tvalid(int_data_s_axis_tvalid[j]),
+          .s_axis_tready(int_data_s_axis_tready[j]),
+          .s_axis_tlast(int_data_s_axis_tlast[j]),
+          .s_axis_tid({8'd0}),
+          .s_axis_tdest(int_data_s_axis_tdest[j*ID_SLOT_WIDTH +: DATA_DEST_LVL2]),
+          .s_axis_tuser(int_data_s_axis_tuser[j*PORT_WIDTH +: PORT_WIDTH]),
+      
+          /*
+           * AXI Stream outputs
+           */
+          .m_axis_tdata(data_s_axis_tdata[j*LVL2_SW_PORTS*AXIS_DATA_WIDTH +: LVL2_SW_PORTS*AXIS_DATA_WIDTH]),
+          .m_axis_tkeep(data_s_axis_tkeep[j*LVL2_SW_PORTS*AXIS_STRB_WIDTH +: LVL2_SW_PORTS*AXIS_STRB_WIDTH]),
+          .m_axis_tvalid(data_s_axis_tvalid[j*LVL2_SW_PORTS +: LVL2_SW_PORTS]),
+          .m_axis_tready(data_s_axis_tready[j*LVL2_SW_PORTS +: LVL2_SW_PORTS]),
+          .m_axis_tlast(data_s_axis_tlast[j*LVL2_SW_PORTS +: LVL2_SW_PORTS]),
+          .m_axis_tid(),
+          .m_axis_tdest(data_s_axis_tdest[j*LVL2_SW_PORTS*DATA_DEST_LVL2 +: LVL2_SW_PORTS*DATA_DEST_LVL2]),
+          .m_axis_tuser(data_s_axis_tuser[j*LVL2_SW_PORTS*PORT_WIDTH +: LVL2_SW_PORTS*PORT_WIDTH])
+      );
+      
+      axis_arb_mux #
+      (
+          .S_COUNT(LVL2_SW_PORTS),
+          .DATA_WIDTH(AXIS_DATA_WIDTH),
+          .DEST_WIDTH(PORT_WIDTH),
+          .USER_WIDTH(ID_SLOT_WIDTH),
+          .DEST_ENABLE(1)
+      ) data_out_sw_lvl2
+      (
+          .clk(sys_clk),
+          .rst(sys_rst),
+      
+          /*
+           * AXI Stream inputs
+           */
+          .s_axis_tdata(data_m_axis_tdata[j*LVL2_SW_PORTS*AXIS_DATA_WIDTH +: LVL2_SW_PORTS*AXIS_DATA_WIDTH]),
+          .s_axis_tkeep(data_m_axis_tkeep[j*LVL2_SW_PORTS*AXIS_STRB_WIDTH +: LVL2_SW_PORTS*AXIS_STRB_WIDTH]),
+          .s_axis_tvalid(data_m_axis_tvalid[j*LVL2_SW_PORTS +: LVL2_SW_PORTS]),
+          .s_axis_tready(data_m_axis_tready[j*LVL2_SW_PORTS +: LVL2_SW_PORTS]),
+          .s_axis_tlast(data_m_axis_tlast[j*LVL2_SW_PORTS +: LVL2_SW_PORTS]),
+          .s_axis_tid({LVL2_SW_PORTS{8'd0}}),
+          .s_axis_tdest(data_m_axis_tdest[j*LVL2_SW_PORTS*PORT_WIDTH +: LVL2_SW_PORTS*PORT_WIDTH]),
+          .s_axis_tuser(data_m_axis_tuser[j*LVL2_SW_PORTS*ID_SLOT_WIDTH +: LVL2_SW_PORTS*ID_SLOT_WIDTH]),
+      
+          /*
+           * AXI Stream outputs
+           */
+          .m_axis_tdata(int_data_m_axis_tdata[j*AXIS_DATA_WIDTH +: AXIS_DATA_WIDTH]),
+          .m_axis_tkeep(int_data_m_axis_tkeep[j*AXIS_STRB_WIDTH +: AXIS_STRB_WIDTH]),
+          .m_axis_tvalid(int_data_m_axis_tvalid[j]),
+          .m_axis_tready(int_data_m_axis_tready[j]),
+          .m_axis_tlast(int_data_m_axis_tlast[j]),
+          .m_axis_tid(),
+          .m_axis_tdest(int_data_m_axis_tdest[j*PORT_WIDTH +: PORT_WIDTH]),
+          .m_axis_tuser(int_data_m_axis_tuser[j*ID_SLOT_WIDTH +: ID_SLOT_WIDTH])
+  
+      );
+      
+      axis_switch #
+      (
+          .S_COUNT(1),
+          .M_COUNT(LVL2_SW_PORTS),
+          .DATA_WIDTH(AXIS_DATA_WIDTH),
+          .DEST_WIDTH(CTRL_DEST_LVL2),
+          .USER_ENABLE(0),
+          .KEEP_ENABLE(0)
+      ) ctrl_in_sw_lvl2
+      (
+          .clk(sys_clk),
+          .rst(sys_rst),
+      
+          /*
+           * AXI Stream inputs
+           */
+          .s_axis_tdata(int_ctrl_s_axis_tdata[j*AXIS_DATA_WIDTH +: AXIS_DATA_WIDTH]),
+          .s_axis_tkeep(),
+          .s_axis_tvalid(int_ctrl_s_axis_tvalid[j]),
+          .s_axis_tready(int_ctrl_s_axis_tready[j]),
+          .s_axis_tlast(int_ctrl_s_axis_tlast[j]),
+          .s_axis_tid(8'd0),
+          .s_axis_tdest(int_ctrl_s_axis_tdest[j*CORE_WIDTH +: CTRL_DEST_LVL2]),
+          .s_axis_tuser(),
+  
+          /*
+           * AXI Stream outputs
+           */
+          .m_axis_tdata(ctrl_s_axis_tdata[j*LVL2_SW_PORTS*AXIS_DATA_WIDTH +: LVL2_SW_PORTS*AXIS_DATA_WIDTH]),
+          .m_axis_tkeep(),
+          .m_axis_tvalid(ctrl_s_axis_tvalid[j*LVL2_SW_PORTS +: LVL2_SW_PORTS]),
+          .m_axis_tready(ctrl_s_axis_tready[j*LVL2_SW_PORTS +: LVL2_SW_PORTS]),
+          .m_axis_tlast(ctrl_s_axis_tlast[j*LVL2_SW_PORTS +: LVL2_SW_PORTS]),
+          .m_axis_tid(),
+          .m_axis_tdest(),
+          .m_axis_tuser()
+      );
+      
+      
+      axis_arb_mux #
+      (
+          .S_COUNT(LVL2_SW_PORTS),
+          .DATA_WIDTH(AXIS_DATA_WIDTH),
+          .USER_WIDTH(CORE_WIDTH),
+          .KEEP_ENABLE(0)
+      ) ctrl_out_sw_lvl2
+      (
+          .clk(sys_clk),
+          .rst(sys_rst),
+      
+          /*
+           * AXI Stream inputs
+           */
+          .s_axis_tdata(ctrl_m_axis_tdata[j*LVL2_SW_PORTS*AXIS_DATA_WIDTH +: LVL2_SW_PORTS*AXIS_DATA_WIDTH]),
+          .s_axis_tkeep(),
+          .s_axis_tvalid(ctrl_m_axis_tvalid[j*LVL2_SW_PORTS +: LVL2_SW_PORTS]),
+          .s_axis_tready(ctrl_m_axis_tready[j*LVL2_SW_PORTS +: LVL2_SW_PORTS]),
+          .s_axis_tlast(ctrl_m_axis_tlast[j*LVL2_SW_PORTS +: LVL2_SW_PORTS]),
+          .s_axis_tid({LVL2_SW_PORTS{8'd0}}),
+          .s_axis_tdest(),
+          .s_axis_tuser(ctrl_m_axis_tuser[j*LVL2_SW_PORTS*CORE_WIDTH +: LVL2_SW_PORTS*CORE_WIDTH]),
+  
+          /*
+           * AXI Stream output
+           */
+          .m_axis_tdata(int_ctrl_m_axis_tdata[j*AXIS_DATA_WIDTH +: AXIS_DATA_WIDTH]),
+          .m_axis_tkeep(),
+          .m_axis_tvalid(int_ctrl_m_axis_tvalid[j]),
+          .m_axis_tready(int_ctrl_m_axis_tready[j]),
+          .m_axis_tlast(int_ctrl_m_axis_tlast[j]),
+          .m_axis_tid(),
+          .m_axis_tdest(),
+          .m_axis_tuser(int_ctrl_m_axis_tuser[j*CORE_WIDTH +: CORE_WIDTH])
+  
+      );
+    end  
+  end
+endgenerate
+
+
+// Core internal messaging
+wire [LVL1_SW_PORTS*CORE_MSG_WIDTH-1:0] int_core_msg_out_data;
+wire [LVL1_SW_PORTS-1:0]                int_core_msg_out_valid;
+wire [LVL1_SW_PORTS-1:0]                int_core_msg_out_ready;
+
+wire [CORE_MSG_WIDTH-1:0] core_msg_merged_data;
+wire                      core_msg_merged_valid;
+wire                      core_msg_merged_ready;
+
+axis_arb_mux #
+(
+    .S_COUNT(LVL1_SW_PORTS),
+    .DATA_WIDTH(CORE_MSG_WIDTH),
+    .USER_ENABLE(0),
+    .KEEP_ENABLE(0)
+) cores_to_broadcaster
+(
+    .clk(core_clk),
+    .rst(core_rst),
+
+    /*
+     * AXI Stream inputs
+     */
+    .s_axis_tdata(int_core_msg_out_data),
+    .s_axis_tkeep({LVL1_SW_PORTS{6'd0}}),
+    .s_axis_tvalid(int_core_msg_out_valid),
+    .s_axis_tready(int_core_msg_out_ready),
+    .s_axis_tlast({LVL1_SW_PORTS{1'b1}}),
+    .s_axis_tid({LVL1_SW_PORTS{8'd0}}),
+    .s_axis_tdest({LVL1_SW_PORTS{8'd0}}),
+    .s_axis_tuser({LVL1_SW_PORTS{1'b0}}),
+
+    /*
+     * AXI Stream output
+     */
+    .m_axis_tdata(core_msg_merged_data),
+    .m_axis_tkeep(),
+    .m_axis_tvalid(core_msg_merged_valid),
+    .m_axis_tready(core_msg_merged_ready),
+    .m_axis_tlast(),
+    .m_axis_tid(),
+    .m_axis_tdest(),
+    .m_axis_tuser()
+);
+
+// Broadcast the arbitted core messages. Since cores always accept
+// the last cycle's core_msg_out_ready is the sender, so no broadcast to sender
+// Must be updated for 2 level 
 wire [CORE_COUNT-1:0] core_msg_in_valid;
-wire [CORE_MSG_WIDTH*CORE_COUNT-1:0] core_msg_in_data;
+wire [CORE_COUNT*CORE_MSG_WIDTH-1:0] core_msg_in_data;
+reg [CORE_COUNT-1:0] core_msg_out_ready_r;
+always @ (posedge core_clk)
+  if (core_rst)
+    core_msg_out_ready_r <= {CORE_COUNT{1'b1}};
+  else
+    core_msg_out_ready_r <= ~core_msg_out_ready;
 
-wire [CORE_COUNT-1:0] core_msg_out_valid;
-wire [CORE_COUNT-1:0] core_msg_out_ready;
-wire [CORE_MSG_WIDTH*CORE_COUNT-1:0] core_msg_out_data;
+assign core_msg_in_data = {CORE_COUNT{core_msg_merged_data}};
+assign core_msg_in_valid = {CORE_COUNT{core_msg_merged_valid}} & core_msg_out_ready_r;
+assign core_msg_merged_ready = 1'b1;
+
+
+// lvl2 
+wire [CORE_COUNT*CORE_MSG_WIDTH-1:0] core_msg_out_data;
+wire [CORE_COUNT-1:0]                core_msg_out_valid;
+wire [CORE_COUNT-1:0]                core_msg_out_ready;
+
+// if (LVL2_SW_PORTS == 1) begin
+  assign int_core_msg_out_valid = core_msg_out_valid;
+  assign int_core_msg_out_data  = core_msg_out_data;
+  assign core_msg_out_ready     = int_core_msg_out_ready;
+// end
 
 genvar i;
 generate
@@ -573,7 +877,7 @@ generate
         .data_s_axis_tvalid(data_s_axis_tvalid[i]),
         .data_s_axis_tready(data_s_axis_tready[i]),
         .data_s_axis_tlast(data_s_axis_tlast[i]),
-        .data_s_axis_tdest(data_s_axis_tdest[ID_SLOT_WIDTH*i +: ID_SLOT_WIDTH]),
+        .data_s_axis_tdest(data_s_axis_tdest[DATA_DEST_LVL2*i +: SLOT_WIDTH]),
         .data_s_axis_tuser(data_s_axis_tuser[PORT_WIDTH*i +: PORT_WIDTH]),
   
         // Outgoing data
@@ -591,7 +895,6 @@ generate
         .ctrl_s_axis_tvalid(ctrl_s_axis_tvalid[i]),
         .ctrl_s_axis_tready(ctrl_s_axis_tready[i]),
         .ctrl_s_axis_tlast(ctrl_s_axis_tlast[i]),
-        .ctrl_s_axis_tdest(ctrl_s_axis_tdest[CORE_WIDTH*i +: CORE_WIDTH]),
   
         // Outgoing control
         .ctrl_m_axis_tdata(ctrl_m_axis_tdata[AXIS_DATA_WIDTH*i +: AXIS_DATA_WIDTH]),
@@ -613,60 +916,6 @@ generate
   end
 
 endgenerate
-
-// core message broadcast system
-wire core_msg_merged_valid;
-wire core_msg_merged_ready;
-wire [CORE_MSG_WIDTH-1:0] core_msg_merged_data;
-
-axis_arb_mux #
-(
-    .S_COUNT(CORE_COUNT),
-    .DATA_WIDTH(CORE_MSG_WIDTH),
-    .USER_ENABLE(0),
-    .KEEP_ENABLE(0)
-) cores_to_broadcaster
-(
-    .clk(core_clk),
-    .rst(core_rst),
-
-    /*
-     * AXI Stream inputs
-     */
-    .s_axis_tdata(core_msg_out_data),
-    .s_axis_tkeep({CORE_COUNT{6'd0}}),
-    .s_axis_tvalid(core_msg_out_valid),
-    .s_axis_tready(core_msg_out_ready),
-    .s_axis_tlast({CORE_COUNT{1'b1}}),
-    .s_axis_tid({CORE_COUNT{8'd0}}),
-    .s_axis_tdest({CORE_COUNT{8'd0}}),
-    .s_axis_tuser({CORE_COUNT{1'b0}}),
-
-    /*
-     * AXI Stream output
-     */
-    .m_axis_tdata(core_msg_merged_data),
-    .m_axis_tkeep(),
-    .m_axis_tvalid(core_msg_merged_valid),
-    .m_axis_tready(core_msg_merged_ready),
-    .m_axis_tlast(),
-    .m_axis_tid(),
-    .m_axis_tdest(),
-    .m_axis_tuser()
-);
-
-// Broadcast the arbitted core messages. Since cores always accept
-// the last cycle's core_msg_out_ready is the sender, so no broadcast to sender
-reg [CORE_COUNT-1:0] core_msg_out_ready_r;
-always @ (posedge core_clk)
-  if (core_rst)
-    core_msg_out_ready_r <= {CORE_COUNT{1'b1}};
-  else
-    core_msg_out_ready_r <= ~core_msg_out_ready;
-
-assign core_msg_in_data = {CORE_COUNT{core_msg_merged_data}};
-assign core_msg_in_valid = {CORE_COUNT{core_msg_merged_valid}} & core_msg_out_ready_r;
-assign core_msg_merged_ready = 1'b1;
 
 // ILA
 if (ENABLE_ILA) begin

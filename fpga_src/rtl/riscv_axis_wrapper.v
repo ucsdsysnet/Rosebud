@@ -49,7 +49,7 @@ module riscv_axis_wrapper # (
     input  wire                     data_s_axis_tvalid,
     output wire                     data_s_axis_tready,
     input  wire                     data_s_axis_tlast,
-    input  wire [ID_SLOT_WIDTH-1:0] data_s_axis_tdest,
+    input  wire [SLOT_WIDTH-1:0]    data_s_axis_tdest,
     input  wire [PORT_WIDTH-1:0]    data_s_axis_tuser,
   
     // Outgoing data
@@ -67,7 +67,6 @@ module riscv_axis_wrapper # (
     input  wire                     ctrl_s_axis_tvalid,
     output wire                     ctrl_s_axis_tready,
     input  wire                     ctrl_s_axis_tlast,
-    input  wire [CORE_ID_WIDTH-1:0] ctrl_s_axis_tdest,
   
     // Outgoing control
     output wire [DATA_WIDTH-1:0]    ctrl_m_axis_tdata,
@@ -195,10 +194,10 @@ always @ (posedge sys_clk) begin
     s_axis_tdata  <= data_s_axis_tdata;
     s_axis_tkeep  <= data_s_axis_tkeep; 
     s_axis_tlast  <= data_s_axis_tlast;
-    s_axis_tdest  <= data_s_axis_tdest[SLOT_WIDTH-1:0];  
+    s_axis_tdest  <= data_s_axis_tdest;
     s_axis_tuser  <= data_s_axis_tuser;  
-    s_has_header  <= data_s_axis_tdest[SLOT_WIDTH-1:0]=={SLOT_WIDTH{1'b0}};
-    s_slot_ptr    <= data_s_axis_tdest[SLOT_WIDTH-1:0]-1;
+    s_has_header  <= data_s_axis_tdest=={SLOT_WIDTH{1'b0}};
+    s_slot_ptr    <= data_s_axis_tdest;
   end
 
   // If there is data and ready is asserted pipeline can move. 

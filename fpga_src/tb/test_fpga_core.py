@@ -83,6 +83,7 @@ def bench():
     SEND_COUNT_1 = 100
     SIZE_0       = 72 - 18 
     SIZE_1       = 73 - 18
+    CHECK_PKT    = True
 
     # Inputs
     sys_clk  = Signal(bool(0))
@@ -278,8 +279,9 @@ def bench():
           print ("packet number from port 0:",j)
           for i in range(0, len(data), 16):
               print(" ".join(("{:02x}".format(c) for c in bytearray(data[i:i+16]))))
-          assert rx_frame.data[0:22] == start_data_2[0:22]
-          assert rx_frame.data[22:-4] == start_data_2[22:-4]
+          if (CHECK_PKT):
+            assert rx_frame.data[0:22] == start_data_2[0:22]
+            assert rx_frame.data[22:-4] == start_data_2[22:-4]
           lengths.append(len(data)-8)
 
         for j in range (0,SEND_COUNT_0):
@@ -289,8 +291,9 @@ def bench():
           print ("packet number from port 1:",j)
           for i in range(0, len(data), 16):
               print(" ".join(("{:02x}".format(c) for c in bytearray(data[i:i+16]))))
-          assert rx_frame.data[0:22] == start_data_1[0:22]
-          assert rx_frame.data[22:-4] == start_data_1[22:-4]
+          if (CHECK_PKT):
+            assert rx_frame.data[0:22] == start_data_1[0:22]
+            assert rx_frame.data[22:-4] == start_data_1[22:-4]
           lengths.append(len(data)-8)
 
        
