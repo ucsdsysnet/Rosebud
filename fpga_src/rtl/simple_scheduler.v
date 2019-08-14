@@ -250,20 +250,29 @@ module simple_scheduler # (
 
   // Core reset command
   reg [CORE_ID_WIDTH:0] core_rst_counter;
+  wire core_reset_in_prog = (core_rst_counter < CORE_COUNT); 
+  wire [CORE_ID_WIDTH:0] reordered_core_rst_counter;
+  
+  // Reordering of reset for alleviating congestion on lvl 2 switches 
+  // during startup
+  if (LVL2_SW_PORTS==1)
+    assign reordered_core_rst_counter = core_rst_counter[CORE_ID_WIDTH-1:0];  
+  else 
+    assign reordered_core_rst_counter = {core_rst_counter[LVL1_BITS-1:0],
+                                         core_rst_counter[CORE_ID_WIDTH-1:LVL1_BITS]};
+
   always @ (posedge clk)
     if (rst)
         core_rst_counter <= 0;
     else
-      if (ctrl_m_axis_tvalid && ctrl_m_axis_tready)
+      if (ctrl_m_axis_tvalid && ctrl_m_axis_tready && core_reset_in_prog)
         core_rst_counter <= core_rst_counter + 1;
-        
-  wire core_reset_in_prog = (core_rst_counter < CORE_COUNT); 
 
   // making the descriptor type to be 0, so core would send out. 
   assign ctrl_m_axis_tdata  = core_reset_in_prog ? 64'hFFFFFFFF_FFFFFFFE : {8'd0,loopback_data[DATA_WIDTH-9:0]};
   assign ctrl_m_axis_tlast  = 1'b1;
   assign ctrl_m_axis_tvalid = core_reset_in_prog || loopback_valid;
-  assign ctrl_m_axis_tdest  = core_reset_in_prog ? core_rst_counter[CORE_ID_WIDTH-1:0] : loopback_dest;
+  assign ctrl_m_axis_tdest  = core_reset_in_prog ? reordered_core_rst_counter : loopback_dest;
 
   assign loopback_ready = (!core_reset_in_prog) && ctrl_m_axis_tready;
 
