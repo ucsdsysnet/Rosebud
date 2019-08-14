@@ -23,6 +23,7 @@ module riscv_axis_wrapper # (
     parameter CORE_ID_WIDTH   = 4, 
     parameter SLOT_START_ADDR = 16'h2000,
     parameter SLOT_ADDR_STEP  = 16'h0800,
+    parameter HOST_PORT       = 4,
 
     parameter STRB_WIDTH      = (DATA_WIDTH/8),
     parameter SLOT_WIDTH      = $clog2(SLOT_COUNT+1), 
@@ -242,6 +243,8 @@ wire                   pkt_sent;
 wire [63:0] send_desc_fifoed;
 wire send_desc_valid_fifoed, send_desc_ready_fifoed;
 
+wire from_host_msg = recv_desc_valid && (recv_desc_tuser==HOST_PORT);
+
 axis_dma # (
   .DATA_WIDTH     (DATA_WIDTH),
   .ADDR_WIDTH     (ADDR_WIDTH),       
@@ -288,7 +291,7 @@ axis_dma # (
   .mem_rd_data_ready(ram_rd_resp_ready),
   
   .recv_desc_valid(recv_desc_valid),
-  .recv_desc_ready(recv_desc_ready),
+  .recv_desc_ready(recv_desc_ready || from_host_msg),
   .recv_desc_len  (recv_desc_len),
   .recv_desc_tdest(recv_desc_tdest),
   .recv_desc_tuser(recv_desc_tuser),
@@ -317,6 +320,7 @@ wire [63:0] recv_desc = {recv_desc_addr,
                         {(8-SLOT_WIDTH){1'b0}},recv_desc_tdest,
                         {(16-LEN_WIDTH){1'b0}},recv_desc_len};
 
+
 if (!SEPARATE_CLOCKS) begin
   simple_fifo # (
     .ADDR_WIDTH($clog2(RECV_DESC_DEPTH)),
@@ -326,7 +330,7 @@ if (!SEPARATE_CLOCKS) begin
     .rst(sys_rst),
     .clear(1'b0),
   
-    .din_valid(recv_desc_valid),
+    .din_valid(recv_desc_valid && (!from_host_msg)),
     .din(recv_desc),
     .din_ready(recv_desc_ready),
    
@@ -343,7 +347,7 @@ end else begin
     .async_rst(sys_rst),
   
     .din_clk(sys_clk),
-    .din_valid(recv_desc_valid),
+    .din_valid(recv_desc_valid && (!from_host_msg)),
     .din(recv_desc),
     .din_ready(recv_desc_ready),
    

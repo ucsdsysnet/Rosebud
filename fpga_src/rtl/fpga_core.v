@@ -93,6 +93,7 @@ parameter DMEM_SIZE_BYTES = 32768;
 parameter COHERENT_START  = 16'h6FFF;
 parameter LEN_WIDTH       = 16;
 parameter INTERLEAVE      = 1;
+parameter HOST_PORT       = 4;
 parameter ENABLE_ILA      = 0;
 
 parameter CORE_WIDTH      = $clog2(CORE_COUNT);
@@ -594,7 +595,8 @@ generate
         .CORE_ID(i),
         .CORE_ID_WIDTH(CORE_WIDTH),
         .SLOT_START_ADDR(SLOT_START_ADDR),
-        .SLOT_ADDR_STEP(SLOT_ADDR_STEP)
+        .SLOT_ADDR_STEP(SLOT_ADDR_STEP),
+        .HOST_PORT(HOST_PORT)
     )
     core_wrapper (
         .sys_clk(sys_clk),
