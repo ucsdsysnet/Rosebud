@@ -30,11 +30,15 @@ int main(void){
 			}
 
 			data = (unsigned int *)(((unsigned int)data)+offset);
-			// pkt_send(&len, &slot, &port, data);
-			pkt_done_msg(&len, &slot, &port, data);
+			// safe_pkt_send(&len, &slot, &port, data);
+		  safe_pkt_done_msg(&len, &slot, &port, data);
+			
+			safe_dmem_write(0xAAAAAAAA, 0xBBBBBBBB, &len, &slot, &port, data);
+			dmem_read_req(0x50505050, 0x05050505, &len, &slot, &port, data);
 
 	 		// end_time = read_timer();
 			// write_setting (0, end_time-start_time);
+
 
   	}
   }

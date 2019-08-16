@@ -15,6 +15,7 @@
 #define CTRL_DESC  			  (IO_START + 0x0008) 
 #define SETTING_WR 			  (IO_START + 0x0010) 
 #define SLOT_ADDR  			  (IO_START + 0x0018) 
+#define DRAM_WR_ADDR   	  (IO_START + 0x0020) 
 
 #define DATA_DESC_SEND		(IO_START + 0x0038)
 #define CTRL_DESC_SEND 		(IO_START + 0x0039) 
@@ -51,26 +52,27 @@ inline int core_id () {
 	return (*core_id);
 }
 
-inline _Bool data_desc_ready (){
+inline _Bool data_desc_ready () {
 	volatile unsigned int * status = (volatile unsigned int *) STATUS_RD;
-	return ((*((unsigned char *)status))==1);
+	return ((*((volatile unsigned char *)status)==1));
 }
 
 inline _Bool ctrl_desc_ready (){
 	volatile unsigned int * status = (volatile unsigned int *) STATUS_RD;
-	return ((*(((unsigned char *)status)+1))==1);
+	return ((*(((volatile unsigned char *)status)+1))==1);
 }
 
 inline _Bool update_slot_ready (){
 	volatile unsigned int * status = (volatile unsigned int *) STATUS_RD;
-	return ((*(((unsigned char *)status)+2))==1);
+	return ((*(((volatile unsigned char *)status)+2))==1);
 }
 
 inline _Bool core_msg_ready (){
 	volatile unsigned int * status = (volatile unsigned int *) STATUS_RD;
-	return ((*(((unsigned char *)status)+3))==1);
+	return ((*(((volatile unsigned char *)status)+3))==1);
 }
 
+// Maybe make high and low to be int*
 inline void write_setting (const unsigned int high, const unsigned int low){
 	volatile unsigned int  * setting_wr    = (volatile unsigned int *)  SETTING_WR;
 	volatile unsigned char * setting_apply = (volatile unsigned char *) SETTING_APPLY;
@@ -88,7 +90,7 @@ inline void read_setting (unsigned int * high, unsigned int * low){
 	return;
 }
 
-inline _Bool in_pkt_ready (){
+inline volatile _Bool in_pkt_ready (){
 	volatile unsigned int * recv_desc = (volatile unsigned int *) RECV_DESC;
 	return ((*recv_desc)!=0);
 }
@@ -130,6 +132,33 @@ inline void pkt_send (unsigned short* len, unsigned char* slot, unsigned char* p
 	return;
 }
 
+inline void safe_pkt_done_msg (unsigned short* len, unsigned char* slot, unsigned char* port, unsigned int* data){
+  volatile unsigned int  * ctrl_desc      = (volatile unsigned int *)  CTRL_DESC;
+  volatile unsigned char * ctrl_desc_send = (volatile unsigned char *) CTRL_DESC_SEND;
+	*ctrl_desc = (int)(*len);
+  *((unsigned char*)ctrl_desc+2) = *slot;
+  *((unsigned char*)ctrl_desc+3) = *port;
+  *(ctrl_desc+1) = (unsigned int) data;
+  *((unsigned char*)ctrl_desc+7) = 1;
+	while(!ctrl_desc_ready());
+	asm volatile("" ::: "memory");
+	* ctrl_desc_send = 1;
+	return;
+}
+
+inline void safe_pkt_send (unsigned short* len, unsigned char* slot, unsigned char* port, unsigned int* data){
+  volatile unsigned int  * data_desc      = (volatile unsigned int *)  DATA_DESC;
+  volatile unsigned char * data_desc_send = (volatile unsigned char *) DATA_DESC_SEND;
+	*data_desc = (int)(*len);
+  *((unsigned char*)data_desc+2) = *slot;
+  *((unsigned char*)data_desc+3) = *port;
+  *(data_desc+1) = (unsigned int) data;
+	while(!data_desc_ready());
+	asm volatile("" ::: "memory");
+	* data_desc_send = 1;
+	return;
+}
+
 inline int read_timer () {
 	volatile unsigned int * timer_32 = (volatile unsigned int *) TIMER_32;
 	return (*timer_32); 
@@ -144,6 +173,81 @@ inline void reset_timer (){
 inline void reset_error (){
 	volatile unsigned char * err_clear = (volatile unsigned char *) ERROR_CLEAR;
 	*err_clear = 1;
+	return;
+}
+
+// make dram_addr_high int* 
+inline void dmem_write (const unsigned int dram_addr_high, const unsigned int dram_addr_low,
+											  unsigned short* len, unsigned char* slot, unsigned char* port, 
+											  unsigned int* data){
+	volatile unsigned int  * dram_addr_wr   = (volatile unsigned int *)  DRAM_WR_ADDR;
+  volatile unsigned int  * data_desc      = (volatile unsigned int *)  DATA_DESC;
+  volatile unsigned char * data_desc_send = (volatile unsigned char *) DATA_DESC_SEND;
+	* dram_addr_wr    = dram_addr_low;
+	*(dram_addr_wr+1) = dram_addr_high;
+	*data_desc = (int)(*len);
+  *((unsigned char*)data_desc+2) = *slot;
+  *((unsigned char*)data_desc+3) = *port;
+  *(data_desc+1) = (unsigned int) data;
+  *((unsigned char*)data_desc+7) = 1;
+	asm volatile("" ::: "memory");
+	* data_desc_send = 1;
+	return;
+}
+
+inline void safe_dmem_write (const unsigned int dram_addr_high, const unsigned int dram_addr_low,
+								      			 unsigned short* len, unsigned char* slot, unsigned char* port, 
+										     	   unsigned int* data){
+	volatile unsigned int  * dram_addr_wr   = (volatile unsigned int *)  DRAM_WR_ADDR;
+  volatile unsigned int  * data_desc      = (volatile unsigned int *)  DATA_DESC;
+  volatile unsigned char * data_desc_send = (volatile unsigned char *) DATA_DESC_SEND;
+	* dram_addr_wr    = dram_addr_low;
+	*(dram_addr_wr+1) = dram_addr_high;
+	*data_desc = (int)(*len);
+  *((unsigned char*)data_desc+2) = *slot;
+  *((unsigned char*)data_desc+3) = *port;
+  *(data_desc+1) = (unsigned int) data;
+  *((unsigned char*)data_desc+7) = 1;
+	while(!data_desc_ready());
+	asm volatile("" ::: "memory");
+	* data_desc_send = 1;
+	return;
+}
+
+inline void dmem_read_req (const unsigned int dram_addr_high, const unsigned int dram_addr_low,
+											     unsigned short* len, unsigned char* slot, unsigned char* port, 
+											     unsigned int* data){
+	volatile unsigned int  * dram_addr_wr   = (volatile unsigned int *)  DRAM_WR_ADDR;
+  volatile unsigned int  * ctrl_desc      = (volatile unsigned int *)  CTRL_DESC;
+  volatile unsigned char * ctrl_desc_send = (volatile unsigned char *) CTRL_DESC_SEND;
+	* dram_addr_wr    = dram_addr_low;
+	*(dram_addr_wr+1) = dram_addr_high;
+	*ctrl_desc = (int)(*len);
+  *((unsigned char*)ctrl_desc+2) = *slot;
+  *((unsigned char*)ctrl_desc+3) = *port;
+  *(ctrl_desc+1) = (unsigned int) data;
+  *((unsigned char*)ctrl_desc+7) = 3;
+	asm volatile("" ::: "memory");
+	* ctrl_desc_send = 1;
+	return;
+}
+
+inline void safe_dmem_read_req (const unsigned int dram_addr_high, const unsigned int dram_addr_low,
+								     			      unsigned short* len, unsigned char* slot, unsigned char* port, 
+											          unsigned int* data){
+	volatile unsigned int  * dram_addr_wr   = (volatile unsigned int *)  DRAM_WR_ADDR;
+  volatile unsigned int  * ctrl_desc      = (volatile unsigned int *)  CTRL_DESC;
+  volatile unsigned char * ctrl_desc_send = (volatile unsigned char *) CTRL_DESC_SEND;
+	* dram_addr_wr    = dram_addr_low;
+	*(dram_addr_wr+1) = dram_addr_high;
+	*ctrl_desc = (int)(*len);
+  *((unsigned char*)ctrl_desc+2) = *slot;
+  *((unsigned char*)ctrl_desc+3) = *port;
+  *(ctrl_desc+1) = (unsigned int) data;
+  *((unsigned char*)ctrl_desc+7) = 3;
+	while(!ctrl_desc_ready());
+	asm volatile("" ::: "memory");
+	* ctrl_desc_send = 1;
 	return;
 }
 

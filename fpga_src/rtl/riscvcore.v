@@ -37,6 +37,8 @@ module riscvcore #(
     output [63:0]                ctrl_desc,
     output                       ctrl_desc_valid,
     input                        ctrl_desc_ready,
+    
+    output [63:0]                dram_wr_addr,
 
     output [SLOT_PTR_WIDTH-1:0]  slot_wr_ptr, 
     output [ADDR_WIDTH-1:0]      slot_wr_addr,
@@ -100,9 +102,9 @@ localparam SETTING_ADDR   = 4'b0010;//???;
 localparam SLOT_LUT_ADDR  = 5'b00110;//??;
 // localparam RESERVED_4  = 5'b00111;//??;
 
-// localparam RESERVED_8  = 4'b0100???;//
-// localparam RESERVED_8  = 4'b0101???;//
-// localparam RESERVED_8  = 4'b0110???;//
+localparam WR_DRAM_ADDR   = 4'b0100;//???;
+// localparam RESERVED_8  = 4'b0101;//???;
+// localparam RESERVED_8  = 4'b0110;//???;
 
 localparam DATA_DESC_STRB = 7'b0111000;//;
 localparam CTRL_DESC_STRB = 7'b0111001;//;
@@ -122,6 +124,7 @@ wire data_desc_wen  = io_write && (dmem_addr[6:3]==DATA_DESC_ADDR);
 wire ctrl_desc_wen  = io_write && (dmem_addr[6:3]==CTRL_DESC_ADDR);
 wire setting_wen    = io_write && (dmem_addr[6:3]==SETTING_ADDR);
 wire slot_info_wen  = io_write && (dmem_addr[6:2]==SLOT_LUT_ADDR);
+wire dram_addr_wen  = io_write && (dmem_addr[6:3]==WR_DRAM_ADDR);
 
 wire send_data_desc = io_write && (dmem_addr[6:0]==DATA_DESC_STRB);
 wire send_ctrl_desc = io_write && (dmem_addr[6:0]==CTRL_DESC_STRB);
@@ -132,6 +135,7 @@ wire error_clear    = io_write && (dmem_addr[6:0]==ERR_CLEAR_STRB);
 wire reset_timer    = io_write && (dmem_addr[6:0]==RESET_TIMER);
 
 reg [63:0] setting_r;
+reg [63:0] dram_wr_addr_r;
 
 reg [63:0] data_desc_data_r;
 reg [63:0] ctrl_desc_data_r;
@@ -139,6 +143,7 @@ reg [63:0] setting_data_r;
 reg [31:0] slot_info_data_r;
 reg data_desc_v_r, ctrl_desc_v_r;
 
+assign dram_wr_addr = dram_wr_addr_r;
 // Byte writable data_desc
 wire [7:0]  wr_desc_mask = {4'd0, dmem_word_write_mask[3:0]} << {dmem_addr[2], 2'd0};
 wire [63:0] wr_desc_din  = {32'd0, dmem_wr_data} << {dmem_addr[2], 5'd0};
@@ -165,6 +170,10 @@ always @ (posedge clk) begin
         for (i = 0; i < 4; i = i + 1) 
             if (wr_desc_mask[i] == 1'b1) 
                 slot_info_data_r[i*8 +: 8] <= wr_desc_din[i*8 +: 8];
+    if (dram_addr_wen)
+        for (i = 0; i < 8; i = i + 1) 
+            if (wr_desc_mask[i] == 1'b1) 
+                dram_wr_addr_r[i*8 +: 8] <= wr_desc_din[i*8 +: 8];
 end
 
 always @ (posedge clk) begin

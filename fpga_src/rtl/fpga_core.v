@@ -77,7 +77,7 @@ assign sma_led   = 0;
 
 // RISCV system parameters
 parameter CORE_COUNT      = 16;
-parameter PORT_COUNT      = 2;
+parameter PORT_COUNT      = 3;
 parameter CORE_ADDR_WIDTH = 16;
 parameter SLOT_COUNT      = 8;
 parameter SLOT_START_ADDR = 16'h2000;
@@ -93,7 +93,7 @@ parameter DMEM_SIZE_BYTES = 32768;
 parameter COHERENT_START  = 16'h6FFF;
 parameter LEN_WIDTH       = 16;
 parameter INTERLEAVE      = 1;
-parameter HOST_PORT       = 4;
+parameter DRAM_PORT       = 2;
 parameter LVL1_SW_PORTS   = 4;
 parameter CORE_MSG_LVL1   = 16;
 parameter ENABLE_ILA      = 0;
@@ -318,7 +318,7 @@ simple_scheduler # (
   .tx_axis_tdata(tx_axis_tdata),
   .tx_axis_tkeep(tx_axis_tkeep),
   .tx_axis_tvalid(tx_axis_tvalid), 
-  .tx_axis_tready(tx_axis_tready), 
+  .tx_axis_tready({1'b1,tx_axis_tready}), 
   .tx_axis_tlast(tx_axis_tlast),
   
   .rx_axis_tdata(rx_axis_tdata),
@@ -403,7 +403,7 @@ axis_switch #
     .DATA_WIDTH(AXIS_DATA_WIDTH),
     .DEST_WIDTH(ID_SLOT_WIDTH),
     .USER_WIDTH(PORT_WIDTH),
-    .S_REG_TYPE(2),
+    .S_REG_TYPE(1),
     .M_REG_TYPE(2)
 ) data_in_sw_lvl1
 (
@@ -442,7 +442,8 @@ axis_switch #
     .DATA_WIDTH(AXIS_DATA_WIDTH),
     .DEST_WIDTH(PORT_WIDTH),
     .USER_WIDTH(ID_SLOT_WIDTH),
-    .S_REG_TYPE(2)
+    .S_REG_TYPE(1),
+    .M_REG_TYPE(2)
 ) data_out_sw_lvl1
 (
     .clk(sys_clk),
@@ -482,7 +483,7 @@ axis_switch #
     .DEST_WIDTH(CORE_WIDTH),
     .USER_ENABLE(0),
     .KEEP_ENABLE(0),
-    .S_REG_TYPE(2),
+    .S_REG_TYPE(1),
     .M_REG_TYPE(2)
 ) ctrl_in_sw_lvl1
 (
@@ -579,6 +580,21 @@ wire [CORE_COUNT*CORE_WIDTH-1:0]      ctrl_m_axis_tuser;
 wire [CORE_COUNT-1:0]                 ctrl_m_axis_tvalid, 
                                       ctrl_m_axis_tready, 
                                       ctrl_m_axis_tlast;
+
+wire [CORE_COUNT*AXIS_DATA_WIDTH-1:0] dram_s_axis_tdata;
+wire [CORE_COUNT-1:0]                 dram_s_axis_tvalid, 
+                                      dram_s_axis_tready, 
+                                      dram_s_axis_tlast;
+
+wire [CORE_COUNT*AXIS_DATA_WIDTH-1:0] dram_m_axis_tdata;
+wire [CORE_COUNT*CORE_WIDTH-1:0]      dram_m_axis_tuser;
+wire [CORE_COUNT-1:0]                 dram_m_axis_tvalid, 
+                                      dram_m_axis_tready, 
+                                      dram_m_axis_tlast;
+
+reg  [CORE_COUNT*AXIS_DATA_WIDTH-1:0] dram_s_axis_tdata_r;
+reg  [CORE_COUNT*2-1:0]               dram_s_axis_state;
+wire [CORE_COUNT-1:0]                 ctrl_s_axis_pkt_req;
 
 genvar j;
 generate 
@@ -907,7 +923,7 @@ generate
         .CORE_ID_WIDTH(CORE_WIDTH),
         .SLOT_START_ADDR(SLOT_START_ADDR),
         .SLOT_ADDR_STEP(SLOT_ADDR_STEP),
-        .HOST_PORT(HOST_PORT)
+        .DRAM_PORT(DRAM_PORT)
     )
     core_wrapper (
         .sys_clk(sys_clk),
@@ -947,6 +963,20 @@ generate
         .ctrl_m_axis_tready(ctrl_m_axis_tready[i]),
         .ctrl_m_axis_tlast(ctrl_m_axis_tlast[i]),
         .ctrl_m_axis_tuser(ctrl_m_axis_tuser[CORE_WIDTH*i +: CORE_WIDTH]),
+    
+        // ------------ DRAM RD REQ CHANNEL ------------- // 
+        // Incoming DRAM request
+        .dram_s_axis_tdata(dram_s_axis_tdata[AXIS_DATA_WIDTH*i +: AXIS_DATA_WIDTH]),
+        .dram_s_axis_tvalid(dram_s_axis_tvalid[i]),
+        .dram_s_axis_tready(dram_s_axis_tready[i]),
+        .dram_s_axis_tlast(dram_s_axis_tlast[i]),
+  
+        // Outgoing DRAM request
+        .dram_m_axis_tdata (dram_m_axis_tdata[AXIS_DATA_WIDTH*i +: AXIS_DATA_WIDTH]),
+        .dram_m_axis_tvalid(dram_m_axis_tvalid[i]),
+        .dram_m_axis_tready(dram_m_axis_tready[i]),
+        .dram_m_axis_tlast (dram_m_axis_tlast[i]),
+        .dram_m_axis_tuser (dram_m_axis_tuser[CORE_WIDTH*i +: CORE_WIDTH]),
    
         // ------------- CORE MSG CHANNEL -------------- // 
         // Core messages output  
@@ -959,8 +989,39 @@ generate
         .core_msg_in_user(core_msg_in_user[CORE_WIDTH*i +: CORE_WIDTH]),
         .core_msg_in_valid(core_msg_in_valid[i])
     );
-  end
+      
+    // Temp DRAM req test, copying control channel requests for a dummy address 
+    assign ctrl_s_axis_pkt_req[i] = ctrl_s_axis_tvalid[i] && ctrl_s_axis_tready[i] &&
+          (ctrl_s_axis_tdata[AXIS_DATA_WIDTH*i +: AXIS_DATA_WIDTH]!=64'hFFFFFFFF_FFFFFFFE);
+    
+    always @ (posedge sys_clk)
+      if (ctrl_s_axis_pkt_req[i])
+        dram_s_axis_tdata_r[AXIS_DATA_WIDTH*i +: AXIS_DATA_WIDTH] <= 
+            ctrl_s_axis_tdata[AXIS_DATA_WIDTH*i +: AXIS_DATA_WIDTH];
 
+    always @ (posedge sys_clk)
+      if (sys_rst)
+        dram_s_axis_state[2*i +: 2] <= 2'd0;
+      else 
+        case (dram_s_axis_state[2*i +: 2])
+          2'd0: if (ctrl_s_axis_pkt_req[i]) 
+                  dram_s_axis_state[2*i +: 2] <= 2'd1;
+          2'd1: if (dram_s_axis_tready[i]) dram_s_axis_state[2*i +: 2] <= 2'd2;
+          2'd2: if (dram_s_axis_tready[i]) dram_s_axis_state[2*i +: 2] <= 2'd0;
+          2'd3: dram_s_axis_state[2*i +: 2] <= 2'd3; // Error
+        endcase
+
+    assign dram_s_axis_tvalid[i] = (dram_s_axis_state[2*i +: 2] == 2'd1) ||
+                                   (dram_s_axis_state[2*i +: 2] == 2'd2);
+    assign dram_s_axis_tlast[i]  = (dram_s_axis_state[2*i +: 2] == 2'd2);
+    assign dram_s_axis_tdata[AXIS_DATA_WIDTH*i +: AXIS_DATA_WIDTH] = 
+            (dram_s_axis_state[2*i +: 2]==2'd2) ? 64'hDEADBEEF5A5AA5A5 :
+            dram_s_axis_tdata_r[AXIS_DATA_WIDTH*i +: AXIS_DATA_WIDTH]; 
+
+    assign dram_m_axis_tready[i] = 1'b1;
+
+  end
+        
 endgenerate
 
 // ILA

@@ -16,6 +16,7 @@ module riscv_axis_wrapper # (
     parameter INTERLEAVE      = 1,
     parameter RECV_DESC_DEPTH = 8,
     parameter SEND_DESC_DEPTH = 8,
+    parameter DRAM_DESC_DEPTH = 8,
     parameter MSG_FIFO_DEPTH  = 16,
     parameter PORT_COUNT      = 4,
     parameter LEN_WIDTH       = 16,
@@ -23,7 +24,7 @@ module riscv_axis_wrapper # (
     parameter CORE_ID_WIDTH   = 4, 
     parameter SLOT_START_ADDR = 16'h2000,
     parameter SLOT_ADDR_STEP  = 16'h0800,
-    parameter HOST_PORT       = 4,
+    parameter DRAM_PORT       = 4,
 
     parameter STRB_WIDTH      = (DATA_WIDTH/8),
     parameter SLOT_WIDTH      = $clog2(SLOT_COUNT+1), 
@@ -74,6 +75,20 @@ module riscv_axis_wrapper # (
     input  wire                     ctrl_m_axis_tready,
     output wire                     ctrl_m_axis_tlast,
     output wire [CORE_ID_WIDTH-1:0] ctrl_m_axis_tuser,
+    
+    // ------------ DRAM RD REQ CHANNEL ------------- // 
+    // Incoming DRAM request
+    input  wire [DATA_WIDTH-1:0]    dram_s_axis_tdata,
+    input  wire                     dram_s_axis_tvalid,
+    output wire                     dram_s_axis_tready,
+    input  wire                     dram_s_axis_tlast,
+  
+    // Outgoing DRAM request
+    output wire [DATA_WIDTH-1:0]    dram_m_axis_tdata,
+    output wire                     dram_m_axis_tvalid,
+    input  wire                     dram_m_axis_tready,
+    output wire                     dram_m_axis_tlast,
+    output wire [CORE_ID_WIDTH-1:0] dram_m_axis_tuser,
 
     // ------------- CORE MSG CHANNEL -------------- // 
     // Core messages output  
@@ -89,6 +104,7 @@ module riscv_axis_wrapper # (
 
 assign data_m_axis_tuser [SLOT_WIDTH +: CORE_ID_WIDTH] = CORE_ID; 
 assign ctrl_m_axis_tuser = CORE_ID;
+assign dram_m_axis_tuser = CORE_ID;
 
 /////////////////////////////////////////////////////////////////////
 //////////////////////// CORE RESET COMMAND /////////////////////////
@@ -177,16 +193,24 @@ end
 assign slot_addr = slot_addr_lut[s_slot_ptr]; 
  
 // Pipeline register to load from slot LUT or packet header
-reg  [DATA_WIDTH-1:0]     s_axis_tdata;
-reg  [STRB_WIDTH-1:0]     s_axis_tkeep;
-reg                       s_axis_tvalid;
-wire                      s_axis_tready;
-reg                       s_axis_tlast;
-reg  [SLOT_WIDTH-1:0]     s_axis_tdest;
-reg  [PORT_WIDTH-1:0]     s_axis_tuser;
+reg  [DATA_WIDTH-1:0] s_axis_tdata;
+reg  [STRB_WIDTH-1:0] s_axis_tkeep;
+reg                   s_axis_tvalid;
+wire                  s_axis_tready;
+reg                   s_axis_tlast;
+reg  [SLOT_WIDTH-1:0] s_axis_tdest;
+reg  [PORT_WIDTH-1:0] s_axis_tuser;
 
-reg                       s_has_header; 
-wire [ADDR_WIDTH-1:0]     s_base_addr;
+wire [DATA_WIDTH-1:0] m_axis_tdata;
+wire [STRB_WIDTH-1:0] m_axis_tkeep;
+wire                  m_axis_tvalid;
+wire                  m_axis_tready;
+wire                  m_axis_tlast;
+wire [PORT_WIDTH-1:0] m_axis_tdest;
+wire [SLOT_WIDTH-1:0] m_axis_tuser;
+ 
+reg                   s_has_header; 
+wire [ADDR_WIDTH-1:0] s_base_addr;
 
 assign data_s_axis_tready = s_axis_tready;
 
@@ -198,7 +222,7 @@ always @ (posedge sys_clk) begin
     s_axis_tdest  <= data_s_axis_tdest;
     s_axis_tuser  <= data_s_axis_tuser;  
     s_has_header  <= data_s_axis_tdest=={SLOT_WIDTH{1'b0}};
-    s_slot_ptr    <= data_s_axis_tdest;
+    s_slot_ptr    <= data_s_axis_tdest-{{(SLOT_WIDTH-1){1'b0}},1'b1};
   end
 
   // If there is data and ready is asserted pipeline can move. 
@@ -240,10 +264,12 @@ wire [ADDR_WIDTH-1:0]  recv_desc_addr;
 
 wire                   pkt_sent;
 
-wire [63:0] send_desc_fifoed;
-wire send_desc_valid_fifoed, send_desc_ready_fifoed;
+wire [63:0] send_desc;
+wire send_desc_valid, send_desc_ready;
 
-wire from_host_msg = recv_desc_valid && (recv_desc_tuser==HOST_PORT);
+// Or can use slot being 0
+wire [PORT_WIDTH-1:0] dram_port = DRAM_PORT;
+wire from_host_msg = recv_desc_valid && (recv_desc_tuser==dram_port);
 
 axis_dma # (
   .DATA_WIDTH     (DATA_WIDTH),
@@ -267,13 +293,13 @@ axis_dma # (
 
   .wr_base_addr (s_base_addr),
 
-  .m_axis_tdata (data_m_axis_tdata),
-  .m_axis_tkeep (data_m_axis_tkeep),
-  .m_axis_tvalid(data_m_axis_tvalid),
-  .m_axis_tready(data_m_axis_tready),
-  .m_axis_tlast (data_m_axis_tlast),
-  .m_axis_tdest (data_m_axis_tdest),
-  .m_axis_tuser (data_m_axis_tuser[SLOT_WIDTH-1:0]),
+  .m_axis_tdata (m_axis_tdata),
+  .m_axis_tkeep (m_axis_tkeep),
+  .m_axis_tvalid(m_axis_tvalid),
+  .m_axis_tready(m_axis_tready),
+  .m_axis_tlast (m_axis_tlast),
+  .m_axis_tdest (m_axis_tdest),
+  .m_axis_tuser (m_axis_tuser),
   
   .mem_wr_en   (ram_cmd_wr_en),
   .mem_wr_strb (ram_cmd_wr_strb),
@@ -297,12 +323,12 @@ axis_dma # (
   .recv_desc_tuser(recv_desc_tuser),
   .recv_desc_addr (recv_desc_addr),
 
-  .send_desc_valid(send_desc_valid_fifoed),
-  .send_desc_ready(send_desc_ready_fifoed),
-  .send_desc_addr(send_desc_fifoed[ADDR_WIDTH+31:32]),
-  .send_desc_len(send_desc_fifoed[LEN_WIDTH-1:0]),
-  .send_desc_tdest(send_desc_fifoed[PORT_WIDTH+23:24]),
-  .send_desc_tuser(send_desc_fifoed[SLOT_WIDTH+15:16]),
+  .send_desc_valid(send_desc_valid),
+  .send_desc_ready(send_desc_ready),
+  .send_desc_addr(send_desc[ADDR_WIDTH+31:32]),
+  .send_desc_len(send_desc[LEN_WIDTH-1:0]),
+  .send_desc_tdest(send_desc[PORT_WIDTH+23:24]),
+  .send_desc_tuser(send_desc[SLOT_WIDTH+15:16]),
 
   .pkt_sent       (pkt_sent)
 
@@ -391,6 +417,9 @@ wire [63:0] data_send_desc;
 wire data_out_desc_valid, data_out_desc_ready;
 wire [63:0] data_out_desc;
 
+wire core_dram_wr_valid = (data_send_desc[63:56]==8'd1);
+wire dram_wr_send_ready;
+
 if (!SEPARATE_CLOCKS) begin
   simple_fifo # (
     .ADDR_WIDTH($clog2(SEND_DESC_DEPTH)),
@@ -400,7 +429,7 @@ if (!SEPARATE_CLOCKS) begin
     .rst(sys_rst),
     .clear(1'b0),
   
-    .din_valid(data_send_valid),
+    .din_valid(data_send_valid && !core_dram_wr_valid),
     .din(data_send_desc),
     .din_ready(data_send_ready),
    
@@ -416,7 +445,7 @@ end else begin
     .async_rst(sys_rst),
   
     .din_clk(core_clk),
-    .din_valid(data_send_valid),
+    .din_valid(data_send_valid && !core_dram_wr_valid),
     .din(data_send_desc),
     .din_ready(data_send_ready),
    
@@ -427,12 +456,18 @@ end else begin
   );
 end
 
+wire data_dram_send_ready = (dram_wr_send_ready && core_dram_wr_valid) || 
+                            (data_send_ready && !core_dram_wr_valid);
+
 // Simple arbiter among the 2 FIFOs, priority to messages from controller 
-wire   data_select            = ctrl_in_valid;
-assign send_desc_valid_fifoed = ctrl_in_valid || data_out_desc_valid;
-assign send_desc_fifoed       = data_select ? ctrl_in_desc : data_out_desc;
-assign data_out_desc_ready    = send_desc_ready_fifoed && (!data_select);
-assign ctrl_in_ready          = send_desc_ready_fifoed &&   data_select ;
+wire [63:0] send_pkt_desc;
+wire send_pkt_valid, send_pkt_ready;
+
+wire   data_select         = ctrl_in_valid;
+assign send_pkt_valid      = ctrl_in_valid || data_out_desc_valid;
+assign send_pkt_desc       = data_select ? ctrl_in_desc : data_out_desc;
+assign data_out_desc_ready = send_pkt_ready && (!data_select);
+assign ctrl_in_ready       = send_pkt_ready &&   data_select ;
  
 /////////////////////////////////////////////////////////////////////
 /////////////// CTRL OUT DESCRIPTOR FIFOS AND ARBITER ///////////////
@@ -440,6 +475,9 @@ assign ctrl_in_ready          = send_desc_ready_fifoed &&   data_select ;
 // A desc FIFO for msgs to scheduler
 wire ctrl_send_valid, ctrl_send_ready;
 wire [63:0] ctrl_send_data;
+
+wire core_dram_rd_valid = (ctrl_send_data[63:56] == 8'd3);
+wire dram_rd_send_ready;
 
 wire ctrl_send_valid_fifoed, ctrl_send_ready_fifoed;
 wire [63:0] ctrl_send_data_fifoed;
@@ -453,7 +491,7 @@ if (!SEPARATE_CLOCKS) begin
     .rst(sys_rst),
     .clear(1'b0),
   
-    .din_valid(ctrl_send_valid),
+    .din_valid(ctrl_send_valid && !core_dram_rd_valid),
     .din(ctrl_send_data),
     .din_ready(ctrl_send_ready),
    
@@ -469,7 +507,7 @@ end else begin
     .async_rst(sys_rst),
   
     .din_clk(core_clk),
-    .din_valid(ctrl_send_valid),
+    .din_valid(ctrl_send_valid && !core_dram_rd_valid),
     .din(ctrl_send_data),
     .din_ready(ctrl_send_ready),
    
@@ -480,12 +518,15 @@ end else begin
   );
 end
 
+wire ctrl_dram_send_ready = (dram_rd_send_ready && core_dram_rd_valid) || 
+                            (ctrl_send_ready && !core_dram_rd_valid);
+
 // Latch the output descriptor and send it to controller when 
 // it is transmitted
 reg [63:0] latched_send_desc;
 always @ (posedge sys_clk) 
-    if (send_desc_valid_fifoed && send_desc_ready_fifoed)
-        latched_send_desc   <= send_desc_fifoed;
+    if (send_desc_valid && send_desc_ready)
+        latched_send_desc <= send_desc;
 
 // A FIFO for outgoing control messages
 wire pkt_sent_v, pkt_sent_ready;
@@ -499,7 +540,7 @@ simple_fifo # (
   .rst(sys_rst),
   .clear(1'b0),
 
-  .din_valid(pkt_sent),
+  .din_valid(pkt_sent && (latched_send_desc[PORT_WIDTH+23:24]!=dram_port)), 
   .din(latched_send_desc),
   .din_ready(),
  
@@ -515,7 +556,224 @@ assign ctrl_m_axis_tdata      = ctrl_select ? pkt_sent_desc : ctrl_send_data_fif
 assign ctrl_m_axis_tlast      = 1'b1;
 assign ctrl_send_ready_fifoed = ctrl_m_axis_tready && (!ctrl_select);
 assign pkt_sent_ready         = ctrl_m_axis_tready &&   ctrl_select ;
+
+/////////////////////////////////////////////////////////////////////
+/////////////// DRAM OUT DESCRIPTOR FIFOS AND ARBITER ///////////////
+/////////////////////////////////////////////////////////////////////
+
+// A desc FIFO for send dram based on dram read message
+reg        dram_req_valid;
+wire       dram_req_ready;
+reg [63:0] dram_req_high, dram_req_low;
+
+wire dram_in_valid, dram_in_ready;
+wire [127:0] dram_in_desc;
+
+always @ (posedge sys_clk) begin
+  if (dram_s_axis_tvalid && dram_req_ready)
+    if (dram_s_axis_tlast) begin
+      dram_req_high  <= dram_s_axis_tdata;
+      dram_req_valid <= 1'b1;
+    end else begin
+      dram_req_low   <= {dram_s_axis_tdata[63:24+PORT_WIDTH],
+                         dram_port, dram_s_axis_tdata[23:0]};
+      dram_req_valid <= 1'b0;
+    end
+  else
+      dram_req_valid <= 1'b0;
+
+  if (sys_rst) 
+      dram_req_valid <= 1'b0;
+end
+
+assign dram_s_axis_tready = dram_req_ready;
+
+simple_fifo # (
+  .ADDR_WIDTH($clog2(DRAM_DESC_DEPTH)),
+  .DATA_WIDTH(128)
+) recvd_dram_rd_fifo (
+  .clk(sys_clk),
+  .rst(sys_rst),
+  .clear(1'b0),
+
+  .din_valid(dram_req_valid),
+  .din({dram_req_high,dram_req_low}),
+  .din_ready(dram_req_ready),
  
+  .dout_valid(dram_in_valid),
+  .dout(dram_in_desc),
+  .dout_ready(dram_in_ready)
+);
+
+wire dram_out_desc_valid, dram_out_desc_ready;
+wire [127:0] dram_out_desc;
+wire [63:0] core_dram_addr;
+
+if (!SEPARATE_CLOCKS) begin
+  simple_fifo # (
+    .ADDR_WIDTH($clog2(DRAM_DESC_DEPTH)),
+    .DATA_WIDTH(128)
+  ) dram_send_fifo (
+    .clk(sys_clk),
+    .rst(sys_rst),
+    .clear(1'b0),
+  
+    .din_valid(data_send_valid && core_dram_wr_valid),
+    .din({core_dram_addr,data_send_desc[63:24+PORT_WIDTH],
+          dram_port, data_send_desc[23:0]}),
+    .din_ready(dram_wr_send_ready),
+   
+    .dout_valid(dram_out_desc_valid),
+    .dout(dram_out_desc),
+    .dout_ready(dram_out_desc_ready)
+  );
+end else begin 
+  simple_async_fifo # (
+    .DEPTH(DRAM_DESC_DEPTH),
+    .DATA_WIDTH(128)
+  ) dram_send_fifo (
+    .async_rst(sys_rst),
+  
+    .din_clk(core_clk),
+    .din_valid(data_send_valid && core_dram_wr_valid),
+    .din({core_dram_addr,data_send_desc[63:24+PORT_WIDTH],
+          dram_port, data_send_desc[23:0]}),
+    .din_ready(dram_wr_send_ready),
+   
+    .dout_clk(sys_clk),
+    .dout_valid(dram_out_desc_valid),
+    .dout(dram_out_desc),
+    .dout_ready(dram_out_desc_ready)
+  );
+end
+
+// Simple arbiter among the 2 FIFOs, priority to releasing a desc
+wire         dram_select   = dram_out_desc_valid;
+wire         dram_wr_valid = dram_out_desc_valid || dram_in_valid;
+wire [127:0] dram_wr_desc  = dram_select ? dram_out_desc : dram_in_desc;
+wire         dram_wr_ready;
+
+assign dram_out_desc_ready =   dram_select  && dram_out_desc_valid && dram_wr_ready;
+assign dram_in_ready       = (!dram_select) && dram_in_valid && dram_wr_ready;
+
+// A desc FIFO for dram read msgs
+wire dram_rd_desc_valid, dram_rd_desc_ready;
+wire [127:0] dram_rd_desc;
+
+if (!SEPARATE_CLOCKS) begin
+  simple_fifo # (
+    .ADDR_WIDTH($clog2(DRAM_DESC_DEPTH)),
+    .DATA_WIDTH(128)
+  ) send_ctrl_fifo (
+    .clk(sys_clk),
+    .rst(sys_rst),
+    .clear(1'b0),
+  
+    .din_valid(ctrl_send_valid && core_dram_rd_valid),
+    .din({ctrl_send_data,core_dram_addr}),
+    .din_ready(dram_rd_send_ready),
+   
+    .dout_valid(dram_rd_desc_valid),
+    .dout(dram_rd_desc),
+    .dout_ready(dram_rd_desc_ready)
+  );
+end else begin
+  simple_async_fifo # (
+    .DEPTH(DRAM_DESC_DEPTH),
+    .DATA_WIDTH(128)
+  ) send_ctrl_fifo (
+    .async_rst(sys_rst),
+  
+    .din_clk(core_clk),
+    .din_valid(ctrl_send_valid && core_dram_rd_valid),
+    .din({ctrl_send_data,core_dram_addr}),
+    .din_ready(dram_rd_send_ready),
+   
+    .dout_clk(sys_clk),
+    .dout_valid(dram_rd_desc_valid),
+    .dout(dram_rd_desc),
+    .dout_ready(dram_rd_desc_ready)
+  );
+end
+
+reg [1:0] send_dram_rd_state;
+always @ (posedge sys_clk)
+  if (sys_rst)
+    send_dram_rd_state <= 2'd0;
+  else if (dram_rd_desc_valid)
+    case (send_dram_rd_state)
+      2'd0: send_dram_rd_state <= 2'd1;
+      2'd1: if (dram_m_axis_tready) send_dram_rd_state <= 2'd2;
+      2'd2: if (dram_m_axis_tready) send_dram_rd_state <= 2'd0;
+      2'd3: send_dram_rd_state <= 2'd3; // Error
+    endcase
+
+assign dram_m_axis_tvalid = (send_dram_rd_state != 2'd0);
+assign dram_m_axis_tdata  = (send_dram_rd_state == 2'd2) ? dram_rd_desc[127:64] 
+                                                         : dram_rd_desc[63:0];
+assign dram_m_axis_tlast  = (send_dram_rd_state == 2'd2);
+assign dram_rd_desc_ready = (send_dram_rd_state == 2'd2) && dram_m_axis_tready;
+
+// Arbiter for sending packet out or data to dram
+reg m_axis_header_allowed_r;
+always @ (posedge sys_clk)
+  if (sys_rst)
+    m_axis_header_allowed_r <= 1'b1;
+  else
+    if (m_axis_tvalid && m_axis_tready) begin
+      if (m_axis_tlast)
+        m_axis_header_allowed_r <= 1'b1;
+      else
+        m_axis_header_allowed_r <= 1'b0;
+    end
+
+reg dram_next_selection_r;
+always @ (posedge sys_clk)
+  if (sys_rst)
+    dram_next_selection_r <= 1'b0;
+  else if (dram_wr_valid && dram_wr_ready) 
+    dram_next_selection_r <= 1'b0;
+  else if (send_pkt_valid && send_pkt_ready)
+    dram_next_selection_r <= 1'b1;
+
+reg dram_out_select; 
+always @ (*)
+  if (!dram_wr_valid)
+    dram_out_select = 1'b0;
+  else if (!send_pkt_valid)
+    dram_out_select = 1'b1;
+  else
+    dram_out_select = dram_next_selection_r; 
+
+assign dram_wr_ready   = dram_wr_valid && dram_out_select && send_desc_ready;
+assign send_pkt_ready  = send_pkt_valid && !dram_out_select && send_desc_ready;
+assign send_desc       = dram_out_select ? dram_wr_desc[63:0] : send_pkt_desc;
+assign send_desc_valid = dram_wr_valid || send_pkt_valid;
+
+reg [63:0] m_axis_dram_addr_r;
+reg        m_axis_dram_v;
+always @ (posedge sys_clk) 
+  if (dram_wr_valid && dram_wr_ready) 
+    m_axis_dram_addr_r <= dram_wr_desc[127:64];
+
+always @ (posedge sys_clk)
+  if (sys_rst)
+    m_axis_dram_v <= 1'b0;
+  else if (dram_wr_valid && dram_wr_ready) 
+    m_axis_dram_v <= 1'b1;
+  else if (m_axis_tvalid && data_m_axis_tready && m_axis_header_allowed_r)
+    m_axis_dram_v <= 1'b0;
+
+wire dram_addr_send = m_axis_tvalid && m_axis_header_allowed_r && m_axis_dram_v;
+
+assign data_m_axis_tdata = dram_addr_send ? m_axis_dram_addr_r : m_axis_tdata;
+assign data_m_axis_tkeep = dram_addr_send ? {STRB_WIDTH{1'b1}} : m_axis_tkeep;
+assign data_m_axis_tlast = dram_addr_send ? 1'b0               : m_axis_tlast;
+assign data_m_axis_tdest = m_axis_tdest;
+assign data_m_axis_tuser[SLOT_WIDTH-1:0] = m_axis_tuser;
+assign m_axis_tready = (!dram_addr_send) && data_m_axis_tready;
+assign data_m_axis_tvalid = dram_addr_send || m_axis_tvalid;
+
 /////////////////////////////////////////////////////////////////////
 /////////////////////// BROADCAST MESSAGING /////////////////////////
 /////////////////////////////////////////////////////////////////////
@@ -819,11 +1077,13 @@ riscvcore #(
 
     .data_desc(data_send_desc),
     .data_desc_valid(data_send_valid),
-    .data_desc_ready(data_send_ready),
+    .data_desc_ready(data_dram_send_ready),
     
     .ctrl_desc(ctrl_send_data),
     .ctrl_desc_valid(ctrl_send_valid),
-    .ctrl_desc_ready(ctrl_send_ready),
+    .ctrl_desc_ready(ctrl_dram_send_ready),
+    
+    .dram_wr_addr(core_dram_addr),
 
     .slot_wr_ptr(slot_wr_ptr), 
     .slot_wr_addr(slot_wr_addr),
