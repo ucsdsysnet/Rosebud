@@ -25,12 +25,6 @@ module simple_scheduler # (
   output wire [PORT_COUNT-1:0]               rx_axis_tready, 
   input  wire [PORT_COUNT-1:0]               rx_axis_tlast,
   
-  input  wire [PORT_COUNT-1:0]               rx_fifo_overflow,
-  input  wire [PORT_COUNT-1:0]               rx_fifo_good_frame,
-  input  wire [PORT_COUNT-1:0]               tx_fifo_overflow,
-  input  wire [PORT_COUNT-1:0]               tx_fifo_bad_frame,
-  input  wire [PORT_COUNT-1:0]               tx_fifo_good_frame,
-
   output wire [PORT_COUNT*DATA_WIDTH-1:0]    tx_axis_tdata,
   output wire [PORT_COUNT*STRB_WIDTH-1:0]    tx_axis_tkeep,
   output wire [PORT_COUNT-1:0]               tx_axis_tvalid, 
@@ -324,11 +318,7 @@ if (ENABLE_ILA) begin // NOT UP TO DATE TO THE LATEST CODE
        rx_axis_tvalid, 
        rx_axis_tready, 
        rx_axis_tlast,
-       rx_fifo_overflow,
-       rx_fifo_good_frame,
-       tx_fifo_overflow,
-       sending_last_word,
-       tx_fifo_good_frame
+       sending_last_word
     }),
     
     .probe1 ({

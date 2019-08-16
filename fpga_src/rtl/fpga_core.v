@@ -302,6 +302,12 @@ wire                       sched_ctrl_s_axis_tready;
 wire                       sched_ctrl_s_axis_tlast;
 wire [CORE_WIDTH-1:0]      sched_ctrl_s_axis_tuser;
 
+
+wire [AXIS_DATA_WIDTH-1:0] dram_tx_axis_tdata;
+wire [AXIS_STRB_WIDTH-1:0] dram_tx_axis_tkeep;
+wire dram_tx_axis_tvalid, dram_tx_axis_tlast;
+wire dram_rx_axis_tready;
+
 simple_scheduler # (
   .PORT_COUNT(PORT_COUNT),
   .CORE_COUNT(CORE_COUNT),
@@ -315,24 +321,18 @@ simple_scheduler # (
   .rst(sys_rst),
 
   // Data line to/from Eth interfaces
-  .tx_axis_tdata(tx_axis_tdata),
-  .tx_axis_tkeep(tx_axis_tkeep),
-  .tx_axis_tvalid(tx_axis_tvalid), 
+  .tx_axis_tdata({dram_tx_axis_tdata,tx_axis_tdata}),
+  .tx_axis_tkeep({dram_tx_axis_tkeep,tx_axis_tkeep}),
+  .tx_axis_tvalid({dram_tx_axis_tvalid,tx_axis_tvalid}), 
   .tx_axis_tready({1'b1,tx_axis_tready}), 
-  .tx_axis_tlast(tx_axis_tlast),
+  .tx_axis_tlast({dram_tx_axis_tlast,tx_axis_tlast}),
   
-  .rx_axis_tdata(rx_axis_tdata),
-  .rx_axis_tkeep(rx_axis_tkeep),
-  .rx_axis_tvalid(rx_axis_tvalid), 
-  .rx_axis_tready(rx_axis_tready), 
-  .rx_axis_tlast(rx_axis_tlast),
+  .rx_axis_tdata({64'd0,rx_axis_tdata}),
+  .rx_axis_tkeep({8'd0,rx_axis_tkeep}),
+  .rx_axis_tvalid({1'b0,rx_axis_tvalid}), 
+  .rx_axis_tready({dram_rx_axis_tready,rx_axis_tready}), 
+  .rx_axis_tlast({1'b0,rx_axis_tlast}),
   
-  .rx_fifo_overflow(rx_fifo_overflow),
-  .rx_fifo_good_frame(rx_fifo_good_frame),
-  .tx_fifo_overflow(tx_fifo_overflow),
-  .tx_fifo_bad_frame(tx_fifo_bad_frame),
-  .tx_fifo_good_frame(tx_fifo_good_frame),
-
   // DATA lines to/from cores
   .data_m_axis_tdata(sched_rx_axis_tdata),
   .data_m_axis_tkeep(sched_rx_axis_tkeep),
