@@ -141,7 +141,7 @@ module simple_scheduler # (
   assign rx_desc_v          = | rx_desc_slot_v;
   assign rx_desc_data       = {selected_desc, rx_desc_slot[selected_desc]};
 
-  wire [7:0] msg_type = ctrl_s_axis_tdata[DATA_WIDTH-1:DATA_WIDTH-8];
+  wire [7:0] msg_type = ctrl_s_axis_tdata[DATA_WIDTH-1:DATA_WIDTH-4];
 
   // Slot descriptor loader module 
   wire [CORE_COUNT-1:0] desc_fifo_clear, loader_valid, busy_by_loader;
@@ -155,7 +155,7 @@ module simple_scheduler # (
     .clk(clk),
     .rst(rst),
   
-    .req_valid(ctrl_s_axis_tvalid && (msg_type==4)),
+    .req_valid(ctrl_s_axis_tvalid && (msg_type==3)),
     .req_dest(ctrl_s_axis_tuser),
     .slot_count(ctrl_s_axis_tdata[SLOT_WIDTH-1:0]),
     .req_ready(loader_ready),
@@ -246,7 +246,7 @@ module simple_scheduler # (
 
   assign ctrl_s_axis_tready = ((|(rx_desc_slot_accept & (1<<ctrl_s_axis_tuser))) && (msg_type==0)) ||
                                  (loopback_in_ready && (msg_type==1)) || 
-                                 (loader_ready && (msg_type==4));
+                                 (loader_ready && (msg_type==3));
 
   // Core reset command
   reg [CORE_ID_WIDTH:0] core_rst_counter;

@@ -17,7 +17,7 @@ int main(void){
 	while (1){
 		if (in_pkt_ready()){
 	 		
-			// start_time = read_timer();
+			start_time = read_timer();
 			read_in_pkt(&len, &slot, &port, &data);
 			offset = 0;
 	
@@ -30,15 +30,14 @@ int main(void){
 			}
 
 			data = (unsigned int *)(((unsigned int)data)+offset);
-			// safe_pkt_send(&len, &slot, &port, data);
+		  // safe_pkt_send(&len, &slot, &port, data);
 		  safe_pkt_done_msg(&len, &slot, &port, data);
 			
 			safe_dmem_write(0xAAAAAAAA, 0xBBBBBBBB, &len, &slot, &port, data);
 			dmem_read_req(0x50505050, 0x05050505, &len, &slot, &port, data);
 
-	 		// end_time = read_timer();
-			// write_setting (0, end_time-start_time);
-
+	 		end_time = read_timer();
+			write_setting (0, end_time-start_time);
 
   	}
   }

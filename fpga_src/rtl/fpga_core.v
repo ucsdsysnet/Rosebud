@@ -928,8 +928,8 @@ generate
     core_wrapper (
         .sys_clk(sys_clk),
         .sys_rst(sys_rst),
-        .core_clk(core_clk),
-        .core_rst(core_rst),
+        .core_clk_i(core_clk),
+        .core_rst_i(core_rst),
 
         // ---------------- DATA CHANNEL --------------- // 
         // Incoming data

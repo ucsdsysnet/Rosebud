@@ -32,13 +32,8 @@ module riscvcore #(
 
     output [63:0]                data_desc,
     output                       data_desc_valid,
-    input                        data_desc_ready,
-
-    output [63:0]                ctrl_desc,
-    output                       ctrl_desc_valid,
-    input                        ctrl_desc_ready,
-    
     output [63:0]                dram_wr_addr,
+    input                        data_desc_ready,
 
     output [SLOT_PTR_WIDTH-1:0]  slot_wr_ptr, 
     output [ADDR_WIDTH-1:0]      slot_wr_addr,
@@ -97,22 +92,22 @@ VexRiscv core (
 ///////////////////////////////////////////////////////////////////////////
 
 localparam DATA_DESC_ADDR = 4'b0000;//???;
-localparam CTRL_DESC_ADDR = 4'b0001;//???;
+localparam WR_DRAM_ADDR   = 4'b0001;//???;
 localparam SETTING_ADDR   = 4'b0010;//???;
 localparam SLOT_LUT_ADDR  = 5'b00110;//??;
 // localparam RESERVED_4  = 5'b00111;//??;
 
-localparam WR_DRAM_ADDR   = 4'b0100;//???;
+// localparam RESERVED_8  = 4'b0100;//???;
 // localparam RESERVED_8  = 4'b0101;//???;
 // localparam RESERVED_8  = 4'b0110;//???;
 
 localparam DATA_DESC_STRB = 7'b0111000;//;
-localparam CTRL_DESC_STRB = 7'b0111001;//;
+localparam RD_DESC_STRB   = 7'b0111001;//;
 localparam SETTING_STRB   = 7'b0111010;//;
 localparam SLOT_LUT_STRB  = 7'b0111011;//;
-localparam RD_DESC_STRB   = 7'b0111100;//;
+localparam RESET_TIMER    = 7'b0111100;//;
 localparam ERR_CLEAR_STRB = 7'b0111101;//;
-localparam RESET_TIMER    = 7'b0111110;//;
+// localparam RESERVED_1  = 7'b0111110;//;
 // localparam RESERVED_1  = 7'b0111111;//;
 
 localparam IO_BYTE_ACCESS = 4'b0111;//??;
@@ -121,27 +116,24 @@ localparam IO_WRITE_ADDRS = 1'b0;//??????;
 wire io_write = io_not_mem && dmem_v && dmem_wr_en && ext_dmem_ready; 
 
 wire data_desc_wen  = io_write && (dmem_addr[6:3]==DATA_DESC_ADDR);
-wire ctrl_desc_wen  = io_write && (dmem_addr[6:3]==CTRL_DESC_ADDR);
+wire dram_addr_wen  = io_write && (dmem_addr[6:3]==WR_DRAM_ADDR);
 wire setting_wen    = io_write && (dmem_addr[6:3]==SETTING_ADDR);
 wire slot_info_wen  = io_write && (dmem_addr[6:2]==SLOT_LUT_ADDR);
-wire dram_addr_wen  = io_write && (dmem_addr[6:3]==WR_DRAM_ADDR);
 
 wire send_data_desc = io_write && (dmem_addr[6:0]==DATA_DESC_STRB);
-wire send_ctrl_desc = io_write && (dmem_addr[6:0]==CTRL_DESC_STRB);
+wire rd_desc_done   = io_write && (dmem_addr[6:0]==RD_DESC_STRB);
 wire setting_apply  = io_write && (dmem_addr[6:0]==SETTING_STRB);
 wire slot_wen       = io_write && (dmem_addr[6:0]==SLOT_LUT_STRB);
-wire rd_desc_done   = io_write && (dmem_addr[6:0]==RD_DESC_STRB);
-wire error_clear    = io_write && (dmem_addr[6:0]==ERR_CLEAR_STRB);
 wire reset_timer    = io_write && (dmem_addr[6:0]==RESET_TIMER);
+wire error_clear    = io_write && (dmem_addr[6:0]==ERR_CLEAR_STRB);
 
 reg [63:0] setting_r;
 reg [63:0] dram_wr_addr_r;
 
 reg [63:0] data_desc_data_r;
-reg [63:0] ctrl_desc_data_r;
 reg [63:0] setting_data_r;
 reg [31:0] slot_info_data_r;
-reg data_desc_v_r, ctrl_desc_v_r;
+reg data_desc_v_r;
 
 assign dram_wr_addr = dram_wr_addr_r;
 // Byte writable data_desc
@@ -158,11 +150,7 @@ always @ (posedge clk) begin
         for (i = 0; i < 8; i = i + 1) 
             if (wr_desc_mask[i] == 1'b1) 
                 data_desc_data_r[i*8 +: 8] <= wr_desc_din[i*8 +: 8];
-    if (ctrl_desc_wen)
-        for (i = 0; i < 8; i = i + 1) 
-            if (wr_desc_mask[i] == 1'b1) 
-                ctrl_desc_data_r[i*8 +: 8] <= wr_desc_din[i*8 +: 8];
-    if (setting_wen)
+   if (setting_wen)
         for (i = 0; i < 8; i = i + 1) 
             if (wr_desc_mask[i] == 1'b1) 
                 setting_data_r[i*8 +: 8] <= wr_desc_din[i*8 +: 8];
@@ -179,7 +167,6 @@ end
 always @ (posedge clk) begin
     if (rst) begin
             data_desc_v_r <= 1'b0;
-            ctrl_desc_v_r <= 1'b0;
             setting_r     <= 64'd0;
     end else begin
         if (send_data_desc && strb_asserted)
@@ -187,11 +174,6 @@ always @ (posedge clk) begin
         if (data_desc_v_r && data_desc_ready)
             data_desc_v_r <= 1'b0;
         
-        if (send_ctrl_desc && strb_asserted)
-            ctrl_desc_v_r <= 1'b1;
-        if (ctrl_desc_v_r && ctrl_desc_ready)
-            ctrl_desc_v_r <= 1'b0;
-
         if (setting_apply && strb_asserted)
           setting_r <= setting_data_r;
     end
@@ -202,9 +184,7 @@ assign slot_wr_ptr     = slot_info_data_r[31:24] - 1;
 assign slot_wr_valid   = slot_wen && strb_asserted;
 
 assign data_desc       = data_desc_data_r;
-assign ctrl_desc       = ctrl_desc_data_r;
 assign data_desc_valid = data_desc_v_r;
-assign ctrl_desc_valid = ctrl_desc_v_r;
 
 ///////////////////////////////////////////////////////////////////////////
 ////////////////////////////// IO READS ///////////////////////////////////
@@ -255,7 +235,7 @@ always @ (posedge clk) begin
  
     if (stat_ren)
         io_read_data <= {7'd0,core_msg_ready, 7'd0,slot_wr_ready,
-                         7'd0,ctrl_desc_ready, 7'd0,data_desc_ready};
+                         8'd0, 7'd0,data_desc_ready};
  
     if (setting_ren)
         if (dmem_addr[2]) 
