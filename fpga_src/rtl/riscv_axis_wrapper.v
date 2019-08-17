@@ -544,7 +544,7 @@ if (!SEPARATE_CLOCKS) begin
     .clear(1'b0),
   
     .din_valid(data_send_valid && core_dram_wr),
-    .din({core_dram_addr,data_send_desc[63:24+PORT_WIDTH],
+    .din({core_dram_addr, data_send_desc[63:24+PORT_WIDTH],
           dram_port, data_send_desc[23:0]}),
     .din_ready(core_dram_wr_ready),
    
@@ -561,7 +561,7 @@ end else begin
   
     .din_clk(core_clk),
     .din_valid(data_send_valid && core_dram_wr),
-    .din({core_dram_addr,data_send_desc[63:24+PORT_WIDTH],
+    .din({core_dram_addr, data_send_desc[63:24+PORT_WIDTH],
           dram_port, data_send_desc[23:0]}),
     .din_ready(core_dram_wr_ready),
    
@@ -587,7 +587,7 @@ if (!SEPARATE_CLOCKS) begin
     .clear(1'b0),
   
     .din_valid(data_send_valid && core_dram_rd),
-    .din({data_send_desc,core_dram_addr}),
+    .din({core_dram_addr, data_send_desc}),
     .din_ready(core_dram_rd_ready),
    
     .dout_valid(core_dram_rd_valid_f),
@@ -603,7 +603,7 @@ end else begin
   
     .din_clk(core_clk),
     .din_valid(data_send_valid && core_dram_rd),
-    .din({data_send_desc,core_dram_addr}),
+    .din({core_dram_addr, data_send_desc}),
     .din_ready(core_dram_rd_ready),
    
     .dout_clk(sys_clk),
@@ -693,7 +693,7 @@ simple_fifo # (
   .clear(1'b0),
 
   .din_valid(dram_req_valid),
-  .din({dram_req_high,dram_req_low}),
+  .din({dram_req_high, dram_req_low}),
   .din_ready(dram_req_ready),
  
   .dout_valid(dram_in_valid),
@@ -705,8 +705,9 @@ simple_fifo # (
 ///////////////// DRAM DESCRIPTOR WIDTH CHANGE //////////////////////
 /////////////////////////////////////////////////////////////////////
 
-// Incoming dram desc
+// For DRAM descriptor the first word is descriptor followed by DRAM address
 
+// Incoming dram desc
 always @ (posedge sys_clk) begin
   if (dram_s_axis_tvalid && dram_req_ready)
     if (dram_s_axis_tlast) begin
