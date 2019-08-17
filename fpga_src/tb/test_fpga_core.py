@@ -53,6 +53,8 @@ srcs.append("../rtl/fpga_core.v")
 
 # srcs.append("../lib/axis/rtl/axis_switch.v")
 srcs.append("../lib/axis/rtl/axis_arb_mux.v")
+srcs.append("../lib/axis/rtl/axis_fifo.v")
+srcs.append("../lib/axis/rtl/axis_fifo_adapter.v")
 srcs.append("../lib/axis/rtl/axis_register.v")
 srcs.append("../lib/axis/rtl/arbiter.v")
 srcs.append("../lib/axis/rtl/priority_encoder.v")

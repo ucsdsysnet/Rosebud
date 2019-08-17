@@ -1,5 +1,6 @@
 module simple_scheduler # (
-  parameter PORT_COUNT      = 2,
+  parameter INTERFACE_COUNT = 2,
+  parameter PORT_COUNT      = 3,
   parameter CORE_COUNT      = 16,
   parameter SLOT_COUNT      = 8,
   parameter DATA_WIDTH      = 64,
@@ -8,6 +9,7 @@ module simple_scheduler # (
 
   parameter SLOT_WIDTH      = $clog2(SLOT_COUNT+1),
   parameter CORE_ID_WIDTH   = $clog2(CORE_COUNT),
+  parameter INTERFACE_WIDTH = $clog2(INTERFACE_COUNT),
   parameter PORT_WIDTH      = $clog2(PORT_COUNT),
   parameter ID_SLOT_WIDTH   = CORE_ID_WIDTH+SLOT_WIDTH,
   parameter STRB_WIDTH      = DATA_WIDTH/8,
@@ -19,34 +21,34 @@ module simple_scheduler # (
   input                                     rst,
 
   // Data line to/from Eth interfaces
-  input  wire [PORT_COUNT*DATA_WIDTH-1:0]    rx_axis_tdata,
-  input  wire [PORT_COUNT*STRB_WIDTH-1:0]    rx_axis_tkeep,
-  input  wire [PORT_COUNT-1:0]               rx_axis_tvalid, 
-  output wire [PORT_COUNT-1:0]               rx_axis_tready, 
-  input  wire [PORT_COUNT-1:0]               rx_axis_tlast,
+  input  wire [INTERFACE_COUNT*DATA_WIDTH-1:0]    rx_axis_tdata,
+  input  wire [INTERFACE_COUNT*STRB_WIDTH-1:0]    rx_axis_tkeep,
+  input  wire [INTERFACE_COUNT-1:0]               rx_axis_tvalid, 
+  output wire [INTERFACE_COUNT-1:0]               rx_axis_tready, 
+  input  wire [INTERFACE_COUNT-1:0]               rx_axis_tlast,
   
-  output wire [PORT_COUNT*DATA_WIDTH-1:0]    tx_axis_tdata,
-  output wire [PORT_COUNT*STRB_WIDTH-1:0]    tx_axis_tkeep,
-  output wire [PORT_COUNT-1:0]               tx_axis_tvalid, 
-  input  wire [PORT_COUNT-1:0]               tx_axis_tready, 
-  output wire [PORT_COUNT-1:0]               tx_axis_tlast,
+  output wire [INTERFACE_COUNT*DATA_WIDTH-1:0]    tx_axis_tdata,
+  output wire [INTERFACE_COUNT*STRB_WIDTH-1:0]    tx_axis_tkeep,
+  output wire [INTERFACE_COUNT-1:0]               tx_axis_tvalid, 
+  input  wire [INTERFACE_COUNT-1:0]               tx_axis_tready, 
+  output wire [INTERFACE_COUNT-1:0]               tx_axis_tlast,
   
   // DATA lines to/from cores
-  output wire [PORT_COUNT*DATA_WIDTH-1:0]    data_m_axis_tdata,
-  output wire [PORT_COUNT*STRB_WIDTH-1:0]    data_m_axis_tkeep,
-  output wire [PORT_COUNT*ID_SLOT_WIDTH-1:0] data_m_axis_tdest,
-  output wire [PORT_COUNT*PORT_WIDTH-1:0]    data_m_axis_tuser,
-  output wire [PORT_COUNT-1:0]               data_m_axis_tvalid,
-  input  wire [PORT_COUNT-1:0]               data_m_axis_tready,
-  output wire [PORT_COUNT-1:0]               data_m_axis_tlast,
+  output wire [INTERFACE_COUNT*DATA_WIDTH-1:0]    data_m_axis_tdata,
+  output wire [INTERFACE_COUNT*STRB_WIDTH-1:0]    data_m_axis_tkeep,
+  output wire [INTERFACE_COUNT*ID_SLOT_WIDTH-1:0] data_m_axis_tdest,
+  output wire [INTERFACE_COUNT*PORT_WIDTH-1:0]    data_m_axis_tuser,
+  output wire [INTERFACE_COUNT-1:0]               data_m_axis_tvalid,
+  input  wire [INTERFACE_COUNT-1:0]               data_m_axis_tready,
+  output wire [INTERFACE_COUNT-1:0]               data_m_axis_tlast,
   
-  input  wire [PORT_COUNT*DATA_WIDTH-1:0]    data_s_axis_tdata,
-  input  wire [PORT_COUNT*STRB_WIDTH-1:0]    data_s_axis_tkeep,
-  input  wire [PORT_COUNT*PORT_WIDTH-1:0]    data_s_axis_tdest,
-  input  wire [PORT_COUNT*ID_SLOT_WIDTH-1:0] data_s_axis_tuser,
-  input  wire [PORT_COUNT-1:0]               data_s_axis_tvalid, 
-  output wire [PORT_COUNT-1:0]               data_s_axis_tready, 
-  input  wire [PORT_COUNT-1:0]               data_s_axis_tlast,
+  input  wire [INTERFACE_COUNT*DATA_WIDTH-1:0]    data_s_axis_tdata,
+  input  wire [INTERFACE_COUNT*STRB_WIDTH-1:0]    data_s_axis_tkeep,
+  input  wire [INTERFACE_COUNT*PORT_WIDTH-1:0]    data_s_axis_tdest,
+  input  wire [INTERFACE_COUNT*ID_SLOT_WIDTH-1:0] data_s_axis_tuser,
+  input  wire [INTERFACE_COUNT-1:0]               data_s_axis_tvalid, 
+  output wire [INTERFACE_COUNT-1:0]               data_s_axis_tready, 
+  input  wire [INTERFACE_COUNT-1:0]               data_s_axis_tlast,
       
   // Control lines to/from cores
   output wire [DATA_WIDTH-1:0]               ctrl_m_axis_tdata,
@@ -64,11 +66,11 @@ module simple_scheduler # (
   
   // Adding tdest and tuser to input data from eth, dest based on 
   // rx_desc_fifo and stamp the incoming port
-  reg  [PORT_COUNT*ID_SLOT_WIDTH-1:0] dest_r;
-  wire [PORT_WIDTH-1:0] selected_port_enc;
-  wire [PORT_COUNT-1:0] sending_last_word;
-  reg  [PORT_COUNT-1:0] dest_r_v;
-  wire [PORT_COUNT-1:0] selected_port;
+  reg  [INTERFACE_COUNT*ID_SLOT_WIDTH-1:0] dest_r;
+  wire [INTERFACE_WIDTH-1:0] selected_port_enc;
+  wire [INTERFACE_COUNT-1:0] sending_last_word;
+  reg  [INTERFACE_COUNT-1:0] dest_r_v;
+  wire [INTERFACE_COUNT-1:0] selected_port;
 
   wire selected_port_v;
   wire rx_desc_pop; // maybe used for error catching
@@ -77,14 +79,14 @@ module simple_scheduler # (
 
   assign sending_last_word = rx_axis_tvalid & rx_axis_tlast & rx_axis_tready;
   assign rx_desc_pop = selected_port_v;
-  wire [PORT_COUNT-1:0] desc_req = (~(dest_r_v|selected_port))|sending_last_word;
+  wire [INTERFACE_COUNT-1:0] desc_req = (~(dest_r_v|selected_port))|sending_last_word;
   
-  arbiter # (.PORTS(PORT_COUNT),.TYPE("ROUND_ROBIN")) port_selector (
+  arbiter # (.PORTS(INTERFACE_COUNT),.TYPE("ROUND_ROBIN")) port_selector (
     .clk(clk),
     .rst(rst),
     
     .request(desc_req),
-    .acknowledge({PORT_COUNT{1'b0}}),
+    .acknowledge({INTERFACE_COUNT{1'b0}}),
     
     .grant(selected_port),
     .grant_valid(selected_port_v),
@@ -98,12 +100,12 @@ module simple_scheduler # (
       dest_r[selected_port_enc*ID_SLOT_WIDTH +: ID_SLOT_WIDTH] <= rx_desc_data;
     end
     if (rst)
-      dest_r_v <= {PORT_COUNT{1'b0}};
+      dest_r_v <= {INTERFACE_COUNT{1'b0}};
   end
 
   genvar j;
   generate
-    for (j=0; j<PORT_COUNT;j=j+1)
+    for (j=0; j<INTERFACE_COUNT;j=j+1)
       assign data_m_axis_tuser[j*PORT_WIDTH +: PORT_WIDTH] = j;
   endgenerate
 
