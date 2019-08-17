@@ -403,7 +403,7 @@ axis_switch #
     .DATA_WIDTH(AXIS_DATA_WIDTH),
     .DEST_WIDTH(ID_SLOT_WIDTH),
     .USER_WIDTH(PORT_WIDTH),
-    .S_REG_TYPE(1),
+    .S_REG_TYPE(2),
     .M_REG_TYPE(2)
 ) data_in_sw_lvl1
 (
@@ -442,7 +442,7 @@ axis_switch #
     .DATA_WIDTH(AXIS_DATA_WIDTH),
     .DEST_WIDTH(PORT_WIDTH),
     .USER_WIDTH(ID_SLOT_WIDTH),
-    .S_REG_TYPE(1),
+    .S_REG_TYPE(2),
     .M_REG_TYPE(2)
 ) data_out_sw_lvl1
 (
@@ -483,7 +483,7 @@ axis_switch #
     .DEST_WIDTH(CORE_WIDTH),
     .USER_ENABLE(0),
     .KEEP_ENABLE(0),
-    .S_REG_TYPE(1),
+    .S_REG_TYPE(2),
     .M_REG_TYPE(2)
 ) ctrl_in_sw_lvl1
 (
