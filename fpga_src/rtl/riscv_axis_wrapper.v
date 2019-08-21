@@ -64,13 +64,13 @@ module riscv_axis_wrapper # (
   
     // ---------------- CTRL CHANNEL --------------- // 
     // Incoming control
-    input  wire [DATA_WIDTH-1:0]    ctrl_s_axis_tdata,
+    input  wire [63:0]              ctrl_s_axis_tdata,
     input  wire                     ctrl_s_axis_tvalid,
     output wire                     ctrl_s_axis_tready,
     input  wire                     ctrl_s_axis_tlast,
   
     // Outgoing control
-    output wire [DATA_WIDTH-1:0]    ctrl_m_axis_tdata,
+    output wire [63:0]              ctrl_m_axis_tdata,
     output wire                     ctrl_m_axis_tvalid,
     input  wire                     ctrl_m_axis_tready,
     output wire                     ctrl_m_axis_tlast,
@@ -78,13 +78,13 @@ module riscv_axis_wrapper # (
     
     // ------------ DRAM RD REQ CHANNEL ------------- // 
     // Incoming DRAM request
-    input  wire [DATA_WIDTH-1:0]    dram_s_axis_tdata,
+    input  wire [63:0]              dram_s_axis_tdata,
     input  wire                     dram_s_axis_tvalid,
     output wire                     dram_s_axis_tready,
     input  wire                     dram_s_axis_tlast,
   
     // Outgoing DRAM request
-    output wire [DATA_WIDTH-1:0]    dram_m_axis_tdata,
+    output wire [63:0]              dram_m_axis_tdata,
     output wire                     dram_m_axis_tvalid,
     input  wire                     dram_m_axis_tready,
     output wire                     dram_m_axis_tlast,
@@ -108,7 +108,7 @@ assign dram_m_axis_tuser = CORE_ID;
 /////////////////////////////////////////////////////////////////////
 //////////////////////// CORE RESET COMMAND /////////////////////////
 /////////////////////////////////////////////////////////////////////
-wire reset_cmd = ctrl_s_axis_tvalid && (&ctrl_s_axis_tdata[DATA_WIDTH-1:DATA_WIDTH-8]);
+wire reset_cmd = ctrl_s_axis_tvalid && (&ctrl_s_axis_tdata[63:60]);
 reg  core_reset_r = 1'b1;
 
 always @ (posedge sys_clk)
@@ -795,7 +795,7 @@ assign send_desc_valid = (dram_wr_valid || send_pkt_valid) && pkt_sent_ready;
 
 // CTRL out arbiter between packet sent and core message to scheduler
 // Priority to releasing a desc
-wire [DATA_WIDTH-1:0] ctrl_out_data;
+wire [63:0] ctrl_out_data;
 wire ctrl_out_valid, ctrl_out_ready;
 
 wire   ctrl_select          = pkt_sent_valid_f;
@@ -805,8 +805,8 @@ assign core_ctrl_wr_ready_f = ctrl_out_ready && (!ctrl_select);
 assign pkt_sent_ready_f     = ctrl_out_ready &&   ctrl_select ;
 
 // Latching the output to deal with the next stage valid/ready
-reg [DATA_WIDTH-1:0] ctrl_m_axis_tdata_r;
-reg                  ctrl_m_axis_tvalid_r;
+reg [63:0] ctrl_m_axis_tdata_r;
+reg        ctrl_m_axis_tvalid_r;
 
 always @ (posedge sys_clk) begin
   if (ctrl_out_valid && (!ctrl_m_axis_tvalid_r || ctrl_m_axis_tready)) begin

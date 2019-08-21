@@ -4,6 +4,7 @@ module simple_scheduler # (
   parameter CORE_COUNT      = 16,
   parameter SLOT_COUNT      = 8,
   parameter DATA_WIDTH      = 64,
+  parameter CTRL_WIDTH      = 64,
   parameter LEN_WIDTH       = 16,
   parameter ENABLE_ILA      = 0,
 
@@ -51,13 +52,13 @@ module simple_scheduler # (
   input  wire [INTERFACE_COUNT-1:0]               data_s_axis_tlast,
       
   // Control lines to/from cores
-  output wire [DATA_WIDTH-1:0]               ctrl_m_axis_tdata,
+  output wire [CTRL_WIDTH-1:0]               ctrl_m_axis_tdata,
   output wire                                ctrl_m_axis_tvalid,
   input  wire                                ctrl_m_axis_tready,
   output wire                                ctrl_m_axis_tlast,
   output wire [CORE_ID_WIDTH-1:0]            ctrl_m_axis_tdest,
 
-  input  wire [DATA_WIDTH-1:0]               ctrl_s_axis_tdata,
+  input  wire [CTRL_WIDTH-1:0]               ctrl_s_axis_tdata,
   input  wire                                ctrl_s_axis_tvalid,
   output wire                                ctrl_s_axis_tready,
   input  wire                                ctrl_s_axis_tlast,
@@ -140,7 +141,7 @@ module simple_scheduler # (
   assign rx_desc_v          = | rx_desc_slot_v;
   assign rx_desc_data       = {selected_desc, rx_desc_slot[selected_desc]};
 
-  wire [3:0] msg_type = ctrl_s_axis_tdata[DATA_WIDTH-1:DATA_WIDTH-4];
+  wire [3:0] msg_type = ctrl_s_axis_tdata[CTRL_WIDTH-1:CTRL_WIDTH-4];
 
   // Slot descriptor loader module 
   wire [CORE_COUNT-1:0] desc_fifo_clear, loader_valid, busy_by_loader, rx_desc_fifo_v;
@@ -224,13 +225,13 @@ module simple_scheduler # (
   // Loop back ready desc 
   wire loopback_in_ready;
   wire [CORE_ID_WIDTH-1:0] loopback_dest;
-  wire [DATA_WIDTH-1:0]    loopback_data;
+  wire [CTRL_WIDTH-1:0]    loopback_data;
   wire                     loopback_valid;
   wire                     loopback_ready;
 
   simple_fifo # (
     .ADDR_WIDTH($clog2(4*CORE_COUNT)),
-    .DATA_WIDTH(DATA_WIDTH+CORE_ID_WIDTH)
+    .DATA_WIDTH(CTRL_WIDTH+CORE_ID_WIDTH)
   ) desc_loopback (
     .clk(clk),
     .rst(rst),
@@ -270,7 +271,8 @@ module simple_scheduler # (
         core_rst_counter <= core_rst_counter + 1;
 
   // making the descriptor type to be 0, so core would send out. 
-  assign ctrl_m_axis_tdata  = core_reset_in_prog ? 64'hFFFFFFFF_FFFFFFFE : {4'd0,loopback_data[DATA_WIDTH-5:0]};
+  assign ctrl_m_axis_tdata  = core_reset_in_prog ? {{(CTRL_WIDTH-1){1'b1}}, 1'b0} 
+                                                 : {4'd0,loopback_data[CTRL_WIDTH-5:0]};
   assign ctrl_m_axis_tvalid = core_reset_in_prog || loopback_valid;
   assign ctrl_m_axis_tlast  = ctrl_m_axis_tvalid;
   assign ctrl_m_axis_tdest  = core_reset_in_prog ? reordered_core_rst_counter : loopback_dest;
