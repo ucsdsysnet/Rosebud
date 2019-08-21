@@ -102,7 +102,7 @@ parameter DRAM_PORT        = 2;
 parameter LVL1_SW_PORTS    = 4;
 parameter CORE_MSG_LVL1    = 16;
 parameter SEPARATE_CLOCKS  = 1;
-parameter ENABLE_ILA       = 1;
+parameter ENABLE_ILA       = 0;
 
 parameter CORE_WIDTH       = $clog2(CORE_COUNT);
 parameter PORT_WIDTH       = $clog2(PORT_COUNT);
@@ -355,46 +355,46 @@ assign dram_rx_axis_tlast  = 1'b0;
 assign dram_rx_axis_tdest  = {ID_SLOT_WIDTH{1'b0}};
 assign dram_rx_axis_tuser  = DRAM_PORT;
 
-// Temp DRAM req test, copying control channel requests for a dummy address 
-// Since this takes 2 cycles instead of 1, some of the ctrl channel requests 
-// might be missed, just for testing purposes. 
-reg  [AXIS_DATA_WIDTH-1:0] dram_req_data_r;
-reg  [CORE_WIDTH-1:0]      dram_req_dest_r;
-reg  [1:0]                 dram_req_state;
-wire                       ctrl_pkt_req;
-
-assign ctrl_pkt_req = sched_ctrl_m_axis_tvalid && sched_ctrl_m_axis_tready &&
-                     (sched_ctrl_m_axis_tdata!=64'hFFFFFFFF_FFFFFFFE);
-
-always @ (posedge sys_clk)
-  if (ctrl_pkt_req) begin
-    dram_req_data_r <= sched_ctrl_m_axis_tdata;
-    dram_req_dest_r <= sched_ctrl_m_axis_tdest;
-  end
-
-always @ (posedge sys_clk)
-  if (sys_rst)
-    dram_req_state <= 2'd0;
-  else 
-    case (dram_req_state)
-      2'd0: if (ctrl_pkt_req) 
-              dram_req_state <= 2'd1;
-      2'd1: if (dram_ctrl_s_axis_tready) dram_req_state <= 2'd2;
-      2'd2: if (dram_ctrl_s_axis_tready) dram_req_state <= 2'd0;
-      2'd3: dram_req_state <= 2'd3; // Error
-    endcase
-
-assign dram_ctrl_s_axis_tvalid = 1'b0; 
-assign dram_ctrl_s_axis_tlast  = 1'b0;
-assign dram_ctrl_s_axis_tdata  = 64'hDEADBEEF5A5AA5A5;
-assign dram_ctrl_s_axis_tdest  = 0;
-
+// // Temp DRAM req test, copying control channel requests for a dummy address 
+// // Since this takes 2 cycles instead of 1, some of the ctrl channel requests 
+// // might be missed, just for testing purposes. 
+// reg  [AXIS_DATA_WIDTH-1:0] dram_req_data_r;
+// reg  [CORE_WIDTH-1:0]      dram_req_dest_r;
+// reg  [1:0]                 dram_req_state;
+// wire                       ctrl_pkt_req;
+// 
+// assign ctrl_pkt_req = sched_ctrl_m_axis_tvalid && sched_ctrl_m_axis_tready &&
+//                      (sched_ctrl_m_axis_tdata!=64'hFFFFFFFF_FFFFFFFE);
+// 
+// always @ (posedge sys_clk)
+//   if (ctrl_pkt_req) begin
+//     dram_req_data_r <= sched_ctrl_m_axis_tdata;
+//     dram_req_dest_r <= sched_ctrl_m_axis_tdest;
+//   end
+// 
+// always @ (posedge sys_clk)
+//   if (sys_rst)
+//     dram_req_state <= 2'd0;
+//   else 
+//     case (dram_req_state)
+//       2'd0: if (ctrl_pkt_req) 
+//               dram_req_state <= 2'd1;
+//       2'd1: if (dram_ctrl_s_axis_tready) dram_req_state <= 2'd2;
+//       2'd2: if (dram_ctrl_s_axis_tready) dram_req_state <= 2'd0;
+//       2'd3: dram_req_state <= 2'd3; // Error
+//     endcase
+// 
 // assign dram_ctrl_s_axis_tvalid = (dram_req_state == 2'd1) ||
 //                                  (dram_req_state == 2'd2);
 // assign dram_ctrl_s_axis_tlast  = (dram_req_state == 2'd2);
 // assign dram_ctrl_s_axis_tdata  = (dram_req_state==2'd2) ? 
 //                                    64'hDEADBEEF5A5AA5A5 : dram_req_data_r; 
 // assign dram_ctrl_s_axis_tdest  = dram_req_dest_r; 
+
+assign dram_ctrl_s_axis_tvalid = 1'b0; 
+assign dram_ctrl_s_axis_tlast  = 1'b0;
+assign dram_ctrl_s_axis_tdata  = 64'hDEADBEEF5A5AA5A5;
+assign dram_ctrl_s_axis_tdest  = 0;
 
 assign dram_ctrl_m_axis_tready = 1'b1;
 
