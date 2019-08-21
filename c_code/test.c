@@ -34,8 +34,8 @@ int main(void){
 		  // safe_pkt_send(&packet); // len, &slot, &port, data);
 		  safe_pkt_done_msg(&packet); // &len, &slot, &port, data);
 			
-			// safe_dmem_write(0xAAAAAAAA, 0xBBBBBBBB, &packet);
-			dmem_read_req(0x50505050, 0x05050505, &packet);
+			safe_dram_write(0xAAAAAAAA, 0xBBBBBBBB, &packet);
+			// dram_read_req(0x50505050, 0x05050505, &packet);
 
 	 		end_time = read_timer();
 			write_setting (0, end_time-start_time);

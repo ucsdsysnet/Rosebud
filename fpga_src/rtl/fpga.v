@@ -568,8 +568,8 @@ core_inst (
      */
     .sys_clk(clk_200mhz_int),
     .sys_rst(rst_200mhz_int),
-    .core_clk(clk_183mhz_int),
-    .core_rst(rst_183mhz_int),
+    .core_clk_i(clk_183mhz_int),
+    .core_rst_i(rst_183mhz_int),
     /*
      * GPIO
      */

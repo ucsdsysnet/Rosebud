@@ -176,7 +176,7 @@ inline void reset_error (){
 }
 
 // make dram_addr_high int* 
-inline void dmem_write (const unsigned int dram_addr_high, const unsigned int dram_addr_low,
+inline void dram_write (const unsigned int dram_addr_high, const unsigned int dram_addr_low,
 											  struct Desc* output_desc){ 
 	volatile unsigned int  * dram_addr_wr   = (volatile unsigned int *)  DRAM_WR_ADDR;
   volatile unsigned int  * data_desc      = (volatile unsigned int *)  DATA_DESC;
@@ -185,7 +185,7 @@ inline void dmem_write (const unsigned int dram_addr_high, const unsigned int dr
 	*(dram_addr_wr+1) = dram_addr_high;
 	*data_desc = (int)(output_desc->len);
   *((unsigned char*)data_desc+2) = output_desc->slot;
-  *((unsigned char*)data_desc+3) = output_desc->port;
+  // port would get overwritten by hardware 
   *(data_desc+1) = (unsigned int) (output_desc->data);
   *((unsigned char*)data_desc+7) = (4<<4);
 	asm volatile("" ::: "memory");
@@ -193,7 +193,7 @@ inline void dmem_write (const unsigned int dram_addr_high, const unsigned int dr
 	return;
 }
 
-inline void safe_dmem_write (const unsigned int dram_addr_high, const unsigned int dram_addr_low,
+inline void safe_dram_write (const unsigned int dram_addr_high, const unsigned int dram_addr_low,
 														 struct Desc* output_desc){ 
 	volatile unsigned int  * dram_addr_wr   = (volatile unsigned int *)  DRAM_WR_ADDR;
   volatile unsigned int  * data_desc      = (volatile unsigned int *)  DATA_DESC;
@@ -202,7 +202,7 @@ inline void safe_dmem_write (const unsigned int dram_addr_high, const unsigned i
 	*(dram_addr_wr+1) = dram_addr_high;
 	*data_desc = (int)(output_desc->len);
   *((unsigned char*)data_desc+2) = output_desc->slot;
-  *((unsigned char*)data_desc+3) = output_desc->port;
+  // port would get overwritten by hardware 
   *(data_desc+1) = (unsigned int) (output_desc->data);
   *((unsigned char*)data_desc+7) = (4<<4);
 	while(!data_desc_ready());
@@ -211,7 +211,8 @@ inline void safe_dmem_write (const unsigned int dram_addr_high, const unsigned i
 	return;
 }
 
-inline void dmem_read_req (const unsigned int dram_addr_high, const unsigned int dram_addr_low,
+// slot would be replaced by dram flag  #
+inline void dram_read_req (const unsigned int dram_addr_high, const unsigned int dram_addr_low,
 													 struct Desc* output_desc){ 
 	volatile unsigned int  * dram_addr_wr   = (volatile unsigned int *)  DRAM_WR_ADDR;
   volatile unsigned int  * data_desc      = (volatile unsigned int *)  DATA_DESC;
@@ -220,7 +221,7 @@ inline void dmem_read_req (const unsigned int dram_addr_high, const unsigned int
 	*(dram_addr_wr+1) = dram_addr_high;
 	*data_desc = (int)(output_desc->len);
   *((unsigned char*)data_desc+2) = output_desc->slot;
-  *((unsigned char*)data_desc+3) = output_desc->port;
+  // There is no port for DRAM request. 
   *(data_desc+1) = (unsigned int) (output_desc->data);
   *((unsigned char*)data_desc+7) = (5<<4);
 	asm volatile("" ::: "memory");
@@ -228,7 +229,7 @@ inline void dmem_read_req (const unsigned int dram_addr_high, const unsigned int
 	return;
 }
 
-inline void safe_dmem_read_req (const unsigned int dram_addr_high, const unsigned int dram_addr_low,
+inline void safe_dram_read_req (const unsigned int dram_addr_high, const unsigned int dram_addr_low,
 															  struct Desc* output_desc){ 
 	volatile unsigned int  * dram_addr_wr   = (volatile unsigned int *)  DRAM_WR_ADDR;
   volatile unsigned int  * data_desc      = (volatile unsigned int *)  DATA_DESC;
@@ -237,8 +238,8 @@ inline void safe_dmem_read_req (const unsigned int dram_addr_high, const unsigne
 	*(dram_addr_wr+1) = dram_addr_high;
 	*data_desc = (int)(output_desc->len);
   *((unsigned char*)data_desc+2) = output_desc->slot;
-  *((unsigned char*)data_desc+3) = output_desc->port;
-  *(data_desc+1) = (unsigned int) (output_desc->data);
+  // There is no port for DRAM request. 
+	*(data_desc+1) = (unsigned int) (output_desc->data);
   *((unsigned char*)data_desc+7) = (5<<4);
 	while(!data_desc_ready());
 	asm volatile("" ::: "memory");

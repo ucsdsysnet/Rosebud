@@ -37,8 +37,8 @@ module fpga_core
      */
     input  wire       sys_clk,
     input  wire       sys_rst,
-    input  wire       core_clk,
-    input  wire       core_rst,
+    input  wire       core_clk_i,
+    input  wire       core_rst_i,
 
     /*
      * GPIO
@@ -88,6 +88,7 @@ parameter TX_FIFO_DEPTH    = 32768;
 parameter RX_FIFO_DEPTH    = 32768;
 parameter RECV_DESC_DEPTH  = 8;
 parameter SEND_DESC_DEPTH  = 8;
+parameter DRAM_DESC_DEPTH  = 16;
 parameter MSG_FIFO_DEPTH   = 16;
 parameter STG_F_DATA_DEPTH = 8192;
 parameter STG_F_CTRL_DEPTH = 32; // TKEEP is not enabled, so 32 words
@@ -101,7 +102,7 @@ parameter DRAM_PORT        = 2;
 parameter LVL1_SW_PORTS    = 4;
 parameter CORE_MSG_LVL1    = 16;
 parameter SEPARATE_CLOCKS  = 1;
-parameter ENABLE_ILA       = 0;
+parameter ENABLE_ILA       = 1;
 
 parameter CORE_WIDTH       = $clog2(CORE_COUNT);
 parameter PORT_WIDTH       = $clog2(PORT_COUNT);
@@ -114,6 +115,9 @@ parameter CORE_MSG_LVL2    = CORE_COUNT/CORE_MSG_LVL1;
 parameter LVL1_DEST_BITS   = $clog2(LVL1_SW_PORTS);
 parameter DATA_DEST_LVL2   = ID_SLOT_WIDTH-LVL1_DEST_BITS;
 parameter CTRL_DEST_LVL2   = CORE_WIDTH-LVL1_DEST_BITS;
+
+wire core_clk = SEPARATE_CLOCKS ? core_clk_i : sys_clk;
+wire core_rst = SEPARATE_CLOCKS ? core_rst_i : sys_rst;
 
 // ETH interfaces renaming
 wire [INTERFACE_COUNT-1:0]    sfp_tx_clk = {sfp_2_tx_clk, sfp_1_tx_clk};
@@ -254,6 +258,7 @@ wire                                       sched_ctrl_s_axis_tready;
 wire                                       sched_ctrl_s_axis_tlast;
 wire [CORE_WIDTH-1:0]                      sched_ctrl_s_axis_tuser;
 
+
 simple_scheduler # (
   .PORT_COUNT(PORT_COUNT),
   .INTERFACE_COUNT(INTERFACE_COUNT),
@@ -379,12 +384,18 @@ always @ (posedge sys_clk)
       2'd3: dram_req_state <= 2'd3; // Error
     endcase
 
-assign dram_ctrl_s_axis_tvalid = (dram_req_state == 2'd1) ||
-                                 (dram_req_state == 2'd2);
-assign dram_ctrl_s_axis_tlast  = (dram_req_state == 2'd2);
-assign dram_ctrl_s_axis_tdata  = (dram_req_state==2'd2) ? 
-                                   64'hDEADBEEF5A5AA5A5 : dram_req_data_r; 
-assign dram_ctrl_s_axis_tdest  = dram_req_dest_r; 
+assign dram_ctrl_s_axis_tvalid = 1'b0; 
+assign dram_ctrl_s_axis_tlast  = 1'b0;
+assign dram_ctrl_s_axis_tdata  = 64'hDEADBEEF5A5AA5A5;
+assign dram_ctrl_s_axis_tdest  = 0;
+
+// assign dram_ctrl_s_axis_tvalid = (dram_req_state == 2'd1) ||
+//                                  (dram_req_state == 2'd2);
+// assign dram_ctrl_s_axis_tlast  = (dram_req_state == 2'd2);
+// assign dram_ctrl_s_axis_tdata  = (dram_req_state==2'd2) ? 
+//                                    64'hDEADBEEF5A5AA5A5 : dram_req_data_r; 
+// assign dram_ctrl_s_axis_tdest  = dram_req_dest_r; 
+
 assign dram_ctrl_m_axis_tready = 1'b1;
 
 // Switches
@@ -776,6 +787,17 @@ generate
     assign int_ctrl_m_axis_tvalid_f = ctrl_m_axis_tvalid;
     assign int_ctrl_m_axis_tlast_f  = ctrl_m_axis_tlast;
     assign ctrl_m_axis_tready       = int_ctrl_m_axis_tready_f;
+    
+    assign dram_s_axis_tdata             = int_dram_ctrl_s_axis_tdata;
+    assign dram_s_axis_tvalid            = int_dram_ctrl_s_axis_tvalid; 
+    assign dram_s_axis_tlast             = int_dram_ctrl_s_axis_tlast;
+    assign int_dram_ctrl_s_axis_tready   = dram_s_axis_tready;    
+ 
+    assign int_dram_ctrl_m_axis_tdata_f  = dram_m_axis_tdata;
+    assign int_dram_ctrl_m_axis_tuser_f  = dram_m_axis_tuser;
+    assign int_dram_ctrl_m_axis_tvalid_f = dram_m_axis_tvalid;
+    assign int_dram_ctrl_m_axis_tlast_f  = dram_m_axis_tlast;
+    assign dram_m_axis_tready            = int_dram_ctrl_m_axis_tready_f;
   
   end else begin
 
@@ -1344,6 +1366,7 @@ generate
         .INTERLEAVE(INTERLEAVE),
         .RECV_DESC_DEPTH(RECV_DESC_DEPTH),
         .SEND_DESC_DEPTH(SEND_DESC_DEPTH),
+        .DRAM_DESC_DEPTH(DRAM_DESC_DEPTH),
         .MSG_FIFO_DEPTH(MSG_FIFO_DEPTH),
         .PORT_COUNT(PORT_COUNT),
         .LEN_WIDTH(LEN_WIDTH),
@@ -1357,8 +1380,8 @@ generate
     core_wrapper (
         .sys_clk(sys_clk),
         .sys_rst(sys_rst),
-        .core_clk_i(core_clk),
-        .core_rst_i(core_rst),
+        .core_clk(core_clk),
+        .core_rst(core_rst),
 
         // ---------------- DATA CHANNEL --------------- // 
         // Incoming data
@@ -1425,15 +1448,53 @@ endgenerate
 
 // ILA
 if (ENABLE_ILA) begin
-  reg [63:0] useful_tdest_h, useful_tdest_l;
+  reg [63:0] useful_tdest;
+  reg [63:0] ctrl_m_msg_type;
+  reg [63:0] ctrl_m_msg_slot;
+  reg [63:0] ctrl_m_msg_port;
+  reg [63:0] ctrl_s_msg_type;
+  reg [63:0] ctrl_s_msg_slot;
+  reg [63:0] ctrl_s_msg_port;
   integer k;
   always @ (*)
-    for (k=0; k<8; k=k+1) begin
-      useful_tdest_h[k*8+:8]=data_s_axis_tdest[96+(k*12)+:8];
-      useful_tdest_l[k*8+:8]=data_s_axis_tdest[k*12+:8];
+    for (k=0; k<CORE_COUNT; k=k+1) begin
+      useful_tdest [k*SLOT_WIDTH +: SLOT_WIDTH] = data_s_axis_tdest[DATA_DEST_LVL2*k +: SLOT_WIDTH];
+      ctrl_m_msg_type [k*4+:4] = ctrl_m_axis_tdata [(k*AXIS_DATA_WIDTH)+60 +:4];
+      ctrl_m_msg_slot [k*4+:4] = ctrl_m_axis_tdata [(k*AXIS_DATA_WIDTH)+16 +:4];
+      ctrl_m_msg_port [k*4+:4] = ctrl_m_axis_tdata [(k*AXIS_DATA_WIDTH)+24 +:4];
+      ctrl_s_msg_type [k*4+:4] = ctrl_s_axis_tdata [(k*AXIS_DATA_WIDTH)+60 +:4];
+      ctrl_s_msg_slot [k*4+:4] = ctrl_s_axis_tdata [(k*AXIS_DATA_WIDTH)+16 +:4];
+      ctrl_s_msg_port [k*4+:4] = ctrl_s_axis_tdata [(k*AXIS_DATA_WIDTH)+24 +:4];
     end
 
-  ila_8x64 debugger3 (
+  // Updated signals, just disabled for BRAM utilization
+  // ila_4x64 debugger3 (
+  //   .clk    (sys_clk),
+ 
+  //   .trig_out(),
+  //   .trig_out_ack(1'b0),
+  //   .trig_in (1'b0),
+  //   .trig_in_ack(),
+ 
+  //   .probe0 ({
+  //     data_s_axis_tvalid,
+  //     data_s_axis_tready,
+  //     data_m_axis_tdest
+  //   }),
+
+  //   .probe1 ({
+  //     data_m_axis_tvalid,
+  //     data_m_axis_tready,
+  //     data_m_axis_tlast,
+  //     data_s_axis_tlast
+  //   }),
+  //       
+  //   .probe2 (useful_tdest),
+  //   .probe3 (data_s_axis_tuser)
+
+  // );
+
+  ila_8x64 debugger4 (
     .clk    (sys_clk),
  
     .trig_out(),
@@ -1441,29 +1502,19 @@ if (ENABLE_ILA) begin
     .trig_in (1'b0),
     .trig_in_ack(),
  
-    .probe0 ({
-      data_s_axis_tvalid,
-      data_s_axis_tready,
-      data_s_axis_tlast,
-      data_s_axis_tuser
-    }),
-
-    .probe1 ({
-      data_m_axis_tvalid,
-      data_m_axis_tready,
-      data_m_axis_tlast,
-      data_m_axis_tdest
-    }),
-        
-    .probe2 (data_m_axis_tkeep[63:0]),
-    .probe3 (data_m_axis_tkeep[127:64]),
-
-    .probe4 (data_s_axis_tkeep[63:0]),
-    .probe5 (data_s_axis_tkeep[127:64]),
-    .probe6 (useful_tdest_l),
-    .probe7 (useful_tdest_h)
-
+    .probe0({ctrl_s_axis_tvalid, ctrl_s_axis_tready, 
+            ctrl_s_axis_tlast}),
+    .probe1(ctrl_s_msg_type),
+    .probe2(ctrl_s_msg_slot),
+    .probe3(ctrl_s_msg_port),
+    
+    .probe4({ctrl_m_axis_tvalid, ctrl_m_axis_tready, 
+            ctrl_m_axis_tlast}),
+    .probe5(ctrl_m_msg_type),
+    .probe6(ctrl_m_msg_slot),
+    .probe7(ctrl_m_msg_port)
   );
+
 end
 
 endmodule

@@ -100,8 +100,8 @@ end
 fpga_core UUT(
     .sys_clk(sys_clk),
     .sys_rst(sys_rst),
-    .core_clk(core_clk),
-    .core_rst(core_rst),
+    .core_clk_i(core_clk),
+    .core_rst_i(core_rst),
 
     .sfp_1_led(),
     .sfp_2_led(),

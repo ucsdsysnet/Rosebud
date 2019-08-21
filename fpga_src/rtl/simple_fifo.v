@@ -109,7 +109,7 @@ always @ (posedge clk)
 	if (rst || clear) begin
     full_r  <= 1'b0;
     empty_r <= 1'b1;
-	end else if (enque | deque) begin
+	end else if (enque ^ deque) begin
     full_r  <= ((wptr + {{(ADDR_WIDTH-1){1'b0}},1'b1}) == rptr) && enque;
     empty_r <= ((rptr + {{(ADDR_WIDTH-1){1'b0}},1'b1}) == wptr) && deque;
 	end

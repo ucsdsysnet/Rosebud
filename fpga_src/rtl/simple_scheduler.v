@@ -78,8 +78,11 @@ module simple_scheduler # (
   wire rx_desc_v; 
 
   assign sending_last_word = rx_axis_tvalid & rx_axis_tlast & rx_axis_tready;
-  assign rx_desc_pop = selected_port_v;
-  wire [INTERFACE_COUNT-1:0] desc_req = (~(dest_r_v|selected_port))|sending_last_word;
+  assign rx_desc_pop = selected_port_v && rx_desc_v;
+  // If one of the descriptors are not valid or a last word is being sent that means they need a new descriptor.
+  // If a descriptor is being assigned or there is no descriptors available the request would be masked.
+  wire [INTERFACE_COUNT-1:0] desc_req = ((~dest_r_v)|sending_last_word) & 
+                                        {INTERFACE_COUNT{rx_desc_v}} & (~selected_port);
   
   arbiter # (.PORTS(INTERFACE_COUNT),.TYPE("ROUND_ROBIN")) port_selector (
     .clk(clk),
@@ -95,8 +98,8 @@ module simple_scheduler # (
 
   always @ (posedge clk) begin
     dest_r_v <= dest_r_v & (~sending_last_word);
-    if (selected_port_v) begin
-      dest_r_v[selected_port_enc] <= rx_desc_v;
+    if (selected_port_v && rx_desc_v) begin
+      dest_r_v[selected_port_enc] <= 1'b1;
       dest_r[selected_port_enc*ID_SLOT_WIDTH +: ID_SLOT_WIDTH] <= rx_desc_data;
     end
     if (rst)
@@ -137,10 +140,10 @@ module simple_scheduler # (
   assign rx_desc_v          = | rx_desc_slot_v;
   assign rx_desc_data       = {selected_desc, rx_desc_slot[selected_desc]};
 
-  wire [7:0] msg_type = ctrl_s_axis_tdata[DATA_WIDTH-1:DATA_WIDTH-4];
+  wire [3:0] msg_type = ctrl_s_axis_tdata[DATA_WIDTH-1:DATA_WIDTH-4];
 
   // Slot descriptor loader module 
-  wire [CORE_COUNT-1:0] desc_fifo_clear, loader_valid, busy_by_loader;
+  wire [CORE_COUNT-1:0] desc_fifo_clear, loader_valid, busy_by_loader, rx_desc_fifo_v;
   wire [SLOT_WIDTH-1:0] loader_slot;
   wire                  loader_ready;
 
@@ -175,7 +178,7 @@ module simple_scheduler # (
         .rst(rst),
         .clear(desc_fifo_clear[i]),
       
-        .din_valid((ctrl_s_axis_tvalid && (ctrl_s_axis_tuser==i) && (msg_type==0)) || loader_valid[i]),
+        .din_valid(rx_desc_fifo_v[i]), 
         .din(loader_valid[i] ? loader_slot : ctrl_s_axis_tdata[LEN_WIDTH+SLOT_WIDTH-1:LEN_WIDTH]),
         .din_ready(rx_desc_slot_accept_temp[i]),
        
@@ -187,6 +190,8 @@ module simple_scheduler # (
       );
       // If there is no data in any fifo max_finder would return 0, meaning first core is selected.
       // but since rx_desc_v is zero (all fifoes are not-valid) this ready is not used
+      assign rx_desc_fifo_v[i]      = (ctrl_s_axis_tvalid && (ctrl_s_axis_tuser==i) && (msg_type==0)) 
+                                       || loader_valid[i];
       assign rx_desc_slot_pop[i]    = rx_desc_pop && (selected_desc==i);
       assign rx_desc_slot_accept[i] = rx_desc_slot_accept_temp[i] && (!busy_by_loader[i]);
     end
@@ -265,14 +270,14 @@ module simple_scheduler # (
         core_rst_counter <= core_rst_counter + 1;
 
   // making the descriptor type to be 0, so core would send out. 
-  assign ctrl_m_axis_tdata  = core_reset_in_prog ? 64'hFFFFFFFF_FFFFFFFE : {8'd0,loopback_data[DATA_WIDTH-9:0]};
-  assign ctrl_m_axis_tlast  = 1'b1;
+  assign ctrl_m_axis_tdata  = core_reset_in_prog ? 64'hFFFFFFFF_FFFFFFFE : {4'd0,loopback_data[DATA_WIDTH-5:0]};
   assign ctrl_m_axis_tvalid = core_reset_in_prog || loopback_valid;
+  assign ctrl_m_axis_tlast  = ctrl_m_axis_tvalid;
   assign ctrl_m_axis_tdest  = core_reset_in_prog ? reordered_core_rst_counter : loopback_dest;
 
   assign loopback_ready = (!core_reset_in_prog) && ctrl_m_axis_tready;
 
-if (ENABLE_ILA) begin // NOT UP TO DATE TO THE LATEST CODE
+if (ENABLE_ILA) begin
   wire trig_out_1, trig_out_2;
   wire ack_1, ack_2;
 
@@ -305,27 +310,26 @@ if (ENABLE_ILA) begin // NOT UP TO DATE TO THE LATEST CODE
         tx_count_1 <= tx_count_1 + 16'd1;
     end
 
+  wire hang_trigger = ctrl_s_axis_tvalid && (!ctrl_s_axis_tready) && (msg_type==0);
+
   ila_4x64 debugger1 (
     .clk    (clk),
  
     .trig_out(trig_out_1),
-    .trig_out_ack(ack_1),
-    .trig_in (trig_out_2),
+    .trig_out_ack(1'b0), // ack_1),
+    .trig_in (hang_trigger), // trig_out_2 || hang_trigger),
     .trig_in_ack(ack_2),
  
     .probe0 ({
        rx_axis_tkeep,
        data_m_axis_tdest,
-       data_m_axis_tuser,
-       rx_axis_tvalid, 
-       rx_axis_tready, 
-       rx_axis_tlast,
-       sending_last_word
+       ctrl_m_axis_tdata[31:0]
+       // rx_count_0,
     }),
     
     .probe1 ({
        ctrl_s_axis_tdata[31:0],
-       rx_count_0,
+       data_m_axis_tuser,
        ctrl_m_axis_tdest,
        ctrl_s_axis_tuser,
        ctrl_m_axis_tvalid,
@@ -334,45 +338,55 @@ if (ENABLE_ILA) begin // NOT UP TO DATE TO THE LATEST CODE
        ctrl_s_axis_tvalid,
        ctrl_s_axis_tready,
        ctrl_s_axis_tlast,
-       dest_r_v
-     
+       dest_r_v,
+       msg_type,
+       rx_axis_tvalid, 
+       rx_axis_tready, 
+       rx_axis_tlast,
+       sending_last_word
      }),
   
-    .probe2 (rx_axis_tdata[63:0]),
+    .probe2 (rx_desc_count), 
 
-    .probe3 (rx_axis_tdata[127:64])
+    .probe3 ({rx_desc_fifo_v, rx_desc_slot_accept,
+              rx_desc_slot_v, rx_desc_slot_pop})
+
+    // .probe2 (rx_axis_tdata[63:0]),
+
+    // .probe3 (rx_axis_tdata[127:64])
   );
 
-  ila_8x64 debugger2 (
-    .clk    (clk),
+  // Updated signals, just disabled for saving BRAMs
+  // ila_8x64 debugger2 (
+  //   .clk    (clk),
  
-    .trig_out(trig_out_2),
-    .trig_out_ack(ack_2),
-    .trig_in (trig_out_1),
-    .trig_in_ack(ack_1),
-   
-    .probe0 ({
-       data_s_axis_tkeep,
-       data_s_axis_tuser,
-       rx_desc_data,
-       data_s_axis_tdest,
-       data_s_axis_tvalid, 
-       data_s_axis_tready, 
-       data_s_axis_tlast,
-       rx_desc_v, 
-       rx_desc_pop
-     }),
-  
-    .probe1 (ctrl_m_axis_tdata),
-    
-    .probe2 (data_s_axis_tdata[63:0]),
+  //   .trig_out(trig_out_2),
+  //   .trig_out_ack(ack_2),
+  //   .trig_in (trig_out_1 || hang_trigger),
+  //   .trig_in_ack(ack_1),
+  //  
+  //   .probe0 ({
+  //      data_s_axis_tkeep,
+  //      data_s_axis_tuser,
+  //      rx_desc_data,
+  //      data_s_axis_tdest,
+  //      data_s_axis_tvalid, 
+  //      data_s_axis_tready, 
+  //      data_s_axis_tlast,
+  //      rx_desc_v, 
+  //      rx_desc_pop
+  //    }),
+  // 
+  //   .probe1 (ctrl_m_axis_tdata),
+  //   
+  //   .probe2 (data_s_axis_tdata[63:0]),
 
-    .probe3 (data_s_axis_tdata[127:64]),
-    
-    .probe4 (tx_count_1), .probe5 (tx_count_0), 
-    .probe6 (rx_count_1), .probe7 (rx_count_0)
+  //   .probe3 (data_s_axis_tdata[127:64]),
+  //   
+  //   .probe4 (tx_count_1), .probe5 (tx_count_0), 
+  //   .probe6 (rx_count_1), .probe7 (rx_count_0)
  
-  );
+  // );
 end
 
 endmodule

@@ -16,7 +16,7 @@ module riscv_axis_wrapper # (
     parameter INTERLEAVE      = 1,
     parameter RECV_DESC_DEPTH = 8,
     parameter SEND_DESC_DEPTH = 8,
-    parameter DRAM_DESC_DEPTH = 8,
+    parameter DRAM_DESC_DEPTH = 16,
     parameter MSG_FIFO_DEPTH  = 16,
     parameter PORT_COUNT      = 4,
     parameter LEN_WIDTH       = 16,
@@ -24,7 +24,7 @@ module riscv_axis_wrapper # (
     parameter CORE_ID_WIDTH   = 4, 
     parameter SLOT_START_ADDR = 16'h2000,
     parameter SLOT_ADDR_STEP  = 16'h0800,
-    parameter DRAM_PORT       = 4,
+    parameter DRAM_PORT       = 2,
 
     parameter STRB_WIDTH      = (DATA_WIDTH/8),
     parameter SLOT_WIDTH      = $clog2(SLOT_COUNT+1), 
@@ -40,8 +40,8 @@ module riscv_axis_wrapper # (
 (
     input  wire                     sys_clk,
     input  wire                     sys_rst,
-    input  wire                     core_clk_i,
-    input  wire                     core_rst_i,
+    input  wire                     core_clk,
+    input  wire                     core_rst,
 
     // ---------------- DATA CHANNEL --------------- // 
     // Incoming data
@@ -102,11 +102,7 @@ module riscv_axis_wrapper # (
     input  wire                     core_msg_in_valid
 );
 
-wire core_clk = SEPARATE_CLOCKS ? core_clk_i : sys_clk;
-wire core_rst = SEPARATE_CLOCKS ? core_rst_i : sys_rst;
-
 assign data_m_axis_tuser [SLOT_WIDTH +: CORE_ID_WIDTH] = CORE_ID; 
-assign ctrl_m_axis_tuser = CORE_ID;
 assign dram_m_axis_tuser = CORE_ID;
 
 /////////////////////////////////////////////////////////////////////
@@ -649,10 +645,13 @@ simple_fifo # (
 
 // Latch the output descriptor and send it to controller when 
 // it is transmitted
+wire pkt_sent_ready; // should always be ready
 reg [63:0] latched_send_desc;
 always @ (posedge sys_clk) 
-    if (send_desc_valid && send_desc_ready)
+    if (send_desc_valid && send_desc_ready && pkt_sent_ready)
         latched_send_desc <= send_desc;
+
+wire pkt_sent_is_dram = (latched_send_desc[PORT_WIDTH+23:24]==dram_port);
 
 // A FIFO for outgoing control messages
 wire pkt_sent_valid_f, pkt_sent_ready_f;
@@ -666,9 +665,9 @@ simple_fifo # (
   .rst(sys_rst),
   .clear(1'b0),
 
-  .din_valid(pkt_sent && (latched_send_desc[PORT_WIDTH+23:24]!=dram_port)), 
+  .din_valid(pkt_sent && (!pkt_sent_is_dram)), 
   .din(latched_send_desc),
-  .din_ready(),
+  .din_ready(pkt_sent_ready),
  
   .dout_valid(pkt_sent_valid_f),
   .dout(pkt_sent_desc_f),
@@ -789,19 +788,44 @@ always @ (*)
   else
     dram_out_select = dram_next_selection_r; 
 
-assign dram_wr_ready   = dram_wr_valid && dram_out_select && send_desc_ready;
-assign send_pkt_ready  = send_pkt_valid && !dram_out_select && send_desc_ready;
+assign dram_wr_ready   = dram_wr_valid && dram_out_select && send_desc_ready && pkt_sent_ready;
+assign send_pkt_ready  = send_pkt_valid && !dram_out_select && send_desc_ready && pkt_sent_ready;
 assign send_desc       = dram_out_select ? dram_wr_desc[63:0] : send_pkt_desc;
-assign send_desc_valid = dram_wr_valid || send_pkt_valid;
+assign send_desc_valid = (dram_wr_valid || send_pkt_valid) && pkt_sent_ready;
 
 // CTRL out arbiter between packet sent and core message to scheduler
 // Priority to releasing a desc
-wire   ctrl_select            = pkt_sent_valid_f;
-assign ctrl_m_axis_tvalid     = pkt_sent_valid_f || core_ctrl_wr_valid_f; 
-assign ctrl_m_axis_tdata      = ctrl_select ? pkt_sent_desc_f : core_ctrl_wr_desc_f;
-assign ctrl_m_axis_tlast      = 1'b1;
-assign core_ctrl_wr_ready_f = ctrl_m_axis_tready && (!ctrl_select);
-assign pkt_sent_ready_f         = ctrl_m_axis_tready &&   ctrl_select ;
+wire [DATA_WIDTH-1:0] ctrl_out_data;
+wire ctrl_out_valid, ctrl_out_ready;
+
+wire   ctrl_select          = pkt_sent_valid_f;
+assign ctrl_out_valid       = pkt_sent_valid_f || core_ctrl_wr_valid_f; 
+assign ctrl_out_data        = ctrl_select ? pkt_sent_desc_f : core_ctrl_wr_desc_f;
+assign core_ctrl_wr_ready_f = ctrl_out_ready && (!ctrl_select);
+assign pkt_sent_ready_f     = ctrl_out_ready &&   ctrl_select ;
+
+// Latching the output to deal with the next stage valid/ready
+reg [DATA_WIDTH-1:0] ctrl_m_axis_tdata_r;
+reg                  ctrl_m_axis_tvalid_r;
+
+always @ (posedge sys_clk) begin
+  if (ctrl_out_valid && (!ctrl_m_axis_tvalid_r || ctrl_m_axis_tready)) begin
+    ctrl_m_axis_tdata_r  <= ctrl_out_data;
+    ctrl_m_axis_tvalid_r <= 1'b1;
+  end else if (ctrl_m_axis_tready && !ctrl_out_valid) begin
+    ctrl_m_axis_tvalid_r <= 1'b0;
+  end
+  if (sys_rst) begin
+    ctrl_m_axis_tvalid_r <= 1'b0;
+    ctrl_m_axis_tdata_r  <= 64'd0;
+  end
+end 
+
+assign ctrl_m_axis_tvalid = ctrl_m_axis_tvalid_r;
+assign ctrl_m_axis_tdata  = ctrl_m_axis_tdata_r;
+assign ctrl_m_axis_tlast  = ctrl_m_axis_tvalid;
+assign ctrl_m_axis_tuser  = CORE_ID;
+assign ctrl_out_ready     = (!ctrl_m_axis_tvalid_r) || ctrl_m_axis_tready; 
 
 /////////////////////////////////////////////////////////////////////
 /////////////////////// BROADCAST MESSAGING /////////////////////////

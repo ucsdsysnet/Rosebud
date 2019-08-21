@@ -81,10 +81,10 @@ def bench():
     CTRL_WIDTH = (DATA_WIDTH/8)
     AXI_ADDR_WIDTH = 16
 
-    SEND_COUNT_0 = 100
-    SEND_COUNT_1 = 100
-    SIZE_0       = 72 - 18 
-    SIZE_1       = 73 - 18
+    SEND_COUNT_0 = 300
+    SEND_COUNT_1 = 300
+    SIZE_0       = 1518 - 18 
+    SIZE_1       = 1532 - 18
     CHECK_PKT    = True
 
     # Inputs
@@ -223,20 +223,23 @@ def bench():
           test_frame_1.update_fcs()
           axis_frame = test_frame_1.build_axis_fcs()
           xgmii_source_0.send(b'\x55\x55\x55\x55\x55\x55\x55\xD5'+bytearray(axis_frame))
+          # yield delay(random.randrange(128))
           yield rx_clk_0.posedge
           # yield rx_clk_0.posedge
-          # yield delay(random.randrange(200))
 
     def port2():
         for i in range (0,SEND_COUNT_1):
           # test_frame_2.payload = bytes([x%256 for x in range(10,10+random.randrange(300))])
+          # if (i%20==19):
+          #   test_frame_2.payload = bytes([x%256 for x in range(78-14)])
+          # else:
           test_frame_2.payload = bytes([x%256 for x in range(SIZE_1)])
           test_frame_2.update_fcs()
           axis_frame_2 = test_frame_2.build_axis_fcs()
           xgmii_source_1.send(b'\x55\x55\x55\x55\x55\x55\x55\xD5'+bytearray(axis_frame_2))
+          # yield delay(random.randrange(128))
           yield rx_clk_1.posedge
           # yield rx_clk_1.posedge
-          # yield delay(random.randrange(50000))
 
     @instance
     def check():
