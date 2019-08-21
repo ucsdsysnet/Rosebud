@@ -157,7 +157,7 @@ module simple_scheduler # (
   
     .req_valid(ctrl_s_axis_tvalid && (msg_type==3)),
     .req_dest(ctrl_s_axis_tuser),
-    .slot_count(ctrl_s_axis_tdata[SLOT_WIDTH-1:0]),
+    .slot_count(ctrl_s_axis_tdata[LEN_WIDTH +: SLOT_WIDTH]),
     .req_ready(loader_ready),
   
     .clear_fifo(desc_fifo_clear),
@@ -180,7 +180,7 @@ module simple_scheduler # (
         .clear(desc_fifo_clear[i]),
       
         .din_valid(rx_desc_fifo_v[i]), 
-        .din(loader_valid[i] ? loader_slot : ctrl_s_axis_tdata[LEN_WIDTH+SLOT_WIDTH-1:LEN_WIDTH]),
+        .din(loader_valid[i] ? loader_slot : ctrl_s_axis_tdata[LEN_WIDTH +: SLOT_WIDTH]),
         .din_ready(rx_desc_slot_accept_temp[i]),
        
         .dout_valid(rx_desc_slot_v[i]),

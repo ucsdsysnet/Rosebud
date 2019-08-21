@@ -44,7 +44,8 @@ inline void init_slots (const unsigned int slot_count,
 		*update_slot  = 1;
 	}
 
-  *data_desc = slot_count;
+  *data_desc = addr_step;
+  *(((unsigned char*)data_desc)+2) = (unsigned char) slot_count;
   *(data_desc+1) = (3<<28);
   asm volatile("" ::: "memory");
   * data_desc_send = 1;
