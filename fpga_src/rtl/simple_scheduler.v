@@ -141,7 +141,8 @@ module simple_scheduler # (
   assign rx_desc_v          = | rx_desc_slot_v;
   assign rx_desc_data       = {selected_desc, rx_desc_slot[selected_desc]};
 
-  wire [3:0] msg_type = ctrl_s_axis_tdata[CTRL_WIDTH-1:CTRL_WIDTH-4];
+  wire [3:0]            msg_type = ctrl_s_axis_tdata[CTRL_WIDTH-1:CTRL_WIDTH-4];
+  wire [SLOT_WIDTH-1:0] msg_slot = ctrl_s_axis_tdata[LEN_WIDTH +: SLOT_WIDTH]; 
 
   // Slot descriptor loader module 
   wire [CORE_COUNT-1:0] desc_fifo_clear, loader_valid, busy_by_loader, rx_desc_fifo_v;
@@ -157,7 +158,7 @@ module simple_scheduler # (
   
     .req_valid(ctrl_s_axis_tvalid && (msg_type==3)),
     .req_dest(ctrl_s_axis_tuser),
-    .slot_count(ctrl_s_axis_tdata[LEN_WIDTH +: SLOT_WIDTH]),
+    .slot_count(msg_slot),
     .req_ready(loader_ready),
   
     .clear_fifo(desc_fifo_clear),
@@ -180,7 +181,7 @@ module simple_scheduler # (
         .clear(desc_fifo_clear[i]),
       
         .din_valid(rx_desc_fifo_v[i]), 
-        .din(loader_valid[i] ? loader_slot : ctrl_s_axis_tdata[LEN_WIDTH +: SLOT_WIDTH]),
+        .din(loader_valid[i] ? loader_slot : msg_slot),
         .din_ready(rx_desc_slot_accept_temp[i]),
        
         .dout_valid(rx_desc_slot_v[i]),
@@ -191,10 +192,10 @@ module simple_scheduler # (
       );
       // If there is no data in any fifo max_finder would return 0, meaning first core is selected.
       // but since rx_desc_v is zero (all fifoes are not-valid) this ready is not used
-      assign rx_desc_fifo_v[i]      = (ctrl_s_axis_tvalid && (ctrl_s_axis_tuser==i) && (msg_type==0)) 
+      assign rx_desc_fifo_v[i]      = (ctrl_s_axis_tvalid && (ctrl_s_axis_tuser==i) && (msg_type==0) && (msg_slot!=0)) 
                                        || loader_valid[i];
       assign rx_desc_slot_pop[i]    = rx_desc_pop && (selected_desc==i);
-      assign rx_desc_slot_accept[i] = rx_desc_slot_accept_temp[i] && (!busy_by_loader[i]);
+      assign rx_desc_slot_accept[i] = (rx_desc_slot_accept_temp[i] || (msg_slot==0)) && (!busy_by_loader[i]);
     end
   endgenerate
 
@@ -246,6 +247,7 @@ module simple_scheduler # (
     .dout_ready(loopback_ready)
   );
 
+  // We ignore info messages for now
   assign ctrl_s_axis_tready = ((|(rx_desc_slot_accept & (1<<ctrl_s_axis_tuser))) && (msg_type==0)) ||
                                  (loopback_in_ready && (msg_type==1)) || 
                                  (loader_ready && (msg_type==3));

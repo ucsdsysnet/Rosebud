@@ -81,11 +81,11 @@ def bench():
     CTRL_WIDTH = (DATA_WIDTH/8)
     AXI_ADDR_WIDTH = 16
 
-    SEND_COUNT_0 = 300
-    SEND_COUNT_1 = 300
-    SIZE_0       = 1518 - 18 
-    SIZE_1       = 1532 - 18
-    CHECK_PKT    = True
+    SEND_COUNT_0 = 50
+    SEND_COUNT_1 = 50
+    SIZE_0       = 150 - 18 
+    SIZE_1       = 150 - 18
+    CHECK_PKT    = False
 
     # Inputs
     sys_clk  = Signal(bool(0))
