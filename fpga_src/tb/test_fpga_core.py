@@ -83,8 +83,8 @@ def bench():
 
     SEND_COUNT_0 = 50
     SEND_COUNT_1 = 50
-    SIZE_0       = 1500 - 18 
-    SIZE_1       = 1500 - 18
+    SIZE_0       = 150 - 18 
+    SIZE_1       = 150 - 18
     CHECK_PKT    = True
 
     # Inputs

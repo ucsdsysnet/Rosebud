@@ -44,17 +44,22 @@ int main(void){
 }
 
 void exception(void){
-	int cause = read_csr(mcause);
+	int cause = csr_read(mcause);
 	if(cause < 0){ //interrupt
-		write_setting (0xDEADDEAD, 0xBEEFBEEF);
-		reset_timer();
-		set_csr(mstatus, MSTATUS_MIE);
+		switch(cause & 0xFF){
+			case CAUSE_MACHINE_TIMER:{
+				write_setting (0xDEADDEAD, 0xBEEFBEEF);
+			} break;
+			case CAUSE_MACHINE_EXT_INT: {
+				write_setting (0x5A5A5A5A, 0xAAAA5555);
+			} break;
+			default: break;
+		}
 	} else { //exception
 		write_setting (0xABABABAB, 0xCDCDCDCD);
-		reset_timer();
-		set_csr(mstatus, MSTATUS_MIE);
-	
 	}
+	reset_timer();
+	csr_set(mstatus, MSTATUS_MIE);
 	return;
 };
 

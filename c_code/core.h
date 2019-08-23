@@ -1,7 +1,7 @@
 #ifndef CORE_H
 #define CORE_H
 
-#include "riscv_encoding.h"
+#include "riscv.h"
 // time read is not supported by Vexriscv
 
 #define IO_START					0x8000

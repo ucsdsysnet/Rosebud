@@ -81,10 +81,10 @@ VexRiscv core (
       .dBus_cmd_payload_data(dmem_wr_data),
       .dBus_cmd_payload_size(dmem_byte_count),
       .dBus_rsp_ready(dmem_read_ready),
-      .dBus_rsp_error(dmem_access_err || io_access_data_err || io_byte_access_err || timer_interrupt), // 1'b0),
+      .dBus_rsp_error(dmem_access_err || io_access_data_err || io_byte_access_err), // 1'b0),
       .dBus_rsp_data(dmem_read_data),
       
-      .timerInterrupt(), // timer_interrupt), 
+      .timerInterrupt(timer_interrupt), 
       .externalInterrupt(interrupt_in),
       .softwareInterrupt(1'b0)
 );
@@ -263,7 +263,7 @@ always @ (posedge clk)
 always @ (posedge clk)
   if (rst || reset_timer)
     timer_interrupt <= 1'b0;
-  else if (internal_timer[11:0] == {12{1'b1}})
+  else if (internal_timer[9:0] == {10{1'b1}})
     timer_interrupt <= 1'b1;
 
 ///////////////////////////////////////////////////////////////////////////
