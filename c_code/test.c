@@ -2,6 +2,8 @@
 
 int main(void){
 
+	// set_csr(mie, MIP_MEIP);
+	// set_csr(mstatus, MSTATUS_MIE);
 	
 	volatile unsigned short * sh_test  = (volatile unsigned short *) 0x0700A;
 
@@ -40,4 +42,11 @@ int main(void){
   
   return 1;
 }
+
+void exception(void){
+	write_setting (0xDEADDEAD, 0xBEEFBEEF);
+	reset_timer();
+	set_csr(mstatus, MSTATUS_MIE);
+	return;
+};
 

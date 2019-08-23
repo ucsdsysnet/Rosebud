@@ -61,6 +61,7 @@ reg  io_access_data_err, io_byte_access_err;
 wire [1:0] dmem_byte_count;
 wire io_not_mem = dmem_addr[ADDR_WIDTH-1];
 wire [4:0] dmem_word_write_mask;
+reg timer_interrupt;
 
 VexRiscv core (
       .clk(clk),
@@ -83,8 +84,9 @@ VexRiscv core (
       .dBus_rsp_error(dmem_access_err || io_access_data_err || io_byte_access_err), // 1'b0),
       .dBus_rsp_data(dmem_read_data),
       
-      .timerInterrupt(), 
-      .externalInterrupt(interrupt_in)
+      .timerInterrupt(timer_interrupt), 
+      .externalInterrupt(interrupt_in),
+      .softwareInterrupt(1'b0)
 );
 
 ///////////////////////////////////////////////////////////////////////////
@@ -257,6 +259,12 @@ always @ (posedge clk)
     internal_timer <= 32'd0;
   else
     internal_timer <= internal_timer + 32'd1;
+
+always @ (posedge clk)
+  if (rst || reset_timer)
+    timer_interrupt <= 1'b0;
+  else if (internal_timer[9:0] == {10{1'b1}})
+    timer_interrupt <= 1'b1;
 
 ///////////////////////////////////////////////////////////////////////////
 /////////////////////// WORD LENGTH ADJUSTMENT ////////////////////////////

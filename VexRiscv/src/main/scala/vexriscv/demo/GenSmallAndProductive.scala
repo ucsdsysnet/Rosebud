@@ -16,7 +16,7 @@ object GenSmallAndProductive extends App{
           cmdForkOnSecondStage = false,
           cmdForkPersistence = false,
           prediction = NONE, // STATIC, // DYNAMIC_TARGET, // NONE,
-          catchAccessFault = true,
+          catchAccessFault = false,
           compressedGen = false,
           busLatencyMin = 1
         ),
@@ -25,28 +25,7 @@ object GenSmallAndProductive extends App{
           catchAccessFault = true,
           earlyInjection = true
         ),
-        new CsrPlugin(
-          config = CsrPluginConfig(
-            catchIllegalAccess = false,
-            mvendorid      = null,
-            marchid        = null,
-            mimpid         = null,
-            mhartid        = null,
-            misaExtensionsInit = 66,
-            misaAccess     = CsrAccess.NONE,
-            mtvecAccess    = CsrAccess.NONE,
-            mtvecInit      = 0x00000200l,
-            mepcAccess     = CsrAccess.READ_WRITE,
-            mscratchGen    = false,
-            mcauseAccess   = CsrAccess.READ_ONLY,
-            mbadaddrAccess = CsrAccess.READ_ONLY,
-            mcycleAccess   = CsrAccess.NONE,
-            minstretAccess = CsrAccess.NONE,
-            ecallGen       = false,
-            wfiGenAsWait   = false,
-            ucycleAccess   = CsrAccess.NONE
-          )
-        ),        
+        new CsrPlugin(CsrPluginConfig.smallest(0x00000200l)),
         new DecoderSimplePlugin(
           catchIllegalInstruction = true
         ),
@@ -62,7 +41,6 @@ object GenSmallAndProductive extends App{
         new FullBarrelShifterPlugin(
           earlyInjection = true
         ),
-        // new LightShifterPlugin,
         new HazardSimplePlugin(
           bypassExecute           = true,
           bypassMemory            = true,

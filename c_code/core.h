@@ -1,6 +1,8 @@
 #ifndef CORE_H
 #define CORE_H
 
+#include "riscv_encoding.h"
+
 #define IO_START					0x8000
 // update slot start addr and step, and ctrl msg code for slot init
 // Setting is byte addressable for read and write, no function for it though
@@ -22,6 +24,8 @@
 #define UPDATE_SLOT       (IO_START + 0x003B) 
 #define RESET_TIMER 		  (IO_START + 0x003C) 
 #define ERROR_CLEAR			  (IO_START + 0x003D)
+
+extern void exception(void) __attribute__ ((section ("except"))) __attribute__((interrupt));
 
 struct Desc {
 	unsigned int*  data;
