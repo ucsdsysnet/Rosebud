@@ -35,7 +35,7 @@ int main(void){
 			safe_dram_write(0xAAAAAAAA, 0xBBBBBBBB, &packet);
 
 	 		end_time = read_timer();
-			write_setting (0, end_time-start_time);
+			write_setting (end_time, start_time);
 
   	}
   }
@@ -44,9 +44,17 @@ int main(void){
 }
 
 void exception(void){
-	write_setting (0xDEADDEAD, 0xBEEFBEEF);
-	reset_timer();
-	set_csr(mstatus, MSTATUS_MIE);
+	int cause = read_csr(mcause);
+	if(cause < 0){ //interrupt
+		write_setting (0xDEADDEAD, 0xBEEFBEEF);
+		reset_timer();
+		set_csr(mstatus, MSTATUS_MIE);
+	} else { //exception
+		write_setting (0xABABABAB, 0xCDCDCDCD);
+		reset_timer();
+		set_csr(mstatus, MSTATUS_MIE);
+	
+	}
 	return;
 };
 

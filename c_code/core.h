@@ -2,6 +2,7 @@
 #define CORE_H
 
 #include "riscv_encoding.h"
+// time read is not supported by Vexriscv
 
 #define IO_START					0x8000
 // update slot start addr and step, and ctrl msg code for slot init

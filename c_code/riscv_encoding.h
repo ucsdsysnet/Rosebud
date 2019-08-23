@@ -176,6 +176,7 @@
   __tmp; })
 
 #define rdtime() read_csr(time)
+#define rdtimeh() read_csr(timeh) // for 32-bit RISCV 
 #define rdcycle() read_csr(cycle)
 #define rdinstret() read_csr(instret)
 
