@@ -202,8 +202,8 @@ reg                   s_axis_tlast;
 reg  [TAG_WIDTH-1:0]  s_axis_tdest;
 reg  [PORT_WIDTH-1:0] s_axis_tuser;
 
-reg                   s_has_header; 
-reg                   s_has_header_r; 
+reg                   s_is_header; 
+reg                   s_is_header_r; 
 reg                   s_pot_header;
 reg  [ADDR_WIDTH-1:0] s_header_addr;
 wire [ADDR_WIDTH-1:0] s_base_addr;
@@ -211,6 +211,8 @@ wire [ADDR_WIDTH-1:0] s_base_addr;
 assign data_s_axis_tready = s_axis_tready;
 
 always @ (posedge sys_clk) begin
+
+  // Determining the first word which potentially can be a header
   if (sys_rst) begin
     s_pot_header <= 1'b1;
   end else if (data_s_axis_tvalid && data_s_axis_tready) begin
@@ -219,19 +221,24 @@ always @ (posedge sys_clk) begin
     else 
       s_pot_header <= 1'b0;
   end
-                
+  
+  // Latch slot and port and destination address only from first word 
+  if (data_s_axis_tvalid && data_s_axis_tready && s_pot_header) begin
+    s_axis_tdest  <= data_s_axis_tdest;
+    s_axis_tuser  <= data_s_axis_tuser;  
+    s_slot_ptr    <= data_s_axis_tdest[SLOT_WIDTH-1:0]-{{(SLOT_WIDTH-1){1'b0}},1'b1};
+    s_header_addr <= data_s_axis_tdata[32 +: ADDR_WIDTH];
+  end
+
+  // Register data and tkeep and tlast. Also mark first and second word
+  // so in case of header the first one is not valid and base address 
+  // is asserted with second word.
   if (data_s_axis_tvalid && data_s_axis_tready) begin
     s_axis_tdata  <= data_s_axis_tdata;
     s_axis_tkeep  <= data_s_axis_tkeep; 
     s_axis_tlast  <= data_s_axis_tlast;
-    s_has_header_r <= s_has_header;
-  end
-  if (data_s_axis_tvalid && data_s_axis_tready && s_pot_header) begin
-    s_axis_tdest  <= data_s_axis_tdest;
-    s_axis_tuser  <= data_s_axis_tuser;  
-    s_has_header  <= (data_s_axis_tuser==dram_port);  
-    s_slot_ptr    <= data_s_axis_tdest[SLOT_WIDTH-1:0]-{{(SLOT_WIDTH-1){1'b0}},1'b1};
-    s_header_addr <= data_s_axis_tdata[32 +: ADDR_WIDTH];
+    s_is_header   <= (data_s_axis_tuser==dram_port) && s_pot_header;  
+    s_is_header_r <= s_is_header;
   end
 
   // If there is data and ready is asserted pipeline can move. 
@@ -240,12 +247,12 @@ always @ (posedge sys_clk) begin
                     (s_axis_tvalid && (!s_axis_tready)));
   if (sys_rst) begin
     s_axis_tvalid <= 1'b0;
-    s_has_header <= 1'b0;
-    s_has_header_r <= 1'b0;
+    s_is_header   <= 1'b0;
+    s_is_header_r <= 1'b0;
   end
 end
     
-assign s_base_addr = s_has_header_r ? s_header_addr : slot_addr;
+assign s_base_addr = s_is_header_r ? s_header_addr : slot_addr;
 
 /////////////////////////////////////////////////////////////////////
 //////////// ATTACHING DRAM ADDR TO OUTGOING DRAM DATA //////////////
@@ -349,7 +356,7 @@ axis_dma # (
 
   .s_axis_tdata (s_axis_tdata),
   .s_axis_tkeep (s_axis_tkeep),
-  .s_axis_tvalid(s_axis_tvalid), // && !s_has_header),
+  .s_axis_tvalid(s_axis_tvalid && !s_is_header),
   .s_axis_tready(s_axis_tready),
   .s_axis_tlast (s_axis_tlast),
   .s_axis_tdest (s_axis_tdest),
