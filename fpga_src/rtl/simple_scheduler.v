@@ -4,7 +4,7 @@ module simple_scheduler # (
   parameter CORE_COUNT      = 16,
   parameter SLOT_COUNT      = 8,
   parameter DATA_WIDTH      = 64,
-  parameter CTRL_WIDTH      = 64,
+  parameter CTRL_WIDTH      = 32+4,
   parameter LEN_WIDTH       = 16,
   parameter ENABLE_ILA      = 0,
 
@@ -12,7 +12,8 @@ module simple_scheduler # (
   parameter CORE_ID_WIDTH   = $clog2(CORE_COUNT),
   parameter INTERFACE_WIDTH = $clog2(INTERFACE_COUNT),
   parameter PORT_WIDTH      = $clog2(PORT_COUNT),
-  parameter ID_SLOT_WIDTH   = CORE_ID_WIDTH+SLOT_WIDTH,
+  parameter TAG_WIDTH       = (SLOT_WIDTH>5)? SLOT_WIDTH:5,
+  parameter ID_TAG_WIDTH    = CORE_ID_WIDTH+TAG_WIDTH,
   parameter STRB_WIDTH      = DATA_WIDTH/8,
   parameter LVL1_SW_PORTS   = CORE_COUNT,
   parameter LVL2_SW_PORTS   = CORE_COUNT/LVL1_SW_PORTS,
@@ -37,7 +38,7 @@ module simple_scheduler # (
   // DATA lines to/from cores
   output wire [INTERFACE_COUNT*DATA_WIDTH-1:0]    data_m_axis_tdata,
   output wire [INTERFACE_COUNT*STRB_WIDTH-1:0]    data_m_axis_tkeep,
-  output wire [INTERFACE_COUNT*ID_SLOT_WIDTH-1:0] data_m_axis_tdest,
+  output wire [INTERFACE_COUNT*ID_TAG_WIDTH-1:0]  data_m_axis_tdest,
   output wire [INTERFACE_COUNT*PORT_WIDTH-1:0]    data_m_axis_tuser,
   output wire [INTERFACE_COUNT-1:0]               data_m_axis_tvalid,
   input  wire [INTERFACE_COUNT-1:0]               data_m_axis_tready,
@@ -46,7 +47,7 @@ module simple_scheduler # (
   input  wire [INTERFACE_COUNT*DATA_WIDTH-1:0]    data_s_axis_tdata,
   input  wire [INTERFACE_COUNT*STRB_WIDTH-1:0]    data_s_axis_tkeep,
   input  wire [INTERFACE_COUNT*PORT_WIDTH-1:0]    data_s_axis_tdest,
-  input  wire [INTERFACE_COUNT*ID_SLOT_WIDTH-1:0] data_s_axis_tuser,
+  input  wire [INTERFACE_COUNT*ID_TAG_WIDTH-1:0]  data_s_axis_tuser,
   input  wire [INTERFACE_COUNT-1:0]               data_s_axis_tvalid, 
   output wire [INTERFACE_COUNT-1:0]               data_s_axis_tready, 
   input  wire [INTERFACE_COUNT-1:0]               data_s_axis_tlast,
@@ -67,7 +68,7 @@ module simple_scheduler # (
   
   // Adding tdest and tuser to input data from eth, dest based on 
   // rx_desc_fifo and stamp the incoming port
-  reg  [INTERFACE_COUNT*ID_SLOT_WIDTH-1:0] dest_r;
+  reg  [INTERFACE_COUNT*ID_TAG_WIDTH-1:0] dest_r;
   wire [INTERFACE_WIDTH-1:0] selected_port_enc;
   wire [INTERFACE_COUNT-1:0] sending_last_word;
   reg  [INTERFACE_COUNT-1:0] dest_r_v;
@@ -75,7 +76,7 @@ module simple_scheduler # (
 
   wire selected_port_v;
   wire rx_desc_pop; // maybe used for error catching
-  wire [ID_SLOT_WIDTH-1:0] rx_desc_data; 
+  wire [ID_TAG_WIDTH-1:0] rx_desc_data; 
   wire rx_desc_v; 
 
   assign sending_last_word = rx_axis_tvalid & rx_axis_tlast & rx_axis_tready;
@@ -101,7 +102,7 @@ module simple_scheduler # (
     dest_r_v <= dest_r_v & (~sending_last_word);
     if (selected_port_v && rx_desc_v) begin
       dest_r_v[selected_port_enc] <= 1'b1;
-      dest_r[selected_port_enc*ID_SLOT_WIDTH +: ID_SLOT_WIDTH] <= rx_desc_data;
+      dest_r[selected_port_enc*ID_TAG_WIDTH +: ID_TAG_WIDTH] <= rx_desc_data;
     end
     if (rst)
       dest_r_v <= {INTERFACE_COUNT{1'b0}};
@@ -139,7 +140,8 @@ module simple_scheduler # (
   wire [CORE_COUNT*SLOT_WIDTH-1:0] rx_desc_count;
         
   assign rx_desc_v          = | rx_desc_slot_v;
-  assign rx_desc_data       = {selected_desc, rx_desc_slot[selected_desc]};
+  assign rx_desc_data       = {selected_desc, {(TAG_WIDTH-SLOT_WIDTH){1'b0}}, 
+                              rx_desc_slot[selected_desc]};
 
   wire [3:0]            msg_type = ctrl_s_axis_tdata[CTRL_WIDTH-1:CTRL_WIDTH-4];
   wire [SLOT_WIDTH-1:0] msg_slot = ctrl_s_axis_tdata[LEN_WIDTH +: SLOT_WIDTH]; 

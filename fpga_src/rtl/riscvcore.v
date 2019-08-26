@@ -30,6 +30,9 @@ module riscvcore #(
     input                        in_desc_valid,
     output                       in_desc_taken,
 
+    input  [4:0]                 recv_dram_tag,
+    input                        recv_dram_tag_valid,
+
     output [63:0]                data_desc,
     output                       data_desc_valid,
     output [63:0]                dram_wr_addr,
@@ -265,6 +268,17 @@ always @ (posedge clk)
     timer_interrupt <= 1'b0;
   else if (internal_timer[9:0] == {10{1'b1}})
     timer_interrupt <= 1'b1;
+
+///////////////////////////////////////////////////////////////////////////
+/////////////////////////// DRAM RECV FLAGS ///////////////////////////////
+///////////////////////////////////////////////////////////////////////////
+reg [31:1]dram_recv_flag;
+always @ (posedge clk)
+  if (rst)
+    dram_recv_flag <= 31'd0;
+  else
+    if (recv_dram_tag_valid)
+      dram_recv_flag[recv_dram_tag] <= 1'b1;
 
 ///////////////////////////////////////////////////////////////////////////
 /////////////////////// WORD LENGTH ADJUSTMENT ////////////////////////////

@@ -20,6 +20,7 @@ module simple_async_fifo # (
       .DEPTH(DEPTH),
       .DATA_WIDTH(DATA_WIDTH),
       .KEEP_ENABLE(0),
+      .KEEP_WIDTH(1),
       .LAST_ENABLE(0),
       .ID_ENABLE(0),
       .DEST_ENABLE(0),
@@ -30,7 +31,7 @@ module simple_async_fifo # (
   
       .s_clk(din_clk),
       .s_axis_tdata(din),
-      .s_axis_tkeep({(DATA_WIDTH/8){1'b0}}),
+      .s_axis_tkeep(1'b0), 
       .s_axis_tvalid(din_valid),
       .s_axis_tready(din_ready),
       .s_axis_tlast(1'b1),
