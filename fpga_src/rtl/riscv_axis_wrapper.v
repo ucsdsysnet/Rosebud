@@ -158,7 +158,7 @@ if (SEPARATE_CLOCKS) begin
   simple_async_fifo # (
     .DEPTH(4),
     .DATA_WIDTH(ADDR_WIDTH+SLOT_PTR_WIDTH)
-  ) recvd_data_fifo (
+  ) slot_addr_wr_fifo (
     .async_rst(sys_rst),
   
     .din_clk(core_clk),
@@ -471,7 +471,7 @@ if (SEPARATE_CLOCKS) begin
   simple_async_fifo # (
     .DEPTH(4),
     .DATA_WIDTH(5)
-  ) recvd_data_fifo (
+  ) dram_flag_wr_fifo (
     .async_rst(sys_rst),
   
     .din_clk(sys_clk),
@@ -717,7 +717,7 @@ always @ (posedge sys_clk) begin
                             - {{(SLOT_WIDTH-1){1'b0}},1'b1};
   end 
   ctrl_s_axis_tvalid_r <= ((ctrl_s_axis_tvalid && !reset_cmd && ctrl_s_axis_tready) || 
-                           (ctrl_s_axis_tvalid_r && (!s_axis_tready)));
+                           (ctrl_s_axis_tvalid_r && (!ctrl_s_axis_tready)));
 
   if (sys_rst)
     ctrl_s_axis_tvalid_r <= 1'b0;
