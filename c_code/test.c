@@ -9,17 +9,24 @@ int main(void){
 
 	struct Desc packet;
 	unsigned int start_time, end_time;
-	unsigned int setting_high, setting_low;
 	int offset = 0; 
+	write_debug(core_id());
+	write_debug(read_timer_high());
+	reset_timer();
+	write_dram_flags(0xffffffff);
+	dram_flag_reset(5);
+	write_dram_flags(0x00000000);
 	
 	// Do this at the beginnig, so scheduler can fill the slots while 
-	// initializing other things. 
+	// initializing other things.
+	write_timer_interval(0x00000200);
+	set_masks(0x3F); //enable all but dram
 	init_slots(8, 0x200A, 2048);
 
 	while (1){
 		if (in_pkt_ready()){
 	 		
-			start_time = read_timer();
+			start_time = read_timer_low();
 			read_in_pkt(&packet);
 			packet.data = (unsigned int *)(((unsigned int)packet.data)+offset);
 	
@@ -34,32 +41,11 @@ int main(void){
 		  safe_pkt_done_msg(&packet);
 			safe_dram_write(0xAAAAAAAA, 0xBBBBBBBB, &packet);
 
-	 		end_time = read_timer();
-			write_setting (end_time, start_time);
+	 		end_time = read_timer_low();
+			write_debug (end_time - start_time);
 
   	}
   }
   
   return 1;
 }
-
-void exception(void){
-	int cause = read_csr(mcause);
-	if(cause < 0){ //interrupt
-		switch(cause & 0xFF){
-			case IRQ_M_TIMER:{
-				write_setting (0xDEADDEAD, 0xBEEFBEEF);
-			} break;
-			case IRQ_M_EXT: {
-				write_setting (0x5A5A5A5A, 0xAAAA5555);
-			} break;
-			default: break;
-		}
-	} else { //exception
-		write_setting (0xABABABAB, 0xCDCDCDCD);
-	}
-	reset_timer();
-	set_csr(mstatus, MSTATUS_MIE);
-	return;
-};
-
