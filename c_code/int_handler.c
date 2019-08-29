@@ -1,7 +1,6 @@
 #include "core.h"
 
 void int_handler(void) {
-	clear_csr(mstatus, MSTATUS_MIE);
 	int cause = read_csr(mcause);
 	char int_flag = interrupt_flags();
 	if(cause < 0){ //interrupt
@@ -34,8 +33,5 @@ void int_handler(void) {
 				interrupt_ack(0x08); 
 			}
 	}
-
-	set_csr(mstatus, MSTATUS_MIE);
-	// return;
 };
 

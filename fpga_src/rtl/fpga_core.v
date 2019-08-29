@@ -123,8 +123,8 @@ parameter LVL1_DEST_BITS   = $clog2(LVL1_SW_PORTS);
 parameter DATA_DEST_LVL2   = ID_TAG_WIDTH-LVL1_DEST_BITS;
 parameter CTRL_DEST_LVL2   = CORE_WIDTH-LVL1_DEST_BITS;
 
-parameter TEST_DRAM_WR     = 0;
-parameter TEST_DRAM_REQ    = 0;
+parameter TEST_DRAM_WR     = 1;
+parameter TEST_DRAM_REQ    = 1;
 
 wire core_clk = SEPARATE_CLOCKS ? core_clk_i : sys_clk;
 wire core_rst = SEPARATE_CLOCKS ? core_rst_i : sys_rst;
