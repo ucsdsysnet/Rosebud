@@ -2184,7 +2184,7 @@ generate
             .USER_ENABLE(0), 
             .FRAME_FIFO(0)
         ) if_rx_axis_fifo (
-            .async_rst(sys_rst),
+            .async_rst(rst_250mhz),
         
             .s_clk(sys_clk),
             .s_axis_tdata(if_fifo_rx_axis_tdata[n*AXIS_DATA_WIDTH +: AXIS_DATA_WIDTH]),

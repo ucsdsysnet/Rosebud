@@ -105,7 +105,7 @@
         <spirit:configurableElementValue spirit:referenceId="PARAM_VALUE.Component_Name">gtwizard_ultrascale_0</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="PARAM_VALUE.DISABLE_LOC_XDC">0</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="PARAM_VALUE.ENABLE_COMMON_USRCLK">0</spirit:configurableElementValue>
-        <spirit:configurableElementValue spirit:referenceId="PARAM_VALUE.ENABLE_OPTIONAL_PORTS">rxpolarity_in txpolarity_in</spirit:configurableElementValue>
+        <spirit:configurableElementValue spirit:referenceId="PARAM_VALUE.ENABLE_OPTIONAL_PORTS">rxpmareset_in rxpolarity_in txpolarity_in</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="PARAM_VALUE.FREERUN_FREQUENCY">125</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="PARAM_VALUE.GT_DIRECTION">BOTH</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="PARAM_VALUE.GT_REV">0</spirit:configurableElementValue>
@@ -1175,7 +1175,7 @@
         <spirit:configurableElementValue spirit:referenceId="PORT_ENABLEMENT.rxphdlyreset_in">false</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="PORT_ENABLEMENT.rxphovrden_in">false</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="PORT_ENABLEMENT.rxpllclksel_in">false</spirit:configurableElementValue>
-        <spirit:configurableElementValue spirit:referenceId="PORT_ENABLEMENT.rxpmareset_in">false</spirit:configurableElementValue>
+        <spirit:configurableElementValue spirit:referenceId="PORT_ENABLEMENT.rxpmareset_in">true</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="PORT_ENABLEMENT.rxpmaresetdone_out">true</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="PORT_ENABLEMENT.rxpolarity_in">true</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="PORT_ENABLEMENT.rxprbscntreset_in">false</spirit:configurableElementValue>

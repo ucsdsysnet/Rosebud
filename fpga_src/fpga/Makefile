@@ -5,8 +5,8 @@ FPGA_TOP = fpga
 FPGA_ARCH = kintexu
 
 # Files for synthesis
-SYN_FILES = rtl/fpga.v
-SYN_FILES += rtl/fpga_core.v
+SYN_FILES = rtl/fpga_corundum.v
+SYN_FILES += rtl/fpga_core_corundum.v
 SYN_FILES += rtl/riscvcore.v
 SYN_FILES += rtl/VexRiscv.v
 SYN_FILES += rtl/core_mems.v
@@ -21,6 +21,7 @@ SYN_FILES += rtl/simple_sync_sig.v
 SYN_FILES += rtl/sync_reset.v
 SYN_FILES += rtl/sync_signal.v
 SYN_FILES += rtl/axis_switch.v
+SYN_FILES += rtl/pkt_processing.v
 
 # SYN_FILES += lib/axis/rtl/axis_switch.v
 SYN_FILES += lib/axis/rtl/axis_arb_mux.v
@@ -50,6 +51,55 @@ SYN_FILES += lib/eth/rtl/xgmii_baser_enc_64.v
 SYN_FILES += lib/eth/rtl/eth_axis_rx_64.v
 SYN_FILES += lib/eth/rtl/eth_axis_tx_64.v
 SYN_FILES += lib/eth/rtl/eth_arb_mux.v
+
+SYN_FILES += lib/eth/rtl/ptp_clock.v
+SYN_FILES += lib/eth/rtl/ptp_clock_cdc.v
+SYN_FILES += lib/eth/rtl/ptp_perout.v
+SYN_FILES += lib/eth/rtl/ptp_ts_extract.v
+
+SYN_FILES += lib/axi/rtl/axi_crossbar.v
+SYN_FILES += lib/axi/rtl/axi_crossbar_addr.v
+SYN_FILES += lib/axi/rtl/axi_crossbar_rd.v
+SYN_FILES += lib/axi/rtl/axi_crossbar_wr.v
+SYN_FILES += lib/axi/rtl/axi_dma.v
+SYN_FILES += lib/axi/rtl/axi_dma_rd.v
+SYN_FILES += lib/axi/rtl/axi_dma_wr.v
+SYN_FILES += lib/axi/rtl/axi_interconnect.v
+SYN_FILES += lib/axi/rtl/axi_ram.v
+SYN_FILES += lib/axi/rtl/axi_ram_rd_if.v
+SYN_FILES += lib/axi/rtl/axi_ram_wr_if.v
+SYN_FILES += lib/axi/rtl/axi_register_rd.v
+SYN_FILES += lib/axi/rtl/axi_register_wr.v
+SYN_FILES += lib/axi/rtl/axil_interconnect.v
+SYN_FILES += lib/axi/rtl/arbiter.v
+SYN_FILES += lib/axi/rtl/priority_encoder.v
+
+SYN_FILES += lib/pcie/rtl/pcie_axi_dma_desc_mux.v
+SYN_FILES += lib/pcie/rtl/pcie_us_axil_master.v
+SYN_FILES += lib/pcie/rtl/pcie_us_axi_master.v
+SYN_FILES += lib/pcie/rtl/pcie_us_axi_master_rd.v
+SYN_FILES += lib/pcie/rtl/pcie_us_axi_master_wr.v
+SYN_FILES += lib/pcie/rtl/pcie_us_axi_dma.v
+SYN_FILES += lib/pcie/rtl/pcie_us_axi_dma_rd.v
+SYN_FILES += lib/pcie/rtl/pcie_us_axi_dma_wr.v
+SYN_FILES += lib/pcie/rtl/pcie_us_axis_cq_demux.v
+SYN_FILES += lib/pcie/rtl/pcie_us_cfg.v
+SYN_FILES += lib/pcie/rtl/pcie_us_msi.v
+SYN_FILES += lib/pcie/rtl/pcie_tag_manager.v
+SYN_FILES += lib/pcie/rtl/pulse_merge.v
+
+SYN_FILES += lib/corundum/rtl/interface.v
+SYN_FILES += lib/corundum/rtl/port.v
+SYN_FILES += lib/corundum/rtl/queue_manager.v
+SYN_FILES += lib/corundum/rtl/cpl_queue_manager.v
+SYN_FILES += lib/corundum/rtl/tx_engine.v
+SYN_FILES += lib/corundum/rtl/rx_engine.v
+SYN_FILES += lib/corundum/rtl/tx_checksum.v
+SYN_FILES += lib/corundum/rtl/rx_checksum.v
+SYN_FILES += lib/corundum/rtl/tx_scheduler_rr.v
+SYN_FILES += lib/corundum/rtl/tdma_scheduler.v
+SYN_FILES += lib/corundum/rtl/event_queue.v
+SYN_FILES += lib/corundum/rtl/event_mux.v
 
 # SYN_FILES += lib/eth/rtl/udp_complete_64.v
 # SYN_FILES += lib/eth/rtl/udp_checksum_gen_64.v
@@ -90,7 +140,8 @@ XDC_FILES += lib/axis/syn/axis_async_fifo.tcl
 XDC_FILES += rtl/simple_sync_sig.tcl
 
 # IP
-XCI_FILES =  ip/gtwizard_ultrascale_0.xci
+XCI_FILES  =  ip/gtwizard_ultrascale_0.xci
+XCI_FILES +=  ip/pcie3_ultrascale_0.xci
 # XCI_FILES += ip/axi_crossbar_0.xci
 # XCI_FILES += ip/axi_data_fifo.xci
 # XCI_FILES += ip/ila_2x64.xci
