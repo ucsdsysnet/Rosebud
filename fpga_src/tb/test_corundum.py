@@ -51,8 +51,24 @@ testbench = 'test_corundum' # 'test_%s' % module
 
 srcs = []
 
-# srcs.append("../rtl/%s.v" % module)
+srcs.append("../ip/ila_8x64_stub.v")
+srcs.append("../ip/ila_4x64_stub.v")
+srcs.append("../rtl/simple_fifo.v")
+srcs.append("../rtl/loaded_desc_fifo.v")
+srcs.append("../rtl/max_finder_tree.v")
+srcs.append("../rtl/slot_fifo_loader.v")
+srcs.append("../rtl/core_mems.v")
+srcs.append("../rtl/axis_dma.v")
+srcs.append("../rtl/VexRiscv.v")
+srcs.append("../rtl/riscvcore.v")
+srcs.append("../rtl/riscv_axis_wrapper.v")
+srcs.append("../rtl/simple_scheduler.v")
+srcs.append("../rtl/simple_sync_sig.v")
+srcs.append("../rtl/axis_switch.v")
+srcs.append("../rtl/pkt_processing.v")
 srcs.append("../rtl/fpga_core_corundum.v")
+
+# srcs.append("../rtl/%s.v" % module)
 srcs.append("../lib/corundum/rtl/interface.v")
 srcs.append("../lib/corundum/rtl/port.v")
 srcs.append("../lib/corundum/rtl/queue_manager.v")
@@ -95,6 +111,7 @@ srcs.append("../lib/axis/rtl/axis_arb_mux.v")
 srcs.append("../lib/axis/rtl/axis_async_fifo.v")
 srcs.append("../lib/axis/rtl/axis_async_fifo_adapter.v")
 srcs.append("../lib/axis/rtl/axis_fifo.v")
+srcs.append("../lib/axis/rtl/axis_fifo_adapter.v")
 srcs.append("../lib/axis/rtl/axis_register.v")
 srcs.append("../lib/pcie/rtl/pcie_axi_dma_desc_mux.v")
 srcs.append("../lib/pcie/rtl/pcie_us_axil_master.v")
@@ -147,6 +164,10 @@ def bench():
     rst_156mhz = Signal(bool(0))
     clk_250mhz = Signal(bool(0))
     rst_250mhz = Signal(bool(0))
+    clk_200mhz = Signal(bool(0))
+    rst_200mhz = Signal(bool(0))
+    core_clk_i = Signal(bool(0))
+    core_rst_i = Signal(bool(0))
     m_axis_rq_tready = Signal(bool(0))
     s_axis_rc_tdata = Signal(intbv(0)[256:])
     s_axis_rc_tkeep = Signal(intbv(0)[8:])
@@ -477,6 +498,10 @@ def bench():
         current_test=current_test,
         clk_156mhz=clk_156mhz,
         rst_156mhz=rst_156mhz,
+        core_clk_i=core_clk_i,
+        core_rst_i=core_rst_i,
+        clk_200mhz=clk_200mhz,
+        rst_200mhz=rst_200mhz,
         clk_250mhz=user_clk,
         rst_250mhz=user_reset,
         sfp_1_led=sfp_1_led,
@@ -582,6 +607,14 @@ def bench():
     @always(delay(5))
     def clkgen():
         clk.next = not clk
+    
+    @always(delay(4))
+    def clkgen2():
+        core_clk_i.next = not core_clk_i
+    
+    @always(delay(3))
+    def clkgen3():
+        clk_200mhz.next = not clk_200mhz
 
     @always_comb
     def clk_logic():
@@ -618,8 +651,14 @@ def bench():
         yield delay(100)
         yield clk.posedge
         rst.next = 1
+        core_rst_i.next = 1
+        rst_200mhz.next = 1
         yield clk.posedge
+        yield core_clk_i.posedge
+        yield clk_200mhz.posedge
         rst.next = 0
+        core_rst_i.next = 0
+        rst_200mhz.next = 0
         yield clk.posedge
         yield delay(100)
         yield clk.posedge
@@ -767,6 +806,7 @@ def bench():
                 pkt = driver.interfaces[0].recv()
 
             print(pkt)
+            print(pkts[k])
             assert pkt.data == pkts[k]
             assert frame_checksum(pkt.data) == pkt.rx_checksum
 
@@ -781,6 +821,7 @@ def bench():
         count = 64
 
         pkts = [bytearray([(x+k)%256 for x in range(1514)]) for k in range(count)]
+        pkts_set = set([bytes(x) for x in pkts])
 
         loopback_enable.next = True
 
@@ -795,7 +836,10 @@ def bench():
                 pkt = driver.interfaces[0].recv()
 
             print(pkt)
-            assert pkt.data == pkts[k]
+            print(pkts[k])
+            assert bytes(pkt.data) in pkts_set
+            pkts_set.remove(bytes(pkt.data))
+            # assert pkt.data == pkts[k]
             assert frame_checksum(pkt.data) == pkt.rx_checksum
 
         loopback_enable.next = False

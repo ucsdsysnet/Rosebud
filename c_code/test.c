@@ -9,7 +9,7 @@ int main(void){
 	int offset = 0; 
 	
 	write_timer_interval(0x00000200);
-	set_masks(0x7F); //enable all, these masks occur before riscv masks
+	set_masks(0x1F); //enable all, these masks occur before riscv masks
 
 	// Do this at the beginnig, so scheduler can fill the slots while 
 	// initializing other things.
@@ -22,16 +22,25 @@ int main(void){
 			read_in_pkt(&packet);
 			packet.data = (unsigned int *)(((unsigned int)packet.data)+offset);
 	
-			if (packet.port==0){
-				packet.port = 1;
-				*sh_test += 1;
-			} else {
-				packet.port = 0;
-				*(sh_test+1) += 1;
-			}
+			if (packet.port==0)
+			 	packet.port = 2;
+			else if (packet.port==2)
+			 	packet.port = 0;
+			else if (packet.port==1)
+			 	packet.port = 3;
+			else if (packet.port==3)
+			 	packet.port = 1;
+
+			// if (packet.port==0){
+			// 	packet.port = 1;
+			// 	*sh_test += 1;
+			// } else {
+			// 	packet.port = 0;
+			// 	*(sh_test+1) += 1;
+			// }
 
 		  safe_pkt_done_msg(&packet);
-			safe_dram_write(0xAAAAAAAA, 0xBBBBBBBB, &packet);
+			// safe_dram_write(0xAAAAAAAA, 0xBBBBBBBB, &packet);
 
 	 		end_time = read_timer_low();
 			write_debug (end_time - start_time);

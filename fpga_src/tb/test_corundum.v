@@ -51,6 +51,10 @@ reg clk_156mhz = 0;
 reg rst_156mhz = 0;
 reg clk_250mhz = 0;
 reg rst_250mhz = 0;
+reg clk_200mhz = 0;
+reg rst_200mhz = 0;
+reg core_clk_i = 0;
+reg core_rst_i = 0;
 reg m_axis_rq_tready = 0;
 reg [255:0] s_axis_rc_tdata = 0;
 reg [7:0] s_axis_rc_tkeep = 0;
@@ -159,6 +163,10 @@ initial begin
         rst_156mhz,
         clk_250mhz,
         rst_250mhz,
+        clk_200mhz,
+        rst_200mhz,
+        core_clk_i,
+        core_rst_i,
         current_test,
         m_axis_rq_tready,
         s_axis_rc_tdata,
@@ -273,6 +281,10 @@ UUT (
     .rst_156mhz(rst_156mhz),
     .clk_250mhz(clk_250mhz),
     .rst_250mhz(rst_250mhz),
+    .sys_clk(clk_200mhz),
+    .sys_rst(rst_200mhz),
+    .core_clk_i(core_clk_i),
+    .core_rst_i(core_rst_i),
     .sfp_1_led(sfp_1_led),
     .sfp_2_led(sfp_2_led),
     .sma_led(sma_led),
