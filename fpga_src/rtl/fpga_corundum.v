@@ -928,8 +928,8 @@ core_inst (
     .rst_156mhz(rst_156mhz_int),
     .clk_250mhz(pcie_user_clk),
     .rst_250mhz(pcie_user_reset),
-    .sys_clk(clk_200mhz_int),
-    .sys_rst(rst_200mhz_int),
+    .clk_200mhz(clk_200mhz_int),
+    .rst_200mhz(rst_200mhz_int),
     .core_clk_i(clk_183mhz_int),
     .core_rst_i(rst_183mhz_int),
 

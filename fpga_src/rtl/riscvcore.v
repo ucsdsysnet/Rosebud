@@ -241,6 +241,7 @@ wire int_flags_ren  = io_read  && (dmem_addr[6:2]==RD_INT_F_ADDR);
 reg [31:0] io_read_data;
 reg        io_ren_r;
 reg [63:0] internal_timer;
+reg [31:0] dram_recv_flag;
 
 always @ (posedge clk)
     if (rst)
@@ -307,7 +308,6 @@ always @ (posedge clk)
 ///////////////////////////////////////////////////////////////////////////
 /////////////////////////// DRAM RECV FLAGS ///////////////////////////////
 ///////////////////////////////////////////////////////////////////////////
-reg [31:0] dram_recv_flag;
 reg [4:0]  recv_dram_tag_r;
 reg        recv_dram_tag_valid_r;
 

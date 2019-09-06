@@ -54,8 +54,8 @@ module fpga_core #
     input  wire                            clk_250mhz,
     input  wire                            rst_250mhz,
     
-    input  wire                            sys_clk,
-    input  wire                            sys_rst,
+    input  wire                            clk_200mhz,
+    input  wire                            rst_200mhz,
     input  wire                            core_clk_i,
     input  wire                            core_rst_i,
 
@@ -1886,48 +1886,65 @@ wire [IF_COUNT*32-1:0] if_msi_irq;
 
 assign msi_irq = if_msi_irq[31:0] | if_msi_irq[63:32];
 
-wire [IF_COUNT*AXIS_DATA_WIDTH-1:0] if_tx_axis_tdata;
-wire [IF_COUNT*AXIS_KEEP_WIDTH-1:0] if_tx_axis_tkeep;
-wire [IF_COUNT-1:0]                 if_tx_axis_tvalid;
-wire [IF_COUNT-1:0]                 if_tx_axis_tready;
-wire [IF_COUNT-1:0]                 if_tx_axis_tlast;
-wire [IF_COUNT-1:0]                 if_tx_axis_tuser;
+wire [IF_COUNT*AXIS_DATA_WIDTH-1:0] tx_axis_tdata;
+wire [IF_COUNT*AXIS_KEEP_WIDTH-1:0] tx_axis_tkeep;
+wire [IF_COUNT-1:0] tx_axis_tvalid;
+wire [IF_COUNT-1:0] tx_axis_tready;
+wire [IF_COUNT-1:0] tx_axis_tlast;
+wire [IF_COUNT-1:0] tx_axis_tuser;
 
-wire [IF_COUNT*AXIS_DATA_WIDTH-1:0] if_rx_axis_tdata;
-wire [IF_COUNT*AXIS_KEEP_WIDTH-1:0] if_rx_axis_tkeep;
-wire [IF_COUNT-1:0]                 if_rx_axis_tvalid;
-wire [IF_COUNT-1:0]                 if_rx_axis_tready;
-wire [IF_COUNT-1:0]                 if_rx_axis_tlast;
-wire [IF_COUNT-1:0]                 if_rx_axis_tuser;
+wire [IF_COUNT*AXIS_DATA_WIDTH-1:0] rx_axis_tdata;
+wire [IF_COUNT*AXIS_KEEP_WIDTH-1:0] rx_axis_tkeep;
+wire [IF_COUNT-1:0] rx_axis_tvalid;
+wire [IF_COUNT-1:0] rx_axis_tready;
+wire [IF_COUNT-1:0] rx_axis_tlast;
+wire [IF_COUNT-1:0] rx_axis_tuser;
 
-wire [IF_COUNT*AXIS_DATA_WIDTH-1:0] if_fifo_tx_axis_tdata;
-wire [IF_COUNT*AXIS_KEEP_WIDTH-1:0] if_fifo_tx_axis_tkeep;
-wire [IF_COUNT-1:0]                 if_fifo_tx_axis_tvalid;
-wire [IF_COUNT-1:0]                 if_fifo_tx_axis_tready;
-wire [IF_COUNT-1:0]                 if_fifo_tx_axis_tlast;
-wire [IF_COUNT-1:0]                 if_fifo_tx_axis_tuser;
+// wire [IF_COUNT*AXIS_DATA_WIDTH-1:0] tx_axis_tdata;
+// wire [IF_COUNT*AXIS_KEEP_WIDTH-1:0] tx_axis_tkeep;
+// wire [IF_COUNT-1:0] tx_axis_tvalid;
+// wire [IF_COUNT-1:0] tx_axis_tready;
+// wire [IF_COUNT-1:0] tx_axis_tlast;
+// wire [IF_COUNT-1:0] tx_axis_tuser;
+// 
+// wire [IF_COUNT*AXIS_DATA_WIDTH-1:0] rx_axis_tdata;
+// wire [IF_COUNT*AXIS_KEEP_WIDTH-1:0] rx_axis_tkeep;
+// wire [IF_COUNT-1:0] rx_axis_tvalid;
+// wire [IF_COUNT-1:0] rx_axis_tready;
+// wire [IF_COUNT-1:0] rx_axis_tlast;
+// wire [IF_COUNT-1:0] rx_axis_tuser;
 
-wire [IF_COUNT*AXIS_DATA_WIDTH-1:0] if_fifo_rx_axis_tdata;
-wire [IF_COUNT*AXIS_KEEP_WIDTH-1:0] if_fifo_rx_axis_tkeep;
-wire [IF_COUNT-1:0]                 if_fifo_rx_axis_tvalid;
-wire [IF_COUNT-1:0]                 if_fifo_rx_axis_tready;
-wire [IF_COUNT-1:0]                 if_fifo_rx_axis_tlast;
-wire [IF_COUNT-1:0]                 if_fifo_rx_axis_tuser;
+wire [IF_COUNT*AXIS_DATA_WIDTH-1:0] mac_tx_axis_tdata;
+wire [IF_COUNT*AXIS_KEEP_WIDTH-1:0] mac_tx_axis_tkeep;
+wire [IF_COUNT-1:0] mac_tx_axis_tvalid;
+wire [IF_COUNT-1:0] mac_tx_axis_tready;
+wire [IF_COUNT-1:0] mac_tx_axis_tlast;
+wire [IF_COUNT-1:0] mac_tx_axis_tuser;
 
-wire [PORT_COUNT*AXIS_DATA_WIDTH-1:0] phy_tx_axis_tdata;
-wire [PORT_COUNT*AXIS_KEEP_WIDTH-1:0] phy_tx_axis_tkeep;
-wire [PORT_COUNT-1:0]                 phy_tx_axis_tvalid;
-wire [PORT_COUNT-1:0]                 phy_tx_axis_tready;
-wire [PORT_COUNT-1:0]                 phy_tx_axis_tlast;
-wire [PORT_COUNT-1:0]                 phy_tx_axis_tuser;
+wire [IF_COUNT*AXIS_DATA_WIDTH-1:0] mac_rx_axis_tdata;
+wire [IF_COUNT*AXIS_KEEP_WIDTH-1:0] mac_rx_axis_tkeep;
+wire [IF_COUNT-1:0] mac_rx_axis_tvalid;
+wire [IF_COUNT-1:0] mac_rx_axis_tready;
+wire [IF_COUNT-1:0] mac_rx_axis_tlast;
+wire [IF_COUNT-1:0] mac_rx_axis_tuser;
 
-wire [PORT_COUNT*AXIS_DATA_WIDTH-1:0] phy_rx_axis_tdata;
-wire [PORT_COUNT*AXIS_KEEP_WIDTH-1:0] phy_rx_axis_tkeep;
-wire [PORT_COUNT-1:0]                 phy_rx_axis_tvalid;
-wire [PORT_COUNT-1:0]                 phy_rx_axis_tready;
-wire [PORT_COUNT-1:0]                 phy_rx_axis_tlast;
-wire [PORT_COUNT-1:0]                 phy_rx_axis_tuser;
- 
+wire [IF_COUNT*PTP_TS_WIDTH-1:0] tx_ptp_ts_96;
+wire [IF_COUNT-1:0] tx_ptp_ts_valid;
+wire [IF_COUNT-1:0] tx_ptp_ts_ready;
+
+wire [IF_COUNT*PTP_TS_WIDTH-1:0] rx_ptp_ts_96;
+wire [IF_COUNT-1:0] rx_ptp_ts_valid;
+wire [IF_COUNT-1:0] rx_ptp_ts_ready;
+
+// wire [IF_COUNT*PTP_TS_WIDTH-1:0] tx_ptp_ts_96;
+// wire [IF_COUNT-1:0] tx_ptp_ts_valid;
+// wire [IF_COUNT-1:0] tx_ptp_ts_ready;
+// 
+// wire [IF_COUNT*PTP_TS_WIDTH-1:0] rx_ptp_ts_96;
+// wire [IF_COUNT-1:0] rx_ptp_ts_valid;
+// wire [IF_COUNT-1:0] rx_ptp_ts_ready;
+
+
 generate
     genvar m, n;
 
@@ -2104,42 +2121,42 @@ generate
             /*
              * Transmit data output
              */
-            .tx_axis_tdata(if_tx_axis_tdata[n*AXIS_DATA_WIDTH +: AXIS_DATA_WIDTH]),
-            .tx_axis_tkeep(if_tx_axis_tkeep[n*AXIS_KEEP_WIDTH +: AXIS_KEEP_WIDTH]),
-            .tx_axis_tvalid(if_tx_axis_tvalid[n]),
-            .tx_axis_tready(if_tx_axis_tready[n]),
-            .tx_axis_tlast(if_tx_axis_tlast[n]),
-            .tx_axis_tuser(if_tx_axis_tuser[n]),
+            .tx_axis_tdata(tx_axis_tdata[n*AXIS_DATA_WIDTH +: AXIS_DATA_WIDTH]),
+            .tx_axis_tkeep(tx_axis_tkeep[n*AXIS_KEEP_WIDTH +: AXIS_KEEP_WIDTH]),
+            .tx_axis_tvalid(tx_axis_tvalid[n]),
+            .tx_axis_tready(tx_axis_tready[n]),
+            .tx_axis_tlast(tx_axis_tlast[n]),
+            .tx_axis_tuser(tx_axis_tuser[n]),
 
             /*
              * Transmit timestamp input
              */
-            .s_axis_tx_ptp_ts_96(96'd0), //tx_ptp_ts_96),
-            .s_axis_tx_ptp_ts_valid(1'b0), // tx_ptp_ts_valid),
-            .s_axis_tx_ptp_ts_ready(), // tx_ptp_ts_ready),
+            .s_axis_tx_ptp_ts_96(tx_ptp_ts_96[n*PTP_TS_WIDTH +: PTP_TS_WIDTH]),
+            .s_axis_tx_ptp_ts_valid(tx_ptp_ts_valid[n]),
+            .s_axis_tx_ptp_ts_ready(tx_ptp_ts_ready[n]),
 
             /*
              * Receive data input
              */
-            .rx_axis_tdata(if_rx_axis_tdata[n*AXIS_DATA_WIDTH +: AXIS_DATA_WIDTH]),
-            .rx_axis_tkeep(if_rx_axis_tkeep[n*AXIS_KEEP_WIDTH +: AXIS_KEEP_WIDTH]),
-            .rx_axis_tvalid(if_rx_axis_tvalid[n]),
-            .rx_axis_tready(if_rx_axis_tready[n]),
-            .rx_axis_tlast(if_rx_axis_tlast[n]),
-            .rx_axis_tuser(if_rx_axis_tuser[n]),
+            .rx_axis_tdata(rx_axis_tdata[n*AXIS_DATA_WIDTH +: AXIS_DATA_WIDTH]),
+            .rx_axis_tkeep(rx_axis_tkeep[n*AXIS_KEEP_WIDTH +: AXIS_KEEP_WIDTH]),
+            .rx_axis_tvalid(rx_axis_tvalid[n]),
+            .rx_axis_tready(rx_axis_tready[n]),
+            .rx_axis_tlast(rx_axis_tlast[n]),
+            .rx_axis_tuser(rx_axis_tuser[n]),
 
             /*
              * Receive timestamp input
              */
-            .s_axis_rx_ptp_ts_96(96'd0), //rx_ptp_ts_96),
-            .s_axis_rx_ptp_ts_valid(1'b0), // rx_ptp_ts_valid),
-            .s_axis_rx_ptp_ts_ready(), // rx_ptp_ts_ready),
+            .s_axis_rx_ptp_ts_96(rx_ptp_ts_96[n*PTP_TS_WIDTH +: PTP_TS_WIDTH]),
+            .s_axis_rx_ptp_ts_valid(rx_ptp_ts_valid[n]),
+            .s_axis_rx_ptp_ts_ready(rx_ptp_ts_ready[n]),
 
             /*
              * PTP clock
              */
-            .ptp_ts_96(96'd0), // ptp_ts_96),
-            .ptp_ts_step(0), // ptp_ts_step),
+            .ptp_ts_96(ptp_ts_96),
+            .ptp_ts_step(ptp_ts_step),
 
             /*
              * MSI interrupts
@@ -2147,69 +2164,129 @@ generate
             .msi_irq(if_msi_irq[n*32 +: 32])
         );
 
-        axis_async_fifo # (
-            .DEPTH(4096),
-            .DATA_WIDTH(AXIS_DATA_WIDTH),
-            .KEEP_WIDTH(AXIS_KEEP_WIDTH),
-            .USER_ENABLE(0), 
-            .FRAME_FIFO(0)
-        ) if_tx_axis_fifo (
-            .async_rst(sys_rst),
-        
-            .s_clk(clk_250mhz),
-            .s_axis_tdata(if_tx_axis_tdata[n*AXIS_DATA_WIDTH +: AXIS_DATA_WIDTH]),
-            .s_axis_tkeep(if_tx_axis_tkeep[n*AXIS_KEEP_WIDTH +: AXIS_KEEP_WIDTH]),
-            .s_axis_tvalid(if_tx_axis_tvalid[n]),
-            .s_axis_tready(if_tx_axis_tready[n]),
-            .s_axis_tlast(if_tx_axis_tlast[n]),
-            .s_axis_tid(0),
-            .s_axis_tdest(0),
-            .s_axis_tuser(0),
-        
-            .m_clk(sys_clk),
-            .m_axis_tdata(if_fifo_tx_axis_tdata[n*AXIS_DATA_WIDTH +: AXIS_DATA_WIDTH]),
-            .m_axis_tkeep(if_fifo_tx_axis_tkeep[n*AXIS_KEEP_WIDTH +: AXIS_KEEP_WIDTH]),
-            .m_axis_tvalid(if_fifo_tx_axis_tvalid[n]),
-            .m_axis_tready(if_fifo_tx_axis_tready[n]),
-            .m_axis_tlast(if_fifo_tx_axis_tlast[n]),
-            .m_axis_tid(),
-            .m_axis_tdest(),
-            .m_axis_tuser()
-        );
-
-        axis_async_fifo # (
-            .DEPTH(4096),
-            .DATA_WIDTH(AXIS_DATA_WIDTH),
-            .KEEP_WIDTH(AXIS_KEEP_WIDTH),
-            .USER_ENABLE(0), 
-            .FRAME_FIFO(0)
-        ) if_rx_axis_fifo (
-            .async_rst(rst_250mhz),
-        
-            .s_clk(sys_clk),
-            .s_axis_tdata(if_fifo_rx_axis_tdata[n*AXIS_DATA_WIDTH +: AXIS_DATA_WIDTH]),
-            .s_axis_tkeep(if_fifo_rx_axis_tkeep[n*AXIS_KEEP_WIDTH +: AXIS_KEEP_WIDTH]),
-            .s_axis_tvalid(if_fifo_rx_axis_tvalid[n]),
-            .s_axis_tready(if_fifo_rx_axis_tready[n]),
-            .s_axis_tlast(if_fifo_rx_axis_tlast[n]),
-            .s_axis_tid(0),
-            .s_axis_tdest(0),
-            .s_axis_tuser(0),
-
-            .m_clk(clk_250mhz),
-            .m_axis_tdata(if_rx_axis_tdata[n*AXIS_DATA_WIDTH +: AXIS_DATA_WIDTH]),
-            .m_axis_tkeep(if_rx_axis_tkeep[n*AXIS_KEEP_WIDTH +: AXIS_KEEP_WIDTH]),
-            .m_axis_tvalid(if_rx_axis_tvalid[n]),
-            .m_axis_tready(if_rx_axis_tready[n]),
-            .m_axis_tlast(if_rx_axis_tlast[n]),
-            .m_axis_tid(),
-            .m_axis_tdest(),
-            .m_axis_tuser()
-        );
-
     end
-    
     for (m = 0; m < PORT_COUNT; m = m + 1) begin : mac
+        // axis_async_fifo # (
+        //     .DEPTH(4096),
+        //     .DATA_WIDTH(AXIS_DATA_WIDTH),
+        //     .KEEP_WIDTH(AXIS_KEEP_WIDTH),
+        //     .USER_ENABLE(0), 
+        //     .FRAME_FIFO(0)
+        // ) if_tx_axis_fifo (
+        //     .async_rst(rst_200mhz),
+        // 
+        //     .s_clk(clk_250mhz),
+        //     .s_axis_tdata(tx_axis_tdata[n*AXIS_DATA_WIDTH +: AXIS_DATA_WIDTH]),
+        //     .s_axis_tkeep(tx_axis_tkeep[n*AXIS_KEEP_WIDTH +: AXIS_KEEP_WIDTH]),
+        //     .s_axis_tvalid(tx_axis_tvalid[n]),
+        //     .s_axis_tready(tx_axis_tready[n]),
+        //     .s_axis_tlast(tx_axis_tlast[n]),
+        //     .s_axis_tid(0),
+        //     .s_axis_tdest(0),
+        //     .s_axis_tuser(0),
+        // 
+        //     .m_clk(clk_200mhz),
+        //     .m_axis_tdata(tx_axis_tdata[n*AXIS_DATA_WIDTH +: AXIS_DATA_WIDTH]),
+        //     .m_axis_tkeep(tx_axis_tkeep[n*AXIS_KEEP_WIDTH +: AXIS_KEEP_WIDTH]),
+        //     .m_axis_tvalid(tx_axis_tvalid[n]),
+        //     .m_axis_tready(tx_axis_tready[n]),
+        //     .m_axis_tlast(tx_axis_tlast[n]),
+        //     .m_axis_tid(),
+        //     .m_axis_tdest(),
+        //     .m_axis_tuser()
+        // );
+
+        // axis_async_fifo # (
+        //     .DEPTH(4096),
+        //     .DATA_WIDTH(AXIS_DATA_WIDTH),
+        //     .KEEP_WIDTH(AXIS_KEEP_WIDTH),
+        //     .USER_ENABLE(0), 
+        //     .FRAME_FIFO(0)
+        // ) if_rx_axis_fifo (
+        //     .async_rst(rst_250mhz),
+        // 
+        //     .s_clk(clk_200mhz),
+        //     .s_axis_tdata(rx_axis_tdata[n*AXIS_DATA_WIDTH +: AXIS_DATA_WIDTH]),
+        //     .s_axis_tkeep(rx_axis_tkeep[n*AXIS_KEEP_WIDTH +: AXIS_KEEP_WIDTH]),
+        //     .s_axis_tvalid(rx_axis_tvalid[n]),
+        //     .s_axis_tready(rx_axis_tready[n]),
+        //     .s_axis_tlast(rx_axis_tlast[n]),
+        //     .s_axis_tid(0),
+        //     .s_axis_tdest(0),
+        //     .s_axis_tuser(0),
+
+        //     .m_clk(clk_250mhz),
+        //     .m_axis_tdata(rx_axis_tdata[n*AXIS_DATA_WIDTH +: AXIS_DATA_WIDTH]),
+        //     .m_axis_tkeep(rx_axis_tkeep[n*AXIS_KEEP_WIDTH +: AXIS_KEEP_WIDTH]),
+        //     .m_axis_tvalid(rx_axis_tvalid[n]),
+        //     .m_axis_tready(rx_axis_tready[n]),
+        //     .m_axis_tlast(rx_axis_tlast[n]),
+        //     .m_axis_tid(),
+        //     .m_axis_tdest(),
+        //     .m_axis_tuser()
+        // );
+        // 
+        // axis_async_fifo # (
+        //     .DEPTH(128),
+        //     .DATA_WIDTH(PTP_TS_WIDTH),
+        //     .KEEP_ENABLE(0),
+        //     .KEEP_WIDTH(1),
+        //     .USER_ENABLE(0), 
+        //     .FRAME_FIFO(0)
+        // ) tx_ptp_ts_fifo (
+        //     .async_rst(rst_200mhz),
+        // 
+        //     .s_clk(clk_250mhz),
+        //     .s_axis_tdata(tx_ptp_ts_96[n*PTP_TS_WIDTH +: PTP_TS_WIDTH]),
+        //     .s_axis_tkeep(0), 
+        //     .s_axis_tvalid(tx_ptp_ts_valid[n]),
+        //     .s_axis_tready(tx_ptp_ts_ready[n]), 
+        //     .s_axis_tlast(), 
+        //     .s_axis_tid(0),
+        //     .s_axis_tdest(0),
+        //     .s_axis_tuser(0),
+
+        //     .m_clk(clk_200mhz),
+        //     .m_axis_tdata(tx_ptp_ts_96[n*PTP_TS_WIDTH +: PTP_TS_WIDTH]),
+        //     .m_axis_tkeep(), 
+        //     .m_axis_tvalid(tx_ptp_ts_valid[n]),
+        //     .m_axis_tready(tx_ptp_ts_ready[n]), 
+        //     .m_axis_tlast(), 
+        //     .m_axis_tid(),
+        //     .m_axis_tdest(),
+        //     .m_axis_tuser()
+        // );
+        // 
+        // axis_async_fifo # (
+        //     .DEPTH(128),
+        //     .DATA_WIDTH(PTP_TS_WIDTH),
+        //     .KEEP_ENABLE(0),
+        //     .KEEP_WIDTH(1),
+        //     .USER_ENABLE(0), 
+        //     .FRAME_FIFO(0)
+        // ) rx_ptp_ts_fifo (
+        //     .async_rst(rst_250mhz),
+        // 
+        //     .s_clk(clk_200mhz),
+        //     .s_axis_tdata(rx_ptp_ts_96[n*PTP_TS_WIDTH +: PTP_TS_WIDTH]),
+        //     .s_axis_tkeep(0), 
+        //     .s_axis_tvalid(rx_ptp_ts_valid[n]),
+        //     .s_axis_tready(rx_ptp_ts_ready[n]), 
+        //     .s_axis_tlast(), 
+        //     .s_axis_tid(0),
+        //     .s_axis_tdest(0),
+        //     .s_axis_tuser(0),
+
+        //     .m_clk(clk_250mhz),
+        //     .m_axis_tdata(rx_ptp_ts_96[n*PTP_TS_WIDTH +: PTP_TS_WIDTH]),
+        //     .m_axis_tkeep(), 
+        //     .m_axis_tvalid(rx_ptp_ts_valid[n]),
+        //     .m_axis_tready(rx_ptp_ts_ready[n]), 
+        //     .m_axis_tlast(), 
+        //     .m_axis_tid(),
+        //     .m_axis_tdest(),
+        //     .m_axis_tuser()
+        // );
 
         eth_mac_10g_fifo #(
             .DATA_WIDTH(64),
@@ -2241,38 +2318,36 @@ generate
             .rx_rst(port_xgmii_rx_rst[m]),
             .tx_clk(port_xgmii_tx_clk[m]),
             .tx_rst(port_xgmii_tx_rst[m]),
-            .logic_clk(sys_clk),
-            .logic_rst(sys_rst),
-            // .logic_clk(clk_250mhz),
-            // .logic_rst(rst_250mhz),
-            .ptp_sample_clk(1'b0), // clk_250mhz),
+            .logic_clk(clk_250mhz),
+            .logic_rst(rst_250mhz),
+            .ptp_sample_clk(clk_250mhz),
 
-            .tx_axis_tdata(phy_tx_axis_tdata[m*AXIS_DATA_WIDTH +: AXIS_DATA_WIDTH]),
-            .tx_axis_tkeep(phy_tx_axis_tkeep[m*AXIS_KEEP_WIDTH +: AXIS_KEEP_WIDTH]),
-            .tx_axis_tvalid(phy_tx_axis_tvalid[m]),
-            .tx_axis_tready(phy_tx_axis_tready[m]),
-            .tx_axis_tlast(phy_tx_axis_tlast[m]),
-            .tx_axis_tuser(phy_tx_axis_tuser[m]),
+            .tx_axis_tdata(mac_tx_axis_tdata[m*AXIS_DATA_WIDTH +: AXIS_DATA_WIDTH]),
+            .tx_axis_tkeep(mac_tx_axis_tkeep[m*AXIS_KEEP_WIDTH +: AXIS_KEEP_WIDTH]),
+            .tx_axis_tvalid(mac_tx_axis_tvalid[m]),
+            .tx_axis_tready(mac_tx_axis_tready[m]),
+            .tx_axis_tlast(mac_tx_axis_tlast[m]),
+            .tx_axis_tuser(mac_tx_axis_tuser[m]),
 
             .s_axis_tx_ptp_ts_tag(16'd0),
             .s_axis_tx_ptp_ts_valid(1'b0),
             .s_axis_tx_ptp_ts_ready(),
 
-            .m_axis_tx_ptp_ts_96(), //tx_ptp_ts_96[m*PTP_TS_WIDTH +: PTP_TS_WIDTH]),
+            .m_axis_tx_ptp_ts_96(tx_ptp_ts_96[m*PTP_TS_WIDTH +: PTP_TS_WIDTH]),
             .m_axis_tx_ptp_ts_tag(),
-            .m_axis_tx_ptp_ts_valid(), //tx_ptp_ts_valid[m +: 1]),
-            .m_axis_tx_ptp_ts_ready(1'b0), //tx_ptp_ts_ready[m +: 1]),
+            .m_axis_tx_ptp_ts_valid(tx_ptp_ts_valid[m]),
+            .m_axis_tx_ptp_ts_ready(tx_ptp_ts_ready[m]),
 
-            .rx_axis_tdata(phy_rx_axis_tdata[m*AXIS_DATA_WIDTH +: AXIS_DATA_WIDTH]),
-            .rx_axis_tkeep(phy_rx_axis_tkeep[m*AXIS_KEEP_WIDTH +: AXIS_KEEP_WIDTH]),
-            .rx_axis_tvalid(phy_rx_axis_tvalid[m]),
-            .rx_axis_tready(phy_rx_axis_tready[m]),
-            .rx_axis_tlast(phy_rx_axis_tlast[m]),
-            .rx_axis_tuser(phy_rx_axis_tuser[m]),
+            .rx_axis_tdata(mac_rx_axis_tdata[m*AXIS_DATA_WIDTH +: AXIS_DATA_WIDTH]),
+            .rx_axis_tkeep(mac_rx_axis_tkeep[m*AXIS_KEEP_WIDTH +: AXIS_KEEP_WIDTH]),
+            .rx_axis_tvalid(mac_rx_axis_tvalid[m]),
+            .rx_axis_tready(mac_rx_axis_tready[m]),
+            .rx_axis_tlast(mac_rx_axis_tlast[m]),
+            .rx_axis_tuser(mac_rx_axis_tuser[m]),
 
-            .m_axis_rx_ptp_ts_96(), //rx_ptp_ts_96[m*PTP_TS_WIDTH +: PTP_TS_WIDTH]),
-            .m_axis_rx_ptp_ts_valid(), //rx_ptp_ts_valid[m +: 1]),
-            .m_axis_rx_ptp_ts_ready(1'b0), // rx_ptp_ts_ready[m +: 1]),
+            .m_axis_rx_ptp_ts_96(rx_ptp_ts_96[m*PTP_TS_WIDTH +: PTP_TS_WIDTH]),
+            .m_axis_rx_ptp_ts_valid(rx_ptp_ts_valid[m +: 1]),
+            .m_axis_rx_ptp_ts_ready(rx_ptp_ts_ready[m +: 1]),
 
             .xgmii_rxd(port_xgmii_rxd[m*64 +: 64]),
             .xgmii_rxc(port_xgmii_rxc[m*8 +: 8]),
@@ -2289,7 +2364,7 @@ generate
             .rx_fifo_bad_frame(),
             .rx_fifo_good_frame(),
 
-            .ptp_ts_96(96'd0), // ptp_ts_96),
+            .ptp_ts_96(ptp_ts_96),
 
             .ifg_delay(8'd12)
         );
@@ -2298,28 +2373,53 @@ generate
 
 endgenerate
 
+assign mac_tx_axis_tdata   = tx_axis_tdata;
+assign mac_tx_axis_tkeep   = tx_axis_tkeep;
+assign mac_tx_axis_tvalid  = tx_axis_tvalid;
+assign tx_axis_tready = mac_tx_axis_tready;
+assign mac_tx_axis_tlast   = tx_axis_tlast;
+assign mac_tx_axis_tuser   = tx_axis_tuser;
 
-pkt_processing # (
-    .LVL1_DATA_WIDTH(AXIS_DATA_WIDTH),
-    .LVL1_STRB_WIDTH(AXIS_KEEP_WIDTH),
-    .INTERFACE_COUNT(4)
-) riscv_sys_0 (
-    .sys_clk(sys_clk),
-    .sys_rst(sys_rst),
-    .core_clk_i(core_clk_i),
-    .core_rst_i(core_rst_i),
+assign rx_axis_tdata  = mac_rx_axis_tdata;
+assign rx_axis_tkeep  = mac_rx_axis_tkeep;
+assign rx_axis_tvalid = mac_rx_axis_tvalid;
+assign mac_rx_axis_tready  = rx_axis_tready;
+assign rx_axis_tlast  = mac_rx_axis_tlast;
+assign rx_axis_tuser  = mac_rx_axis_tuser;
 
-    .tx_axis_tdata ({if_fifo_rx_axis_tdata, phy_tx_axis_tdata}),
-    .tx_axis_tkeep ({if_fifo_rx_axis_tkeep, phy_tx_axis_tkeep}),
-    .tx_axis_tvalid({if_fifo_rx_axis_tvalid,phy_tx_axis_tvalid}),
-    .tx_axis_tready({if_fifo_rx_axis_tready,phy_tx_axis_tready}),
-    .tx_axis_tlast ({if_fifo_rx_axis_tlast, phy_tx_axis_tlast}),
+// assign if_rx_axis_tdata  = mac_rx_axis_tdata;
+// assign if_rx_axis_tkeep  = mac_rx_axis_tkeep;
+// assign if_rx_axis_tvalid = mac_rx_axis_tvalid;
+// assign mac_rx_axis_tready     = if_rx_axis_tready;
+// assign if_rx_axis_tlast  = mac_rx_axis_tlast;
+// 
+// assign mac_tx_axis_tdata      = if_tx_axis_tdata;
+// assign mac_tx_axis_tkeep      = if_tx_axis_tkeep;
+// assign mac_tx_axis_tvalid     = if_tx_axis_tvalid;
+// assign if_tx_axis_tready = mac_tx_axis_tready;
+// assign mac_tx_axis_tlast      = if_tx_axis_tlast;
 
-    .rx_axis_tdata ({if_fifo_tx_axis_tdata, phy_rx_axis_tdata}),
-    .rx_axis_tkeep ({if_fifo_tx_axis_tkeep, phy_rx_axis_tkeep}),
-    .rx_axis_tvalid({if_fifo_tx_axis_tvalid,phy_rx_axis_tvalid}), 
-    .rx_axis_tready({if_fifo_tx_axis_tready,phy_rx_axis_tready}), 
-    .rx_axis_tlast ({if_fifo_tx_axis_tlast, phy_rx_axis_tlast})
-);
+// pkt_processing # (
+//     .LVL1_DATA_WIDTH(AXIS_DATA_WIDTH),
+//     .LVL1_STRB_WIDTH(AXIS_KEEP_WIDTH),
+//     .INTERFACE_COUNT(4)
+// ) riscv_sys_0 (
+//     .clk_200mhz(clk_200mhz),
+//     .rst_200mhz(rst_200mhz),
+//     .core_clk_i(core_clk_i),
+//     .core_rst_i(core_rst_i),
+// 
+//     .tx_axis_tdata ({if_rx_axis_tdata, mac_tx_axis_tdata}),
+//     .tx_axis_tkeep ({if_rx_axis_tkeep, mac_tx_axis_tkeep}),
+//     .tx_axis_tvalid({if_rx_axis_tvalid,mac_tx_axis_tvalid}),
+//     .tx_axis_tready({if_rx_axis_tready,mac_tx_axis_tready}),
+//     .tx_axis_tlast ({if_rx_axis_tlast, mac_tx_axis_tlast}),
+// 
+//     .rx_axis_tdata ({if_tx_axis_tdata, mac_rx_axis_tdata}),
+//     .rx_axis_tkeep ({if_tx_axis_tkeep, mac_rx_axis_tkeep}),
+//     .rx_axis_tvalid({if_tx_axis_tvalid,mac_rx_axis_tvalid}), 
+//     .rx_axis_tready({if_tx_axis_tready,mac_rx_axis_tready}), 
+//     .rx_axis_tlast ({if_tx_axis_tlast, mac_rx_axis_tlast})
+// );
 
 endmodule

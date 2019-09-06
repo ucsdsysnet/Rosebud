@@ -209,6 +209,7 @@ reg  [ADDR_WIDTH-1:0] s_header_addr;
 wire [ADDR_WIDTH-1:0] s_base_addr;
 
 assign data_s_axis_tready = s_axis_tready;
+wire [PORT_WIDTH-1:0] dram_port = DRAM_PORT;
 
 always @ (posedge sys_clk) begin
 
@@ -338,9 +339,6 @@ wire                   pkt_sent;
 
 wire [63:0] send_desc;
 wire send_desc_valid, send_desc_ready;
-
-// Or can use slot being 0
-wire [PORT_WIDTH-1:0] dram_port = DRAM_PORT;
 
 axis_dma # (
   .DATA_WIDTH     (DATA_WIDTH),
