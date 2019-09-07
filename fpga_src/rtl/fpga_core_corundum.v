@@ -2314,19 +2314,19 @@ generate
 
 endgenerate
 
-assign mac_tx_axis_tdata     = fifoed_tx_axis_tdata;
-assign mac_tx_axis_tkeep     = fifoed_tx_axis_tkeep;
-assign mac_tx_axis_tvalid    = fifoed_tx_axis_tvalid;
-assign fifoed_tx_axis_tready = mac_tx_axis_tready;
-assign mac_tx_axis_tlast     = fifoed_tx_axis_tlast;
-assign mac_tx_axis_tuser     = fifoed_tx_axis_tuser;
-
-assign fifoed_rx_axis_tdata  = mac_rx_axis_tdata;
-assign fifoed_rx_axis_tkeep  = mac_rx_axis_tkeep;
-assign fifoed_rx_axis_tvalid = mac_rx_axis_tvalid;
-assign mac_rx_axis_tready    = fifoed_rx_axis_tready;
-assign fifoed_rx_axis_tlast  = mac_rx_axis_tlast;
-assign fifoed_rx_axis_tuser  = mac_rx_axis_tuser;
+// assign mac_tx_axis_tdata     = fifoed_tx_axis_tdata;
+// assign mac_tx_axis_tkeep     = fifoed_tx_axis_tkeep;
+// assign mac_tx_axis_tvalid    = fifoed_tx_axis_tvalid;
+// assign fifoed_tx_axis_tready = mac_tx_axis_tready;
+// assign mac_tx_axis_tlast     = fifoed_tx_axis_tlast;
+// assign mac_tx_axis_tuser     = fifoed_tx_axis_tuser;
+// 
+// assign fifoed_rx_axis_tdata  = mac_rx_axis_tdata;
+// assign fifoed_rx_axis_tkeep  = mac_rx_axis_tkeep;
+// assign fifoed_rx_axis_tvalid = mac_rx_axis_tvalid;
+// assign mac_rx_axis_tready    = fifoed_rx_axis_tready;
+// assign fifoed_rx_axis_tlast  = mac_rx_axis_tlast;
+// assign fifoed_rx_axis_tuser  = mac_rx_axis_tuser;
   
 reg [15:0] rx_count_0, rx_count_1, tx_count_0, tx_count_1;
 always @ (posedge clk_250mhz)
@@ -2432,27 +2432,27 @@ ila_4x64 fast_clk_debugger (
             tx_count_1})
 );
 
-// pkt_processing # (
-//     .LVL1_DATA_WIDTH(AXIS_DATA_WIDTH),
-//     .LVL1_STRB_WIDTH(AXIS_KEEP_WIDTH),
-//     .INTERFACE_COUNT(4)
-// ) riscv_sys_0 (
-//     .clk_200mhz(clk_200mhz),
-//     .rst_200mhz(rst_200mhz),
-//     .core_clk_i(core_clk_i),
-//     .core_rst_i(core_rst_i),
-// 
-//     .tx_axis_tdata ({if_rx_axis_tdata, mac_tx_axis_tdata}),
-//     .tx_axis_tkeep ({if_rx_axis_tkeep, mac_tx_axis_tkeep}),
-//     .tx_axis_tvalid({if_rx_axis_tvalid,mac_tx_axis_tvalid}),
-//     .tx_axis_tready({if_rx_axis_tready,mac_tx_axis_tready}),
-//     .tx_axis_tlast ({if_rx_axis_tlast, mac_tx_axis_tlast}),
-// 
-//     .rx_axis_tdata ({if_tx_axis_tdata, mac_rx_axis_tdata}),
-//     .rx_axis_tkeep ({if_tx_axis_tkeep, mac_rx_axis_tkeep}),
-//     .rx_axis_tvalid({if_tx_axis_tvalid,mac_rx_axis_tvalid}), 
-//     .rx_axis_tready({if_tx_axis_tready,mac_rx_axis_tready}), 
-//     .rx_axis_tlast ({if_tx_axis_tlast, mac_rx_axis_tlast})
-// );
+pkt_processing # (
+    .LVL1_DATA_WIDTH(AXIS_DATA_WIDTH),
+    .LVL1_STRB_WIDTH(AXIS_KEEP_WIDTH),
+    .INTERFACE_COUNT(4)
+) riscv_sys_0 (
+    .sys_clk(clk_200mhz),
+    .sys_rst(rst_200mhz),
+    .core_clk_i(core_clk_i),
+    .core_rst_i(core_rst_i),
+
+    .tx_axis_tdata ({fifoed_rx_axis_tdata, mac_tx_axis_tdata}),
+    .tx_axis_tkeep ({fifoed_rx_axis_tkeep, mac_tx_axis_tkeep}),
+    .tx_axis_tvalid({fifoed_rx_axis_tvalid,mac_tx_axis_tvalid}),
+    .tx_axis_tready({fifoed_rx_axis_tready,mac_tx_axis_tready}),
+    .tx_axis_tlast ({fifoed_rx_axis_tlast, mac_tx_axis_tlast}),
+
+    .rx_axis_tdata ({fifoed_tx_axis_tdata, mac_rx_axis_tdata}),
+    .rx_axis_tkeep ({fifoed_tx_axis_tkeep, mac_rx_axis_tkeep}),
+    .rx_axis_tvalid({fifoed_tx_axis_tvalid,mac_rx_axis_tvalid}), 
+    .rx_axis_tready({fifoed_tx_axis_tready,mac_rx_axis_tready}), 
+    .rx_axis_tlast ({fifoed_tx_axis_tlast, mac_rx_axis_tlast})
+);
 
 endmodule
