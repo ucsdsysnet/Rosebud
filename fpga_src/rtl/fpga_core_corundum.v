@@ -269,7 +269,6 @@ parameter TX_FIFO_DEPTH = 16384;
 parameter RX_FIFO_DEPTH = 16384;
 
 parameter ILA_EN = 0;
-
 // AXI lite connections
 wire [AXIL_ADDR_WIDTH-1:0] axil_pcie_awaddr;
 wire [2:0]                 axil_pcie_awprot;
@@ -1538,7 +1537,7 @@ axi_crossbar #(
     .BUSER_ENABLE(0),
     .ARUSER_ENABLE(0),
     .RUSER_ENABLE(0),
-    .S_THREADS({2{32'd2}}),
+    .S_THREADS({2{32'd4}}),
     .S_ACCEPT({2{32'd16}}),
     .M_REGIONS(1),
     .M_BASE_ADDR(IF_AXI_BASE_ADDR),
@@ -2156,11 +2155,7 @@ generate
              */
             .msi_irq(if_msi_irq[n*32 +: 32])
         );
-    end
-endgenerate
 
-generate
-    for (i = 0; i < IF_COUNT; i = i + 1) begin : async_fifos_tx
         axis_async_fifo # (
             .DEPTH(4096),
             .DATA_WIDTH(AXIS_DATA_WIDTH),
@@ -2171,32 +2166,26 @@ generate
             .async_rst(rst_200mhz),
         
             .s_clk(clk_250mhz),
-            .s_axis_tdata(tx_axis_tdata[i*AXIS_DATA_WIDTH +: AXIS_DATA_WIDTH]),
-            .s_axis_tkeep(tx_axis_tkeep[i*AXIS_KEEP_WIDTH +: AXIS_KEEP_WIDTH]),
-            .s_axis_tvalid(tx_axis_tvalid[i]),
-            .s_axis_tready(tx_axis_tready[i]),
-            .s_axis_tlast(tx_axis_tlast[i]),
+            .s_axis_tdata(tx_axis_tdata[n*AXIS_DATA_WIDTH +: AXIS_DATA_WIDTH]),
+            .s_axis_tkeep(tx_axis_tkeep[n*AXIS_KEEP_WIDTH +: AXIS_KEEP_WIDTH]),
+            .s_axis_tvalid(tx_axis_tvalid[n]),
+            .s_axis_tready(tx_axis_tready[n]),
+            .s_axis_tlast(tx_axis_tlast[n]),
             .s_axis_tid(0),
             .s_axis_tdest(0),
-            .s_axis_tuser(tx_axis_tuser[i]),
+            .s_axis_tuser(tx_axis_tuser[n]),
         
             .m_clk(clk_200mhz),
-            .m_axis_tdata(fifoed_tx_axis_tdata[i*AXIS_DATA_WIDTH +: AXIS_DATA_WIDTH]),
-            .m_axis_tkeep(fifoed_tx_axis_tkeep[i*AXIS_KEEP_WIDTH +: AXIS_KEEP_WIDTH]),
-            .m_axis_tvalid(fifoed_tx_axis_tvalid[i]),
-            .m_axis_tready(fifoed_tx_axis_tready[i]),
-            .m_axis_tlast(fifoed_tx_axis_tlast[i]),
+            .m_axis_tdata(fifoed_tx_axis_tdata[n*AXIS_DATA_WIDTH +: AXIS_DATA_WIDTH]),
+            .m_axis_tkeep(fifoed_tx_axis_tkeep[n*AXIS_KEEP_WIDTH +: AXIS_KEEP_WIDTH]),
+            .m_axis_tvalid(fifoed_tx_axis_tvalid[n]),
+            .m_axis_tready(fifoed_tx_axis_tready[n]),
+            .m_axis_tlast(fifoed_tx_axis_tlast[n]),
             .m_axis_tid(),
             .m_axis_tdest(),
-            .m_axis_tuser(fifoed_tx_axis_tuser[i])
+            .m_axis_tuser(fifoed_tx_axis_tuser[n])
         );
     
-    end
-endgenerate
-
-generate
-    for (j = 0; j < IF_COUNT; j = j + 1) begin : async_fifos_rx
-
         axis_async_fifo # (
             .DEPTH(4096),
             .DATA_WIDTH(AXIS_DATA_WIDTH),
@@ -2207,30 +2196,26 @@ generate
             .async_rst(rst_250mhz),
         
             .s_clk(clk_200mhz),
-            .s_axis_tdata(fifoed_rx_axis_tdata[j*AXIS_DATA_WIDTH +: AXIS_DATA_WIDTH]),
-            .s_axis_tkeep(fifoed_rx_axis_tkeep[j*AXIS_KEEP_WIDTH +: AXIS_KEEP_WIDTH]),
-            .s_axis_tvalid(fifoed_rx_axis_tvalid[j]),
-            .s_axis_tready(fifoed_rx_axis_tready[j]),
-            .s_axis_tlast(fifoed_rx_axis_tlast[j]),
+            .s_axis_tdata(fifoed_rx_axis_tdata[n*AXIS_DATA_WIDTH +: AXIS_DATA_WIDTH]),
+            .s_axis_tkeep(fifoed_rx_axis_tkeep[n*AXIS_KEEP_WIDTH +: AXIS_KEEP_WIDTH]),
+            .s_axis_tvalid(fifoed_rx_axis_tvalid[n]),
+            .s_axis_tready(fifoed_rx_axis_tready[n]),
+            .s_axis_tlast(fifoed_rx_axis_tlast[n]),
             .s_axis_tid(0),
             .s_axis_tdest(0),
-            .s_axis_tuser(fifoed_rx_axis_tuser[j]),
+            .s_axis_tuser(fifoed_rx_axis_tuser[n]),
 
             .m_clk(clk_250mhz),
-            .m_axis_tdata(rx_axis_tdata[j*AXIS_DATA_WIDTH +: AXIS_DATA_WIDTH]),
-            .m_axis_tkeep(rx_axis_tkeep[j*AXIS_KEEP_WIDTH +: AXIS_KEEP_WIDTH]),
-            .m_axis_tvalid(rx_axis_tvalid[j]),
-            .m_axis_tready(rx_axis_tready[j]),
-            .m_axis_tlast(rx_axis_tlast[j]),
+            .m_axis_tdata(rx_axis_tdata[n*AXIS_DATA_WIDTH +: AXIS_DATA_WIDTH]),
+            .m_axis_tkeep(rx_axis_tkeep[n*AXIS_KEEP_WIDTH +: AXIS_KEEP_WIDTH]),
+            .m_axis_tvalid(rx_axis_tvalid[n]),
+            .m_axis_tready(rx_axis_tready[n]),
+            .m_axis_tlast(rx_axis_tlast[n]),
             .m_axis_tid(),
             .m_axis_tdest(),
-            .m_axis_tuser(rx_axis_tuser[j])
+            .m_axis_tuser(rx_axis_tuser[n])
         );
-    end
-endgenerate
 
-generate
-    for (m = 0; m < PORT_COUNT; m = m + 1) begin : mac
         eth_mac_10g_fifo #(
             .DATA_WIDTH(64),
             .AXIS_DATA_WIDTH(AXIS_DATA_WIDTH),
@@ -2257,20 +2242,20 @@ generate
             .PTP_TAG_WIDTH(16)
         )
         eth_mac_inst (
-            .rx_clk(port_xgmii_rx_clk[m]),
-            .rx_rst(port_xgmii_rx_rst[m]),
-            .tx_clk(port_xgmii_tx_clk[m]),
-            .tx_rst(port_xgmii_tx_rst[m]),
+            .rx_clk(port_xgmii_rx_clk[n]),
+            .rx_rst(port_xgmii_rx_rst[n]),
+            .tx_clk(port_xgmii_tx_clk[n]),
+            .tx_rst(port_xgmii_tx_rst[n]),
             .logic_clk(clk_200mhz),
             .logic_rst(rst_200mhz),
             .ptp_sample_clk(clk_200mhz),
 
-            .tx_axis_tdata(mac_tx_axis_tdata[m*AXIS_DATA_WIDTH +: AXIS_DATA_WIDTH]),
-            .tx_axis_tkeep(mac_tx_axis_tkeep[m*AXIS_KEEP_WIDTH +: AXIS_KEEP_WIDTH]),
-            .tx_axis_tvalid(mac_tx_axis_tvalid[m]),
-            .tx_axis_tready(mac_tx_axis_tready[m]),
-            .tx_axis_tlast(mac_tx_axis_tlast[m]),
-            .tx_axis_tuser(mac_tx_axis_tuser[m]),
+            .tx_axis_tdata(mac_tx_axis_tdata[n*AXIS_DATA_WIDTH +: AXIS_DATA_WIDTH]),
+            .tx_axis_tkeep(mac_tx_axis_tkeep[n*AXIS_KEEP_WIDTH +: AXIS_KEEP_WIDTH]),
+            .tx_axis_tvalid(mac_tx_axis_tvalid[n]),
+            .tx_axis_tready(mac_tx_axis_tready[n]),
+            .tx_axis_tlast(mac_tx_axis_tlast[n]),
+            .tx_axis_tuser(mac_tx_axis_tuser[n]),
 
             .s_axis_tx_ptp_ts_tag(16'd0),
             .s_axis_tx_ptp_ts_valid(1'b0),
@@ -2281,21 +2266,21 @@ generate
             .m_axis_tx_ptp_ts_valid(), // fifoed_tx_ptp_ts_valid[m]),
             .m_axis_tx_ptp_ts_ready(1'b1), // fifoed_tx_ptp_ts_ready[m]),
 
-            .rx_axis_tdata(mac_rx_axis_tdata[m*AXIS_DATA_WIDTH +: AXIS_DATA_WIDTH]),
-            .rx_axis_tkeep(mac_rx_axis_tkeep[m*AXIS_KEEP_WIDTH +: AXIS_KEEP_WIDTH]),
-            .rx_axis_tvalid(mac_rx_axis_tvalid[m]),
-            .rx_axis_tready(mac_rx_axis_tready[m]),
-            .rx_axis_tlast(mac_rx_axis_tlast[m]),
-            .rx_axis_tuser(mac_rx_axis_tuser[m]),
+            .rx_axis_tdata(mac_rx_axis_tdata[n*AXIS_DATA_WIDTH +: AXIS_DATA_WIDTH]),
+            .rx_axis_tkeep(mac_rx_axis_tkeep[n*AXIS_KEEP_WIDTH +: AXIS_KEEP_WIDTH]),
+            .rx_axis_tvalid(mac_rx_axis_tvalid[n]),
+            .rx_axis_tready(mac_rx_axis_tready[n]),
+            .rx_axis_tlast(mac_rx_axis_tlast[n]),
+            .rx_axis_tuser(mac_rx_axis_tuser[n]),
 
             .m_axis_rx_ptp_ts_96(), //fifoed_rx_ptp_ts_96[m*PTP_TS_WIDTH +: PTP_TS_WIDTH]),
             .m_axis_rx_ptp_ts_valid(), //fifoed_rx_ptp_ts_valid[m +: 1]),
             .m_axis_rx_ptp_ts_ready(1'b0), // fifoed_rx_ptp_ts_ready[m +: 1]),
 
-            .xgmii_rxd(port_xgmii_rxd[m*64 +: 64]),
-            .xgmii_rxc(port_xgmii_rxc[m*8 +: 8]),
-            .xgmii_txd(port_xgmii_txd[m*64 +: 64]),
-            .xgmii_txc(port_xgmii_txc[m*8 +: 8]),
+            .xgmii_rxd(port_xgmii_rxd[n*64 +: 64]),
+            .xgmii_rxc(port_xgmii_rxc[n*8 +: 8]),
+            .xgmii_txd(port_xgmii_txd[n*64 +: 64]),
+            .xgmii_txc(port_xgmii_txc[n*8 +: 8]),
 
             .tx_error_underflow(),
             .tx_fifo_overflow(),
@@ -2316,21 +2301,65 @@ generate
 
 endgenerate
 
-// assign mac_tx_axis_tdata     = fifoed_tx_axis_tdata;
-// assign mac_tx_axis_tkeep     = fifoed_tx_axis_tkeep;
-// assign mac_tx_axis_tvalid    = fifoed_tx_axis_tvalid;
-// assign fifoed_tx_axis_tready = mac_tx_axis_tready;
-// assign mac_tx_axis_tlast     = fifoed_tx_axis_tlast;
+// ASYNC FIFO only
 // 
-// assign fifoed_rx_axis_tdata  = mac_rx_axis_tdata;
-// assign fifoed_rx_axis_tkeep  = mac_rx_axis_tkeep;
-// assign fifoed_rx_axis_tvalid = mac_rx_axis_tvalid;
-// assign mac_rx_axis_tready    = fifoed_rx_axis_tready;
-// assign fifoed_rx_axis_tlast  = mac_rx_axis_tlast;
+//   assign mac_tx_axis_tdata     = fifoed_tx_axis_tdata;
+//   assign mac_tx_axis_tkeep     = fifoed_tx_axis_tkeep;
+//   assign mac_tx_axis_tvalid    = fifoed_tx_axis_tvalid;
+//   assign fifoed_tx_axis_tready = mac_tx_axis_tready;
+//   assign mac_tx_axis_tlast     = fifoed_tx_axis_tlast;
+//   assign mac_tx_axis_tuser     = 0; // fifoed_tx_axis_tuser;
+//   
+//   assign fifoed_rx_axis_tdata  = mac_rx_axis_tdata;
+//   assign fifoed_rx_axis_tkeep  = mac_rx_axis_tkeep;
+//   assign fifoed_rx_axis_tvalid = mac_rx_axis_tvalid;
+//   assign mac_rx_axis_tready    = fifoed_rx_axis_tready;
+//   assign fifoed_rx_axis_tlast  = mac_rx_axis_tlast;
+//   assign fifoed_rx_axis_tuser  = 0; // mac_rx_axis_tuser;
 
-assign mac_tx_axis_tuser     = fifoed_tx_axis_tuser;
-assign fifoed_rx_axis_tuser  = mac_rx_axis_tuser;
+
+// Direct connection
+// 
+//   assign mac_tx_axis_tdata  = tx_axis_tdata;
+//   assign mac_tx_axis_tkeep  = tx_axis_tkeep;
+//   assign mac_tx_axis_tvalid = tx_axis_tvalid;
+//   assign tx_axis_tready     = mac_tx_axis_tready;
+//   assign mac_tx_axis_tlast  = tx_axis_tlast;
+//   assign mac_tx_axis_tuser  = tx_axis_tuser;
+//   
+//   assign rx_axis_tdata      = mac_rx_axis_tdata;
+//   assign rx_axis_tkeep      = mac_rx_axis_tkeep;
+//   assign rx_axis_tvalid     = mac_rx_axis_tvalid;
+//   assign mac_rx_axis_tready = rx_axis_tready;
+//   assign rx_axis_tlast      = mac_rx_axis_tlast;
+//   assign rx_axis_tuser      = mac_rx_axis_tuser;
+
+  pkt_processing # (
+      .LVL1_DATA_WIDTH(AXIS_DATA_WIDTH),
+      .LVL1_STRB_WIDTH(AXIS_KEEP_WIDTH),
+      .INTERFACE_COUNT(4)
+  ) riscv_sys_0 (
+      .sys_clk(clk_200mhz),
+      .sys_rst(rst_200mhz),
+      .core_clk_i(core_clk_i),
+      .core_rst_i(core_rst_i),
   
+      .tx_axis_tdata ({mac_tx_axis_tdata , fifoed_rx_axis_tdata }),
+      .tx_axis_tkeep ({mac_tx_axis_tkeep , fifoed_rx_axis_tkeep }),
+      .tx_axis_tvalid({mac_tx_axis_tvalid, fifoed_rx_axis_tvalid}),
+      .tx_axis_tready({mac_tx_axis_tready, fifoed_rx_axis_tready}),
+      .tx_axis_tlast ({mac_tx_axis_tlast , fifoed_rx_axis_tlast }),
+                                          
+      .rx_axis_tdata ({mac_rx_axis_tdata , fifoed_tx_axis_tdata }),
+      .rx_axis_tkeep ({mac_rx_axis_tkeep , fifoed_tx_axis_tkeep }),
+      .rx_axis_tvalid({mac_rx_axis_tvalid, fifoed_tx_axis_tvalid}), 
+      .rx_axis_tready({mac_rx_axis_tready, fifoed_tx_axis_tready}), 
+      .rx_axis_tlast ({mac_rx_axis_tlast , fifoed_tx_axis_tlast })
+  );
+
+  assign mac_tx_axis_tuser     = 0; // fifoed_tx_axis_tuser;
+  assign fifoed_rx_axis_tuser  = 0; // mac_rx_axis_tuser;
+ 
 if (ILA_EN) begin
   reg [15:0] rx_count_0, rx_count_1, tx_count_0, tx_count_1;
   always @ (posedge clk_250mhz)
@@ -2435,29 +2464,7 @@ if (ILA_EN) begin
               tx_count_0,
               tx_count_1})
   );
+
 end
-
-pkt_processing # (
-    .LVL1_DATA_WIDTH(AXIS_DATA_WIDTH),
-    .LVL1_STRB_WIDTH(AXIS_KEEP_WIDTH),
-    .INTERFACE_COUNT(4)
-) riscv_sys_0 (
-    .sys_clk(clk_200mhz),
-    .sys_rst(rst_200mhz),
-    .core_clk_i(core_clk_i),
-    .core_rst_i(core_rst_i),
-
-    .tx_axis_tdata ({fifoed_rx_axis_tdata, mac_tx_axis_tdata}),
-    .tx_axis_tkeep ({fifoed_rx_axis_tkeep, mac_tx_axis_tkeep}),
-    .tx_axis_tvalid({fifoed_rx_axis_tvalid,mac_tx_axis_tvalid}),
-    .tx_axis_tready({fifoed_rx_axis_tready,mac_tx_axis_tready}),
-    .tx_axis_tlast ({fifoed_rx_axis_tlast, mac_tx_axis_tlast}),
-
-    .rx_axis_tdata ({fifoed_tx_axis_tdata, mac_rx_axis_tdata}),
-    .rx_axis_tkeep ({fifoed_tx_axis_tkeep, mac_rx_axis_tkeep}),
-    .rx_axis_tvalid({fifoed_tx_axis_tvalid,mac_rx_axis_tvalid}), 
-    .rx_axis_tready({fifoed_tx_axis_tready,mac_rx_axis_tready}), 
-    .rx_axis_tlast ({fifoed_tx_axis_tlast, mac_rx_axis_tlast})
-);
 
 endmodule

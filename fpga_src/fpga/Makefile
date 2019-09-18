@@ -7,6 +7,8 @@ FPGA_ARCH = kintexu
 # Files for synthesis
 SYN_FILES = rtl/fpga_corundum.v
 SYN_FILES += rtl/fpga_core_corundum.v
+SYN_FILES += rtl/sync_reset.v
+SYN_FILES += rtl/sync_signal.v
 SYN_FILES += rtl/riscvcore.v
 SYN_FILES += rtl/VexRiscv.v
 SYN_FILES += rtl/core_mems.v
@@ -18,8 +20,6 @@ SYN_FILES += rtl/max_finder_tree.v
 SYN_FILES += rtl/axis_dma.v 
 SYN_FILES += rtl/riscv_axis_wrapper.v 
 SYN_FILES += rtl/simple_sync_sig.v
-SYN_FILES += rtl/sync_reset.v
-SYN_FILES += rtl/sync_signal.v
 SYN_FILES += rtl/axis_switch.v
 SYN_FILES += rtl/pkt_processing.v
 

@@ -102,6 +102,7 @@ module rx_engine #
     /*
      * Receive request status output
      */
+    output wire [AXI_DMA_LEN_WIDTH-1:0]     m_axis_rx_req_status_len,
     output wire [REQ_TAG_WIDTH-1:0]         m_axis_rx_req_status_tag,
     output wire                             m_axis_rx_req_status_valid,
 
@@ -116,6 +117,7 @@ module rx_engine #
     /*
      * Descriptor dequeue response input
      */
+    input  wire [QUEUE_INDEX_WIDTH-1:0]     s_axis_desc_dequeue_resp_queue,
     input  wire [QUEUE_PTR_WIDTH-1:0]       s_axis_desc_dequeue_resp_ptr,
     input  wire [PCIE_ADDR_WIDTH-1:0]       s_axis_desc_dequeue_resp_addr,
     input  wire [CPL_QUEUE_INDEX_WIDTH-1:0] s_axis_desc_dequeue_resp_cpl,
@@ -325,11 +327,17 @@ initial begin
         $error("Error: Packet scratch address increment must be at least as large as one packet (instance %m)");
         $finish;
     end
+
+    if (QUEUE_REQ_TAG_WIDTH < CL_DESC_TABLE_SIZE) begin
+        $error("Error: QUEUE_REQ_TAG_WIDTH must be at least $clog2(DESC_TABLE_SIZE) (instance %m)");
+        $finish;
+    end
 end
 
 reg [REQ_TAG_WIDTH-1:0] s_axis_rx_req_tag_reg = {REQ_TAG_WIDTH{1'b0}}, s_axis_rx_req_tag_next;
 reg s_axis_rx_req_ready_reg = 1'b0, s_axis_rx_req_ready_next;
 
+reg [AXI_DMA_LEN_WIDTH-1:0] m_axis_rx_req_status_len_reg = {AXI_DMA_LEN_WIDTH{1'b0}}, m_axis_rx_req_status_len_next;
 reg [REQ_TAG_WIDTH-1:0] m_axis_rx_req_status_tag_reg = {REQ_TAG_WIDTH{1'b0}}, m_axis_rx_req_status_tag_next;
 reg m_axis_rx_req_status_valid_reg = 1'b0, m_axis_rx_req_status_valid_next;
 
@@ -450,6 +458,7 @@ reg pkt_table_finish_en;
 
 assign s_axis_rx_req_ready = s_axis_rx_req_ready_reg;
 
+assign m_axis_rx_req_status_len = m_axis_rx_req_status_len_reg;
 assign m_axis_rx_req_status_tag = m_axis_rx_req_status_tag_reg;
 assign m_axis_rx_req_status_valid = m_axis_rx_req_status_valid_reg;
 
@@ -710,6 +719,7 @@ always @* begin
     s_axis_rx_req_tag_next = s_axis_rx_req_tag_reg;
     s_axis_rx_req_ready_next = 1'b0;
 
+    m_axis_rx_req_status_len_next = m_axis_rx_req_status_len_reg;
     m_axis_rx_req_status_tag_next = m_axis_rx_req_status_tag_reg;
     m_axis_rx_req_status_valid_next = 1'b0;
 
@@ -1027,6 +1037,7 @@ always @* begin
             desc_table_finish_en = 1'b1;
 
             // return receive request completion
+            m_axis_rx_req_status_len_next = 0;
             m_axis_rx_req_status_tag_next = desc_table_tag[desc_table_finish_ptr_reg & DESC_PTR_MASK];
             m_axis_rx_req_status_valid_next = 1'b1;
         end else if (desc_table_cpl_write_done[desc_table_finish_ptr_reg & DESC_PTR_MASK] && !m_axis_cpl_enqueue_commit_valid) begin
@@ -1038,6 +1049,7 @@ always @* begin
             m_axis_cpl_enqueue_commit_valid_next = 1'b1;
 
             // return receive request completion
+            m_axis_rx_req_status_len_next = desc_table_dma_len[desc_table_finish_ptr_reg & DESC_PTR_MASK];
             m_axis_rx_req_status_tag_next = desc_table_tag[desc_table_finish_ptr_reg & DESC_PTR_MASK];
             m_axis_rx_req_status_valid_next = 1'b1;
         end
@@ -1174,6 +1186,7 @@ always @(posedge clk) begin
 
     s_axis_rx_req_tag_reg <= s_axis_rx_req_tag_next;
 
+    m_axis_rx_req_status_len_reg <= m_axis_rx_req_status_len_next;
     m_axis_rx_req_status_tag_reg <= m_axis_rx_req_status_tag_next;
 
     m_axis_desc_dequeue_req_queue_reg <= m_axis_desc_dequeue_req_queue_next;
