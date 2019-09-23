@@ -22,22 +22,22 @@ int main(void){
 			read_in_pkt(&packet);
 			packet.data = (unsigned int *)(((unsigned int)packet.data)+offset);
 	
-			if (packet.port==0)
-			 	packet.port = 2;
-			else if (packet.port==2)
-			 	packet.port = 0;
-			else if (packet.port==1)
-			 	packet.port = 3;
-			else if (packet.port==3)
-			 	packet.port = 1;
+			// if (packet.port==0)
+			//  	packet.port = 2;
+			// else if (packet.port==2)
+			//  	packet.port = 0;
+			// else if (packet.port==1)
+			//  	packet.port = 3;
+			// else if (packet.port==3)
+			//  	packet.port = 1;
 
-			// if (packet.port==0){
-			// 	packet.port = 1;
-			// 	*sh_test += 1;
-			// } else {
-			// 	packet.port = 0;
-			// 	*(sh_test+1) += 1;
-			// }
+			if (packet.port==0){
+				packet.port = 1;
+				*sh_test += 1;
+			} else {
+				packet.port = 0;
+				*(sh_test+1) += 1;
+			}
 
 		  safe_pkt_done_msg(&packet);
 			// safe_dram_write(0xAAAAAAAA, 0xBBBBBBBB, &packet);
