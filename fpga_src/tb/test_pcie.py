@@ -62,20 +62,9 @@ srcs.append("../lib/eth/rtl/axis_xgmii_rx_64.v")
 srcs.append("../lib/eth/rtl/axis_xgmii_tx_64.v")
 srcs.append("../lib/eth/rtl/lfsr.v")
 
-srcs.append("../lib/axi/rtl/axi_crossbar.v")
-srcs.append("../lib/axi/rtl/axi_crossbar_addr.v")
-srcs.append("../lib/axi/rtl/axi_crossbar_rd.v")
-srcs.append("../lib/axi/rtl/axi_crossbar_wr.v")
-srcs.append("../lib/axi/rtl/axi_dma.v")
-srcs.append("../lib/axi/rtl/axi_dma_rd.v")
-srcs.append("../lib/axi/rtl/axi_dma_wr.v")
-srcs.append("../lib/axi/rtl/axi_interconnect.v")
 srcs.append("../lib/axi/rtl/axi_ram.v")
 srcs.append("../lib/axi/rtl/axi_ram_rd_if.v")
 srcs.append("../lib/axi/rtl/axi_ram_wr_if.v")
-srcs.append("../lib/axi/rtl/axi_register_rd.v")
-srcs.append("../lib/axi/rtl/axi_register_wr.v")
-srcs.append("../lib/axi/rtl/axil_interconnect.v")
 srcs.append("../lib/axi/rtl/arbiter.v")
 srcs.append("../lib/axi/rtl/priority_encoder.v")
 
@@ -98,8 +87,6 @@ srcs.append("../lib/pcie/rtl/pcie_us_axi_master_wr.v")
 srcs.append("../lib/pcie/rtl/pcie_us_axis_cq_demux.v")
 srcs.append("../lib/pcie/rtl/pcie_us_cfg.v")
 srcs.append("../lib/pcie/rtl/pcie_us_msi.v")
-# srcs.append("../lib/pcie/rtl/arbiter.v")
-# srcs.append("../lib/pcie/rtl/priority_encoder.v")
 srcs.append("../lib/pcie/rtl/pulse_merge.v")
 srcs.append("%s.v" % testbench)
 
@@ -307,8 +294,8 @@ def bench():
         m_axis_rc_tready=s_axis_rc_tready,
 
         # Transmit Flow Control Interface
-        # pcie_tfc_nph_av=pcie_tfc_nph_av,
-        # pcie_tfc_npd_av=pcie_tfc_npd_av,
+        pcie_tfc_nph_av=pcie_tfc_nph_av,
+        pcie_tfc_npd_av=pcie_tfc_npd_av,
 
         # Configuration Management Interface
         cfg_mgmt_addr=cfg_mgmt_addr,

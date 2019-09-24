@@ -1233,30 +1233,30 @@ generate
     end
 endgenerate
 
-  pkt_processing # (
-      .LVL1_DATA_WIDTH(AXIS_DATA_WIDTH),
-      .LVL1_STRB_WIDTH(AXIS_KEEP_WIDTH),
-      .INTERFACE_COUNT(2)
-  ) riscv_sys_0 (
-      .sys_clk(clk_200mhz),
-      .sys_rst(rst_200mhz),
-      .core_clk_i(core_clk_i),
-      .core_rst_i(core_rst_i),
-  
-      .tx_axis_tdata (mac_tx_axis_tdata ),
-      .tx_axis_tkeep (mac_tx_axis_tkeep ),
-      .tx_axis_tvalid(mac_tx_axis_tvalid),
-      .tx_axis_tready(mac_tx_axis_tready),
-      .tx_axis_tlast (mac_tx_axis_tlast ),
-                                        
-      .rx_axis_tdata (mac_rx_axis_tdata ),
-      .rx_axis_tkeep (mac_rx_axis_tkeep ),
-      .rx_axis_tvalid(mac_rx_axis_tvalid), 
-      .rx_axis_tready(mac_rx_axis_tready), 
-      .rx_axis_tlast (mac_rx_axis_tlast )
-  );
+pkt_processing # (
+    .LVL1_DATA_WIDTH(AXIS_DATA_WIDTH),
+    .LVL1_STRB_WIDTH(AXIS_KEEP_WIDTH),
+    .INTERFACE_COUNT(2)
+) riscv_sys_0 (
+    .sys_clk(clk_200mhz),
+    .sys_rst(rst_200mhz),
+    .core_clk_i(core_clk_i),
+    .core_rst_i(core_rst_i),
 
-  assign mac_tx_axis_tuser     = 0; 
-  assign fifoed_rx_axis_tuser  = 0; 
+    .tx_axis_tdata (mac_tx_axis_tdata ),
+    .tx_axis_tkeep (mac_tx_axis_tkeep ),
+    .tx_axis_tvalid(mac_tx_axis_tvalid),
+    .tx_axis_tready(mac_tx_axis_tready),
+    .tx_axis_tlast (mac_tx_axis_tlast ),
+                                      
+    .rx_axis_tdata (mac_rx_axis_tdata ),
+    .rx_axis_tkeep (mac_rx_axis_tkeep ),
+    .rx_axis_tvalid(mac_rx_axis_tvalid), 
+    .rx_axis_tready(mac_rx_axis_tready), 
+    .rx_axis_tlast (mac_rx_axis_tlast )
+);
+
+assign mac_tx_axis_tuser     = 0; 
+assign fifoed_rx_axis_tuser  = 0; 
  
 endmodule
