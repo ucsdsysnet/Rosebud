@@ -670,27 +670,27 @@ def bench():
         yield rc.enumerate(enable_bus_mastering=True, configure_msi=True)
 
         dev_pf0_bar0 = dev.functions[0].bar[0] & 0xfffffffc
-        dev_pf0_bar1 = dev.functions[0].bar[1] & 0xfffffffc
+        # dev_pf0_bar1 = dev.functions[0].bar[1] & 0xfffffffc
 
         yield delay(100)
 
         yield pcie_clk.posedge
-        print("test 2: memory write to bar 1")
+        # print("test 2: memory write to bar 1")
 
-        yield rc.mem_write(dev_pf0_bar1, b'\x11\x22\x33\x44')
+        # yield rc.mem_write(dev_pf0_bar1, b'\x11\x22\x33\x44')
 
-        yield delay(100)
+        # yield delay(100)
 
-        yield pcie_clk.posedge
-        print("test 3: memory read from bar 1")
+        # yield pcie_clk.posedge
+        # print("test 3: memory read from bar 1")
 
-        val = yield from rc.mem_read(dev_pf0_bar1, 4, 1000)
-        print(val)
-        assert val == b'\x11\x22\x33\x44'
+        # val = yield from rc.mem_read(dev_pf0_bar1, 4, 1000)
+        # print(val)
+        # assert val == b'\x11\x22\x33\x44'
 
-        yield delay(100)
+        # yield delay(100)
 
-        yield pcie_clk.posedge
+        # yield pcie_clk.posedge
         print("test 4: test DMA")
 
         # write packet data
