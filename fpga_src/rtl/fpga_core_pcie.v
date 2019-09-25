@@ -91,38 +91,11 @@ module fpga_core #
     output wire [32:0]                     m_axis_cc_tuser,
     output wire                            m_axis_cc_tvalid,
 
-    input  wire [1:0]                      pcie_tfc_nph_av,
-    input  wire [1:0]                      pcie_tfc_npd_av,
-
     input  wire [2:0]                      cfg_max_payload,
     input  wire [2:0]                      cfg_max_read_req,
+    input  wire                            ext_tag_enable,
 
-    output wire [18:0]                     cfg_mgmt_addr,
-    output wire                            cfg_mgmt_write,
-    output wire [31:0]                     cfg_mgmt_write_data,
-    output wire [3:0]                      cfg_mgmt_byte_enable,
-    output wire                            cfg_mgmt_read,
-    input  wire [31:0]                     cfg_mgmt_read_data,
-    input  wire                            cfg_mgmt_read_write_done,
-
-    input  wire [3:0]                      cfg_interrupt_msi_enable,
-    input  wire [7:0]                      cfg_interrupt_msi_vf_enable,
-    input  wire [11:0]                     cfg_interrupt_msi_mmenable,
-    input  wire                            cfg_interrupt_msi_mask_update,
-    input  wire [31:0]                     cfg_interrupt_msi_data,
-    output wire [3:0]                      cfg_interrupt_msi_select,
-    output wire [31:0]                     cfg_interrupt_msi_int,
-    output wire [31:0]                     cfg_interrupt_msi_pending_status,
-    output wire                            cfg_interrupt_msi_pending_status_data_enable,
-    output wire [3:0]                      cfg_interrupt_msi_pending_status_function_num,
-    input  wire                            cfg_interrupt_msi_sent,
-    input  wire                            cfg_interrupt_msi_fail,
-    output wire [2:0]                      cfg_interrupt_msi_attr,
-    output wire                            cfg_interrupt_msi_tph_present,
-    output wire [1:0]                      cfg_interrupt_msi_tph_type,
-    output wire [8:0]                      cfg_interrupt_msi_tph_st_tag,
-    output wire [3:0]                      cfg_interrupt_msi_function_number,
-
+    output wire [31:0]                     msi_irq,
     output wire                            status_error_cor,
     output wire                            status_error_uncor,
 
@@ -231,14 +204,6 @@ wire                       axi_pcie_dma_rlast;
 wire                       axi_pcie_dma_rvalid;
 wire                       axi_pcie_dma_rready;
 
-// Error handling
-wire [1:0] status_error_uncor_int;
-wire [1:0] status_error_cor_int;
-
-wire [31:0] msi_irq;
-
-wire ext_tag_enable;
-
 // PCIe DMA control
 wire [PCIE_ADDR_WIDTH-1:0]     pcie_dma_read_desc_pcie_addr;
 wire [AXI_ADDR_WIDTH-1:0]      pcie_dma_read_desc_axi_addr;
@@ -264,7 +229,10 @@ wire                           pcie_dma_write_desc_status_ready;
 
 wire                           pcie_dma_enable;
 
-// Register axis input from PCIe
+// -------------------------------------------------------------------//
+// -------- Register axis input from PCIe, and error handling --------//
+// -------------------------------------------------------------------//
+
 wire [AXIS_PCIE_DATA_WIDTH-1:0] axis_rc_tdata_r;
 wire [AXIS_PCIE_KEEP_WIDTH-1:0] axis_rc_tkeep_r;
 wire                            axis_rc_tlast_r;
@@ -356,6 +324,36 @@ cq_reg (
     .m_axis_tdest(),
     .m_axis_tuser(axis_cq_tuser_r)
 );
+
+wire [1:0] status_error_uncor_int;
+wire [1:0] status_error_cor_int;
+
+pulse_merge #(
+    .INPUT_WIDTH(2),
+    .COUNT_WIDTH(4)
+)
+status_error_cor_pm_inst (
+    .clk(clk_250mhz),
+    .rst(rst_250mhz),
+
+    .pulse_in(status_error_cor_int),
+    .count_out(),
+    .pulse_out(status_error_cor)
+);
+
+pulse_merge #(
+    .INPUT_WIDTH(2),
+    .COUNT_WIDTH(4)
+)
+status_error_uncor_pm_inst (
+    .clk(clk_250mhz),
+    .rst(rst_250mhz),
+
+    .pulse_in(status_error_uncor_int),
+    .count_out(),
+    .pulse_out(status_error_uncor)
+);
+
 
 // control registers
 reg axil_ctrl_awready_reg = 1'b0, axil_ctrl_awready_next;
@@ -559,38 +557,6 @@ always @(posedge clk_250mhz) begin
 end
 
 assign sma_led = 2'b00;
-
-pcie_us_cfg #(
-    .PF_COUNT(1),
-    .VF_COUNT(0),
-    .VF_OFFSET(64),
-    .PCIE_CAP_OFFSET(12'h0C0)
-)
-pcie_us_cfg_inst (
-    .clk(clk_250mhz),
-    .rst(rst_250mhz),
-
-    /*
-     * Configuration outputs
-     */
-    .ext_tag_enable(ext_tag_enable),
-    .max_read_request_size(),
-    .max_payload_size(),
-
-    /*
-     * Interface to Ultrascale PCIe IP core
-     */
-    .cfg_mgmt_addr(cfg_mgmt_addr[9:0]),
-    .cfg_mgmt_function_number(cfg_mgmt_addr[17:10]),
-    .cfg_mgmt_write(cfg_mgmt_write),
-    .cfg_mgmt_write_data(cfg_mgmt_write_data),
-    .cfg_mgmt_byte_enable(cfg_mgmt_byte_enable),
-    .cfg_mgmt_read(cfg_mgmt_read),
-    .cfg_mgmt_read_data(cfg_mgmt_read_data),
-    .cfg_mgmt_read_write_done(cfg_mgmt_read_write_done)
-);
-
-assign cfg_mgmt_addr[18] = 1'b0;
 
 pcie_us_axil_master #(
     .AXIS_PCIE_DATA_WIDTH(AXIS_PCIE_DATA_WIDTH),
@@ -836,60 +802,6 @@ axi_dma_ram_inst (
     .s_axi_rlast(axi_pcie_dma_rlast),
     .s_axi_rvalid(axi_pcie_dma_rvalid),
     .s_axi_rready(axi_pcie_dma_rready)
-);
-
-pulse_merge #(
-    .INPUT_WIDTH(2),
-    .COUNT_WIDTH(4)
-)
-status_error_cor_pm_inst (
-    .clk(clk_250mhz),
-    .rst(rst_250mhz),
-
-    .pulse_in(status_error_cor_int),
-    .count_out(),
-    .pulse_out(status_error_cor)
-);
-
-pulse_merge #(
-    .INPUT_WIDTH(2),
-    .COUNT_WIDTH(4)
-)
-status_error_uncor_pm_inst (
-    .clk(clk_250mhz),
-    .rst(rst_250mhz),
-
-    .pulse_in(status_error_uncor_int),
-    .count_out(),
-    .pulse_out(status_error_uncor)
-);
-
-pcie_us_msi #(
-    .MSI_COUNT(32)
-)
-pcie_us_msi_inst (
-    .clk(clk_250mhz),
-    .rst(rst_250mhz),
-
-    .msi_irq(msi_irq),
-
-    .cfg_interrupt_msi_enable(cfg_interrupt_msi_enable),
-    .cfg_interrupt_msi_vf_enable(cfg_interrupt_msi_vf_enable),
-    .cfg_interrupt_msi_mmenable(cfg_interrupt_msi_mmenable),
-    .cfg_interrupt_msi_mask_update(cfg_interrupt_msi_mask_update),
-    .cfg_interrupt_msi_data(cfg_interrupt_msi_data),
-    .cfg_interrupt_msi_select(cfg_interrupt_msi_select),
-    .cfg_interrupt_msi_int(cfg_interrupt_msi_int),
-    .cfg_interrupt_msi_pending_status(cfg_interrupt_msi_pending_status),
-    .cfg_interrupt_msi_pending_status_data_enable(cfg_interrupt_msi_pending_status_data_enable),
-    .cfg_interrupt_msi_pending_status_function_num(cfg_interrupt_msi_pending_status_function_num),
-    .cfg_interrupt_msi_sent(cfg_interrupt_msi_sent),
-    .cfg_interrupt_msi_fail(cfg_interrupt_msi_fail),
-    .cfg_interrupt_msi_attr(cfg_interrupt_msi_attr),
-    .cfg_interrupt_msi_tph_present(cfg_interrupt_msi_tph_present),
-    .cfg_interrupt_msi_tph_type(cfg_interrupt_msi_tph_type),
-    .cfg_interrupt_msi_tph_st_tag(cfg_interrupt_msi_tph_st_tag),
-    .cfg_interrupt_msi_function_number(cfg_interrupt_msi_function_number)
 );
 
 // MAC modules

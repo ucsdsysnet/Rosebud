@@ -212,6 +212,70 @@ initial begin
     $dumpvars(0, test_pcie);
 end
 
+wire ext_tag_enable;
+
+pcie_us_cfg #(
+    .PF_COUNT(1),
+    .VF_COUNT(0),
+    .VF_OFFSET(64),
+    .PCIE_CAP_OFFSET(12'h0C0)
+)
+pcie_us_cfg_inst (
+    .clk(pcie_user_clk),
+    .rst(pcie_user_reset),
+
+    /*
+     * Configuration outputs
+     */
+    .ext_tag_enable(ext_tag_enable),
+    .max_read_request_size(),
+    .max_payload_size(),
+
+    /*
+     * Interface to Ultrascale PCIe IP core
+     */
+    .cfg_mgmt_addr(cfg_mgmt_addr[9:0]),
+    .cfg_mgmt_function_number(cfg_mgmt_addr[17:10]),
+    .cfg_mgmt_write(cfg_mgmt_write),
+    .cfg_mgmt_write_data(cfg_mgmt_write_data),
+    .cfg_mgmt_byte_enable(cfg_mgmt_byte_enable),
+    .cfg_mgmt_read(cfg_mgmt_read),
+    .cfg_mgmt_read_data(cfg_mgmt_read_data),
+    .cfg_mgmt_read_write_done(cfg_mgmt_read_write_done)
+);
+
+assign cfg_mgmt_addr[18] = 1'b0;
+
+wire [31:0] msi_irq;
+
+pcie_us_msi #(
+    .MSI_COUNT(32)
+)
+pcie_us_msi_inst (
+    .clk(pcie_user_clk),
+    .rst(pcie_user_reset),
+
+    .msi_irq(msi_irq),
+
+    .cfg_interrupt_msi_enable(cfg_interrupt_msi_enable),
+    .cfg_interrupt_msi_vf_enable(cfg_interrupt_msi_vf_enable),
+    .cfg_interrupt_msi_mmenable(cfg_interrupt_msi_mmenable),
+    .cfg_interrupt_msi_mask_update(cfg_interrupt_msi_mask_update),
+    .cfg_interrupt_msi_data(cfg_interrupt_msi_data),
+    .cfg_interrupt_msi_select(cfg_interrupt_msi_select),
+    .cfg_interrupt_msi_int(cfg_interrupt_msi_int),
+    .cfg_interrupt_msi_pending_status(cfg_interrupt_msi_pending_status),
+    .cfg_interrupt_msi_pending_status_data_enable(cfg_interrupt_msi_pending_status_data_enable),
+    .cfg_interrupt_msi_pending_status_function_num(cfg_interrupt_msi_pending_status_function_num),
+    .cfg_interrupt_msi_sent(cfg_interrupt_msi_sent),
+    .cfg_interrupt_msi_fail(cfg_interrupt_msi_fail),
+    .cfg_interrupt_msi_attr(cfg_interrupt_msi_attr),
+    .cfg_interrupt_msi_tph_present(cfg_interrupt_msi_tph_present),
+    .cfg_interrupt_msi_tph_type(cfg_interrupt_msi_tph_type),
+    .cfg_interrupt_msi_tph_st_tag(cfg_interrupt_msi_tph_st_tag),
+    .cfg_interrupt_msi_function_number(cfg_interrupt_msi_function_number)
+);
+
 fpga_core
 UUT (
     .clk_250mhz(pcie_clk),
@@ -245,34 +309,36 @@ UUT (
     .m_axis_cc_tready(m_axis_cc_tready),
     .m_axis_cc_tuser(m_axis_cc_tuser),
     .m_axis_cc_tvalid(m_axis_cc_tvalid),
-    .pcie_tfc_nph_av(pcie_tfc_nph_av),
-    .pcie_tfc_npd_av(pcie_tfc_npd_av),
+    // .pcie_tfc_nph_av(pcie_tfc_nph_av),
+    // .pcie_tfc_npd_av(pcie_tfc_npd_av),
     .cfg_max_payload(cfg_max_payload),
     .cfg_max_read_req(cfg_max_read_req),
-    .cfg_mgmt_addr(cfg_mgmt_addr),
-    .cfg_mgmt_write(cfg_mgmt_write),
-    .cfg_mgmt_write_data(cfg_mgmt_write_data),
-    .cfg_mgmt_byte_enable(cfg_mgmt_byte_enable),
-    .cfg_mgmt_read(cfg_mgmt_read),
-    .cfg_mgmt_read_data(cfg_mgmt_read_data),
-    .cfg_mgmt_read_write_done(cfg_mgmt_read_write_done),
-    .cfg_interrupt_msi_enable(cfg_interrupt_msi_enable),
-    .cfg_interrupt_msi_vf_enable(cfg_interrupt_msi_vf_enable),
-    .cfg_interrupt_msi_mmenable(cfg_interrupt_msi_mmenable),
-    .cfg_interrupt_msi_mask_update(cfg_interrupt_msi_mask_update),
-    .cfg_interrupt_msi_data(cfg_interrupt_msi_data),
-    .cfg_interrupt_msi_select(cfg_interrupt_msi_select),
-    .cfg_interrupt_msi_int(cfg_interrupt_msi_int),
-    .cfg_interrupt_msi_pending_status(cfg_interrupt_msi_pending_status),
-    .cfg_interrupt_msi_pending_status_data_enable(cfg_interrupt_msi_pending_status_data_enable),
-    .cfg_interrupt_msi_pending_status_function_num(cfg_interrupt_msi_pending_status_function_num),
-    .cfg_interrupt_msi_sent(cfg_interrupt_msi_sent),
-    .cfg_interrupt_msi_fail(cfg_interrupt_msi_fail),
-    .cfg_interrupt_msi_attr(cfg_interrupt_msi_attr),
-    .cfg_interrupt_msi_tph_present(cfg_interrupt_msi_tph_present),
-    .cfg_interrupt_msi_tph_type(cfg_interrupt_msi_tph_type),
-    .cfg_interrupt_msi_tph_st_tag(cfg_interrupt_msi_tph_st_tag),
-    .cfg_interrupt_msi_function_number(cfg_interrupt_msi_function_number),
+    .ext_tag_enable(ext_tag_enable),
+    .msi_irq(msi_irq),
+    // .cfg_mgmt_addr(cfg_mgmt_addr),
+    // .cfg_mgmt_write(cfg_mgmt_write),
+    // .cfg_mgmt_write_data(cfg_mgmt_write_data),
+    // .cfg_mgmt_byte_enable(cfg_mgmt_byte_enable),
+    // .cfg_mgmt_read(cfg_mgmt_read),
+    // .cfg_mgmt_read_data(cfg_mgmt_read_data),
+    // .cfg_mgmt_read_write_done(cfg_mgmt_read_write_done),
+    // .cfg_interrupt_msi_enable(cfg_interrupt_msi_enable),
+    // .cfg_interrupt_msi_vf_enable(cfg_interrupt_msi_vf_enable),
+    // .cfg_interrupt_msi_mmenable(cfg_interrupt_msi_mmenable),
+    // .cfg_interrupt_msi_mask_update(cfg_interrupt_msi_mask_update),
+    // .cfg_interrupt_msi_data(cfg_interrupt_msi_data),
+    // .cfg_interrupt_msi_select(cfg_interrupt_msi_select),
+    // .cfg_interrupt_msi_int(cfg_interrupt_msi_int),
+    // .cfg_interrupt_msi_pending_status(cfg_interrupt_msi_pending_status),
+    // .cfg_interrupt_msi_pending_status_data_enable(cfg_interrupt_msi_pending_status_data_enable),
+    // .cfg_interrupt_msi_pending_status_function_num(cfg_interrupt_msi_pending_status_function_num),
+    // .cfg_interrupt_msi_sent(cfg_interrupt_msi_sent),
+    // .cfg_interrupt_msi_fail(cfg_interrupt_msi_fail),
+    // .cfg_interrupt_msi_attr(cfg_interrupt_msi_attr),
+    // .cfg_interrupt_msi_tph_present(cfg_interrupt_msi_tph_present),
+    // .cfg_interrupt_msi_tph_type(cfg_interrupt_msi_tph_type),
+    // .cfg_interrupt_msi_tph_st_tag(cfg_interrupt_msi_tph_st_tag),
+    // .cfg_interrupt_msi_function_number(cfg_interrupt_msi_function_number),
     .status_error_cor(status_error_cor),
     .status_error_uncor(status_error_uncor),
     .sfp_1_tx_clk(sfp_1_tx_clk),
