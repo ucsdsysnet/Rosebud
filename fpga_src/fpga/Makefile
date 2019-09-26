@@ -5,8 +5,8 @@ FPGA_TOP = fpga
 FPGA_ARCH = kintexu
 
 # Files for synthesis
-SYN_FILES = rtl/fpga_pcie.v
-SYN_FILES += rtl/fpga_core_pcie.v
+SYN_FILES = rtl/fpga.v
+SYN_FILES += rtl/fpga_core.v
 SYN_FILES += rtl/sync_reset.v
 SYN_FILES += rtl/sync_signal.v
 SYN_FILES += rtl/riscvcore.v
@@ -15,13 +15,12 @@ SYN_FILES += rtl/core_mems.v
 SYN_FILES += rtl/slot_fifo_loader.v
 SYN_FILES += rtl/simple_fifo.v
 SYN_FILES += rtl/simple_scheduler.v
-SYN_FILES += rtl/loaded_desc_fifo.v
 SYN_FILES += rtl/max_finder_tree.v
 SYN_FILES += rtl/axis_dma.v 
 SYN_FILES += rtl/riscv_axis_wrapper.v 
 SYN_FILES += rtl/simple_sync_sig.v
 SYN_FILES += rtl/axis_switch.v
-SYN_FILES += rtl/pkt_processing.v
+SYN_FILES += rtl/pcie_controller.v
 
 # SYN_FILES += lib/axis/rtl/axis_switch.v
 SYN_FILES += lib/axis/rtl/axis_arb_mux.v
@@ -52,11 +51,6 @@ SYN_FILES += lib/eth/rtl/eth_axis_rx_64.v
 SYN_FILES += lib/eth/rtl/eth_axis_tx_64.v
 SYN_FILES += lib/eth/rtl/eth_arb_mux.v
 
-# SYN_FILES += lib/eth/rtl/ptp_clock.v
-# SYN_FILES += lib/eth/rtl/ptp_clock_cdc.v
-# SYN_FILES += lib/eth/rtl/ptp_perout.v
-# SYN_FILES += lib/eth/rtl/ptp_ts_extract.v
-# 
 # SYN_FILES += lib/axi/rtl/axi_crossbar.v
 # SYN_FILES += lib/axi/rtl/axi_crossbar_addr.v
 # SYN_FILES += lib/axi/rtl/axi_crossbar_rd.v
@@ -137,8 +131,7 @@ SYN_FILES += lib/pcie/rtl/pulse_merge.v
 # XDC files
 XDC_FILES = fpga.xdc
 XDC_FILES += lib/axis/syn/axis_async_fifo.tcl
-XDC_FILES += lib/eth/syn/ptp_clock_cdc.tcl
-XDC_FILES += rtl/simple_sync_sig.tcl
+XDC_FILES += syn/simple_sync_sig.tcl
 
 # IP
 XCI_FILES  =  ip/gtwizard_ultrascale_0.xci

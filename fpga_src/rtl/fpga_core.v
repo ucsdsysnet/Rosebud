@@ -1,24 +1,33 @@
 /*
 
-Copyright (c) 2014-2018 Alex Forencich
+Copyright 2019, The Regents of the University of California.
+All rights reserved.
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
 
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
+   1. Redistributions of source code must retain the above copyright notice,
+      this list of conditions and the following disclaimer.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE.
+   2. Redistributions in binary form must reproduce the above copyright notice,
+      this list of conditions and the following disclaimer in the documentation
+      and/or other materials provided with the distribution.
+
+THIS SOFTWARE IS PROVIDED BY THE REGENTS OF THE UNIVERSITY OF CALIFORNIA ''AS
+IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE REGENTS OF THE UNIVERSITY OF CALIFORNIA OR
+CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT
+OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY
+OF SUCH DAMAGE.
+
+The views and conclusions contained in the software and documentation are those
+of the authors and should not be interpreted as representing official policies,
+either expressed or implied, of The Regents of the University of California.
 
 */
 
@@ -29,23 +38,66 @@ THE SOFTWARE.
 /*
  * FPGA core logic
  */
-module fpga_core
+module fpga_core #
+(
+    parameter AXIS_PCIE_DATA_WIDTH = 256,
+    parameter AXIS_PCIE_KEEP_WIDTH = (AXIS_PCIE_DATA_WIDTH/32)
+)
 (
     /*
-     * Clock: 156.25MHz
+     * Clock: 156.25MHz, 200MHz, 250MHz
      * Synchronous reset
      */
     input  wire       sys_clk,
     input  wire       sys_rst,
-    input  wire       core_clk_i,
-    input  wire       core_rst_i,
+    input  wire       pcie_clk,
+    input  wire       pcie_rst,
+    input  wire       core_clk,
+    input  wire       core_rst,
 
     /*
      * GPIO
      */
-    output wire [1:0] sfp_1_led,
-    output wire [1:0] sfp_2_led,
     output wire [1:0] sma_led,
+
+    /*
+     * PCIe
+     */
+    output wire [AXIS_PCIE_DATA_WIDTH-1:0] m_axis_rq_tdata,
+    output wire [AXIS_PCIE_KEEP_WIDTH-1:0] m_axis_rq_tkeep,
+    output wire                            m_axis_rq_tlast,
+    input  wire                            m_axis_rq_tready,
+    output wire [59:0]                     m_axis_rq_tuser,
+    output wire                            m_axis_rq_tvalid,
+
+    input  wire [AXIS_PCIE_DATA_WIDTH-1:0] s_axis_rc_tdata,
+    input  wire [AXIS_PCIE_KEEP_WIDTH-1:0] s_axis_rc_tkeep,
+    input  wire                            s_axis_rc_tlast,
+    output wire                            s_axis_rc_tready,
+    input  wire [74:0]                     s_axis_rc_tuser,
+    input  wire                            s_axis_rc_tvalid,
+
+    input  wire [AXIS_PCIE_DATA_WIDTH-1:0] s_axis_cq_tdata,
+    input  wire [AXIS_PCIE_KEEP_WIDTH-1:0] s_axis_cq_tkeep,
+    input  wire                            s_axis_cq_tlast,
+    output wire                            s_axis_cq_tready,
+    input  wire [84:0]                     s_axis_cq_tuser,
+    input  wire                            s_axis_cq_tvalid,
+
+    output wire [AXIS_PCIE_DATA_WIDTH-1:0] m_axis_cc_tdata,
+    output wire [AXIS_PCIE_KEEP_WIDTH-1:0] m_axis_cc_tkeep,
+    output wire                            m_axis_cc_tlast,
+    input  wire                            m_axis_cc_tready,
+    output wire [32:0]                     m_axis_cc_tuser,
+    output wire                            m_axis_cc_tvalid,
+
+    input  wire [2:0]                      cfg_max_payload,
+    input  wire [2:0]                      cfg_max_read_req,
+    input  wire                            ext_tag_enable,
+
+    output wire [31:0]                     msi_irq,
+    output wire                            status_error_cor,
+    output wire                            status_error_uncor,
 
     /*
      * Ethernet: QSFP28
@@ -69,18 +121,15 @@ module fpga_core
     input  wire [7:0]  sfp_2_rxc
 );
 
-// assign sfp_2_txd = 64'h0707070707070707;
-// assign sfp_2_txc = 8'hff;
-assign sfp_1_led = 0;
-assign sfp_2_led = 0;
-assign sma_led   = 0;
+assign sma_led   = 2'd0;
 
 // RISCV system parameters
 parameter CORE_COUNT       = 16;
-parameter PORT_COUNT       = 3;
 parameter INTERFACE_COUNT  = 2;
+parameter PORT_COUNT       = INTERFACE_COUNT+1;
 parameter CORE_ADDR_WIDTH  = 16;
 parameter SLOT_COUNT       = 8;
+parameter PCIE_SLOT_COUNT  = 16;
 parameter SLOT_START_ADDR  = 16'h2000;
 parameter SLOT_ADDR_STEP   = 16'h0800;
 parameter LVL1_DATA_WIDTH  = 128;
@@ -103,7 +152,7 @@ parameter DMEM_SIZE_BYTES  = 32768;
 parameter COHERENT_START   = 16'h6FFF;
 parameter LEN_WIDTH        = 16;
 parameter INTERLEAVE       = 1;
-parameter DRAM_PORT        = 2;
+parameter DRAM_PORT        = INTERFACE_COUNT+1-1;
 parameter LVL1_SW_PORTS    = 4;
 parameter CORE_MSG_LVL1    = 16;
 parameter SEPARATE_CLOCKS  = 1;
@@ -123,11 +172,8 @@ parameter LVL1_DEST_BITS   = $clog2(LVL1_SW_PORTS);
 parameter DATA_DEST_LVL2   = ID_TAG_WIDTH-LVL1_DEST_BITS;
 parameter CTRL_DEST_LVL2   = CORE_WIDTH-LVL1_DEST_BITS;
 
-parameter TEST_DRAM_WR     = 1;
-parameter TEST_DRAM_REQ    = 1;
-
-wire core_clk = SEPARATE_CLOCKS ? core_clk_i : sys_clk;
-wire core_rst = SEPARATE_CLOCKS ? core_rst_i : sys_rst;
+wire select_core_clk = SEPARATE_CLOCKS ? core_clk : sys_clk;
+wire select_core_rst = SEPARATE_CLOCKS ? core_rst : sys_rst;
 
 // ETH interfaces renaming
 wire [INTERFACE_COUNT-1:0]    sfp_tx_clk = {sfp_2_tx_clk, sfp_1_tx_clk};
@@ -152,14 +198,6 @@ wire [INTERFACE_COUNT-1:0] tx_axis_tvalid, tx_axis_tready, tx_axis_tlast;
 wire [INTERFACE_COUNT*LVL1_DATA_WIDTH-1:0] rx_axis_tdata;
 wire [INTERFACE_COUNT*LVL1_STRB_WIDTH-1:0] rx_axis_tkeep;
 wire [INTERFACE_COUNT-1:0] rx_axis_tvalid, rx_axis_tready, rx_axis_tlast;
-
-wire [INTERFACE_COUNT-1:0] rx_fifo_overflow;
-wire [INTERFACE_COUNT-1:0] rx_fifo_good_frame;
-wire [INTERFACE_COUNT-1:0] tx_fifo_overflow;
-wire [INTERFACE_COUNT-1:0] tx_fifo_bad_frame;
-wire [INTERFACE_COUNT-1:0] tx_fifo_good_frame;
-
-wire [7:0] ifg_delay = 8'd12;
 
 genvar l;
 generate
@@ -213,12 +251,12 @@ generate
             /*
              * Status
              */
-            .rx_fifo_overflow(rx_fifo_overflow[l]),
-            .rx_fifo_good_frame(rx_fifo_good_frame[l]),
+            .rx_fifo_overflow(),
+            .rx_fifo_good_frame(), 
             .tx_error_underflow(),
-            .tx_fifo_overflow(tx_fifo_overflow[l]),
-            .tx_fifo_bad_frame(tx_fifo_bad_frame[l]),
-            .tx_fifo_good_frame(tx_fifo_good_frame[l]),
+            .tx_fifo_overflow(), 
+            .tx_fifo_bad_frame(),
+            .tx_fifo_good_frame(), 
             .rx_error_bad_frame(),
             .rx_error_bad_fcs(),
             .rx_fifo_bad_frame(),
@@ -226,7 +264,7 @@ generate
             /*
              * Configuration
              */
-            .ifg_delay(ifg_delay),
+            .ifg_delay(8'd12),
         
             /*
              * PTP not used
@@ -239,6 +277,127 @@ generate
             .ptp_sample_clk (1'b0)
         );
 endgenerate
+
+// PCIE and DRAM controller 
+
+// DRAM DMA controller data 
+wire [LVL1_DATA_WIDTH-1:0] dram_tx_axis_tdata;
+wire [LVL1_STRB_WIDTH-1:0] dram_tx_axis_tkeep;
+wire [PORT_WIDTH-1:0]      dram_tx_axis_tdest;
+wire [ID_TAG_WIDTH-1:0]    dram_tx_axis_tuser;
+wire                       dram_tx_axis_tvalid, 
+                           dram_tx_axis_tready, 
+                           dram_tx_axis_tlast;
+
+wire [LVL1_DATA_WIDTH-1:0] dram_rx_axis_tdata;
+wire [LVL1_STRB_WIDTH-1:0] dram_rx_axis_tkeep;
+wire [ID_TAG_WIDTH-1:0]    dram_rx_axis_tdest;
+wire [PORT_WIDTH-1:0]      dram_rx_axis_tuser;
+wire                       dram_rx_axis_tvalid, 
+                           dram_rx_axis_tready, 
+                           dram_rx_axis_tlast;
+
+// outgoing channel
+wire [LVL1_DRAM_WIDTH-1:0] dram_ctrl_m_axis_tdata;
+wire                       dram_ctrl_m_axis_tvalid;
+wire                       dram_ctrl_m_axis_tready;
+wire                       dram_ctrl_m_axis_tlast;
+wire [CORE_WIDTH-1:0]      dram_ctrl_m_axis_tuser;
+
+// incoming channel
+wire [LVL1_DRAM_WIDTH-1:0] dram_ctrl_s_axis_tdata;
+wire                       dram_ctrl_s_axis_tvalid;
+wire                       dram_ctrl_s_axis_tready;
+wire                       dram_ctrl_s_axis_tlast;
+wire [CORE_WIDTH-1:0]      dram_ctrl_s_axis_tdest;
+
+pcie_controller #
+(
+  .AXIS_PCIE_DATA_WIDTH(AXIS_PCIE_DATA_WIDTH),
+  .AXIS_PCIE_KEEP_WIDTH(AXIS_PCIE_KEEP_WIDTH),
+  .AXIS_DATA_WIDTH(LVL1_DATA_WIDTH),
+  .AXIS_KEEP_WIDTH(LVL1_STRB_WIDTH),
+  .AXIS_TAG_WIDTH(ID_TAG_WIDTH),  
+  .CORE_DESC_WIDTH(LVL1_DRAM_WIDTH),
+  .CORE_WIDTH(CORE_WIDTH),        
+  .CORES_ADDR_WIDTH(CORE_WIDTH+CORE_ADDR_WIDTH), 
+  .PCIE_SLOT_COUNT(PCIE_SLOT_COUNT)
+) pcie_controller_inst (
+  .sys_clk(sys_clk),
+  .sys_rst(sys_rst),
+  .pcie_clk(pcie_clk),
+  .pcie_rst(pcie_rst),
+
+  /*
+   * PCIe
+   */
+  .m_axis_rq_tdata   (m_axis_rq_tdata),
+  .m_axis_rq_tkeep   (m_axis_rq_tkeep),
+  .m_axis_rq_tlast   (m_axis_rq_tlast),
+  .m_axis_rq_tready  (m_axis_rq_tready),
+  .m_axis_rq_tuser   (m_axis_rq_tuser),
+  .m_axis_rq_tvalid  (m_axis_rq_tvalid),
+
+  .s_axis_rc_tdata   (s_axis_rc_tdata),
+  .s_axis_rc_tkeep   (s_axis_rc_tkeep),
+  .s_axis_rc_tlast   (s_axis_rc_tlast),
+  .s_axis_rc_tready  (s_axis_rc_tready),
+  .s_axis_rc_tuser   (s_axis_rc_tuser),
+  .s_axis_rc_tvalid  (s_axis_rc_tvalid),
+
+  .s_axis_cq_tdata   (s_axis_cq_tdata),
+  .s_axis_cq_tkeep   (s_axis_cq_tkeep),
+  .s_axis_cq_tlast   (s_axis_cq_tlast),
+  .s_axis_cq_tready  (s_axis_cq_tready),
+  .s_axis_cq_tuser   (s_axis_cq_tuser),
+  .s_axis_cq_tvalid  (s_axis_cq_tvalid),
+
+  .m_axis_cc_tdata   (m_axis_cc_tdata),
+  .m_axis_cc_tkeep   (m_axis_cc_tkeep),
+  .m_axis_cc_tlast   (m_axis_cc_tlast),
+  .m_axis_cc_tready  (m_axis_cc_tready),
+  .m_axis_cc_tuser   (m_axis_cc_tuser),
+  .m_axis_cc_tvalid  (m_axis_cc_tvalid),
+
+  .cfg_max_payload   (cfg_max_payload),
+  .cfg_max_read_req  (cfg_max_read_req),
+  .ext_tag_enable    (ext_tag_enable),
+
+  .msi_irq           (msi_irq),
+  .status_error_cor  (status_error_cor),
+  .status_error_uncor(status_error_uncor),
+  
+  // Cores data
+  .cores_tx_axis_tdata (dram_tx_axis_tdata),
+  .cores_tx_axis_tkeep (dram_tx_axis_tkeep),
+  .cores_tx_axis_tuser (dram_tx_axis_tuser),
+  .cores_tx_axis_tvalid(dram_tx_axis_tvalid), 
+  .cores_tx_axis_tready(dram_tx_axis_tready), 
+  .cores_tx_axis_tlast (dram_tx_axis_tlast),
+  
+  .cores_rx_axis_tdata (dram_rx_axis_tdata),
+  .cores_rx_axis_tkeep (dram_rx_axis_tkeep),
+  .cores_rx_axis_tdest (dram_rx_axis_tdest),
+  .cores_rx_axis_tvalid(dram_rx_axis_tvalid), 
+  .cores_rx_axis_tready(dram_rx_axis_tready), 
+  .cores_rx_axis_tlast (dram_rx_axis_tlast),
+  
+  // Cores DRAM requests
+  .cores_ctrl_s_axis_tdata (dram_ctrl_m_axis_tdata),
+  .cores_ctrl_s_axis_tvalid(dram_ctrl_m_axis_tvalid),
+  .cores_ctrl_s_axis_tready(dram_ctrl_m_axis_tready),
+  .cores_ctrl_s_axis_tlast (dram_ctrl_m_axis_tlast),
+  .cores_ctrl_s_axis_tuser (dram_ctrl_m_axis_tuser),
+  
+  .cores_ctrl_m_axis_tdata (dram_ctrl_s_axis_tdata),
+  .cores_ctrl_m_axis_tvalid(dram_ctrl_s_axis_tvalid),
+  .cores_ctrl_m_axis_tready(dram_ctrl_s_axis_tready),
+  .cores_ctrl_m_axis_tlast (dram_ctrl_s_axis_tlast),
+  .cores_ctrl_m_axis_tdest (dram_ctrl_s_axis_tdest)
+);
+
+// no use for dram_tx_axis_tdest
+assign dram_rx_axis_tuser = DRAM_PORT;
 
 // Scheduler 
 wire [INTERFACE_COUNT*LVL1_DATA_WIDTH-1:0] sched_tx_axis_tdata;
@@ -327,129 +486,6 @@ simple_scheduler # (
   .ctrl_s_axis_tlast(sched_ctrl_s_axis_tlast),
   .ctrl_s_axis_tuser(sched_ctrl_s_axis_tuser)
 );
-
-// DRAM DMA controller data 
-wire [LVL1_DATA_WIDTH-1:0] dram_tx_axis_tdata;
-wire [LVL1_STRB_WIDTH-1:0] dram_tx_axis_tkeep;
-wire [PORT_WIDTH-1:0]      dram_tx_axis_tdest;
-wire [ID_TAG_WIDTH-1:0]    dram_tx_axis_tuser;
-wire                       dram_tx_axis_tvalid, 
-                           dram_tx_axis_tready, 
-                           dram_tx_axis_tlast;
-
-wire [LVL1_DATA_WIDTH-1:0] dram_rx_axis_tdata;
-wire [LVL1_STRB_WIDTH-1:0] dram_rx_axis_tkeep;
-wire [ID_TAG_WIDTH-1:0]    dram_rx_axis_tdest;
-wire [PORT_WIDTH-1:0]      dram_rx_axis_tuser;
-wire                       dram_rx_axis_tvalid, 
-                           dram_rx_axis_tready, 
-                           dram_rx_axis_tlast;
-
-// outgoing channel
-wire [LVL1_DRAM_WIDTH-1:0] dram_ctrl_m_axis_tdata;
-wire                       dram_ctrl_m_axis_tvalid;
-wire                       dram_ctrl_m_axis_tready;
-wire                       dram_ctrl_m_axis_tlast;
-wire [CORE_WIDTH-1:0]      dram_ctrl_m_axis_tuser;
-
-// incoming channel
-wire [LVL1_DRAM_WIDTH-1:0] dram_ctrl_s_axis_tdata;
-wire                       dram_ctrl_s_axis_tvalid;
-wire                       dram_ctrl_s_axis_tready;
-wire                       dram_ctrl_s_axis_tlast;
-wire [CORE_WIDTH-1:0]      dram_ctrl_s_axis_tdest;
-
-if (TEST_DRAM_WR) begin
-  // Temp DRAM write to cores test
-  reg [7:0] test_no;
-  reg [ID_TAG_WIDTH-1:0] test_dest_r;
-  
-  assign data_write = sched_rx_axis_tvalid[0] && sched_rx_axis_tready[0];
-  always @ (posedge sys_clk)
-    if (data_write)
-      test_dest_r <= {sched_rx_axis_tdest[ID_TAG_WIDTH-1:TAG_WIDTH],test_no[4:0]};
-  
-  always @ (posedge sys_clk)
-    if (sys_rst)
-      test_no <= 8'd0;
-    else if (dram_rx_axis_tvalid && dram_rx_axis_tready && dram_rx_axis_tlast)
-      test_no <= test_no + 8'd1;
-  
-  reg [1:0] test_state;
-  always @ (posedge sys_clk)
-    if (sys_rst)
-      test_state <= 2'd0;
-    else case (test_state)
-      2'd0: if (data_write)          test_state <= 2'd1;
-      2'd1: if (dram_rx_axis_tready) test_state <= 2'd2;
-      2'd2: if (dram_rx_axis_tready) test_state <= 2'd0;
-      2'd3:                          test_state <= 2'd3; //err
-     endcase
-  
-  assign dram_rx_axis_tvalid = (test_state==2'd1) || (test_state==2'd2);
-  assign dram_rx_axis_tlast  = (test_state==2'd2);
-  assign dram_rx_axis_tdest  = test_dest_r; 
-  assign dram_rx_axis_tdata  = (test_state==2'd1) ? {{8{test_no}},24'd4,test_no,32'd0} : 
-                               (test_state==2'd2) ? {16{test_no}} : 128'd0;
-  assign dram_rx_axis_tkeep  = (test_state==2'd1) ? {16{1'b1}} : 
-                               (test_state==2'd2) ? {{8{1'b0}},{8{1'b1}}} : 16'd0;
-end else begin
-  assign dram_rx_axis_tvalid = 1'b0;
-  assign dram_rx_axis_tlast  = 1'b0;
-  assign dram_rx_axis_tdest  = {ID_TAG_WIDTH{1'b0}};
-  assign dram_rx_axis_tdata  = {LVL1_DATA_WIDTH{1'b0}};
-  assign dram_rx_axis_tkeep  = {LVL1_STRB_WIDTH{1'b0}};
-end
-
-assign dram_rx_axis_tuser  = DRAM_PORT;
-assign dram_tx_axis_tready = 1'b1;
-
-if (TEST_DRAM_REQ) begin
-  // Temp DRAM req test, copying control channel requests for a dummy address 
-  // Since this takes 2 cycles instead of 1, some of the ctrl channel requests 
-  // might be missed, just for testing purposes. 
-  reg  [LVL1_DRAM_WIDTH-1:0] dram_req_data_r;
-  reg  [CORE_WIDTH-1:0]      dram_req_dest_r;
-  reg  [1:0]                 dram_req_state;
-  wire                       ctrl_pkt_req;
-  
-  assign ctrl_pkt_req = sched_ctrl_m_axis_tvalid && sched_ctrl_m_axis_tready &&
-                       (sched_ctrl_m_axis_tdata!=36'hF_FFFFFFFE);
-  
-  wire [15:0] new_len = sched_ctrl_m_axis_tdata[15:0] - 16'd1;
-  
-  always @ (posedge sys_clk)
-    if (ctrl_pkt_req) begin
-      dram_req_data_r <= {32'd500, sched_ctrl_m_axis_tdata[31:16],new_len};
-      dram_req_dest_r <= sched_ctrl_m_axis_tdest;
-    end
-  
-  always @ (posedge sys_clk)
-    if (sys_rst)
-      dram_req_state <= 2'd0;
-    else 
-      case (dram_req_state)
-        2'd0: if (ctrl_pkt_req) 
-                dram_req_state <= 2'd1;
-        2'd1: if (dram_ctrl_s_axis_tready) dram_req_state <= 2'd2;
-        2'd2: if (dram_ctrl_s_axis_tready) dram_req_state <= 2'd0;
-        2'd3: dram_req_state <= 2'd3; // Error
-      endcase
-  
-  assign dram_ctrl_s_axis_tvalid = (dram_req_state == 2'd1) ||
-                                   (dram_req_state == 2'd2);
-  assign dram_ctrl_s_axis_tlast  = (dram_req_state == 2'd2);
-  assign dram_ctrl_s_axis_tdata  = (dram_req_state==2'd2) ? 
-                                     64'hDEADBEEF5A5AA5A5 : dram_req_data_r; 
-  assign dram_ctrl_s_axis_tdest  = dram_req_dest_r; 
-end else begin
-  assign dram_ctrl_s_axis_tvalid = 1'b0; 
-  assign dram_ctrl_s_axis_tlast  = 1'b0;
-  assign dram_ctrl_s_axis_tdata  = 64'hDEADBEEF5A5AA5A5;
-  assign dram_ctrl_s_axis_tdest  = 0;
-end 
-
-assign dram_ctrl_m_axis_tready = 1'b1;
 
 // Switches
 
@@ -1311,8 +1347,8 @@ axis_arb_mux #
     .KEEP_ENABLE(0)
 ) cores_to_broadcaster_lvl1
 (
-    .clk(core_clk),
-    .rst(core_rst),
+    .clk(select_core_clk),
+    .rst(select_core_rst),
 
     /*
      * AXI Stream inputs
@@ -1374,8 +1410,8 @@ generate
           .KEEP_ENABLE(0)
       ) cores_to_broadcaster_lvl2
       (
-          .clk(core_clk),
-          .rst(core_rst),
+          .clk(select_core_clk),
+          .rst(select_core_rst),
       
           /*
            * AXI Stream inputs
@@ -1433,8 +1469,8 @@ generate
     core_wrapper (
         .sys_clk(sys_clk),
         .sys_rst(sys_rst),
-        .core_clk(core_clk),
-        .core_rst(core_rst),
+        .core_clk(select_core_clk),
+        .core_rst(select_core_rst),
 
         // ---------------- DATA CHANNEL --------------- // 
         // Incoming data
