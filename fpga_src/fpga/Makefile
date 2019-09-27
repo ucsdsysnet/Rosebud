@@ -109,12 +109,11 @@ SYN_FILES += lib/pcie/rtl/pulse_merge.v
 # SYN_FILES += lib/eth/rtl/arp_cache.v
 # SYN_FILES += lib/eth/rtl/arp_eth_rx_64.v
 # SYN_FILES += lib/eth/rtl/arp_eth_tx_64.v
-# 
-# SYN_FILES += lib/axi/rtl/axi_ram_rd_if.v
-# SYN_FILES += lib/axi/rtl/axi_ram_wr_if.v
-# SYN_FILES += lib/axi/rtl/axi_dma.v
-# SYN_FILES += lib/axi/rtl/axi_dma_rd.v
-# SYN_FILES += lib/axi/rtl/axi_dma_wr.v
+
+SYN_FILES += lib/axi/rtl/axi_dma.v
+SYN_FILES += lib/axi/rtl/axi_dma_rd.v
+SYN_FILES += lib/axi/rtl/axi_dma_wr.v
+SYN_FILES += lib/axi/rtl/axi_interconnect.v
 # SYN_FILES += lib/axi/rtl/axi_fifo.v
 # SYN_FILES += lib/axi/rtl/axi_fifo_rd.v
 # SYN_FILES += lib/axi/rtl/axi_fifo_wr.v
@@ -126,7 +125,6 @@ SYN_FILES += lib/pcie/rtl/pulse_merge.v
 # SYN_FILES += /lib/axi/rtl/axi_crossbar_wr.v
 # SYN_FILES += /lib/axi/rtl/axi_crossbar_rd.v
 # SYN_FILES += /lib/axi/rtl/axi_crossbar.v
-# SYN_FILES += lib/axi/rtl/axi_interconnect.v
 
 # XDC files
 XDC_FILES = fpga.xdc
