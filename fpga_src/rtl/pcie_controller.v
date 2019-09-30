@@ -44,7 +44,8 @@ module pcie_controller #
   parameter AXIS_TAG_WIDTH       = 9, 
   parameter CORE_DESC_WIDTH      = 128,
   parameter CORE_WIDTH           = 4, 
-  parameter CORES_ADDR_WIDTH     = 16+4, 
+  parameter CORE_ADDR_WIDTH      = 16, 
+  parameter CORES_ADDR_WIDTH     = CORE_WIDTH+CORE_ADDR_WIDTH, 
   parameter PCIE_SLOT_COUNT      = 16,
   parameter PCIE_SLOT_WIDTH      = $clog2(PCIE_SLOT_COUNT) 
 ) (
@@ -1351,7 +1352,30 @@ axi_ram_inst (
     .s_axi_rvalid(axi_ram_rvalid),
     .s_axi_rready(axi_ram_rready)
 );
+
+reg [AXI_LEN_WIDTH-1:0]   rx_len       [PCIE_SLOT_COUNT];
+reg [CORE_ADDR_WIDTH-1:0] rx_core_addr [PCIE_SLOT_COUNT];
+reg [AXIS_TAG_WIDTH-1:0]  rx_core_tag  [PCIE_SLOT_COUNT];
+
+reg  [PCIE_SLOT_COUNT-1:0] rx_slot;
+wire [PCIE_SLOT_WIDTH-1:0] selected_rx_slot;
+wire [PCIE_SLOT_COUNT-1:0] selected_rx_slot_1hot;
+wire                       selected_rx_slot_v;
+
+penc (.IN_WIDTH(PCIE_SLOT_COUNT)) rx_penc (
+  .to_select(rx_slot),.selected(selected_rx_slot),
+  .selected_1hot (selected_rx_slot_1hot),.valid(selected_rx_slot_v));
+
+
+always @ (posedge pcie_clk) begin
   
+
+
+  if (pcie_rst) begin
+    rx_slot = {PCIE_SLOT_COUNT{1'b1}};
+  end
+end
+ 
   assign pcie_dma_read_desc_pcie_addr     = host_dma_read_desc_pcie_addr;
   assign pcie_dma_read_desc_axi_addr      = host_dma_read_desc_axi_addr;
   assign pcie_dma_read_desc_len           = host_dma_read_desc_len;
@@ -1384,3 +1408,31 @@ axi_ram_inst (
   assign cores_ctrl_m_axis_tdest  = 0;
   
 endmodule
+
+module penc (parameter IN_WIDTH=4,
+             parameter OUT_WIDTH=$clog2(IN_WIDTH)
+)(
+    input  [IN_WIDTH-1:0]  to_select,
+    
+    output [IN_WIDTH-1:0]  selected_1hot,
+    output [OUT_WIDTH-1:0] selected,
+    output                 valid
+);
+
+    integer i;
+    
+    always@(*) begin
+      selected      = {OUT_WIDTH{1'b0}};
+      selected_1hot = {IN_WIDTH{1'b0}};
+      for (i=IN_WIDTH-1;i>=0;i=i-1)
+        if (to_select[i]) begin
+          selected = i;
+          selected_1hot = 1 << i;
+        end
+    end
+    
+    assign valid = &to_select;
+
+endmodule
+
+
