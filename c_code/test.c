@@ -18,7 +18,7 @@ int main(void){
 	packet.len  = 69;
 	packet.tag  = 12;
 	packet.data = (unsigned int*)0x220;
-	safe_dram_read_req(0xAAAAAAAA, 0xBBBBBBBB, &packet);
+	safe_dram_read_req(0x0, 0x0000BBBB, &packet);
 
 	while (1){
 		if (in_pkt_ready()){

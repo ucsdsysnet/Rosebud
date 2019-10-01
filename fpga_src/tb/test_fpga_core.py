@@ -261,7 +261,7 @@ def bench():
     dev.functions[0].msi_multiple_message_capable = 5
 
     dev.functions[0].configure_bar(0, 4*1024*1024)
-    dev.functions[0].configure_bar(1, 4*1024*1024)
+    # dev.functions[0].configure_bar(1, 4*1024*1024)
 
     rc.make_port().connect(dev)
 
@@ -708,6 +708,8 @@ def bench():
 
         # write packet data
         mem_data[0:1024] = bytearray([x%256 for x in range(1024)])
+        mem_data[48059:48200] = bytearray([(x+10)%256 for x in range(141)])
+
 
         # enable DMA
         yield rc.mem_write(dev_pf0_bar0+0x100000, struct.pack('<L', 1))
