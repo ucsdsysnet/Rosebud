@@ -279,10 +279,19 @@ reg  [AXI_ADDR_WIDTH-1:0]  axis_read_desc_addr;
 reg  [AXI_LEN_WIDTH-1:0]   axis_read_desc_len;
 reg  [PCIE_SLOT_WIDTH-1:0] axis_read_desc_tag;
 reg  [AXIS_TAG_WIDTH-1:0]  axis_read_desc_dest;
+reg  [CORE_ADDR_WIDTH-1:0] axis_read_desc_user;
 reg                        axis_read_desc_valid;
 wire                       axis_read_desc_ready;
 wire [PCIE_SLOT_WIDTH-1:0] axis_read_desc_status_tag;
 wire                       axis_read_desc_status_valid;
+
+wire [AXI_ADDR_WIDTH-1:0]  axis_read_desc_addr_f;
+wire [AXI_LEN_WIDTH-1:0]   axis_read_desc_len_f;
+wire [PCIE_SLOT_WIDTH-1:0] axis_read_desc_tag_f;
+wire [AXIS_TAG_WIDTH-1:0]  axis_read_desc_dest_f;
+wire [CORE_ADDR_WIDTH-1:0] axis_read_desc_user_f;
+wire                       axis_read_desc_valid_f;
+wire                       axis_read_desc_ready_f;
 
 wire [AXI_ADDR_WIDTH-1:0]  axis_write_desc_addr;
 wire [AXI_LEN_WIDTH-1:0]   axis_write_desc_len;
@@ -294,12 +303,19 @@ wire [PCIE_SLOT_WIDTH-1:0] axis_write_desc_status_tag;
 wire [AXIS_TAG_WIDTH-1:0]  axis_write_desc_status_user;
 wire                       axis_write_desc_status_valid;
 
+wire [AXI_ADDR_WIDTH-1:0]  axis_write_desc_addr_f;
+wire [AXI_LEN_WIDTH-1:0]   axis_write_desc_len_f;
+wire [PCIE_SLOT_WIDTH-1:0] axis_write_desc_tag_f;
+wire                       axis_write_desc_valid_f;
+wire                       axis_write_desc_ready_f;
+
 wire [AXI_DATA_WIDTH-1:0]  axis_read_data_tdata;
 wire [AXI_STRB_WIDTH-1:0]  axis_read_data_tkeep;
 wire                       axis_read_data_tvalid;
 wire                       axis_read_data_tready;
 wire                       axis_read_data_tlast;
 wire [AXIS_TAG_WIDTH-1:0]  axis_read_data_tdest;
+wire [CORE_ADDR_WIDTH-1:0] axis_read_data_tuser;
 
 wire [AXI_DATA_WIDTH-1:0]  axis_write_data_tdata;
 wire [AXI_STRB_WIDTH-1:0]  axis_write_data_tkeep;
@@ -316,6 +332,14 @@ reg  [PCIE_DMA_TAG_WIDTH-1:0]  pcie_dma_read_desc_tag;
 reg                            pcie_dma_read_desc_valid;
 wire                           pcie_dma_read_desc_ready;
 
+wire [PCIE_ADDR_WIDTH-1:0]     pcie_dma_read_desc_pcie_addr_f;
+wire [AXI_ADDR_WIDTH-1:0]      pcie_dma_read_desc_axi_addr_f;
+wire [PCIE_DMA_LEN_WIDTH-1:0]  pcie_dma_read_desc_len_f;
+wire [PCIE_DMA_TAG_WIDTH-1:0]  pcie_dma_read_desc_tag_f;
+wire                           pcie_dma_read_desc_valid_f;
+wire                           pcie_dma_read_desc_ready_f;
+
+
 wire [PCIE_DMA_TAG_WIDTH-1:0]  pcie_dma_read_desc_status_tag;
 wire                           pcie_dma_read_desc_status_valid;
 wire                           pcie_dma_read_desc_status_ready;
@@ -326,6 +350,14 @@ wire [PCIE_DMA_LEN_WIDTH-1:0]  pcie_dma_write_desc_len;
 wire [PCIE_DMA_TAG_WIDTH-1:0]  pcie_dma_write_desc_tag;
 wire                           pcie_dma_write_desc_valid;
 wire                           pcie_dma_write_desc_ready;
+
+wire [PCIE_ADDR_WIDTH-1:0]     pcie_dma_write_desc_pcie_addr_f;
+wire [AXI_ADDR_WIDTH-1:0]      pcie_dma_write_desc_axi_addr_f;
+wire [PCIE_DMA_LEN_WIDTH-1:0]  pcie_dma_write_desc_len_f;
+wire [PCIE_DMA_TAG_WIDTH-1:0]  pcie_dma_write_desc_tag_f;
+wire                           pcie_dma_write_desc_valid_f;
+wire                           pcie_dma_write_desc_ready_f;
+
 
 wire [PCIE_DMA_TAG_WIDTH-1:0]  pcie_dma_write_desc_status_tag;
 wire                           pcie_dma_write_desc_status_valid;
@@ -341,6 +373,13 @@ wire [HOST_DMA_TAG_WIDTH-1:0]  host_dma_read_desc_tag;
 wire                           host_dma_read_desc_valid;
 wire                           host_dma_read_desc_ready;
 
+wire [PCIE_ADDR_WIDTH-1:0]     host_dma_read_desc_pcie_addr_f;
+wire [PCIE_AXI_ADDR_WIDTH-1:0] host_dma_read_desc_axi_addr_f;
+wire [PCIE_DMA_LEN_WIDTH-1:0]  host_dma_read_desc_len_f;
+wire [HOST_DMA_TAG_WIDTH-1:0]  host_dma_read_desc_tag_f;
+wire                           host_dma_read_desc_valid_f;
+wire                           host_dma_read_desc_ready_f;
+
 reg  [HOST_DMA_TAG_WIDTH-1:0]  host_dma_read_desc_status_tag;
 reg                            host_dma_read_desc_status_valid;
 wire                           host_dma_read_desc_status_ready;
@@ -351,6 +390,13 @@ wire [PCIE_DMA_LEN_WIDTH-1:0]  host_dma_write_desc_len;
 wire [HOST_DMA_TAG_WIDTH-1:0]  host_dma_write_desc_tag;
 wire                           host_dma_write_desc_valid;
 wire                           host_dma_write_desc_ready;
+
+wire [PCIE_ADDR_WIDTH-1:0]     host_dma_write_desc_pcie_addr_f;
+wire [PCIE_AXI_ADDR_WIDTH-1:0] host_dma_write_desc_axi_addr_f;
+wire [PCIE_DMA_LEN_WIDTH-1:0]  host_dma_write_desc_len_f;
+wire [HOST_DMA_TAG_WIDTH-1:0]  host_dma_write_desc_tag_f;
+wire                           host_dma_write_desc_valid_f;
+wire                           host_dma_write_desc_ready_f;
 
 wire [HOST_DMA_TAG_WIDTH-1:0]  host_dma_write_desc_status_tag;
 wire                           host_dma_write_desc_status_valid;
@@ -1002,12 +1048,12 @@ pcie_us_axi_dma_inst (
     /*
      * AXI read descriptor input
      */
-    .s_axis_read_desc_pcie_addr(pcie_dma_read_desc_pcie_addr),
-    .s_axis_read_desc_axi_addr(pcie_dma_read_desc_axi_addr),
-    .s_axis_read_desc_len(pcie_dma_read_desc_len),
-    .s_axis_read_desc_tag(pcie_dma_read_desc_tag),
-    .s_axis_read_desc_valid(pcie_dma_read_desc_valid),
-    .s_axis_read_desc_ready(pcie_dma_read_desc_ready),
+    .s_axis_read_desc_pcie_addr(pcie_dma_read_desc_pcie_addr_f),
+    .s_axis_read_desc_axi_addr(pcie_dma_read_desc_axi_addr_f),
+    .s_axis_read_desc_len(pcie_dma_read_desc_len_f),
+    .s_axis_read_desc_tag(pcie_dma_read_desc_tag_f),
+    .s_axis_read_desc_valid(pcie_dma_read_desc_valid_f),
+    .s_axis_read_desc_ready(pcie_dma_read_desc_ready_f),
 
     /*
      * AXI read descriptor status output
@@ -1103,7 +1149,7 @@ axi_dma # (
     .AXIS_DEST_ENABLE(1),
     .AXIS_DEST_WIDTH(AXIS_TAG_WIDTH),
     .AXIS_USER_ENABLE(1),
-    .AXIS_USER_WIDTH(AXIS_TAG_WIDTH),
+    .AXIS_USER_WIDTH(CORE_ADDR_WIDTH), // send addr as tuser for read desc
     .LEN_WIDTH(AXI_LEN_WIDTH),
     .TAG_WIDTH(PCIE_SLOT_WIDTH),
     .ENABLE_UNALIGNED(0)
@@ -1114,22 +1160,22 @@ axi_dma # (
     /*
      * AXI Stream descriptors
      */
-    .s_axis_read_desc_addr        (axis_read_desc_addr),
-    .s_axis_read_desc_len         (axis_read_desc_len),
-    .s_axis_read_desc_tag         (axis_read_desc_tag),
+    .s_axis_read_desc_addr        (axis_read_desc_addr_f),
+    .s_axis_read_desc_len         (axis_read_desc_len_f),
+    .s_axis_read_desc_tag         (axis_read_desc_tag_f),
     .s_axis_read_desc_id          (8'd0),
-    .s_axis_read_desc_dest        (axis_read_desc_dest),
-    .s_axis_read_desc_user        ({AXIS_TAG_WIDTH{1'b0}}), 
-    .s_axis_read_desc_valid       (axis_read_desc_valid),
-    .s_axis_read_desc_ready       (axis_read_desc_ready),
+    .s_axis_read_desc_dest        (axis_read_desc_dest_f),
+    .s_axis_read_desc_user        (axis_read_desc_user_f), 
+    .s_axis_read_desc_valid       (axis_read_desc_valid_f),
+    .s_axis_read_desc_ready       (axis_read_desc_ready_f),
     .m_axis_read_desc_status_tag  (axis_read_desc_status_tag),
     .m_axis_read_desc_status_valid(axis_read_desc_status_valid),
 
-    .s_axis_write_desc_addr        (axis_write_desc_addr),
-    .s_axis_write_desc_len         (axis_write_desc_len),
-    .s_axis_write_desc_tag         (axis_write_desc_tag),
-    .s_axis_write_desc_valid       (axis_write_desc_valid),
-    .s_axis_write_desc_ready       (axis_write_desc_ready),
+    .s_axis_write_desc_addr        (axis_write_desc_addr_f),
+    .s_axis_write_desc_len         (axis_write_desc_len_f),
+    .s_axis_write_desc_tag         (axis_write_desc_tag_f),
+    .s_axis_write_desc_valid       (axis_write_desc_valid_f),
+    .s_axis_write_desc_ready       (axis_write_desc_ready_f),
     .m_axis_write_desc_status_len  (axis_write_desc_status_len),
     .m_axis_write_desc_status_tag  (axis_write_desc_status_tag),
     .m_axis_write_desc_status_id   (),
@@ -1147,7 +1193,7 @@ axi_dma # (
     .m_axis_read_data_tlast (axis_read_data_tlast),
     .m_axis_read_data_tid   (),
     .m_axis_read_data_tdest (axis_read_data_tdest),
-    .m_axis_read_data_tuser (), 
+    .m_axis_read_data_tuser (axis_read_data_tuser), 
 
     .s_axis_write_data_tdata (axis_write_data_tdata),
     .s_axis_write_data_tkeep (axis_write_data_tkeep),
@@ -1156,7 +1202,7 @@ axi_dma # (
     .s_axis_write_data_tlast (axis_write_data_tlast),
     .s_axis_write_data_tid   (),
     .s_axis_write_data_tdest ({AXIS_TAG_WIDTH{1'b0}}),
-    .s_axis_write_data_tuser (axis_write_data_tuser),
+    .s_axis_write_data_tuser ({{(CORE_ADDR_WIDTH-AXIS_TAG_WIDTH){1'b0}},axis_write_data_tuser}), 
 
     /*
      * AXI Master output
@@ -1366,10 +1412,6 @@ wire [PCIE_SLOT_WIDTH-1:0] selected_rx_slot;
 wire [PCIE_SLOT_COUNT-1:0] selected_rx_slot_1hot;
 wire                       selected_rx_slot_v;
 
-reg [63:0]                 rx_header;
-reg                        rx_header_valid;
-wire                       rx_header_ready;
-
 penc # (.IN_WIDTH(PCIE_SLOT_COUNT)) rx_penc (
   .to_select(rx_slot),.selected(selected_rx_slot),
   .selected_1hot (selected_rx_slot_1hot),.valid(selected_rx_slot_v));
@@ -1383,7 +1425,7 @@ always @ (posedge pcie_clk) begin
                                        {(AXIS_TAG_WIDTH-CORE_WIDTH){1'b0}}};
     rx_pcie_tag [selected_rx_slot] <= host_dma_read_desc_tag;
 
-    // Make pcie_dma descriptor
+    // Make pcie_dma descriptor, it goes to FIFO
     pcie_dma_read_desc_pcie_addr   <= host_dma_read_desc_pcie_addr;
     pcie_dma_read_desc_axi_addr    <= {selected_rx_slot,11'd0}; 
     pcie_dma_read_desc_len         <= host_dma_read_desc_len;
@@ -1393,26 +1435,22 @@ always @ (posedge pcie_clk) begin
     pcie_dma_read_desc_valid <= 1'b0;
   end
 
-  // Add axis_read_desc_ready and backpressure handling later
-  // Add core address as header!
+  // There is FIFO afterwards and since there is a fifo for requests in first place 
+  // That would limit the number of status valid and this FIFO does not overflow
   if (pcie_dma_read_desc_status_valid) begin
     axis_read_desc_addr  <= {pcie_dma_read_desc_status_tag,11'd0};
     axis_read_desc_len   <= rx_len[pcie_dma_read_desc_status_tag];
     axis_read_desc_tag   <= pcie_dma_read_desc_status_tag;
     axis_read_desc_dest  <= rx_core_tag[pcie_dma_read_desc_status_tag];
     axis_read_desc_valid <= 1'b1;
-    rx_header            <= {rx_core_addr[pcie_dma_read_desc_status_tag],32'd0};
-    rx_header_valid      <= 1'b1;
+    axis_read_desc_user  <= rx_core_addr[pcie_dma_read_desc_status_tag];
   end else begin
     axis_read_desc_valid <= 1'b0;
   end
 
-  // Not sure about timing of data and header!!!
-  if (rx_header_valid && rx_header_ready)
-    rx_header_valid <= 1'b0;
-
+  // Output status is also 1 cycle, so no need for FIFO
   if (axis_read_desc_status_valid) begin
-    host_dma_read_desc_status_tag <= rx_pcie_tag [axis_read_desc_status_tag];
+    host_dma_read_desc_status_tag   <= rx_pcie_tag [axis_read_desc_status_tag];
     host_dma_read_desc_status_valid <= 1'b1;
   end else begin
     host_dma_read_desc_status_valid <= 1'b0;
@@ -1430,13 +1468,72 @@ always @ (posedge pcie_clk) begin
     rx_slot                         <= {PCIE_SLOT_COUNT{1'b1}};
     pcie_dma_read_desc_valid        <= 1'b0;
     axis_read_desc_valid            <= 1'b0;
-    rx_header_valid                 <= 1'b0;
     host_dma_read_desc_status_valid <= 1'b0;
   end
 end
 
+// If there is space in FIFO and some slot available we can accept the host dma request
 assign host_dma_read_desc_ready = pcie_dma_read_desc_ready && selected_rx_slot_v;
-  
+
+// Descriptor FIFOs and header adder
+simple_fifo # (
+  .ADDR_WIDTH(PCIE_SLOT_WIDTH),
+  .DATA_WIDTH(PCIE_ADDR_WIDTH+AXI_ADDR_WIDTH+
+              PCIE_DMA_LEN_WIDTH+PCIE_DMA_TAG_WIDTH)
+) pcie_dma_read_desc_fifo (
+  .clk(pcie_clk),
+  .rst(pcie_rst),
+  .clear(1'b0),
+
+  .din_valid(pcie_dma_read_desc_valid),
+  .din(     {pcie_dma_read_desc_pcie_addr,
+             pcie_dma_read_desc_axi_addr,
+             pcie_dma_read_desc_len,
+             pcie_dma_read_desc_tag}),
+  .din_ready(pcie_dma_read_desc_ready),
+ 
+  .dout_valid(pcie_dma_read_desc_valid_f),
+  .dout(     {pcie_dma_read_desc_pcie_addr_f,
+              pcie_dma_read_desc_axi_addr_f,
+              pcie_dma_read_desc_len_f,
+              pcie_dma_read_desc_tag_f}),
+  .dout_ready(pcie_dma_read_desc_ready_f),
+
+  .item_count(),
+  .full(),
+  .empty()
+);
+
+simple_fifo # (
+  .ADDR_WIDTH(PCIE_SLOT_WIDTH),
+  .DATA_WIDTH(AXI_ADDR_WIDTH+AXI_LEN_WIDTH+PCIE_SLOT_WIDTH+
+              AXIS_TAG_WIDTH+CORE_ADDR_WIDTH)
+) axis_read_desc_fifo (
+  .clk(pcie_clk),
+  .rst(pcie_rst),
+  .clear(1'b0),
+
+  .din_valid(axis_read_desc_valid),
+  .din(     {axis_read_desc_addr,
+             axis_read_desc_len,
+             axis_read_desc_tag,
+             axis_read_desc_dest,
+             axis_read_desc_user}),
+  .din_ready(axis_read_desc_ready),
+ 
+  .dout_valid(axis_read_desc_valid_f),
+  .dout(     {axis_read_desc_addr_f,
+              axis_read_desc_len_f,
+              axis_read_desc_tag_f,
+              axis_read_desc_dest_f,
+              axis_read_desc_user_f}),
+  .dout_ready(axis_read_desc_ready_f),
+
+  .item_count(),
+  .full(),
+  .empty()
+);
+ 
 header_adder # (
   .DATA_WIDTH(AXI_DATA_WIDTH),
   .HDR_WIDTH(64),
@@ -1453,9 +1550,9 @@ header_adder # (
   .s_axis_tvalid(axis_read_data_tvalid),
   .s_axis_tready(axis_read_data_tready),
 
-  .header(rx_header),
-  .header_valid(rx_header_valid),
-  .header_ready(rx_header_ready), 
+  .header({{(32-CORE_ADDR_WIDTH){1'b0}},axis_read_data_tuser,32'd0}),
+  .header_valid(axis_read_data_tvalid),
+  .header_ready(), 
 
   .m_axis_tdata (cores_rx_tdata),
   .m_axis_tkeep (cores_rx_tkeep),
@@ -1497,7 +1594,6 @@ end
   assign host_dma_write_desc_status_valid = pcie_dma_write_desc_status_valid;
 
   assign cores_tx_axis_tready = 1'b1;
-
 
   assign cores_ctrl_s_axis_tready = 1'b1;
   assign cores_ctrl_m_axis_tvalid = 1'b0; 
