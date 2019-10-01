@@ -53,6 +53,7 @@ srcs.append("../rtl/riscv_axis_wrapper.v")
 srcs.append("../rtl/simple_scheduler.v")
 srcs.append("../rtl/simple_sync_sig.v")
 srcs.append("../rtl/axis_switch.v")
+srcs.append("../rtl/header.v")
 srcs.append("../rtl/pcie_controller.v")
 srcs.append("../rtl/fpga_core.v")
 
@@ -71,6 +72,12 @@ srcs.append("../lib/axi/rtl/axi_dma.v")
 srcs.append("../lib/axi/rtl/axi_dma_rd.v")
 srcs.append("../lib/axi/rtl/axi_dma_wr.v")
 srcs.append("../lib/axi/rtl/axi_interconnect.v")
+srcs.append("../lib/axi/rtl/axi_crossbar_rd.v")
+srcs.append("../lib/axi/rtl/axi_crossbar_wr.v")
+srcs.append("../lib/axi/rtl/axi_crossbar_addr.v")
+srcs.append("../lib/axi/rtl/axi_register_rd.v")
+srcs.append("../lib/axi/rtl/axi_register_wr.v")
+srcs.append("../lib/axi/rtl/axi_crossbar.v")
 
 srcs.append("../lib/axis/rtl/axis_adapter.v")
 srcs.append("../lib/axis/rtl/axis_arb_mux.v")
@@ -110,6 +117,7 @@ def bench():
     SIZE_0       = 150 - 18 
     SIZE_1       = 150 - 18
     CHECK_PKT    = True
+    TEST_SFP     = False
 
     # Inputs
     sys_clk  = Signal(bool(0))
@@ -542,15 +550,15 @@ def bench():
         status_error_uncor=status_error_uncor
     )
 
-    @always(delay(25))
+    @always(delay(2)) #25
     def clkgen():
         sys_clk.next = not sys_clk
     
-    @always(delay(27))
+    @always(delay(3)) #27
     def clkgen3():
         core_clk.next = not core_clk
 
-    @always(delay(32))
+    @always(delay(3)) #32
     def clkgen2():
         sfp_1_tx_clk.next = not sfp_1_tx_clk
         sfp_1_rx_clk.next = not sfp_1_rx_clk
@@ -618,54 +626,55 @@ def bench():
         yield delay(2000)
         yield sys_clk.posedge
         yield sys_clk.posedge
-        
-        yield port1(),None
-        yield port2(),None
+       
+        if (TEST_SFP):
+          yield port1(),None
+          yield port2(),None
 
-        lengths = []
-        print ("send data from LAN")
-        for j in range (0,SEND_COUNT_1):
-          yield xgmii_sink_0.wait()
-          rx_frame = xgmii_sink_0.recv()
-          data = rx_frame.data
-          print ("packet number from port 0:",j)
-          for i in range(0, len(data), 16):
-              print(" ".join(("{:02x}".format(c) for c in bytearray(data[i:i+16]))))
-          if (CHECK_PKT):
-            assert rx_frame.data[0:22] == start_data_2[0:22]
-            assert rx_frame.data[22:-4] == start_data_2[22:-4]
-          lengths.append(len(data)-8)
+          lengths = []
+          print ("send data from LAN")
+          for j in range (0,SEND_COUNT_1):
+            yield xgmii_sink_0.wait()
+            rx_frame = xgmii_sink_0.recv()
+            data = rx_frame.data
+            print ("packet number from port 0:",j)
+            for i in range(0, len(data), 16):
+                print(" ".join(("{:02x}".format(c) for c in bytearray(data[i:i+16]))))
+            if (CHECK_PKT):
+              assert rx_frame.data[0:22] == start_data_2[0:22]
+              assert rx_frame.data[22:-4] == start_data_2[22:-4]
+            lengths.append(len(data)-8)
 
-        for j in range (0,SEND_COUNT_0):
-          yield xgmii_sink_1.wait()
-          rx_frame = xgmii_sink_1.recv()
-          data = rx_frame.data
-          print ("packet number from port 1:",j)
-          for i in range(0, len(data), 16):
-              print(" ".join(("{:02x}".format(c) for c in bytearray(data[i:i+16]))))
-          if (CHECK_PKT):
-            assert rx_frame.data[0:22] == start_data_1[0:22]
-            assert rx_frame.data[22:-4] == start_data_1[22:-4]
-          lengths.append(len(data)-8)
+          for j in range (0,SEND_COUNT_0):
+            yield xgmii_sink_1.wait()
+            rx_frame = xgmii_sink_1.recv()
+            data = rx_frame.data
+            print ("packet number from port 1:",j)
+            for i in range(0, len(data), 16):
+                print(" ".join(("{:02x}".format(c) for c in bytearray(data[i:i+16]))))
+            if (CHECK_PKT):
+              assert rx_frame.data[0:22] == start_data_1[0:22]
+              assert rx_frame.data[22:-4] == start_data_1[22:-4]
+            lengths.append(len(data)-8)
 
        
-        # print ("Very last packet:")
-        # for i in range(0, len(data), 16):
-        #     print(" ".join(("{:02x}".format(c) for c in bytearray(data[i:i+16]))))
-        print ("lengths: " , lengths)
+          # print ("Very last packet:")
+          # for i in range(0, len(data), 16):
+          #     print(" ".join(("{:02x}".format(c) for c in bytearray(data[i:i+16]))))
+          print ("lengths: " , lengths)
 
-        # eth_frame = eth_ep.EthFrame()
-        # eth_frame.parse_axis_fcs(rx_frame.data[8:])
+          # eth_frame = eth_ep.EthFrame()
+          # eth_frame.parse_axis_fcs(rx_frame.data[8:])
 
-        # print(hex(eth_frame.eth_fcs))
-        # print(hex(eth_frame.calc_fcs()))
+          # print(hex(eth_frame.eth_fcs))
+          # print(hex(eth_frame.calc_fcs()))
 
-        # assert len(eth_frame.payload.data) == 46
-        # assert eth_frame.eth_fcs == eth_frame.calc_fcs()
-        # assert eth_frame.eth_dest_mac == test_frame_1.eth_dest_mac
-        # assert eth_frame.eth_src_mac == test_frame_1.eth_src_mac
-        # assert eth_frame.eth_type == test_frame_1.eth_type
-        # assert eth_frame.payload.data.index(test_frame_1.payload.data) == 0
+          # assert len(eth_frame.payload.data) == 46
+          # assert eth_frame.eth_fcs == eth_frame.calc_fcs()
+          # assert eth_frame.eth_dest_mac == test_frame_1.eth_dest_mac
+          # assert eth_frame.eth_src_mac == test_frame_1.eth_src_mac
+          # assert eth_frame.eth_type == test_frame_1.eth_type
+          # assert eth_frame.payload.data.index(test_frame_1.payload.data) == 0
 
         # PCIE test
         print("PCIE tests")
@@ -706,8 +715,8 @@ def bench():
         # write pcie read descriptor
         yield rc.mem_write(dev_pf0_bar0+0x100100, struct.pack('<L', (mem_base+0x0000) & 0xffffffff))
         yield rc.mem_write(dev_pf0_bar0+0x100104, struct.pack('<L', (mem_base+0x0000 >> 32) & 0xffffffff))
-        yield rc.mem_write(dev_pf0_bar0+0x100108, struct.pack('<L', (0x100) & 0xffffffff))
-        yield rc.mem_write(dev_pf0_bar0+0x10010C, struct.pack('<L', (0x100 >> 32) & 0xffffffff))
+        yield rc.mem_write(dev_pf0_bar0+0x100108, struct.pack('<L', (0x50100) & 0xffffffff))
+        yield rc.mem_write(dev_pf0_bar0+0x10010C, struct.pack('<L', (0x50100 >> 32) & 0xffffffff))
         yield rc.mem_write(dev_pf0_bar0+0x100110, struct.pack('<L', 0x400))
         yield rc.mem_write(dev_pf0_bar0+0x100114, struct.pack('<L', 0xAA))
 
