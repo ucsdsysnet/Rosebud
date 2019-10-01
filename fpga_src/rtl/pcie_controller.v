@@ -631,58 +631,57 @@ axis_async_fifo_adapter # (
     .m_status_good_frame()
 );
   
-// localparam CORE_DESC_STRB_WIDTH = CORE_DESC_WIDTH/8;
-// 
-// wire [127:0]          cores_ctrl_s_tdata;
-// wire                  cores_ctrl_s_tvalid;
-// wire                  cores_ctrl_s_tready;
-// wire                  cores_ctrl_s_tlast;
-// wire [CORE_WIDTH-1:0] cores_ctrl_s_tuser;
-//  
-// axis_async_fifo_adapter # (
-//     .DEPTH(1024),
-//     .S_DATA_WIDTH(CORE_DESC_WIDTH),
-//     .S_KEEP_ENABLE(1), 
-//     .S_KEEP_WIDTH(CORE_DESC_STRB_WIDTH),
-//     .M_DATA_WIDTH(128),
-//     .M_KEEP_ENABLE(1),
-//     .M_KEEP_WIDTH(16),
-//     .ID_ENABLE(0),
-//     .DEST_ENABLE(0),
-//     .USER_ENABLE(1),
-//     .USER_WIDTH(CORE_WIDTH),
-//     .FRAME_FIFO(0)
-// ) cores_ctrl_s_axis_async_fifo (
-//     .s_clk(sys_clk),
-//     .s_rst(sys_rst),
-//     .s_axis_tdata (cores_ctrl_s_axis_tdata),
-//     .s_axis_tkeep ({CORE_DESC_STRB_WIDTH{1'b1}}),
-//     .s_axis_tvalid(cores_ctrl_s_axis_tvalid),
-//     .s_axis_tready(cores_ctrl_s_axis_tready),
-//     .s_axis_tlast (cores_ctrl_s_axis_tlast),
-//     .s_axis_tid   (8'd0),
-//     .s_axis_tdest (8'd0),
-//     .s_axis_tuser (cores_ctrl_s_axis_tuser),
-// 
-//     .m_clk(pcie_clk),
-//     .m_rst(pcie_rst),
-//     .m_axis_tdata (cores_ctrl_s_tdata),
-//     .m_axis_tkeep (),
-//     .m_axis_tvalid(cores_ctrl_s_tvalid),
-//     .m_axis_tready(cores_ctrl_s_tready),
-//     .m_axis_tlast (cores_ctrl_s_tlast),
-//     .m_axis_tid   (),
-//     .m_axis_tdest (),
-//     .m_axis_tuser (cores_ctrl_s_tuser),
-// 
-//     .s_status_overflow(),
-//     .s_status_bad_frame(),
-//     .s_status_good_frame(),
-//     .m_status_overflow(),
-//     .m_status_bad_frame(),
-//     .m_status_good_frame()
-// );
-// 
+localparam CORE_DESC_STRB_WIDTH = CORE_DESC_WIDTH/8;
+
+wire [127:0]          cores_ctrl_s_tdata;
+wire                  cores_ctrl_s_tvalid;
+wire                  cores_ctrl_s_tready;
+wire [CORE_WIDTH-1:0] cores_ctrl_s_tuser;
+ 
+axis_async_fifo_adapter # (
+    .DEPTH(1024),
+    .S_DATA_WIDTH(CORE_DESC_WIDTH),
+    .S_KEEP_ENABLE(1), 
+    .S_KEEP_WIDTH(CORE_DESC_STRB_WIDTH),
+    .M_DATA_WIDTH(128),
+    .M_KEEP_ENABLE(1),
+    .M_KEEP_WIDTH(16),
+    .ID_ENABLE(0),
+    .DEST_ENABLE(0),
+    .USER_ENABLE(1),
+    .USER_WIDTH(CORE_WIDTH),
+    .FRAME_FIFO(0)
+) cores_ctrl_s_axis_async_fifo (
+    .s_clk(sys_clk),
+    .s_rst(sys_rst),
+    .s_axis_tdata (cores_ctrl_s_axis_tdata),
+    .s_axis_tkeep ({CORE_DESC_STRB_WIDTH{1'b1}}),
+    .s_axis_tvalid(cores_ctrl_s_axis_tvalid),
+    .s_axis_tready(cores_ctrl_s_axis_tready),
+    .s_axis_tlast (cores_ctrl_s_axis_tlast),
+    .s_axis_tid   (8'd0),
+    .s_axis_tdest (8'd0),
+    .s_axis_tuser (cores_ctrl_s_axis_tuser),
+
+    .m_clk(pcie_clk),
+    .m_rst(pcie_rst),
+    .m_axis_tdata (cores_ctrl_s_tdata),
+    .m_axis_tkeep (),
+    .m_axis_tvalid(cores_ctrl_s_tvalid),
+    .m_axis_tready(cores_ctrl_s_tready),
+    .m_axis_tlast (),
+    .m_axis_tid   (),
+    .m_axis_tdest (),
+    .m_axis_tuser (cores_ctrl_s_tuser),
+
+    .s_status_overflow(),
+    .s_status_bad_frame(),
+    .s_status_good_frame(),
+    .m_status_overflow(),
+    .m_status_bad_frame(),
+    .m_status_good_frame()
+);
+
 // wire [127:0]          cores_ctrl_m_tdata;
 // wire                  cores_ctrl_m_tvalid;
 // wire                  cores_ctrl_m_tready;
@@ -1415,7 +1414,7 @@ wire                       selected_rx_slot_v;
 penc # (.IN_WIDTH(PCIE_SLOT_COUNT)) rx_penc (
   .to_select(rx_slot),.selected(selected_rx_slot),
   .selected_1hot (selected_rx_slot_1hot),.valid(selected_rx_slot_v));
-
+    
 always @ (posedge pcie_clk) begin
   if (host_dma_read_desc_valid && host_dma_read_desc_ready) begin 
     // Save request info for rx slot
@@ -1430,9 +1429,21 @@ always @ (posedge pcie_clk) begin
     pcie_dma_read_desc_axi_addr    <= {selected_rx_slot,11'd0}; 
     pcie_dma_read_desc_len         <= host_dma_read_desc_len;
     pcie_dma_read_desc_tag         <= selected_rx_slot; 
-    pcie_dma_read_desc_valid       <= 1'b1; 
-  end else begin // host_dma_read_desc_valid gets deasserted when ready is asserted
-    pcie_dma_read_desc_valid <= 1'b0;
+    pcie_dma_read_desc_valid       <= 1'b1;
+  end else if (cores_ctrl_s_tvalid && cores_ctrl_s_tready) begin
+    rx_len      [selected_rx_slot] <= cores_ctrl_s_tdata[AXI_LEN_WIDTH-1:0];
+    rx_core_addr[selected_rx_slot] <= cores_ctrl_s_tdata[CORE_ADDR_WIDTH+31:32];
+    rx_core_tag [selected_rx_slot] <= {cores_ctrl_s_tuser, 
+                                       cores_ctrl_s_tdata[(AXIS_TAG_WIDTH-CORE_WIDTH)+15:16]};
+    rx_pcie_tag [selected_rx_slot] <= {HOST_DMA_TAG_WIDTH{1'b0}};
+
+    pcie_dma_read_desc_pcie_addr   <= cores_ctrl_s_tdata[127:64];
+    pcie_dma_read_desc_axi_addr    <= {selected_rx_slot,11'd0}; 
+    pcie_dma_read_desc_len         <= cores_ctrl_s_tdata[AXI_LEN_WIDTH-1:0];
+    pcie_dma_read_desc_tag         <= selected_rx_slot; 
+    pcie_dma_read_desc_valid       <= 1'b1;
+  end else begin // valid gets deasserted when ready is asserted
+    pcie_dma_read_desc_valid       <= 1'b0;
   end
 
   // There is FIFO afterwards and since there is a fifo for requests in first place 
@@ -1449,17 +1460,19 @@ always @ (posedge pcie_clk) begin
   end
 
   // Output status is also 1 cycle, so no need for FIFO
-  if (axis_read_desc_status_valid) begin
+  if (axis_read_desc_status_valid && (rx_pcie_tag [axis_read_desc_status_tag]!=0)) begin
     host_dma_read_desc_status_tag   <= rx_pcie_tag [axis_read_desc_status_tag];
     host_dma_read_desc_status_valid <= 1'b1;
   end else begin
     host_dma_read_desc_status_valid <= 1'b0;
   end
   
-  if (host_dma_read_desc_valid && host_dma_read_desc_ready && axis_read_desc_status_valid) 
+  if (((host_dma_read_desc_valid && host_dma_read_desc_ready)||
+      (cores_ctrl_s_tvalid && cores_ctrl_s_tready)) && axis_read_desc_status_valid) 
     rx_slot <= (rx_slot & (~selected_rx_slot_1hot)) 
                 | ({{(PCIE_SLOT_COUNT-1){1'b0}},1'b1} << axis_read_desc_status_tag);
-  else if (host_dma_read_desc_valid && host_dma_read_desc_ready)
+  else if ((host_dma_read_desc_valid && host_dma_read_desc_ready)|| 
+           (cores_ctrl_s_tvalid && cores_ctrl_s_tready))
     rx_slot <= rx_slot & (~selected_rx_slot_1hot);
   if (axis_read_desc_status_valid)
     rx_slot <= rx_slot | ({{(PCIE_SLOT_COUNT-1){1'b0}},1'b1} << axis_read_desc_status_tag);
@@ -1473,7 +1486,10 @@ always @ (posedge pcie_clk) begin
 end
 
 // If there is space in FIFO and some slot available we can accept the host dma request
+// Similar for core requests, but it has lower priority than host_dma_read request
 assign host_dma_read_desc_ready = pcie_dma_read_desc_ready && selected_rx_slot_v;
+assign cores_ctrl_s_tready      = pcie_dma_read_desc_ready && selected_rx_slot_v && 
+                                  !host_dma_read_desc_valid;
 
 // Descriptor FIFOs and header adder
 simple_fifo # (

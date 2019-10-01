@@ -817,8 +817,9 @@ always @ (posedge sys_clk) begin
       dram_req_high  <= dram_s_axis_tdata;
       dram_req_valid <= 1'b1;
     end else begin
+      // Overriding dram port and setting the tag to 0
       dram_req_low   <= {dram_s_axis_tdata[63:24+PORT_WIDTH],
-                         dram_port, dram_s_axis_tdata[23:0]};
+                         dram_port, 8'd0, dram_s_axis_tdata[15:0]};
       dram_req_valid <= 1'b0;
     end
   else
