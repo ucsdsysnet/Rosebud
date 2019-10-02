@@ -731,8 +731,8 @@ def bench():
         # write pcie write descriptor
         yield rc.mem_write(dev_pf0_bar0+0x100200, struct.pack('<L', (mem_base+0x1000) & 0xffffffff))
         yield rc.mem_write(dev_pf0_bar0+0x100204, struct.pack('<L', (mem_base+0x1000 >> 32) & 0xffffffff))
-        yield rc.mem_write(dev_pf0_bar0+0x100208, struct.pack('<L', (0x100) & 0xffffffff))
-        yield rc.mem_write(dev_pf0_bar0+0x10020C, struct.pack('<L', (0x100 >> 32) & 0xffffffff))
+        yield rc.mem_write(dev_pf0_bar0+0x100208, struct.pack('<L', (0x50100) & 0xffffffff))
+        yield rc.mem_write(dev_pf0_bar0+0x10020C, struct.pack('<L', (0x50100 >> 32) & 0xffffffff))
         yield rc.mem_write(dev_pf0_bar0+0x100210, struct.pack('<L', 0x400))
         yield rc.mem_write(dev_pf0_bar0+0x100214, struct.pack('<L', 0x55))
 

@@ -161,8 +161,10 @@ module header_remover # (
  
   // Latch tdest and tuser at first cycle (for last cycle), and always latch tdata and tkeep
   always @ (posedge clk) begin
-    rest_tdata_r <= s_axis_tdata[DATA_WIDTH-1:HDR_WIDTH];
-    rest_tkeep_r <= s_axis_tkeep[STRB_WIDTH-1:HDR_STRB];
+    if (s_axis_tvalid && s_axis_tready) begin
+      rest_tdata_r <= s_axis_tdata[DATA_WIDTH-1:HDR_WIDTH];
+      rest_tkeep_r <= s_axis_tkeep[STRB_WIDTH-1:HDR_STRB];
+    end 
     if (state == HDR) begin
       header_r       <= s_axis_tdata[HDR_WIDTH-1:0];
       s_axis_tdest_r <= s_axis_tdest;
