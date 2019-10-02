@@ -43,7 +43,8 @@ module pcie_controller #
   parameter AXIS_KEEP_WIDTH      = 16, 
   parameter AXIS_TAG_WIDTH       = 9, 
   parameter CORE_DESC_WIDTH      = 128,
-  parameter CORE_WIDTH           = 4, 
+  parameter CORE_COUNT           = 16,
+  parameter CORE_WIDTH           = $clog2(CORE_COUNT), 
   parameter CORE_ADDR_WIDTH      = 16, 
   parameter CORES_ADDR_WIDTH     = CORE_WIDTH+CORE_ADDR_WIDTH, 
   parameter PCIE_SLOT_COUNT      = 16,
@@ -682,55 +683,54 @@ axis_async_fifo_adapter # (
     .m_status_good_frame()
 );
 
-// wire [127:0]          cores_ctrl_m_tdata;
-// wire                  cores_ctrl_m_tvalid;
-// wire                  cores_ctrl_m_tready;
-// wire                  cores_ctrl_m_tlast;
-// wire [CORE_WIDTH-1:0] cores_ctrl_m_tdest;
-// 
-// axis_async_fifo_adapter # (
-//     .DEPTH(1024),
-//     .S_DATA_WIDTH(128),
-//     .S_KEEP_ENABLE(1), 
-//     .S_KEEP_WIDTH(16),
-//     .M_DATA_WIDTH(CORE_DESC_WIDTH),
-//     .M_KEEP_ENABLE(1),
-//     .M_KEEP_WIDTH(CORE_DESC_STRB_WIDTH),
-//     .ID_ENABLE(0),
-//     .DEST_ENABLE(1),
-//     .DEST_WIDTH(CORE_WIDTH),
-//     .USER_ENABLE(0),
-//     .FRAME_FIFO(0)
-// ) cores_ctrl_m_axis_async_fifo (
-//     .s_clk(pcie_clk),
-//     .s_rst(pci_rst),
-//     .s_axis_tdata (cores_ctrl_m_tdata),
-//     .s_axis_tkeep ({16{1'b1}}),
-//     .s_axis_tvalid(cores_ctrl_m_tvalid),
-//     .s_axis_tready(cores_ctrl_m_tready),
-//     .s_axis_tlast (cores_ctrl_m_tlast),
-//     .s_axis_tid   (8'd0),
-//     .s_axis_tdest (cores_ctrl_m_tdest),
-//     .s_axis_tuser (1'b0),
-// 
-//     .m_clk(sys_clk),
-//     .m_rst(sys_rst),
-//     .m_axis_tdata (cores_ctrl_m_axis_tdata),
-//     .m_axis_tkeep (),
-//     .m_axis_tvalid(cores_ctrl_m_axis_tvalid),
-//     .m_axis_tready(cores_ctrl_m_axis_tready),
-//     .m_axis_tlast (cores_ctrl_m_axis_tlast),
-//     .m_axis_tid   (),
-//     .m_axis_tdest (cores_ctrl_m_axis_tdest),
-//     .m_axis_tuser (),
-// 
-//     .s_status_overflow(),
-//     .s_status_bad_frame(),
-//     .s_status_good_frame(),
-//     .m_status_overflow(),
-//     .m_status_bad_frame(),
-//     .m_status_good_frame()
-// );
+reg  [127:0]          cores_ctrl_m_tdata;
+reg                   cores_ctrl_m_tvalid;
+wire                  cores_ctrl_m_tready;
+reg  [CORE_WIDTH-1:0] cores_ctrl_m_tdest;
+
+axis_async_fifo_adapter # (
+    .DEPTH(1024),
+    .S_DATA_WIDTH(128),
+    .S_KEEP_ENABLE(1), 
+    .S_KEEP_WIDTH(16),
+    .M_DATA_WIDTH(CORE_DESC_WIDTH),
+    .M_KEEP_ENABLE(1),
+    .M_KEEP_WIDTH(CORE_DESC_STRB_WIDTH),
+    .ID_ENABLE(0),
+    .DEST_ENABLE(1),
+    .DEST_WIDTH(CORE_WIDTH),
+    .USER_ENABLE(0),
+    .FRAME_FIFO(0)
+) cores_ctrl_m_axis_async_fifo (
+    .s_clk(pcie_clk),
+    .s_rst(pci_rst),
+    .s_axis_tdata (cores_ctrl_m_tdata),
+    .s_axis_tkeep ({16{1'b1}}),
+    .s_axis_tvalid(cores_ctrl_m_tvalid),
+    .s_axis_tready(cores_ctrl_m_tready),
+    .s_axis_tlast (1'b1),
+    .s_axis_tid   (8'd0),
+    .s_axis_tdest (cores_ctrl_m_tdest),
+    .s_axis_tuser (1'b0),
+
+    .m_clk(sys_clk),
+    .m_rst(sys_rst),
+    .m_axis_tdata (cores_ctrl_m_axis_tdata),
+    .m_axis_tkeep (),
+    .m_axis_tvalid(cores_ctrl_m_axis_tvalid),
+    .m_axis_tready(cores_ctrl_m_axis_tready),
+    .m_axis_tlast (cores_ctrl_m_axis_tlast),
+    .m_axis_tid   (),
+    .m_axis_tdest (cores_ctrl_m_axis_tdest),
+    .m_axis_tuser (),
+
+    .s_status_overflow(),
+    .s_status_bad_frame(),
+    .s_status_good_frame(),
+    .m_status_overflow(),
+    .m_status_bad_frame(),
+    .m_status_good_frame()
+);
 
 // control registers
 reg axil_ctrl_awready_reg = 1'b0, axil_ctrl_awready_next;
@@ -1579,6 +1579,35 @@ header_adder # (
   .m_axis_tready(cores_rx_tready)
 );
 
+// Forwarding host write request to the corresponding core, and saving PCIe tag per core
+reg [HOST_DMA_TAG_WIDTH-1:0] tx_pcie_tag [0:CORE_COUNT-1];
+reg [CORE_COUNT-1:0]         tx_pcie_tag_v;
+
+wire host_wr_dest_core = host_dma_write_desc_axi_addr[CORE_ADDR_WIDTH +: CORE_WIDTH];
+
+always @ (posedge pcie_clk) begin
+  if (host_dma_write_desc_valid && host_dma_write_desc_ready) begin
+    // PORT field in descriptor gets overriden by core wrapper, and TAG field is 0
+    cores_ctrl_m_tdata                        <= 128'd0;
+    cores_ctrl_m_tdata[127:64]                <= host_dma_write_desc_pcie_addr;
+    cores_ctrl_m_tdata[31+CORE_ADDR_WIDTH:32] <= host_dma_write_desc_axi_addr[CORE_ADDR_WIDTH-1:0];
+    cores_ctrl_m_tdata[AXI_LEN_WIDTH-1:0]     <= host_dma_write_desc_len;
+    cores_ctrl_m_tdest                        <= host_wr_dest_core;
+    cores_ctrl_m_tvalid                       <= 1'b1;
+    tx_pcie_tag[host_wr_dest_core]            <= host_dma_write_desc_tag;
+  end else begin
+    cores_ctrl_m_tvalid <= 1'b0;
+  end
+
+  if (pcie_rst) begin
+    cores_ctrl_m_tvalid <= 1'b0;
+    tx_pcie_tag_v <= {CORE_COUNT{1'b0}};
+  end
+end
+
+// We can accept one read out per core (at least for now). 
+assign host_dma_write_desc_ready = cores_ctrl_m_tready && (tx_pcie_tag_v[host_wr_dest_core]==1'b0);
+
 // Data from cores management
 reg [AXI_LEN_WIDTH-1:0]   tx_len       [0:PCIE_SLOT_COUNT-1];
 reg [PCIE_ADDR_WIDTH-1:0] tx_pcie_addr [0:PCIE_SLOT_COUNT-1];
@@ -1593,29 +1622,24 @@ penc # (.IN_WIDTH(PCIE_SLOT_COUNT)) tx_penc (
   .to_select(tx_slot),.selected(selected_tx_slot),
   .selected_1hot (selected_tx_slot_1hot),.valid(selected_tx_slot_v));
 
-always @ (posedge pcie_clk) begin
 
+always @ (posedge pcie_clk) begin
   if (pcie_rst) begin
     tx_slot = {PCIE_SLOT_COUNT{1'b1}};
   end
 end
 
-  assign pcie_dma_write_desc_pcie_addr    = host_dma_write_desc_pcie_addr;
-  assign pcie_dma_write_desc_axi_addr     = host_dma_write_desc_axi_addr;
-  assign pcie_dma_write_desc_len          = host_dma_write_desc_len;
-  assign pcie_dma_write_desc_tag          = host_dma_write_desc_tag;
-  assign pcie_dma_write_desc_valid        = host_dma_write_desc_valid;
-  assign host_dma_write_desc_ready        = pcie_dma_write_desc_ready;
+  assign pcie_dma_write_desc_pcie_addr    = 0;
+  assign pcie_dma_write_desc_axi_addr     = 0;
+  assign pcie_dma_write_desc_len          = 0;
+  assign pcie_dma_write_desc_tag          = 0;
+  assign pcie_dma_write_desc_valid        = 0;
+  // pcie_dma_write_desc_ready;
+
   assign host_dma_write_desc_status_tag   = pcie_dma_write_desc_status_tag;
   assign host_dma_write_desc_status_valid = pcie_dma_write_desc_status_valid;
 
   assign cores_tx_axis_tready = 1'b1;
-
-  assign cores_ctrl_s_axis_tready = 1'b1;
-  assign cores_ctrl_m_axis_tvalid = 1'b0; 
-  assign cores_ctrl_m_axis_tlast  = 1'b0;
-  assign cores_ctrl_m_axis_tdata  = 0; // 128'hDEADBEEF05050505DEADBEEFA0A0A0A0;
-  assign cores_ctrl_m_axis_tdest  = 0;
   
 endmodule
 
