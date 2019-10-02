@@ -147,21 +147,21 @@ parameter PCIE_DMA_TAG_WIDTH = PCIE_SLOT_WIDTH;
 wire [AXIL_ADDR_WIDTH-1:0] axil_ctrl_awaddr;
 wire [2:0]                 axil_ctrl_awprot;
 wire                       axil_ctrl_awvalid;
-wire                       axil_ctrl_awready;
+reg                        axil_ctrl_awready;
 wire [AXIL_DATA_WIDTH-1:0] axil_ctrl_wdata;
 wire [AXIL_STRB_WIDTH-1:0] axil_ctrl_wstrb;
 wire                       axil_ctrl_wvalid;
-wire                       axil_ctrl_wready;
-wire [1:0]                 axil_ctrl_bresp;
-wire                       axil_ctrl_bvalid;
+reg                        axil_ctrl_wready;
+reg  [1:0]                 axil_ctrl_bresp;
+reg                        axil_ctrl_bvalid;
 wire                       axil_ctrl_bready;
 wire [AXIL_ADDR_WIDTH-1:0] axil_ctrl_araddr;
 wire [2:0]                 axil_ctrl_arprot;
 wire                       axil_ctrl_arvalid;
-wire                       axil_ctrl_arready;
-wire [AXIL_DATA_WIDTH-1:0] axil_ctrl_rdata;
-wire [1:0]                 axil_ctrl_rresp;
-wire                       axil_ctrl_rvalid;
+reg                        axil_ctrl_arready;
+reg  [AXIL_DATA_WIDTH-1:0] axil_ctrl_rdata;
+reg  [1:0]                 axil_ctrl_rresp;
+reg                        axil_ctrl_rvalid;
 wire                       axil_ctrl_rready;
 
 // AXI DMA connections
@@ -358,14 +358,14 @@ wire [PCIE_DMA_TAG_WIDTH-1:0]  pcie_dma_write_desc_status_tag;
 wire                           pcie_dma_write_desc_status_valid;
 wire                           pcie_dma_write_desc_status_ready;
 
-wire                           pcie_dma_enable;
+reg                            pcie_dma_enable;
 
 // DMA requests from Host
-wire [PCIE_ADDR_WIDTH-1:0]     host_dma_read_desc_pcie_addr;
-wire [PCIE_AXI_ADDR_WIDTH-1:0] host_dma_read_desc_axi_addr;
-wire [PCIE_DMA_LEN_WIDTH-1:0]  host_dma_read_desc_len;
-wire [HOST_DMA_TAG_WIDTH-1:0]  host_dma_read_desc_tag;
-wire                           host_dma_read_desc_valid;
+reg  [PCIE_ADDR_WIDTH-1:0]     host_dma_read_desc_pcie_addr;
+reg  [PCIE_AXI_ADDR_WIDTH-1:0] host_dma_read_desc_axi_addr;
+reg  [PCIE_DMA_LEN_WIDTH-1:0]  host_dma_read_desc_len;
+reg  [HOST_DMA_TAG_WIDTH-1:0]  host_dma_read_desc_tag;
+reg                            host_dma_read_desc_valid;
 wire                           host_dma_read_desc_ready;
 
 wire [PCIE_ADDR_WIDTH-1:0]     host_dma_read_desc_pcie_addr_f;
@@ -377,13 +377,12 @@ wire                           host_dma_read_desc_ready_f;
 
 reg  [HOST_DMA_TAG_WIDTH-1:0]  host_dma_read_desc_status_tag;
 reg                            host_dma_read_desc_status_valid;
-wire                           host_dma_read_desc_status_ready;
 
-wire [PCIE_ADDR_WIDTH-1:0]     host_dma_write_desc_pcie_addr;
-wire [PCIE_AXI_ADDR_WIDTH-1:0] host_dma_write_desc_axi_addr;
-wire [PCIE_DMA_LEN_WIDTH-1:0]  host_dma_write_desc_len;
-wire [HOST_DMA_TAG_WIDTH-1:0]  host_dma_write_desc_tag;
-wire                           host_dma_write_desc_valid;
+reg  [PCIE_ADDR_WIDTH-1:0]     host_dma_write_desc_pcie_addr;
+reg  [PCIE_AXI_ADDR_WIDTH-1:0] host_dma_write_desc_axi_addr;
+reg  [PCIE_DMA_LEN_WIDTH-1:0]  host_dma_write_desc_len;
+reg  [HOST_DMA_TAG_WIDTH-1:0]  host_dma_write_desc_tag;
+reg                            host_dma_write_desc_valid;
 wire                           host_dma_write_desc_ready;
 
 wire [PCIE_ADDR_WIDTH-1:0]     host_dma_write_desc_pcie_addr_f;
@@ -395,8 +394,9 @@ wire                           host_dma_write_desc_ready_f;
 
 reg  [HOST_DMA_TAG_WIDTH-1:0]  host_dma_write_desc_status_tag;
 reg                            host_dma_write_desc_status_valid;
-wire                           host_dma_write_desc_status_ready;
 
+reg  [HOST_DMA_TAG_WIDTH-1:0]  host_dma_read_status_tags;
+reg  [HOST_DMA_TAG_WIDTH-1:0]  host_dma_write_status_tags;
 
 // -------------------------------------------------------------------//
 // -------- Register axis input from PCIe, and error handling --------//
@@ -726,205 +726,124 @@ axis_async_fifo_adapter # (
     .m_status_good_frame()
 );
 
-// control registers
-reg axil_ctrl_awready_reg = 1'b0, axil_ctrl_awready_next;
-reg axil_ctrl_wready_reg = 1'b0, axil_ctrl_wready_next;
-reg [1:0] axil_ctrl_bresp_reg = 2'b00, axil_ctrl_bresp_next;
-reg axil_ctrl_bvalid_reg = 1'b0, axil_ctrl_bvalid_next;
-reg axil_ctrl_arready_reg = 1'b0, axil_ctrl_arready_next;
-reg [AXIL_DATA_WIDTH-1:0] axil_ctrl_rdata_reg = {AXIL_DATA_WIDTH{1'b0}}, axil_ctrl_rdata_next;
-reg [1:0] axil_ctrl_rresp_reg = 2'b00, axil_ctrl_rresp_next;
-reg axil_ctrl_rvalid_reg = 1'b0, axil_ctrl_rvalid_next;
+// AXIL write and read back
 
-reg [PCIE_ADDR_WIDTH-1:0] host_dma_read_desc_pcie_addr_reg = 0, host_dma_read_desc_pcie_addr_next;
-reg [PCIE_AXI_ADDR_WIDTH-1:0] host_dma_read_desc_axi_addr_reg = 0, host_dma_read_desc_axi_addr_next;
-reg [15:0] host_dma_read_desc_len_reg = 0, host_dma_read_desc_len_next;
-reg [HOST_DMA_TAG_WIDTH-1:0] host_dma_read_desc_tag_reg = 0, host_dma_read_desc_tag_next;
-reg host_dma_read_desc_valid_reg = 0, host_dma_read_desc_valid_next;
-
-reg host_dma_read_desc_status_ready_reg = 0, host_dma_read_desc_status_ready_next;
-
-reg [PCIE_ADDR_WIDTH-1:0] host_dma_write_desc_pcie_addr_reg = 0, host_dma_write_desc_pcie_addr_next;
-reg [PCIE_AXI_ADDR_WIDTH-1:0] host_dma_write_desc_axi_addr_reg = 0, host_dma_write_desc_axi_addr_next;
-reg [15:0] host_dma_write_desc_len_reg = 0, host_dma_write_desc_len_next;
-reg [HOST_DMA_TAG_WIDTH-1:0] host_dma_write_desc_tag_reg = 0, host_dma_write_desc_tag_next;
-reg host_dma_write_desc_valid_reg = 0, host_dma_write_desc_valid_next;
-
-reg host_dma_write_desc_status_ready_reg = 0, host_dma_write_desc_status_ready_next;
-
-reg pcie_dma_enable_reg = 0, pcie_dma_enable_next;
-
-reg [31:0] pcie_rq_count_reg = 0;
-reg [31:0] pcie_rc_count_reg = 0;
-reg [31:0] pcie_cq_count_reg = 0;
-reg [31:0] pcie_cc_count_reg = 0;
-
-assign axil_ctrl_awready = axil_ctrl_awready_reg;
-assign axil_ctrl_wready = axil_ctrl_wready_reg;
-assign axil_ctrl_bresp = axil_ctrl_bresp_reg;
-assign axil_ctrl_bvalid = axil_ctrl_bvalid_reg;
-assign axil_ctrl_arready = axil_ctrl_arready_reg;
-assign axil_ctrl_rdata = axil_ctrl_rdata_reg;
-assign axil_ctrl_rresp = axil_ctrl_rresp_reg;
-assign axil_ctrl_rvalid = axil_ctrl_rvalid_reg;
-
-assign host_dma_read_desc_pcie_addr = host_dma_read_desc_pcie_addr_reg;
-assign host_dma_read_desc_axi_addr = host_dma_read_desc_axi_addr_reg;
-assign host_dma_read_desc_len = host_dma_read_desc_len_reg;
-assign host_dma_read_desc_tag = host_dma_read_desc_tag_reg;
-assign host_dma_read_desc_valid = host_dma_read_desc_valid_reg;
-assign host_dma_read_desc_status_ready = host_dma_read_desc_status_ready_reg;
-assign host_dma_write_desc_pcie_addr = host_dma_write_desc_pcie_addr_reg;
-assign host_dma_write_desc_axi_addr = host_dma_write_desc_axi_addr_reg;
-assign host_dma_write_desc_len = host_dma_write_desc_len_reg;
-assign host_dma_write_desc_tag = host_dma_write_desc_tag_reg;
-assign host_dma_write_desc_valid = host_dma_write_desc_valid_reg;
-assign host_dma_write_desc_status_ready = host_dma_write_desc_status_ready_reg;
-assign pcie_dma_enable = pcie_dma_enable_reg;
+reg [31:0] pcie_rq_count_reg;
+reg [31:0] pcie_rc_count_reg;
+reg [31:0] pcie_cq_count_reg;
+reg [31:0] pcie_cc_count_reg;
 
 assign msi_irq[0] = host_dma_read_desc_status_valid || host_dma_write_desc_status_valid;
 assign msi_irq[31:1] = 0;
 
-always @* begin
-    axil_ctrl_awready_next = 1'b0;
-    axil_ctrl_wready_next = 1'b0;
-    axil_ctrl_bresp_next = 2'b00;
-    axil_ctrl_bvalid_next = axil_ctrl_bvalid_reg && !axil_ctrl_bready;
-    axil_ctrl_arready_next = 1'b0;
-    axil_ctrl_rdata_next = {AXIL_DATA_WIDTH{1'b0}};
-    axil_ctrl_rresp_next = 2'b00;
-    axil_ctrl_rvalid_next = axil_ctrl_rvalid_reg && !axil_ctrl_rready;
-
-    host_dma_read_desc_pcie_addr_next = host_dma_read_desc_pcie_addr_reg;
-    host_dma_read_desc_axi_addr_next = host_dma_read_desc_axi_addr_reg;
-    host_dma_read_desc_len_next = host_dma_read_desc_len_reg;
-    host_dma_read_desc_tag_next = host_dma_read_desc_tag_reg;
-    host_dma_read_desc_valid_next = host_dma_read_desc_valid_reg && !host_dma_read_desc_ready;
-    host_dma_read_desc_status_ready_next = 1'b0;
-
-    host_dma_write_desc_pcie_addr_next = host_dma_write_desc_pcie_addr_reg;
-    host_dma_write_desc_axi_addr_next = host_dma_write_desc_axi_addr_reg;
-    host_dma_write_desc_len_next = host_dma_write_desc_len_reg;
-    host_dma_write_desc_tag_next = host_dma_write_desc_tag_reg;
-    host_dma_write_desc_valid_next = host_dma_write_desc_valid_reg && !host_dma_read_desc_ready;
-    host_dma_write_desc_status_ready_next = 1'b0;
-
-    pcie_dma_enable_next = pcie_dma_enable_reg;
-
-    if (axil_ctrl_awvalid && axil_ctrl_wvalid && !axil_ctrl_bvalid) begin
-        // write operation
-        axil_ctrl_awready_next = 1'b1;
-        axil_ctrl_wready_next = 1'b1;
-        axil_ctrl_bresp_next = 2'b00;
-        axil_ctrl_bvalid_next = 1'b1;
-
-        case ({axil_ctrl_awaddr[15:2], 2'b00})
-            16'h0000: pcie_dma_enable_next = axil_ctrl_wdata;
-            16'h0100: host_dma_read_desc_pcie_addr_next[31:0] = axil_ctrl_wdata;
-            16'h0104: host_dma_read_desc_pcie_addr_next[63:32] = axil_ctrl_wdata;
-            16'h0108: host_dma_read_desc_axi_addr_next[31:0] = axil_ctrl_wdata;
-            //16'h010C: host_dma_read_desc_axi_addr_next[63:32] = axil_ctrl_wdata;
-            16'h0110: host_dma_read_desc_len_next = axil_ctrl_wdata;
-            16'h0114: begin
-                host_dma_read_desc_tag_next = axil_ctrl_wdata;
-                host_dma_read_desc_valid_next = 1'b1;
-            end
-            16'h0200: host_dma_write_desc_pcie_addr_next[31:0] = axil_ctrl_wdata;
-            16'h0204: host_dma_write_desc_pcie_addr_next[63:32] = axil_ctrl_wdata;
-            16'h0208: host_dma_write_desc_axi_addr_next[31:0] = axil_ctrl_wdata;
-            //16'h020C: host_dma_write_desc_axi_addr_next[63:32] = axil_ctrl_wdata;
-            16'h0210: host_dma_write_desc_len_next = axil_ctrl_wdata;
-            16'h0214: begin
-                host_dma_write_desc_tag_next = axil_ctrl_wdata;
-                host_dma_write_desc_valid_next = 1'b1;
-            end
-        endcase
-    end
-
-    if (axil_ctrl_arvalid && !axil_ctrl_rvalid) begin
-        // read operation
-        axil_ctrl_arready_next = 1'b1;
-        axil_ctrl_rresp_next = 2'b00;
-        axil_ctrl_rvalid_next = 1'b1;
-
-        case ({axil_ctrl_araddr[15:2], 2'b00})
-            16'h0000: axil_ctrl_rdata_next = pcie_dma_enable_reg;
-            16'h0118: begin
-                axil_ctrl_rdata_next = host_dma_read_desc_status_tag | (host_dma_read_desc_status_valid ? 32'h80000000 : 32'd0);
-                host_dma_read_desc_status_ready_next = host_dma_read_desc_status_valid;
-            end
-            16'h0218: begin
-                axil_ctrl_rdata_next = host_dma_write_desc_status_tag | (host_dma_write_desc_status_valid ? 32'h80000000 : 32'd0);
-                host_dma_write_desc_status_ready_next = host_dma_write_desc_status_valid;
-            end
-            16'h0400: axil_ctrl_rdata_next = pcie_rq_count_reg;
-            16'h0404: axil_ctrl_rdata_next = pcie_rc_count_reg;
-            16'h0408: axil_ctrl_rdata_next = pcie_cq_count_reg;
-            16'h040C: axil_ctrl_rdata_next = pcie_cc_count_reg;
-        endcase
-    end
-end
-
 always @(posedge pcie_clk) begin
     if (pcie_rst) begin
-        axil_ctrl_awready_reg <= 1'b0;
-        axil_ctrl_wready_reg <= 1'b0;
-        axil_ctrl_bvalid_reg <= 1'b0;
-        axil_ctrl_arready_reg <= 1'b0;
-        axil_ctrl_rvalid_reg <= 1'b0;
+        axil_ctrl_awready          <= 1'b0;
+        axil_ctrl_wready           <= 1'b0;
+        axil_ctrl_bvalid           <= 1'b0;
+        axil_ctrl_arready          <= 1'b0;
+        axil_ctrl_rvalid           <= 1'b0;
 
-        host_dma_read_desc_valid_reg <= 1'b0;
-        host_dma_read_desc_status_ready_reg <= 1'b0;
-        host_dma_write_desc_valid_reg <= 1'b0;
-        host_dma_write_desc_status_ready_reg <= 1'b0;
-        pcie_dma_enable_reg <= 1'b0;
+        host_dma_read_desc_valid   <= 1'b0;
+        host_dma_write_desc_valid  <= 1'b0;
+        host_dma_read_status_tags  <= {HOST_DMA_TAG_WIDTH{1'b0}};
+        host_dma_write_status_tags <= {HOST_DMA_TAG_WIDTH{1'b0}};
+        pcie_dma_enable            <= 1'b0;
 
-        pcie_rq_count_reg <= 0;
-        pcie_rc_count_reg <= 0;
-        pcie_cq_count_reg <= 0;
-        pcie_cc_count_reg <= 0;
+        pcie_rq_count_reg          <= 32'd0;
+        pcie_rc_count_reg          <= 32'd0;
+        pcie_cq_count_reg          <= 32'd0;
+        pcie_cc_count_reg          <= 32'd0;
+
     end else begin
-        axil_ctrl_awready_reg <= axil_ctrl_awready_next;
-        axil_ctrl_wready_reg <= axil_ctrl_wready_next;
-        axil_ctrl_bvalid_reg <= axil_ctrl_bvalid_next;
-        axil_ctrl_arready_reg <= axil_ctrl_arready_next;
-        axil_ctrl_rvalid_reg <= axil_ctrl_rvalid_next;
 
-        host_dma_read_desc_valid_reg <= host_dma_read_desc_valid_next;
-        host_dma_read_desc_status_ready_reg <= host_dma_read_desc_status_ready_next;
-        host_dma_write_desc_valid_reg <= host_dma_write_desc_valid_next;
-        host_dma_write_desc_status_ready_reg <= host_dma_write_desc_status_ready_next;
-        pcie_dma_enable_reg <= pcie_dma_enable_next;
+        axil_ctrl_awready <= 1'b0;
+        axil_ctrl_wready  <= 1'b0;
+        axil_ctrl_bresp   <= 2'b00;
+        axil_ctrl_bvalid  <= axil_ctrl_bvalid && !axil_ctrl_bready;
+        axil_ctrl_arready <= 1'b0;
+        axil_ctrl_rresp   <= 2'b00;
+        axil_ctrl_rvalid  <= axil_ctrl_rvalid && !axil_ctrl_rready;
 
-        if (m_axis_rq_tready && m_axis_rq_tvalid && m_axis_rq_tlast) begin
+        host_dma_read_desc_valid         <= host_dma_read_desc_valid && !host_dma_read_desc_ready;
+        host_dma_write_desc_valid        <= host_dma_write_desc_valid && !host_dma_read_desc_ready;
+
+        if (axil_ctrl_awvalid && axil_ctrl_wvalid && !axil_ctrl_bvalid) begin
+            // write operation
+            axil_ctrl_awready <= 1'b1;
+            axil_ctrl_wready  <= 1'b1;
+            axil_ctrl_bresp   <= 2'b00;
+            axil_ctrl_bvalid  <= 1'b1;
+
+            case ({axil_ctrl_awaddr[15:2], 2'b00})
+                16'h0000: pcie_dma_enable <= axil_ctrl_wdata;
+                16'h0100: host_dma_read_desc_pcie_addr[31:0] <= axil_ctrl_wdata;
+                16'h0104: host_dma_read_desc_pcie_addr[63:32] <= axil_ctrl_wdata;
+                16'h0108: host_dma_read_desc_axi_addr[31:0] <= axil_ctrl_wdata;
+                //16'h010C: host_dma_read_desc_axi_addr[63:32] = axil_ctrl_wdata;
+                16'h0110: host_dma_read_desc_len <= axil_ctrl_wdata;
+                16'h0114: begin
+                    host_dma_read_desc_tag <= axil_ctrl_wdata;
+                    host_dma_read_desc_valid <= 1'b1;
+                end
+                16'h0200: host_dma_write_desc_pcie_addr[31:0] <= axil_ctrl_wdata;
+                16'h0204: host_dma_write_desc_pcie_addr[63:32] <= axil_ctrl_wdata;
+                16'h0208: host_dma_write_desc_axi_addr[31:0] <= axil_ctrl_wdata;
+                //16'h020C: host_dma_write_desc_axi_addr[63:32] <= axil_ctrl_wdata;
+                16'h0210: host_dma_write_desc_len <= axil_ctrl_wdata;
+                16'h0214: begin
+                    host_dma_write_desc_tag <= axil_ctrl_wdata;
+                    host_dma_write_desc_valid <= 1'b1;
+                end
+            endcase
+        end
+
+        if (axil_ctrl_arvalid && !axil_ctrl_rvalid) begin
+            // read operation
+            axil_ctrl_arready <= 1'b1;
+            axil_ctrl_rvalid  <= 1'b1;
+
+            case ({axil_ctrl_araddr[15:2], 2'b00})
+                16'h0000: axil_ctrl_rdata <= pcie_dma_enable;
+                16'h0118: axil_ctrl_rdata <= host_dma_read_status_tags;
+                16'h0218: axil_ctrl_rdata <= host_dma_write_status_tags;
+                16'h0400: axil_ctrl_rdata <= pcie_rq_count_reg;
+                16'h0404: axil_ctrl_rdata <= pcie_rc_count_reg;
+                16'h0408: axil_ctrl_rdata <= pcie_cq_count_reg;
+                16'h040C: axil_ctrl_rdata <= pcie_cc_count_reg;
+            endcase
+        end
+        
+
+        if (axil_ctrl_arvalid && !axil_ctrl_rvalid && ({axil_ctrl_araddr[15:2], 2'd0}==16'h0118))
+            if (!host_dma_read_desc_status_valid)
+                host_dma_read_status_tags <= {HOST_DMA_TAG_WIDTH{1'b0}};
+            else
+                host_dma_read_status_tags <= host_dma_read_desc_status_tag;
+        else if (host_dma_read_desc_status_valid)
+          host_dma_read_status_tags <= host_dma_read_status_tags | host_dma_read_desc_status_tag;
+        
+        if (axil_ctrl_arvalid && !axil_ctrl_rvalid && ({axil_ctrl_araddr[15:2], 2'd0}==16'h0218))
+            if (!host_dma_write_desc_status_valid)
+                host_dma_write_status_tags <= {HOST_DMA_TAG_WIDTH{1'b0}};
+            else
+                host_dma_write_status_tags <= host_dma_write_desc_status_tag;
+        else if (host_dma_write_desc_status_valid)
+          host_dma_write_status_tags <= host_dma_write_status_tags | host_dma_write_desc_status_tag;
+  
+
+        if (m_axis_rq_tready && m_axis_rq_tvalid && m_axis_rq_tlast)
             pcie_rq_count_reg <= pcie_rq_count_reg + 1;
-        end
 
-        if (s_axis_rc_tready && s_axis_rc_tvalid && s_axis_rc_tlast) begin
+        if (s_axis_rc_tready && s_axis_rc_tvalid && s_axis_rc_tlast)
             pcie_rc_count_reg <= pcie_rc_count_reg + 1;
-        end
 
-        if (s_axis_cq_tready && s_axis_cq_tvalid && s_axis_cq_tlast) begin
+        if (s_axis_cq_tready && s_axis_cq_tvalid && s_axis_cq_tlast)
             pcie_cq_count_reg <= pcie_cq_count_reg + 1;
-        end
 
-        if (m_axis_cc_tready && m_axis_cc_tvalid && m_axis_cc_tlast) begin
+        if (m_axis_cc_tready && m_axis_cc_tvalid && m_axis_cc_tlast)
             pcie_cc_count_reg <= pcie_cc_count_reg + 1;
-        end
     end
-
-    axil_ctrl_bresp_reg <= axil_ctrl_bresp_next;
-    axil_ctrl_rdata_reg <= axil_ctrl_rdata_next;
-    axil_ctrl_rresp_reg <= axil_ctrl_rresp_next;
-
-    host_dma_read_desc_pcie_addr_reg <= host_dma_read_desc_pcie_addr_next;
-    host_dma_read_desc_axi_addr_reg <= host_dma_read_desc_axi_addr_next;
-    host_dma_read_desc_len_reg <= host_dma_read_desc_len_next;
-    host_dma_read_desc_tag_reg <= host_dma_read_desc_tag_next;
-    host_dma_write_desc_pcie_addr_reg <= host_dma_write_desc_pcie_addr_next;
-    host_dma_write_desc_axi_addr_reg <= host_dma_write_desc_axi_addr_next;
-    host_dma_write_desc_len_reg <= host_dma_write_desc_len_next;
-    host_dma_write_desc_tag_reg <= host_dma_write_desc_tag_next;
 end
 
 pcie_us_axil_master #(
