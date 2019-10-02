@@ -697,7 +697,7 @@ axis_async_fifo_adapter # (
     .FRAME_FIFO(0)
 ) cores_ctrl_m_axis_async_fifo (
     .s_clk(pcie_clk),
-    .s_rst(pci_rst),
+    .s_rst(pcie_rst),
     .s_axis_tdata (cores_ctrl_m_tdata),
     .s_axis_tkeep ({16{1'b1}}),
     .s_axis_tvalid(cores_ctrl_m_tvalid),
