@@ -1,11 +1,12 @@
 module simple_scheduler # (
   parameter INTERFACE_COUNT = 2,
-  parameter PORT_COUNT      = 3,
+  parameter PORT_COUNT      = 4,
   parameter CORE_COUNT      = 16,
   parameter SLOT_COUNT      = 8,
   parameter DATA_WIDTH      = 64,
   parameter CTRL_WIDTH      = 32+4,
   parameter LEN_WIDTH       = 16,
+  parameter LOOPBACK_PORT   = 2,
   parameter ENABLE_ILA      = 0,
 
   parameter SLOT_WIDTH      = $clog2(SLOT_COUNT+1),
@@ -63,8 +64,17 @@ module simple_scheduler # (
   input  wire                                ctrl_s_axis_tvalid,
   output wire                                ctrl_s_axis_tready,
   input  wire                                ctrl_s_axis_tlast,
-  input  wire [CORE_ID_WIDTH-1:0]            ctrl_s_axis_tuser
+  input  wire [CORE_ID_WIDTH-1:0]            ctrl_s_axis_tuser,
+
+  // Descriptor for Loopback message FIFO among cores
+  output wire [CORE_ID_WIDTH-1:0]            loopback_msg_src,
+  output wire [CORE_ID_WIDTH-1:0]            loopback_msg_dest,
+  output wire [SLOT_WIDTH-1:0]               loopback_msg_slot,
+  output wire                                loopback_msg_valid,
+  input  wire                                loopback_msg_ready
 );
+
+  wire [PORT_WIDTH-1:0] loopback_port = LOOPBACK_PORT;
   
   // Adding tdest and tuser to input data from eth, dest based on 
   // rx_desc_fifo and stamp the incoming port
@@ -232,6 +242,9 @@ module simple_scheduler # (
   wire                     loopback_valid;
   wire                     loopback_ready;
 
+  wire [CTRL_WIDTH-1:0] loopback_ctrl_s_tdata = (msg_type!=2) ? ctrl_s_axis_tdata : 
+      {ctrl_s_axis_tdata[CTRL_WIDTH-1:24+PORT_WIDTH],loopback_port,ctrl_s_axis_tdata[23:0]};
+  
   simple_fifo # (
     .ADDR_WIDTH($clog2(4*CORE_COUNT)),
     .DATA_WIDTH(CTRL_WIDTH+CORE_ID_WIDTH)
@@ -241,17 +254,24 @@ module simple_scheduler # (
     .clear(1'b0),
   
     .din_valid(ctrl_s_axis_tvalid && (msg_type==1)),
-    .din({ctrl_s_axis_tuser,ctrl_s_axis_tdata}),
+    .din({ctrl_s_axis_tuser,loopback_ctrl_s_tdata}),
     .din_ready(loopback_in_ready),
    
     .dout_valid(loopback_valid),
     .dout({loopback_dest,loopback_data}),
     .dout_ready(loopback_ready)
   );
+  
+  // Outputting loopback message descriptor to loopback message FIFO
+  assign loopback_msg_src   = ctrl_s_axis_tuser;
+  assign loopback_msg_dest  = ctrl_s_axis_tdata[24 +: CORE_ID_WIDTH]; 
+  assign loopback_msg_slot  = msg_slot;
+  assign loopback_msg_valid = ctrl_s_axis_tvalid && (msg_type==2);
 
   // We ignore info messages for now
   assign ctrl_s_axis_tready = ((|(rx_desc_slot_accept & (1<<ctrl_s_axis_tuser))) && (msg_type==0)) ||
                                  (loopback_in_ready && (msg_type==1)) || 
+                                 (loopback_msg_ready && (msg_type==2)) || 
                                  (loader_ready && (msg_type==3));
 
   // Core reset command

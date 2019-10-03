@@ -126,7 +126,7 @@ assign sma_led   = 2'd0;
 // RISCV system parameters
 parameter CORE_COUNT       = 16;
 parameter INTERFACE_COUNT  = 2;
-parameter PORT_COUNT       = INTERFACE_COUNT+1;
+parameter PORT_COUNT       = INTERFACE_COUNT+2;
 parameter CORE_ADDR_WIDTH  = 16;
 parameter SLOT_COUNT       = 8;
 parameter PCIE_SLOT_COUNT  = 16;
@@ -152,7 +152,8 @@ parameter DMEM_SIZE_BYTES  = 32768;
 parameter COHERENT_START   = 16'h6FFF;
 parameter LEN_WIDTH        = 16;
 parameter INTERLEAVE       = 1;
-parameter DRAM_PORT        = INTERFACE_COUNT+1-1;
+parameter DRAM_PORT        = INTERFACE_COUNT+2-1;
+parameter LOOPBACK_PORT    = INTERFACE_COUNT+1-1;
 parameter LVL1_SW_PORTS    = 4;
 parameter CORE_MSG_LVL1    = 16;
 parameter SEPARATE_CLOCKS  = 1;
@@ -399,6 +400,26 @@ pcie_controller #
 // no use for dram_tx_axis_tdest
 assign dram_rx_axis_tuser = DRAM_PORT;
 
+// Loopback message FIFO module
+wire [LVL1_DATA_WIDTH-1:0] loopback_tx_axis_tdata;
+wire [LVL1_STRB_WIDTH-1:0] loopback_tx_axis_tkeep;
+wire [PORT_WIDTH-1:0]      loopback_tx_axis_tdest;
+wire [ID_TAG_WIDTH-1:0]    loopback_tx_axis_tuser;
+wire                       loopback_tx_axis_tvalid, 
+                           loopback_tx_axis_tready, 
+                           loopback_tx_axis_tlast;
+
+wire [LVL1_DATA_WIDTH-1:0] loopback_rx_axis_tdata;
+wire [LVL1_STRB_WIDTH-1:0] loopback_rx_axis_tkeep;
+wire [ID_TAG_WIDTH-1:0]    loopback_rx_axis_tdest;
+wire [PORT_WIDTH-1:0]      loopback_rx_axis_tuser;
+wire                       loopback_rx_axis_tvalid, 
+                           loopback_rx_axis_tready, 
+                           loopback_rx_axis_tlast;
+
+assign loopback_tx_axis_tready = 1'b1;
+assign loopback_rx_axis_tvalid = 1'b0;
+
 // Scheduler 
 wire [INTERFACE_COUNT*LVL1_DATA_WIDTH-1:0] sched_tx_axis_tdata;
 wire [INTERFACE_COUNT*LVL1_STRB_WIDTH-1:0] sched_tx_axis_tkeep;
@@ -428,6 +449,11 @@ wire                                       sched_ctrl_s_axis_tready;
 wire                                       sched_ctrl_s_axis_tlast;
 wire [CORE_WIDTH-1:0]                      sched_ctrl_s_axis_tuser;
 
+wire [CORE_WIDTH-1:0]                      loopback_msg_src;
+wire [CORE_WIDTH-1:0]                      loopback_msg_dest;
+wire [SLOT_WIDTH-1:0]                      loopback_msg_slot;
+wire                                       loopback_msg_valid;
+wire                                       loopback_msg_ready;
 
 simple_scheduler # (
   .PORT_COUNT(PORT_COUNT),
@@ -438,6 +464,7 @@ simple_scheduler # (
   .CTRL_WIDTH(LVL1_CTRL_WIDTH),
   .LEN_WIDTH(LEN_WIDTH),
   .LVL1_SW_PORTS(LVL1_SW_PORTS),
+  .LOOPBACK_PORT(LOOPBACK_PORT),
   .ENABLE_ILA(ENABLE_ILA)
 ) scheduler (
   .clk(sys_clk),
@@ -484,8 +511,17 @@ simple_scheduler # (
   .ctrl_s_axis_tvalid(sched_ctrl_s_axis_tvalid),
   .ctrl_s_axis_tready(sched_ctrl_s_axis_tready),
   .ctrl_s_axis_tlast(sched_ctrl_s_axis_tlast),
-  .ctrl_s_axis_tuser(sched_ctrl_s_axis_tuser)
+  .ctrl_s_axis_tuser(sched_ctrl_s_axis_tuser),
+  
+  // Descriptor for Loopback message FIFO among cores
+  .loopback_msg_src(loopback_msg_src),
+  .loopback_msg_dest(loopback_msg_dest),
+  .loopback_msg_slot(loopback_msg_slot),
+  .loopback_msg_valid(loopback_msg_valid),
+  .loopback_msg_ready(loopback_msg_ready)
 );
+
+assign loopback_msg_ready = 1'b1;
 
 // Switches
 
@@ -588,14 +624,14 @@ axis_switch #
     /*
      * AXI Stream inputs
      */
-    .s_axis_tdata({dram_rx_axis_tdata,sched_rx_axis_tdata}),
-    .s_axis_tkeep({dram_rx_axis_tkeep,sched_rx_axis_tkeep}),
-    .s_axis_tvalid({dram_rx_axis_tvalid,sched_rx_axis_tvalid}),
-    .s_axis_tready({dram_rx_axis_tready,sched_rx_axis_tready}),
-    .s_axis_tlast({dram_rx_axis_tlast,sched_rx_axis_tlast}),
+    .s_axis_tdata( {dram_rx_axis_tdata, loopback_rx_axis_tdata, sched_rx_axis_tdata}),
+    .s_axis_tkeep( {dram_rx_axis_tkeep, loopback_rx_axis_tkeep, sched_rx_axis_tkeep}),
+    .s_axis_tvalid({dram_rx_axis_tvalid,loopback_rx_axis_tvalid,sched_rx_axis_tvalid}),
+    .s_axis_tready({dram_rx_axis_tready,loopback_rx_axis_tready,sched_rx_axis_tready}),
+    .s_axis_tlast( {dram_rx_axis_tlast, loopback_rx_axis_tlast, sched_rx_axis_tlast}),
     .s_axis_tid({PORT_COUNT{8'd0}}),
-    .s_axis_tdest({dram_rx_axis_tdest,sched_rx_axis_tdest}),
-    .s_axis_tuser({dram_rx_axis_tuser,sched_rx_axis_tuser}),
+    .s_axis_tdest( {dram_rx_axis_tdest, loopback_rx_axis_tdest, sched_rx_axis_tdest}),
+    .s_axis_tuser( {dram_rx_axis_tuser, loopback_rx_axis_tuser, sched_rx_axis_tuser}),
 
     /*
      * AXI Stream outputs
@@ -639,14 +675,14 @@ axis_switch #
     /*
      * AXI Stream outputs
      */
-    .m_axis_tdata({dram_tx_axis_tdata,sched_tx_axis_tdata}),
-    .m_axis_tkeep({dram_tx_axis_tkeep,sched_tx_axis_tkeep}),
-    .m_axis_tvalid({dram_tx_axis_tvalid,sched_tx_axis_tvalid}),
-    .m_axis_tready({dram_tx_axis_tready,sched_tx_axis_tready}),
-    .m_axis_tlast({dram_tx_axis_tlast,sched_tx_axis_tlast}),
-    .m_axis_tid(),
-    .m_axis_tdest({dram_tx_axis_tdest,sched_tx_axis_tdest}),
-    .m_axis_tuser({dram_tx_axis_tuser,sched_tx_axis_tuser})
+    .m_axis_tdata( {dram_tx_axis_tdata, loopback_tx_axis_tdata, sched_tx_axis_tdata}),
+    .m_axis_tkeep( {dram_tx_axis_tkeep, loopback_tx_axis_tkeep, sched_tx_axis_tkeep}),
+    .m_axis_tvalid({dram_tx_axis_tvalid,loopback_tx_axis_tvalid,sched_tx_axis_tvalid}),
+    .m_axis_tready({dram_tx_axis_tready,loopback_tx_axis_tready,sched_tx_axis_tready}),
+    .m_axis_tlast( {dram_tx_axis_tlast, loopback_tx_axis_tlast, sched_tx_axis_tlast}),
+    .m_axis_tid(),                      
+    .m_axis_tdest( {dram_tx_axis_tdest, loopback_tx_axis_tdest, sched_tx_axis_tdest}),
+    .m_axis_tuser( {dram_tx_axis_tuser, loopback_tx_axis_tuser, sched_tx_axis_tuser})
 
 );
 
