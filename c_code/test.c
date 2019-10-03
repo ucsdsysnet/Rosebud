@@ -25,26 +25,30 @@ int main(void){
 	 		
 			start_time = read_timer_low();
 			read_in_pkt(&packet);
-			packet.data = (unsigned int *)(((unsigned int)packet.data)+offset);
-	
-			// if (packet.port==0)
-			//  	packet.port = 2;
-			// else if (packet.port==2)
-			//  	packet.port = 0;
-			// else if (packet.port==1)
-			//  	packet.port = 3;
-			// else if (packet.port==3)
-			//  	packet.port = 1;
+
+			if (packet.port<2){
+				packet.data = (unsigned int *)(((unsigned int)packet.data)-2);
+				*(unsigned short *)(packet.data) = (unsigned short)(packet.port);
+				packet.len += 2;
+			}
+
+			// if (packet.port==0){
+			// 	packet.port = 1;
+			// 	*sh_test += 1;
+			// } else {
+			// 	packet.port = 0;
+			// 	*(sh_test+1) += 1;
+			// }
 
 			if (core_id()==15){
 
-				if (packet.port==0){
+				if (*(unsigned short*)(packet.data)==0){
 					packet.port = 1;
-					*sh_test += 1;
 				} else {
 					packet.port = 0;
-					*(sh_test+1) += 1;
 				}
+				packet.data = (unsigned int *)(((unsigned int)packet.data)+2);
+				packet.len -= 2;
 				safe_pkt_done_msg(&packet);
 			
 			} else {

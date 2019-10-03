@@ -89,7 +89,7 @@ module simple_scheduler # (
   wire rx_desc_v; 
 
   assign sending_last_word = rx_axis_tvalid & rx_axis_tlast & rx_axis_tready;
-  assign rx_desc_pop = selected_port_v && rx_desc_v;
+  assign rx_desc_pop = selected_port_v && rx_desc_v && !(loopback_msg_valid && (loopback_msg_dest_core==selected_desc));
   // If one of the descriptors are not valid or a last word is being sent that means they need a new descriptor.
   // If a descriptor is being assigned or there is no descriptors available the request would be masked.
   wire [INTERFACE_COUNT-1:0] desc_req = ((~dest_r_v)|sending_last_word) & 
@@ -151,6 +151,10 @@ module simple_scheduler # (
   assign rx_desc_v          = | rx_desc_slot_v;
   assign rx_desc_data       = {selected_desc, {(TAG_WIDTH-SLOT_WIDTH){1'b0}}, 
                               rx_desc_slot[selected_desc]};
+  
+  wire [CORE_ID_WIDTH-1:0] loopback_msg_dest_core = ctrl_s_axis_tdata[24 +: CORE_ID_WIDTH];
+  wire [SLOT_WIDTH-1:0]    loopback_msg_dest_slot = rx_desc_slot[loopback_msg_dest_core];
+  wire                     loopback_slot_avail    = rx_desc_slot_v[loopback_msg_dest_core];
 
   wire [3:0]            msg_type = ctrl_s_axis_tdata[CTRL_WIDTH-1:CTRL_WIDTH-4];
   wire [SLOT_WIDTH-1:0] msg_slot = ctrl_s_axis_tdata[LEN_WIDTH +: SLOT_WIDTH]; 
@@ -205,7 +209,7 @@ module simple_scheduler # (
       // but since rx_desc_v is zero (all fifoes are not-valid) this ready is not used
       assign rx_desc_fifo_v[i]      = (ctrl_s_axis_tvalid && (ctrl_s_axis_tuser==i) && (msg_type==0) && (msg_slot!=0)) 
                                        || loader_valid[i];
-      assign rx_desc_slot_pop[i]    = rx_desc_pop && (selected_desc==i);
+      assign rx_desc_slot_pop[i]    = (rx_desc_pop && (selected_desc==i)) || (loopback_msg_valid && (loopback_msg_dest_core==i));
       assign rx_desc_slot_accept[i] = (rx_desc_slot_accept_temp[i] || (msg_slot==0)) && (!busy_by_loader[i]);
     end
   endgenerate
@@ -241,9 +245,8 @@ module simple_scheduler # (
   wire                     loopback_valid;
   wire                     loopback_ready;
 
-  // TAKE DESCRIPTOR ...
   wire [CTRL_WIDTH-1:0] loopback_ctrl_s_tdata = (msg_type!=2) ? ctrl_s_axis_tdata : 
-      {ctrl_s_axis_tdata[CTRL_WIDTH-1:24+PORT_WIDTH],loopback_port,ctrl_s_axis_tdata[23:0]};
+      {ctrl_s_axis_tdata[CTRL_WIDTH-1:24+PORT_WIDTH], loopback_port, ctrl_s_axis_tdata[23:0]};
   
   simple_fifo # (
     .ADDR_WIDTH($clog2(4*CORE_COUNT)),
@@ -265,15 +268,15 @@ module simple_scheduler # (
   // Outputting loopback message descriptor to loopback message FIFO
   // Slot should be assigned, also think about how core sends it out and says I'm done with packet (already done?)
   assign loopback_msg_src   = {ctrl_s_axis_tuser, 
-                               {(TAG_WIDTH-SLOT_WIDTH){1'b0}}, msg_slot};
-  assign loopback_msg_dest  = {ctrl_s_axis_tdata[24 +: CORE_ID_WIDTH], 
-                               {(TAG_WIDTH-SLOT_WIDTH){1'b0}}, msg_slot}; 
+                              {(TAG_WIDTH-SLOT_WIDTH){1'b0}}, msg_slot};
+  assign loopback_msg_dest  = {loopback_msg_dest_core, 
+                              {(TAG_WIDTH-SLOT_WIDTH){1'b0}}, loopback_msg_dest_slot};
   assign loopback_msg_valid = ctrl_s_axis_tvalid && (msg_type==2);
 
   // We ignore info messages for now
   assign ctrl_s_axis_tready = ((|(rx_desc_slot_accept & (1<<ctrl_s_axis_tuser))) && (msg_type==0)) ||
                                  (loopback_in_ready && (msg_type==1)) || 
-                                 (loopback_msg_ready && (msg_type==2)) || 
+                                 (loopback_msg_ready && loopback_slot_avail && (msg_type==2)) || 
                                  (loader_ready && (msg_type==3));
 
   // Core reset command
