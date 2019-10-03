@@ -417,9 +417,6 @@ wire                       loopback_rx_axis_tvalid,
                            loopback_rx_axis_tready, 
                            loopback_rx_axis_tlast;
 
-assign loopback_tx_axis_tready = 1'b1;
-assign loopback_rx_axis_tvalid = 1'b0;
-
 // Scheduler 
 wire [INTERFACE_COUNT*LVL1_DATA_WIDTH-1:0] sched_tx_axis_tdata;
 wire [INTERFACE_COUNT*LVL1_STRB_WIDTH-1:0] sched_tx_axis_tkeep;
@@ -449,9 +446,8 @@ wire                                       sched_ctrl_s_axis_tready;
 wire                                       sched_ctrl_s_axis_tlast;
 wire [CORE_WIDTH-1:0]                      sched_ctrl_s_axis_tuser;
 
-wire [CORE_WIDTH-1:0]                      loopback_msg_src;
-wire [CORE_WIDTH-1:0]                      loopback_msg_dest;
-wire [SLOT_WIDTH-1:0]                      loopback_msg_slot;
+wire [ID_TAG_WIDTH-1:0]                    loopback_msg_src;
+wire [ID_TAG_WIDTH-1:0]                    loopback_msg_dest;
 wire                                       loopback_msg_valid;
 wire                                       loopback_msg_ready;
 
@@ -514,14 +510,46 @@ simple_scheduler # (
   .ctrl_s_axis_tuser(sched_ctrl_s_axis_tuser),
   
   // Descriptor for Loopback message FIFO among cores
-  .loopback_msg_src(loopback_msg_src),
-  .loopback_msg_dest(loopback_msg_dest),
-  .loopback_msg_slot(loopback_msg_slot),
+  .loopback_msg_src  (loopback_msg_src),
+  .loopback_msg_dest (loopback_msg_dest),
   .loopback_msg_valid(loopback_msg_valid),
   .loopback_msg_ready(loopback_msg_ready)
 );
 
-assign loopback_msg_ready = 1'b1;
+
+// Loopback inter core message FIFO
+loopback_msg_fifo # (
+  .DATA_WIDTH(LVL1_DATA_WIDTH),
+  .STRB_WIDTH(LVL1_STRB_WIDTH),
+  .PORT_WIDTH(PORT_WIDTH),
+  .CORE_WIDTH(CORE_WIDTH), 
+  .SLOT_WIDTH(SLOT_WIDTH),
+  .ID_TAG_WIDTH(ID_TAG_WIDTH)
+) loopback_msg_fifo_inst (
+    .clk(sys_clk),
+    .rst(sys_rst),
+
+    .s_axis_tdata (loopback_tx_axis_tdata),
+    .s_axis_tkeep (loopback_tx_axis_tkeep),
+    .s_axis_tvalid(loopback_tx_axis_tvalid),
+    .s_axis_tready(loopback_tx_axis_tready),
+    .s_axis_tlast (loopback_tx_axis_tlast),
+    .s_axis_tdest (loopback_tx_axis_tdest),
+    .s_axis_tuser (loopback_tx_axis_tuser),
+  
+    .m_axis_tdata (loopback_rx_axis_tdata),
+    .m_axis_tkeep (loopback_rx_axis_tkeep),
+    .m_axis_tvalid(loopback_rx_axis_tvalid),
+    .m_axis_tready(loopback_rx_axis_tready),
+    .m_axis_tlast (loopback_rx_axis_tlast),
+    .m_axis_tdest (loopback_rx_axis_tdest),
+    .m_axis_tuser (loopback_rx_axis_tuser),
+ 
+    .msg_src  (loopback_msg_src), 
+    .msg_dest (loopback_msg_dest),
+    .msg_valid(loopback_msg_valid),
+    .msg_ready(loopback_msg_ready)
+);
 
 // Switches
 

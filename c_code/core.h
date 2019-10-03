@@ -294,4 +294,31 @@ inline void safe_dram_read_req (const unsigned int dram_addr_high, const unsigne
 	return;
 }
 
+inline void send_to_core (struct Desc* output_desc){
+  volatile unsigned int  * data_desc      = (volatile unsigned int *)  DATA_DESC;
+  volatile unsigned char * data_desc_send = (volatile unsigned char *) DATA_DESC_SEND;
+	*data_desc = (int)(output_desc->len);
+  *((unsigned char*)data_desc+2) = output_desc->tag;
+  *((unsigned char*)data_desc+3) = output_desc->port;
+  *(data_desc+1) = (unsigned int) (output_desc->data);
+  *((unsigned char*)data_desc+7) = (2<<4);
+	asm volatile("" ::: "memory");
+	* data_desc_send = 1;
+	return;
+}
+
+inline void safe_send_to_core (struct Desc* output_desc){ 
+  volatile unsigned int  * data_desc      = (volatile unsigned int *)  DATA_DESC;
+  volatile unsigned char * data_desc_send = (volatile unsigned char *) DATA_DESC_SEND;
+	*data_desc = (int)(output_desc->len);
+  *((unsigned char*)data_desc+2) = output_desc->tag;
+  *((unsigned char*)data_desc+3) = output_desc->port;
+  *(data_desc+1) = (unsigned int) (output_desc->data);
+  *((unsigned char*)data_desc+7) = (2<<4);
+	while(!data_desc_ready());
+	asm volatile("" ::: "memory");
+	* data_desc_send = 1;
+	return;
+}
+
 #endif /* CORE_H */

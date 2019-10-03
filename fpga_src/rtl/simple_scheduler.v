@@ -67,9 +67,8 @@ module simple_scheduler # (
   input  wire [CORE_ID_WIDTH-1:0]            ctrl_s_axis_tuser,
 
   // Descriptor for Loopback message FIFO among cores
-  output wire [CORE_ID_WIDTH-1:0]            loopback_msg_src,
-  output wire [CORE_ID_WIDTH-1:0]            loopback_msg_dest,
-  output wire [SLOT_WIDTH-1:0]               loopback_msg_slot,
+  output wire [ID_TAG_WIDTH-1:0]             loopback_msg_src,
+  output wire [ID_TAG_WIDTH-1:0]             loopback_msg_dest,
   output wire                                loopback_msg_valid,
   input  wire                                loopback_msg_ready
 );
@@ -242,6 +241,7 @@ module simple_scheduler # (
   wire                     loopback_valid;
   wire                     loopback_ready;
 
+  // TAKE DESCRIPTOR ...
   wire [CTRL_WIDTH-1:0] loopback_ctrl_s_tdata = (msg_type!=2) ? ctrl_s_axis_tdata : 
       {ctrl_s_axis_tdata[CTRL_WIDTH-1:24+PORT_WIDTH],loopback_port,ctrl_s_axis_tdata[23:0]};
   
@@ -253,7 +253,7 @@ module simple_scheduler # (
     .rst(rst),
     .clear(1'b0),
   
-    .din_valid(ctrl_s_axis_tvalid && (msg_type==1)),
+    .din_valid(ctrl_s_axis_tvalid && ((msg_type==1)||(msg_type==2))),
     .din({ctrl_s_axis_tuser,loopback_ctrl_s_tdata}),
     .din_ready(loopback_in_ready),
    
@@ -263,9 +263,11 @@ module simple_scheduler # (
   );
   
   // Outputting loopback message descriptor to loopback message FIFO
-  assign loopback_msg_src   = ctrl_s_axis_tuser;
-  assign loopback_msg_dest  = ctrl_s_axis_tdata[24 +: CORE_ID_WIDTH]; 
-  assign loopback_msg_slot  = msg_slot;
+  // Slot should be assigned, also think about how core sends it out and says I'm done with packet (already done?)
+  assign loopback_msg_src   = {ctrl_s_axis_tuser, 
+                               {(TAG_WIDTH-SLOT_WIDTH){1'b0}}, msg_slot};
+  assign loopback_msg_dest  = {ctrl_s_axis_tdata[24 +: CORE_ID_WIDTH], 
+                               {(TAG_WIDTH-SLOT_WIDTH){1'b0}}, msg_slot}; 
   assign loopback_msg_valid = ctrl_s_axis_tvalid && (msg_type==2);
 
   // We ignore info messages for now

@@ -36,15 +36,24 @@ int main(void){
 			// else if (packet.port==3)
 			//  	packet.port = 1;
 
-			if (packet.port==0){
-				packet.port = 1;
-				*sh_test += 1;
+			if (core_id()==15){
+
+				if (packet.port==0){
+					packet.port = 1;
+					*sh_test += 1;
+				} else {
+					packet.port = 0;
+					*(sh_test+1) += 1;
+				}
+				safe_pkt_done_msg(&packet);
+			
 			} else {
-				packet.port = 0;
-				*(sh_test+1) += 1;
+
+				packet.port = (char)(core_id()+1);
+				safe_send_to_core(&packet);
+			
 			}
 
-		  safe_pkt_done_msg(&packet);
 			// safe_dram_write(0xAAAAAAAA, 0xBBBBBBBB, &packet);
 
 	 		end_time = read_timer_low();

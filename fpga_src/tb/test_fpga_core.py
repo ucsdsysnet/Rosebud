@@ -53,6 +53,7 @@ srcs.append("../rtl/riscv_axis_wrapper.v")
 srcs.append("../rtl/simple_scheduler.v")
 srcs.append("../rtl/simple_sync_sig.v")
 srcs.append("../rtl/axis_switch.v")
+srcs.append("../rtl/loopback_msg_fifo.v")
 srcs.append("../rtl/header.v")
 srcs.append("../rtl/pcie_controller.v")
 srcs.append("../rtl/fpga_core.v")
@@ -112,12 +113,13 @@ def bench():
     CTRL_WIDTH = (DATA_WIDTH/8)
     AXI_ADDR_WIDTH = 16
 
-    SEND_COUNT_0 = 50
-    SEND_COUNT_1 = 50
+    SEND_COUNT_0 = 1
+    SEND_COUNT_1 = 0
     SIZE_0       = 150 - 18 
     SIZE_1       = 150 - 18
     CHECK_PKT    = True
-    TEST_SFP     = False
+    TEST_SFP     = True
+    TEST_PCIE    = False
 
     # Inputs
     sys_clk  = Signal(bool(0))
@@ -677,76 +679,77 @@ def bench():
           # assert eth_frame.payload.data.index(test_frame_1.payload.data) == 0
 
         # PCIE test
-        print("PCIE tests")
-        print("test 1: enumeration")
+        if (TEST_PCIE):
+          print("PCIE tests")
+          print("test 1: enumeration")
 
-        yield rc.enumerate(enable_bus_mastering=True, configure_msi=True)
+          yield rc.enumerate(enable_bus_mastering=True, configure_msi=True)
 
-        dev_pf0_bar0 = dev.functions[0].bar[0] & 0xfffffffc
-        # dev_pf0_bar1 = dev.functions[0].bar[1] & 0xfffffffc
+          dev_pf0_bar0 = dev.functions[0].bar[0] & 0xfffffffc
+          # dev_pf0_bar1 = dev.functions[0].bar[1] & 0xfffffffc
 
-        yield delay(100)
+          yield delay(100)
 
-        yield pcie_clk.posedge
-        # print("test 2: memory write to bar 1")
+          yield pcie_clk.posedge
+          # print("test 2: memory write to bar 1")
 
-        # yield rc.mem_write(dev_pf0_bar1, b'\x11\x22\x33\x44')
+          # yield rc.mem_write(dev_pf0_bar1, b'\x11\x22\x33\x44')
 
-        # yield delay(100)
+          # yield delay(100)
 
-        # yield pcie_clk.posedge
-        # print("test 3: memory read from bar 1")
+          # yield pcie_clk.posedge
+          # print("test 3: memory read from bar 1")
 
-        # val = yield from rc.mem_read(dev_pf0_bar1, 4, 1000)
-        # print(val)
-        # assert val == b'\x11\x22\x33\x44'
+          # val = yield from rc.mem_read(dev_pf0_bar1, 4, 1000)
+          # print(val)
+          # assert val == b'\x11\x22\x33\x44'
 
-        # yield delay(100)
+          # yield delay(100)
 
-        # yield pcie_clk.posedge
-        print("test 4: test DMA")
+          # yield pcie_clk.posedge
+          print("test 4: test DMA")
 
-        # write packet data
-        mem_data[0:1024] = bytearray([x%256 for x in range(1024)])
-        mem_data[48059:48200] = bytearray([(x+10)%256 for x in range(141)])
+          # write packet data
+          mem_data[0:1024] = bytearray([x%256 for x in range(1024)])
+          mem_data[48059:48200] = bytearray([(x+10)%256 for x in range(141)])
 
 
-        # enable DMA
-        yield rc.mem_write(dev_pf0_bar0+0x100000, struct.pack('<L', 1))
+          # enable DMA
+          yield rc.mem_write(dev_pf0_bar0+0x100000, struct.pack('<L', 1))
 
-        # write pcie read descriptor
-        yield rc.mem_write(dev_pf0_bar0+0x100100, struct.pack('<L', (mem_base+0x0000) & 0xffffffff))
-        yield rc.mem_write(dev_pf0_bar0+0x100104, struct.pack('<L', (mem_base+0x0000 >> 32) & 0xffffffff))
-        yield rc.mem_write(dev_pf0_bar0+0x100108, struct.pack('<L', (0x50100) & 0xffffffff))
-        yield rc.mem_write(dev_pf0_bar0+0x10010C, struct.pack('<L', (0x50100 >> 32) & 0xffffffff))
-        yield rc.mem_write(dev_pf0_bar0+0x100110, struct.pack('<L', 0x400))
-        yield rc.mem_write(dev_pf0_bar0+0x100114, struct.pack('<L', 0xAA))
+          # write pcie read descriptor
+          yield rc.mem_write(dev_pf0_bar0+0x100100, struct.pack('<L', (mem_base+0x0000) & 0xffffffff))
+          yield rc.mem_write(dev_pf0_bar0+0x100104, struct.pack('<L', (mem_base+0x0000 >> 32) & 0xffffffff))
+          yield rc.mem_write(dev_pf0_bar0+0x100108, struct.pack('<L', (0x50100) & 0xffffffff))
+          yield rc.mem_write(dev_pf0_bar0+0x10010C, struct.pack('<L', (0x50100 >> 32) & 0xffffffff))
+          yield rc.mem_write(dev_pf0_bar0+0x100110, struct.pack('<L', 0x400))
+          yield rc.mem_write(dev_pf0_bar0+0x100114, struct.pack('<L', 0xAA))
 
-        yield delay(2000)
+          yield delay(2000)
 
-        # read status
-        val = yield from rc.mem_read(dev_pf0_bar0+0x100118, 4)
-        print(val)
+          # read status
+          val = yield from rc.mem_read(dev_pf0_bar0+0x100118, 4)
+          print(val)
 
-        # write pcie write descriptor
-        yield rc.mem_write(dev_pf0_bar0+0x100200, struct.pack('<L', (mem_base+0x1000) & 0xffffffff))
-        yield rc.mem_write(dev_pf0_bar0+0x100204, struct.pack('<L', (mem_base+0x1000 >> 32) & 0xffffffff))
-        yield rc.mem_write(dev_pf0_bar0+0x100208, struct.pack('<L', (0x50100) & 0xffffffff))
-        yield rc.mem_write(dev_pf0_bar0+0x10020C, struct.pack('<L', (0x50100 >> 32) & 0xffffffff))
-        yield rc.mem_write(dev_pf0_bar0+0x100210, struct.pack('<L', 0x400))
-        yield rc.mem_write(dev_pf0_bar0+0x100214, struct.pack('<L', 0x55))
+          # write pcie write descriptor
+          yield rc.mem_write(dev_pf0_bar0+0x100200, struct.pack('<L', (mem_base+0x1000) & 0xffffffff))
+          yield rc.mem_write(dev_pf0_bar0+0x100204, struct.pack('<L', (mem_base+0x1000 >> 32) & 0xffffffff))
+          yield rc.mem_write(dev_pf0_bar0+0x100208, struct.pack('<L', (0x50100) & 0xffffffff))
+          yield rc.mem_write(dev_pf0_bar0+0x10020C, struct.pack('<L', (0x50100 >> 32) & 0xffffffff))
+          yield rc.mem_write(dev_pf0_bar0+0x100210, struct.pack('<L', 0x400))
+          yield rc.mem_write(dev_pf0_bar0+0x100214, struct.pack('<L', 0x55))
 
-        yield delay(2000)
+          yield delay(2000)
 
-        # read status
-        val = yield from rc.mem_read(dev_pf0_bar0+0x100218, 4)
-        print(val)
+          # read status
+          val = yield from rc.mem_read(dev_pf0_bar0+0x100218, 4)
+          print(val)
 
-        data = mem_data[0x1000:(0x1000)+64]
-        for i in range(0, len(data), 16):
-            print(" ".join(("{:02x}".format(c) for c in bytearray(data[i:i+16]))))
+          data = mem_data[0x1000:(0x1000)+64]
+          for i in range(0, len(data), 16):
+              print(" ".join(("{:02x}".format(c) for c in bytearray(data[i:i+16]))))
 
-        assert mem_data[0:1024] == mem_data[0x1000:0x1000+1024]
+          assert mem_data[0:1024] == mem_data[0x1000:0x1000+1024]
 
         yield delay(1000)
 
