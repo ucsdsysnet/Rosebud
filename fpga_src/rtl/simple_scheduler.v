@@ -73,7 +73,279 @@ module simple_scheduler # (
   input  wire                                loopback_msg_ready
 );
 
+  
+  // Separate incoming ctrl messages
   wire [PORT_WIDTH-1:0] loopback_port = LOOPBACK_PORT;
+  wire [3:0]            msg_type      = ctrl_s_axis_tdata[CTRL_WIDTH-1:CTRL_WIDTH-4];
+
+  wire [CTRL_WIDTH-5:0]    pkt_done_desc,     pkt_sent_desc,  
+                           pkt_to_core_desc,  slot_loader_desc;
+  wire [CORE_ID_WIDTH-1:0] pkt_done_src,      pkt_sent_src,   
+                           pkt_to_core_src,   slot_loader_src;
+  wire                     pkt_done_valid,    pkt_sent_valid, 
+                           pkt_to_core_valid, slot_loader_valid;
+  wire                     pkt_done_ready,    pkt_sent_ready, 
+                           pkt_to_core_ready, slot_loader_ready;
+
+  wire [CORE_COUNT-1:0]    rx_desc_slot_accept;
+  wire loader_ready, loopback_ready, loopback_slot_avail, arb_to_core_ready;
+
+  simple_fifo # (
+    .ADDR_WIDTH(3),
+    .DATA_WIDTH(CORE_ID_WIDTH+CTRL_WIDTH-4)
+  ) pkt_sent_fifo (
+    .clk(clk),
+    .rst(rst),
+    .clear(1'b0),
+  
+    .din_valid(ctrl_s_axis_tvalid && (msg_type==0)),
+    .din({ctrl_s_axis_tuser,ctrl_s_axis_tdata[CTRL_WIDTH-5:0]}),
+    .din_ready(pkt_sent_ready),
+   
+    .dout_valid(pkt_sent_valid),
+    .dout({pkt_sent_src,pkt_sent_desc}),
+    .dout_ready(|(rx_desc_slot_accept & (1<<pkt_sent_src)))
+  );
+
+  simple_fifo # (
+    .ADDR_WIDTH(3),
+    .DATA_WIDTH(CORE_ID_WIDTH+CTRL_WIDTH-4)
+  ) pkt_done_fifo (
+    .clk(clk),
+    .rst(rst),
+    .clear(1'b0),
+  
+    .din_valid(ctrl_s_axis_tvalid && (msg_type==1)),
+    .din({ctrl_s_axis_tuser,ctrl_s_axis_tdata[CTRL_WIDTH-5:0]}),
+    .din_ready(pkt_done_ready),
+   
+    .dout_valid(pkt_done_valid),
+    .dout({pkt_done_src,pkt_done_desc}),
+    .dout_ready(loopback_ready)
+  );
+ 
+  simple_fifo # (
+    .ADDR_WIDTH(6),
+    .DATA_WIDTH(CORE_ID_WIDTH+CTRL_WIDTH-4)
+  ) pkt_to_core_fifo (
+    .clk(clk),
+    .rst(rst),
+    .clear(1'b0),
+  
+    .din_valid(ctrl_s_axis_tvalid && (msg_type==2)),
+    .din({ctrl_s_axis_tuser, ctrl_s_axis_tdata[CTRL_WIDTH-5:0]}), 
+    .din_ready(pkt_to_core_ready),
+   
+    .dout_valid(pkt_to_core_valid),
+    .dout({pkt_to_core_src,pkt_to_core_desc}),
+    .dout_ready(arb_to_core_ready && loopback_msg_ready && loopback_slot_avail)
+  );
+   
+  simple_fifo # (
+    .ADDR_WIDTH(3),
+    .DATA_WIDTH(CORE_ID_WIDTH+CTRL_WIDTH-4)
+  ) slot_loader_fifo (
+    .clk(clk),
+    .rst(rst),
+    .clear(1'b0),
+  
+    .din_valid(ctrl_s_axis_tvalid && (msg_type==3)),
+    .din({ctrl_s_axis_tuser,ctrl_s_axis_tdata[CTRL_WIDTH-5:0]}),
+    .din_ready(slot_loader_ready),
+   
+    .dout_valid(slot_loader_valid),
+    .dout({slot_loader_src,slot_loader_desc}),
+    .dout_ready(loader_ready)
+  );
+ 
+  assign ctrl_s_axis_tready = (pkt_sent_ready    && (msg_type==0)) ||
+                              (pkt_done_ready    && (msg_type==1)) || 
+                              (pkt_to_core_ready && (msg_type==2)) || 
+                              (slot_loader_ready && (msg_type==3));
+  
+  // Generating src,dest descriptor for loopback output port
+  wire [SLOT_WIDTH-1:0]    pkt_to_core_slot       = pkt_to_core_desc[LEN_WIDTH +: SLOT_WIDTH]; 
+  wire [CORE_ID_WIDTH-1:0] loopback_msg_dest_core = pkt_to_core_desc[24 +: CORE_ID_WIDTH];
+  wire [SLOT_WIDTH-1:0]    loopback_msg_dest_slot = rx_desc_slot[loopback_msg_dest_core];
+  assign                   loopback_slot_avail    = rx_desc_slot_v[loopback_msg_dest_core];
+
+  assign loopback_msg_src   = {pkt_to_core_src, {(TAG_WIDTH-SLOT_WIDTH){1'b0}}, 
+                               pkt_to_core_slot};
+  assign loopback_msg_dest  = {loopback_msg_dest_core, {(TAG_WIDTH-SLOT_WIDTH){1'b0}}, 
+                               loopback_msg_dest_slot};
+  assign loopback_msg_valid = pkt_to_core_valid && loopback_slot_avail && arb_to_core_ready;
+
+  // Slot descriptor fifos, addressing msg type 0 requests
+  wire [CORE_COUNT*SLOT_WIDTH-1:0] rx_desc_count;
+  wire [SLOT_WIDTH-1:0]    rx_desc_slot [0:CORE_COUNT-1];
+  wire [CORE_ID_WIDTH-1:0] selected_desc;
+  wire [CORE_COUNT-1:0]    rx_desc_slot_v;
+  wire [CORE_COUNT-1:0]    rx_desc_slot_pop;
+  wire [CORE_COUNT-1:0]    rx_desc_slot_accept_temp;
+
+  wire [CORE_COUNT-1:0] desc_fifo_clear, loader_valid, busy_by_loader, rx_desc_fifo_v;
+  wire [SLOT_WIDTH-1:0] loader_slot;
+  
+  wire [SLOT_WIDTH-1:0] pkt_sent_slot = pkt_sent_desc[LEN_WIDTH +: SLOT_WIDTH]; 
+  wire rx_desc_pop; // maybe used for error catching
+
+  genvar i;
+  generate 
+    for (i=0;i<CORE_COUNT;i=i+1) begin
+      simple_fifo # (
+        .DATA_WIDTH(SLOT_WIDTH),
+        .ADDR_WIDTH($clog2(SLOT_COUNT))
+      ) rx_desc_fifo (
+        .clk(clk),
+        .rst(rst),
+        .clear(desc_fifo_clear[i]),
+      
+        .din_valid(rx_desc_fifo_v[i]), 
+        .din(loader_valid[i] ? loader_slot : pkt_sent_slot),
+        .din_ready(rx_desc_slot_accept_temp[i]),
+       
+        .dout_valid(rx_desc_slot_v[i]),
+        .dout(rx_desc_slot[i]),
+        .dout_ready(rx_desc_slot_pop[i]),
+        
+        .item_count(rx_desc_count[i*SLOT_WIDTH +: SLOT_WIDTH])
+      );
+      // If there is no data in any fifo max_finder would return 0, meaning first core is selected.
+      // but since rx_desc_v is zero (all fifoes are not-valid) this ready is not used
+      assign rx_desc_fifo_v[i]      = (pkt_sent_valid && (pkt_sent_src==i) && (pkt_sent_slot!=0)) 
+                                      || loader_valid[i];
+      assign rx_desc_slot_pop[i]    = (rx_desc_pop && (selected_desc==i)) || (loopback_msg_valid && (loopback_msg_dest_core==i));
+      assign rx_desc_slot_accept[i] = (rx_desc_slot_accept_temp[i] || (pkt_sent_slot==0)) && (!busy_by_loader[i]);
+    end
+  endgenerate
+
+  // arbiter between pkt done and pkt send to core, addressing msg type 1&2 requests
+  wire [CORE_ID_WIDTH-1:0] ctrl_out_dest;
+  wire [CTRL_WIDTH-5:0]    ctrl_out_desc;
+  wire ctrl_out_valid, ctrl_out_ready;
+  
+  wire [CTRL_WIDTH-5:0] pkt_to_core_with_port = 
+      {pkt_to_core_desc[CTRL_WIDTH-5:24+PORT_WIDTH], loopback_port, pkt_to_core_desc[23:0]};
+
+  axis_arb_mux #
+  (
+    .S_COUNT(2),
+    .DATA_WIDTH(CORE_ID_WIDTH+CTRL_WIDTH-4),
+    .KEEP_ENABLE(0),
+    .DEST_ENABLE(0),
+    .USER_ENABLE(0),
+    .ARB_TYPE("ROUND_ROBIN")
+  ) ctrl_out_arbiter
+  (
+    .clk(clk),
+    .rst(rst),
+  
+    .s_axis_tdata({pkt_to_core_src,pkt_to_core_with_port,
+                   pkt_done_src,pkt_done_desc}),
+    .s_axis_tkeep(),
+    .s_axis_tvalid({(pkt_to_core_valid && loopback_msg_ready && loopback_slot_avail)    
+                    ,pkt_done_valid}),
+    .s_axis_tready({arb_to_core_ready, loopback_ready}),
+    .s_axis_tlast(2'b11),
+    .s_axis_tid(),
+    .s_axis_tdest(),
+    .s_axis_tuser(),
+    
+    .m_axis_tdata({ctrl_out_dest,ctrl_out_desc}),
+    .m_axis_tkeep(),
+    .m_axis_tvalid(ctrl_out_valid),
+    .m_axis_tready(ctrl_out_ready),
+    .m_axis_tlast(),
+    .m_axis_tid(),
+    .m_axis_tdest(),
+    .m_axis_tuser()
+  );
+ 
+  // Slot descriptor loader module, addressing msg typee 3 requests
+  slot_fifo_loader # (
+    .MAX_SLOT_COUNT(SLOT_COUNT),
+    .DEST_COUNT(CORE_COUNT)
+  ) slot_loader (
+    .clk(clk),
+    .rst(rst),
+  
+    .req_valid(slot_loader_valid),
+    .req_dest(slot_loader_src),
+    .slot_count(slot_loader_desc[LEN_WIDTH +: SLOT_WIDTH]),
+    .req_ready(loader_ready),
+  
+    .clear_fifo(desc_fifo_clear),
+    .out_slot_valid(loader_valid),
+    .out_slot(loader_slot)
+  );
+
+  assign busy_by_loader = loader_valid | desc_fifo_clear;
+
+  // Arbiter for ctrl messaage output 
+
+  // Core reset command
+  reg [CORE_ID_WIDTH:0] core_rst_counter;
+  wire core_reset_in_prog = (core_rst_counter < CORE_COUNT); 
+  wire [CORE_ID_WIDTH:0] reordered_core_rst_counter;
+  
+  // Reordering of reset for alleviating congestion on lvl 2 switches 
+  // during startup
+  if (LVL2_SW_PORTS==1)
+    assign reordered_core_rst_counter = core_rst_counter[CORE_ID_WIDTH-1:0];  
+  else 
+    assign reordered_core_rst_counter = {core_rst_counter[LVL1_BITS-1:0],
+                                         core_rst_counter[CORE_ID_WIDTH-1:LVL1_BITS]};
+
+  always @ (posedge clk)
+    if (rst)
+        core_rst_counter <= 0;
+    else
+      if (ctrl_m_axis_tvalid && ctrl_m_axis_tready && core_reset_in_prog)
+        core_rst_counter <= core_rst_counter + 1;
+
+  // making the descriptor type to be 0, so core would send out. 
+  assign ctrl_m_axis_tdata  = core_reset_in_prog ? {{(CTRL_WIDTH-1){1'b1}}, 1'b0} 
+                                                 : {ctrl_out_dest,4'd0,ctrl_out_desc};
+  assign ctrl_m_axis_tvalid = core_reset_in_prog || ctrl_out_valid;
+  assign ctrl_m_axis_tlast  = ctrl_m_axis_tvalid;
+  assign ctrl_m_axis_tdest  = core_reset_in_prog ? reordered_core_rst_counter : ctrl_out_dest;
+
+  assign ctrl_out_ready     = (!core_reset_in_prog) && ctrl_m_axis_tready;
+
+  
+  // Selecting the core with most available slots
+  // Since slots start from 1, SLOT WIDTH is already 1 bit extra
+  wire [ID_TAG_WIDTH-1:0] rx_desc_data; 
+  wire rx_desc_v; 
+  
+  assign rx_desc_v          = | rx_desc_slot_v;
+  assign rx_desc_data       = {selected_desc, {(TAG_WIDTH-SLOT_WIDTH){1'b0}}, 
+                              rx_desc_slot[selected_desc]};
+  
+  reg [CORE_COUNT*SLOT_WIDTH-1:0] reordered_rx_desc_count;
+  wire [CORE_ID_WIDTH-1:0] reordered_selected_desc;
+  integer k,l;
+  always @ (*)
+    for (k=0; k<LVL2_SW_PORTS; k=k+1)
+      for (l=0; l<LVL1_SW_PORTS; l=l+1)
+        reordered_rx_desc_count[(k*LVL1_SW_PORTS+l)*SLOT_WIDTH +: SLOT_WIDTH] = 
+                  rx_desc_count[(l*LVL2_SW_PORTS+k)*SLOT_WIDTH +: SLOT_WIDTH];
+
+  max_finder_tree # (
+    .PORT_COUNT(CORE_COUNT),
+    .DATA_WIDTH(SLOT_WIDTH)
+  ) core_selector ( 
+    .values(reordered_rx_desc_count),
+    .max_val(),
+    .max_ptr(reordered_selected_desc)
+  );
+
+  if (LVL2_SW_PORTS==1)
+    assign selected_desc = reordered_selected_desc;
+  else 
+    assign selected_desc = {reordered_selected_desc[LVL1_BITS-1:0],
+                           reordered_selected_desc[CORE_ID_WIDTH-1:LVL1_BITS]};
+
   
   // Adding tdest and tuser to input data from eth, dest based on 
   // rx_desc_fifo and stamp the incoming port
@@ -82,11 +354,7 @@ module simple_scheduler # (
   wire [INTERFACE_COUNT-1:0] sending_last_word;
   reg  [INTERFACE_COUNT-1:0] dest_r_v;
   wire [INTERFACE_COUNT-1:0] selected_port;
-
   wire selected_port_v;
-  wire rx_desc_pop; // maybe used for error catching
-  wire [ID_TAG_WIDTH-1:0] rx_desc_data; 
-  wire rx_desc_v; 
 
   assign sending_last_word = rx_axis_tvalid & rx_axis_tlast & rx_axis_tready;
   assign rx_desc_pop = selected_port_v && rx_desc_v && !(loopback_msg_valid && (loopback_msg_dest_core==selected_desc));
@@ -135,178 +403,7 @@ module simple_scheduler # (
   assign tx_axis_tvalid     = data_s_axis_tvalid;  
   assign tx_axis_tlast      = data_s_axis_tlast;
   assign data_s_axis_tready = tx_axis_tready;
-
   // no further use for data_s_axis_tdest after its at correct port
-
-  wire [SLOT_WIDTH-1:0]    rx_desc_slot [0:CORE_COUNT-1];
-  wire [CORE_ID_WIDTH-1:0] selected_desc;
-  wire [CORE_COUNT-1:0]    rx_desc_slot_v;
-  wire [CORE_COUNT-1:0]    rx_desc_slot_pop;
-  wire [CORE_COUNT-1:0]    rx_desc_slot_accept_temp;
-  wire [CORE_COUNT-1:0]    rx_desc_slot_accept;
-  
-  // Since slots start from 1, SLOT WIDTH is already 1 bit extra
-  wire [CORE_COUNT*SLOT_WIDTH-1:0] rx_desc_count;
-        
-  assign rx_desc_v          = | rx_desc_slot_v;
-  assign rx_desc_data       = {selected_desc, {(TAG_WIDTH-SLOT_WIDTH){1'b0}}, 
-                              rx_desc_slot[selected_desc]};
-  
-  wire [CORE_ID_WIDTH-1:0] loopback_msg_dest_core = ctrl_s_axis_tdata[24 +: CORE_ID_WIDTH];
-  wire [SLOT_WIDTH-1:0]    loopback_msg_dest_slot = rx_desc_slot[loopback_msg_dest_core];
-  wire                     loopback_slot_avail    = rx_desc_slot_v[loopback_msg_dest_core];
-
-  wire [3:0]            msg_type = ctrl_s_axis_tdata[CTRL_WIDTH-1:CTRL_WIDTH-4];
-  wire [SLOT_WIDTH-1:0] msg_slot = ctrl_s_axis_tdata[LEN_WIDTH +: SLOT_WIDTH]; 
-
-  // Slot descriptor loader module 
-  wire [CORE_COUNT-1:0] desc_fifo_clear, loader_valid, busy_by_loader, rx_desc_fifo_v;
-  wire [SLOT_WIDTH-1:0] loader_slot;
-  wire                  loader_ready;
-
-  slot_fifo_loader # (
-    .MAX_SLOT_COUNT(SLOT_COUNT),
-    .DEST_COUNT(CORE_COUNT)
-  ) slot_loader (
-    .clk(clk),
-    .rst(rst),
-  
-    .req_valid(ctrl_s_axis_tvalid && (msg_type==3)),
-    .req_dest(ctrl_s_axis_tuser),
-    .slot_count(msg_slot),
-    .req_ready(loader_ready),
-  
-    .clear_fifo(desc_fifo_clear),
-    .out_slot_valid(loader_valid),
-    .out_slot(loader_slot)
-  );
-
-  assign busy_by_loader = loader_valid | desc_fifo_clear;
-
-  // Slot descriptor fifos
-  genvar i;
-  generate 
-    for (i=0;i<CORE_COUNT;i=i+1) begin
-      simple_fifo # (
-        .DATA_WIDTH(SLOT_WIDTH),
-        .ADDR_WIDTH($clog2(SLOT_COUNT))
-      ) rx_desc_fifo (
-        .clk(clk),
-        .rst(rst),
-        .clear(desc_fifo_clear[i]),
-      
-        .din_valid(rx_desc_fifo_v[i]), 
-        .din(loader_valid[i] ? loader_slot : msg_slot),
-        .din_ready(rx_desc_slot_accept_temp[i]),
-       
-        .dout_valid(rx_desc_slot_v[i]),
-        .dout(rx_desc_slot[i]),
-        .dout_ready(rx_desc_slot_pop[i]),
-        
-        .item_count(rx_desc_count[i*SLOT_WIDTH +: SLOT_WIDTH])
-      );
-      // If there is no data in any fifo max_finder would return 0, meaning first core is selected.
-      // but since rx_desc_v is zero (all fifoes are not-valid) this ready is not used
-      assign rx_desc_fifo_v[i]      = (ctrl_s_axis_tvalid && (ctrl_s_axis_tuser==i) && (msg_type==0) && (msg_slot!=0)) 
-                                       || loader_valid[i];
-      assign rx_desc_slot_pop[i]    = (rx_desc_pop && (selected_desc==i)) || (loopback_msg_valid && (loopback_msg_dest_core==i));
-      assign rx_desc_slot_accept[i] = (rx_desc_slot_accept_temp[i] || (msg_slot==0)) && (!busy_by_loader[i]);
-    end
-  endgenerate
-
-  reg [CORE_COUNT*SLOT_WIDTH-1:0] reordered_rx_desc_count;
-  wire [CORE_ID_WIDTH-1:0] reordered_selected_desc;
-  integer k,l;
-  always @ (*)
-    for (k=0; k<LVL2_SW_PORTS; k=k+1)
-      for (l=0; l<LVL1_SW_PORTS; l=l+1)
-        reordered_rx_desc_count[(k*LVL1_SW_PORTS+l)*SLOT_WIDTH +: SLOT_WIDTH] = 
-                  rx_desc_count[(l*LVL2_SW_PORTS+k)*SLOT_WIDTH +: SLOT_WIDTH];
-
-  max_finder_tree # (
-    .PORT_COUNT(CORE_COUNT),
-    .DATA_WIDTH(SLOT_WIDTH)
-  ) core_selector ( 
-    .values(reordered_rx_desc_count),
-    .max_val(),
-    .max_ptr(reordered_selected_desc)
-  );
-
-  if (LVL2_SW_PORTS==1)
-    assign selected_desc = reordered_selected_desc;
-  else 
-    assign selected_desc = {reordered_selected_desc[LVL1_BITS-1:0],
-                           reordered_selected_desc[CORE_ID_WIDTH-1:LVL1_BITS]};
-
-  // Loop back ready desc 
-  wire loopback_in_ready;
-  wire [CORE_ID_WIDTH-1:0] loopback_dest;
-  wire [CTRL_WIDTH-1:0]    loopback_data;
-  wire                     loopback_valid;
-  wire                     loopback_ready;
-
-  wire [CTRL_WIDTH-1:0] loopback_ctrl_s_tdata = (msg_type!=2) ? ctrl_s_axis_tdata : 
-      {ctrl_s_axis_tdata[CTRL_WIDTH-1:24+PORT_WIDTH], loopback_port, ctrl_s_axis_tdata[23:0]};
-  
-  simple_fifo # (
-    .ADDR_WIDTH($clog2(4*CORE_COUNT)),
-    .DATA_WIDTH(CTRL_WIDTH+CORE_ID_WIDTH)
-  ) desc_loopback (
-    .clk(clk),
-    .rst(rst),
-    .clear(1'b0),
-  
-    .din_valid(ctrl_s_axis_tvalid && ((msg_type==1)||(msg_type==2))),
-    .din({ctrl_s_axis_tuser,loopback_ctrl_s_tdata}),
-    .din_ready(loopback_in_ready),
-   
-    .dout_valid(loopback_valid),
-    .dout({loopback_dest,loopback_data}),
-    .dout_ready(loopback_ready)
-  );
-  
-  // Outputting loopback message descriptor to loopback message FIFO
-  // Slot should be assigned, also think about how core sends it out and says I'm done with packet (already done?)
-  assign loopback_msg_src   = {ctrl_s_axis_tuser, 
-                              {(TAG_WIDTH-SLOT_WIDTH){1'b0}}, msg_slot};
-  assign loopback_msg_dest  = {loopback_msg_dest_core, 
-                              {(TAG_WIDTH-SLOT_WIDTH){1'b0}}, loopback_msg_dest_slot};
-  assign loopback_msg_valid = ctrl_s_axis_tvalid && (msg_type==2);
-
-  // We ignore info messages for now
-  assign ctrl_s_axis_tready = ((|(rx_desc_slot_accept & (1<<ctrl_s_axis_tuser))) && (msg_type==0)) ||
-                                 (loopback_in_ready && (msg_type==1)) || 
-                                 (loopback_msg_ready && loopback_slot_avail && (msg_type==2)) || 
-                                 (loader_ready && (msg_type==3));
-
-  // Core reset command
-  reg [CORE_ID_WIDTH:0] core_rst_counter;
-  wire core_reset_in_prog = (core_rst_counter < CORE_COUNT); 
-  wire [CORE_ID_WIDTH:0] reordered_core_rst_counter;
-  
-  // Reordering of reset for alleviating congestion on lvl 2 switches 
-  // during startup
-  if (LVL2_SW_PORTS==1)
-    assign reordered_core_rst_counter = core_rst_counter[CORE_ID_WIDTH-1:0];  
-  else 
-    assign reordered_core_rst_counter = {core_rst_counter[LVL1_BITS-1:0],
-                                         core_rst_counter[CORE_ID_WIDTH-1:LVL1_BITS]};
-
-  always @ (posedge clk)
-    if (rst)
-        core_rst_counter <= 0;
-    else
-      if (ctrl_m_axis_tvalid && ctrl_m_axis_tready && core_reset_in_prog)
-        core_rst_counter <= core_rst_counter + 1;
-
-  // making the descriptor type to be 0, so core would send out. 
-  assign ctrl_m_axis_tdata  = core_reset_in_prog ? {{(CTRL_WIDTH-1){1'b1}}, 1'b0} 
-                                                 : {4'd0,loopback_data[CTRL_WIDTH-5:0]};
-  assign ctrl_m_axis_tvalid = core_reset_in_prog || loopback_valid;
-  assign ctrl_m_axis_tlast  = ctrl_m_axis_tvalid;
-  assign ctrl_m_axis_tdest  = core_reset_in_prog ? reordered_core_rst_counter : loopback_dest;
-
-  assign loopback_ready = (!core_reset_in_prog) && ctrl_m_axis_tready;
 
 if (ENABLE_ILA) begin
   wire trig_out_1, trig_out_2;

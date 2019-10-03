@@ -760,7 +760,8 @@ axis_arb_mux #
     .S_COUNT(LVL1_SW_PORTS),
     .DATA_WIDTH(LVL1_CTRL_WIDTH),
     .USER_WIDTH(CORE_WIDTH),
-    .KEEP_ENABLE(0)
+    .KEEP_ENABLE(0),
+    .ARB_TYPE("ROUND_ROBIN")
 ) ctrl_out_sw_lvl1
 (
     .clk(sys_clk),
@@ -837,7 +838,8 @@ axis_arb_mux #
     .S_COUNT(LVL1_SW_PORTS),
     .DATA_WIDTH(LVL1_DRAM_WIDTH),
     .USER_WIDTH(CORE_WIDTH),
-    .KEEP_ENABLE(0)
+    .KEEP_ENABLE(0),
+    .ARB_TYPE("ROUND_ROBIN")
 ) dram_ctrl_out_sw_lvl1
 (
     .clk(sys_clk),
@@ -1067,7 +1069,8 @@ generate
           .DATA_WIDTH(LVL2_DATA_WIDTH),
           .DEST_WIDTH(PORT_WIDTH),
           .USER_WIDTH(ID_TAG_WIDTH),
-          .DEST_ENABLE(1)
+          .DEST_ENABLE(1),
+          .ARB_TYPE("ROUND_ROBIN")
       ) data_out_sw_lvl2 (
 
           .clk(sys_clk),
@@ -1212,7 +1215,8 @@ generate
           .S_COUNT(LVL2_SW_PORTS),
           .DATA_WIDTH(LVL2_CTRL_WIDTH),
           .USER_WIDTH(CORE_WIDTH),
-          .KEEP_ENABLE(0)
+          .KEEP_ENABLE(0),
+          .ARB_TYPE("ROUND_ROBIN")
       ) ctrl_out_sw_lvl2 (
           .clk(sys_clk),
           .rst(sys_rst),
@@ -1356,7 +1360,8 @@ generate
           .S_COUNT(LVL2_SW_PORTS),
           .DATA_WIDTH(LVL2_DRAM_WIDTH),
           .USER_WIDTH(CORE_WIDTH),
-          .KEEP_ENABLE(0)
+          .KEEP_ENABLE(0),
+          .ARB_TYPE("ROUND_ROBIN")
       ) dram_ctrl_out_sw_lvl2 (
           .clk(sys_clk),
           .rst(sys_rst),
@@ -1408,7 +1413,8 @@ axis_arb_mux #
     .S_COUNT(CORE_MSG_LVL1),
     .DATA_WIDTH(CORE_MSG_WIDTH),
     .USER_WIDTH(CORE_WIDTH),
-    .KEEP_ENABLE(0)
+    .KEEP_ENABLE(0),
+    .ARB_TYPE("ROUND_ROBIN")
 ) cores_to_broadcaster_lvl1
 (
     .clk(select_core_clk),
@@ -1471,7 +1477,8 @@ generate
           .S_COUNT(CORE_MSG_LVL1),
           .DATA_WIDTH(CORE_MSG_WIDTH),
           .USER_WIDTH(CORE_WIDTH),
-          .KEEP_ENABLE(0)
+          .KEEP_ENABLE(0),
+          .ARB_TYPE("ROUND_ROBIN")
       ) cores_to_broadcaster_lvl2
       (
           .clk(select_core_clk),
