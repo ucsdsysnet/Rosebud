@@ -75,7 +75,6 @@ module simple_scheduler # (
 
   
   // Separate incoming ctrl messages
-  wire [PORT_WIDTH-1:0] loopback_port = LOOPBACK_PORT;
   wire [3:0]            msg_type      = ctrl_s_axis_tdata[CTRL_WIDTH-1:CTRL_WIDTH-4];
 
   wire [CTRL_WIDTH-5:0]    pkt_done_desc,     pkt_sent_desc,  
@@ -125,7 +124,7 @@ module simple_scheduler # (
   );
  
   simple_fifo # (
-    .ADDR_WIDTH(6),
+    .ADDR_WIDTH(CORE_ID_WIDTH+SLOT_WIDTH),
     .DATA_WIDTH(CORE_ID_WIDTH+CTRL_WIDTH-4)
   ) pkt_to_core_fifo (
     .clk(clk),
@@ -224,8 +223,9 @@ module simple_scheduler # (
   wire [CTRL_WIDTH-5:0]    ctrl_out_desc;
   wire ctrl_out_valid, ctrl_out_ready;
   
+  wire [CORE_ID_WIDTH-1:0] loopback_port = LOOPBACK_PORT;
   wire [CTRL_WIDTH-5:0] pkt_to_core_with_port = 
-      {pkt_to_core_desc[CTRL_WIDTH-5:24+PORT_WIDTH], loopback_port, pkt_to_core_desc[23:0]};
+      {pkt_to_core_desc[CTRL_WIDTH-5:24+CORE_ID_WIDTH], loopback_port, pkt_to_core_desc[23:0]};
 
   axis_arb_mux #
   (
@@ -305,7 +305,7 @@ module simple_scheduler # (
 
   // making the descriptor type to be 0, so core would send out. 
   assign ctrl_m_axis_tdata  = core_reset_in_prog ? {{(CTRL_WIDTH-1){1'b1}}, 1'b0} 
-                                                 : {ctrl_out_dest,4'd0,ctrl_out_desc};
+                                                 : {4'd0, ctrl_out_desc};
   assign ctrl_m_axis_tvalid = core_reset_in_prog || ctrl_out_valid;
   assign ctrl_m_axis_tlast  = ctrl_m_axis_tvalid;
   assign ctrl_m_axis_tdest  = core_reset_in_prog ? reordered_core_rst_counter : ctrl_out_dest;
