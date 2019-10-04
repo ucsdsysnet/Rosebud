@@ -126,7 +126,7 @@ assign sma_led   = 2'd0;
 // RISCV system parameters
 parameter CORE_COUNT       = 16;
 parameter INTERFACE_COUNT  = 2;
-parameter PORT_COUNT       = INTERFACE_COUNT+2;
+parameter PORT_COUNT       = 2*INTERFACE_COUNT+1;
 parameter CORE_ADDR_WIDTH  = 16;
 parameter SLOT_COUNT       = 8;
 parameter PCIE_SLOT_COUNT  = 16;
@@ -152,7 +152,7 @@ parameter DMEM_SIZE_BYTES  = 32768;
 parameter COHERENT_START   = 16'h6FFF;
 parameter LEN_WIDTH        = 16;
 parameter INTERLEAVE       = 1;
-parameter DRAM_PORT        = INTERFACE_COUNT+2-1;
+parameter DRAM_PORT        = 2*INTERFACE_COUNT+1-1;
 parameter LOOPBACK_PORT    = INTERFACE_COUNT+1-1;
 parameter LVL1_SW_PORTS    = 4;
 parameter CORE_MSG_LVL1    = 16;
@@ -401,21 +401,21 @@ pcie_controller #
 assign dram_rx_axis_tuser = DRAM_PORT;
 
 // Loopback message FIFO module
-wire [LVL1_DATA_WIDTH-1:0] loopback_tx_axis_tdata;
-wire [LVL1_STRB_WIDTH-1:0] loopback_tx_axis_tkeep;
-wire [PORT_WIDTH-1:0]      loopback_tx_axis_tdest;
-wire [ID_TAG_WIDTH-1:0]    loopback_tx_axis_tuser;
-wire                       loopback_tx_axis_tvalid, 
-                           loopback_tx_axis_tready, 
-                           loopback_tx_axis_tlast;
+wire [2*LVL1_DATA_WIDTH-1:0] loopback_tx_axis_tdata;
+wire [2*LVL1_STRB_WIDTH-1:0] loopback_tx_axis_tkeep;
+wire [2*PORT_WIDTH-1:0]      loopback_tx_axis_tdest;
+wire [2*ID_TAG_WIDTH-1:0]    loopback_tx_axis_tuser;
+wire [2-1:0]                 loopback_tx_axis_tvalid, 
+                             loopback_tx_axis_tready, 
+                             loopback_tx_axis_tlast;
 
-wire [LVL1_DATA_WIDTH-1:0] loopback_rx_axis_tdata;
-wire [LVL1_STRB_WIDTH-1:0] loopback_rx_axis_tkeep;
-wire [ID_TAG_WIDTH-1:0]    loopback_rx_axis_tdest;
-wire [PORT_WIDTH-1:0]      loopback_rx_axis_tuser;
-wire                       loopback_rx_axis_tvalid, 
-                           loopback_rx_axis_tready, 
-                           loopback_rx_axis_tlast;
+wire [2*LVL1_DATA_WIDTH-1:0] loopback_rx_axis_tdata;
+wire [2*LVL1_STRB_WIDTH-1:0] loopback_rx_axis_tkeep;
+wire [2*ID_TAG_WIDTH-1:0]    loopback_rx_axis_tdest;
+wire [2*PORT_WIDTH-1:0]      loopback_rx_axis_tuser;
+wire [2-1:0]                 loopback_rx_axis_tvalid, 
+                             loopback_rx_axis_tready, 
+                             loopback_rx_axis_tlast;
 
 // Scheduler 
 wire [INTERFACE_COUNT*LVL1_DATA_WIDTH-1:0] sched_tx_axis_tdata;
@@ -461,6 +461,7 @@ simple_scheduler # (
   .LEN_WIDTH(LEN_WIDTH),
   .LVL1_SW_PORTS(LVL1_SW_PORTS),
   .LOOPBACK_PORT(LOOPBACK_PORT),
+  .LOOPBACK_COUNT(INTERFACE_COUNT),
   .ENABLE_ILA(ENABLE_ILA)
 ) scheduler (
   .clk(sys_clk),
@@ -524,6 +525,7 @@ loopback_msg_fifo # (
   .PORT_WIDTH(PORT_WIDTH),
   .CORE_WIDTH(CORE_WIDTH), 
   .SLOT_WIDTH(SLOT_WIDTH),
+  .PORT_COUNT(INTERFACE_COUNT),
   .ID_TAG_WIDTH(ID_TAG_WIDTH)
 ) loopback_msg_fifo_inst (
     .clk(sys_clk),

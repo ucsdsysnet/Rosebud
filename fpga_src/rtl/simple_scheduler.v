@@ -7,6 +7,7 @@ module simple_scheduler # (
   parameter CTRL_WIDTH      = 32+4,
   parameter LEN_WIDTH       = 16,
   parameter LOOPBACK_PORT   = 2,
+  parameter LOOPBACK_COUNT  = 2,
   parameter ENABLE_ILA      = 0,
 
   parameter SLOT_WIDTH      = $clog2(SLOT_COUNT+1),
@@ -223,7 +224,23 @@ module simple_scheduler # (
   wire [CTRL_WIDTH-5:0]    ctrl_out_desc;
   wire ctrl_out_valid, ctrl_out_ready;
   
-  wire [CORE_ID_WIDTH-1:0] loopback_port = LOOPBACK_PORT;
+  wire [CORE_ID_WIDTH-1:0] loopback_port;
+
+  if (LOOPBACK_COUNT==1)
+    assign loopback_port = LOOPBACK_PORT;
+  else begin
+    reg [$clog2(LOOPBACK_COUNT)-1:0] loopback_port_select_r;
+    always @ (posedge clk)
+      if (rst)
+        loopback_port_select_r <= 0;
+      else if (pkt_to_core_valid && loopback_msg_ready && loopback_slot_avail && arb_to_core_ready)
+        if (loopback_port_select_r==(LOOPBACK_COUNT-1))
+          loopback_port_select_r <= 0;
+        else
+          loopback_port_select_r <= loopback_port_select_r+1;
+    assign loopback_port = LOOPBACK_PORT + loopback_port_select_r;
+  end
+
   wire [CTRL_WIDTH-5:0] pkt_to_core_with_port = 
       {pkt_to_core_desc[CTRL_WIDTH-5:24+CORE_ID_WIDTH], loopback_port, pkt_to_core_desc[23:0]};
 

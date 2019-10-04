@@ -113,8 +113,8 @@ def bench():
     CTRL_WIDTH = (DATA_WIDTH/8)
     AXI_ADDR_WIDTH = 16
 
-    SEND_COUNT_0 = 10
-    SEND_COUNT_1 = 10
+    SEND_COUNT_0 = 50
+    SEND_COUNT_1 = 50
     SIZE_0       = 150 - 18 
     SIZE_1       = 150 - 18
     CHECK_PKT    = True
