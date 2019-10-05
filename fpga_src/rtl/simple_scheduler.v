@@ -442,7 +442,7 @@ module simple_scheduler # (
  
   assign sending_last_word = rx_axis_tvalid & rx_axis_tlast & rx_axis_tready;
   assign rx_desc_pop = selected_port_v && rx_desc_v && 
-                       !(|(pkt_to_core_valid & arb_to_core_ready));
+                       !(|(pkt_to_core_valid & arb_to_core_ready & rx_desc_slot_v));
   // If one of the descriptors are not valid or a last word is being sent 
   // that means they need a new descriptor. If a descriptor is being assigned 
   // or there is no descriptors available the request would be masked.
@@ -535,7 +535,8 @@ if (ENABLE_ILA) begin
     .trig_in_ack(ack_2),
  
     .probe0 ({
-       rx_axis_tkeep,
+       // rx_axis_tkeep,
+       sending_last_word,
        data_m_axis_tdest,
        ctrl_m_axis_tdata[31:0]
        // rx_count_0,
@@ -556,8 +557,7 @@ if (ENABLE_ILA) begin
        msg_type,
        rx_axis_tvalid, 
        rx_axis_tready, 
-       rx_axis_tlast,
-       sending_last_word
+       rx_axis_tlast
      }),
   
     .probe2 (rx_desc_count), 

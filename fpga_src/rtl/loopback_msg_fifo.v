@@ -53,7 +53,7 @@ generate
 
     // AXIS FIFO
     axis_fifo #(
-        .DEPTH(4096),
+        .DEPTH(8192),
         .DATA_WIDTH(DATA_WIDTH),
         .KEEP_ENABLE(1),
         .KEEP_WIDTH(STRB_WIDTH),

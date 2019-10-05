@@ -116,7 +116,7 @@ def bench():
     SEND_COUNT_0 = 50
     SEND_COUNT_1 = 50
     SIZE_0       = 150 - 18 
-    SIZE_1       = 150 - 18
+    SIZE_1       = 149 - 18
     CHECK_PKT    = True
     TEST_SFP     = True
     TEST_PCIE    = False
@@ -628,56 +628,7 @@ def bench():
         yield delay(2000)
         yield sys_clk.posedge
         yield sys_clk.posedge
-       
-        if (TEST_SFP):
-          yield port1(),None
-          yield port2(),None
-
-          lengths = []
-          print ("send data from LAN")
-          for j in range (0,SEND_COUNT_1):
-            yield xgmii_sink_0.wait()
-            rx_frame = xgmii_sink_0.recv()
-            data = rx_frame.data
-            print ("packet number from port 0:",j)
-            for i in range(0, len(data), 16):
-                print(" ".join(("{:02x}".format(c) for c in bytearray(data[i:i+16]))))
-            if (CHECK_PKT):
-              assert rx_frame.data[0:22] == start_data_2[0:22]
-              assert rx_frame.data[22:-4] == start_data_2[22:-4]
-            lengths.append(len(data)-8)
-
-          for j in range (0,SEND_COUNT_0):
-            yield xgmii_sink_1.wait()
-            rx_frame = xgmii_sink_1.recv()
-            data = rx_frame.data
-            print ("packet number from port 1:",j)
-            for i in range(0, len(data), 16):
-                print(" ".join(("{:02x}".format(c) for c in bytearray(data[i:i+16]))))
-            if (CHECK_PKT):
-              assert rx_frame.data[0:22] == start_data_1[0:22]
-              assert rx_frame.data[22:-4] == start_data_1[22:-4]
-            lengths.append(len(data)-8)
-
-       
-          # print ("Very last packet:")
-          # for i in range(0, len(data), 16):
-          #     print(" ".join(("{:02x}".format(c) for c in bytearray(data[i:i+16]))))
-          print ("lengths: " , lengths)
-
-          # eth_frame = eth_ep.EthFrame()
-          # eth_frame.parse_axis_fcs(rx_frame.data[8:])
-
-          # print(hex(eth_frame.eth_fcs))
-          # print(hex(eth_frame.calc_fcs()))
-
-          # assert len(eth_frame.payload.data) == 46
-          # assert eth_frame.eth_fcs == eth_frame.calc_fcs()
-          # assert eth_frame.eth_dest_mac == test_frame_1.eth_dest_mac
-          # assert eth_frame.eth_src_mac == test_frame_1.eth_src_mac
-          # assert eth_frame.eth_type == test_frame_1.eth_type
-          # assert eth_frame.payload.data.index(test_frame_1.payload.data) == 0
-
+        
         # PCIE test
         if (TEST_PCIE):
           print("PCIE tests")
@@ -709,19 +660,33 @@ def bench():
           # yield pcie_clk.posedge
           print("test 4: test DMA")
 
+          ins = bytearray(open("../../c_code/test_fast.bin", "rb").read())
+
           # write packet data
-          mem_data[0:1024] = bytearray([x%256 for x in range(1024)])
+          # mem_data[0:1024] = bytearray([x%256 for x in range(1024)])
+          mem_data[0:len(ins)] = ins
           mem_data[48059:48200] = bytearray([(x+10)%256 for x in range(141)])
 
 
           # enable DMA
           yield rc.mem_write(dev_pf0_bar0+0x100000, struct.pack('<L', 1))
 
+          for i in range (0,16):
+              # write pcie read descriptor
+              yield rc.mem_write(dev_pf0_bar0+0x100100, struct.pack('<L', (mem_base+0x0000) & 0xffffffff))
+              yield rc.mem_write(dev_pf0_bar0+0x100104, struct.pack('<L', (mem_base+0x0000 >> 32) & 0xffffffff))
+              yield rc.mem_write(dev_pf0_bar0+0x100108, struct.pack('<L', ((i<<16)+0x8000) & 0xffffffff))
+              yield rc.mem_write(dev_pf0_bar0+0x10010C, struct.pack('<L', (((i<<16)+0x8000) >> 32) & 0xffffffff))
+              yield rc.mem_write(dev_pf0_bar0+0x100110, struct.pack('<L', 0x400))
+              yield rc.mem_write(dev_pf0_bar0+0x100114, struct.pack('<L', 0xAA))
+
+              yield delay(2000)
+
           # write pcie read descriptor
           yield rc.mem_write(dev_pf0_bar0+0x100100, struct.pack('<L', (mem_base+0x0000) & 0xffffffff))
           yield rc.mem_write(dev_pf0_bar0+0x100104, struct.pack('<L', (mem_base+0x0000 >> 32) & 0xffffffff))
-          yield rc.mem_write(dev_pf0_bar0+0x100108, struct.pack('<L', (0x50100) & 0xffffffff))
-          yield rc.mem_write(dev_pf0_bar0+0x10010C, struct.pack('<L', (0x50100 >> 32) & 0xffffffff))
+          yield rc.mem_write(dev_pf0_bar0+0x100108, struct.pack('<L', ((4<<16)+0x0100) & 0xffffffff))
+          yield rc.mem_write(dev_pf0_bar0+0x10010C, struct.pack('<L', (((4<<16)+0x0100) >> 32) & 0xffffffff))
           yield rc.mem_write(dev_pf0_bar0+0x100110, struct.pack('<L', 0x400))
           yield rc.mem_write(dev_pf0_bar0+0x100114, struct.pack('<L', 0xAA))
 
@@ -734,8 +699,8 @@ def bench():
           # write pcie write descriptor
           yield rc.mem_write(dev_pf0_bar0+0x100200, struct.pack('<L', (mem_base+0x1000) & 0xffffffff))
           yield rc.mem_write(dev_pf0_bar0+0x100204, struct.pack('<L', (mem_base+0x1000 >> 32) & 0xffffffff))
-          yield rc.mem_write(dev_pf0_bar0+0x100208, struct.pack('<L', (0x50100) & 0xffffffff))
-          yield rc.mem_write(dev_pf0_bar0+0x10020C, struct.pack('<L', (0x50100 >> 32) & 0xffffffff))
+          yield rc.mem_write(dev_pf0_bar0+0x100208, struct.pack('<L', (0x40100) & 0xffffffff))
+          yield rc.mem_write(dev_pf0_bar0+0x10020C, struct.pack('<L', (0x40100 >> 32) & 0xffffffff))
           yield rc.mem_write(dev_pf0_bar0+0x100210, struct.pack('<L', 0x400))
           yield rc.mem_write(dev_pf0_bar0+0x100214, struct.pack('<L', 0x55))
 
@@ -745,13 +710,61 @@ def bench():
           val = yield from rc.mem_read(dev_pf0_bar0+0x100218, 4)
           print(val)
 
-          data = mem_data[0x1000:(0x1000)+64]
+          data = mem_data[0x1000:(0x1000)+1024]
           for i in range(0, len(data), 16):
               print(" ".join(("{:02x}".format(c) for c in bytearray(data[i:i+16]))))
 
           assert mem_data[0:1024] == mem_data[0x1000:0x1000+1024]
 
         yield delay(1000)
+       
+        if (TEST_SFP):
+          yield port1(),None
+          yield port2(),None
+
+          lengths = []
+          print ("send data from LAN")
+          for j in range (0,SEND_COUNT_1):
+            yield xgmii_sink_0.wait()
+            rx_frame = xgmii_sink_0.recv()
+            data = rx_frame.data
+            print ("packet number from port 0:",j)
+            for i in range(0, len(data), 16):
+                print(" ".join(("{:02x}".format(c) for c in bytearray(data[i:i+16]))))
+            if (CHECK_PKT):
+              assert rx_frame.data[0:22] == start_data_2[0:22]
+              assert rx_frame.data[22:-4] == start_data_2[22:-4]
+            lengths.append(len(data)-8)
+
+          for j in range (0,SEND_COUNT_0):
+            yield xgmii_sink_1.wait()
+            rx_frame = xgmii_sink_1.recv()
+            data = rx_frame.data
+            print ("packet number from port 1:",j)
+            for i in range(0, len(data), 16):
+                print(" ".join(("{:02x}".format(c) for c in bytearray(data[i:i+16]))))
+            if (CHECK_PKT):
+              assert rx_frame.data[0:22] == start_data_1[0:22]
+              assert rx_frame.data[22:-4] == start_data_1[22:-4]
+            lengths.append(len(data)-8)
+
+          # print ("Very last packet:")
+          # for i in range(0, len(data), 16):
+          #     print(" ".join(("{:02x}".format(c) for c in bytearray(data[i:i+16]))))
+          print ("lengths: " , lengths)
+
+          # eth_frame = eth_ep.EthFrame()
+          # eth_frame.parse_axis_fcs(rx_frame.data[8:])
+
+          # print(hex(eth_frame.eth_fcs))
+          # print(hex(eth_frame.calc_fcs()))
+
+          # assert len(eth_frame.payload.data) == 46
+          # assert eth_frame.eth_fcs == eth_frame.calc_fcs()
+          # assert eth_frame.eth_dest_mac == test_frame_1.eth_dest_mac
+          # assert eth_frame.eth_src_mac == test_frame_1.eth_src_mac
+          # assert eth_frame.eth_type == test_frame_1.eth_type
+          # assert eth_frame.payload.data.index(test_frame_1.payload.data) == 0
 
         raise StopSimulation
 
