@@ -8,6 +8,7 @@ module simple_scheduler # (
   parameter LOOPBACK_PORT   = 2,
   parameter LOOPBACK_COUNT  = 2,
   parameter ENABLE_ILA      = 0,
+	parameter AUTO_RESET      = 0,
 
   parameter SLOT_WIDTH      = $clog2(SLOT_COUNT+1),
   parameter CORE_ID_WIDTH   = $clog2(CORE_COUNT),
@@ -70,7 +71,13 @@ module simple_scheduler # (
   output wire [ID_TAG_WIDTH-1:0]             loopback_msg_src,
   output wire [ID_TAG_WIDTH-1:0]             loopback_msg_dest,
   output wire                                loopback_msg_valid,
-  input  wire                                loopback_msg_ready
+  input  wire                                loopback_msg_ready,
+
+  // Cores reset
+  input  wire [CORE_ID_WIDTH-1:0]            reset_dest,
+  input  wire                                reset_value,
+  input  wire                                reset_valid,
+  output wire                                reset_ready
 );
 
   parameter MSG_TYPE_WIDTH = 4;
@@ -233,7 +240,7 @@ module simple_scheduler # (
       ) rx_desc_fifo (
         .clk(clk),
         .rst(rst),
-        .clear(desc_fifo_clear[i]),
+        .clear(desc_fifo_clear[i] || (reset_valid && (reset_dest==i))),
       
         .din_valid(rx_desc_fifo_v[i]), 
         .din(loader_valid[i] ? loader_slot : pkt_sent_slot),
@@ -313,7 +320,7 @@ module simple_scheduler # (
     .out_slot(loader_slot)
   );
 
-  assign busy_by_loader = loader_valid | desc_fifo_clear;
+  assign busy_by_loader = loader_valid | desc_fifo_clear | reset_valid;
 
   // Generating src,dest descriptor for loopback output port
   wire [SLOT_WIDTH-1:0]    selected_pkt_to_core_slot = selected_pkt_to_core_desc[16 +: SLOT_WIDTH]; 
@@ -331,6 +338,31 @@ module simple_scheduler # (
   wire [CORE_ID_WIDTH-1:0] ctrl_out_dest;
   wire [DESC_WIDTH-1:0]    ctrl_out_desc;
   wire ctrl_out_valid, ctrl_out_ready;
+
+  // reg last_selected; 
+  // reg ctrl_out_select;
+
+  // always @ (posedge clk)
+  //   if (rst) 
+  //     last_selected <= 1'b0;
+  //   else if (ctrl_out_valid && ctrl_out_ready)
+  //     last_selected <= ctrl_out_select;
+
+  // always @ (*)
+  //   if (selected_pkt_to_core_valid && loopback_msg_ready &&  pkt_done_valid)
+  //     ctrl_out_select = ~last_selected;
+  //   else if (selected_pkt_to_core_valid && loopback_msg_ready)
+  //     ctrl_out_select = 1'b1;
+  //   else if (pkt_done_valid)
+  //     ctrl_out_select = 1'b0;
+  //   else 
+  //     ctrl_out_select = last_selected;
+
+  // assign ctrl_out_valid = (selected_pkt_to_core_valid && loopback_msg_ready) || pkt_done_valid;
+  // assign ctrl_out_dest  = ctrl_out_select ? selected_pkt_to_core_src : pkt_done_src;
+  // assign ctrl_out_desc  = ctrl_out_select ? pkt_to_core_with_port    : pkt_done_desc;
+  // assign selected_pkt_to_core_ready = ctrl_out_select  && ctrl_out_ready;
+  // assign loopback_ready             = !ctrl_out_select && ctrl_out_ready;
 
   axis_arb_mux #
   (
@@ -366,16 +398,17 @@ module simple_scheduler # (
     .m_axis_tuser()
   );
 
-  // Core reset command
+// Core reset command
+if (AUTO_RESET) begin
   reg [CORE_ID_WIDTH:0] core_rst_counter;
-  wire core_reset_in_prog = (core_rst_counter < CORE_COUNT); 
+  wire core_reset_in_prog = (core_rst_counter < CORE_COUNT);
   wire [CORE_ID_WIDTH:0] reordered_core_rst_counter;
-  
-  // Reordering of reset for alleviating congestion on lvl 2 switches 
+
+  // Reordering of reset for alleviating congestion on lvl 2 switches
   // during startup
   if (LVL2_SW_PORTS==1)
-    assign reordered_core_rst_counter = core_rst_counter[CORE_ID_WIDTH-1:0];  
-  else 
+    assign reordered_core_rst_counter = core_rst_counter[CORE_ID_WIDTH-1:0];
+  else
     assign reordered_core_rst_counter = {core_rst_counter[LVL1_BITS-1:0],
                                          core_rst_counter[CORE_ID_WIDTH-1:LVL1_BITS]};
 
@@ -385,17 +418,28 @@ module simple_scheduler # (
     else
       if (ctrl_m_axis_tvalid && ctrl_m_axis_tready && core_reset_in_prog)
         core_rst_counter <= core_rst_counter + 1;
-
-  // making the descriptor type to be 0, so core would send out. 
-  assign ctrl_m_axis_tdata  = core_reset_in_prog ? {{(CTRL_WIDTH-1){1'b1}}, 1'b0} 
+  // making the descriptor type to be 0, so core would send out.
+  assign ctrl_m_axis_tdata  = core_reset_in_prog ? {{(CTRL_WIDTH-1){1'b1}}, 1'b0}
                                                  : {{MSG_TYPE_WIDTH{1'b0}}, ctrl_out_desc};
   assign ctrl_m_axis_tvalid = core_reset_in_prog || ctrl_out_valid;
   assign ctrl_m_axis_tlast  = ctrl_m_axis_tvalid;
-  assign ctrl_m_axis_tdest  = core_reset_in_prog ? reordered_core_rst_counter 
+  assign ctrl_m_axis_tdest  = core_reset_in_prog ? reordered_core_rst_counter
                                                  : ctrl_out_dest;
 
   assign ctrl_out_ready     = (!core_reset_in_prog) && ctrl_m_axis_tready;
+  assign reset_ready        = 1'b1;
 
+end else begin
+  // making the descriptor type to be 0, so core would send out. 
+  assign ctrl_m_axis_tdata  = reset_valid ? {{(CTRL_WIDTH-1){1'b1}}, reset_value} 
+                                          : {{MSG_TYPE_WIDTH{1'b0}}, ctrl_out_desc};
+  assign ctrl_m_axis_tvalid = reset_valid || ctrl_out_valid;
+  assign ctrl_m_axis_tlast  = ctrl_m_axis_tvalid;
+  assign ctrl_m_axis_tdest  = reset_valid ? reset_dest : ctrl_out_dest;
+
+  assign ctrl_out_ready     = (!reset_valid) && ctrl_m_axis_tready;
+  assign reset_ready        = 1'b1;
+end
   
   // Selecting the core with most available slots
   // Since slots start from 1, SLOT WIDTH is already 1 bit extra

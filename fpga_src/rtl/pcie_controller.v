@@ -120,7 +120,13 @@ module pcie_controller #
   output wire                            cores_ctrl_m_axis_tvalid,
   input  wire                            cores_ctrl_m_axis_tready,
   output wire                            cores_ctrl_m_axis_tlast,
-  output wire [CORE_WIDTH-1:0]           cores_ctrl_m_axis_tdest
+  output wire [CORE_WIDTH-1:0]           cores_ctrl_m_axis_tdest,
+
+  // Cores reset
+  output wire [CORE_WIDTH-1:0]           reset_dest,
+  output wire                            reset_value,
+  output wire                            reset_valid,
+  input  wire                            reset_ready
 );
 
 parameter PCIE_ADDR_WIDTH = 64;
@@ -359,6 +365,12 @@ wire                           pcie_dma_write_desc_status_valid;
 wire                           pcie_dma_write_desc_status_ready;
 
 reg                            pcie_dma_enable;
+reg [CORE_WIDTH+1-1:0]         pcie_core_reset;
+reg                            pcie_core_reset_valid;
+
+assign reset_valid = pcie_core_reset_valid;
+assign reset_value = pcie_core_reset[0];
+assign reset_dest  = pcie_core_reset[CORE_WIDTH:1];
 
 // DMA requests from Host
 reg  [PCIE_ADDR_WIDTH-1:0]     host_dma_read_desc_pcie_addr;
@@ -746,6 +758,7 @@ always @(posedge pcie_clk) begin
 
         host_dma_read_desc_valid   <= 1'b0;
         host_dma_write_desc_valid  <= 1'b0;
+        pcie_core_reset_valid      <= 1'b0;
         host_dma_read_status_tags  <= {HOST_DMA_TAG_WIDTH{1'b0}};
         host_dma_write_status_tags <= {HOST_DMA_TAG_WIDTH{1'b0}};
         pcie_dma_enable            <= 1'b0;
@@ -767,6 +780,7 @@ always @(posedge pcie_clk) begin
 
         host_dma_read_desc_valid         <= host_dma_read_desc_valid && !host_dma_read_desc_ready;
         host_dma_write_desc_valid        <= host_dma_write_desc_valid && !host_dma_read_desc_ready;
+        pcie_core_reset_valid            <= pcie_core_reset_valid && !reset_ready; 
 
         if (axil_ctrl_awvalid && axil_ctrl_wvalid && !axil_ctrl_bvalid) begin
             // write operation
@@ -777,6 +791,10 @@ always @(posedge pcie_clk) begin
 
             case ({axil_ctrl_awaddr[15:2], 2'b00})
                 16'h0000: pcie_dma_enable <= axil_ctrl_wdata;
+                16'h0004: begin 
+                    pcie_core_reset       <= axil_ctrl_wdata[CORE_WIDTH:0];
+                    pcie_core_reset_valid <= 1'b1;
+                end
                 16'h0100: host_dma_read_desc_pcie_addr[31:0] <= axil_ctrl_wdata;
                 16'h0104: host_dma_read_desc_pcie_addr[63:32] <= axil_ctrl_wdata;
                 16'h0108: host_dma_read_desc_axi_addr[31:0] <= axil_ctrl_wdata;

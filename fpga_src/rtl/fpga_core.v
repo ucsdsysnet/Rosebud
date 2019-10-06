@@ -157,6 +157,7 @@ parameter LOOPBACK_PORT    = INTERFACE_COUNT+1-1;
 parameter LVL1_SW_PORTS    = 4;
 parameter CORE_MSG_LVL1    = 16;
 parameter SEPARATE_CLOCKS  = 1;
+parameter AUTO_RESET       = 0;
 parameter ENABLE_ILA       = 1;
 
 parameter CORE_WIDTH       = $clog2(CORE_COUNT);
@@ -312,6 +313,12 @@ wire                       dram_ctrl_s_axis_tready;
 wire                       dram_ctrl_s_axis_tlast;
 wire [CORE_WIDTH-1:0]      dram_ctrl_s_axis_tdest;
 
+// Cores reset
+wire [CORE_WIDTH-1:0]      reset_dest;
+wire                       reset_value;
+wire                       reset_valid;
+wire                       reset_ready;
+
 pcie_controller #
 (
   .AXIS_PCIE_DATA_WIDTH(AXIS_PCIE_DATA_WIDTH),
@@ -394,7 +401,13 @@ pcie_controller #
   .cores_ctrl_m_axis_tvalid(dram_ctrl_s_axis_tvalid),
   .cores_ctrl_m_axis_tready(dram_ctrl_s_axis_tready),
   .cores_ctrl_m_axis_tlast (dram_ctrl_s_axis_tlast),
-  .cores_ctrl_m_axis_tdest (dram_ctrl_s_axis_tdest)
+  .cores_ctrl_m_axis_tdest (dram_ctrl_s_axis_tdest),
+
+  // Cores reset
+  .reset_dest (reset_dest),
+  .reset_value(reset_value),
+  .reset_valid(reset_valid),
+  .reset_ready(reset_ready)
 );
 
 // no use for dram_tx_axis_tdest
@@ -461,6 +474,7 @@ simple_scheduler # (
   .LVL1_SW_PORTS(LVL1_SW_PORTS),
   .LOOPBACK_PORT(LOOPBACK_PORT),
   .LOOPBACK_COUNT(INTERFACE_COUNT),
+	.AUTO_RESET(AUTO_RESET),
   .ENABLE_ILA(ENABLE_ILA)
 ) scheduler (
   .clk(sys_clk),
@@ -513,7 +527,13 @@ simple_scheduler # (
   .loopback_msg_src  (loopback_msg_src),
   .loopback_msg_dest (loopback_msg_dest),
   .loopback_msg_valid(loopback_msg_valid),
-  .loopback_msg_ready(loopback_msg_ready)
+  .loopback_msg_ready(loopback_msg_ready),
+
+  // Cores reset
+  .reset_dest (reset_dest),
+  .reset_value(reset_value),
+  .reset_valid(reset_valid),
+  .reset_ready(reset_ready)
 );
 
 

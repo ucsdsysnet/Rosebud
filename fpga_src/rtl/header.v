@@ -65,8 +65,10 @@ module header_adder # (
   
   // Latch tdest and tuser at first cycle (for last cycle), and always latch tdata and tkeep
   always @ (posedge clk) begin
-    rest_tdata_r <= s_axis_tdata[DATA_WIDTH-1:DATA_WIDTH-HDR_WIDTH];
-    rest_tkeep_r <= s_axis_tkeep[STRB_WIDTH-1:STRB_WIDTH-HDR_STRB];
+    if (s_axis_tvalid && s_axis_tready) begin
+      rest_tdata_r <= s_axis_tdata[DATA_WIDTH-1:DATA_WIDTH-HDR_WIDTH];
+      rest_tkeep_r <= s_axis_tkeep[STRB_WIDTH-1:STRB_WIDTH-HDR_STRB];
+    end
     if (state == HDR) begin
       s_axis_tdest_r <= s_axis_tdest;
       s_axis_tuser_r <= s_axis_tuser;

@@ -119,7 +119,7 @@ def bench():
     SIZE_1       = 149 - 18
     CHECK_PKT    = True
     TEST_SFP     = True
-    TEST_PCIE    = False
+    TEST_PCIE    = True
 
     # Inputs
     sys_clk  = Signal(bool(0))
@@ -670,8 +670,11 @@ def bench():
 
           # enable DMA
           yield rc.mem_write(dev_pf0_bar0+0x100000, struct.pack('<L', 1))
-
+          
+          # Load instruction memories
           for i in range (0,16):
+              yield rc.mem_write(dev_pf0_bar0+0x100004, struct.pack('<L', ((i<<1)+1)))
+              yield delay(20)
               # write pcie read descriptor
               yield rc.mem_write(dev_pf0_bar0+0x100100, struct.pack('<L', (mem_base+0x0000) & 0xffffffff))
               yield rc.mem_write(dev_pf0_bar0+0x100104, struct.pack('<L', (mem_base+0x0000 >> 32) & 0xffffffff))
@@ -681,7 +684,9 @@ def bench():
               yield rc.mem_write(dev_pf0_bar0+0x100114, struct.pack('<L', 0xAA))
 
               yield delay(2000)
-
+              yield rc.mem_write(dev_pf0_bar0+0x100004, struct.pack('<L', ((i<<1)+0)))
+              yield delay(20)
+          
           # write pcie read descriptor
           yield rc.mem_write(dev_pf0_bar0+0x100100, struct.pack('<L', (mem_base+0x0000) & 0xffffffff))
           yield rc.mem_write(dev_pf0_bar0+0x100104, struct.pack('<L', (mem_base+0x0000 >> 32) & 0xffffffff))
