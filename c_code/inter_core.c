@@ -21,29 +21,29 @@ int main(void){
 			read_in_pkt(&packet);
 
 			if (packet.port<2){
-				packet.data = (unsigned int *)(((unsigned int)packet.data)-2);
+				packet.data = (unsigned int *)(((unsigned int)packet.data)-4);
 				*(unsigned short *)(packet.data) = (unsigned short)(packet.port);
-				packet.len += 2;
-			}
-			
-			if (core_id()==15){
-
-				if (*(unsigned short*)(packet.data)==0){
-					packet.port = 1;
-				} else {
-					packet.port = 0;
-				}
-				packet.data = (unsigned int *)(((unsigned int)packet.data)+2);
-				packet.len -= 2;
-				safe_pkt_send(&packet);
-			
-			} else {
-
-				packet.port = (char)(core_id()+1);
+				*((unsigned short *)(packet.data)+1) = 1;
+				packet.len += 4;
+				packet.port = (char)(core_id()+4); // there are 16 cores, system would cut overflow
 				safe_send_to_core(&packet);
-			
 			}
-
+			else {
+				*((unsigned short *)(packet.data)+1) += 1;
+				if ((*((unsigned short *)(packet.data)+1))==4){
+					if (*(unsigned short*)(packet.data)==0){
+						packet.port = 1;
+					} else {
+						packet.port = 0;
+					}
+					packet.data = (unsigned int *)(((unsigned int)packet.data)+4);
+					packet.len -= 4;
+					safe_pkt_send(&packet);
+				} else {
+					packet.port = (char)(core_id()+4); // there are 16 cores, system would cut overflow
+					safe_send_to_core(&packet);
+				}
+			}
   	}
   }
   
