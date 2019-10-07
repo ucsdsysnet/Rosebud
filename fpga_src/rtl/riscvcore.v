@@ -91,7 +91,9 @@ VexRiscv core (
       .dBus_rsp_data(dmem_read_data),
       
       .timerInterrupt(timer_interrupt && mask_r[5]), 
-      .externalInterrupt((interrupt_in && mask_r[4]) || (dram_recv_any && mask_r[6])),
+      .externalInterrupt((interrupt_in && mask_r[4])  || 
+                         (dram_recv_any && mask_r[6]) || 
+                         (in_desc_valid && mask_r[7])),
       .softwareInterrupt(1'b0)
 );
 
@@ -186,7 +188,7 @@ always @ (posedge clk) begin
             if (wr_desc_mask[i] == 1'b1) 
                 debug_reg[(i-4)*8 +: 8] <= wr_desc_din[i*8 +: 8];
 
-    if (rst) // Timer and dram recv interrupts are blocked, erros are allowed.
+    if (rst) // Timer, dram recv and incoming packet interrupts are blocked, erros are allowed.
       mask_r <= 8'h1F;
     else if(mask_write && wr_desc_mask[4])
       mask_r <= wr_desc_din[39:32];
@@ -273,7 +275,9 @@ always @ (posedge clk) begin
         io_read_data <= internal_timer[63:32];
 
     if (int_flags_ren)
-        io_read_data <= {16'd0, mask_r, 1'b0, dram_recv_any, timer_interrupt, interrupt_in, 
+        io_read_data <= {16'd0, mask_r, 
+                         in_desc_valid, dram_recv_any, 
+                         timer_interrupt, interrupt_in, 
                          io_byte_access_err, io_access_data_err,
                          dmem_access_err, imem_access_err};
 

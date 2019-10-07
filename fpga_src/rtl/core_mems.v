@@ -31,11 +31,9 @@ always @ (posedge clkb)
 
 assign doutb = mem_out;
 
-// For now before adding PCI-e DMA master for instructions
 initial begin
-    $readmemh("../../c_code/test.hex", mem);
+    $readmemh("../../c_code/default.hex", mem);
 end 
-
 
 endmodule
 

@@ -645,8 +645,7 @@ def bench():
 
           print("test 4: test DMA")
 
-          # ins = bytearray(open("../../c_code/extreme_core_msg_forward.bin", "rb").read())
-          ins = bytearray(open("../../c_code/basic_forward.bin", "rb").read())
+          ins = bytearray(open("../../c_code/dram_test.bin", "rb").read())
 
           # write packet data
           # mem_data[0:1024] = bytearray([x%256 for x in range(1024)])
@@ -700,6 +699,11 @@ def bench():
           print(val)
 
           data = mem_data[0x1000:(0x1000)+1024]
+          for i in range(0, len(data), 16):
+              print(" ".join(("{:02x}".format(c) for c in bytearray(data[i:i+16]))))
+
+          print("core to host write data")
+          data = mem_data[0xBCBB:(0xBCBB)+128]
           for i in range(0, len(data), 16):
               print(" ".join(("{:02x}".format(c) for c in bytearray(data[i:i+16]))))
 

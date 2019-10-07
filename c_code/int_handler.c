@@ -9,7 +9,23 @@ void int_handler(void) {
 			interrupt_ack(0x20); 
 		}
 		if (cause & IRQ_M_EXT) {
-			if (int_flag & 0x40) { // dram_interrupt
+			if (int_flag & 0x80) { // incoming_pkt_interrupt
+			
+			unsigned int start_time, end_time;
+			struct Desc packet;
+
+			start_time = read_timer_low();
+			read_in_pkt(&packet);
+			if (packet.port==0)
+				packet.port = 1;
+			else
+				packet.port = 0;
+
+			safe_pkt_done_msg(&packet);
+	 		end_time = read_timer_low();
+			write_debug (end_time - start_time);
+
+			} else if (int_flag & 0x40) { // dram_interrupt
 				write_debug (0x5A5A5A5A);
 				write_debug (dram_flags());
 				write_dram_flags(0x00000000);

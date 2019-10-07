@@ -98,6 +98,7 @@ module simple_scheduler # (
 
   wire loader_ready, loopback_ready;
   wire [CORE_COUNT-1:0]    rx_desc_slot_accept;
+  reg  [CORE_COUNT-1:0] core_under_reset;
 
   simple_fifo # (
     .ADDR_WIDTH(3),
@@ -143,7 +144,7 @@ module simple_scheduler # (
       ) pkt_to_core_fifo (
         .clk(clk),
         .rst(rst),
-        .clear(1'b0),
+        .clear(core_under_reset[m]),
       
         .din_valid(ctrl_s_axis_tvalid && (msg_type==2) && (dest_core==m)),
         .din({ctrl_s_axis_tuser, ctrl_s_axis_tdata[DESC_WIDTH-1:0]}), 
@@ -224,7 +225,6 @@ module simple_scheduler # (
   wire [CORE_COUNT-1:0]    rx_desc_slot_accept_temp;
 
   wire [CORE_COUNT-1:0] desc_fifo_clear, loader_valid, busy_by_loader, rx_desc_fifo_v;
-  reg  [CORE_COUNT-1:0] core_under_reset;
   wire [SLOT_WIDTH-1:0] loader_slot;
   
   wire [SLOT_WIDTH-1:0] pkt_sent_slot = pkt_sent_desc[16 +: SLOT_WIDTH]; 
@@ -372,8 +372,6 @@ module simple_scheduler # (
       core_under_reset[reset_dest]      <= 1'b1;
     else if (reset_valid && reset_ready && !reset_value)
       core_under_reset[reset_dest]      <= 1'b0;
-    // else if (slot_loader_valid && loader_ready)
-    //  core_under_reset[slot_loader_src] <= 1'b0;
 
   reg [CORE_ID_WIDTH:0] core_rst_counter;
   wire core_reset_in_prog = (core_rst_counter < CORE_COUNT);

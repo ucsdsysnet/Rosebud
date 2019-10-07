@@ -153,20 +153,6 @@ static int edev_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
     dev_info(dev, "CQ: %d", ioread32(edev->bar[0]+0x000408));
     dev_info(dev, "CC: %d", ioread32(edev->bar[0]+0x00040C));
 
-    // // Read/write test
-    // dev_info(dev, "write to BAR1");
-    // iowrite32(0x11223344, edev->bar[1]);
-
-    // dev_info(dev, "read from BAR1");
-    // dev_info(dev, "%08x", ioread32(edev->bar[1]));
-
-    // // Dump counters
-    // dev_info(dev, "TLP counters");
-    // dev_info(dev, "RQ: %d", ioread32(edev->bar[0]+0x000400));
-    // dev_info(dev, "RC: %d", ioread32(edev->bar[0]+0x000404));
-    // dev_info(dev, "CQ: %d", ioread32(edev->bar[0]+0x000408));
-    // dev_info(dev, "CC: %d", ioread32(edev->bar[0]+0x00040C));
-
     // PCIe DMA test
     dev_info(dev, "write test data");
     memcpy((char *)edev->dma_region,test_bin,test_bin_len);
@@ -198,10 +184,10 @@ static int edev_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
     	iowrite32(test_bin_len, edev->bar[0]+0x000110);
     	iowrite32(1<<k, edev->bar[0]+0x000114);
     	msleep(100);
-	if (k<16){ 
+			if (k<16){ 
     	    iowrite32((k<<1)+0, edev->bar[0]+0x000004);
     	    msleep(20);
-	}
+			}
     }
 
     dev_info(dev, "start copy to card");

@@ -1,4 +1,4 @@
-NAME=test
+NAME=default
 
 compile:
 	riscv32-unknown-elf-gcc -nostdlib -O2 -T link_option.ld -mbranch-cost=3 -o ${NAME}.o startup.S int_handler.c ${NAME}.c
