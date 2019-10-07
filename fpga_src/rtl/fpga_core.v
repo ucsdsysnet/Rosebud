@@ -157,7 +157,6 @@ parameter LOOPBACK_PORT    = INTERFACE_COUNT+1-1;
 parameter LVL1_SW_PORTS    = 4;
 parameter CORE_MSG_LVL1    = 16;
 parameter SEPARATE_CLOCKS  = 1;
-parameter AUTO_RESET       = 0;
 parameter ENABLE_ILA       = 1;
 
 parameter CORE_WIDTH       = $clog2(CORE_COUNT);
@@ -474,7 +473,6 @@ simple_scheduler # (
   .LVL1_SW_PORTS(LVL1_SW_PORTS),
   .LOOPBACK_PORT(LOOPBACK_PORT),
   .LOOPBACK_COUNT(INTERFACE_COUNT),
-	.AUTO_RESET(AUTO_RESET),
   .ENABLE_ILA(ENABLE_ILA)
 ) scheduler (
   .clk(sys_clk),

@@ -8,7 +8,6 @@ module simple_scheduler # (
   parameter LOOPBACK_PORT   = 2,
   parameter LOOPBACK_COUNT  = 2,
   parameter ENABLE_ILA      = 0,
-	parameter AUTO_RESET      = 0,
 
   parameter SLOT_WIDTH      = $clog2(SLOT_COUNT+1),
   parameter CORE_ID_WIDTH   = $clog2(CORE_COUNT),
@@ -225,6 +224,7 @@ module simple_scheduler # (
   wire [CORE_COUNT-1:0]    rx_desc_slot_accept_temp;
 
   wire [CORE_COUNT-1:0] desc_fifo_clear, loader_valid, busy_by_loader, rx_desc_fifo_v;
+  reg  [CORE_COUNT-1:0] core_under_reset;
   wire [SLOT_WIDTH-1:0] loader_slot;
   
   wire [SLOT_WIDTH-1:0] pkt_sent_slot = pkt_sent_desc[16 +: SLOT_WIDTH]; 
@@ -240,7 +240,7 @@ module simple_scheduler # (
       ) rx_desc_fifo (
         .clk(clk),
         .rst(rst),
-        .clear(desc_fifo_clear[i] || (reset_valid && (reset_dest==i))),
+        .clear(desc_fifo_clear[i] || core_under_reset[i]), 
       
         .din_valid(rx_desc_fifo_v[i]), 
         .din(loader_valid[i] ? loader_slot : pkt_sent_slot),
@@ -364,8 +364,17 @@ module simple_scheduler # (
   assign selected_pkt_to_core_ready = ctrl_out_select  && ctrl_out_ready;
   assign loopback_ready             = !ctrl_out_select && ctrl_out_ready;
 
-// Core reset command
-if (AUTO_RESET) begin
+  // Core reset command
+  always @ (posedge clk)
+    if (rst)
+      core_under_reset <= {CORE_COUNT{1'b0}};
+    else if (reset_valid && reset_ready && reset_value)
+      core_under_reset[reset_dest]      <= 1'b1;
+    else if (reset_valid && reset_ready && !reset_value)
+      core_under_reset[reset_dest]      <= 1'b0;
+    // else if (slot_loader_valid && loader_ready)
+    //  core_under_reset[slot_loader_src] <= 1'b0;
+
   reg [CORE_ID_WIDTH:0] core_rst_counter;
   wire core_reset_in_prog = (core_rst_counter < CORE_COUNT);
   wire [CORE_ID_WIDTH:0] reordered_core_rst_counter;
@@ -385,28 +394,17 @@ if (AUTO_RESET) begin
       if (ctrl_m_axis_tvalid && ctrl_m_axis_tready && core_reset_in_prog)
         core_rst_counter <= core_rst_counter + 1;
   // making the descriptor type to be 0, so core would send out.
-  assign ctrl_m_axis_tdata  = core_reset_in_prog ? {{(CTRL_WIDTH-1){1'b1}}, 1'b0}
+  assign ctrl_m_axis_tdata  = core_reset_in_prog ? {{(CTRL_WIDTH-1){1'b1}}, 1'b0} :
+                               reset_valid       ? {{(CTRL_WIDTH-1){1'b1}}, reset_value} 
                                                  : {{MSG_TYPE_WIDTH{1'b0}}, ctrl_out_desc};
-  assign ctrl_m_axis_tvalid = core_reset_in_prog || ctrl_out_valid;
+  assign ctrl_m_axis_tvalid = core_reset_in_prog || reset_valid || ctrl_out_valid;
   assign ctrl_m_axis_tlast  = ctrl_m_axis_tvalid;
-  assign ctrl_m_axis_tdest  = core_reset_in_prog ? reordered_core_rst_counter
-                                                 : ctrl_out_dest;
+  assign ctrl_m_axis_tdest  = core_reset_in_prog ? reordered_core_rst_counter : 
+                              reset_valid        ? reset_dest : ctrl_out_dest;
 
-  assign ctrl_out_ready     = (!core_reset_in_prog) && ctrl_m_axis_tready;
-  assign reset_ready        = 1'b1;
+  assign ctrl_out_ready     = (!core_reset_in_prog) && (!reset_valid) && ctrl_m_axis_tready;
+  assign reset_ready        = !core_reset_in_prog;
 
-end else begin
-  // making the descriptor type to be 0, so core would send out. 
-  assign ctrl_m_axis_tdata  = reset_valid ? {{(CTRL_WIDTH-1){1'b1}}, reset_value} 
-                                          : {{MSG_TYPE_WIDTH{1'b0}}, ctrl_out_desc};
-  assign ctrl_m_axis_tvalid = reset_valid || ctrl_out_valid;
-  assign ctrl_m_axis_tlast  = ctrl_m_axis_tvalid;
-  assign ctrl_m_axis_tdest  = reset_valid ? reset_dest : ctrl_out_dest;
-
-  assign ctrl_out_ready     = (!reset_valid) && ctrl_m_axis_tready;
-  assign reset_ready        = 1'b1;
-end
-  
   // Selecting the core with most available slots
   // Since slots start from 1, SLOT WIDTH is already 1 bit extra
   reg [CORE_COUNT*SLOT_WIDTH-1:0] reordered_rx_desc_count;
@@ -471,12 +469,18 @@ end
     .grant_encoded(selected_port_enc)
     );
 
+  integer n;
   always @ (posedge clk) begin
     dest_r_v <= dest_r_v & (~sending_last_word);
     if (rx_desc_pop) begin
       dest_r_v[selected_port_enc] <= 1'b1;
       dest_r[selected_port_enc*ID_TAG_WIDTH +: ID_TAG_WIDTH] <= rx_desc_data;
     end
+
+    for (n=0; n<INTERFACE_COUNT; n=n+1)
+      if (reset_valid && reset_ready && (dest_r[(n*ID_TAG_WIDTH)+TAG_WIDTH +: CORE_ID_WIDTH] == reset_dest))
+        dest_r_v[n] <= 1'b0;
+
     if (rst)
       dest_r_v <= {INTERFACE_COUNT{1'b0}};
   end

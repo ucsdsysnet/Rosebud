@@ -115,8 +115,8 @@ def bench():
 
     SEND_COUNT_0 = 50
     SEND_COUNT_1 = 50
-    SIZE_0       = 1500 - 18 
-    SIZE_1       = 1497 - 18
+    SIZE_0       = 150 - 18 
+    SIZE_1       = 149 - 18
     CHECK_PKT    = True
     TEST_SFP     = True
     TEST_PCIE    = True
@@ -450,7 +450,7 @@ def bench():
     test_frame_1.eth_dest_mac = 0xDAD1D2D3D4D5
     test_frame_1.eth_src_mac = 0x5A5152535455
     test_frame_1.eth_type = 0x8000
-    test_frame_1.payload = bytes([x%256 for x in range(SIZE_0)])
+    test_frame_1.payload = bytes([0]+[x%256 for x in range(SIZE_0-1)])
     test_frame_1.update_fcs()
     axis_frame = test_frame_1.build_axis_fcs()
     start_data_1 = bytearray(b'\x55\x55\x55\x55\x55\x55\x55\xD5' + bytearray(axis_frame))
@@ -459,7 +459,7 @@ def bench():
     test_frame_2.eth_dest_mac = 0x5A5152535455
     test_frame_2.eth_src_mac = 0xDAD1D2D3D4D5
     test_frame_2.eth_type = 0x8000
-    test_frame_2.payload = bytes([x%256 for x in range(SIZE_1)])
+    test_frame_2.payload = bytes([0]+[x%256 for x in range(SIZE_1-1)])
     test_frame_2.update_fcs()
     axis_frame_2 = test_frame_2.build_axis_fcs()
     start_data_2 = bytearray(b'\x55\x55\x55\x55\x55\x55\x55\xD5' + bytearray(axis_frame_2))
@@ -575,7 +575,7 @@ def bench():
     def port1():
         for i in range (0,SEND_COUNT_0):
           # test_frame_1.payload = bytes([x%256 for x in range(random.randrange(1980))])
-          test_frame_1.payload = bytes([x%256 for x in range(SIZE_0)])
+          test_frame_1.payload = bytes([i%256] + [x%256 for x in range(SIZE_0-1)])
           test_frame_1.update_fcs()
           axis_frame = test_frame_1.build_axis_fcs()
           xgmii_source_0.send(b'\x55\x55\x55\x55\x55\x55\x55\xD5'+bytearray(axis_frame))
@@ -589,7 +589,7 @@ def bench():
           # if (i%20==19):
           #   test_frame_2.payload = bytes([x%256 for x in range(78-14)])
           # else:
-          test_frame_2.payload = bytes([x%256 for x in range(SIZE_1)])
+          test_frame_1.payload = bytes([i%256] + [x%256 for x in range(SIZE_1-1)])
           test_frame_2.update_fcs()
           axis_frame_2 = test_frame_2.build_axis_fcs()
           xgmii_source_1.send(b'\x55\x55\x55\x55\x55\x55\x55\xD5'+bytearray(axis_frame_2))
@@ -645,7 +645,8 @@ def bench():
 
           print("test 4: test DMA")
 
-          ins = bytearray(open("../../c_code/test_fast.bin", "rb").read())
+          # ins = bytearray(open("../../c_code/extreme_core_msg_forward.bin", "rb").read())
+          ins = bytearray(open("../../c_code/basic_forward.bin", "rb").read())
 
           # write packet data
           # mem_data[0:1024] = bytearray([x%256 for x in range(1024)])
@@ -653,31 +654,30 @@ def bench():
           mem_data[48059:48200] = bytearray([(x+10)%256 for x in range(141)])
 
           # enable DMA
-          yield rc.mem_write(dev_pf0_bar0+0x100000, struct.pack('<L', 1))
+          yield rc.mem_write(dev_pf0_bar0+0x000000, struct.pack('<L', 1))
           
           # Load instruction memories
           for i in range (0,16):
-              yield rc.mem_write(dev_pf0_bar0+0x100004, struct.pack('<L', ((i<<1)+1)))
+              yield rc.mem_write(dev_pf0_bar0+0x000004, struct.pack('<L', ((i<<1)+1)))
               yield delay(20)
-              # # write pcie read descriptor
-              # yield rc.mem_write(dev_pf0_bar0+0x100100, struct.pack('<L', (mem_base+0x0000) & 0xffffffff))
-              # yield rc.mem_write(dev_pf0_bar0+0x100104, struct.pack('<L', (mem_base+0x0000 >> 32) & 0xffffffff))
-              # yield rc.mem_write(dev_pf0_bar0+0x100108, struct.pack('<L', ((i<<16)+0x8000) & 0xffffffff))
-              # yield rc.mem_write(dev_pf0_bar0+0x10010C, struct.pack('<L', (((i<<16)+0x8000) >> 32) & 0xffffffff))
-              # yield rc.mem_write(dev_pf0_bar0+0x100110, struct.pack('<L', 0x400))
-              # yield rc.mem_write(dev_pf0_bar0+0x100114, struct.pack('<L', 0xAA))
-
-              # yield delay(2000)
-              yield rc.mem_write(dev_pf0_bar0+0x100004, struct.pack('<L', ((i<<1)+0)))
+              # write pcie read descriptor
+              yield rc.mem_write(dev_pf0_bar0+0x000100, struct.pack('<L', (mem_base+0x0000) & 0xffffffff))
+              yield rc.mem_write(dev_pf0_bar0+0x000104, struct.pack('<L', (mem_base+0x0000 >> 32) & 0xffffffff))
+              yield rc.mem_write(dev_pf0_bar0+0x000108, struct.pack('<L', ((i<<16)+0x8000) & 0xffffffff))
+              yield rc.mem_write(dev_pf0_bar0+0x00010C, struct.pack('<L', (((i<<16)+0x8000) >> 32) & 0xffffffff))
+              yield rc.mem_write(dev_pf0_bar0+0x000110, struct.pack('<L', 0x400))
+              yield rc.mem_write(dev_pf0_bar0+0x000114, struct.pack('<L', 0xAA))
+              yield delay(2000)
+              yield rc.mem_write(dev_pf0_bar0+0x000004, struct.pack('<L', ((i<<1)+0)))
               yield delay(20)
           
           # write pcie read descriptor
-          yield rc.mem_write(dev_pf0_bar0+0x100100, struct.pack('<L', (mem_base+0x0000) & 0xffffffff))
-          yield rc.mem_write(dev_pf0_bar0+0x100104, struct.pack('<L', (mem_base+0x0000 >> 32) & 0xffffffff))
-          yield rc.mem_write(dev_pf0_bar0+0x100108, struct.pack('<L', ((4<<16)+0x0100) & 0xffffffff))
-          yield rc.mem_write(dev_pf0_bar0+0x10010C, struct.pack('<L', (((4<<16)+0x0100) >> 32) & 0xffffffff))
-          yield rc.mem_write(dev_pf0_bar0+0x100110, struct.pack('<L', 0x400))
-          yield rc.mem_write(dev_pf0_bar0+0x100114, struct.pack('<L', 0xAA))
+          yield rc.mem_write(dev_pf0_bar0+0x000100, struct.pack('<L', (mem_base+0x0000) & 0xffffffff))
+          yield rc.mem_write(dev_pf0_bar0+0x000104, struct.pack('<L', (mem_base+0x0000 >> 32) & 0xffffffff))
+          yield rc.mem_write(dev_pf0_bar0+0x000108, struct.pack('<L', ((4<<16)+0x0100) & 0xffffffff))
+          yield rc.mem_write(dev_pf0_bar0+0x00010C, struct.pack('<L', (((4<<16)+0x0100) >> 32) & 0xffffffff))
+          yield rc.mem_write(dev_pf0_bar0+0x000110, struct.pack('<L', 0x400))
+          yield rc.mem_write(dev_pf0_bar0+0x000114, struct.pack('<L', 0xAA))
 
           yield delay(2000)
 
@@ -686,17 +686,17 @@ def bench():
           print(val)
 
           # write pcie write descriptor
-          yield rc.mem_write(dev_pf0_bar0+0x100200, struct.pack('<L', (mem_base+0x1000) & 0xffffffff))
-          yield rc.mem_write(dev_pf0_bar0+0x100204, struct.pack('<L', (mem_base+0x1000 >> 32) & 0xffffffff))
-          yield rc.mem_write(dev_pf0_bar0+0x100208, struct.pack('<L', (0x40100) & 0xffffffff))
-          yield rc.mem_write(dev_pf0_bar0+0x10020C, struct.pack('<L', (0x40100 >> 32) & 0xffffffff))
-          yield rc.mem_write(dev_pf0_bar0+0x100210, struct.pack('<L', 0x400))
-          yield rc.mem_write(dev_pf0_bar0+0x100214, struct.pack('<L', 0x55))
+          yield rc.mem_write(dev_pf0_bar0+0x000200, struct.pack('<L', (mem_base+0x1000) & 0xffffffff))
+          yield rc.mem_write(dev_pf0_bar0+0x000204, struct.pack('<L', (mem_base+0x1000 >> 32) & 0xffffffff))
+          yield rc.mem_write(dev_pf0_bar0+0x000208, struct.pack('<L', (0x40100) & 0xffffffff))
+          yield rc.mem_write(dev_pf0_bar0+0x00020C, struct.pack('<L', (0x40100 >> 32) & 0xffffffff))
+          yield rc.mem_write(dev_pf0_bar0+0x000210, struct.pack('<L', 0x400))
+          yield rc.mem_write(dev_pf0_bar0+0x000214, struct.pack('<L', 0x55))
 
           yield delay(2000)
 
           # read status
-          val = yield from rc.mem_read(dev_pf0_bar0+0x100218, 4)
+          val = yield from rc.mem_read(dev_pf0_bar0+0x000218, 4)
           print(val)
 
           data = mem_data[0x1000:(0x1000)+1024]
@@ -722,7 +722,7 @@ def bench():
                 print(" ".join(("{:02x}".format(c) for c in bytearray(data[i:i+16]))))
             if (CHECK_PKT):
               assert rx_frame.data[0:22] == start_data_2[0:22]
-              assert rx_frame.data[22:-4] == start_data_2[22:-4]
+              assert rx_frame.data[23:-4] == start_data_2[23:-4]
             lengths.append(len(data)-8)
 
           for j in range (0,SEND_COUNT_0):
@@ -734,7 +734,7 @@ def bench():
                 print(" ".join(("{:02x}".format(c) for c in bytearray(data[i:i+16]))))
             if (CHECK_PKT):
               assert rx_frame.data[0:22] == start_data_1[0:22]
-              assert rx_frame.data[22:-4] == start_data_1[22:-4]
+              assert rx_frame.data[23:-4] == start_data_1[23:-4]
             lengths.append(len(data)-8)
 
           # print ("Very last packet:")

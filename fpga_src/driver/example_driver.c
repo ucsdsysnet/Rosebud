@@ -192,14 +192,16 @@ static int edev_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
 
     for (k=0; k<16; k++){
     	dev_info(dev, "updating core %d instructions",k);
-    	iowrite32((k<<16)+1, edev->bar[0]+0x000004);
-    	msleep(10);
+    	iowrite32((k<<1)+1, edev->bar[0]+0x000004);
+    	msleep(1);
     	iowrite32((k<<16)+0x8000, edev->bar[0]+0x000108);
     	iowrite32(test_bin_len, edev->bar[0]+0x000110);
     	iowrite32(1<<k, edev->bar[0]+0x000114);
-    	msleep(10);
-    	iowrite32((k<<16)+0, edev->bar[0]+0x000004);
-    	msleep(10);
+    	msleep(100);
+	if (k<16){ 
+    	    iowrite32((k<<1)+0, edev->bar[0]+0x000004);
+    	    msleep(20);
+	}
     }
 
     dev_info(dev, "start copy to card");

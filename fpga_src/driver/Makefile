@@ -9,4 +9,8 @@ all:
 
 clean:
 	make -C /lib/modules/$(shell uname -r)/build M=$(PWD) clean
+	rm example_driver.o.ur-safe
 
+update: clean all
+	sudo rmmod example
+	sudo insmod example.ko	

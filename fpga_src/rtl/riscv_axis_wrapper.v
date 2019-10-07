@@ -425,7 +425,7 @@ if (!SEPARATE_CLOCKS) begin
   ) recvd_data_fifo (
     .clk(sys_clk),
     .rst(sys_rst),
-    .clear(1'b0),
+    .clear(core_reset_r),
   
     .din_valid(recv_desc_valid && (!recv_from_dram) && (!recv_tag_zero)),
     .din(recv_desc),
@@ -441,7 +441,7 @@ end else begin
     .DEPTH(RECV_DESC_DEPTH),
     .DATA_WIDTH(64)
   ) recvd_data_fifo (
-    .async_rst(sys_rst),
+    .async_rst(sys_rst || core_reset_r),
   
     .din_clk(sys_clk),
     .din_valid(recv_desc_valid && (!recv_from_dram) && (!recv_tag_zero)),
@@ -530,7 +530,7 @@ if (!SEPARATE_CLOCKS) begin
   ) send_data_fifo (
     .clk(sys_clk),
     .rst(sys_rst),
-    .clear(1'b0),
+    .clear(core_reset_r),
   
     .din_valid(data_send_valid && core_data_wr),
     .din(data_send_desc),
@@ -545,7 +545,7 @@ end else begin
     .DEPTH(SEND_DESC_DEPTH),
     .DATA_WIDTH(64)
   ) send_data_fifo (
-    .async_rst(sys_rst),
+    .async_rst(sys_rst || core_reset_r),
   
     .din_clk(core_clk),
     .din_valid(data_send_valid && core_data_wr),
@@ -572,7 +572,7 @@ if (!SEPARATE_CLOCKS) begin
   ) send_ctrl_fifo (
     .clk(sys_clk),
     .rst(sys_rst),
-    .clear(1'b0),
+    .clear(core_reset_r),
   
     .din_valid(data_send_valid && core_ctrl_wr),
     .din(data_send_desc),
@@ -587,7 +587,7 @@ end else begin
     .DEPTH(SEND_DESC_DEPTH),
     .DATA_WIDTH(64)
   ) send_ctrl_fifo (
-    .async_rst(sys_rst),
+    .async_rst(sys_rst || core_reset_r),
   
     .din_clk(core_clk),
     .din_valid(data_send_valid && core_ctrl_wr),
@@ -621,7 +621,7 @@ if (!SEPARATE_CLOCKS) begin
   ) dram_send_fifo (
     .clk(sys_clk),
     .rst(sys_rst),
-    .clear(1'b0),
+    .clear(core_reset_r),
   
     .din_valid(data_send_valid && core_dram_wr),
     .din({core_dram_addr, data_send_desc[63:24+PORT_WIDTH],
@@ -637,7 +637,7 @@ end else begin
     .DEPTH(DRAM_DESC_DEPTH),
     .DATA_WIDTH(128)
   ) dram_send_fifo (
-    .async_rst(sys_rst),
+    .async_rst(sys_rst || core_reset_r),
   
     .din_clk(core_clk),
     .din_valid(data_send_valid && core_dram_wr),
@@ -664,7 +664,7 @@ if (!SEPARATE_CLOCKS) begin
   ) send_ctrl_fifo (
     .clk(sys_clk),
     .rst(sys_rst),
-    .clear(1'b0),
+    .clear(core_reset_r),
   
     .din_valid(data_send_valid && core_dram_rd),
     .din({core_dram_addr, data_send_desc}),
@@ -679,7 +679,7 @@ end else begin
     .DEPTH(DRAM_DESC_DEPTH),
     .DATA_WIDTH(128)
   ) send_ctrl_fifo (
-    .async_rst(sys_rst),
+    .async_rst(sys_rst || core_reset_r),
   
     .din_clk(core_clk),
     .din_valid(data_send_valid && core_dram_rd),
@@ -734,7 +734,7 @@ simple_fifo # (
 ) recvd_ctrl_fifo (
   .clk(sys_clk),
   .rst(sys_rst),
-  .clear(1'b0),
+  .clear(core_reset_r),
 
   .din_valid(ctrl_s_axis_tvalid_r),
   .din({{(32-ADDR_WIDTH){1'b0}},ctrl_send_addr,ctrl_s_axis_tdata_r}),
@@ -767,7 +767,7 @@ simple_fifo # (
 ) pkt_sent_fifo (
   .clk(sys_clk),
   .rst(sys_rst),
-  .clear(1'b0),
+  .clear(core_reset_r),
 
   .din_valid(pkt_sent && (!pkt_sent_is_dram)), 
   .din(latched_send_desc),
@@ -793,7 +793,7 @@ simple_fifo # (
 ) recvd_dram_rd_fifo (
   .clk(sys_clk),
   .rst(sys_rst),
-  .clear(1'b0),
+  .clear(core_reset_r),
 
   .din_valid(dram_req_valid),
   .din({dram_req_high, dram_req_low}),
