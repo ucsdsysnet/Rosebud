@@ -26,38 +26,38 @@ int main(void){
 			start_time = read_timer_low();
 			read_in_pkt(&packet);
 
-			// if (packet.port==0){
-			// 	packet.port = 1;
-			// 	*sh_test += 1;
-			// } else {
-			// 	packet.port = 0;
-			// 	*(sh_test+1) += 1;
-			// }
-			// safe_pkt_send(&packet);
-
-			if (packet.port<2){
-				packet.data = (unsigned int *)(((unsigned int)packet.data)-2);
-				*(unsigned short *)(packet.data) = (unsigned short)(packet.port);
-				packet.len += 2;
-			}
-			
-			if (core_id()==15){
-
-				if (*(unsigned short*)(packet.data)==0){
-					packet.port = 1;
-				} else {
-					packet.port = 0;
-				}
-				packet.data = (unsigned int *)(((unsigned int)packet.data)+2);
-				packet.len -= 2;
-				safe_pkt_send(&packet);
-			
+			if (packet.port==0){
+				packet.port = 1;
+				*sh_test += 1;
 			} else {
-
-				packet.port = (char)(core_id()+1);
-				safe_send_to_core(&packet);
-			
+				packet.port = 0;
+				*(sh_test+1) += 1;
 			}
+			safe_pkt_done_msg(&packet);
+
+			// if (packet.port<2){
+			// 	packet.data = (unsigned int *)(((unsigned int)packet.data)-2);
+			// 	*(unsigned short *)(packet.data) = (unsigned short)(packet.port);
+			// 	packet.len += 2;
+			// }
+			// 
+			// if (core_id()==15){
+
+			// 	if (*(unsigned short*)(packet.data)==0){
+			// 		packet.port = 1;
+			// 	} else {
+			// 		packet.port = 0;
+			// 	}
+			// 	packet.data = (unsigned int *)(((unsigned int)packet.data)+2);
+			// 	packet.len -= 2;
+			// 	safe_pkt_send(&packet);
+			// 
+			// } else {
+
+			// 	packet.port = (char)(core_id()+1);
+			// 	safe_send_to_core(&packet);
+			// 
+			// }
 
 			// safe_dram_write(0xAAAAAAAA, 0xBBBBBBBB, &packet);
 

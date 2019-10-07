@@ -339,64 +339,30 @@ module simple_scheduler # (
   wire [DESC_WIDTH-1:0]    ctrl_out_desc;
   wire ctrl_out_valid, ctrl_out_ready;
 
-  // reg last_selected; 
-  // reg ctrl_out_select;
+  reg last_selected; 
+  reg ctrl_out_select;
 
-  // always @ (posedge clk)
-  //   if (rst) 
-  //     last_selected <= 1'b0;
-  //   else if (ctrl_out_valid && ctrl_out_ready)
-  //     last_selected <= ctrl_out_select;
+  always @ (posedge clk) 
+    if (rst) 
+      last_selected <= 1'b0;
+    else if (ctrl_out_valid && ctrl_out_ready)
+      last_selected <= ctrl_out_select;
 
-  // always @ (*)
-  //   if (selected_pkt_to_core_valid && loopback_msg_ready &&  pkt_done_valid)
-  //     ctrl_out_select = ~last_selected;
-  //   else if (selected_pkt_to_core_valid && loopback_msg_ready)
-  //     ctrl_out_select = 1'b1;
-  //   else if (pkt_done_valid)
-  //     ctrl_out_select = 1'b0;
-  //   else 
-  //     ctrl_out_select = last_selected;
+  always @ (*)
+    if (selected_pkt_to_core_valid && loopback_msg_ready &&  pkt_done_valid)
+      ctrl_out_select = ~last_selected;
+    else if (selected_pkt_to_core_valid && loopback_msg_ready)
+      ctrl_out_select = 1'b1;
+    else if (pkt_done_valid)
+      ctrl_out_select = 1'b0;
+    else 
+      ctrl_out_select = last_selected;
 
-  // assign ctrl_out_valid = (selected_pkt_to_core_valid && loopback_msg_ready) || pkt_done_valid;
-  // assign ctrl_out_dest  = ctrl_out_select ? selected_pkt_to_core_src : pkt_done_src;
-  // assign ctrl_out_desc  = ctrl_out_select ? pkt_to_core_with_port    : pkt_done_desc;
-  // assign selected_pkt_to_core_ready = ctrl_out_select  && ctrl_out_ready;
-  // assign loopback_ready             = !ctrl_out_select && ctrl_out_ready;
-
-  axis_arb_mux #
-  (
-    .S_COUNT(2),
-    .DATA_WIDTH(CORE_ID_WIDTH+DESC_WIDTH),
-    .KEEP_ENABLE(0),
-    .DEST_ENABLE(0),
-    .USER_ENABLE(0),
-    .ARB_TYPE("ROUND_ROBIN")
-  ) ctrl_out_arbiter
-  (
-    .clk(clk),
-    .rst(rst),
-
-    .s_axis_tdata({selected_pkt_to_core_src, pkt_to_core_with_port,
-                   pkt_done_src,pkt_done_desc}),
-    .s_axis_tkeep(),
-    .s_axis_tvalid({(selected_pkt_to_core_valid && loopback_msg_ready)
-                    ,pkt_done_valid}),
-    .s_axis_tready({selected_pkt_to_core_ready, loopback_ready}),
-    .s_axis_tlast(2'b11),
-    .s_axis_tid(),
-    .s_axis_tdest(),
-    .s_axis_tuser(),
-
-    .m_axis_tdata({ctrl_out_dest,ctrl_out_desc}),
-    .m_axis_tkeep(),
-    .m_axis_tvalid(ctrl_out_valid),
-    .m_axis_tready(ctrl_out_ready),
-    .m_axis_tlast(),
-    .m_axis_tid(),
-    .m_axis_tdest(),
-    .m_axis_tuser()
-  );
+  assign ctrl_out_valid = (selected_pkt_to_core_valid && loopback_msg_ready) || pkt_done_valid;
+  assign ctrl_out_dest  = ctrl_out_select ? selected_pkt_to_core_src : pkt_done_src;
+  assign ctrl_out_desc  = ctrl_out_select ? pkt_to_core_with_port    : pkt_done_desc;
+  assign selected_pkt_to_core_ready = ctrl_out_select  && ctrl_out_ready;
+  assign loopback_ready             = !ctrl_out_select && ctrl_out_ready;
 
 // Core reset command
 if (AUTO_RESET) begin

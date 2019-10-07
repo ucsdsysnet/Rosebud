@@ -367,10 +367,7 @@ wire                           pcie_dma_write_desc_status_ready;
 reg                            pcie_dma_enable;
 reg [CORE_WIDTH+1-1:0]         pcie_core_reset;
 reg                            pcie_core_reset_valid;
-
-assign reset_valid = pcie_core_reset_valid;
-assign reset_value = pcie_core_reset[0];
-assign reset_dest  = pcie_core_reset[CORE_WIDTH:1];
+wire                           pcie_core_reset_ready;
 
 // DMA requests from Host
 reg  [PCIE_ADDR_WIDTH-1:0]     host_dma_read_desc_pcie_addr;
@@ -780,7 +777,7 @@ always @(posedge pcie_clk) begin
 
         host_dma_read_desc_valid         <= host_dma_read_desc_valid && !host_dma_read_desc_ready;
         host_dma_write_desc_valid        <= host_dma_write_desc_valid && !host_dma_read_desc_ready;
-        pcie_core_reset_valid            <= pcie_core_reset_valid && !reset_ready; 
+        pcie_core_reset_valid            <= pcie_core_reset_valid && !pcie_core_reset_ready; 
 
         if (axil_ctrl_awvalid && axil_ctrl_wvalid && !axil_ctrl_bvalid) begin
             // write operation
@@ -863,6 +860,23 @@ always @(posedge pcie_clk) begin
             pcie_cc_count_reg <= pcie_cc_count_reg + 1;
     end
 end
+
+simple_async_fifo # (
+  .DEPTH(3),
+  .DATA_WIDTH(CORE_WIDTH+1)
+) cores_reset_async_fifo (
+  .async_rst(sys_rst),
+
+  .din_clk(pcie_clk),
+  .din_valid(pcie_core_reset_valid),
+  .din(pcie_core_reset),
+  .din_ready(pcie_core_reset_ready),
+ 
+  .dout_clk(sys_clk),
+  .dout_valid(reset_valid),
+  .dout({reset_dest,reset_value}),
+  .dout_ready(reset_ready)
+);
 
 pcie_us_axil_master #(
     .AXIS_PCIE_DATA_WIDTH(AXIS_PCIE_DATA_WIDTH),

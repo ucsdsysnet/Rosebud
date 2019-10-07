@@ -115,8 +115,8 @@ def bench():
 
     SEND_COUNT_0 = 50
     SEND_COUNT_1 = 50
-    SIZE_0       = 150 - 18 
-    SIZE_1       = 149 - 18
+    SIZE_0       = 1500 - 18 
+    SIZE_1       = 1497 - 18
     CHECK_PKT    = True
     TEST_SFP     = True
     TEST_PCIE    = True
@@ -642,22 +642,7 @@ def bench():
           yield delay(100)
 
           yield pcie_clk.posedge
-          # print("test 2: memory write to bar 1")
 
-          # yield rc.mem_write(dev_pf0_bar1, b'\x11\x22\x33\x44')
-
-          # yield delay(100)
-
-          # yield pcie_clk.posedge
-          # print("test 3: memory read from bar 1")
-
-          # val = yield from rc.mem_read(dev_pf0_bar1, 4, 1000)
-          # print(val)
-          # assert val == b'\x11\x22\x33\x44'
-
-          # yield delay(100)
-
-          # yield pcie_clk.posedge
           print("test 4: test DMA")
 
           ins = bytearray(open("../../c_code/test_fast.bin", "rb").read())
@@ -667,7 +652,6 @@ def bench():
           mem_data[0:len(ins)] = ins
           mem_data[48059:48200] = bytearray([(x+10)%256 for x in range(141)])
 
-
           # enable DMA
           yield rc.mem_write(dev_pf0_bar0+0x100000, struct.pack('<L', 1))
           
@@ -675,15 +659,15 @@ def bench():
           for i in range (0,16):
               yield rc.mem_write(dev_pf0_bar0+0x100004, struct.pack('<L', ((i<<1)+1)))
               yield delay(20)
-              # write pcie read descriptor
-              yield rc.mem_write(dev_pf0_bar0+0x100100, struct.pack('<L', (mem_base+0x0000) & 0xffffffff))
-              yield rc.mem_write(dev_pf0_bar0+0x100104, struct.pack('<L', (mem_base+0x0000 >> 32) & 0xffffffff))
-              yield rc.mem_write(dev_pf0_bar0+0x100108, struct.pack('<L', ((i<<16)+0x8000) & 0xffffffff))
-              yield rc.mem_write(dev_pf0_bar0+0x10010C, struct.pack('<L', (((i<<16)+0x8000) >> 32) & 0xffffffff))
-              yield rc.mem_write(dev_pf0_bar0+0x100110, struct.pack('<L', 0x400))
-              yield rc.mem_write(dev_pf0_bar0+0x100114, struct.pack('<L', 0xAA))
+              # # write pcie read descriptor
+              # yield rc.mem_write(dev_pf0_bar0+0x100100, struct.pack('<L', (mem_base+0x0000) & 0xffffffff))
+              # yield rc.mem_write(dev_pf0_bar0+0x100104, struct.pack('<L', (mem_base+0x0000 >> 32) & 0xffffffff))
+              # yield rc.mem_write(dev_pf0_bar0+0x100108, struct.pack('<L', ((i<<16)+0x8000) & 0xffffffff))
+              # yield rc.mem_write(dev_pf0_bar0+0x10010C, struct.pack('<L', (((i<<16)+0x8000) >> 32) & 0xffffffff))
+              # yield rc.mem_write(dev_pf0_bar0+0x100110, struct.pack('<L', 0x400))
+              # yield rc.mem_write(dev_pf0_bar0+0x100114, struct.pack('<L', 0xAA))
 
-              yield delay(2000)
+              # yield delay(2000)
               yield rc.mem_write(dev_pf0_bar0+0x100004, struct.pack('<L', ((i<<1)+0)))
               yield delay(20)
           

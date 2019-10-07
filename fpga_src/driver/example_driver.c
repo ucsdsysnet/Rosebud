@@ -27,6 +27,7 @@ THE SOFTWARE.
 #include <linux/pci.h>
 #include <linux/pci-aspm.h>
 #include <linux/delay.h>
+#include "ins.c"
 
 MODULE_DESCRIPTION("verilog-pcie example driver");
 MODULE_AUTHOR("Alex Forencich");
@@ -168,13 +169,10 @@ static int edev_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
 
     // PCIe DMA test
     dev_info(dev, "write test data");
-    for (k = 0; k < 256; k++)
-    {
-        ((char *)edev->dma_region)[k] = k;
-    }
+    memcpy((char *)edev->dma_region,test_bin,test_bin_len);
 
     dev_info(dev, "read test data");
-    print_hex_dump(KERN_INFO, "", DUMP_PREFIX_NONE, 16, 1, edev->dma_region, 256, true);
+    print_hex_dump(KERN_INFO, "", DUMP_PREFIX_NONE, 16, 1, edev->dma_region, test_bin_len, true);
 
     dev_info(dev, "check DMA enable");
     dev_info(dev, "%08x", ioread32(edev->bar[0]+0x000000));
@@ -185,13 +183,29 @@ static int edev_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
     dev_info(dev, "check DMA enable");
     dev_info(dev, "%08x", ioread32(edev->bar[0]+0x000000));
 
-    dev_info(dev, "start copy to card");
+    dev_info(dev, "Init core instruction memories");
+    
+    // Write common values for PCIe address and MSB of internal address
     iowrite32((edev->dma_region_addr+0x0000)&0xffffffff, edev->bar[0]+0x000100);
     iowrite32(((edev->dma_region_addr+0x0000) >> 32)&0xffffffff, edev->bar[0]+0x000104);
-    iowrite32(0x100, edev->bar[0]+0x000108);
     iowrite32(0, edev->bar[0]+0x00010C);
-    iowrite32(0x100, edev->bar[0]+0x000110);
-    iowrite32(0xAA, edev->bar[0]+0x000114);
+
+    for (k=0; k<16; k++){
+    	dev_info(dev, "updating core %d instructions",k);
+    	iowrite32((k<<16)+1, edev->bar[0]+0x000004);
+    	msleep(10);
+    	iowrite32((k<<16)+0x8000, edev->bar[0]+0x000108);
+    	iowrite32(test_bin_len, edev->bar[0]+0x000110);
+    	iowrite32(1<<k, edev->bar[0]+0x000114);
+    	msleep(10);
+    	iowrite32((k<<16)+0, edev->bar[0]+0x000004);
+    	msleep(10);
+    }
+
+    dev_info(dev, "start copy to card");
+    iowrite32(0x50100, edev->bar[0]+0x000108);
+    iowrite32(256, edev->bar[0]+0x000110);
+    iowrite32(1<<17, edev->bar[0]+0x000114);
 
     msleep(1);
 
@@ -201,9 +215,9 @@ static int edev_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
     dev_info(dev, "start copy to host");
     iowrite32((edev->dma_region_addr+0x0200)&0xffffffff, edev->bar[0]+0x000200);
     iowrite32(((edev->dma_region_addr+0x0200) >> 32)&0xffffffff, edev->bar[0]+0x000204);
-    iowrite32(0x100, edev->bar[0]+0x000208);
+    iowrite32(0x50100, edev->bar[0]+0x000208);
     iowrite32(0, edev->bar[0]+0x00020C);
-    iowrite32(0x100, edev->bar[0]+0x000210);
+    iowrite32(256, edev->bar[0]+0x000210);
     iowrite32(0x55, edev->bar[0]+0x000214);
 
     msleep(1);
