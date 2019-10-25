@@ -157,7 +157,7 @@ parameter LOOPBACK_PORT    = INTERFACE_COUNT+1-1;
 parameter LVL1_SW_PORTS    = 4;
 parameter CORE_MSG_LVL1    = 16;
 parameter SEPARATE_CLOCKS  = 1;
-parameter ENABLE_ILA       = 0;
+parameter ENABLE_ILA       = 1;
 
 parameter CORE_WIDTH       = $clog2(CORE_COUNT);
 parameter PORT_WIDTH       = $clog2(PORT_COUNT);
@@ -209,9 +209,12 @@ generate
             .AXIS_DATA_WIDTH(LVL1_DATA_WIDTH),
             .ENABLE_PADDING(1),
             .ENABLE_DIC(1),
+            .MIN_FRAME_LENGTH(64),
             .TX_FIFO_DEPTH(TX_FIFO_DEPTH),
+            .TX_FRAME_FIFO(1),
             .TX_DROP_WHEN_FULL(0),
-            .RX_FIFO_DEPTH(RX_FIFO_DEPTH)
+            .RX_FIFO_DEPTH(RX_FIFO_DEPTH),
+            .RX_FRAME_FIFO(1)
         ) eth_mac
         (
             .rx_clk(sfp_rx_clk[l]),
@@ -317,6 +320,10 @@ wire [CORE_WIDTH-1:0]      reset_dest;
 wire                       reset_value;
 wire                       reset_valid;
 wire                       reset_ready;
+wire [CORE_COUNT-1:0]      income_cores;
+wire [CORE_COUNT-1:0]      cores_to_be_reset;
+wire [CORE_WIDTH-1:0]      core_for_slot_count;
+wire [SLOT_WIDTH-1:0]      slot_count;
 
 pcie_controller #
 (
@@ -325,6 +332,7 @@ pcie_controller #
   .AXIS_DATA_WIDTH(LVL1_DATA_WIDTH),
   .AXIS_KEEP_WIDTH(LVL1_STRB_WIDTH),
   .AXIS_TAG_WIDTH(ID_TAG_WIDTH),  
+  .CORE_SLOT_WIDTH(SLOT_WIDTH),
   .CORE_DESC_WIDTH(LVL1_DRAM_WIDTH),
   .CORE_COUNT(CORE_COUNT),        
   .CORE_ADDR_WIDTH(CORE_ADDR_WIDTH), 
@@ -406,7 +414,12 @@ pcie_controller #
   .reset_dest (reset_dest),
   .reset_value(reset_value),
   .reset_valid(reset_valid),
-  .reset_ready(reset_ready)
+  .reset_ready(reset_ready),
+
+  .income_cores       (income_cores),
+  .cores_to_be_reset  (cores_to_be_reset),
+  .core_for_slot_count(core_for_slot_count),
+  .slot_count         (slot_count)     
 );
 
 // no use for dram_tx_axis_tdest
@@ -531,7 +544,12 @@ simple_scheduler # (
   .reset_dest (reset_dest),
   .reset_value(reset_value),
   .reset_valid(reset_valid),
-  .reset_ready(reset_ready)
+  .reset_ready(reset_ready),
+
+  .income_cores       (income_cores),
+  .cores_to_be_reset  (cores_to_be_reset),
+  .core_for_slot_count(core_for_slot_count),
+  .slot_count         (slot_count)     
 );
 
 

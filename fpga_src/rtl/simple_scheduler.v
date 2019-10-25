@@ -76,7 +76,12 @@ module simple_scheduler # (
   input  wire [CORE_ID_WIDTH-1:0]            reset_dest,
   input  wire                                reset_value,
   input  wire                                reset_valid,
-  output wire                                reset_ready
+  output wire                                reset_ready,
+
+  input  wire [CORE_COUNT-1:0]               income_cores, 
+  input  wire [CORE_COUNT-1:0]               cores_to_be_reset,
+  input  wire [CORE_ID_WIDTH-1:0]            core_for_slot_count,
+  output wire [SLOT_WIDTH-1:0]               slot_count
 );
 
   parameter MSG_TYPE_WIDTH = 4;
@@ -98,7 +103,6 @@ module simple_scheduler # (
 
   wire loader_ready, loopback_ready;
   wire [CORE_COUNT-1:0]    rx_desc_slot_accept;
-  reg  [CORE_COUNT-1:0] core_under_reset;
 
   simple_fifo # (
     .ADDR_WIDTH(3),
@@ -114,7 +118,7 @@ module simple_scheduler # (
    
     .dout_valid(pkt_sent_valid),
     .dout({pkt_sent_src,pkt_sent_desc}),
-    .dout_ready(|(rx_desc_slot_accept & (1<<pkt_sent_src)))
+    .dout_ready(rx_desc_slot_accept[pkt_sent_src])
   );
 
   simple_fifo # (
@@ -133,7 +137,7 @@ module simple_scheduler # (
     .dout({pkt_done_src,pkt_done_desc}),
     .dout_ready(loopback_ready)
   );
- 
+
   genvar m;
   generate 
     for (m=0;m<CORE_COUNT;m=m+1) begin
@@ -144,7 +148,7 @@ module simple_scheduler # (
       ) pkt_to_core_fifo (
         .clk(clk),
         .rst(rst),
-        .clear(core_under_reset[m]),
+        .clear(1'b0),
       
         .din_valid(ctrl_s_axis_tvalid && (msg_type==2) && (dest_core==m)),
         .din({ctrl_s_axis_tuser, ctrl_s_axis_tdata[DESC_WIDTH-1:0]}), 
@@ -153,7 +157,7 @@ module simple_scheduler # (
         .dout_valid(pkt_to_core_valid[m]),
         .dout(pkt_to_core_req[m*(DESC_WIDTH+CORE_ID_WIDTH) +: 
                                 (DESC_WIDTH+CORE_ID_WIDTH)]),
-        .dout_ready(arb_to_core_ready[m] && rx_desc_slot_v[m])
+        .dout_ready(arb_to_core_ready[m] && rx_desc_slot_v[m] && !cores_to_be_reset[m])
       );
     end
   endgenerate
@@ -179,7 +183,7 @@ module simple_scheduler # (
   
     .s_axis_tdata(pkt_to_core_req), 
     .s_axis_tkeep(),
-    .s_axis_tvalid(pkt_to_core_valid & rx_desc_slot_v),
+    .s_axis_tvalid(pkt_to_core_valid & rx_desc_slot_v & ~cores_to_be_reset),
     .s_axis_tready(arb_to_core_ready),
     .s_axis_tlast({CORE_COUNT{1'b1}}),
     .s_axis_tid(),
@@ -229,6 +233,7 @@ module simple_scheduler # (
   
   wire [SLOT_WIDTH-1:0] pkt_sent_slot = pkt_sent_desc[16 +: SLOT_WIDTH]; 
   wire rx_desc_pop; // maybe used for error catching
+  wire max_valid;
 
   // TODO: Make this one bit flags and use PENC and DEC
   genvar i;
@@ -240,7 +245,7 @@ module simple_scheduler # (
       ) rx_desc_fifo (
         .clk(clk),
         .rst(rst),
-        .clear(desc_fifo_clear[i] || core_under_reset[i]), 
+        .clear(desc_fifo_clear[i]), 
       
         .din_valid(rx_desc_fifo_v[i]), 
         .din(loader_valid[i] ? loader_slot : pkt_sent_slot),
@@ -252,17 +257,20 @@ module simple_scheduler # (
         
         .item_count(rx_desc_count[i*SLOT_WIDTH +: SLOT_WIDTH])
       );
-      // If there is no data in any fifo max_finder would return 0, meaning first core is selected.
-      // but since rx_desc_v is zero (all fifoes are not-valid) this ready is not used
+
       assign rx_desc_fifo_v[i]      = (pkt_sent_valid && (pkt_sent_src==i) && (pkt_sent_slot!=0)) 
                                       || loader_valid[i];
       assign rx_desc_slot_pop[i]    = (rx_desc_pop && (selected_desc==i)) || 
-                                      (pkt_to_core_valid[i] && arb_to_core_ready[i]);
+                                      (pkt_to_core_valid[i] && arb_to_core_ready[i] && (~cores_to_be_reset[i]));
 
       assign rx_desc_slot_accept[i] = (rx_desc_slot_accept_temp[i] || (pkt_sent_slot==0)) && 
                                       (!busy_by_loader[i]);
     end
   endgenerate
+  
+  reg [$clog2(INTERFACE_COUNT)-1:0] dropped_count [0:CORE_COUNT-1];
+  assign slot_count = rx_desc_count[core_for_slot_count * SLOT_WIDTH +: SLOT_WIDTH] + 
+                      dropped_count[core_for_slot_count];
 
   // Assing looback port
   wire [CORE_ID_WIDTH-1:0] loopback_port;
@@ -320,7 +328,7 @@ module simple_scheduler # (
     .out_slot(loader_slot)
   );
 
-  assign busy_by_loader = loader_valid | desc_fifo_clear | reset_valid;
+  assign busy_by_loader = loader_valid | desc_fifo_clear;
 
   // Generating src,dest descriptor for loopback output port
   wire [SLOT_WIDTH-1:0]    selected_pkt_to_core_slot = selected_pkt_to_core_desc[16 +: SLOT_WIDTH]; 
@@ -349,7 +357,7 @@ module simple_scheduler # (
       last_selected <= ctrl_out_select;
 
   always @ (*)
-    if (selected_pkt_to_core_valid && loopback_msg_ready &&  pkt_done_valid)
+    if (selected_pkt_to_core_valid && loopback_msg_ready && pkt_done_valid)
       ctrl_out_select = ~last_selected;
     else if (selected_pkt_to_core_valid && loopback_msg_ready)
       ctrl_out_select = 1'b1;
@@ -365,14 +373,6 @@ module simple_scheduler # (
   assign loopback_ready             = !ctrl_out_select && ctrl_out_ready;
 
   // Core reset command
-  always @ (posedge clk)
-    if (rst)
-      core_under_reset <= {CORE_COUNT{1'b0}};
-    else if (reset_valid && reset_ready && reset_value)
-      core_under_reset[reset_dest]      <= 1'b1;
-    else if (reset_valid && reset_ready && !reset_value)
-      core_under_reset[reset_dest]      <= 1'b0;
-
   reg [CORE_ID_WIDTH:0] core_rst_counter;
   wire core_reset_in_prog = (core_rst_counter < CORE_COUNT);
   wire [CORE_ID_WIDTH:0] reordered_core_rst_counter;
@@ -405,22 +405,30 @@ module simple_scheduler # (
 
   // Selecting the core with most available slots
   // Since slots start from 1, SLOT WIDTH is already 1 bit extra
-  reg [CORE_COUNT*SLOT_WIDTH-1:0] reordered_rx_desc_count;
-  wire [CORE_ID_WIDTH-1:0] reordered_selected_desc;
+  reg  [CORE_COUNT*SLOT_WIDTH-1:0] reordered_rx_desc_count;
+  wire [CORE_ID_WIDTH-1:0]         reordered_selected_desc;
+  reg  [CORE_COUNT-1:0]            reordered_masks;
   integer k,l;
   always @ (*)
     for (k=0; k<LVL2_SW_PORTS; k=k+1)
-      for (l=0; l<LVL1_SW_PORTS; l=l+1)
+      for (l=0; l<LVL1_SW_PORTS; l=l+1) begin
         reordered_rx_desc_count[(k*LVL1_SW_PORTS+l)*SLOT_WIDTH +: SLOT_WIDTH] = 
                   rx_desc_count[(l*LVL2_SW_PORTS+k)*SLOT_WIDTH +: SLOT_WIDTH];
+        // Priority to inter core messages, and only income_cores are available for selection
+        reordered_masks [k*LVL1_SW_PORTS+l] = income_cores[l*LVL2_SW_PORTS+k] &&
+                                             !(pkt_to_core_valid[l*LVL2_SW_PORTS+k] &&
+                                               arb_to_core_ready[l*LVL2_SW_PORTS+k]);
+      end
 
   max_finder_tree # (
     .PORT_COUNT(CORE_COUNT),
     .DATA_WIDTH(SLOT_WIDTH)
   ) core_selector ( 
     .values(reordered_rx_desc_count),
+    .valids(reordered_masks),
     .max_val(),
-    .max_ptr(reordered_selected_desc)
+    .max_ptr(reordered_selected_desc),
+    .max_valid(max_valid)
   );
 
   if (LVL2_SW_PORTS==1)
@@ -440,20 +448,17 @@ module simple_scheduler # (
   wire selected_port_v;
   
   wire [ID_TAG_WIDTH-1:0] rx_desc_data; 
-  wire rx_desc_v; 
   
-  assign rx_desc_v          = | rx_desc_slot_v;
   assign rx_desc_data       = {selected_desc, {(TAG_WIDTH-SLOT_WIDTH){1'b0}}, 
                               rx_desc_slot[selected_desc*SLOT_WIDTH +: SLOT_WIDTH]};
  
   assign sending_last_word = rx_axis_tvalid & rx_axis_tlast & rx_axis_tready;
-  assign rx_desc_pop = selected_port_v && rx_desc_v && 
-                       !(|(pkt_to_core_valid & arb_to_core_ready & rx_desc_slot_v));
+  assign rx_desc_pop = selected_port_v && max_valid;
   // If one of the descriptors are not valid or a last word is being sent 
   // that means they need a new descriptor. If a descriptor is being assigned 
   // or there is no descriptors available the request would be masked.
   wire [INTERFACE_COUNT-1:0] desc_req = ((~dest_r_v)|sending_last_word) & 
-                                        {INTERFACE_COUNT{rx_desc_v}} & (~selected_port);
+                                        {INTERFACE_COUNT{max_valid}} & (~selected_port);
   
   arbiter # (.PORTS(INTERFACE_COUNT),.TYPE("ROUND_ROBIN")) port_selector (
     .clk(clk),
@@ -468,20 +473,47 @@ module simple_scheduler # (
     );
 
   integer n;
+  reg [CORE_COUNT-1:0] dropped [0:INTERFACE_COUNT-1];
+
   always @ (posedge clk) begin
+
     dest_r_v <= dest_r_v & (~sending_last_word);
     if (rx_desc_pop) begin
       dest_r_v[selected_port_enc] <= 1'b1;
       dest_r[selected_port_enc*ID_TAG_WIDTH +: ID_TAG_WIDTH] <= rx_desc_data;
     end
 
-    for (n=0; n<INTERFACE_COUNT; n=n+1)
-      if (reset_valid && reset_ready && (dest_r[(n*ID_TAG_WIDTH)+TAG_WIDTH +: CORE_ID_WIDTH] == reset_dest))
+    for (n=0; n<INTERFACE_COUNT; n=n+1) begin
+      // cores_to_be_reset or actual reset would flush dest_r
+      if (cores_to_be_reset[dest_r[(n*ID_TAG_WIDTH)+TAG_WIDTH +: CORE_ID_WIDTH]])
         dest_r_v[n] <= 1'b0;
 
-    if (rst)
-      dest_r_v <= {INTERFACE_COUNT{1'b0}};
+      if (reset_valid && reset_ready && (dest_r[(n*ID_TAG_WIDTH)+TAG_WIDTH +: CORE_ID_WIDTH] == reset_dest)) 
+        dest_r_v[n] <= 1'b0;
+
+      // If preparing for reset we remember if any desc was dropped, used for slots which were in controller before reset 
+      // Drop means it was valid, and not being used for a packet
+      if (cores_to_be_reset[dest_r[(n*ID_TAG_WIDTH)+TAG_WIDTH +: CORE_ID_WIDTH]] && dest_r_v[n] && !rx_axis_tvalid[n]) 
+        dropped[n][dest_r[(n*ID_TAG_WIDTH)+TAG_WIDTH +: CORE_ID_WIDTH]] <= 1'b1;
+      if (reset_valid && reset_ready) begin
+        dropped[n][reset_dest] <= 1'b0;
+      end
+
+      if (rst) begin
+        dest_r_v[n] <= 1'b0;
+        dropped[n]  <= {CORE_COUNT{1'b0}};
+      end
+    end
+      
   end
+
+  integer p,q;
+  always @(*)
+    for (q=0; q<CORE_COUNT; q=q+1) begin
+      dropped_count[q] = 0;
+      for (p=0; p<INTERFACE_COUNT; p=p+1)
+        dropped_count[q] = dropped_count[q] + dropped[p][q];
+    end
 
   genvar j;
   generate
@@ -547,21 +579,17 @@ if (ENABLE_ILA) begin
     .trig_in_ack(ack_2),
  
     .probe0 ({
-       // rx_axis_tkeep,
+       loopback_msg_dest,
+       loopback_msg_valid,
+       loopback_msg_ready,
        sending_last_word,
        data_m_axis_tdest,
-       ctrl_m_axis_tdata[31:0]
-       // rx_count_0,
-    }),
-    
-    .probe1 ({
-       ctrl_s_axis_tdata[31:0],
+       pkt_sent_valid, rst,
        data_m_axis_tuser,
        ctrl_m_axis_tdest,
        ctrl_s_axis_tuser,
        ctrl_m_axis_tvalid,
        ctrl_m_axis_tready,
-       ctrl_m_axis_tlast,
        ctrl_s_axis_tvalid,
        ctrl_s_axis_tready,
        ctrl_s_axis_tlast,
@@ -571,15 +599,24 @@ if (ENABLE_ILA) begin
        rx_axis_tready, 
        rx_axis_tlast
      }),
+    
+    .probe1 ({
+       ctrl_m_axis_tdata[31:0],
+       ctrl_s_axis_tdata[31:0]
+       // rx_axis_tkeep,
+       // rx_count_0,
+    }),
   
     .probe2 (rx_desc_count), 
 
     .probe3 ({rx_desc_fifo_v, rx_desc_slot_accept,
               rx_desc_slot_v, rx_desc_slot_pop})
 
-    // .probe2 (rx_axis_tdata[63:0]),
+    // .probe4 ({cores_to_be_reset, income_cores, 
+    //           loader_valid, desc_fifo_clear})
+    // .probe5 (rx_axis_tdata[63:0]),
 
-    // .probe3 (rx_axis_tdata[127:64])
+    // .probe6 (rx_axis_tdata[127:64])
   );
 
   // Updated signals, just disabled for saving BRAMs
@@ -599,7 +636,7 @@ if (ENABLE_ILA) begin
   //      data_s_axis_tvalid, 
   //      data_s_axis_tready, 
   //      data_s_axis_tlast,
-  //      rx_desc_v, 
+  //      max_valid, 
   //      rx_desc_pop
   //    }),
   // 

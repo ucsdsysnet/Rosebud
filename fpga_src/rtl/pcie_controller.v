@@ -42,6 +42,7 @@ module pcie_controller #
   parameter AXIS_DATA_WIDTH      = 128, 
   parameter AXIS_KEEP_WIDTH      = 16, 
   parameter AXIS_TAG_WIDTH       = 9, 
+  parameter CORE_SLOT_WIDTH      = 4,
   parameter CORE_DESC_WIDTH      = 128,
   parameter CORE_COUNT           = 16,
   parameter CORE_WIDTH           = $clog2(CORE_COUNT), 
@@ -126,7 +127,12 @@ module pcie_controller #
   output wire [CORE_WIDTH-1:0]           reset_dest,
   output wire                            reset_value,
   output wire                            reset_valid,
-  input  wire                            reset_ready
+  input  wire                            reset_ready,
+
+  output wire [CORE_COUNT-1:0]           income_cores, 
+  output wire [CORE_COUNT-1:0]           cores_to_be_reset,
+  output wire [CORE_WIDTH-1:0]           core_for_slot_count,
+  input  wire [CORE_SLOT_WIDTH-1:0]      slot_count
 );
 
 parameter PCIE_ADDR_WIDTH = 64;
@@ -368,6 +374,11 @@ reg                            pcie_dma_enable;
 reg [CORE_WIDTH+1-1:0]         pcie_core_reset;
 reg                            pcie_core_reset_valid;
 wire                           pcie_core_reset_ready;
+reg [CORE_COUNT-1:0]           income_cores_r;
+reg [CORE_COUNT-1:0]           income_cores_rr;
+reg [CORE_COUNT-1:0]           cores_to_be_reset_r;
+reg [CORE_WIDTH-1:0]           core_for_slot_count_r;
+wire [CORE_SLOT_WIDTH-1:0]     slot_count_r;
 
 // DMA requests from Host
 reg  [PCIE_ADDR_WIDTH-1:0]     host_dma_read_desc_pcie_addr;
@@ -759,6 +770,9 @@ always @(posedge pcie_clk) begin
         host_dma_read_status_tags  <= {HOST_DMA_TAG_WIDTH{1'b0}};
         host_dma_write_status_tags <= {HOST_DMA_TAG_WIDTH{1'b0}};
         pcie_dma_enable            <= 1'b0;
+        income_cores_r             <= {CORE_COUNT{1'b0}};
+        cores_to_be_reset_r        <= {CORE_COUNT{1'b0}};
+        core_for_slot_count_r      <= {CORE_WIDTH{1'b0}};
 
         pcie_rq_count_reg          <= 32'd0;
         pcie_rc_count_reg          <= 32'd0;
@@ -792,6 +806,9 @@ always @(posedge pcie_clk) begin
                     pcie_core_reset       <= axil_ctrl_wdata[CORE_WIDTH:0];
                     pcie_core_reset_valid <= 1'b1;
                 end
+                16'h0008: income_cores_r <= axil_ctrl_wdata[CORE_COUNT-1:0];
+                16'h000C: cores_to_be_reset_r <= axil_ctrl_wdata[CORE_COUNT-1:0];
+                16'h0010: core_for_slot_count_r <= axil_ctrl_wdata[CORE_WIDTH-1:0];
                 16'h0100: host_dma_read_desc_pcie_addr[31:0] <= axil_ctrl_wdata;
                 16'h0104: host_dma_read_desc_pcie_addr[63:32] <= axil_ctrl_wdata;
                 16'h0108: host_dma_read_desc_axi_addr[31:0] <= axil_ctrl_wdata;
@@ -820,6 +837,7 @@ always @(posedge pcie_clk) begin
 
             case ({axil_ctrl_araddr[15:2], 2'b00})
                 16'h0000: axil_ctrl_rdata <= pcie_dma_enable;
+                16'h0010: axil_ctrl_rdata <= slot_count_r;
                 16'h0118: axil_ctrl_rdata <= host_dma_read_status_tags;
                 16'h0218: axil_ctrl_rdata <= host_dma_write_status_tags;
                 16'h0400: axil_ctrl_rdata <= pcie_rq_count_reg;
@@ -876,6 +894,54 @@ simple_async_fifo # (
   .dout_valid(reset_valid),
   .dout({reset_dest,reset_value}),
   .dout_ready(reset_ready)
+);
+
+// A core to be reset cannot be an incoming core. 
+// Simplifies logic in controller. 
+always @ (posedge pcie_clk)
+  if (pcie_rst)
+    income_cores_rr <= {CORE_COUNT{1'b0}};
+  else
+    income_cores_rr <= income_cores_r & (~cores_to_be_reset_r);
+
+simple_sync_sig # (
+  .RST_VAL(1'b0),
+  .WIDTH(CORE_COUNT)
+) income_cores_syncer (
+  .dst_clk(sys_clk),
+  .dst_rst(sys_rst),
+  .in(income_cores_rr), 
+  .out(income_cores)
+);
+
+simple_sync_sig # (
+  .RST_VAL(1'b0),
+  .WIDTH(CORE_COUNT)
+) cores_to_be_reset_syncer (
+  .dst_clk(sys_clk),
+  .dst_rst(sys_rst),
+  .in(cores_to_be_reset_r),
+  .out(cores_to_be_reset)
+);
+
+simple_sync_sig # (
+  .RST_VAL(1'b0),
+  .WIDTH(CORE_WIDTH)
+) core_for_slot_count_syncer (
+  .dst_clk(sys_clk),
+  .dst_rst(sys_rst),
+  .in(core_for_slot_count_r),
+  .out(core_for_slot_count)
+);
+
+simple_sync_sig # (
+  .RST_VAL(1'b0),
+  .WIDTH(CORE_SLOT_WIDTH)
+) slot_count_syncer (
+  .dst_clk(pcie_clk),
+  .dst_rst(pcie_rst),
+  .in(slot_count),
+  .out(slot_count_r)
 );
 
 pcie_us_axil_master #(

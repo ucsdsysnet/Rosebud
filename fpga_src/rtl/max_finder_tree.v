@@ -4,22 +4,37 @@ module max_finder_tree # (
   parameter ADDR_WIDTH = $clog2(PORT_COUNT)
 ) ( 
   input  wire [PORT_COUNT*DATA_WIDTH-1:0] values,
+  input  wire [PORT_COUNT-1:0]            valids,
+
   output wire [DATA_WIDTH-1:0]            max_val,
-  output wire [ADDR_WIDTH-1:0]            max_ptr
+  output wire [ADDR_WIDTH-1:0]            max_ptr,
+  output wire                             max_valid
 );
 
 localparam CEIL_PORT_CNT = (2**$clog2(PORT_COUNT));
 localparam PADDING       = CEIL_PORT_CNT - PORT_COUNT;
+
+reg [PORT_COUNT*DATA_WIDTH-1:0] masked_values;
+integer i;
+
+always @ (*)
+  for (i=0; i< PORT_COUNT; i=i+1)
+    if (!valids[i])
+      masked_values [i*DATA_WIDTH +: DATA_WIDTH] = {DATA_WIDTH{1'b0}};
+    else
+      masked_values [i*DATA_WIDTH +: DATA_WIDTH] = values [i*DATA_WIDTH +: DATA_WIDTH];
 
 max_finder_tree_pow_of_2 # (
   .PORT_COUNT(CEIL_PORT_CNT),
   .DATA_WIDTH(DATA_WIDTH),
   .ADDR_WIDTH(ADDR_WIDTH)
 ) max_finder ( 
-  .values({{PADDING*DATA_WIDTH{1'b0}},values}),
+  .values({{PADDING*DATA_WIDTH{1'b0}},masked_values}),
   .max_val(max_val),
   .max_ptr(max_ptr)
 );
+
+assign max_valid = (masked_values != {PORT_COUNT*DATA_WIDTH{1'b0}});
 
 endmodule
 
