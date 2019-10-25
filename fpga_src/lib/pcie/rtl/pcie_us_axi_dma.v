@@ -36,9 +36,9 @@ module pcie_us_axi_dma #
     // PCIe AXI stream tkeep signal width (words per cycle)
     parameter AXIS_PCIE_KEEP_WIDTH = (AXIS_PCIE_DATA_WIDTH/32),
     // PCIe AXI stream RC tuser signal width
-    parameter AXIS_PCIE_RC_USER_WIDTH = 75,
+    parameter AXIS_PCIE_RC_USER_WIDTH = AXIS_PCIE_DATA_WIDTH < 512 ? 75 : 161,
     // PCIe AXI stream RQ tuser signal width
-    parameter AXIS_PCIE_RQ_USER_WIDTH = 60,
+    parameter AXIS_PCIE_RQ_USER_WIDTH = AXIS_PCIE_DATA_WIDTH < 512 ? 60 : 137,
     // Width of AXI data bus in bits
     parameter AXI_DATA_WIDTH = AXIS_PCIE_DATA_WIDTH,
     // Width of AXI address bus in bits
@@ -62,7 +62,9 @@ module pcie_us_axi_dma #
     // Length field width
     parameter LEN_WIDTH = 20,
     // Tag field width
-    parameter TAG_WIDTH = 8
+    parameter TAG_WIDTH = 8,
+    // Operation tag width
+    parameter OP_TAG_WIDTH = AXI_ID_WIDTH < PCIE_TAG_WIDTH ? AXI_ID_WIDTH : PCIE_TAG_WIDTH
 )
 (
     input  wire                               clk,
@@ -206,7 +208,8 @@ pcie_us_axi_dma_rd #(
     .PCIE_TAG_WIDTH(PCIE_TAG_WIDTH),
     .PCIE_EXT_TAG_ENABLE(PCIE_EXT_TAG_ENABLE),
     .LEN_WIDTH(LEN_WIDTH),
-    .TAG_WIDTH(TAG_WIDTH)
+    .TAG_WIDTH(TAG_WIDTH),
+    .OP_TAG_WIDTH(OP_TAG_WIDTH)
 )
 pcie_us_axi_dma_rd_inst (
     .clk(clk),
