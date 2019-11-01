@@ -471,11 +471,7 @@ wire                                       sched_ctrl_s_axis_tready;
 wire                                       sched_ctrl_s_axis_tlast;
 wire [CORE_WIDTH-1:0]                      sched_ctrl_s_axis_tuser;
 
-wire [ID_TAG_WIDTH-1:0]                    loopback_msg_src;
-wire [ID_TAG_WIDTH-1:0]                    loopback_msg_dest;
-wire                                       loopback_msg_valid;
-wire                                       loopback_msg_ready;
-
+wire sched_trig_in, sched_trig_out, sched_trig_in_ack, sched_trig_out_ack;
 simple_scheduler # (
   .PORT_COUNT(PORT_COUNT),
   .INTERFACE_COUNT(INTERFACE_COUNT),
@@ -534,12 +530,6 @@ simple_scheduler # (
   .ctrl_s_axis_tlast(sched_ctrl_s_axis_tlast),
   .ctrl_s_axis_tuser(sched_ctrl_s_axis_tuser),
   
-  // Descriptor for Loopback message FIFO among cores
-  .loopback_msg_src  (loopback_msg_src),
-  .loopback_msg_dest (loopback_msg_dest),
-  .loopback_msg_valid(loopback_msg_valid),
-  .loopback_msg_ready(loopback_msg_ready),
-
   // Cores reset
   .reset_dest (reset_dest),
   .reset_value(reset_value),
@@ -549,7 +539,12 @@ simple_scheduler # (
   .income_cores       (income_cores),
   .cores_to_be_reset  (cores_to_be_reset),
   .core_for_slot_count(core_for_slot_count),
-  .slot_count         (slot_count)     
+  .slot_count         (slot_count),
+
+  .trig_in     (sched_trig_in),
+  .trig_in_ack (sched_trig_in_ack),
+  .trig_out    (sched_trig_out),
+  .trig_out_ack(sched_trig_out_ack)
 );
 
 
@@ -580,12 +575,7 @@ loopback_msg_fifo # (
     .m_axis_tready(loopback_rx_axis_tready),
     .m_axis_tlast (loopback_rx_axis_tlast),
     .m_axis_tdest (loopback_rx_axis_tdest),
-    .m_axis_tuser (loopback_rx_axis_tuser),
- 
-    .msg_src  (loopback_msg_src), 
-    .msg_dest (loopback_msg_dest),
-    .msg_valid(loopback_msg_valid),
-    .msg_ready(loopback_msg_ready)
+    .m_axis_tuser (loopback_rx_axis_tuser)
 );
 
 // Switches
@@ -1644,8 +1634,9 @@ generate
 endgenerate
 
 // ILA
-if (ENABLE_ILA) begin
+if (ENABLE_ILA) begin  
   reg [63:0] data_s_slot;
+  reg [63:0] data_m_slot;
   reg [63:0] ctrl_m_msg_type;
   reg [63:0] ctrl_m_msg_slot;
   reg [63:0] ctrl_m_msg_port;
@@ -1653,64 +1644,113 @@ if (ENABLE_ILA) begin
   reg [63:0] ctrl_s_msg_slot;
   reg [63:0] ctrl_s_msg_port;
   integer k;
-  always @ (*)
+  always @ (posedge sys_clk)
     for (k=0; k<CORE_COUNT; k=k+1) begin
-      data_s_slot [k*SLOT_WIDTH +: SLOT_WIDTH] = data_s_axis_tdest[DATA_DEST_LVL2*k +: SLOT_WIDTH];
-      ctrl_m_msg_type [k*4+:4] = ctrl_m_axis_tdata [(k*LVL2_CTRL_WIDTH)+32 +:4];
-      ctrl_m_msg_slot [k*4+:4] = ctrl_m_axis_tdata [(k*LVL2_CTRL_WIDTH)+16 +:4];
-      ctrl_m_msg_port [k*4+:4] = ctrl_m_axis_tdata [(k*LVL2_CTRL_WIDTH)+24 +:4];
-      ctrl_s_msg_type [k*4+:4] = ctrl_s_axis_tdata [(k*LVL2_CTRL_WIDTH)+32 +:4];
-      ctrl_s_msg_slot [k*4+:4] = ctrl_s_axis_tdata [(k*LVL2_CTRL_WIDTH)+16 +:4];
-      ctrl_s_msg_port [k*4+:4] = ctrl_s_axis_tdata [(k*LVL2_CTRL_WIDTH)+24 +:4];
+      data_s_slot [k*SLOT_WIDTH +: SLOT_WIDTH] <= data_s_axis_tdest[DATA_DEST_LVL2*k +: SLOT_WIDTH];
+      data_m_slot [k*SLOT_WIDTH +: SLOT_WIDTH] <= data_m_axis_tuser[ID_TAG_WIDTH*k +: SLOT_WIDTH];
+      ctrl_m_msg_type [k*4+:4] <= ctrl_m_axis_tdata [(k*LVL2_CTRL_WIDTH)+32 +:4];
+      ctrl_m_msg_slot [k*4+:4] <= ctrl_m_axis_tdata [(k*LVL2_CTRL_WIDTH)+16 +:4];
+      ctrl_m_msg_port [k*4+:4] <= ctrl_m_axis_tdata [(k*LVL2_CTRL_WIDTH)+24 +:4];
+      ctrl_s_msg_type [k*4+:4] <= ctrl_s_axis_tdata [(k*LVL2_CTRL_WIDTH)+32 +:4];
+      ctrl_s_msg_slot [k*4+:4] <= ctrl_s_axis_tdata [(k*LVL2_CTRL_WIDTH)+16 +:4];
+      ctrl_s_msg_port [k*4+:4] <= ctrl_s_axis_tdata [(k*LVL2_CTRL_WIDTH)+24 +:4];
     end
 
+  reg [63:0] data_m_16_31_2nds;
+  reg [63:0] data_m_lsb_third_4;
+  reg [63:0] data_s_16_31_2nds;
+  reg [63:0] data_s_lsb_third_4;
+  integer l;
+
+  always @ (posedge sys_clk)
+    for (l=0; l<4; l=l+1) begin
+      data_m_16_31_2nds [l*16+:16] <= data_m_axis_tdata [(((l*4)+1)*LVL2_DATA_WIDTH)+16 +:16];
+      data_s_16_31_2nds [l*16+:16] <= data_s_axis_tdata [(((l*4)+1)*LVL2_DATA_WIDTH)+16 +:16];
+
+      data_m_lsb_third_4 [l*16+:16] <= data_m_axis_tdata [((8+l)*LVL2_DATA_WIDTH)+16 +:16];
+      data_s_lsb_third_4 [l*16+:16] <= data_s_axis_tdata [((8+l)*LVL2_DATA_WIDTH)+16 +:16];
+    end
+      
+reg [CORE_COUNT-1:0] data_m_axis_tvalid_r;
+reg [CORE_COUNT-1:0] data_m_axis_tready_r;
+reg [CORE_COUNT-1:0] data_m_axis_tlast_r;
+reg [CORE_COUNT-1:0] data_s_axis_tvalid_r;
+reg [CORE_COUNT-1:0] data_s_axis_tready_r;
+reg [CORE_COUNT-1:0] data_s_axis_tlast_r;
+reg [CORE_COUNT-1:0] ctrl_s_axis_tvalid_r;
+reg [CORE_COUNT-1:0] ctrl_s_axis_tready_r;
+reg [CORE_COUNT-1:0] ctrl_m_axis_tvalid_r;
+reg [CORE_COUNT-1:0] ctrl_m_axis_tready_r;
+
+reg [CORE_COUNT*PORT_WIDTH-1:0] data_m_axis_tdest_r;
+reg [CORE_COUNT*PORT_WIDTH-1:0] data_s_axis_tuser_r;
+
+always @ (posedge sys_clk) begin
+  data_m_axis_tvalid_r <= data_m_axis_tvalid;
+  data_m_axis_tready_r <= data_m_axis_tready;
+  data_m_axis_tdest_r  <= data_m_axis_tdest;
+  data_m_axis_tlast_r  <= data_m_axis_tlast;
+  data_s_axis_tvalid_r <= data_s_axis_tvalid;
+  data_s_axis_tready_r <= data_s_axis_tready;
+  data_s_axis_tuser_r  <= data_s_axis_tuser;
+  data_s_axis_tlast_r  <= data_s_axis_tlast;
+  ctrl_s_axis_tvalid_r <= ctrl_s_axis_tvalid;
+  ctrl_s_axis_tready_r <= ctrl_s_axis_tready;
+  ctrl_m_axis_tvalid_r <= ctrl_m_axis_tvalid;
+  ctrl_m_axis_tready_r <= ctrl_m_axis_tready;
+end
+
+  // wire trig, trig_ack;
+  // wire trig2, trig_ack2;
+
   // Updated signals, just disabled for BRAM utilization
-  // ila_4x64 debugger3 (
-  //   .clk    (sys_clk),
- 
-  //   .trig_out(),
-  //   .trig_out_ack(1'b0),
-  //   .trig_in (1'b0),
-  //   .trig_in_ack(),
- 
-  //   .probe0 ({
-  //     data_s_axis_tvalid,
-  //     data_s_axis_tready,
-  //     data_m_axis_tdest
-  //   }),
-
-  //   .probe1 ({
-  //     data_m_axis_tvalid,
-  //     data_m_axis_tready,
-  //     data_m_axis_tlast,
-  //     data_s_axis_tlast
-  //   }),
-  //       
-  //   .probe2 (data_s_slot),
-  //   .probe3 (data_s_axis_tuser)
-
-  // );
-
-  ila_8x64 debugger4 (
+  ila_8x64 debugger3 (
     .clk    (sys_clk),
  
-    .trig_out(),
-    .trig_out_ack(1'b0),
-    .trig_in (1'b0),
-    .trig_in_ack(),
+    .trig_out(sched_trig_in),
+    .trig_out_ack(sched_trig_in_ack),
+    .trig_in (sched_trig_out),
+    .trig_in_ack(sched_trig_out_ack),
  
-    .probe0({ctrl_s_axis_tvalid, ctrl_s_axis_tready, 
-            ctrl_s_axis_tlast}),
-    .probe1(ctrl_s_msg_type),
-    .probe2(ctrl_s_msg_slot),
-    .probe3(ctrl_s_msg_port),
-    
-    .probe4({ctrl_m_axis_tvalid, ctrl_m_axis_tready, 
-            ctrl_m_axis_tlast}),
-    .probe5(ctrl_m_msg_type),
-    .probe6(ctrl_m_msg_slot),
-    .probe7(ctrl_m_msg_port)
+    .probe0({
+      data_s_axis_tvalid_r,
+      data_s_axis_tready_r,
+      ctrl_s_axis_tvalid_r, 
+      ctrl_s_axis_tready_r}),
+
+    .probe1(data_s_slot),
+    .probe2({data_s_axis_tuser_r,
+             data_s_axis_tlast_r}),
+
+    .probe3(data_s_16_31_2nds),
+    .probe4({data_m_axis_tvalid_r,
+             data_m_axis_tready_r,
+             ctrl_m_axis_tvalid_r, 
+             ctrl_m_axis_tready_r}),
+    .probe5(data_m_slot),
+    .probe6({data_m_axis_tdest_r,
+             data_m_axis_tlast_r}),
+    .probe7(data_m_16_31_2nds)
+
   );
+
+  // ila_8x64 debugger4 (
+  //   .clk    (sys_clk),
+ 
+  //   .trig_out(trig2),
+  //   .trig_out_ack(trig_ack2),
+  //   .trig_in (trig),
+  //   .trig_in_ack(trig_ack),
+ 
+  //   .probe0(data_mslsb_third_4),
+  //   .probe1(ctrl_s_msg_type),
+  //   .probe2(ctrl_s_msg_slot),
+  //   .probe3(ctrl_s_msg_port),
+  //   .probe4(data_m_lsb_third_4),
+  //   .probe5(ctrl_m_msg_type),
+  //   .probe6(ctrl_m_msg_slot),
+  //   .probe7(ctrl_m_msg_port)
+  // );
 
 end
 

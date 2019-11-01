@@ -274,6 +274,9 @@ wire [127:0] dram_wr_desc;
 wire         dram_wr_valid;
 wire         dram_wr_ready;
 
+wire ctrl_in_valid, ctrl_in_ready;
+wire [ID_TAG_WIDTH+64:0] ctrl_in_desc;
+
 always @ (posedge sys_clk)
   if (sys_rst)
     m_axis_header_allowed_r <= 1'b1;
@@ -286,14 +289,17 @@ always @ (posedge sys_clk)
     end
 
 always @ (posedge sys_clk) 
-  if (dram_wr_valid && dram_wr_ready) 
+  if (dram_wr_valid && dram_wr_ready)
     m_axis_dram_addr_r <= dram_wr_desc[127:64];
+  else if (ctrl_in_valid && ctrl_in_desc[64+ID_TAG_WIDTH] && ctrl_in_ready)
+    m_axis_dram_addr_r <= {{(64-ID_TAG_WIDTH){1'b0}},ctrl_in_desc[63+ID_TAG_WIDTH:64]};
 
 // Can get 1 cycle more efficient while output DMA is getting initialized 
 always @ (posedge sys_clk)
   if (sys_rst)
     m_axis_dram_v <= 1'b0;
-  else if (dram_wr_valid && dram_wr_ready) 
+  else if ((dram_wr_valid && dram_wr_ready)||
+           (ctrl_in_valid && ctrl_in_desc[64+ID_TAG_WIDTH] && ctrl_in_ready))
     m_axis_dram_v <= 1'b1;
   else if (m_axis_tvalid && data_m_axis_tready && m_axis_header_allowed_r)
     m_axis_dram_v <= 1'b0;
@@ -603,11 +609,14 @@ end
 
 // A register to look up the send adddress based on slot
 reg  [ADDR_WIDTH-1:0] send_slot_addr [0:SLOT_COUNT-1];
+reg  [LEN_WIDTH-1:0]  send_slot_len  [0:SLOT_COUNT-1];
 wire [SLOT_PTR_WIDTH-1:0] ctrl_out_slot_ptr = core_ctrl_wr_desc_f[LEN_WIDTH +: SLOT_WIDTH]
                                               -{{(SLOT_WIDTH-1){1'b0}},1'b1};
 always @ (posedge sys_clk)
-  if (core_ctrl_wr_valid_f && core_ctrl_wr_ready_f)
+  if (core_ctrl_wr_valid_f && core_ctrl_wr_ready_f) begin
     send_slot_addr [ctrl_out_slot_ptr] <= core_ctrl_wr_desc_f[32+:ADDR_WIDTH];
+    send_slot_len  [ctrl_out_slot_ptr] <= core_ctrl_wr_desc_f[LEN_WIDTH-1:0];
+  end
 
 // A FIFO for dram write requests
 wire core_dram_wr_ready;
@@ -705,12 +714,12 @@ assign data_send_ready = (core_data_wr_ready && core_data_wr) ||
 /////////////////////////////////////////////////////////////////////
 
 
-reg  [31:0] ctrl_s_axis_tdata_r;
+reg  [35:0] ctrl_s_axis_tdata_r;
 reg         ctrl_s_axis_tvalid_r;
 reg  [SLOT_PTR_WIDTH-1:0] ctrl_in_slot_ptr;
 always @ (posedge sys_clk) begin
   if (ctrl_s_axis_tvalid && ctrl_s_axis_tready) begin
-    ctrl_s_axis_tdata_r  <= ctrl_s_axis_tdata[31:0];
+    ctrl_s_axis_tdata_r  <= ctrl_s_axis_tdata;
     ctrl_in_slot_ptr     <= ctrl_s_axis_tdata[16+:SLOT_WIDTH]
                             - {{(SLOT_WIDTH-1){1'b0}},1'b1};
   end 
@@ -721,23 +730,28 @@ always @ (posedge sys_clk) begin
     ctrl_s_axis_tvalid_r <= 1'b0;
 end
   
-wire [ADDR_WIDTH-1:0] ctrl_send_addr = send_slot_addr[ctrl_in_slot_ptr];
+wire [ADDR_WIDTH-1:0] ctrl_send_addr   = send_slot_addr[ctrl_in_slot_ptr];
+wire [ADDR_WIDTH-1:0] ctrl_lp_send_len = send_slot_len [ctrl_in_slot_ptr];
+wire [3:0]            ctrl_msg_type    = ctrl_s_axis_tdata_r[35:32];
 wire ctrl_s_axis_fifo_ready;
 
+wire [ID_TAG_WIDTH+64:0] parsed_ctrl_desc = (ctrl_msg_type==4'd1) ? 
+              {1'b1,ctrl_s_axis_tdata_r[ID_TAG_WIDTH-1:0],{(32-ADDR_WIDTH){1'b0}}, ctrl_send_addr,
+               ctrl_s_axis_tdata_r[31:16], {(16-LEN_WIDTH){1'b0}}, ctrl_lp_send_len} : 
+              {1'b0,{(ID_TAG_WIDTH+32-ADDR_WIDTH){1'b0}}, ctrl_send_addr,ctrl_s_axis_tdata_r[31:0]};
+
 // A desc FIFO for send data based on scheduler message
-wire ctrl_in_valid, ctrl_in_ready;
-wire [63:0] ctrl_in_desc;
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(RECV_DESC_DEPTH)),
-  .DATA_WIDTH(64)
+  .DATA_WIDTH(64+ID_TAG_WIDTH+1)
 ) recvd_ctrl_fifo (
   .clk(sys_clk),
   .rst(sys_rst),
   .clear(1'b0),
 
   .din_valid(ctrl_s_axis_tvalid_r),
-  .din({{(32-ADDR_WIDTH){1'b0}},ctrl_send_addr,ctrl_s_axis_tdata_r}),
+  .din(parsed_ctrl_desc), 
   .din_ready(ctrl_s_axis_tready),
  
   .dout_valid(ctrl_in_valid),
@@ -861,7 +875,7 @@ wire send_pkt_valid, send_pkt_ready;
 
 wire   data_select          = ctrl_in_valid;
 assign send_pkt_valid       = ctrl_in_valid || core_data_wr_valid_f;
-assign send_pkt_desc        = data_select ? ctrl_in_desc : core_data_wr_desc_f;
+assign send_pkt_desc        = data_select ? ctrl_in_desc[63:0] : core_data_wr_desc_f;
 assign core_data_wr_ready_f = send_pkt_ready && (!data_select);
 assign ctrl_in_ready        = send_pkt_ready &&   data_select ;
 

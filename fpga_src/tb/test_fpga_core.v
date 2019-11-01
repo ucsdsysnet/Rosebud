@@ -345,11 +345,6 @@ wire [3:0] ctrl_s_dest_core = UUT.scheduler.ctrl_s_axis_tdata[27:24];
 wire [3:0] ctrl_s_src_slot  = UUT.scheduler.ctrl_s_axis_tdata[19:16];
 wire [3:0] ctrl_s_src_core  = UUT.scheduler.ctrl_s_axis_tuser;
 
-wire [3:0] lp_src_core      =  UUT.scheduler.loopback_msg_src[8:5];
-wire [3:0] lp_src_slot      =  UUT.scheduler.loopback_msg_src[3:0];
-wire [3:0] lp_dest_core     =  UUT.scheduler.loopback_msg_dest[8:5];
-wire [3:0] lp_dest_slot     =  UUT.scheduler.loopback_msg_dest[3:0];
-
 always @ (posedge UUT.scheduler.clk) begin
   if (UUT.scheduler.ctrl_s_axis_tvalid && UUT.scheduler.ctrl_s_axis_tready)
     case (ctrl_s_type)
@@ -360,8 +355,6 @@ always @ (posedge UUT.scheduler.clk) begin
     endcase
   if (UUT.scheduler.ctrl_m_axis_tvalid && UUT.scheduler.ctrl_m_axis_tready)
     $fwrite(f,"%t sent msg to   %x : 0x%x\n",$time, UUT.scheduler.ctrl_m_axis_tdest, UUT.scheduler.ctrl_m_axis_tdata);
-  if (UUT.scheduler.loopback_msg_valid && UUT.scheduler.loopback_msg_ready)
-    $fwrite(f,"%t assigned %x,%x -> %x,%x\n",$time, lp_src_core, lp_src_slot, lp_dest_core, lp_dest_slot);
 end
 
 endmodule
