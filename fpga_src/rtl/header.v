@@ -90,7 +90,8 @@ module header_adder # (
   assign m_axis_tuser = (state==HDR) ? s_axis_tuser : s_axis_tuser_r;
   assign m_axis_tlast = (state==LST) | (!strb_left && s_axis_tlast);
   
-  assign s_axis_tready = (state==HDR) ? (m_axis_tready && header_valid) : m_axis_tready;
+  assign s_axis_tready = (state==HDR) ? (m_axis_tready && header_valid) : 
+                         (state==MID) ? m_axis_tready : 1'b0;
   // Accepting header only on the first word
   assign header_ready  = (state==HDR) && s_axis_tvalid && m_axis_tready; 
                       
@@ -192,7 +193,7 @@ module header_remover # (
 
   assign m_axis_tlast  = (state==LST) | ((state==HDR) && s_axis_tlast) | (!strb_left && s_axis_tlast);
   
-  assign s_axis_tready = (state==HDR) | m_axis_tready;
+  assign s_axis_tready = (state==HDR) | (m_axis_tready&&(state!=LST));
 
 endmodule
 

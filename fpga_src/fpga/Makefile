@@ -13,6 +13,7 @@ SYN_FILES += rtl/riscvcore.v
 SYN_FILES += rtl/VexRiscv.v
 SYN_FILES += rtl/core_mems.v
 SYN_FILES += rtl/slot_fifo_loader.v
+SYN_FILES += rtl/slot_keeper.v
 SYN_FILES += rtl/simple_fifo.v
 SYN_FILES += rtl/simple_scheduler.v
 SYN_FILES += rtl/max_finder_tree.v

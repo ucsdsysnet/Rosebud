@@ -45,6 +45,7 @@ srcs.append("../ip/ila_4x64_stub.v")
 srcs.append("../rtl/simple_fifo.v")
 srcs.append("../rtl/max_finder_tree.v")
 srcs.append("../rtl/slot_fifo_loader.v")
+srcs.append("../rtl/slot_keeper.v")
 srcs.append("../rtl/core_mems.v")
 srcs.append("../rtl/axis_dma.v")
 srcs.append("../rtl/VexRiscv.v")
@@ -113,8 +114,8 @@ def bench():
     CTRL_WIDTH = (DATA_WIDTH/8)
     AXI_ADDR_WIDTH = 16
 
-    SEND_COUNT_0 = 150
-    SEND_COUNT_1 = 150
+    SEND_COUNT_0 = 100
+    SEND_COUNT_1 = 100
     SIZE_0       = 1500 - 18 
     SIZE_1       = 1500 - 18
     CHECK_PKT    = True
@@ -664,7 +665,7 @@ def bench():
             yield delay(20)
         
         yield rc.mem_write(dev_pf0_bar0+0x00000C, struct.pack('<L', 0x0000))
-        yield rc.mem_write(dev_pf0_bar0+0x000008, struct.pack('<L', 0x000f))
+        yield rc.mem_write(dev_pf0_bar0+0x000008, struct.pack('<L', 0x0f00))
         
         if (TEST_PCIE):
           print("PCIE tests")

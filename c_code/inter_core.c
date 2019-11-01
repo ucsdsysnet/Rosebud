@@ -7,7 +7,8 @@ int main(void){
 	struct Desc packet;
 	unsigned int start_time, end_time;
 	int offset = 0; 
-	
+	int id=core_id();
+
 	write_timer_interval(0x00000200);
 	set_masks(0x1F); //enable just errors
 
@@ -25,7 +26,7 @@ int main(void){
 				*(unsigned short *)(packet.data) = (unsigned short)(packet.port);
 				*((unsigned short *)(packet.data)+1) = 1;
 				packet.len += 4;
-				packet.port = (char)(core_id()+4); // there are 16 cores, system would cut overflow
+				packet.port = (char)(id+4); 
 				safe_send_to_core(&packet);
 			}
 			else {
@@ -40,7 +41,7 @@ int main(void){
 					packet.len -= 4;
 					safe_pkt_send(&packet);
 				} else {
-					packet.port = (char)(core_id()+4); // there are 16 cores, system would cut overflow
+					packet.port = (char)(id+4);
 					safe_send_to_core(&packet);
 				}
 			}
