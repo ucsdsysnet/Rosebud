@@ -13,6 +13,7 @@ module riscvcore #(
 )(
     input                        clk,
     input                        rst,
+    input                        timer_rst,
     
     output                       ext_dmem_en,
     output                       ext_dmem_ren,
@@ -118,7 +119,7 @@ localparam DRAM_FLAG_RST  = 7'b0111010;//;
 localparam SLOT_LUT_STRB  = 7'b0111011;//;
 localparam MASK_WR        = 7'b0111100;//;
 localparam INTERRUPT_ACK  = 7'b0111101;//;
-localparam RESET_TIMER    = 7'b0111110;//;
+// localparam RESERVED_1  = 7'b0111110;//;
 // localparam RESERVED_1  = 7'b0111111;//;
 
 localparam IO_BYTE_ACCESS = 4'b0111;//??;
@@ -140,7 +141,6 @@ wire dram_flag_rst  = io_write && (dmem_addr[6:0]==DRAM_FLAG_RST);
 wire slot_wen       = io_write && (dmem_addr[6:0]==SLOT_LUT_STRB);
 wire mask_write     = io_write && (dmem_addr[6:0]==MASK_WR);
 wire interrupt_ack  = io_write && (dmem_addr[6:0]==INTERRUPT_ACK);
-wire reset_timer    = io_write && (dmem_addr[6:0]==RESET_TIMER);
 
 reg [63:0] dram_wr_addr_r;
 reg [31:0] timer_step_r;
@@ -289,7 +289,7 @@ assign in_desc_taken = rd_desc_done && strb_asserted;
 //////////////////////// INTERNAL 32-BIT TIMER ////////////////////////////
 ///////////////////////////////////////////////////////////////////////////
 always @ (posedge clk)
-  if (rst || reset_timer)
+  if (timer_rst)
     internal_timer <= 64'd0;
   else
     internal_timer <= internal_timer + 64'd1;

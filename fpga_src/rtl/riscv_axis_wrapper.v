@@ -111,6 +111,7 @@ assign dram_m_axis_tuser = CORE_ID;
 /////////////////////////////////////////////////////////////////////
 wire reset_cmd = ctrl_s_axis_tvalid && (&ctrl_s_axis_tdata[35:32]);
 reg  core_reset_r = 1'b1;
+wire timer_rst;
 
 always @ (posedge sys_clk)
     if (sys_rst) 
@@ -121,6 +122,7 @@ always @ (posedge sys_clk)
 wire core_reset;
 if (!SEPARATE_CLOCKS) begin
   assign core_reset = core_reset_r;
+  assign timer_rst  = sys_rst;
 
 end else begin
   
@@ -129,6 +131,13 @@ end else begin
     .dst_rst(core_rst),
     .in(core_reset_r),
     .out(core_reset)
+  );
+  
+  simple_sync_sig #(.RST_VAL(1'b1)) timer_reset_sync (
+    .dst_clk(core_clk),
+    .dst_rst(core_rst),
+    .in(sys_rst),
+    .out(timer_rst)
   );
 
 end
@@ -266,9 +275,9 @@ wire                  m_axis_tlast;
 wire [PORT_WIDTH-1:0] m_axis_tdest;
 wire [TAG_WIDTH-1:0]  m_axis_tuser;
 
-reg  [63:0]  m_axis_dram_addr_r;
-reg          m_axis_header_allowed_r;
-reg          m_axis_dram_v;
+reg  [63:0]  m_header_r;
+reg          m_header_allowed_r;
+reg          m_header_v;
 
 wire [127:0] dram_wr_desc; 
 wire         dram_wr_valid;
@@ -279,34 +288,34 @@ wire [ID_TAG_WIDTH+64:0] ctrl_in_desc;
 
 always @ (posedge sys_clk)
   if (sys_rst)
-    m_axis_header_allowed_r <= 1'b1;
+    m_header_allowed_r <= 1'b1;
   else
     if (m_axis_tvalid && m_axis_tready) begin
       if (m_axis_tlast)
-        m_axis_header_allowed_r <= 1'b1;
+        m_header_allowed_r <= 1'b1;
       else
-        m_axis_header_allowed_r <= 1'b0;
+        m_header_allowed_r <= 1'b0;
     end
 
 always @ (posedge sys_clk) 
   if (dram_wr_valid && dram_wr_ready)
-    m_axis_dram_addr_r <= dram_wr_desc[127:64];
+    m_header_r <= dram_wr_desc[127:64];
   else if (ctrl_in_valid && ctrl_in_desc[64+ID_TAG_WIDTH] && ctrl_in_ready)
-    m_axis_dram_addr_r <= {{(64-ID_TAG_WIDTH){1'b0}},ctrl_in_desc[63+ID_TAG_WIDTH:64]};
+    m_header_r <= {{(64-ID_TAG_WIDTH){1'b0}},ctrl_in_desc[63+ID_TAG_WIDTH:64]};
 
 // Can get 1 cycle more efficient while output DMA is getting initialized 
 always @ (posedge sys_clk)
   if (sys_rst)
-    m_axis_dram_v <= 1'b0;
+    m_header_v <= 1'b0;
   else if ((dram_wr_valid && dram_wr_ready)||
            (ctrl_in_valid && ctrl_in_desc[64+ID_TAG_WIDTH] && ctrl_in_ready))
-    m_axis_dram_v <= 1'b1;
-  else if (m_axis_tvalid && data_m_axis_tready && m_axis_header_allowed_r)
-    m_axis_dram_v <= 1'b0;
+    m_header_v <= 1'b1;
+  else if (m_axis_tvalid && data_m_axis_tready && m_header_allowed_r)
+    m_header_v <= 1'b0;
 
-wire dram_addr_send = m_axis_tvalid && m_axis_header_allowed_r && m_axis_dram_v;
+wire dram_addr_send = m_axis_tvalid && m_header_allowed_r && m_header_v;
 
-assign data_m_axis_tdata = dram_addr_send ? m_axis_dram_addr_r : m_axis_tdata;
+assign data_m_axis_tdata = dram_addr_send ? m_header_r : m_axis_tdata;
 assign data_m_axis_tkeep = dram_addr_send ? {STRB_WIDTH{1'b1}} : m_axis_tkeep;
 assign data_m_axis_tlast = dram_addr_send ? 1'b0               : m_axis_tlast;
 assign data_m_axis_tdest = m_axis_tdest;
@@ -431,7 +440,7 @@ if (!SEPARATE_CLOCKS) begin
   ) recvd_data_fifo (
     .clk(sys_clk),
     .rst(sys_rst),
-    .clear(1'b0),
+    .clear(core_reset_r),
   
     .din_valid(recv_desc_valid && (!recv_from_dram) && (!recv_tag_zero)),
     .din(recv_desc),
@@ -447,7 +456,7 @@ end else begin
     .DEPTH(RECV_DESC_DEPTH),
     .DATA_WIDTH(64)
   ) recvd_data_fifo (
-    .async_rst(sys_rst),
+    .async_rst(sys_rst || core_reset_r),
   
     .din_clk(sys_clk),
     .din_valid(recv_desc_valid && (!recv_from_dram) && (!recv_tag_zero)),
@@ -536,7 +545,7 @@ if (!SEPARATE_CLOCKS) begin
   ) send_data_fifo (
     .clk(sys_clk),
     .rst(sys_rst),
-    .clear(1'b0),
+    .clear(core_reset_r),
   
     .din_valid(data_send_valid && core_data_wr),
     .din(data_send_desc),
@@ -551,7 +560,7 @@ end else begin
     .DEPTH(SEND_DESC_DEPTH),
     .DATA_WIDTH(64)
   ) send_data_fifo (
-    .async_rst(sys_rst),
+    .async_rst(sys_rst || core_reset_r),
   
     .din_clk(core_clk),
     .din_valid(data_send_valid && core_data_wr),
@@ -578,7 +587,7 @@ if (!SEPARATE_CLOCKS) begin
   ) send_ctrl_fifo (
     .clk(sys_clk),
     .rst(sys_rst),
-    .clear(1'b0),
+    .clear(core_reset_r),
   
     .din_valid(data_send_valid && core_ctrl_wr),
     .din(data_send_desc),
@@ -593,7 +602,7 @@ end else begin
     .DEPTH(SEND_DESC_DEPTH),
     .DATA_WIDTH(64)
   ) send_ctrl_fifo (
-    .async_rst(sys_rst),
+    .async_rst(sys_rst || core_reset_r),
   
     .din_clk(core_clk),
     .din_valid(data_send_valid && core_ctrl_wr),
@@ -630,7 +639,7 @@ if (!SEPARATE_CLOCKS) begin
   ) dram_send_fifo (
     .clk(sys_clk),
     .rst(sys_rst),
-    .clear(1'b0),
+    .clear(core_reset_r),
   
     .din_valid(data_send_valid && core_dram_wr),
     .din({core_dram_addr, data_send_desc[63:24+PORT_WIDTH],
@@ -646,7 +655,7 @@ end else begin
     .DEPTH(DRAM_DESC_DEPTH),
     .DATA_WIDTH(128)
   ) dram_send_fifo (
-    .async_rst(sys_rst),
+    .async_rst(sys_rst || core_reset_r),
   
     .din_clk(core_clk),
     .din_valid(data_send_valid && core_dram_wr),
@@ -673,7 +682,7 @@ if (!SEPARATE_CLOCKS) begin
   ) send_ctrl_fifo (
     .clk(sys_clk),
     .rst(sys_rst),
-    .clear(1'b0),
+    .clear(core_reset_r),
   
     .din_valid(data_send_valid && core_dram_rd),
     .din({core_dram_addr, data_send_desc}),
@@ -688,7 +697,7 @@ end else begin
     .DEPTH(DRAM_DESC_DEPTH),
     .DATA_WIDTH(128)
   ) send_ctrl_fifo (
-    .async_rst(sys_rst),
+    .async_rst(sys_rst || core_reset_r),
   
     .din_clk(core_clk),
     .din_valid(data_send_valid && core_dram_rd),
@@ -748,7 +757,7 @@ simple_fifo # (
 ) recvd_ctrl_fifo (
   .clk(sys_clk),
   .rst(sys_rst),
-  .clear(1'b0),
+  .clear(core_reset_r),
 
   .din_valid(ctrl_s_axis_tvalid_r),
   .din(parsed_ctrl_desc), 
@@ -781,7 +790,7 @@ simple_fifo # (
 ) pkt_sent_fifo (
   .clk(sys_clk),
   .rst(sys_rst),
-  .clear(1'b0),
+  .clear(core_reset_r),
 
   .din_valid(pkt_sent && (!pkt_sent_is_dram)), 
   .din(latched_send_desc),
@@ -807,7 +816,7 @@ simple_fifo # (
 ) recvd_dram_rd_fifo (
   .clk(sys_clk),
   .rst(sys_rst),
-  .clear(1'b0),
+  .clear(core_reset_r),
 
   .din_valid(dram_req_valid),
   .din({dram_req_high, dram_req_low}),
@@ -1218,6 +1227,7 @@ riscvcore #(
 ) core (
     .clk(core_clk),
     .rst(core_reset),
+    .timer_rst(timer_rst),
 
     .ext_dmem_en(core_dmem_en),
     .ext_dmem_ren(core_dmem_ren),

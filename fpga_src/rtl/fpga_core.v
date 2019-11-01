@@ -1671,39 +1671,35 @@ if (ENABLE_ILA) begin
       data_s_lsb_third_4 [l*16+:16] <= data_s_axis_tdata [((8+l)*LVL2_DATA_WIDTH)+16 +:16];
     end
       
-reg [CORE_COUNT-1:0] data_m_axis_tvalid_r;
-reg [CORE_COUNT-1:0] data_m_axis_tready_r;
-reg [CORE_COUNT-1:0] data_m_axis_tlast_r;
-reg [CORE_COUNT-1:0] data_s_axis_tvalid_r;
-reg [CORE_COUNT-1:0] data_s_axis_tready_r;
-reg [CORE_COUNT-1:0] data_s_axis_tlast_r;
-reg [CORE_COUNT-1:0] ctrl_s_axis_tvalid_r;
-reg [CORE_COUNT-1:0] ctrl_s_axis_tready_r;
-reg [CORE_COUNT-1:0] ctrl_m_axis_tvalid_r;
-reg [CORE_COUNT-1:0] ctrl_m_axis_tready_r;
+  reg [CORE_COUNT-1:0] data_m_axis_tvalid_r;
+  reg [CORE_COUNT-1:0] data_m_axis_tready_r;
+  reg [CORE_COUNT-1:0] data_m_axis_tlast_r;
+  reg [CORE_COUNT-1:0] data_s_axis_tvalid_r;
+  reg [CORE_COUNT-1:0] data_s_axis_tready_r;
+  reg [CORE_COUNT-1:0] data_s_axis_tlast_r;
+  reg [CORE_COUNT-1:0] ctrl_s_axis_tvalid_r;
+  reg [CORE_COUNT-1:0] ctrl_s_axis_tready_r;
+  reg [CORE_COUNT-1:0] ctrl_m_axis_tvalid_r;
+  reg [CORE_COUNT-1:0] ctrl_m_axis_tready_r;
+  
+  reg [CORE_COUNT*PORT_WIDTH-1:0] data_m_axis_tdest_r;
+  reg [CORE_COUNT*PORT_WIDTH-1:0] data_s_axis_tuser_r;
+  
+  always @ (posedge sys_clk) begin
+    data_m_axis_tvalid_r <= data_m_axis_tvalid;
+    data_m_axis_tready_r <= data_m_axis_tready;
+    data_m_axis_tdest_r  <= data_m_axis_tdest;
+    data_m_axis_tlast_r  <= data_m_axis_tlast;
+    data_s_axis_tvalid_r <= data_s_axis_tvalid;
+    data_s_axis_tready_r <= data_s_axis_tready;
+    data_s_axis_tuser_r  <= data_s_axis_tuser;
+    data_s_axis_tlast_r  <= data_s_axis_tlast;
+    ctrl_s_axis_tvalid_r <= ctrl_s_axis_tvalid;
+    ctrl_s_axis_tready_r <= ctrl_s_axis_tready;
+    ctrl_m_axis_tvalid_r <= ctrl_m_axis_tvalid;
+    ctrl_m_axis_tready_r <= ctrl_m_axis_tready;
+  end
 
-reg [CORE_COUNT*PORT_WIDTH-1:0] data_m_axis_tdest_r;
-reg [CORE_COUNT*PORT_WIDTH-1:0] data_s_axis_tuser_r;
-
-always @ (posedge sys_clk) begin
-  data_m_axis_tvalid_r <= data_m_axis_tvalid;
-  data_m_axis_tready_r <= data_m_axis_tready;
-  data_m_axis_tdest_r  <= data_m_axis_tdest;
-  data_m_axis_tlast_r  <= data_m_axis_tlast;
-  data_s_axis_tvalid_r <= data_s_axis_tvalid;
-  data_s_axis_tready_r <= data_s_axis_tready;
-  data_s_axis_tuser_r  <= data_s_axis_tuser;
-  data_s_axis_tlast_r  <= data_s_axis_tlast;
-  ctrl_s_axis_tvalid_r <= ctrl_s_axis_tvalid;
-  ctrl_s_axis_tready_r <= ctrl_s_axis_tready;
-  ctrl_m_axis_tvalid_r <= ctrl_m_axis_tvalid;
-  ctrl_m_axis_tready_r <= ctrl_m_axis_tready;
-end
-
-  // wire trig, trig_ack;
-  // wire trig2, trig_ack2;
-
-  // Updated signals, just disabled for BRAM utilization
   ila_8x64 debugger3 (
     .clk    (sys_clk),
  
@@ -1712,17 +1708,16 @@ end
     .trig_in (sched_trig_out),
     .trig_in_ack(sched_trig_out_ack),
  
-    .probe0({
-      data_s_axis_tvalid_r,
-      data_s_axis_tready_r,
-      ctrl_s_axis_tvalid_r, 
-      ctrl_s_axis_tready_r}),
+    .probe0({data_s_axis_tvalid_r,
+             data_s_axis_tready_r,
+             ctrl_s_axis_tvalid_r, 
+             ctrl_s_axis_tready_r}),
 
     .probe1(data_s_slot),
     .probe2({data_s_axis_tuser_r,
              data_s_axis_tlast_r}),
 
-    .probe3(data_s_16_31_2nds),
+    .probe3(ctrl_s_msg_slot),
     .probe4({data_m_axis_tvalid_r,
              data_m_axis_tready_r,
              ctrl_m_axis_tvalid_r, 
@@ -1730,27 +1725,12 @@ end
     .probe5(data_m_slot),
     .probe6({data_m_axis_tdest_r,
              data_m_axis_tlast_r}),
-    .probe7(data_m_16_31_2nds)
+    .probe7(ctrl_m_msg_slot)
+    
+    // .probe3(data_s_16_31_2nds),
+    // .probe7(data_m_16_31_2nds)
 
   );
-
-  // ila_8x64 debugger4 (
-  //   .clk    (sys_clk),
- 
-  //   .trig_out(trig2),
-  //   .trig_out_ack(trig_ack2),
-  //   .trig_in (trig),
-  //   .trig_in_ack(trig_ack),
- 
-  //   .probe0(data_mslsb_third_4),
-  //   .probe1(ctrl_s_msg_type),
-  //   .probe2(ctrl_s_msg_slot),
-  //   .probe3(ctrl_s_msg_port),
-  //   .probe4(data_m_lsb_third_4),
-  //   .probe5(ctrl_m_msg_type),
-  //   .probe6(ctrl_m_msg_slot),
-  //   .probe7(ctrl_m_msg_port)
-  // );
 
 end
 

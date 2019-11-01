@@ -44,7 +44,7 @@ srcs.append("../ip/ila_4x64_stub.v")
 
 srcs.append("../rtl/simple_fifo.v")
 srcs.append("../rtl/max_finder_tree.v")
-srcs.append("../rtl/slot_fifo_loader.v")
+# srcs.append("../rtl/slot_fifo_loader.v")
 srcs.append("../rtl/slot_keeper.v")
 srcs.append("../rtl/core_mems.v")
 srcs.append("../rtl/axis_dma.v")
@@ -114,13 +114,14 @@ def bench():
     CTRL_WIDTH = (DATA_WIDTH/8)
     AXI_ADDR_WIDTH = 16
 
-    SEND_COUNT_0 = 100
-    SEND_COUNT_1 = 100
-    SIZE_0       = 1500 - 18 
-    SIZE_1       = 1500 - 18
+    SEND_COUNT_0 = 50
+    SEND_COUNT_1 = 50
+    SIZE_0       = 500 - 18 
+    SIZE_1       = 500 - 18
     CHECK_PKT    = True
     TEST_SFP     = True
     TEST_PCIE    = False
+    UPDATE_INS   = False
     FIRMWARE     = "../../c_code/inter_core.bin"
 
     # Inputs
@@ -647,26 +648,29 @@ def bench():
 
         # enable DMA
         yield rc.mem_write(dev_pf0_bar0+0x000000, struct.pack('<L', 1))
-        yield rc.mem_write(dev_pf0_bar0+0x00000C, struct.pack('<L', 0xffff))
         
-        # Load instruction memories
-        for i in range (0,16):
-            yield rc.mem_write(dev_pf0_bar0+0x000004, struct.pack('<L', ((i<<1)+1)))
-            yield delay(20)
-            # write pcie read descriptor
-            yield rc.mem_write(dev_pf0_bar0+0x000100, struct.pack('<L', (mem_base+0x0000) & 0xffffffff))
-            yield rc.mem_write(dev_pf0_bar0+0x000104, struct.pack('<L', (mem_base+0x0000 >> 32) & 0xffffffff))
-            yield rc.mem_write(dev_pf0_bar0+0x000108, struct.pack('<L', ((i<<16)+0x8000) & 0xffffffff))
-            yield rc.mem_write(dev_pf0_bar0+0x00010C, struct.pack('<L', (((i<<16)+0x8000) >> 32) & 0xffffffff))
-            yield rc.mem_write(dev_pf0_bar0+0x000110, struct.pack('<L', 0x400))
-            yield rc.mem_write(dev_pf0_bar0+0x000114, struct.pack('<L', 0xAA))
-            yield delay(2000)
-            yield rc.mem_write(dev_pf0_bar0+0x000004, struct.pack('<L', ((i<<1)+0)))
-            yield delay(20)
+        if (UPDATE_INS):
+          yield rc.mem_write(dev_pf0_bar0+0x00000C, struct.pack('<L', 0xffff))
+          
+          # Load instruction memories
+          for i in range (0,16):
+              yield rc.mem_write(dev_pf0_bar0+0x000004, struct.pack('<L', ((i<<1)+1)))
+              yield delay(20)
+              # write pcie read descriptor
+              yield rc.mem_write(dev_pf0_bar0+0x000100, struct.pack('<L', (mem_base+0x0000) & 0xffffffff))
+              yield rc.mem_write(dev_pf0_bar0+0x000104, struct.pack('<L', (mem_base+0x0000 >> 32) & 0xffffffff))
+              yield rc.mem_write(dev_pf0_bar0+0x000108, struct.pack('<L', ((i<<16)+0x8000) & 0xffffffff))
+              yield rc.mem_write(dev_pf0_bar0+0x00010C, struct.pack('<L', (((i<<16)+0x8000) >> 32) & 0xffffffff))
+              yield rc.mem_write(dev_pf0_bar0+0x000110, struct.pack('<L', 0x400))
+              yield rc.mem_write(dev_pf0_bar0+0x000114, struct.pack('<L', 0xAA))
+              yield delay(2000)
+              yield rc.mem_write(dev_pf0_bar0+0x000004, struct.pack('<L', ((i<<1)+0)))
+              yield delay(20)
+          
+          yield rc.mem_write(dev_pf0_bar0+0x00000C, struct.pack('<L', 0x0000))
         
-        yield rc.mem_write(dev_pf0_bar0+0x00000C, struct.pack('<L', 0x0000))
         yield rc.mem_write(dev_pf0_bar0+0x000008, struct.pack('<L', 0x0f00))
-        
+
         if (TEST_PCIE):
           print("PCIE tests")
           mem_data[48059:48200] = bytearray([(x+10)%256 for x in range(141)])

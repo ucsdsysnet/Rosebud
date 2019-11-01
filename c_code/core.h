@@ -29,7 +29,6 @@
 #define UPDATE_SLOT       (IO_START + 0x003B) 
 #define MASK_WRITE  		  (IO_START + 0x003C) 
 #define INTERRUPT_ACK		  (IO_START + 0x003D)
-#define RESET_TIMER 		  (IO_START + 0x003E) 
 
 struct Desc {
 	unsigned int*  data;
@@ -150,12 +149,6 @@ inline void write_debug (const unsigned int val){
 inline void interrupt_ack (const unsigned char interrupt_ack){
 	volatile unsigned char * int_ack = (volatile unsigned char *) INTERRUPT_ACK;
 	* int_ack = interrupt_ack;
-	return;
-}
-
-inline void reset_timer (){
-	volatile unsigned char * rst_timer = (volatile unsigned char *) RESET_TIMER;
-	*rst_timer = 1;
 	return;
 }
 

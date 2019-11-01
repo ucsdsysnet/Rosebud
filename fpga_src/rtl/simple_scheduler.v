@@ -93,35 +93,17 @@ module simple_scheduler # (
   wire [MSG_TYPE_WIDTH-1:0] send_out_msg = {(MSG_TYPE_WIDTH){1'b0}};
   wire [MSG_TYPE_WIDTH-1:0] loopback_msg = {{(MSG_TYPE_WIDTH-1){1'b0}},1'b1};
 
-  wire [DESC_WIDTH-1:0]    pkt_done_desc,  pkt_sent_desc,  slot_loader_desc;
-  wire [CORE_ID_WIDTH-1:0] pkt_done_src,   pkt_sent_src,   slot_loader_src;
-  wire                     pkt_done_valid, pkt_sent_valid, slot_loader_valid;
-  wire                     pkt_done_ready, pkt_sent_ready, slot_loader_ready;
+  wire [DESC_WIDTH-1:0]    pkt_done_desc;
+  wire [CORE_ID_WIDTH-1:0] pkt_done_src;
+  wire                     pkt_done_valid;
+  wire                     pkt_done_ready;
                            
   wire [CORE_COUNT*(DESC_WIDTH+CORE_ID_WIDTH)-1:0] pkt_to_core_req;
   wire [CORE_COUNT*SLOT_WIDTH-1:0]                 rx_desc_slot;
   wire [CORE_COUNT-1:0] pkt_to_core_valid, pkt_to_core_ready, 
                         arb_to_core_ready, rx_desc_slot_v;
 
-  wire loader_ready, loopback_ready;
-  wire [CORE_COUNT-1:0]    rx_desc_slot_accept;
-
-  simple_fifo # (
-    .ADDR_WIDTH(3),
-    .DATA_WIDTH(CORE_ID_WIDTH+DESC_WIDTH)
-  ) pkt_sent_fifo (
-    .clk(clk),
-    .rst(rst),
-    .clear(1'b0),
-  
-    .din_valid(ctrl_s_axis_tvalid && (msg_type==0)),
-    .din({ctrl_s_axis_tuser,ctrl_s_axis_tdata[DESC_WIDTH-1:0]}),
-    .din_ready(pkt_sent_ready),
-   
-    .dout_valid(pkt_sent_valid),
-    .dout({pkt_sent_src,pkt_sent_desc}),
-    .dout_ready(rx_desc_slot_accept[pkt_sent_src])
-  );
+  wire loopback_ready;
 
   simple_fifo # (
     .ADDR_WIDTH(3),
@@ -195,46 +177,30 @@ module simple_scheduler # (
     .m_axis_tdata({selected_pkt_to_core_src, selected_pkt_to_core_desc}),
     .m_axis_tkeep(),
     .m_axis_tvalid(selected_pkt_to_core_valid),
-    .m_axis_tready(selected_pkt_to_core_ready), // && loopback_msg_ready),
+    .m_axis_tready(selected_pkt_to_core_ready),
     .m_axis_tlast(),
     .m_axis_tid(),
     .m_axis_tdest(),
     .m_axis_tuser(selected_pkt_to_core_dest_slot)
   );
    
-  simple_fifo # (
-    .ADDR_WIDTH(3),
-    .DATA_WIDTH(CORE_ID_WIDTH+DESC_WIDTH)
-  ) slot_loader_fifo (
-    .clk(clk),
-    .rst(rst),
-    .clear(1'b0),
-  
-    .din_valid(ctrl_s_axis_tvalid && (msg_type==3)),
-    .din({ctrl_s_axis_tuser,ctrl_s_axis_tdata[DESC_WIDTH-1:0]}),
-    .din_ready(slot_loader_ready),
-   
-    .dout_valid(slot_loader_valid),
-    .dout({slot_loader_src,slot_loader_desc}),
-    .dout_ready(loader_ready)
-  );
- 
-  assign ctrl_s_axis_tready = (pkt_sent_ready    && (msg_type==0)) ||
+  assign ctrl_s_axis_tready = ((msg_type==0)   ||   (msg_type==3)) ||
                               (pkt_done_ready    && (msg_type==1)) || 
-                              (pkt_to_core_ready && (msg_type==2)) || 
-                              (slot_loader_ready && (msg_type==3));
+                              (pkt_to_core_ready && (msg_type==2)) ;
   
-  // Slot descriptor fifos, addressing msg type 0 requests
+  // Slot descriptor fifos, addressing msg type 0&3 requests
   wire [CORE_COUNT*SLOT_WIDTH-1:0] rx_desc_count;
   wire [CORE_ID_WIDTH-1:0] selected_desc;
   wire [CORE_COUNT-1:0]    rx_desc_slot_pop;
-  wire [CORE_COUNT-1:0]    rx_desc_slot_accept_temp;
-
-  wire [CORE_COUNT-1:0] desc_fifo_clear, loader_valid, busy_by_loader, rx_desc_fifo_v;
-  wire [SLOT_WIDTH-1:0] loader_slot;
   
-  wire [SLOT_WIDTH-1:0] pkt_sent_slot = pkt_sent_desc[16 +: SLOT_WIDTH]; 
-  wire rx_desc_pop; // maybe used for error catching
+  reg  [CORE_COUNT-1:0] enq_slot_v;
+  reg  [CORE_COUNT-1:0] init_slot_v;
+  reg  [SLOT_WIDTH-1:0] input_slot;
+  
+  always @ (posedge clk)
+    input_slot <= ctrl_s_axis_tdata[16 +: SLOT_WIDTH];
+
+  wire rx_desc_pop; 
   wire max_valid;
 
   wire [CORE_COUNT-1:0] core_slot_err;
@@ -246,40 +212,42 @@ module simple_scheduler # (
     slot_insert_err <= | core_slot_err_r;
   end
 
-  // TODO: Make this one bit flags and use PENC and DEC
   genvar i;
   generate 
     for (i=0;i<CORE_COUNT;i=i+1) begin
-      wire [SLOT_WIDTH-1:0] input_slot = 
-              loader_valid[i] ? loader_slot : pkt_sent_slot;
-     
-     slot_keeper # (
-       .SLOT_COUNT(SLOT_COUNT), 
-       .SLOT_WIDTH(SLOT_WIDTH)
-     ) rx_desc_keeper (
+      assign rx_desc_slot_pop[i]    = (rx_desc_pop && (selected_desc==i)) || 
+                                      (pkt_to_core_valid[i] && arb_to_core_ready[i] && (~cores_to_be_reset[i]));
+      // Register valid for better timing closure
+      always @ (posedge clk)
+        if (rst) begin
+          enq_slot_v[i]  <= 1'b0;
+          init_slot_v[i] <= 1'b0;
+        end else begin
+          enq_slot_v[i]  <= ctrl_s_axis_tvalid && (msg_type==0) && (ctrl_s_axis_tuser==i);
+          init_slot_v[i] <= ctrl_s_axis_tvalid && (msg_type==3) && (ctrl_s_axis_tuser==i);
+        end
+
+      slot_keeper # (
+        .SLOT_COUNT(SLOT_COUNT), 
+        .SLOT_WIDTH(SLOT_WIDTH)
+      ) rx_desc_keeper (
         .clk(clk),
         .rst(rst),
-        .clear(desc_fifo_clear[i]), 
-      
-        .slot_in_valid(rx_desc_fifo_v[i]), 
-        .slot_in(input_slot),
-        .slot_in_accept(rx_desc_slot_accept_temp[i]),
+
+        .init_slots(input_slot),
+        .init_valid(init_slot_v[i]), 
+ 
+        .slot_in(input_slot), 
+        .slot_in_valid(enq_slot_v[i]), 
        
-        .slot_out_valid(rx_desc_slot_v[i]),
         .slot_out(rx_desc_slot[i*SLOT_WIDTH +: SLOT_WIDTH]),
+        .slot_out_valid(rx_desc_slot_v[i]),
         .slot_out_pop(rx_desc_slot_pop[i]),
         
         .slot_count(rx_desc_count[i*SLOT_WIDTH +: SLOT_WIDTH]),
         .insert_err(core_slot_err[i])
       );
 
-      assign rx_desc_fifo_v[i]      = (pkt_sent_valid && (pkt_sent_src==i) && (pkt_sent_slot!=0)) 
-                                      || loader_valid[i];
-      assign rx_desc_slot_pop[i]    = (rx_desc_pop && (selected_desc==i)) || 
-                                      (pkt_to_core_valid[i] && arb_to_core_ready[i] && (~cores_to_be_reset[i]));
-
-      assign rx_desc_slot_accept[i] = (rx_desc_slot_accept_temp[i] || (pkt_sent_slot==0)) && 
-                                      (!busy_by_loader[i]);
     end
   endgenerate
   
@@ -299,7 +267,7 @@ module simple_scheduler # (
     always @ (posedge clk)
       if (rst)
         loopback_port_select_r <= 1'b0;
-      else if (selected_pkt_to_core_valid && selected_pkt_to_core_ready) // && loopback_msg_ready)
+      else if (selected_pkt_to_core_valid && selected_pkt_to_core_ready)
         loopback_port_select_r <= ~loopback_port_select_r;
 
     assign loopback_port = loopback_port_select_r ? (LOOPBACK_PORT+1) : LOOPBACK_PORT;
@@ -311,7 +279,7 @@ module simple_scheduler # (
     always @ (posedge clk)
       if (rst)
         loopback_port_select_r <= 0;
-      else if (selected_pkt_to_core_valid && selected_pkt_to_core_ready) // && loopback_msg_ready)
+      else if (selected_pkt_to_core_valid && selected_pkt_to_core_ready)
         if (loopback_port_select_r==(LOOPBACK_COUNT-1))
           loopback_port_select_r <= 0;
         else
@@ -328,26 +296,6 @@ module simple_scheduler # (
               {{(8-CORE_ID_WIDTH){1'b0}}, loopback_port, 
               selected_pkt_to_core_desc[23:16], //this is src slot
               {(16-ID_TAG_WIDTH){1'b0}}, dest_id_slot};
-
-  // Slot descriptor loader module, addressing msg typee 3 requests
-  slot_fifo_loader # (
-    .MAX_SLOT_COUNT(SLOT_COUNT),
-    .DEST_COUNT(CORE_COUNT)
-  ) slot_loader (
-    .clk(clk),
-    .rst(rst),
-  
-    .req_valid(slot_loader_valid),
-    .req_dest(slot_loader_src),
-    .slot_count(slot_loader_desc[16 +: SLOT_WIDTH]),
-    .req_ready(loader_ready),
-  
-    .clear_fifo(desc_fifo_clear),
-    .out_slot_valid(loader_valid),
-    .out_slot(loader_slot)
-  );
-
-  assign busy_by_loader = loader_valid | desc_fifo_clear;
 
   // Arbiter for ctrl messaage output 
   
@@ -366,16 +314,16 @@ module simple_scheduler # (
       last_selected <= ctrl_out_select;
 
   always @ (*)
-    if (selected_pkt_to_core_valid && pkt_done_valid) //&& loopback_msg_ready
+    if (selected_pkt_to_core_valid && pkt_done_valid)
       ctrl_out_select = ~last_selected;
-    else if (selected_pkt_to_core_valid) // && loopback_msg_ready)
+    else if (selected_pkt_to_core_valid)
       ctrl_out_select = 1'b1;
     else if (pkt_done_valid)
       ctrl_out_select = 1'b0;
     else 
       ctrl_out_select = last_selected;
 
-  assign ctrl_out_valid = selected_pkt_to_core_valid || pkt_done_valid; //&& loopback_msg_ready)  
+  assign ctrl_out_valid = selected_pkt_to_core_valid || pkt_done_valid;
   assign ctrl_out_dest  = ctrl_out_select ? selected_pkt_to_core_src : pkt_done_src;
   assign ctrl_out_desc  = ctrl_out_select ? {loopback_msg, pkt_to_core_with_port} 
                                           : {send_out_msg, pkt_done_desc};
@@ -572,10 +520,17 @@ if (ENABLE_ILA) begin
   wire trig_out_1, trig_out_2;
   wire ack_1, ack_2;
   reg [CORE_COUNT*SLOT_WIDTH-1:0] rx_desc_count_r;
+  reg [INTERFACE_COUNT-1:0] desc_req_r;
+  reg max_valid_r, rx_desc_pop_r;
+  reg [ID_TAG_WIDTH-1:0] rx_desc_data_r; 
 
-  always @ (posedge clk)
+  always @ (posedge clk) begin
     rx_desc_count_r <= rx_desc_count;
-
+    desc_req_r      <= desc_req;
+    max_valid_r     <= max_valid;
+    rx_desc_pop_r   <= rx_desc_pop;
+    rx_desc_data_r  <= rx_desc_data;
+  end
 
   reg [15:0] rx_count_0, rx_count_1, tx_count_0, tx_count_1;
   always @ (posedge clk)
@@ -606,20 +561,18 @@ if (ENABLE_ILA) begin
         tx_count_1 <= tx_count_1 + 16'd1;
     end
 
-  // wire hang_trigger = ctrl_s_axis_tvalid && (!ctrl_s_axis_tready) && (msg_type==0);
-
   ila_4x64 debugger1 (
     .clk    (clk),
  
     .trig_out(trig_out),
-    .trig_out_ack(trig_out_ack), // ack_1),
-    .trig_in (trig_in), // trig_out_2 || hang_trigger),
+    .trig_out_ack(trig_out_ack),
+    .trig_in (trig_in),
     .trig_in_ack(trig_in_ack),
  
     .probe0 ({
        sending_last_word,
        data_m_axis_tdest,
-       pkt_sent_valid, rst,
+       rst,
        data_m_axis_tuser,
        ctrl_m_axis_tdest,
        ctrl_s_axis_tuser,
@@ -628,65 +581,28 @@ if (ENABLE_ILA) begin
        ctrl_s_axis_tvalid,
        ctrl_s_axis_tready,
        slot_insert_err,
-       // ctrl_s_axis_tlast,
        dest_r_v,
        msg_type,
        rx_axis_tvalid, 
-       pkt_sent_slot
-       // rx_axis_tready,
-       // rx_axis_tlast
+       max_valid_r,
+       rx_desc_pop_r,
+       desc_req_r,
+       rx_axis_tready,
+       // rx_axis_tkeep,
+       rx_axis_tlast,
+       rx_desc_data_r
      }),
     
     .probe1 ({
        ctrl_m_axis_tdata[31:0],
-       ctrl_s_axis_tdata[31:0]
-       // rx_axis_tkeep,
-       // rx_count_0,
-    }),
+       ctrl_s_axis_tdata[31:0]}),
   
     .probe2 (rx_desc_count_r), 
 
-    .probe3 ({rx_desc_fifo_v, rx_desc_slot_accept,
-              rx_desc_slot_v, rx_desc_slot_pop})
-
-    // .probe4 ({cores_to_be_reset, income_cores, 
-    //           loader_valid, desc_fifo_clear})
-    // .probe5 (rx_axis_tdata[63:0]),
-
-    // .probe6 (rx_axis_tdata[127:64])
+    .probe3 ({rx_desc_slot_v, rx_desc_slot_pop,
+              cores_to_be_reset, income_cores})
   );
 
-  // Updated signals, just disabled for saving BRAMs
-  // ila_8x64 debugger2 (
-  //   .clk    (clk),
- 
-  //   .trig_out(trig_out_2),
-  //   .trig_out_ack(ack_2),
-  //   .trig_in (trig_out_1 || hang_trigger),
-  //   .trig_in_ack(ack_1),
-  //  
-  //   .probe0 ({
-  //      data_s_axis_tkeep,
-  //      data_s_axis_tuser,
-  //      rx_desc_data,
-  //      data_s_axis_tdest,
-  //      data_s_axis_tvalid, 
-  //      data_s_axis_tready, 
-  //      data_s_axis_tlast,
-  //      max_valid, 
-  //      rx_desc_pop
-  //    }),
-  // 
-  //   .probe1 (ctrl_m_axis_tdata),
-  //   
-  //   .probe2 (data_s_axis_tdata[63:0]),
-
-  //   .probe3 (data_s_axis_tdata[127:64]),
-  //   
-  //   .probe4 (tx_count_1), .probe5 (tx_count_0), 
-  //   .probe6 (rx_count_1), .probe7 (rx_count_0)
- 
-  // );
 end
 
 endmodule
