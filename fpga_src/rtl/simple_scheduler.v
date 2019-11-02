@@ -204,12 +204,10 @@ module simple_scheduler # (
   wire max_valid;
 
   wire [CORE_COUNT-1:0] core_slot_err;
-  reg  [CORE_COUNT-1:0] core_slot_err_r;
   reg  slot_insert_err;
 
   always @ (posedge clk) begin
-    core_slot_err_r <= core_slot_err; 
-    slot_insert_err <= | core_slot_err_r;
+    slot_insert_err <= | core_slot_err;
   end
 
   genvar i;
@@ -245,7 +243,7 @@ module simple_scheduler # (
         .slot_out_pop(rx_desc_slot_pop[i]),
         
         .slot_count(rx_desc_count[i*SLOT_WIDTH +: SLOT_WIDTH]),
-        .insert_err(core_slot_err[i])
+        .enq_err(core_slot_err[i])
       );
 
     end
@@ -587,7 +585,7 @@ if (ENABLE_ILA) begin
        max_valid_r,
        rx_desc_pop_r,
        desc_req_r,
-       rx_axis_tready,
+       // rx_axis_tready,
        // rx_axis_tkeep,
        rx_axis_tlast,
        rx_desc_data_r

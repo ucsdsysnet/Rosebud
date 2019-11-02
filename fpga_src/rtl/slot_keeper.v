@@ -16,7 +16,8 @@ module slot_keeper # (
   input                		slot_out_pop,
 
   output [SLOT_WIDTH-1:0] slot_count,
-  output                  insert_err
+  // enq_err is asserted 2 cycles later after the wrong slot enq
+  output                  enq_err 
 );
 
   wire enque = slot_in_valid && (slot_in!=0);
@@ -34,23 +35,32 @@ module slot_keeper # (
   end
   
   reg [SLOT_COUNT:1] slot_err;
+  //counts enq error to know when output is not valid
+  reg [SLOT_WIDTH:0] last_valid_count; 
+
   always @ (posedge clk) begin
     if (enque) begin 
-      if (occupied[slot_in])
+      if (occupied[slot_in]) begin
         slot_err[slot_in] <= 1'b1;
+        last_valid_count  <= last_valid_count + {{(SLOT_WIDTH-1){1'b0}},1'b1};
+      end
       occupied[slot_in] <= 1'b1;
     end
   
     if (deque)
        occupied[selected_slot] <= 1'b0;
 
-    if (init_valid)
-       occupied <= ({SLOT_COUNT{1'b1}} >> (SLOT_COUNT-init_slots));
-  
-    if (rst)
-       occupied <= {SLOT_COUNT{1'b0}};
-    if (rst)
-       slot_err <= {SLOT_COUNT{1'b0}};
+    if (init_valid) begin 
+       occupied         <= ({SLOT_COUNT{1'b1}} >> (SLOT_COUNT-init_slots));
+       slot_err         <= {SLOT_COUNT{1'b0}};
+       last_valid_count <= {{(SLOT_WIDTH-1){1'b0}},1'b1};
+    end
+
+    if (rst) begin
+       occupied         <= {SLOT_COUNT{1'b0}};
+       slot_err         <= {SLOT_COUNT{1'b0}};
+       last_valid_count <= {{(SLOT_WIDTH-1){1'b0}},1'b1};
+    end
   end
 
   reg [SLOT_WIDTH:0] slot_count_r;
@@ -63,21 +73,26 @@ module slot_keeper # (
       if (init_valid) begin
         slot_count_r <= init_slots;
         valid_r      <= (init_slots!=0);
-      // end if (enque && (!occupied[slot_in]) && !deque) begin
       end if (enque && !deque) begin
         slot_count_r <= slot_count_r + {{(SLOT_WIDTH-1){1'b0}},1'b1};
         valid_r      <= 1'b1;
-      // end else if (((!enque)||(enque && occupied[slot_in])) && deque) begin
       end else if (!enque && deque) begin
         slot_count_r <= slot_count_r - {{(SLOT_WIDTH-1){1'b0}},1'b1};
-        if (slot_count_r == 1)
+        if (slot_count_r == last_valid_count)
           valid_r <= 1'b0;
       end
     end
+  
+  reg enq_err_r;
+  always @ (posedge clk)
+    if (rst)
+      enq_err_r <= 1'b0;
+    else
+      enq_err_r <= |slot_err;
 
   assign slot_out_valid = valid_r;
   assign slot_out       = selected_slot;
-  assign insert_err     = |slot_err;
+  assign enq_err        = enq_err_r; 
   assign slot_count     = slot_count_r;
 
 endmodule

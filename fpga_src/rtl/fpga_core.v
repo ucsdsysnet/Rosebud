@@ -157,7 +157,7 @@ parameter LOOPBACK_PORT    = INTERFACE_COUNT+1-1;
 parameter LVL1_SW_PORTS    = 4;
 parameter CORE_MSG_LVL1    = 16;
 parameter SEPARATE_CLOCKS  = 1;
-parameter ENABLE_ILA       = 1;
+parameter ENABLE_ILA       = 0;
 
 parameter CORE_WIDTH       = $clog2(CORE_COUNT);
 parameter PORT_WIDTH       = $clog2(PORT_COUNT);
