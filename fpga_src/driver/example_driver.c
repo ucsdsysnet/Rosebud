@@ -153,6 +153,20 @@ static int edev_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
     dev_info(dev, "CQ: %d", ioread32(edev->bar[0]+0x000408));
     dev_info(dev, "CC: %d", ioread32(edev->bar[0]+0x00040C));
 
+    // // Read/write test
+    // dev_info(dev, "write to BAR1");
+    // iowrite32(0x11223344, edev->bar[1]);
+
+    // dev_info(dev, "read from BAR1");
+    // dev_info(dev, "%08x", ioread32(edev->bar[1]));
+
+    // // Dump counters
+    // dev_info(dev, "TLP counters");
+    // dev_info(dev, "RQ: %d", ioread32(edev->bar[0]+0x000400));
+    // dev_info(dev, "RC: %d", ioread32(edev->bar[0]+0x000404));
+    // dev_info(dev, "CQ: %d", ioread32(edev->bar[0]+0x000408));
+    // dev_info(dev, "CC: %d", ioread32(edev->bar[0]+0x00040C));
+
     // PCIe DMA test
     dev_info(dev, "write test data");
     memcpy((char *)edev->dma_region,test_bin,test_bin_len);
@@ -175,20 +189,53 @@ static int edev_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
     iowrite32((edev->dma_region_addr+0x0000)&0xffffffff, edev->bar[0]+0x000100);
     iowrite32(((edev->dma_region_addr+0x0000) >> 32)&0xffffffff, edev->bar[0]+0x000104);
     iowrite32(0, edev->bar[0]+0x00010C);
+    	
+    dev_info(dev, "Set cores to be reset and no incoming cores.");
+    iowrite32(0x0000, edev->bar[0]+0x000008);
+    iowrite32(0xffff, edev->bar[0]+0x00000C);
 
     for (k=0; k<16; k++){
-    	dev_info(dev, "updating core %d instructions",k);
+    	iowrite32(k,    edev->bar[0]+0x000010);
+    	dev_info(dev, "%d has %08x slots", k, ioread32(edev->bar[0]+0x000010));
+    }
+    msleep(100);
+    for (k=0; k<16; k++){
+    	iowrite32(k,    edev->bar[0]+0x000010);
+    	dev_info(dev, "%d has %08x slots", k, ioread32(edev->bar[0]+0x000010));
+    }
+    msleep(100);
+
+    for (k=0; k<16; k++){
+	dev_info(dev, "Reset core %d",k);
     	iowrite32((k<<1)+1, edev->bar[0]+0x000004);
     	msleep(1);
+    }
+    for (k=0; k<16; k++){
+    	dev_info(dev, "updating core %d instructions",k);
     	iowrite32((k<<16)+0x8000, edev->bar[0]+0x000108);
     	iowrite32(test_bin_len, edev->bar[0]+0x000110);
     	iowrite32(1<<k, edev->bar[0]+0x000114);
     	msleep(100);
-			if (k<16){ 
-    	    iowrite32((k<<1)+0, edev->bar[0]+0x000004);
-    	    msleep(20);
-			}
     }
+    for (k=0; k<16; k++){
+    	iowrite32((k<<1)+0, edev->bar[0]+0x000004);
+    	msleep(20);
+	dev_info(dev, "Done resetting core %d",k);
+    }
+    
+    for (k=0; k<16; k++){
+    	iowrite32(k,    edev->bar[0]+0x000010);
+    	dev_info(dev, "%d has %08x slots", k, ioread32(edev->bar[0]+0x000010));
+    }
+    msleep(100);
+    for (k=0; k<16; k++){
+    	iowrite32(k,    edev->bar[0]+0x000010);
+    	dev_info(dev, "%d has %08x slots", k, ioread32(edev->bar[0]+0x000010));
+    }
+    
+    iowrite32(0x0000, edev->bar[0]+0x00000C);
+    dev_info(dev, "set incoming cores");
+    iowrite32(0x0f00, edev->bar[0]+0x000008);
 
     dev_info(dev, "start copy to card");
     iowrite32(0x50100, edev->bar[0]+0x000108);
@@ -251,6 +298,8 @@ static void edev_remove(struct pci_dev *pdev)
     if (!(edev = pci_get_drvdata(pdev))) {
         return;
     }
+
+    // Add dumping code
 
     pci_free_irq(pdev, 0, edev);
     pci_free_irq_vectors(pdev);
