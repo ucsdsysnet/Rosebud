@@ -601,6 +601,9 @@ if (ENABLE_ILA) begin
               cores_to_be_reset, income_cores})
   );
 
+end else begin
+  assign trig_in_ack = 1'b0;
+  assign trig_out    = 1'b0;
 end
 
 endmodule

@@ -141,8 +141,9 @@ module pcie_controller #
   input  wire [CORE_SLOT_WIDTH-1:0]         slot_count
 );
 
-parameter PCIE_ADDR_WIDTH = 64;
-parameter TX_RX_RAM_SIZE  = 2**15; 
+parameter PCIE_ADDR_WIDTH     = 64;
+parameter PCIE_RAM_ADDR_WIDTH = 32;
+parameter TX_RX_RAM_SIZE      = 2**15; 
 
 // AXI lite interface parameters
 parameter AXIL_DATA_WIDTH = 32;
@@ -589,7 +590,7 @@ wire [CORE_SLOT_WIDTH-1:0]     slot_count_r;
 
 // DMA requests from Host through AXIL
 reg  [PCIE_ADDR_WIDTH-1:0]     host_dma_read_desc_pcie_addr;
-reg  [RAM_ADDR_WIDTH-1:0]      host_dma_read_desc_ram_addr;
+reg  [PCIE_RAM_ADDR_WIDTH-1:0] host_dma_read_desc_ram_addr;
 reg  [PCIE_DMA_LEN_WIDTH-1:0]  host_dma_read_desc_len;
 reg  [HOST_DMA_TAG_WIDTH-1:0]  host_dma_read_desc_tag;
 reg                            host_dma_read_desc_valid;
@@ -598,7 +599,7 @@ wire [HOST_DMA_TAG_WIDTH-1:0]  host_dma_read_desc_status_tag;
 wire                           host_dma_read_desc_status_valid;
 
 reg  [PCIE_ADDR_WIDTH-1:0]     host_dma_write_desc_pcie_addr;
-reg  [RAM_ADDR_WIDTH-1:0]      host_dma_write_desc_ram_addr;
+reg  [PCIE_RAM_ADDR_WIDTH-1:0] host_dma_write_desc_ram_addr;
 reg  [PCIE_DMA_LEN_WIDTH-1:0]  host_dma_write_desc_len;
 reg  [HOST_DMA_TAG_WIDTH-1:0]  host_dma_write_desc_tag;
 reg                            host_dma_write_desc_valid;
@@ -670,7 +671,7 @@ always @(posedge pcie_clk) begin
                 16'h0010: core_for_slot_count_r <= axil_ctrl_wdata[CORE_WIDTH-1:0];
                 16'h0100: host_dma_read_desc_pcie_addr[31:0] <= axil_ctrl_wdata;
                 16'h0104: host_dma_read_desc_pcie_addr[63:32] <= axil_ctrl_wdata;
-                16'h0108: host_dma_read_desc_ram_addr <= axil_ctrl_wdata[RAM_ADDR_WIDTH-1:0];
+                16'h0108: host_dma_read_desc_ram_addr[31:0] <= axil_ctrl_wdata;
                 16'h0110: host_dma_read_desc_len <= axil_ctrl_wdata;
                 16'h0114: begin
                     host_dma_read_desc_tag <= axil_ctrl_wdata;
@@ -678,7 +679,7 @@ always @(posedge pcie_clk) begin
                 end
                 16'h0200: host_dma_write_desc_pcie_addr[31:0] <= axil_ctrl_wdata;
                 16'h0204: host_dma_write_desc_pcie_addr[63:32] <= axil_ctrl_wdata;
-                16'h0208: host_dma_write_desc_ram_addr <= axil_ctrl_wdata[RAM_ADDR_WIDTH-1:0];
+                16'h0208: host_dma_write_desc_ram_addr[31:0] <= axil_ctrl_wdata;
                 16'h0210: host_dma_write_desc_len <= axil_ctrl_wdata;
                 16'h0214: begin
                     host_dma_write_desc_tag <= axil_ctrl_wdata;
@@ -934,6 +935,7 @@ pcie_cont_read # (
     .AXIS_PCIE_KEEP_WIDTH(AXIS_PCIE_KEEP_WIDTH),
     .HOST_DMA_TAG_WIDTH(HOST_DMA_TAG_WIDTH),
     .PCIE_ADDR_WIDTH(PCIE_ADDR_WIDTH),
+    .PCIE_RAM_ADDR_WIDTH(PCIE_RAM_ADDR_WIDTH),
     .PCIE_SLOT_COUNT(PCIE_SLOT_COUNT),
     .PCIE_SLOT_WIDTH(PCIE_SLOT_WIDTH),
     .PCIE_DMA_TAG_WIDTH(PCIE_DMA_TAG_WIDTH),
@@ -1004,6 +1006,7 @@ pcie_cont_write # (
     .AXIS_PCIE_KEEP_WIDTH(AXIS_PCIE_KEEP_WIDTH),
     .HOST_DMA_TAG_WIDTH(HOST_DMA_TAG_WIDTH),
     .PCIE_ADDR_WIDTH(PCIE_ADDR_WIDTH),
+    .PCIE_RAM_ADDR_WIDTH(PCIE_RAM_ADDR_WIDTH),
     .PCIE_SLOT_COUNT(PCIE_SLOT_COUNT),
     .PCIE_SLOT_WIDTH(PCIE_SLOT_WIDTH),
     .PCIE_DMA_TAG_WIDTH(PCIE_DMA_TAG_WIDTH),

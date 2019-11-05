@@ -4,6 +4,7 @@ module pcie_cont_read # (
   parameter AXIS_PCIE_KEEP_WIDTH = (AXIS_PCIE_DATA_WIDTH/32),
   parameter HOST_DMA_TAG_WIDTH   = 32,
   parameter PCIE_ADDR_WIDTH      = 64,
+  parameter PCIE_RAM_ADDR_WIDTH  = 32,
   parameter PCIE_SLOT_COUNT      = 16,
   parameter PCIE_SLOT_WIDTH      = $clog2(PCIE_SLOT_COUNT),
   parameter PCIE_DMA_TAG_WIDTH   = PCIE_SLOT_WIDTH,
@@ -32,7 +33,7 @@ module pcie_cont_read # (
 
   // Read descriptor request from host
   input  wire [PCIE_ADDR_WIDTH-1:0]          host_dma_read_desc_pcie_addr,
-  input  wire [RAM_ADDR_WIDTH-1:0]           host_dma_read_desc_ram_addr,
+  input  wire [PCIE_RAM_ADDR_WIDTH-1:0]      host_dma_read_desc_ram_addr,
   input  wire [PCIE_DMA_LEN_WIDTH-1:0]       host_dma_read_desc_len,
   input  wire [HOST_DMA_TAG_WIDTH-1:0]       host_dma_read_desc_tag,
   input  wire                                host_dma_read_desc_valid,

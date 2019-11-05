@@ -4,6 +4,7 @@ module pcie_cont_write # (
   parameter AXIS_PCIE_KEEP_WIDTH = (AXIS_PCIE_DATA_WIDTH/32),
   parameter HOST_DMA_TAG_WIDTH   = 32,
   parameter PCIE_ADDR_WIDTH      = 64,
+  parameter PCIE_RAM_ADDR_WIDTH  = 32,
   parameter PCIE_SLOT_COUNT      = 16,
   parameter PCIE_SLOT_WIDTH      = $clog2(PCIE_SLOT_COUNT),
   parameter PCIE_DMA_TAG_WIDTH   = PCIE_SLOT_WIDTH,
@@ -32,7 +33,7 @@ module pcie_cont_write # (
 
   // Read descriptor request from host
   input  wire [PCIE_ADDR_WIDTH-1:0]          host_dma_write_desc_pcie_addr,
-  input  wire [RAM_ADDR_WIDTH-1:0]           host_dma_write_desc_ram_addr,
+  input  wire [PCIE_RAM_ADDR_WIDTH-1:0]      host_dma_write_desc_ram_addr,
   input  wire [PCIE_DMA_LEN_WIDTH-1:0]       host_dma_write_desc_len,
   input  wire [HOST_DMA_TAG_WIDTH-1:0]       host_dma_write_desc_tag,
   input  wire                                host_dma_write_desc_valid,
@@ -73,6 +74,45 @@ module pcie_cont_write # (
   output wire [SEG_COUNT-1:0]                dma_ram_rd_resp_valid,
   input  wire [SEG_COUNT-1:0]                dma_ram_rd_resp_ready
 );
+
+// Removing PCIe address header
+wire [AXIS_DATA_WIDTH-1:0] axis_write_data_tdata;
+wire [AXIS_KEEP_WIDTH-1:0] axis_write_data_tkeep;
+wire                       axis_write_data_tvalid;
+wire                       axis_write_data_tready;
+wire                       axis_write_data_tlast;
+wire [AXIS_TAG_WIDTH-1:0]  axis_write_data_tuser;
+
+wire [63:0] tx_header;
+
+header_remover # (
+  .DATA_WIDTH(AXIS_DATA_WIDTH),
+  .HDR_WIDTH(64),
+  .USER_WIDTH(AXIS_TAG_WIDTH)
+) tx_header_remover (
+  .clk(pcie_clk),
+  .rst(pcie_rst),
+
+  .s_axis_tdata (cores_tx_tdata),
+  .s_axis_tkeep (cores_tx_tkeep),
+  .s_axis_tdest (8'd0),
+  .s_axis_tuser (cores_tx_tuser),
+  .s_axis_tlast (cores_tx_tlast),
+  .s_axis_tvalid(cores_tx_tvalid),
+  .s_axis_tready(cores_tx_tready),
+
+  .header(tx_header), 
+
+  .m_axis_tdata (axis_write_data_tdata),
+  .m_axis_tkeep (axis_write_data_tkeep),
+  .m_axis_tdest (),
+  .m_axis_tuser (axis_write_data_tuser), 
+  .m_axis_tlast (axis_write_data_tlast),
+  .m_axis_tvalid(axis_write_data_tvalid),
+  .m_axis_tready(axis_write_data_tready)
+
+);
+
 
 // Internal wires
 reg  [PCIE_ADDR_WIDTH-1:0]    pcie_dma_write_desc_pcie_addr_r;
@@ -205,44 +245,6 @@ assign cores_ctrl_m_tdata        = cores_ctrl_m_tdata_r;
 assign cores_ctrl_m_tvalid       = cores_ctrl_m_tvalid_r;
 assign cores_ctrl_m_tdest        = cores_ctrl_m_tdest_r;
 assign host_dma_write_desc_ready = cores_ctrl_m_tready && (tx_pcie_tag_v[host_wr_dest_core]==1'b0);
-
-// Removing PCIe address header
-wire [AXIS_DATA_WIDTH-1:0] axis_write_data_tdata;
-wire [AXIS_KEEP_WIDTH-1:0] axis_write_data_tkeep;
-wire                       axis_write_data_tvalid;
-wire                       axis_write_data_tready;
-wire                       axis_write_data_tlast;
-wire [AXIS_TAG_WIDTH-1:0]  axis_write_data_tuser;
-
-wire [63:0] tx_header;
-
-header_remover # (
-  .DATA_WIDTH(AXIS_DATA_WIDTH),
-  .HDR_WIDTH(64),
-  .USER_WIDTH(AXIS_TAG_WIDTH)
-) tx_header_remover (
-  .clk(pcie_clk),
-  .rst(pcie_rst),
-
-  .s_axis_tdata (cores_tx_tdata),
-  .s_axis_tkeep (cores_tx_tkeep),
-  .s_axis_tdest (8'd0),
-  .s_axis_tuser (cores_tx_tuser),
-  .s_axis_tlast (cores_tx_tlast),
-  .s_axis_tvalid(cores_tx_tvalid),
-  .s_axis_tready(cores_tx_tready),
-
-  .header(tx_header), 
-
-  .m_axis_tdata (axis_write_data_tdata),
-  .m_axis_tkeep (axis_write_data_tkeep),
-  .m_axis_tdest (),
-  .m_axis_tuser (axis_write_data_tuser), 
-  .m_axis_tlast (axis_write_data_tlast),
-  .m_axis_tvalid(axis_write_data_tvalid),
-  .m_axis_tready(axis_write_data_tready)
-
-);
 
 // Scratchpad for reordering from PCIe 
 wire [SEG_COUNT*SEG_BE_WIDTH-1:0]    dma_ram_wr_cmd_be_int;

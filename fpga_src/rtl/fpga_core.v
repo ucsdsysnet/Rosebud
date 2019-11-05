@@ -1732,6 +1732,9 @@ if (ENABLE_ILA) begin
 
   );
 
+end else begin
+  assign sched_trig_in      = 1'b0;
+  assign sched_trig_out_ack = 1'b0;
 end
 
 endmodule
