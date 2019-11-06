@@ -21,6 +21,7 @@ SYN_FILES += rtl/axis_dma.v
 SYN_FILES += rtl/riscv_axis_wrapper.v 
 SYN_FILES += rtl/simple_sync_sig.v
 SYN_FILES += rtl/axis_switch.v
+SYN_FILES += rtl/axis_switch_2lvl.v
 SYN_FILES += rtl/loopback_msg_fifo.v
 SYN_FILES += rtl/header.v
 SYN_FILES += rtl/pcie_controller.v

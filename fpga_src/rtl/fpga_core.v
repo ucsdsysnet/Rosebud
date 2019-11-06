@@ -154,8 +154,8 @@ parameter LEN_WIDTH        = 16;
 parameter INTERLEAVE       = 1;
 parameter DRAM_PORT        = 2*INTERFACE_COUNT+1-1;
 parameter LOOPBACK_PORT    = INTERFACE_COUNT+1-1;
-parameter LVL1_SW_PORTS    = 4;
-parameter CORE_MSG_LVL1    = 16;
+parameter CLUSTER_COUNT    = 4;
+parameter BC_MSG_CLUSTERS  = 16;
 parameter SEPARATE_CLOCKS  = 1;
 parameter ENABLE_ILA       = 0;
 
@@ -167,11 +167,6 @@ parameter ID_TAG_WIDTH     = CORE_WIDTH+TAG_WIDTH;
 parameter LVL1_STRB_WIDTH  = LVL1_DATA_WIDTH/8;
 parameter LVL2_STRB_WIDTH  = LVL2_DATA_WIDTH/8;
 parameter CORE_MSG_WIDTH   = 4+$clog2(DMEM_SIZE_BYTES)+32;
-parameter LVL2_SW_PORTS    = CORE_COUNT/LVL1_SW_PORTS;
-parameter CORE_MSG_LVL2    = CORE_COUNT/CORE_MSG_LVL1;
-parameter LVL1_DEST_BITS   = $clog2(LVL1_SW_PORTS);
-parameter DATA_DEST_LVL2   = ID_TAG_WIDTH-LVL1_DEST_BITS;
-parameter CTRL_DEST_LVL2   = CORE_WIDTH-LVL1_DEST_BITS;
 
 wire select_core_clk = SEPARATE_CLOCKS ? core_clk : sys_clk;
 wire select_core_rst = SEPARATE_CLOCKS ? core_rst : sys_rst;
@@ -287,7 +282,6 @@ endgenerate
 // DRAM DMA controller data 
 wire [LVL1_DATA_WIDTH-1:0] dram_tx_axis_tdata;
 wire [LVL1_STRB_WIDTH-1:0] dram_tx_axis_tkeep;
-wire [PORT_WIDTH-1:0]      dram_tx_axis_tdest;
 wire [ID_TAG_WIDTH-1:0]    dram_tx_axis_tuser;
 wire                       dram_tx_axis_tvalid, 
                            dram_tx_axis_tready, 
@@ -422,13 +416,11 @@ pcie_controller #
   .slot_count         (slot_count)     
 );
 
-// no use for dram_tx_axis_tdest
 assign dram_rx_axis_tuser = DRAM_PORT;
 
 // Loopback message FIFO module
 wire [2*LVL1_DATA_WIDTH-1:0] loopback_tx_axis_tdata;
 wire [2*LVL1_STRB_WIDTH-1:0] loopback_tx_axis_tkeep;
-wire [2*PORT_WIDTH-1:0]      loopback_tx_axis_tdest;
 wire [2*ID_TAG_WIDTH-1:0]    loopback_tx_axis_tuser;
 wire [2-1:0]                 loopback_tx_axis_tvalid, 
                              loopback_tx_axis_tready, 
@@ -445,7 +437,6 @@ wire [2-1:0]                 loopback_rx_axis_tvalid,
 // Scheduler 
 wire [INTERFACE_COUNT*LVL1_DATA_WIDTH-1:0] sched_tx_axis_tdata;
 wire [INTERFACE_COUNT*LVL1_STRB_WIDTH-1:0] sched_tx_axis_tkeep;
-wire [INTERFACE_COUNT*PORT_WIDTH-1:0]      sched_tx_axis_tdest;
 wire [INTERFACE_COUNT*ID_TAG_WIDTH-1:0]    sched_tx_axis_tuser;
 wire [INTERFACE_COUNT-1:0]                 sched_tx_axis_tvalid, 
                                            sched_tx_axis_tready, 
@@ -479,7 +470,7 @@ simple_scheduler # (
   .SLOT_COUNT(SLOT_COUNT),
   .DATA_WIDTH(LVL1_DATA_WIDTH),
   .CTRL_WIDTH(LVL1_CTRL_WIDTH),
-  .LVL1_SW_PORTS(LVL1_SW_PORTS),
+  .CLUSTER_COUNT(CLUSTER_COUNT),
   .LOOPBACK_PORT(LOOPBACK_PORT),
   .LOOPBACK_COUNT(INTERFACE_COUNT),
   .ENABLE_ILA(ENABLE_ILA)
@@ -511,7 +502,6 @@ simple_scheduler # (
   
   .data_s_axis_tdata(sched_tx_axis_tdata),
   .data_s_axis_tkeep(sched_tx_axis_tkeep),
-  .data_s_axis_tdest(sched_tx_axis_tdest),
   .data_s_axis_tuser(sched_tx_axis_tuser),
   .data_s_axis_tvalid(sched_tx_axis_tvalid), 
   .data_s_axis_tready(sched_tx_axis_tready), 
@@ -556,6 +546,7 @@ loopback_msg_fifo # (
   .CORE_WIDTH(CORE_WIDTH), 
   .SLOT_WIDTH(SLOT_WIDTH),
   .PORT_COUNT(INTERFACE_COUNT),
+  .FIRST_PORT(LOOPBACK_PORT),
   .ID_TAG_WIDTH(ID_TAG_WIDTH)
 ) loopback_msg_fifo_inst (
     .clk(sys_clk),
@@ -566,7 +557,6 @@ loopback_msg_fifo # (
     .s_axis_tvalid(loopback_tx_axis_tvalid),
     .s_axis_tready(loopback_tx_axis_tready),
     .s_axis_tlast (loopback_tx_axis_tlast),
-    .s_axis_tdest (loopback_tx_axis_tdest),
     .s_axis_tuser (loopback_tx_axis_tuser),
   
     .m_axis_tdata (loopback_rx_axis_tdata),
@@ -579,329 +569,9 @@ loopback_msg_fifo # (
 );
 
 // Switches
-
-// Level 1
-wire [LVL1_SW_PORTS*LVL1_DATA_WIDTH-1:0] int_data_s_axis_tdata;
-wire [LVL1_SW_PORTS*LVL1_STRB_WIDTH-1:0] int_data_s_axis_tkeep;
-wire [LVL1_SW_PORTS*ID_TAG_WIDTH-1:0]    int_data_s_axis_tdest;
-wire [LVL1_SW_PORTS*PORT_WIDTH-1:0]      int_data_s_axis_tuser;
-wire [LVL1_SW_PORTS-1:0]                 int_data_s_axis_tvalid, 
-                                         int_data_s_axis_tready, 
-                                         int_data_s_axis_tlast;
-
-wire [LVL1_SW_PORTS*LVL2_DATA_WIDTH-1:0] int_data_m_axis_tdata;
-wire [LVL1_SW_PORTS*LVL2_STRB_WIDTH-1:0] int_data_m_axis_tkeep;
-wire [LVL1_SW_PORTS*PORT_WIDTH-1:0]      int_data_m_axis_tdest;
-wire [LVL1_SW_PORTS*ID_TAG_WIDTH-1:0]    int_data_m_axis_tuser;
-wire [LVL1_SW_PORTS-1:0]                 int_data_m_axis_tvalid, 
-                                         int_data_m_axis_tready, 
-                                         int_data_m_axis_tlast;
-
-wire [LVL1_SW_PORTS*LVL1_CTRL_WIDTH-1:0] int_ctrl_s_axis_tdata;
-wire [LVL1_SW_PORTS*CORE_WIDTH-1:0]      int_ctrl_s_axis_tdest;
-wire [LVL1_SW_PORTS-1:0]                 int_ctrl_s_axis_tvalid, 
-                                         int_ctrl_s_axis_tready, 
-                                         int_ctrl_s_axis_tlast;
-
-wire [LVL1_SW_PORTS*LVL2_CTRL_WIDTH-1:0] int_ctrl_m_axis_tdata;
-wire [LVL1_SW_PORTS*CORE_WIDTH-1:0]      int_ctrl_m_axis_tuser;
-wire [LVL1_SW_PORTS-1:0]                 int_ctrl_m_axis_tvalid, 
-                                         int_ctrl_m_axis_tready, 
-                                         int_ctrl_m_axis_tlast;
-
-wire [LVL1_SW_PORTS*LVL1_DRAM_WIDTH-1:0] int_dram_ctrl_s_axis_tdata;
-wire [LVL1_SW_PORTS*CORE_WIDTH-1:0]      int_dram_ctrl_s_axis_tdest;
-wire [LVL1_SW_PORTS-1:0]                 int_dram_ctrl_s_axis_tvalid, 
-                                         int_dram_ctrl_s_axis_tready, 
-                                         int_dram_ctrl_s_axis_tlast;
-
-wire [LVL1_SW_PORTS*LVL2_DRAM_WIDTH-1:0] int_dram_ctrl_m_axis_tdata;
-wire [LVL1_SW_PORTS*CORE_WIDTH-1:0]      int_dram_ctrl_m_axis_tuser;
-wire [LVL1_SW_PORTS-1:0]                 int_dram_ctrl_m_axis_tvalid, 
-                                         int_dram_ctrl_m_axis_tready, 
-                                         int_dram_ctrl_m_axis_tlast;
-
-wire [LVL1_SW_PORTS*LVL2_DATA_WIDTH-1:0] int_data_s_axis_tdata_f;
-wire [LVL1_SW_PORTS*LVL2_STRB_WIDTH-1:0] int_data_s_axis_tkeep_f;
-wire [LVL1_SW_PORTS*ID_TAG_WIDTH-1:0]    int_data_s_axis_tdest_f;
-wire [LVL1_SW_PORTS*PORT_WIDTH-1:0]      int_data_s_axis_tuser_f;
-wire [LVL1_SW_PORTS-1:0]                 int_data_s_axis_tvalid_f, 
-                                         int_data_s_axis_tready_f, 
-                                         int_data_s_axis_tlast_f;
-
-wire [LVL1_SW_PORTS*LVL1_DATA_WIDTH-1:0] int_data_m_axis_tdata_f;
-wire [LVL1_SW_PORTS*LVL1_STRB_WIDTH-1:0] int_data_m_axis_tkeep_f;
-wire [LVL1_SW_PORTS*PORT_WIDTH-1:0]      int_data_m_axis_tdest_f;
-wire [LVL1_SW_PORTS*ID_TAG_WIDTH-1:0]    int_data_m_axis_tuser_f;
-wire [LVL1_SW_PORTS-1:0]                 int_data_m_axis_tvalid_f, 
-                                         int_data_m_axis_tready_f, 
-                                         int_data_m_axis_tlast_f;
-
-wire [LVL1_SW_PORTS*LVL2_CTRL_WIDTH-1:0] int_ctrl_s_axis_tdata_f;
-wire [LVL1_SW_PORTS*CORE_WIDTH-1:0]      int_ctrl_s_axis_tdest_f;
-wire [LVL1_SW_PORTS-1:0]                 int_ctrl_s_axis_tvalid_f, 
-                                         int_ctrl_s_axis_tready_f, 
-                                         int_ctrl_s_axis_tlast_f;
-
-wire [LVL1_SW_PORTS*LVL1_CTRL_WIDTH-1:0] int_ctrl_m_axis_tdata_f;
-wire [LVL1_SW_PORTS*CORE_WIDTH-1:0]      int_ctrl_m_axis_tuser_f;
-wire [LVL1_SW_PORTS-1:0]                 int_ctrl_m_axis_tvalid_f, 
-                                         int_ctrl_m_axis_tready_f, 
-                                         int_ctrl_m_axis_tlast_f;
-
-wire [LVL1_SW_PORTS*LVL2_DRAM_WIDTH-1:0] int_dram_ctrl_s_axis_tdata_f;
-wire [LVL1_SW_PORTS*CORE_WIDTH-1:0]      int_dram_ctrl_s_axis_tdest_f;
-wire [LVL1_SW_PORTS-1:0]                 int_dram_ctrl_s_axis_tvalid_f, 
-                                         int_dram_ctrl_s_axis_tready_f, 
-                                         int_dram_ctrl_s_axis_tlast_f;
-
-wire [LVL1_SW_PORTS*LVL1_DRAM_WIDTH-1:0] int_dram_ctrl_m_axis_tdata_f;
-wire [LVL1_SW_PORTS*CORE_WIDTH-1:0]      int_dram_ctrl_m_axis_tuser_f;
-wire [LVL1_SW_PORTS-1:0]                 int_dram_ctrl_m_axis_tvalid_f, 
-                                         int_dram_ctrl_m_axis_tready_f, 
-                                         int_dram_ctrl_m_axis_tlast_f;
-
-// Data channel switch
-axis_switch #
-(
-    .S_COUNT(PORT_COUNT),
-    .M_COUNT(LVL1_SW_PORTS),
-    .DATA_WIDTH(LVL1_DATA_WIDTH),
-    .DEST_WIDTH(ID_TAG_WIDTH),
-    .USER_WIDTH(PORT_WIDTH),
-    .S_REG_TYPE(2),
-    .M_REG_TYPE(2)
-) data_in_sw_lvl1
-(
-    .clk(sys_clk),
-    .rst(sys_rst),
-
-    /*
-     * AXI Stream inputs
-     */
-    .s_axis_tdata( {dram_rx_axis_tdata, loopback_rx_axis_tdata, sched_rx_axis_tdata}),
-    .s_axis_tkeep( {dram_rx_axis_tkeep, loopback_rx_axis_tkeep, sched_rx_axis_tkeep}),
-    .s_axis_tvalid({dram_rx_axis_tvalid,loopback_rx_axis_tvalid,sched_rx_axis_tvalid}),
-    .s_axis_tready({dram_rx_axis_tready,loopback_rx_axis_tready,sched_rx_axis_tready}),
-    .s_axis_tlast( {dram_rx_axis_tlast, loopback_rx_axis_tlast, sched_rx_axis_tlast}),
-    .s_axis_tid({PORT_COUNT{8'd0}}),
-    .s_axis_tdest( {dram_rx_axis_tdest, loopback_rx_axis_tdest, sched_rx_axis_tdest}),
-    .s_axis_tuser( {dram_rx_axis_tuser, loopback_rx_axis_tuser, sched_rx_axis_tuser}),
-
-    /*
-     * AXI Stream outputs
-     */
-    .m_axis_tdata(int_data_s_axis_tdata),
-    .m_axis_tkeep(int_data_s_axis_tkeep),
-    .m_axis_tvalid(int_data_s_axis_tvalid),
-    .m_axis_tready(int_data_s_axis_tready),
-    .m_axis_tlast(int_data_s_axis_tlast),
-    .m_axis_tid(),
-    .m_axis_tdest(int_data_s_axis_tdest),
-    .m_axis_tuser(int_data_s_axis_tuser)
-);
-
-axis_switch #
-(
-    .S_COUNT(LVL1_SW_PORTS),
-    .M_COUNT(PORT_COUNT),
-    .DATA_WIDTH(LVL1_DATA_WIDTH),
-    .DEST_WIDTH(PORT_WIDTH),
-    .USER_WIDTH(ID_TAG_WIDTH),
-    .S_REG_TYPE(2),
-    .M_REG_TYPE(2)
-) data_out_sw_lvl1
-(
-    .clk(sys_clk),
-    .rst(sys_rst),
-
-    /*
-     * AXI Stream inputs
-     */
-    .s_axis_tdata(int_data_m_axis_tdata_f),
-    .s_axis_tkeep(int_data_m_axis_tkeep_f),
-    .s_axis_tvalid(int_data_m_axis_tvalid_f),
-    .s_axis_tready(int_data_m_axis_tready_f),
-    .s_axis_tlast(int_data_m_axis_tlast_f),
-    .s_axis_tid({LVL1_SW_PORTS{8'd0}}),
-    .s_axis_tdest(int_data_m_axis_tdest_f),
-    .s_axis_tuser(int_data_m_axis_tuser_f),
-
-    /*
-     * AXI Stream outputs
-     */
-    .m_axis_tdata( {dram_tx_axis_tdata, loopback_tx_axis_tdata, sched_tx_axis_tdata}),
-    .m_axis_tkeep( {dram_tx_axis_tkeep, loopback_tx_axis_tkeep, sched_tx_axis_tkeep}),
-    .m_axis_tvalid({dram_tx_axis_tvalid,loopback_tx_axis_tvalid,sched_tx_axis_tvalid}),
-    .m_axis_tready({dram_tx_axis_tready,loopback_tx_axis_tready,sched_tx_axis_tready}),
-    .m_axis_tlast( {dram_tx_axis_tlast, loopback_tx_axis_tlast, sched_tx_axis_tlast}),
-    .m_axis_tid(),                      
-    .m_axis_tdest( {dram_tx_axis_tdest, loopback_tx_axis_tdest, sched_tx_axis_tdest}),
-    .m_axis_tuser( {dram_tx_axis_tuser, loopback_tx_axis_tuser, sched_tx_axis_tuser})
-
-);
-
-axis_switch #
-(
-    .S_COUNT(1),
-    .M_COUNT(LVL1_SW_PORTS),
-    .DATA_WIDTH(LVL1_CTRL_WIDTH),
-    .DEST_WIDTH(CORE_WIDTH),
-    .USER_ENABLE(0),
-    .KEEP_ENABLE(0),
-    .S_REG_TYPE(2),
-    .M_REG_TYPE(2)
-) ctrl_in_sw_lvl1
-(
-    .clk(sys_clk),
-    .rst(sys_rst),
-
-    /*
-     * AXI Stream inputs
-     */
-    .s_axis_tdata(sched_ctrl_m_axis_tdata),
-    .s_axis_tkeep(),
-    .s_axis_tvalid(sched_ctrl_m_axis_tvalid),
-    .s_axis_tready(sched_ctrl_m_axis_tready),
-    .s_axis_tlast(sched_ctrl_m_axis_tlast),
-    .s_axis_tid(8'd0),
-    .s_axis_tdest(sched_ctrl_m_axis_tdest),
-    .s_axis_tuser(),
-
-    /*
-     * AXI Stream outputs
-     */
-    .m_axis_tdata(int_ctrl_s_axis_tdata),
-    .m_axis_tkeep(),
-    .m_axis_tvalid(int_ctrl_s_axis_tvalid),
-    .m_axis_tready(int_ctrl_s_axis_tready),
-    .m_axis_tlast(int_ctrl_s_axis_tlast),
-    .m_axis_tid(),
-    .m_axis_tdest(int_ctrl_s_axis_tdest),
-    .m_axis_tuser()
-);
-
-
-axis_arb_mux #
-(
-    .S_COUNT(LVL1_SW_PORTS),
-    .DATA_WIDTH(LVL1_CTRL_WIDTH),
-    .USER_WIDTH(CORE_WIDTH),
-    .KEEP_ENABLE(0),
-    .ARB_TYPE("ROUND_ROBIN")
-) ctrl_out_sw_lvl1
-(
-    .clk(sys_clk),
-    .rst(sys_rst),
-
-    /*
-     * AXI Stream inputs
-     */
-    .s_axis_tdata(int_ctrl_m_axis_tdata_f),
-    .s_axis_tkeep(),
-    .s_axis_tvalid(int_ctrl_m_axis_tvalid_f),
-    .s_axis_tready(int_ctrl_m_axis_tready_f),
-    .s_axis_tlast(int_ctrl_m_axis_tlast_f),
-    .s_axis_tid(),
-    .s_axis_tdest(),
-    .s_axis_tuser(int_ctrl_m_axis_tuser_f),
-
-    /*
-     * AXI Stream output
-     */
-    .m_axis_tdata(sched_ctrl_s_axis_tdata),
-    .m_axis_tkeep(),
-    .m_axis_tvalid(sched_ctrl_s_axis_tvalid),
-    .m_axis_tready(sched_ctrl_s_axis_tready),
-    .m_axis_tlast(sched_ctrl_s_axis_tlast),
-    .m_axis_tid(),
-    .m_axis_tdest(),
-    .m_axis_tuser(sched_ctrl_s_axis_tuser)
-);
-
-axis_switch #
-(
-    .S_COUNT(1),
-    .M_COUNT(LVL1_SW_PORTS),
-    .DATA_WIDTH(LVL1_DRAM_WIDTH),
-    .DEST_WIDTH(CORE_WIDTH),
-    .USER_ENABLE(0),
-    .KEEP_ENABLE(0),
-    .S_REG_TYPE(2),
-    .M_REG_TYPE(2)
-) dram_ctrl_in_sw_lvl1
-(
-    .clk(sys_clk),
-    .rst(sys_rst),
-
-    /*
-     * AXI Stream inputs
-     */
-    .s_axis_tdata(dram_ctrl_s_axis_tdata),
-    .s_axis_tkeep(),
-    .s_axis_tvalid(dram_ctrl_s_axis_tvalid),
-    .s_axis_tready(dram_ctrl_s_axis_tready),
-    .s_axis_tlast(dram_ctrl_s_axis_tlast),
-    .s_axis_tid(8'd0),
-    .s_axis_tdest(dram_ctrl_s_axis_tdest),
-    .s_axis_tuser(),
-
-    /*
-     * AXI Stream outputs
-     */
-    .m_axis_tdata(int_dram_ctrl_s_axis_tdata),
-    .m_axis_tkeep(),
-    .m_axis_tvalid(int_dram_ctrl_s_axis_tvalid),
-    .m_axis_tready(int_dram_ctrl_s_axis_tready),
-    .m_axis_tlast(int_dram_ctrl_s_axis_tlast),
-    .m_axis_tid(),
-    .m_axis_tdest(int_dram_ctrl_s_axis_tdest),
-    .m_axis_tuser()
-);
-
-
-axis_arb_mux #
-(
-    .S_COUNT(LVL1_SW_PORTS),
-    .DATA_WIDTH(LVL1_DRAM_WIDTH),
-    .USER_WIDTH(CORE_WIDTH),
-    .KEEP_ENABLE(0),
-    .ARB_TYPE("ROUND_ROBIN")
-) dram_ctrl_out_sw_lvl1
-(
-    .clk(sys_clk),
-    .rst(sys_rst),
-
-    /*
-     * AXI Stream inputs
-     */
-    .s_axis_tdata(int_dram_ctrl_m_axis_tdata_f),
-    .s_axis_tkeep(),
-    .s_axis_tvalid(int_dram_ctrl_m_axis_tvalid_f),
-    .s_axis_tready(int_dram_ctrl_m_axis_tready_f),
-    .s_axis_tlast(int_dram_ctrl_m_axis_tlast_f),
-    .s_axis_tid(),
-    .s_axis_tdest(),
-    .s_axis_tuser(int_dram_ctrl_m_axis_tuser_f),
-
-    /*
-     * AXI Stream output
-     */
-    .m_axis_tdata(dram_ctrl_m_axis_tdata),
-    .m_axis_tkeep(),
-    .m_axis_tvalid(dram_ctrl_m_axis_tvalid),
-    .m_axis_tready(dram_ctrl_m_axis_tready),
-    .m_axis_tlast(dram_ctrl_m_axis_tlast),
-    .m_axis_tid(),
-    .m_axis_tdest(),
-    .m_axis_tuser(dram_ctrl_m_axis_tuser)
-);
-
-// Level 2 Switches
-
 wire [CORE_COUNT*LVL2_DATA_WIDTH-1:0] data_s_axis_tdata;
 wire [CORE_COUNT*LVL2_STRB_WIDTH-1:0] data_s_axis_tkeep;
-wire [CORE_COUNT*DATA_DEST_LVL2-1:0]  data_s_axis_tdest;
+wire [CORE_COUNT*TAG_WIDTH-1:0]       data_s_axis_tdest;
 wire [CORE_COUNT*PORT_WIDTH-1:0]      data_s_axis_tuser;
 wire [CORE_COUNT-1:0]                 data_s_axis_tvalid, 
                                       data_s_axis_tready, 
@@ -937,527 +607,318 @@ wire [CORE_COUNT-1:0]                 dram_m_axis_tvalid,
                                       dram_m_axis_tready, 
                                       dram_m_axis_tlast;
 
-genvar j;
-generate 
-  if (LVL2_SW_PORTS == 1) begin
-    assign data_s_axis_tdata        = int_data_s_axis_tdata;
-    assign data_s_axis_tkeep        = int_data_s_axis_tkeep;
-    assign data_s_axis_tuser        = int_data_s_axis_tuser;
-    assign data_s_axis_tvalid       = int_data_s_axis_tvalid;
-    assign data_s_axis_tlast        = int_data_s_axis_tlast;
-    assign int_data_s_axis_tready   = data_s_axis_tready;
+axis_switch_2lvl # (
+    .S_COUNT         (PORT_COUNT),
+    .M_COUNT         (CORE_COUNT),
+    .S_DATA_WIDTH    (LVL1_DATA_WIDTH),
+    .S_KEEP_WIDTH    (LVL1_STRB_WIDTH),
+    .S_DEST_WIDTH    (ID_TAG_WIDTH),
+    .M_DATA_WIDTH    (LVL2_DATA_WIDTH),
+    .M_KEEP_WIDTH    (LVL2_STRB_WIDTH),
+    .M_DEST_ENABLE   (1),
+    .M_DEST_WIDTH    (TAG_WIDTH),
+    .ID_ENABLE       (0),
+    .USER_ENABLE     (1),
+    .USER_WIDTH      (PORT_WIDTH),
+    .S_REG_TYPE      (2),
+    .M_REG_TYPE      (2),
+    .CLUSTER_COUNT   (CLUSTER_COUNT),
+    .STAGE_FIFO_DEPTH(STG_F_DATA_DEPTH),
+    .FRAME_FIFO(1)
+) data_in_sw (
+    .clk(sys_clk),
+    .rst(sys_rst),
     
-    for (j=0; j<LVL1_SW_PORTS; j=j+1) 
-      assign data_s_axis_tdest[j*DATA_DEST_LVL2 +: DATA_DEST_LVL2] = 
-         int_data_s_axis_tdest[j*ID_TAG_WIDTH +: DATA_DEST_LVL2];
+    .s_axis_tdata( {dram_rx_axis_tdata, loopback_rx_axis_tdata, sched_rx_axis_tdata}),
+    .s_axis_tkeep( {dram_rx_axis_tkeep, loopback_rx_axis_tkeep, sched_rx_axis_tkeep}),
+    .s_axis_tvalid({dram_rx_axis_tvalid,loopback_rx_axis_tvalid,sched_rx_axis_tvalid}),
+    .s_axis_tready({dram_rx_axis_tready,loopback_rx_axis_tready,sched_rx_axis_tready}),
+    .s_axis_tlast( {dram_rx_axis_tlast, loopback_rx_axis_tlast, sched_rx_axis_tlast}),
+    .s_axis_tid({PORT_COUNT{1'b0}}),
+    .s_axis_tdest( {dram_rx_axis_tdest, loopback_rx_axis_tdest, sched_rx_axis_tdest}),
+    .s_axis_tuser( {dram_rx_axis_tuser, loopback_rx_axis_tuser, sched_rx_axis_tuser}),
 
-    assign int_data_m_axis_tdata_f  = data_m_axis_tdata;
-    assign int_data_m_axis_tkeep_f  = data_m_axis_tkeep;
-    assign int_data_m_axis_tdest_f  = data_m_axis_tdest;
-    assign int_data_m_axis_tuser_f  = data_m_axis_tuser;
-    assign int_data_m_axis_tvalid_f = data_m_axis_tvalid;
-    assign int_data_m_axis_tlast_f  = data_m_axis_tlast;
-    assign data_m_axis_tready       = int_data_m_axis_tready_f;
-  
-    assign ctrl_s_axis_tdata        = int_ctrl_s_axis_tdata;
-    assign ctrl_s_axis_tvalid       = int_ctrl_s_axis_tvalid; 
-    assign ctrl_s_axis_tlast        = int_ctrl_s_axis_tlast;
-    assign int_ctrl_s_axis_tready   = ctrl_s_axis_tready;
-  
-    assign int_ctrl_m_axis_tdata_f  = ctrl_m_axis_tdata;
-    assign int_ctrl_m_axis_tuser_f  = ctrl_m_axis_tuser;
-    assign int_ctrl_m_axis_tvalid_f = ctrl_m_axis_tvalid;
-    assign int_ctrl_m_axis_tlast_f  = ctrl_m_axis_tlast;
-    assign ctrl_m_axis_tready       = int_ctrl_m_axis_tready_f;
-    
-    assign dram_s_axis_tdata             = int_dram_ctrl_s_axis_tdata;
-    assign dram_s_axis_tvalid            = int_dram_ctrl_s_axis_tvalid; 
-    assign dram_s_axis_tlast             = int_dram_ctrl_s_axis_tlast;
-    assign int_dram_ctrl_s_axis_tready   = dram_s_axis_tready;    
+    .m_axis_tdata (data_s_axis_tdata),
+    .m_axis_tkeep (data_s_axis_tkeep),
+    .m_axis_tvalid(data_s_axis_tvalid),
+    .m_axis_tready(data_s_axis_tready),
+    .m_axis_tlast (data_s_axis_tlast),
+    .m_axis_tid   (),
+    .m_axis_tdest (data_s_axis_tdest),
+    .m_axis_tuser (data_s_axis_tuser)
+);
  
-    assign int_dram_ctrl_m_axis_tdata_f  = dram_m_axis_tdata;
-    assign int_dram_ctrl_m_axis_tuser_f  = dram_m_axis_tuser;
-    assign int_dram_ctrl_m_axis_tvalid_f = dram_m_axis_tvalid;
-    assign int_dram_ctrl_m_axis_tlast_f  = dram_m_axis_tlast;
-    assign dram_m_axis_tready            = int_dram_ctrl_m_axis_tready_f;
-  
-  end else begin
-
-    for (j=0; j<LVL1_SW_PORTS; j=j+1) begin
-      // Data channel switch and FIFO
-      axis_fifo_adapter # (
-          .DEPTH(STG_F_DATA_DEPTH),
-          .S_DATA_WIDTH(LVL1_DATA_WIDTH),
-          .M_DATA_WIDTH(LVL2_DATA_WIDTH),
-          .DEST_ENABLE(1),
-          .DEST_WIDTH(DATA_DEST_LVL2),
-          .USER_ENABLE(1),
-          .USER_WIDTH(PORT_WIDTH),
-          .FRAME_FIFO(0)
-      ) data_in_sw_lvl2_fifo (
-          .clk(sys_clk),
-          .rst(sys_rst),
-
-          .s_axis_tdata(int_data_s_axis_tdata[j*LVL1_DATA_WIDTH +: LVL1_DATA_WIDTH]),
-          .s_axis_tkeep(int_data_s_axis_tkeep[j*LVL1_STRB_WIDTH +: LVL1_STRB_WIDTH]),
-          .s_axis_tvalid(int_data_s_axis_tvalid[j]),
-          .s_axis_tready(int_data_s_axis_tready[j]),
-          .s_axis_tlast(int_data_s_axis_tlast[j]),
-          .s_axis_tid({8'd0}),
-          .s_axis_tdest(int_data_s_axis_tdest[j*ID_TAG_WIDTH +: DATA_DEST_LVL2]),
-          .s_axis_tuser(int_data_s_axis_tuser[j*PORT_WIDTH +: PORT_WIDTH]),
-
-          .m_axis_tdata(int_data_s_axis_tdata_f[j*LVL2_DATA_WIDTH +: LVL2_DATA_WIDTH]),
-          .m_axis_tkeep(int_data_s_axis_tkeep_f[j*LVL2_STRB_WIDTH +: LVL2_STRB_WIDTH]),
-          .m_axis_tvalid(int_data_s_axis_tvalid_f[j]),
-          .m_axis_tready(int_data_s_axis_tready_f[j]),
-          .m_axis_tlast(int_data_s_axis_tlast_f[j]),
-          .m_axis_tid(),
-          .m_axis_tdest(int_data_s_axis_tdest_f[j*ID_TAG_WIDTH +: DATA_DEST_LVL2]),
-          .m_axis_tuser(int_data_s_axis_tuser_f[j*PORT_WIDTH +: PORT_WIDTH]),
-   
-          .status_overflow(),
-          .status_bad_frame(),
-          .status_good_frame()
-      );
-
-      axis_switch #
-      (
-          .S_COUNT(1),
-          .M_COUNT(LVL2_SW_PORTS),
-          .DATA_WIDTH(LVL2_DATA_WIDTH),
-          .DEST_WIDTH(DATA_DEST_LVL2),
-          .USER_WIDTH(PORT_WIDTH),
-          .M_REG_TYPE(2)
-      ) data_in_sw_lvl2
-      (
-          .clk(sys_clk),
-          .rst(sys_rst),
-      
-          .s_axis_tdata(int_data_s_axis_tdata_f[j*LVL2_DATA_WIDTH +: LVL2_DATA_WIDTH]),
-          .s_axis_tkeep(int_data_s_axis_tkeep_f[j*LVL2_STRB_WIDTH +: LVL2_STRB_WIDTH]),
-          .s_axis_tvalid(int_data_s_axis_tvalid_f[j]),
-          .s_axis_tready(int_data_s_axis_tready_f[j]),
-          .s_axis_tlast(int_data_s_axis_tlast_f[j]),
-          .s_axis_tid({8'd0}),
-          .s_axis_tdest(int_data_s_axis_tdest_f[j*ID_TAG_WIDTH +: DATA_DEST_LVL2]),
-          .s_axis_tuser(int_data_s_axis_tuser_f[j*PORT_WIDTH +: PORT_WIDTH]),
-      
-          .m_axis_tdata(data_s_axis_tdata[j*LVL2_SW_PORTS*LVL2_DATA_WIDTH +: LVL2_SW_PORTS*LVL2_DATA_WIDTH]),
-          .m_axis_tkeep(data_s_axis_tkeep[j*LVL2_SW_PORTS*LVL2_STRB_WIDTH +: LVL2_SW_PORTS*LVL2_STRB_WIDTH]),
-          .m_axis_tvalid(data_s_axis_tvalid[j*LVL2_SW_PORTS +: LVL2_SW_PORTS]),
-          .m_axis_tready(data_s_axis_tready[j*LVL2_SW_PORTS +: LVL2_SW_PORTS]),
-          .m_axis_tlast(data_s_axis_tlast[j*LVL2_SW_PORTS +: LVL2_SW_PORTS]),
-          .m_axis_tid(),
-          .m_axis_tdest(data_s_axis_tdest[j*LVL2_SW_PORTS*DATA_DEST_LVL2 +: LVL2_SW_PORTS*DATA_DEST_LVL2]),
-          .m_axis_tuser(data_s_axis_tuser[j*LVL2_SW_PORTS*PORT_WIDTH +: LVL2_SW_PORTS*PORT_WIDTH])
-      );
-
-      axis_fifo_adapter # (
-          .DEPTH(STG_F_DATA_DEPTH),
-          .S_DATA_WIDTH(LVL2_DATA_WIDTH),
-          .M_DATA_WIDTH(LVL1_DATA_WIDTH),
-          .DEST_ENABLE(1),
-          .DEST_WIDTH(PORT_WIDTH),
-          .USER_ENABLE(1),
-          .USER_WIDTH(ID_TAG_WIDTH),
-          .FRAME_FIFO(1)
-      ) data_out_sw_lvl2_fifo (
+axis_switch_2lvl # (
+    .S_COUNT         (CORE_COUNT),
+    .M_COUNT         (PORT_COUNT),
+    .S_DATA_WIDTH    (LVL2_DATA_WIDTH),
+    .S_KEEP_WIDTH    (LVL2_STRB_WIDTH),
+    .S_DEST_WIDTH    (PORT_WIDTH),
+    .M_DATA_WIDTH    (LVL1_DATA_WIDTH),
+    .M_KEEP_WIDTH    (LVL1_STRB_WIDTH),
+    .M_DEST_ENABLE   (0),
+    .ID_ENABLE       (0),
+    .USER_ENABLE     (1),
+    .USER_WIDTH      (ID_TAG_WIDTH),
+    .S_REG_TYPE      (2),
+    .M_REG_TYPE      (2),
+    .CLUSTER_COUNT   (CLUSTER_COUNT),
+    .STAGE_FIFO_DEPTH(STG_F_DATA_DEPTH),
+    .FRAME_FIFO(1)
+) data_out_sw (
+    .clk(sys_clk),
+    .rst(sys_rst),
  
-          .clk(sys_clk),
-          .rst(sys_rst),
-          
-          .s_axis_tdata(int_data_m_axis_tdata[j*LVL2_DATA_WIDTH +: LVL2_DATA_WIDTH]),
-          .s_axis_tkeep(int_data_m_axis_tkeep[j*LVL2_STRB_WIDTH +: LVL2_STRB_WIDTH]),
-          .s_axis_tvalid(int_data_m_axis_tvalid[j]),
-          .s_axis_tready(int_data_m_axis_tready[j]),
-          .s_axis_tlast(int_data_m_axis_tlast[j]),
-          .s_axis_tid({8'd0}),
-          .s_axis_tdest(int_data_m_axis_tdest[j*PORT_WIDTH +: PORT_WIDTH]),
-          .s_axis_tuser(int_data_m_axis_tuser[j*ID_TAG_WIDTH +: ID_TAG_WIDTH]),
+    /*
+     * AXI Stream inputs
+     */
+    .s_axis_tdata(data_m_axis_tdata),
+    .s_axis_tkeep(data_m_axis_tkeep),
+    .s_axis_tvalid(data_m_axis_tvalid),
+    .s_axis_tready(data_m_axis_tready),
+    .s_axis_tlast(data_m_axis_tlast),
+    .s_axis_tid({CORE_COUNT{1'b0}}),
+    .s_axis_tdest(data_m_axis_tdest),
+    .s_axis_tuser(data_m_axis_tuser),
 
-          .m_axis_tdata(int_data_m_axis_tdata_f[j*LVL1_DATA_WIDTH +: LVL1_DATA_WIDTH]),
-          .m_axis_tkeep(int_data_m_axis_tkeep_f[j*LVL1_STRB_WIDTH +: LVL1_STRB_WIDTH]),
-          .m_axis_tvalid(int_data_m_axis_tvalid_f[j]),
-          .m_axis_tready(int_data_m_axis_tready_f[j]),
-          .m_axis_tlast(int_data_m_axis_tlast_f[j]),
-          .m_axis_tid(),
-          .m_axis_tdest(int_data_m_axis_tdest_f[j*PORT_WIDTH +: PORT_WIDTH]),
-          .m_axis_tuser(int_data_m_axis_tuser_f[j*ID_TAG_WIDTH +: ID_TAG_WIDTH]),
+    /*
+     * AXI Stream outputs
+     */
+    .m_axis_tdata( {dram_tx_axis_tdata, loopback_tx_axis_tdata, sched_tx_axis_tdata}),
+    .m_axis_tkeep( {dram_tx_axis_tkeep, loopback_tx_axis_tkeep, sched_tx_axis_tkeep}),
+    .m_axis_tvalid({dram_tx_axis_tvalid,loopback_tx_axis_tvalid,sched_tx_axis_tvalid}),
+    .m_axis_tready({dram_tx_axis_tready,loopback_tx_axis_tready,sched_tx_axis_tready}),
+    .m_axis_tlast( {dram_tx_axis_tlast, loopback_tx_axis_tlast, sched_tx_axis_tlast}),
+    .m_axis_tid(),                      
+    .m_axis_tdest(), 
+    .m_axis_tuser( {dram_tx_axis_tuser, loopback_tx_axis_tuser, sched_tx_axis_tuser})
 
-          .status_overflow(),
-          .status_bad_frame(),
-          .status_good_frame()
-      );
-      
-      axis_arb_mux #
-      (
-          .S_COUNT(LVL2_SW_PORTS),
-          .DATA_WIDTH(LVL2_DATA_WIDTH),
-          .DEST_WIDTH(PORT_WIDTH),
-          .USER_WIDTH(ID_TAG_WIDTH),
-          .DEST_ENABLE(1),
-          .ARB_TYPE("ROUND_ROBIN")
-      ) data_out_sw_lvl2 (
+);
 
-          .clk(sys_clk),
-          .rst(sys_rst),
-      
-          /*
-           * AXI Stream inputs
-           */
-          .s_axis_tdata(data_m_axis_tdata[j*LVL2_SW_PORTS*LVL2_DATA_WIDTH +: LVL2_SW_PORTS*LVL2_DATA_WIDTH]),
-          .s_axis_tkeep(data_m_axis_tkeep[j*LVL2_SW_PORTS*LVL2_STRB_WIDTH +: LVL2_SW_PORTS*LVL2_STRB_WIDTH]),
-          .s_axis_tvalid(data_m_axis_tvalid[j*LVL2_SW_PORTS +: LVL2_SW_PORTS]),
-          .s_axis_tready(data_m_axis_tready[j*LVL2_SW_PORTS +: LVL2_SW_PORTS]),
-          .s_axis_tlast(data_m_axis_tlast[j*LVL2_SW_PORTS +: LVL2_SW_PORTS]),
-          .s_axis_tid({LVL2_SW_PORTS{8'd0}}),
-          .s_axis_tdest(data_m_axis_tdest[j*LVL2_SW_PORTS*PORT_WIDTH +: LVL2_SW_PORTS*PORT_WIDTH]),
-          .s_axis_tuser(data_m_axis_tuser[j*LVL2_SW_PORTS*ID_TAG_WIDTH +: LVL2_SW_PORTS*ID_TAG_WIDTH]),
-      
-          /*
-           * AXI Stream outputs
-           */
-          .m_axis_tdata(int_data_m_axis_tdata[j*LVL2_DATA_WIDTH +: LVL2_DATA_WIDTH]),
-          .m_axis_tkeep(int_data_m_axis_tkeep[j*LVL2_STRB_WIDTH +: LVL2_STRB_WIDTH]),
-          .m_axis_tvalid(int_data_m_axis_tvalid[j]),
-          .m_axis_tready(int_data_m_axis_tready[j]),
-          .m_axis_tlast(int_data_m_axis_tlast[j]),
-          .m_axis_tid(),
-          .m_axis_tdest(int_data_m_axis_tdest[j*PORT_WIDTH +: PORT_WIDTH]),
-          .m_axis_tuser(int_data_m_axis_tuser[j*ID_TAG_WIDTH +: ID_TAG_WIDTH])
-  
-      );
-      
-      axis_fifo_adapter # (
-          .DEPTH(STG_F_CTRL_DEPTH),
-          .S_DATA_WIDTH(LVL1_CTRL_WIDTH),
-          .M_DATA_WIDTH(LVL2_CTRL_WIDTH),
-          .S_KEEP_ENABLE(0),
-          .M_KEEP_ENABLE(0),
-          .DEST_ENABLE(1),
-          .DEST_WIDTH(CTRL_DEST_LVL2),
-          .USER_ENABLE(0),
-          .FRAME_FIFO(0)
-      ) ctrl_in_sw_lvl2_fifo (
- 
-          .clk(sys_clk),
-          .rst(sys_rst),
-          
-          .s_axis_tdata(int_ctrl_s_axis_tdata[j*LVL1_CTRL_WIDTH +: LVL1_CTRL_WIDTH]),
-          .s_axis_tkeep(),
-          .s_axis_tvalid(int_ctrl_s_axis_tvalid[j]),
-          .s_axis_tready(int_ctrl_s_axis_tready[j]),
-          .s_axis_tlast(int_ctrl_s_axis_tlast[j]),
-          .s_axis_tid(8'd0),
-          .s_axis_tdest(int_ctrl_s_axis_tdest[j*CORE_WIDTH +: CTRL_DEST_LVL2]),
-          .s_axis_tuser(1'b0),
-          
-          .m_axis_tdata(int_ctrl_s_axis_tdata_f[j*LVL2_CTRL_WIDTH +: LVL2_CTRL_WIDTH]),
-          .m_axis_tkeep(),
-          .m_axis_tvalid(int_ctrl_s_axis_tvalid_f[j]),
-          .m_axis_tready(int_ctrl_s_axis_tready_f[j]),
-          .m_axis_tlast(int_ctrl_s_axis_tlast_f[j]),
-          .m_axis_tid(),
-          .m_axis_tdest(int_ctrl_s_axis_tdest_f[j*CORE_WIDTH +: CTRL_DEST_LVL2]),
-          .m_axis_tuser(),
+axis_switch_2lvl # (
+    .S_COUNT         (1),
+    .M_COUNT         (CORE_COUNT),
+    .S_DATA_WIDTH    (LVL1_CTRL_WIDTH),
+    .S_KEEP_ENABLE   (0),
+    .S_DEST_WIDTH    (CORE_WIDTH),
+    .M_DATA_WIDTH    (LVL2_CTRL_WIDTH),
+    .M_KEEP_ENABLE   (0),
+    .M_DEST_ENABLE   (0),
+    .ID_ENABLE       (0),
+    .USER_ENABLE     (0),
+    .S_REG_TYPE      (2),
+    .M_REG_TYPE      (2),
+    .CLUSTER_COUNT   (CLUSTER_COUNT),
+    .STAGE_FIFO_DEPTH(STG_F_CTRL_DEPTH),
+    .FRAME_FIFO(0)
+) ctrl_in_sw
+(
+    .clk(sys_clk),
+    .rst(sys_rst),
 
-          .status_overflow(),
-          .status_bad_frame(),
-          .status_good_frame()
-      );
-      
-      axis_switch #
-      (
-          .S_COUNT(1),
-          .M_COUNT(LVL2_SW_PORTS),
-          .DATA_WIDTH(LVL2_CTRL_WIDTH),
-          .DEST_WIDTH(CTRL_DEST_LVL2),
-          .USER_ENABLE(0),
-          .KEEP_ENABLE(0)
-      ) ctrl_in_sw_lvl2 (
+    /*
+     * AXI Stream inputs
+     */
+    .s_axis_tdata(sched_ctrl_m_axis_tdata),
+    .s_axis_tkeep(1'b0),
+    .s_axis_tvalid(sched_ctrl_m_axis_tvalid),
+    .s_axis_tready(sched_ctrl_m_axis_tready),
+    .s_axis_tlast(sched_ctrl_m_axis_tlast),
+    .s_axis_tid(1'b0),
+    .s_axis_tdest(sched_ctrl_m_axis_tdest),
+    .s_axis_tuser(1'b0),
 
-          .clk(sys_clk),
-          .rst(sys_rst),
-      
-          .s_axis_tdata(int_ctrl_s_axis_tdata_f[j*LVL2_CTRL_WIDTH +: LVL2_CTRL_WIDTH]),
-          .s_axis_tkeep(),
-          .s_axis_tvalid(int_ctrl_s_axis_tvalid_f[j]),
-          .s_axis_tready(int_ctrl_s_axis_tready_f[j]),
-          .s_axis_tlast(int_ctrl_s_axis_tlast_f[j]),
-          .s_axis_tid(8'd0),
-          .s_axis_tdest(int_ctrl_s_axis_tdest_f[j*CORE_WIDTH +: CTRL_DEST_LVL2]),
-          .s_axis_tuser(),
-  
-          .m_axis_tdata(ctrl_s_axis_tdata[j*LVL2_SW_PORTS*LVL2_CTRL_WIDTH +: LVL2_SW_PORTS*LVL2_CTRL_WIDTH]),
-          .m_axis_tkeep(),
-          .m_axis_tvalid(ctrl_s_axis_tvalid[j*LVL2_SW_PORTS +: LVL2_SW_PORTS]),
-          .m_axis_tready(ctrl_s_axis_tready[j*LVL2_SW_PORTS +: LVL2_SW_PORTS]),
-          .m_axis_tlast(ctrl_s_axis_tlast[j*LVL2_SW_PORTS +: LVL2_SW_PORTS]),
-          .m_axis_tid(),
-          .m_axis_tdest(),
-          .m_axis_tuser()
-      );
-      
-      axis_fifo_adapter # (
-          .DEPTH(STG_F_CTRL_DEPTH),
-          .S_DATA_WIDTH(LVL2_CTRL_WIDTH),
-          .M_DATA_WIDTH(LVL1_CTRL_WIDTH),
-          .S_KEEP_ENABLE(0),
-          .M_KEEP_ENABLE(0),
-          .DEST_ENABLE(0),
-          .USER_ENABLE(1),
-          .USER_WIDTH(CORE_WIDTH),
-          .FRAME_FIFO(0)
-      ) ctrl_out_sw_lvl2_fifo (
- 
-          .clk(sys_clk),
-          .rst(sys_rst),
-          
-          .s_axis_tdata(int_ctrl_m_axis_tdata[j*LVL2_CTRL_WIDTH +: LVL2_CTRL_WIDTH]),
-          .s_axis_tkeep(),
-          .s_axis_tvalid(int_ctrl_m_axis_tvalid[j]),
-          .s_axis_tready(int_ctrl_m_axis_tready[j]),
-          .s_axis_tlast(int_ctrl_m_axis_tlast[j]),
-          .s_axis_tid(),
-          .s_axis_tdest(),
-          .s_axis_tuser(int_ctrl_m_axis_tuser[j*CORE_WIDTH +: CORE_WIDTH]),
-          
-          .m_axis_tdata(int_ctrl_m_axis_tdata_f[j*LVL1_CTRL_WIDTH +: LVL1_CTRL_WIDTH]),
-          .m_axis_tkeep(),
-          .m_axis_tvalid(int_ctrl_m_axis_tvalid_f[j]),
-          .m_axis_tready(int_ctrl_m_axis_tready_f[j]),
-          .m_axis_tlast(int_ctrl_m_axis_tlast_f[j]),
-          .m_axis_tid(),
-          .m_axis_tdest(),
-          .m_axis_tuser(int_ctrl_m_axis_tuser_f[j*CORE_WIDTH +: CORE_WIDTH]),
-          
-          .status_overflow(),
-          .status_bad_frame(),
-          .status_good_frame()
-      );
-      
-      axis_arb_mux #
-      (
-          .S_COUNT(LVL2_SW_PORTS),
-          .DATA_WIDTH(LVL2_CTRL_WIDTH),
-          .USER_WIDTH(CORE_WIDTH),
-          .KEEP_ENABLE(0),
-          .ARB_TYPE("ROUND_ROBIN")
-      ) ctrl_out_sw_lvl2 (
-          .clk(sys_clk),
-          .rst(sys_rst),
-      
-          /*
-           * AXI Stream inputs
-           */
-          .s_axis_tdata(ctrl_m_axis_tdata[j*LVL2_SW_PORTS*LVL2_CTRL_WIDTH +: LVL2_SW_PORTS*LVL2_CTRL_WIDTH]),
-          .s_axis_tkeep(),
-          .s_axis_tvalid(ctrl_m_axis_tvalid[j*LVL2_SW_PORTS +: LVL2_SW_PORTS]),
-          .s_axis_tready(ctrl_m_axis_tready[j*LVL2_SW_PORTS +: LVL2_SW_PORTS]),
-          .s_axis_tlast(ctrl_m_axis_tlast[j*LVL2_SW_PORTS +: LVL2_SW_PORTS]),
-          .s_axis_tid({LVL2_SW_PORTS{8'd0}}),
-          .s_axis_tdest(),
-          .s_axis_tuser(ctrl_m_axis_tuser[j*LVL2_SW_PORTS*CORE_WIDTH +: LVL2_SW_PORTS*CORE_WIDTH]),
-  
-          /*
-           * AXI Stream output
-           */
-          .m_axis_tdata(int_ctrl_m_axis_tdata[j*LVL2_CTRL_WIDTH +: LVL2_CTRL_WIDTH]),
-          .m_axis_tkeep(),
-          .m_axis_tvalid(int_ctrl_m_axis_tvalid[j]),
-          .m_axis_tready(int_ctrl_m_axis_tready[j]),
-          .m_axis_tlast(int_ctrl_m_axis_tlast[j]),
-          .m_axis_tid(),
-          .m_axis_tdest(),
-          .m_axis_tuser(int_ctrl_m_axis_tuser[j*CORE_WIDTH +: CORE_WIDTH])
-  
-      );
+    /*
+     * AXI Stream outputs
+     */
+    .m_axis_tdata(ctrl_s_axis_tdata),
+    .m_axis_tkeep(),
+    .m_axis_tvalid(ctrl_s_axis_tvalid),
+    .m_axis_tready(ctrl_s_axis_tready),
+    .m_axis_tlast(ctrl_s_axis_tlast),
+    .m_axis_tid(),
+    .m_axis_tdest(),
+    .m_axis_tuser()
+);
 
-      axis_fifo_adapter # (
-          .DEPTH(STG_F_DRAM_DEPTH),
-          .S_DATA_WIDTH(LVL1_DRAM_WIDTH),
-          .M_DATA_WIDTH(LVL2_DRAM_WIDTH),
-          .S_KEEP_ENABLE(1),
-          .M_KEEP_ENABLE(1),
-          .DEST_ENABLE(1),
-          .DEST_WIDTH(CTRL_DEST_LVL2),
-          .USER_ENABLE(0),
-          .FRAME_FIFO(0)
-      ) dram_ctrl_in_sw_lvl2_fifo (
- 
-          .clk(sys_clk),
-          .rst(sys_rst),
-          
-          .s_axis_tdata(int_dram_ctrl_s_axis_tdata[j*LVL1_DRAM_WIDTH +: LVL1_DRAM_WIDTH]),
-          .s_axis_tkeep({(LVL1_DRAM_WIDTH/8){1'b1}}),
-          .s_axis_tvalid(int_dram_ctrl_s_axis_tvalid[j]),
-          .s_axis_tready(int_dram_ctrl_s_axis_tready[j]),
-          .s_axis_tlast(int_dram_ctrl_s_axis_tlast[j]),
-          .s_axis_tid(8'd0),
-          .s_axis_tdest(int_dram_ctrl_s_axis_tdest[j*CORE_WIDTH +: CTRL_DEST_LVL2]),
-          .s_axis_tuser(1'b0),
-          
-          .m_axis_tdata(int_dram_ctrl_s_axis_tdata_f[j*LVL2_DRAM_WIDTH +: LVL2_DRAM_WIDTH]),
-          .m_axis_tkeep(),
-          .m_axis_tvalid(int_dram_ctrl_s_axis_tvalid_f[j]),
-          .m_axis_tready(int_dram_ctrl_s_axis_tready_f[j]),
-          .m_axis_tlast(int_dram_ctrl_s_axis_tlast_f[j]),
-          .m_axis_tid(),
-          .m_axis_tdest(int_dram_ctrl_s_axis_tdest_f[j*CORE_WIDTH +: CTRL_DEST_LVL2]),
-          .m_axis_tuser(),
+axis_switch_2lvl # (
+    .S_COUNT         (CORE_COUNT),
+    .M_COUNT         (1),
+    .S_DATA_WIDTH    (LVL2_CTRL_WIDTH),
+    .S_KEEP_ENABLE   (0),
+    .M_DATA_WIDTH    (LVL1_CTRL_WIDTH),
+    .M_KEEP_ENABLE   (0),
+    .M_DEST_ENABLE   (0),
+    .ID_ENABLE       (0),
+    .USER_ENABLE     (1),
+    .USER_WIDTH      (CORE_WIDTH),
+    .S_REG_TYPE      (2),
+    .M_REG_TYPE      (2),
+    .CLUSTER_COUNT   (CLUSTER_COUNT),
+    .STAGE_FIFO_DEPTH(STG_F_CTRL_DEPTH),
+    .FRAME_FIFO(0)
+) ctrl_out_sw
+(
+    .clk(sys_clk),
+    .rst(sys_rst),
 
-          .status_overflow(),
-          .status_bad_frame(),
-          .status_good_frame()
-      );
-      
-      axis_switch #
-      (
-          .S_COUNT(1),
-          .M_COUNT(LVL2_SW_PORTS),
-          .DATA_WIDTH(LVL2_DRAM_WIDTH),
-          .DEST_WIDTH(CTRL_DEST_LVL2),
-          .USER_ENABLE(0),
-          .KEEP_ENABLE(0)
-      ) dram_ctrl_in_sw_lvl2 (
+    /*
+     * AXI Stream inputs
+     */
+    .s_axis_tdata(ctrl_m_axis_tdata),
+    .s_axis_tkeep({CORE_COUNT{1'b0}}),
+    .s_axis_tvalid(ctrl_m_axis_tvalid),
+    .s_axis_tready(ctrl_m_axis_tready),
+    .s_axis_tlast(ctrl_m_axis_tlast),
+    .s_axis_tid({CORE_COUNT{1'b0}}),
+    .s_axis_tdest({CORE_COUNT{1'b0}}),
+    .s_axis_tuser(ctrl_m_axis_tuser),
 
-          .clk(sys_clk),
-          .rst(sys_rst),
-      
-          .s_axis_tdata(int_dram_ctrl_s_axis_tdata_f[j*LVL2_DRAM_WIDTH +: LVL2_DRAM_WIDTH]),
-          .s_axis_tkeep(),
-          .s_axis_tvalid(int_dram_ctrl_s_axis_tvalid_f[j]),
-          .s_axis_tready(int_dram_ctrl_s_axis_tready_f[j]),
-          .s_axis_tlast(int_dram_ctrl_s_axis_tlast_f[j]),
-          .s_axis_tid(8'd0),
-          .s_axis_tdest(int_dram_ctrl_s_axis_tdest_f[j*CORE_WIDTH +: CTRL_DEST_LVL2]),
-          .s_axis_tuser(),
-  
-          .m_axis_tdata(dram_s_axis_tdata[j*LVL2_SW_PORTS*LVL2_DRAM_WIDTH +: LVL2_SW_PORTS*LVL2_DRAM_WIDTH]),
-          .m_axis_tkeep(),
-          .m_axis_tvalid(dram_s_axis_tvalid[j*LVL2_SW_PORTS +: LVL2_SW_PORTS]),
-          .m_axis_tready(dram_s_axis_tready[j*LVL2_SW_PORTS +: LVL2_SW_PORTS]),
-          .m_axis_tlast(dram_s_axis_tlast[j*LVL2_SW_PORTS +: LVL2_SW_PORTS]),
-          .m_axis_tid(),
-          .m_axis_tdest(),
-          .m_axis_tuser()
-      );
-      
-      axis_fifo_adapter # (
-          .DEPTH(STG_F_DRAM_DEPTH),
-          .S_DATA_WIDTH(LVL2_DRAM_WIDTH),
-          .M_DATA_WIDTH(LVL1_DRAM_WIDTH),
-          .S_KEEP_ENABLE(1),
-          .M_KEEP_ENABLE(1),
-          .DEST_ENABLE(0),
-          .USER_ENABLE(1),
-          .USER_WIDTH(CORE_WIDTH),
-          .FRAME_FIFO(0)
-      ) dram_ctrl_out_sw_lvl2_fifo (
- 
-          .clk(sys_clk),
-          .rst(sys_rst),
-          
-          .s_axis_tdata(int_dram_ctrl_m_axis_tdata[j*LVL2_DRAM_WIDTH +: LVL2_DRAM_WIDTH]),
-          .s_axis_tkeep({(LVL2_DRAM_WIDTH/8){1'b1}}),
-          .s_axis_tvalid(int_dram_ctrl_m_axis_tvalid[j]),
-          .s_axis_tready(int_dram_ctrl_m_axis_tready[j]),
-          .s_axis_tlast(int_dram_ctrl_m_axis_tlast[j]),
-          .s_axis_tid(),
-          .s_axis_tdest(),
-          .s_axis_tuser(int_dram_ctrl_m_axis_tuser[j*CORE_WIDTH +: CORE_WIDTH]),
-          
-          .m_axis_tdata(int_dram_ctrl_m_axis_tdata_f[j*LVL1_DRAM_WIDTH +: LVL1_DRAM_WIDTH]),
-          .m_axis_tkeep(),
-          .m_axis_tvalid(int_dram_ctrl_m_axis_tvalid_f[j]),
-          .m_axis_tready(int_dram_ctrl_m_axis_tready_f[j]),
-          .m_axis_tlast(int_dram_ctrl_m_axis_tlast_f[j]),
-          .m_axis_tid(),
-          .m_axis_tdest(),
-          .m_axis_tuser(int_dram_ctrl_m_axis_tuser_f[j*CORE_WIDTH +: CORE_WIDTH]),
-          
-          .status_overflow(),
-          .status_bad_frame(),
-          .status_good_frame()
-      );
-      
-      axis_arb_mux #
-      (
-          .S_COUNT(LVL2_SW_PORTS),
-          .DATA_WIDTH(LVL2_DRAM_WIDTH),
-          .USER_WIDTH(CORE_WIDTH),
-          .KEEP_ENABLE(0),
-          .ARB_TYPE("ROUND_ROBIN")
-      ) dram_ctrl_out_sw_lvl2 (
-          .clk(sys_clk),
-          .rst(sys_rst),
-      
-          /*
-           * AXI Stream inputs
-           */
-          .s_axis_tdata(dram_m_axis_tdata[j*LVL2_SW_PORTS*LVL2_DRAM_WIDTH +: LVL2_SW_PORTS*LVL2_DRAM_WIDTH]),
-          .s_axis_tkeep(),
-          .s_axis_tvalid(dram_m_axis_tvalid[j*LVL2_SW_PORTS +: LVL2_SW_PORTS]),
-          .s_axis_tready(dram_m_axis_tready[j*LVL2_SW_PORTS +: LVL2_SW_PORTS]),
-          .s_axis_tlast(dram_m_axis_tlast[j*LVL2_SW_PORTS +: LVL2_SW_PORTS]),
-          .s_axis_tid({LVL2_SW_PORTS{8'd0}}),
-          .s_axis_tdest(),
-          .s_axis_tuser(dram_m_axis_tuser[j*LVL2_SW_PORTS*CORE_WIDTH +: LVL2_SW_PORTS*CORE_WIDTH]),
-  
-          /*
-           * AXI Stream output
-           */
-          .m_axis_tdata(int_dram_ctrl_m_axis_tdata[j*LVL2_DRAM_WIDTH +: LVL2_DRAM_WIDTH]),
-          .m_axis_tkeep(),
-          .m_axis_tvalid(int_dram_ctrl_m_axis_tvalid[j]),
-          .m_axis_tready(int_dram_ctrl_m_axis_tready[j]),
-          .m_axis_tlast(int_dram_ctrl_m_axis_tlast[j]),
-          .m_axis_tid(),
-          .m_axis_tdest(),
-          .m_axis_tuser(int_dram_ctrl_m_axis_tuser[j*CORE_WIDTH +: CORE_WIDTH])
-  
-      );
+    /*
+     * AXI Stream output
+     */
+    .m_axis_tdata(sched_ctrl_s_axis_tdata),
+    .m_axis_tkeep(),
+    .m_axis_tvalid(sched_ctrl_s_axis_tvalid),
+    .m_axis_tready(sched_ctrl_s_axis_tready),
+    .m_axis_tlast(sched_ctrl_s_axis_tlast),
+    .m_axis_tid(),
+    .m_axis_tdest(),
+    .m_axis_tuser(sched_ctrl_s_axis_tuser)
+);
 
-    end  
-  end
-endgenerate
+axis_switch_2lvl # (
+    .S_COUNT         (1),
+    .M_COUNT         (CORE_COUNT),
+    .S_DATA_WIDTH    (LVL1_DRAM_WIDTH),
+    .S_KEEP_ENABLE   (0),
+    .S_DEST_WIDTH    (CORE_WIDTH),
+    .M_DATA_WIDTH    (LVL2_DRAM_WIDTH),
+    .M_KEEP_ENABLE   (0),
+    .M_DEST_ENABLE   (0),
+    .ID_ENABLE       (0),
+    .USER_ENABLE     (0),
+    .S_REG_TYPE      (2),
+    .M_REG_TYPE      (2),
+    .CLUSTER_COUNT   (CLUSTER_COUNT),
+    .STAGE_FIFO_DEPTH(STG_F_DRAM_DEPTH),
+    .FRAME_FIFO(0)
+) dram_ctrl_in_sw
+(
+    .clk(sys_clk),
+    .rst(sys_rst),
 
+    /*
+     * AXI Stream inputs
+     */
+    .s_axis_tdata(dram_ctrl_s_axis_tdata),
+    .s_axis_tkeep(1'b0),
+    .s_axis_tvalid(dram_ctrl_s_axis_tvalid),
+    .s_axis_tready(dram_ctrl_s_axis_tready),
+    .s_axis_tlast(dram_ctrl_s_axis_tlast),
+    .s_axis_tid(1'b0),
+    .s_axis_tdest(dram_ctrl_s_axis_tdest),
+    .s_axis_tuser(1'b0),
+
+    /*
+     * AXI Stream outputs
+     */
+    .m_axis_tdata(dram_s_axis_tdata),
+    .m_axis_tkeep(),
+    .m_axis_tvalid(dram_s_axis_tvalid),
+    .m_axis_tready(dram_s_axis_tready),
+    .m_axis_tlast(dram_s_axis_tlast),
+    .m_axis_tid(),
+    .m_axis_tdest(),
+    .m_axis_tuser()
+);
+
+axis_switch_2lvl # (
+    .S_COUNT         (CORE_COUNT),
+    .M_COUNT         (1),
+    .S_DATA_WIDTH    (LVL2_DRAM_WIDTH),
+    .S_KEEP_ENABLE   (0),
+    .M_DATA_WIDTH    (LVL1_DRAM_WIDTH),
+    .M_KEEP_ENABLE   (0),
+    .M_DEST_ENABLE   (0),
+    .ID_ENABLE       (0),
+    .USER_ENABLE     (1),
+    .USER_WIDTH      (CORE_WIDTH),
+    .S_REG_TYPE      (2),
+    .M_REG_TYPE      (2),
+    .CLUSTER_COUNT   (CLUSTER_COUNT),
+    .STAGE_FIFO_DEPTH(STG_F_CTRL_DEPTH),
+    .FRAME_FIFO(0)
+) dram_ctrl_out_sw
+(
+    .clk(sys_clk),
+    .rst(sys_rst),
+
+    /*
+     * AXI Stream inputs
+     */
+    .s_axis_tdata(dram_m_axis_tdata),
+    .s_axis_tkeep({CORE_COUNT{1'b0}}),
+    .s_axis_tvalid(dram_m_axis_tvalid),
+    .s_axis_tready(dram_m_axis_tready),
+    .s_axis_tlast(dram_m_axis_tlast),
+    .s_axis_tid({CORE_COUNT{1'b0}}),
+    .s_axis_tdest({CORE_COUNT{1'b0}}),
+    .s_axis_tuser(dram_m_axis_tuser),
+
+    /*
+     * AXI Stream output
+     */
+    .m_axis_tdata(dram_ctrl_m_axis_tdata),
+    .m_axis_tkeep(),
+    .m_axis_tvalid(dram_ctrl_m_axis_tvalid),
+    .m_axis_tready(dram_ctrl_m_axis_tready),
+    .m_axis_tlast(dram_ctrl_m_axis_tlast),
+    .m_axis_tid(),
+    .m_axis_tdest(),
+    .m_axis_tuser(dram_ctrl_m_axis_tuser)
+);
 
 // Core internal messaging
-wire [CORE_MSG_LVL1*CORE_MSG_WIDTH-1:0] int_core_msg_out_data;
-wire [CORE_MSG_LVL1*CORE_WIDTH-1:0]     int_core_msg_out_user;
-wire [CORE_MSG_LVL1-1:0]                int_core_msg_out_valid;
-wire [CORE_MSG_LVL1-1:0]                int_core_msg_out_ready;
+wire [CORE_COUNT*CORE_MSG_WIDTH-1:0] core_msg_out_data;
+wire [CORE_COUNT-1:0]                core_msg_out_valid;
+wire [CORE_COUNT-1:0]                core_msg_out_ready;
 
-wire [CORE_MSG_WIDTH-1:0] core_msg_merged_data;
-wire [CORE_WIDTH-1:0]     core_msg_merged_user;
-wire                      core_msg_merged_valid;
-wire                      core_msg_merged_ready;
+wire [CORE_MSG_WIDTH-1:0]            core_msg_merged_data;
+wire [CORE_WIDTH-1:0]                core_msg_merged_user;
+wire                                 core_msg_merged_valid;
+wire                                 core_msg_merged_ready;
 
-axis_arb_mux #
-(
-    .S_COUNT(CORE_MSG_LVL1),
-    .DATA_WIDTH(CORE_MSG_WIDTH),
-    .USER_WIDTH(CORE_WIDTH),
-    .KEEP_ENABLE(0),
-    .ARB_TYPE("ROUND_ROBIN")
-) cores_to_broadcaster_lvl1
-(
+axis_switch_2lvl # (
+    .S_COUNT         (CORE_COUNT),
+    .M_COUNT         (1),
+    .S_DATA_WIDTH    (CORE_MSG_WIDTH),
+    .S_KEEP_ENABLE   (0),
+    .M_DATA_WIDTH    (CORE_MSG_WIDTH),
+    .M_KEEP_ENABLE   (0),
+    .M_DEST_ENABLE   (0),
+    .ID_ENABLE       (0),
+    .USER_ENABLE     (1),
+    .USER_WIDTH      (CORE_WIDTH),
+    .S_REG_TYPE      (0),
+    .M_REG_TYPE      (0),
+    .CLUSTER_COUNT   (BC_MSG_CLUSTERS),
+    .STAGE_FIFO_DEPTH(0)
+) cores_to_broadcaster (
     .clk(select_core_clk),
     .rst(select_core_rst),
 
     /*
      * AXI Stream inputs
      */
-    .s_axis_tdata(int_core_msg_out_data),
-    .s_axis_tkeep({CORE_MSG_LVL1{6'd0}}),
-    .s_axis_tvalid(int_core_msg_out_valid),
-    .s_axis_tready(int_core_msg_out_ready),
-    .s_axis_tlast({CORE_MSG_LVL1{1'b1}}),
-    .s_axis_tid({CORE_MSG_LVL1{8'd0}}),
-    .s_axis_tdest({CORE_MSG_LVL1{8'd0}}),
-    .s_axis_tuser(int_core_msg_out_user),
+    .s_axis_tdata(core_msg_out_data),
+    .s_axis_tkeep({CORE_COUNT{1'b0}}),
+    .s_axis_tvalid(core_msg_out_valid),
+    .s_axis_tready(core_msg_out_ready),
+    .s_axis_tlast({CORE_COUNT{1'b1}}),
+    .s_axis_tid({CORE_COUNT{1'b0}}),
+    .s_axis_tdest({CORE_COUNT{1'b0}}),
+    .s_axis_tuser(ctrl_m_axis_tuser),
 
     /*
      * AXI Stream output
@@ -1482,63 +943,7 @@ assign core_msg_in_user  = {CORE_COUNT{core_msg_merged_user}};
 assign core_msg_in_valid = {CORE_COUNT{core_msg_merged_valid}}; 
 assign core_msg_merged_ready = 1'b1;
 
-// lvl2 
-wire [CORE_COUNT*CORE_MSG_WIDTH-1:0] core_msg_out_data;
-wire [CORE_COUNT-1:0]                core_msg_out_valid;
-wire [CORE_COUNT-1:0]                core_msg_out_ready;
-
-genvar k;
-generate
-  if (CORE_MSG_LVL2 == 1) begin
-
-    assign int_core_msg_out_valid = core_msg_out_valid;
-    assign int_core_msg_out_data  = core_msg_out_data;
-    assign int_core_msg_out_user  = ctrl_m_axis_tuser;
-    assign core_msg_out_ready     = int_core_msg_out_ready;
-
-  end else begin
-
-    for (k=0; k<CORE_MSG_LVL1; k=k+1) begin
-      axis_arb_mux #
-      (
-          .S_COUNT(CORE_MSG_LVL1),
-          .DATA_WIDTH(CORE_MSG_WIDTH),
-          .USER_WIDTH(CORE_WIDTH),
-          .KEEP_ENABLE(0),
-          .ARB_TYPE("ROUND_ROBIN")
-      ) cores_to_broadcaster_lvl2
-      (
-          .clk(select_core_clk),
-          .rst(select_core_rst),
-      
-          /*
-           * AXI Stream inputs
-           */
-          .s_axis_tdata(core_msg_out_data[k*CORE_MSG_LVL2*CORE_MSG_WIDTH +: CORE_MSG_LVL2*CORE_MSG_WIDTH]),
-          .s_axis_tkeep({CORE_MSG_LVL2{6'd0}}),
-          .s_axis_tvalid(core_msg_out_valid[k*CORE_MSG_LVL2 +: CORE_MSG_LVL2]),
-          .s_axis_tready(core_msg_out_ready[k*CORE_MSG_LVL2 +: CORE_MSG_LVL2]),
-          .s_axis_tlast({CORE_MSG_LVL2{1'b1}}),
-          .s_axis_tid({CORE_MSG_LVL2{8'd0}}),
-          .s_axis_tdest({CORE_MSG_LVL2{8'd0}}),
-          .s_axis_tuser(ctrl_m_axis_tuser[k*CORE_MSG_LVL2*CORE_WIDTH +: CORE_MSG_LVL2*CORE_WIDTH]),
-      
-          /*
-           * AXI Stream output
-           */
-          .m_axis_tdata(int_core_msg_out_data[k*CORE_MSG_WIDTH +: CORE_MSG_WIDTH]),
-          .m_axis_tkeep(),
-          .m_axis_tvalid(int_core_msg_out_valid[k]),
-          .m_axis_tready(int_core_msg_out_ready[k]),
-          .m_axis_tlast(),
-          .m_axis_tid(),
-          .m_axis_tdest(),
-          .m_axis_tuser(int_core_msg_out_user[k*CORE_WIDTH +: CORE_WIDTH])
-      );
-    end
-  end
-endgenerate 
-
+// Instantiating riscv core wrappers
 genvar i;
 generate
   for (i=0; i<CORE_COUNT; i=i+1) begin
@@ -1577,7 +982,7 @@ generate
         .data_s_axis_tvalid(data_s_axis_tvalid[i]),
         .data_s_axis_tready(data_s_axis_tready[i]),
         .data_s_axis_tlast(data_s_axis_tlast[i]),
-        .data_s_axis_tdest(data_s_axis_tdest[DATA_DEST_LVL2*i +: TAG_WIDTH]),
+        .data_s_axis_tdest(data_s_axis_tdest[TAG_WIDTH*i +: TAG_WIDTH]),
         .data_s_axis_tuser(data_s_axis_tuser[PORT_WIDTH*i +: PORT_WIDTH]),
   
         // Outgoing data
@@ -1646,7 +1051,7 @@ if (ENABLE_ILA) begin
   integer k;
   always @ (posedge sys_clk)
     for (k=0; k<CORE_COUNT; k=k+1) begin
-      data_s_slot [k*SLOT_WIDTH +: SLOT_WIDTH] <= data_s_axis_tdest[DATA_DEST_LVL2*k +: SLOT_WIDTH];
+      data_s_slot [k*SLOT_WIDTH +: SLOT_WIDTH] <= data_s_axis_tdest[TAG_WIDTH*k +: SLOT_WIDTH];
       data_m_slot [k*SLOT_WIDTH +: SLOT_WIDTH] <= data_m_axis_tuser[ID_TAG_WIDTH*k +: SLOT_WIDTH];
       ctrl_m_msg_type [k*4+:4] <= ctrl_m_axis_tdata [(k*LVL2_CTRL_WIDTH)+32 +:4];
       ctrl_m_msg_slot [k*4+:4] <= ctrl_m_axis_tdata [(k*LVL2_CTRL_WIDTH)+16 +:4];
