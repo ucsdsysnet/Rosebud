@@ -147,8 +147,8 @@ reg [PCIE_ADDR_WIDTH-1:0]    tx_pcie_addr [0:PCIE_SLOT_COUNT-1];
 reg [AXIS_TAG_WIDTH-1:0]     tx_core_tag  [0:PCIE_SLOT_COUNT-1];
 
 reg  [PCIE_SLOT_COUNT-1:0]   tx_slot;
-wire [PCIE_SLOT_WIDTH-1:0]   selected_tx_slot;
-wire [PCIE_SLOT_COUNT-1:0]   selected_tx_slot_1hot;
+reg  [PCIE_SLOT_WIDTH-1:0]   selected_tx_slot;
+reg  [PCIE_SLOT_COUNT-1:0]   selected_tx_slot_1hot;
 wire                         selected_tx_slot_v;
 reg  [PCIE_SLOT_WIDTH-1:0]   last_tx_slot;
 reg                          last_tx_slot_v;
@@ -162,9 +162,19 @@ wire [CORE_WIDTH-1:0]                tx_done_core_id =
 wire [AXIS_TAG_WIDTH-CORE_WIDTH-1:0] tx_done_core_tag = 
     tx_core_tag[pcie_dma_write_desc_status_tag][AXIS_TAG_WIDTH-CORE_WIDTH-1:0]; 
 
-penc # (.IN_WIDTH(PCIE_SLOT_COUNT)) tx_penc (
-  .to_select(tx_slot),.selected(selected_tx_slot),
-  .selected_1hot (selected_tx_slot_1hot),.valid(selected_tx_slot_v));
+integer i;
+
+always@(*) begin
+  selected_tx_slot      = {PCIE_SLOT_WIDTH{1'b0}};
+  selected_tx_slot_1hot = {PCIE_SLOT_COUNT{1'b0}};
+  for (i=PCIE_SLOT_COUNT-1;i>=0;i=i-1)
+    if (tx_slot[i]) begin
+      selected_tx_slot      = i;
+      selected_tx_slot_1hot = 1 << i;
+    end
+end
+
+assign selected_tx_slot_v = |tx_slot;
 
 always @ (posedge pcie_clk) begin
 

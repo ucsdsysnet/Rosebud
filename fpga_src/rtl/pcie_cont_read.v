@@ -102,14 +102,24 @@ reg  [AXIS_TAG_WIDTH-1:0]     rx_core_tag  [0:PCIE_SLOT_COUNT-1];
 reg  [HOST_DMA_TAG_WIDTH-1:0] rx_pcie_tag  [0:PCIE_SLOT_COUNT-1];
 
 reg  [PCIE_SLOT_COUNT-1:0]    rx_slot;
-wire [PCIE_SLOT_WIDTH-1:0]    selected_rx_slot;
-wire [PCIE_SLOT_COUNT-1:0]    selected_rx_slot_1hot;
+reg  [PCIE_SLOT_WIDTH-1:0]    selected_rx_slot;
+reg  [PCIE_SLOT_COUNT-1:0]    selected_rx_slot_1hot;
 wire                          selected_rx_slot_v;
 
-penc # (.IN_WIDTH(PCIE_SLOT_COUNT)) rx_penc (
-  .to_select(rx_slot),.selected(selected_rx_slot),
-  .selected_1hot (selected_rx_slot_1hot),.valid(selected_rx_slot_v));
-    
+integer i;
+
+always@(*) begin
+  selected_rx_slot      = {PCIE_SLOT_WIDTH{1'b0}};
+  selected_rx_slot_1hot = {PCIE_SLOT_COUNT{1'b0}};
+  for (i=PCIE_SLOT_COUNT-1;i>=0;i=i-1)
+    if (rx_slot[i]) begin
+      selected_rx_slot      = i;
+      selected_rx_slot_1hot = 1 << i;
+    end
+end
+
+assign selected_rx_slot_v = |rx_slot;
+
 always @ (posedge pcie_clk) begin
   if (host_dma_read_desc_valid && host_dma_read_desc_ready) begin 
     // Save request info for rx slot
