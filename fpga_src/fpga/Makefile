@@ -24,6 +24,7 @@ SYN_FILES += rtl/axis_switch.v
 SYN_FILES += rtl/axis_switch_2lvl.v
 SYN_FILES += rtl/loopback_msg_fifo.v
 SYN_FILES += rtl/header.v
+SYN_FILES += rtl/pcie_config.v
 SYN_FILES += rtl/pcie_controller.v
 SYN_FILES += rtl/pcie_cont_read.v
 SYN_FILES += rtl/pcie_cont_write.v

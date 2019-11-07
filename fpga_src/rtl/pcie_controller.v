@@ -43,6 +43,14 @@ module pcie_controller #
   parameter AXIS_PCIE_RQ_USER_WIDTH = 60,
   parameter AXIS_PCIE_CQ_USER_WIDTH = 85,
   parameter AXIS_PCIE_CC_USER_WIDTH = 33,
+  parameter PCIE_ADDR_WIDTH         = 64,
+  parameter PCIE_RAM_ADDR_WIDTH     = 32,
+  parameter TX_RX_RAM_SIZE          = 2**15, 
+  parameter PCIE_DMA_LEN_WIDTH      = 16,
+  parameter HOST_DMA_TAG_WIDTH      = 32,
+  parameter AXIL_DATA_WIDTH         = 32,
+  parameter AXIL_STRB_WIDTH         = (AXIL_DATA_WIDTH/8),
+  parameter AXIL_ADDR_WIDTH         = 32,
   parameter AXIS_DATA_WIDTH         = 128, 
   parameter AXIS_KEEP_WIDTH         = 16, 
   parameter AXIS_TAG_WIDTH          = 9, 
@@ -96,8 +104,8 @@ module pcie_controller #
   input  wire [2:0]                         cfg_max_payload,
   input  wire [2:0]                         cfg_max_read_req,
   input  wire                               ext_tag_enable,
+  input  wire                               pcie_dma_enable,
 
-  output wire [31:0]                        msi_irq,
   output wire                               status_error_cor,
   output wire                               status_error_uncor,
   
@@ -128,39 +136,57 @@ module pcie_controller #
   input  wire                               cores_ctrl_m_axis_tready,
   output wire                               cores_ctrl_m_axis_tlast,
   output wire [CORE_WIDTH-1:0]              cores_ctrl_m_axis_tdest,
+  
+  // DMA requests from Host
+  input  wire [PCIE_ADDR_WIDTH-1:0]         host_dma_read_desc_pcie_addr,
+  input  wire [PCIE_RAM_ADDR_WIDTH-1:0]     host_dma_read_desc_ram_addr,
+  input  wire [PCIE_DMA_LEN_WIDTH-1:0]      host_dma_read_desc_len,
+  input  wire [HOST_DMA_TAG_WIDTH-1:0]      host_dma_read_desc_tag,
+  input  wire                               host_dma_read_desc_valid,
+  output wire                               host_dma_read_desc_ready,
+  output wire [HOST_DMA_TAG_WIDTH-1:0]      host_dma_read_desc_status_tag,
+  output wire                               host_dma_read_desc_status_valid,
 
-  // Cores reset
-  output wire [CORE_WIDTH-1:0]              reset_dest,
-  output wire                               reset_value,
-  output wire                               reset_valid,
-  input  wire                               reset_ready,
+  input  wire [PCIE_ADDR_WIDTH-1:0]         host_dma_write_desc_pcie_addr,
+  input  wire [PCIE_RAM_ADDR_WIDTH-1:0]     host_dma_write_desc_ram_addr,
+  input  wire [PCIE_DMA_LEN_WIDTH-1:0]      host_dma_write_desc_len,
+  input  wire [HOST_DMA_TAG_WIDTH-1:0]      host_dma_write_desc_tag,
+  input  wire                               host_dma_write_desc_valid,
+  output wire                               host_dma_write_desc_ready,
+  output wire [HOST_DMA_TAG_WIDTH-1:0]      host_dma_write_desc_status_tag,
+  output wire                               host_dma_write_desc_status_valid,
+ 
+  // AXI lite
+  output wire [AXIL_ADDR_WIDTH-1:0]         axil_ctrl_awaddr,
+  output wire [2:0]                         axil_ctrl_awprot,
+  output wire                               axil_ctrl_awvalid,
+  input  wire                               axil_ctrl_awready,
+  output wire [AXIL_DATA_WIDTH-1:0]         axil_ctrl_wdata,
+  output wire [AXIL_STRB_WIDTH-1:0]         axil_ctrl_wstrb,
+  output wire                               axil_ctrl_wvalid,
+  input  wire                               axil_ctrl_wready,
+  input  wire [1:0]                         axil_ctrl_bresp,
+  input  wire                               axil_ctrl_bvalid,
+  output wire                               axil_ctrl_bready,
+  output wire [AXIL_ADDR_WIDTH-1:0]         axil_ctrl_araddr,
+  output wire [2:0]                         axil_ctrl_arprot,
+  output wire                               axil_ctrl_arvalid,
+  input  wire                               axil_ctrl_arready,
+  input  wire [AXIL_DATA_WIDTH-1:0]         axil_ctrl_rdata,
+  input  wire [1:0]                         axil_ctrl_rresp,
+  input  wire                               axil_ctrl_rvalid,
+  output wire                               axil_ctrl_rready
 
-  output wire [CORE_COUNT-1:0]              income_cores, 
-  output wire [CORE_COUNT-1:0]              cores_to_be_reset,
-  output wire [CORE_WIDTH-1:0]              core_for_slot_count,
-  input  wire [CORE_SLOT_WIDTH-1:0]         slot_count
 );
 
-parameter PCIE_ADDR_WIDTH     = 64;
-parameter PCIE_RAM_ADDR_WIDTH = 32;
-parameter TX_RX_RAM_SIZE      = 2**15; 
-
-// AXI lite interface parameters
-parameter AXIL_DATA_WIDTH = 32;
-parameter AXIL_STRB_WIDTH = (AXIL_DATA_WIDTH/8);
-parameter AXIL_ADDR_WIDTH = 32;
-
 // PCIe DMA parameters
-parameter PCIE_DMA_LEN_WIDTH = 16;
-parameter HOST_DMA_TAG_WIDTH = 32;
 parameter PCIE_DMA_TAG_WIDTH = PCIE_SLOT_WIDTH;
-
-parameter SEG_COUNT      = AXIS_PCIE_DATA_WIDTH > 64 ? AXIS_PCIE_DATA_WIDTH*2 / 128 : 2;
-parameter SEG_DATA_WIDTH = AXIS_PCIE_DATA_WIDTH*2/SEG_COUNT;
-parameter SEG_ADDR_WIDTH = $clog2((TX_RX_RAM_SIZE/SEG_COUNT)/8); 
-parameter SEG_BE_WIDTH   = SEG_DATA_WIDTH/8;
-parameter RAM_ADDR_WIDTH = SEG_ADDR_WIDTH+$clog2(SEG_COUNT)+$clog2(SEG_BE_WIDTH);
-parameter RAM_PIPELINE   = 4;
+parameter SEG_COUNT          = AXIS_PCIE_DATA_WIDTH > 64 ? AXIS_PCIE_DATA_WIDTH*2 / 128 : 2;
+parameter SEG_DATA_WIDTH     = AXIS_PCIE_DATA_WIDTH*2/SEG_COUNT;
+parameter SEG_ADDR_WIDTH     = $clog2((TX_RX_RAM_SIZE/SEG_COUNT)/8); 
+parameter SEG_BE_WIDTH       = SEG_DATA_WIDTH/8;
+parameter RAM_ADDR_WIDTH     = SEG_ADDR_WIDTH+$clog2(SEG_COUNT)+$clog2(SEG_BE_WIDTH);
+parameter RAM_PIPELINE       = 4;
 
 // -------------------------------------------------------------------//
 // -------- Register axis input from PCIe, and error handling --------//
@@ -490,27 +516,6 @@ axis_async_fifo_adapter # (
 // --------------------AXIL write and read back-----------------------//
 // -------------------------------------------------------------------//
 
-// AXI lite connections
-wire [AXIL_ADDR_WIDTH-1:0] axil_ctrl_awaddr;
-wire [2:0]                 axil_ctrl_awprot;
-wire                       axil_ctrl_awvalid;
-reg                        axil_ctrl_awready;
-wire [AXIL_DATA_WIDTH-1:0] axil_ctrl_wdata;
-wire [AXIL_STRB_WIDTH-1:0] axil_ctrl_wstrb;
-wire                       axil_ctrl_wvalid;
-reg                        axil_ctrl_wready;
-reg  [1:0]                 axil_ctrl_bresp;
-reg                        axil_ctrl_bvalid;
-wire                       axil_ctrl_bready;
-wire [AXIL_ADDR_WIDTH-1:0] axil_ctrl_araddr;
-wire [2:0]                 axil_ctrl_arprot;
-wire                       axil_ctrl_arvalid;
-reg                        axil_ctrl_arready;
-reg  [AXIL_DATA_WIDTH-1:0] axil_ctrl_rdata;
-reg  [1:0]                 axil_ctrl_rresp;
-reg                        axil_ctrl_rvalid;
-wire                       axil_ctrl_rready;
-
 pcie_us_axil_master #(
     .AXIS_PCIE_DATA_WIDTH(AXIS_PCIE_DATA_WIDTH),
     .AXI_DATA_WIDTH(AXIL_DATA_WIDTH),
@@ -575,215 +580,6 @@ pcie_us_axil_master_inst (
      */
     .status_error_cor(status_error_cor_int[0]),
     .status_error_uncor(status_error_uncor_int[0])
-);
-
-// Registers set by AXIL
-reg                            pcie_dma_enable;
-reg  [CORE_WIDTH+1-1:0]        pcie_core_reset;
-reg                            pcie_core_reset_valid;
-wire                           pcie_core_reset_ready;
-reg  [CORE_COUNT-1:0]          income_cores_r;
-reg  [CORE_COUNT-1:0]          income_cores_rr;
-reg  [CORE_COUNT-1:0]          cores_to_be_reset_r;
-reg  [CORE_WIDTH-1:0]          core_for_slot_count_r;
-wire [CORE_SLOT_WIDTH-1:0]     slot_count_r;
-
-// DMA requests from Host through AXIL
-reg  [PCIE_ADDR_WIDTH-1:0]     host_dma_read_desc_pcie_addr;
-reg  [PCIE_RAM_ADDR_WIDTH-1:0] host_dma_read_desc_ram_addr;
-reg  [PCIE_DMA_LEN_WIDTH-1:0]  host_dma_read_desc_len;
-reg  [HOST_DMA_TAG_WIDTH-1:0]  host_dma_read_desc_tag;
-reg                            host_dma_read_desc_valid;
-wire                           host_dma_read_desc_ready;
-wire [HOST_DMA_TAG_WIDTH-1:0]  host_dma_read_desc_status_tag;
-wire                           host_dma_read_desc_status_valid;
-
-reg  [PCIE_ADDR_WIDTH-1:0]     host_dma_write_desc_pcie_addr;
-reg  [PCIE_RAM_ADDR_WIDTH-1:0] host_dma_write_desc_ram_addr;
-reg  [PCIE_DMA_LEN_WIDTH-1:0]  host_dma_write_desc_len;
-reg  [HOST_DMA_TAG_WIDTH-1:0]  host_dma_write_desc_tag;
-reg                            host_dma_write_desc_valid;
-wire                           host_dma_write_desc_ready;
-wire [HOST_DMA_TAG_WIDTH-1:0]  host_dma_write_desc_status_tag;
-wire                           host_dma_write_desc_status_valid;
-
-// State registers for readback
-reg  [HOST_DMA_TAG_WIDTH-1:0]  host_dma_read_status_tags;
-reg  [HOST_DMA_TAG_WIDTH-1:0]  host_dma_write_status_tags;
-
-reg [31:0] pcie_rq_count_reg;
-reg [31:0] pcie_rc_count_reg;
-reg [31:0] pcie_cq_count_reg;
-reg [31:0] pcie_cc_count_reg;
-
-always @(posedge pcie_clk) begin
-    if (pcie_rst) begin
-        axil_ctrl_awready          <= 1'b0;
-        axil_ctrl_wready           <= 1'b0;
-        axil_ctrl_bvalid           <= 1'b0;
-        axil_ctrl_arready          <= 1'b0;
-        axil_ctrl_rvalid           <= 1'b0;
-
-        host_dma_read_desc_valid   <= 1'b0;
-        host_dma_write_desc_valid  <= 1'b0;
-        pcie_core_reset_valid      <= 1'b0;
-        host_dma_read_status_tags  <= {HOST_DMA_TAG_WIDTH{1'b0}};
-        host_dma_write_status_tags <= {HOST_DMA_TAG_WIDTH{1'b0}};
-        pcie_dma_enable            <= 1'b0;
-        income_cores_r             <= {CORE_COUNT{1'b0}};
-        cores_to_be_reset_r        <= {CORE_COUNT{1'b0}};
-        core_for_slot_count_r      <= {CORE_WIDTH{1'b0}};
-
-        pcie_rq_count_reg          <= 32'd0;
-        pcie_rc_count_reg          <= 32'd0;
-        pcie_cq_count_reg          <= 32'd0;
-        pcie_cc_count_reg          <= 32'd0;
-
-    end else begin
-
-        axil_ctrl_awready <= 1'b0;
-        axil_ctrl_wready  <= 1'b0;
-        axil_ctrl_bresp   <= 2'b00;
-        axil_ctrl_bvalid  <= axil_ctrl_bvalid && !axil_ctrl_bready;
-        axil_ctrl_arready <= 1'b0;
-        axil_ctrl_rresp   <= 2'b00;
-        axil_ctrl_rvalid  <= axil_ctrl_rvalid && !axil_ctrl_rready;
-
-        host_dma_read_desc_valid         <= host_dma_read_desc_valid && !host_dma_read_desc_ready;
-        host_dma_write_desc_valid        <= host_dma_write_desc_valid && !host_dma_read_desc_ready;
-        pcie_core_reset_valid            <= pcie_core_reset_valid && !pcie_core_reset_ready; 
-
-        if (axil_ctrl_awvalid && axil_ctrl_wvalid && !axil_ctrl_bvalid) begin
-            // write operation
-            axil_ctrl_awready <= 1'b1;
-            axil_ctrl_wready  <= 1'b1;
-            axil_ctrl_bresp   <= 2'b00;
-            axil_ctrl_bvalid  <= 1'b1;
-
-            case ({axil_ctrl_awaddr[15:2], 2'b00})
-                16'h0000: pcie_dma_enable <= axil_ctrl_wdata;
-                16'h0004: begin 
-                    pcie_core_reset       <= axil_ctrl_wdata[CORE_WIDTH:0];
-                    pcie_core_reset_valid <= 1'b1;
-                end
-                16'h0008: income_cores_r <= axil_ctrl_wdata[CORE_COUNT-1:0];
-                16'h000C: cores_to_be_reset_r <= axil_ctrl_wdata[CORE_COUNT-1:0];
-                16'h0010: core_for_slot_count_r <= axil_ctrl_wdata[CORE_WIDTH-1:0];
-                16'h0100: host_dma_read_desc_pcie_addr[31:0] <= axil_ctrl_wdata;
-                16'h0104: host_dma_read_desc_pcie_addr[63:32] <= axil_ctrl_wdata;
-                16'h0108: host_dma_read_desc_ram_addr[31:0] <= axil_ctrl_wdata;
-                16'h0110: host_dma_read_desc_len <= axil_ctrl_wdata;
-                16'h0114: begin
-                    host_dma_read_desc_tag <= axil_ctrl_wdata;
-                    host_dma_read_desc_valid <= 1'b1;
-                end
-                16'h0200: host_dma_write_desc_pcie_addr[31:0] <= axil_ctrl_wdata;
-                16'h0204: host_dma_write_desc_pcie_addr[63:32] <= axil_ctrl_wdata;
-                16'h0208: host_dma_write_desc_ram_addr[31:0] <= axil_ctrl_wdata;
-                16'h0210: host_dma_write_desc_len <= axil_ctrl_wdata;
-                16'h0214: begin
-                    host_dma_write_desc_tag <= axil_ctrl_wdata;
-                    host_dma_write_desc_valid <= 1'b1;
-                end
-            endcase
-        end
-
-        if (axil_ctrl_arvalid && !axil_ctrl_rvalid) begin
-            // read operation
-            axil_ctrl_arready <= 1'b1;
-            axil_ctrl_rvalid  <= 1'b1;
-
-            case ({axil_ctrl_araddr[15:2], 2'b00})
-                16'h0000: axil_ctrl_rdata <= pcie_dma_enable;
-                16'h0010: axil_ctrl_rdata <= slot_count_r;
-                16'h0118: axil_ctrl_rdata <= host_dma_read_status_tags;
-                16'h0218: axil_ctrl_rdata <= host_dma_write_status_tags;
-                16'h0400: axil_ctrl_rdata <= pcie_rq_count_reg;
-                16'h0404: axil_ctrl_rdata <= pcie_rc_count_reg;
-                16'h0408: axil_ctrl_rdata <= pcie_cq_count_reg;
-                16'h040C: axil_ctrl_rdata <= pcie_cc_count_reg;
-            endcase
-        end
-        
-
-        if (axil_ctrl_arvalid && !axil_ctrl_rvalid && ({axil_ctrl_araddr[15:2], 2'd0}==16'h0118))
-            if (!host_dma_read_desc_status_valid)
-                host_dma_read_status_tags <= {HOST_DMA_TAG_WIDTH{1'b0}};
-            else
-                host_dma_read_status_tags <= host_dma_read_desc_status_tag;
-        else if (host_dma_read_desc_status_valid)
-          host_dma_read_status_tags <= host_dma_read_status_tags | host_dma_read_desc_status_tag;
-        
-        if (axil_ctrl_arvalid && !axil_ctrl_rvalid && ({axil_ctrl_araddr[15:2], 2'd0}==16'h0218))
-            if (!host_dma_write_desc_status_valid)
-                host_dma_write_status_tags <= {HOST_DMA_TAG_WIDTH{1'b0}};
-            else
-                host_dma_write_status_tags <= host_dma_write_desc_status_tag;
-        else if (host_dma_write_desc_status_valid)
-          host_dma_write_status_tags <= host_dma_write_status_tags | host_dma_write_desc_status_tag;
-  
-
-        if (m_axis_rq_tready && m_axis_rq_tvalid && m_axis_rq_tlast)
-            pcie_rq_count_reg <= pcie_rq_count_reg + 1;
-
-        if (s_axis_rc_tready && s_axis_rc_tvalid && s_axis_rc_tlast)
-            pcie_rc_count_reg <= pcie_rc_count_reg + 1;
-
-        if (s_axis_cq_tready && s_axis_cq_tvalid && s_axis_cq_tlast)
-            pcie_cq_count_reg <= pcie_cq_count_reg + 1;
-
-        if (m_axis_cc_tready && m_axis_cc_tvalid && m_axis_cc_tlast)
-            pcie_cc_count_reg <= pcie_cc_count_reg + 1;
-    end
-end
-
-assign msi_irq[0] = host_dma_read_desc_status_valid || host_dma_write_desc_status_valid;
-assign msi_irq[31:1] = 0;
-
-// A core to be reset cannot be an incoming core. 
-// Simplifies logic in controller. 
-always @ (posedge pcie_clk)
-  if (pcie_rst)
-    income_cores_rr <= {CORE_COUNT{1'b0}};
-  else
-    income_cores_rr <= income_cores_r & (~cores_to_be_reset_r);
-
-// Time domain crossing
-simple_async_fifo # (
-  .DEPTH(3),
-  .DATA_WIDTH(CORE_WIDTH+1)
-) cores_reset_cmd_async_fifo (
-  .async_rst(sys_rst),
-
-  .din_clk(pcie_clk),
-  .din_valid(pcie_core_reset_valid),
-  .din(pcie_core_reset),
-  .din_ready(pcie_core_reset_ready),
- 
-  .dout_clk(sys_clk),
-  .dout_valid(reset_valid),
-  .dout({reset_dest,reset_value}),
-  .dout_ready(reset_ready)
-);
-
-simple_sync_sig # (
-  .RST_VAL(1'b0),
-  .WIDTH(CORE_COUNT+CORE_COUNT+CORE_WIDTH)
-) scheduler_cmd_syncer (
-  .dst_clk(sys_clk),
-  .dst_rst(sys_rst),
-  .in({income_cores_rr,cores_to_be_reset_r,core_for_slot_count_r}),
-  .out({income_cores,cores_to_be_reset,core_for_slot_count})
-);
-
-simple_sync_sig # (
-  .RST_VAL(1'b0),
-  .WIDTH(CORE_SLOT_WIDTH)
-) slot_count_syncer (
-  .dst_clk(pcie_clk),
-  .dst_rst(pcie_rst),
-  .in(slot_count),
-  .out(slot_count_r)
 );
 
 // -------------------------------------------------------------------//
