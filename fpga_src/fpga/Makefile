@@ -21,9 +21,13 @@ SYN_FILES += rtl/axis_dma.v
 SYN_FILES += rtl/riscv_axis_wrapper.v 
 SYN_FILES += rtl/simple_sync_sig.v
 SYN_FILES += rtl/axis_switch.v
+SYN_FILES += rtl/axis_switch_2lvl.v
 SYN_FILES += rtl/loopback_msg_fifo.v
 SYN_FILES += rtl/header.v
+SYN_FILES += rtl/pcie_config.v
 SYN_FILES += rtl/pcie_controller.v
+SYN_FILES += rtl/pcie_cont_read.v
+SYN_FILES += rtl/pcie_cont_write.v
 
 # SYN_FILES += lib/axis/rtl/axis_switch.v
 SYN_FILES += lib/axis/rtl/axis_arb_mux.v
@@ -54,32 +58,13 @@ SYN_FILES += lib/eth/rtl/eth_axis_rx_64.v
 SYN_FILES += lib/eth/rtl/eth_axis_tx_64.v
 SYN_FILES += lib/eth/rtl/eth_arb_mux.v
 
-# SYN_FILES += lib/axi/rtl/axi_crossbar.v
-# SYN_FILES += lib/axi/rtl/axi_crossbar_addr.v
-# SYN_FILES += lib/axi/rtl/axi_crossbar_rd.v
-# SYN_FILES += lib/axi/rtl/axi_crossbar_wr.v
-SYN_FILES += lib/axi/rtl/axi_dma.v
-SYN_FILES += lib/axi/rtl/axi_dma_rd.v
-SYN_FILES += lib/axi/rtl/axi_dma_wr.v
-SYN_FILES += lib/axi/rtl/axi_interconnect.v
-SYN_FILES += lib/axi/rtl/axi_ram.v
-SYN_FILES += lib/axi/rtl/axi_ram_rd_if.v
-SYN_FILES += lib/axi/rtl/axi_ram_wr_if.v
-# SYN_FILES += lib/axi/rtl/axi_register_rd.v
-# SYN_FILES += lib/axi/rtl/axi_register_wr.v
-# SYN_FILES += lib/axi/rtl/axil_interconnect.v
-# SYN_FILES += lib/axi/rtl/arbiter.v
-# SYN_FILES += lib/axi/rtl/priority_encoder.v
-
-# SYN_FILES += lib/pcie/rtl/pcie_axi_dma_desc_mux.v
 SYN_FILES += lib/pcie/rtl/pcie_us_axil_master.v
-SYN_FILES += lib/pcie/rtl/pcie_us_axi_master.v
-SYN_FILES += lib/pcie/rtl/pcie_us_axi_master_rd.v
-SYN_FILES += lib/pcie/rtl/pcie_us_axi_master_wr.v
-SYN_FILES += lib/pcie/rtl/pcie_us_axi_dma.v
-SYN_FILES += lib/pcie/rtl/pcie_us_axi_dma_rd.v
-SYN_FILES += lib/pcie/rtl/pcie_us_axi_dma_wr.v
-SYN_FILES += lib/pcie/rtl/pcie_us_axis_cq_demux.v
+SYN_FILES += lib/pcie/rtl/dma_client_axis_sink.v
+SYN_FILES += lib/pcie/rtl/dma_client_axis_source.v
+SYN_FILES += lib/pcie/rtl/dma_if_pcie_us.v
+SYN_FILES += lib/pcie/rtl/dma_if_pcie_us_rd.v
+SYN_FILES += lib/pcie/rtl/dma_if_pcie_us_wr.v
+SYN_FILES += lib/pcie/rtl/dma_psdpram.v
 SYN_FILES += lib/pcie/rtl/pcie_us_cfg.v
 SYN_FILES += lib/pcie/rtl/pcie_us_msi.v
 SYN_FILES += lib/pcie/rtl/pcie_tag_manager.v
@@ -113,22 +98,6 @@ SYN_FILES += lib/pcie/rtl/pulse_merge.v
 # SYN_FILES += lib/eth/rtl/arp_eth_rx_64.v
 # SYN_FILES += lib/eth/rtl/arp_eth_tx_64.v
 
-# SYN_FILES += lib/axi/rtl/axi_dma.v
-# SYN_FILES += lib/axi/rtl/axi_dma_rd.v
-# SYN_FILES += lib/axi/rtl/axi_dma_wr.v
-# SYN_FILES += lib/axi/rtl/axi_interconnect.v
-# SYN_FILES += lib/axi/rtl/axi_fifo.v
-# SYN_FILES += lib/axi/rtl/axi_fifo_rd.v
-# SYN_FILES += lib/axi/rtl/axi_fifo_wr.v
-# SYN_FILES += lib/axi/rtl/priority_encoder.v
-# SYN_FILES += lib/axi/rtl/arbiter.v
-# SYN_FILES += /lib/axi/rtl/axi_register_wr.v
-# SYN_FILES += /lib/axi/rtl/axi_register_rd.v 
-# SYN_FILES += /lib/axi/rtl/axi_crossbar_addr.v
-# SYN_FILES += /lib/axi/rtl/axi_crossbar_wr.v
-# SYN_FILES += /lib/axi/rtl/axi_crossbar_rd.v
-# SYN_FILES += /lib/axi/rtl/axi_crossbar.v
-
 # XDC files
 XDC_FILES = fpga.xdc
 XDC_FILES += lib/axis/syn/axis_async_fifo.tcl
@@ -137,9 +106,6 @@ XDC_FILES += syn/simple_sync_sig.tcl
 # IP
 XCI_FILES  =  ip/gtwizard_ultrascale_0.xci
 XCI_FILES +=  ip/pcie3_ultrascale_0.xci
-# XCI_FILES += ip/axi_crossbar_0.xci
-# XCI_FILES += ip/axi_data_fifo.xci
-# XCI_FILES += ip/ila_2x64.xci
 XCI_FILES += ip/ila_4x64.xci
 XCI_FILES += ip/ila_8x64.xci
 

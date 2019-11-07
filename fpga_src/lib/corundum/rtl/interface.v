@@ -42,14 +42,12 @@ module interface #
 (
     // Number of ports
     parameter PORTS = 1,
-    // PCIe address width
-    parameter PCIE_ADDR_WIDTH = 64,
-    // PCIe DMA length field width
-    parameter PCIE_DMA_LEN_WIDTH = 16,
-    // PCIe DMA tag field width
-    parameter PCIE_DMA_TAG_WIDTH = 8,
-    // Request tag field width
-    parameter REQ_TAG_WIDTH = 8,
+    // DMA address width
+    parameter DMA_ADDR_WIDTH = 64,
+    // DMA length field width
+    parameter DMA_LEN_WIDTH = 16,
+    // DMA tag field width
+    parameter DMA_TAG_WIDTH = 8,
     // Number of outstanding operations (event queue)
     parameter EVENT_QUEUE_OP_TABLE_SIZE = 16,
     // Number of outstanding operations (transmit queue)
@@ -60,10 +58,6 @@ module interface #
     parameter TX_CPL_QUEUE_OP_TABLE_SIZE = 16,
     // Number of outstanding operations (receive completion queue)
     parameter RX_CPL_QUEUE_OP_TABLE_SIZE = 16,
-    // Queue request tag field width
-    parameter QUEUE_REQ_TAG_WIDTH = 8,
-    // Queue operation tag field width
-    parameter QUEUE_OP_TAG_WIDTH = 8,
     // Event queue index width
     parameter EVENT_QUEUE_INDEX_WIDTH = 5,
     // Transmit queue index width
@@ -94,10 +88,6 @@ module interface #
     parameter QUEUE_PTR_WIDTH = 16,
     // Queue log size field width
     parameter QUEUE_LOG_SIZE_WIDTH = 4,
-    // RAM internal address width
-    parameter RAM_ADDR_WIDTH = 16,
-    // Packet scratch RAM size
-    parameter RAM_SIZE = 2**14,
     // Enable PTP timestamping
     parameter PTP_TS_ENABLE = 1,
     // PTP timestamp width
@@ -112,198 +102,227 @@ module interface #
     parameter AXIL_ADDR_WIDTH = 16,
     // Width of AXI lite wstrb (width of data bus in words)
     parameter AXIL_STRB_WIDTH = (AXIL_DATA_WIDTH/8),
-    // Width of AXI data bus in bits
-    parameter AXI_DATA_WIDTH = 256,
-    // Width of AXI address bus in bits
-    parameter AXI_ADDR_WIDTH = 16,
-    // Width of AXI wstrb (width of data bus in words)
-    parameter AXI_STRB_WIDTH = (AXIL_DATA_WIDTH/8),
-    // Width of AXI ID signal
-    parameter AXI_ID_WIDTH = 8,
-    // Maximum AXI burst length to generate
-    parameter AXI_MAX_BURST_LEN = 16,
-    // AXI base address of this module (as seen by PCIe DMA)
-    parameter AXI_BASE_ADDR = 0,
+    // DMA RAM segment count
+    parameter SEG_COUNT = 2,
+    // DMA RAM segment data width
+    parameter SEG_DATA_WIDTH = 64,
+    // DMA RAM segment address width
+    parameter SEG_ADDR_WIDTH = 8,
+    // DMA RAM segment byte enable width
+    parameter SEG_BE_WIDTH = SEG_DATA_WIDTH/8,
+    // DMA RAM segment select width
+    parameter RAM_SEL_WIDTH = $clog2(PORTS+1),
+    // DMA RAM address width
+    parameter RAM_ADDR_WIDTH = SEG_ADDR_WIDTH+$clog2(SEG_COUNT)+$clog2(SEG_BE_WIDTH),
+    // DMA RAM pipeline stages
+    parameter RAM_PIPELINE = 2,
     // Width of AXI stream interfaces in bits
-    parameter AXIS_DATA_WIDTH = AXI_DATA_WIDTH,
+    parameter AXIS_DATA_WIDTH = 256,
     // AXI stream tkeep signal width (words per cycle)
-    parameter AXIS_KEEP_WIDTH = AXI_STRB_WIDTH
+    parameter AXIS_KEEP_WIDTH = AXIS_DATA_WIDTH/8,
+    // Max transmit packet size
+    parameter MAX_TX_SIZE = 2048,
+    // Max receive packet size
+    parameter MAX_RX_SIZE = 2048,
+    // DMA TX RAM size
+    parameter TX_RAM_SIZE = TX_PKT_TABLE_SIZE*MAX_TX_SIZE,
+    // DMA RX RAM size
+    parameter RX_RAM_SIZE = RX_PKT_TABLE_SIZE*MAX_RX_SIZE
 )
 (
-    input  wire                               clk,
-    input  wire                               rst,
+    input  wire                                clk,
+    input  wire                                rst,
 
     /*
-     * PCIe read descriptor output
+     * DMA read descriptor output
      */
-    output wire [PCIE_ADDR_WIDTH-1:0]         m_axis_pcie_axi_dma_read_desc_pcie_addr,
-    output wire [AXI_ADDR_WIDTH-1:0]          m_axis_pcie_axi_dma_read_desc_axi_addr,
-    output wire [PCIE_DMA_LEN_WIDTH-1:0]      m_axis_pcie_axi_dma_read_desc_len,
-    output wire [PCIE_DMA_TAG_WIDTH-1:0]      m_axis_pcie_axi_dma_read_desc_tag,
-    output wire                               m_axis_pcie_axi_dma_read_desc_valid,
-    input  wire                               m_axis_pcie_axi_dma_read_desc_ready,
+    output wire [DMA_ADDR_WIDTH-1:0]           m_axis_dma_read_desc_dma_addr,
+    output wire [RAM_SEL_WIDTH-1:0]            m_axis_dma_read_desc_ram_sel,
+    output wire [RAM_ADDR_WIDTH-1:0]           m_axis_dma_read_desc_ram_addr,
+    output wire [DMA_LEN_WIDTH-1:0]            m_axis_dma_read_desc_len,
+    output wire [DMA_TAG_WIDTH-1:0]            m_axis_dma_read_desc_tag,
+    output wire                                m_axis_dma_read_desc_valid,
+    input  wire                                m_axis_dma_read_desc_ready,
 
     /*
-     * PCIe read descriptor status input
+     * DMA read descriptor status input
      */
-    input  wire [PCIE_DMA_TAG_WIDTH-1:0]      s_axis_pcie_axi_dma_read_desc_status_tag,
-    input  wire                               s_axis_pcie_axi_dma_read_desc_status_valid,
+    input  wire [DMA_TAG_WIDTH-1:0]            s_axis_dma_read_desc_status_tag,
+    input  wire                                s_axis_dma_read_desc_status_valid,
 
     /*
-     * PCIe write descriptor output
+     * DMA write descriptor output
      */
-    output wire [PCIE_ADDR_WIDTH-1:0]         m_axis_pcie_axi_dma_write_desc_pcie_addr,
-    output wire [AXI_ADDR_WIDTH-1:0]          m_axis_pcie_axi_dma_write_desc_axi_addr,
-    output wire [PCIE_DMA_LEN_WIDTH-1:0]      m_axis_pcie_axi_dma_write_desc_len,
-    output wire [PCIE_DMA_TAG_WIDTH-1:0]      m_axis_pcie_axi_dma_write_desc_tag,
-    output wire                               m_axis_pcie_axi_dma_write_desc_valid,
-    input  wire                               m_axis_pcie_axi_dma_write_desc_ready,
+    output wire [DMA_ADDR_WIDTH-1:0]           m_axis_dma_write_desc_dma_addr,
+    output wire [RAM_SEL_WIDTH-1:0]            m_axis_dma_write_desc_ram_sel,
+    output wire [RAM_ADDR_WIDTH-1:0]           m_axis_dma_write_desc_ram_addr,
+    output wire [DMA_LEN_WIDTH-1:0]            m_axis_dma_write_desc_len,
+    output wire [DMA_TAG_WIDTH-1:0]            m_axis_dma_write_desc_tag,
+    output wire                                m_axis_dma_write_desc_valid,
+    input  wire                                m_axis_dma_write_desc_ready,
 
     /*
-     * PCIe write descriptor status input
+     * DMA write descriptor status input
      */
-    input  wire [PCIE_DMA_TAG_WIDTH-1:0]      s_axis_pcie_axi_dma_write_desc_status_tag,
-    input  wire                               s_axis_pcie_axi_dma_write_desc_status_valid,
+    input  wire [DMA_TAG_WIDTH-1:0]            s_axis_dma_write_desc_status_tag,
+    input  wire                                s_axis_dma_write_desc_status_valid,
 
     /*
      * AXI-Lite slave interface
      */
-    input  wire [AXIL_ADDR_WIDTH-1:0]         s_axil_awaddr,
-    input  wire [2:0]                         s_axil_awprot,
-    input  wire                               s_axil_awvalid,
-    output wire                               s_axil_awready,
-    input  wire [AXIL_DATA_WIDTH-1:0]         s_axil_wdata,
-    input  wire [AXIL_STRB_WIDTH-1:0]         s_axil_wstrb,
-    input  wire                               s_axil_wvalid,
-    output wire                               s_axil_wready,
-    output wire [1:0]                         s_axil_bresp,
-    output wire                               s_axil_bvalid,
-    input  wire                               s_axil_bready,
-    input  wire [AXIL_ADDR_WIDTH-1:0]         s_axil_araddr,
-    input  wire [2:0]                         s_axil_arprot,
-    input  wire                               s_axil_arvalid,
-    output wire                               s_axil_arready,
-    output wire [AXIL_DATA_WIDTH-1:0]         s_axil_rdata,
-    output wire [1:0]                         s_axil_rresp,
-    output wire                               s_axil_rvalid,
-    input  wire                               s_axil_rready,
+    input  wire [AXIL_ADDR_WIDTH-1:0]          s_axil_awaddr,
+    input  wire [2:0]                          s_axil_awprot,
+    input  wire                                s_axil_awvalid,
+    output wire                                s_axil_awready,
+    input  wire [AXIL_DATA_WIDTH-1:0]          s_axil_wdata,
+    input  wire [AXIL_STRB_WIDTH-1:0]          s_axil_wstrb,
+    input  wire                                s_axil_wvalid,
+    output wire                                s_axil_wready,
+    output wire [1:0]                          s_axil_bresp,
+    output wire                                s_axil_bvalid,
+    input  wire                                s_axil_bready,
+    input  wire [AXIL_ADDR_WIDTH-1:0]          s_axil_araddr,
+    input  wire [2:0]                          s_axil_arprot,
+    input  wire                                s_axil_arvalid,
+    output wire                                s_axil_arready,
+    output wire [AXIL_DATA_WIDTH-1:0]          s_axil_rdata,
+    output wire [1:0]                          s_axil_rresp,
+    output wire                                s_axil_rvalid,
+    input  wire                                s_axil_rready,
 
     /*
      * AXI-Lite master interface (passthrough for NIC control and status)
      */
-    output wire [AXIL_ADDR_WIDTH-1:0]         m_axil_csr_awaddr,
-    output wire [2:0]                         m_axil_csr_awprot,
-    output wire                               m_axil_csr_awvalid,
-    input  wire                               m_axil_csr_awready,
-    output wire [AXIL_DATA_WIDTH-1:0]         m_axil_csr_wdata,
-    output wire [AXIL_STRB_WIDTH-1:0]         m_axil_csr_wstrb,
-    output wire                               m_axil_csr_wvalid,
-    input  wire                               m_axil_csr_wready,
-    input  wire [1:0]                         m_axil_csr_bresp,
-    input  wire                               m_axil_csr_bvalid,
-    output wire                               m_axil_csr_bready,
-    output wire [AXIL_ADDR_WIDTH-1:0]         m_axil_csr_araddr,
-    output wire [2:0]                         m_axil_csr_arprot,
-    output wire                               m_axil_csr_arvalid,
-    input  wire                               m_axil_csr_arready,
-    input  wire [AXIL_DATA_WIDTH-1:0]         m_axil_csr_rdata,
-    input  wire [1:0]                         m_axil_csr_rresp,
-    input  wire                               m_axil_csr_rvalid,
-    output wire                               m_axil_csr_rready,
+    output wire [AXIL_ADDR_WIDTH-1:0]          m_axil_csr_awaddr,
+    output wire [2:0]                          m_axil_csr_awprot,
+    output wire                                m_axil_csr_awvalid,
+    input  wire                                m_axil_csr_awready,
+    output wire [AXIL_DATA_WIDTH-1:0]          m_axil_csr_wdata,
+    output wire [AXIL_STRB_WIDTH-1:0]          m_axil_csr_wstrb,
+    output wire                                m_axil_csr_wvalid,
+    input  wire                                m_axil_csr_wready,
+    input  wire [1:0]                          m_axil_csr_bresp,
+    input  wire                                m_axil_csr_bvalid,
+    output wire                                m_axil_csr_bready,
+    output wire [AXIL_ADDR_WIDTH-1:0]          m_axil_csr_araddr,
+    output wire [2:0]                          m_axil_csr_arprot,
+    output wire                                m_axil_csr_arvalid,
+    input  wire                                m_axil_csr_arready,
+    input  wire [AXIL_DATA_WIDTH-1:0]          m_axil_csr_rdata,
+    input  wire [1:0]                          m_axil_csr_rresp,
+    input  wire                                m_axil_csr_rvalid,
+    output wire                                m_axil_csr_rready,
 
     /*
-     * AXI slave inteface
+     * RAM interface
      */
-    input  wire [AXI_ID_WIDTH-1:0]            s_axi_awid,
-    input  wire [AXI_ADDR_WIDTH-1:0]          s_axi_awaddr,
-    input  wire [7:0]                         s_axi_awlen,
-    input  wire [2:0]                         s_axi_awsize,
-    input  wire [1:0]                         s_axi_awburst,
-    input  wire                               s_axi_awlock,
-    input  wire [3:0]                         s_axi_awcache,
-    input  wire [2:0]                         s_axi_awprot,
-    input  wire                               s_axi_awvalid,
-    output wire                               s_axi_awready,
-    input  wire [AXI_DATA_WIDTH-1:0]          s_axi_wdata,
-    input  wire [AXI_STRB_WIDTH-1:0]          s_axi_wstrb,
-    input  wire                               s_axi_wlast,
-    input  wire                               s_axi_wvalid,
-    output wire                               s_axi_wready,
-    output wire [AXI_ID_WIDTH-1:0]            s_axi_bid,
-    output wire [1:0]                         s_axi_bresp,
-    output wire                               s_axi_bvalid,
-    input  wire                               s_axi_bready,
-    input  wire [AXI_ID_WIDTH-1:0]            s_axi_arid,
-    input  wire [AXI_ADDR_WIDTH-1:0]          s_axi_araddr,
-    input  wire [7:0]                         s_axi_arlen,
-    input  wire [2:0]                         s_axi_arsize,
-    input  wire [1:0]                         s_axi_arburst,
-    input  wire                               s_axi_arlock,
-    input  wire [3:0]                         s_axi_arcache,
-    input  wire [2:0]                         s_axi_arprot,
-    input  wire                               s_axi_arvalid,
-    output wire                               s_axi_arready,
-    output wire [AXI_ID_WIDTH-1:0]            s_axi_rid,
-    output wire [AXI_DATA_WIDTH-1:0]          s_axi_rdata,
-    output wire [1:0]                         s_axi_rresp,
-    output wire                               s_axi_rlast,
-    output wire                               s_axi_rvalid,
-    input  wire                               s_axi_rready,
+    input  wire [SEG_COUNT*RAM_SEL_WIDTH-1:0]  dma_ram_wr_cmd_sel,
+    input  wire [SEG_COUNT*SEG_BE_WIDTH-1:0]   dma_ram_wr_cmd_be,
+    input  wire [SEG_COUNT*SEG_ADDR_WIDTH-1:0] dma_ram_wr_cmd_addr,
+    input  wire [SEG_COUNT*SEG_DATA_WIDTH-1:0] dma_ram_wr_cmd_data,
+    input  wire [SEG_COUNT-1:0]                dma_ram_wr_cmd_valid,
+    output wire [SEG_COUNT-1:0]                dma_ram_wr_cmd_ready,
+    input  wire [SEG_COUNT*RAM_SEL_WIDTH-1:0]  dma_ram_rd_cmd_sel,
+    input  wire [SEG_COUNT*SEG_ADDR_WIDTH-1:0] dma_ram_rd_cmd_addr,
+    input  wire [SEG_COUNT-1:0]                dma_ram_rd_cmd_valid,
+    output wire [SEG_COUNT-1:0]                dma_ram_rd_cmd_ready,
+    output wire [SEG_COUNT*SEG_DATA_WIDTH-1:0] dma_ram_rd_resp_data,
+    output wire [SEG_COUNT-1:0]                dma_ram_rd_resp_valid,
+    input  wire [SEG_COUNT-1:0]                dma_ram_rd_resp_ready,
 
     /*
      * Transmit data output
      */
-    output wire [PORTS*AXIS_DATA_WIDTH-1:0]   tx_axis_tdata,
-    output wire [PORTS*AXIS_KEEP_WIDTH-1:0]   tx_axis_tkeep,
-    output wire [PORTS-1:0]                   tx_axis_tvalid,
-    input  wire [PORTS-1:0]                   tx_axis_tready,
-    output wire [PORTS-1:0]                   tx_axis_tlast,
-    output wire [PORTS-1:0]                   tx_axis_tuser,
+    output wire [PORTS*AXIS_DATA_WIDTH-1:0]    tx_axis_tdata,
+    output wire [PORTS*AXIS_KEEP_WIDTH-1:0]    tx_axis_tkeep,
+    output wire [PORTS-1:0]                    tx_axis_tvalid,
+    input  wire [PORTS-1:0]                    tx_axis_tready,
+    output wire [PORTS-1:0]                    tx_axis_tlast,
+    output wire [PORTS-1:0]                    tx_axis_tuser,
 
     /*
      * Transmit timestamp input
      */
-    input  wire [PORTS*PTP_TS_WIDTH-1:0]      s_axis_tx_ptp_ts_96,
-    input  wire [PORTS-1:0]                   s_axis_tx_ptp_ts_valid,
-    output wire [PORTS-1:0]                   s_axis_tx_ptp_ts_ready,
+    input  wire [PORTS*PTP_TS_WIDTH-1:0]       s_axis_tx_ptp_ts_96,
+    input  wire [PORTS-1:0]                    s_axis_tx_ptp_ts_valid,
+    output wire [PORTS-1:0]                    s_axis_tx_ptp_ts_ready,
 
     /*
      * Receive data input
      */
-    input  wire [PORTS*AXIS_DATA_WIDTH-1:0]   rx_axis_tdata,
-    input  wire [PORTS*AXIS_KEEP_WIDTH-1:0]   rx_axis_tkeep,
-    input  wire [PORTS-1:0]                   rx_axis_tvalid,
-    output wire [PORTS-1:0]                   rx_axis_tready,
-    input  wire [PORTS-1:0]                   rx_axis_tlast,
-    input  wire [PORTS-1:0]                   rx_axis_tuser,
+    input  wire [PORTS*AXIS_DATA_WIDTH-1:0]    rx_axis_tdata,
+    input  wire [PORTS*AXIS_KEEP_WIDTH-1:0]    rx_axis_tkeep,
+    input  wire [PORTS-1:0]                    rx_axis_tvalid,
+    output wire [PORTS-1:0]                    rx_axis_tready,
+    input  wire [PORTS-1:0]                    rx_axis_tlast,
+    input  wire [PORTS-1:0]                    rx_axis_tuser,
 
     /*
      * Receive timestamp input
      */
-    input  wire [PORTS*PTP_TS_WIDTH-1:0]      s_axis_rx_ptp_ts_96,
-    input  wire [PORTS-1:0]                   s_axis_rx_ptp_ts_valid,
-    output wire [PORTS-1:0]                   s_axis_rx_ptp_ts_ready,
+    input  wire [PORTS*PTP_TS_WIDTH-1:0]       s_axis_rx_ptp_ts_96,
+    input  wire [PORTS-1:0]                    s_axis_rx_ptp_ts_valid,
+    output wire [PORTS-1:0]                    s_axis_rx_ptp_ts_ready,
 
     /*
      * PTP clock
      */
-    input  wire [95:0]                        ptp_ts_96,
-    input  wire                               ptp_ts_step,
+    input  wire [95:0]                         ptp_ts_96,
+    input  wire                                ptp_ts_step,
 
     /*
      * MSI interrupts
      */
-    output wire [31:0]                        msi_irq
+    output wire [31:0]                         msi_irq
 );
 
 parameter DESC_SIZE = 16;
 parameter CPL_SIZE = 32;
 parameter EVENT_SIZE = 32;
 
+parameter AXIS_DESC_DATA_WIDTH = DESC_SIZE*8;
+parameter AXIS_DESC_KEEP_WIDTH = AXIS_DESC_DATA_WIDTH/8;
+
 parameter EVENT_SOURCE_WIDTH = 16;
 parameter EVENT_TYPE_WIDTH = 16;
 
-parameter PCIE_DMA_TAG_WIDTH_INT = PCIE_DMA_TAG_WIDTH - $clog2(PORTS+1);
+parameter MAX_DESC_TABLE_SIZE = TX_DESC_TABLE_SIZE > RX_DESC_TABLE_SIZE ? TX_DESC_TABLE_SIZE : RX_DESC_TABLE_SIZE;
+
+parameter REQ_TAG_WIDTH = $clog2(MAX_DESC_TABLE_SIZE) + 1 + $clog2(PORTS+1);
+parameter DESC_REQ_TAG_WIDTH = $clog2(MAX_DESC_TABLE_SIZE) + 1 + $clog2(PORTS+1);
+
+parameter QUEUE_REQ_TAG_WIDTH = $clog2(MAX_DESC_TABLE_SIZE) + 1 + $clog2(PORTS+1);
+parameter QUEUE_OP_TAG_WIDTH = 6;
+
+parameter DMA_TAG_WIDTH_INT = DMA_TAG_WIDTH - $clog2(PORTS+1);
+
+parameter QUEUE_INDEX_WIDTH = TX_QUEUE_INDEX_WIDTH > RX_QUEUE_INDEX_WIDTH ? TX_QUEUE_INDEX_WIDTH : RX_QUEUE_INDEX_WIDTH;
+parameter CPL_QUEUE_INDEX_WIDTH = TX_CPL_QUEUE_INDEX_WIDTH > RX_CPL_QUEUE_INDEX_WIDTH ? TX_CPL_QUEUE_INDEX_WIDTH : RX_CPL_QUEUE_INDEX_WIDTH;
+
+parameter PORT_DESC_REQ_TAG_WIDTH = DESC_REQ_TAG_WIDTH - $clog2(PORTS+1);
+
+parameter AXIL_CSR_ADDR_WIDTH = AXIL_ADDR_WIDTH-5-$clog2((PORTS+3)/8);
+parameter AXIL_CTRL_ADDR_WIDTH = AXIL_ADDR_WIDTH-5-$clog2((PORTS+3)/8);
+parameter AXIL_EQM_ADDR_WIDTH = AXIL_ADDR_WIDTH-4-$clog2((PORTS+3)/8);
+parameter AXIL_TX_QM_ADDR_WIDTH = AXIL_ADDR_WIDTH-3-$clog2((PORTS+3)/8);
+parameter AXIL_TX_CQM_ADDR_WIDTH = AXIL_ADDR_WIDTH-3-$clog2((PORTS+3)/8);
+parameter AXIL_RX_QM_ADDR_WIDTH = AXIL_ADDR_WIDTH-4-$clog2((PORTS+3)/8);
+parameter AXIL_RX_CQM_ADDR_WIDTH = AXIL_ADDR_WIDTH-4-$clog2((PORTS+3)/8);
+parameter AXIL_PORT_ADDR_WIDTH = AXIL_ADDR_WIDTH-3-$clog2((PORTS+3)/8);
+
+parameter AXIL_CSR_BASE_ADDR = 0;
+parameter AXIL_CTRL_BASE_ADDR = AXIL_CSR_BASE_ADDR + 2**AXIL_CSR_ADDR_WIDTH;
+parameter AXIL_EQM_BASE_ADDR = AXIL_CTRL_BASE_ADDR + 2**AXIL_CTRL_ADDR_WIDTH;
+parameter AXIL_TX_QM_BASE_ADDR = AXIL_EQM_BASE_ADDR + 2**AXIL_EQM_ADDR_WIDTH;
+parameter AXIL_TX_CQM_BASE_ADDR = AXIL_TX_QM_BASE_ADDR + 2**AXIL_TX_QM_ADDR_WIDTH;
+parameter AXIL_RX_QM_BASE_ADDR = AXIL_TX_CQM_BASE_ADDR + 2**AXIL_TX_CQM_ADDR_WIDTH;
+parameter AXIL_RX_CQM_BASE_ADDR = AXIL_RX_QM_BASE_ADDR + 2**AXIL_RX_QM_ADDR_WIDTH;
+parameter AXIL_PORT_BASE_ADDR = AXIL_RX_CQM_BASE_ADDR + 2**AXIL_RX_CQM_ADDR_WIDTH;
+
+// parameter sizing helpers
+function [31:0] w_32(input [31:0] val);
+    w_32 = val;
+endfunction
 
 // AXI lite connections
 wire [AXIL_ADDR_WIDTH-1:0] axil_ctrl_awaddr;
@@ -446,73 +465,70 @@ wire [PORTS*2-1:0]               axil_port_rresp;
 wire [PORTS-1:0]                 axil_port_rvalid;
 wire [PORTS-1:0]                 axil_port_rready;
 
-// AXI connections
-wire [AXI_ID_WIDTH-1:0]    axi_event_awid;
-wire [AXI_ADDR_WIDTH-1:0]  axi_event_awaddr;
-wire [7:0]                 axi_event_awlen;
-wire [2:0]                 axi_event_awsize;
-wire [1:0]                 axi_event_awburst;
-wire                       axi_event_awlock;
-wire [3:0]                 axi_event_awcache;
-wire [2:0]                 axi_event_awprot;
-wire                       axi_event_awvalid;
-wire                       axi_event_awready;
-wire [AXI_DATA_WIDTH-1:0]  axi_event_wdata;
-wire [AXI_STRB_WIDTH-1:0]  axi_event_wstrb;
-wire                       axi_event_wlast;
-wire                       axi_event_wvalid;
-wire                       axi_event_wready;
-wire [AXI_ID_WIDTH-1:0]    axi_event_bid;
-wire [1:0]                 axi_event_bresp;
-wire                       axi_event_bvalid;
-wire                       axi_event_bready;
-wire [AXI_ID_WIDTH-1:0]    axi_event_arid;
-wire [AXI_ADDR_WIDTH-1:0]  axi_event_araddr;
-wire [7:0]                 axi_event_arlen;
-wire [2:0]                 axi_event_arsize;
-wire [1:0]                 axi_event_arburst;
-wire                       axi_event_arlock;
-wire [3:0]                 axi_event_arcache;
-wire [2:0]                 axi_event_arprot;
-wire                       axi_event_arvalid;
-wire                       axi_event_arready;
-wire [AXI_ID_WIDTH-1:0]    axi_event_rid;
-wire [AXI_DATA_WIDTH-1:0]  axi_event_rdata;
-wire [1:0]                 axi_event_rresp;
-wire                       axi_event_rlast;
-wire                       axi_event_rvalid;
-wire                       axi_event_rready;
+// DMA
+wire [DMA_ADDR_WIDTH-1:0]    desc_dma_read_desc_dma_addr;
+wire [RAM_ADDR_WIDTH-1:0]    desc_dma_read_desc_ram_addr;
+wire [DMA_LEN_WIDTH-1:0]     desc_dma_read_desc_len;
+wire [DMA_TAG_WIDTH_INT-1:0] desc_dma_read_desc_tag;
+wire                         desc_dma_read_desc_valid;
+wire                         desc_dma_read_desc_ready;
 
-// PCIe DMA
-wire [PCIE_ADDR_WIDTH-1:0]        event_pcie_axi_dma_write_desc_pcie_addr;
-wire [AXI_ADDR_WIDTH-1:0]         event_pcie_axi_dma_write_desc_axi_addr;
-wire [PCIE_DMA_LEN_WIDTH-1:0]     event_pcie_axi_dma_write_desc_len;
-wire [PCIE_DMA_TAG_WIDTH_INT-1:0] event_pcie_axi_dma_write_desc_tag;
-wire                              event_pcie_axi_dma_write_desc_valid;
-wire                              event_pcie_axi_dma_write_desc_ready;
+wire [DMA_TAG_WIDTH_INT-1:0] desc_dma_read_desc_status_tag;
+wire                         desc_dma_read_desc_status_valid;
 
-wire [PCIE_DMA_TAG_WIDTH_INT-1:0] event_pcie_axi_dma_write_desc_status_tag;
-wire                              event_pcie_axi_dma_write_desc_status_valid;
+wire [DMA_ADDR_WIDTH-1:0]    desc_dma_write_desc_dma_addr;
+wire [RAM_ADDR_WIDTH-1:0]    desc_dma_write_desc_ram_addr;
+wire [DMA_LEN_WIDTH-1:0]     desc_dma_write_desc_len;
+wire [DMA_TAG_WIDTH_INT-1:0] desc_dma_write_desc_tag;
+wire                         desc_dma_write_desc_valid;
+wire                         desc_dma_write_desc_ready;
 
-wire [PORTS*PCIE_ADDR_WIDTH-1:0]        port_pcie_axi_dma_read_desc_pcie_addr;
-wire [PORTS*AXI_ADDR_WIDTH-1:0]         port_pcie_axi_dma_read_desc_axi_addr;
-wire [PORTS*PCIE_DMA_LEN_WIDTH-1:0]     port_pcie_axi_dma_read_desc_len;
-wire [PORTS*PCIE_DMA_TAG_WIDTH_INT-1:0] port_pcie_axi_dma_read_desc_tag;
-wire [PORTS-1:0]                        port_pcie_axi_dma_read_desc_valid;
-wire [PORTS-1:0]                        port_pcie_axi_dma_read_desc_ready;
+wire [DMA_TAG_WIDTH_INT-1:0] desc_dma_write_desc_status_tag;
+wire                         desc_dma_write_desc_status_valid;
 
-wire [PORTS*PCIE_DMA_TAG_WIDTH_INT-1:0] port_pcie_axi_dma_read_desc_status_tag;
-wire [PORTS-1:0]                        port_pcie_axi_dma_read_desc_status_valid;
+wire [SEG_COUNT*SEG_BE_WIDTH-1:0]    desc_dma_ram_wr_cmd_be;
+wire [SEG_COUNT*SEG_ADDR_WIDTH-1:0]  desc_dma_ram_wr_cmd_addr;
+wire [SEG_COUNT*SEG_DATA_WIDTH-1:0]  desc_dma_ram_wr_cmd_data;
+wire [SEG_COUNT-1:0]                 desc_dma_ram_wr_cmd_valid;
+wire [SEG_COUNT-1:0]                 desc_dma_ram_wr_cmd_ready;
+wire [SEG_COUNT*SEG_ADDR_WIDTH-1:0]  desc_dma_ram_rd_cmd_addr;
+wire [SEG_COUNT-1:0]                 desc_dma_ram_rd_cmd_valid;
+wire [SEG_COUNT-1:0]                 desc_dma_ram_rd_cmd_ready;
+wire [SEG_COUNT*SEG_DATA_WIDTH-1:0]  desc_dma_ram_rd_resp_data;
+wire [SEG_COUNT-1:0]                 desc_dma_ram_rd_resp_valid;
+wire [SEG_COUNT-1:0]                 desc_dma_ram_rd_resp_ready;
 
-wire [PORTS*PCIE_ADDR_WIDTH-1:0]        port_pcie_axi_dma_write_desc_pcie_addr;
-wire [PORTS*AXI_ADDR_WIDTH-1:0]         port_pcie_axi_dma_write_desc_axi_addr;
-wire [PORTS*PCIE_DMA_LEN_WIDTH-1:0]     port_pcie_axi_dma_write_desc_len;
-wire [PORTS*PCIE_DMA_TAG_WIDTH_INT-1:0] port_pcie_axi_dma_write_desc_tag;
-wire [PORTS-1:0]                        port_pcie_axi_dma_write_desc_valid;
-wire [PORTS-1:0]                        port_pcie_axi_dma_write_desc_ready;
+wire [PORTS*DMA_ADDR_WIDTH-1:0]    port_dma_read_desc_dma_addr;
+wire [PORTS*RAM_ADDR_WIDTH-1:0]    port_dma_read_desc_ram_addr;
+wire [PORTS*DMA_LEN_WIDTH-1:0]     port_dma_read_desc_len;
+wire [PORTS*DMA_TAG_WIDTH_INT-1:0] port_dma_read_desc_tag;
+wire [PORTS-1:0]                   port_dma_read_desc_valid;
+wire [PORTS-1:0]                   port_dma_read_desc_ready;
 
-wire [PORTS*PCIE_DMA_TAG_WIDTH_INT-1:0] port_pcie_axi_dma_write_desc_status_tag;
-wire [PORTS-1:0]                        port_pcie_axi_dma_write_desc_status_valid;
+wire [PORTS*DMA_TAG_WIDTH_INT-1:0] port_dma_read_desc_status_tag;
+wire [PORTS-1:0]                   port_dma_read_desc_status_valid;
+
+wire [PORTS*DMA_ADDR_WIDTH-1:0]    port_dma_write_desc_dma_addr;
+wire [PORTS*RAM_ADDR_WIDTH-1:0]    port_dma_write_desc_ram_addr;
+wire [PORTS*DMA_LEN_WIDTH-1:0]     port_dma_write_desc_len;
+wire [PORTS*DMA_TAG_WIDTH_INT-1:0] port_dma_write_desc_tag;
+wire [PORTS-1:0]                   port_dma_write_desc_valid;
+wire [PORTS-1:0]                   port_dma_write_desc_ready;
+
+wire [PORTS*DMA_TAG_WIDTH_INT-1:0] port_dma_write_desc_status_tag;
+wire [PORTS-1:0]                   port_dma_write_desc_status_valid;
+
+wire [PORTS*SEG_COUNT*SEG_BE_WIDTH-1:0]    port_dma_ram_wr_cmd_be;
+wire [PORTS*SEG_COUNT*SEG_ADDR_WIDTH-1:0]  port_dma_ram_wr_cmd_addr;
+wire [PORTS*SEG_COUNT*SEG_DATA_WIDTH-1:0]  port_dma_ram_wr_cmd_data;
+wire [PORTS*SEG_COUNT-1:0]                 port_dma_ram_wr_cmd_valid;
+wire [PORTS*SEG_COUNT-1:0]                 port_dma_ram_wr_cmd_ready;
+wire [PORTS*SEG_COUNT*SEG_ADDR_WIDTH-1:0]  port_dma_ram_rd_cmd_addr;
+wire [PORTS*SEG_COUNT-1:0]                 port_dma_ram_rd_cmd_valid;
+wire [PORTS*SEG_COUNT-1:0]                 port_dma_ram_rd_cmd_ready;
+wire [PORTS*SEG_COUNT*SEG_DATA_WIDTH-1:0]  port_dma_ram_rd_resp_data;
+wire [PORTS*SEG_COUNT-1:0]                 port_dma_ram_rd_resp_valid;
+wire [PORTS*SEG_COUNT-1:0]                 port_dma_ram_rd_resp_ready;
 
 // Queue management
 wire [EVENT_QUEUE_INDEX_WIDTH-1:0]  event_enqueue_req_queue;
@@ -520,7 +536,7 @@ wire [QUEUE_REQ_TAG_WIDTH-1:0]      event_enqueue_req_tag;
 wire                                event_enqueue_req_valid;
 wire                                event_enqueue_req_ready;
 
-wire [PCIE_ADDR_WIDTH-1:0]          event_enqueue_resp_addr;
+wire [DMA_ADDR_WIDTH-1:0]           event_enqueue_resp_addr;
 wire [QUEUE_REQ_TAG_WIDTH-1:0]      event_enqueue_resp_tag;
 wire [QUEUE_OP_TAG_WIDTH-1:0]       event_enqueue_resp_op_tag;
 wire                                event_enqueue_resp_full;
@@ -539,7 +555,7 @@ wire                                tx_desc_dequeue_req_ready;
 
 wire [TX_QUEUE_INDEX_WIDTH-1:0]     tx_desc_dequeue_resp_queue;
 wire [QUEUE_PTR_WIDTH-1:0]          tx_desc_dequeue_resp_ptr;
-wire [PCIE_ADDR_WIDTH-1:0]          tx_desc_dequeue_resp_addr;
+wire [DMA_ADDR_WIDTH-1:0]           tx_desc_dequeue_resp_addr;
 wire [TX_CPL_QUEUE_INDEX_WIDTH-1:0] tx_desc_dequeue_resp_cpl;
 wire [QUEUE_REQ_TAG_WIDTH-1:0]      tx_desc_dequeue_resp_tag;
 wire [QUEUE_OP_TAG_WIDTH-1:0]       tx_desc_dequeue_resp_op_tag;
@@ -555,32 +571,12 @@ wire                                tx_desc_dequeue_commit_ready;
 wire [TX_QUEUE_INDEX_WIDTH-1:0]     tx_doorbell_queue;
 wire                                tx_doorbell_valid;
 
-wire [PORTS*TX_QUEUE_INDEX_WIDTH-1:0]     tx_port_desc_dequeue_req_queue;
-wire [PORTS*QUEUE_REQ_TAG_WIDTH-1:0]      tx_port_desc_dequeue_req_tag;
-wire [PORTS-1:0]                          tx_port_desc_dequeue_req_valid;
-wire [PORTS-1:0]                          tx_port_desc_dequeue_req_ready;
-
-wire [PORTS*TX_QUEUE_INDEX_WIDTH-1:0]     tx_port_desc_dequeue_resp_queue;
-wire [PORTS*QUEUE_PTR_WIDTH-1:0]          tx_port_desc_dequeue_resp_ptr;
-wire [PORTS*PCIE_ADDR_WIDTH-1:0]          tx_port_desc_dequeue_resp_addr;
-wire [PORTS*TX_CPL_QUEUE_INDEX_WIDTH-1:0] tx_port_desc_dequeue_resp_cpl;
-wire [PORTS*QUEUE_REQ_TAG_WIDTH-1:0]      tx_port_desc_dequeue_resp_tag;
-wire [PORTS*QUEUE_OP_TAG_WIDTH-1:0]       tx_port_desc_dequeue_resp_op_tag;
-wire [PORTS-1:0]                          tx_port_desc_dequeue_resp_empty;
-wire [PORTS-1:0]                          tx_port_desc_dequeue_resp_error;
-wire [PORTS-1:0]                          tx_port_desc_dequeue_resp_valid;
-wire [PORTS-1:0]                          tx_port_desc_dequeue_resp_ready;
-
-wire [PORTS*QUEUE_OP_TAG_WIDTH-1:0]       tx_port_desc_dequeue_commit_op_tag;
-wire [PORTS-1:0]                          tx_port_desc_dequeue_commit_valid;
-wire [PORTS-1:0]                          tx_port_desc_dequeue_commit_ready;
-
 wire [TX_CPL_QUEUE_INDEX_WIDTH-1:0] tx_cpl_enqueue_req_queue;
 wire [QUEUE_REQ_TAG_WIDTH-1:0]      tx_cpl_enqueue_req_tag;
 wire                                tx_cpl_enqueue_req_valid;
 wire                                tx_cpl_enqueue_req_ready;
 
-wire [PCIE_ADDR_WIDTH-1:0]          tx_cpl_enqueue_resp_addr;
+wire [DMA_ADDR_WIDTH-1:0]           tx_cpl_enqueue_resp_addr;
 wire [QUEUE_REQ_TAG_WIDTH-1:0]      tx_cpl_enqueue_resp_tag;
 wire [QUEUE_OP_TAG_WIDTH-1:0]       tx_cpl_enqueue_resp_op_tag;
 wire                                tx_cpl_enqueue_resp_full;
@@ -592,23 +588,6 @@ wire [QUEUE_OP_TAG_WIDTH-1:0]       tx_cpl_enqueue_commit_op_tag;
 wire                                tx_cpl_enqueue_commit_valid;
 wire                                tx_cpl_enqueue_commit_ready;
 
-wire [PORTS*TX_CPL_QUEUE_INDEX_WIDTH-1:0] tx_port_cpl_enqueue_req_queue;
-wire [PORTS*QUEUE_REQ_TAG_WIDTH-1:0]      tx_port_cpl_enqueue_req_tag;
-wire [PORTS-1:0]                          tx_port_cpl_enqueue_req_valid;
-wire [PORTS-1:0]                          tx_port_cpl_enqueue_req_ready;
-
-wire [PORTS*PCIE_ADDR_WIDTH-1:0]          tx_port_cpl_enqueue_resp_addr;
-wire [PORTS*QUEUE_REQ_TAG_WIDTH-1:0]      tx_port_cpl_enqueue_resp_tag;
-wire [PORTS*QUEUE_OP_TAG_WIDTH-1:0]       tx_port_cpl_enqueue_resp_op_tag;
-wire [PORTS-1:0]                          tx_port_cpl_enqueue_resp_full;
-wire [PORTS-1:0]                          tx_port_cpl_enqueue_resp_error;
-wire [PORTS-1:0]                          tx_port_cpl_enqueue_resp_valid;
-wire [PORTS-1:0]                          tx_port_cpl_enqueue_resp_ready;
-
-wire [PORTS*QUEUE_OP_TAG_WIDTH-1:0]       tx_port_cpl_enqueue_commit_op_tag;
-wire [PORTS-1:0]                          tx_port_cpl_enqueue_commit_valid;
-wire [PORTS-1:0]                          tx_port_cpl_enqueue_commit_ready;
-
 wire [TX_QUEUE_INDEX_WIDTH-1:0]     rx_desc_dequeue_req_queue;
 wire [QUEUE_REQ_TAG_WIDTH-1:0]      rx_desc_dequeue_req_tag;
 wire                                rx_desc_dequeue_req_valid;
@@ -616,7 +595,7 @@ wire                                rx_desc_dequeue_req_ready;
 
 wire [TX_QUEUE_INDEX_WIDTH-1:0]     rx_desc_dequeue_resp_queue;
 wire [QUEUE_PTR_WIDTH-1:0]          rx_desc_dequeue_resp_ptr;
-wire [PCIE_ADDR_WIDTH-1:0]          rx_desc_dequeue_resp_addr;
+wire [DMA_ADDR_WIDTH-1:0]           rx_desc_dequeue_resp_addr;
 wire [RX_CPL_QUEUE_INDEX_WIDTH-1:0] rx_desc_dequeue_resp_cpl;
 wire [QUEUE_REQ_TAG_WIDTH-1:0]      rx_desc_dequeue_resp_tag;
 wire [QUEUE_OP_TAG_WIDTH-1:0]       rx_desc_dequeue_resp_op_tag;
@@ -629,32 +608,12 @@ wire [QUEUE_OP_TAG_WIDTH-1:0]       rx_desc_dequeue_commit_op_tag;
 wire                                rx_desc_dequeue_commit_valid;
 wire                                rx_desc_dequeue_commit_ready;
 
-wire [PORTS*RX_QUEUE_INDEX_WIDTH-1:0]     rx_port_desc_dequeue_req_queue;
-wire [PORTS*QUEUE_REQ_TAG_WIDTH-1:0]      rx_port_desc_dequeue_req_tag;
-wire [PORTS-1:0]                          rx_port_desc_dequeue_req_valid;
-wire [PORTS-1:0]                          rx_port_desc_dequeue_req_ready;
-
-wire [PORTS*RX_QUEUE_INDEX_WIDTH-1:0]     rx_port_desc_dequeue_resp_queue;
-wire [PORTS*QUEUE_PTR_WIDTH-1:0]          rx_port_desc_dequeue_resp_ptr;
-wire [PORTS*PCIE_ADDR_WIDTH-1:0]          rx_port_desc_dequeue_resp_addr;
-wire [PORTS*RX_CPL_QUEUE_INDEX_WIDTH-1:0] rx_port_desc_dequeue_resp_cpl;
-wire [PORTS*QUEUE_REQ_TAG_WIDTH-1:0]      rx_port_desc_dequeue_resp_tag;
-wire [PORTS*QUEUE_OP_TAG_WIDTH-1:0]       rx_port_desc_dequeue_resp_op_tag;
-wire [PORTS-1:0]                          rx_port_desc_dequeue_resp_empty;
-wire [PORTS-1:0]                          rx_port_desc_dequeue_resp_error;
-wire [PORTS-1:0]                          rx_port_desc_dequeue_resp_valid;
-wire [PORTS-1:0]                          rx_port_desc_dequeue_resp_ready;
-
-wire [PORTS*QUEUE_OP_TAG_WIDTH-1:0]       rx_port_desc_dequeue_commit_op_tag;
-wire [PORTS-1:0]                          rx_port_desc_dequeue_commit_valid;
-wire [PORTS-1:0]                          rx_port_desc_dequeue_commit_ready;
-
 wire [RX_CPL_QUEUE_INDEX_WIDTH-1:0] rx_cpl_enqueue_req_queue;
 wire [QUEUE_REQ_TAG_WIDTH-1:0]      rx_cpl_enqueue_req_tag;
 wire                                rx_cpl_enqueue_req_valid;
 wire                                rx_cpl_enqueue_req_ready;
 
-wire [PCIE_ADDR_WIDTH-1:0]          rx_cpl_enqueue_resp_addr;
+wire [DMA_ADDR_WIDTH-1:0]           rx_cpl_enqueue_resp_addr;
 wire [QUEUE_REQ_TAG_WIDTH-1:0]      rx_cpl_enqueue_resp_tag;
 wire [QUEUE_OP_TAG_WIDTH-1:0]       rx_cpl_enqueue_resp_op_tag;
 wire                                rx_cpl_enqueue_resp_full;
@@ -666,22 +625,86 @@ wire [QUEUE_OP_TAG_WIDTH-1:0]       rx_cpl_enqueue_commit_op_tag;
 wire                                rx_cpl_enqueue_commit_valid;
 wire                                rx_cpl_enqueue_commit_ready;
 
-wire [PORTS*RX_CPL_QUEUE_INDEX_WIDTH-1:0] rx_port_cpl_enqueue_req_queue;
-wire [PORTS*QUEUE_REQ_TAG_WIDTH-1:0]      rx_port_cpl_enqueue_req_tag;
-wire [PORTS-1:0]                          rx_port_cpl_enqueue_req_valid;
-wire [PORTS-1:0]                          rx_port_cpl_enqueue_req_ready;
+// descriptor and completion
+wire [0:0]                               desc_req_sel;
+wire [QUEUE_INDEX_WIDTH-1:0]             desc_req_queue;
+wire [DESC_REQ_TAG_WIDTH-1:0]            desc_req_tag;
+wire                                     desc_req_valid;
+wire                                     desc_req_ready;
 
-wire [PORTS*PCIE_ADDR_WIDTH-1:0]          rx_port_cpl_enqueue_resp_addr;
-wire [PORTS*QUEUE_REQ_TAG_WIDTH-1:0]      rx_port_cpl_enqueue_resp_tag;
-wire [PORTS*QUEUE_OP_TAG_WIDTH-1:0]       rx_port_cpl_enqueue_resp_op_tag;
-wire [PORTS-1:0]                          rx_port_cpl_enqueue_resp_full;
-wire [PORTS-1:0]                          rx_port_cpl_enqueue_resp_error;
-wire [PORTS-1:0]                          rx_port_cpl_enqueue_resp_valid;
-wire [PORTS-1:0]                          rx_port_cpl_enqueue_resp_ready;
+wire [QUEUE_INDEX_WIDTH-1:0]             desc_req_status_queue;
+wire [QUEUE_PTR_WIDTH-1:0]               desc_req_status_ptr;
+wire [CPL_QUEUE_INDEX_WIDTH-1:0]         desc_req_status_cpl;
+wire [DESC_REQ_TAG_WIDTH-1:0]            desc_req_status_tag;
+wire                                     desc_req_status_empty;
+wire                                     desc_req_status_error;
+wire                                     desc_req_status_valid;
 
-wire [PORTS*QUEUE_OP_TAG_WIDTH-1:0]       rx_port_cpl_enqueue_commit_op_tag;
-wire [PORTS-1:0]                          rx_port_cpl_enqueue_commit_valid;
-wire [PORTS-1:0]                          rx_port_cpl_enqueue_commit_ready;
+wire [AXIS_DESC_DATA_WIDTH-1:0]          axis_desc_tdata;
+wire [AXIS_DESC_KEEP_WIDTH-1:0]          axis_desc_tkeep;
+wire                                     axis_desc_tvalid;
+wire                                     axis_desc_tready;
+wire                                     axis_desc_tlast;
+wire [DESC_REQ_TAG_WIDTH-1:0]            axis_desc_tid;
+wire                                     axis_desc_tuser;
+
+wire [PORTS*1-1:0]                       port_desc_req_sel;
+wire [PORTS*QUEUE_INDEX_WIDTH-1:0]       port_desc_req_queue;
+wire [PORTS*PORT_DESC_REQ_TAG_WIDTH-1:0] port_desc_req_tag;
+wire [PORTS-1:0]                         port_desc_req_valid;
+wire [PORTS-1:0]                         port_desc_req_ready;
+
+wire [PORTS*QUEUE_INDEX_WIDTH-1:0]       port_desc_req_status_queue;
+wire [PORTS*QUEUE_PTR_WIDTH-1:0]         port_desc_req_status_ptr;
+wire [PORTS*CPL_QUEUE_INDEX_WIDTH-1:0]   port_desc_req_status_cpl;
+wire [PORTS*PORT_DESC_REQ_TAG_WIDTH-1:0] port_desc_req_status_tag;
+wire [PORTS-1:0]                         port_desc_req_status_empty;
+wire [PORTS-1:0]                         port_desc_req_status_error;
+wire [PORTS-1:0]                         port_desc_req_status_valid;
+
+wire [PORTS*AXIS_DESC_DATA_WIDTH-1:0]    port_axis_desc_tdata;
+wire [PORTS*AXIS_DESC_KEEP_WIDTH-1:0]    port_axis_desc_tkeep;
+wire [PORTS-1:0]                         port_axis_desc_tvalid;
+wire [PORTS-1:0]                         port_axis_desc_tready;
+wire [PORTS-1:0]                         port_axis_desc_tlast;
+wire [PORTS*PORT_DESC_REQ_TAG_WIDTH-1:0] port_axis_desc_tid;
+wire [PORTS-1:0]                         port_axis_desc_tuser;
+
+wire [1:0]                               cpl_req_sel;
+wire [QUEUE_INDEX_WIDTH-1:0]             cpl_req_queue;
+wire [DESC_REQ_TAG_WIDTH-1:0]            cpl_req_tag;
+wire [CPL_SIZE*8-1:0]                    cpl_req_data;
+wire                                     cpl_req_valid;
+wire                                     cpl_req_ready;
+
+wire [DESC_REQ_TAG_WIDTH-1:0]            cpl_req_status_tag;
+wire                                     cpl_req_status_full;
+wire                                     cpl_req_status_error;
+wire                                     cpl_req_status_valid;
+
+wire [1:0]                               event_cpl_req_sel = 2'd2;
+wire [QUEUE_INDEX_WIDTH-1:0]             event_cpl_req_queue;
+wire [PORT_DESC_REQ_TAG_WIDTH-1:0]       event_cpl_req_tag;
+wire [CPL_SIZE*8-1:0]                    event_cpl_req_data;
+wire                                     event_cpl_req_valid;
+wire                                     event_cpl_req_ready;
+
+wire [PORT_DESC_REQ_TAG_WIDTH-1:0]       event_cpl_req_status_tag;
+wire                                     event_cpl_req_status_full;
+wire                                     event_cpl_req_status_error;
+wire                                     event_cpl_req_status_valid;
+
+wire [PORTS*2-1:0]                       port_cpl_req_sel;
+wire [PORTS*QUEUE_INDEX_WIDTH-1:0]       port_cpl_req_queue;
+wire [PORTS*PORT_DESC_REQ_TAG_WIDTH-1:0] port_cpl_req_tag;
+wire [PORTS*CPL_SIZE*8-1:0]              port_cpl_req_data;
+wire [PORTS-1:0]                         port_cpl_req_valid;
+wire [PORTS-1:0]                         port_cpl_req_ready;
+
+wire [PORTS*PORT_DESC_REQ_TAG_WIDTH-1:0] port_cpl_req_status_tag;
+wire [PORTS-1:0]                         port_cpl_req_status_full;
+wire [PORTS-1:0]                         port_cpl_req_status_error;
+wire [PORTS-1:0]                         port_cpl_req_status_valid;
 
 // events
 wire [EVENT_QUEUE_INDEX_WIDTH-1:0]  axis_event_queue;
@@ -774,18 +797,18 @@ always @(posedge clk) begin
                 axil_ctrl_rdata_reg[9] <= RX_CHECKSUM_ENABLE;
             end
             16'h0010: axil_ctrl_rdata_reg <= 2**EVENT_QUEUE_INDEX_WIDTH;  // event_queue_count
-            16'h0014: axil_ctrl_rdata_reg <= 24'h080000;                  // event_queue_offset
+            16'h0014: axil_ctrl_rdata_reg <= AXIL_EQM_BASE_ADDR;          // event_queue_offset
             16'h0020: axil_ctrl_rdata_reg <= 2**TX_QUEUE_INDEX_WIDTH;     // tx_queue_count
-            16'h0024: axil_ctrl_rdata_reg <= 24'h100000;                  // tx_queue_offset
+            16'h0024: axil_ctrl_rdata_reg <= AXIL_TX_QM_BASE_ADDR;        // tx_queue_offset
             16'h0028: axil_ctrl_rdata_reg <= 2**TX_CPL_QUEUE_INDEX_WIDTH; // tx_cpl_queue_count
-            16'h002C: axil_ctrl_rdata_reg <= 24'h200000;                  // tx_cpl_queue_offset
+            16'h002C: axil_ctrl_rdata_reg <= AXIL_TX_CQM_BASE_ADDR;       // tx_cpl_queue_offset
             16'h0030: axil_ctrl_rdata_reg <= 2**RX_QUEUE_INDEX_WIDTH;     // rx_queue_count
-            16'h0034: axil_ctrl_rdata_reg <= 24'h300000;                  // rx_queue_offset
+            16'h0034: axil_ctrl_rdata_reg <= AXIL_RX_QM_BASE_ADDR;        // rx_queue_offset
             16'h0038: axil_ctrl_rdata_reg <= 2**RX_CPL_QUEUE_INDEX_WIDTH; // rx_cpl_queue_count
-            16'h003C: axil_ctrl_rdata_reg <= 24'h380000;                  // rx_cpl_queue_offset
+            16'h003C: axil_ctrl_rdata_reg <= AXIL_RX_CQM_BASE_ADDR;       // rx_cpl_queue_offset
             16'h0040: axil_ctrl_rdata_reg <= PORTS;                       // port_count
-            16'h0044: axil_ctrl_rdata_reg <= 24'h400000;                  // port_offset
-            16'h0048: axil_ctrl_rdata_reg <= 24'h100000;                  // port_stride
+            16'h0044: axil_ctrl_rdata_reg <= AXIL_PORT_BASE_ADDR;         // port_offset
+            16'h0048: axil_ctrl_rdata_reg <= 2**AXIL_PORT_ADDR_WIDTH;     // port_stride
         endcase
     end
 
@@ -808,8 +831,7 @@ axil_interconnect #(
     .STRB_WIDTH(AXIL_STRB_WIDTH),
     .S_COUNT(AXIL_S_COUNT),
     .M_COUNT(AXIL_M_COUNT),
-    .M_BASE_ADDR({23'h400000, 23'h380000, 23'h300000, 23'h200000, 23'h100000, 23'h080000, 23'h040000, 23'h000000}),
-    .M_ADDR_WIDTH({32'd20, 32'd19, 32'd19, 32'd20, 32'd20, 32'd19, 32'd18, 32'd18}),
+    .M_ADDR_WIDTH({{PORTS{w_32(AXIL_PORT_ADDR_WIDTH)}}, w_32(AXIL_RX_CQM_ADDR_WIDTH), w_32(AXIL_RX_QM_ADDR_WIDTH), w_32(AXIL_TX_CQM_ADDR_WIDTH), w_32(AXIL_TX_QM_ADDR_WIDTH), w_32(AXIL_EQM_ADDR_WIDTH), w_32(AXIL_CTRL_ADDR_WIDTH), w_32(AXIL_CSR_ADDR_WIDTH)}),
     .M_CONNECT_READ({AXIL_M_COUNT{{AXIL_S_COUNT{1'b1}}}}),
     .M_CONNECT_WRITE({AXIL_M_COUNT{{AXIL_S_COUNT{1'b1}}}})
 )
@@ -859,7 +881,7 @@ axil_interconnect_inst (
 // Queue managers
 
 cpl_queue_manager #(
-    .ADDR_WIDTH(PCIE_ADDR_WIDTH),
+    .ADDR_WIDTH(DMA_ADDR_WIDTH),
     .REQ_TAG_WIDTH(QUEUE_REQ_TAG_WIDTH),
     .OP_TABLE_SIZE(EVENT_QUEUE_OP_TABLE_SIZE),
     .OP_TAG_WIDTH(QUEUE_OP_TAG_WIDTH),
@@ -870,7 +892,7 @@ cpl_queue_manager #(
     .CPL_SIZE(EVENT_SIZE),
     .PIPELINE(3),
     .AXIL_DATA_WIDTH(AXIL_DATA_WIDTH),
-    .AXIL_ADDR_WIDTH(AXIL_ADDR_WIDTH),
+    .AXIL_ADDR_WIDTH(AXIL_EQM_ADDR_WIDTH),
     .AXIL_STRB_WIDTH(AXIL_STRB_WIDTH)
 )
 event_queue_manager_inst (
@@ -942,109 +964,8 @@ event_queue_manager_inst (
     .enable(1'b1)
 );
 
-if (PORTS > 1) begin
-
-    queue_op_mux #(
-        .PORTS(PORTS),
-        .ADDR_WIDTH(PCIE_ADDR_WIDTH),
-        .S_REQ_TAG_WIDTH(QUEUE_REQ_TAG_WIDTH),
-        .M_REQ_TAG_WIDTH(QUEUE_REQ_TAG_WIDTH), // TODO
-        .OP_TAG_WIDTH(QUEUE_OP_TAG_WIDTH),
-        .QUEUE_INDEX_WIDTH(TX_QUEUE_INDEX_WIDTH),
-        .QUEUE_PTR_WIDTH(QUEUE_PTR_WIDTH),
-        .CPL_INDEX_WIDTH(TX_CPL_QUEUE_INDEX_WIDTH),
-        .ARB_TYPE("ROUND_ROBIN"),
-        .LSB_PRIORITY("HIGH")
-    )
-    tx_queue_op_mux_inst (
-        .clk(clk),
-        .rst(rst),
-
-        /*
-         * Dequeue request output
-         */
-        .m_axis_dequeue_req_queue(tx_desc_dequeue_req_queue),
-        .m_axis_dequeue_req_tag(tx_desc_dequeue_req_tag),
-        .m_axis_dequeue_req_valid(tx_desc_dequeue_req_valid),
-        .m_axis_dequeue_req_ready(tx_desc_dequeue_req_ready),
-
-        /*
-         * Dequeue response input
-         */
-        .s_axis_enqueue_resp_queue(tx_desc_dequeue_resp_queue),
-        .s_axis_dequeue_resp_ptr(tx_desc_dequeue_resp_ptr),
-        .s_axis_dequeue_resp_addr(tx_desc_dequeue_resp_addr),
-        .s_axis_dequeue_resp_cpl(tx_desc_dequeue_resp_cpl),
-        .s_axis_dequeue_resp_tag(tx_desc_dequeue_resp_tag),
-        .s_axis_dequeue_resp_op_tag(tx_desc_dequeue_resp_op_tag),
-        .s_axis_dequeue_resp_empty(tx_desc_dequeue_resp_empty),
-        .s_axis_dequeue_resp_error(tx_desc_dequeue_resp_error),
-        .s_axis_dequeue_resp_valid(tx_desc_dequeue_resp_valid),
-        .s_axis_dequeue_resp_ready(tx_desc_dequeue_resp_ready),
-
-        /*
-         * Dequeue commit output
-         */
-        .m_axis_dequeue_commit_op_tag(tx_desc_dequeue_commit_op_tag),
-        .m_axis_dequeue_commit_valid(tx_desc_dequeue_commit_valid),
-        .m_axis_dequeue_commit_ready(tx_desc_dequeue_commit_ready),
-
-        /*
-         * Dequeue request input
-         */
-        .s_axis_dequeue_req_queue(tx_port_desc_dequeue_req_queue),
-        .s_axis_dequeue_req_tag(tx_port_desc_dequeue_req_tag),
-        .s_axis_dequeue_req_valid(tx_port_desc_dequeue_req_valid),
-        .s_axis_dequeue_req_ready(tx_port_desc_dequeue_req_ready),
-
-        /*
-         * Dequeue response output
-         */
-        .m_axis_enqueue_resp_queue(tx_port_desc_dequeue_resp_queue),
-        .m_axis_dequeue_resp_ptr(tx_port_desc_dequeue_resp_ptr),
-        .m_axis_dequeue_resp_addr(tx_port_desc_dequeue_resp_addr),
-        .m_axis_dequeue_resp_cpl(tx_port_desc_dequeue_resp_cpl),
-        .m_axis_dequeue_resp_tag(tx_port_desc_dequeue_resp_tag),
-        .m_axis_dequeue_resp_op_tag(tx_port_desc_dequeue_resp_op_tag),
-        .m_axis_dequeue_resp_empty(tx_port_desc_dequeue_resp_empty),
-        .m_axis_dequeue_resp_error(tx_port_desc_dequeue_resp_error),
-        .m_axis_dequeue_resp_valid(tx_port_desc_dequeue_resp_valid),
-        .m_axis_dequeue_resp_ready(tx_port_desc_dequeue_resp_ready),
-
-        /*
-         * Dequeue commit input
-         */
-        .s_axis_dequeue_commit_op_tag(tx_port_desc_dequeue_commit_op_tag),
-        .s_axis_dequeue_commit_valid(tx_port_desc_dequeue_commit_valid),
-        .s_axis_dequeue_commit_ready(tx_port_desc_dequeue_commit_ready)
-    );
-
-end else begin
-
-    assign tx_desc_dequeue_req_queue = tx_port_desc_dequeue_req_queue;
-    assign tx_desc_dequeue_req_tag = tx_port_desc_dequeue_req_tag;
-    assign tx_desc_dequeue_req_valid = tx_port_desc_dequeue_req_valid;
-    assign tx_port_desc_dequeue_req_ready = tx_desc_dequeue_req_ready;
-
-    assign tx_port_desc_dequeue_resp_queue = tx_desc_dequeue_resp_queue;
-    assign tx_port_desc_dequeue_resp_ptr = tx_desc_dequeue_resp_ptr;
-    assign tx_port_desc_dequeue_resp_addr = tx_desc_dequeue_resp_addr;
-    assign tx_port_desc_dequeue_resp_cpl = tx_desc_dequeue_resp_cpl;
-    assign tx_port_desc_dequeue_resp_tag = tx_desc_dequeue_resp_tag;
-    assign tx_port_desc_dequeue_resp_op_tag = tx_desc_dequeue_resp_op_tag;
-    assign tx_port_desc_dequeue_resp_empty = tx_desc_dequeue_resp_empty;
-    assign tx_port_desc_dequeue_resp_error = tx_desc_dequeue_resp_error;
-    assign tx_port_desc_dequeue_resp_valid = tx_desc_dequeue_resp_valid;
-    assign tx_desc_dequeue_resp_ready = tx_port_desc_dequeue_resp_ready;
-
-    assign tx_desc_dequeue_commit_op_tag = tx_port_desc_dequeue_commit_op_tag;
-    assign tx_desc_dequeue_commit_valid = tx_port_desc_dequeue_commit_valid;
-    assign tx_port_desc_dequeue_commit_ready = tx_desc_dequeue_commit_ready;
-
-end
-
 queue_manager #(
-    .ADDR_WIDTH(PCIE_ADDR_WIDTH),
+    .ADDR_WIDTH(DMA_ADDR_WIDTH),
     .REQ_TAG_WIDTH(QUEUE_REQ_TAG_WIDTH),
     .OP_TABLE_SIZE(TX_QUEUE_OP_TABLE_SIZE),
     .OP_TAG_WIDTH(QUEUE_OP_TAG_WIDTH),
@@ -1055,7 +976,7 @@ queue_manager #(
     .DESC_SIZE(DESC_SIZE),
     .PIPELINE(3),
     .AXIL_DATA_WIDTH(AXIL_DATA_WIDTH),
-    .AXIL_ADDR_WIDTH(AXIL_ADDR_WIDTH),
+    .AXIL_ADDR_WIDTH(AXIL_TX_QM_ADDR_WIDTH),
     .AXIL_STRB_WIDTH(AXIL_STRB_WIDTH)
 )
 tx_queue_manager_inst (
@@ -1126,106 +1047,8 @@ tx_queue_manager_inst (
     .enable(1'b1)
 );
 
-if (PORTS > 1) begin
-
-    queue_op_mux #(
-        .PORTS(PORTS),
-        .ADDR_WIDTH(PCIE_ADDR_WIDTH),
-        .S_REQ_TAG_WIDTH(QUEUE_REQ_TAG_WIDTH),
-        .M_REQ_TAG_WIDTH(QUEUE_REQ_TAG_WIDTH), // TODO
-        .OP_TAG_WIDTH(QUEUE_OP_TAG_WIDTH),
-        .QUEUE_INDEX_WIDTH(TX_CPL_QUEUE_INDEX_WIDTH),
-        .QUEUE_PTR_WIDTH(QUEUE_PTR_WIDTH),
-        .CPL_INDEX_WIDTH(0),
-        .ARB_TYPE("ROUND_ROBIN"),
-        .LSB_PRIORITY("HIGH")
-    )
-    tx_cpl_queue_op_mux_inst (
-        .clk(clk),
-        .rst(rst),
-
-        /*
-         * Dequeue request output
-         */
-        .m_axis_dequeue_req_queue(tx_cpl_enqueue_req_queue),
-        .m_axis_dequeue_req_tag(tx_cpl_enqueue_req_tag),
-        .m_axis_dequeue_req_valid(tx_cpl_enqueue_req_valid),
-        .m_axis_dequeue_req_ready(tx_cpl_enqueue_req_ready),
-
-        /*
-         * Dequeue response input
-         */
-        .s_axis_enqueue_resp_queue(0),
-        .s_axis_dequeue_resp_ptr(0),
-        .s_axis_dequeue_resp_addr(tx_cpl_enqueue_resp_addr),
-        .s_axis_dequeue_resp_cpl(0),
-        .s_axis_dequeue_resp_tag(tx_cpl_enqueue_resp_tag),
-        .s_axis_dequeue_resp_op_tag(tx_cpl_enqueue_resp_op_tag),
-        .s_axis_dequeue_resp_empty(tx_cpl_enqueue_resp_full),
-        .s_axis_dequeue_resp_error(tx_cpl_enqueue_resp_error),
-        .s_axis_dequeue_resp_valid(tx_cpl_enqueue_resp_valid),
-        .s_axis_dequeue_resp_ready(tx_cpl_enqueue_resp_ready),
-
-        /*
-         * Dequeue commit output
-         */
-        .m_axis_dequeue_commit_op_tag(tx_cpl_enqueue_commit_op_tag),
-        .m_axis_dequeue_commit_valid(tx_cpl_enqueue_commit_valid),
-        .m_axis_dequeue_commit_ready(tx_cpl_enqueue_commit_ready),
-
-        /*
-         * Dequeue request input
-         */
-        .s_axis_dequeue_req_queue(tx_port_cpl_enqueue_req_queue),
-        .s_axis_dequeue_req_tag(tx_port_cpl_enqueue_req_tag),
-        .s_axis_dequeue_req_valid(tx_port_cpl_enqueue_req_valid),
-        .s_axis_dequeue_req_ready(tx_port_cpl_enqueue_req_ready),
-
-        /*
-         * Dequeue response output
-         */
-        .m_axis_enqueue_resp_queue(),
-        .m_axis_dequeue_resp_ptr(),
-        .m_axis_dequeue_resp_addr(tx_port_cpl_enqueue_resp_addr),
-        .m_axis_dequeue_resp_cpl(),
-        .m_axis_dequeue_resp_tag(tx_port_cpl_enqueue_resp_tag),
-        .m_axis_dequeue_resp_op_tag(tx_port_cpl_enqueue_resp_op_tag),
-        .m_axis_dequeue_resp_empty(tx_port_cpl_enqueue_resp_full),
-        .m_axis_dequeue_resp_error(tx_port_cpl_enqueue_resp_error),
-        .m_axis_dequeue_resp_valid(tx_port_cpl_enqueue_resp_valid),
-        .m_axis_dequeue_resp_ready(tx_port_cpl_enqueue_resp_ready),
-
-        /*
-         * Dequeue commit input
-         */
-        .s_axis_dequeue_commit_op_tag(tx_port_cpl_enqueue_commit_op_tag),
-        .s_axis_dequeue_commit_valid(tx_port_cpl_enqueue_commit_valid),
-        .s_axis_dequeue_commit_ready(tx_port_cpl_enqueue_commit_ready)
-    );
-
-end else begin
-
-    assign tx_cpl_enqueue_req_queue = tx_port_cpl_enqueue_req_queue;
-    assign tx_cpl_enqueue_req_tag = tx_port_cpl_enqueue_req_tag;
-    assign tx_cpl_enqueue_req_valid = tx_port_cpl_enqueue_req_valid;
-    assign tx_port_cpl_enqueue_req_ready = tx_cpl_enqueue_req_ready;
-
-    assign tx_port_cpl_enqueue_resp_addr = tx_cpl_enqueue_resp_addr;
-    assign tx_port_cpl_enqueue_resp_tag = tx_cpl_enqueue_resp_tag;
-    assign tx_port_cpl_enqueue_resp_op_tag = tx_cpl_enqueue_resp_op_tag;
-    assign tx_port_cpl_enqueue_resp_full = tx_cpl_enqueue_resp_full;
-    assign tx_port_cpl_enqueue_resp_error = tx_cpl_enqueue_resp_error;
-    assign tx_port_cpl_enqueue_resp_valid = tx_cpl_enqueue_resp_valid;
-    assign tx_cpl_enqueue_resp_ready = tx_port_cpl_enqueue_resp_ready;
-
-    assign tx_cpl_enqueue_commit_op_tag = tx_port_cpl_enqueue_commit_op_tag;
-    assign tx_cpl_enqueue_commit_valid = tx_port_cpl_enqueue_commit_valid;
-    assign tx_port_cpl_enqueue_commit_ready = tx_cpl_enqueue_commit_ready;
-
-end
-
 cpl_queue_manager #(
-    .ADDR_WIDTH(PCIE_ADDR_WIDTH),
+    .ADDR_WIDTH(DMA_ADDR_WIDTH),
     .REQ_TAG_WIDTH(QUEUE_REQ_TAG_WIDTH),
     .OP_TABLE_SIZE(TX_QUEUE_OP_TABLE_SIZE),
     .OP_TAG_WIDTH(QUEUE_OP_TAG_WIDTH),
@@ -1236,7 +1059,7 @@ cpl_queue_manager #(
     .CPL_SIZE(CPL_SIZE),
     .PIPELINE(3),
     .AXIL_DATA_WIDTH(AXIL_DATA_WIDTH),
-    .AXIL_ADDR_WIDTH(AXIL_ADDR_WIDTH),
+    .AXIL_ADDR_WIDTH(AXIL_TX_CQM_ADDR_WIDTH),
     .AXIL_STRB_WIDTH(AXIL_STRB_WIDTH)
 )
 tx_cpl_queue_manager_inst (
@@ -1308,110 +1131,8 @@ tx_cpl_queue_manager_inst (
     .enable(1'b1)
 );
 
-
-if (PORTS > 1) begin
-
-    queue_op_mux #(
-        .PORTS(PORTS),
-        .ADDR_WIDTH(PCIE_ADDR_WIDTH),
-        .S_REQ_TAG_WIDTH(QUEUE_REQ_TAG_WIDTH),
-        .M_REQ_TAG_WIDTH(QUEUE_REQ_TAG_WIDTH), // TODO
-        .OP_TAG_WIDTH(QUEUE_OP_TAG_WIDTH),
-        .QUEUE_INDEX_WIDTH(RX_QUEUE_INDEX_WIDTH),
-        .QUEUE_PTR_WIDTH(QUEUE_PTR_WIDTH),
-        .CPL_INDEX_WIDTH(RX_CPL_QUEUE_INDEX_WIDTH),
-        .ARB_TYPE("ROUND_ROBIN"),
-        .LSB_PRIORITY("HIGH")
-    )
-    rx_queue_op_mux_inst (
-        .clk(clk),
-        .rst(rst),
-
-        /*
-         * Dequeue request output
-         */
-        .m_axis_dequeue_req_queue(rx_desc_dequeue_req_queue),
-        .m_axis_dequeue_req_tag(rx_desc_dequeue_req_tag),
-        .m_axis_dequeue_req_valid(rx_desc_dequeue_req_valid),
-        .m_axis_dequeue_req_ready(rx_desc_dequeue_req_ready),
-
-        /*
-         * Dequeue response input
-         */
-        .s_axis_enqueue_resp_queue(rx_desc_dequeue_resp_queue),
-        .s_axis_dequeue_resp_ptr(rx_desc_dequeue_resp_ptr),
-        .s_axis_dequeue_resp_addr(rx_desc_dequeue_resp_addr),
-        .s_axis_dequeue_resp_cpl(rx_desc_dequeue_resp_cpl),
-        .s_axis_dequeue_resp_tag(rx_desc_dequeue_resp_tag),
-        .s_axis_dequeue_resp_op_tag(rx_desc_dequeue_resp_op_tag),
-        .s_axis_dequeue_resp_empty(rx_desc_dequeue_resp_empty),
-        .s_axis_dequeue_resp_error(rx_desc_dequeue_resp_error),
-        .s_axis_dequeue_resp_valid(rx_desc_dequeue_resp_valid),
-        .s_axis_dequeue_resp_ready(rx_desc_dequeue_resp_ready),
-
-        /*
-         * Dequeue commit output
-         */
-        .m_axis_dequeue_commit_op_tag(rx_desc_dequeue_commit_op_tag),
-        .m_axis_dequeue_commit_valid(rx_desc_dequeue_commit_valid),
-        .m_axis_dequeue_commit_ready(rx_desc_dequeue_commit_ready),
-
-        /*
-         * Dequeue request input
-         */
-        .s_axis_dequeue_req_queue(rx_port_desc_dequeue_req_queue),
-        .s_axis_dequeue_req_tag(rx_port_desc_dequeue_req_tag),
-        .s_axis_dequeue_req_valid(rx_port_desc_dequeue_req_valid),
-        .s_axis_dequeue_req_ready(rx_port_desc_dequeue_req_ready),
-
-        /*
-         * Dequeue response output
-         */
-        .m_axis_enqueue_resp_queue(rx_port_desc_dequeue_resp_queue),
-        .m_axis_dequeue_resp_ptr(rx_port_desc_dequeue_resp_ptr),
-        .m_axis_dequeue_resp_addr(rx_port_desc_dequeue_resp_addr),
-        .m_axis_dequeue_resp_cpl(rx_port_desc_dequeue_resp_cpl),
-        .m_axis_dequeue_resp_tag(rx_port_desc_dequeue_resp_tag),
-        .m_axis_dequeue_resp_op_tag(rx_port_desc_dequeue_resp_op_tag),
-        .m_axis_dequeue_resp_empty(rx_port_desc_dequeue_resp_empty),
-        .m_axis_dequeue_resp_error(rx_port_desc_dequeue_resp_error),
-        .m_axis_dequeue_resp_valid(rx_port_desc_dequeue_resp_valid),
-        .m_axis_dequeue_resp_ready(rx_port_desc_dequeue_resp_ready),
-
-        /*
-         * Dequeue commit input
-         */
-        .s_axis_dequeue_commit_op_tag(rx_port_desc_dequeue_commit_op_tag),
-        .s_axis_dequeue_commit_valid(rx_port_desc_dequeue_commit_valid),
-        .s_axis_dequeue_commit_ready(rx_port_desc_dequeue_commit_ready)
-    );
-
-end else begin
-
-    assign rx_desc_dequeue_req_queue = rx_port_desc_dequeue_req_queue;
-    assign rx_desc_dequeue_req_tag = rx_port_desc_dequeue_req_tag;
-    assign rx_desc_dequeue_req_valid = rx_port_desc_dequeue_req_valid;
-    assign rx_port_desc_dequeue_req_ready = rx_desc_dequeue_req_ready;
-
-    assign rx_port_desc_dequeue_resp_queue = rx_desc_dequeue_resp_queue;
-    assign rx_port_desc_dequeue_resp_ptr = rx_desc_dequeue_resp_ptr;
-    assign rx_port_desc_dequeue_resp_addr = rx_desc_dequeue_resp_addr;
-    assign rx_port_desc_dequeue_resp_cpl = rx_desc_dequeue_resp_cpl;
-    assign rx_port_desc_dequeue_resp_tag = rx_desc_dequeue_resp_tag;
-    assign rx_port_desc_dequeue_resp_op_tag = rx_desc_dequeue_resp_op_tag;
-    assign rx_port_desc_dequeue_resp_empty = rx_desc_dequeue_resp_empty;
-    assign rx_port_desc_dequeue_resp_error = rx_desc_dequeue_resp_error;
-    assign rx_port_desc_dequeue_resp_valid = rx_desc_dequeue_resp_valid;
-    assign rx_desc_dequeue_resp_ready = rx_port_desc_dequeue_resp_ready;
-
-    assign rx_desc_dequeue_commit_op_tag = rx_port_desc_dequeue_commit_op_tag;
-    assign rx_desc_dequeue_commit_valid = rx_port_desc_dequeue_commit_valid;
-    assign rx_port_desc_dequeue_commit_ready = rx_desc_dequeue_commit_ready;
-
-end
-
 queue_manager #(
-    .ADDR_WIDTH(PCIE_ADDR_WIDTH),
+    .ADDR_WIDTH(DMA_ADDR_WIDTH),
     .REQ_TAG_WIDTH(QUEUE_REQ_TAG_WIDTH),
     .OP_TABLE_SIZE(RX_QUEUE_OP_TABLE_SIZE),
     .OP_TAG_WIDTH(QUEUE_OP_TAG_WIDTH),
@@ -1422,7 +1143,7 @@ queue_manager #(
     .DESC_SIZE(DESC_SIZE),
     .PIPELINE(3),
     .AXIL_DATA_WIDTH(AXIL_DATA_WIDTH),
-    .AXIL_ADDR_WIDTH(AXIL_ADDR_WIDTH),
+    .AXIL_ADDR_WIDTH(AXIL_RX_QM_ADDR_WIDTH),
     .AXIL_STRB_WIDTH(AXIL_STRB_WIDTH)
 )
 rx_queue_manager_inst (
@@ -1440,7 +1161,7 @@ rx_queue_manager_inst (
     /*
      * Dequeue response output
      */
-    .m_axis_dequeue_resp_queue(),
+    .m_axis_dequeue_resp_queue(rx_desc_dequeue_resp_queue),
     .m_axis_dequeue_resp_ptr(rx_desc_dequeue_resp_ptr),
     .m_axis_dequeue_resp_addr(rx_desc_dequeue_resp_addr),
     .m_axis_dequeue_resp_cpl(rx_desc_dequeue_resp_cpl),
@@ -1493,106 +1214,8 @@ rx_queue_manager_inst (
     .enable(1'b1)
 );
 
-if (PORTS > 1) begin
-
-    queue_op_mux #(
-        .PORTS(PORTS),
-        .ADDR_WIDTH(PCIE_ADDR_WIDTH),
-        .S_REQ_TAG_WIDTH(QUEUE_REQ_TAG_WIDTH),
-        .M_REQ_TAG_WIDTH(QUEUE_REQ_TAG_WIDTH), // TODO
-        .OP_TAG_WIDTH(QUEUE_OP_TAG_WIDTH),
-        .QUEUE_INDEX_WIDTH(RX_CPL_QUEUE_INDEX_WIDTH),
-        .QUEUE_PTR_WIDTH(QUEUE_PTR_WIDTH),
-        .CPL_INDEX_WIDTH(0),
-        .ARB_TYPE("ROUND_ROBIN"),
-        .LSB_PRIORITY("HIGH")
-    )
-    rx_cpl_queue_op_mux_inst (
-        .clk(clk),
-        .rst(rst),
-
-        /*
-         * Dequeue request output
-         */
-        .m_axis_dequeue_req_queue(rx_cpl_enqueue_req_queue),
-        .m_axis_dequeue_req_tag(rx_cpl_enqueue_req_tag),
-        .m_axis_dequeue_req_valid(rx_cpl_enqueue_req_valid),
-        .m_axis_dequeue_req_ready(rx_cpl_enqueue_req_ready),
-
-        /*
-         * Dequeue response input
-         */
-        .m_axis_enqueue_resp_queue(0),
-        .s_axis_dequeue_resp_ptr(0),
-        .s_axis_dequeue_resp_addr(rx_cpl_enqueue_resp_addr),
-        .s_axis_dequeue_resp_cpl(0),
-        .s_axis_dequeue_resp_tag(rx_cpl_enqueue_resp_tag),
-        .s_axis_dequeue_resp_op_tag(rx_cpl_enqueue_resp_op_tag),
-        .s_axis_dequeue_resp_empty(rx_cpl_enqueue_resp_full),
-        .s_axis_dequeue_resp_error(rx_cpl_enqueue_resp_error),
-        .s_axis_dequeue_resp_valid(rx_cpl_enqueue_resp_valid),
-        .s_axis_dequeue_resp_ready(rx_cpl_enqueue_resp_ready),
-
-        /*
-         * Dequeue commit output
-         */
-        .m_axis_dequeue_commit_op_tag(rx_cpl_enqueue_commit_op_tag),
-        .m_axis_dequeue_commit_valid(rx_cpl_enqueue_commit_valid),
-        .m_axis_dequeue_commit_ready(rx_cpl_enqueue_commit_ready),
-
-        /*
-         * Dequeue request input
-         */
-        .s_axis_dequeue_req_queue(rx_port_cpl_enqueue_req_queue),
-        .s_axis_dequeue_req_tag(rx_port_cpl_enqueue_req_tag),
-        .s_axis_dequeue_req_valid(rx_port_cpl_enqueue_req_valid),
-        .s_axis_dequeue_req_ready(rx_port_cpl_enqueue_req_ready),
-
-        /*
-         * Dequeue response output
-         */
-        .m_axis_enqueue_resp_queue(),
-        .m_axis_dequeue_resp_ptr(),
-        .m_axis_dequeue_resp_addr(rx_port_cpl_enqueue_resp_addr),
-        .m_axis_dequeue_resp_cpl(),
-        .m_axis_dequeue_resp_tag(rx_port_cpl_enqueue_resp_tag),
-        .m_axis_dequeue_resp_op_tag(rx_port_cpl_enqueue_resp_op_tag),
-        .m_axis_dequeue_resp_empty(rx_port_cpl_enqueue_resp_full),
-        .m_axis_dequeue_resp_error(rx_port_cpl_enqueue_resp_error),
-        .m_axis_dequeue_resp_valid(rx_port_cpl_enqueue_resp_valid),
-        .m_axis_dequeue_resp_ready(rx_port_cpl_enqueue_resp_ready),
-
-        /*
-         * Dequeue commit input
-         */
-        .s_axis_dequeue_commit_op_tag(rx_port_cpl_enqueue_commit_op_tag),
-        .s_axis_dequeue_commit_valid(rx_port_cpl_enqueue_commit_valid),
-        .s_axis_dequeue_commit_ready(rx_port_cpl_enqueue_commit_ready)
-    );
-
-end else begin
-
-    assign rx_cpl_enqueue_req_queue = rx_port_cpl_enqueue_req_queue;
-    assign rx_cpl_enqueue_req_tag = rx_port_cpl_enqueue_req_tag;
-    assign rx_cpl_enqueue_req_valid = rx_port_cpl_enqueue_req_valid;
-    assign rx_port_cpl_enqueue_req_ready = rx_cpl_enqueue_req_ready;
-
-    assign rx_port_cpl_enqueue_resp_addr = rx_cpl_enqueue_resp_addr;
-    assign rx_port_cpl_enqueue_resp_tag = rx_cpl_enqueue_resp_tag;
-    assign rx_port_cpl_enqueue_resp_op_tag = rx_cpl_enqueue_resp_op_tag;
-    assign rx_port_cpl_enqueue_resp_full = rx_cpl_enqueue_resp_full;
-    assign rx_port_cpl_enqueue_resp_error = rx_cpl_enqueue_resp_error;
-    assign rx_port_cpl_enqueue_resp_valid = rx_cpl_enqueue_resp_valid;
-    assign rx_cpl_enqueue_resp_ready = rx_port_cpl_enqueue_resp_ready;
-
-    assign rx_cpl_enqueue_commit_op_tag = rx_port_cpl_enqueue_commit_op_tag;
-    assign rx_cpl_enqueue_commit_valid = rx_port_cpl_enqueue_commit_valid;
-    assign rx_port_cpl_enqueue_commit_ready = rx_cpl_enqueue_commit_ready;
-
-end
-
 cpl_queue_manager #(
-    .ADDR_WIDTH(PCIE_ADDR_WIDTH),
+    .ADDR_WIDTH(DMA_ADDR_WIDTH),
     .REQ_TAG_WIDTH(QUEUE_REQ_TAG_WIDTH),
     .OP_TABLE_SIZE(RX_QUEUE_OP_TABLE_SIZE),
     .OP_TAG_WIDTH(QUEUE_OP_TAG_WIDTH),
@@ -1603,7 +1226,7 @@ cpl_queue_manager #(
     .CPL_SIZE(CPL_SIZE),
     .PIPELINE(3),
     .AXIL_DATA_WIDTH(AXIL_DATA_WIDTH),
-    .AXIL_ADDR_WIDTH(AXIL_ADDR_WIDTH),
+    .AXIL_ADDR_WIDTH(AXIL_RX_CQM_ADDR_WIDTH),
     .AXIL_STRB_WIDTH(AXIL_STRB_WIDTH)
 )
 rx_cpl_queue_manager_inst (
@@ -1675,118 +1298,504 @@ rx_cpl_queue_manager_inst (
     .enable(1'b1)
 );
 
-generate
-
 if (PORTS > 1) begin
 
-    pcie_axi_dma_desc_mux #(
+    desc_op_mux #(
         .PORTS(PORTS),
-        .PCIE_ADDR_WIDTH(PCIE_ADDR_WIDTH),
-        .AXI_ADDR_WIDTH(AXI_ADDR_WIDTH),
-        .LEN_WIDTH(PCIE_DMA_LEN_WIDTH),
-        .S_TAG_WIDTH(PCIE_DMA_TAG_WIDTH_INT),
-        .M_TAG_WIDTH(PCIE_DMA_TAG_WIDTH),
+        .SELECT_WIDTH(1),
+        .QUEUE_INDEX_WIDTH(QUEUE_INDEX_WIDTH),
+        .QUEUE_PTR_WIDTH(QUEUE_PTR_WIDTH),
+        .CPL_QUEUE_INDEX_WIDTH(CPL_QUEUE_INDEX_WIDTH),
+        .S_REQ_TAG_WIDTH(PORT_DESC_REQ_TAG_WIDTH),
+        .M_REQ_TAG_WIDTH(DESC_REQ_TAG_WIDTH),
+        .AXIS_DATA_WIDTH(AXIS_DESC_DATA_WIDTH),
+        .AXIS_KEEP_WIDTH(AXIS_DESC_KEEP_WIDTH),
         .ARB_TYPE("ROUND_ROBIN"),
         .LSB_PRIORITY("HIGH")
     )
-    pcie_axi_dma_read_desc_mux_inst (
+    desc_op_mux_inst (
         .clk(clk),
         .rst(rst),
 
         /*
-         * Descriptor output
+         * Descriptor request output
          */
-        .m_axis_desc_pcie_addr(m_axis_pcie_axi_dma_read_desc_pcie_addr),
-        .m_axis_desc_axi_addr(m_axis_pcie_axi_dma_read_desc_axi_addr),
-        .m_axis_desc_len(m_axis_pcie_axi_dma_read_desc_len),
-        .m_axis_desc_tag(m_axis_pcie_axi_dma_read_desc_tag),
-        .m_axis_desc_valid(m_axis_pcie_axi_dma_read_desc_valid),
-        .m_axis_desc_ready(m_axis_pcie_axi_dma_read_desc_ready),
+        .m_axis_req_sel(desc_req_sel),
+        .m_axis_req_queue(desc_req_queue),
+        .m_axis_req_tag(desc_req_tag),
+        .m_axis_req_valid(desc_req_valid),
+        .m_axis_req_ready(desc_req_ready),
 
         /*
-         * Descriptor status input
+         * Descriptor request status input
          */
-        .s_axis_desc_status_tag(s_axis_pcie_axi_dma_read_desc_status_tag),
-        .s_axis_desc_status_valid(s_axis_pcie_axi_dma_read_desc_status_valid),
+        .s_axis_req_status_queue(desc_req_status_queue),
+        .s_axis_req_status_ptr(desc_req_status_ptr),
+        .s_axis_req_status_cpl(desc_req_status_cpl),
+        .s_axis_req_status_tag(desc_req_status_tag),
+        .s_axis_req_status_empty(desc_req_status_empty),
+        .s_axis_req_status_error(desc_req_status_error),
+        .s_axis_req_status_valid(desc_req_status_valid),
 
         /*
-         * Descriptor input
+         * Descriptor data input
          */
-        .s_axis_desc_pcie_addr(port_pcie_axi_dma_read_desc_pcie_addr),
-        .s_axis_desc_axi_addr(port_pcie_axi_dma_read_desc_axi_addr),
-        .s_axis_desc_len(port_pcie_axi_dma_read_desc_len),
-        .s_axis_desc_tag(port_pcie_axi_dma_read_desc_tag),
-        .s_axis_desc_valid(port_pcie_axi_dma_read_desc_valid),
-        .s_axis_desc_ready(port_pcie_axi_dma_read_desc_ready),
+        .s_axis_desc_tdata(axis_desc_tdata),
+        .s_axis_desc_tkeep(axis_desc_tkeep),
+        .s_axis_desc_tvalid(axis_desc_tvalid),
+        .s_axis_desc_tready(axis_desc_tready),
+        .s_axis_desc_tlast(axis_desc_tlast),
+        .s_axis_desc_tid(axis_desc_tid),
+        .s_axis_desc_tuser(axis_desc_tuser),
 
         /*
-         * Descriptor status output
+         * Descriptor request input
          */
-        .m_axis_desc_status_tag(port_pcie_axi_dma_read_desc_status_tag),
-        .m_axis_desc_status_valid(port_pcie_axi_dma_read_desc_status_valid)
+        .s_axis_req_sel(port_desc_req_sel),
+        .s_axis_req_queue(port_desc_req_queue),
+        .s_axis_req_tag(port_desc_req_tag),
+        .s_axis_req_valid(port_desc_req_valid),
+        .s_axis_req_ready(port_desc_req_ready),
+
+        /*
+         * Descriptor request status output
+         */
+        .m_axis_req_status_queue(port_desc_req_status_queue),
+        .m_axis_req_status_ptr(port_desc_req_status_ptr),
+        .m_axis_req_status_cpl(port_desc_req_status_cpl),
+        .m_axis_req_status_tag(port_desc_req_status_tag),
+        .m_axis_req_status_empty(port_desc_req_status_empty),
+        .m_axis_req_status_error(port_desc_req_status_error),
+        .m_axis_req_status_valid(port_desc_req_status_valid),
+
+        /*
+         * Descriptor data output
+         */
+        .m_axis_desc_tdata(port_axis_desc_tdata),
+        .m_axis_desc_tkeep(port_axis_desc_tkeep),
+        .m_axis_desc_tvalid(port_axis_desc_tvalid),
+        .m_axis_desc_tready(port_axis_desc_tready),
+        .m_axis_desc_tlast(port_axis_desc_tlast),
+        .m_axis_desc_tid(port_axis_desc_tid),
+        .m_axis_desc_tuser(port_axis_desc_tuser)
     );
 
 end else begin
-    
-    assign m_axis_pcie_axi_dma_read_desc_pcie_addr = port_pcie_axi_dma_read_desc_pcie_addr;
-    assign m_axis_pcie_axi_dma_read_desc_axi_addr = port_pcie_axi_dma_read_desc_axi_addr;
-    assign m_axis_pcie_axi_dma_read_desc_len = port_pcie_axi_dma_read_desc_len;
-    assign m_axis_pcie_axi_dma_read_desc_tag = port_pcie_axi_dma_read_desc_tag;
-    assign m_axis_pcie_axi_dma_read_desc_valid = port_pcie_axi_dma_read_desc_valid;
-    assign port_pcie_axi_dma_read_desc_ready = m_axis_pcie_axi_dma_read_desc_ready;
 
-    assign port_pcie_axi_dma_read_desc_status_tag = s_axis_pcie_axi_dma_read_desc_status_tag;
-    assign port_pcie_axi_dma_read_desc_status_valid = s_axis_pcie_axi_dma_read_desc_status_valid;
+    assign desc_req_sel = port_desc_req_sel;
+    assign desc_req_queue = port_desc_req_queue;
+    assign desc_req_tag = port_desc_req_tag;
+    assign desc_req_valid = port_desc_req_valid;
+    assign port_desc_req_ready = desc_req_ready;
+
+    assign port_desc_req_status_queue = desc_req_status_queue;
+    assign port_desc_req_status_ptr = desc_req_status_ptr;
+    assign port_desc_req_status_cpl = desc_req_status_cpl;
+    assign port_desc_req_status_tag = desc_req_status_tag;
+    assign port_desc_req_status_empty = desc_req_status_empty;
+    assign port_desc_req_status_error = desc_req_status_error;
+    assign port_desc_req_status_valid = desc_req_status_valid;
+
+    assign port_axis_desc_tdata = axis_desc_tdata;
+    assign port_axis_desc_tkeep = axis_desc_tkeep;
+    assign port_axis_desc_tvalid = axis_desc_tvalid;
+    assign axis_desc_tready = port_axis_desc_tready;
+    assign port_axis_desc_tlast = axis_desc_tlast;
+    assign port_axis_desc_tid = axis_desc_tid;
+    assign port_axis_desc_tuser = axis_desc_tuser;
 
 end
 
-endgenerate
-
-pcie_axi_dma_desc_mux #(
-    .PORTS(PORTS+1),
-    .PCIE_ADDR_WIDTH(PCIE_ADDR_WIDTH),
-    .AXI_ADDR_WIDTH(AXI_ADDR_WIDTH),
-    .LEN_WIDTH(PCIE_DMA_LEN_WIDTH),
-    .S_TAG_WIDTH(PCIE_DMA_TAG_WIDTH_INT),
-    .M_TAG_WIDTH(PCIE_DMA_TAG_WIDTH),
-    .ARB_TYPE("ROUND_ROBIN"),
-    .LSB_PRIORITY("HIGH")
+desc_fetch #(
+    .PORTS(2),
+    .SELECT_WIDTH(1),
+    .SEG_COUNT(SEG_COUNT),
+    .SEG_DATA_WIDTH(SEG_DATA_WIDTH),
+    .SEG_ADDR_WIDTH(SEG_ADDR_WIDTH),
+    .SEG_BE_WIDTH(SEG_BE_WIDTH),
+    .RAM_ADDR_WIDTH(RAM_ADDR_WIDTH),
+    .RAM_PIPELINE(RAM_PIPELINE),
+    .AXIS_DATA_WIDTH(AXIS_DESC_DATA_WIDTH),
+    .AXIS_KEEP_WIDTH(AXIS_DESC_KEEP_WIDTH),
+    .DMA_ADDR_WIDTH(DMA_ADDR_WIDTH),
+    .DMA_LEN_WIDTH(DMA_LEN_WIDTH),
+    .DMA_TAG_WIDTH(DMA_TAG_WIDTH),
+    .REQ_TAG_WIDTH(DESC_REQ_TAG_WIDTH),
+    .QUEUE_REQ_TAG_WIDTH(QUEUE_REQ_TAG_WIDTH),
+    .QUEUE_OP_TAG_WIDTH(QUEUE_OP_TAG_WIDTH),
+    .QUEUE_INDEX_WIDTH(QUEUE_INDEX_WIDTH),
+    .CPL_QUEUE_INDEX_WIDTH(CPL_QUEUE_INDEX_WIDTH),
+    .QUEUE_PTR_WIDTH(QUEUE_PTR_WIDTH),
+    .DESC_SIZE(DESC_SIZE),
+    .DESC_TABLE_SIZE(32)
 )
-pcie_axi_dma_write_desc_mux_inst (
+desc_fetch_inst (
     .clk(clk),
     .rst(rst),
 
     /*
-     * Descriptor output
+     * Descriptor read request input
      */
-    .m_axis_desc_pcie_addr(m_axis_pcie_axi_dma_write_desc_pcie_addr),
-    .m_axis_desc_axi_addr(m_axis_pcie_axi_dma_write_desc_axi_addr),
-    .m_axis_desc_len(m_axis_pcie_axi_dma_write_desc_len),
-    .m_axis_desc_tag(m_axis_pcie_axi_dma_write_desc_tag),
-    .m_axis_desc_valid(m_axis_pcie_axi_dma_write_desc_valid),
-    .m_axis_desc_ready(m_axis_pcie_axi_dma_write_desc_ready),
+    .s_axis_req_sel(desc_req_sel),
+    .s_axis_req_queue(desc_req_queue),
+    .s_axis_req_tag(desc_req_tag),
+    .s_axis_req_valid(desc_req_valid),
+    .s_axis_req_ready(desc_req_ready),
 
     /*
-     * Descriptor status input
+     * Descriptor read request status output
      */
-    .s_axis_desc_status_tag(s_axis_pcie_axi_dma_write_desc_status_tag),
-    .s_axis_desc_status_valid(s_axis_pcie_axi_dma_write_desc_status_valid),
+    .m_axis_req_status_queue(desc_req_status_queue),
+    .m_axis_req_status_ptr(desc_req_status_ptr),
+    .m_axis_req_status_cpl(desc_req_status_cpl),
+    .m_axis_req_status_tag(desc_req_status_tag),
+    .m_axis_req_status_empty(desc_req_status_empty),
+    .m_axis_req_status_error(desc_req_status_error),
+    .m_axis_req_status_valid(desc_req_status_valid),
 
     /*
-     * Descriptor input
+     * Descriptor data output
      */
-    .s_axis_desc_pcie_addr({port_pcie_axi_dma_write_desc_pcie_addr, event_pcie_axi_dma_write_desc_pcie_addr}),
-    .s_axis_desc_axi_addr({port_pcie_axi_dma_write_desc_axi_addr, event_pcie_axi_dma_write_desc_axi_addr}),
-    .s_axis_desc_len({port_pcie_axi_dma_write_desc_len, event_pcie_axi_dma_write_desc_len}),
-    .s_axis_desc_tag({port_pcie_axi_dma_write_desc_tag, event_pcie_axi_dma_write_desc_tag}),
-    .s_axis_desc_valid({port_pcie_axi_dma_write_desc_valid, event_pcie_axi_dma_write_desc_valid}),
-    .s_axis_desc_ready({port_pcie_axi_dma_write_desc_ready, event_pcie_axi_dma_write_desc_ready}),
+    .m_axis_desc_tdata(axis_desc_tdata),
+    .m_axis_desc_tkeep(axis_desc_tkeep),
+    .m_axis_desc_tvalid(axis_desc_tvalid),
+    .m_axis_desc_tready(axis_desc_tready),
+    .m_axis_desc_tlast(axis_desc_tlast),
+    .m_axis_desc_tid(axis_desc_tid),
+    .m_axis_desc_tuser(axis_desc_tuser),
 
     /*
-     * Descriptor status output
+     * Descriptor dequeue request output
      */
-    .m_axis_desc_status_tag({port_pcie_axi_dma_write_desc_status_tag, event_pcie_axi_dma_write_desc_status_tag}),
-    .m_axis_desc_status_valid({port_pcie_axi_dma_write_desc_status_valid, event_pcie_axi_dma_write_desc_status_valid})
+    .m_axis_desc_dequeue_req_queue({rx_desc_dequeue_req_queue, tx_desc_dequeue_req_queue}),
+    .m_axis_desc_dequeue_req_tag({rx_desc_dequeue_req_tag, tx_desc_dequeue_req_tag}),
+    .m_axis_desc_dequeue_req_valid({rx_desc_dequeue_req_valid, tx_desc_dequeue_req_valid}),
+    .m_axis_desc_dequeue_req_ready({rx_desc_dequeue_req_ready, tx_desc_dequeue_req_ready}),
+
+    /*
+     * Descriptor dequeue response input
+     */
+    .s_axis_desc_dequeue_resp_queue({rx_desc_dequeue_resp_queue, tx_desc_dequeue_resp_queue}),
+    .s_axis_desc_dequeue_resp_ptr({rx_desc_dequeue_resp_ptr, tx_desc_dequeue_resp_ptr}),
+    .s_axis_desc_dequeue_resp_addr({rx_desc_dequeue_resp_addr, tx_desc_dequeue_resp_addr}),
+    .s_axis_desc_dequeue_resp_cpl({rx_desc_dequeue_resp_cpl, tx_desc_dequeue_resp_cpl}),
+    .s_axis_desc_dequeue_resp_tag({rx_desc_dequeue_resp_tag, tx_desc_dequeue_resp_tag}),
+    .s_axis_desc_dequeue_resp_op_tag({rx_desc_dequeue_resp_op_tag, tx_desc_dequeue_resp_op_tag}),
+    .s_axis_desc_dequeue_resp_empty({rx_desc_dequeue_resp_empty, tx_desc_dequeue_resp_empty}),
+    .s_axis_desc_dequeue_resp_error({rx_desc_dequeue_resp_error, tx_desc_dequeue_resp_error}),
+    .s_axis_desc_dequeue_resp_valid({rx_desc_dequeue_resp_valid, tx_desc_dequeue_resp_valid}),
+    .s_axis_desc_dequeue_resp_ready({rx_desc_dequeue_resp_ready, tx_desc_dequeue_resp_ready}),
+
+    /*
+     * Descriptor dequeue commit output
+     */
+    .m_axis_desc_dequeue_commit_op_tag({rx_desc_dequeue_commit_op_tag, tx_desc_dequeue_commit_op_tag}),
+    .m_axis_desc_dequeue_commit_valid({rx_desc_dequeue_commit_valid, tx_desc_dequeue_commit_valid}),
+    .m_axis_desc_dequeue_commit_ready({rx_desc_dequeue_commit_ready, tx_desc_dequeue_commit_ready}),
+
+    /*
+     * DMA read descriptor output
+     */
+    .m_axis_dma_read_desc_dma_addr(desc_dma_read_desc_dma_addr),
+    .m_axis_dma_read_desc_ram_addr(desc_dma_read_desc_ram_addr),
+    .m_axis_dma_read_desc_len(desc_dma_read_desc_len),
+    .m_axis_dma_read_desc_tag(desc_dma_read_desc_tag),
+    .m_axis_dma_read_desc_valid(desc_dma_read_desc_valid),
+    .m_axis_dma_read_desc_ready(desc_dma_read_desc_ready),
+
+    /*
+     * DMA read descriptor status input
+     */
+    .s_axis_dma_read_desc_status_tag(desc_dma_read_desc_status_tag),
+    .s_axis_dma_read_desc_status_valid(desc_dma_read_desc_status_valid),
+
+    /*
+     * RAM interface
+     */
+    .dma_ram_wr_cmd_be(desc_dma_ram_wr_cmd_be),
+    .dma_ram_wr_cmd_addr(desc_dma_ram_wr_cmd_addr),
+    .dma_ram_wr_cmd_data(desc_dma_ram_wr_cmd_data),
+    .dma_ram_wr_cmd_valid(desc_dma_ram_wr_cmd_valid),
+    .dma_ram_wr_cmd_ready(desc_dma_ram_wr_cmd_ready),
+
+    /*
+     * Configuration
+     */
+    .enable(1'b1)
+);
+
+cpl_op_mux #(
+    .PORTS(PORTS+1),
+    .SELECT_WIDTH(2),
+    .QUEUE_INDEX_WIDTH(QUEUE_INDEX_WIDTH),
+    .S_REQ_TAG_WIDTH(PORT_DESC_REQ_TAG_WIDTH),
+    .M_REQ_TAG_WIDTH(DESC_REQ_TAG_WIDTH),
+    .CPL_SIZE(CPL_SIZE),
+    .ARB_TYPE("ROUND_ROBIN"),
+    .LSB_PRIORITY("HIGH")
+)
+cpl_op_mux_inst (
+    .clk(clk),
+    .rst(rst),
+
+    /*
+     * Completion request output
+     */
+    .m_axis_req_sel(cpl_req_sel),
+    .m_axis_req_queue(cpl_req_queue),
+    .m_axis_req_tag(cpl_req_tag),
+    .m_axis_req_data(cpl_req_data),
+    .m_axis_req_valid(cpl_req_valid),
+    .m_axis_req_ready(cpl_req_ready),
+
+    /*
+     * Completion request status input
+     */
+    .s_axis_req_status_tag(cpl_req_status_tag),
+    .s_axis_req_status_full(cpl_req_status_full),
+    .s_axis_req_status_error(cpl_req_status_error),
+    .s_axis_req_status_valid(cpl_req_status_valid),
+
+    /*
+     * Completion request input
+     */
+    .s_axis_req_sel({port_cpl_req_sel, event_cpl_req_sel}),
+    .s_axis_req_queue({port_cpl_req_queue, event_cpl_req_queue}),
+    .s_axis_req_tag({port_cpl_req_tag, event_cpl_req_tag}),
+    .s_axis_req_data({port_cpl_req_data, event_cpl_req_data}),
+    .s_axis_req_valid({port_cpl_req_valid, event_cpl_req_valid}),
+    .s_axis_req_ready({port_cpl_req_ready, event_cpl_req_ready}),
+
+    /*
+     * Completion response output
+     */
+    .m_axis_req_status_tag({port_cpl_req_status_tag, event_cpl_req_status_tag}),
+    .m_axis_req_status_full({port_cpl_req_status_full, event_cpl_req_status_full}),
+    .m_axis_req_status_error({port_cpl_req_status_error, event_cpl_req_status_error}),
+    .m_axis_req_status_valid({port_cpl_req_status_valid, event_cpl_req_status_valid})
+);
+
+cpl_write #(
+    .PORTS(3),
+    .SELECT_WIDTH(2),
+    .SEG_COUNT(SEG_COUNT),
+    .SEG_DATA_WIDTH(SEG_DATA_WIDTH),
+    .SEG_ADDR_WIDTH(SEG_ADDR_WIDTH),
+    .SEG_BE_WIDTH(SEG_BE_WIDTH),
+    .RAM_PIPELINE(RAM_PIPELINE),
+    .RAM_ADDR_WIDTH(RAM_ADDR_WIDTH),
+    .DMA_ADDR_WIDTH(DMA_ADDR_WIDTH),
+    .DMA_LEN_WIDTH(DMA_LEN_WIDTH),
+    .DMA_TAG_WIDTH(DMA_TAG_WIDTH),
+    .REQ_TAG_WIDTH(DESC_REQ_TAG_WIDTH),
+    .QUEUE_REQ_TAG_WIDTH(QUEUE_REQ_TAG_WIDTH),
+    .QUEUE_OP_TAG_WIDTH(QUEUE_OP_TAG_WIDTH),
+    .QUEUE_INDEX_WIDTH(QUEUE_INDEX_WIDTH),
+    .CPL_SIZE(CPL_SIZE),
+    .DESC_TABLE_SIZE(32)
+)
+cpl_write_inst (
+    .clk(clk),
+    .rst(rst),
+
+    /*
+     * Completion read request input
+     */
+    .s_axis_req_sel(cpl_req_sel),
+    .s_axis_req_queue(cpl_req_queue),
+    .s_axis_req_tag(cpl_req_tag),
+    .s_axis_req_data(cpl_req_data),
+    .s_axis_req_valid(cpl_req_valid),
+    .s_axis_req_ready(cpl_req_ready),
+
+    /*
+     * Completion read request status output
+     */
+    .m_axis_req_status_tag(cpl_req_status_tag),
+    .m_axis_req_status_full(cpl_req_status_full),
+    .m_axis_req_status_error(cpl_req_status_error),
+    .m_axis_req_status_valid(cpl_req_status_valid),
+
+    /*
+     * Completion enqueue request output
+     */
+    .m_axis_cpl_enqueue_req_queue({event_enqueue_req_queue, rx_cpl_enqueue_req_queue, tx_cpl_enqueue_req_queue}),
+    .m_axis_cpl_enqueue_req_tag({event_enqueue_req_tag, rx_cpl_enqueue_req_tag, tx_cpl_enqueue_req_tag}),
+    .m_axis_cpl_enqueue_req_valid({event_enqueue_req_valid, rx_cpl_enqueue_req_valid, tx_cpl_enqueue_req_valid}),
+    .m_axis_cpl_enqueue_req_ready({event_enqueue_req_ready, rx_cpl_enqueue_req_ready, tx_cpl_enqueue_req_ready}),
+
+    /*
+     * Completion enqueue response input
+     */
+    .s_axis_cpl_enqueue_resp_addr({event_enqueue_resp_addr, rx_cpl_enqueue_resp_addr, tx_cpl_enqueue_resp_addr}),
+    .s_axis_cpl_enqueue_resp_tag({event_enqueue_resp_tag, rx_cpl_enqueue_resp_tag, tx_cpl_enqueue_resp_tag}),
+    .s_axis_cpl_enqueue_resp_op_tag({event_enqueue_resp_op_tag, rx_cpl_enqueue_resp_op_tag, tx_cpl_enqueue_resp_op_tag}),
+    .s_axis_cpl_enqueue_resp_full({event_enqueue_resp_full, rx_cpl_enqueue_resp_full, tx_cpl_enqueue_resp_full}),
+    .s_axis_cpl_enqueue_resp_error({event_enqueue_resp_error, rx_cpl_enqueue_resp_error, tx_cpl_enqueue_resp_error}),
+    .s_axis_cpl_enqueue_resp_valid({event_enqueue_resp_valid, rx_cpl_enqueue_resp_valid, tx_cpl_enqueue_resp_valid}),
+    .s_axis_cpl_enqueue_resp_ready({event_enqueue_resp_ready, rx_cpl_enqueue_resp_ready, tx_cpl_enqueue_resp_ready}),
+
+    /*
+     * Completion enqueue commit output
+     */
+    .m_axis_cpl_enqueue_commit_op_tag({event_enqueue_commit_op_tag, rx_cpl_enqueue_commit_op_tag, tx_cpl_enqueue_commit_op_tag}),
+    .m_axis_cpl_enqueue_commit_valid({event_enqueue_commit_valid, rx_cpl_enqueue_commit_valid, tx_cpl_enqueue_commit_valid}),
+    .m_axis_cpl_enqueue_commit_ready({event_enqueue_commit_ready, rx_cpl_enqueue_commit_ready, tx_cpl_enqueue_commit_ready}),
+
+    /*
+     * DMA write descriptor output
+     */
+    .m_axis_dma_write_desc_dma_addr(desc_dma_write_desc_dma_addr),
+    .m_axis_dma_write_desc_ram_addr(desc_dma_write_desc_ram_addr),
+    .m_axis_dma_write_desc_len(desc_dma_write_desc_len),
+    .m_axis_dma_write_desc_tag(desc_dma_write_desc_tag),
+    .m_axis_dma_write_desc_valid(desc_dma_write_desc_valid),
+    .m_axis_dma_write_desc_ready(desc_dma_write_desc_ready),
+
+    /*
+     * DMA write descriptor status input
+     */
+    .s_axis_dma_write_desc_status_tag(desc_dma_write_desc_status_tag),
+    .s_axis_dma_write_desc_status_valid(desc_dma_write_desc_status_valid),
+
+    /*
+     * RAM interface
+     */
+    .dma_ram_rd_cmd_addr(desc_dma_ram_rd_cmd_addr),
+    .dma_ram_rd_cmd_valid(desc_dma_ram_rd_cmd_valid),
+    .dma_ram_rd_cmd_ready(desc_dma_ram_rd_cmd_ready),
+    .dma_ram_rd_resp_data(desc_dma_ram_rd_resp_data),
+    .dma_ram_rd_resp_valid(desc_dma_ram_rd_resp_valid),
+    .dma_ram_rd_resp_ready(desc_dma_ram_rd_resp_ready),
+
+    /*
+     * Configuration
+     */
+    .enable(1'b1)
+);
+
+dma_if_mux #
+(
+    .PORTS(PORTS+1),
+    .SEG_COUNT(SEG_COUNT),
+    .SEG_DATA_WIDTH(SEG_DATA_WIDTH),
+    .SEG_ADDR_WIDTH(SEG_ADDR_WIDTH),
+    .SEG_BE_WIDTH(SEG_BE_WIDTH),
+    .S_RAM_SEL_WIDTH(0),
+    .M_RAM_SEL_WIDTH(RAM_SEL_WIDTH),
+    .RAM_ADDR_WIDTH(RAM_ADDR_WIDTH),
+    .DMA_ADDR_WIDTH(DMA_ADDR_WIDTH),
+    .LEN_WIDTH(DMA_LEN_WIDTH),
+    .S_TAG_WIDTH(DMA_TAG_WIDTH_INT),
+    .M_TAG_WIDTH(DMA_TAG_WIDTH),
+    .ARB_TYPE("ROUND_ROBIN"),
+    .LSB_PRIORITY("HIGH")
+)
+dma_if_mux_inst (
+    .clk(clk),
+    .rst(rst),
+
+    /*
+     * Read descriptor output (to DMA interface)
+     */
+    .m_axis_read_desc_dma_addr(m_axis_dma_read_desc_dma_addr),
+    .m_axis_read_desc_ram_sel(m_axis_dma_read_desc_ram_sel),
+    .m_axis_read_desc_ram_addr(m_axis_dma_read_desc_ram_addr),
+    .m_axis_read_desc_len(m_axis_dma_read_desc_len),
+    .m_axis_read_desc_tag(m_axis_dma_read_desc_tag),
+    .m_axis_read_desc_valid(m_axis_dma_read_desc_valid),
+    .m_axis_read_desc_ready(m_axis_dma_read_desc_ready),
+
+    /*
+     * Read descriptor status input (from DMA interface)
+     */
+    .s_axis_read_desc_status_tag(s_axis_dma_read_desc_status_tag),
+    .s_axis_read_desc_status_valid(s_axis_dma_read_desc_status_valid),
+
+    /*
+     * Read descriptor input
+     */
+    .s_axis_read_desc_dma_addr({port_dma_read_desc_dma_addr, desc_dma_read_desc_dma_addr}),
+    .s_axis_read_desc_ram_sel(0),
+    .s_axis_read_desc_ram_addr({port_dma_read_desc_ram_addr, desc_dma_read_desc_ram_addr}),
+    .s_axis_read_desc_len({port_dma_read_desc_len, desc_dma_read_desc_len}),
+    .s_axis_read_desc_tag({port_dma_read_desc_tag, desc_dma_read_desc_tag}),
+    .s_axis_read_desc_valid({port_dma_read_desc_valid, desc_dma_read_desc_valid}),
+    .s_axis_read_desc_ready({port_dma_read_desc_ready, desc_dma_read_desc_ready}),
+
+    /*
+     * Read descriptor status output
+     */
+    .m_axis_read_desc_status_tag({port_dma_read_desc_status_tag, desc_dma_read_desc_status_tag}),
+    .m_axis_read_desc_status_valid({port_dma_read_desc_status_valid, desc_dma_read_desc_status_valid}),
+
+    /*
+     * Write descriptor output (to DMA interface)
+     */
+    .m_axis_write_desc_dma_addr(m_axis_dma_write_desc_dma_addr),
+    .m_axis_write_desc_ram_sel(m_axis_dma_write_desc_ram_sel),
+    .m_axis_write_desc_ram_addr(m_axis_dma_write_desc_ram_addr),
+    .m_axis_write_desc_len(m_axis_dma_write_desc_len),
+    .m_axis_write_desc_tag(m_axis_dma_write_desc_tag),
+    .m_axis_write_desc_valid(m_axis_dma_write_desc_valid),
+    .m_axis_write_desc_ready(m_axis_dma_write_desc_ready),
+
+    /*
+     * Write descriptor status input (from DMA interface)
+     */
+    .s_axis_write_desc_status_tag(s_axis_dma_write_desc_status_tag),
+    .s_axis_write_desc_status_valid(s_axis_dma_write_desc_status_valid),
+
+    /*
+     * Write descriptor input
+     */
+    .s_axis_write_desc_dma_addr({port_dma_write_desc_dma_addr, desc_dma_write_desc_dma_addr}),
+    .s_axis_write_desc_ram_sel(0),
+    .s_axis_write_desc_ram_addr({port_dma_write_desc_ram_addr, desc_dma_write_desc_ram_addr}),
+    .s_axis_write_desc_len({port_dma_write_desc_len, desc_dma_write_desc_len}),
+    .s_axis_write_desc_tag({port_dma_write_desc_tag, desc_dma_write_desc_tag}),
+    .s_axis_write_desc_valid({port_dma_write_desc_valid, desc_dma_write_desc_valid}),
+    .s_axis_write_desc_ready({port_dma_write_desc_ready, desc_dma_write_desc_ready}),
+
+    /*
+     * Write descriptor status output
+     */
+    .m_axis_write_desc_status_tag({port_dma_write_desc_status_tag, desc_dma_write_desc_status_tag}),
+    .m_axis_write_desc_status_valid({port_dma_write_desc_status_valid, desc_dma_write_desc_status_valid}),
+
+    /*
+     * RAM interface (from DMA interface)
+     */
+    .if_ram_wr_cmd_sel(dma_ram_wr_cmd_sel),
+    .if_ram_wr_cmd_be(dma_ram_wr_cmd_be),
+    .if_ram_wr_cmd_addr(dma_ram_wr_cmd_addr),
+    .if_ram_wr_cmd_data(dma_ram_wr_cmd_data),
+    .if_ram_wr_cmd_valid(dma_ram_wr_cmd_valid),
+    .if_ram_wr_cmd_ready(dma_ram_wr_cmd_ready),
+    .if_ram_rd_cmd_sel(dma_ram_rd_cmd_sel),
+    .if_ram_rd_cmd_addr(dma_ram_rd_cmd_addr),
+    .if_ram_rd_cmd_valid(dma_ram_rd_cmd_valid),
+    .if_ram_rd_cmd_ready(dma_ram_rd_cmd_ready),
+    .if_ram_rd_resp_data(dma_ram_rd_resp_data),
+    .if_ram_rd_resp_valid(dma_ram_rd_resp_valid),
+    .if_ram_rd_resp_ready(dma_ram_rd_resp_ready),
+
+    /*
+     * RAM interface
+     */
+    .ram_wr_cmd_sel(),
+    .ram_wr_cmd_be({port_dma_ram_wr_cmd_be, desc_dma_ram_wr_cmd_be}),
+    .ram_wr_cmd_addr({port_dma_ram_wr_cmd_addr, desc_dma_ram_wr_cmd_addr}),
+    .ram_wr_cmd_data({port_dma_ram_wr_cmd_data, desc_dma_ram_wr_cmd_data}),
+    .ram_wr_cmd_valid({port_dma_ram_wr_cmd_valid, desc_dma_ram_wr_cmd_valid}),
+    .ram_wr_cmd_ready({port_dma_ram_wr_cmd_ready, desc_dma_ram_wr_cmd_ready}),
+    .ram_rd_cmd_sel(),
+    .ram_rd_cmd_addr({port_dma_ram_rd_cmd_addr, desc_dma_ram_rd_cmd_addr}),
+    .ram_rd_cmd_valid({port_dma_ram_rd_cmd_valid, desc_dma_ram_rd_cmd_valid}),
+    .ram_rd_cmd_ready({port_dma_ram_rd_cmd_ready, desc_dma_ram_rd_cmd_ready}),
+    .ram_rd_resp_data({port_dma_ram_rd_resp_data, desc_dma_ram_rd_resp_data}),
+    .ram_rd_resp_valid({port_dma_ram_rd_resp_valid, desc_dma_ram_rd_resp_valid}),
+    .ram_rd_resp_ready({port_dma_ram_rd_resp_ready, desc_dma_ram_rd_resp_ready})
 );
 
 event_mux #(
@@ -1819,6 +1828,14 @@ event_mux_inst (
     .s_axis_event_valid({rx_fifo_event_valid, tx_fifo_event_valid}),
     .s_axis_event_ready({rx_fifo_event_ready, tx_fifo_event_ready})
 );
+
+assign event_cpl_req_queue = axis_event_queue;
+assign event_cpl_req_tag = 0;
+assign event_cpl_req_data[15:0] = axis_event_type;
+assign event_cpl_req_data[31:16] = axis_event_source;
+assign event_cpl_req_data[255:32] = 0;
+assign event_cpl_req_valid = axis_event_valid;
+assign axis_event_ready = event_cpl_req_ready;
 
 axis_fifo #(
     .DEPTH(16),
@@ -1900,488 +1917,27 @@ rx_event_fifo (
     .status_good_frame()
 );
 
-event_queue #(
-    .AXI_DATA_WIDTH(AXI_DATA_WIDTH),
-    .AXI_ADDR_WIDTH(AXI_ADDR_WIDTH),
-    .AXI_ID_WIDTH(AXI_ID_WIDTH),
-    .PCIE_ADDR_WIDTH(PCIE_ADDR_WIDTH),
-    .PCIE_DMA_LEN_WIDTH(PCIE_DMA_LEN_WIDTH),
-    .PCIE_DMA_TAG_WIDTH(PCIE_DMA_TAG_WIDTH_INT),
-    .QUEUE_REQ_TAG_WIDTH(QUEUE_REQ_TAG_WIDTH),
-    .QUEUE_OP_TAG_WIDTH(QUEUE_OP_TAG_WIDTH),
-    .QUEUE_INDEX_WIDTH(EVENT_QUEUE_INDEX_WIDTH),
-    .QUEUE_PTR_WIDTH(QUEUE_PTR_WIDTH),
-    .EVENT_TABLE_SIZE(16),
-    .AXI_BASE_ADDR(AXI_BASE_ADDR + 24'h000000)
-)
-event_queue_inst (
-    .clk(clk),
-    .rst(rst),
-
-    /*
-     * Event input
-     */
-    .s_axis_event_queue(axis_event_queue),
-    .s_axis_event_type(axis_event_type),
-    .s_axis_event_source(axis_event_source),
-    .s_axis_event_valid(axis_event_valid),
-    .s_axis_event_ready(axis_event_ready),
-
-    /*
-     * Completion enqueue request output
-     */
-    .m_axis_event_enqueue_req_queue(event_enqueue_req_queue),
-    .m_axis_event_enqueue_req_tag(event_enqueue_req_tag),
-    .m_axis_event_enqueue_req_valid(event_enqueue_req_valid),
-    .m_axis_event_enqueue_req_ready(event_enqueue_req_ready),
-
-    /*
-     * Completion enqueue response input
-     */
-    .s_axis_event_enqueue_resp_addr(event_enqueue_resp_addr),
-    .s_axis_event_enqueue_resp_tag(event_enqueue_resp_tag),
-    .s_axis_event_enqueue_resp_op_tag(event_enqueue_resp_op_tag),
-    .s_axis_event_enqueue_resp_full(event_enqueue_resp_full),
-    .s_axis_event_enqueue_resp_error(event_enqueue_resp_error),
-    .s_axis_event_enqueue_resp_valid(event_enqueue_resp_valid),
-    .s_axis_event_enqueue_resp_ready(event_enqueue_resp_ready),
-
-    /*
-     * Completion enqueue commit output
-     */
-    .m_axis_event_enqueue_commit_op_tag(event_enqueue_commit_op_tag),
-    .m_axis_event_enqueue_commit_valid(event_enqueue_commit_valid),
-    .m_axis_event_enqueue_commit_ready(event_enqueue_commit_ready),
-
-    /*
-     * PCIe DMA write descriptor output
-     */
-    .m_axis_pcie_axi_dma_write_desc_pcie_addr(event_pcie_axi_dma_write_desc_pcie_addr),
-    .m_axis_pcie_axi_dma_write_desc_axi_addr(event_pcie_axi_dma_write_desc_axi_addr),
-    .m_axis_pcie_axi_dma_write_desc_len(event_pcie_axi_dma_write_desc_len),
-    .m_axis_pcie_axi_dma_write_desc_tag(event_pcie_axi_dma_write_desc_tag),
-    .m_axis_pcie_axi_dma_write_desc_valid(event_pcie_axi_dma_write_desc_valid),
-    .m_axis_pcie_axi_dma_write_desc_ready(event_pcie_axi_dma_write_desc_ready),
-
-    /*
-     * PCIe DMA write descriptor status input
-     */
-    .s_axis_pcie_axi_dma_write_desc_status_tag(event_pcie_axi_dma_write_desc_status_tag),
-    .s_axis_pcie_axi_dma_write_desc_status_valid(event_pcie_axi_dma_write_desc_status_valid),
-
-    /*
-     * AXI slave interface
-     */
-    .s_axi_awid(axi_event_awid),
-    .s_axi_awaddr(axi_event_awaddr),
-    .s_axi_awlen(axi_event_awlen),
-    .s_axi_awsize(axi_event_awsize),
-    .s_axi_awburst(axi_event_awburst),
-    .s_axi_awlock(axi_event_awlock),
-    .s_axi_awcache(axi_event_awcache),
-    .s_axi_awprot(axi_event_awprot),
-    .s_axi_awvalid(axi_event_awvalid),
-    .s_axi_awready(axi_event_awready),
-    .s_axi_wdata(axi_event_wdata),
-    .s_axi_wstrb(axi_event_wstrb),
-    .s_axi_wlast(axi_event_wlast),
-    .s_axi_wvalid(axi_event_wvalid),
-    .s_axi_wready(axi_event_wready),
-    .s_axi_bid(axi_event_bid),
-    .s_axi_bresp(axi_event_bresp),
-    .s_axi_bvalid(axi_event_bvalid),
-    .s_axi_bready(axi_event_bready),
-    .s_axi_arid(axi_event_arid),
-    .s_axi_araddr(axi_event_araddr),
-    .s_axi_arlen(axi_event_arlen),
-    .s_axi_arsize(axi_event_arsize),
-    .s_axi_arburst(axi_event_arburst),
-    .s_axi_arlock(axi_event_arlock),
-    .s_axi_arcache(axi_event_arcache),
-    .s_axi_arprot(axi_event_arprot),
-    .s_axi_arvalid(axi_event_arvalid),
-    .s_axi_arready(axi_event_arready),
-    .s_axi_rid(axi_event_rid),
-    .s_axi_rdata(axi_event_rdata),
-    .s_axi_rresp(axi_event_rresp),
-    .s_axi_rlast(axi_event_rlast),
-    .s_axi_rvalid(axi_event_rvalid),
-    .s_axi_rready(axi_event_rready),
-
-    /*
-     * Configuration
-     */
-    .enable(1'b1)
-);
-
-parameter RAM_COUNT = PORTS*2+1;
-parameter RAM_BASE_ADDR_WIDTH = RAM_COUNT*AXI_ADDR_WIDTH;
-parameter RAM_BASE_ADDR = calcRAMBaseAddrs(RAM_ADDR_WIDTH);
-
-function [RAM_BASE_ADDR_WIDTH-1:0] calcRAMBaseAddrs(input [31:0] ram_width);
-    integer i;
-    begin
-        calcRAMBaseAddrs = {RAM_BASE_ADDR_WIDTH{1'b0}};
-        for (i = 0; i < RAM_COUNT; i = i + 1) begin
-            calcRAMBaseAddrs[i * AXI_ADDR_WIDTH +: AXI_ADDR_WIDTH] = i * (2**ram_width);
-        end
-    end
-endfunction
-
-parameter AXI_S_COUNT = PORTS+1;
-parameter AXI_M_COUNT = RAM_COUNT+1;
-
-parameter RAM_ID_WIDTH = AXI_ID_WIDTH+$clog2(AXI_S_COUNT);
-
-
-wire [PORTS*AXI_ID_WIDTH-1:0]    axi_port_dma_awid;
-wire [PORTS*AXI_ADDR_WIDTH-1:0]  axi_port_dma_awaddr;
-wire [PORTS*8-1:0]               axi_port_dma_awlen;
-wire [PORTS*3-1:0]               axi_port_dma_awsize;
-wire [PORTS*2-1:0]               axi_port_dma_awburst;
-wire [PORTS-1:0]                 axi_port_dma_awlock;
-wire [PORTS*4-1:0]               axi_port_dma_awcache;
-wire [PORTS*3-1:0]               axi_port_dma_awprot;
-wire [PORTS-1:0]                 axi_port_dma_awvalid;
-wire [PORTS-1:0]                 axi_port_dma_awready;
-wire [PORTS*AXI_DATA_WIDTH-1:0]  axi_port_dma_wdata;
-wire [PORTS*AXI_STRB_WIDTH-1:0]  axi_port_dma_wstrb;
-wire [PORTS-1:0]                 axi_port_dma_wlast;
-wire [PORTS-1:0]                 axi_port_dma_wvalid;
-wire [PORTS-1:0]                 axi_port_dma_wready;
-wire [PORTS*AXI_ID_WIDTH-1:0]    axi_port_dma_bid;
-wire [PORTS*2-1:0]               axi_port_dma_bresp;
-wire [PORTS-1:0]                 axi_port_dma_bvalid;
-wire [PORTS-1:0]                 axi_port_dma_bready;
-wire [PORTS*AXI_ID_WIDTH-1:0]    axi_port_dma_arid;
-wire [PORTS*AXI_ADDR_WIDTH-1:0]  axi_port_dma_araddr;
-wire [PORTS*8-1:0]               axi_port_dma_arlen;
-wire [PORTS*3-1:0]               axi_port_dma_arsize;
-wire [PORTS*2-1:0]               axi_port_dma_arburst;
-wire [PORTS-1:0]                 axi_port_dma_arlock;
-wire [PORTS*4-1:0]               axi_port_dma_arcache;
-wire [PORTS*3-1:0]               axi_port_dma_arprot;
-wire [PORTS-1:0]                 axi_port_dma_arvalid;
-wire [PORTS-1:0]                 axi_port_dma_arready;
-wire [PORTS*AXI_ID_WIDTH-1:0]    axi_port_dma_rid;
-wire [PORTS*AXI_DATA_WIDTH-1:0]  axi_port_dma_rdata;
-wire [PORTS*2-1:0]               axi_port_dma_rresp;
-wire [PORTS-1:0]                 axi_port_dma_rlast;
-wire [PORTS-1:0]                 axi_port_dma_rvalid;
-wire [PORTS-1:0]                 axi_port_dma_rready;
-
-wire [RAM_COUNT*RAM_ID_WIDTH-1:0]   axi_ram_awid;
-wire [RAM_COUNT*AXI_ADDR_WIDTH-1:0] axi_ram_awaddr;
-wire [RAM_COUNT*8-1:0]              axi_ram_awlen;
-wire [RAM_COUNT*3-1:0]              axi_ram_awsize;
-wire [RAM_COUNT*2-1:0]              axi_ram_awburst;
-wire [RAM_COUNT-1:0]                axi_ram_awlock;
-wire [RAM_COUNT*4-1:0]              axi_ram_awcache;
-wire [RAM_COUNT*3-1:0]              axi_ram_awprot;
-wire [RAM_COUNT-1:0]                axi_ram_awvalid;
-wire [RAM_COUNT-1:0]                axi_ram_awready;
-wire [RAM_COUNT*AXI_DATA_WIDTH-1:0] axi_ram_wdata;
-wire [RAM_COUNT*AXI_STRB_WIDTH-1:0] axi_ram_wstrb;
-wire [RAM_COUNT-1:0]                axi_ram_wlast;
-wire [RAM_COUNT-1:0]                axi_ram_wvalid;
-wire [RAM_COUNT-1:0]                axi_ram_wready;
-wire [RAM_COUNT*RAM_ID_WIDTH-1:0]   axi_ram_bid;
-wire [RAM_COUNT*2-1:0]              axi_ram_bresp;
-wire [RAM_COUNT-1:0]                axi_ram_bvalid;
-wire [RAM_COUNT-1:0]                axi_ram_bready;
-wire [RAM_COUNT*RAM_ID_WIDTH-1:0]   axi_ram_arid;
-wire [RAM_COUNT*AXI_ADDR_WIDTH-1:0] axi_ram_araddr;
-wire [RAM_COUNT*8-1:0]              axi_ram_arlen;
-wire [RAM_COUNT*3-1:0]              axi_ram_arsize;
-wire [RAM_COUNT*2-1:0]              axi_ram_arburst;
-wire [RAM_COUNT-1:0]                axi_ram_arlock;
-wire [RAM_COUNT*4-1:0]              axi_ram_arcache;
-wire [RAM_COUNT*3-1:0]              axi_ram_arprot;
-wire [RAM_COUNT-1:0]                axi_ram_arvalid;
-wire [RAM_COUNT-1:0]                axi_ram_arready;
-wire [RAM_COUNT*RAM_ID_WIDTH-1:0]   axi_ram_rid;
-wire [RAM_COUNT*AXI_DATA_WIDTH-1:0] axi_ram_rdata;
-wire [RAM_COUNT*2-1:0]              axi_ram_rresp;
-wire [RAM_COUNT-1:0]                axi_ram_rlast;
-wire [RAM_COUNT-1:0]                axi_ram_rvalid;
-wire [RAM_COUNT-1:0]                axi_ram_rready;
-
-wire [PORTS*RAM_ID_WIDTH-1:0]    axi_port_desc_awid;
-wire [PORTS*AXI_ADDR_WIDTH-1:0]  axi_port_desc_awaddr;
-wire [PORTS*8-1:0]               axi_port_desc_awlen;
-wire [PORTS*3-1:0]               axi_port_desc_awsize;
-wire [PORTS*2-1:0]               axi_port_desc_awburst;
-wire [PORTS-1:0]                 axi_port_desc_awlock;
-wire [PORTS*4-1:0]               axi_port_desc_awcache;
-wire [PORTS*3-1:0]               axi_port_desc_awprot;
-wire [PORTS-1:0]                 axi_port_desc_awvalid;
-wire [PORTS-1:0]                 axi_port_desc_awready;
-wire [PORTS*AXI_DATA_WIDTH-1:0]  axi_port_desc_wdata;
-wire [PORTS*AXI_STRB_WIDTH-1:0]  axi_port_desc_wstrb;
-wire [PORTS-1:0]                 axi_port_desc_wlast;
-wire [PORTS-1:0]                 axi_port_desc_wvalid;
-wire [PORTS-1:0]                 axi_port_desc_wready;
-wire [PORTS*RAM_ID_WIDTH-1:0]    axi_port_desc_bid;
-wire [PORTS*2-1:0]               axi_port_desc_bresp;
-wire [PORTS-1:0]                 axi_port_desc_bvalid;
-wire [PORTS-1:0]                 axi_port_desc_bready;
-wire [PORTS*RAM_ID_WIDTH-1:0]    axi_port_desc_arid;
-wire [PORTS*AXI_ADDR_WIDTH-1:0]  axi_port_desc_araddr;
-wire [PORTS*8-1:0]               axi_port_desc_arlen;
-wire [PORTS*3-1:0]               axi_port_desc_arsize;
-wire [PORTS*2-1:0]               axi_port_desc_arburst;
-wire [PORTS-1:0]                 axi_port_desc_arlock;
-wire [PORTS*4-1:0]               axi_port_desc_arcache;
-wire [PORTS*3-1:0]               axi_port_desc_arprot;
-wire [PORTS-1:0]                 axi_port_desc_arvalid;
-wire [PORTS-1:0]                 axi_port_desc_arready;
-wire [PORTS*RAM_ID_WIDTH-1:0]    axi_port_desc_rid;
-wire [PORTS*AXI_DATA_WIDTH-1:0]  axi_port_desc_rdata;
-wire [PORTS*2-1:0]               axi_port_desc_rresp;
-wire [PORTS-1:0]                 axi_port_desc_rlast;
-wire [PORTS-1:0]                 axi_port_desc_rvalid;
-wire [PORTS-1:0]                 axi_port_desc_rready;
-
-axi_crossbar #(
-    .S_COUNT(AXI_S_COUNT),
-    .M_COUNT(RAM_COUNT),
-    .DATA_WIDTH(AXI_DATA_WIDTH),
-    .ADDR_WIDTH(AXI_ADDR_WIDTH),
-    .STRB_WIDTH(AXI_STRB_WIDTH),
-    .S_ID_WIDTH(AXI_ID_WIDTH),
-    .M_ID_WIDTH(RAM_ID_WIDTH),
-    .AWUSER_ENABLE(0),
-    .WUSER_ENABLE(0),
-    .BUSER_ENABLE(0),
-    .ARUSER_ENABLE(0),
-    .RUSER_ENABLE(0),
-    .S_THREADS({AXI_S_COUNT{32'd4}}),
-    .S_ACCEPT({AXI_S_COUNT{32'd16}}),
-    .M_REGIONS(1),
-    .M_BASE_ADDR(RAM_BASE_ADDR),
-    .M_ADDR_WIDTH({RAM_COUNT{32'd16}}),
-    .M_CONNECT_READ({RAM_COUNT{{AXI_S_COUNT{1'b1}}}}),
-    .M_CONNECT_WRITE({RAM_COUNT{{AXI_S_COUNT{1'b1}}}}),
-    .M_ISSUE({RAM_COUNT{32'd4}}),
-    .M_SECURE({RAM_COUNT{1'b0}})
-)
-axi_crossbar_inst (
-    .clk(clk),
-    .rst(rst),
-    .s_axi_awid(     {axi_port_dma_awid,     s_axi_awid}),
-    .s_axi_awaddr(   {axi_port_dma_awaddr,   s_axi_awaddr}),
-    .s_axi_awlen(    {axi_port_dma_awlen,    s_axi_awlen}),
-    .s_axi_awsize(   {axi_port_dma_awsize,   s_axi_awsize}),
-    .s_axi_awburst(  {axi_port_dma_awburst,  s_axi_awburst}),
-    .s_axi_awlock(   {axi_port_dma_awlock,   s_axi_awlock}),
-    .s_axi_awcache(  {axi_port_dma_awcache,  s_axi_awcache}),
-    .s_axi_awprot(   {axi_port_dma_awprot,   s_axi_awprot}),
-    .s_axi_awqos(0),
-    .s_axi_awuser(0),
-    .s_axi_awvalid(  {axi_port_dma_awvalid,  s_axi_awvalid}),
-    .s_axi_awready(  {axi_port_dma_awready,  s_axi_awready}),
-    .s_axi_wdata(    {axi_port_dma_wdata,    s_axi_wdata}),
-    .s_axi_wstrb(    {axi_port_dma_wstrb,    s_axi_wstrb}),
-    .s_axi_wlast(    {axi_port_dma_wlast,    s_axi_wlast}),
-    .s_axi_wuser(0),
-    .s_axi_wvalid(   {axi_port_dma_wvalid,   s_axi_wvalid}),
-    .s_axi_wready(   {axi_port_dma_wready,   s_axi_wready}),
-    .s_axi_bid(      {axi_port_dma_bid,      s_axi_bid}),
-    .s_axi_bresp(    {axi_port_dma_bresp,    s_axi_bresp}),
-    .s_axi_buser(),
-    .s_axi_bvalid(   {axi_port_dma_bvalid,   s_axi_bvalid}),
-    .s_axi_bready(   {axi_port_dma_bready,   s_axi_bready}),
-    .s_axi_arid(     {axi_port_dma_arid,     s_axi_arid}),
-    .s_axi_araddr(   {axi_port_dma_araddr,   s_axi_araddr}),
-    .s_axi_arlen(    {axi_port_dma_arlen,    s_axi_arlen}),
-    .s_axi_arsize(   {axi_port_dma_arsize,   s_axi_arsize}),
-    .s_axi_arburst(  {axi_port_dma_arburst,  s_axi_arburst}),
-    .s_axi_arlock(   {axi_port_dma_arlock,   s_axi_arlock}),
-    .s_axi_arcache(  {axi_port_dma_arcache,  s_axi_arcache}),
-    .s_axi_arprot(   {axi_port_dma_arprot,   s_axi_arprot}),
-    .s_axi_arqos(0),
-    .s_axi_aruser(0),
-    .s_axi_arvalid(  {axi_port_dma_arvalid,  s_axi_arvalid}),
-    .s_axi_arready(  {axi_port_dma_arready,  s_axi_arready}),
-    .s_axi_rid(      {axi_port_dma_rid,      s_axi_rid}),
-    .s_axi_rdata(    {axi_port_dma_rdata,    s_axi_rdata}),
-    .s_axi_rresp(    {axi_port_dma_rresp,    s_axi_rresp}),
-    .s_axi_rlast(    {axi_port_dma_rlast,    s_axi_rlast}),
-    .s_axi_ruser(),
-    .s_axi_rvalid(   {axi_port_dma_rvalid,   s_axi_rvalid}),
-    .s_axi_rready(   {axi_port_dma_rready,   s_axi_rready}),
-
-    .m_axi_awid(     {axi_ram_awid}),
-    .m_axi_awaddr(   {axi_ram_awaddr}),
-    .m_axi_awlen(    {axi_ram_awlen}),
-    .m_axi_awsize(   {axi_ram_awsize}),
-    .m_axi_awburst(  {axi_ram_awburst}),
-    .m_axi_awlock(   {axi_ram_awlock}),
-    .m_axi_awcache(  {axi_ram_awcache}),
-    .m_axi_awprot(   {axi_ram_awprot}),
-    .m_axi_awqos(),
-    .m_axi_awregion(),
-    .m_axi_awuser(),
-    .m_axi_awvalid(  {axi_ram_awvalid}),
-    .m_axi_awready(  {axi_ram_awready}),
-    .m_axi_wdata(    {axi_ram_wdata}),
-    .m_axi_wstrb(    {axi_ram_wstrb}),
-    .m_axi_wlast(    {axi_ram_wlast}),
-    .m_axi_wuser(),
-    .m_axi_wvalid(   {axi_ram_wvalid}),
-    .m_axi_wready(   {axi_ram_wready}),
-    .m_axi_bid(      {axi_ram_bid}),
-    .m_axi_bresp(    {axi_ram_bresp}),
-    .m_axi_buser(0),
-    .m_axi_bvalid(   {axi_ram_bvalid}),
-    .m_axi_bready(   {axi_ram_bready}),
-    .m_axi_arid(     {axi_ram_arid}),
-    .m_axi_araddr(   {axi_ram_araddr}),
-    .m_axi_arlen(    {axi_ram_arlen}),
-    .m_axi_arsize(   {axi_ram_arsize}),
-    .m_axi_arburst(  {axi_ram_arburst}),
-    .m_axi_arlock(   {axi_ram_arlock}),
-    .m_axi_arcache(  {axi_ram_arcache}),
-    .m_axi_arprot(   {axi_ram_arprot}),
-    .m_axi_arqos(),
-    .m_axi_arregion(),
-    .m_axi_aruser(),
-    .m_axi_arvalid(  {axi_ram_arvalid}),
-    .m_axi_arready(  {axi_ram_arready}),
-    .m_axi_rid(      {axi_ram_rid}),
-    .m_axi_rdata(    {axi_ram_rdata}),
-    .m_axi_rresp(    {axi_ram_rresp}),
-    .m_axi_rlast(    {axi_ram_rlast}),
-    .m_axi_ruser(0),
-    .m_axi_rvalid(   {axi_ram_rvalid}),
-    .m_axi_rready(   {axi_ram_rready})
-);
-
-axi_interconnect #(
-    .S_COUNT(1),
-    .M_COUNT(2),
-    .DATA_WIDTH(AXI_DATA_WIDTH),
-    .ADDR_WIDTH(AXI_ADDR_WIDTH),
-    .STRB_WIDTH(AXI_STRB_WIDTH),
-    .ID_WIDTH(RAM_ID_WIDTH),
-    .AWUSER_ENABLE(0),
-    .WUSER_ENABLE(0),
-    .BUSER_ENABLE(0),
-    .ARUSER_ENABLE(0),
-    .RUSER_ENABLE(0),
-    .FORWARD_ID(0),
-    .M_REGIONS(1),
-    .M_BASE_ADDR({23'h004000, 23'h000000}),
-    .M_ADDR_WIDTH({2{32'd14}}),
-    .M_CONNECT_READ({2{{1{1'b1}}}}),
-    .M_CONNECT_WRITE({2{{1{1'b1}}}})
-)
-axi_interconnect_inst (
-    .clk(clk),
-    .rst(rst),
-    .s_axi_awid(     {axi_ram_awid[RAM_ID_WIDTH-1:0]}),
-    .s_axi_awaddr(   {axi_ram_awaddr[AXI_ADDR_WIDTH-1:0]}),
-    .s_axi_awlen(    {axi_ram_awlen[7:0]}),
-    .s_axi_awsize(   {axi_ram_awsize[2:0]}),
-    .s_axi_awburst(  {axi_ram_awburst[1:0]}),
-    .s_axi_awlock(   {axi_ram_awlock[0]}),
-    .s_axi_awcache(  {axi_ram_awcache[3:0]}),
-    .s_axi_awprot(   {axi_ram_awprot[2:0]}),
-    .s_axi_awqos(0),
-    .s_axi_awuser(0),
-    .s_axi_awvalid(  {axi_ram_awvalid[0]}),
-    .s_axi_awready(  {axi_ram_awready[0]}),
-    .s_axi_wdata(    {axi_ram_wdata[AXI_DATA_WIDTH-1:0]}),
-    .s_axi_wstrb(    {axi_ram_wstrb[AXI_STRB_WIDTH-1:0]}),
-    .s_axi_wlast(    {axi_ram_wlast[0]}),
-    .s_axi_wuser(0),
-    .s_axi_wvalid(   {axi_ram_wvalid[0]}),
-    .s_axi_wready(   {axi_ram_wready[0]}),
-    .s_axi_bid(      {axi_ram_bid[RAM_ID_WIDTH-1:0]}),
-    .s_axi_bresp(    {axi_ram_bresp[1:0]}),
-    .s_axi_buser(),
-    .s_axi_bvalid(   {axi_ram_bvalid[0]}),
-    .s_axi_bready(   {axi_ram_bready[0]}),
-    .s_axi_arid(     {axi_ram_arid[RAM_ID_WIDTH-1:0]}),
-    .s_axi_araddr(   {axi_ram_araddr[AXI_ADDR_WIDTH-1:0]}),
-    .s_axi_arlen(    {axi_ram_arlen[7:0]}),
-    .s_axi_arsize(   {axi_ram_arsize[2:0]}),
-    .s_axi_arburst(  {axi_ram_arburst[1:0]}),
-    .s_axi_arlock(   {axi_ram_arlock[0]}),
-    .s_axi_arcache(  {axi_ram_arcache[3:0]}),
-    .s_axi_arprot(   {axi_ram_arprot[2:0]}),
-    .s_axi_arqos(0),
-    .s_axi_aruser(0),
-    .s_axi_arvalid(  {axi_ram_arvalid[0]}),
-    .s_axi_arready(  {axi_ram_arready[0]}),
-    .s_axi_rid(      {axi_ram_rid[RAM_ID_WIDTH-1:0]}),
-    .s_axi_rdata(    {axi_ram_rdata[AXI_DATA_WIDTH-1:0]}),
-    .s_axi_rresp(    {axi_ram_rresp[1:0]}),
-    .s_axi_rlast(    {axi_ram_rlast[0]}),
-    .s_axi_ruser(),
-    .s_axi_rvalid(   {axi_ram_rvalid[0]}),
-    .s_axi_rready(   {axi_ram_rready[0]}),
-
-    .m_axi_awid(     {axi_port_desc_awid,     axi_event_awid}),
-    .m_axi_awaddr(   {axi_port_desc_awaddr,   axi_event_awaddr}),
-    .m_axi_awlen(    {axi_port_desc_awlen,    axi_event_awlen}),
-    .m_axi_awsize(   {axi_port_desc_awsize,   axi_event_awsize}),
-    .m_axi_awburst(  {axi_port_desc_awburst,  axi_event_awburst}),
-    .m_axi_awlock(   {axi_port_desc_awlock,   axi_event_awlock}),
-    .m_axi_awcache(  {axi_port_desc_awcache,  axi_event_awcache}),
-    .m_axi_awprot(   {axi_port_desc_awprot,   axi_event_awprot}),
-    .m_axi_awqos(),
-    .m_axi_awuser(),
-    .m_axi_awvalid(  {axi_port_desc_awvalid,  axi_event_awvalid}),
-    .m_axi_awready(  {axi_port_desc_awready,  axi_event_awready}),
-    .m_axi_wdata(    {axi_port_desc_wdata,    axi_event_wdata}),
-    .m_axi_wstrb(    {axi_port_desc_wstrb,    axi_event_wstrb}),
-    .m_axi_wlast(    {axi_port_desc_wlast,    axi_event_wlast}),
-    .m_axi_wuser(),
-    .m_axi_wvalid(   {axi_port_desc_wvalid,   axi_event_wvalid}),
-    .m_axi_wready(   {axi_port_desc_wready,   axi_event_wready}),
-    .m_axi_bid(      {axi_port_desc_bid,      axi_event_bid}),
-    .m_axi_bresp(    {axi_port_desc_bresp,    axi_event_bresp}),
-    .m_axi_buser(0),
-    .m_axi_bvalid(   {axi_port_desc_bvalid,   axi_event_bvalid}),
-    .m_axi_bready(   {axi_port_desc_bready,   axi_event_bready}),
-    .m_axi_arid(     {axi_port_desc_arid,     axi_event_arid}),
-    .m_axi_araddr(   {axi_port_desc_araddr,   axi_event_araddr}),
-    .m_axi_arlen(    {axi_port_desc_arlen,    axi_event_arlen}),
-    .m_axi_arsize(   {axi_port_desc_arsize,   axi_event_arsize}),
-    .m_axi_arburst(  {axi_port_desc_arburst,  axi_event_arburst}),
-    .m_axi_arlock(   {axi_port_desc_arlock,   axi_event_arlock}),
-    .m_axi_arcache(  {axi_port_desc_arcache,  axi_event_arcache}),
-    .m_axi_arprot(   {axi_port_desc_arprot,   axi_event_arprot}),
-    .m_axi_arqos(),
-    .m_axi_aruser(),
-    .m_axi_arvalid(  {axi_port_desc_arvalid,  axi_event_arvalid}),
-    .m_axi_arready(  {axi_port_desc_arready,  axi_event_arready}),
-    .m_axi_rid(      {axi_port_desc_rid,      axi_event_rid}),
-    .m_axi_rdata(    {axi_port_desc_rdata,    axi_event_rdata}),
-    .m_axi_rresp(    {axi_port_desc_rresp,    axi_event_rresp}),
-    .m_axi_rlast(    {axi_port_desc_rlast,    axi_event_rlast}),
-    .m_axi_ruser(0),
-    .m_axi_rvalid(   {axi_port_desc_rvalid,   axi_event_rvalid}),
-    .m_axi_rready(   {axi_port_desc_rready,   axi_event_rready})
-);
-
 generate
     genvar n;
 
     for (n = 0; n < PORTS; n = n + 1) begin : port
 
+        assign port_cpl_req_sel[n*2+1 +: 1] = 1'b0;
+
         port #(
-            .PCIE_ADDR_WIDTH(PCIE_ADDR_WIDTH),
-            .PCIE_DMA_LEN_WIDTH(PCIE_DMA_LEN_WIDTH),
-            .PCIE_DMA_TAG_WIDTH(PCIE_DMA_TAG_WIDTH_INT),
+            .DMA_ADDR_WIDTH(DMA_ADDR_WIDTH),
+            .DMA_LEN_WIDTH(DMA_LEN_WIDTH),
+            .DMA_TAG_WIDTH(DMA_TAG_WIDTH_INT),
             .REQ_TAG_WIDTH(REQ_TAG_WIDTH),
+            .DESC_REQ_TAG_WIDTH(PORT_DESC_REQ_TAG_WIDTH),
             .QUEUE_REQ_TAG_WIDTH(QUEUE_REQ_TAG_WIDTH),
             .QUEUE_OP_TAG_WIDTH(QUEUE_OP_TAG_WIDTH),
             .TX_QUEUE_INDEX_WIDTH(TX_QUEUE_INDEX_WIDTH),
             .RX_QUEUE_INDEX_WIDTH(RX_QUEUE_INDEX_WIDTH),
+            .QUEUE_INDEX_WIDTH(QUEUE_INDEX_WIDTH),
             .TX_CPL_QUEUE_INDEX_WIDTH(TX_CPL_QUEUE_INDEX_WIDTH),
             .RX_CPL_QUEUE_INDEX_WIDTH(RX_CPL_QUEUE_INDEX_WIDTH),
+            .CPL_QUEUE_INDEX_WIDTH(CPL_QUEUE_INDEX_WIDTH),
             .TX_DESC_TABLE_SIZE(TX_DESC_TABLE_SIZE),
             .TX_PKT_TABLE_SIZE(TX_PKT_TABLE_SIZE),
             .RX_DESC_TABLE_SIZE(RX_DESC_TABLE_SIZE),
@@ -2395,51 +1951,77 @@ generate
             .TX_CHECKSUM_ENABLE(TX_CHECKSUM_ENABLE),
             .RX_CHECKSUM_ENABLE(RX_CHECKSUM_ENABLE),
             .AXIL_DATA_WIDTH(AXIL_DATA_WIDTH),
-            .AXIL_ADDR_WIDTH(AXIL_ADDR_WIDTH),
+            .AXIL_ADDR_WIDTH(AXIL_PORT_ADDR_WIDTH),
             .AXIL_STRB_WIDTH(AXIL_STRB_WIDTH),
-            .AXI_DATA_WIDTH(AXI_DATA_WIDTH),
-            .AXI_ADDR_WIDTH(AXI_ADDR_WIDTH),
-            .AXI_STRB_WIDTH(AXI_STRB_WIDTH),
-            .AXI_ID_WIDTH(AXI_ID_WIDTH),
-            .AXI_MAX_BURST_LEN(AXI_MAX_BURST_LEN),
-            .AXI_BASE_ADDR(23'h000000),
-            .TX_RAM_AXI_BASE_ADDR(23'h000000 + 23'h010000),
-            .RX_RAM_AXI_BASE_ADDR(23'h000000 + 23'h020000),
+            .SEG_COUNT(SEG_COUNT),
+            .SEG_DATA_WIDTH(SEG_DATA_WIDTH),
+            .SEG_ADDR_WIDTH(SEG_ADDR_WIDTH),
+            .SEG_BE_WIDTH(SEG_BE_WIDTH),
+            .RAM_ADDR_WIDTH(RAM_ADDR_WIDTH),
+            .RAM_PIPELINE(RAM_PIPELINE),
             .AXIS_DATA_WIDTH(AXIS_DATA_WIDTH),
-            .AXIS_KEEP_WIDTH(AXIS_KEEP_WIDTH)
+            .AXIS_KEEP_WIDTH(AXIS_KEEP_WIDTH),
+            .MAX_TX_SIZE(MAX_TX_SIZE),
+            .MAX_RX_SIZE(MAX_RX_SIZE),
+            .DESC_SIZE(DESC_SIZE),
+            .CPL_SIZE(CPL_SIZE),
+            .AXIS_DESC_DATA_WIDTH(AXIS_DESC_DATA_WIDTH),
+            .AXIS_DESC_KEEP_WIDTH(AXIS_DESC_KEEP_WIDTH),
+            .TX_RAM_SIZE(TX_RAM_SIZE),
+            .RX_RAM_SIZE(RX_RAM_SIZE)
         )
         port_inst (
             .clk(clk),
             .rst(rst),
 
             /*
-             * TX descriptor dequeue request output
+             * Descriptor request output
              */
-            .m_axis_tx_desc_dequeue_req_queue(tx_port_desc_dequeue_req_queue[n*TX_QUEUE_INDEX_WIDTH +: TX_QUEUE_INDEX_WIDTH]),
-            .m_axis_tx_desc_dequeue_req_tag(tx_port_desc_dequeue_req_tag[n*QUEUE_REQ_TAG_WIDTH +: QUEUE_REQ_TAG_WIDTH]),
-            .m_axis_tx_desc_dequeue_req_valid(tx_port_desc_dequeue_req_valid[n +: 1]),
-            .m_axis_tx_desc_dequeue_req_ready(tx_port_desc_dequeue_req_ready[n +: 1]),
+            .m_axis_desc_req_sel(port_desc_req_sel[n*1 +: 1]),
+            .m_axis_desc_req_queue(port_desc_req_queue[n*QUEUE_INDEX_WIDTH +: QUEUE_INDEX_WIDTH]),
+            .m_axis_desc_req_tag(port_desc_req_tag[n*PORT_DESC_REQ_TAG_WIDTH +: PORT_DESC_REQ_TAG_WIDTH]),
+            .m_axis_desc_req_valid(port_desc_req_valid[n +: 1]),
+            .m_axis_desc_req_ready(port_desc_req_ready[n +: 1]),
 
             /*
-             * TX descriptor dequeue response input
+             * Descriptor response input
              */
-            .s_axis_tx_desc_dequeue_resp_queue(tx_port_desc_dequeue_resp_queue[n*TX_QUEUE_INDEX_WIDTH +: TX_QUEUE_INDEX_WIDTH]),
-            .s_axis_tx_desc_dequeue_resp_ptr(tx_port_desc_dequeue_resp_ptr[n*QUEUE_PTR_WIDTH +: QUEUE_PTR_WIDTH]),
-            .s_axis_tx_desc_dequeue_resp_addr(tx_port_desc_dequeue_resp_addr[n*PCIE_ADDR_WIDTH +: PCIE_ADDR_WIDTH]),
-            .s_axis_tx_desc_dequeue_resp_cpl(tx_port_desc_dequeue_resp_cpl[n*TX_CPL_QUEUE_INDEX_WIDTH +: TX_CPL_QUEUE_INDEX_WIDTH]),
-            .s_axis_tx_desc_dequeue_resp_tag(tx_port_desc_dequeue_resp_tag[n*QUEUE_REQ_TAG_WIDTH +: QUEUE_REQ_TAG_WIDTH]),
-            .s_axis_tx_desc_dequeue_resp_op_tag(tx_port_desc_dequeue_resp_op_tag[n*QUEUE_OP_TAG_WIDTH +: QUEUE_OP_TAG_WIDTH]),
-            .s_axis_tx_desc_dequeue_resp_empty(tx_port_desc_dequeue_resp_empty[n +: 1]),
-            .s_axis_tx_desc_dequeue_resp_error(tx_port_desc_dequeue_resp_error[n +: 1]),
-            .s_axis_tx_desc_dequeue_resp_valid(tx_port_desc_dequeue_resp_valid[n +: 1]),
-            .s_axis_tx_desc_dequeue_resp_ready(tx_port_desc_dequeue_resp_ready[n +: 1]),
+            .s_axis_desc_req_status_queue(port_desc_req_status_queue[n*QUEUE_INDEX_WIDTH +: QUEUE_INDEX_WIDTH]),
+            .s_axis_desc_req_status_ptr(port_desc_req_status_ptr[n*QUEUE_PTR_WIDTH +: QUEUE_PTR_WIDTH]),
+            .s_axis_desc_req_status_cpl(port_desc_req_status_cpl[n*CPL_QUEUE_INDEX_WIDTH +: CPL_QUEUE_INDEX_WIDTH]),
+            .s_axis_desc_req_status_tag(port_desc_req_status_tag[n*PORT_DESC_REQ_TAG_WIDTH +: PORT_DESC_REQ_TAG_WIDTH]),
+            .s_axis_desc_req_status_empty(port_desc_req_status_empty[n +: 1]),
+            .s_axis_desc_req_status_error(port_desc_req_status_error[n +: 1]),
+            .s_axis_desc_req_status_valid(port_desc_req_status_valid[n +: 1]),
 
             /*
-             * TX descriptor dequeue commit output
+             * Descriptor data input
              */
-            .m_axis_tx_desc_dequeue_commit_op_tag(tx_port_desc_dequeue_commit_op_tag[n*QUEUE_OP_TAG_WIDTH +: QUEUE_OP_TAG_WIDTH]),
-            .m_axis_tx_desc_dequeue_commit_valid(tx_port_desc_dequeue_commit_valid[n +: 1]),
-            .m_axis_tx_desc_dequeue_commit_ready(tx_port_desc_dequeue_commit_ready[n +: 1]),
+            .s_axis_desc_tdata(port_axis_desc_tdata[n*AXIS_DESC_DATA_WIDTH +: AXIS_DESC_DATA_WIDTH]),
+            .s_axis_desc_tkeep(port_axis_desc_tkeep[n*AXIS_DESC_KEEP_WIDTH +: AXIS_DESC_KEEP_WIDTH]),
+            .s_axis_desc_tvalid(port_axis_desc_tvalid[n +: 1]),
+            .s_axis_desc_tready(port_axis_desc_tready[n +: 1]),
+            .s_axis_desc_tlast(port_axis_desc_tlast[n +: 1]),
+            .s_axis_desc_tid(port_axis_desc_tid[n*PORT_DESC_REQ_TAG_WIDTH +: PORT_DESC_REQ_TAG_WIDTH]),
+            .s_axis_desc_tuser(port_axis_desc_tuser[n +: 1]),
+
+            /*
+             * Completion request output
+             */
+            .m_axis_cpl_req_sel(port_cpl_req_sel[n*2 +: 1]),
+            .m_axis_cpl_req_queue(port_cpl_req_queue[n*QUEUE_INDEX_WIDTH +: QUEUE_INDEX_WIDTH]),
+            .m_axis_cpl_req_tag(port_cpl_req_tag[n*PORT_DESC_REQ_TAG_WIDTH +: PORT_DESC_REQ_TAG_WIDTH]),
+            .m_axis_cpl_req_data(port_cpl_req_data[n*CPL_SIZE*8 +: CPL_SIZE*8]),
+            .m_axis_cpl_req_valid(port_cpl_req_valid[n +: 1]),
+            .m_axis_cpl_req_ready(port_cpl_req_ready[n +: 1]),
+
+            /*
+             * Completion response input
+             */
+            .s_axis_cpl_req_status_tag(port_cpl_req_status_tag[n*PORT_DESC_REQ_TAG_WIDTH +: PORT_DESC_REQ_TAG_WIDTH]),
+            .s_axis_cpl_req_status_full(port_cpl_req_status_full[n +: 1]),
+            .s_axis_cpl_req_status_error(port_cpl_req_status_error[n +: 1]),
+            .s_axis_cpl_req_status_valid(port_cpl_req_status_valid[n +: 1]),
 
             /*
              * TX doorbell input
@@ -2448,121 +2030,36 @@ generate
             .s_axis_tx_doorbell_valid(tx_doorbell_valid),
 
             /*
-             * TX completion enqueue request output
+             * DMA read descriptor output
              */
-            .m_axis_tx_cpl_enqueue_req_queue(tx_port_cpl_enqueue_req_queue[n*TX_CPL_QUEUE_INDEX_WIDTH +: TX_CPL_QUEUE_INDEX_WIDTH]),
-            .m_axis_tx_cpl_enqueue_req_tag(tx_port_cpl_enqueue_req_tag[n*QUEUE_REQ_TAG_WIDTH +: QUEUE_REQ_TAG_WIDTH]),
-            .m_axis_tx_cpl_enqueue_req_valid(tx_port_cpl_enqueue_req_valid[n +: 1]),
-            .m_axis_tx_cpl_enqueue_req_ready(tx_port_cpl_enqueue_req_ready[n +: 1]),
+            .m_axis_dma_read_desc_dma_addr(port_dma_read_desc_dma_addr[n*DMA_ADDR_WIDTH +: DMA_ADDR_WIDTH]),
+            .m_axis_dma_read_desc_ram_addr(port_dma_read_desc_ram_addr[n*RAM_ADDR_WIDTH +: RAM_ADDR_WIDTH]),
+            .m_axis_dma_read_desc_len(port_dma_read_desc_len[n*DMA_LEN_WIDTH +: DMA_LEN_WIDTH]),
+            .m_axis_dma_read_desc_tag(port_dma_read_desc_tag[n*DMA_TAG_WIDTH_INT +: DMA_TAG_WIDTH_INT]),
+            .m_axis_dma_read_desc_valid(port_dma_read_desc_valid[n +: 1]),
+            .m_axis_dma_read_desc_ready(port_dma_read_desc_ready[n +: 1]),
 
             /*
-             * TX completion enqueue response input
+             * DMA read descriptor status input
              */
-            //.s_axis_tx_cpl_enqueue_resp_ptr(),
-            .s_axis_tx_cpl_enqueue_resp_addr(tx_port_cpl_enqueue_resp_addr[n*PCIE_ADDR_WIDTH +: PCIE_ADDR_WIDTH]),
-            //.s_axis_tx_cpl_enqueue_resp_event(),
-            .s_axis_tx_cpl_enqueue_resp_tag(tx_port_cpl_enqueue_resp_tag[n*QUEUE_REQ_TAG_WIDTH +: QUEUE_REQ_TAG_WIDTH]),
-            .s_axis_tx_cpl_enqueue_resp_op_tag(tx_port_cpl_enqueue_resp_op_tag[n*QUEUE_OP_TAG_WIDTH +: QUEUE_OP_TAG_WIDTH]),
-            .s_axis_tx_cpl_enqueue_resp_full(tx_port_cpl_enqueue_resp_full[n +: 1]),
-            .s_axis_tx_cpl_enqueue_resp_error(tx_port_cpl_enqueue_resp_error[n +: 1]),
-            .s_axis_tx_cpl_enqueue_resp_valid(tx_port_cpl_enqueue_resp_valid[n +: 1]),
-            .s_axis_tx_cpl_enqueue_resp_ready(tx_port_cpl_enqueue_resp_ready[n +: 1]),
+            .s_axis_dma_read_desc_status_tag(port_dma_read_desc_status_tag[n*DMA_TAG_WIDTH_INT +: DMA_TAG_WIDTH_INT]),
+            .s_axis_dma_read_desc_status_valid(port_dma_read_desc_status_valid[n +: 1]),
 
             /*
-             * TX completion enqueue commit output
+             * DMA write descriptor output
              */
-            .m_axis_tx_cpl_enqueue_commit_op_tag(tx_port_cpl_enqueue_commit_op_tag[n*QUEUE_OP_TAG_WIDTH +: QUEUE_OP_TAG_WIDTH]),
-            .m_axis_tx_cpl_enqueue_commit_valid(tx_port_cpl_enqueue_commit_valid[n +: 1]),
-            .m_axis_tx_cpl_enqueue_commit_ready(tx_port_cpl_enqueue_commit_ready[n +: 1]),
+            .m_axis_dma_write_desc_dma_addr(port_dma_write_desc_dma_addr[n*DMA_ADDR_WIDTH +: DMA_ADDR_WIDTH]),
+            .m_axis_dma_write_desc_ram_addr(port_dma_write_desc_ram_addr[n*RAM_ADDR_WIDTH +: RAM_ADDR_WIDTH]),
+            .m_axis_dma_write_desc_len(port_dma_write_desc_len[n*DMA_LEN_WIDTH +: DMA_LEN_WIDTH]),
+            .m_axis_dma_write_desc_tag(port_dma_write_desc_tag[n*DMA_TAG_WIDTH_INT +: DMA_TAG_WIDTH_INT]),
+            .m_axis_dma_write_desc_valid(port_dma_write_desc_valid[n +: 1]),
+            .m_axis_dma_write_desc_ready(port_dma_write_desc_ready[n +: 1]),
 
             /*
-             * RX descriptor dequeue request output
+             * DMA write descriptor status input
              */
-            .m_axis_rx_desc_dequeue_req_queue(rx_port_desc_dequeue_req_queue[n*RX_QUEUE_INDEX_WIDTH +: RX_QUEUE_INDEX_WIDTH]),
-            .m_axis_rx_desc_dequeue_req_tag(rx_port_desc_dequeue_req_tag[n*QUEUE_REQ_TAG_WIDTH +: QUEUE_REQ_TAG_WIDTH]),
-            .m_axis_rx_desc_dequeue_req_valid(rx_port_desc_dequeue_req_valid[n +: 1]),
-            .m_axis_rx_desc_dequeue_req_ready(rx_port_desc_dequeue_req_ready[n +: 1]),
-
-            /*
-             * RX descriptor dequeue response input
-             */
-            .s_axis_rx_desc_dequeue_resp_queue(rx_port_desc_dequeue_resp_queue[n*RX_QUEUE_INDEX_WIDTH +: RX_QUEUE_INDEX_WIDTH]),
-            .s_axis_rx_desc_dequeue_resp_ptr(rx_port_desc_dequeue_resp_ptr[n*QUEUE_PTR_WIDTH +: QUEUE_PTR_WIDTH]),
-            .s_axis_rx_desc_dequeue_resp_addr(rx_port_desc_dequeue_resp_addr[n*PCIE_ADDR_WIDTH +: PCIE_ADDR_WIDTH]),
-            .s_axis_rx_desc_dequeue_resp_cpl(rx_port_desc_dequeue_resp_cpl[n*RX_CPL_QUEUE_INDEX_WIDTH +: RX_CPL_QUEUE_INDEX_WIDTH]),
-            .s_axis_rx_desc_dequeue_resp_tag(rx_port_desc_dequeue_resp_tag[n*QUEUE_REQ_TAG_WIDTH +: QUEUE_REQ_TAG_WIDTH]),
-            .s_axis_rx_desc_dequeue_resp_op_tag(rx_port_desc_dequeue_resp_op_tag[n*QUEUE_OP_TAG_WIDTH +: QUEUE_OP_TAG_WIDTH]),
-            .s_axis_rx_desc_dequeue_resp_empty(rx_port_desc_dequeue_resp_empty[n +: 1]),
-            .s_axis_rx_desc_dequeue_resp_error(rx_port_desc_dequeue_resp_error[n +: 1]),
-            .s_axis_rx_desc_dequeue_resp_valid(rx_port_desc_dequeue_resp_valid[n +: 1]),
-            .s_axis_rx_desc_dequeue_resp_ready(rx_port_desc_dequeue_resp_ready[n +: 1]),
-
-            /*
-             * RX descriptor dequeue commit output
-             */
-            .m_axis_rx_desc_dequeue_commit_op_tag(rx_port_desc_dequeue_commit_op_tag[n*QUEUE_OP_TAG_WIDTH +: QUEUE_OP_TAG_WIDTH]),
-            .m_axis_rx_desc_dequeue_commit_valid(rx_port_desc_dequeue_commit_valid[n +: 1]),
-            .m_axis_rx_desc_dequeue_commit_ready(rx_port_desc_dequeue_commit_ready[n +: 1]),
-
-            /*
-             * RX completion enqueue request output
-             */
-            .m_axis_rx_cpl_enqueue_req_queue(rx_port_cpl_enqueue_req_queue[n*RX_CPL_QUEUE_INDEX_WIDTH +: RX_CPL_QUEUE_INDEX_WIDTH]),
-            .m_axis_rx_cpl_enqueue_req_tag(rx_port_cpl_enqueue_req_tag[n*QUEUE_REQ_TAG_WIDTH +: QUEUE_REQ_TAG_WIDTH]),
-            .m_axis_rx_cpl_enqueue_req_valid(rx_port_cpl_enqueue_req_valid[n +: 1]),
-            .m_axis_rx_cpl_enqueue_req_ready(rx_port_cpl_enqueue_req_ready[n +: 1]),
-
-            /*
-             * RX completion enqueue response input
-             */
-            //.s_axis_rx_cpl_enqueue_resp_ptr(),
-            .s_axis_rx_cpl_enqueue_resp_addr(rx_port_cpl_enqueue_resp_addr[n*PCIE_ADDR_WIDTH +: PCIE_ADDR_WIDTH]),
-            //.s_axis_rx_cpl_enqueue_resp_event(),
-            .s_axis_rx_cpl_enqueue_resp_tag(rx_port_cpl_enqueue_resp_tag[n*QUEUE_REQ_TAG_WIDTH +: QUEUE_REQ_TAG_WIDTH]),
-            .s_axis_rx_cpl_enqueue_resp_op_tag(rx_port_cpl_enqueue_resp_op_tag[n*QUEUE_OP_TAG_WIDTH +: QUEUE_OP_TAG_WIDTH]),
-            .s_axis_rx_cpl_enqueue_resp_full(rx_port_cpl_enqueue_resp_full[n +: 1]),
-            .s_axis_rx_cpl_enqueue_resp_error(rx_port_cpl_enqueue_resp_error[n +: 1]),
-            .s_axis_rx_cpl_enqueue_resp_valid(rx_port_cpl_enqueue_resp_valid[n +: 1]),
-            .s_axis_rx_cpl_enqueue_resp_ready(rx_port_cpl_enqueue_resp_ready[n +: 1]),
-
-            /*
-             * RX completion enqueue commit output
-             */
-            .m_axis_rx_cpl_enqueue_commit_op_tag(rx_port_cpl_enqueue_commit_op_tag[n*QUEUE_OP_TAG_WIDTH +: QUEUE_OP_TAG_WIDTH]),
-            .m_axis_rx_cpl_enqueue_commit_valid(rx_port_cpl_enqueue_commit_valid[n +: 1]),
-            .m_axis_rx_cpl_enqueue_commit_ready(rx_port_cpl_enqueue_commit_ready[n +: 1]),
-
-            /*
-             * PCIe read descriptor output
-             */
-            .m_axis_pcie_axi_dma_read_desc_pcie_addr(port_pcie_axi_dma_read_desc_pcie_addr[n*PCIE_ADDR_WIDTH +: PCIE_ADDR_WIDTH]),
-            .m_axis_pcie_axi_dma_read_desc_axi_addr(port_pcie_axi_dma_read_desc_axi_addr[n*AXI_ADDR_WIDTH +: AXI_ADDR_WIDTH]),
-            .m_axis_pcie_axi_dma_read_desc_len(port_pcie_axi_dma_read_desc_len[n*PCIE_DMA_LEN_WIDTH +: PCIE_DMA_LEN_WIDTH]),
-            .m_axis_pcie_axi_dma_read_desc_tag(port_pcie_axi_dma_read_desc_tag[n*PCIE_DMA_TAG_WIDTH_INT +: PCIE_DMA_TAG_WIDTH_INT]),
-            .m_axis_pcie_axi_dma_read_desc_valid(port_pcie_axi_dma_read_desc_valid[n +: 1]),
-            .m_axis_pcie_axi_dma_read_desc_ready(port_pcie_axi_dma_read_desc_ready[n +: 1]),
-
-            /*
-             * PCIe read descriptor status input
-             */
-            .s_axis_pcie_axi_dma_read_desc_status_tag(port_pcie_axi_dma_read_desc_status_tag[n*PCIE_DMA_TAG_WIDTH_INT +: PCIE_DMA_TAG_WIDTH_INT]),
-            .s_axis_pcie_axi_dma_read_desc_status_valid(port_pcie_axi_dma_read_desc_status_valid[n +: 1]),
-
-            /*
-             * PCIe write descriptor output
-             */
-            .m_axis_pcie_axi_dma_write_desc_pcie_addr(port_pcie_axi_dma_write_desc_pcie_addr[n*PCIE_ADDR_WIDTH +: PCIE_ADDR_WIDTH]),
-            .m_axis_pcie_axi_dma_write_desc_axi_addr(port_pcie_axi_dma_write_desc_axi_addr[n*AXI_ADDR_WIDTH +: AXI_ADDR_WIDTH]),
-            .m_axis_pcie_axi_dma_write_desc_len(port_pcie_axi_dma_write_desc_len[n*PCIE_DMA_LEN_WIDTH +: PCIE_DMA_LEN_WIDTH]),
-            .m_axis_pcie_axi_dma_write_desc_tag(port_pcie_axi_dma_write_desc_tag[n*PCIE_DMA_TAG_WIDTH_INT +: PCIE_DMA_TAG_WIDTH_INT]),
-            .m_axis_pcie_axi_dma_write_desc_valid(port_pcie_axi_dma_write_desc_valid[n +: 1]),
-            .m_axis_pcie_axi_dma_write_desc_ready(port_pcie_axi_dma_write_desc_ready[n +: 1]),
-
-            /*
-             * PCIe write descriptor status input
-             */
-            .s_axis_pcie_axi_dma_write_desc_status_tag(port_pcie_axi_dma_write_desc_status_tag[n*PCIE_DMA_TAG_WIDTH_INT +: PCIE_DMA_TAG_WIDTH_INT]),
-            .s_axis_pcie_axi_dma_write_desc_status_valid(port_pcie_axi_dma_write_desc_status_valid[n +: 1]),
+            .s_axis_dma_write_desc_status_tag(port_dma_write_desc_status_tag[n*DMA_TAG_WIDTH_INT +: DMA_TAG_WIDTH_INT]),
+            .s_axis_dma_write_desc_status_valid(port_dma_write_desc_status_valid[n +: 1]),
 
             /*
              * AXI-Lite slave interface
@@ -2588,82 +2085,19 @@ generate
             .s_axil_rready(axil_port_rready[n +: 1]),
 
             /*
-             * AXI master interface
+             * RAM interface
              */
-            .m_axi_awid(axi_port_dma_awid[n*AXI_ID_WIDTH +: AXI_ID_WIDTH]),
-            .m_axi_awaddr(axi_port_dma_awaddr[n*AXI_ADDR_WIDTH +: AXI_ADDR_WIDTH]),
-            .m_axi_awlen(axi_port_dma_awlen[n*8 +: 8]),
-            .m_axi_awsize(axi_port_dma_awsize[n*3 +: 3]),
-            .m_axi_awburst(axi_port_dma_awburst[n*2 +: 2]),
-            .m_axi_awlock(axi_port_dma_awlock[n +: 1]),
-            .m_axi_awcache(axi_port_dma_awcache[n*4 +: 4]),
-            .m_axi_awprot(axi_port_dma_awprot[n*3 +: 3]),
-            .m_axi_awvalid(axi_port_dma_awvalid[n +: 1]),
-            .m_axi_awready(axi_port_dma_awready[n +: 1]),
-            .m_axi_wdata(axi_port_dma_wdata[n*AXI_DATA_WIDTH +: AXI_DATA_WIDTH]),
-            .m_axi_wstrb(axi_port_dma_wstrb[n*AXI_STRB_WIDTH +: AXI_STRB_WIDTH]),
-            .m_axi_wlast(axi_port_dma_wlast[n +: 1]),
-            .m_axi_wvalid(axi_port_dma_wvalid[n +: 1]),
-            .m_axi_wready(axi_port_dma_wready[n +: 1]),
-            .m_axi_bid(axi_port_dma_bid[n*AXI_ID_WIDTH +: AXI_ID_WIDTH]),
-            .m_axi_bresp(axi_port_dma_bresp[n*2 +: 2]),
-            .m_axi_bvalid(axi_port_dma_bvalid[n +: 1]),
-            .m_axi_bready(axi_port_dma_bready[n +: 1]),
-            .m_axi_arid(axi_port_dma_arid[n*AXI_ID_WIDTH +: AXI_ID_WIDTH]),
-            .m_axi_araddr(axi_port_dma_araddr[n*AXI_ADDR_WIDTH +: AXI_ADDR_WIDTH]),
-            .m_axi_arlen(axi_port_dma_arlen[n*8 +: 8]),
-            .m_axi_arsize(axi_port_dma_arsize[n*3 +: 3]),
-            .m_axi_arburst(axi_port_dma_arburst[n*2 +: 2]),
-            .m_axi_arlock(axi_port_dma_arlock[n +: 1]),
-            .m_axi_arcache(axi_port_dma_arcache[n*4 +: 4]),
-            .m_axi_arprot(axi_port_dma_arprot[n*3 +: 3]),
-            .m_axi_arvalid(axi_port_dma_arvalid[n +: 1]),
-            .m_axi_arready(axi_port_dma_arready[n +: 1]),
-            .m_axi_rid(axi_port_dma_rid[n*AXI_ID_WIDTH +: AXI_ID_WIDTH]),
-            .m_axi_rdata(axi_port_dma_rdata[n*AXI_DATA_WIDTH +: AXI_DATA_WIDTH]),
-            .m_axi_rresp(axi_port_dma_rresp[n*2 +: 2]),
-            .m_axi_rlast(axi_port_dma_rlast[n +: 1]),
-            .m_axi_rvalid(axi_port_dma_rvalid[n +: 1]),
-            .m_axi_rready(axi_port_dma_rready[n +: 1]),
-
-            /*
-             * AXI slave inteface
-             */
-            .s_axi_awid(axi_port_desc_awid[n*RAM_ID_WIDTH +: RAM_ID_WIDTH]),
-            .s_axi_awaddr(axi_port_desc_awaddr[n*AXI_ADDR_WIDTH +: AXI_ADDR_WIDTH]),
-            .s_axi_awlen(axi_port_desc_awlen[n*8 +: 8]),
-            .s_axi_awsize(axi_port_desc_awsize[n*3 +: 3]),
-            .s_axi_awburst(axi_port_desc_awburst[n*2 +: 2]),
-            .s_axi_awlock(axi_port_desc_awlock[n +: 1]),
-            .s_axi_awcache(axi_port_desc_awcache[n*4 +: 4]),
-            .s_axi_awprot(axi_port_desc_awprot[n*3 +: 3]),
-            .s_axi_awvalid(axi_port_desc_awvalid[n +: 1]),
-            .s_axi_awready(axi_port_desc_awready[n +: 1]),
-            .s_axi_wdata(axi_port_desc_wdata[n*AXI_DATA_WIDTH +: AXI_DATA_WIDTH]),
-            .s_axi_wstrb(axi_port_desc_wstrb[n*AXI_STRB_WIDTH +: AXI_STRB_WIDTH]),
-            .s_axi_wlast(axi_port_desc_wlast[n +: 1]),
-            .s_axi_wvalid(axi_port_desc_wvalid[n +: 1]),
-            .s_axi_wready(axi_port_desc_wready[n +: 1]),
-            .s_axi_bid(axi_port_desc_bid[n*RAM_ID_WIDTH +: RAM_ID_WIDTH]),
-            .s_axi_bresp(axi_port_desc_bresp[n*2 +: 2]),
-            .s_axi_bvalid(axi_port_desc_bvalid[n +: 1]),
-            .s_axi_bready(axi_port_desc_bready[n +: 1]),
-            .s_axi_arid(axi_port_desc_arid[n*RAM_ID_WIDTH +: RAM_ID_WIDTH]),
-            .s_axi_araddr(axi_port_desc_araddr[n*AXI_ADDR_WIDTH +: AXI_ADDR_WIDTH]),
-            .s_axi_arlen(axi_port_desc_arlen[n*8 +: 8]),
-            .s_axi_arsize(axi_port_desc_arsize[n*3 +: 3]),
-            .s_axi_arburst(axi_port_desc_arburst[n*2 +: 2]),
-            .s_axi_arlock(axi_port_desc_arlock[n +: 1]),
-            .s_axi_arcache(axi_port_desc_arcache[n*4 +: 4]),
-            .s_axi_arprot(axi_port_desc_arprot[n*3 +: 3]),
-            .s_axi_arvalid(axi_port_desc_arvalid[n +: 1]),
-            .s_axi_arready(axi_port_desc_arready[n +: 1]),
-            .s_axi_rid(axi_port_desc_rid[n*RAM_ID_WIDTH +: RAM_ID_WIDTH]),
-            .s_axi_rdata(axi_port_desc_rdata[n*AXI_DATA_WIDTH +: AXI_DATA_WIDTH]),
-            .s_axi_rresp(axi_port_desc_rresp[n*2 +: 2]),
-            .s_axi_rlast(axi_port_desc_rlast[n +: 1]),
-            .s_axi_rvalid(axi_port_desc_rvalid[n +: 1]),
-            .s_axi_rready(axi_port_desc_rready[n +: 1]),
+            .dma_ram_wr_cmd_be(port_dma_ram_wr_cmd_be[SEG_COUNT*SEG_BE_WIDTH*n +: SEG_COUNT*SEG_BE_WIDTH]),
+            .dma_ram_wr_cmd_addr(port_dma_ram_wr_cmd_addr[SEG_COUNT*SEG_ADDR_WIDTH*n +: SEG_COUNT*SEG_ADDR_WIDTH]),
+            .dma_ram_wr_cmd_data(port_dma_ram_wr_cmd_data[SEG_COUNT*SEG_DATA_WIDTH*n +: SEG_COUNT*SEG_DATA_WIDTH]),
+            .dma_ram_wr_cmd_valid(port_dma_ram_wr_cmd_valid[SEG_COUNT*n +: SEG_COUNT]),
+            .dma_ram_wr_cmd_ready(port_dma_ram_wr_cmd_ready[SEG_COUNT*n +: SEG_COUNT]),
+            .dma_ram_rd_cmd_addr(port_dma_ram_rd_cmd_addr[SEG_COUNT*SEG_ADDR_WIDTH*n +: SEG_COUNT*SEG_ADDR_WIDTH]),
+            .dma_ram_rd_cmd_valid(port_dma_ram_rd_cmd_valid[SEG_COUNT*n +: SEG_COUNT]),
+            .dma_ram_rd_cmd_ready(port_dma_ram_rd_cmd_ready[SEG_COUNT*n +: SEG_COUNT]),
+            .dma_ram_rd_resp_data(port_dma_ram_rd_resp_data[SEG_COUNT*SEG_DATA_WIDTH*n +: SEG_COUNT*SEG_DATA_WIDTH]),
+            .dma_ram_rd_resp_valid(port_dma_ram_rd_resp_valid[SEG_COUNT*n +: SEG_COUNT]),
+            .dma_ram_rd_resp_ready(port_dma_ram_rd_resp_ready[SEG_COUNT*n +: SEG_COUNT]),
 
             /*
              * Transmit data output
@@ -2704,58 +2138,6 @@ generate
              */
             .ptp_ts_96(ptp_ts_96),
             .ptp_ts_step(ptp_ts_step)
-        );
-
-    end
-
-    for (n = 1; n < RAM_COUNT; n = n + 1) begin : ram
-
-        axi_ram #(
-            .DATA_WIDTH(AXI_DATA_WIDTH),
-            //.ADDR_WIDTH(RAM_ADDR_WIDTH),
-            .ADDR_WIDTH($clog2(RAM_SIZE)),
-            .STRB_WIDTH(AXI_STRB_WIDTH),
-            .ID_WIDTH(RAM_ID_WIDTH),
-            .PIPELINE_OUTPUT(1)
-        )
-        axi_ram_inst (
-            .clk(clk),
-            .rst(rst),
-            .s_axi_awid(axi_ram_awid[n*RAM_ID_WIDTH +: RAM_ID_WIDTH]),
-            .s_axi_awaddr(axi_ram_awaddr[n*AXI_ADDR_WIDTH +: AXI_ADDR_WIDTH]),
-            .s_axi_awlen(axi_ram_awlen[n*8 +: 8]),
-            .s_axi_awsize(axi_ram_awsize[n*3 +: 3]),
-            .s_axi_awburst(axi_ram_awburst[n*2 +: 2]),
-            .s_axi_awlock(axi_ram_awlock[n +: 1]),
-            .s_axi_awcache(axi_ram_awcache[n*4 +: 4]),
-            .s_axi_awprot(axi_ram_awprot[n*3 +: 3]),
-            .s_axi_awvalid(axi_ram_awvalid[n +: 1]),
-            .s_axi_awready(axi_ram_awready[n +: 1]),
-            .s_axi_wdata(axi_ram_wdata[n*AXI_DATA_WIDTH +: AXI_DATA_WIDTH]),
-            .s_axi_wstrb(axi_ram_wstrb[n*AXI_STRB_WIDTH +: AXI_STRB_WIDTH]),
-            .s_axi_wlast(axi_ram_wlast[n +: 1]),
-            .s_axi_wvalid(axi_ram_wvalid[n +: 1]),
-            .s_axi_wready(axi_ram_wready[n +: 1]),
-            .s_axi_bid(axi_ram_bid[n*RAM_ID_WIDTH +: RAM_ID_WIDTH]),
-            .s_axi_bresp(axi_ram_bresp[n*2 +: 2]),
-            .s_axi_bvalid(axi_ram_bvalid[n +: 1]),
-            .s_axi_bready(axi_ram_bready[n +: 1]),
-            .s_axi_arid(axi_ram_arid[n*RAM_ID_WIDTH +: RAM_ID_WIDTH]),
-            .s_axi_araddr(axi_ram_araddr[n*AXI_ADDR_WIDTH +: AXI_ADDR_WIDTH]),
-            .s_axi_arlen(axi_ram_arlen[n*8 +: 8]),
-            .s_axi_arsize(axi_ram_arsize[n*3 +: 3]),
-            .s_axi_arburst(axi_ram_arburst[n*2 +: 2]),
-            .s_axi_arlock(axi_ram_arlock[n +: 1]),
-            .s_axi_arcache(axi_ram_arcache[n*4 +: 4]),
-            .s_axi_arprot(axi_ram_arprot[n*3 +: 3]),
-            .s_axi_arvalid(axi_ram_arvalid[n +: 1]),
-            .s_axi_arready(axi_ram_arready[n +: 1]),
-            .s_axi_rid(axi_ram_rid[n*RAM_ID_WIDTH +: RAM_ID_WIDTH]),
-            .s_axi_rdata(axi_ram_rdata[n*AXI_DATA_WIDTH +: AXI_DATA_WIDTH]),
-            .s_axi_rresp(axi_ram_rresp[n*2 +: 2]),
-            .s_axi_rlast(axi_ram_rlast[n +: 1]),
-            .s_axi_rvalid(axi_ram_rvalid[n +: 1]),
-            .s_axi_rready(axi_ram_rready[n +: 1])
         );
 
     end

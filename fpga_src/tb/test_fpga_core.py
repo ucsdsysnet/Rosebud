@@ -44,7 +44,6 @@ srcs.append("../ip/ila_4x64_stub.v")
 
 srcs.append("../rtl/simple_fifo.v")
 srcs.append("../rtl/max_finder_tree.v")
-# srcs.append("../rtl/slot_fifo_loader.v")
 srcs.append("../rtl/slot_keeper.v")
 srcs.append("../rtl/core_mems.v")
 srcs.append("../rtl/axis_dma.v")
@@ -54,9 +53,13 @@ srcs.append("../rtl/riscv_axis_wrapper.v")
 srcs.append("../rtl/simple_scheduler.v")
 srcs.append("../rtl/simple_sync_sig.v")
 srcs.append("../rtl/axis_switch.v")
+srcs.append("../rtl/axis_switch_2lvl.v")
 srcs.append("../rtl/loopback_msg_fifo.v")
 srcs.append("../rtl/header.v")
+srcs.append("../rtl/pcie_config.v")
 srcs.append("../rtl/pcie_controller.v")
+srcs.append("../rtl/pcie_cont_read.v")
+srcs.append("../rtl/pcie_cont_write.v")
 srcs.append("../rtl/fpga_core.v")
 
 srcs.append("../lib/eth/rtl/eth_mac_10g_fifo.v")
@@ -65,22 +68,8 @@ srcs.append("../lib/eth/rtl/axis_xgmii_rx_64.v")
 srcs.append("../lib/eth/rtl/axis_xgmii_tx_64.v")
 srcs.append("../lib/eth/rtl/lfsr.v")
 
-srcs.append("../lib/axi/rtl/axi_ram.v")
-srcs.append("../lib/axi/rtl/axi_ram_rd_if.v")
-srcs.append("../lib/axi/rtl/axi_ram_wr_if.v")
-srcs.append("../lib/axi/rtl/arbiter.v")
-srcs.append("../lib/axi/rtl/priority_encoder.v")
-srcs.append("../lib/axi/rtl/axi_dma.v")
-srcs.append("../lib/axi/rtl/axi_dma_rd.v")
-srcs.append("../lib/axi/rtl/axi_dma_wr.v")
-srcs.append("../lib/axi/rtl/axi_interconnect.v")
-srcs.append("../lib/axi/rtl/axi_crossbar_rd.v")
-srcs.append("../lib/axi/rtl/axi_crossbar_wr.v")
-srcs.append("../lib/axi/rtl/axi_crossbar_addr.v")
-srcs.append("../lib/axi/rtl/axi_register_rd.v")
-srcs.append("../lib/axi/rtl/axi_register_wr.v")
-srcs.append("../lib/axi/rtl/axi_crossbar.v")
-
+srcs.append("../lib/axis/rtl/arbiter.v")
+srcs.append("../lib/axis/rtl/priority_encoder.v")
 srcs.append("../lib/axis/rtl/axis_adapter.v")
 srcs.append("../lib/axis/rtl/axis_arb_mux.v")
 srcs.append("../lib/axis/rtl/axis_async_fifo.v")
@@ -90,14 +79,13 @@ srcs.append("../lib/axis/rtl/axis_fifo_adapter.v")
 srcs.append("../lib/axis/rtl/axis_register.v")
 
 srcs.append("../lib/pcie/rtl/pcie_us_axil_master.v")
-srcs.append("../lib/pcie/rtl/pcie_us_axi_dma.v")
-srcs.append("../lib/pcie/rtl/pcie_us_axi_dma_rd.v")
-srcs.append("../lib/pcie/rtl/pcie_us_axi_dma_wr.v")
+srcs.append("../lib/pcie/rtl/dma_client_axis_sink.v")
+srcs.append("../lib/pcie/rtl/dma_client_axis_source.v")
+srcs.append("../lib/pcie/rtl/dma_if_pcie_us.v")
+srcs.append("../lib/pcie/rtl/dma_if_pcie_us_rd.v")
+srcs.append("../lib/pcie/rtl/dma_if_pcie_us_wr.v")
+srcs.append("../lib/pcie/rtl/dma_psdpram.v")
 srcs.append("../lib/pcie/rtl/pcie_tag_manager.v")
-srcs.append("../lib/pcie/rtl/pcie_us_axi_master.v")
-srcs.append("../lib/pcie/rtl/pcie_us_axi_master_rd.v")
-srcs.append("../lib/pcie/rtl/pcie_us_axi_master_wr.v")
-srcs.append("../lib/pcie/rtl/pcie_us_axis_cq_demux.v")
 srcs.append("../lib/pcie/rtl/pcie_us_cfg.v")
 srcs.append("../lib/pcie/rtl/pcie_us_msi.v")
 srcs.append("../lib/pcie/rtl/pulse_merge.v")
@@ -120,9 +108,10 @@ def bench():
     SIZE_1       = 500 - 18
     CHECK_PKT    = True
     TEST_SFP     = True
-    TEST_PCIE    = False
-    UPDATE_INS   = False
-    FIRMWARE     = "../../c_code/inter_core.bin"
+    TEST_PCIE    = True
+    UPDATE_INS   = True
+    FIRMWARE     = "../../c_code/dram_test.bin"
+    # FIRMWARE     = "../../c_code/inter_core.bin"
 
     # Inputs
     sys_clk  = Signal(bool(0))

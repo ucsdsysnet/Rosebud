@@ -16,9 +16,9 @@ module simple_scheduler # (
   parameter TAG_WIDTH       = (SLOT_WIDTH>5)? SLOT_WIDTH:5,
   parameter ID_TAG_WIDTH    = CORE_ID_WIDTH+TAG_WIDTH,
   parameter STRB_WIDTH      = DATA_WIDTH/8,
-  parameter LVL1_SW_PORTS   = CORE_COUNT,
-  parameter LVL2_SW_PORTS   = CORE_COUNT/LVL1_SW_PORTS,
-  parameter LVL1_BITS       = $clog2(LVL1_SW_PORTS)
+  parameter CLUSTER_COUNT   = CORE_COUNT,
+  parameter LVL2_SW_PORTS   = CORE_COUNT/CLUSTER_COUNT,
+  parameter LVL1_BITS       = $clog2(CLUSTER_COUNT)
 ) (
   input                                     clk,
   input                                     rst,
@@ -47,7 +47,6 @@ module simple_scheduler # (
   
   input  wire [INTERFACE_COUNT*DATA_WIDTH-1:0]    data_s_axis_tdata,
   input  wire [INTERFACE_COUNT*STRB_WIDTH-1:0]    data_s_axis_tkeep,
-  input  wire [INTERFACE_COUNT*PORT_WIDTH-1:0]    data_s_axis_tdest,
   input  wire [INTERFACE_COUNT*ID_TAG_WIDTH-1:0]  data_s_axis_tuser,
   input  wire [INTERFACE_COUNT-1:0]               data_s_axis_tvalid, 
   output wire [INTERFACE_COUNT-1:0]               data_s_axis_tready, 
@@ -390,11 +389,11 @@ module simple_scheduler # (
   integer k,l;
   always @ (*)
     for (k=0; k<LVL2_SW_PORTS; k=k+1)
-      for (l=0; l<LVL1_SW_PORTS; l=l+1) begin
-        reordered_rx_desc_count[(k*LVL1_SW_PORTS+l)*SLOT_WIDTH +: SLOT_WIDTH] = 
+      for (l=0; l<CLUSTER_COUNT; l=l+1) begin
+        reordered_rx_desc_count[(k*CLUSTER_COUNT+l)*SLOT_WIDTH +: SLOT_WIDTH] = 
                   rx_desc_count[(l*LVL2_SW_PORTS+k)*SLOT_WIDTH +: SLOT_WIDTH];
         // Priority to inter core messages, and only income_cores are available for selection
-        reordered_masks [k*LVL1_SW_PORTS+l] = income_cores[l*LVL2_SW_PORTS+k] &&
+        reordered_masks [k*CLUSTER_COUNT+l] = income_cores[l*LVL2_SW_PORTS+k] &&
                                              !(pkt_to_core_valid[l*LVL2_SW_PORTS+k] &&
                                                arb_to_core_ready[l*LVL2_SW_PORTS+k]);
       end
@@ -512,7 +511,6 @@ module simple_scheduler # (
   assign tx_axis_tvalid     = data_s_axis_tvalid;  
   assign tx_axis_tlast      = data_s_axis_tlast;
   assign data_s_axis_tready = tx_axis_tready;
-  // no further use for data_s_axis_tdest after its at correct port
 
 if (ENABLE_ILA) begin  
   wire trig_out_1, trig_out_2;
@@ -601,6 +599,9 @@ if (ENABLE_ILA) begin
               cores_to_be_reset, income_cores})
   );
 
+end else begin
+  assign trig_in_ack = 1'b0;
+  assign trig_out    = 1'b0;
 end
 
 endmodule
