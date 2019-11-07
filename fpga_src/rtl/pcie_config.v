@@ -24,7 +24,7 @@ module pcie_config # (
   input  wire [AXIL_STRB_WIDTH-1:0]         axil_ctrl_wstrb,
   input  wire                               axil_ctrl_wvalid,
   output reg                                axil_ctrl_wready,
-  output reg  [1:0]                         axil_ctrl_bresp,
+  output wire [1:0]                         axil_ctrl_bresp,
   output reg                                axil_ctrl_bvalid,
   input  wire                               axil_ctrl_bready,
   input  wire [AXIL_ADDR_WIDTH-1:0]         axil_ctrl_araddr,
@@ -32,7 +32,7 @@ module pcie_config # (
   input  wire                               axil_ctrl_arvalid,
   output reg                                axil_ctrl_arready,
   output reg  [AXIL_DATA_WIDTH-1:0]         axil_ctrl_rdata,
-  output reg  [1:0]                         axil_ctrl_rresp,
+  output wire [1:0]                         axil_ctrl_rresp,
   output reg                                axil_ctrl_rvalid,
   input  wire                               axil_ctrl_rready,
 
@@ -54,6 +54,36 @@ module pcie_config # (
   input  wire                               host_dma_write_desc_ready,
   input  wire [HOST_DMA_TAG_WIDTH-1:0]      host_dma_write_desc_status_tag,
   input  wire                               host_dma_write_desc_status_valid,
+    
+  // I2C
+  input  wire                               sfp_i2c_scl_i,
+  output reg                                sfp_i2c_scl_o,
+  output wire                               sfp_i2c_scl_t,
+  input  wire                               sfp_1_i2c_sda_i,
+  output reg                                sfp_1_i2c_sda_o,
+  output wire                               sfp_1_i2c_sda_t,
+  input  wire                               sfp_2_i2c_sda_i,
+  output reg                                sfp_2_i2c_sda_o,
+  output wire                               sfp_2_i2c_sda_t,
+
+  input  wire                               eeprom_i2c_scl_i,
+  output reg                                eeprom_i2c_scl_o,
+  output wire                               eeprom_i2c_scl_t,
+  input  wire                               eeprom_i2c_sda_i,
+  output reg                                eeprom_i2c_sda_o,
+  output wire                               eeprom_i2c_sda_t,
+
+  // BPI Flash
+  input  wire [15:0]                        flash_dq_i,
+  output reg  [15:0]                        flash_dq_o,
+  output reg                                flash_dq_oe,
+  output reg  [22:0]                        flash_addr,
+  output reg                                flash_region,
+  output reg                                flash_region_oe,
+  output reg                                flash_ce_n,
+  output reg                                flash_oe_n,
+  output reg                                flash_we_n,
+  output reg                                flash_adv_n,
   
   // Cores reset
   output wire [CORE_WIDTH-1:0]              reset_dest,
@@ -83,6 +113,15 @@ wire [CORE_SLOT_WIDTH-1:0] slot_count_r;
 // State registers for readback
 reg  [HOST_DMA_TAG_WIDTH-1:0]  host_dma_read_status_tags;
 reg  [HOST_DMA_TAG_WIDTH-1:0]  host_dma_write_status_tags;
+         
+assign axil_ctrl_bresp  = 2'b00;
+assign axil_ctrl_rresp  = 2'b00;
+
+assign sfp_i2c_scl_t    = sfp_i2c_scl_o;
+assign sfp_1_i2c_sda_t  = sfp_1_i2c_sda_o;
+assign sfp_2_i2c_sda_t  = sfp_2_i2c_sda_o;
+assign eeprom_i2c_scl_t = eeprom_i2c_scl_o;
+assign eeprom_i2c_sda_t = eeprom_i2c_sda_o;
 
 always @(posedge pcie_clk) begin
     if (pcie_rst) begin
@@ -101,15 +140,29 @@ always @(posedge pcie_clk) begin
         income_cores_r             <= {CORE_COUNT{1'b0}};
         cores_to_be_reset_r        <= {CORE_COUNT{1'b0}};
         core_for_slot_count_r      <= {CORE_WIDTH{1'b0}};
+  
+        sfp_i2c_scl_o              <= 1'b1;
+        sfp_1_i2c_sda_o            <= 1'b1;
+        sfp_2_i2c_sda_o            <= 1'b1;
+        eeprom_i2c_scl_o           <= 1'b1;
+        eeprom_i2c_sda_o           <= 1'b1;
+        
+        flash_dq_o                 <= 16'd0;
+        flash_dq_oe                <= 1'b0;
+        flash_addr                 <= 23'd0;
+        flash_region               <= 1'b0;
+        flash_region_oe            <= 1'b0;
+        flash_ce_n                 <= 1'b1;
+        flash_oe_n                 <= 1'b1;
+        flash_we_n                 <= 1'b1;
+        flash_adv_n                <= 1'b1;
 
     end else begin
 
         axil_ctrl_awready <= 1'b0;
         axil_ctrl_wready  <= 1'b0;
-        axil_ctrl_bresp   <= 2'b00;
         axil_ctrl_bvalid  <= axil_ctrl_bvalid && !axil_ctrl_bready;
         axil_ctrl_arready <= 1'b0;
-        axil_ctrl_rresp   <= 2'b00;
         axil_ctrl_rvalid  <= axil_ctrl_rvalid && !axil_ctrl_rready;
 
         host_dma_read_desc_valid         <= host_dma_read_desc_valid && !host_dma_read_desc_ready;
@@ -120,7 +173,6 @@ always @(posedge pcie_clk) begin
             // write operation
             axil_ctrl_awready <= 1'b1;
             axil_ctrl_wready  <= 1'b1;
-            axil_ctrl_bresp   <= 2'b00;
             axil_ctrl_bvalid  <= 1'b1;
 
             case ({axil_ctrl_awaddr[15:2], 2'b00})

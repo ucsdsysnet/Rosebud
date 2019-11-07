@@ -45,7 +45,7 @@ module fpga_core #
 )
 (
     /*
-     * Clock: 156.25MHz, 200MHz, 250MHz
+     * Clock: 200MHz, 250MHz, 178MHz
      * Synchronous reset
      */
     input  wire       sys_clk,
@@ -58,7 +58,11 @@ module fpga_core #
     /*
      * GPIO
      */
-    output wire [1:0] sma_led,
+    output wire [1:0]                      sma_led,
+    input  wire                            sma_in,
+    output wire                            sma_out,
+    output wire                            sma_out_en,
+    output wire                            sma_term_en,
 
     /*
      * PCIe
@@ -100,28 +104,61 @@ module fpga_core #
     output wire                            status_error_uncor,
 
     /*
-     * Ethernet: QSFP28
+     * Ethernet: SFP+
      */
-    input  wire        sfp_1_tx_clk,
-    input  wire        sfp_1_tx_rst,
-    output wire [63:0] sfp_1_txd,
-    output wire [7:0]  sfp_1_txc,
-    input  wire        sfp_1_rx_clk,
-    input  wire        sfp_1_rx_rst,
-    input  wire [63:0] sfp_1_rxd,
-    input  wire [7:0]  sfp_1_rxc,
+    input  wire                            sfp_1_tx_clk,
+    input  wire                            sfp_1_tx_rst,
+    output wire [63:0]                     sfp_1_txd,
+    output wire [7:0]                      sfp_1_txc,
+    input  wire                            sfp_1_rx_clk,
+    input  wire                            sfp_1_rx_rst,
+    input  wire [63:0]                     sfp_1_rxd,
+    input  wire [7:0]                      sfp_1_rxc,
+    input  wire                            sfp_2_tx_clk,
+    input  wire                            sfp_2_tx_rst,
+    output wire [63:0]                     sfp_2_txd,
+    output wire [7:0]                      sfp_2_txc,
+    input  wire                            sfp_2_rx_clk,
+    input  wire                            sfp_2_rx_rst,
+    input  wire [63:0]                     sfp_2_rxd,
+    input  wire [7:0]                      sfp_2_rxc,
 
-    input  wire        sfp_2_tx_clk,
-    input  wire        sfp_2_tx_rst,
-    output wire [63:0] sfp_2_txd,
-    output wire [7:0]  sfp_2_txc,
-    input  wire        sfp_2_rx_clk,
-    input  wire        sfp_2_rx_rst,
-    input  wire [63:0] sfp_2_rxd,
-    input  wire [7:0]  sfp_2_rxc
+    input  wire                            sfp_i2c_scl_i,
+    output wire                            sfp_i2c_scl_o,
+    output wire                            sfp_i2c_scl_t,
+    input  wire                            sfp_1_i2c_sda_i,
+    output wire                            sfp_1_i2c_sda_o,
+    output wire                            sfp_1_i2c_sda_t,
+    input  wire                            sfp_2_i2c_sda_i,
+    output wire                            sfp_2_i2c_sda_o,
+    output wire                            sfp_2_i2c_sda_t,
+
+    input  wire                            eeprom_i2c_scl_i,
+    output wire                            eeprom_i2c_scl_o,
+    output wire                            eeprom_i2c_scl_t,
+    input  wire                            eeprom_i2c_sda_i,
+    output wire                            eeprom_i2c_sda_o,
+    output wire                            eeprom_i2c_sda_t,
+
+    /*
+     * BPI Flash
+     */
+    input  wire [15:0]                     flash_dq_i,
+    output wire [15:0]                     flash_dq_o,
+    output wire                            flash_dq_oe,
+    output wire [22:0]                     flash_addr,
+    output wire                            flash_region,
+    output wire                            flash_region_oe,
+    output wire                            flash_ce_n,
+    output wire                            flash_oe_n,
+    output wire                            flash_we_n,
+    output wire                            flash_adv_n
 );
 
-assign sma_led   = 2'd0;
+assign sma_led     = 2'd0;
+assign sma_out     = 1'b0;
+assign sma_out_en  = 1'b0;
+assign sma_term_en = 1'b0;
 
 // RISCV system parameters
 parameter CORE_COUNT       = 16;
@@ -429,6 +466,36 @@ pcie_config # (
   .host_dma_write_desc_ready       (host_dma_write_desc_ready),
   .host_dma_write_desc_status_tag  (host_dma_write_desc_status_tag),
   .host_dma_write_desc_status_valid(host_dma_write_desc_status_valid),
+  
+  // I2C
+  .sfp_i2c_scl_i(sfp_i2c_scl_i),
+  .sfp_i2c_scl_o(sfp_i2c_scl_o),
+  .sfp_i2c_scl_t(sfp_i2c_scl_t),
+  .sfp_1_i2c_sda_i(sfp_1_i2c_sda_i),
+  .sfp_1_i2c_sda_o(sfp_1_i2c_sda_o),
+  .sfp_1_i2c_sda_t(sfp_1_i2c_sda_t),
+  .sfp_2_i2c_sda_i(sfp_2_i2c_sda_i),
+  .sfp_2_i2c_sda_o(sfp_2_i2c_sda_o),
+  .sfp_2_i2c_sda_t(sfp_2_i2c_sda_t),
+
+  .eeprom_i2c_scl_i(eeprom_i2c_scl_i),
+  .eeprom_i2c_scl_o(eeprom_i2c_scl_o),
+  .eeprom_i2c_scl_t(eeprom_i2c_scl_t),
+  .eeprom_i2c_sda_i(eeprom_i2c_sda_i),
+  .eeprom_i2c_sda_o(eeprom_i2c_sda_o),
+  .eeprom_i2c_sda_t(eeprom_i2c_sda_t),
+
+  // BPI Flash
+  .flash_dq_i(flash_dq_i),
+  .flash_dq_o(flash_dq_o),
+  .flash_dq_oe(flash_dq_oe),
+  .flash_addr(flash_addr),
+  .flash_region(flash_region),
+  .flash_region_oe(flash_region_oe),
+  .flash_ce_n(flash_ce_n),
+  .flash_oe_n(flash_oe_n),
+  .flash_we_n(flash_we_n),
+  .flash_adv_n(flash_adv_n),    
   
   // Cores reset
   .reset_dest (reset_dest),

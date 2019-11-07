@@ -53,6 +53,11 @@ module fpga (
     output wire [1:0]   sfp_2_led,
     output wire [1:0]   sma_led,
 
+    input  wire         sma_in,
+    output wire         sma_out,
+    output wire         sma_out_en,
+    output wire         sma_term_en,
+
     /*
      * PCI express
      */
@@ -84,7 +89,25 @@ module fpga (
     input  wire         sfp_1_los,
     input  wire         sfp_2_los,
     output wire         sfp_1_rs,
-    output wire         sfp_2_rs
+    output wire         sfp_2_rs,
+
+    inout  wire         sfp_i2c_scl,
+    inout  wire         sfp_1_i2c_sda,
+    inout  wire         sfp_2_i2c_sda,
+
+    inout  wire         eeprom_i2c_scl,
+    inout  wire         eeprom_i2c_sda,
+
+    /*
+     * BPI Flash
+     */
+    inout  wire [15:0]  flash_dq,
+    output wire [22:0]  flash_addr,
+    output wire         flash_region,
+    output wire         flash_ce_n,
+    output wire         flash_oe_n,
+    output wire         flash_we_n,
+    output wire         flash_adv_n
 );
 
 parameter AXIS_PCIE_DATA_WIDTH = 256;
@@ -291,6 +314,70 @@ sync_reset_183mhz_inst (
     .clk(clk_183mhz_int),
     .rst(~mmcm_locked2),
     .sync_reset_out(rst_183mhz_int)
+);
+// GPIO
+wire sfp_i2c_scl_i;
+wire sfp_i2c_scl_o;
+wire sfp_i2c_scl_t;
+wire sfp_1_i2c_sda_i;
+wire sfp_1_i2c_sda_o;
+wire sfp_1_i2c_sda_t;
+wire sfp_2_i2c_sda_i;
+wire sfp_2_i2c_sda_o;
+wire sfp_2_i2c_sda_t;
+wire eeprom_i2c_scl_i;
+wire eeprom_i2c_scl_o;
+wire eeprom_i2c_scl_t;
+wire eeprom_i2c_sda_i;
+wire eeprom_i2c_sda_o;
+wire eeprom_i2c_sda_t;
+
+sync_signal #(
+    .WIDTH(5),
+    .N(2)
+)
+sync_signal_inst (
+    .clk(pcie_user_clk),
+    .in({sfp_i2c_scl, sfp_1_i2c_sda, sfp_2_i2c_sda,
+        eeprom_i2c_scl, eeprom_i2c_sda}),
+    .out({sfp_i2c_scl_i, sfp_1_i2c_sda_i, sfp_2_i2c_sda_i,
+        eeprom_i2c_scl_i, eeprom_i2c_sda_i})
+);
+
+assign sfp_i2c_scl = sfp_i2c_scl_t ? 1'bz : sfp_i2c_scl_o;
+assign sfp_1_i2c_sda = sfp_1_i2c_sda_t ? 1'bz : sfp_1_i2c_sda_o;
+assign sfp_2_i2c_sda = sfp_2_i2c_sda_t ? 1'bz : sfp_2_i2c_sda_o;
+assign eeprom_i2c_scl = eeprom_i2c_scl_t ? 1'bz : eeprom_i2c_scl_o;
+assign eeprom_i2c_sda = eeprom_i2c_sda_t ? 1'bz : eeprom_i2c_sda_o;
+
+// Flash
+wire [15:0] flash_dq_i_int;
+wire [15:0] flash_dq_o_int;
+wire flash_dq_oe_int;
+wire [22:0] flash_addr_int;
+wire flash_region_int;
+wire flash_region_oe_int;
+wire flash_ce_n_int;
+wire flash_oe_n_int;
+wire flash_we_n_int;
+wire flash_adv_n_int;
+
+assign flash_dq = flash_dq_oe_int ? flash_dq_o_int : 16'hzzzz;
+assign flash_addr = flash_addr_int;
+assign flash_region = flash_region_oe_int ? flash_region_int : 1'bz;
+assign flash_ce_n = flash_ce_n_int;
+assign flash_oe_n = flash_oe_n_int;
+assign flash_we_n = flash_we_n_int;
+assign flash_adv_n = flash_adv_n_int;
+
+sync_signal #(
+    .WIDTH(16),
+    .N(2)
+)
+flash_sync_signal_inst (
+    .clk(pcie_user_clk),
+    .in(flash_dq),
+    .out(flash_dq_i_int)
 );
 
 // PCIe
@@ -912,6 +999,10 @@ core_inst (
      * GPIO
      */
     .sma_led(sma_led),
+    .sma_in(sma_in),
+    .sma_out(sma_out),
+    .sma_out_en(sma_out_en),
+    .sma_term_en(sma_term_en),
 
     /*
      * PCIe
@@ -970,7 +1061,38 @@ core_inst (
     .sfp_2_rx_clk(sfp_2_rx_clk_int),
     .sfp_2_rx_rst(sfp_2_rx_rst_int),
     .sfp_2_rxd(sfp_2_rxd_int),
-    .sfp_2_rxc(sfp_2_rxc_int)
+    .sfp_2_rxc(sfp_2_rxc_int),
+
+    .sfp_i2c_scl_i(sfp_i2c_scl_i),
+    .sfp_i2c_scl_o(sfp_i2c_scl_o),
+    .sfp_i2c_scl_t(sfp_i2c_scl_t),
+    .sfp_1_i2c_sda_i(sfp_1_i2c_sda_i),
+    .sfp_1_i2c_sda_o(sfp_1_i2c_sda_o),
+    .sfp_1_i2c_sda_t(sfp_1_i2c_sda_t),
+    .sfp_2_i2c_sda_i(sfp_2_i2c_sda_i),
+    .sfp_2_i2c_sda_o(sfp_2_i2c_sda_o),
+    .sfp_2_i2c_sda_t(sfp_2_i2c_sda_t),
+
+    .eeprom_i2c_scl_i(eeprom_i2c_scl_i),
+    .eeprom_i2c_scl_o(eeprom_i2c_scl_o),
+    .eeprom_i2c_scl_t(eeprom_i2c_scl_t),
+    .eeprom_i2c_sda_i(eeprom_i2c_sda_i),
+    .eeprom_i2c_sda_o(eeprom_i2c_sda_o),
+    .eeprom_i2c_sda_t(eeprom_i2c_sda_t),
+
+    /*
+     * BPI flash
+     */
+    .flash_dq_i(flash_dq_i_int),
+    .flash_dq_o(flash_dq_o_int),
+    .flash_dq_oe(flash_dq_oe_int),
+    .flash_addr(flash_addr_int),
+    .flash_region(flash_region_int),
+    .flash_region_oe(flash_region_oe_int),
+    .flash_ce_n(flash_ce_n_int),
+    .flash_oe_n(flash_oe_n_int),
+    .flash_we_n(flash_we_n_int),
+    .flash_adv_n(flash_adv_n_int)
 );
 
 endmodule
