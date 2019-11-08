@@ -63,7 +63,9 @@ module pcie_controller #
   parameter CORES_DATA_FIFO_SIZE    = 1024,
   parameter CORES_CTRL_FIFO_SIZE    = 512,
   parameter PCIE_SLOT_COUNT         = 16,
-  parameter PCIE_SLOT_WIDTH         = $clog2(PCIE_SLOT_COUNT)
+  parameter PCIE_SLOT_WIDTH         = $clog2(PCIE_SLOT_COUNT),
+  parameter IF_COUNT                = 2,
+  parameter PORTS_PER_IF            = 1
 ) (
   input  wire                               sys_clk,
   input  wire                               sys_rst,

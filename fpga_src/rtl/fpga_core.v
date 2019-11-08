@@ -40,119 +40,124 @@ either expressed or implied, of The Regents of the University of California.
  */
 module fpga_core #
 (
-    parameter AXIS_PCIE_DATA_WIDTH = 256,
-    parameter AXIS_PCIE_KEEP_WIDTH = (AXIS_PCIE_DATA_WIDTH/32)
+    parameter AXIS_PCIE_DATA_WIDTH    = 256,
+    parameter AXIS_PCIE_KEEP_WIDTH    = (AXIS_PCIE_DATA_WIDTH/32),
+    parameter AXIS_PCIE_RC_USER_WIDTH = 75,
+    parameter AXIS_PCIE_RQ_USER_WIDTH = 60,
+    parameter AXIS_PCIE_CQ_USER_WIDTH = 85,
+    parameter AXIS_PCIE_CC_USER_WIDTH = 33,
+    parameter BAR0_APERTURE           = 24
 )
 (
     /*
      * Clock: 200MHz, 250MHz, 178MHz
      * Synchronous reset
      */
-    input  wire       sys_clk,
-    input  wire       sys_rst,
-    input  wire       pcie_clk,
-    input  wire       pcie_rst,
-    input  wire       core_clk,
-    input  wire       core_rst,
+    input  wire                               sys_clk,
+    input  wire                               sys_rst,
+    input  wire                               pcie_clk,
+    input  wire                               pcie_rst,
+    input  wire                               core_clk,
+    input  wire                               core_rst,
 
     /*
      * GPIO
      */
-    output wire [1:0]                      sma_led,
-    input  wire                            sma_in,
-    output wire                            sma_out,
-    output wire                            sma_out_en,
-    output wire                            sma_term_en,
+    output wire [1:0]                         sma_led,
+    input  wire                               sma_in,
+    output wire                               sma_out,
+    output wire                               sma_out_en,
+    output wire                               sma_term_en,
 
     /*
      * PCIe
      */
-    output wire [AXIS_PCIE_DATA_WIDTH-1:0] m_axis_rq_tdata,
-    output wire [AXIS_PCIE_KEEP_WIDTH-1:0] m_axis_rq_tkeep,
-    output wire                            m_axis_rq_tlast,
-    input  wire                            m_axis_rq_tready,
-    output wire [59:0]                     m_axis_rq_tuser,
-    output wire                            m_axis_rq_tvalid,
+    output wire [AXIS_PCIE_DATA_WIDTH-1:0]    m_axis_rq_tdata,
+    output wire [AXIS_PCIE_KEEP_WIDTH-1:0]    m_axis_rq_tkeep,
+    output wire                               m_axis_rq_tlast,
+    input  wire                               m_axis_rq_tready,
+    output wire [AXIS_PCIE_RQ_USER_WIDTH-1:0] m_axis_rq_tuser,
+    output wire                               m_axis_rq_tvalid,
 
-    input  wire [AXIS_PCIE_DATA_WIDTH-1:0] s_axis_rc_tdata,
-    input  wire [AXIS_PCIE_KEEP_WIDTH-1:0] s_axis_rc_tkeep,
-    input  wire                            s_axis_rc_tlast,
-    output wire                            s_axis_rc_tready,
-    input  wire [74:0]                     s_axis_rc_tuser,
-    input  wire                            s_axis_rc_tvalid,
+    input  wire [AXIS_PCIE_DATA_WIDTH-1:0]    s_axis_rc_tdata,
+    input  wire [AXIS_PCIE_KEEP_WIDTH-1:0]    s_axis_rc_tkeep,
+    input  wire                               s_axis_rc_tlast,
+    output wire                               s_axis_rc_tready,
+    input  wire [AXIS_PCIE_RC_USER_WIDTH-1:0] s_axis_rc_tuser,
+    input  wire                               s_axis_rc_tvalid,
 
-    input  wire [AXIS_PCIE_DATA_WIDTH-1:0] s_axis_cq_tdata,
-    input  wire [AXIS_PCIE_KEEP_WIDTH-1:0] s_axis_cq_tkeep,
-    input  wire                            s_axis_cq_tlast,
-    output wire                            s_axis_cq_tready,
-    input  wire [84:0]                     s_axis_cq_tuser,
-    input  wire                            s_axis_cq_tvalid,
+    input  wire [AXIS_PCIE_DATA_WIDTH-1:0]    s_axis_cq_tdata,
+    input  wire [AXIS_PCIE_KEEP_WIDTH-1:0]    s_axis_cq_tkeep,
+    input  wire                               s_axis_cq_tlast,
+    output wire                               s_axis_cq_tready,
+    input  wire [AXIS_PCIE_CQ_USER_WIDTH-1:0] s_axis_cq_tuser,
+    input  wire                               s_axis_cq_tvalid,
 
-    output wire [AXIS_PCIE_DATA_WIDTH-1:0] m_axis_cc_tdata,
-    output wire [AXIS_PCIE_KEEP_WIDTH-1:0] m_axis_cc_tkeep,
-    output wire                            m_axis_cc_tlast,
-    input  wire                            m_axis_cc_tready,
-    output wire [32:0]                     m_axis_cc_tuser,
-    output wire                            m_axis_cc_tvalid,
+    output wire [AXIS_PCIE_DATA_WIDTH-1:0]    m_axis_cc_tdata,
+    output wire [AXIS_PCIE_KEEP_WIDTH-1:0]    m_axis_cc_tkeep,
+    output wire                               m_axis_cc_tlast,
+    input  wire                               m_axis_cc_tready,
+    output wire [AXIS_PCIE_CC_USER_WIDTH-1:0] m_axis_cc_tuser,
+    output wire                               m_axis_cc_tvalid,
 
-    input  wire [2:0]                      cfg_max_payload,
-    input  wire [2:0]                      cfg_max_read_req,
-    input  wire                            ext_tag_enable,
+    input  wire [2:0]                         cfg_max_payload,
+    input  wire [2:0]                         cfg_max_read_req,
+    input  wire                               ext_tag_enable,
 
-    output wire [31:0]                     msi_irq,
-    output wire                            status_error_cor,
-    output wire                            status_error_uncor,
+    output wire [31:0]                        msi_irq,
+    output wire                               status_error_cor,
+    output wire                               status_error_uncor,
 
     /*
      * Ethernet: SFP+
      */
-    input  wire                            sfp_1_tx_clk,
-    input  wire                            sfp_1_tx_rst,
-    output wire [63:0]                     sfp_1_txd,
-    output wire [7:0]                      sfp_1_txc,
-    input  wire                            sfp_1_rx_clk,
-    input  wire                            sfp_1_rx_rst,
-    input  wire [63:0]                     sfp_1_rxd,
-    input  wire [7:0]                      sfp_1_rxc,
-    input  wire                            sfp_2_tx_clk,
-    input  wire                            sfp_2_tx_rst,
-    output wire [63:0]                     sfp_2_txd,
-    output wire [7:0]                      sfp_2_txc,
-    input  wire                            sfp_2_rx_clk,
-    input  wire                            sfp_2_rx_rst,
-    input  wire [63:0]                     sfp_2_rxd,
-    input  wire [7:0]                      sfp_2_rxc,
+    input  wire                               sfp_1_tx_clk,
+    input  wire                               sfp_1_tx_rst,
+    output wire [63:0]                        sfp_1_txd,
+    output wire [7:0]                         sfp_1_txc,
+    input  wire                               sfp_1_rx_clk,
+    input  wire                               sfp_1_rx_rst,
+    input  wire [63:0]                        sfp_1_rxd,
+    input  wire [7:0]                         sfp_1_rxc,
+    input  wire                               sfp_2_tx_clk,
+    input  wire                               sfp_2_tx_rst,
+    output wire [63:0]                        sfp_2_txd,
+    output wire [7:0]                         sfp_2_txc,
+    input  wire                               sfp_2_rx_clk,
+    input  wire                               sfp_2_rx_rst,
+    input  wire [63:0]                        sfp_2_rxd,
+    input  wire [7:0]                         sfp_2_rxc,
 
-    input  wire                            sfp_i2c_scl_i,
-    output wire                            sfp_i2c_scl_o,
-    output wire                            sfp_i2c_scl_t,
-    input  wire                            sfp_1_i2c_sda_i,
-    output wire                            sfp_1_i2c_sda_o,
-    output wire                            sfp_1_i2c_sda_t,
-    input  wire                            sfp_2_i2c_sda_i,
-    output wire                            sfp_2_i2c_sda_o,
-    output wire                            sfp_2_i2c_sda_t,
+    input  wire                               sfp_i2c_scl_i,
+    output wire                               sfp_i2c_scl_o,
+    output wire                               sfp_i2c_scl_t,
+    input  wire                               sfp_1_i2c_sda_i,
+    output wire                               sfp_1_i2c_sda_o,
+    output wire                               sfp_1_i2c_sda_t,
+    input  wire                               sfp_2_i2c_sda_i,
+    output wire                               sfp_2_i2c_sda_o,
+    output wire                               sfp_2_i2c_sda_t,
 
-    input  wire                            eeprom_i2c_scl_i,
-    output wire                            eeprom_i2c_scl_o,
-    output wire                            eeprom_i2c_scl_t,
-    input  wire                            eeprom_i2c_sda_i,
-    output wire                            eeprom_i2c_sda_o,
-    output wire                            eeprom_i2c_sda_t,
+    input  wire                               eeprom_i2c_scl_i,
+    output wire                               eeprom_i2c_scl_o,
+    output wire                               eeprom_i2c_scl_t,
+    input  wire                               eeprom_i2c_sda_i,
+    output wire                               eeprom_i2c_sda_o,
+    output wire                               eeprom_i2c_sda_t,
 
     /*
      * BPI Flash
      */
-    input  wire [15:0]                     flash_dq_i,
-    output wire [15:0]                     flash_dq_o,
-    output wire                            flash_dq_oe,
-    output wire [22:0]                     flash_addr,
-    output wire                            flash_region,
-    output wire                            flash_region_oe,
-    output wire                            flash_ce_n,
-    output wire                            flash_oe_n,
-    output wire                            flash_we_n,
-    output wire                            flash_adv_n
+    input  wire [15:0]                        flash_dq_i,
+    output wire [15:0]                        flash_dq_o,
+    output wire                               flash_dq_oe,
+    output wire [22:0]                        flash_addr,
+    output wire                               flash_region,
+    output wire                               flash_region_oe,
+    output wire                               flash_ce_n,
+    output wire                               flash_oe_n,
+    output wire                               flash_we_n,
+    output wire                               flash_adv_n
 );
 
 assign sma_led     = 2'd0;
@@ -201,14 +206,12 @@ parameter PCIE_RAM_ADDR_WIDTH = 32;
 parameter TX_RX_RAM_SIZE      = 2**15;
 parameter PCIE_DMA_LEN_WIDTH  = 16;
 parameter HOST_DMA_TAG_WIDTH  = 32;
-parameter AXIS_PCIE_CQ_USER_WIDTH = 85;
-parameter AXIS_PCIE_CC_USER_WIDTH = 33;
-parameter AXIS_PCIE_RC_USER_WIDTH = 75;
-parameter AXIS_PCIE_RQ_USER_WIDTH = 60;
   
 parameter AXIL_DATA_WIDTH = 32;
 parameter AXIL_STRB_WIDTH = (AXIL_DATA_WIDTH/8);
 parameter AXIL_ADDR_WIDTH = 32;
+parameter IF_COUNT        = 2;
+parameter PORTS_PER_IF    = 1;
 
 parameter CORE_WIDTH       = $clog2(CORE_COUNT);
 parameter PORT_WIDTH       = $clog2(PORT_COUNT);
@@ -420,7 +423,9 @@ pcie_config # (
   .AXIL_STRB_WIDTH(AXIL_STRB_WIDTH),
   .AXIL_ADDR_WIDTH(AXIL_ADDR_WIDTH),
   .CORE_COUNT(CORE_COUNT),
-  .CORE_SLOT_WIDTH(SLOT_WIDTH)
+  .CORE_SLOT_WIDTH(SLOT_WIDTH),
+  .IF_COUNT(IF_COUNT),
+  .PORTS_PER_IF(PORTS_PER_IF)
 ) pcie_config_inst (
   .sys_clk(sys_clk),
   .sys_rst(sys_rst),
@@ -533,7 +538,9 @@ pcie_controller #
   .CORE_DESC_WIDTH(LVL1_DRAM_WIDTH),
   .CORE_COUNT(CORE_COUNT),        
   .CORE_ADDR_WIDTH(CORE_ADDR_WIDTH), 
-  .PCIE_SLOT_COUNT(PCIE_SLOT_COUNT)
+  .PCIE_SLOT_COUNT(PCIE_SLOT_COUNT),
+  .IF_COUNT(IF_COUNT),
+  .PORTS_PER_IF(PORTS_PER_IF)
 ) pcie_controller_inst (
   .sys_clk(sys_clk),
   .sys_rst(sys_rst),
