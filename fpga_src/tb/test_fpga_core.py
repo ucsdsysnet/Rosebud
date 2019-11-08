@@ -636,60 +636,60 @@ def bench():
         mem_data[0:len(ins)] = ins
 
         # enable DMA
-        yield rc.mem_write(dev_pf0_bar0+0x000000, struct.pack('<L', 1))
+        yield rc.mem_write(dev_pf0_bar0+0x000400, struct.pack('<L', 1))
         
         if (UPDATE_INS):
-          yield rc.mem_write(dev_pf0_bar0+0x00000C, struct.pack('<L', 0xffff))
+          yield rc.mem_write(dev_pf0_bar0+0x00040C, struct.pack('<L', 0xffff))
           
           # Load instruction memories
           for i in range (0,16):
-              yield rc.mem_write(dev_pf0_bar0+0x000004, struct.pack('<L', ((i<<1)+1)))
+              yield rc.mem_write(dev_pf0_bar0+0x000404, struct.pack('<L', ((i<<1)+1)))
               yield delay(20)
               # write pcie read descriptor
-              yield rc.mem_write(dev_pf0_bar0+0x000100, struct.pack('<L', (mem_base+0x0000) & 0xffffffff))
-              yield rc.mem_write(dev_pf0_bar0+0x000104, struct.pack('<L', (mem_base+0x0000 >> 32) & 0xffffffff))
-              yield rc.mem_write(dev_pf0_bar0+0x000108, struct.pack('<L', ((i<<16)+0x8000) & 0xffffffff))
-              yield rc.mem_write(dev_pf0_bar0+0x00010C, struct.pack('<L', (((i<<16)+0x8000) >> 32) & 0xffffffff))
-              yield rc.mem_write(dev_pf0_bar0+0x000110, struct.pack('<L', 0x400))
-              yield rc.mem_write(dev_pf0_bar0+0x000114, struct.pack('<L', 0xAA))
+              yield rc.mem_write(dev_pf0_bar0+0x000440, struct.pack('<L', (mem_base+0x0000) & 0xffffffff))
+              yield rc.mem_write(dev_pf0_bar0+0x000444, struct.pack('<L', (mem_base+0x0000 >> 32) & 0xffffffff))
+              yield rc.mem_write(dev_pf0_bar0+0x000448, struct.pack('<L', ((i<<16)+0x8000) & 0xffffffff))
+              # yield rc.mem_write(dev_pf0_bar0+0x00044C, struct.pack('<L', (((i<<16)+0x8000) >> 32) & 0xffffffff))
+              yield rc.mem_write(dev_pf0_bar0+0x000450, struct.pack('<L', 0x400))
+              yield rc.mem_write(dev_pf0_bar0+0x000454, struct.pack('<L', 0xAA))
               yield delay(2000)
-              yield rc.mem_write(dev_pf0_bar0+0x000004, struct.pack('<L', ((i<<1)+0)))
+              yield rc.mem_write(dev_pf0_bar0+0x000404, struct.pack('<L', ((i<<1)+0)))
               yield delay(20)
           
-          yield rc.mem_write(dev_pf0_bar0+0x00000C, struct.pack('<L', 0x0000))
+          yield rc.mem_write(dev_pf0_bar0+0x00040C, struct.pack('<L', 0x0000))
         
-        yield rc.mem_write(dev_pf0_bar0+0x000008, struct.pack('<L', 0x0f00))
+        yield rc.mem_write(dev_pf0_bar0+0x000408, struct.pack('<L', 0x0f00))
 
         if (TEST_PCIE):
           print("PCIE tests")
           mem_data[48059:48200] = bytearray([(x+10)%256 for x in range(141)])
 
           # write pcie read descriptor
-          yield rc.mem_write(dev_pf0_bar0+0x000100, struct.pack('<L', (mem_base+0x0000) & 0xffffffff))
-          yield rc.mem_write(dev_pf0_bar0+0x000104, struct.pack('<L', (mem_base+0x0000 >> 32) & 0xffffffff))
-          yield rc.mem_write(dev_pf0_bar0+0x000108, struct.pack('<L', ((4<<16)+0x0100) & 0xffffffff))
-          yield rc.mem_write(dev_pf0_bar0+0x00010C, struct.pack('<L', (((4<<16)+0x0100) >> 32) & 0xffffffff))
-          yield rc.mem_write(dev_pf0_bar0+0x000110, struct.pack('<L', 0x400))
-          yield rc.mem_write(dev_pf0_bar0+0x000114, struct.pack('<L', 0xAA))
+          yield rc.mem_write(dev_pf0_bar0+0x000440, struct.pack('<L', (mem_base+0x0000) & 0xffffffff))
+          yield rc.mem_write(dev_pf0_bar0+0x000444, struct.pack('<L', (mem_base+0x0000 >> 32) & 0xffffffff))
+          yield rc.mem_write(dev_pf0_bar0+0x000448, struct.pack('<L', ((4<<16)+0x0100) & 0xffffffff))
+          # yield rc.mem_write(dev_pf0_bar0+0x00044C, struct.pack('<L', (((4<<16)+0x0100) >> 32) & 0xffffffff))
+          yield rc.mem_write(dev_pf0_bar0+0x000450, struct.pack('<L', 0x400))
+          yield rc.mem_write(dev_pf0_bar0+0x000454, struct.pack('<L', 0xAA))
 
           yield delay(2000)
 
           # read status
-          val = yield from rc.mem_read(dev_pf0_bar0+0x100118, 4)
+          val = yield from rc.mem_read(dev_pf0_bar0+0x000458, 4)
           print(val)
 
           # write pcie write descriptor
-          yield rc.mem_write(dev_pf0_bar0+0x000200, struct.pack('<L', (mem_base+0x1000) & 0xffffffff))
-          yield rc.mem_write(dev_pf0_bar0+0x000204, struct.pack('<L', (mem_base+0x1000 >> 32) & 0xffffffff))
-          yield rc.mem_write(dev_pf0_bar0+0x000208, struct.pack('<L', (0x40100) & 0xffffffff))
-          yield rc.mem_write(dev_pf0_bar0+0x00020C, struct.pack('<L', (0x40100 >> 32) & 0xffffffff))
-          yield rc.mem_write(dev_pf0_bar0+0x000210, struct.pack('<L', 0x400))
-          yield rc.mem_write(dev_pf0_bar0+0x000214, struct.pack('<L', 0x55))
+          yield rc.mem_write(dev_pf0_bar0+0x000460, struct.pack('<L', (mem_base+0x1000) & 0xffffffff))
+          yield rc.mem_write(dev_pf0_bar0+0x000464, struct.pack('<L', (mem_base+0x1000 >> 32) & 0xffffffff))
+          yield rc.mem_write(dev_pf0_bar0+0x000468, struct.pack('<L', (0x40100) & 0xffffffff))
+          # yield rc.mem_write(dev_pf0_bar0+0x00046C, struct.pack('<L', (0x40100 >> 32) & 0xffffffff))
+          yield rc.mem_write(dev_pf0_bar0+0x000470, struct.pack('<L', 0x400))
+          yield rc.mem_write(dev_pf0_bar0+0x000474, struct.pack('<L', 0x55))
 
           yield delay(2000)
 
           # read status
-          val = yield from rc.mem_read(dev_pf0_bar0+0x000218, 4)
+          val = yield from rc.mem_read(dev_pf0_bar0+0x000478, 4)
           print(val)
 
           data = mem_data[0x1000:(0x1000)+1024]
@@ -710,29 +710,29 @@ def bench():
           yield port2(),None
 
           # yield delay(10000)
-          # val = yield from rc.mem_read(dev_pf0_bar0+0x000010, 4)
+          # val = yield from rc.mem_read(dev_pf0_bar0+0x000410, 4)
           # print ("Moein read core 0 slot count:",val)
-          # yield rc.mem_write(dev_pf0_bar0+0x00000C, struct.pack('<L', 1))
+          # yield rc.mem_write(dev_pf0_bar0+0x00040C, struct.pack('<L', 1))
           # 
           # while (val[0]!=0x08):
           #   yield delay(2000)
-          #   val = yield from rc.mem_read(dev_pf0_bar0+0x000010, 4)
+          #   val = yield from rc.mem_read(dev_pf0_bar0+0x000410, 4)
           #   print ("Moein read core 0 slot count:",val)
           # 
-          # yield rc.mem_write(dev_pf0_bar0+0x00000C, struct.pack('<L', 0))
+          # yield rc.mem_write(dev_pf0_bar0+0x00040C, struct.pack('<L', 0))
           # 
-          # yield rc.mem_write(dev_pf0_bar0+0x000010, struct.pack('<L', 5))
+          # yield rc.mem_write(dev_pf0_bar0+0x000410, struct.pack('<L', 5))
           # yield delay(200)
-          # val = yield from rc.mem_read(dev_pf0_bar0+0x000010, 4)
+          # val = yield from rc.mem_read(dev_pf0_bar0+0x000410, 4)
           # print ("Moein read core 5 slot count:",val)
-          # yield rc.mem_write(dev_pf0_bar0+0x00000C, struct.pack('<L', 0x0020))
+          # yield rc.mem_write(dev_pf0_bar0+0x00040C, struct.pack('<L', 0x0020))
           # 
           # while (val[0]!=0x08):
           #   yield delay(2000)
-          #   val = yield from rc.mem_read(dev_pf0_bar0+0x000010, 4)
+          #   val = yield from rc.mem_read(dev_pf0_bar0+0x000410, 4)
           #   print ("Moein read core 5 slot count:",val)
           # 
-          # yield rc.mem_write(dev_pf0_bar0+0x00000C, struct.pack('<L', 0))
+          # yield rc.mem_write(dev_pf0_bar0+0x00040C, struct.pack('<L', 0))
 
           lengths = []
           print ("send data from LAN")
