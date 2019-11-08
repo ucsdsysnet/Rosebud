@@ -20,8 +20,8 @@ module simple_scheduler # (
   parameter LVL2_SW_PORTS   = CORE_COUNT/CLUSTER_COUNT,
   parameter LVL1_BITS       = $clog2(CLUSTER_COUNT)
 ) (
-  input                                     clk,
-  input                                     rst,
+  input                                           clk,
+  input                                           rst,
 
   // Data line to/from Eth interfaces
   input  wire [INTERFACE_COUNT*DATA_WIDTH-1:0]    rx_axis_tdata,

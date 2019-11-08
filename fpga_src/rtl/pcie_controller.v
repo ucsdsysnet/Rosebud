@@ -65,120 +65,137 @@ module pcie_controller #
   parameter PCIE_SLOT_COUNT         = 16,
   parameter PCIE_SLOT_WIDTH         = $clog2(PCIE_SLOT_COUNT),
   parameter IF_COUNT                = 2,
-  parameter PORTS_PER_IF            = 1
+  parameter PORTS_PER_IF            = 1,
+  parameter PORT_COUNT              = (IF_COUNT>0) ? IF_COUNT*PORTS_PER_IF : 1
 ) (
-  input  wire                               sys_clk,
-  input  wire                               sys_rst,
-  input  wire                               pcie_clk,
-  input  wire                               pcie_rst,
+  input  wire                                  sys_clk,
+  input  wire                                  sys_rst,
+  input  wire                                  pcie_clk,
+  input  wire                                  pcie_rst,
 
   /*
    * PCIe
    */
-  output wire [AXIS_PCIE_DATA_WIDTH-1:0]    m_axis_rq_tdata,
-  output wire [AXIS_PCIE_KEEP_WIDTH-1:0]    m_axis_rq_tkeep,
-  output wire                               m_axis_rq_tlast,
-  input  wire                               m_axis_rq_tready,
-  output wire [AXIS_PCIE_RQ_USER_WIDTH-1:0] m_axis_rq_tuser,
-  output wire                               m_axis_rq_tvalid,
+  output wire [AXIS_PCIE_DATA_WIDTH-1:0]       m_axis_rq_tdata,
+  output wire [AXIS_PCIE_KEEP_WIDTH-1:0]       m_axis_rq_tkeep,
+  output wire                                  m_axis_rq_tlast,
+  input  wire                                  m_axis_rq_tready,
+  output wire [AXIS_PCIE_RQ_USER_WIDTH-1:0]    m_axis_rq_tuser,
+  output wire                                  m_axis_rq_tvalid,
 
-  input  wire [AXIS_PCIE_DATA_WIDTH-1:0]    s_axis_rc_tdata,
-  input  wire [AXIS_PCIE_KEEP_WIDTH-1:0]    s_axis_rc_tkeep,
-  input  wire                               s_axis_rc_tlast,
-  output wire                               s_axis_rc_tready,
-  input  wire [AXIS_PCIE_RC_USER_WIDTH-1:0] s_axis_rc_tuser,
-  input  wire                               s_axis_rc_tvalid,
+  input  wire [AXIS_PCIE_DATA_WIDTH-1:0]       s_axis_rc_tdata,
+  input  wire [AXIS_PCIE_KEEP_WIDTH-1:0]       s_axis_rc_tkeep,
+  input  wire                                  s_axis_rc_tlast,
+  output wire                                  s_axis_rc_tready,
+  input  wire [AXIS_PCIE_RC_USER_WIDTH-1:0]    s_axis_rc_tuser,
+  input  wire                                  s_axis_rc_tvalid,
 
-  input  wire [AXIS_PCIE_DATA_WIDTH-1:0]    s_axis_cq_tdata,
-  input  wire [AXIS_PCIE_KEEP_WIDTH-1:0]    s_axis_cq_tkeep,
-  input  wire                               s_axis_cq_tlast,
-  output wire                               s_axis_cq_tready,
-  input  wire [AXIS_PCIE_CQ_USER_WIDTH-1:0] s_axis_cq_tuser,
-  input  wire                               s_axis_cq_tvalid,
+  input  wire [AXIS_PCIE_DATA_WIDTH-1:0]       s_axis_cq_tdata,
+  input  wire [AXIS_PCIE_KEEP_WIDTH-1:0]       s_axis_cq_tkeep,
+  input  wire                                  s_axis_cq_tlast,
+  output wire                                  s_axis_cq_tready,
+  input  wire [AXIS_PCIE_CQ_USER_WIDTH-1:0]    s_axis_cq_tuser,
+  input  wire                                  s_axis_cq_tvalid,
 
-  output wire [AXIS_PCIE_DATA_WIDTH-1:0]    m_axis_cc_tdata,
-  output wire [AXIS_PCIE_KEEP_WIDTH-1:0]    m_axis_cc_tkeep,
-  output wire                               m_axis_cc_tlast,
-  input  wire                               m_axis_cc_tready,
-  output wire [AXIS_PCIE_CC_USER_WIDTH-1:0] m_axis_cc_tuser,
-  output wire                               m_axis_cc_tvalid,
+  output wire [AXIS_PCIE_DATA_WIDTH-1:0]       m_axis_cc_tdata,
+  output wire [AXIS_PCIE_KEEP_WIDTH-1:0]       m_axis_cc_tkeep,
+  output wire                                  m_axis_cc_tlast,
+  input  wire                                  m_axis_cc_tready,
+  output wire [AXIS_PCIE_CC_USER_WIDTH-1:0]    m_axis_cc_tuser,
+  output wire                                  m_axis_cc_tvalid,
 
-  input  wire [2:0]                         cfg_max_payload,
-  input  wire [2:0]                         cfg_max_read_req,
-  input  wire                               ext_tag_enable,
-  input  wire                               pcie_dma_enable,
+  input  wire [2:0]                            cfg_max_payload,
+  input  wire [2:0]                            cfg_max_read_req,
+  input  wire                                  ext_tag_enable,
+  input  wire                                  pcie_dma_enable,
 
-  output wire                               status_error_cor,
-  output wire                               status_error_uncor,
+  output wire                                  status_error_cor,
+  output wire                                  status_error_uncor,
   
   // Cores data
-  input  wire [AXIS_DATA_WIDTH-1:0]         cores_tx_axis_tdata,
-  input  wire [AXIS_KEEP_WIDTH-1:0]         cores_tx_axis_tkeep,
-  input  wire [AXIS_TAG_WIDTH-1:0]          cores_tx_axis_tuser,
-  input  wire                               cores_tx_axis_tvalid, 
-  output wire                               cores_tx_axis_tready, 
-  input  wire                               cores_tx_axis_tlast,
+  input  wire [AXIS_DATA_WIDTH-1:0]            cores_tx_axis_tdata,
+  input  wire [AXIS_KEEP_WIDTH-1:0]            cores_tx_axis_tkeep,
+  input  wire [AXIS_TAG_WIDTH-1:0]             cores_tx_axis_tuser,
+  input  wire                                  cores_tx_axis_tvalid, 
+  output wire                                  cores_tx_axis_tready, 
+  input  wire                                  cores_tx_axis_tlast,
   
-  output wire [AXIS_DATA_WIDTH-1:0]         cores_rx_axis_tdata,
-  output wire [AXIS_KEEP_WIDTH-1:0]         cores_rx_axis_tkeep,
-  output wire [AXIS_TAG_WIDTH-1:0]          cores_rx_axis_tdest,
-  output wire                               cores_rx_axis_tvalid, 
-  input  wire                               cores_rx_axis_tready, 
-  output wire                               cores_rx_axis_tlast,
+  output wire [AXIS_DATA_WIDTH-1:0]            cores_rx_axis_tdata,
+  output wire [AXIS_KEEP_WIDTH-1:0]            cores_rx_axis_tkeep,
+  output wire [AXIS_TAG_WIDTH-1:0]             cores_rx_axis_tdest,
+  output wire                                  cores_rx_axis_tvalid, 
+  input  wire                                  cores_rx_axis_tready, 
+  output wire                                  cores_rx_axis_tlast,
   
   // Cores DRAM requests
-  input  wire [CORE_DESC_WIDTH-1:0]         cores_ctrl_s_axis_tdata,
-  input  wire                               cores_ctrl_s_axis_tvalid,
-  output wire                               cores_ctrl_s_axis_tready,
-  input  wire                               cores_ctrl_s_axis_tlast,
-  input  wire [CORE_WIDTH-1:0]              cores_ctrl_s_axis_tuser,
+  input  wire [CORE_DESC_WIDTH-1:0]            cores_ctrl_s_axis_tdata,
+  input  wire                                  cores_ctrl_s_axis_tvalid,
+  output wire                                  cores_ctrl_s_axis_tready,
+  input  wire                                  cores_ctrl_s_axis_tlast,
+  input  wire [CORE_WIDTH-1:0]                 cores_ctrl_s_axis_tuser,
   
-  output wire [CORE_DESC_WIDTH-1:0]         cores_ctrl_m_axis_tdata,
-  output wire                               cores_ctrl_m_axis_tvalid,
-  input  wire                               cores_ctrl_m_axis_tready,
-  output wire                               cores_ctrl_m_axis_tlast,
-  output wire [CORE_WIDTH-1:0]              cores_ctrl_m_axis_tdest,
+  output wire [CORE_DESC_WIDTH-1:0]            cores_ctrl_m_axis_tdata,
+  output wire                                  cores_ctrl_m_axis_tvalid,
+  input  wire                                  cores_ctrl_m_axis_tready,
+  output wire                                  cores_ctrl_m_axis_tlast,
+  output wire [CORE_WIDTH-1:0]                 cores_ctrl_m_axis_tdest,
   
   // DMA requests from Host
-  input  wire [PCIE_ADDR_WIDTH-1:0]         host_dma_read_desc_pcie_addr,
-  input  wire [PCIE_RAM_ADDR_WIDTH-1:0]     host_dma_read_desc_ram_addr,
-  input  wire [PCIE_DMA_LEN_WIDTH-1:0]      host_dma_read_desc_len,
-  input  wire [HOST_DMA_TAG_WIDTH-1:0]      host_dma_read_desc_tag,
-  input  wire                               host_dma_read_desc_valid,
-  output wire                               host_dma_read_desc_ready,
-  output wire [HOST_DMA_TAG_WIDTH-1:0]      host_dma_read_desc_status_tag,
-  output wire                               host_dma_read_desc_status_valid,
+  input  wire [PCIE_ADDR_WIDTH-1:0]            host_dma_read_desc_pcie_addr,
+  input  wire [PCIE_RAM_ADDR_WIDTH-1:0]        host_dma_read_desc_ram_addr,
+  input  wire [PCIE_DMA_LEN_WIDTH-1:0]         host_dma_read_desc_len,
+  input  wire [HOST_DMA_TAG_WIDTH-1:0]         host_dma_read_desc_tag,
+  input  wire                                  host_dma_read_desc_valid,
+  output wire                                  host_dma_read_desc_ready,
+  output wire [HOST_DMA_TAG_WIDTH-1:0]         host_dma_read_desc_status_tag,
+  output wire                                  host_dma_read_desc_status_valid,
 
-  input  wire [PCIE_ADDR_WIDTH-1:0]         host_dma_write_desc_pcie_addr,
-  input  wire [PCIE_RAM_ADDR_WIDTH-1:0]     host_dma_write_desc_ram_addr,
-  input  wire [PCIE_DMA_LEN_WIDTH-1:0]      host_dma_write_desc_len,
-  input  wire [HOST_DMA_TAG_WIDTH-1:0]      host_dma_write_desc_tag,
-  input  wire                               host_dma_write_desc_valid,
-  output wire                               host_dma_write_desc_ready,
-  output wire [HOST_DMA_TAG_WIDTH-1:0]      host_dma_write_desc_status_tag,
-  output wire                               host_dma_write_desc_status_valid,
+  input  wire [PCIE_ADDR_WIDTH-1:0]            host_dma_write_desc_pcie_addr,
+  input  wire [PCIE_RAM_ADDR_WIDTH-1:0]        host_dma_write_desc_ram_addr,
+  input  wire [PCIE_DMA_LEN_WIDTH-1:0]         host_dma_write_desc_len,
+  input  wire [HOST_DMA_TAG_WIDTH-1:0]         host_dma_write_desc_tag,
+  input  wire                                  host_dma_write_desc_valid,
+  output wire                                  host_dma_write_desc_ready,
+  output wire [HOST_DMA_TAG_WIDTH-1:0]         host_dma_write_desc_status_tag,
+  output wire                                  host_dma_write_desc_status_valid,
  
   // AXI lite
-  output wire [AXIL_ADDR_WIDTH-1:0]         axil_ctrl_awaddr,
-  output wire [2:0]                         axil_ctrl_awprot,
-  output wire                               axil_ctrl_awvalid,
-  input  wire                               axil_ctrl_awready,
-  output wire [AXIL_DATA_WIDTH-1:0]         axil_ctrl_wdata,
-  output wire [AXIL_STRB_WIDTH-1:0]         axil_ctrl_wstrb,
-  output wire                               axil_ctrl_wvalid,
-  input  wire                               axil_ctrl_wready,
-  input  wire [1:0]                         axil_ctrl_bresp,
-  input  wire                               axil_ctrl_bvalid,
-  output wire                               axil_ctrl_bready,
-  output wire [AXIL_ADDR_WIDTH-1:0]         axil_ctrl_araddr,
-  output wire [2:0]                         axil_ctrl_arprot,
-  output wire                               axil_ctrl_arvalid,
-  input  wire                               axil_ctrl_arready,
-  input  wire [AXIL_DATA_WIDTH-1:0]         axil_ctrl_rdata,
-  input  wire [1:0]                         axil_ctrl_rresp,
-  input  wire                               axil_ctrl_rvalid,
-  output wire                               axil_ctrl_rready
+  output wire [AXIL_ADDR_WIDTH-1:0]            axil_ctrl_awaddr,
+  output wire [2:0]                            axil_ctrl_awprot,
+  output wire                                  axil_ctrl_awvalid,
+  input  wire                                  axil_ctrl_awready,
+  output wire [AXIL_DATA_WIDTH-1:0]            axil_ctrl_wdata,
+  output wire [AXIL_STRB_WIDTH-1:0]            axil_ctrl_wstrb,
+  output wire                                  axil_ctrl_wvalid,
+  input  wire                                  axil_ctrl_wready,
+  input  wire [1:0]                            axil_ctrl_bresp,
+  input  wire                                  axil_ctrl_bvalid,
+  output wire                                  axil_ctrl_bready,
+  output wire [AXIL_ADDR_WIDTH-1:0]            axil_ctrl_araddr,
+  output wire [2:0]                            axil_ctrl_arprot,
+  output wire                                  axil_ctrl_arvalid,
+  input  wire                                  axil_ctrl_arready,
+  input  wire [AXIL_DATA_WIDTH-1:0]            axil_ctrl_rdata,
+  input  wire [1:0]                            axil_ctrl_rresp,
+  input  wire                                  axil_ctrl_rvalid,
+  output wire                                  axil_ctrl_rready,
+    
+  // Virtual MACs
+  output wire [PORT_COUNT*AXIS_DATA_WIDTH-1:0] tx_axis_tdata,
+  output wire [PORT_COUNT*AXIS_KEEP_WIDTH-1:0] tx_axis_tkeep,
+  output wire [PORT_COUNT-1:0]                 tx_axis_tvalid,
+  input  wire [PORT_COUNT-1:0]                 tx_axis_tready,
+  output wire [PORT_COUNT-1:0]                 tx_axis_tlast,
+  output wire [PORT_COUNT-1:0]                 tx_axis_tuser,
 
+  input  wire [PORT_COUNT*AXIS_DATA_WIDTH-1:0] rx_axis_tdata,
+  input  wire [PORT_COUNT*AXIS_KEEP_WIDTH-1:0] rx_axis_tkeep,
+  input  wire [PORT_COUNT-1:0]                 rx_axis_tvalid,
+  output wire [PORT_COUNT-1:0]                 rx_axis_tready,
+  input  wire [PORT_COUNT-1:0]                 rx_axis_tlast,
+  input  wire [PORT_COUNT-1:0]                 rx_axis_tuser,
+    
+  output wire [31:0]                           msi_irq
 );
   
 parameter IF_AXIL_ADDR_WIDTH  = (IF_COUNT>0) ? AXIL_ADDR_WIDTH-$clog2(IF_COUNT) : AXIL_ADDR_WIDTH;
@@ -990,6 +1007,14 @@ if (IF_COUNT==0) begin
   assign axil_pcie_rresp   = axil_ctrl_rresp;
   assign axil_pcie_rvalid  = axil_ctrl_rvalid;
   assign axil_ctrl_rready  = axil_pcie_rready; 
+  
+  assign tx_axis_tdata  = {AXIS_DATA_WIDTH{1'b0}};
+  assign tx_axis_tkeep  = {AXIS_KEEP_WIDTH{1'b0}};
+  assign tx_axis_tvalid = 1'b0;
+  assign tx_axis_tlast  = 1'b0;
+  assign tx_axis_tuser  = 1'b0;
+  assign rx_axis_tready = 1'b0;
+  assign msi_irq        = 32'd0;
 
 end else begin
     
@@ -1218,19 +1243,19 @@ end else begin
       .if_dma_ram_rd_resp_valid(if_dma_ram_rd_resp_valid),
       .if_dma_ram_rd_resp_ready(if_dma_ram_rd_resp_ready),
   
-      .tx_axis_tdata(),
-      .tx_axis_tkeep(),
-      .tx_axis_tvalid(),
-      .tx_axis_tready({IF_COUNT{1'b0}}),
-      .tx_axis_tlast(),
-      .tx_axis_tuser(),
+      .tx_axis_tdata(tx_axis_tdata),
+      .tx_axis_tkeep(tx_axis_tkeep),
+      .tx_axis_tvalid(tx_axis_tvalid),
+      .tx_axis_tready(tx_axis_tready),
+      .tx_axis_tlast(tx_axis_tlast),
+      .tx_axis_tuser(tx_axis_tuser),
   
-      .rx_axis_tdata({IF_COUNT*AXIS_DATA_WIDTH{1'b0}}),
-      .rx_axis_tkeep({IF_COUNT*AXIS_KEEP_WIDTH{1'b0}}),
-      .rx_axis_tvalid({IF_COUNT{1'b0}}),
-      .rx_axis_tready(),
-      .rx_axis_tlast({IF_COUNT{1'b0}}),
-      .rx_axis_tuser({IF_COUNT{1'b0}}),
+      .rx_axis_tdata(rx_axis_tdata),
+      .rx_axis_tkeep(rx_axis_tkeep),
+      .rx_axis_tvalid(rx_axis_tvalid),
+      .rx_axis_tready(rx_axis_tready),
+      .rx_axis_tlast(rx_axis_tlast),
+      .rx_axis_tuser(rx_axis_tuser),
   
       .axil_pcie_awaddr (axil_pcie_awaddr),
       .axil_pcie_awprot (axil_pcie_awprot),
@@ -1272,7 +1297,7 @@ end else begin
       .axil_ctrl_rvalid (axil_ctrl_rvalid),
       .axil_ctrl_rready (axil_ctrl_rready),
   
-      .msi_irq()
+      .msi_irq(msi_irq)
   );
   
   assign axil_ctrl_awaddr[AXIL_ADDR_WIDTH-1:AXIL_CSR_ADDR_WIDTH] = 

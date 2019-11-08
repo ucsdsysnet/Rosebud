@@ -99,6 +99,7 @@ module pcie_config # (
   input  wire [CORE_SLOT_WIDTH-1:0]         slot_count,
   
   output reg                                pcie_dma_enable,
+  input  wire [31:0]                        if_msi_irq,
   output wire [31:0]                        msi_irq
 );
 
@@ -335,8 +336,8 @@ always @(posedge pcie_clk) begin
     end
 end
 
-assign msi_irq[0] = host_dma_read_desc_status_valid || host_dma_write_desc_status_valid;
-assign msi_irq[31:1] = 0;
+// assign msi_irq[0] = host_dma_read_desc_status_valid || host_dma_write_desc_status_valid;
+assign msi_irq = if_msi_irq;
 
 // A core to be reset cannot be an incoming core. 
 // Simplifies logic in controller. 

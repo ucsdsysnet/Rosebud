@@ -168,7 +168,6 @@ assign sma_term_en = 1'b0;
 // RISCV system parameters
 parameter CORE_COUNT       = 16;
 parameter INTERFACE_COUNT  = 2;
-parameter PORT_COUNT       = 2*INTERFACE_COUNT+1;
 parameter CORE_ADDR_WIDTH  = 16;
 parameter SLOT_COUNT       = 8;
 parameter PCIE_SLOT_COUNT  = 16;
@@ -194,8 +193,6 @@ parameter DMEM_SIZE_BYTES  = 32768;
 parameter COHERENT_START   = 16'h6FFF;
 parameter LEN_WIDTH        = 16;
 parameter INTERLEAVE       = 1;
-parameter DRAM_PORT        = 2*INTERFACE_COUNT+1-1;
-parameter LOOPBACK_PORT    = INTERFACE_COUNT+1-1;
 parameter CLUSTER_COUNT    = 4;
 parameter BC_MSG_CLUSTERS  = 16;
 parameter SEPARATE_CLOCKS  = 1;
@@ -210,8 +207,13 @@ parameter HOST_DMA_TAG_WIDTH  = 32;
 parameter AXIL_DATA_WIDTH = 32;
 parameter AXIL_STRB_WIDTH = (AXIL_DATA_WIDTH/8);
 parameter AXIL_ADDR_WIDTH = BAR0_APERTURE;
-parameter IF_COUNT        = 2;
-parameter PORTS_PER_IF    = 1;
+parameter V_IF_COUNT      = 2;
+parameter PORTS_PER_V_IF  = 1;
+parameter V_PORT_COUNT    = V_IF_COUNT * PORTS_PER_V_IF;
+parameter FIRST_LB_PORT   = INTERFACE_COUNT+V_PORT_COUNT+1-1;
+parameter LB_PORT_COUNT   = 2;
+parameter PORT_COUNT      = INTERFACE_COUNT+V_PORT_COUNT+LB_PORT_COUNT+1;
+parameter DRAM_PORT       = PORT_COUNT-1;
 
 parameter CORE_WIDTH       = $clog2(CORE_COUNT);
 parameter PORT_WIDTH       = $clog2(PORT_COUNT);
@@ -241,13 +243,13 @@ assign sfp_2_txd = sfp_txd[127:64];
 assign sfp_2_txc = sfp_txc[15:8];
 
 // ETH interfaces MAC
-wire [INTERFACE_COUNT*LVL1_DATA_WIDTH-1:0] tx_axis_tdata;
-wire [INTERFACE_COUNT*LVL1_STRB_WIDTH-1:0] tx_axis_tkeep;
-wire [INTERFACE_COUNT-1:0] tx_axis_tvalid, tx_axis_tready, tx_axis_tlast;
+wire [(INTERFACE_COUNT+V_PORT_COUNT)*LVL1_DATA_WIDTH-1:0] tx_axis_tdata;
+wire [(INTERFACE_COUNT+V_PORT_COUNT)*LVL1_STRB_WIDTH-1:0] tx_axis_tkeep;
+wire [(INTERFACE_COUNT+V_PORT_COUNT)-1:0] tx_axis_tvalid, tx_axis_tready, tx_axis_tlast;
 
-wire [INTERFACE_COUNT*LVL1_DATA_WIDTH-1:0] rx_axis_tdata;
-wire [INTERFACE_COUNT*LVL1_STRB_WIDTH-1:0] rx_axis_tkeep;
-wire [INTERFACE_COUNT-1:0] rx_axis_tvalid, rx_axis_tready, rx_axis_tlast;
+wire [(INTERFACE_COUNT+V_PORT_COUNT)*LVL1_DATA_WIDTH-1:0] rx_axis_tdata;
+wire [(INTERFACE_COUNT+V_PORT_COUNT)*LVL1_STRB_WIDTH-1:0] rx_axis_tkeep;
+wire [(INTERFACE_COUNT+V_PORT_COUNT)-1:0] rx_axis_tvalid, rx_axis_tready, rx_axis_tlast;
 
 genvar l;
 generate
@@ -373,7 +375,8 @@ wire [CORE_COUNT-1:0]      cores_to_be_reset;
 wire [CORE_WIDTH-1:0]      core_for_slot_count;
 wire [SLOT_WIDTH-1:0]      slot_count;
 wire                       pcie_dma_enable;
-   
+wire [31:0]                vif_irq;
+
 // AXI lite connections
 wire [AXIL_ADDR_WIDTH-1:0]         axil_ctrl_awaddr;
 wire [2:0]                         axil_ctrl_awprot;
@@ -414,6 +417,19 @@ wire                           host_dma_write_desc_ready;
 wire [HOST_DMA_TAG_WIDTH-1:0]  host_dma_write_desc_status_tag;
 wire                           host_dma_write_desc_status_valid;
 
+// Virtual MAC ports
+parameter V_PORT_COUNT_MIN1 = (V_PORT_COUNT>0) ? V_PORT_COUNT:1;
+  
+wire [V_PORT_COUNT_MIN1*LVL1_DATA_WIDTH-1:0] v_tx_axis_tdata;
+wire [V_PORT_COUNT_MIN1*LVL1_STRB_WIDTH-1:0] v_tx_axis_tkeep;
+wire [V_PORT_COUNT_MIN1-1:0] v_tx_axis_tvalid, v_tx_axis_tready, 
+                             v_tx_axis_tlast,  v_tx_axis_tuser;
+
+wire [V_PORT_COUNT_MIN1*LVL1_DATA_WIDTH-1:0] v_rx_axis_tdata;
+wire [V_PORT_COUNT_MIN1*LVL1_STRB_WIDTH-1:0] v_rx_axis_tkeep;
+wire [V_PORT_COUNT_MIN1-1:0] v_rx_axis_tvalid, v_rx_axis_tready, 
+                             v_rx_axis_tlast;
+ 
 pcie_config # (
   .PCIE_ADDR_WIDTH(PCIE_ADDR_WIDTH),
   .PCIE_RAM_ADDR_WIDTH(PCIE_RAM_ADDR_WIDTH),
@@ -424,8 +440,8 @@ pcie_config # (
   .AXIL_ADDR_WIDTH(AXIL_ADDR_WIDTH),
   .CORE_COUNT(CORE_COUNT),
   .CORE_SLOT_WIDTH(SLOT_WIDTH),
-  .IF_COUNT(IF_COUNT),
-  .PORTS_PER_IF(PORTS_PER_IF)
+  .IF_COUNT(V_IF_COUNT),
+  .PORTS_PER_IF(PORTS_PER_V_IF)
 ) pcie_config_inst (
   .sys_clk(sys_clk),
   .sys_rst(sys_rst),
@@ -514,9 +530,35 @@ pcie_config # (
   .slot_count         (slot_count),
 
   .pcie_dma_enable    (pcie_dma_enable),
+  .if_msi_irq         (vif_irq),
   .msi_irq            (msi_irq)
 );
 
+if (V_PORT_COUNT==0) begin
+
+  assign v_rx_axis_tready = 1'b0;
+  assign v_tx_axis_tdata  = {LVL1_DATA_WIDTH{1'b0}};
+  assign v_tx_axis_tkeep  = {LVL1_STRB_WIDTH{1'b0}};
+  assign v_tx_axis_tvalid = 1'b0; 
+  assign v_tx_axis_tlast  = 1'b0;
+  assign v_tx_axis_tuser  = 1'b0; 
+
+end else begin
+ 
+  assign rx_axis_tdata[INTERFACE_COUNT*LVL1_DATA_WIDTH +: V_PORT_COUNT*LVL1_DATA_WIDTH] = v_rx_axis_tdata;
+  assign rx_axis_tkeep[INTERFACE_COUNT*LVL1_STRB_WIDTH +: V_PORT_COUNT*LVL1_STRB_WIDTH] = v_rx_axis_tkeep;
+  assign rx_axis_tvalid[INTERFACE_COUNT +: V_PORT_COUNT]                                = v_rx_axis_tvalid;
+  assign rx_axis_tlast[INTERFACE_COUNT +: V_PORT_COUNT]                                 = v_rx_axis_tlast;
+  assign v_rx_axis_tready = rx_axis_tready[INTERFACE_COUNT +: V_PORT_COUNT]; 
+
+  assign v_tx_axis_tdata  = tx_axis_tdata[INTERFACE_COUNT*LVL1_DATA_WIDTH +: V_PORT_COUNT*LVL1_DATA_WIDTH];
+  assign v_tx_axis_tkeep  = tx_axis_tkeep[INTERFACE_COUNT*LVL1_STRB_WIDTH +: V_PORT_COUNT*LVL1_STRB_WIDTH];
+  assign v_tx_axis_tvalid = tx_axis_tvalid[INTERFACE_COUNT +: V_PORT_COUNT];
+  assign v_tx_axis_tlast  = tx_axis_tlast[INTERFACE_COUNT +: V_PORT_COUNT];
+  assign v_tx_axis_tuser  = {V_PORT_COUNT{1'b0}}; 
+  assign tx_axis_tready[INTERFACE_COUNT +: V_PORT_COUNT] = v_tx_axis_tready;
+end
+  
 pcie_controller #
 (
   .AXIS_PCIE_DATA_WIDTH(AXIS_PCIE_DATA_WIDTH),
@@ -539,8 +581,8 @@ pcie_controller #
   .CORE_COUNT(CORE_COUNT),        
   .CORE_ADDR_WIDTH(CORE_ADDR_WIDTH), 
   .PCIE_SLOT_COUNT(PCIE_SLOT_COUNT),
-  .IF_COUNT(IF_COUNT),
-  .PORTS_PER_IF(PORTS_PER_IF)
+  .IF_COUNT(V_IF_COUNT),
+  .PORTS_PER_IF(PORTS_PER_V_IF)
 ) pcie_controller_inst (
   .sys_clk(sys_clk),
   .sys_rst(sys_rst),
@@ -652,12 +694,30 @@ pcie_controller #
   .axil_ctrl_rdata(axil_ctrl_rdata),
   .axil_ctrl_rresp(axil_ctrl_rresp),
   .axil_ctrl_rvalid(axil_ctrl_rvalid),
-  .axil_ctrl_rready(axil_ctrl_rready)
+  .axil_ctrl_rready(axil_ctrl_rready),
+
+  // Virtual ports
+  .tx_axis_tdata(v_rx_axis_tdata), 
+  .tx_axis_tkeep(v_rx_axis_tkeep),
+  .tx_axis_tvalid(v_rx_axis_tvalid),
+  .tx_axis_tready(v_rx_axis_tready),
+  .tx_axis_tlast(v_rx_axis_tlast),
+  .tx_axis_tuser(),
+  
+  .rx_axis_tdata(v_tx_axis_tdata),
+  .rx_axis_tkeep(v_tx_axis_tkeep),
+  .rx_axis_tvalid(v_tx_axis_tvalid),
+  .rx_axis_tready(v_tx_axis_tready),
+  .rx_axis_tlast(v_tx_axis_tlast),
+  .rx_axis_tuser(v_tx_axis_tuser),
+
+  .msi_irq (vif_irq)
+
 );
 
 assign dram_rx_axis_tuser = DRAM_PORT;
 
-// Loopback message FIFO module
+// Loopback inter core message FIFO
 wire [2*LVL1_DATA_WIDTH-1:0] loopback_tx_axis_tdata;
 wire [2*LVL1_STRB_WIDTH-1:0] loopback_tx_axis_tkeep;
 wire [2*ID_TAG_WIDTH-1:0]    loopback_tx_axis_tuser;
@@ -673,21 +733,51 @@ wire [2-1:0]                 loopback_rx_axis_tvalid,
                              loopback_rx_axis_tready, 
                              loopback_rx_axis_tlast;
 
-// Scheduler 
-wire [INTERFACE_COUNT*LVL1_DATA_WIDTH-1:0] sched_tx_axis_tdata;
-wire [INTERFACE_COUNT*LVL1_STRB_WIDTH-1:0] sched_tx_axis_tkeep;
-wire [INTERFACE_COUNT*ID_TAG_WIDTH-1:0]    sched_tx_axis_tuser;
-wire [INTERFACE_COUNT-1:0]                 sched_tx_axis_tvalid, 
-                                           sched_tx_axis_tready, 
-                                           sched_tx_axis_tlast;
+loopback_msg_fifo # (
+  .DATA_WIDTH(LVL1_DATA_WIDTH),
+  .STRB_WIDTH(LVL1_STRB_WIDTH),
+  .PORT_WIDTH(PORT_WIDTH),
+  .CORE_WIDTH(CORE_WIDTH), 
+  .SLOT_WIDTH(SLOT_WIDTH),
+  .PORT_COUNT(LB_PORT_COUNT),
+  .FIRST_PORT(FIRST_LB_PORT),
+  .ID_TAG_WIDTH(ID_TAG_WIDTH)
+) loopback_msg_fifo_inst (
+    .clk(sys_clk),
+    .rst(sys_rst),
 
-wire [INTERFACE_COUNT*LVL1_DATA_WIDTH-1:0] sched_rx_axis_tdata;
-wire [INTERFACE_COUNT*LVL1_STRB_WIDTH-1:0] sched_rx_axis_tkeep;
-wire [INTERFACE_COUNT*ID_TAG_WIDTH-1:0]    sched_rx_axis_tdest;
-wire [INTERFACE_COUNT*PORT_WIDTH-1:0]      sched_rx_axis_tuser;
-wire [INTERFACE_COUNT-1:0]                 sched_rx_axis_tvalid, 
-                                           sched_rx_axis_tready, 
-                                           sched_rx_axis_tlast;
+    .s_axis_tdata (loopback_tx_axis_tdata),
+    .s_axis_tkeep (loopback_tx_axis_tkeep),
+    .s_axis_tvalid(loopback_tx_axis_tvalid),
+    .s_axis_tready(loopback_tx_axis_tready),
+    .s_axis_tlast (loopback_tx_axis_tlast),
+    .s_axis_tuser (loopback_tx_axis_tuser),
+  
+    .m_axis_tdata (loopback_rx_axis_tdata),
+    .m_axis_tkeep (loopback_rx_axis_tkeep),
+    .m_axis_tvalid(loopback_rx_axis_tvalid),
+    .m_axis_tready(loopback_rx_axis_tready),
+    .m_axis_tlast (loopback_rx_axis_tlast),
+    .m_axis_tdest (loopback_rx_axis_tdest),
+    .m_axis_tuser (loopback_rx_axis_tuser)
+);
+
+
+// Scheduler 
+wire [(INTERFACE_COUNT+V_PORT_COUNT)*LVL1_DATA_WIDTH-1:0] sched_tx_axis_tdata;
+wire [(INTERFACE_COUNT+V_PORT_COUNT)*LVL1_STRB_WIDTH-1:0] sched_tx_axis_tkeep;
+wire [(INTERFACE_COUNT+V_PORT_COUNT)*ID_TAG_WIDTH-1:0]    sched_tx_axis_tuser;
+wire [(INTERFACE_COUNT+V_PORT_COUNT)-1:0]                 sched_tx_axis_tvalid, 
+                                                          sched_tx_axis_tready, 
+                                                          sched_tx_axis_tlast;
+
+wire [(INTERFACE_COUNT+V_PORT_COUNT)*LVL1_DATA_WIDTH-1:0] sched_rx_axis_tdata;
+wire [(INTERFACE_COUNT+V_PORT_COUNT)*LVL1_STRB_WIDTH-1:0] sched_rx_axis_tkeep;
+wire [(INTERFACE_COUNT+V_PORT_COUNT)*ID_TAG_WIDTH-1:0]    sched_rx_axis_tdest;
+wire [(INTERFACE_COUNT+V_PORT_COUNT)*PORT_WIDTH-1:0]      sched_rx_axis_tuser;
+wire [(INTERFACE_COUNT+V_PORT_COUNT)-1:0]                 sched_rx_axis_tvalid, 
+                                                          sched_rx_axis_tready, 
+                                                          sched_rx_axis_tlast;
     
 wire [LVL1_CTRL_WIDTH-1:0]                 sched_ctrl_m_axis_tdata;
 wire                                       sched_ctrl_m_axis_tvalid;
@@ -704,14 +794,14 @@ wire [CORE_WIDTH-1:0]                      sched_ctrl_s_axis_tuser;
 wire sched_trig_in, sched_trig_out, sched_trig_in_ack, sched_trig_out_ack;
 simple_scheduler # (
   .PORT_COUNT(PORT_COUNT),
-  .INTERFACE_COUNT(INTERFACE_COUNT),
+  .INTERFACE_COUNT(INTERFACE_COUNT+V_PORT_COUNT),
   .CORE_COUNT(CORE_COUNT),
   .SLOT_COUNT(SLOT_COUNT),
   .DATA_WIDTH(LVL1_DATA_WIDTH),
   .CTRL_WIDTH(LVL1_CTRL_WIDTH),
   .CLUSTER_COUNT(CLUSTER_COUNT),
-  .LOOPBACK_PORT(LOOPBACK_PORT),
-  .LOOPBACK_COUNT(INTERFACE_COUNT),
+  .LOOPBACK_PORT(FIRST_LB_PORT),
+  .LOOPBACK_COUNT(LB_PORT_COUNT),
   .ENABLE_ILA(ENABLE_ILA)
 ) scheduler (
   .clk(sys_clk),
@@ -774,37 +864,6 @@ simple_scheduler # (
   .trig_in_ack (sched_trig_in_ack),
   .trig_out    (sched_trig_out),
   .trig_out_ack(sched_trig_out_ack)
-);
-
-
-// Loopback inter core message FIFO
-loopback_msg_fifo # (
-  .DATA_WIDTH(LVL1_DATA_WIDTH),
-  .STRB_WIDTH(LVL1_STRB_WIDTH),
-  .PORT_WIDTH(PORT_WIDTH),
-  .CORE_WIDTH(CORE_WIDTH), 
-  .SLOT_WIDTH(SLOT_WIDTH),
-  .PORT_COUNT(INTERFACE_COUNT),
-  .FIRST_PORT(LOOPBACK_PORT),
-  .ID_TAG_WIDTH(ID_TAG_WIDTH)
-) loopback_msg_fifo_inst (
-    .clk(sys_clk),
-    .rst(sys_rst),
-
-    .s_axis_tdata (loopback_tx_axis_tdata),
-    .s_axis_tkeep (loopback_tx_axis_tkeep),
-    .s_axis_tvalid(loopback_tx_axis_tvalid),
-    .s_axis_tready(loopback_tx_axis_tready),
-    .s_axis_tlast (loopback_tx_axis_tlast),
-    .s_axis_tuser (loopback_tx_axis_tuser),
-  
-    .m_axis_tdata (loopback_rx_axis_tdata),
-    .m_axis_tkeep (loopback_rx_axis_tkeep),
-    .m_axis_tvalid(loopback_rx_axis_tvalid),
-    .m_axis_tready(loopback_rx_axis_tready),
-    .m_axis_tlast (loopback_rx_axis_tlast),
-    .m_axis_tdest (loopback_rx_axis_tdest),
-    .m_axis_tuser (loopback_rx_axis_tuser)
 );
 
 // Switches
