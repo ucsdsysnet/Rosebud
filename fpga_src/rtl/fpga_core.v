@@ -174,7 +174,7 @@ parameter SLOT_COUNT       = 8;
 parameter PCIE_SLOT_COUNT  = 16;
 parameter SLOT_START_ADDR  = 16'h2000;
 parameter SLOT_ADDR_STEP   = 16'h0800;
-parameter LVL1_DATA_WIDTH  = 128;
+parameter LVL1_DATA_WIDTH  = 256;
 parameter LVL1_CTRL_WIDTH  = 32+4; //DON'T CHANGE
 parameter LVL1_DRAM_WIDTH  = 64; //DRAM CONTROL
 parameter LVL2_DATA_WIDTH  = 64;
@@ -209,7 +209,7 @@ parameter HOST_DMA_TAG_WIDTH  = 32;
   
 parameter AXIL_DATA_WIDTH = 32;
 parameter AXIL_STRB_WIDTH = (AXIL_DATA_WIDTH/8);
-parameter AXIL_ADDR_WIDTH = 32;
+parameter AXIL_ADDR_WIDTH = BAR0_APERTURE;
 parameter IF_COUNT        = 2;
 parameter PORTS_PER_IF    = 1;
 

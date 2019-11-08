@@ -1,7 +1,5 @@
 module pcie_cont_read # (
   // PCIe Parameters
-  parameter AXIS_PCIE_DATA_WIDTH = 256,
-  parameter AXIS_PCIE_KEEP_WIDTH = (AXIS_PCIE_DATA_WIDTH/32),
   parameter HOST_DMA_TAG_WIDTH   = 32,
   parameter PCIE_ADDR_WIDTH      = 64,
   parameter PCIE_RAM_ADDR_WIDTH  = 32,
@@ -9,10 +7,9 @@ module pcie_cont_read # (
   parameter PCIE_SLOT_WIDTH      = $clog2(PCIE_SLOT_COUNT),
   parameter PCIE_DMA_TAG_WIDTH   = PCIE_SLOT_WIDTH,
   parameter PCIE_DMA_LEN_WIDTH   = 16,
-  // RAM parameters
-  parameter SEG_COUNT            = AXIS_PCIE_DATA_WIDTH > 64 ? 
-                                   AXIS_PCIE_DATA_WIDTH*2 / 128 : 2,
-  parameter SEG_DATA_WIDTH       = AXIS_PCIE_DATA_WIDTH*2/SEG_COUNT,
+  // RAM parameters, default for PCI_AXIS_WIDTH of 256
+  parameter SEG_COUNT            = 4, 
+  parameter SEG_DATA_WIDTH       = 128, 
   parameter RAM_SIZE             = 2**15, 
   parameter SEG_ADDR_WIDTH       = $clog2((RAM_SIZE/SEG_COUNT)/8),
   parameter SEG_BE_WIDTH         = SEG_DATA_WIDTH/8,
@@ -197,7 +194,8 @@ assign cores_ctrl_s_tready = pcie_dma_read_desc_ready && selected_rx_slot_v &&
 
 assign host_dma_read_desc_status_tag   = host_dma_read_desc_status_tag_r;
 assign host_dma_read_desc_status_valid = host_dma_read_desc_status_valid_r;
-assign host_dma_read_desc_ready        = pcie_dma_read_desc_ready && selected_rx_slot_v;
+assign host_dma_read_desc_ready        = pcie_dma_read_desc_ready_r && selected_rx_slot_v;
+
 
 // internal read desc FIFO
 wire [RAM_ADDR_WIDTH-1:0]     axis_read_desc_addr;
