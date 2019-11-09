@@ -78,7 +78,6 @@ srcs.append("../lib/axis/rtl/axis_async_fifo_adapter.v")
 srcs.append("../lib/axis/rtl/axis_fifo.v")
 srcs.append("../lib/axis/rtl/axis_fifo_adapter.v")
 srcs.append("../lib/axis/rtl/axis_register.v")
-
 srcs.append("../lib/axi/rtl/axil_interconnect.v")
 
 srcs.append("../lib/pcie/rtl/pcie_us_axil_master.v")
@@ -120,9 +119,13 @@ build_cmd = "iverilog -o %s.vvp %s" % (testbench, src)
 def bench():
 
     # Parameters
-    DATA_WIDTH = 64
-    CTRL_WIDTH = (DATA_WIDTH/8)
-    AXI_ADDR_WIDTH = 16
+    AXIS_PCIE_DATA_WIDTH = 256
+    AXIS_PCIE_KEEP_WIDTH = (AXIS_PCIE_DATA_WIDTH/32)
+    AXIS_PCIE_RC_USER_WIDTH = 75
+    AXIS_PCIE_RQ_USER_WIDTH = 60
+    AXIS_PCIE_CQ_USER_WIDTH = 85
+    AXIS_PCIE_CC_USER_WIDTH = 33
+    BAR0_APERTURE = 24
 
     SEND_COUNT_0 = 50
     SEND_COUNT_1 = 50
@@ -144,6 +147,7 @@ def bench():
     core_rst = Signal(bool(0))
     sys_clk_to_pcie=Signal(bool(0))
     sys_rst_to_pcie=Signal(bool(0))
+    current_test = Signal(intbv(0)[8:])
     sfp_1_tx_clk = Signal(bool(0))
     sfp_1_tx_rst = Signal(bool(0))
     sfp_1_rx_clk = Signal(bool(0))
@@ -153,21 +157,16 @@ def bench():
     sfp_2_rx_clk = Signal(bool(0))
     sfp_2_rx_rst = Signal(bool(0))
 
-    sfp_1_rxd = Signal(intbv(0x0707070707070707)[DATA_WIDTH:])
-    sfp_1_rxc = Signal(intbv(0xff)[CTRL_WIDTH:])
-    sfp_2_rxd = Signal(intbv(0x0707070707070707)[DATA_WIDTH:])
-    sfp_2_rxc = Signal(intbv(0xff)[CTRL_WIDTH:])
-    
     m_axis_rq_tready = Signal(bool(0))
-    s_axis_rc_tdata = Signal(intbv(0)[256:])
-    s_axis_rc_tkeep = Signal(intbv(0)[8:])
+    s_axis_rc_tdata = Signal(intbv(0)[AXIS_PCIE_DATA_WIDTH:])
+    s_axis_rc_tkeep = Signal(intbv(0)[AXIS_PCIE_KEEP_WIDTH:])
     s_axis_rc_tlast = Signal(bool(0))
-    s_axis_rc_tuser = Signal(intbv(0)[75:])
+    s_axis_rc_tuser = Signal(intbv(0)[AXIS_PCIE_RC_USER_WIDTH:])
     s_axis_rc_tvalid = Signal(bool(0))
-    s_axis_cq_tdata = Signal(intbv(0)[256:])
-    s_axis_cq_tkeep = Signal(intbv(0)[8:])
+    s_axis_cq_tdata = Signal(intbv(0)[AXIS_PCIE_DATA_WIDTH:])
+    s_axis_cq_tkeep = Signal(intbv(0)[AXIS_PCIE_KEEP_WIDTH:])
     s_axis_cq_tlast = Signal(bool(0))
-    s_axis_cq_tuser = Signal(intbv(0)[85:])
+    s_axis_cq_tuser = Signal(intbv(0)[AXIS_PCIE_CQ_USER_WIDTH:])
     s_axis_cq_tvalid = Signal(bool(0))
     m_axis_cc_tready = Signal(bool(0))
     pcie_tfc_nph_av = Signal(intbv(0)[2:])
@@ -183,26 +182,38 @@ def bench():
     cfg_interrupt_msi_data = Signal(intbv(0)[32:])
     cfg_interrupt_msi_sent = Signal(bool(0))
     cfg_interrupt_msi_fail = Signal(bool(0))
+    sfp_1_tx_clk = Signal(bool(0))
+    sfp_1_tx_rst = Signal(bool(0))
+    sfp_1_rx_clk = Signal(bool(0))
+    sfp_1_rx_rst = Signal(bool(0))
+    sfp_1_rxd = Signal(intbv(0)[64:])
+    sfp_1_rxc = Signal(intbv(0)[8:])
+    sfp_2_tx_clk = Signal(bool(0))
+    sfp_2_tx_rst = Signal(bool(0))
+    sfp_2_rx_clk = Signal(bool(0))
+    sfp_2_rx_rst = Signal(bool(0))
+    sfp_2_rxd = Signal(intbv(0)[64:])
+    sfp_2_rxc = Signal(intbv(0)[8:])
+    sfp_i2c_scl_i = Signal(bool(1))
+    sfp_1_i2c_sda_i = Signal(bool(1))
+    sfp_2_i2c_sda_i = Signal(bool(1))
+    eeprom_i2c_scl_i = Signal(bool(1))
+    eeprom_i2c_sda_i = Signal(bool(1))
+    flash_dq_i = Signal(intbv(0)[16:])
 
     # Outputs
-    sfp_1_txd = Signal(intbv(0x0707070707070707)[DATA_WIDTH:])
-    sfp_1_txc = Signal(intbv(0xff)[CTRL_WIDTH:])
-    sfp_2_txd = Signal(intbv(0x0707070707070707)[DATA_WIDTH:])
-    sfp_2_txc = Signal(intbv(0xff)[CTRL_WIDTH:])
-
     sma_led = Signal(intbv(0)[2:])
-    
-    m_axis_rq_tdata = Signal(intbv(0)[256:])
-    m_axis_rq_tkeep = Signal(intbv(0)[8:])
+    m_axis_rq_tdata = Signal(intbv(0)[AXIS_PCIE_DATA_WIDTH:])
+    m_axis_rq_tkeep = Signal(intbv(0)[AXIS_PCIE_KEEP_WIDTH:])
     m_axis_rq_tlast = Signal(bool(0))
-    m_axis_rq_tuser = Signal(intbv(0)[60:])
+    m_axis_rq_tuser = Signal(intbv(0)[AXIS_PCIE_RQ_USER_WIDTH:])
     m_axis_rq_tvalid = Signal(bool(0))
     s_axis_rc_tready = Signal(bool(0))
     s_axis_cq_tready = Signal(bool(0))
-    m_axis_cc_tdata = Signal(intbv(0)[256:])
-    m_axis_cc_tkeep = Signal(intbv(0)[8:])
+    m_axis_cc_tdata = Signal(intbv(0)[AXIS_PCIE_DATA_WIDTH:])
+    m_axis_cc_tkeep = Signal(intbv(0)[AXIS_PCIE_KEEP_WIDTH:])
     m_axis_cc_tlast = Signal(bool(0))
-    m_axis_cc_tuser = Signal(intbv(0)[33:])
+    m_axis_cc_tuser = Signal(intbv(0)[AXIS_PCIE_CC_USER_WIDTH:])
     m_axis_cc_tvalid = Signal(bool(0))
     status_error_cor = Signal(bool(0))
     status_error_uncor = Signal(bool(0))
@@ -221,7 +232,30 @@ def bench():
     cfg_interrupt_msi_tph_type = Signal(intbv(0)[2:])
     cfg_interrupt_msi_tph_st_tag = Signal(intbv(0)[9:])
     cfg_interrupt_msi_function_number = Signal(intbv(0)[4:])
- 
+    sfp_1_txd = Signal(intbv(0)[64:])
+    sfp_1_txc = Signal(intbv(0)[8:])
+    sfp_2_txd = Signal(intbv(0)[64:])
+    sfp_2_txc = Signal(intbv(0)[8:])
+    sfp_i2c_scl_o = Signal(bool(1))
+    sfp_i2c_scl_t = Signal(bool(1))
+    sfp_1_i2c_sda_o = Signal(bool(1))
+    sfp_1_i2c_sda_t = Signal(bool(1))
+    sfp_2_i2c_sda_o = Signal(bool(1))
+    sfp_2_i2c_sda_t = Signal(bool(1))
+    eeprom_i2c_scl_o = Signal(bool(1))
+    eeprom_i2c_scl_t = Signal(bool(1))
+    eeprom_i2c_sda_o = Signal(bool(1))
+    eeprom_i2c_sda_t = Signal(bool(1))
+    flash_dq_o = Signal(intbv(0)[16:])
+    flash_dq_oe = Signal(bool(0))
+    flash_addr = Signal(intbv(0)[23:])
+    flash_region = Signal(bool(0))
+    flash_region_oe = Signal(bool(0))
+    flash_ce_n = Signal(bool(1))
+    flash_oe_n = Signal(bool(1))
+    flash_we_n = Signal(bool(1))
+    flash_adv_n = Signal(bool(1))
+
     # sources and sinks
     xgmii_source_0 = xgmii_ep.XGMIISource()
 
@@ -272,12 +306,11 @@ def bench():
 
     dev.pcie_generation = 3
     dev.pcie_link_width = 8
-    dev.user_clock_frequency = 250e6
+    dev.user_clock_frequency = 256e6
 
     dev.functions[0].msi_multiple_message_capable = 5
 
-    dev.functions[0].configure_bar(0, 4*1024*1024)
-    # dev.functions[0].configure_bar(1, 4*1024*1024)
+    dev.functions[0].configure_bar(0, 2**BAR0_APERTURE)
 
     rc.make_port().connect(dev)
 
@@ -490,6 +523,7 @@ def bench():
         core_rst=core_rst,
         pcie_clk=pcie_clk,
         pcie_rst=pcie_rst,
+        current_test=current_test,
         sfp_1_rx_clk=sfp_1_rx_clk,
         sfp_1_rx_rst=sfp_1_rx_rst,
         sfp_1_tx_clk=sfp_1_tx_clk,
@@ -507,9 +541,7 @@ def bench():
         sfp_2_rxc=sfp_2_rxc,
         sfp_2_txd=sfp_2_txd,
         sfp_2_txc=sfp_2_txc,
-
         sma_led=sma_led,
-        
         m_axis_rq_tdata=m_axis_rq_tdata,
         m_axis_rq_tkeep=m_axis_rq_tkeep,
         m_axis_rq_tlast=m_axis_rq_tlast,
@@ -563,7 +595,32 @@ def bench():
         cfg_interrupt_msi_tph_st_tag=cfg_interrupt_msi_tph_st_tag,
         cfg_interrupt_msi_function_number=cfg_interrupt_msi_function_number,
         status_error_cor=status_error_cor,
-        status_error_uncor=status_error_uncor
+        status_error_uncor=status_error_uncor,
+        sfp_i2c_scl_i=sfp_i2c_scl_i,
+        sfp_i2c_scl_o=sfp_i2c_scl_o,
+        sfp_i2c_scl_t=sfp_i2c_scl_t,
+        sfp_1_i2c_sda_i=sfp_1_i2c_sda_i,
+        sfp_1_i2c_sda_o=sfp_1_i2c_sda_o,
+        sfp_1_i2c_sda_t=sfp_1_i2c_sda_t,
+        sfp_2_i2c_sda_i=sfp_2_i2c_sda_i,
+        sfp_2_i2c_sda_o=sfp_2_i2c_sda_o,
+        sfp_2_i2c_sda_t=sfp_2_i2c_sda_t,
+        eeprom_i2c_scl_i=eeprom_i2c_scl_i,
+        eeprom_i2c_scl_o=eeprom_i2c_scl_o,
+        eeprom_i2c_scl_t=eeprom_i2c_scl_t,
+        eeprom_i2c_sda_i=eeprom_i2c_sda_i,
+        eeprom_i2c_sda_o=eeprom_i2c_sda_o,
+        eeprom_i2c_sda_t=eeprom_i2c_sda_t,
+        flash_dq_i=flash_dq_i,
+        flash_dq_o=flash_dq_o,
+        flash_dq_oe=flash_dq_oe,
+        flash_addr=flash_addr,
+        flash_region=flash_region,
+        flash_region_oe=flash_region_oe,
+        flash_ce_n=flash_ce_n,
+        flash_oe_n=flash_oe_n,
+        flash_we_n=flash_we_n,
+        flash_adv_n=flash_adv_n
     )
 
     @always(delay(2)) #25
