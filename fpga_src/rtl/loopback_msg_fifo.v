@@ -39,8 +39,8 @@ generate
     wire [63:0]              dest_header;
 
     // no use fo s_axis_tuser
-    wire [PORT_WIDTH-1:0]    int_axis_tdest = FIRST_PORT + i;
-
+    assign m_axis_tuser[i*PORT_WIDTH +: PORT_WIDTH] = FIRST_PORT + i;
+ 
     header_remover # (
       .DATA_WIDTH(DATA_WIDTH),
       .HDR_WIDTH(64),
@@ -80,8 +80,8 @@ generate
         .ID_ENABLE(0),
         .DEST_ENABLE(1),
         .DEST_WIDTH(ID_TAG_WIDTH),
-        .USER_ENABLE(1),
-        .USER_WIDTH (PORT_WIDTH),
+        .USER_ENABLE(0),
+        .USER_WIDTH (1),
         .FRAME_FIFO(0)
     ) axis_fifo_inst (
         .clk(clk),
@@ -94,7 +94,7 @@ generate
         .s_axis_tlast (int_axis_tlast),
         .s_axis_tid   (8'd0),
         .s_axis_tdest (dest_header[ID_TAG_WIDTH-1:0]),
-        .s_axis_tuser (int_axis_tdest),
+        .s_axis_tuser (1'b0),
     
         .m_axis_tdata (m_axis_tdata[i*DATA_WIDTH +: DATA_WIDTH]),
         .m_axis_tkeep (m_axis_tkeep[i*STRB_WIDTH +: STRB_WIDTH]),
@@ -103,7 +103,7 @@ generate
         .m_axis_tlast (m_axis_tlast[i]),
         .m_axis_tid   (),
         .m_axis_tdest (m_axis_tdest[i*ID_TAG_WIDTH +: ID_TAG_WIDTH]),
-        .m_axis_tuser (m_axis_tuser[i*PORT_WIDTH +: PORT_WIDTH]),
+        .m_axis_tuser (),
     
         .status_overflow(),
         .status_bad_frame(),

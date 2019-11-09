@@ -281,8 +281,8 @@ pcie_us_cfg #(
     .PCIE_CAP_OFFSET(12'h0C0)
 )
 pcie_us_cfg_inst (
-    .clk(pcie_user_clk),
-    .rst(pcie_user_reset),
+    .clk(pcie_clk),
+    .rst(pcie_reset),
 
     /*
      * Configuration outputs
@@ -312,8 +312,8 @@ pcie_us_msi #(
     .MSI_COUNT(32)
 )
 pcie_us_msi_inst (
-    .clk(pcie_user_clk),
-    .rst(pcie_user_reset),
+    .clk(pcie_clk),
+    .rst(pcie_reset),
 
     .msi_irq(msi_irq),
 

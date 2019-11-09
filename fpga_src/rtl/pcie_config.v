@@ -149,8 +149,8 @@ always @(posedge pcie_clk) begin
         pcie_core_reset_valid      <= 1'b0;
         host_dma_read_status_tags  <= {HOST_DMA_TAG_WIDTH{1'b0}};
         host_dma_write_status_tags <= {HOST_DMA_TAG_WIDTH{1'b0}};
-        pcie_dma_enable            <= 1'b0;
-        income_cores_r             <= {CORE_COUNT{1'b0}};
+        pcie_dma_enable            <= 1'b1;
+        income_cores_r             <= {CORE_COUNT{1'b1}};
         cores_to_be_reset_r        <= {CORE_COUNT{1'b0}};
         core_for_slot_count_r      <= {CORE_WIDTH{1'b0}};
   
@@ -343,7 +343,7 @@ assign msi_irq = if_msi_irq;
 // Simplifies logic in controller. 
 always @ (posedge pcie_clk)
   if (pcie_rst)
-    income_cores_rr <= {CORE_COUNT{1'b0}};
+    income_cores_rr <= {CORE_COUNT{1'b1}};
   else
     income_cores_rr <= income_cores_r & (~cores_to_be_reset_r);
 

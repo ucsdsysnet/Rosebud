@@ -17,9 +17,13 @@ void int_handler(void) {
 			start_time = read_timer_low();
 			read_in_pkt(&packet);
 			if (packet.port==0)
-				packet.port = 1;
-			else
+				packet.port = 2;
+			else if (packet.port==1)
+				packet.port = 3;
+			else if (packet.port==2)
 				packet.port = 0;
+			else
+				packet.port = 1;
 
 			safe_pkt_done_msg(&packet);
 	 		end_time = read_timer_low();
