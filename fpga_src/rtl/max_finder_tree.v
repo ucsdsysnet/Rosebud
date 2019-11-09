@@ -122,7 +122,44 @@ module greater_than #(
 
   output result
 );
-  
-  assign result = (inp_A>inp_B);
+    // cmp_cla #(.DATA_WIDTH(DATA_WIDTH)) cmp_cla_inst (
+    //   .input_value_0(inp_B),
+    //   .input_value_1(inp_A),
+    //   .output_found(),
+    //   .output_sel(result)
+    // );
+    
+    assign result = (inp_A>inp_B);
 
 endmodule
+
+module cmp_cla #(parameter DATA_WIDTH=4)
+(
+    input  wire [DATA_WIDTH-1:0] input_value_0,
+    input  wire [DATA_WIDTH-1:0] input_value_1,
+    output wire                  output_found,
+    output wire                  output_sel
+);
+
+  wire [DATA_WIDTH-1:0] out_gf = input_value_1 ^ input_value_0;
+  wire [DATA_WIDTH-1:0] out_gc = input_value_1 & ~input_value_0;
+  
+  wire [DATA_WIDTH-1:0] out_sel;
+  
+  genvar i;
+  generate 
+    if (DATA_WIDTH==1) begin
+      assign out_sel[0] = out_gc[0];
+    end else begin
+      assign out_sel[DATA_WIDTH-1] = out_gc[DATA_WIDTH-1];
+      for (i=DATA_WIDTH-2;i>=0;i=i-1) begin
+        assign out_sel[i] = out_sel[i+1] | &{out_gc[i], ~out_gf[DATA_WIDTH-1:i+1]};
+      end
+    end  
+  endgenerate
+
+  assign output_sel   = out_sel[0];
+  assign output_found = |out_gf[DATA_WIDTH-1:0];
+
+endmodule
+
