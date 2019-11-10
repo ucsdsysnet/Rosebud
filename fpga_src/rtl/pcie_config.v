@@ -124,8 +124,29 @@ reg  [CORE_WIDTH-1:0]      core_for_slot_count_r;
 wire [CORE_SLOT_WIDTH-1:0] slot_count_r;
 
 // State registers for readback
-reg  [HOST_DMA_TAG_WIDTH-1:0]  host_dma_read_status_tags;
-reg  [HOST_DMA_TAG_WIDTH-1:0]  host_dma_write_status_tags;
+reg [HOST_DMA_TAG_WIDTH-1:0]  host_dma_read_status_tags;
+reg [HOST_DMA_TAG_WIDTH-1:0]  host_dma_write_status_tags;
+  
+reg        sfp_i2c_scl_o_r;
+reg        sfp_1_i2c_sda_o_r;
+reg        sfp_2_i2c_sda_o_r;
+reg        eeprom_i2c_scl_o_r;
+reg        eeprom_i2c_sda_o_r;
+reg [15:0] flash_dq_o_r;
+reg        flash_dq_oe_r;
+reg [22:0] flash_addr_r;
+reg        flash_region_r;
+reg        flash_region_oe_r;
+reg        flash_ce_n_r;
+reg        flash_oe_n_r;
+reg        flash_we_n_r;
+reg        flash_adv_n_r;
+reg        sfp_i2c_scl_i_r;
+reg        sfp_1_i2c_sda_i_r;
+reg        sfp_2_i2c_sda_i_r;
+reg        eeprom_i2c_scl_i_r;
+reg        eeprom_i2c_sda_i_r;
+reg [15:0] flash_dq_i_r;
          
 assign axil_ctrl_bresp  = 2'b00;
 assign axil_ctrl_rresp  = 2'b00;
@@ -154,21 +175,21 @@ always @(posedge pcie_clk) begin
         cores_to_be_reset_r        <= {CORE_COUNT{1'b0}};
         core_for_slot_count_r      <= {CORE_WIDTH{1'b0}};
   
-        sfp_i2c_scl_o              <= 1'b1;
-        sfp_1_i2c_sda_o            <= 1'b1;
-        sfp_2_i2c_sda_o            <= 1'b1;
-        eeprom_i2c_scl_o           <= 1'b1;
-        eeprom_i2c_sda_o           <= 1'b1;
+        sfp_i2c_scl_o_r            <= 1'b1;
+        sfp_1_i2c_sda_o_r          <= 1'b1;
+        sfp_2_i2c_sda_o_r          <= 1'b1;
+        eeprom_i2c_scl_o_r         <= 1'b1;
+        eeprom_i2c_sda_o_r         <= 1'b1;
         
-        flash_dq_o                 <= 16'd0;
-        flash_dq_oe                <= 1'b0;
-        flash_addr                 <= 23'd0;
-        flash_region               <= 1'b0;
-        flash_region_oe            <= 1'b0;
-        flash_ce_n                 <= 1'b1;
-        flash_oe_n                 <= 1'b1;
-        flash_we_n                 <= 1'b1;
-        flash_adv_n                <= 1'b1;
+        flash_dq_o_r               <= 16'd0;
+        flash_dq_oe_r              <= 1'b0;
+        flash_addr_r               <= 23'd0;
+        flash_region_r             <= 1'b0;
+        flash_region_oe_r          <= 1'b0;
+        flash_ce_n_r               <= 1'b1;
+        flash_oe_n_r               <= 1'b1;
+        flash_we_n_r               <= 1'b1;
+        flash_adv_n_r              <= 1'b1;
 
     end else begin
 
@@ -193,36 +214,36 @@ always @(posedge pcie_clk) begin
                 16'h0100: begin
                     // GPIO out
                     if (axil_ctrl_wstrb[2]) begin
-                        sfp_i2c_scl_o   <= axil_ctrl_wdata[16];
-                        sfp_1_i2c_sda_o <= axil_ctrl_wdata[17];
-                        sfp_2_i2c_sda_o <= axil_ctrl_wdata[18];
+                        sfp_i2c_scl_o_r   <= axil_ctrl_wdata[16];
+                        sfp_1_i2c_sda_o_r <= axil_ctrl_wdata[17];
+                        sfp_2_i2c_sda_o_r <= axil_ctrl_wdata[18];
                     end
                     if (axil_ctrl_wstrb[3]) begin
-                        eeprom_i2c_scl_o <= axil_ctrl_wdata[24];
-                        eeprom_i2c_sda_o <= axil_ctrl_wdata[25];
+                        eeprom_i2c_scl_o_r <= axil_ctrl_wdata[24];
+                        eeprom_i2c_sda_o_r <= axil_ctrl_wdata[25];
                     end
                 end
 
                 // Flash
                 16'h0144: begin
                     // Flash address
-                    flash_addr   <= axil_ctrl_wdata[22:0];
-                    flash_region <= axil_ctrl_wdata[23];
+                    flash_addr_r   <= axil_ctrl_wdata[22:0];
+                    flash_region_r <= axil_ctrl_wdata[23];
                 end
-                16'h0148: flash_dq_o <= axil_ctrl_wdata; // Flash data
+                16'h0148: flash_dq_o_r <= axil_ctrl_wdata; // Flash data
                 16'h014C: begin
                     // Flash control
                     if (axil_ctrl_wstrb[0]) begin
-                        flash_ce_n  <= axil_ctrl_wdata[0];
-                        flash_oe_n  <= axil_ctrl_wdata[1];
-                        flash_we_n  <= axil_ctrl_wdata[2];
-                        flash_adv_n <= axil_ctrl_wdata[3];
+                        flash_ce_n_r  <= axil_ctrl_wdata[0];
+                        flash_oe_n_r  <= axil_ctrl_wdata[1];
+                        flash_we_n_r  <= axil_ctrl_wdata[2];
+                        flash_adv_n_r <= axil_ctrl_wdata[3];
                     end
                     if (axil_ctrl_wstrb[1]) begin
-                        flash_dq_oe <= axil_ctrl_wdata[8];
+                        flash_dq_oe_r <= axil_ctrl_wdata[8];
                     end
                     if (axil_ctrl_wstrb[2]) begin
-                        flash_region_oe <= axil_ctrl_wdata[16];
+                        flash_region_oe_r <= axil_ctrl_wdata[16];
                     end
                 end
 
@@ -276,37 +297,37 @@ always @(posedge pcie_clk) begin
                 // GPIO
                 16'h0100: begin
                     // GPIO out
-                    axil_ctrl_rdata[16] <= sfp_i2c_scl_o;
-                    axil_ctrl_rdata[17] <= sfp_1_i2c_sda_o;
-                    axil_ctrl_rdata[18] <= sfp_2_i2c_sda_o;
-                    axil_ctrl_rdata[24] <= eeprom_i2c_scl_o;
-                    axil_ctrl_rdata[25] <= eeprom_i2c_sda_o;
+                    axil_ctrl_rdata[16] <= sfp_i2c_scl_o_r;
+                    axil_ctrl_rdata[17] <= sfp_1_i2c_sda_o_r;
+                    axil_ctrl_rdata[18] <= sfp_2_i2c_sda_o_r;
+                    axil_ctrl_rdata[24] <= eeprom_i2c_scl_o_r;
+                    axil_ctrl_rdata[25] <= eeprom_i2c_sda_o_r;
                 end
                 16'h0104: begin
                     // GPIO in
-                    axil_ctrl_rdata[16] <= sfp_i2c_scl_i;
-                    axil_ctrl_rdata[17] <= sfp_1_i2c_sda_i;
-                    axil_ctrl_rdata[18] <= sfp_2_i2c_sda_i;
-                    axil_ctrl_rdata[24] <= eeprom_i2c_scl_i;
-                    axil_ctrl_rdata[25] <= eeprom_i2c_sda_i;
+                    axil_ctrl_rdata[16] <= sfp_i2c_scl_i_r;
+                    axil_ctrl_rdata[17] <= sfp_1_i2c_sda_i_r;
+                    axil_ctrl_rdata[18] <= sfp_2_i2c_sda_i_r;
+                    axil_ctrl_rdata[24] <= eeprom_i2c_scl_i_r;
+                    axil_ctrl_rdata[25] <= eeprom_i2c_sda_i_r;
                 end
                 
                 // Flash
                 16'h0140: axil_ctrl_rdata <= 32'd0; // Flash ID
                 16'h0144: begin
                     // Flash address
-                    axil_ctrl_rdata[22:0] <= flash_addr;
-                    axil_ctrl_rdata[23]   <= flash_region;
+                    axil_ctrl_rdata[22:0] <= flash_addr_r;
+                    axil_ctrl_rdata[23]   <= flash_region_r;
                 end
-                16'h0148: axil_ctrl_rdata <= flash_dq_i; // Flash data
+                16'h0148: axil_ctrl_rdata <= flash_dq_i_r; // Flash data
                 16'h014C: begin
                     // Flash control
-                    axil_ctrl_rdata[0]  <= flash_ce_n; // chip enable (inverted)
-                    axil_ctrl_rdata[1]  <= flash_oe_n; // output enable (inverted)
-                    axil_ctrl_rdata[2]  <= flash_we_n; // write enable (inverted)
-                    axil_ctrl_rdata[3]  <= flash_adv_n; // address valid (inverted)
-                    axil_ctrl_rdata[8]  <= flash_dq_oe; // data output enable
-                    axil_ctrl_rdata[16] <= flash_region_oe; // region output enable (addr bit 23)
+                    axil_ctrl_rdata[0]  <= flash_ce_n_r; // chip enable (inverted)
+                    axil_ctrl_rdata[1]  <= flash_oe_n_r; // output enable (inverted)
+                    axil_ctrl_rdata[2]  <= flash_we_n_r; // write enable (inverted)
+                    axil_ctrl_rdata[3]  <= flash_adv_n_r; // address valid (inverted)
+                    axil_ctrl_rdata[8]  <= flash_dq_oe_r; // data output enable
+                    axil_ctrl_rdata[16] <= flash_region_oe_r; // region output enable (addr bit 23)
                 end
 
                 // Cores control and DMA request response
@@ -335,6 +356,52 @@ always @(posedge pcie_clk) begin
   
     end
 end
+
+// One level register before i2c and flash input/outputs for better timing
+always @(posedge pcie_clk)
+    if (pcie_rst) begin
+        sfp_i2c_scl_o      <= 1'b1;
+        sfp_1_i2c_sda_o    <= 1'b1;
+        sfp_2_i2c_sda_o    <= 1'b1;
+        eeprom_i2c_scl_o   <= 1'b1;
+        eeprom_i2c_sda_o   <= 1'b1;
+        flash_dq_o         <= 16'd0;
+        flash_dq_oe        <= 1'b0;
+        flash_addr         <= 23'd0;
+        flash_region       <= 1'b0;
+        flash_region_oe    <= 1'b0;
+        flash_ce_n         <= 1'b1;
+        flash_oe_n         <= 1'b1;
+        flash_we_n         <= 1'b1;
+        flash_adv_n        <= 1'b1;
+        sfp_i2c_scl_i_r    <= 1'b1;
+        sfp_1_i2c_sda_i_r  <= 1'b1;
+        sfp_2_i2c_sda_i_r  <= 1'b1;
+        eeprom_i2c_scl_i_r <= 1'b1;
+        eeprom_i2c_sda_i_r <= 1'b1;
+        flash_dq_i_r       <= 16'd0;
+    end else begin
+        sfp_i2c_scl_o      <= sfp_i2c_scl_o_r;
+        sfp_1_i2c_sda_o    <= sfp_1_i2c_sda_o_r;
+        sfp_2_i2c_sda_o    <= sfp_2_i2c_sda_o_r;
+        eeprom_i2c_scl_o   <= eeprom_i2c_scl_o_r;
+        eeprom_i2c_sda_o   <= eeprom_i2c_sda_o_r;
+        flash_dq_o         <= flash_dq_o_r;
+        flash_dq_oe        <= flash_dq_oe_r;
+        flash_addr         <= flash_addr_r;
+        flash_region       <= flash_region_r;
+        flash_region_oe    <= flash_region_oe_r;
+        flash_ce_n         <= flash_ce_n_r;
+        flash_oe_n         <= flash_oe_n_r;
+        flash_we_n         <= flash_we_n_r;
+        flash_adv_n        <= flash_adv_n_r;       
+        sfp_i2c_scl_i_r    <= sfp_i2c_scl_i;
+        sfp_1_i2c_sda_i_r  <= sfp_1_i2c_sda_i;
+        sfp_2_i2c_sda_i_r  <= sfp_2_i2c_sda_i;
+        eeprom_i2c_scl_i_r <= eeprom_i2c_scl_i;
+        eeprom_i2c_sda_i_r <= eeprom_i2c_sda_i;
+        flash_dq_i_r       <= flash_dq_i;     
+    end
 
 // assign msi_irq[0] = host_dma_read_desc_status_valid || host_dma_write_desc_status_valid;
 assign msi_irq = if_msi_irq;
