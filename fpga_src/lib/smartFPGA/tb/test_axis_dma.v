@@ -189,12 +189,13 @@ mem_1r1w #(
   .BYTES_PER_LINE(STRB_WIDTH),
   .ADDR_WIDTH(ADDR_WIDTH-$clog2(STRB_WIDTH))    
 ) test (
-  .clk(clk),
+  .clka(clk),
   .ena(mem_wr_en),
   .wea(mem_wr_strb),
   .addra(mem_wr_addr[ADDR_WIDTH-1:$clog2(STRB_WIDTH)]),
   .dina(mem_wr_data),
 
+  .clkb(clk),
   .enb(mem_rd_en),
   .addrb(mem_rd_addr[ADDR_WIDTH-1:$clog2(STRB_WIDTH)]),
   .doutb(mem_rd_data)

@@ -5,30 +5,29 @@ FPGA_TOP = fpga
 FPGA_ARCH = kintexu
 
 # Files for synthesis
-SYN_FILES = rtl/fpga.v
+SYN_FILES  = rtl/fpga.v
 SYN_FILES += rtl/fpga_core.v
 SYN_FILES += rtl/sync_reset.v
 SYN_FILES += rtl/sync_signal.v
-SYN_FILES += rtl/riscvcore.v
-SYN_FILES += rtl/VexRiscv.v
-SYN_FILES += rtl/core_mems.v
-SYN_FILES += rtl/slot_fifo_loader.v
-SYN_FILES += rtl/slot_keeper.v
-SYN_FILES += rtl/simple_fifo.v
-SYN_FILES += rtl/simple_scheduler.v
-SYN_FILES += rtl/max_finder_tree.v
-SYN_FILES += rtl/axis_dma.v 
-SYN_FILES += rtl/riscv_axis_wrapper.v 
-SYN_FILES += rtl/simple_sync_sig.v
-SYN_FILES += rtl/axis_switch.v
-SYN_FILES += rtl/axis_switch_2lvl.v
-SYN_FILES += rtl/loopback_msg_fifo.v
-SYN_FILES += rtl/header.v
-SYN_FILES += rtl/pcie_config.v
-SYN_FILES += rtl/pcie_controller.v
-SYN_FILES += rtl/pcie_cont_read.v
-SYN_FILES += rtl/pcie_cont_write.v
-SYN_FILES += rtl/corundum.v
+SYN_FILES += lib/smartFPGA/rtl/riscvcore.v
+SYN_FILES += lib/smartFPGA/rtl/VexRiscv.v
+SYN_FILES += lib/smartFPGA/rtl/core_mems.v
+SYN_FILES += lib/smartFPGA/rtl/slot_keeper.v
+SYN_FILES += lib/smartFPGA/rtl/simple_fifo.v
+SYN_FILES += lib/smartFPGA/rtl/simple_scheduler.v
+SYN_FILES += lib/smartFPGA/rtl/max_finder_tree.v
+SYN_FILES += lib/smartFPGA/rtl/axis_dma.v
+SYN_FILES += lib/smartFPGA/rtl/riscv_axis_wrapper.v
+SYN_FILES += lib/smartFPGA/rtl/simple_sync_sig.v
+SYN_FILES += lib/smartFPGA/rtl/axis_switch.v
+SYN_FILES += lib/smartFPGA/rtl/axis_switch_2lvl.v
+SYN_FILES += lib/smartFPGA/rtl/loopback_msg_fifo.v
+SYN_FILES += lib/smartFPGA/rtl/header.v
+SYN_FILES += lib/smartFPGA/rtl/pcie_config.v
+SYN_FILES += lib/smartFPGA/rtl/pcie_controller.v
+SYN_FILES += lib/smartFPGA/rtl/pcie_cont_read.v
+SYN_FILES += lib/smartFPGA/rtl/pcie_cont_write.v
+SYN_FILES += lib/smartFPGA/rtl/corundum.v
 
 # SYN_FILES += lib/axis/rtl/axis_switch.v
 SYN_FILES += lib/axis/rtl/axis_arb_mux.v
@@ -109,11 +108,11 @@ SYN_FILES += lib/corundum/rtl/event_mux.v
 # XDC files
 XDC_FILES = fpga.xdc
 XDC_FILES += lib/axis/syn/axis_async_fifo.tcl
-XDC_FILES += syn/simple_sync_sig.tcl
+XDC_FILES += lib/smartFPGA/syn/simple_sync_sig.tcl
 
 # IP
-XCI_FILES  =  ip/gtwizard_ultrascale_0.xci
-XCI_FILES +=  ip/pcie3_ultrascale_0.xci
+XCI_FILES  = ip/gtwizard_ultrascale_0.xci
+XCI_FILES += ip/pcie3_ultrascale_0.xci
 XCI_FILES += ip/ila_4x64.xci
 XCI_FILES += ip/ila_8x64.xci
 

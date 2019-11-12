@@ -1,89 +1,74 @@
 #!/usr/bin/env python
 """
 
-Copyright 2019, The Regents of the University of California.
-All rights reserved.
+Copyright (c) 2018 Alex Forencich
 
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are met:
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-   1. Redistributions of source code must retain the above copyright notice,
-      this list of conditions and the following disclaimer.
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
 
-   2. Redistributions in binary form must reproduce the above copyright notice,
-      this list of conditions and the following disclaimer in the documentation
-      and/or other materials provided with the distribution.
-
-THIS SOFTWARE IS PROVIDED BY THE REGENTS OF THE UNIVERSITY OF CALIFORNIA ''AS
-IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL THE REGENTS OF THE UNIVERSITY OF CALIFORNIA OR
-CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
-EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT
-OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
-CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
-IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY
-OF SUCH DAMAGE.
-
-The views and conclusions contained in the software and documentation are those
-of the authors and should not be interpreted as representing official policies,
-either expressed or implied, of The Regents of the University of California.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
 
 """
 
 from myhdl import *
 import os
+import random
 
 import pcie
 import pcie_us
+import eth_ep
 import xgmii_ep
 import axis_ep
-import eth_ep
-import udp_ep
 
 import struct
 
-import mqnic
-
-module = 'fpga_core'
-testbench = 'test_%s' % module
+testbench = 'test_fpga_core'
 
 srcs = []
 
 srcs.append("../ip/ila_8x64_stub.v")
 srcs.append("../ip/ila_4x64_stub.v")
-
-srcs.append("../rtl/simple_fifo.v")
-srcs.append("../rtl/max_finder_tree.v")
-srcs.append("../rtl/slot_keeper.v")
-srcs.append("../rtl/core_mems.v")
-srcs.append("../rtl/axis_dma.v")
-srcs.append("../rtl/VexRiscv.v")
-srcs.append("../rtl/riscvcore.v")
-srcs.append("../rtl/riscv_axis_wrapper.v")
-srcs.append("../rtl/simple_scheduler.v")
-srcs.append("../rtl/simple_sync_sig.v")
-srcs.append("../rtl/axis_switch.v")
-srcs.append("../rtl/axis_switch_2lvl.v")
-srcs.append("../rtl/loopback_msg_fifo.v")
-srcs.append("../rtl/header.v")
-srcs.append("../rtl/pcie_config.v")
-srcs.append("../rtl/pcie_controller.v")
-srcs.append("../rtl/pcie_cont_read.v")
-srcs.append("../rtl/pcie_cont_write.v")
-srcs.append("../rtl/corundum.v")
 srcs.append("../rtl/fpga_core.v")
+
+srcs.append("../lib/smartFPGA/rtl/simple_fifo.v")
+srcs.append("../lib/smartFPGA/rtl/max_finder_tree.v")
+srcs.append("../lib/smartFPGA/rtl/slot_keeper.v")
+srcs.append("../lib/smartFPGA/rtl/core_mems.v")
+srcs.append("../lib/smartFPGA/rtl/axis_dma.v")
+srcs.append("../lib/smartFPGA/rtl/VexRiscv.v")
+srcs.append("../lib/smartFPGA/rtl/riscvcore.v")
+srcs.append("../lib/smartFPGA/rtl/riscv_axis_wrapper.v")
+srcs.append("../lib/smartFPGA/rtl/simple_scheduler.v")
+srcs.append("../lib/smartFPGA/rtl/simple_sync_sig.v")
+srcs.append("../lib/smartFPGA/rtl/axis_switch.v")
+srcs.append("../lib/smartFPGA/rtl/axis_switch_2lvl.v")
+srcs.append("../lib/smartFPGA/rtl/loopback_msg_fifo.v")
+srcs.append("../lib/smartFPGA/rtl/header.v")
+srcs.append("../lib/smartFPGA/rtl/pcie_config.v")
+srcs.append("../lib/smartFPGA/rtl/pcie_controller.v")
+srcs.append("../lib/smartFPGA/rtl/pcie_cont_read.v")
+srcs.append("../lib/smartFPGA/rtl/pcie_cont_write.v")
+srcs.append("../lib/smartFPGA/rtl/corundum.v")
 
 srcs.append("../lib/eth/rtl/eth_mac_10g_fifo.v")
 srcs.append("../lib/eth/rtl/eth_mac_10g.v")
 srcs.append("../lib/eth/rtl/axis_xgmii_rx_64.v")
 srcs.append("../lib/eth/rtl/axis_xgmii_tx_64.v")
 srcs.append("../lib/eth/rtl/lfsr.v")
-# srcs.append("../lib/eth/rtl/ptp_clock.v")
-# srcs.append("../lib/eth/rtl/ptp_clock_cdc.v")
-# srcs.append("../lib/eth/rtl/ptp_perout.v")
-# srcs.append("../lib/eth/rtl/ptp_ts_extract.v")
+
 srcs.append("../lib/axis/rtl/arbiter.v")
 srcs.append("../lib/axis/rtl/priority_encoder.v")
 srcs.append("../lib/axis/rtl/axis_adapter.v")
@@ -131,24 +116,6 @@ src = ' '.join(srcs)
 
 build_cmd = "iverilog -o %s.vvp %s" % (testbench, src)
 
-def frame_checksum(frame):
-    data = frame[14:]
-
-    csum = 0
-    odd = False
-
-    for b in data:
-        if odd:
-            csum += b
-        else:
-            csum += b << 8
-        odd = not odd
-
-    csum = (csum & 0xffff) + (csum >> 16)
-    csum = (csum & 0xffff) + (csum >> 16)
-
-    return csum
-
 def bench():
 
     # Parameters
@@ -159,6 +126,17 @@ def bench():
     AXIS_PCIE_CQ_USER_WIDTH = 85
     AXIS_PCIE_CC_USER_WIDTH = 33
     BAR0_APERTURE = 24
+
+    SEND_COUNT_0 = 50
+    SEND_COUNT_1 = 50
+    SIZE_0       = 500 - 18 
+    SIZE_1       = 500 - 18
+    CHECK_PKT    = True
+    TEST_SFP     = True
+    TEST_PCIE    = True
+    UPDATE_INS   = True
+    FIRMWARE     = "../../../../c_code/dram_test.bin"
+    # FIRMWARE     = "../../../../c_code/inter_core.bin"
 
     # Inputs
     sys_clk  = Signal(bool(0))
@@ -279,25 +257,50 @@ def bench():
     flash_adv_n = Signal(bool(1))
 
     # sources and sinks
-    sfp_1_source = xgmii_ep.XGMIISource()
-    sfp_1_source_logic = sfp_1_source.create_logic(sfp_1_rx_clk, sfp_1_rx_rst, txd=sfp_1_rxd, txc=sfp_1_rxc, name='sfp_1_source')
+    xgmii_source_0 = xgmii_ep.XGMIISource()
 
-    sfp_1_sink = xgmii_ep.XGMIISink()
-    sfp_1_sink_logic = sfp_1_sink.create_logic(sfp_1_tx_clk, sfp_1_tx_rst, rxd=sfp_1_txd, rxc=sfp_1_txc, name='sfp_1_sink')
+    xgmii_source_logic_0 = xgmii_source_0.create_logic(
+        clk=sfp_1_rx_clk,
+        rst=sfp_1_rx_rst,
+        txd=sfp_1_rxd,
+        txc=sfp_1_rxc,
+        name='xgmii_source_0'
+    )
 
-    sfp_2_source = xgmii_ep.XGMIISource()
-    sfp_2_source_logic = sfp_2_source.create_logic(sfp_2_rx_clk, sfp_2_rx_rst, txd=sfp_2_rxd, txc=sfp_2_rxc, name='sfp_2_source')
+    xgmii_sink_0 = xgmii_ep.XGMIISink()
 
-    sfp_2_sink = xgmii_ep.XGMIISink()
-    sfp_2_sink_logic = sfp_2_sink.create_logic(sfp_2_tx_clk, sfp_2_tx_rst, rxd=sfp_2_txd, rxc=sfp_2_txc, name='sfp_2_sink')
+    xgmii_sink_logic_0 = xgmii_sink_0.create_logic(
+        clk=sfp_1_tx_clk,
+        rst=sfp_1_tx_rst,
+        rxd=sfp_1_txd,
+        rxc=sfp_1_txc,
+        name='xgmii_sink_0'
+    )
+    
+    xgmii_source_1 = xgmii_ep.XGMIISource()
 
+    xgmii_source_logic_1 = xgmii_source_1.create_logic(
+        clk=sfp_2_rx_clk,
+        rst=sfp_2_rx_rst,
+        txd=sfp_2_rxd,
+        txc=sfp_2_rxc,
+        name='xgmii_source_1'
+    )
+
+    xgmii_sink_1 = xgmii_ep.XGMIISink()
+
+    xgmii_sink_logic_1 = xgmii_sink_1.create_logic(
+        clk=sfp_2_tx_clk,
+        rst=sfp_2_tx_rst,
+        rxd=sfp_2_txd,
+        rxc=sfp_2_txc,
+        name='xgmii_sink_1'
+    )
+    
     # PCIe devices
     rc = pcie.RootComplex()
 
-    rc.max_payload_size = 0x1 # 256 bytes
-    rc.max_read_request_size = 0x5 # 4096 bytes
-
-    driver = mqnic.Driver(rc)
+    mem_base, mem_data = rc.alloc_region(16*1024*1024)
 
     dev = pcie_us.UltrascalePCIe()
 
@@ -489,6 +492,25 @@ def bench():
         #pcie_perstn1_out=pcie_perstn1_out
     )
 
+    # test frames
+    test_frame_1 = eth_ep.EthFrame()
+    test_frame_1.eth_dest_mac = 0xDAD1D2D3D4D5
+    test_frame_1.eth_src_mac = 0x5A5152535455
+    test_frame_1.eth_type = 0x8000
+    test_frame_1.payload = bytes([0]+[x%256 for x in range(SIZE_0-1)])
+    test_frame_1.update_fcs()
+    axis_frame = test_frame_1.build_axis_fcs()
+    start_data_1 = bytearray(b'\x55\x55\x55\x55\x55\x55\x55\xD5' + bytearray(axis_frame))
+
+    test_frame_2 = eth_ep.EthFrame()
+    test_frame_2.eth_dest_mac = 0x5A5152535455
+    test_frame_2.eth_src_mac = 0xDAD1D2D3D4D5
+    test_frame_2.eth_type = 0x8000
+    test_frame_2.payload = bytes([0]+[x%256 for x in range(SIZE_1-1)])
+    test_frame_2.update_fcs()
+    axis_frame_2 = test_frame_2.build_axis_fcs()
+    start_data_2 = bytearray(b'\x55\x55\x55\x55\x55\x55\x55\xD5' + bytearray(axis_frame_2))
+ 
     # DUT
     if os.system(build_cmd):
         raise Exception("Error running build command")
@@ -621,230 +643,219 @@ def bench():
         sys_clk_to_pcie.next = sys_clk
         sys_rst_to_pcie.next = not sys_rst
 
-    loopback_enable = Signal(bool(0))
+    def port1():
+        for i in range (0,SEND_COUNT_0):
+          # test_frame_1.payload = bytes([x%256 for x in range(random.randrange(1980))])
+          test_frame_1.payload = bytes([i%256] + [x%256 for x in range(SIZE_0-1)])
+          test_frame_1.update_fcs()
+          axis_frame = test_frame_1.build_axis_fcs()
+          xgmii_source_0.send(b'\x55\x55\x55\x55\x55\x55\x55\xD5'+bytearray(axis_frame))
+          # yield delay(random.randrange(128))
+          yield sfp_1_rx_clk.posedge
+          # yield sfp_1_rx_clk.posedge
 
-    @instance
-    def loopback():
-        while True:
-
-            yield sys_clk.posedge
-
-            if loopback_enable:
-                if not sfp_1_sink.empty():
-                    pkt = sfp_1_sink.recv()
-                    sfp_1_source.send(pkt)
-                if not sfp_2_sink.empty():
-                    pkt = sfp_2_sink.recv()
-                    sfp_2_source.send(pkt)
+    def port2():
+        for i in range (0,SEND_COUNT_1):
+          # test_frame_2.payload = bytes([x%256 for x in range(10,10+random.randrange(300))])
+          # if (i%20==19):
+          #   test_frame_2.payload = bytes([x%256 for x in range(78-14)])
+          # else:
+          test_frame_2.payload = bytes([i%256] + [x%256 for x in range(SIZE_1-1)])
+          test_frame_2.update_fcs()
+          axis_frame_2 = test_frame_2.build_axis_fcs()
+          xgmii_source_1.send(b'\x55\x55\x55\x55\x55\x55\x55\xD5'+bytearray(axis_frame_2))
+          # yield delay(random.randrange(128))
+          yield sfp_2_rx_clk.posedge
+          # yield sfp_2_rx_clk.posedge
 
     @instance
     def check():
-        yield delay(100)
+        yield delay(1000)
         yield sys_clk.posedge
         sys_rst.next = 1
+        yield core_clk.posedge
         core_rst.next = 1
+        yield sfp_1_tx_clk.posedge
+        yield sfp_1_rx_clk.posedge
+        yield sfp_2_tx_clk.posedge
+        yield sfp_2_rx_clk.posedge
+        yield sys_clk.posedge
         sfp_1_tx_rst.next = 1
         sfp_1_rx_rst.next = 1
         sfp_2_tx_rst.next = 1
         sfp_2_rx_rst.next = 1
         yield sys_clk.posedge
+        yield sys_clk.posedge
+        sys_rst.next = 0
         yield core_clk.posedge
         core_rst.next = 0
-        sys_rst.next = 0
-        sfp_1_tx_rst.next = 0  
-        sfp_1_rx_rst.next = 0  
-        sfp_2_tx_rst.next = 0  
-        sfp_2_rx_rst.next = 0  
         yield sys_clk.posedge
-        yield core_clk.posedge
-        yield delay(100)
+        yield sfp_1_tx_clk.posedge
+        sfp_1_tx_rst.next = 0
+        sfp_1_rx_rst.next = 0
+        sfp_2_tx_rst.next = 0
+        sfp_2_rx_rst.next = 0
+        yield sfp_1_tx_clk.posedge
+        yield delay(2000)
         yield sys_clk.posedge
-
-        # testbench stimulus
-
-        current_tag = 1
-
         yield sys_clk.posedge
-        print("test 1: enumeration")
-        current_test.next = 1
+        
+        print("PCIe enumeration")
 
         yield rc.enumerate(enable_bus_mastering=True, configure_msi=True)
 
         dev_pf0_bar0 = dev.functions[0].bar[0] & 0xfffffffc
-        dev_pf0_bar1 = dev.functions[0].bar[1] & 0xfffffffc
-
-        # yield from rc.mem_write_dword(dev_pf0_bar0+0x270, 0);
-        # yield from rc.mem_write_dword(dev_pf0_bar0+0x274, 0);
-        # yield from rc.mem_write_dword(dev_pf0_bar0+0x278, 0);
-        # yield from rc.mem_write_dword(dev_pf0_bar0+0x27C, 0);
-
-        # yield from rc.mem_write_dword(dev_pf0_bar0+0x290, 0);
-        # yield from rc.mem_write_dword(dev_pf0_bar0+0x294, 1000);
-        # yield from rc.mem_write_dword(dev_pf0_bar0+0x298, 0);
-        # yield from rc.mem_write_dword(dev_pf0_bar0+0x29C, 0);
-
-        # yield from rc.mem_write_dword(dev_pf0_bar0+0x280, 0);
-        # yield from rc.mem_write_dword(dev_pf0_bar0+0x284, 2000);
-        # yield from rc.mem_write_dword(dev_pf0_bar0+0x288, 0);
-        # yield from rc.mem_write_dword(dev_pf0_bar0+0x28C, 0);
 
         yield delay(100)
 
-        yield sys_clk.posedge
-        print("test 2: init NIC")
-        current_test.next = 2
+        yield pcie_clk.posedge
 
-        yield from driver.init_dev(dev.functions[0].get_id())
-        yield from driver.interfaces[0].open()
+        print("Firmware load")
+        ins = bytearray(open(FIRMWARE, "rb").read())
+        mem_data[0:len(ins)] = ins
 
-        # enable queues
-        yield from rc.mem_write_dword(driver.interfaces[0].ports[0].hw_addr+mqnic.MQNIC_PORT_REG_SCHED_ENABLE, 0x00000001)
-        for k in range(driver.interfaces[0].tx_queue_count):
-            yield from rc.mem_write_dword(driver.interfaces[0].ports[0].schedulers[0].hw_addr+4*k, 0x00000003)
+        # enable DMA
+        yield rc.mem_write(dev_pf0_bar0+0x000400, struct.pack('<L', 1))
+        
+        if (UPDATE_INS):
+          yield rc.mem_write(dev_pf0_bar0+0x00040C, struct.pack('<L', 0xffff))
+          
+          # Load instruction memories
+          for i in range (0,16):
+              yield rc.mem_write(dev_pf0_bar0+0x000404, struct.pack('<L', ((i<<1)+1)))
+              yield delay(20)
+              # write pcie read descriptor
+              yield rc.mem_write(dev_pf0_bar0+0x000440, struct.pack('<L', (mem_base+0x0000) & 0xffffffff))
+              yield rc.mem_write(dev_pf0_bar0+0x000444, struct.pack('<L', (mem_base+0x0000 >> 32) & 0xffffffff))
+              yield rc.mem_write(dev_pf0_bar0+0x000448, struct.pack('<L', ((i<<16)+0x8000) & 0xffffffff))
+              # yield rc.mem_write(dev_pf0_bar0+0x00044C, struct.pack('<L', (((i<<16)+0x8000) >> 32) & 0xffffffff))
+              yield rc.mem_write(dev_pf0_bar0+0x000450, struct.pack('<L', 0x400))
+              yield rc.mem_write(dev_pf0_bar0+0x000454, struct.pack('<L', 0xAA))
+              yield delay(2000)
+              yield rc.mem_write(dev_pf0_bar0+0x000404, struct.pack('<L', ((i<<1)+0)))
+              yield delay(20)
+          
+          yield rc.mem_write(dev_pf0_bar0+0x00040C, struct.pack('<L', 0x0000))
+        
+        yield rc.mem_write(dev_pf0_bar0+0x000408, struct.pack('<L', 0x0f00))
 
-        yield from rc.mem_read(driver.hw_addr, 4) # wait for all writes to complete
+        if (TEST_PCIE):
+          print("PCIE tests")
+          mem_data[48059:48200] = bytearray([(x+10)%256 for x in range(141)])
 
-        yield delay(100)
+          # write pcie read descriptor
+          yield rc.mem_write(dev_pf0_bar0+0x000440, struct.pack('<L', (mem_base+0x0000) & 0xffffffff))
+          yield rc.mem_write(dev_pf0_bar0+0x000444, struct.pack('<L', (mem_base+0x0000 >> 32) & 0xffffffff))
+          yield rc.mem_write(dev_pf0_bar0+0x000448, struct.pack('<L', ((4<<16)+0x0100) & 0xffffffff))
+          # yield rc.mem_write(dev_pf0_bar0+0x00044C, struct.pack('<L', (((4<<16)+0x0100) >> 32) & 0xffffffff))
+          yield rc.mem_write(dev_pf0_bar0+0x000450, struct.pack('<L', 0x400))
+          yield rc.mem_write(dev_pf0_bar0+0x000454, struct.pack('<L', 0xAA))
 
-        yield sys_clk.posedge
-        print("test 3: send and receive a packet")
-        current_test.next = 3
+          yield delay(2000)
 
-        data = bytearray([x%256 for x in range(1024)])
+          # read status
+          val = yield from rc.mem_read(dev_pf0_bar0+0x000458, 4)
+          print(val)
 
-        yield from driver.interfaces[0].start_xmit(data, 0)
+          # write pcie write descriptor
+          yield rc.mem_write(dev_pf0_bar0+0x000460, struct.pack('<L', (mem_base+0x1000) & 0xffffffff))
+          yield rc.mem_write(dev_pf0_bar0+0x000464, struct.pack('<L', (mem_base+0x1000 >> 32) & 0xffffffff))
+          yield rc.mem_write(dev_pf0_bar0+0x000468, struct.pack('<L', (0x40100) & 0xffffffff))
+          # yield rc.mem_write(dev_pf0_bar0+0x00046C, struct.pack('<L', (0x40100 >> 32) & 0xffffffff))
+          yield rc.mem_write(dev_pf0_bar0+0x000470, struct.pack('<L', 0x400))
+          yield rc.mem_write(dev_pf0_bar0+0x000474, struct.pack('<L', 0x55))
 
-        yield sfp_1_sink.wait()
+          yield delay(2000)
 
-        pkt = sfp_1_sink.recv()
-        print(pkt)
+          # read status
+          val = yield from rc.mem_read(dev_pf0_bar0+0x000478, 4)
+          print(val)
 
-        sfp_1_source.send(pkt)
+          data = mem_data[0x1000:(0x1000)+1024]
+          for i in range(0, len(data), 16):
+              print(" ".join(("{:02x}".format(c) for c in bytearray(data[i:i+16]))))
 
-        yield driver.interfaces[0].wait()
+          print("core to host write data")
+          data = mem_data[0xBCBB:(0xBCBB)+128]
+          for i in range(0, len(data), 16):
+              print(" ".join(("{:02x}".format(c) for c in bytearray(data[i:i+16]))))
 
-        pkt = driver.interfaces[0].recv()
+          assert mem_data[0:1024] == mem_data[0x1000:0x1000+1024]
 
-        print(pkt)
+        yield delay(1000)
+       
+        if (TEST_SFP):
+          yield port1(),None
+          yield port2(),None
 
-        yield delay(100)
+          # yield delay(10000)
+          # val = yield from rc.mem_read(dev_pf0_bar0+0x000410, 4)
+          # print ("Moein read core 0 slot count:",val)
+          # yield rc.mem_write(dev_pf0_bar0+0x00040C, struct.pack('<L', 1))
+          # 
+          # while (val[0]!=0x08):
+          #   yield delay(2000)
+          #   val = yield from rc.mem_read(dev_pf0_bar0+0x000410, 4)
+          #   print ("Moein read core 0 slot count:",val)
+          # 
+          # yield rc.mem_write(dev_pf0_bar0+0x00040C, struct.pack('<L', 0))
+          # 
+          # yield rc.mem_write(dev_pf0_bar0+0x000410, struct.pack('<L', 5))
+          # yield delay(200)
+          # val = yield from rc.mem_read(dev_pf0_bar0+0x000410, 4)
+          # print ("Moein read core 5 slot count:",val)
+          # yield rc.mem_write(dev_pf0_bar0+0x00040C, struct.pack('<L', 0x0020))
+          # 
+          # while (val[0]!=0x08):
+          #   yield delay(2000)
+          #   val = yield from rc.mem_read(dev_pf0_bar0+0x000410, 4)
+          #   print ("Moein read core 5 slot count:",val)
+          # 
+          # yield rc.mem_write(dev_pf0_bar0+0x00040C, struct.pack('<L', 0))
 
-        yield sys_clk.posedge
-        print("test 4: checksum tests")
-        current_test.next = 4
+          lengths = []
+          print ("send data from LAN")
+          for j in range (0,SEND_COUNT_1):
+            yield xgmii_sink_0.wait()
+            rx_frame = xgmii_sink_0.recv()
+            data = rx_frame.data
+            print ("packet number from port 0:",j)
+            for i in range(0, len(data), 16):
+                print(" ".join(("{:02x}".format(c) for c in bytearray(data[i:i+16]))))
+            if (CHECK_PKT):
+              assert rx_frame.data[0:22] == start_data_2[0:22]
+              assert rx_frame.data[23:-4] == start_data_2[23:-4]
+            lengths.append(len(data)-8)
 
-        test_frame = udp_ep.UDPFrame()
-        test_frame.eth_dest_mac = 0xDAD1D2D3D4D5
-        test_frame.eth_src_mac = 0x5A5152535455
-        test_frame.eth_type = 0x0800
-        test_frame.ip_version = 4
-        test_frame.ip_ihl = 5
-        test_frame.ip_length = None
-        test_frame.ip_identification = 0
-        test_frame.ip_flags = 2
-        test_frame.ip_fragment_offset = 0
-        test_frame.ip_ttl = 64
-        test_frame.ip_protocol = 0x11
-        test_frame.ip_header_checksum = None
-        test_frame.ip_source_ip = 0xc0a80164
-        test_frame.ip_dest_ip = 0xc0a80165
-        test_frame.udp_source_port = 1
-        test_frame.udp_dest_port = 2
-        test_frame.udp_length = None
-        test_frame.udp_checksum = None
-        test_frame.payload = bytearray((x%256 for x in range(256)))
+          for j in range (0,SEND_COUNT_0):
+            yield xgmii_sink_1.wait()
+            rx_frame = xgmii_sink_1.recv()
+            data = rx_frame.data
+            print ("packet number from port 1:",j)
+            for i in range(0, len(data), 16):
+                print(" ".join(("{:02x}".format(c) for c in bytearray(data[i:i+16]))))
+            if (CHECK_PKT):
+              assert rx_frame.data[0:22] == start_data_1[0:22]
+              assert rx_frame.data[23:-4] == start_data_1[23:-4]
+            lengths.append(len(data)-8)
 
-        test_frame.set_udp_pseudo_header_checksum()
+          # print ("Very last packet:")
+          # for i in range(0, len(data), 16):
+          #     print(" ".join(("{:02x}".format(c) for c in bytearray(data[i:i+16]))))
+          print ("lengths: " , lengths)
 
-        axis_frame = test_frame.build_axis()
+          # eth_frame = eth_ep.EthFrame()
+          # eth_frame.parse_axis_fcs(rx_frame.data[8:])
 
-        yield from driver.interfaces[0].start_xmit(axis_frame.data, 0, 34, 6)
+          # print(hex(eth_frame.eth_fcs))
+          # print(hex(eth_frame.calc_fcs()))
 
-        yield sfp_1_sink.wait()
-
-        pkt = sfp_1_sink.recv()
-        print(pkt)
-
-        sfp_1_source.send(pkt)
-
-        yield driver.interfaces[0].wait()
-
-        pkt = driver.interfaces[0].recv()
-
-        print(pkt)
-
-        assert pkt.rx_checksum == frame_checksum(pkt.data)
-
-        check_frame = udp_ep.UDPFrame()
-        check_frame.parse_axis(pkt.data)
-
-        assert check_frame.verify_checksums()
-
-        yield delay(100)
-
-        yield sys_clk.posedge
-        print("test 5: multiple small packets")
-        current_test.next = 5
-
-        count = 64
-
-        pkts = [bytearray([(x+k)%256 for x in range(64)]) for k in range(count)]
-        pkts_set = set([bytes(x) for x in pkts])
-
-        loopback_enable.next = True
-
-        for p in pkts:
-            yield from driver.interfaces[0].start_xmit(p, 0)
-
-        for k in range(count):
-            pkt = driver.interfaces[0].recv()
-
-            if not pkt:
-                yield driver.interfaces[0].wait()
-                pkt = driver.interfaces[0].recv()
-
-            print(pkt)
-            print(pkts[k])
-            assert bytes(pkt.data) in pkts_set
-            pkts_set.remove(bytes(pkt.data))
-            # assert pkt.data == pkts[k]
-            assert frame_checksum(pkt.data) == pkt.rx_checksum
-
-        loopback_enable.next = False
-
-        yield delay(100)
-
-        yield sys_clk.posedge
-        print("test 6: multiple large packets")
-        current_test.next = 6
-
-        count = 64
-
-        pkts = [bytearray([(x+k)%256 for x in range(1514)]) for k in range(count)]
-        pkts_set = set([bytes(x) for x in pkts])
-
-        loopback_enable.next = True
-
-        for p in pkts:
-            yield from driver.interfaces[0].start_xmit(p, 0)
-
-        for k in range(count):
-            pkt = driver.interfaces[0].recv()
-
-            if not pkt:
-                yield driver.interfaces[0].wait()
-                pkt = driver.interfaces[0].recv()
-
-            print(pkt)
-            print(pkts[k])
-            assert bytes(pkt.data) in pkts_set
-            pkts_set.remove(bytes(pkt.data))
-            # assert pkt.data == pkts[k]
-            assert frame_checksum(pkt.data) == pkt.rx_checksum
-
-        loopback_enable.next = False
-
-        yield delay(100)
+          # assert len(eth_frame.payload.data) == 46
+          # assert eth_frame.eth_fcs == eth_frame.calc_fcs()
+          # assert eth_frame.eth_dest_mac == test_frame_1.eth_dest_mac
+          # assert eth_frame.eth_src_mac == test_frame_1.eth_src_mac
+          # assert eth_frame.eth_type == test_frame_1.eth_type
+          # assert eth_frame.payload.data.index(test_frame_1.payload.data) == 0
 
         raise StopSimulation
 
