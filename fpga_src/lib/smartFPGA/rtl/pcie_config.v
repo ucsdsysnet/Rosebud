@@ -10,7 +10,11 @@ module pcie_config # (
   parameter CORE_SLOT_WIDTH         = 4,
   parameter CORE_WIDTH              = $clog2(CORE_COUNT),
   parameter IF_COUNT                = 2,
-  parameter PORTS_PER_IF            = 1
+  parameter PORTS_PER_IF            = 1,
+  parameter FW_ID                   = 32'd0,
+  parameter FW_VER                  = {16'd0, 16'd1},
+  parameter BOARD_ID                = {16'h1ce4, 16'h0003},
+  parameter BOARD_VER               = {16'd0, 16'd1}
 ) (
   input  wire                               sys_clk,
   input  wire                               sys_rst,
@@ -102,12 +106,6 @@ module pcie_config # (
   input  wire [31:0]                        if_msi_irq,
   output wire [31:0]                        msi_irq
 );
-
-// FW and board IDs
-parameter FW_ID = 32'd0;
-parameter FW_VER = {16'd0, 16'd1};
-parameter BOARD_ID = {16'h1ce4, 16'h0003};
-parameter BOARD_VER = {16'd0, 16'd1};
 
 // Interface and port count, and address space allocation. If corundum is used.
 parameter IF_AXIL_ADDR_WIDTH  = AXIL_ADDR_WIDTH-$clog2(IF_COUNT);
