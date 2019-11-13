@@ -67,7 +67,8 @@ module pcie_controller #
   parameter PCIE_SLOT_WIDTH         = $clog2(PCIE_SLOT_COUNT),
   parameter IF_COUNT                = 2,
   parameter PORTS_PER_IF            = 1,
-  parameter PORT_COUNT              = (IF_COUNT>0) ? IF_COUNT*PORTS_PER_IF : 1
+  parameter PORT_COUNT              = (IF_COUNT>0) ? IF_COUNT*PORTS_PER_IF : 1,
+  parameter RAM_PIPELINE            = 4
 ) (
   input  wire                                  sys_clk,
   input  wire                                  sys_rst,
@@ -210,7 +211,6 @@ parameter SEG_DATA_WIDTH        = AXIS_PCIE_DATA_WIDTH*2/SEG_COUNT;
 parameter SEG_ADDR_WIDTH        = 12; 
 parameter SEG_BE_WIDTH          = SEG_DATA_WIDTH/8;
 parameter RAM_ADDR_WIDTH        = SEG_ADDR_WIDTH+$clog2(SEG_COUNT)+$clog2(SEG_BE_WIDTH);
-parameter RAM_PIPELINE          = 4;
 parameter RAM_SEL_WIDTH         = (IF_COUNT>0) ? $clog2(IF_COUNT+1)+$clog2(PORTS_PER_IF+1) : 1;
 parameter IF_PCIE_DMA_TAG_WIDTH = PCIE_DMA_TAG_WIDTH-$clog2(IF_COUNT+1);
 parameter IF_RAM_SEL_WIDTH      = (PORTS_PER_IF>0) ? $clog2(PORTS_PER_IF+1) : 1;

@@ -7,6 +7,7 @@ FPGA_ARCH = kintexuplus
 # Files for synthesis
 SYN_FILES  = rtl/fpga.v
 SYN_FILES += rtl/fpga_core.v
+SYN_FILES += rtl/pcie_config.v
 SYN_FILES += rtl/sync_reset.v
 SYN_FILES += rtl/sync_signal.v
 SYN_FILES += lib/smartFPGA/rtl/riscvcore.v
@@ -23,7 +24,6 @@ SYN_FILES += lib/smartFPGA/rtl/axis_switch.v
 SYN_FILES += lib/smartFPGA/rtl/axis_switch_2lvl.v
 SYN_FILES += lib/smartFPGA/rtl/loopback_msg_fifo.v
 SYN_FILES += lib/smartFPGA/rtl/header.v
-SYN_FILES += lib/smartFPGA/rtl/pcie_config.v
 SYN_FILES += lib/smartFPGA/rtl/pcie_controller.v
 SYN_FILES += lib/smartFPGA/rtl/pcie_cont_read.v
 SYN_FILES += lib/smartFPGA/rtl/pcie_cont_write.v

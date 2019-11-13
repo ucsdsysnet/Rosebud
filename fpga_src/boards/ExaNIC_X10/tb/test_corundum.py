@@ -53,8 +53,8 @@ srcs = []
 
 srcs.append("../ip/ila_8x64_stub.v")
 srcs.append("../ip/ila_4x64_stub.v")
-
 srcs.append("../rtl/fpga_core.v")
+srcs.append("../rtl/pcie_config.v")
 
 srcs.append("../lib/smartFPGA/rtl/simple_fifo.v")
 srcs.append("../lib/smartFPGA/rtl/max_finder_tree.v")
@@ -70,7 +70,6 @@ srcs.append("../lib/smartFPGA/rtl/axis_switch.v")
 srcs.append("../lib/smartFPGA/rtl/axis_switch_2lvl.v")
 srcs.append("../lib/smartFPGA/rtl/loopback_msg_fifo.v")
 srcs.append("../lib/smartFPGA/rtl/header.v")
-srcs.append("../lib/smartFPGA/rtl/pcie_config.v")
 srcs.append("../lib/smartFPGA/rtl/pcie_controller.v")
 srcs.append("../lib/smartFPGA/rtl/pcie_cont_read.v")
 srcs.append("../lib/smartFPGA/rtl/pcie_cont_write.v")

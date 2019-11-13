@@ -196,8 +196,6 @@ parameter RX_CHECKSUM_ENABLE = 1;
 parameter ENABLE_PADDING = 1;
 parameter ENABLE_DIC = 1;
 parameter MIN_FRAME_LENGTH = 64;
-parameter TX_FIFO_DEPTH = 16384;
-parameter RX_FIFO_DEPTH = 16384;
 parameter MAX_TX_SIZE = 2048;
 parameter MAX_RX_SIZE = 2048;
 
@@ -397,10 +395,26 @@ wire                           pcie_dma_write_desc_status_valid;
 
 wire [IF_COUNT*32-1:0] if_msi_irq;
 
-assign msi_irq = if_msi_irq[31:0] | if_msi_irq[63:32];
-
 generate
     genvar m, n;
+    
+    case (IF_COUNT)
+        1: assign msi_irq = if_msi_irq[0*32+:32];
+        2: assign msi_irq = if_msi_irq[0*32+:32] | if_msi_irq[1*32+:32];
+        3: assign msi_irq = if_msi_irq[0*32+:32] | if_msi_irq[1*32+:32] | if_msi_irq[2*32+:32];
+        4: assign msi_irq = if_msi_irq[0*32+:32] | if_msi_irq[1*32+:32] | if_msi_irq[2*32+:32] | 
+                            if_msi_irq[3*32+:32];
+        5: assign msi_irq = if_msi_irq[0*32+:32] | if_msi_irq[1*32+:32] | if_msi_irq[2*32+:32] | 
+                            if_msi_irq[3*32+:32] | if_msi_irq[4*32+:32];
+        6: assign msi_irq = if_msi_irq[0*32+:32] | if_msi_irq[1*32+:32] | if_msi_irq[2*32+:32] | 
+                            if_msi_irq[3*32+:32] | if_msi_irq[4*32+:32] | if_msi_irq[5*32+:32];
+        7: assign msi_irq = if_msi_irq[0*32+:32] | if_msi_irq[1*32+:32] | if_msi_irq[2*32+:32] | 
+                            if_msi_irq[3*32+:32] | if_msi_irq[4*32+:32] | if_msi_irq[5*32+:32] | 
+                            if_msi_irq[6*32+:32];
+        8: assign msi_irq = if_msi_irq[0*32+:32] | if_msi_irq[1*32+:32] | if_msi_irq[2*32+:32] | 
+                            if_msi_irq[3*32+:32] | if_msi_irq[4*32+:32] | if_msi_irq[5*32+:32] | 
+                            if_msi_irq[6*32+:32] | if_msi_irq[7*32+:32];
+    endcase
 
     for (n = 0; n < IF_COUNT; n = n + 1) begin : iface
 
