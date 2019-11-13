@@ -19,4 +19,4 @@ load: clean all
 	sudo insmod example.ko	
 
 reset: 
-	sudo ./pcie_hot_reset.sh 05:00.0
+	sudo ./pcie_hot_reset.sh 02:00.0

@@ -27,7 +27,7 @@ THE SOFTWARE.
 
 #include <linux/kernel.h>
 
-#define DRIVER_NAME "edev"
+#define DRIVER_NAME "bump"
 #define DRIVER_VERSION "0.1"
 
 #define DEV_BAR_CNT 1

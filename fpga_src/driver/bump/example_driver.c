@@ -214,7 +214,7 @@ static int edev_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
     
     iowrite32(0x0000, edev->bar[0]+0x00040C);
     dev_info(dev, "set incoming cores");
-    iowrite32(0x0f00, edev->bar[0]+0x000408);
+    iowrite32(0xffff, edev->bar[0]+0x000408);
 
     dev_info(dev, "start copy to card");
     iowrite32(0x50100, edev->bar[0]+0x000448);
