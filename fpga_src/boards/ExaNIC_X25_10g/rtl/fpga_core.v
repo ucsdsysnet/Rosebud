@@ -224,7 +224,7 @@ parameter ID_TAG_WIDTH     = CORE_WIDTH+TAG_WIDTH;
 parameter LVL1_STRB_WIDTH  = LVL1_DATA_WIDTH/8;
 parameter LVL2_STRB_WIDTH  = LVL2_DATA_WIDTH/8;
 parameter CORE_MSG_WIDTH   = 4+$clog2(DMEM_SIZE_BYTES)+32;
-  
+
 // FW and board IDs
 parameter FW_ID     = 32'd0;
 parameter FW_VER    = {16'd0, 16'd1};
@@ -576,8 +576,8 @@ pcie_controller #
   .AXIS_PCIE_KEEP_WIDTH(AXIS_PCIE_KEEP_WIDTH),
   .AXIS_PCIE_RC_USER_WIDTH(AXIS_PCIE_RC_USER_WIDTH),
   .AXIS_PCIE_RQ_USER_WIDTH(AXIS_PCIE_RQ_USER_WIDTH),
-  .AXIS_PCIE_CQ_USER_WIDTH(AXIS_PCIE_CQ_USER_WIDTH),
   .AXIS_PCIE_CC_USER_WIDTH(AXIS_PCIE_CC_USER_WIDTH),
+  .AXIS_PCIE_CQ_USER_WIDTH(AXIS_PCIE_CQ_USER_WIDTH),
   .PCIE_ADDR_WIDTH(PCIE_ADDR_WIDTH),
   .PCIE_RAM_ADDR_WIDTH(PCIE_RAM_ADDR_WIDTH),
   .TX_RX_RAM_SIZE(TX_RX_RAM_SIZE),
@@ -806,6 +806,8 @@ wire                                       sched_ctrl_s_axis_tlast;
 wire [CORE_WIDTH-1:0]                      sched_ctrl_s_axis_tuser;
 
 wire sched_trig_in, sched_trig_out, sched_trig_in_ack, sched_trig_out_ack;
+
+(* keep_hierarchy = "soft" *)
 simple_scheduler # (
   .PORT_COUNT(PORT_COUNT),
   .INTERFACE_COUNT(INTERFACE_COUNT+V_PORT_COUNT),

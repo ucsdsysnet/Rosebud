@@ -279,6 +279,7 @@ always @(posedge pcie_clk) begin
             // read operation
             axil_ctrl_arready <= 1'b1;
             axil_ctrl_rvalid  <= 1'b1;
+            axil_ctrl_rdata   <= {AXIL_DATA_WIDTH{1'b0}};
 
             case ({axil_ctrl_araddr[15:2], 2'b00})
                 16'h0000: axil_ctrl_rdata <= FW_ID;      // fw_id
@@ -291,7 +292,7 @@ always @(posedge pcie_clk) begin
                 16'h0020: axil_ctrl_rdata <= IF_COUNT;   // if_count
                 16'h0024: axil_ctrl_rdata <= 2**IF_AXIL_ADDR_WIDTH; // if_stride
                 16'h002C: axil_ctrl_rdata <= 2**AXIL_CSR_ADDR_WIDTH; // if_ctrl_offset
-                
+
                 // GPIO
                 16'h0100: begin
                     // GPIO out

@@ -279,6 +279,7 @@ always @(posedge pcie_clk) begin
             // read operation
             axil_ctrl_arready <= 1'b1;
             axil_ctrl_rvalid  <= 1'b1;
+            axil_ctrl_rdata   <= {AXIL_DATA_WIDTH{1'b0}};
 
             case ({axil_ctrl_araddr[15:2], 2'b00})
                 16'h0000: axil_ctrl_rdata <= FW_ID;      // fw_id
