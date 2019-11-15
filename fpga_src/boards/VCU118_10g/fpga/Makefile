@@ -30,6 +30,18 @@ SYN_FILES += lib/smartFPGA/rtl/pcie_cont_read.v
 SYN_FILES += lib/smartFPGA/rtl/pcie_cont_write.v
 SYN_FILES += lib/smartFPGA/rtl/corundum.v
 
+# SYN_FILES += lib/axis/rtl/axis_switch.v
+SYN_FILES += lib/axis/rtl/axis_arb_mux.v
+SYN_FILES += lib/axis/rtl/axis_fifo.v
+SYN_FILES += lib/axis/rtl/axis_fifo_adapter.v
+SYN_FILES += lib/axis/rtl/axis_register.v
+SYN_FILES += lib/axis/rtl/arbiter.v
+SYN_FILES += lib/axis/rtl/priority_encoder.v
+SYN_FILES += lib/axis/rtl/axis_async_fifo.v
+SYN_FILES += lib/axis/rtl/axis_async_fifo_adapter.v
+SYN_FILES += lib/axis/rtl/axis_adapter.v
+SYN_FILES += lib/axi/rtl/axil_interconnect.v
+
 SYN_FILES += lib/eth/rtl/eth_mac_10g_fifo.v
 SYN_FILES += lib/eth/rtl/eth_mac_10g.v
 SYN_FILES += lib/eth/rtl/lfsr.v
@@ -47,18 +59,6 @@ SYN_FILES += lib/eth/rtl/xgmii_baser_enc_64.v
 SYN_FILES += lib/eth/rtl/eth_axis_rx_64.v
 SYN_FILES += lib/eth/rtl/eth_axis_tx_64.v
 SYN_FILES += lib/eth/rtl/eth_arb_mux.v
-
-# SYN_FILES += lib/axis/rtl/axis_switch.v
-SYN_FILES += lib/axis/rtl/axis_arb_mux.v
-SYN_FILES += lib/axis/rtl/axis_fifo.v
-SYN_FILES += lib/axis/rtl/axis_fifo_adapter.v
-SYN_FILES += lib/axis/rtl/axis_register.v
-SYN_FILES += lib/axis/rtl/arbiter.v
-SYN_FILES += lib/axis/rtl/priority_encoder.v
-SYN_FILES += lib/axis/rtl/axis_async_fifo.v
-SYN_FILES += lib/axis/rtl/axis_async_fifo_adapter.v
-SYN_FILES += lib/axis/rtl/axis_adapter.v
-SYN_FILES += lib/axi/rtl/axil_interconnect.v
 
 SYN_FILES += lib/pcie/rtl/pcie_us_axil_master.v
 SYN_FILES += lib/pcie/rtl/dma_client_axis_sink.v

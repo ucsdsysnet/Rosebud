@@ -53,15 +53,15 @@ module axis_switch_2lvl # (
     // Frame FIFO mode - operate on frames instead of cycles
     // When set, m_axis_tvalid will not be deasserted within a frame
     // Requires LAST_ENABLE set
-    parameter FRAME_FIFO = 0
+    parameter FRAME_FIFO = 0,
+    parameter SEPARATE_CLOCKS = 0
 
 ) (
-    input  wire                   clk,
-    input  wire                   rst,
-
     /*
      * AXI Stream inputs
      */
+    input  wire                            s_clk,
+    input  wire                            s_rst,
     input  wire [S_COUNT*S_DATA_WIDTH-1:0] s_axis_tdata,
     input  wire [S_COUNT*S_KEEP_WIDTH-1:0] s_axis_tkeep,
     input  wire [S_COUNT-1:0]              s_axis_tvalid,
@@ -74,6 +74,8 @@ module axis_switch_2lvl # (
     /*
      * AXI Stream outputs
      */
+    input  wire                            m_clk,
+    input  wire                            m_rst,
     output wire [M_COUNT*M_DATA_WIDTH-1:0] m_axis_tdata,
     output wire [M_COUNT*M_KEEP_WIDTH-1:0] m_axis_tkeep,
     output wire [M_COUNT-1:0]              m_axis_tvalid,
@@ -84,11 +86,12 @@ module axis_switch_2lvl # (
     output wire [M_COUNT*USER_WIDTH-1:0]   m_axis_tuser
 );
 
-initial 
-    if ((STAGE_FIFO_DEPTH==0)&&(M_DATA_WIDTH!=S_DATA_WIDTH)) begin
-        $error("Error: There needs to be a FIFO for width conversion");
+initial begin
+    if ((STAGE_FIFO_DEPTH==0)&&((M_DATA_WIDTH!=S_DATA_WIDTH)||SEPARATE_CLOCKS)) begin
+        $error("Error: There needs to be a FIFO for width conversion or clock domain crossing");
         $finish;
     end
+end
 
 if (S_COUNT >= M_COUNT) begin
     axis_switch_2lvl_shrink # (
@@ -114,11 +117,11 @@ if (S_COUNT >= M_COUNT) begin
         .LSB_PRIORITY    (LSB_PRIORITY),
         .CLUSTER_COUNT   (CLUSTER_COUNT),
         .STAGE_FIFO_DEPTH(STAGE_FIFO_DEPTH),
-        .FRAME_FIFO      (FRAME_FIFO)
+        .FRAME_FIFO      (FRAME_FIFO),
+        .SEPARATE_CLOCKS (SEPARATE_CLOCKS)
     ) axis_switch_2lvl_shrink_inst (
-        .clk(clk),
-        .rst(rst),
-    
+        .s_clk        (s_clk),
+        .s_rst        (s_rst),
         .s_axis_tdata (s_axis_tdata),
         .s_axis_tkeep (s_axis_tkeep),
         .s_axis_tvalid(s_axis_tvalid),
@@ -128,6 +131,8 @@ if (S_COUNT >= M_COUNT) begin
         .s_axis_tdest (s_axis_tdest),
         .s_axis_tuser (s_axis_tuser),
   
+        .m_clk        (m_clk),
+        .m_rst        (m_rst),
         .m_axis_tdata (m_axis_tdata),
         .m_axis_tkeep (m_axis_tkeep),
         .m_axis_tvalid(m_axis_tvalid),
@@ -162,11 +167,11 @@ end else begin
         .LSB_PRIORITY    (LSB_PRIORITY),
         .CLUSTER_COUNT   (CLUSTER_COUNT),
         .STAGE_FIFO_DEPTH(STAGE_FIFO_DEPTH),
-        .FRAME_FIFO      (FRAME_FIFO)
+        .FRAME_FIFO      (FRAME_FIFO),
+        .SEPARATE_CLOCKS (SEPARATE_CLOCKS)
     ) axis_switch_2lvl_grow_inst (
-        .clk(clk),
-        .rst(rst),
-    
+        .s_clk        (s_clk),
+        .s_rst        (s_rst),
         .s_axis_tdata (s_axis_tdata),
         .s_axis_tkeep (s_axis_tkeep),
         .s_axis_tvalid(s_axis_tvalid),
@@ -176,6 +181,8 @@ end else begin
         .s_axis_tdest (s_axis_tdest),
         .s_axis_tuser (s_axis_tuser),
   
+        .m_clk        (m_clk),
+        .m_rst        (m_rst),
         .m_axis_tdata (m_axis_tdata),
         .m_axis_tkeep (m_axis_tkeep),
         .m_axis_tvalid(m_axis_tvalid),
@@ -213,14 +220,14 @@ module axis_switch_2lvl_shrink # (
     parameter LSB_PRIORITY     = "HIGH",
     parameter CLUSTER_COUNT    = 4,
     parameter STAGE_FIFO_DEPTH = 8192,
-    parameter FRAME_FIFO       = 0
+    parameter FRAME_FIFO       = 0,
+    parameter SEPARATE_CLOCKS  = 0
 ) (
-    input  wire                   clk,
-    input  wire                   rst,
-
     /*
      * AXI Stream inputs
      */
+    input  wire                            s_clk,
+    input  wire                            s_rst,
     input  wire [S_COUNT*S_DATA_WIDTH-1:0] s_axis_tdata,
     input  wire [S_COUNT*S_KEEP_WIDTH-1:0] s_axis_tkeep,
     input  wire [S_COUNT-1:0]              s_axis_tvalid,
@@ -233,6 +240,8 @@ module axis_switch_2lvl_shrink # (
     /*
      * AXI Stream outputs
      */
+    input  wire                            m_clk,
+    input  wire                            m_rst,
     output wire [M_COUNT*M_DATA_WIDTH-1:0] m_axis_tdata,
     output wire [M_COUNT*M_KEEP_WIDTH-1:0] m_axis_tkeep,
     output wire [M_COUNT-1:0]              m_axis_tvalid,
@@ -243,6 +252,9 @@ module axis_switch_2lvl_shrink # (
     output wire [M_COUNT*USER_WIDTH-1:0]   m_axis_tuser
 );
     
+    wire select_m_clk = SEPARATE_CLOCKS ? m_clk : s_clk;
+    wire select_m_rst = SEPARATE_CLOCKS ? m_rst : s_rst;
+
     parameter S_PER_CLUSTER     = S_COUNT/CLUSTER_COUNT;
     parameter STAGE_FIFO_ENABLE = (STAGE_FIFO_DEPTH>0);
 
@@ -281,7 +293,7 @@ module axis_switch_2lvl_shrink # (
                                                   int_axis_tready, 
                                                   int_axis_tlast;
              
-            for (j=0; j<CLUSTER_COUNT; j=j+1) begin
+            for (j=0; j<CLUSTER_COUNT; j=j+1) begin : arb_n_fifo
                 axis_arb_mux #
                 (
                     .S_COUNT(S_PER_CLUSTER),
@@ -298,8 +310,8 @@ module axis_switch_2lvl_shrink # (
                     .LSB_PRIORITY(LSB_PRIORITY)
                 ) sw_lvl1 (
     
-                    .clk(clk),
-                    .rst(rst),
+                    .clk(s_clk),
+                    .rst(s_rst),
                 
                     /*
                      * AXI Stream inputs
@@ -328,48 +340,97 @@ module axis_switch_2lvl_shrink # (
                 );
     
                 if (STAGE_FIFO_ENABLE) begin
-                    axis_fifo_adapter # (
-                        .DEPTH(STAGE_FIFO_DEPTH),
-                        .S_DATA_WIDTH(S_DATA_WIDTH),
-                        .S_KEEP_ENABLE(S_KEEP_ENABLE),
-                        .S_KEEP_WIDTH(S_KEEP_WIDTH),
-                        .M_DATA_WIDTH(M_DATA_WIDTH),
-                        .M_KEEP_ENABLE(M_KEEP_ENABLE),
-                        .M_KEEP_WIDTH(M_KEEP_WIDTH),
-                        .DEST_ENABLE(S_DEST_ENABLE),
-                        .DEST_WIDTH(S_DEST_WIDTH),
-                        .USER_ENABLE(USER_ENABLE),
-                        .USER_WIDTH(USER_WIDTH),
-                        .ID_ENABLE(ID_ENABLE),
-                        .ID_WIDTH(ID_WIDTH),
-                        .FRAME_FIFO(FRAME_FIFO)
-                    ) stage_fifo (
+                    if (SEPARATE_CLOCKS) begin
+                        axis_async_fifo_adapter # (
+                            .DEPTH(STAGE_FIFO_DEPTH),
+                            .S_DATA_WIDTH(S_DATA_WIDTH),
+                            .S_KEEP_ENABLE(S_KEEP_ENABLE),
+                            .S_KEEP_WIDTH(S_KEEP_WIDTH),
+                            .M_DATA_WIDTH(M_DATA_WIDTH),
+                            .M_KEEP_ENABLE(M_KEEP_ENABLE),
+                            .M_KEEP_WIDTH(M_KEEP_WIDTH),
+                            .DEST_ENABLE(S_DEST_ENABLE),
+                            .DEST_WIDTH(S_DEST_WIDTH),
+                            .USER_ENABLE(USER_ENABLE),
+                            .USER_WIDTH(USER_WIDTH),
+                            .ID_ENABLE(ID_ENABLE),
+                            .ID_WIDTH(ID_WIDTH),
+                            .FRAME_FIFO(FRAME_FIFO)
+                        ) stage_fifo (
      
-                        .clk(clk),
-                        .rst(rst),
-                        
-                        .s_axis_tdata(int_axis_tdata[j*S_DATA_WIDTH +: S_DATA_WIDTH]),
-                        .s_axis_tkeep(int_axis_tkeep[j*S_KEEP_WIDTH +: S_KEEP_WIDTH]),
-                        .s_axis_tvalid(int_axis_tvalid[j]),
-                        .s_axis_tready(int_axis_tready[j]),
-                        .s_axis_tlast(int_axis_tlast[j]),
-                        .s_axis_tid(int_axis_tid[j*ID_WIDTH +: ID_WIDTH]),
-                        .s_axis_tdest(int_axis_tdest[j*S_DEST_WIDTH +: S_DEST_WIDTH]),
-                        .s_axis_tuser(int_axis_tuser[j*USER_WIDTH +: USER_WIDTH]),
+                            .s_clk(s_clk),
+                            .s_rst(s_rst),
+                            .s_axis_tdata(int_axis_tdata[j*S_DATA_WIDTH +: S_DATA_WIDTH]),
+                            .s_axis_tkeep(int_axis_tkeep[j*S_KEEP_WIDTH +: S_KEEP_WIDTH]),
+                            .s_axis_tvalid(int_axis_tvalid[j]),
+                            .s_axis_tready(int_axis_tready[j]),
+                            .s_axis_tlast(int_axis_tlast[j]),
+                            .s_axis_tid(int_axis_tid[j*ID_WIDTH +: ID_WIDTH]),
+                            .s_axis_tdest(int_axis_tdest[j*S_DEST_WIDTH +: S_DEST_WIDTH]),
+                            .s_axis_tuser(int_axis_tuser[j*USER_WIDTH +: USER_WIDTH]),
     
-                        .m_axis_tdata(int_axis_tdata_f[j*M_DATA_WIDTH +: M_DATA_WIDTH]),
-                        .m_axis_tkeep(int_axis_tkeep_f[j*M_KEEP_WIDTH +: M_KEEP_WIDTH]),
-                        .m_axis_tvalid(int_axis_tvalid_f[j]),
-                        .m_axis_tready(int_axis_tready_f[j]),
-                        .m_axis_tlast(int_axis_tlast_f[j]),
-                        .m_axis_tid(int_axis_tid_f[j*ID_WIDTH +: ID_WIDTH]),
-                        .m_axis_tdest(int_axis_tdest_f[j*S_DEST_WIDTH +: S_DEST_WIDTH]),
-                        .m_axis_tuser(int_axis_tuser_f[j*USER_WIDTH +: USER_WIDTH]),
+                            .m_clk(select_m_clk),
+                            .m_rst(select_m_rst),
+                            .m_axis_tdata(int_axis_tdata_f[j*M_DATA_WIDTH +: M_DATA_WIDTH]),
+                            .m_axis_tkeep(int_axis_tkeep_f[j*M_KEEP_WIDTH +: M_KEEP_WIDTH]),
+                            .m_axis_tvalid(int_axis_tvalid_f[j]),
+                            .m_axis_tready(int_axis_tready_f[j]),
+                            .m_axis_tlast(int_axis_tlast_f[j]),
+                            .m_axis_tid(int_axis_tid_f[j*ID_WIDTH +: ID_WIDTH]),
+                            .m_axis_tdest(int_axis_tdest_f[j*S_DEST_WIDTH +: S_DEST_WIDTH]),
+                            .m_axis_tuser(int_axis_tuser_f[j*USER_WIDTH +: USER_WIDTH]),
     
-                        .status_overflow(),
-                        .status_bad_frame(),
-                        .status_good_frame()
-                    );
+                            .s_status_overflow(),
+                            .s_status_bad_frame(),
+                            .s_status_good_frame(),
+                            .m_status_overflow(),
+                            .m_status_bad_frame(),
+                            .m_status_good_frame()
+                        );
+                    end else begin
+                        axis_fifo_adapter # (
+                            .DEPTH(STAGE_FIFO_DEPTH),
+                            .S_DATA_WIDTH(S_DATA_WIDTH),
+                            .S_KEEP_ENABLE(S_KEEP_ENABLE),
+                            .S_KEEP_WIDTH(S_KEEP_WIDTH),
+                            .M_DATA_WIDTH(M_DATA_WIDTH),
+                            .M_KEEP_ENABLE(M_KEEP_ENABLE),
+                            .M_KEEP_WIDTH(M_KEEP_WIDTH),
+                            .DEST_ENABLE(S_DEST_ENABLE),
+                            .DEST_WIDTH(S_DEST_WIDTH),
+                            .USER_ENABLE(USER_ENABLE),
+                            .USER_WIDTH(USER_WIDTH),
+                            .ID_ENABLE(ID_ENABLE),
+                            .ID_WIDTH(ID_WIDTH),
+                            .FRAME_FIFO(FRAME_FIFO)
+                        ) stage_fifo (
+     
+                            .clk(s_clk),
+                            .rst(s_rst),
+
+                            .s_axis_tdata(int_axis_tdata[j*S_DATA_WIDTH +: S_DATA_WIDTH]),
+                            .s_axis_tkeep(int_axis_tkeep[j*S_KEEP_WIDTH +: S_KEEP_WIDTH]),
+                            .s_axis_tvalid(int_axis_tvalid[j]),
+                            .s_axis_tready(int_axis_tready[j]),
+                            .s_axis_tlast(int_axis_tlast[j]),
+                            .s_axis_tid(int_axis_tid[j*ID_WIDTH +: ID_WIDTH]),
+                            .s_axis_tdest(int_axis_tdest[j*S_DEST_WIDTH +: S_DEST_WIDTH]),
+                            .s_axis_tuser(int_axis_tuser[j*USER_WIDTH +: USER_WIDTH]),
+    
+                            .m_axis_tdata(int_axis_tdata_f[j*M_DATA_WIDTH +: M_DATA_WIDTH]),
+                            .m_axis_tkeep(int_axis_tkeep_f[j*M_KEEP_WIDTH +: M_KEEP_WIDTH]),
+                            .m_axis_tvalid(int_axis_tvalid_f[j]),
+                            .m_axis_tready(int_axis_tready_f[j]),
+                            .m_axis_tlast(int_axis_tlast_f[j]),
+                            .m_axis_tid(int_axis_tid_f[j*ID_WIDTH +: ID_WIDTH]),
+                            .m_axis_tdest(int_axis_tdest_f[j*S_DEST_WIDTH +: S_DEST_WIDTH]),
+                            .m_axis_tuser(int_axis_tuser_f[j*USER_WIDTH +: USER_WIDTH]),
+    
+                            .status_overflow(),
+                            .status_bad_frame(),
+                            .status_good_frame()
+                        );
+                    end
                 end else begin
                     assign int_axis_tdata_f  = int_axis_tdata;
                     assign int_axis_tkeep_f  = int_axis_tkeep;
@@ -404,8 +465,8 @@ module axis_switch_2lvl_shrink # (
             .LSB_PRIORITY(LSB_PRIORITY)
         ) sw_lvl2
         (
-            .clk(clk),
-            .rst(rst),
+            .clk(select_m_clk),
+            .rst(select_m_rst),
         
             /*
              * AXI Stream inputs
@@ -453,8 +514,8 @@ module axis_switch_2lvl_shrink # (
             .M_REG_TYPE(M_REG_TYPE)
         ) sw_lvl2
         (
-            .clk(clk),
-            .rst(rst),
+            .clk(select_m_clk),
+            .rst(select_m_rst),
         
             /*
              * AXI Stream inputs
@@ -514,14 +575,14 @@ module axis_switch_2lvl_grow # (
     parameter LSB_PRIORITY     = "HIGH",
     parameter CLUSTER_COUNT    = 4,
     parameter STAGE_FIFO_DEPTH = 8192,
-    parameter FRAME_FIFO       = 0
+    parameter FRAME_FIFO       = 0,
+    parameter SEPARATE_CLOCKS  = 0
 ) (
-    input  wire                   clk,
-    input  wire                   rst,
-
     /*
      * AXI Stream inputs
      */
+    input  wire                            s_clk,
+    input  wire                            s_rst,
     input  wire [S_COUNT*S_DATA_WIDTH-1:0] s_axis_tdata,
     input  wire [S_COUNT*S_KEEP_WIDTH-1:0] s_axis_tkeep,
     input  wire [S_COUNT-1:0]              s_axis_tvalid,
@@ -534,6 +595,8 @@ module axis_switch_2lvl_grow # (
     /*
      * AXI Stream outputs
      */
+    input  wire                            m_clk,
+    input  wire                            m_rst,
     output wire [M_COUNT*M_DATA_WIDTH-1:0] m_axis_tdata,
     output wire [M_COUNT*M_KEEP_WIDTH-1:0] m_axis_tkeep,
     output wire [M_COUNT-1:0]              m_axis_tvalid,
@@ -543,6 +606,8 @@ module axis_switch_2lvl_grow # (
     output wire [M_COUNT*M_DEST_WIDTH-1:0] m_axis_tdest,
     output wire [M_COUNT*USER_WIDTH-1:0]   m_axis_tuser
 );
+    wire select_m_clk = SEPARATE_CLOCKS ? m_clk : s_clk;
+    wire select_m_rst = SEPARATE_CLOCKS ? m_rst : s_rst;
     
     parameter M_PER_CLUSTER     = M_COUNT/CLUSTER_COUNT;
     parameter INT_DEST_WIDTH    = S_DEST_WIDTH-$clog2(CLUSTER_COUNT);
@@ -577,8 +642,8 @@ module axis_switch_2lvl_grow # (
         .M_REG_TYPE(M_REG_TYPE)
     ) sw_lvl1
     (
-        .clk(clk),
-        .rst(rst),
+        .clk(s_clk),
+        .rst(s_rst),
     
         /*
          * AXI Stream inputs
@@ -636,49 +701,97 @@ module axis_switch_2lvl_grow # (
             wire [M_COUNT*INT_DEST_WIDTH-1:0]     m_axis_tdest_r;
             
     
-            for (j=0; j<CLUSTER_COUNT; j=j+1) begin
+            for (j=0; j<CLUSTER_COUNT; j=j+1) begin : fifo_n_switch
                 if (STAGE_FIFO_ENABLE) begin
-                    axis_fifo_adapter # (
-                        .DEPTH(STAGE_FIFO_DEPTH),
-                        .S_DATA_WIDTH(S_DATA_WIDTH),
-                        .S_KEEP_ENABLE(S_KEEP_ENABLE),
-                        .S_KEEP_WIDTH(S_KEEP_WIDTH),
-                        .M_DATA_WIDTH(M_DATA_WIDTH),
-                        .M_KEEP_ENABLE(M_KEEP_ENABLE),
-                        .M_KEEP_WIDTH(M_KEEP_WIDTH),
-                        .DEST_ENABLE(1),
-                        .DEST_WIDTH(INT_DEST_WIDTH),
-                        .USER_ENABLE(USER_ENABLE),
-                        .USER_WIDTH(USER_WIDTH),
-                        .ID_ENABLE(ID_ENABLE),
-                        .ID_WIDTH(ID_WIDTH),
-                        .FRAME_FIFO(FRAME_FIFO)
-                    ) stage_fifo (
-                        .clk(clk),
-                        .rst(rst),
+                    if (SEPARATE_CLOCKS) begin
+                        axis_async_fifo_adapter # (
+                            .DEPTH(STAGE_FIFO_DEPTH),
+                            .S_DATA_WIDTH(S_DATA_WIDTH),
+                            .S_KEEP_ENABLE(S_KEEP_ENABLE),
+                            .S_KEEP_WIDTH(S_KEEP_WIDTH),
+                            .M_DATA_WIDTH(M_DATA_WIDTH),
+                            .M_KEEP_ENABLE(M_KEEP_ENABLE),
+                            .M_KEEP_WIDTH(M_KEEP_WIDTH),
+                            .DEST_ENABLE(1),
+                            .DEST_WIDTH(INT_DEST_WIDTH),
+                            .USER_ENABLE(USER_ENABLE),
+                            .USER_WIDTH(USER_WIDTH),
+                            .ID_ENABLE(ID_ENABLE),
+                            .ID_WIDTH(ID_WIDTH),
+                            .FRAME_FIFO(FRAME_FIFO)
+                        ) stage_fifo (
+                            .s_clk(s_clk),
+                            .s_rst(s_rst),
+                            .s_axis_tdata(int_axis_tdata[j*S_DATA_WIDTH +: S_DATA_WIDTH]),
+                            .s_axis_tkeep(int_axis_tkeep[j*S_KEEP_WIDTH +: S_KEEP_WIDTH]),
+                            .s_axis_tvalid(int_axis_tvalid[j]),
+                            .s_axis_tready(int_axis_tready[j]),
+                            .s_axis_tlast(int_axis_tlast[j]),
+                            .s_axis_tid(int_axis_tid[j*ID_WIDTH +: ID_WIDTH]),
+                            .s_axis_tdest(int_axis_tdest[j*S_DEST_WIDTH +: INT_DEST_WIDTH]),
+                            .s_axis_tuser(int_axis_tuser[j*USER_WIDTH +: USER_WIDTH]),
     
-                        .s_axis_tdata(int_axis_tdata[j*S_DATA_WIDTH +: S_DATA_WIDTH]),
-                        .s_axis_tkeep(int_axis_tkeep[j*S_KEEP_WIDTH +: S_KEEP_WIDTH]),
-                        .s_axis_tvalid(int_axis_tvalid[j]),
-                        .s_axis_tready(int_axis_tready[j]),
-                        .s_axis_tlast(int_axis_tlast[j]),
-                        .s_axis_tid(int_axis_tid[j*ID_WIDTH +: ID_WIDTH]),
-                        .s_axis_tdest(int_axis_tdest[j*S_DEST_WIDTH +: INT_DEST_WIDTH]),
-                        .s_axis_tuser(int_axis_tuser[j*USER_WIDTH +: USER_WIDTH]),
-    
-                        .m_axis_tdata(int_axis_tdata_f[j*M_DATA_WIDTH +: M_DATA_WIDTH]),
-                        .m_axis_tkeep(int_axis_tkeep_f[j*M_KEEP_WIDTH +: M_KEEP_WIDTH]),
-                        .m_axis_tvalid(int_axis_tvalid_f[j]),
-                        .m_axis_tready(int_axis_tready_f[j]),
-                        .m_axis_tlast(int_axis_tlast_f[j]),
-                        .m_axis_tid(int_axis_tid_f[j*ID_WIDTH +: ID_WIDTH]),
-                        .m_axis_tdest(int_axis_tdest_f[j*S_DEST_WIDTH +: INT_DEST_WIDTH]),
-                        .m_axis_tuser(int_axis_tuser_f[j*USER_WIDTH +: USER_WIDTH]),
+                            .m_clk(select_m_clk),
+                            .m_rst(select_m_rst),
+                            .m_axis_tdata(int_axis_tdata_f[j*M_DATA_WIDTH +: M_DATA_WIDTH]),
+                            .m_axis_tkeep(int_axis_tkeep_f[j*M_KEEP_WIDTH +: M_KEEP_WIDTH]),
+                            .m_axis_tvalid(int_axis_tvalid_f[j]),
+                            .m_axis_tready(int_axis_tready_f[j]),
+                            .m_axis_tlast(int_axis_tlast_f[j]),
+                            .m_axis_tid(int_axis_tid_f[j*ID_WIDTH +: ID_WIDTH]),
+                            .m_axis_tdest(int_axis_tdest_f[j*S_DEST_WIDTH +: INT_DEST_WIDTH]),
+                            .m_axis_tuser(int_axis_tuser_f[j*USER_WIDTH +: USER_WIDTH]),
          
-                        .status_overflow(),
-                        .status_bad_frame(),
-                        .status_good_frame()
-                    );
+                            .s_status_overflow(),
+                            .s_status_bad_frame(),
+                            .s_status_good_frame(),
+                            .m_status_overflow(),
+                            .m_status_bad_frame(),
+                            .m_status_good_frame()
+                        );
+                    end else begin
+                        axis_fifo_adapter # (
+                            .DEPTH(STAGE_FIFO_DEPTH),
+                            .S_DATA_WIDTH(S_DATA_WIDTH),
+                            .S_KEEP_ENABLE(S_KEEP_ENABLE),
+                            .S_KEEP_WIDTH(S_KEEP_WIDTH),
+                            .M_DATA_WIDTH(M_DATA_WIDTH),
+                            .M_KEEP_ENABLE(M_KEEP_ENABLE),
+                            .M_KEEP_WIDTH(M_KEEP_WIDTH),
+                            .DEST_ENABLE(1),
+                            .DEST_WIDTH(INT_DEST_WIDTH),
+                            .USER_ENABLE(USER_ENABLE),
+                            .USER_WIDTH(USER_WIDTH),
+                            .ID_ENABLE(ID_ENABLE),
+                            .ID_WIDTH(ID_WIDTH),
+                            .FRAME_FIFO(FRAME_FIFO)
+                        ) stage_fifo (
+                            .clk(s_clk),
+                            .rst(s_rst),
+    
+                            .s_axis_tdata(int_axis_tdata[j*S_DATA_WIDTH +: S_DATA_WIDTH]),
+                            .s_axis_tkeep(int_axis_tkeep[j*S_KEEP_WIDTH +: S_KEEP_WIDTH]),
+                            .s_axis_tvalid(int_axis_tvalid[j]),
+                            .s_axis_tready(int_axis_tready[j]),
+                            .s_axis_tlast(int_axis_tlast[j]),
+                            .s_axis_tid(int_axis_tid[j*ID_WIDTH +: ID_WIDTH]),
+                            .s_axis_tdest(int_axis_tdest[j*S_DEST_WIDTH +: INT_DEST_WIDTH]),
+                            .s_axis_tuser(int_axis_tuser[j*USER_WIDTH +: USER_WIDTH]),
+    
+                            .m_axis_tdata(int_axis_tdata_f[j*M_DATA_WIDTH +: M_DATA_WIDTH]),
+                            .m_axis_tkeep(int_axis_tkeep_f[j*M_KEEP_WIDTH +: M_KEEP_WIDTH]),
+                            .m_axis_tvalid(int_axis_tvalid_f[j]),
+                            .m_axis_tready(int_axis_tready_f[j]),
+                            .m_axis_tlast(int_axis_tlast_f[j]),
+                            .m_axis_tid(int_axis_tid_f[j*ID_WIDTH +: ID_WIDTH]),
+                            .m_axis_tdest(int_axis_tdest_f[j*S_DEST_WIDTH +: INT_DEST_WIDTH]),
+                            .m_axis_tuser(int_axis_tuser_f[j*USER_WIDTH +: USER_WIDTH]),
+         
+                            .status_overflow(),
+                            .status_bad_frame(),
+                            .status_good_frame()
+                        );
+                    end
                 end else begin
                     assign int_axis_tdata_f  = int_axis_tdata;
                     assign int_axis_tkeep_f  = int_axis_tkeep;
@@ -708,8 +821,8 @@ module axis_switch_2lvl_grow # (
                     .LSB_PRIORITY(LSB_PRIORITY)
                 ) sw_lvl2
                 (
-                    .clk(clk),
-                    .rst(rst),
+                    .clk(select_m_clk),
+                    .rst(select_m_rst),
                 
                     .s_axis_tdata(int_axis_tdata_f[j*M_DATA_WIDTH +: M_DATA_WIDTH]),
                     .s_axis_tkeep(int_axis_tkeep_f[j*M_KEEP_WIDTH +: M_KEEP_WIDTH]),

@@ -13,7 +13,6 @@ srcs.append("../rtl/%s.v" % module)
 srcs.append("%s.v" % testbench)
 srcs.append("../rtl/simple_fifo.v")
 srcs.append("../rtl/core_mems.v")
-srcs.append("../../axis/rtl/axis_async_fifo.v") 
 
 src = ' '.join(srcs)
 

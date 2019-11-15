@@ -43,11 +43,11 @@ srcs = []
 
 srcs.append("../rtl/fpga_core.v")
 srcs.append("../rtl/pcie_config.v")
-srcs.append("../rtl/core_mems.v")
 
 srcs.append("../lib/smartFPGA/rtl/simple_fifo.v")
 srcs.append("../lib/smartFPGA/rtl/max_finder_tree.v")
 srcs.append("../lib/smartFPGA/rtl/slot_keeper.v")
+srcs.append("../lib/smartFPGA/rtl/core_mems.v")
 srcs.append("../lib/smartFPGA/rtl/axis_dma.v")
 srcs.append("../lib/smartFPGA/rtl/VexRiscv.v")
 srcs.append("../lib/smartFPGA/rtl/riscvcore.v")

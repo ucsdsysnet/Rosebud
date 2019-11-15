@@ -16,7 +16,6 @@ module riscvcore #(
     input                        timer_rst,
     
     output                       ext_dmem_en,
-    output                       ext_dmem_ren,
     output [STRB_WIDTH-1:0]      ext_dmem_wen,
     output [ADDR_WIDTH-1:0]      ext_dmem_addr,
     output [DATA_WIDTH-1:0]      ext_dmem_wr_data,
@@ -404,7 +403,6 @@ always @ (posedge clk)
 
 // connection to dmem and imem
   assign ext_dmem_en       = dmem_v && (!io_not_mem);
-  assign ext_dmem_ren      = !(|dmem_line_write_mask);
   assign ext_dmem_wen      = dmem_line_write_mask;
   assign ext_dmem_addr     = dmem_addr;
   assign ext_dmem_wr_data  = dmem_data_in;

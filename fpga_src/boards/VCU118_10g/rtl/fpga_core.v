@@ -288,7 +288,7 @@ parameter ID_TAG_WIDTH     = CORE_WIDTH+TAG_WIDTH;
 parameter LVL1_STRB_WIDTH  = LVL1_DATA_WIDTH/8;
 parameter LVL2_STRB_WIDTH  = LVL2_DATA_WIDTH/8;
 parameter CORE_MSG_WIDTH   = 4+$clog2(DMEM_SIZE_BYTES)+32;
-  
+
 // FW and board IDs
 parameter FW_ID = 32'd0;
 parameter FW_VER = {16'd0, 16'd1};
@@ -778,8 +778,8 @@ pcie_controller #
   .AXIS_PCIE_KEEP_WIDTH(AXIS_PCIE_KEEP_WIDTH),
   .AXIS_PCIE_RC_USER_WIDTH(AXIS_PCIE_RC_USER_WIDTH),
   .AXIS_PCIE_RQ_USER_WIDTH(AXIS_PCIE_RQ_USER_WIDTH),
-  .AXIS_PCIE_CQ_USER_WIDTH(AXIS_PCIE_CQ_USER_WIDTH),
   .AXIS_PCIE_CC_USER_WIDTH(AXIS_PCIE_CC_USER_WIDTH),
+  .AXIS_PCIE_CQ_USER_WIDTH(AXIS_PCIE_CQ_USER_WIDTH),
   .PCIE_ADDR_WIDTH(PCIE_ADDR_WIDTH),
   .PCIE_RAM_ADDR_WIDTH(PCIE_RAM_ADDR_WIDTH),
   .TX_RX_RAM_SIZE(TX_RX_RAM_SIZE),
@@ -1009,6 +1009,8 @@ wire                                       sched_ctrl_s_axis_tlast;
 wire [CORE_WIDTH-1:0]                      sched_ctrl_s_axis_tuser;
 
 wire sched_trig_in, sched_trig_out, sched_trig_in_ack, sched_trig_out_ack;
+
+(* keep_hierarchy = "soft" *)
 simple_scheduler # (
   .PORT_COUNT(PORT_COUNT),
   .INTERFACE_COUNT(INTERFACE_COUNT+V_PORT_COUNT),
@@ -1139,11 +1141,11 @@ axis_switch_2lvl # (
     .M_REG_TYPE      (2),
     .CLUSTER_COUNT   (CLUSTER_COUNT),
     .STAGE_FIFO_DEPTH(STG_F_DATA_DEPTH),
-    .FRAME_FIFO(1)
+    .FRAME_FIFO(1),
+    .SEPARATE_CLOCKS(SEPARATE_CLOCKS)
 ) data_in_sw (
-    .clk(sys_clk),
-    .rst(sys_rst),
-    
+    .s_clk(sys_clk),
+    .s_rst(sys_rst),
     .s_axis_tdata( {dram_rx_axis_tdata, loopback_rx_axis_tdata, sched_rx_axis_tdata}),
     .s_axis_tkeep( {dram_rx_axis_tkeep, loopback_rx_axis_tkeep, sched_rx_axis_tkeep}),
     .s_axis_tvalid({dram_rx_axis_tvalid,loopback_rx_axis_tvalid,sched_rx_axis_tvalid}),
@@ -1153,6 +1155,8 @@ axis_switch_2lvl # (
     .s_axis_tdest( {dram_rx_axis_tdest, loopback_rx_axis_tdest, sched_rx_axis_tdest}),
     .s_axis_tuser( {dram_rx_axis_tuser, loopback_rx_axis_tuser, sched_rx_axis_tuser}),
 
+    .m_clk(core_clk),
+    .m_rst(core_rst),
     .m_axis_tdata (data_s_axis_tdata),
     .m_axis_tkeep (data_s_axis_tkeep),
     .m_axis_tvalid(data_s_axis_tvalid),
@@ -1179,14 +1183,14 @@ axis_switch_2lvl # (
     .M_REG_TYPE      (2),
     .CLUSTER_COUNT   (CLUSTER_COUNT),
     .STAGE_FIFO_DEPTH(STG_F_DATA_DEPTH),
-    .FRAME_FIFO(1)
+    .FRAME_FIFO(1),
+    .SEPARATE_CLOCKS(SEPARATE_CLOCKS)
 ) data_out_sw (
-    .clk(sys_clk),
-    .rst(sys_rst),
- 
     /*
      * AXI Stream inputs
      */
+    .s_clk(core_clk),
+    .s_rst(core_rst),
     .s_axis_tdata(data_m_axis_tdata),
     .s_axis_tkeep(data_m_axis_tkeep),
     .s_axis_tvalid(data_m_axis_tvalid),
@@ -1199,6 +1203,8 @@ axis_switch_2lvl # (
     /*
      * AXI Stream outputs
      */
+    .m_clk(sys_clk),
+    .m_rst(sys_rst),
     .m_axis_tdata( {dram_tx_axis_tdata, loopback_tx_axis_tdata, sched_tx_axis_tdata}),
     .m_axis_tkeep( {dram_tx_axis_tkeep, loopback_tx_axis_tkeep, sched_tx_axis_tkeep}),
     .m_axis_tvalid({dram_tx_axis_tvalid,loopback_tx_axis_tvalid,sched_tx_axis_tvalid}),
@@ -1225,15 +1231,15 @@ axis_switch_2lvl # (
     .M_REG_TYPE      (2),
     .CLUSTER_COUNT   (CLUSTER_COUNT),
     .STAGE_FIFO_DEPTH(STG_F_CTRL_DEPTH),
-    .FRAME_FIFO(0)
+    .FRAME_FIFO(0),
+    .SEPARATE_CLOCKS(SEPARATE_CLOCKS)
 ) ctrl_in_sw
 (
-    .clk(sys_clk),
-    .rst(sys_rst),
-
     /*
      * AXI Stream inputs
      */
+    .s_clk(sys_clk),
+    .s_rst(sys_rst),
     .s_axis_tdata(sched_ctrl_m_axis_tdata),
     .s_axis_tkeep(1'b0),
     .s_axis_tvalid(sched_ctrl_m_axis_tvalid),
@@ -1246,6 +1252,8 @@ axis_switch_2lvl # (
     /*
      * AXI Stream outputs
      */
+    .m_clk(core_clk),
+    .m_rst(core_rst),
     .m_axis_tdata(ctrl_s_axis_tdata),
     .m_axis_tkeep(),
     .m_axis_tvalid(ctrl_s_axis_tvalid),
@@ -1271,15 +1279,15 @@ axis_switch_2lvl # (
     .M_REG_TYPE      (2),
     .CLUSTER_COUNT   (CLUSTER_COUNT),
     .STAGE_FIFO_DEPTH(STG_F_CTRL_DEPTH),
-    .FRAME_FIFO(0)
+    .FRAME_FIFO(0),
+    .SEPARATE_CLOCKS(SEPARATE_CLOCKS)
 ) ctrl_out_sw
 (
-    .clk(sys_clk),
-    .rst(sys_rst),
-
     /*
      * AXI Stream inputs
      */
+    .s_clk(core_clk),
+    .s_rst(core_rst),
     .s_axis_tdata(ctrl_m_axis_tdata),
     .s_axis_tkeep({CORE_COUNT{1'b0}}),
     .s_axis_tvalid(ctrl_m_axis_tvalid),
@@ -1292,6 +1300,8 @@ axis_switch_2lvl # (
     /*
      * AXI Stream output
      */
+    .m_clk(sys_clk),
+    .m_rst(sys_rst),
     .m_axis_tdata(sched_ctrl_s_axis_tdata),
     .m_axis_tkeep(),
     .m_axis_tvalid(sched_ctrl_s_axis_tvalid),
@@ -1317,15 +1327,15 @@ axis_switch_2lvl # (
     .M_REG_TYPE      (2),
     .CLUSTER_COUNT   (CLUSTER_COUNT),
     .STAGE_FIFO_DEPTH(STG_F_DRAM_DEPTH),
-    .FRAME_FIFO(0)
+    .FRAME_FIFO(0),
+    .SEPARATE_CLOCKS(1)
 ) dram_ctrl_in_sw
 (
-    .clk(sys_clk),
-    .rst(sys_rst),
-
     /*
      * AXI Stream inputs
      */
+    .s_clk(pcie_clk),
+    .s_rst(pcie_rst),
     .s_axis_tdata(dram_ctrl_s_axis_tdata),
     .s_axis_tkeep(1'b0),
     .s_axis_tvalid(dram_ctrl_s_axis_tvalid),
@@ -1338,6 +1348,8 @@ axis_switch_2lvl # (
     /*
      * AXI Stream outputs
      */
+    .m_clk(core_clk),
+    .m_rst(core_rst),
     .m_axis_tdata(dram_s_axis_tdata),
     .m_axis_tkeep(),
     .m_axis_tvalid(dram_s_axis_tvalid),
@@ -1363,15 +1375,15 @@ axis_switch_2lvl # (
     .M_REG_TYPE      (2),
     .CLUSTER_COUNT   (CLUSTER_COUNT),
     .STAGE_FIFO_DEPTH(STG_F_CTRL_DEPTH),
-    .FRAME_FIFO(0)
+    .FRAME_FIFO(0),
+    .SEPARATE_CLOCKS(1)
 ) dram_ctrl_out_sw
 (
-    .clk(sys_clk),
-    .rst(sys_rst),
-
     /*
      * AXI Stream inputs
      */
+    .s_clk(core_clk),
+    .s_rst(core_rst),
     .s_axis_tdata(dram_m_axis_tdata),
     .s_axis_tkeep({CORE_COUNT{1'b0}}),
     .s_axis_tvalid(dram_m_axis_tvalid),
@@ -1384,6 +1396,8 @@ axis_switch_2lvl # (
     /*
      * AXI Stream output
      */
+    .m_clk(pcie_clk),
+    .m_rst(pcie_rst),
     .m_axis_tdata(dram_ctrl_m_axis_tdata),
     .m_axis_tkeep(),
     .m_axis_tvalid(dram_ctrl_m_axis_tvalid),
@@ -1418,14 +1432,15 @@ axis_switch_2lvl # (
     .S_REG_TYPE      (0),
     .M_REG_TYPE      (0),
     .CLUSTER_COUNT   (BC_MSG_CLUSTERS),
-    .STAGE_FIFO_DEPTH(0)
+    .STAGE_FIFO_DEPTH(0),
+    .SEPARATE_CLOCKS(0)
 ) cores_to_broadcaster (
-    .clk(select_core_clk),
-    .rst(select_core_rst),
 
     /*
      * AXI Stream inputs
      */
+    .s_clk(core_clk),
+    .s_rst(core_rst),
     .s_axis_tdata(core_msg_out_data),
     .s_axis_tkeep({CORE_COUNT{1'b0}}),
     .s_axis_tvalid(core_msg_out_valid),
@@ -1438,6 +1453,8 @@ axis_switch_2lvl # (
     /*
      * AXI Stream output
      */
+    .m_clk(core_clk),
+    .m_rst(core_rst),
     .m_axis_tdata(core_msg_merged_data),
     .m_axis_tkeep(),
     .m_axis_tvalid(core_msg_merged_valid),
@@ -1481,14 +1498,11 @@ generate
         .CORE_ID_WIDTH(CORE_WIDTH),
         .SLOT_START_ADDR(SLOT_START_ADDR),
         .SLOT_ADDR_STEP(SLOT_ADDR_STEP),
-        .DRAM_PORT(DRAM_PORT),
-        .SEPARATE_CLOCKS(SEPARATE_CLOCKS)
+        .DRAM_PORT(DRAM_PORT)
     )
     core_wrapper (
-        .sys_clk(sys_clk),
-        .sys_rst(sys_rst),
-        .core_clk(select_core_clk),
-        .core_rst(select_core_rst),
+        .clk(core_clk),
+        .rst(core_rst),
 
         // ---------------- DATA CHANNEL --------------- // 
         // Incoming data

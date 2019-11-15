@@ -35,14 +35,11 @@ module riscv_axis_wrapper # (
     parameter DMEM_ADDR_WIDTH = $clog2(DMEM_SIZE_BYTES),
     parameter IMEM_ADDR_WIDTH = $clog2(IMEM_SIZE_BYTES),
     parameter LINE_ADDR_BITS  = $clog2(STRB_WIDTH),
-    parameter MSG_WIDTH       = 4+DMEM_ADDR_WIDTH+32,
-    parameter SEPARATE_CLOCKS = 1
+    parameter MSG_WIDTH       = 4+DMEM_ADDR_WIDTH+32
 )
 (
-    input  wire                     sys_clk,
-    input  wire                     sys_rst,
-    input  wire                     core_clk,
-    input  wire                     core_rst,
+    input  wire                     clk,
+    input  wire                     rst,
 
     // ---------------- DATA CHANNEL --------------- // 
     // Incoming data
@@ -51,7 +48,7 @@ module riscv_axis_wrapper # (
     input  wire                     data_s_axis_tvalid,
     output wire                     data_s_axis_tready,
     input  wire                     data_s_axis_tlast,
-    input  wire [TAG_WIDTH-1:0]    data_s_axis_tdest,
+    input  wire [TAG_WIDTH-1:0]     data_s_axis_tdest,
     input  wire [PORT_WIDTH-1:0]    data_s_axis_tuser,
   
     // Outgoing data
@@ -113,34 +110,14 @@ wire reset_cmd = ctrl_s_axis_tvalid && (&ctrl_s_axis_tdata[35:32]);
 reg  core_reset_r = 1'b1;
 wire timer_rst;
 
-always @ (posedge sys_clk)
-    if (sys_rst) 
+always @ (posedge clk)
+    if (rst) 
         core_reset_r <= 1'b1;
     else if (reset_cmd)
         core_reset_r <= ctrl_s_axis_tdata[0];
 
-wire core_reset;
-if (!SEPARATE_CLOCKS) begin
-  assign core_reset = core_reset_r;
-  assign timer_rst  = sys_rst;
-
-end else begin
-  
-  simple_sync_sig #(.RST_VAL(1'b1)) reset_sync (
-    .dst_clk(core_clk),
-    .dst_rst(core_rst),
-    .in(core_reset_r),
-    .out(core_reset)
-  );
-  
-  simple_sync_sig #(.RST_VAL(1'b1)) timer_reset_sync (
-    .dst_clk(core_clk),
-    .dst_rst(core_rst),
-    .in(sys_rst),
-    .out(timer_rst)
-  );
-
-end
+wire   core_reset = core_reset_r;
+assign timer_rst  = rst;
 
 /////////////////////////////////////////////////////////////////////
 /////////// EXTRACTING BASE ADDR FROM/FOR INCOMING DATA /////////////
@@ -156,43 +133,10 @@ reg  [SLOT_PTR_WIDTH-1:0] s_slot_ptr;
 wire [ADDR_WIDTH-1:0]     slot_addr;
 integer j;
 
-if (SEPARATE_CLOCKS) begin
-
-  wire [ADDR_WIDTH-1:0]     slot_wr_addr_r;
-  wire [SLOT_PTR_WIDTH-1:0] slot_wr_ptr_r;
-  wire                      slot_wr_valid_r;
-  
-  // There is at least a cycle between two write from core if value 
-  // is changed, so even double core clock 4 entries are more than enough
-  simple_async_fifo # (
-    .DEPTH(4),
-    .DATA_WIDTH(ADDR_WIDTH+SLOT_PTR_WIDTH)
-  ) slot_addr_wr_fifo (
-    .async_rst(sys_rst),
-  
-    .din_clk(core_clk),
-    .din_valid(slot_wr_valid),
-    .din({slot_wr_ptr, slot_wr_addr}),
-    .din_ready(slot_wr_ready),
-   
-    .dout_clk(sys_clk),
-    .dout_valid(slot_wr_valid_r),
-    .dout({slot_wr_ptr_r, slot_wr_addr_r}),
-    .dout_ready(1'b1)
-  );
-
-  always @ (posedge sys_clk)
-    if (slot_wr_valid_r)
-      slot_addr_lut[slot_wr_ptr_r] <= slot_wr_addr_r;
-
-end else begin
-
-  always @ (posedge sys_clk)
-    if (slot_wr_valid)
-      slot_addr_lut[slot_wr_ptr] <= slot_wr_addr;
-  assign slot_wr_ready = 1'b1;
-
-end
+always @ (posedge clk)
+  if (slot_wr_valid)
+    slot_addr_lut[slot_wr_ptr] <= slot_wr_addr;
+assign slot_wr_ready = 1'b1;
 
 initial begin
   for (j=0;j<SLOT_COUNT;j=j+1)
@@ -220,10 +164,10 @@ wire [ADDR_WIDTH-1:0] s_base_addr;
 assign data_s_axis_tready = s_axis_tready;
 wire [PORT_WIDTH-1:0] dram_port = DRAM_PORT;
 
-always @ (posedge sys_clk) begin
+always @ (posedge clk) begin
 
   // Determining the first word which potentially can be a header
-  if (sys_rst) begin
+  if (rst) begin
     s_pot_header <= 1'b1;
   end else if (data_s_axis_tvalid && data_s_axis_tready) begin
     if (data_s_axis_tlast) 
@@ -255,7 +199,7 @@ always @ (posedge sys_clk) begin
   // If there is data in pipe but ready is not asserted valid stays asserted.
   s_axis_tvalid <= ((data_s_axis_tvalid && data_s_axis_tready) || 
                     (s_axis_tvalid && (!s_axis_tready)));
-  if (sys_rst) begin
+  if (rst) begin
     s_axis_tvalid <= 1'b0;
     s_is_header   <= 1'b0;
     s_is_header_r <= 1'b0;
@@ -286,8 +230,8 @@ wire         dram_wr_ready;
 wire ctrl_in_valid, ctrl_in_ready;
 wire [ID_TAG_WIDTH+64:0] ctrl_in_desc;
 
-always @ (posedge sys_clk)
-  if (sys_rst)
+always @ (posedge clk)
+  if (rst)
     m_header_allowed_r <= 1'b1;
   else
     if (m_axis_tvalid && m_axis_tready) begin
@@ -297,15 +241,15 @@ always @ (posedge sys_clk)
         m_header_allowed_r <= 1'b0;
     end
 
-always @ (posedge sys_clk) 
+always @ (posedge clk) 
   if (dram_wr_valid && dram_wr_ready)
     m_header_r <= dram_wr_desc[127:64];
   else if (ctrl_in_valid && ctrl_in_desc[64+ID_TAG_WIDTH] && ctrl_in_ready)
     m_header_r <= {{(64-ID_TAG_WIDTH){1'b0}},ctrl_in_desc[63+ID_TAG_WIDTH:64]};
 
 // Can get 1 cycle more efficient while output DMA is getting initialized 
-always @ (posedge sys_clk)
-  if (sys_rst)
+always @ (posedge clk)
+  if (rst)
     m_header_v <= 1'b0;
   else if ((dram_wr_valid && dram_wr_ready)||
            (ctrl_in_valid && ctrl_in_desc[64+ID_TAG_WIDTH] && ctrl_in_ready))
@@ -364,8 +308,8 @@ axis_dma # (
   .DEST_WIDTH_OUT (PORT_WIDTH),  
   .USER_WIDTH_OUT (TAG_WIDTH)  
 ) axis_dma_inst (
-  .clk(sys_clk),
-  .rst(sys_rst),
+  .clk(clk),
+  .rst(rst),
 
   .s_axis_tdata (s_axis_tdata),
   .s_axis_tkeep (s_axis_tkeep),
@@ -433,88 +377,40 @@ wire [63:0] recv_desc = {recv_desc_addr,
 wire recv_from_dram = recv_desc_valid && (recv_desc_tuser==dram_port);
 wire recv_tag_zero  = recv_desc_valid && (recv_desc_tdest=={TAG_WIDTH{1'b0}});
 
-if (!SEPARATE_CLOCKS) begin
-  simple_fifo # (
-    .ADDR_WIDTH($clog2(RECV_DESC_DEPTH)),
-    .DATA_WIDTH(64)
-  ) recvd_data_fifo (
-    .clk(sys_clk),
-    .rst(sys_rst),
-    .clear(core_reset_r),
-  
-    .din_valid(recv_desc_valid && (!recv_from_dram) && (!recv_tag_zero)),
-    .din(recv_desc),
-    .din_ready(recv_desc_fifo_ready),
-   
-    .dout_valid(recv_desc_valid_f),
-    .dout(recv_desc_f),
-    .dout_ready(recv_desc_ready_f)
-  );
+simple_fifo # (
+  .ADDR_WIDTH($clog2(RECV_DESC_DEPTH)),
+  .DATA_WIDTH(64)
+) recvd_data_fifo (
+  .clk(clk),
+  .rst(rst),
+  .clear(core_reset_r),
 
-end else begin
-  simple_async_fifo # (
-    .DEPTH(RECV_DESC_DEPTH),
-    .DATA_WIDTH(64)
-  ) recvd_data_fifo (
-    .async_rst(sys_rst || core_reset_r),
-  
-    .din_clk(sys_clk),
-    .din_valid(recv_desc_valid && (!recv_from_dram) && (!recv_tag_zero)),
-    .din(recv_desc),
-    .din_ready(recv_desc_fifo_ready),
-   
-    .dout_clk(core_clk),
-    .dout_valid(recv_desc_valid_f),
-    .dout(recv_desc_f),
-    .dout_ready(recv_desc_ready_f)
-  );
-
-end
-
+  .din_valid(recv_desc_valid && (!recv_from_dram) && (!recv_tag_zero)),
+  .din(recv_desc),
+  .din_ready(recv_desc_fifo_ready),
+ 
+  .dout_valid(recv_desc_valid_f),
+  .dout(recv_desc_f),
+  .dout_ready(recv_desc_ready_f)
+);
 
 wire [4:0] recv_dram_tag;
 wire       recv_dram_tag_fifo_ready;
 wire       recv_dram_tag_v;
  
-if (SEPARATE_CLOCKS) begin
+reg [4:0] recv_dram_tag_r;
+reg       recv_dram_tag_v_r;
 
- 
-  // There is at least a cycle between two write from core if value 
-  // is changed, so even double core clock 4 entries are more than enough
-  simple_async_fifo # (
-    .DEPTH(4),
-    .DATA_WIDTH(5)
-  ) dram_flag_wr_fifo (
-    .async_rst(sys_rst),
-  
-    .din_clk(sys_clk),
-    .din_valid(recv_desc_valid && recv_from_dram && (!recv_tag_zero)),
-    .din(recv_desc_tdest[4:0]),
-    .din_ready(recv_dram_tag_fifo_ready),
-   
-    .dout_clk(core_clk),
-    .dout_valid(recv_dram_tag_v),
-    .dout(recv_dram_tag),
-    .dout_ready(1'b1)
-  );
-
-end else begin
-
-  reg [4:0] recv_dram_tag_r;
-  reg       recv_dram_tag_v_r;
-
-  always @ (posedge sys_clk) begin
-    recv_dram_tag_r     <= recv_desc_tdest[4:0];
-    recv_dram_tag_v_r   <= recv_desc_valid && recv_from_dram && (!recv_tag_zero);
-    if (sys_rst)
-      recv_dram_tag_v_r <= 1'b0;
-  end
-  
-  assign recv_dram_tag_v          = recv_dram_tag_v_r;
-  assign recv_dram_tag            = recv_dram_tag_r;
-  assign recv_dram_tag_fifo_ready = 1'b1;
-
+always @ (posedge clk) begin
+  recv_dram_tag_r     <= recv_desc_tdest[4:0];
+  recv_dram_tag_v_r   <= recv_desc_valid && recv_from_dram && (!recv_tag_zero);
+  if (rst)
+    recv_dram_tag_v_r <= 1'b0;
 end
+
+assign recv_dram_tag_v          = recv_dram_tag_v_r;
+assign recv_dram_tag            = recv_dram_tag_r;
+assign recv_dram_tag_fifo_ready = 1'b1;
 
 assign recv_desc_ready = (recv_desc_fifo_ready && (!recv_from_dram))  || 
                          (recv_from_dram && recv_dram_tag_fifo_ready) || 
@@ -538,41 +434,22 @@ wire core_data_wr_ready;
 wire core_data_wr_valid_f, core_data_wr_ready_f;
 wire [63:0] core_data_wr_desc_f;
 
-if (!SEPARATE_CLOCKS) begin
-  simple_fifo # (
-    .ADDR_WIDTH($clog2(SEND_DESC_DEPTH)),
-    .DATA_WIDTH(64)
-  ) send_data_fifo (
-    .clk(sys_clk),
-    .rst(sys_rst),
-    .clear(core_reset_r),
-  
-    .din_valid(data_send_valid && core_data_wr),
-    .din(data_send_desc),
-    .din_ready(core_data_wr_ready),
-   
-    .dout_valid(core_data_wr_valid_f),
-    .dout(core_data_wr_desc_f),
-    .dout_ready(core_data_wr_ready_f)
-  );
-end else begin 
-  simple_async_fifo # (
-    .DEPTH(SEND_DESC_DEPTH),
-    .DATA_WIDTH(64)
-  ) send_data_fifo (
-    .async_rst(sys_rst || core_reset_r),
-  
-    .din_clk(core_clk),
-    .din_valid(data_send_valid && core_data_wr),
-    .din(data_send_desc),
-    .din_ready(core_data_wr_ready),
-   
-    .dout_clk(sys_clk),
-    .dout_valid(core_data_wr_valid_f),
-    .dout(core_data_wr_desc_f),
-    .dout_ready(core_data_wr_ready_f)
-  );
-end
+simple_fifo # (
+  .ADDR_WIDTH($clog2(SEND_DESC_DEPTH)),
+  .DATA_WIDTH(64)
+) send_data_fifo (
+  .clk(clk),
+  .rst(rst),
+  .clear(core_reset_r),
+
+  .din_valid(data_send_valid && core_data_wr),
+  .din(data_send_desc),
+  .din_ready(core_data_wr_ready),
+ 
+  .dout_valid(core_data_wr_valid_f),
+  .dout(core_data_wr_desc_f),
+  .dout_ready(core_data_wr_ready_f)
+);
 
 // A desc FIFO for msgs to scheduler
 wire core_ctrl_wr_ready;
@@ -580,48 +457,29 @@ wire core_ctrl_wr_ready;
 wire core_ctrl_wr_valid_f, core_ctrl_wr_ready_f;
 wire [63:0] core_ctrl_wr_desc_f;
 
-if (!SEPARATE_CLOCKS) begin
-  simple_fifo # (
-    .ADDR_WIDTH($clog2(SEND_DESC_DEPTH)),
-    .DATA_WIDTH(64)
-  ) send_ctrl_fifo (
-    .clk(sys_clk),
-    .rst(sys_rst),
-    .clear(core_reset_r),
-  
-    .din_valid(data_send_valid && core_ctrl_wr),
-    .din(data_send_desc),
-    .din_ready(core_ctrl_wr_ready),
-   
-    .dout_valid(core_ctrl_wr_valid_f),
-    .dout(core_ctrl_wr_desc_f),
-    .dout_ready(core_ctrl_wr_ready_f)
-  );
-end else begin
-  simple_async_fifo # (
-    .DEPTH(SEND_DESC_DEPTH),
-    .DATA_WIDTH(64)
-  ) send_ctrl_fifo (
-    .async_rst(sys_rst || core_reset_r),
-  
-    .din_clk(core_clk),
-    .din_valid(data_send_valid && core_ctrl_wr),
-    .din(data_send_desc),
-    .din_ready(core_ctrl_wr_ready),
-   
-    .dout_clk(sys_clk),
-    .dout_valid(core_ctrl_wr_valid_f),
-    .dout(core_ctrl_wr_desc_f),
-    .dout_ready(core_ctrl_wr_ready_f)
-  );
-end
+simple_fifo # (
+  .ADDR_WIDTH($clog2(SEND_DESC_DEPTH)),
+  .DATA_WIDTH(64)
+) send_ctrl_fifo (
+  .clk(clk),
+  .rst(rst),
+  .clear(core_reset_r),
+
+  .din_valid(data_send_valid && core_ctrl_wr),
+  .din(data_send_desc),
+  .din_ready(core_ctrl_wr_ready),
+ 
+  .dout_valid(core_ctrl_wr_valid_f),
+  .dout(core_ctrl_wr_desc_f),
+  .dout_ready(core_ctrl_wr_ready_f)
+);
 
 // A register to look up the send adddress based on slot
 reg  [ADDR_WIDTH-1:0] send_slot_addr [0:SLOT_COUNT-1];
 reg  [LEN_WIDTH-1:0]  send_slot_len  [0:SLOT_COUNT-1];
 wire [SLOT_PTR_WIDTH-1:0] ctrl_out_slot_ptr = core_ctrl_wr_desc_f[LEN_WIDTH +: SLOT_WIDTH]
                                               -{{(SLOT_WIDTH-1){1'b0}},1'b1};
-always @ (posedge sys_clk)
+always @ (posedge clk)
   if (core_ctrl_wr_valid_f && core_ctrl_wr_ready_f) begin
     send_slot_addr [ctrl_out_slot_ptr] <= core_ctrl_wr_desc_f[32+:ADDR_WIDTH];
     send_slot_len  [ctrl_out_slot_ptr] <= core_ctrl_wr_desc_f[LEN_WIDTH-1:0];
@@ -632,84 +490,45 @@ wire core_dram_wr_ready;
 wire core_dram_wr_valid_f, core_dram_wr_ready_f;
 wire [127:0] core_dram_wr_desc_f;
 
-if (!SEPARATE_CLOCKS) begin
-  simple_fifo # (
-    .ADDR_WIDTH($clog2(DRAM_DESC_DEPTH)),
-    .DATA_WIDTH(128)
-  ) dram_send_fifo (
-    .clk(sys_clk),
-    .rst(sys_rst),
-    .clear(core_reset_r),
-  
-    .din_valid(data_send_valid && core_dram_wr),
-    .din({core_dram_addr, data_send_desc[63:24+PORT_WIDTH],
-          dram_port, data_send_desc[23:0]}),
-    .din_ready(core_dram_wr_ready),
-   
-    .dout_valid(core_dram_wr_valid_f),
-    .dout(core_dram_wr_desc_f),
-    .dout_ready(core_dram_wr_ready_f)
-  );
-end else begin 
-  simple_async_fifo # (
-    .DEPTH(DRAM_DESC_DEPTH),
-    .DATA_WIDTH(128)
-  ) dram_send_fifo (
-    .async_rst(sys_rst || core_reset_r),
-  
-    .din_clk(core_clk),
-    .din_valid(data_send_valid && core_dram_wr),
-    .din({core_dram_addr, data_send_desc[63:24+PORT_WIDTH],
-          dram_port, data_send_desc[23:0]}),
-    .din_ready(core_dram_wr_ready),
-   
-    .dout_clk(sys_clk),
-    .dout_valid(core_dram_wr_valid_f),
-    .dout(core_dram_wr_desc_f),
-    .dout_ready(core_dram_wr_ready_f)
-  );
-end
+simple_fifo # (
+  .ADDR_WIDTH($clog2(DRAM_DESC_DEPTH)),
+  .DATA_WIDTH(128)
+) dram_send_fifo (
+  .clk(clk),
+  .rst(rst),
+  .clear(core_reset_r),
+
+  .din_valid(data_send_valid && core_dram_wr),
+  .din({core_dram_addr, data_send_desc[63:24+PORT_WIDTH],
+        dram_port, data_send_desc[23:0]}),
+  .din_ready(core_dram_wr_ready),
+ 
+  .dout_valid(core_dram_wr_valid_f),
+  .dout(core_dram_wr_desc_f),
+  .dout_ready(core_dram_wr_ready_f)
+);
 
 // A desc FIFO for dram read msgs
 wire core_dram_rd_ready;
 wire core_dram_rd_valid_f, core_dram_rd_ready_f;
 wire [127:0] core_dram_rd_desc_f;
 
-if (!SEPARATE_CLOCKS) begin
-  simple_fifo # (
-    .ADDR_WIDTH($clog2(DRAM_DESC_DEPTH)),
-    .DATA_WIDTH(128)
-  ) send_ctrl_fifo (
-    .clk(sys_clk),
-    .rst(sys_rst),
-    .clear(core_reset_r),
-  
-    .din_valid(data_send_valid && core_dram_rd),
-    .din({core_dram_addr, data_send_desc}),
-    .din_ready(core_dram_rd_ready),
-   
-    .dout_valid(core_dram_rd_valid_f),
-    .dout(core_dram_rd_desc_f),
-    .dout_ready(core_dram_rd_ready_f)
-  );
-end else begin
-  simple_async_fifo # (
-    .DEPTH(DRAM_DESC_DEPTH),
-    .DATA_WIDTH(128)
-  ) send_ctrl_fifo (
-    .async_rst(sys_rst || core_reset_r),
-  
-    .din_clk(core_clk),
-    .din_valid(data_send_valid && core_dram_rd),
-    .din({core_dram_addr, data_send_desc}),
-    .din_ready(core_dram_rd_ready),
-   
-    .dout_clk(sys_clk),
-    .dout_valid(core_dram_rd_valid_f),
-    .dout(core_dram_rd_desc_f),
-    .dout_ready(core_dram_rd_ready_f)
-  );
-end
+simple_fifo # (
+  .ADDR_WIDTH($clog2(DRAM_DESC_DEPTH)),
+  .DATA_WIDTH(128)
+) send_dram_ctrl_fifo (
+  .clk(clk),
+  .rst(rst),
+  .clear(core_reset_r),
+
+  .din_valid(data_send_valid && core_dram_rd),
+  .din({core_dram_addr, data_send_desc}),
+  .din_ready(core_dram_rd_ready),
+ 
+  .dout_valid(core_dram_rd_valid_f),
+  .dout(core_dram_rd_desc_f),
+  .dout_ready(core_dram_rd_ready_f)
+);
 
 assign data_send_ready = (core_data_wr_ready && core_data_wr) || 
                          (core_ctrl_wr_ready && core_ctrl_wr) ||
@@ -726,7 +545,7 @@ assign data_send_ready = (core_data_wr_ready && core_data_wr) ||
 reg  [35:0] ctrl_s_axis_tdata_r;
 reg         ctrl_s_axis_tvalid_r;
 reg  [SLOT_PTR_WIDTH-1:0] ctrl_in_slot_ptr;
-always @ (posedge sys_clk) begin
+always @ (posedge clk) begin
   if (ctrl_s_axis_tvalid && ctrl_s_axis_tready) begin
     ctrl_s_axis_tdata_r  <= ctrl_s_axis_tdata;
     ctrl_in_slot_ptr     <= ctrl_s_axis_tdata[16+:SLOT_WIDTH]
@@ -735,7 +554,7 @@ always @ (posedge sys_clk) begin
   ctrl_s_axis_tvalid_r <= ((ctrl_s_axis_tvalid && !reset_cmd && ctrl_s_axis_tready) || 
                            (ctrl_s_axis_tvalid_r && (!ctrl_s_axis_tready)));
 
-  if (sys_rst)
+  if (rst)
     ctrl_s_axis_tvalid_r <= 1'b0;
 end
   
@@ -755,8 +574,8 @@ simple_fifo # (
   .ADDR_WIDTH($clog2(RECV_DESC_DEPTH)),
   .DATA_WIDTH(64+ID_TAG_WIDTH+1)
 ) recvd_ctrl_fifo (
-  .clk(sys_clk),
-  .rst(sys_rst),
+  .clk(clk),
+  .rst(rst),
   .clear(core_reset_r),
 
   .din_valid(ctrl_s_axis_tvalid_r),
@@ -774,7 +593,7 @@ simple_fifo # (
 // it is transmitted
 wire pkt_sent_ready; // should always be ready
 reg [63:0] latched_send_desc;
-always @ (posedge sys_clk) 
+always @ (posedge clk) 
     if (send_desc_valid && send_desc_ready && pkt_sent_ready)
         latched_send_desc <= send_desc;
 
@@ -788,8 +607,8 @@ simple_fifo # (
   .ADDR_WIDTH($clog2(SEND_DESC_DEPTH)),
   .DATA_WIDTH(64)
 ) pkt_sent_fifo (
-  .clk(sys_clk),
-  .rst(sys_rst),
+  .clk(clk),
+  .rst(rst),
   .clear(core_reset_r),
 
   .din_valid(pkt_sent && (!pkt_sent_is_dram)), 
@@ -814,8 +633,8 @@ simple_fifo # (
   .ADDR_WIDTH($clog2(DRAM_DESC_DEPTH)),
   .DATA_WIDTH(128)
 ) recvd_dram_rd_fifo (
-  .clk(sys_clk),
-  .rst(sys_rst),
+  .clk(clk),
+  .rst(rst),
   .clear(core_reset_r),
 
   .din_valid(dram_req_valid),
@@ -834,7 +653,7 @@ simple_fifo # (
 // For DRAM descriptor the first word is descriptor followed by DRAM address
 
 // Incoming dram desc
-always @ (posedge sys_clk) begin
+always @ (posedge clk) begin
   if (dram_s_axis_tvalid && dram_req_ready)
     if (dram_s_axis_tlast) begin
       dram_req_high  <= dram_s_axis_tdata;
@@ -848,7 +667,7 @@ always @ (posedge sys_clk) begin
   else
       dram_req_valid <= 1'b0;
 
-  if (sys_rst) 
+  if (rst) 
       dram_req_valid <= 1'b0;
 end
 
@@ -856,8 +675,8 @@ assign dram_s_axis_tready = dram_req_ready;
 
 // Outgoing dram desc
 reg [1:0] send_dram_rd_state;
-always @ (posedge sys_clk)
-  if (sys_rst)
+always @ (posedge clk)
+  if (rst)
     send_dram_rd_state <= 2'd0;
   else if (core_dram_rd_valid_f)
     case (send_dram_rd_state)
@@ -899,8 +718,8 @@ assign dram_in_ready       = (!dram_select) && dram_in_valid && dram_wr_ready;
 
 // Arbiter between packets and DRAM out data, round robin 
 reg dram_next_selection_r;
-always @ (posedge sys_clk)
-  if (sys_rst)
+always @ (posedge clk)
+  if (rst)
     dram_next_selection_r <= 1'b0;
   else if (dram_wr_valid && dram_wr_ready) 
     dram_next_selection_r <= 1'b0;
@@ -936,14 +755,14 @@ assign pkt_sent_ready_f     = ctrl_out_ready &&   ctrl_select ;
 reg [35:0] ctrl_m_axis_tdata_r;
 reg        ctrl_m_axis_tvalid_r;
 
-always @ (posedge sys_clk) begin
+always @ (posedge clk) begin
   if (ctrl_out_valid && (!ctrl_m_axis_tvalid_r || ctrl_m_axis_tready)) begin
     ctrl_m_axis_tdata_r  <= {ctrl_out_data[63:60], ctrl_out_data[31:0]};
     ctrl_m_axis_tvalid_r <= 1'b1;
   end else if (ctrl_m_axis_tready && !ctrl_out_valid) begin
     ctrl_m_axis_tvalid_r <= 1'b0;
   end
-  if (sys_rst) begin
+  if (rst) begin
     ctrl_m_axis_tvalid_r <= 1'b0;
     ctrl_m_axis_tdata_r  <= 36'd0;
   end
@@ -970,7 +789,7 @@ simple_fifo # (
   .ADDR_WIDTH($clog2(MSG_FIFO_DEPTH)),
   .DATA_WIDTH(MSG_WIDTH)
 ) core_msg_out_fifo (
-  .clk(core_clk),
+  .clk(clk),
   .rst(core_reset),
   .clear(1'b0),
 
@@ -989,11 +808,11 @@ reg [31:0]                core_msg_in_data_r;
 reg [3:0]                 core_msg_in_strb_r;
 reg                       core_msg_in_v_r;
 
-always @ (posedge core_clk) begin
+always @ (posedge clk) begin
   core_msg_in_addr_r <= core_msg_in_data[31+DMEM_ADDR_WIDTH:32];
   core_msg_in_data_r <= core_msg_in_data[31:0];
   core_msg_in_strb_r <= core_msg_in_data[MSG_WIDTH-1:MSG_WIDTH-4];
-  if (core_rst)
+  if (rst)
     core_msg_in_v_r  <= 1'b0;
   else
     core_msg_in_v_r  <= core_msg_in_valid && (core_msg_in_user!=CORE_ID);
@@ -1027,8 +846,8 @@ localparam DMEM_READ  = 2'b10;
 reg [1:0] dma_dmem_op, dma_dmem_last_op;
 reg dmam_dmem_switch;
 
-always @ (posedge sys_clk) 
-  if (sys_rst) begin
+always @ (posedge clk) 
+  if (rst) begin
     dma_dmem_last_op <= DMEM_IDLE;
     dmam_dmem_switch <= 1'b0;
   end else begin
@@ -1065,7 +884,6 @@ wire                  data_dma_en      = dma_dmem_wr_en || dma_dmem_rd_en;
 wire [ADDR_WIDTH-1:0] data_dma_addr    = (dma_dmem_op==DMEM_WRITE) ?
                                          {1'b0,ram_cmd_wr_addr[ADDR_WIDTH-2:0]}: 
                                          {1'b0,ram_cmd_rd_addr[ADDR_WIDTH-2:0]};
-wire                  data_dma_ren     = (dma_dmem_op==DMEM_READ); 
 wire [STRB_WIDTH-1:0] data_dma_wen     = ((dma_dmem_op==DMEM_WRITE) ? 
                                          ram_cmd_wr_strb : {STRB_WIDTH{1'b0}});
 wire [DATA_WIDTH-1:0] data_dma_wr_data = ram_cmd_wr_data;
@@ -1091,8 +909,8 @@ assign ram_rd_resp_data = data_dma_rd_data;
 reg read_rejected;
 reg read_accepted_r; 
 wire read_accepted = (dma_dmem_op==DMEM_READ);
-always @(posedge sys_clk) 
-  if(sys_rst) begin
+always @(posedge clk) 
+  if(rst) begin
     read_accepted_r <= 1'b0;
     read_rejected   <= 1'b0;
   end else begin
@@ -1115,7 +933,6 @@ wire [ADDR_WIDTH-1:0] core_imem_addr;
 wire [DATA_WIDTH-1:0] core_imem_rd_data;
 
 wire                  core_dmem_en;
-wire                  core_dmem_ren;
 wire [STRB_WIDTH-1:0] core_dmem_wen;
 wire [ADDR_WIDTH-1:0] core_dmem_addr;
 wire [DATA_WIDTH-1:0] core_dmem_wr_data;
@@ -1124,14 +941,12 @@ wire                  core_dmem_ready;
 
 // Muxing between incoming msg data and core dmem access
 wire                  dmem_en;
-wire                  dmem_ren;
 wire [STRB_WIDTH-1:0] dmem_wen;
 wire [ADDR_WIDTH-1:0] dmem_addr;
 wire [DATA_WIDTH-1:0] dmem_wr_data;
 wire [DATA_WIDTH-1:0] dmem_rd_data;
 
 assign dmem_en      = core_msg_in_v_r || core_dmem_en; 
-assign dmem_ren     = core_dmem_ren && !core_msg_in_v_r;
 assign dmem_wen     = core_msg_in_v_r ? core_msg_write_mask : core_dmem_wen;
 assign dmem_addr    = core_msg_in_v_r ? core_msg_in_addr_r : core_dmem_addr;
 assign dmem_wr_data = core_msg_in_v_r ? core_msg_write_data : core_dmem_wr_data;
@@ -1143,17 +958,15 @@ mem_2rw #(
   .BYTES_PER_LINE(STRB_WIDTH),
   .ADDR_WIDTH(DMEM_ADDR_WIDTH-LINE_ADDR_BITS)    
 ) dmem (
-  .clka(sys_clk),
+  .clk(clk),
+
   .ena(data_dma_en),
-  .rena(data_dma_ren),
   .wena(data_dma_wen),
   .addra(data_dma_addr[DMEM_ADDR_WIDTH-1:LINE_ADDR_BITS]),
   .dina(data_dma_wr_data),
   .douta(data_dma_rd_data),
 
-  .clkb(core_clk),
   .enb(dmem_en),
-  .renb(dmem_ren),
   .wenb(dmem_wen),
   .addrb(dmem_addr[DMEM_ADDR_WIDTH-1:LINE_ADDR_BITS]),
   .dinb(dmem_wr_data),
@@ -1164,13 +977,13 @@ mem_1r1w #(
   .BYTES_PER_LINE(STRB_WIDTH),
   .ADDR_WIDTH(IMEM_ADDR_WIDTH-LINE_ADDR_BITS)    
 ) imem (
-  .clka(sys_clk),
+  .clk(clk),
+
   .ena(|(ins_dma_wen)),
   .wea(ins_dma_wen),
   .addra(ins_dma_addr[IMEM_ADDR_WIDTH-1:LINE_ADDR_BITS]),
   .dina(ins_dma_wr_data),
 
-  .clkb(core_clk),
   .enb(core_imem_ren),
   .addrb(core_imem_addr[IMEM_ADDR_WIDTH-1:LINE_ADDR_BITS]),
   .doutb(core_imem_rd_data)
@@ -1180,8 +993,8 @@ mem_1r1w #(
 reg out_of_bound;
 wire out_of_bound_clear;
 
-always @(posedge sys_clk)
-  if (sys_rst || out_of_bound_clear)
+always @(posedge clk)
+  if (rst || out_of_bound_clear)
     out_of_bound <= 1'b0;
   else 
     out_of_bound <= out_of_bound || 
@@ -1190,28 +1003,8 @@ always @(posedge sys_clk)
 
 wire core_interrupt, core_interrupt_ack;
 
-if (SEPARATE_CLOCKS) begin
-
-  // Interrupt stays high until core addresses the problem, so a simple sync without 
-  // handshake is enough. Ack also stays high for 2 cycles, so a simple sync is enough.
-  simple_sync_sig #(.RST_VAL(1'b0)) interrupt_sync (
-      .dst_clk(core_clk),
-      .dst_rst(core_rst),
-      .in(out_of_bound),
-      .out(core_interrupt)
-  );
-  
-  simple_sync_sig #(.RST_VAL(1'b0)) interrupt_ack_sync (
-       .dst_clk(sys_clk),
-       .dst_rst(sys_rst),
-       .in(core_interrupt_ack),
-       .out(out_of_bound_clear)
-   );
-
-end else begin 
-   assign core_interrupt = out_of_bound;
-   assign out_of_bound_clear = core_interrupt_ack;
-end
+assign core_interrupt = out_of_bound;
+assign out_of_bound_clear = core_interrupt_ack;
 
 /////////////////////////////////////////////////////////////////////
 /////////////////////////// RISCV CORE //////////////////////////////
@@ -1225,12 +1018,11 @@ riscvcore #(
   .SLOT_PTR_WIDTH(SLOT_PTR_WIDTH),
   .CORE_ID(CORE_ID)
 ) core (
-    .clk(core_clk),
+    .clk(clk),
     .rst(core_reset),
     .timer_rst(timer_rst),
 
     .ext_dmem_en(core_dmem_en),
-    .ext_dmem_ren(core_dmem_ren),
     .ext_dmem_wen(core_dmem_wen),
     .ext_dmem_addr(core_dmem_addr),
     .ext_dmem_wr_data(core_dmem_wr_data),

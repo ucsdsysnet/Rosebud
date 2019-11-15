@@ -292,7 +292,7 @@ always @(posedge pcie_clk) begin
                 16'h0020: axil_ctrl_rdata <= IF_COUNT;   // if_count
                 16'h0024: axil_ctrl_rdata <= 2**IF_AXIL_ADDR_WIDTH; // if_stride
                 16'h002C: axil_ctrl_rdata <= 2**AXIL_CSR_ADDR_WIDTH; // if_ctrl_offset
-                
+
                 // GPIO
                 16'h0100: begin
                     // GPIO out
@@ -414,22 +414,48 @@ always @ (posedge pcie_clk)
     income_cores_rr <= income_cores_r & (~cores_to_be_reset_r);
 
 // Time domain crossing
-simple_async_fifo # (
-  .DEPTH(3),
-  .DATA_WIDTH(CORE_WIDTH+1)
+axis_async_fifo #
+(
+    .DEPTH(3),
+    .DATA_WIDTH(CORE_WIDTH+1),
+    .KEEP_ENABLE(0),
+    .KEEP_WIDTH(1),
+    .LAST_ENABLE(0),
+    .ID_ENABLE(0),
+    .DEST_ENABLE(0),
+    .USER_ENABLE(0),
+    .FRAME_FIFO(0)
 ) cores_reset_cmd_async_fifo (
-  .async_rst(sys_rst),
+    .async_rst(sys_rst),
 
-  .din_clk(pcie_clk),
-  .din_valid(pcie_core_reset_valid),
-  .din(pcie_core_reset),
-  .din_ready(pcie_core_reset_ready),
- 
-  .dout_clk(sys_clk),
-  .dout_valid(reset_valid),
-  .dout({reset_dest,reset_value}),
-  .dout_ready(reset_ready)
+    .s_clk(pcie_clk),
+    .s_axis_tdata(pcie_core_reset),
+    .s_axis_tkeep(1'b0), 
+    .s_axis_tvalid(pcie_core_reset_valid),
+    .s_axis_tready(pcie_core_reset_ready),
+    .s_axis_tlast(1'b1),
+    .s_axis_tid(8'd0),
+    .s_axis_tdest(8'd0),
+    .s_axis_tuser(1'b0),
+
+    .m_clk(sys_clk),
+    .m_axis_tdata({reset_dest,reset_value}),
+    .m_axis_tkeep(),
+    .m_axis_tvalid(reset_valid),
+    .m_axis_tready(reset_ready),
+    .m_axis_tlast(),
+    .m_axis_tid(),
+    .m_axis_tdest(),
+    .m_axis_tuser(),
+
+    .s_status_overflow(),
+    .s_status_bad_frame(),
+    .s_status_good_frame(),
+    .m_status_overflow(),
+    .m_status_bad_frame(),
+    .m_status_good_frame()
 );
+
 
 simple_sync_sig # (
   .RST_VAL(1'b0),
