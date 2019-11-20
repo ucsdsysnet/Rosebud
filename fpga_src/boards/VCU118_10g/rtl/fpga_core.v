@@ -1479,7 +1479,7 @@ assign core_msg_merged_ready = 1'b1;
 genvar i;
 generate
   for (i=0; i<CORE_COUNT; i=i+1) begin
-    // (* keep_hierarchy = "yes" *)
+    // (* keep_hierarchy = "soft" *)
     riscv_axis_wrapper #(
         .DATA_WIDTH(LVL2_DATA_WIDTH),
         .ADDR_WIDTH(CORE_ADDR_WIDTH),
@@ -1498,11 +1498,14 @@ generate
         .CORE_ID_WIDTH(CORE_WIDTH),
         .SLOT_START_ADDR(SLOT_START_ADDR),
         .SLOT_ADDR_STEP(SLOT_ADDR_STEP),
-        .DRAM_PORT(DRAM_PORT)
+        .DRAM_PORT(DRAM_PORT),
+        .SEPARATE_CLOCKS(0)
     )
     core_wrapper (
-        .clk(core_clk),
-        .rst(core_rst),
+        .sys_clk(core_clk),
+        .sys_rst(core_rst),
+        .core_clk(core_clk),
+        .core_rst(core_rst),
 
         // ---------------- DATA CHANNEL --------------- // 
         // Incoming data

@@ -62,6 +62,7 @@ module pcie_controller #
   parameter CORE_ADDR_WIDTH         = 16, 
   parameter CORES_ADDR_WIDTH        = CORE_WIDTH+CORE_ADDR_WIDTH, 
   parameter CORES_DATA_FIFO_SIZE    = 1024,
+  parameter CORES_CTRL_FIFO_SIZE    = 512,
   parameter PCIE_SLOT_COUNT         = 16,
   parameter PCIE_SLOT_WIDTH         = $clog2(PCIE_SLOT_COUNT),
   parameter IF_COUNT                = 2,
@@ -445,7 +446,8 @@ wire                  cores_ctrl_s_tvalid;
 wire                  cores_ctrl_s_tready;
 wire [CORE_WIDTH-1:0] cores_ctrl_s_tuser;
  
-axis_adapter # (
+axis_fifo_adapter # (
+    .DEPTH(CORES_CTRL_FIFO_SIZE),
     .S_DATA_WIDTH(CORE_DESC_WIDTH),
     .S_KEEP_ENABLE(1), 
     .S_KEEP_WIDTH(CORE_DESC_STRB_WIDTH),
@@ -455,11 +457,11 @@ axis_adapter # (
     .ID_ENABLE(0),
     .DEST_ENABLE(0),
     .USER_ENABLE(1),
-    .USER_WIDTH(CORE_WIDTH)
-) cores_ctrl_s_adapter (
+    .USER_WIDTH(CORE_WIDTH),
+    .FRAME_FIFO(0)
+) cores_ctrl_s_axis_async_fifo (
     .clk(pcie_clk),
     .rst(pcie_rst),
-
     .s_axis_tdata (cores_ctrl_s_axis_tdata),
     .s_axis_tkeep ({CORE_DESC_STRB_WIDTH{1'b1}}),
     .s_axis_tvalid(cores_ctrl_s_axis_tvalid),
@@ -476,7 +478,11 @@ axis_adapter # (
     .m_axis_tlast (),
     .m_axis_tid   (),
     .m_axis_tdest (),
-    .m_axis_tuser (cores_ctrl_s_tuser)
+    .m_axis_tuser (cores_ctrl_s_tuser),
+
+    .status_overflow(),
+    .status_bad_frame(),
+    .status_good_frame()
 );
 
 wire  [127:0]         cores_ctrl_m_tdata;
@@ -484,7 +490,8 @@ wire                  cores_ctrl_m_tvalid;
 wire [CORE_WIDTH-1:0] cores_ctrl_m_tdest;
 wire                  cores_ctrl_m_tready;
 
-axis_adapter # (
+axis_fifo_adapter # (
+    .DEPTH(CORES_CTRL_FIFO_SIZE),
     .S_DATA_WIDTH(128),
     .S_KEEP_ENABLE(1), 
     .S_KEEP_WIDTH(16),
@@ -494,11 +501,11 @@ axis_adapter # (
     .ID_ENABLE(0),
     .DEST_ENABLE(1),
     .DEST_WIDTH(CORE_WIDTH),
-    .USER_ENABLE(0)
-) cores_ctrl_m_adapter (
+    .USER_ENABLE(0),
+    .FRAME_FIFO(0)
+) cores_ctrl_m_axis_async_fifo (
     .clk(pcie_clk),
     .rst(pcie_rst),
-
     .s_axis_tdata (cores_ctrl_m_tdata),
     .s_axis_tkeep ({16{1'b1}}),
     .s_axis_tvalid(cores_ctrl_m_tvalid),
@@ -515,7 +522,11 @@ axis_adapter # (
     .m_axis_tlast (cores_ctrl_m_axis_tlast),
     .m_axis_tid   (),
     .m_axis_tdest (cores_ctrl_m_axis_tdest),
-    .m_axis_tuser ()
+    .m_axis_tuser (),
+
+    .status_overflow(),
+    .status_bad_frame(),
+    .status_good_frame()
 );
 
 // -------------------------------------------------------------------//
