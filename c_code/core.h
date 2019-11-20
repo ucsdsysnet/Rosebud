@@ -15,6 +15,7 @@
 #define TIMER_32_H   			(IO_START + 0x0058)
 #define INTERRUPT_FLAGS		(IO_START + 0x005C)
 #define MASK_READ      		(IO_START + 0x005D)
+#define ACTIVE_SLOTS			(IO_START + 0x0060)
 
 #define DATA_DESC				  (IO_START + 0x0000)
 #define DRAM_WR_ADDR   	  (IO_START + 0x0008) 
@@ -69,6 +70,11 @@ inline int core_id () {
 inline int dram_flags () {
 	volatile unsigned int * dram_flags_val = (volatile unsigned int *) DRAM_FLAGS;
 	return (*dram_flags_val);
+}
+
+inline int active_slots () {
+	volatile unsigned int * active_slots_val = (volatile unsigned int *) ACTIVE_SLOTS;
+	return (*active_slots_val);
 }
 
 inline unsigned char interrupt_flags () {

@@ -29,7 +29,6 @@ module riscv_axis_wrapper # (
     parameter STRB_WIDTH      = (DATA_WIDTH/8),
     parameter SLOT_WIDTH      = $clog2(SLOT_COUNT+1), 
     parameter TAG_WIDTH       = (SLOT_WIDTH>5)? SLOT_WIDTH:5,
-    parameter SLOT_PTR_WIDTH  = $clog2(SLOT_COUNT), 
     parameter PORT_WIDTH      = $clog2(PORT_COUNT),
     parameter ID_TAG_WIDTH    = CORE_ID_WIDTH+TAG_WIDTH,
     parameter DMEM_ADDR_WIDTH = $clog2(DMEM_SIZE_BYTES),
@@ -147,26 +146,26 @@ end
 /////////////////////////////////////////////////////////////////////
 
 // Internal lookup table for slot addresses
-reg  [ADDR_WIDTH-1:0]     slot_addr_lut [0:SLOT_COUNT-1];
-wire [ADDR_WIDTH-1:0]     slot_wr_addr;
-wire [SLOT_PTR_WIDTH-1:0] slot_wr_ptr;
-wire                      slot_wr_valid;
-wire                      slot_wr_ready;
-reg  [SLOT_PTR_WIDTH-1:0] s_slot_ptr;
-wire [ADDR_WIDTH-1:0]     slot_addr;
+reg  [ADDR_WIDTH-1:0] slot_addr_lut [1:SLOT_COUNT];
+wire [ADDR_WIDTH-1:0] slot_wr_addr;
+wire [SLOT_WIDTH-1:0] slot_wr_ptr;
+wire                  slot_wr_valid;
+wire                  slot_wr_ready;
+reg  [SLOT_WIDTH-1:0] s_slot_ptr;
+wire [ADDR_WIDTH-1:0] slot_addr;
 integer j;
 
 if (SEPARATE_CLOCKS) begin
 
-  wire [ADDR_WIDTH-1:0]     slot_wr_addr_r;
-  wire [SLOT_PTR_WIDTH-1:0] slot_wr_ptr_r;
-  wire                      slot_wr_valid_r;
+  wire [ADDR_WIDTH-1:0] slot_wr_addr_r;
+  wire [SLOT_WIDTH-1:0] slot_wr_ptr_r;
+  wire                  slot_wr_valid_r;
   
   // There is at least a cycle between two write from core if value 
   // is changed, so even double core clock 4 entries are more than enough
   simple_async_fifo # (
     .DEPTH(4),
-    .DATA_WIDTH(ADDR_WIDTH+SLOT_PTR_WIDTH)
+    .DATA_WIDTH(ADDR_WIDTH+SLOT_WIDTH)
   ) slot_addr_wr_fifo (
     .async_rst(sys_rst),
   
@@ -195,8 +194,8 @@ end else begin
 end
 
 initial begin
-  for (j=0;j<SLOT_COUNT;j=j+1)
-    slot_addr_lut[j] = SLOT_START_ADDR + (j*SLOT_ADDR_STEP);
+  for (j=1;j<=SLOT_COUNT;j=j+1)
+    slot_addr_lut[j] = SLOT_START_ADDR + ((j-1)*SLOT_ADDR_STEP);
 end
 
 // We wanna use LUTS instead of BRAM or REGS
@@ -236,7 +235,7 @@ always @ (posedge sys_clk) begin
   if (data_s_axis_tvalid && data_s_axis_tready && s_pot_header) begin
     s_axis_tdest  <= data_s_axis_tdest;
     s_axis_tuser  <= data_s_axis_tuser;  
-    s_slot_ptr    <= data_s_axis_tdest[SLOT_WIDTH-1:0]-{{(SLOT_WIDTH-1){1'b0}},1'b1};
+    s_slot_ptr    <= data_s_axis_tdest[SLOT_WIDTH-1:0]; 
     s_header_addr <= data_s_axis_tdata[32 +: ADDR_WIDTH];
   end
 
@@ -471,7 +470,6 @@ end else begin
 
 end
 
-
 wire [4:0] recv_dram_tag;
 wire       recv_dram_tag_fifo_ready;
 wire       recv_dram_tag_v;
@@ -617,10 +615,10 @@ end else begin
 end
 
 // A register to look up the send adddress based on slot
-reg  [ADDR_WIDTH-1:0] send_slot_addr [0:SLOT_COUNT-1];
-reg  [LEN_WIDTH-1:0]  send_slot_len  [0:SLOT_COUNT-1];
-wire [SLOT_PTR_WIDTH-1:0] ctrl_out_slot_ptr = core_ctrl_wr_desc_f[LEN_WIDTH +: SLOT_WIDTH]
-                                              -{{(SLOT_WIDTH-1){1'b0}},1'b1};
+reg  [ADDR_WIDTH-1:0] send_slot_addr [1:SLOT_COUNT];
+reg  [LEN_WIDTH-1:0]  send_slot_len  [1:SLOT_COUNT];
+wire [SLOT_WIDTH-1:0] ctrl_out_slot_ptr = core_ctrl_wr_desc_f[LEN_WIDTH +: SLOT_WIDTH];
+
 always @ (posedge sys_clk)
   if (core_ctrl_wr_valid_f && core_ctrl_wr_ready_f) begin
     send_slot_addr [ctrl_out_slot_ptr] <= core_ctrl_wr_desc_f[32+:ADDR_WIDTH];
@@ -723,14 +721,13 @@ assign data_send_ready = (core_data_wr_ready && core_data_wr) ||
 /////////////////////////////////////////////////////////////////////
 
 
-reg  [35:0] ctrl_s_axis_tdata_r;
-reg         ctrl_s_axis_tvalid_r;
-reg  [SLOT_PTR_WIDTH-1:0] ctrl_in_slot_ptr;
+reg  [35:0]           ctrl_s_axis_tdata_r;
+reg                   ctrl_s_axis_tvalid_r;
+reg  [SLOT_WIDTH-1:0] ctrl_in_slot_ptr;
 always @ (posedge sys_clk) begin
   if (ctrl_s_axis_tvalid && ctrl_s_axis_tready) begin
     ctrl_s_axis_tdata_r  <= ctrl_s_axis_tdata;
-    ctrl_in_slot_ptr     <= ctrl_s_axis_tdata[16+:SLOT_WIDTH]
-                            - {{(SLOT_WIDTH-1){1'b0}},1'b1};
+    ctrl_in_slot_ptr     <= ctrl_s_axis_tdata[16+:SLOT_WIDTH];
   end 
   ctrl_s_axis_tvalid_r <= ((ctrl_s_axis_tvalid && !reset_cmd && ctrl_s_axis_tready) || 
                            (ctrl_s_axis_tvalid_r && (!ctrl_s_axis_tready)));
@@ -1216,8 +1213,9 @@ riscvcore #(
   .IMEM_SIZE_BYTES(IMEM_SIZE_BYTES),
   .DMEM_SIZE_BYTES(DMEM_SIZE_BYTES),    
   .COHERENT_START(COHERENT_START),
-  .SLOT_PTR_WIDTH(SLOT_PTR_WIDTH),
-  .CORE_ID(CORE_ID)
+  .SLOT_WIDTH(SLOT_WIDTH),
+  .CORE_ID(CORE_ID),
+  .SLOT_COUNT(SLOT_COUNT)
 ) core (
     .clk(core_clk),
     .rst(core_reset),

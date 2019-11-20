@@ -710,14 +710,14 @@ def bench():
 
         yield pcie_clk.posedge
 
-        print("Firmware load")
-        ins = bytearray(open(FIRMWARE, "rb").read())
-        mem_data[0:len(ins)] = ins
-
-        # enable DMA
+                # enable DMA
         yield rc.mem_write(dev_pf0_bar0+0x000400, struct.pack('<L', 1))
         
         if (UPDATE_INS):
+          print("Firmware load")
+          ins = bytearray(open(FIRMWARE, "rb").read())
+          mem_data[0:len(ins)] = ins
+
           yield rc.mem_write(dev_pf0_bar0+0x00040C, struct.pack('<L', 0xffff))
           
           # Load instruction memories

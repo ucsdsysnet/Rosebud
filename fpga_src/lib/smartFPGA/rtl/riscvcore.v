@@ -5,11 +5,12 @@ module riscvcore #(
   parameter DMEM_SIZE_BYTES = 32768,
   parameter COHERENT_START  = 16'h6FFF,
   parameter CORE_ID         = 0,
-  parameter SLOT_PTR_WIDTH  = 3,
   parameter STRB_WIDTH      = DATA_WIDTH/8,
   parameter LINE_ADDR_BITS  = $clog2(STRB_WIDTH),
   parameter IMEM_ADDR_WIDTH = $clog2(IMEM_SIZE_BYTES),
-  parameter DMEM_ADDR_WIDTH = $clog2(DMEM_SIZE_BYTES)
+  parameter DMEM_ADDR_WIDTH = $clog2(DMEM_SIZE_BYTES),
+  parameter SLOT_COUNT      = 8,
+  parameter SLOT_WIDTH      = $clog2(SLOT_COUNT+1)
 )(
     input                        clk,
     input                        rst,
@@ -38,7 +39,7 @@ module riscvcore #(
     output [63:0]                dram_wr_addr,
     input                        data_desc_ready,
 
-    output [SLOT_PTR_WIDTH-1:0]  slot_wr_ptr, 
+    output [SLOT_WIDTH-1:0]      slot_wr_ptr, 
     output [ADDR_WIDTH-1:0]      slot_wr_addr,
     output                       slot_wr_valid,
     input                        slot_wr_ready,
@@ -206,7 +207,7 @@ always @ (posedge clk) begin
 end
 
 assign slot_wr_addr    = slot_info_data_r[ADDR_WIDTH-1:0]; 
-assign slot_wr_ptr     = slot_info_data_r[31:24] - 8'd1;
+assign slot_wr_ptr     = slot_info_data_r[24+:SLOT_WIDTH];
 assign slot_wr_valid   = slot_wen && strb_asserted;
 
 assign data_desc       = data_desc_data_r;
@@ -216,18 +217,21 @@ assign data_desc_valid = data_desc_v_r;
 ////////////////////////////// IO READS ///////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////
 
-localparam RD_DESC_ADDR    = 4'b1000;//???;
-localparam RD_D_FLAGS_ADDR = 5'b10010;//??;
-localparam RD_STAT_ADDR    = 5'b10011;//??;
-localparam RD_ID_ADDR      = 5'b10100;//??;
-localparam RD_TIMER_L_ADDR = 5'b10101;//??;
-localparam RD_TIMER_H_ADDR = 5'b10110;//??;
-localparam RD_INT_F_ADDR   = 5'b10111;//??;
+localparam RD_DESC_ADDR     = 4'b1000;//???;
+localparam RD_D_FLAGS_ADDR  = 5'b10010;//??;
+localparam RD_STAT_ADDR     = 5'b10011;//??;
+localparam RD_ID_ADDR       = 5'b10100;//??;
+localparam RD_TIMER_L_ADDR  = 5'b10101;//??;
+localparam RD_TIMER_H_ADDR  = 5'b10110;//??;
+localparam RD_INT_F_ADDR    = 5'b10111;//??;
+localparam RD_ACT_SLOT_ADDR = 5'b11000;//??
 
-// localparam RESERVED_32   = 2'b11;//?????;
+// localparam RESERVED_4    = 5'b11001;//??;
+// localparam RESERVED_8    = 4'b1101;//???;
+// localparam RESERVED_16   = 3'b111;//????;
 
-localparam IO_READ_ADDRS   = 1'b1;//??????;
-localparam IO_SPACE        = 64 + 32; 
+localparam IO_READ_ADDRS    = 1'b1;//??????;
+localparam IO_SPACE         = 64 + 36; 
 
 wire io_read  = io_not_mem && dmem_v && (!dmem_wr_en) && ext_dmem_ready;
 
@@ -238,18 +242,20 @@ wire id_ren         = io_read  && (dmem_addr[6:2]==RD_ID_ADDR);
 wire timer_l_ren    = io_read  && (dmem_addr[6:2]==RD_TIMER_L_ADDR);
 wire timer_h_ren    = io_read  && (dmem_addr[6:2]==RD_TIMER_H_ADDR);
 wire int_flags_ren  = io_read  && (dmem_addr[6:2]==RD_INT_F_ADDR);
+wire act_slots_ren  = io_read  && (dmem_addr[6:2]==RD_ACT_SLOT_ADDR);
 
-reg [31:0] io_read_data;
-reg        io_ren_r;
-reg [63:0] internal_timer;
-reg [31:0] dram_recv_flag;
+reg [31:0]         io_read_data;
+reg                io_ren_r;
+reg [63:0]         internal_timer;
+reg [31:0]         dram_recv_flag;
+reg [SLOT_COUNT:1] slots_in_prog;
 
 always @ (posedge clk)
     if (rst)
         io_ren_r <= 1'b0;
     else
         io_ren_r <= in_desc_ren || dram_flags_ren || stat_ren || id_ren || 
-                    timer_l_ren || timer_h_ren || int_flags_ren;
+                    timer_l_ren || timer_h_ren || int_flags_ren || act_slots_ren;
 
 always @ (posedge clk) begin
     if (in_desc_ren && in_desc_valid)
@@ -279,6 +285,9 @@ always @ (posedge clk) begin
                          timer_interrupt, interrupt_in, 
                          io_byte_access_err, io_access_data_err,
                          dmem_access_err, imem_access_err};
+    
+    if (act_slots_ren)
+        io_read_data <= {{(32-SLOT_COUNT){1'b0}}, slots_in_prog};
 
 end
 
@@ -342,6 +351,23 @@ always @ (posedge clk)
   end
 
 assign dram_recv_any = | dram_recv_flag;
+
+///////////////////////////////////////////////////////////////////////////
+//////////////////////// ACTIVE SLOTS STATE/// ////////////////////////////
+///////////////////////////////////////////////////////////////////////////
+wire done_w_slot = ((data_desc[63:60] == 4'd0) ||
+                    (data_desc[63:60] == 4'd1) ||
+                    (data_desc[63:60] == 4'd2));
+
+always @ (posedge clk)
+    if (rst)
+        slots_in_prog <= {SLOT_COUNT{1'b0}};
+    else if (in_desc_valid && in_desc_taken)
+        slots_in_prog[in_desc[16+:SLOT_WIDTH]]   <= 1'b1;
+    else if (done_w_slot && data_desc_valid && data_desc_ready)
+        slots_in_prog[data_desc[16+:SLOT_WIDTH]] <= 1'b0;
+
+// TODO: Add error catching
 
 ///////////////////////////////////////////////////////////////////////////
 /////////////////////// WORD LENGTH ADJUSTMENT ////////////////////////////
