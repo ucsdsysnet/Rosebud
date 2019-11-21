@@ -204,6 +204,7 @@ parameter PCIE_RAM_ADDR_WIDTH = 32;
 parameter TX_RX_RAM_SIZE      = 2**15;
 parameter PCIE_DMA_LEN_WIDTH  = 16;
 parameter HOST_DMA_TAG_WIDTH  = 32;
+parameter RAM_PIPELINE        = 4;
   
 parameter AXIL_DATA_WIDTH = 32;
 parameter AXIL_STRB_WIDTH = (AXIL_DATA_WIDTH/8);
@@ -593,7 +594,9 @@ pcie_controller #
   .CORE_ADDR_WIDTH(CORE_ADDR_WIDTH), 
   .PCIE_SLOT_COUNT(PCIE_SLOT_COUNT),
   .IF_COUNT(V_IF_COUNT),
-  .PORTS_PER_IF(PORTS_PER_V_IF)
+  .PORTS_PER_IF(PORTS_PER_V_IF),
+  .RAM_PIPELINE(RAM_PIPELINE),
+  .CORE_REQ_PCIE_CLK(1)
 ) pcie_controller_inst (
   .sys_clk(sys_clk),
   .sys_rst(sys_rst),
@@ -1273,7 +1276,7 @@ assign core_msg_merged_ready = 1'b1;
 genvar i;
 generate
   for (i=0; i<CORE_COUNT; i=i+1) begin
-    (* keep_hierarchy = "soft" *)
+    // (* keep_hierarchy = "soft" *)
     riscv_axis_wrapper #(
         .DATA_WIDTH(LVL2_DATA_WIDTH),
         .ADDR_WIDTH(CORE_ADDR_WIDTH),
@@ -1293,7 +1296,8 @@ generate
         .SLOT_START_ADDR(SLOT_START_ADDR),
         .SLOT_ADDR_STEP(SLOT_ADDR_STEP),
         .DRAM_PORT(DRAM_PORT),
-        .SEPARATE_CLOCKS(0)
+        .SEPARATE_CLOCKS(0),
+        .TARGET_URAM(1)
     )
     core_wrapper (
         .sys_clk(core_clk),

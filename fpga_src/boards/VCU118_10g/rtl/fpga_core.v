@@ -799,7 +799,8 @@ pcie_controller #
   .PCIE_SLOT_COUNT(PCIE_SLOT_COUNT),
   .IF_COUNT(V_IF_COUNT),
   .PORTS_PER_IF(PORTS_PER_V_IF),
-  .RAM_PIPELINE(RAM_PIPELINE)
+  .RAM_PIPELINE(RAM_PIPELINE),
+  .CORE_REQ_PCIE_CLK(1)
 ) pcie_controller_inst (
   .sys_clk(sys_clk),
   .sys_rst(sys_rst),
@@ -1499,7 +1500,8 @@ generate
         .SLOT_START_ADDR(SLOT_START_ADDR),
         .SLOT_ADDR_STEP(SLOT_ADDR_STEP),
         .DRAM_PORT(DRAM_PORT),
-        .SEPARATE_CLOCKS(0)
+        .SEPARATE_CLOCKS(0),
+        .TARGET_URAM(1)
     )
     core_wrapper (
         .sys_clk(core_clk),

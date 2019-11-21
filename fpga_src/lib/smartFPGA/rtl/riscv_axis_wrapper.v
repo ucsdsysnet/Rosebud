@@ -35,7 +35,8 @@ module riscv_axis_wrapper # (
     parameter IMEM_ADDR_WIDTH = $clog2(IMEM_SIZE_BYTES),
     parameter LINE_ADDR_BITS  = $clog2(STRB_WIDTH),
     parameter MSG_WIDTH       = 4+DMEM_ADDR_WIDTH+32,
-    parameter SEPARATE_CLOCKS = 1
+    parameter SEPARATE_CLOCKS = 1,
+    parameter TARGET_URAM     = 0
 )
 (
     input  wire                     sys_clk,
@@ -235,7 +236,7 @@ always @ (posedge sys_clk) begin
   if (data_s_axis_tvalid && data_s_axis_tready && s_pot_header) begin
     s_axis_tdest  <= data_s_axis_tdest;
     s_axis_tuser  <= data_s_axis_tuser;  
-    s_slot_ptr    <= data_s_axis_tdest[SLOT_WIDTH-1:0]; 
+    s_slot_ptr    <= data_s_axis_tdest[SLOT_WIDTH-1:0];
     s_header_addr <= data_s_axis_tdata[32 +: ADDR_WIDTH];
   end
 
@@ -1126,31 +1127,14 @@ wire [DATA_WIDTH-1:0] dmem_rd_data;
 
 assign dmem_en      = core_msg_in_v_r || core_dmem_en; 
 assign dmem_wen     = core_msg_in_v_r ? core_msg_write_mask : core_dmem_wen;
-assign dmem_addr    = core_msg_in_v_r ? core_msg_in_addr_r : core_dmem_addr;
+assign dmem_addr    = core_msg_in_v_r ? core_msg_in_addr_r  : core_dmem_addr;
 assign dmem_wr_data = core_msg_in_v_r ? core_msg_write_data : core_dmem_wr_data;
 
 assign core_dmem_rd_data = dmem_rd_data;
 assign core_dmem_ready   = !core_msg_in_v_r;
 
-mem_2rw #(
-  .BYTES_PER_LINE(STRB_WIDTH),
-  .ADDR_WIDTH(DMEM_ADDR_WIDTH-LINE_ADDR_BITS)    
-) dmem (
-  .clka(sys_clk),
-  .ena(data_dma_en),
-  .wena(data_dma_wen),
-  .addra(data_dma_addr[DMEM_ADDR_WIDTH-1:LINE_ADDR_BITS]),
-  .dina(data_dma_wr_data),
-  .douta(data_dma_rd_data),
-
-  .clkb(core_clk),
-  .enb(dmem_en),
-  .wenb(dmem_wen),
-  .addrb(dmem_addr[DMEM_ADDR_WIDTH-1:LINE_ADDR_BITS]),
-  .dinb(dmem_wr_data),
-  .doutb(dmem_rd_data)
-);
-
+// URAM cannot be initialized, so using BRAM for imem. 
+// Can be initialized through pcie if URAM is necessary.
 mem_1r1w #(
   .BYTES_PER_LINE(STRB_WIDTH),
   .ADDR_WIDTH(IMEM_ADDR_WIDTH-LINE_ADDR_BITS)    
@@ -1166,6 +1150,52 @@ mem_1r1w #(
   .addrb(core_imem_addr[IMEM_ADDR_WIDTH-1:LINE_ADDR_BITS]),
   .doutb(core_imem_rd_data)
 );
+
+if (TARGET_URAM && !SEPARATE_CLOCKS) begin
+
+  mem_2rw_uram #(
+    .BYTES_PER_LINE(STRB_WIDTH),
+    .ADDR_WIDTH(DMEM_ADDR_WIDTH-LINE_ADDR_BITS)    
+  ) dmem (
+    .clk(sys_clk),
+  
+    .ena(data_dma_en),
+    .wena(data_dma_wen),
+    .addra(data_dma_addr[DMEM_ADDR_WIDTH-1:LINE_ADDR_BITS]),
+    .dina(data_dma_wr_data),
+    .douta(data_dma_rd_data),
+  
+    .enb(dmem_en),
+    .wenb(dmem_wen),
+    .addrb(dmem_addr[DMEM_ADDR_WIDTH-1:LINE_ADDR_BITS]),
+    .dinb(dmem_wr_data),
+    .doutb(dmem_rd_data)
+  );
+
+end else begin
+
+  mem_2rw #(
+    .BYTES_PER_LINE(STRB_WIDTH),
+    .ADDR_WIDTH(DMEM_ADDR_WIDTH-LINE_ADDR_BITS)    
+  ) dmem (
+    .clka(sys_clk),
+    .ena(data_dma_en),
+    .rena((dma_dmem_op==DMEM_READ)),
+    .wena(data_dma_wen),
+    .addra(data_dma_addr[DMEM_ADDR_WIDTH-1:LINE_ADDR_BITS]),
+    .dina(data_dma_wr_data),
+    .douta(data_dma_rd_data),
+  
+    .clkb(core_clk),
+    .enb(dmem_en),
+    .renb((~|core_dmem_wen) && !core_msg_in_v_r),
+    .wenb(dmem_wen),
+    .addrb(dmem_addr[DMEM_ADDR_WIDTH-1:LINE_ADDR_BITS]),
+    .dinb(dmem_wr_data),
+    .doutb(dmem_rd_data)
+  );
+
+end
 
 // External memory access out of bound detection
 reg out_of_bound;
@@ -1213,9 +1243,9 @@ riscvcore #(
   .IMEM_SIZE_BYTES(IMEM_SIZE_BYTES),
   .DMEM_SIZE_BYTES(DMEM_SIZE_BYTES),    
   .COHERENT_START(COHERENT_START),
+  .SLOT_COUNT(SLOT_COUNT),
   .SLOT_WIDTH(SLOT_WIDTH),
-  .CORE_ID(CORE_ID),
-  .SLOT_COUNT(SLOT_COUNT)
+  .CORE_ID(CORE_ID)
 ) core (
     .clk(core_clk),
     .rst(core_reset),

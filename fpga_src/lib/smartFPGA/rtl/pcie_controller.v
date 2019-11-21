@@ -67,8 +67,9 @@ module pcie_controller #
   parameter PCIE_SLOT_WIDTH         = $clog2(PCIE_SLOT_COUNT),
   parameter IF_COUNT                = 2,
   parameter PORTS_PER_IF            = 1,
-  parameter PORT_COUNT              = (IF_COUNT>0) ? IF_COUNT*PORTS_PER_IF : 1,
-  parameter RAM_PIPELINE            = 4
+  parameter PORT_COUNT              = ((IF_COUNT>0) ? IF_COUNT*PORTS_PER_IF : 1),
+  parameter RAM_PIPELINE            = 4,
+  parameter CORE_REQ_PCIE_CLK       = 1 
 ) (
   input  wire                                  sys_clk,
   input  wire                                  sys_rst,
@@ -114,7 +115,7 @@ module pcie_controller #
   output wire                                  status_error_cor,
   output wire                                  status_error_uncor,
   
-  // Cores data (sys_clk)
+  // Cores data
   input  wire [AXIS_DATA_WIDTH-1:0]            cores_tx_axis_tdata,
   input  wire [AXIS_KEEP_WIDTH-1:0]            cores_tx_axis_tkeep,
   input  wire [AXIS_TAG_WIDTH-1:0]             cores_tx_axis_tuser,
@@ -129,7 +130,7 @@ module pcie_controller #
   input  wire                                  cores_rx_axis_tready, 
   output wire                                  cores_rx_axis_tlast,
   
-  // Cores DRAM requests (pcie_clk)
+  // Cores DRAM requests
   input  wire [CORE_DESC_WIDTH-1:0]            cores_ctrl_s_axis_tdata,
   input  wire                                  cores_ctrl_s_axis_tvalid,
   output wire                                  cores_ctrl_s_axis_tready,
@@ -445,89 +446,181 @@ wire [127:0]          cores_ctrl_s_tdata;
 wire                  cores_ctrl_s_tvalid;
 wire                  cores_ctrl_s_tready;
 wire [CORE_WIDTH-1:0] cores_ctrl_s_tuser;
- 
-axis_fifo_adapter # (
-    .DEPTH(CORES_CTRL_FIFO_SIZE),
-    .S_DATA_WIDTH(CORE_DESC_WIDTH),
-    .S_KEEP_ENABLE(1), 
-    .S_KEEP_WIDTH(CORE_DESC_STRB_WIDTH),
-    .M_DATA_WIDTH(128),
-    .M_KEEP_ENABLE(1),
-    .M_KEEP_WIDTH(16),
-    .ID_ENABLE(0),
-    .DEST_ENABLE(0),
-    .USER_ENABLE(1),
-    .USER_WIDTH(CORE_WIDTH),
-    .FRAME_FIFO(0)
-) cores_ctrl_s_axis_async_fifo (
-    .clk(pcie_clk),
-    .rst(pcie_rst),
-    .s_axis_tdata (cores_ctrl_s_axis_tdata),
-    .s_axis_tkeep ({CORE_DESC_STRB_WIDTH{1'b1}}),
-    .s_axis_tvalid(cores_ctrl_s_axis_tvalid),
-    .s_axis_tready(cores_ctrl_s_axis_tready),
-    .s_axis_tlast (cores_ctrl_s_axis_tlast),
-    .s_axis_tid   (8'd0),
-    .s_axis_tdest (8'd0),
-    .s_axis_tuser (cores_ctrl_s_axis_tuser),
-
-    .m_axis_tdata (cores_ctrl_s_tdata),
-    .m_axis_tkeep (),
-    .m_axis_tvalid(cores_ctrl_s_tvalid),
-    .m_axis_tready(cores_ctrl_s_tready),
-    .m_axis_tlast (),
-    .m_axis_tid   (),
-    .m_axis_tdest (),
-    .m_axis_tuser (cores_ctrl_s_tuser),
-
-    .status_overflow(),
-    .status_bad_frame(),
-    .status_good_frame()
-);
 
 wire  [127:0]         cores_ctrl_m_tdata;
 wire                  cores_ctrl_m_tvalid;
 wire [CORE_WIDTH-1:0] cores_ctrl_m_tdest;
 wire                  cores_ctrl_m_tready;
 
-axis_fifo_adapter # (
-    .DEPTH(CORES_CTRL_FIFO_SIZE),
-    .S_DATA_WIDTH(128),
-    .S_KEEP_ENABLE(1), 
-    .S_KEEP_WIDTH(16),
-    .M_DATA_WIDTH(CORE_DESC_WIDTH),
-    .M_KEEP_ENABLE(1),
-    .M_KEEP_WIDTH(CORE_DESC_STRB_WIDTH),
-    .ID_ENABLE(0),
-    .DEST_ENABLE(1),
-    .DEST_WIDTH(CORE_WIDTH),
-    .USER_ENABLE(0),
-    .FRAME_FIFO(0)
-) cores_ctrl_m_axis_async_fifo (
-    .clk(pcie_clk),
-    .rst(pcie_rst),
-    .s_axis_tdata (cores_ctrl_m_tdata),
-    .s_axis_tkeep ({16{1'b1}}),
-    .s_axis_tvalid(cores_ctrl_m_tvalid),
-    .s_axis_tready(cores_ctrl_m_tready),
-    .s_axis_tlast (1'b1),
-    .s_axis_tid   (8'd0),
-    .s_axis_tdest (cores_ctrl_m_tdest),
-    .s_axis_tuser (1'b0),
+if(CORE_REQ_PCIE_CLK) begin: cores_ctrl_fifos
+    axis_fifo_adapter # (
+        .DEPTH(CORES_CTRL_FIFO_SIZE),
+        .S_DATA_WIDTH(CORE_DESC_WIDTH),
+        .S_KEEP_ENABLE(1), 
+        .S_KEEP_WIDTH(CORE_DESC_STRB_WIDTH),
+        .M_DATA_WIDTH(128),
+        .M_KEEP_ENABLE(1),
+        .M_KEEP_WIDTH(16),
+        .ID_ENABLE(0),
+        .DEST_ENABLE(0),
+        .USER_ENABLE(1),
+        .USER_WIDTH(CORE_WIDTH),
+        .FRAME_FIFO(0)
+    ) cores_ctrl_s_axis_async_fifo (
+        .clk(pcie_clk),
+        .rst(pcie_rst),
+        .s_axis_tdata (cores_ctrl_s_axis_tdata),
+        .s_axis_tkeep ({CORE_DESC_STRB_WIDTH{1'b1}}),
+        .s_axis_tvalid(cores_ctrl_s_axis_tvalid),
+        .s_axis_tready(cores_ctrl_s_axis_tready),
+        .s_axis_tlast (cores_ctrl_s_axis_tlast),
+        .s_axis_tid   (8'd0),
+        .s_axis_tdest (8'd0),
+        .s_axis_tuser (cores_ctrl_s_axis_tuser),
+    
+        .m_axis_tdata (cores_ctrl_s_tdata),
+        .m_axis_tkeep (),
+        .m_axis_tvalid(cores_ctrl_s_tvalid),
+        .m_axis_tready(cores_ctrl_s_tready),
+        .m_axis_tlast (),
+        .m_axis_tid   (),
+        .m_axis_tdest (),
+        .m_axis_tuser (cores_ctrl_s_tuser),
+    
+        .status_overflow(),
+        .status_bad_frame(),
+        .status_good_frame()
+    );
+    
+    axis_fifo_adapter # (
+        .DEPTH(CORES_CTRL_FIFO_SIZE),
+        .S_DATA_WIDTH(128),
+        .S_KEEP_ENABLE(1), 
+        .S_KEEP_WIDTH(16),
+        .M_DATA_WIDTH(CORE_DESC_WIDTH),
+        .M_KEEP_ENABLE(1),
+        .M_KEEP_WIDTH(CORE_DESC_STRB_WIDTH),
+        .ID_ENABLE(0),
+        .DEST_ENABLE(1),
+        .DEST_WIDTH(CORE_WIDTH),
+        .USER_ENABLE(0),
+        .FRAME_FIFO(0)
+    ) cores_ctrl_m_axis_async_fifo (
+        .clk(pcie_clk),
+        .rst(pcie_rst),
+        .s_axis_tdata (cores_ctrl_m_tdata),
+        .s_axis_tkeep ({16{1'b1}}),
+        .s_axis_tvalid(cores_ctrl_m_tvalid),
+        .s_axis_tready(cores_ctrl_m_tready),
+        .s_axis_tlast (1'b1),
+        .s_axis_tid   (8'd0),
+        .s_axis_tdest (cores_ctrl_m_tdest),
+        .s_axis_tuser (1'b0),
+    
+        .m_axis_tdata (cores_ctrl_m_axis_tdata),
+        .m_axis_tkeep (),
+        .m_axis_tvalid(cores_ctrl_m_axis_tvalid),
+        .m_axis_tready(cores_ctrl_m_axis_tready),
+        .m_axis_tlast (cores_ctrl_m_axis_tlast),
+        .m_axis_tid   (),
+        .m_axis_tdest (cores_ctrl_m_axis_tdest),
+        .m_axis_tuser (),
+    
+        .status_overflow(),
+        .status_bad_frame(),
+        .status_good_frame()
+    );
 
-    .m_axis_tdata (cores_ctrl_m_axis_tdata),
-    .m_axis_tkeep (),
-    .m_axis_tvalid(cores_ctrl_m_axis_tvalid),
-    .m_axis_tready(cores_ctrl_m_axis_tready),
-    .m_axis_tlast (cores_ctrl_m_axis_tlast),
-    .m_axis_tid   (),
-    .m_axis_tdest (cores_ctrl_m_axis_tdest),
-    .m_axis_tuser (),
+end else begin: cores_ctrl_async_fifos
 
-    .status_overflow(),
-    .status_bad_frame(),
-    .status_good_frame()
-);
+    axis_async_fifo_adapter # (
+        .DEPTH(CORES_CTRL_FIFO_SIZE),
+        .S_DATA_WIDTH(CORE_DESC_WIDTH),
+        .S_KEEP_ENABLE(1), 
+        .S_KEEP_WIDTH(CORE_DESC_STRB_WIDTH),
+        .M_DATA_WIDTH(128),
+        .M_KEEP_ENABLE(1),
+        .M_KEEP_WIDTH(16),
+        .ID_ENABLE(0),
+        .DEST_ENABLE(0),
+        .USER_ENABLE(1),
+        .USER_WIDTH(CORE_WIDTH),
+        .FRAME_FIFO(0)
+    ) cores_ctrl_s_axis_async_fifo (
+        .s_clk(sys_clk),
+        .s_rst(sys_rst),
+        .s_axis_tdata (cores_ctrl_s_axis_tdata),
+        .s_axis_tkeep ({CORE_DESC_STRB_WIDTH{1'b1}}),
+        .s_axis_tvalid(cores_ctrl_s_axis_tvalid),
+        .s_axis_tready(cores_ctrl_s_axis_tready),
+        .s_axis_tlast (cores_ctrl_s_axis_tlast),
+        .s_axis_tid   (8'd0),
+        .s_axis_tdest (8'd0),
+        .s_axis_tuser (cores_ctrl_s_axis_tuser),
+    
+        .m_clk(pcie_clk),
+        .m_rst(pcie_rst),
+        .m_axis_tdata (cores_ctrl_s_tdata),
+        .m_axis_tkeep (),
+        .m_axis_tvalid(cores_ctrl_s_tvalid),
+        .m_axis_tready(cores_ctrl_s_tready),
+        .m_axis_tlast (),
+        .m_axis_tid   (),
+        .m_axis_tdest (),
+        .m_axis_tuser (cores_ctrl_s_tuser),
+    
+        .s_status_overflow(),
+        .s_status_bad_frame(),
+        .s_status_good_frame(),
+        .m_status_overflow(),
+        .m_status_bad_frame(),
+        .m_status_good_frame()
+    );
+    
+    axis_async_fifo_adapter # (
+        .DEPTH(CORES_CTRL_FIFO_SIZE),
+        .S_DATA_WIDTH(128),
+        .S_KEEP_ENABLE(1), 
+        .S_KEEP_WIDTH(16),
+        .M_DATA_WIDTH(CORE_DESC_WIDTH),
+        .M_KEEP_ENABLE(1),
+        .M_KEEP_WIDTH(CORE_DESC_STRB_WIDTH),
+        .ID_ENABLE(0),
+        .DEST_ENABLE(1),
+        .DEST_WIDTH(CORE_WIDTH),
+        .USER_ENABLE(0),
+        .FRAME_FIFO(0)
+    ) cores_ctrl_m_axis_async_fifo (
+        .s_clk(pcie_clk),
+        .s_rst(pcie_rst),
+        .s_axis_tdata (cores_ctrl_m_tdata),
+        .s_axis_tkeep ({16{1'b1}}),
+        .s_axis_tvalid(cores_ctrl_m_tvalid),
+        .s_axis_tready(cores_ctrl_m_tready),
+        .s_axis_tlast (1'b1),
+        .s_axis_tid   (8'd0),
+        .s_axis_tdest (cores_ctrl_m_tdest),
+        .s_axis_tuser (1'b0),
+    
+        .m_clk(sys_clk),
+        .m_rst(sys_rst),
+        .m_axis_tdata (cores_ctrl_m_axis_tdata),
+        .m_axis_tkeep (),
+        .m_axis_tvalid(cores_ctrl_m_axis_tvalid),
+        .m_axis_tready(cores_ctrl_m_axis_tready),
+        .m_axis_tlast (cores_ctrl_m_axis_tlast),
+        .m_axis_tid   (),
+        .m_axis_tdest (cores_ctrl_m_axis_tdest),
+        .m_axis_tuser (),
+    
+        .s_status_overflow(),
+        .s_status_bad_frame(),
+        .s_status_good_frame(),
+        .m_status_overflow(),
+        .m_status_bad_frame(),
+        .m_status_good_frame()
+    );
+end
 
 // -------------------------------------------------------------------//
 // --------------------AXIL write and read back-----------------------//
@@ -948,7 +1041,7 @@ assign cores_dma_write_desc_ram_sel = {IF_RAM_SEL_WIDTH{1'b0}}; //IF_COUNT << ($
 genvar i;     
 
 generate
-  if (IF_COUNT==0) begin
+  if (IF_COUNT==0) begin: no_veth
     assign pcie_dma_read_desc_pcie_addr      = cores_dma_read_desc_pcie_addr;
     assign pcie_dma_read_desc_ram_sel        = cores_dma_read_desc_ram_sel;
     assign pcie_dma_read_desc_ram_addr       = cores_dma_read_desc_ram_addr;  
@@ -1010,7 +1103,7 @@ generate
     assign rx_axis_tready = 1'b0;
     assign msi_irq        = 32'd0;
   
-  end else begin
+  end else begin: virtual_ports
       
     wire [IF_COUNT*PCIE_ADDR_WIDTH-1:0]            if_pcie_dma_read_desc_pcie_addr;
     wire [IF_COUNT*IF_RAM_SEL_WIDTH-1:0]           if_pcie_dma_read_desc_ram_sel;
