@@ -14,7 +14,7 @@ module riscvcore #(
 )(
     input                        clk,
     input                        rst,
-    input                        timer_rst,
+    input                        init_rst,
     
     output                       ext_dmem_en,
     output [STRB_WIDTH-1:0]      ext_dmem_wen,
@@ -297,7 +297,7 @@ assign in_desc_taken = rd_desc_done && strb_asserted;
 //////////////////////// INTERNAL 32-BIT TIMER ////////////////////////////
 ///////////////////////////////////////////////////////////////////////////
 always @ (posedge clk)
-  if (timer_rst)
+  if (init_rst)
     internal_timer <= 64'd0;
   else
     internal_timer <= internal_timer + 64'd1;
@@ -360,7 +360,7 @@ wire done_w_slot = ((data_desc[63:60] == 4'd0) ||
                     (data_desc[63:60] == 4'd2));
 
 always @ (posedge clk)
-    if (rst)
+    if (init_rst)
         slots_in_prog <= {SLOT_COUNT{1'b0}};
     else if (in_desc_valid && in_desc_taken)
         slots_in_prog[in_desc[16+:SLOT_WIDTH]]   <= 1'b1;
@@ -382,11 +382,11 @@ assign dmem_word_write_mask = ((!dmem_wr_en) || (!dmem_v)) ? 5'h0 :
                               (dmem_byte_count == 2'd1) ? (5'h03 << dmem_addr[1:0]) :
                               5'h0f;
 
-if (STRB_WIDTH==4) begin
+if (STRB_WIDTH==4) begin: same_width_dmem
     assign dmem_read_data = io_ren_r ? io_read_data : dmem_data_out;
     assign dmem_line_write_mask = dmem_word_write_mask[3:0];
     assign dmem_data_in   = dmem_wr_data;
-end else begin
+end else begin: width_convert_dmem
     wire [DATA_WIDTH-1:0] dmem_data_out_shifted; 
     reg  [LINE_ADDR_BITS-3:0] dmem_latched_addr;
     localparam REMAINED_BYTES = STRB_WIDTH-4;
@@ -405,9 +405,9 @@ end else begin
                          << {dmem_addr[LINE_ADDR_BITS-1:2], 5'd0};
 end
 
-if (STRB_WIDTH==4) begin
+if (STRB_WIDTH==4) begin: same_width_imem
     assign imem_read_data = imem_data_out;
-end else begin
+end else begin: width_convert_imem
     wire [DATA_WIDTH-1:0] imem_data_out_shifted;
     reg [LINE_ADDR_BITS-3:0] imem_latched_addr;
 

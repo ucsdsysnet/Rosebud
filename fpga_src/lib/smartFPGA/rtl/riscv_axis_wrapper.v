@@ -111,7 +111,7 @@ assign dram_m_axis_tuser = CORE_ID;
 /////////////////////////////////////////////////////////////////////
 wire reset_cmd = ctrl_s_axis_tvalid && (&ctrl_s_axis_tdata[35:32]);
 reg  core_reset_r = 1'b1;
-wire timer_rst;
+wire init_rst;
 
 always @ (posedge sys_clk)
     if (sys_rst) 
@@ -120,11 +120,11 @@ always @ (posedge sys_clk)
         core_reset_r <= ctrl_s_axis_tdata[0];
 
 wire core_reset;
-if (!SEPARATE_CLOCKS) begin
+if (!SEPARATE_CLOCKS) begin: same_reset
   assign core_reset = core_reset_r;
-  assign timer_rst  = sys_rst;
+  assign init_rst   = sys_rst;
 
-end else begin
+end else begin: async_reset
   
   simple_sync_sig #(.RST_VAL(1'b1)) reset_sync (
     .dst_clk(core_clk),
@@ -137,7 +137,7 @@ end else begin
     .dst_clk(core_clk),
     .dst_rst(core_rst),
     .in(sys_rst),
-    .out(timer_rst)
+    .out(init_rst)
   );
 
 end
@@ -156,7 +156,7 @@ reg  [SLOT_WIDTH-1:0] s_slot_ptr;
 wire [ADDR_WIDTH-1:0] slot_addr;
 integer j;
 
-if (SEPARATE_CLOCKS) begin
+if (SEPARATE_CLOCKS) begin: slot_addr_async_fifo
 
   wire [ADDR_WIDTH-1:0] slot_wr_addr_r;
   wire [SLOT_WIDTH-1:0] slot_wr_ptr_r;
@@ -185,7 +185,7 @@ if (SEPARATE_CLOCKS) begin
     if (slot_wr_valid_r)
       slot_addr_lut[slot_wr_ptr_r] <= slot_wr_addr_r;
 
-end else begin
+end else begin: slot_addr_direct
 
   always @ (posedge sys_clk)
     if (slot_wr_valid)
@@ -433,7 +433,7 @@ wire [63:0] recv_desc = {recv_desc_addr,
 wire recv_from_dram = recv_desc_valid && (recv_desc_tuser==dram_port);
 wire recv_tag_zero  = recv_desc_valid && (recv_desc_tdest=={TAG_WIDTH{1'b0}});
 
-if (!SEPARATE_CLOCKS) begin
+if (!SEPARATE_CLOCKS) begin: normal_recv_data_fifo
   simple_fifo # (
     .ADDR_WIDTH($clog2(RECV_DESC_DEPTH)),
     .DATA_WIDTH(64)
@@ -451,7 +451,7 @@ if (!SEPARATE_CLOCKS) begin
     .dout_ready(recv_desc_ready_f)
   );
 
-end else begin
+end else begin: async_recv_data_fifo
   simple_async_fifo # (
     .DEPTH(RECV_DESC_DEPTH),
     .DATA_WIDTH(64)
@@ -475,7 +475,7 @@ wire [4:0] recv_dram_tag;
 wire       recv_dram_tag_fifo_ready;
 wire       recv_dram_tag_v;
  
-if (SEPARATE_CLOCKS) begin
+if (SEPARATE_CLOCKS) begin: async_dram_flag_fifo
 
  
   // There is at least a cycle between two write from core if value 
@@ -497,7 +497,7 @@ if (SEPARATE_CLOCKS) begin
     .dout_ready(1'b1)
   );
 
-end else begin
+end else begin: direct_dram_flag
 
   reg [4:0] recv_dram_tag_r;
   reg       recv_dram_tag_v_r;
@@ -537,7 +537,7 @@ wire core_data_wr_ready;
 wire core_data_wr_valid_f, core_data_wr_ready_f;
 wire [63:0] core_data_wr_desc_f;
 
-if (!SEPARATE_CLOCKS) begin
+if (!SEPARATE_CLOCKS) begin: normal_send_data_fifo
   simple_fifo # (
     .ADDR_WIDTH($clog2(SEND_DESC_DEPTH)),
     .DATA_WIDTH(64)
@@ -554,7 +554,7 @@ if (!SEPARATE_CLOCKS) begin
     .dout(core_data_wr_desc_f),
     .dout_ready(core_data_wr_ready_f)
   );
-end else begin 
+end else begin: async_send_data_fifo
   simple_async_fifo # (
     .DEPTH(SEND_DESC_DEPTH),
     .DATA_WIDTH(64)
@@ -579,7 +579,7 @@ wire core_ctrl_wr_ready;
 wire core_ctrl_wr_valid_f, core_ctrl_wr_ready_f;
 wire [63:0] core_ctrl_wr_desc_f;
 
-if (!SEPARATE_CLOCKS) begin
+if (!SEPARATE_CLOCKS) begin: normal_ctrl_send_fifo
   simple_fifo # (
     .ADDR_WIDTH($clog2(SEND_DESC_DEPTH)),
     .DATA_WIDTH(64)
@@ -596,7 +596,7 @@ if (!SEPARATE_CLOCKS) begin
     .dout(core_ctrl_wr_desc_f),
     .dout_ready(core_ctrl_wr_ready_f)
   );
-end else begin
+end else begin: async_ctrl_send_fifo
   simple_async_fifo # (
     .DEPTH(SEND_DESC_DEPTH),
     .DATA_WIDTH(64)
@@ -631,7 +631,7 @@ wire core_dram_wr_ready;
 wire core_dram_wr_valid_f, core_dram_wr_ready_f;
 wire [127:0] core_dram_wr_desc_f;
 
-if (!SEPARATE_CLOCKS) begin
+if (!SEPARATE_CLOCKS) begin: normal_dram_send_fifo
   simple_fifo # (
     .ADDR_WIDTH($clog2(DRAM_DESC_DEPTH)),
     .DATA_WIDTH(128)
@@ -649,7 +649,7 @@ if (!SEPARATE_CLOCKS) begin
     .dout(core_dram_wr_desc_f),
     .dout_ready(core_dram_wr_ready_f)
   );
-end else begin 
+end else begin: async_dram_send_fifo
   simple_async_fifo # (
     .DEPTH(DRAM_DESC_DEPTH),
     .DATA_WIDTH(128)
@@ -674,11 +674,11 @@ wire core_dram_rd_ready;
 wire core_dram_rd_valid_f, core_dram_rd_ready_f;
 wire [127:0] core_dram_rd_desc_f;
 
-if (!SEPARATE_CLOCKS) begin
+if (!SEPARATE_CLOCKS) begin: normal_dram_ctrl_send_fifo
   simple_fifo # (
     .ADDR_WIDTH($clog2(DRAM_DESC_DEPTH)),
     .DATA_WIDTH(128)
-  ) send_ctrl_fifo (
+  ) send_dram_ctrl_fifo (
     .clk(sys_clk),
     .rst(sys_rst),
     .clear(core_reset_r),
@@ -691,11 +691,11 @@ if (!SEPARATE_CLOCKS) begin
     .dout(core_dram_rd_desc_f),
     .dout_ready(core_dram_rd_ready_f)
   );
-end else begin
+end else begin: async_dram_ctrl_send_fifo
   simple_async_fifo # (
     .DEPTH(DRAM_DESC_DEPTH),
     .DATA_WIDTH(128)
-  ) send_ctrl_fifo (
+  ) send_dram_ctrl_fifo (
     .async_rst(sys_rst || core_reset_r),
   
     .din_clk(core_clk),
@@ -1151,7 +1151,7 @@ mem_1r1w #(
   .doutb(core_imem_rd_data)
 );
 
-if (TARGET_URAM && !SEPARATE_CLOCKS) begin
+if (TARGET_URAM && !SEPARATE_CLOCKS) begin: uram_dmem
 
   mem_2rw_uram #(
     .BYTES_PER_LINE(STRB_WIDTH),
@@ -1172,7 +1172,7 @@ if (TARGET_URAM && !SEPARATE_CLOCKS) begin
     .doutb(dmem_rd_data)
   );
 
-end else begin
+end else begin: simple_dmem
 
   mem_2rw #(
     .BYTES_PER_LINE(STRB_WIDTH),
@@ -1211,7 +1211,7 @@ always @(posedge sys_clk)
 
 wire core_interrupt, core_interrupt_ack;
 
-if (SEPARATE_CLOCKS) begin
+if (SEPARATE_CLOCKS) begin: async_interrupt
 
   // Interrupt stays high until core addresses the problem, so a simple sync without 
   // handshake is enough. Ack also stays high for 2 cycles, so a simple sync is enough.
@@ -1229,7 +1229,7 @@ if (SEPARATE_CLOCKS) begin
        .out(out_of_bound_clear)
    );
 
-end else begin 
+end else begin: direct_interrupt
    assign core_interrupt = out_of_bound;
    assign out_of_bound_clear = core_interrupt_ack;
 end
@@ -1249,7 +1249,7 @@ riscvcore #(
 ) core (
     .clk(core_clk),
     .rst(core_reset),
-    .timer_rst(timer_rst),
+    .init_rst(init_rst),
 
     .ext_dmem_en(core_dmem_en),
     .ext_dmem_wen(core_dmem_wen),

@@ -188,7 +188,7 @@ parameter DRAM_DESC_DEPTH  = 16;
 parameter MSG_FIFO_DEPTH   = 16;
 parameter STG_F_DATA_DEPTH = 8192;
 parameter STG_F_CTRL_DEPTH = 32; // TKEEP is not enabled, so 32 words
-parameter STG_F_DRAM_DEPTH = 1024; 
+parameter STG_F_DRAM_DEPTH = 4096; 
 parameter V_MAC_ASYNC_FIFO_SIZE = 1024;
 parameter IMEM_SIZE_BYTES  = 8192;
 parameter DMEM_SIZE_BYTES  = 32768;
@@ -543,7 +543,7 @@ pcie_config # (
   .msi_irq            (msi_irq)
 );
 
-if (V_PORT_COUNT==0) begin
+if (V_PORT_COUNT==0) begin: no_veth
 
   assign v_rx_axis_tready = 1'b0;
   assign v_tx_axis_tdata  = {LVL1_DATA_WIDTH{1'b0}};
@@ -552,7 +552,7 @@ if (V_PORT_COUNT==0) begin
   assign v_tx_axis_tlast  = 1'b0;
   assign v_tx_axis_tuser  = 1'b0; 
 
-end else begin
+end else begin: virtual_eth_connections
  
   assign rx_axis_tdata[INTERFACE_COUNT*LVL1_DATA_WIDTH +: V_PORT_COUNT*LVL1_DATA_WIDTH] = v_rx_axis_tdata;
   assign rx_axis_tkeep[INTERFACE_COUNT*LVL1_STRB_WIDTH +: V_PORT_COUNT*LVL1_STRB_WIDTH] = v_rx_axis_tkeep;
@@ -1275,8 +1275,8 @@ assign core_msg_merged_ready = 1'b1;
 // Instantiating riscv core wrappers
 genvar i;
 generate
-  for (i=0; i<CORE_COUNT; i=i+1) begin
-    // (* keep_hierarchy = "soft" *)
+  for (i=0; i<CORE_COUNT; i=i+1) begin: riscv_cores
+    (* keep_hierarchy = "soft" *)
     riscv_axis_wrapper #(
         .DATA_WIDTH(LVL2_DATA_WIDTH),
         .ADDR_WIDTH(CORE_ADDR_WIDTH),
@@ -1369,7 +1369,7 @@ generate
 endgenerate
 
 // ILA
-if (ENABLE_ILA) begin  
+if (ENABLE_ILA) begin: ILA_inst
   reg [63:0] data_s_slot;
   reg [63:0] data_m_slot;
   reg [63:0] ctrl_m_msg_type;
@@ -1467,7 +1467,7 @@ if (ENABLE_ILA) begin
 
   );
 
-end else begin
+end else begin: no_ILA
   assign sched_trig_in      = 1'b0;
   assign sched_trig_out_ack = 1'b0;
 end

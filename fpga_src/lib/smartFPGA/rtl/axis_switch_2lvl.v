@@ -93,7 +93,7 @@ initial begin
     end
 end
 
-if (S_COUNT >= M_COUNT) begin
+if (S_COUNT >= M_COUNT) begin: shrink
     axis_switch_2lvl_shrink # (
         .S_COUNT         (S_COUNT),
         .M_COUNT         (M_COUNT),
@@ -143,7 +143,7 @@ if (S_COUNT >= M_COUNT) begin
         .m_axis_tuser (m_axis_tuser)
     );
     
-end else begin
+end else begin: grow
     axis_switch_2lvl_grow # (
         .S_COUNT         (S_COUNT),
         .M_COUNT         (M_COUNT),
@@ -271,7 +271,8 @@ module axis_switch_2lvl_shrink # (
                                           int_axis_tlast_f;
     genvar j;
     generate 
-        if (S_PER_CLUSTER == 1) begin
+        if (S_PER_CLUSTER == 1) begin: bypass 
+            // TODO add fifo if async
 
             assign int_axis_tdata_f  = s_axis_tdata;
             assign int_axis_tkeep_f  = s_axis_tkeep;
@@ -282,7 +283,7 @@ module axis_switch_2lvl_shrink # (
             assign int_axis_tlast_f  = s_axis_tlast;
             assign s_axis_tready     = int_axis_tready_f;
 
-        end else begin
+        end else begin: clusters
 
             wire [CLUSTER_COUNT*S_DATA_WIDTH-1:0] int_axis_tdata;
             wire [CLUSTER_COUNT*S_KEEP_WIDTH-1:0] int_axis_tkeep;
@@ -339,8 +340,8 @@ module axis_switch_2lvl_shrink # (
         
                 );
     
-                if (STAGE_FIFO_ENABLE) begin
-                    if (SEPARATE_CLOCKS) begin
+                if (STAGE_FIFO_ENABLE) begin: fifos
+                    if (SEPARATE_CLOCKS) begin: async_fifos
                         axis_async_fifo_adapter # (
                             .DEPTH(STAGE_FIFO_DEPTH),
                             .S_DATA_WIDTH(S_DATA_WIDTH),
@@ -387,7 +388,7 @@ module axis_switch_2lvl_shrink # (
                             .m_status_bad_frame(),
                             .m_status_good_frame()
                         );
-                    end else begin
+                    end else begin: normal_fifos
                         axis_fifo_adapter # (
                             .DEPTH(STAGE_FIFO_DEPTH),
                             .S_DATA_WIDTH(S_DATA_WIDTH),
@@ -431,7 +432,7 @@ module axis_switch_2lvl_shrink # (
                             .status_good_frame()
                         );
                     end
-                end else begin
+                end else begin: no_fifo
                     assign int_axis_tdata_f  = int_axis_tdata;
                     assign int_axis_tkeep_f  = int_axis_tkeep;
                     assign int_axis_tdest_f  = int_axis_tdest;
@@ -448,7 +449,7 @@ module axis_switch_2lvl_shrink # (
     wire [M_COUNT*S_DEST_WIDTH-1:0] m_axis_tdest_r;
     
     // Level 2 
-    if (M_COUNT==1) begin
+    if (M_COUNT==1) begin: last_level_arbiter
         axis_arb_mux #
         (
             .S_COUNT(CLUSTER_COUNT),
@@ -494,7 +495,7 @@ module axis_switch_2lvl_shrink # (
         
         );
     
-    end else begin //M_COUNT!=1
+    end else begin: last_level_sw //M_COUNT!=1
     
         axis_switch #
         (
@@ -545,9 +546,10 @@ module axis_switch_2lvl_shrink # (
 
     genvar i;
     generate        
-        for (i=0; i<M_COUNT; i=i+1) 
+        for (i=0; i<M_COUNT; i=i+1) begin: tdest_cut
             assign m_axis_tdest[i*M_DEST_WIDTH +: M_DEST_WIDTH] = 
                 M_DEST_ENABLE ? m_axis_tdest_r[i*S_DEST_WIDTH +: M_DEST_WIDTH] : 1'b0;
+        end
     endgenerate
 
 endmodule
@@ -673,7 +675,8 @@ module axis_switch_2lvl_grow # (
     // Level 2 
     genvar i,j;
     generate 
-        if (M_PER_CLUSTER == 1) begin
+        if (M_PER_CLUSTER == 1) begin: bypass 
+            // TODO add fifo if async
 
             assign m_axis_tdata    = int_axis_tdata;
             assign m_axis_tkeep    = int_axis_tkeep;
@@ -683,11 +686,12 @@ module axis_switch_2lvl_grow # (
             assign m_axis_tlast    = int_axis_tlast;
             assign int_axis_tready = m_axis_tready;
             
-            for (j=0; j<CLUSTER_COUNT; j=j+1) 
+            for (j=0; j<CLUSTER_COUNT; j=j+1) begin: tdest_cut
                 assign m_axis_tdest[j*M_DEST_WIDTH +: M_DEST_WIDTH] = 
                     M_DEST_ENABLE ? int_axis_tdest[j*S_DEST_WIDTH +: M_DEST_WIDTH] : 1'b0;
+            end
         
-        end else begin
+        end else begin: clusters
 
             wire [CLUSTER_COUNT*M_DATA_WIDTH-1:0] int_axis_tdata_f;
             wire [CLUSTER_COUNT*M_KEEP_WIDTH-1:0] int_axis_tkeep_f;
@@ -702,8 +706,8 @@ module axis_switch_2lvl_grow # (
             
     
             for (j=0; j<CLUSTER_COUNT; j=j+1) begin : fifo_n_switch
-                if (STAGE_FIFO_ENABLE) begin
-                    if (SEPARATE_CLOCKS) begin
+                if (STAGE_FIFO_ENABLE) begin: fifos
+                    if (SEPARATE_CLOCKS) begin: async_fifos
                         axis_async_fifo_adapter # (
                             .DEPTH(STAGE_FIFO_DEPTH),
                             .S_DATA_WIDTH(S_DATA_WIDTH),
@@ -749,7 +753,7 @@ module axis_switch_2lvl_grow # (
                             .m_status_bad_frame(),
                             .m_status_good_frame()
                         );
-                    end else begin
+                    end else begin: normal_fifo
                         axis_fifo_adapter # (
                             .DEPTH(STAGE_FIFO_DEPTH),
                             .S_DATA_WIDTH(S_DATA_WIDTH),
@@ -792,7 +796,7 @@ module axis_switch_2lvl_grow # (
                             .status_good_frame()
                         );
                     end
-                end else begin
+                end else begin: no_fifo
                     assign int_axis_tdata_f  = int_axis_tdata;
                     assign int_axis_tkeep_f  = int_axis_tkeep;
                     assign int_axis_tdest_f  = int_axis_tdest;
@@ -844,9 +848,10 @@ module axis_switch_2lvl_grow # (
                 );
             end
 
-            for (i=0; i<M_COUNT; i=i+1) 
+            for (i=0; i<M_COUNT; i=i+1) begin: tdest_cut
                 assign m_axis_tdest[i*M_DEST_WIDTH +: M_DEST_WIDTH] = 
                    M_DEST_ENABLE ? m_axis_tdest_r[i*INT_DEST_WIDTH +: M_DEST_WIDTH] : 1'b0;
+            end
         end
     endgenerate
  
