@@ -4,7 +4,7 @@ module riscvcore #(
   parameter IMEM_SIZE_BYTES = 8192,
   parameter DMEM_SIZE_BYTES = 32768,
   parameter COHERENT_START  = 16'h6FFF,
-  parameter CORE_ID         = 0,
+  parameter CORE_ID_WIDTH   = 4,
   parameter STRB_WIDTH      = DATA_WIDTH/8,
   parameter LINE_ADDR_BITS  = $clog2(STRB_WIDTH),
   parameter IMEM_ADDR_WIDTH = $clog2(IMEM_SIZE_BYTES),
@@ -15,6 +15,7 @@ module riscvcore #(
     input                        clk,
     input                        rst,
     input                        init_rst,
+    input  [CORE_ID_WIDTH-1:0]   core_id,
     
     output                       ext_dmem_en,
     output [STRB_WIDTH-1:0]      ext_dmem_wen,
@@ -272,7 +273,7 @@ always @ (posedge clk) begin
                          7'd0,data_desc_ready, 7'd0,in_desc_valid};
 
     if (id_ren)
-        io_read_data <= CORE_ID;
+        io_read_data <= {{(32-CORE_ID_WIDTH){1'b0}},core_id};
  
     if (timer_l_ren)
         io_read_data <= internal_timer[31:0];

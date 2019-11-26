@@ -18,9 +18,8 @@ module riscv_axis_wrapper # (
     parameter SEND_DESC_DEPTH = 8,
     parameter DRAM_DESC_DEPTH = 16,
     parameter MSG_FIFO_DEPTH  = 16,
-    parameter PORT_COUNT      = 4,
+    parameter PORT_WIDTH      = 2,
     parameter LEN_WIDTH       = 16,
-    parameter CORE_ID         = 0,
     parameter CORE_ID_WIDTH   = 4, 
     parameter SLOT_START_ADDR = 16'h2000,
     parameter SLOT_ADDR_STEP  = 16'h0800,
@@ -29,7 +28,6 @@ module riscv_axis_wrapper # (
     parameter STRB_WIDTH      = (DATA_WIDTH/8),
     parameter SLOT_WIDTH      = $clog2(SLOT_COUNT+1), 
     parameter TAG_WIDTH       = (SLOT_WIDTH>5)? SLOT_WIDTH:5,
-    parameter PORT_WIDTH      = $clog2(PORT_COUNT),
     parameter ID_TAG_WIDTH    = CORE_ID_WIDTH+TAG_WIDTH,
     parameter DMEM_ADDR_WIDTH = $clog2(DMEM_SIZE_BYTES),
     parameter IMEM_ADDR_WIDTH = $clog2(IMEM_SIZE_BYTES),
@@ -43,6 +41,8 @@ module riscv_axis_wrapper # (
     input  wire                     sys_rst,
     input  wire                     core_clk,
     input  wire                     core_rst,
+    
+    input  wire [CORE_ID_WIDTH-1:0] core_id,
 
     // ---------------- DATA CHANNEL --------------- // 
     // Incoming data
@@ -61,7 +61,7 @@ module riscv_axis_wrapper # (
     input  wire                     data_m_axis_tready,
     output wire                     data_m_axis_tlast,
     output wire [PORT_WIDTH-1:0]    data_m_axis_tdest,
-    output wire [ID_TAG_WIDTH-1:0]  data_m_axis_tuser,
+    output wire [TAG_WIDTH-1:0]     data_m_axis_tuser,
   
     // ---------------- CTRL CHANNEL --------------- // 
     // Incoming control
@@ -75,7 +75,6 @@ module riscv_axis_wrapper # (
     output wire                     ctrl_m_axis_tvalid,
     input  wire                     ctrl_m_axis_tready,
     output wire                     ctrl_m_axis_tlast,
-    output wire [CORE_ID_WIDTH-1:0] ctrl_m_axis_tuser,
     
     // ------------ DRAM RD REQ CHANNEL ------------- // 
     // Incoming DRAM request
@@ -89,7 +88,6 @@ module riscv_axis_wrapper # (
     output wire                     dram_m_axis_tvalid,
     input  wire                     dram_m_axis_tready,
     output wire                     dram_m_axis_tlast,
-    output wire [CORE_ID_WIDTH-1:0] dram_m_axis_tuser,
 
     // ------------- CORE MSG CHANNEL -------------- // 
     // Core messages output  
@@ -102,9 +100,6 @@ module riscv_axis_wrapper # (
     input  wire [CORE_ID_WIDTH-1:0] core_msg_in_user,
     input  wire                     core_msg_in_valid
 );
-
-assign data_m_axis_tuser [TAG_WIDTH +: CORE_ID_WIDTH] = CORE_ID; 
-assign dram_m_axis_tuser = CORE_ID;
 
 /////////////////////////////////////////////////////////////////////
 //////////////////////// CORE RESET COMMAND /////////////////////////
@@ -319,7 +314,7 @@ assign data_m_axis_tdata = dram_addr_send ? m_header_r : m_axis_tdata;
 assign data_m_axis_tkeep = dram_addr_send ? {STRB_WIDTH{1'b1}} : m_axis_tkeep;
 assign data_m_axis_tlast = dram_addr_send ? 1'b0               : m_axis_tlast;
 assign data_m_axis_tdest = m_axis_tdest;
-assign data_m_axis_tuser[TAG_WIDTH-1:0] = m_axis_tuser;
+assign data_m_axis_tuser = m_axis_tuser;
 assign m_axis_tready = (!dram_addr_send) && data_m_axis_tready;
 assign data_m_axis_tvalid = dram_addr_send || m_axis_tvalid;
 
@@ -950,7 +945,6 @@ end
 assign ctrl_m_axis_tvalid = ctrl_m_axis_tvalid_r;
 assign ctrl_m_axis_tdata  = ctrl_m_axis_tdata_r;
 assign ctrl_m_axis_tlast  = ctrl_m_axis_tvalid;
-assign ctrl_m_axis_tuser  = CORE_ID;
 assign ctrl_out_ready     = (!ctrl_m_axis_tvalid_r) || ctrl_m_axis_tready; 
 
 /////////////////////////////////////////////////////////////////////
@@ -994,7 +988,7 @@ always @ (posedge core_clk) begin
   if (core_rst)
     core_msg_in_v_r  <= 1'b0;
   else
-    core_msg_in_v_r  <= core_msg_in_valid && (core_msg_in_user!=CORE_ID);
+    core_msg_in_v_r  <= core_msg_in_valid;
 end
 
 wire [7:0]  core_msg_write_mask = {4'd0, core_msg_in_strb_r[3:0]} << {core_msg_in_addr_r[2], 2'd0};
@@ -1245,11 +1239,12 @@ riscvcore #(
   .COHERENT_START(COHERENT_START),
   .SLOT_COUNT(SLOT_COUNT),
   .SLOT_WIDTH(SLOT_WIDTH),
-  .CORE_ID(CORE_ID)
+  .CORE_ID_WIDTH(CORE_ID_WIDTH)
 ) core (
     .clk(core_clk),
     .rst(core_reset),
     .init_rst(init_rst),
+    .core_id(core_id),
 
     .ext_dmem_en(core_dmem_en),
     .ext_dmem_wen(core_dmem_wen),

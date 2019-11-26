@@ -229,70 +229,65 @@ module fpga_core #
     output wire                               qsfp2_lpmode
 );
 
-// RISCV system parameters
 parameter CORE_COUNT       = 16;
+
 parameter INTERFACE_COUNT  = 2;
-parameter CORE_ADDR_WIDTH  = 16;
-parameter SLOT_COUNT       = 8;
-parameter PCIE_SLOT_COUNT  = 16;
-parameter SLOT_START_ADDR  = 16'h2000;
-parameter SLOT_ADDR_STEP   = 16'h0800;
+parameter V_IF_COUNT       = 2;
+parameter PORTS_PER_V_IF   = 1;
+parameter LB_PORT_COUNT    = 2;
+
+parameter V_PORT_COUNT     = V_IF_COUNT * PORTS_PER_V_IF;
+parameter FIRST_LB_PORT    = INTERFACE_COUNT+V_PORT_COUNT+1-1;
+parameter PORT_COUNT       = INTERFACE_COUNT+V_PORT_COUNT+LB_PORT_COUNT+1;
+
+parameter ENABLE_ILA       = 0;
+
+// MAC and switching system parameters
 parameter LVL1_DATA_WIDTH  = 128;
+parameter LVL1_STRB_WIDTH  = LVL1_DATA_WIDTH/8;
 parameter LVL1_CTRL_WIDTH  = 32+4; //DON'T CHANGE
 parameter LVL1_DRAM_WIDTH  = 64; //DRAM CONTROL
-parameter LVL2_DATA_WIDTH  = 64;
 parameter LVL2_CTRL_WIDTH  = 32+4; //DON'T CHANGE
 parameter LVL2_DRAM_WIDTH  = 64; //DON'T CHANGE
 parameter TX_FIFO_DEPTH    = 32768;
 parameter RX_FIFO_DEPTH    = 32768;
-parameter RECV_DESC_DEPTH  = 8;
-parameter SEND_DESC_DEPTH  = 8;
-parameter DRAM_DESC_DEPTH  = 16;
-parameter MSG_FIFO_DEPTH   = 16;
 parameter STG_F_DATA_DEPTH = 8192;
 parameter STG_F_CTRL_DEPTH = 32; // TKEEP is not enabled, so 32 words
 parameter STG_F_DRAM_DEPTH = 1024; 
-parameter V_MAC_ASYNC_FIFO_SIZE = 1024;
-parameter IMEM_SIZE_BYTES  = 8192;
-parameter DMEM_SIZE_BYTES  = 32768;
-parameter COHERENT_START   = 16'h6FFF;
-parameter LEN_WIDTH        = 16;
-parameter INTERLEAVE       = 1;
+parameter V_MAC_FIFO_SIZE  = 1024;
 parameter CLUSTER_COUNT    = 4;
 parameter BC_MSG_CLUSTERS  = 16;
-parameter ENABLE_ILA       = 0;
 
+// PCIe parameters
+parameter PCIE_SLOT_COUNT     = 16;
 parameter PCIE_ADDR_WIDTH     = 64;
 parameter PCIE_RAM_ADDR_WIDTH = 32;
 parameter TX_RX_RAM_SIZE      = 2**15;
 parameter PCIE_DMA_LEN_WIDTH  = 16;
 parameter HOST_DMA_TAG_WIDTH  = 32;
 parameter RAM_PIPELINE        = 2;
-  
-parameter AXIL_DATA_WIDTH = 32;
-parameter AXIL_STRB_WIDTH = (AXIL_DATA_WIDTH/8);
-parameter AXIL_ADDR_WIDTH = BAR0_APERTURE;
-parameter V_IF_COUNT      = 2;
-parameter PORTS_PER_V_IF  = 1;
-parameter V_PORT_COUNT    = V_IF_COUNT * PORTS_PER_V_IF;
-parameter FIRST_LB_PORT   = INTERFACE_COUNT+V_PORT_COUNT+1-1;
-parameter LB_PORT_COUNT   = 2;
-parameter PORT_COUNT      = INTERFACE_COUNT+V_PORT_COUNT+LB_PORT_COUNT+1;
-parameter DRAM_PORT       = PORT_COUNT-1;
+parameter AXIL_DATA_WIDTH     = 32;
+parameter AXIL_STRB_WIDTH     = (AXIL_DATA_WIDTH/8);
+parameter AXIL_ADDR_WIDTH     = BAR0_APERTURE;
 
+// RISCV parameters, should match riscv_block
 parameter CORE_WIDTH       = $clog2(CORE_COUNT);
 parameter PORT_WIDTH       = $clog2(PORT_COUNT);
+parameter DRAM_PORT        = PORT_COUNT-1;
+parameter SLOT_COUNT       = 8;
 parameter SLOT_WIDTH       = $clog2(SLOT_COUNT+1);
 parameter TAG_WIDTH        = (SLOT_WIDTH>5)? SLOT_WIDTH:5;
-parameter ID_TAG_WIDTH     = CORE_WIDTH+TAG_WIDTH;
-parameter LVL1_STRB_WIDTH  = LVL1_DATA_WIDTH/8;
-parameter LVL2_STRB_WIDTH  = LVL2_DATA_WIDTH/8;
+parameter DMEM_SIZE_BYTES  = 32768;
 parameter CORE_MSG_WIDTH   = 4+$clog2(DMEM_SIZE_BYTES)+32;
+parameter LVL2_DATA_WIDTH  = 64;
+parameter LVL2_STRB_WIDTH  = LVL2_DATA_WIDTH/8;
+parameter CORE_ADDR_WIDTH  = 16;
+parameter ID_TAG_WIDTH     = CORE_WIDTH+TAG_WIDTH;
 
 // FW and board IDs
-parameter FW_ID = 32'd0;
-parameter FW_VER = {16'd0, 16'd1};
-parameter BOARD_ID = {16'h10ee, 16'h9076};
+parameter FW_ID     = 32'd0;
+parameter FW_VER    = {16'd0, 16'd1};
+parameter BOARD_ID  = {16'h10ee, 16'h9076};
 parameter BOARD_VER = {16'd0, 16'd1};
 
 wire select_core_clk = SEPARATE_CLOCKS ? core_clk : sys_clk;
@@ -747,7 +742,7 @@ pcie_config # (
   .msi_irq            (msi_irq)
 );
 
-if (V_PORT_COUNT==0) begin
+if (V_PORT_COUNT==0) begin: no_veth
 
   assign v_rx_axis_tready = 1'b0;
   assign v_tx_axis_tdata  = {LVL1_DATA_WIDTH{1'b0}};
@@ -756,7 +751,7 @@ if (V_PORT_COUNT==0) begin
   assign v_tx_axis_tlast  = 1'b0;
   assign v_tx_axis_tuser  = 1'b0; 
 
-end else begin
+end else begin: virtual_eth_connections
  
   assign rx_axis_tdata[INTERFACE_COUNT*LVL1_DATA_WIDTH +: V_PORT_COUNT*LVL1_DATA_WIDTH] = v_rx_axis_tdata;
   assign rx_axis_tkeep[INTERFACE_COUNT*LVL1_STRB_WIDTH +: V_PORT_COUNT*LVL1_STRB_WIDTH] = v_rx_axis_tkeep;
@@ -783,7 +778,7 @@ pcie_controller #
   .PCIE_ADDR_WIDTH(PCIE_ADDR_WIDTH),
   .PCIE_RAM_ADDR_WIDTH(PCIE_RAM_ADDR_WIDTH),
   .TX_RX_RAM_SIZE(TX_RX_RAM_SIZE),
-  .MAC_ASYNC_FIFO_SIZE(V_MAC_ASYNC_FIFO_SIZE),
+  .MAC_ASYNC_FIFO_SIZE(V_MAC_FIFO_SIZE),
   .PCIE_DMA_LEN_WIDTH(PCIE_DMA_LEN_WIDTH),
   .HOST_DMA_TAG_WIDTH(HOST_DMA_TAG_WIDTH),
   .AXIL_DATA_WIDTH(AXIL_DATA_WIDTH),
@@ -1479,35 +1474,15 @@ assign core_msg_merged_ready = 1'b1;
 // Instantiating riscv core wrappers
 genvar i;
 generate
-  for (i=0; i<CORE_COUNT; i=i+1) begin
+  for (i=0; i<CORE_COUNT; i=i+1) begin: riscv_cores
+    wire [CORE_WIDTH-1:0] core_id = i;
     // (* keep_hierarchy = "soft" *)
-    riscv_axis_wrapper #(
-        .DATA_WIDTH(LVL2_DATA_WIDTH),
-        .ADDR_WIDTH(CORE_ADDR_WIDTH),
-        .SLOT_COUNT(SLOT_COUNT),
-        .IMEM_SIZE_BYTES(IMEM_SIZE_BYTES),
-        .DMEM_SIZE_BYTES(DMEM_SIZE_BYTES),
-        .COHERENT_START(COHERENT_START),
-        .INTERLEAVE(INTERLEAVE),
-        .RECV_DESC_DEPTH(RECV_DESC_DEPTH),
-        .SEND_DESC_DEPTH(SEND_DESC_DEPTH),
-        .DRAM_DESC_DEPTH(DRAM_DESC_DEPTH),
-        .MSG_FIFO_DEPTH(MSG_FIFO_DEPTH),
-        .PORT_COUNT(PORT_COUNT),
-        .LEN_WIDTH(LEN_WIDTH),
-        .CORE_ID(i),
-        .CORE_ID_WIDTH(CORE_WIDTH),
-        .SLOT_START_ADDR(SLOT_START_ADDR),
-        .SLOT_ADDR_STEP(SLOT_ADDR_STEP),
-        .DRAM_PORT(DRAM_PORT),
-        .SEPARATE_CLOCKS(0),
-        .TARGET_URAM(1)
-    )
-    core_wrapper (
+    riscv_block riscv_block_inst (
         .sys_clk(core_clk),
         .sys_rst(core_rst),
         .core_clk(core_clk),
         .core_rst(core_rst),
+        .core_id(core_id),
 
         // ---------------- DATA CHANNEL --------------- // 
         // Incoming data
@@ -1526,7 +1501,7 @@ generate
         .data_m_axis_tready(data_m_axis_tready[i]),
         .data_m_axis_tlast(data_m_axis_tlast[i]),
         .data_m_axis_tdest(data_m_axis_tdest[PORT_WIDTH*i +: PORT_WIDTH]),
-        .data_m_axis_tuser(data_m_axis_tuser[ID_TAG_WIDTH*i +: ID_TAG_WIDTH]),
+        .data_m_axis_tuser(data_m_axis_tuser[ID_TAG_WIDTH*i +: TAG_WIDTH]),
   
         // ---------------- CTRL CHANNEL --------------- // 
         // Incoming control
@@ -1540,7 +1515,6 @@ generate
         .ctrl_m_axis_tvalid(ctrl_m_axis_tvalid[i]),
         .ctrl_m_axis_tready(ctrl_m_axis_tready[i]),
         .ctrl_m_axis_tlast(ctrl_m_axis_tlast[i]),
-        .ctrl_m_axis_tuser(ctrl_m_axis_tuser[CORE_WIDTH*i +: CORE_WIDTH]),
     
         // ------------ DRAM RD REQ CHANNEL ------------- // 
         // Incoming DRAM request
@@ -1554,7 +1528,6 @@ generate
         .dram_m_axis_tvalid(dram_m_axis_tvalid[i]),
         .dram_m_axis_tready(dram_m_axis_tready[i]),
         .dram_m_axis_tlast (dram_m_axis_tlast[i]),
-        .dram_m_axis_tuser (dram_m_axis_tuser[CORE_WIDTH*i +: CORE_WIDTH]),
    
         // ------------- CORE MSG CHANNEL -------------- // 
         // Core messages output  
@@ -1565,15 +1538,19 @@ generate
         // Core messages input
         .core_msg_in_data(core_msg_in_data[CORE_MSG_WIDTH*i +: CORE_MSG_WIDTH]),
         .core_msg_in_user(core_msg_in_user[CORE_WIDTH*i +: CORE_WIDTH]),
-        .core_msg_in_valid(core_msg_in_valid[i])
+        .core_msg_in_valid(core_msg_in_valid[i] && 
+                          (core_msg_in_user[CORE_WIDTH*i +: CORE_WIDTH]!=i))
     );
-      
+
+        assign dram_m_axis_tuser[CORE_WIDTH*i +: CORE_WIDTH]               = i;
+        assign ctrl_m_axis_tuser[CORE_WIDTH*i +: CORE_WIDTH]               = i;
+        assign data_m_axis_tuser[(ID_TAG_WIDTH*i)+TAG_WIDTH +: CORE_WIDTH] = i;
   end
         
 endgenerate
 
 // ILA
-if (ENABLE_ILA) begin  
+if (ENABLE_ILA) begin: ILA_inst
   reg [63:0] data_s_slot;
   reg [63:0] data_m_slot;
   reg [63:0] ctrl_m_msg_type;
@@ -1671,7 +1648,7 @@ if (ENABLE_ILA) begin
 
   );
 
-end else begin
+end else begin: no_ILA
   assign sched_trig_in      = 1'b0;
   assign sched_trig_out_ack = 1'b0;
 end

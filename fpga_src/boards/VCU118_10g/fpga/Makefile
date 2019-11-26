@@ -7,6 +7,7 @@ FPGA_ARCH = virtexuplus
 # Files for synthesis
 SYN_FILES  = rtl/fpga.v
 SYN_FILES += rtl/fpga_core.v
+SYN_FILES += rtl/riscv_block.v
 SYN_FILES += rtl/pcie_config.v
 SYN_FILES += rtl/debounce_switch.v
 SYN_FILES += rtl/sync_reset.v

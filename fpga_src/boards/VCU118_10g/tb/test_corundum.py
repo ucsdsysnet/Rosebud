@@ -50,6 +50,7 @@ testbench = 'test_fpga_core'
 srcs = []
 
 srcs.append("../rtl/fpga_core.v")
+srcs.append("../rtl/riscv_block.v")
 srcs.append("../rtl/pcie_config.v")
 
 srcs.append("../lib/smartFPGA/rtl/simple_fifo.v")
