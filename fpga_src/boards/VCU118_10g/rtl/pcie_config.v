@@ -64,10 +64,10 @@ module pcie_config # (
   // I2C and config
   input  wire                               i2c_scl_i,
   output reg                                i2c_scl_o,
-  output wire                               i2c_scl_t,
+  output reg                                i2c_scl_t,
   input  wire                               i2c_sda_i,
   output reg                                i2c_sda_o,
-  output wire                               i2c_sda_t,
+  output reg                                i2c_sda_t,
   
   output reg                                qsfp1_modsell,
   output reg                                qsfp1_resetl,
@@ -132,10 +132,24 @@ reg qsfp2_resetl_r;
 reg qsfp2_modprsl_r;
 reg qsfp2_intl_r;
 reg qsfp2_lpmode_r;
- 
-assign i2c_scl_t = i2c_scl_o;
-assign i2c_sda_t = i2c_sda_o;
 
+reg i2c_scl_i_rr;
+reg i2c_scl_o_rr;
+reg i2c_scl_t_rr;
+reg i2c_sda_i_rr;
+reg i2c_sda_o_rr;
+reg i2c_sda_t_rr;
+reg qsfp1_modsell_rr;
+reg qsfp1_resetl_rr;
+reg qsfp1_modprsl_rr;
+reg qsfp1_intl_rr;
+reg qsfp1_lpmode_rr;
+reg qsfp2_modsell_rr;
+reg qsfp2_resetl_rr;
+reg qsfp2_modprsl_rr;
+reg qsfp2_intl_rr;
+reg qsfp2_lpmode_rr;
+ 
 always @(posedge pcie_clk) begin
     if (pcie_rst) begin
         axil_ctrl_awready          <= 1'b0;
@@ -263,18 +277,18 @@ always @(posedge pcie_clk) begin
                 end
                 16'h0104: begin
                     // GPIO in
-                    axil_ctrl_rdata[8]  <= qsfp1_modprsl_r;
-                    axil_ctrl_rdata[9]  <= qsfp1_modsell_r;
-                    axil_ctrl_rdata[10] <= qsfp2_modprsl_r;
-                    axil_ctrl_rdata[11] <= qsfp2_modsell_r;
-                    axil_ctrl_rdata[0]  <= qsfp1_resetl_r;
-                    axil_ctrl_rdata[1]  <= qsfp1_intl_r;
-                    axil_ctrl_rdata[2]  <= qsfp1_lpmode_r;
-                    axil_ctrl_rdata[4]  <= qsfp2_resetl_r;
-                    axil_ctrl_rdata[5]  <= qsfp2_intl_r;
-                    axil_ctrl_rdata[6]  <= qsfp2_lpmode_r;
-                    axil_ctrl_rdata[16] <= i2c_scl_i_r;
-                    axil_ctrl_rdata[17] <= i2c_sda_i_r;
+                    axil_ctrl_rdata[8]  <= qsfp1_modprsl_rr;
+                    axil_ctrl_rdata[9]  <= qsfp1_modsell_rr;
+                    axil_ctrl_rdata[10] <= qsfp2_modprsl_rr;
+                    axil_ctrl_rdata[11] <= qsfp2_modsell_rr;
+                    axil_ctrl_rdata[0]  <= qsfp1_resetl_rr;
+                    axil_ctrl_rdata[1]  <= qsfp1_intl_rr;
+                    axil_ctrl_rdata[2]  <= qsfp1_lpmode_rr;
+                    axil_ctrl_rdata[4]  <= qsfp2_resetl_rr;
+                    axil_ctrl_rdata[5]  <= qsfp2_intl_rr;
+                    axil_ctrl_rdata[6]  <= qsfp2_lpmode_rr;
+                    axil_ctrl_rdata[16] <= i2c_scl_i_rr;
+                    axil_ctrl_rdata[17] <= i2c_sda_i_rr;
                 end
                 
                 // Cores control and DMA request response
@@ -307,35 +321,73 @@ end
 // One level register before i2c and flash input/outputs for better timing
 always @(posedge pcie_clk)
     if (pcie_rst) begin
-        qsfp1_modsell   <= 1'b1;
-        qsfp2_modsell   <= 1'b1;
-        qsfp1_lpmode    <= 1'b0;
-        qsfp2_lpmode    <= 1'b0;
-        qsfp1_resetl    <= 1'b1;
-        qsfp2_resetl    <= 1'b1;
-        i2c_scl_o       <= 1'b1;
-        i2c_sda_o       <= 1'b1;
-        i2c_scl_i_r     <= 1'b1;
-        i2c_sda_i_r     <= 1'b1;
-        qsfp1_modprsl_r <= 1'b0;
-        qsfp2_modprsl_r <= 1'b0;
-        qsfp1_intl_r    <= 1'b0;
-        qsfp2_intl_r    <= 1'b0;
+        qsfp1_modsell    <= 1'b1;
+        qsfp2_modsell    <= 1'b1;
+        qsfp1_lpmode     <= 1'b0;
+        qsfp2_lpmode     <= 1'b0;
+        qsfp1_resetl     <= 1'b1;
+        qsfp2_resetl     <= 1'b1;
+        i2c_scl_o        <= 1'b1;
+        i2c_scl_t        <= 1'b1;
+        i2c_sda_o        <= 1'b1;
+        i2c_sda_t        <= 1'b1;
+        qsfp1_modsell_rr <= 1'b1;
+        qsfp2_modsell_rr <= 1'b1;
+        qsfp1_lpmode_rr  <= 1'b0;
+        qsfp2_lpmode_rr  <= 1'b0;
+        qsfp1_resetl_rr  <= 1'b1;
+        qsfp2_resetl_rr  <= 1'b1;
+        i2c_scl_o_rr     <= 1'b1;
+        i2c_scl_t_rr     <= 1'b1;
+        i2c_sda_o_rr     <= 1'b1;
+        i2c_sda_t_rr     <= 1'b1;
+
+        i2c_scl_i_rr     <= 1'b1;
+        i2c_sda_i_rr     <= 1'b1;
+        qsfp1_modprsl_rr <= 1'b0;
+        qsfp2_modprsl_rr <= 1'b0;
+        qsfp1_intl_rr    <= 1'b0;
+        qsfp2_intl_rr    <= 1'b0;
+        i2c_scl_i_r      <= 1'b1;
+        i2c_sda_i_r      <= 1'b1;
+        qsfp1_modprsl_r  <= 1'b0;
+        qsfp2_modprsl_r  <= 1'b0;
+        qsfp1_intl_r     <= 1'b0;
+        qsfp2_intl_r     <= 1'b0;
     end else begin
-        qsfp1_modsell   <= qsfp1_modsell_r;   
-        qsfp2_modsell   <= qsfp2_modsell_r;   
-        qsfp1_lpmode    <= qsfp1_lpmode_r;    
-        qsfp2_lpmode    <= qsfp2_lpmode_r;    
-        qsfp1_resetl    <= qsfp1_resetl_r;    
-        qsfp2_resetl    <= qsfp2_resetl_r;    
-        i2c_scl_o       <= i2c_scl_o_r;       
-        i2c_sda_o       <= i2c_sda_o_r;       
-        i2c_scl_i_r     <= i2c_scl_i;     
-        i2c_sda_i_r     <= i2c_sda_i;     
-        qsfp1_modprsl_r <= qsfp1_modprsl; 
-        qsfp2_modprsl_r <= qsfp2_modprsl; 
-        qsfp1_intl_r    <= qsfp1_intl;    
-        qsfp2_intl_r    <= qsfp2_intl;    
+        qsfp1_modsell    <= qsfp1_modsell_rr;   
+        qsfp2_modsell    <= qsfp2_modsell_rr;   
+        qsfp1_lpmode     <= qsfp1_lpmode_rr;    
+        qsfp2_lpmode     <= qsfp2_lpmode_rr;    
+        qsfp1_resetl     <= qsfp1_resetl_rr;    
+        qsfp2_resetl     <= qsfp2_resetl_rr;    
+        i2c_scl_o        <= i2c_scl_o_rr;       
+        i2c_scl_t        <= i2c_scl_t_rr;       
+        i2c_sda_o        <= i2c_sda_o_rr;       
+        i2c_sda_t        <= i2c_sda_o_rr;       
+        qsfp1_modsell_rr <= qsfp1_modsell_r;   
+        qsfp2_modsell_rr <= qsfp2_modsell_r;   
+        qsfp1_lpmode_rr  <= qsfp1_lpmode_r;    
+        qsfp2_lpmode_rr  <= qsfp2_lpmode_r;    
+        qsfp1_resetl_rr  <= qsfp1_resetl_r;    
+        qsfp2_resetl_rr  <= qsfp2_resetl_r;    
+        i2c_scl_o_rr     <= i2c_scl_o_r;       
+        i2c_scl_t_rr     <= i2c_scl_o_r;       
+        i2c_sda_o_rr     <= i2c_sda_o_r;       
+        i2c_sda_t_rr     <= i2c_sda_o_r;       
+
+        i2c_scl_i_rr     <= i2c_scl_i_r;     
+        i2c_sda_i_rr     <= i2c_sda_i_r;     
+        qsfp1_modprsl_rr <= qsfp1_modprsl_r; 
+        qsfp2_modprsl_rr <= qsfp2_modprsl_r; 
+        qsfp1_intl_rr    <= qsfp1_intl_r;    
+        qsfp2_intl_rr    <= qsfp2_intl_r;    
+        i2c_scl_i_r      <= i2c_scl_i;     
+        i2c_sda_i_r      <= i2c_sda_i;     
+        qsfp1_modprsl_r  <= qsfp1_modprsl; 
+        qsfp2_modprsl_r  <= qsfp2_modprsl; 
+        qsfp1_intl_r     <= qsfp1_intl;    
+        qsfp2_intl_r     <= qsfp2_intl;    
     end
 
 // assign msi_irq[0] = host_dma_read_desc_status_valid || host_dma_write_desc_status_valid;

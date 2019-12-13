@@ -256,7 +256,7 @@ parameter STG_F_CTRL_DEPTH = 32; // TKEEP is not enabled, so 32 words
 parameter STG_F_DRAM_DEPTH = 1024; 
 parameter V_MAC_FIFO_SIZE  = 1024;
 parameter CLUSTER_COUNT    = 4;
-parameter BC_MSG_CLUSTERS  = 16;
+parameter BC_MSG_CLUSTERS  = 4;
 
 // PCIe parameters
 parameter PCIE_SLOT_COUNT     = 16;
@@ -290,8 +290,15 @@ parameter FW_VER    = {16'd0, 16'd1};
 parameter BOARD_ID  = {16'h10ee, 16'h9076};
 parameter BOARD_VER = {16'd0, 16'd1};
 
-wire select_core_clk = SEPARATE_CLOCKS ? core_clk : sys_clk;
-wire select_core_rst = SEPARATE_CLOCKS ? core_rst : sys_rst;
+// Separating reset per block and keeping it in sync with rest of the system
+(* KEEP = "TRUE" *) reg [CORE_COUNT-1:0] block_reset;
+(* KEEP = "TRUE" *) reg core_rst_r;
+integer j;
+always @ (posedge core_clk) begin
+  core_rst_r <= core_rst;
+  for (j=0; j<CORE_COUNT; j=j+1)
+    block_reset[j] <= core_rst;
+end
 
 // Unused outputs
 assign {qsfp2_tx_prbs31_enable_4, qsfp2_tx_prbs31_enable_3, 
@@ -1152,7 +1159,7 @@ axis_switch_2lvl # (
     .s_axis_tuser( {dram_rx_axis_tuser, loopback_rx_axis_tuser, sched_rx_axis_tuser}),
 
     .m_clk(core_clk),
-    .m_rst(core_rst),
+    .m_rst(core_rst_r),
     .m_axis_tdata (data_s_axis_tdata),
     .m_axis_tkeep (data_s_axis_tkeep),
     .m_axis_tvalid(data_s_axis_tvalid),
@@ -1186,7 +1193,7 @@ axis_switch_2lvl # (
      * AXI Stream inputs
      */
     .s_clk(core_clk),
-    .s_rst(core_rst),
+    .s_rst(core_rst_r),
     .s_axis_tdata(data_m_axis_tdata),
     .s_axis_tkeep(data_m_axis_tkeep),
     .s_axis_tvalid(data_m_axis_tvalid),
@@ -1249,7 +1256,7 @@ axis_switch_2lvl # (
      * AXI Stream outputs
      */
     .m_clk(core_clk),
-    .m_rst(core_rst),
+    .m_rst(core_rst_r),
     .m_axis_tdata(ctrl_s_axis_tdata),
     .m_axis_tkeep(),
     .m_axis_tvalid(ctrl_s_axis_tvalid),
@@ -1283,7 +1290,7 @@ axis_switch_2lvl # (
      * AXI Stream inputs
      */
     .s_clk(core_clk),
-    .s_rst(core_rst),
+    .s_rst(core_rst_r),
     .s_axis_tdata(ctrl_m_axis_tdata),
     .s_axis_tkeep({CORE_COUNT{1'b0}}),
     .s_axis_tvalid(ctrl_m_axis_tvalid),
@@ -1345,7 +1352,7 @@ axis_switch_2lvl # (
      * AXI Stream outputs
      */
     .m_clk(core_clk),
-    .m_rst(core_rst),
+    .m_rst(core_rst_r),
     .m_axis_tdata(dram_s_axis_tdata),
     .m_axis_tkeep(),
     .m_axis_tvalid(dram_s_axis_tvalid),
@@ -1379,7 +1386,7 @@ axis_switch_2lvl # (
      * AXI Stream inputs
      */
     .s_clk(core_clk),
-    .s_rst(core_rst),
+    .s_rst(core_rst_r),
     .s_axis_tdata(dram_m_axis_tdata),
     .s_axis_tkeep({CORE_COUNT{1'b0}}),
     .s_axis_tvalid(dram_m_axis_tvalid),
@@ -1425,8 +1432,8 @@ axis_switch_2lvl # (
     .ID_ENABLE       (0),
     .USER_ENABLE     (1),
     .USER_WIDTH      (CORE_WIDTH),
-    .S_REG_TYPE      (0),
-    .M_REG_TYPE      (0),
+    .S_REG_TYPE      (2),
+    .M_REG_TYPE      (2),
     .CLUSTER_COUNT   (BC_MSG_CLUSTERS),
     .STAGE_FIFO_DEPTH(0),
     .SEPARATE_CLOCKS(0)
@@ -1436,7 +1443,7 @@ axis_switch_2lvl # (
      * AXI Stream inputs
      */
     .s_clk(core_clk),
-    .s_rst(core_rst),
+    .s_rst(core_rst_r),
     .s_axis_tdata(core_msg_out_data),
     .s_axis_tkeep({CORE_COUNT{1'b0}}),
     .s_axis_tvalid(core_msg_out_valid),
@@ -1450,7 +1457,7 @@ axis_switch_2lvl # (
      * AXI Stream output
      */
     .m_clk(core_clk),
-    .m_rst(core_rst),
+    .m_rst(core_rst_r),
     .m_axis_tdata(core_msg_merged_data),
     .m_axis_tkeep(),
     .m_axis_tvalid(core_msg_merged_valid),
@@ -1478,10 +1485,8 @@ generate
     wire [CORE_WIDTH-1:0] core_id = i;
     // (* keep_hierarchy = "soft" *)
     riscv_block riscv_block_inst (
-        .sys_clk(core_clk),
-        .sys_rst(core_rst),
-        .core_clk(core_clk),
-        .core_rst(core_rst),
+        .clk(core_clk),
+        .rst(block_reset[i]),
         .core_id(core_id),
 
         // ---------------- DATA CHANNEL --------------- // 

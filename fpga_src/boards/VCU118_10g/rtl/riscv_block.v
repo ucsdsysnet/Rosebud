@@ -39,10 +39,8 @@ either expressed or implied, of The Regents of the University of California.
  * FPGA core logic
  */
 module riscv_block (
-    input  wire        sys_clk,
-    input  wire        sys_rst,
-    input  wire        core_clk,
-    input  wire        core_rst,
+    input  wire        clk,
+    input  wire        rst,
     
     input  wire [3:0]  core_id,             //CORE_ID_WIDTH
 
@@ -103,6 +101,10 @@ module riscv_block (
     input  wire        core_msg_in_valid
 );
 
+(* KEEP = "TRUE" *) reg rst_r;
+always @ (posedge clk)
+  rst_r <= rst;
+
 // Update if CORE_COUNT or PORT_COUNT has changed
 parameter CORE_ID_WIDTH   = 4;
 parameter PORT_WIDTH      = 3;
@@ -148,10 +150,10 @@ riscv_axis_wrapper #(
     .SEPARATE_CLOCKS(0),
     .TARGET_URAM(1)
 ) wrapper_inst (
-    .sys_clk(sys_clk),
-    .sys_rst(sys_rst),
-    .core_clk(core_clk),
-    .core_rst(core_rst),
+    .sys_clk(clk),
+    .sys_rst(rst_r),
+    .core_clk(clk),
+    .core_rst(rst_r),
     .core_id(core_id),
 
     // ---------------- DATA CHANNEL --------------- // 

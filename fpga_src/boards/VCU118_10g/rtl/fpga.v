@@ -53,16 +53,16 @@ module fpga (
     input  wire         btnd,
     input  wire         btnr,
     input  wire         btnc,
-    input  wire [3:0]   sw,
-    output wire [7:0]   led,
-    output wire [7:0]   pmod0,
-    output wire [7:0]   pmod1,
+    (* IOB = "TRUE" *) input  wire [3:0]   sw,
+    (* IOB = "TRUE" *) output wire [7:0]   led,
+    (* IOB = "TRUE" *) output wire [7:0]   pmod0,
+    (* IOB = "TRUE" *) output wire [7:0]   pmod1,
 
     /*
      * I2C for board management
      */
-    inout  wire         i2c_scl,
-    inout  wire         i2c_sda,
+    (* IOB = "TRUE" *) inout  wire         i2c_scl,
+    (* IOB = "TRUE" *) inout  wire         i2c_sda,
 
     /*
      * PCI express
@@ -75,7 +75,7 @@ module fpga (
     // input  wire         pcie_refclk_1_n,
     input  wire         pcie_refclk_2_p,
     input  wire         pcie_refclk_2_n,
-    input  wire         pcie_reset_n,
+    (* IOB = "TRUE" *) input  wire         pcie_reset_n,
 
     /*
      * Ethernet: QSFP28
@@ -102,11 +102,11 @@ module fpga (
     // input  wire         qsfp1_mgt_refclk_1_n,
     // output wire         qsfp1_recclk_p,
     // output wire         qsfp1_recclk_n,
-    output wire         qsfp1_modsell,
-    output wire         qsfp1_resetl,
-    input  wire         qsfp1_modprsl,
-    input  wire         qsfp1_intl,
-    output wire         qsfp1_lpmode,
+    (* IOB = "TRUE" *) output wire         qsfp1_modsell,
+    (* IOB = "TRUE" *) output wire         qsfp1_resetl,
+    (* IOB = "TRUE" *) input  wire         qsfp1_modprsl,
+    (* IOB = "TRUE" *) input  wire         qsfp1_intl,
+    (* IOB = "TRUE" *) output wire         qsfp1_lpmode,
 
     output wire         qsfp2_tx1_p,
     output wire         qsfp2_tx1_n,
@@ -130,11 +130,11 @@ module fpga (
     // input  wire         qsfp2_mgt_refclk_1_n,
     // output wire         qsfp2_recclk_p,
     // output wire         qsfp2_recclk_n,
-    output wire         qsfp2_modsell,
-    output wire         qsfp2_resetl,
-    input  wire         qsfp2_modprsl,
-    input  wire         qsfp2_intl,
-    output wire         qsfp2_lpmode
+    (* IOB = "TRUE" *) output wire         qsfp2_modsell,
+    (* IOB = "TRUE" *) output wire         qsfp2_resetl,
+    (* IOB = "TRUE" *) input  wire         qsfp2_modprsl,
+    (* IOB = "TRUE" *) input  wire         qsfp2_intl,
+    (* IOB = "TRUE" *) output wire         qsfp2_lpmode
 );
 
 parameter AXIS_PCIE_DATA_WIDTH = 512;
@@ -152,6 +152,7 @@ wire pcie_user_reset;
 wire clk_125mhz_ibufg;
 wire clk_125mhz_mmcm_out;
 wire clk_250mhz_mmcm_out;
+wire clk_250mhz_2_mmcm_out;
 
 // Internal 125 MHz clock
 wire clk_125mhz_int;
@@ -160,6 +161,10 @@ wire rst_125mhz_int;
 // Internal 250 MHz clock
 wire clk_250mhz_int;
 wire rst_250mhz_int;
+
+// Second Internal 250 MHz clock
+wire clk_250mhz_2_int;
+wire rst_250mhz_2_int;
 
 // Internal 156.25 MHz clock
 wire clk_156mhz_int;
@@ -193,7 +198,7 @@ MMCME3_BASE #(
     .CLKOUT1_DIVIDE(4),
     .CLKOUT1_DUTY_CYCLE(0.5),
     .CLKOUT1_PHASE(0),
-    .CLKOUT2_DIVIDE(1),
+    .CLKOUT2_DIVIDE(4),
     .CLKOUT2_DUTY_CYCLE(0.5),
     .CLKOUT2_PHASE(0),
     .CLKOUT3_DIVIDE(1),
@@ -225,7 +230,7 @@ clk_mmcm_inst (
     .CLKOUT0B(),
     .CLKOUT1(clk_250mhz_mmcm_out),
     .CLKOUT1B(),
-    .CLKOUT2(),
+    .CLKOUT2(clk_250mhz_2_mmcm_out),
     .CLKOUT2B(),
     .CLKOUT3(),
     .CLKOUT3B(),
@@ -267,6 +272,21 @@ sync_reset_250mhz_inst (
     .sync_reset_out(rst_250mhz_int)
 );
 
+BUFG
+clk_250mhz_2_bufg_inst (
+    .I(clk_250mhz_2_mmcm_out),
+    .O(clk_250mhz_2_int)
+);
+
+sync_reset #(
+    .N(4)
+)
+sync_reset_250mhz_2_inst (
+    .clk(clk_250mhz_2_int),
+    .rst(~mmcm_locked),
+    .sync_reset_out(rst_250mhz_2_int)
+);
+
 // GPIO
 wire btnu_int;
 wire btnl_int;
@@ -284,6 +304,8 @@ wire i2c_scl_t;
 wire i2c_sda_i;
 wire i2c_sda_o;
 wire i2c_sda_t;
+wire i2c_scl_in;
+wire i2c_sda_in;
 
 debounce_switch #(
     .WIDTH(9),
@@ -319,8 +341,12 @@ sync_signal_inst (
         i2c_scl_i, i2c_sda_i})
 );
 
+
 assign i2c_scl = i2c_scl_t ? 1'bz : i2c_scl_o;
-assign i2c_sda = i2c_sda_t ? 1'bz : i2c_sda_o;
+assign i2c_sda = i2c_sda_t ? 1'bz : i2c_sda_o; 
+
+// IOBUF i2c_scl_buf (.IO(i2c_scl),.T(i2c_scl_t),.I(i2c_scl_o),.O(i2c_scl_in));
+// IOBUF i2c_sda_buf (.IO(i2c_sda),.T(i2c_sda_t),.I(i2c_sda_o),.O(i2c_sda_in));
 
 // PCIe
 wire pcie_sys_clk;
@@ -509,7 +535,7 @@ pcie4_uscale_plus_inst (
     .cfg_fc_sel(3'd0),
 
     .cfg_dsn(64'd0),
-
+    .cfg_bus_number(),
     .cfg_power_state_change_ack(1'b1),
     .cfg_power_state_change_interrupt(),
 
@@ -1257,7 +1283,7 @@ fpga_core #(
     .AXIS_PCIE_CQ_USER_WIDTH(AXIS_PCIE_CQ_USER_WIDTH),
     .AXIS_PCIE_CC_USER_WIDTH(AXIS_PCIE_CC_USER_WIDTH),
     .BAR0_APERTURE(BAR0_APERTURE),
-    .SEPARATE_CLOCKS(0)
+    .SEPARATE_CLOCKS(1)
 ) core_inst (
     /*
      * Clock: 156.25 MHz, 250 MHz
@@ -1267,8 +1293,8 @@ fpga_core #(
     .pcie_rst(pcie_user_reset),
     .sys_clk(clk_250mhz_int),
     .sys_rst(rst_250mhz_int),
-    .core_clk(clk_250mhz_int),
-    .core_rst(rst_250mhz_int),
+    .core_clk(clk_250mhz_2_int),
+    .core_rst(rst_250mhz_2_int),
 
     /*
      * GPIO
