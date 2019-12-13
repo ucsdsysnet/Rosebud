@@ -62,12 +62,12 @@ module pcie_config # (
   input  wire                               host_dma_write_desc_status_valid,
     
   // I2C and config
-  input  wire                               i2c_scl_i,
-  output reg                                i2c_scl_o,
-  output reg                                i2c_scl_t,
-  input  wire                               i2c_sda_i,
-  output reg                                i2c_sda_o,
-  output reg                                i2c_sda_t,
+  (* IOB = "TRUE" *) input  wire            i2c_scl_i,
+  (* IOB = "TRUE" *) output reg             i2c_scl_o,
+  (* IOB = "TRUE" *) output reg             i2c_scl_t,
+  (* IOB = "TRUE" *) input  wire            i2c_sda_i,
+  (* IOB = "TRUE" *) output reg             i2c_sda_o,
+  (* IOB = "TRUE" *) output reg             i2c_sda_t,
   
   output reg                                qsfp1_modsell,
   output reg                                qsfp1_resetl,

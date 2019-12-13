@@ -376,10 +376,3 @@ resize_pblock [get_pblocks pblock_16] -add {RAMB36_X5Y156:RAMB36_X6Y167}
 resize_pblock [get_pblocks pblock_16] -add {URAM288_X1Y208:URAM288_X1Y223}
 set_property SNAPPING_MODE ON [get_pblocks pblock_16]
 
-# set_input_delay -clock [get_clocks -of_objects [get_pins pcie4_uscale_plus_inst/inst/gt_top_i/diablo_gt.diablo_gt_phy_wrapper/phy_clk_i/bufg_gt_userclk/O]] 0.000 [get_ports {pcie_reset_n qsfp1_intl qsfp1_modprsl qsfp2_intl qsfp2_modprsl}]
-# set_output_delay -clock [get_clocks -of_objects [get_pins pcie4_uscale_plus_inst/inst/gt_top_i/diablo_gt.diablo_gt_phy_wrapper/phy_clk_i/bufg_gt_userclk/O]] 0.000 [get_ports {qsfp1_modsell qsfp1_resetl qsfp2_modsell qsfp2_resetl}]
-# set_input_delay -clock [get_clocks -of_objects [get_pins pcie4_uscale_plus_inst/inst/gt_top_i/diablo_gt.diablo_gt_phy_wrapper/phy_clk_i/bufg_gt_userclk/O]] 0.000 [get_ports -filter { NAME =~  "*" && DIRECTION == "INOUT" }]
-# set_output_delay -clock [get_clocks -of_objects [get_pins pcie4_uscale_plus_inst/inst/gt_top_i/diablo_gt.diablo_gt_phy_wrapper/phy_clk_i/bufg_gt_userclk/O]] 0.000 [get_ports -filter { NAME =~  "*" && DIRECTION == "INOUT" }]
-
-
-

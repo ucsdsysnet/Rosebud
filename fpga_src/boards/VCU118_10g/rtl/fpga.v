@@ -336,17 +336,16 @@ sync_signal #(
 sync_signal_inst (
     .clk(pcie_user_clk),
     .in({qsfp1_modprsl, qsfp2_modprsl, qsfp1_intl, qsfp2_intl,
-        i2c_scl, i2c_sda}),
+        i2c_scl_in, i2c_sda_in}),
     .out({qsfp1_modprsl_int, qsfp2_modprsl_int, qsfp1_intl_int, qsfp2_intl_int,
         i2c_scl_i, i2c_sda_i})
 );
 
+// assign i2c_scl = i2c_scl_t ? 1'bz : i2c_scl_o;
+// assign i2c_sda = i2c_sda_t ? 1'bz : i2c_sda_o; 
 
-assign i2c_scl = i2c_scl_t ? 1'bz : i2c_scl_o;
-assign i2c_sda = i2c_sda_t ? 1'bz : i2c_sda_o; 
-
-// IOBUF i2c_scl_buf (.IO(i2c_scl),.T(i2c_scl_t),.I(i2c_scl_o),.O(i2c_scl_in));
-// IOBUF i2c_sda_buf (.IO(i2c_sda),.T(i2c_sda_t),.I(i2c_sda_o),.O(i2c_sda_in));
+IOBUF i2c_scl_buf (.IO(i2c_scl),.T(i2c_scl_t),.I(i2c_scl_o),.O(i2c_scl_in));
+IOBUF i2c_sda_buf (.IO(i2c_sda),.T(i2c_sda_t),.I(i2c_sda_o),.O(i2c_sda_in));
 
 // PCIe
 wire pcie_sys_clk;
