@@ -212,43 +212,85 @@ reg                   s_pot_header;
 reg  [ADDR_WIDTH-1:0] s_header_addr;
 wire [ADDR_WIDTH-1:0] s_base_addr;
 
-assign data_s_axis_tready = s_axis_tready;
+wire [DATA_WIDTH-1:0]    data_s_axis_tdata_r;
+wire [STRB_WIDTH-1:0]    data_s_axis_tkeep_r;
+wire                     data_s_axis_tvalid_r;
+wire                     data_s_axis_tready_r;
+wire                     data_s_axis_tlast_r;
+wire [TAG_WIDTH-1:0]     data_s_axis_tdest_r;
+wire [PORT_WIDTH-1:0]    data_s_axis_tuser_r;
+
+assign data_s_axis_tready_r = s_axis_tready;
 wire [PORT_WIDTH-1:0] dram_port = DRAM_PORT;
+
+axis_register # (
+    .DATA_WIDTH(DATA_WIDTH),
+    .KEEP_ENABLE(1),
+    .KEEP_WIDTH(STRB_WIDTH),
+    .LAST_ENABLE(1),
+    .ID_ENABLE(0),
+    .DEST_ENABLE(1),
+    .DEST_WIDTH(TAG_WIDTH),
+    .USER_ENABLE(1),
+    .USER_WIDTH(PORT_WIDTH),
+    .REG_TYPE(2)
+) data_s_reg_inst (
+    .clk(sys_clk),
+    .rst(sys_rst),
+    // AXI input
+    .s_axis_tdata (data_s_axis_tdata),
+    .s_axis_tkeep (data_s_axis_tkeep),
+    .s_axis_tvalid(data_s_axis_tvalid),
+    .s_axis_tready(data_s_axis_tready),
+    .s_axis_tlast (data_s_axis_tlast),
+    .s_axis_tid   (8'd0),
+    .s_axis_tdest (data_s_axis_tdest),
+    .s_axis_tuser (data_s_axis_tuser),
+    // AXI output
+    .m_axis_tdata (data_s_axis_tdata_r),
+    .m_axis_tkeep (data_s_axis_tkeep_r),
+    .m_axis_tvalid(data_s_axis_tvalid_r),
+    .m_axis_tready(data_s_axis_tready_r),
+    .m_axis_tlast (data_s_axis_tlast_r),
+    .m_axis_tid   (),
+    .m_axis_tdest (data_s_axis_tdest_r),
+    .m_axis_tuser (data_s_axis_tuser_r)
+);
 
 always @ (posedge sys_clk) begin
 
   // Determining the first word which potentially can be a header
   if (sys_rst) begin
     s_pot_header <= 1'b1;
-  end else if (data_s_axis_tvalid && data_s_axis_tready) begin
-    if (data_s_axis_tlast) 
+  end else if (data_s_axis_tvalid_r && data_s_axis_tready_r) begin
+    if (data_s_axis_tlast_r) 
       s_pot_header <= 1'b1;
     else 
       s_pot_header <= 1'b0;
   end
   
   // Latch slot and port and destination address only from first word 
-  if (data_s_axis_tvalid && data_s_axis_tready && s_pot_header) begin
-    s_axis_tdest  <= data_s_axis_tdest;
-    s_axis_tuser  <= data_s_axis_tuser;  
-    s_slot_ptr    <= data_s_axis_tdest[SLOT_WIDTH-1:0];
-    s_header_addr <= data_s_axis_tdata[32 +: ADDR_WIDTH];
+  if (data_s_axis_tvalid_r && data_s_axis_tready_r && s_pot_header) begin
+    s_axis_tdest  <= data_s_axis_tdest_r;
+    s_axis_tuser  <= data_s_axis_tuser_r;  
+    s_slot_ptr    <= data_s_axis_tdest_r[SLOT_WIDTH-1:0];
+    s_header_addr <= data_s_axis_tdata_r[32 +: ADDR_WIDTH];
   end
 
   // Register data and tkeep and tlast. Also mark first and second word
   // so in case of header the first one is not valid and base address 
   // is asserted with second word.
-  if (data_s_axis_tvalid && data_s_axis_tready) begin
-    s_axis_tdata  <= data_s_axis_tdata;
-    s_axis_tkeep  <= data_s_axis_tkeep; 
-    s_axis_tlast  <= data_s_axis_tlast;
-    s_is_header   <= (data_s_axis_tuser==dram_port) && s_pot_header;  
+  if (data_s_axis_tvalid_r && data_s_axis_tready_r) begin
+    s_axis_tdata  <= data_s_axis_tdata_r;
+    s_axis_tkeep  <= data_s_axis_tkeep_r; 
+    s_axis_tlast  <= data_s_axis_tlast_r;
+    s_is_header   <= (data_s_axis_tuser_r==dram_port) && s_pot_header;  
     s_is_header_r <= s_is_header;
   end
 
   // If there is data and ready is asserted pipeline can move. 
   // If there is data in pipe but ready is not asserted valid stays asserted.
-  s_axis_tvalid <= ((data_s_axis_tvalid && data_s_axis_tready) || 
+  s_axis_tvalid <= ((data_s_axis_tvalid_r && data_s_axis_tready_r) || 
                     (s_axis_tvalid && (!s_axis_tready)));
   if (sys_rst) begin
     s_axis_tvalid <= 1'b0;
@@ -270,6 +312,14 @@ wire                  m_axis_tlast;
 wire [PORT_WIDTH-1:0] m_axis_tdest;
 wire [TAG_WIDTH-1:0]  m_axis_tuser;
 
+wire [DATA_WIDTH-1:0]    data_m_axis_tdata_n;
+wire [STRB_WIDTH-1:0]    data_m_axis_tkeep_n;
+wire                     data_m_axis_tvalid_n;
+wire                     data_m_axis_tready_n;
+wire                     data_m_axis_tlast_n;
+wire [PORT_WIDTH-1:0]    data_m_axis_tdest_n;
+wire [TAG_WIDTH-1:0]     data_m_axis_tuser_n;
+ 
 reg  [63:0]  m_header_r;
 reg          m_header_allowed_r;
 reg          m_header_v;
@@ -305,18 +355,53 @@ always @ (posedge sys_clk)
   else if ((dram_wr_valid && dram_wr_ready)||
            (ctrl_in_valid && ctrl_in_desc[64+ID_TAG_WIDTH] && ctrl_in_ready))
     m_header_v <= 1'b1;
-  else if (m_axis_tvalid && data_m_axis_tready && m_header_allowed_r)
+  else if (m_axis_tvalid && data_m_axis_tready_n && m_header_allowed_r)
     m_header_v <= 1'b0;
 
 wire dram_addr_send = m_axis_tvalid && m_header_allowed_r && m_header_v;
 
-assign data_m_axis_tdata = dram_addr_send ? m_header_r : m_axis_tdata;
-assign data_m_axis_tkeep = dram_addr_send ? {STRB_WIDTH{1'b1}} : m_axis_tkeep;
-assign data_m_axis_tlast = dram_addr_send ? 1'b0               : m_axis_tlast;
-assign data_m_axis_tdest = m_axis_tdest;
-assign data_m_axis_tuser = m_axis_tuser;
-assign m_axis_tready = (!dram_addr_send) && data_m_axis_tready;
-assign data_m_axis_tvalid = dram_addr_send || m_axis_tvalid;
+assign data_m_axis_tdata_n = dram_addr_send ? m_header_r : m_axis_tdata;
+assign data_m_axis_tkeep_n = dram_addr_send ? {STRB_WIDTH{1'b1}} : m_axis_tkeep;
+assign data_m_axis_tlast_n = dram_addr_send ? 1'b0               : m_axis_tlast;
+assign data_m_axis_tdest_n = m_axis_tdest;
+assign data_m_axis_tuser_n = m_axis_tuser;
+assign m_axis_tready = (!dram_addr_send) && data_m_axis_tready_n;
+assign data_m_axis_tvalid_n = dram_addr_send || m_axis_tvalid;
+
+// register output data
+axis_register # (
+    .DATA_WIDTH(DATA_WIDTH),
+    .KEEP_ENABLE(1),
+    .KEEP_WIDTH(STRB_WIDTH),
+    .LAST_ENABLE(1),
+    .ID_ENABLE(0),
+    .DEST_ENABLE(1),
+    .DEST_WIDTH(PORT_WIDTH),
+    .USER_ENABLE(1),
+    .USER_WIDTH(TAG_WIDTH),
+    .REG_TYPE(2)
+) data_m_reg_inst (
+    .clk(sys_clk),
+    .rst(sys_rst),
+    // AXI input
+    .s_axis_tdata (data_m_axis_tdata_n),
+    .s_axis_tkeep (data_m_axis_tkeep_n),
+    .s_axis_tvalid(data_m_axis_tvalid_n),
+    .s_axis_tready(data_m_axis_tready_n),
+    .s_axis_tlast (data_m_axis_tlast_n),
+    .s_axis_tid   (8'd0),
+    .s_axis_tdest (data_m_axis_tdest_n),
+    .s_axis_tuser (data_m_axis_tuser_n),
+    // AXI output
+    .m_axis_tdata (data_m_axis_tdata),
+    .m_axis_tkeep (data_m_axis_tkeep),
+    .m_axis_tvalid(data_m_axis_tvalid),
+    .m_axis_tready(data_m_axis_tready),
+    .m_axis_tlast (data_m_axis_tlast),
+    .m_axis_tid   (),
+    .m_axis_tdest (data_m_axis_tdest),
+    .m_axis_tuser (data_m_axis_tuser)
+);
 
 /////////////////////////////////////////////////////////////////////
 /////////// AXIS TO NATIVE MEM INTERFACE WITH DESCRIPTORS ///////////
@@ -945,7 +1030,7 @@ end
 assign ctrl_m_axis_tvalid = ctrl_m_axis_tvalid_r;
 assign ctrl_m_axis_tdata  = ctrl_m_axis_tdata_r;
 assign ctrl_m_axis_tlast  = ctrl_m_axis_tvalid;
-assign ctrl_out_ready     = (!ctrl_m_axis_tvalid_r) || ctrl_m_axis_tready; 
+assign ctrl_out_ready     = (!ctrl_m_axis_tvalid_r) || ctrl_m_axis_tready;
 
 /////////////////////////////////////////////////////////////////////
 /////////////////////// BROADCAST MESSAGING /////////////////////////
