@@ -147,6 +147,9 @@ riscv_axis_wrapper #(
     .SLOT_ADDR_STEP(SLOT_ADDR_STEP),
     .LEN_WIDTH(16), // fixed
     .INTERLEAVE(1),
+    .DATA_S_REG_TYPE(2),
+    .DATA_M_REG_TYPE(2),
+    .DRAM_M_REG_TYPE(2),
     .SEPARATE_CLOCKS(0),
     .TARGET_URAM(1)
 ) wrapper_inst (

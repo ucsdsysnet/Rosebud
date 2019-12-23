@@ -1468,15 +1468,34 @@ axis_switch_2lvl # (
     .m_axis_tuser(core_msg_merged_user)
 );
 
-// Broadcast the arbitted core messages.
-wire [CORE_COUNT*CORE_MSG_WIDTH-1:0] core_msg_in_data;
-wire [CORE_COUNT*CORE_WIDTH-1:0]     core_msg_in_user;
-wire [CORE_COUNT-1:0]                core_msg_in_valid;
+reg [BC_MSG_CLUSTERS*CORE_MSG_WIDTH-1:0] core_msg_merged_data_r;
+reg [BC_MSG_CLUSTERS*CORE_WIDTH-1:0]     core_msg_merged_user_r;
+reg [BC_MSG_CLUSTERS-1:0]                core_msg_merged_valid_r;
 
-assign core_msg_in_data  = {CORE_COUNT{core_msg_merged_data}};
-assign core_msg_in_user  = {CORE_COUNT{core_msg_merged_user}};
-assign core_msg_in_valid = {CORE_COUNT{core_msg_merged_valid}}; 
+always @ (posedge core_clk) begin
+    core_msg_merged_data_r  <= {BC_MSG_CLUSTERS{core_msg_merged_data}};
+    core_msg_merged_user_r  <= {BC_MSG_CLUSTERS{core_msg_merged_user}};
+    core_msg_merged_valid_r <= {BC_MSG_CLUSTERS{core_msg_merged_valid}}; 
+    if (core_rst_r)
+      core_msg_merged_valid_r <= {BC_MSG_CLUSTERS{1'b0}};
+end
+
 assign core_msg_merged_ready = 1'b1;
+
+// Broadcast the arbitted core messages.
+reg [CORE_COUNT*CORE_MSG_WIDTH-1:0] core_msg_in_data;
+reg [CORE_COUNT*CORE_WIDTH-1:0]     core_msg_in_user;
+reg [CORE_COUNT-1:0]                core_msg_in_valid;
+
+localparam CORES_PER_CLUSTER = CORE_COUNT / BC_MSG_CLUSTERS;
+
+always @ (posedge core_clk) begin
+    core_msg_in_data  <= {CORES_PER_CLUSTER{core_msg_merged_data_r}};
+    core_msg_in_user  <= {CORES_PER_CLUSTER{core_msg_merged_user_r}};
+    core_msg_in_valid <= {CORES_PER_CLUSTER{core_msg_merged_valid_r}}; 
+    if (core_rst_r)
+    core_msg_in_valid <= {CORE_COUNT{1'b0}}; 
+end
 
 // Instantiating riscv core wrappers
 genvar i;

@@ -1300,6 +1300,9 @@ generate
         .SLOT_START_ADDR(SLOT_START_ADDR),
         .SLOT_ADDR_STEP(SLOT_ADDR_STEP),
         .DRAM_PORT(DRAM_PORT),
+        .DATA_S_REG_TYPE(0),
+        .DATA_M_REG_TYPE(2),
+        .DRAM_M_REG_TYPE(0),
         .SEPARATE_CLOCKS(0),
         .TARGET_URAM(1)
     )

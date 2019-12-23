@@ -59,6 +59,61 @@ module simple_async_fifo # (
 
 endmodule
 
+module simple_sync_fifo # (
+  parameter DEPTH      = 32,
+  parameter DATA_WIDTH = 64
+)(
+  input                   clk,
+  input                   rst,
+
+  input                		din_valid,
+  input  [DATA_WIDTH-1:0] din,
+  output               		din_ready,
+ 
+  output               		dout_valid,
+  output [DATA_WIDTH-1:0] dout,
+  input                		dout_ready
+);
+
+  axis_fifo # (
+      .DEPTH(DEPTH),
+      .DATA_WIDTH(DATA_WIDTH),
+      .KEEP_ENABLE(0),
+      .KEEP_WIDTH(1),
+      .LAST_ENABLE(0),
+      .ID_ENABLE(0),
+      .DEST_ENABLE(0),
+      .USER_ENABLE(0),
+      .FRAME_FIFO(0)
+  ) sync_fifo_inst (
+      .clk(clk),
+      .rst(rst),
+
+      .s_axis_tdata(din),
+      .s_axis_tkeep(1'b0), 
+      .s_axis_tvalid(din_valid),
+      .s_axis_tready(din_ready),
+      .s_axis_tlast(1'b1),
+      .s_axis_tid(8'd0),
+      .s_axis_tdest(8'd0),
+      .s_axis_tuser(1'b0),
+  
+      .m_axis_tdata(dout),
+      .m_axis_tkeep(),
+      .m_axis_tvalid(dout_valid),
+      .m_axis_tready(dout_ready),
+      .m_axis_tlast(),
+      .m_axis_tid(),
+      .m_axis_tdest(),
+      .m_axis_tuser(),
+  
+      .status_overflow(),
+      .status_bad_frame(),
+      .status_good_frame()
+  );
+
+endmodule
+
 module simple_fifo # (
   parameter ADDR_WIDTH = 5,
   parameter DATA_WIDTH = 32

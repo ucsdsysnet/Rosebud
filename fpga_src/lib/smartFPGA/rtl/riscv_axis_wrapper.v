@@ -33,6 +33,10 @@ module riscv_axis_wrapper # (
     parameter IMEM_ADDR_WIDTH = $clog2(IMEM_SIZE_BYTES),
     parameter LINE_ADDR_BITS  = $clog2(STRB_WIDTH),
     parameter MSG_WIDTH       = 4+DMEM_ADDR_WIDTH+32,
+
+    parameter DATA_S_REG_TYPE = 0,
+    parameter DATA_M_REG_TYPE = 2,
+    parameter DRAM_M_REG_TYPE = 0,
     parameter SEPARATE_CLOCKS = 1,
     parameter TARGET_URAM     = 0
 )
@@ -223,6 +227,7 @@ wire [PORT_WIDTH-1:0]    data_s_axis_tuser_r;
 assign data_s_axis_tready_r = s_axis_tready;
 wire [PORT_WIDTH-1:0] dram_port = DRAM_PORT;
 
+// register input data
 axis_register # (
     .DATA_WIDTH(DATA_WIDTH),
     .KEEP_ENABLE(1),
@@ -233,7 +238,7 @@ axis_register # (
     .DEST_WIDTH(TAG_WIDTH),
     .USER_ENABLE(1),
     .USER_WIDTH(PORT_WIDTH),
-    .REG_TYPE(2)
+    .REG_TYPE(DATA_S_REG_TYPE)
 ) data_s_reg_inst (
     .clk(sys_clk),
     .rst(sys_rst),
@@ -379,7 +384,7 @@ axis_register # (
     .DEST_WIDTH(PORT_WIDTH),
     .USER_ENABLE(1),
     .USER_WIDTH(TAG_WIDTH),
-    .REG_TYPE(2)
+    .REG_TYPE(DATA_M_REG_TYPE)
 ) data_m_reg_inst (
     .clk(sys_clk),
     .rst(sys_rst),
@@ -755,13 +760,12 @@ wire core_dram_rd_valid_f, core_dram_rd_ready_f;
 wire [127:0] core_dram_rd_desc_f;
 
 if (!SEPARATE_CLOCKS) begin: normal_dram_ctrl_send_fifo
-  simple_fifo # (
-    .ADDR_WIDTH($clog2(DRAM_DESC_DEPTH)),
+  simple_sync_fifo # (
+    .DEPTH(DRAM_DESC_DEPTH),
     .DATA_WIDTH(128)
   ) send_dram_ctrl_fifo (
     .clk(sys_clk),
-    .rst(sys_rst),
-    .clear(core_reset_r),
+    .rst(sys_rst || core_reset_r),
   
     .din_valid(data_send_valid && core_dram_rd),
     .din({core_dram_addr, data_send_desc}),
@@ -933,23 +937,60 @@ end
 assign dram_s_axis_tready = dram_req_ready;
 
 // Outgoing dram desc
-reg [1:0] send_dram_rd_state;
+wire [63:0] dram_m_axis_tdata_n;
+wire        dram_m_axis_tvalid_n;
+wire        dram_m_axis_tready_n;
+wire        dram_m_axis_tlast_n;
+reg [1:0]   send_dram_rd_state;
+
 always @ (posedge sys_clk)
   if (sys_rst)
     send_dram_rd_state <= 2'd0;
   else if (core_dram_rd_valid_f)
     case (send_dram_rd_state)
       2'd0: send_dram_rd_state <= 2'd1;
-      2'd1: if (dram_m_axis_tready) send_dram_rd_state <= 2'd2;
-      2'd2: if (dram_m_axis_tready) send_dram_rd_state <= 2'd0;
+      2'd1: if (dram_m_axis_tready_n) send_dram_rd_state <= 2'd2;
+      2'd2: if (dram_m_axis_tready_n) send_dram_rd_state <= 2'd0;
       2'd3: send_dram_rd_state <= 2'd3; // Error
     endcase
 
-assign dram_m_axis_tvalid = (send_dram_rd_state != 2'd0);
-assign dram_m_axis_tdata  = (send_dram_rd_state == 2'd2) ? core_dram_rd_desc_f[127:64] 
-                                                         : core_dram_rd_desc_f[63:0];
-assign dram_m_axis_tlast  = (send_dram_rd_state == 2'd2);
-assign core_dram_rd_ready_f = (send_dram_rd_state == 2'd2) && dram_m_axis_tready;
+assign dram_m_axis_tvalid_n = (send_dram_rd_state != 2'd0);
+assign dram_m_axis_tdata_n  = (send_dram_rd_state == 2'd2) ? core_dram_rd_desc_f[127:64] 
+                                                           : core_dram_rd_desc_f[63:0];
+assign dram_m_axis_tlast_n  = (send_dram_rd_state == 2'd2);
+assign core_dram_rd_ready_f = (send_dram_rd_state == 2'd2) && dram_m_axis_tready_n;
+
+// register output dram data
+axis_register # (
+    .DATA_WIDTH(64),
+    .KEEP_ENABLE(0),
+    .LAST_ENABLE(1),
+    .ID_ENABLE(0),
+    .DEST_ENABLE(0),
+    .USER_ENABLE(0),
+    .REG_TYPE(DRAM_M_REG_TYPE)
+) dram_m_reg_inst (
+    .clk(sys_clk),
+    .rst(sys_rst),
+    // AXI input
+    .s_axis_tdata (dram_m_axis_tdata_n),
+    .s_axis_tkeep (8'd0),
+    .s_axis_tvalid(dram_m_axis_tvalid_n),
+    .s_axis_tready(dram_m_axis_tready_n),
+    .s_axis_tlast (dram_m_axis_tlast_n),
+    .s_axis_tid   (8'd0),
+    .s_axis_tdest (8'd0),
+    .s_axis_tuser (1'd0),
+    // AXI output
+    .m_axis_tdata (dram_m_axis_tdata),
+    .m_axis_tkeep (),
+    .m_axis_tvalid(dram_m_axis_tvalid),
+    .m_axis_tready(dram_m_axis_tready),
+    .m_axis_tlast (dram_m_axis_tlast),
+    .m_axis_tid   (),
+    .m_axis_tdest (),
+    .m_axis_tuser ()
+);
 
 /////////////////////////////////////////////////////////////////////
 /////////////////////////// ARBITERS ////////////////////////////////
@@ -1043,13 +1084,12 @@ wire                       core_msg_valid;
 wire                       core_msg_ready;
 
 // Broadcast messaging is in core clk domain
-simple_fifo # (
-  .ADDR_WIDTH($clog2(MSG_FIFO_DEPTH)),
+simple_sync_fifo # (
+  .DEPTH(MSG_FIFO_DEPTH),
   .DATA_WIDTH(MSG_WIDTH)
 ) core_msg_out_fifo (
   .clk(core_clk),
   .rst(core_reset),
-  .clear(1'b0),
 
   .din_valid(core_msg_valid),
   .din({core_msg_strb, core_msg_addr, core_msg_data}),
