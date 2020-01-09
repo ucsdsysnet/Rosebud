@@ -85,6 +85,8 @@ class UltrascalePlusPCIe(Device):
         self.rq_sink = RQSink()
         self.rc_source = RCSource()
 
+        self.rq_seq_num = []
+
         self.make_function()
 
 
@@ -805,13 +807,24 @@ class UltrascalePlusPCIe(Device):
 
                     if not tlp.discontinue:
                         if self.functions[tlp.requester_id.function].bus_master_enable:
+                            self.rq_seq_num.append(tlp.seq_num)
                             yield from self.send(TLP(tlp))
                         else:
                             print("Bus mastering disabled")
 
                             # TODO: internal response
 
-                # TODO pcie_rq_seq_num
+                # transmit sequence number
+                pcie_rq_seq_num_vld0.next = 0
+                if self.rq_seq_num:
+                    pcie_rq_seq_num0.next = self.rq_seq_num.pop(0)
+                    pcie_rq_seq_num_vld0.next = 1
+
+                pcie_rq_seq_num_vld1.next = 0
+                if self.rq_seq_num:
+                    pcie_rq_seq_num1.next = self.rq_seq_num.pop(0)
+                    pcie_rq_seq_num_vld1.next = 1
+
                 # TODO pcie_rq_tag
 
                 # handle requester completions
@@ -820,8 +833,9 @@ class UltrascalePlusPCIe(Device):
                     self.rc_source.send(tlp.pack_us_rc())
 
                 # transmit flow control
-                #pcie_tfc_nph_av
-                #pcie_tfc_npd_av
+                # TODO
+                pcie_tfc_nph_av.next = 0xf
+                pcie_tfc_npd_av.next = 0xf
 
                 # configuration management
                 # TODO four cycle delay
@@ -897,13 +911,50 @@ class UltrascalePlusPCIe(Device):
                 #cfg_msg_transmit_done
 
                 # configuration flow control
-                #cfg_fc_ph
-                #cfg_fc_pd
-                #cfg_fc_nph
-                #cfg_fc_npd
-                #cfg_fc_cplh
-                #cfg_fc_cpld
-                #cfg_fc_sel
+                if (cfg_fc_sel == 0b010):
+                    # Receive credits consumed
+                    # TODO
+                    cfg_fc_ph.next = 0
+                    cfg_fc_pd.next = 0
+                    cfg_fc_nph.next = 0
+                    cfg_fc_npd.next = 0
+                    cfg_fc_cplh.next = 0
+                    cfg_fc_cpld.next = 0
+                elif (cfg_fc_sel == 0b100):
+                    # Transmit credits available
+                    # TODO
+                    cfg_fc_ph.next = 0x80
+                    cfg_fc_pd.next = 0x800
+                    cfg_fc_nph.next = 0x80
+                    cfg_fc_npd.next = 0x800
+                    cfg_fc_cplh.next = 0x80
+                    cfg_fc_cpld.next = 0x800
+                elif (cfg_fc_sel == 0b101):
+                    # Transmit credit limit
+                    # TODO
+                    cfg_fc_ph.next = 0x80
+                    cfg_fc_pd.next = 0x800
+                    cfg_fc_nph.next = 0x80
+                    cfg_fc_npd.next = 0x800
+                    cfg_fc_cplh.next = 0x80
+                    cfg_fc_cpld.next = 0x800
+                elif (cfg_fc_sel == 0b110):
+                    # Transmit credits consumed
+                    # TODO
+                    cfg_fc_ph.next = 0
+                    cfg_fc_pd.next = 0
+                    cfg_fc_nph.next = 0
+                    cfg_fc_npd.next = 0
+                    cfg_fc_cplh.next = 0
+                    cfg_fc_cpld.next = 0
+                else:
+                    # Reserved
+                    cfg_fc_ph.next = 0
+                    cfg_fc_pd.next = 0
+                    cfg_fc_nph.next = 0
+                    cfg_fc_npd.next = 0
+                    cfg_fc_cplh.next = 0
+                    cfg_fc_cpld.next = 0
 
                 # configuration control
                 #cfg_hot_reset_in
