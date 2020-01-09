@@ -60,6 +60,8 @@ MQNIC_REG_IF_COUNT               = 0x0020
 MQNIC_REG_IF_STRIDE              = 0x0024
 MQNIC_REG_IF_CSR_OFFSET          = 0x002C
 
+MQNIC_REG_FPGA_ID                = 0x0040
+
 MQNIC_REG_GPIO_OUT               = 0x0100
 MQNIC_REG_GPIO_IN                = 0x0104
 
@@ -126,6 +128,7 @@ MQNIC_IF_FEATURE_RX_CSUM         = (1 << 9)
 # Port CSRs
 MQNIC_PORT_REG_PORT_ID                    = 0x0000
 MQNIC_PORT_REG_PORT_FEATURES              = 0x0004
+MQNIC_PORT_REG_PORT_MTU                   = 0x0008
 
 MQNIC_PORT_REG_SCHED_COUNT                = 0x0010
 MQNIC_PORT_REG_SCHED_OFFSET               = 0x0014
@@ -575,6 +578,7 @@ class Port(object):
 
         self.port_id = None
         self.port_features = None
+        self.port_mtu = 0
         self.sched_count = None
         self.sched_offset = None
         self.sched_stride = None
@@ -586,6 +590,8 @@ class Port(object):
         print("Port ID: {:#010x}".format(self.port_id))
         self.port_features = yield from self.driver.rc.mem_read_dword(self.hw_addr+MQNIC_PORT_REG_PORT_FEATURES)
         print("Port features: {:#010x}".format(self.port_features))
+        self.port_mtu = yield from self.driver.rc.mem_read_dword(self.hw_addr+MQNIC_PORT_REG_PORT_MTU)
+        print("Port MTU: {}".format(self.port_mtu))
 
         self.sched_count = yield from self.driver.rc.mem_read_dword(self.hw_addr+MQNIC_PORT_REG_SCHED_COUNT)
         print("Scheduler count: {}".format(self.sched_count))
@@ -892,7 +898,7 @@ class Interface(object):
         else:
             data = skb
 
-        data = data[:2048] # TODO
+        data = data[:16384] # TODO
         ring_index = tx_ring # TODO!
 
         ring = self.tx_queues[ring_index];
@@ -956,7 +962,7 @@ class Driver(object):
         self.if_count = 1
         self.interfaces = []
 
-        self.pkt_buf_size = 2048
+        self.pkt_buf_size = 16384
         self.allocated_packets = []
         self.free_packets = []
 
