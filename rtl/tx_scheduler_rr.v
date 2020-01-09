@@ -151,8 +151,8 @@ initial begin
         $finish;
     end
 
-    if (PIPELINE < 1) begin
-        $error("Error: PIPELINE must be at least 1 (instance %m)");
+    if (PIPELINE < 2) begin
+        $error("Error: PIPELINE must be at least 2 (instance %m)");
         $finish;
     end
 end
@@ -175,7 +175,6 @@ reg [PIPELINE-1:0] op_ctrl_pipe_reg = {PIPELINE{1'b0}}, op_ctrl_pipe_next;
 reg [PIPELINE-1:0] op_internal_pipe_reg = {PIPELINE{1'b0}}, op_internal_pipe_next;
 
 reg [QUEUE_INDEX_WIDTH-1:0] queue_ram_addr_pipeline_reg[PIPELINE-1:0], queue_ram_addr_pipeline_next[PIPELINE-1:0];
-reg [QUEUE_RAM_WIDTH-1:0] queue_ram_read_data_pipeline_reg[PIPELINE-1:0];
 reg [AXIL_DATA_WIDTH-1:0] write_data_pipeline_reg[PIPELINE-1:0], write_data_pipeline_next[PIPELINE-1:0];
 reg [AXIL_STRB_WIDTH-1:0] write_strobe_pipeline_reg[PIPELINE-1:0], write_strobe_pipeline_next[PIPELINE-1:0];
 reg [REQ_TAG_WIDTH-1:0] req_tag_pipeline_reg[PIPELINE-1:0], req_tag_pipeline_next[PIPELINE-1:0];
@@ -200,6 +199,8 @@ reg [QUEUE_INDEX_WIDTH-1:0] queue_ram_write_ptr;
 reg [QUEUE_RAM_WIDTH-1:0] queue_ram_write_data;
 reg queue_ram_wr_en;
 reg [QUEUE_RAM_BE_WIDTH-1:0] queue_ram_be;
+reg [QUEUE_RAM_WIDTH-1:0] queue_ram_read_data_reg = 0;
+reg [QUEUE_RAM_WIDTH-1:0] queue_ram_read_data_pipeline_reg[PIPELINE-1:1];
 
 wire queue_ram_read_data_enabled = queue_ram_read_data_pipeline_reg[PIPELINE-1][0];
 wire queue_ram_read_data_global_enable = queue_ram_read_data_pipeline_reg[PIPELINE-1][1];
@@ -209,10 +210,8 @@ wire queue_ram_read_data_scheduled = queue_ram_read_data_pipeline_reg[PIPELINE-1
 wire [CL_OP_TABLE_SIZE-1:0] queue_ram_read_data_op_tail_index = queue_ram_read_data_pipeline_reg[PIPELINE-1][15:8];
 
 reg [OP_TABLE_SIZE-1:0] op_table_active = 0;
-reg [OP_TABLE_SIZE-1:0] op_table_complete = 0;
 reg [QUEUE_INDEX_WIDTH-1:0] op_table_queue[OP_TABLE_SIZE-1:0];
 reg op_table_doorbell[OP_TABLE_SIZE-1:0];
-reg op_table_tx_status[OP_TABLE_SIZE-1:0];
 reg op_table_is_head[OP_TABLE_SIZE-1:0];
 reg [CL_OP_TABLE_SIZE-1:0] op_table_next_index[OP_TABLE_SIZE-1:0];
 reg [CL_OP_TABLE_SIZE-1:0] op_table_prev_index[OP_TABLE_SIZE-1:0];
@@ -395,7 +394,6 @@ initial begin
         op_table_next_index[i] = 0;
         op_table_prev_index[i] = 0;
         op_table_doorbell[i] = 0;
-        op_table_tx_status[i] = 0;
         op_table_is_head[i] = 0;
     end
 end
@@ -562,7 +560,7 @@ always @* begin
 
         queue_ram_read_ptr = s_axis_sched_ctrl_queue;
         queue_ram_addr_pipeline_next[0] = s_axis_sched_ctrl_queue;
-    end else if (enable && op_table_start_ptr_valid && axis_scheduler_fifo_out_valid && (!m_axis_tx_req_valid || m_axis_tx_req_ready) && !op_req_pipe_reg[0] && !op_req_pipe_hazard) begin
+    end else if (enable && op_table_start_ptr_valid && axis_scheduler_fifo_out_valid && (!m_axis_tx_req_valid || m_axis_tx_req_ready) && !op_req_pipe_reg && !op_req_pipe_hazard) begin
         // transmit request
         op_req_pipe_next[0] = 1'b1;
 
@@ -690,6 +688,16 @@ always @* begin
 
         if (write_data_pipeline_reg[PIPELINE-1][0]) begin
             queue_ram_write_data[6] = 1'b1; // queue active
+
+            // schedule if disabled
+            if ((!SCHED_CTRL_ENABLE || write_data_pipeline_reg[PIPELINE-1][1] || queue_ram_read_data_sched_enable) && !queue_ram_read_data_scheduled) begin
+                queue_ram_write_data[7] = 1'b1; // queue scheduled
+
+                axis_scheduler_fifo_in_queue = queue_ram_addr_pipeline_reg[PIPELINE-1];
+                axis_scheduler_fifo_in_valid = 1'b1;
+
+                active_queue_count_next = active_queue_count_reg + 1;
+            end
         end else begin
             queue_ram_write_data[6] = 1'b0; // queue active
         end
@@ -851,13 +859,13 @@ always @(posedge clk) begin
             end
         end
     end
-    queue_ram_read_data_pipeline_reg[0] <= queue_ram[queue_ram_read_ptr];
-    for (i = 1; i < PIPELINE; i = i + 1) begin
+    queue_ram_read_data_reg <= queue_ram[queue_ram_read_ptr];
+    queue_ram_read_data_pipeline_reg[1] <= queue_ram_read_data_reg;
+    for (i = 2; i < PIPELINE; i = i + 1) begin
         queue_ram_read_data_pipeline_reg[i] <= queue_ram_read_data_pipeline_reg[i-1];
     end
 
     if (op_table_start_en) begin
-        op_table_complete[op_table_start_ptr] <= 1'b0;
         op_table_queue[op_table_start_ptr] <= op_table_start_queue;
         op_table_doorbell[op_table_start_ptr] <= 1'b0;
     end
