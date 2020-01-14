@@ -650,8 +650,10 @@ pcie_controller #
   .m_axis_cc_tuser   (m_axis_cc_tuser),
   .m_axis_cc_tvalid  (m_axis_cc_tvalid),
     
-  .s_axis_rq_seq_num (s_axis_rq_seq_num),
-  .s_axis_rq_seq_num_valid(s_axis_rq_seq_num_valid),
+  .s_axis_rq_seq_num_0(s_axis_rq_seq_num),
+  .s_axis_rq_seq_num_valid_0(s_axis_rq_seq_num_valid),
+  .s_axis_rq_seq_num_1(4'd0),
+  .s_axis_rq_seq_num_valid_1(1'b0),
   
   .pcie_tx_fc_nph_av(pcie_tx_fc_nph_av),
   .pcie_tx_fc_ph_av(pcie_tx_fc_ph_av),

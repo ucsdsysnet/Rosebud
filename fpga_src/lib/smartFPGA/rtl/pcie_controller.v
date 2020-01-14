@@ -108,8 +108,10 @@ module pcie_controller #
   output wire [AXIS_PCIE_CC_USER_WIDTH-1:0]    m_axis_cc_tuser,
   output wire                                  m_axis_cc_tvalid,
     
-  input  wire [RQ_SEQ_NUM_WIDTH-1:0]           s_axis_rq_seq_num,
-  input  wire                                  s_axis_rq_seq_num_valid,
+  input  wire [RQ_SEQ_NUM_WIDTH-1:0]           s_axis_rq_seq_num_0,
+  input  wire                                  s_axis_rq_seq_num_valid_0,
+  input  wire [RQ_SEQ_NUM_WIDTH-1:0]           s_axis_rq_seq_num_1,
+  input  wire                                  s_axis_rq_seq_num_valid_1,
     
   input  wire [7:0]                            pcie_tx_fc_nph_av,
   input  wire [7:0]                            pcie_tx_fc_ph_av,
@@ -812,10 +814,10 @@ dma_if_pcie_us_inst (
     /*
      * Transmit sequence number input
      */
-    .s_axis_rq_seq_num_0(s_axis_rq_seq_num),
-    .s_axis_rq_seq_num_valid_0(s_axis_rq_seq_num_valid),
-    .s_axis_rq_seq_num_1(4'd0),
-    .s_axis_rq_seq_num_valid_1(1'b0),
+    .s_axis_rq_seq_num_0(s_axis_rq_seq_num_0),
+    .s_axis_rq_seq_num_valid_0(s_axis_rq_seq_num_valid_0),
+    .s_axis_rq_seq_num_1(s_axis_rq_seq_num_1),
+    .s_axis_rq_seq_num_valid_1(s_axis_rq_seq_num_valid_1),
 
     /*
      * Transmit flow control
