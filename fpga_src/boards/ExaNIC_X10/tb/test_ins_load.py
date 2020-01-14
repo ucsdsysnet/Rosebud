@@ -108,6 +108,7 @@ srcs.append("../lib/corundum/rtl/tx_engine.v")
 srcs.append("../lib/corundum/rtl/rx_engine.v")
 srcs.append("../lib/corundum/rtl/tx_checksum.v")
 srcs.append("../lib/corundum/rtl/rx_checksum.v")
+srcs.append("../lib/corundum/rtl/rx_hash.v")
 srcs.append("../lib/corundum/rtl/tx_scheduler_rr.v")
 srcs.append("../lib/corundum/rtl/tdma_scheduler.v")
 srcs.append("../lib/corundum/rtl/event_mux.v")
@@ -125,6 +126,7 @@ def bench():
     AXIS_PCIE_RQ_USER_WIDTH = 60
     AXIS_PCIE_CQ_USER_WIDTH = 85
     AXIS_PCIE_CC_USER_WIDTH = 33
+    RQ_SEQ_NUM_WIDTH = 4
     BAR0_APERTURE = 24
 
     SEND_COUNT_0 = 50
@@ -169,12 +171,20 @@ def bench():
     s_axis_cq_tuser = Signal(intbv(0)[AXIS_PCIE_CQ_USER_WIDTH:])
     s_axis_cq_tvalid = Signal(bool(0))
     m_axis_cc_tready = Signal(bool(0))
+    s_axis_rq_seq_num = Signal(intbv(0)[RQ_SEQ_NUM_WIDTH:])
+    s_axis_rq_seq_num_valid = Signal(bool(0))
     pcie_tfc_nph_av = Signal(intbv(0)[2:])
     pcie_tfc_npd_av = Signal(intbv(0)[2:])
     cfg_max_payload = Signal(intbv(0)[3:])
     cfg_max_read_req = Signal(intbv(0)[3:])
     cfg_mgmt_read_data = Signal(intbv(0)[32:])
     cfg_mgmt_read_write_done = Signal(bool(0))
+    cfg_fc_ph = Signal(intbv(0)[8:])
+    cfg_fc_pd = Signal(intbv(0)[12:])
+    cfg_fc_nph = Signal(intbv(0)[8:])
+    cfg_fc_npd = Signal(intbv(0)[12:])
+    cfg_fc_cplh = Signal(intbv(0)[8:])
+    cfg_fc_cpld = Signal(intbv(0)[12:])
     cfg_interrupt_msi_enable = Signal(intbv(0)[4:])
     cfg_interrupt_msi_vf_enable = Signal(intbv(0)[8:])
     cfg_interrupt_msi_mmenable = Signal(intbv(0)[12:])
@@ -222,6 +232,7 @@ def bench():
     cfg_mgmt_write_data = Signal(intbv(0)[32:])
     cfg_mgmt_byte_enable = Signal(intbv(0)[4:])
     cfg_mgmt_read = Signal(bool(0))
+    cfg_fc_sel = Signal(intbv(4)[3:])
     cfg_interrupt_msi_int = Signal(intbv(0)[32:])
     cfg_interrupt_msi_pending_status = Signal(intbv(0)[32:])
     cfg_interrupt_msi_select = Signal(intbv(0)[4:])
@@ -341,8 +352,8 @@ def bench():
         s_axis_rq_tkeep=m_axis_rq_tkeep,
         s_axis_rq_tvalid=m_axis_rq_tvalid,
         s_axis_rq_tready=m_axis_rq_tready,
-        #pcie_rq_seq_num=pcie_rq_seq_num,
-        #pcie_rq_seq_num_vld=pcie_rq_seq_num_vld,
+        pcie_rq_seq_num=s_axis_rq_seq_num,
+        pcie_rq_seq_num_vld=s_axis_rq_seq_num_valid,
         #pcie_rq_tag=pcie_rq_tag,
         #pcie_rq_tag_vld=pcie_rq_tag_vld,
 
@@ -406,13 +417,13 @@ def bench():
         #cfg_msg_transmit_done=cfg_msg_transmit_done,
 
         # Configuration Flow Control Interface
-        #cfg_fc_ph=cfg_fc_ph,
-        #cfg_fc_pd=cfg_fc_pd,
-        #cfg_fc_nph=cfg_fc_nph,
-        #cfg_fc_npd=cfg_fc_npd,
-        #cfg_fc_cplh=cfg_fc_cplh,
-        #cfg_fc_cpld=cfg_fc_cpld,
-        #cfg_fc_sel=cfg_fc_sel,
+        cfg_fc_ph=cfg_fc_ph,
+        cfg_fc_pd=cfg_fc_pd,
+        cfg_fc_nph=cfg_fc_nph,
+        cfg_fc_npd=cfg_fc_npd,
+        cfg_fc_cplh=cfg_fc_cplh,
+        cfg_fc_cpld=cfg_fc_cpld,
+        cfg_fc_sel=cfg_fc_sel,
 
         # Per-Function Status Interface
         #cfg_per_func_status_control=cfg_per_func_status_control,
@@ -566,6 +577,8 @@ def bench():
         m_axis_cc_tready=m_axis_cc_tready,
         m_axis_cc_tuser=m_axis_cc_tuser,
         m_axis_cc_tvalid=m_axis_cc_tvalid,
+        s_axis_rq_seq_num=s_axis_rq_seq_num,
+        s_axis_rq_seq_num_valid=s_axis_rq_seq_num_valid,
         pcie_tfc_nph_av=pcie_tfc_nph_av,
         pcie_tfc_npd_av=pcie_tfc_npd_av,
         cfg_max_payload=cfg_max_payload,
@@ -577,6 +590,13 @@ def bench():
         cfg_mgmt_read=cfg_mgmt_read,
         cfg_mgmt_read_data=cfg_mgmt_read_data,
         cfg_mgmt_read_write_done=cfg_mgmt_read_write_done,
+        cfg_fc_ph=cfg_fc_ph,
+        cfg_fc_pd=cfg_fc_pd,
+        cfg_fc_nph=cfg_fc_nph,
+        cfg_fc_npd=cfg_fc_npd,
+        cfg_fc_cplh=cfg_fc_cplh,
+        cfg_fc_cpld=cfg_fc_cpld,
+        cfg_fc_sel=cfg_fc_sel,
         cfg_interrupt_msi_enable=cfg_interrupt_msi_enable,
         cfg_interrupt_msi_vf_enable=cfg_interrupt_msi_vf_enable,
         cfg_interrupt_msi_int=cfg_interrupt_msi_int,

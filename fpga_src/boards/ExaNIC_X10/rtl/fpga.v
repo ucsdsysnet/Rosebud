@@ -116,6 +116,7 @@ parameter AXIS_PCIE_RC_USER_WIDTH = 75;
 parameter AXIS_PCIE_RQ_USER_WIDTH = 60;
 parameter AXIS_PCIE_CQ_USER_WIDTH = 85;
 parameter AXIS_PCIE_CC_USER_WIDTH = 33;
+parameter RQ_SEQ_NUM_WIDTH        = 4; 
 parameter BAR0_APERTURE           = 24;
 
 // Clock and reset
@@ -428,6 +429,9 @@ wire                               axis_cc_tready;
 wire [AXIS_PCIE_CC_USER_WIDTH-1:0] axis_cc_tuser;
 wire                               axis_cc_tvalid;
 
+wire [RQ_SEQ_NUM_WIDTH-1:0]        pcie_rq_seq_num;
+wire                               pcie_rq_seq_num_vld;
+
 wire [1:0] pcie_tfc_nph_av;
 wire [1:0] pcie_tfc_npd_av;
 
@@ -441,6 +445,14 @@ wire [3:0]  cfg_mgmt_byte_enable;
 wire        cfg_mgmt_read;
 wire [31:0] cfg_mgmt_read_data;
 wire        cfg_mgmt_read_write_done;
+
+wire [7:0]  cfg_fc_ph;
+wire [11:0] cfg_fc_pd;
+wire [7:0]  cfg_fc_nph;
+wire [11:0] cfg_fc_npd;
+wire [7:0]  cfg_fc_cplh;
+wire [11:0] cfg_fc_cpld;
+wire [2:0]  cfg_fc_sel; 
 
 wire [3:0]  cfg_interrupt_msi_enable;
 wire [7:0]  cfg_interrupt_msi_vf_enable;
@@ -501,8 +513,8 @@ pcie3_ultrascale_inst (
     .s_axis_cc_tuser(axis_cc_tuser),
     .s_axis_cc_tvalid(axis_cc_tvalid),
 
-    .pcie_rq_seq_num(),
-    .pcie_rq_seq_num_vld(),
+		.pcie_rq_seq_num(pcie_rq_seq_num),
+    .pcie_rq_seq_num_vld(pcie_rq_seq_num_vld),  
     .pcie_rq_tag(),
     .pcie_rq_tag_av(),
     .pcie_rq_tag_vld(),
@@ -557,13 +569,13 @@ pcie3_ultrascale_inst (
     .cfg_msg_transmit_data(32'd0),
     .cfg_msg_transmit_done(),
 
-    .cfg_fc_ph(),
-    .cfg_fc_pd(),
-    .cfg_fc_nph(),
-    .cfg_fc_npd(),
-    .cfg_fc_cplh(),
-    .cfg_fc_cpld(),
-    .cfg_fc_sel(3'd0),
+    .cfg_fc_ph(cfg_fc_ph),
+    .cfg_fc_pd(cfg_fc_pd),
+    .cfg_fc_nph(cfg_fc_nph),
+    .cfg_fc_npd(cfg_fc_npd),
+    .cfg_fc_cplh(cfg_fc_cplh),
+    .cfg_fc_cpld(cfg_fc_cpld),
+    .cfg_fc_sel(cfg_fc_sel),
 
     .cfg_per_func_status_control(3'd0),
     .cfg_per_func_status_data(),
@@ -695,6 +707,12 @@ pcie_us_msi_inst (
     .cfg_interrupt_msi_tph_st_tag(cfg_interrupt_msi_tph_st_tag),
     .cfg_interrupt_msi_function_number(cfg_interrupt_msi_function_number)
 );
+
+assign cfg_fc_sel = 3'b100;
+
+wire [7:0]  pcie_tx_fc_nph_av = cfg_fc_nph;
+wire [7:0]  pcie_tx_fc_ph_av  = cfg_fc_ph;
+wire [11:0] pcie_tx_fc_pd_av  = cfg_fc_pd;
 
 // XGMII 10G PHY
 
@@ -992,6 +1010,7 @@ fpga_core #(
     .AXIS_PCIE_RQ_USER_WIDTH(AXIS_PCIE_RQ_USER_WIDTH),
     .AXIS_PCIE_CQ_USER_WIDTH(AXIS_PCIE_CQ_USER_WIDTH),
     .AXIS_PCIE_CC_USER_WIDTH(AXIS_PCIE_CC_USER_WIDTH),
+    .RQ_SEQ_NUM_WIDTH(RQ_SEQ_NUM_WIDTH),
     .BAR0_APERTURE(BAR0_APERTURE),
     .SEPARATE_CLOCKS(1)
 )
@@ -1046,6 +1065,13 @@ core_inst (
     .m_axis_cc_tready(axis_cc_tready),
     .m_axis_cc_tuser(axis_cc_tuser),
     .m_axis_cc_tvalid(axis_cc_tvalid),
+
+    .s_axis_rq_seq_num(pcie_rq_seq_num),
+    .s_axis_rq_seq_num_valid(pcie_rq_seq_num_vld),
+
+    .pcie_tx_fc_nph_av(pcie_tx_fc_nph_av),
+    .pcie_tx_fc_ph_av(pcie_tx_fc_ph_av),
+    .pcie_tx_fc_pd_av(pcie_tx_fc_pd_av),
 
     .cfg_max_payload(cfg_max_payload),
     .cfg_max_read_req(cfg_max_read_req),
