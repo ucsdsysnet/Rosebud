@@ -368,16 +368,22 @@ fpga_core #(
     .AXIS_PCIE_RQ_USER_WIDTH(AXIS_PCIE_RQ_USER_WIDTH),
     .AXIS_PCIE_CQ_USER_WIDTH(AXIS_PCIE_CQ_USER_WIDTH),
     .AXIS_PCIE_CC_USER_WIDTH(AXIS_PCIE_CC_USER_WIDTH),
-    .RQ_SEQ_NUM_WIDTH(RQ_SEQ_NUM_WIDTH), 
-    .BAR0_APERTURE(BAR0_APERTURE)
+    .RQ_SEQ_NUM_WIDTH(RQ_SEQ_NUM_WIDTH),
+    .BAR0_APERTURE(BAR0_APERTURE),
+    .SEPARATE_CLOCKS(1)
 ) UUT (
-    .sys_clk(sys_clk),
-    .sys_rst(sys_rst),
     .pcie_clk(pcie_clk),
     .pcie_rst(pcie_rst),
+    .sys_clk(sys_clk),
+    .sys_rst(sys_rst),
     .core_clk(core_clk),
     .core_rst(core_rst),
     .sma_led(sma_led),
+    .sma_in(1'b0),
+    .sma_out(),
+    .sma_out_en(),
+    .sma_term_en(),
+
     .m_axis_rq_tdata(m_axis_rq_tdata),
     .m_axis_rq_tkeep(m_axis_rq_tkeep),
     .m_axis_rq_tlast(m_axis_rq_tlast),

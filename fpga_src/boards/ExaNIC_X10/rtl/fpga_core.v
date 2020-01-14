@@ -651,6 +651,10 @@ pcie_controller #
     
   .s_axis_rq_seq_num (s_axis_rq_seq_num),
   .s_axis_rq_seq_num_valid(s_axis_rq_seq_num_valid),
+  
+  .pcie_tx_fc_nph_av(pcie_tx_fc_nph_av),
+  .pcie_tx_fc_ph_av(pcie_tx_fc_ph_av),
+  .pcie_tx_fc_pd_av(pcie_tx_fc_pd_av),
 
   .cfg_max_payload   (cfg_max_payload),
   .cfg_max_read_req  (cfg_max_read_req),

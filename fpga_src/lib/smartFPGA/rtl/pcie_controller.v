@@ -215,6 +215,7 @@ parameter AXIL_CSR_ADDR_WIDTH = (IF_COUNT>0) ? IF_AXIL_ADDR_WIDTH-5-$clog2((PORT
 
 // PCIe DMA parameters
 parameter PCIE_DMA_TAG_WIDTH    = (PCIE_SLOT_WIDTH>14) ? PCIE_SLOT_WIDTH+2 : 16;
+parameter CORE_DMA_TAG_WIDTH    = (IF_COUNT>0) ? PCIE_DMA_TAG_WIDTH-2 : PCIE_DMA_TAG_WIDTH;
 parameter SEG_COUNT             = AXIS_PCIE_DATA_WIDTH > 64 ? AXIS_PCIE_DATA_WIDTH*2 / 128 : 2;
 parameter SEG_DATA_WIDTH        = AXIS_PCIE_DATA_WIDTH*2/SEG_COUNT;
 parameter SEG_ADDR_WIDTH        = 12; 
@@ -897,20 +898,20 @@ wire [PCIE_ADDR_WIDTH-1:0]    cores_dma_read_desc_pcie_addr;
 wire [CORE_RAM_SEL_WIDTH-1:0] cores_dma_read_desc_ram_sel;
 wire [RAM_ADDR_WIDTH-1:0]     cores_dma_read_desc_ram_addr;  
 wire [PCIE_DMA_LEN_WIDTH-1:0] cores_dma_read_desc_len;   
-wire [PCIE_DMA_TAG_WIDTH-3:0] cores_dma_read_desc_tag;
+wire [CORE_DMA_TAG_WIDTH-1:0] cores_dma_read_desc_tag;
 wire                          cores_dma_read_desc_valid;
 wire                          cores_dma_read_desc_ready;
-wire [PCIE_DMA_TAG_WIDTH-3:0] cores_dma_read_desc_status_tag;
+wire [CORE_DMA_TAG_WIDTH-1:0] cores_dma_read_desc_status_tag;
 wire                          cores_dma_read_desc_status_valid;
   
 wire [PCIE_ADDR_WIDTH-1:0]    cores_dma_write_desc_pcie_addr;
 wire [CORE_RAM_SEL_WIDTH-1:0] cores_dma_write_desc_ram_sel;
 wire [RAM_ADDR_WIDTH-1:0]     cores_dma_write_desc_ram_addr;
 wire [PCIE_DMA_LEN_WIDTH-1:0] cores_dma_write_desc_len;
-wire [PCIE_DMA_TAG_WIDTH-3:0] cores_dma_write_desc_tag;
+wire [CORE_DMA_TAG_WIDTH-1:0] cores_dma_write_desc_tag;
 wire                          cores_dma_write_desc_valid;
 wire                          cores_dma_write_desc_ready;     
-wire [PCIE_DMA_TAG_WIDTH-3:0] cores_dma_write_desc_status_tag;
+wire [CORE_DMA_TAG_WIDTH-1:0] cores_dma_write_desc_status_tag;
 wire                          cores_dma_write_desc_status_valid;
   
 wire [SEG_COUNT*CORE_RAM_SEL_WIDTH-1:0] cores_dma_ram_wr_cmd_sel;
@@ -933,7 +934,7 @@ pcie_cont_read # (
     .PCIE_RAM_ADDR_WIDTH(PCIE_RAM_ADDR_WIDTH),
     .PCIE_SLOT_COUNT(PCIE_SLOT_COUNT),
     .PCIE_SLOT_WIDTH(PCIE_SLOT_WIDTH),
-    .PCIE_DMA_TAG_WIDTH(PCIE_DMA_TAG_WIDTH-2),
+    .PCIE_DMA_TAG_WIDTH(CORE_DMA_TAG_WIDTH),
     .PCIE_DMA_LEN_WIDTH(PCIE_DMA_LEN_WIDTH),
     .SEG_COUNT(SEG_COUNT),
     .SEG_DATA_WIDTH(SEG_DATA_WIDTH),
@@ -1002,7 +1003,7 @@ pcie_cont_write # (
     .PCIE_RAM_ADDR_WIDTH(PCIE_RAM_ADDR_WIDTH),
     .PCIE_SLOT_COUNT(PCIE_SLOT_COUNT),
     .PCIE_SLOT_WIDTH(PCIE_SLOT_WIDTH),
-    .PCIE_DMA_TAG_WIDTH(PCIE_DMA_TAG_WIDTH-2),
+    .PCIE_DMA_TAG_WIDTH(CORE_DMA_TAG_WIDTH),
     .PCIE_DMA_LEN_WIDTH(PCIE_DMA_LEN_WIDTH),
     .SEG_COUNT(SEG_COUNT),
     .SEG_DATA_WIDTH(SEG_DATA_WIDTH),
