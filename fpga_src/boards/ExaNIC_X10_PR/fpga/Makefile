@@ -87,6 +87,7 @@ SYN_FILES += lib/corundum/rtl/tx_engine.v
 SYN_FILES += lib/corundum/rtl/rx_engine.v
 SYN_FILES += lib/corundum/rtl/tx_checksum.v
 SYN_FILES += lib/corundum/rtl/rx_checksum.v
+SYN_FILES += lib/corundum/rtl/rx_hash.v
 SYN_FILES += lib/corundum/rtl/tx_scheduler_rr.v
 SYN_FILES += lib/corundum/rtl/tdma_scheduler.v
 SYN_FILES += lib/corundum/rtl/event_mux.v
