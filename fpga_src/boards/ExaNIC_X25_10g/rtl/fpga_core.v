@@ -46,6 +46,7 @@ module fpga_core #
     parameter AXIS_PCIE_RQ_USER_WIDTH = 60,
     parameter AXIS_PCIE_CQ_USER_WIDTH = 85,
     parameter AXIS_PCIE_CC_USER_WIDTH = 33,
+    parameter RQ_SEQ_NUM_WIDTH        = 6,
     parameter BAR0_APERTURE           = 24,
     parameter SEPARATE_CLOCKS         = 1
 )
@@ -100,6 +101,15 @@ module fpga_core #
     input  wire                               m_axis_cc_tready,
     output wire [AXIS_PCIE_CC_USER_WIDTH-1:0] m_axis_cc_tuser,
     output wire                               m_axis_cc_tvalid,
+    
+    input  wire [RQ_SEQ_NUM_WIDTH-1:0]        s_axis_rq_seq_num_0,
+    input  wire                               s_axis_rq_seq_num_valid_0,
+    input  wire [RQ_SEQ_NUM_WIDTH-1:0]        s_axis_rq_seq_num_1,
+    input  wire                               s_axis_rq_seq_num_valid_1,
+
+    input  wire [7:0]                         pcie_tx_fc_nph_av,
+    input  wire [7:0]                         pcie_tx_fc_ph_av,
+    input  wire [11:0]                        pcie_tx_fc_pd_av,
 
     input  wire [2:0]                         cfg_max_payload,
     input  wire [2:0]                         cfg_max_read_req,
@@ -235,6 +245,7 @@ parameter FW_ID     = 32'd0;
 parameter FW_VER    = {16'd0, 16'd1};
 parameter BOARD_ID  = {16'h1ce4, 16'h0009};
 parameter BOARD_VER = {16'd0, 16'd1};
+parameter FPGA_ID = 32'h4A63093;
 
 // ETH interfaces renaming
 wire [INTERFACE_COUNT-1:0]    sfp_tx_clk = {sfp_2_tx_clk, sfp_1_tx_clk};
@@ -454,7 +465,8 @@ pcie_config # (
   .FW_ID(FW_ID),
   .FW_VER(FW_VER),
   .BOARD_ID(BOARD_ID),
-  .BOARD_VER(BOARD_VER)
+  .BOARD_VER(BOARD_VER),
+  .FPGA_ID(FPGA_ID)
 ) pcie_config_inst (
   .sys_clk(sys_clk),
   .sys_rst(sys_rst),
@@ -580,6 +592,7 @@ pcie_controller #
   .AXIS_PCIE_RQ_USER_WIDTH(AXIS_PCIE_RQ_USER_WIDTH),
   .AXIS_PCIE_CC_USER_WIDTH(AXIS_PCIE_CC_USER_WIDTH),
   .AXIS_PCIE_CQ_USER_WIDTH(AXIS_PCIE_CQ_USER_WIDTH),
+  .RQ_SEQ_NUM_WIDTH(RQ_SEQ_NUM_WIDTH),
   .PCIE_ADDR_WIDTH(PCIE_ADDR_WIDTH),
   .PCIE_RAM_ADDR_WIDTH(PCIE_RAM_ADDR_WIDTH),
   .TX_RX_RAM_SIZE(TX_RX_RAM_SIZE),
@@ -637,6 +650,15 @@ pcie_controller #
   .m_axis_cc_tready  (m_axis_cc_tready),
   .m_axis_cc_tuser   (m_axis_cc_tuser),
   .m_axis_cc_tvalid  (m_axis_cc_tvalid),
+
+  .s_axis_rq_seq_num_0(s_axis_rq_seq_num_0),
+  .s_axis_rq_seq_num_valid_0(s_axis_rq_seq_num_valid_0),
+  .s_axis_rq_seq_num_1(s_axis_rq_seq_num_1),
+  .s_axis_rq_seq_num_valid_1(s_axis_rq_seq_num_valid_1),
+  
+  .pcie_tx_fc_nph_av(pcie_tx_fc_nph_av),
+  .pcie_tx_fc_ph_av(pcie_tx_fc_ph_av),
+  .pcie_tx_fc_pd_av(pcie_tx_fc_pd_av),
 
   .cfg_max_payload   (cfg_max_payload),
   .cfg_max_read_req  (cfg_max_read_req),

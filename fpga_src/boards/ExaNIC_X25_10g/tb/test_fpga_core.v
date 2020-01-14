@@ -47,6 +47,7 @@ parameter AXIS_PCIE_RC_USER_WIDTH = 75;
 parameter AXIS_PCIE_RQ_USER_WIDTH = 62;
 parameter AXIS_PCIE_CQ_USER_WIDTH = 88;
 parameter AXIS_PCIE_CC_USER_WIDTH = 33;
+parameter RQ_SEQ_NUM_WIDTH        = 6; 
 parameter BAR0_APERTURE = 24;
 
 parameter TB_LOG = 0;
@@ -70,6 +71,16 @@ reg s_axis_cq_tlast = 0;
 reg [AXIS_PCIE_CQ_USER_WIDTH-1:0] s_axis_cq_tuser = 0;
 reg s_axis_cq_tvalid = 0;
 reg m_axis_cc_tready = 0;
+reg [RQ_SEQ_NUM_WIDTH-1:0] s_axis_rq_seq_num_0 = 0;
+reg s_axis_rq_seq_num_valid_0 = 0;
+reg [RQ_SEQ_NUM_WIDTH-1:0] s_axis_rq_seq_num_1 = 0;
+reg s_axis_rq_seq_num_valid_1 = 0;
+reg [7:0] cfg_fc_ph = 0;
+reg [11:0] cfg_fc_pd = 0;
+reg [7:0] cfg_fc_nph = 0;
+reg [11:0] cfg_fc_npd = 0;
+reg [7:0] cfg_fc_cplh = 0;
+reg [11:0] cfg_fc_cpld = 0;
 reg [3:0] pcie_tfc_nph_av = 0;
 reg [3:0] pcie_tfc_npd_av = 0;
 reg [2:0] cfg_max_payload = 0;
@@ -121,6 +132,7 @@ wire cfg_mgmt_write;
 wire [31:0] cfg_mgmt_write_data;
 wire [3:0] cfg_mgmt_byte_enable;
 wire cfg_mgmt_read;
+wire [2:0] cfg_fc_sel;
 wire [3:0] cfg_interrupt_msi_select;
 wire [31:0] cfg_interrupt_msi_int;
 wire [31:0] cfg_interrupt_msi_pending_status;
@@ -179,8 +191,18 @@ initial begin
         s_axis_cq_tuser,
         s_axis_cq_tvalid,
         m_axis_cc_tready,
+        s_axis_rq_seq_num_0,
+        s_axis_rq_seq_num_valid_0,
+        s_axis_rq_seq_num_1,
+        s_axis_rq_seq_num_valid_1,
         pcie_tfc_nph_av,
         pcie_tfc_npd_av,
+        cfg_fc_ph,
+        cfg_fc_pd,
+        cfg_fc_nph,
+        cfg_fc_npd,
+        cfg_fc_cplh,
+        cfg_fc_cpld,
         cfg_max_payload,
         cfg_max_read_req,
         cfg_mgmt_read_data,
@@ -224,6 +246,7 @@ initial begin
         m_axis_cc_tlast,
         m_axis_cc_tuser,
         m_axis_cc_tvalid,
+        cfg_fc_sel,
         cfg_mgmt_addr,
         cfg_mgmt_write,
         cfg_mgmt_write_data,
@@ -290,8 +313,6 @@ pcie_us_cfg_inst (
     .max_read_request_size(),
     .max_payload_size(),
 
-
-
     /*
      * Interface to Ultrascale PCIe IP core
      */
@@ -334,6 +355,12 @@ pcie_us_msi_inst (
     .cfg_interrupt_msi_function_number(cfg_interrupt_msi_function_number)
 );
 
+assign cfg_fc_sel = 3'b100;
+
+wire [7:0]  pcie_tx_fc_nph_av = cfg_fc_nph;
+wire [7:0]  pcie_tx_fc_ph_av  = cfg_fc_ph;
+wire [11:0] pcie_tx_fc_pd_av  = cfg_fc_pd;
+
 fpga_core #(
     .AXIS_PCIE_DATA_WIDTH(AXIS_PCIE_DATA_WIDTH),
     .AXIS_PCIE_KEEP_WIDTH(AXIS_PCIE_KEEP_WIDTH),
@@ -341,15 +368,21 @@ fpga_core #(
     .AXIS_PCIE_RQ_USER_WIDTH(AXIS_PCIE_RQ_USER_WIDTH),
     .AXIS_PCIE_CQ_USER_WIDTH(AXIS_PCIE_CQ_USER_WIDTH),
     .AXIS_PCIE_CC_USER_WIDTH(AXIS_PCIE_CC_USER_WIDTH),
+    .RQ_SEQ_NUM_WIDTH(RQ_SEQ_NUM_WIDTH),
     .BAR0_APERTURE(BAR0_APERTURE)
 ) UUT (
-    .sys_clk(sys_clk),
-    .sys_rst(sys_rst),
     .pcie_clk(pcie_clk),
     .pcie_rst(pcie_rst),
+    .sys_clk(sys_clk),
+    .sys_rst(sys_rst),
     .core_clk(core_clk),
     .core_rst(core_rst),
     .sma_led(sma_led),
+    .sma_in(1'b0),
+    .sma_out(),
+    .sma_out_en(),
+    .sma_term_en(),
+
     .m_axis_rq_tdata(m_axis_rq_tdata),
     .m_axis_rq_tkeep(m_axis_rq_tkeep),
     .m_axis_rq_tlast(m_axis_rq_tlast),
@@ -374,6 +407,13 @@ fpga_core #(
     .m_axis_cc_tready(m_axis_cc_tready),
     .m_axis_cc_tuser(m_axis_cc_tuser),
     .m_axis_cc_tvalid(m_axis_cc_tvalid),
+    .s_axis_rq_seq_num_0(s_axis_rq_seq_num_0),
+    .s_axis_rq_seq_num_valid_0(s_axis_rq_seq_num_valid_0),
+    .s_axis_rq_seq_num_1(s_axis_rq_seq_num_1),
+    .s_axis_rq_seq_num_valid_1(s_axis_rq_seq_num_valid_1),
+    .pcie_tx_fc_nph_av(pcie_tx_fc_nph_av),
+    .pcie_tx_fc_ph_av(pcie_tx_fc_ph_av),
+    .pcie_tx_fc_pd_av(pcie_tx_fc_pd_av),
     .cfg_max_payload(cfg_max_payload),
     .cfg_max_read_req(cfg_max_read_req),
     .ext_tag_enable(ext_tag_enable),
