@@ -130,10 +130,10 @@ distclean: clean
 	echo "open_run impl_1" >> generate_bit.tcl
 	echo "write_debug_probes -force debug_probes.ltx" >> generate_bit.tcl
 	echo "report_utilization -force -hierarchical  -file fpga_utilization_hierarchy_placed.rpt" >> generate_bit.tcl
-	echo "write_bitstream -force $.runs/impl_1/$*.bit" >> generate_bit.tcl
+	echo "write_bitstream -force $*.runs/impl_1/$*.bit" >> generate_bit.tcl
 	echo "open_run impl_2" >> generate_bit.tcl
 	echo "write_debug_probes -force debug_probes.ltx" >> generate_bit.tcl
 	echo "report_utilization -force -hierarchical  -file fpga_utilization_hierarchy_placed.rpt" >> generate_bit.tcl
-	echo "write_bitstream -force $.runs/impl_2/$*.bit" >> generate_bit.tcl
+	echo "write_bitstream -force $*.runs/impl_2/$*.bit" >> generate_bit.tcl
 	echo "exit" >> generate_bit.tcl
 	vivado -nojournal -nolog -mode batch -source generate_bit.tcl
