@@ -14,7 +14,8 @@ module pcie_config # (
   parameter FW_ID                   = 32'd0,
   parameter FW_VER                  = {16'd0, 16'd1},
   parameter BOARD_ID                = {16'h1ce4, 16'h0003},
-  parameter BOARD_VER               = {16'd0, 16'd1}
+  parameter BOARD_VER               = {16'd0, 16'd1},
+  parameter FPGA_ID                 = 32'h3823093
 ) (
   input  wire                               sys_clk,
   input  wire                               sys_rst,
@@ -262,6 +263,7 @@ always @(posedge pcie_clk) begin
                 16'h0020: axil_ctrl_rdata <= IF_COUNT;   // if_count
                 16'h0024: axil_ctrl_rdata <= 2**IF_AXIL_ADDR_WIDTH; // if_stride
                 16'h002C: axil_ctrl_rdata <= 2**AXIL_CSR_ADDR_WIDTH; // if_ctrl_offset
+                16'h0040: axil_ctrl_rdata <= FPGA_ID;    // fpga_id 
 
                 // GPIO
                 16'h0100: begin

@@ -149,7 +149,7 @@
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.EXT_STARTUP_PRIMITIVE">FALSE</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.EXT_SYS_CLK_BUFG">FALSE</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.EXT_XVC_VSEC_ENABLE">FALSE</spirit:configurableElementValue>
-        <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.FREE_RUN_FREQ">0</spirit:configurableElementValue>
+        <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.FREE_RUN_FREQ">1</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.GEN4_EIEOS_0S7">TRUE</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.GTCOM_IN_CORE">2</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.GTWIZ_IN_CORE">1</spirit:configurableElementValue>
@@ -160,7 +160,7 @@
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.LL_RX_TLP_PARITY_GEN">FALSE</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.LL_TX_TLP_PARITY_CHK">FALSE</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.MCAP_CAP_NEXTPTR">0x000</spirit:configurableElementValue>
-        <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.MCAP_ENABLEMENT">NONE</spirit:configurableElementValue>
+        <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.MCAP_ENABLEMENT">PR</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.MCAP_FPGA_BITSTREAM_VERSION">0x00000000</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.MSIX_EN">FALSE</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.MSI_EN">TRUE</spirit:configurableElementValue>
@@ -175,7 +175,7 @@
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.PF0_AER_CAP_ECRC_GEN_AND_CHECK_CAPABLE">FALSE</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.PF0_AER_CAP_NEXTPTR">0x1C0</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.PF0_ARI_CAP_NEXTPTR">0x1C0</spirit:configurableElementValue>
-        <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.PF0_ARI_CAP_NEXT_FUNC">0x04</spirit:configurableElementValue>
+        <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.PF0_ARI_CAP_NEXT_FUNC">0x00</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.PF0_BAR0_APERTURE_SIZE">0x011</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.PF0_BAR0_CONTROL">0x4</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.PF0_BAR1_APERTURE_SIZE">0x000</spirit:configurableElementValue>
@@ -218,7 +218,7 @@
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.PF0_PM_CAP_PMESUPPORT_D1">FALSE</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.PF0_PM_CAP_PMESUPPORT_D3HOT">FALSE</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.PF0_PM_CAP_SUPP_D1_STATE">FALSE</spirit:configurableElementValue>
-        <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.PF0_RBAR_BAR_INDEX_0">000</spirit:configurableElementValue>
+        <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.PF0_RBAR_BAR_INDEX_0">0x0</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.PF0_RBAR_BAR_INDEX_1">0x7</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.PF0_RBAR_BAR_INDEX_2">0x7</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.PF0_RBAR_BAR_INDEX_3">0x7</spirit:configurableElementValue>
@@ -230,9 +230,9 @@
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.PF0_RBAR_CAP_BAR3">0x000000000000</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.PF0_RBAR_CAP_BAR4">0x000000000000</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.PF0_RBAR_CAP_BAR5">0x000000000000</spirit:configurableElementValue>
-        <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.PF0_RBAR_NUM_BAR">001</spirit:configurableElementValue>
+        <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.PF0_RBAR_NUM_BAR">0x1</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.PF0_REVISION_ID">0x00</spirit:configurableElementValue>
-        <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.PF0_SECONDARY_PCIE_CAP_NEXTPTR">0x000</spirit:configurableElementValue>
+        <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.PF0_SECONDARY_PCIE_CAP_NEXTPTR">0x350</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.PF0_SRIOV_BAR0_APERTURE_SIZE">0x00</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.PF0_SRIOV_BAR0_CONTROL">0x0</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.PF0_SRIOV_BAR1_APERTURE_SIZE">0x00</spirit:configurableElementValue>
@@ -246,7 +246,7 @@
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.PF0_SRIOV_BAR5_APERTURE_SIZE">0x00</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.PF0_SRIOV_BAR5_CONTROL">0x0</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.PF0_SRIOV_CAP_INITIAL_VF">0x0000</spirit:configurableElementValue>
-        <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.PF0_SRIOV_CAP_NEXTPTR">0x000</spirit:configurableElementValue>
+        <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.PF0_SRIOV_CAP_NEXTPTR">0x350</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.PF0_SRIOV_CAP_TOTAL_VF">0x0000</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.PF0_SRIOV_CAP_VER">0x1</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.PF0_SRIOV_FIRST_VF_OFFSET">0x0000</spirit:configurableElementValue>
@@ -258,17 +258,17 @@
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.PF0_TPHR_CAP_DEV_SPECIFIC_MODE">TRUE</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.PF0_TPHR_CAP_ENABLE">FALSE</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.PF0_TPHR_CAP_INT_VEC_MODE">FALSE</spirit:configurableElementValue>
-        <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.PF0_TPHR_CAP_NEXTPTR">0x000</spirit:configurableElementValue>
+        <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.PF0_TPHR_CAP_NEXTPTR">0x350</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.PF0_TPHR_CAP_ST_MODE_SEL">0x0</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.PF0_TPHR_CAP_ST_TABLE_LOC">0x0</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.PF0_TPHR_CAP_ST_TABLE_SIZE">0x000</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.PF0_TPHR_CAP_VER">0x1</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.PF0_VC_CAP_ENABLE">FALSE</spirit:configurableElementValue>
-        <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.PF0_VC_CAP_NEXTPTR">0x000</spirit:configurableElementValue>
+        <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.PF0_VC_CAP_NEXTPTR">0x350</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.PF0_VENDOR_ID">0x1234</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.PF1_AER_CAP_NEXTPTR">0x000</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.PF1_ARI_CAP_NEXTPTR">0x000</spirit:configurableElementValue>
-        <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.PF1_ARI_CAP_NEXT_FUNC">0x04</spirit:configurableElementValue>
+        <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.PF1_ARI_CAP_NEXT_FUNC">0x00</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.PF1_BAR0_APERTURE_SIZE">0x011</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.PF1_BAR0_CONTROL">0x4</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.PF1_BAR1_APERTURE_SIZE">0x000</spirit:configurableElementValue>
@@ -299,7 +299,7 @@
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.PF1_MSI_CAP_NEXTPTR">0x70</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.PF1_MSI_CAP_PERVECMASKCAP">TRUE</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.PF1_PM_CAP_NEXTPTR">0x70</spirit:configurableElementValue>
-        <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.PF1_RBAR_BAR_INDEX_0">000</spirit:configurableElementValue>
+        <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.PF1_RBAR_BAR_INDEX_0">0x0</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.PF1_RBAR_BAR_INDEX_1">0x7</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.PF1_RBAR_BAR_INDEX_2">0x7</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.PF1_RBAR_BAR_INDEX_3">0x7</spirit:configurableElementValue>
@@ -311,7 +311,7 @@
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.PF1_RBAR_CAP_BAR3">0x000000000000</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.PF1_RBAR_CAP_BAR4">0x000000000000</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.PF1_RBAR_CAP_BAR5">0x000000000000</spirit:configurableElementValue>
-        <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.PF1_RBAR_NUM_BAR">001</spirit:configurableElementValue>
+        <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.PF1_RBAR_NUM_BAR">0x1</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.PF1_REVISION_ID">0x00</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.PF1_SRIOV_BAR0_APERTURE_SIZE">0x00</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.PF1_SRIOV_BAR0_CONTROL">0x0</spirit:configurableElementValue>
@@ -338,7 +338,7 @@
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.PF1_TPHR_CAP_ST_MODE_SEL">0x0</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.PF2_AER_CAP_NEXTPTR">0x000</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.PF2_ARI_CAP_NEXTPTR">0x000</spirit:configurableElementValue>
-        <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.PF2_ARI_CAP_NEXT_FUNC">0x04</spirit:configurableElementValue>
+        <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.PF2_ARI_CAP_NEXT_FUNC">0x00</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.PF2_BAR0_APERTURE_SIZE">0x011</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.PF2_BAR0_CONTROL">0x4</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.PF2_BAR1_APERTURE_SIZE">0x000</spirit:configurableElementValue>
@@ -369,7 +369,7 @@
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.PF2_MSI_CAP_NEXTPTR">0x70</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.PF2_MSI_CAP_PERVECMASKCAP">TRUE</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.PF2_PM_CAP_NEXTPTR">0x70</spirit:configurableElementValue>
-        <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.PF2_RBAR_BAR_INDEX_0">000</spirit:configurableElementValue>
+        <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.PF2_RBAR_BAR_INDEX_0">0x0</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.PF2_RBAR_BAR_INDEX_1">0x7</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.PF2_RBAR_BAR_INDEX_2">0x7</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.PF2_RBAR_BAR_INDEX_3">0x7</spirit:configurableElementValue>
@@ -381,7 +381,7 @@
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.PF2_RBAR_CAP_BAR3">0x000000000000</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.PF2_RBAR_CAP_BAR4">0x000000000000</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.PF2_RBAR_CAP_BAR5">0x000000000000</spirit:configurableElementValue>
-        <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.PF2_RBAR_NUM_BAR">001</spirit:configurableElementValue>
+        <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.PF2_RBAR_NUM_BAR">0x1</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.PF2_REVISION_ID">0x00</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.PF2_SRIOV_BAR0_APERTURE_SIZE">0x00</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.PF2_SRIOV_BAR0_CONTROL">0x0</spirit:configurableElementValue>
@@ -408,7 +408,7 @@
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.PF2_TPHR_CAP_ST_MODE_SEL">0x0</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.PF3_AER_CAP_NEXTPTR">0x000</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.PF3_ARI_CAP_NEXTPTR">0x000</spirit:configurableElementValue>
-        <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.PF3_ARI_CAP_NEXT_FUNC">0x04</spirit:configurableElementValue>
+        <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.PF3_ARI_CAP_NEXT_FUNC">0x00</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.PF3_BAR0_APERTURE_SIZE">0x011</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.PF3_BAR0_CONTROL">0x4</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.PF3_BAR1_APERTURE_SIZE">0x000</spirit:configurableElementValue>
@@ -439,7 +439,7 @@
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.PF3_MSI_CAP_NEXTPTR">0x70</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.PF3_MSI_CAP_PERVECMASKCAP">TRUE</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.PF3_PM_CAP_NEXTPTR">0x70</spirit:configurableElementValue>
-        <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.PF3_RBAR_BAR_INDEX_0">000</spirit:configurableElementValue>
+        <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.PF3_RBAR_BAR_INDEX_0">0x0</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.PF3_RBAR_BAR_INDEX_1">0x7</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.PF3_RBAR_BAR_INDEX_2">0x7</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.PF3_RBAR_BAR_INDEX_3">0x7</spirit:configurableElementValue>
@@ -451,7 +451,7 @@
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.PF3_RBAR_CAP_BAR3">0x000000000000</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.PF3_RBAR_CAP_BAR4">0x000000000000</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.PF3_RBAR_CAP_BAR5">0x000000000000</spirit:configurableElementValue>
-        <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.PF3_RBAR_NUM_BAR">001</spirit:configurableElementValue>
+        <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.PF3_RBAR_NUM_BAR">0x1</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.PF3_REVISION_ID">0x00</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.PF3_SRIOV_BAR0_APERTURE_SIZE">0x00</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.PF3_SRIOV_BAR0_CONTROL">0x0</spirit:configurableElementValue>
@@ -492,7 +492,7 @@
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.SELECT_QUAD">GTY_Quad_227</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.SHARED_LOGIC">1</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.SPARE_WORD1">0x00000000</spirit:configurableElementValue>
-        <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.SRIOV_CAP_ENABLE">0000</spirit:configurableElementValue>
+        <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.SRIOV_CAP_ENABLE">0x0</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.SRIOV_EXD_MODE">FALSE</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.SYS_RESET_POLARITY">0</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.THREE_PORT_SWITCH">FALSE</spirit:configurableElementValue>
@@ -755,9 +755,9 @@
         <spirit:configurableElementValue spirit:referenceId="PARAM_VALUE.legacy_ext_pcie_cfg_space_enabled">false</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="PARAM_VALUE.local_test">false</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="PARAM_VALUE.master_cal_only">false</spirit:configurableElementValue>
-        <spirit:configurableElementValue spirit:referenceId="PARAM_VALUE.mcap_enablement">None</spirit:configurableElementValue>
+        <spirit:configurableElementValue spirit:referenceId="PARAM_VALUE.mcap_enablement">PR_over_PCIe</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="PARAM_VALUE.mcap_fpga_bitstream_version">00000000</spirit:configurableElementValue>
-        <spirit:configurableElementValue spirit:referenceId="PARAM_VALUE.mode_selection">Basic</spirit:configurableElementValue>
+        <spirit:configurableElementValue spirit:referenceId="PARAM_VALUE.mode_selection">Advanced</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="PARAM_VALUE.msix_type">HARD</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="PARAM_VALUE.mult_pf_des">true</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="PARAM_VALUE.pcie_blk_locn">X1Y2</spirit:configurableElementValue>
@@ -777,8 +777,8 @@
         <spirit:configurableElementValue spirit:referenceId="PARAM_VALUE.pf0_bar1_enabled">false</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="PARAM_VALUE.pf0_bar1_index">7</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="PARAM_VALUE.pf0_bar1_prefetchable">false</spirit:configurableElementValue>
-        <spirit:configurableElementValue spirit:referenceId="PARAM_VALUE.pf0_bar1_scale">Megabytes</spirit:configurableElementValue>
-        <spirit:configurableElementValue spirit:referenceId="PARAM_VALUE.pf0_bar1_size">16</spirit:configurableElementValue>
+        <spirit:configurableElementValue spirit:referenceId="PARAM_VALUE.pf0_bar1_scale">Kilobytes</spirit:configurableElementValue>
+        <spirit:configurableElementValue spirit:referenceId="PARAM_VALUE.pf0_bar1_size">128</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="PARAM_VALUE.pf0_bar1_type">N/A</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="PARAM_VALUE.pf0_bar2_64bit">false</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="PARAM_VALUE.pf0_bar2_enabled">false</spirit:configurableElementValue>
@@ -875,8 +875,8 @@
         <spirit:configurableElementValue spirit:referenceId="PARAM_VALUE.pf1_bar1_enabled">false</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="PARAM_VALUE.pf1_bar1_index">7</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="PARAM_VALUE.pf1_bar1_prefetchable">false</spirit:configurableElementValue>
-        <spirit:configurableElementValue spirit:referenceId="PARAM_VALUE.pf1_bar1_scale">Megabytes</spirit:configurableElementValue>
-        <spirit:configurableElementValue spirit:referenceId="PARAM_VALUE.pf1_bar1_size">16</spirit:configurableElementValue>
+        <spirit:configurableElementValue spirit:referenceId="PARAM_VALUE.pf1_bar1_scale">Kilobytes</spirit:configurableElementValue>
+        <spirit:configurableElementValue spirit:referenceId="PARAM_VALUE.pf1_bar1_size">128</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="PARAM_VALUE.pf1_bar1_type">N/A</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="PARAM_VALUE.pf1_bar2_64bit">false</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="PARAM_VALUE.pf1_bar2_enabled">false</spirit:configurableElementValue>
@@ -969,8 +969,8 @@
         <spirit:configurableElementValue spirit:referenceId="PARAM_VALUE.pf2_bar1_enabled">false</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="PARAM_VALUE.pf2_bar1_index">7</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="PARAM_VALUE.pf2_bar1_prefetchable">false</spirit:configurableElementValue>
-        <spirit:configurableElementValue spirit:referenceId="PARAM_VALUE.pf2_bar1_scale">Megabytes</spirit:configurableElementValue>
-        <spirit:configurableElementValue spirit:referenceId="PARAM_VALUE.pf2_bar1_size">16</spirit:configurableElementValue>
+        <spirit:configurableElementValue spirit:referenceId="PARAM_VALUE.pf2_bar1_scale">Kilobytes</spirit:configurableElementValue>
+        <spirit:configurableElementValue spirit:referenceId="PARAM_VALUE.pf2_bar1_size">128</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="PARAM_VALUE.pf2_bar1_type">N/A</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="PARAM_VALUE.pf2_bar2_64bit">false</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="PARAM_VALUE.pf2_bar2_enabled">false</spirit:configurableElementValue>
@@ -1063,8 +1063,8 @@
         <spirit:configurableElementValue spirit:referenceId="PARAM_VALUE.pf3_bar1_enabled">false</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="PARAM_VALUE.pf3_bar1_index">7</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="PARAM_VALUE.pf3_bar1_prefetchable">false</spirit:configurableElementValue>
-        <spirit:configurableElementValue spirit:referenceId="PARAM_VALUE.pf3_bar1_scale">Megabytes</spirit:configurableElementValue>
-        <spirit:configurableElementValue spirit:referenceId="PARAM_VALUE.pf3_bar1_size">16</spirit:configurableElementValue>
+        <spirit:configurableElementValue spirit:referenceId="PARAM_VALUE.pf3_bar1_scale">Kilobytes</spirit:configurableElementValue>
+        <spirit:configurableElementValue spirit:referenceId="PARAM_VALUE.pf3_bar1_size">128</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="PARAM_VALUE.pf3_bar1_type">N/A</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="PARAM_VALUE.pf3_bar2_64bit">false</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="PARAM_VALUE.pf3_bar2_enabled">false</spirit:configurableElementValue>
@@ -1240,11 +1240,21 @@
             <xilinx:configElementInfo xilinx:referenceId="PARAM_VALUE.PF3_SUBSYSTEM_VENDOR_ID" xilinx:valueSource="user"/>
             <xilinx:configElementInfo xilinx:referenceId="PARAM_VALUE.PL_LINK_CAP_MAX_LINK_SPEED" xilinx:valueSource="user"/>
             <xilinx:configElementInfo xilinx:referenceId="PARAM_VALUE.PL_LINK_CAP_MAX_LINK_WIDTH" xilinx:valueSource="user"/>
+            <xilinx:configElementInfo xilinx:referenceId="PARAM_VALUE.VFG0_MSIX_CAP_PBA_OFFSET" xilinx:valueSource="user"/>
+            <xilinx:configElementInfo xilinx:referenceId="PARAM_VALUE.VFG0_MSIX_CAP_TABLE_OFFSET" xilinx:valueSource="user"/>
+            <xilinx:configElementInfo xilinx:referenceId="PARAM_VALUE.VFG1_MSIX_CAP_PBA_OFFSET" xilinx:valueSource="user"/>
+            <xilinx:configElementInfo xilinx:referenceId="PARAM_VALUE.VFG1_MSIX_CAP_TABLE_OFFSET" xilinx:valueSource="user"/>
+            <xilinx:configElementInfo xilinx:referenceId="PARAM_VALUE.VFG2_MSIX_CAP_PBA_OFFSET" xilinx:valueSource="user"/>
+            <xilinx:configElementInfo xilinx:referenceId="PARAM_VALUE.VFG2_MSIX_CAP_TABLE_OFFSET" xilinx:valueSource="user"/>
+            <xilinx:configElementInfo xilinx:referenceId="PARAM_VALUE.VFG3_MSIX_CAP_PBA_OFFSET" xilinx:valueSource="user"/>
+            <xilinx:configElementInfo xilinx:referenceId="PARAM_VALUE.VFG3_MSIX_CAP_TABLE_OFFSET" xilinx:valueSource="user"/>
             <xilinx:configElementInfo xilinx:referenceId="PARAM_VALUE.axisten_freq" xilinx:valueSource="user"/>
             <xilinx:configElementInfo xilinx:referenceId="PARAM_VALUE.axisten_if_enable_client_tag" xilinx:valueSource="user"/>
             <xilinx:configElementInfo xilinx:referenceId="PARAM_VALUE.axisten_if_width" xilinx:valueSource="user"/>
             <xilinx:configElementInfo xilinx:referenceId="PARAM_VALUE.coreclk_freq" xilinx:valueSource="user"/>
             <xilinx:configElementInfo xilinx:referenceId="PARAM_VALUE.en_msi_per_vec_masking" xilinx:valueSource="user"/>
+            <xilinx:configElementInfo xilinx:referenceId="PARAM_VALUE.mcap_enablement" xilinx:valueSource="user"/>
+            <xilinx:configElementInfo xilinx:referenceId="PARAM_VALUE.mode_selection" xilinx:valueSource="user"/>
             <xilinx:configElementInfo xilinx:referenceId="PARAM_VALUE.pcie_id_if" xilinx:valueSource="user"/>
             <xilinx:configElementInfo xilinx:referenceId="PARAM_VALUE.pf0_bar0_scale" xilinx:valueSource="user"/>
             <xilinx:configElementInfo xilinx:referenceId="PARAM_VALUE.pf0_bar0_size" xilinx:valueSource="user"/>
