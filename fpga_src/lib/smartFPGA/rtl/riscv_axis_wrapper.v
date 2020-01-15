@@ -1083,22 +1083,40 @@ wire [3:0]                 core_msg_strb;
 wire                       core_msg_valid;
 wire                       core_msg_ready;
 
-// Broadcast messaging is in core clk domain
-simple_sync_fifo # (
-  .DEPTH(MSG_FIFO_DEPTH),
-  .DATA_WIDTH(MSG_WIDTH)
-) core_msg_out_fifo (
-  .clk(core_clk),
-  .rst(core_reset),
-
-  .din_valid(core_msg_valid),
-  .din({core_msg_strb, core_msg_addr, core_msg_data}),
-  .din_ready(core_msg_ready),
- 
-  .dout_valid(core_msg_out_valid),
-  .dout(core_msg_out_data),
-  .dout_ready(core_msg_out_ready)
-);
+if (!SEPARATE_CLOCKS) begin: sync_core_msg_send_fifo
+  simple_sync_fifo # (
+    .DEPTH(MSG_FIFO_DEPTH),
+    .DATA_WIDTH(MSG_WIDTH)
+  ) core_msg_out_fifo (
+    .clk(sys_clk),
+    .rst(sys_rst || core_reset_r),
+  
+    .din_valid(core_msg_valid),
+    .din({core_msg_strb, core_msg_addr, core_msg_data}),
+    .din_ready(core_msg_ready),
+   
+    .dout_valid(core_msg_out_valid),
+    .dout(core_msg_out_data),
+    .dout_ready(core_msg_out_ready)
+  );
+end else begin: async_core_msg_send_fifo
+  simple_async_fifo # (
+    .DEPTH(MSG_FIFO_DEPTH),
+    .DATA_WIDTH(MSG_WIDTH)
+  ) core_msg_out_fifo (
+    .async_rst(sys_rst || core_reset_r),
+  
+    .din_clk(core_clk),
+    .din_valid(core_msg_valid),
+    .din({core_msg_strb, core_msg_addr, core_msg_data}),
+    .din_ready(core_msg_ready),
+   
+    .dout_clk(sys_clk),
+    .dout_valid(core_msg_out_valid),
+    .dout(core_msg_out_data),
+    .dout_ready(core_msg_out_ready)
+  );
+end
 
 // Register and width convert incoming core msg
 reg [DMEM_ADDR_WIDTH-1:0] core_msg_in_addr_r;
@@ -1106,11 +1124,11 @@ reg [31:0]                core_msg_in_data_r;
 reg [3:0]                 core_msg_in_strb_r;
 reg                       core_msg_in_v_r;
 
-always @ (posedge core_clk) begin
+always @ (posedge sys_clk) begin
   core_msg_in_addr_r <= core_msg_in_data[31+DMEM_ADDR_WIDTH:32];
   core_msg_in_data_r <= core_msg_in_data[31:0];
   core_msg_in_strb_r <= core_msg_in_data[MSG_WIDTH-1:MSG_WIDTH-4];
-  if (core_rst)
+  if (sys_rst)
     core_msg_in_v_r  <= 1'b0;
   else
     core_msg_in_v_r  <= core_msg_in_valid;
@@ -1136,68 +1154,92 @@ wire dma_dmem_rd_en = (~ram_cmd_rd_addr[ADDR_WIDTH-1]) && ram_cmd_rd_en && (!rea
 // This can be done interleaved or full write after full read based on 
 // INTERLEAVE parameter. Also incoming core messages have higher priority.
 
-// DMEM_WRITE and DMEM_READ are bitwise invert
-localparam DMEM_IDLE  = 2'b00;
-localparam DMEM_WRITE = 2'b01;
-localparam DMEM_READ  = 2'b10;
+reg                   data_dma_en_b1;
+reg                   data_dma_wr_b1;
+reg                   data_dma_rd_b1;
+reg  [ADDR_WIDTH-1:0] data_dma_addr_b1;
+reg  [STRB_WIDTH-1:0] data_dma_wen_b1;
+reg  [DATA_WIDTH-1:0] data_dma_wr_data_b1;
+wire [DATA_WIDTH-1:0] data_dma_rd_data_b1;
 
-reg [1:0] dma_dmem_op, dma_dmem_last_op;
-reg dmam_dmem_switch;
+reg                   data_dma_en_b2;
+reg                   data_dma_wr_b2;
+reg                   data_dma_rd_b2;
+reg  [ADDR_WIDTH-1:0] data_dma_addr_b2;
+reg  [STRB_WIDTH-1:0] data_dma_wen_b2;
+reg  [DATA_WIDTH-1:0] data_dma_wr_data_b2;
+wire [DATA_WIDTH-1:0] data_dma_rd_data_b2;
 
-always @ (posedge sys_clk) 
-  if (sys_rst) begin
-    dma_dmem_last_op <= DMEM_IDLE;
-    dmam_dmem_switch <= 1'b0;
-  end else begin
-    dma_dmem_last_op <= dma_dmem_op;
-    if (((dma_dmem_op == DMEM_READ)  && ram_cmd_rd_last && dma_dmem_rd_en) ||
-        ((dma_dmem_op == DMEM_WRITE) && ram_cmd_wr_last && dma_dmem_wr_en))
-      dmam_dmem_switch <= 1'b1;
-    else
-      dmam_dmem_switch <= 1'b0;
+always @ (*) begin
+  data_dma_en_b1      = 1'b0;
+  data_dma_wr_b1      = 1'b0;
+  data_dma_rd_b1      = 1'b0;
+  data_dma_addr_b1    = {1'b0,ram_cmd_wr_addr[ADDR_WIDTH-2:0]};
+  data_dma_wen_b1     = {STRB_WIDTH{1'b0}};
+  data_dma_wr_data_b1 = ram_cmd_wr_data; 
+
+  if (!core_msg_in_addr_r[LINE_ADDR_BITS] && core_msg_in_v_r) begin
+    data_dma_en_b1      = 1'b1;
+    data_dma_addr_b1    = core_msg_in_addr_r;
+    data_dma_wen_b1     = core_msg_write_mask;
+    data_dma_wr_data_b1 = core_msg_write_data;
+  end else if (!ram_cmd_wr_addr[LINE_ADDR_BITS] && dma_dmem_wr_en) begin
+    data_dma_en_b1      = 1'b1;
+    data_dma_wr_b1      = 1'b1;
+    data_dma_wen_b1     = ram_cmd_wr_strb;
+  end else if (!ram_cmd_rd_addr[LINE_ADDR_BITS] && dma_dmem_rd_en) begin
+    data_dma_en_b1      = 1'b1;
+    data_dma_rd_b1      = 1'b1;
+    data_dma_addr_b1    = {1'b0, ram_cmd_rd_addr[ADDR_WIDTH-2:0]};
   end
+end
 
-always @ (*)
-  //core msg is processed, no requests from DMA engine
-  case ({dma_dmem_wr_en,dma_dmem_rd_en})
-    2'b00: dma_dmem_op = DMEM_IDLE;
-    2'b01: dma_dmem_op = DMEM_READ;
-    2'b10: dma_dmem_op = DMEM_WRITE;
-    2'b11: 
-      if (INTERLEAVE || dmam_dmem_switch) begin
-        // ram_rd_resp_ready is asserted 2 cycles after rd_en, hence
-        // there could be a cycle of DMEM_IDLE after rd_en, and in the 
-        // following cycle both rd_en and wr_en being asserted.
-        if (dma_dmem_last_op==DMEM_IDLE)
-          dma_dmem_op = DMEM_WRITE; 
-        else 
-          dma_dmem_op = ~dma_dmem_last_op;
-      end 
-      else 
-          dma_dmem_op =  dma_dmem_last_op;
-  endcase
+always @ (*) begin
+  data_dma_en_b2      = 1'b0;
+  data_dma_wr_b2      = 1'b0;
+  data_dma_rd_b2      = 1'b0;
+  data_dma_addr_b2    = {1'b0,ram_cmd_wr_addr[ADDR_WIDTH-2:0]};
+  data_dma_wen_b2     = {STRB_WIDTH{1'b0}};
+  data_dma_wr_data_b2 = ram_cmd_wr_data; 
 
-// Signals to second port of the local DMEM of the core
-wire                  data_dma_en      = dma_dmem_wr_en || dma_dmem_rd_en;
-wire [ADDR_WIDTH-1:0] data_dma_addr    = (dma_dmem_op==DMEM_WRITE) ?
-                                         {1'b0,ram_cmd_wr_addr[ADDR_WIDTH-2:0]}: 
-                                         {1'b0,ram_cmd_rd_addr[ADDR_WIDTH-2:0]};
-wire [STRB_WIDTH-1:0] data_dma_wen     = ((dma_dmem_op==DMEM_WRITE) ? 
-                                         ram_cmd_wr_strb : {STRB_WIDTH{1'b0}});
-wire [DATA_WIDTH-1:0] data_dma_wr_data = ram_cmd_wr_data;
+  if (core_msg_in_addr_r[LINE_ADDR_BITS] && core_msg_in_v_r) begin
+    data_dma_en_b2      = 1'b1;
+    data_dma_addr_b2    = core_msg_in_addr_r;
+    data_dma_wen_b2     = core_msg_write_mask;
+    data_dma_wr_data_b2 = core_msg_write_data;
+  end else if (ram_cmd_wr_addr[LINE_ADDR_BITS] && dma_dmem_wr_en) begin
+    data_dma_en_b2      = 1'b1;
+    data_dma_wr_b2      = 1'b1;
+    data_dma_wen_b2     = ram_cmd_wr_strb;
+  end else if (ram_cmd_rd_addr[LINE_ADDR_BITS] && dma_dmem_rd_en) begin
+    data_dma_en_b2      = 1'b1;
+    data_dma_rd_b2      = 1'b1;
+    data_dma_addr_b2    = {1'b0, ram_cmd_rd_addr[ADDR_WIDTH-2:0]};
+  end
+end
+
+reg data_dma_rd_b1_r;
+always @ (posedge sys_clk)
+  if (sys_rst)
+    data_dma_rd_b1_r <= 1'b0;
+  else if (dma_dmem_rd_en)
+    data_dma_rd_b1_r <= data_dma_rd_b1;
+
+assign ram_rd_resp_data = data_dma_rd_b1_r ? data_dma_rd_data_b1 : data_dma_rd_data_b2;
 
 // Signals to second port of the local IMEM of the core (just write)
-// or status registers
 wire [STRB_WIDTH-1:0] ins_dma_wen     = ram_cmd_wr_strb & {STRB_WIDTH{dma_imem_wr_en}};
 wire [ADDR_WIDTH-1:0] ins_dma_addr    = {1'b0,ram_cmd_wr_addr[ADDR_WIDTH-2:0]};
 wire [DATA_WIDTH-1:0] ins_dma_wr_data = ram_cmd_wr_data;
-wire [DATA_WIDTH-1:0] data_dma_rd_data;
-
-assign ram_rd_resp_data = data_dma_rd_data;
 
 /////////////////////////////////////////////////////////////////////
 ////////////////// VALID AND READY CONTROL SIGNALS //////////////////
 /////////////////////////////////////////////////////////////////////
+
+// The ready signal is asserted at the end of cycle, 
+// meaning whether the request was accepted.
+assign ram_cmd_wr_ready = data_dma_wr_b1 || data_dma_wr_b2 || !dma_dmem_wr_en;
+assign ram_cmd_rd_ready = data_dma_rd_b1 || data_dma_rd_b2;
 
 // If there was a read request to any of the memories and one of them is accepted,
 // read_accpted would be 1. And since memory response is ready after a cycle
@@ -1206,22 +1248,16 @@ assign ram_rd_resp_data = data_dma_rd_data;
 // read enable signal for both memories the data would not change.
 reg read_rejected;
 reg read_accepted_r; 
-wire read_accepted = (dma_dmem_op==DMEM_READ);
 always @(posedge sys_clk) 
   if(sys_rst) begin
     read_accepted_r <= 1'b0;
     read_rejected   <= 1'b0;
   end else begin
-    read_accepted_r <= read_accepted;
+    read_accepted_r <= ram_cmd_rd_ready;
     read_rejected   <= read_reject; 
   end
 
 assign ram_rd_resp_valid = read_accepted_r || read_rejected;
-
-// The ready signal is asserted at the end of cycle, 
-// meaning whether the request was accepted.
-assign ram_cmd_wr_ready = !((dma_dmem_op!=DMEM_WRITE) && dma_dmem_wr_en);
-assign ram_cmd_rd_ready = read_accepted; 
 
 ///////////////////////////////////////////////////////////////////////////
 //////////////////////////// MEMORY UNITS /////////////////////////////////
@@ -1234,23 +1270,18 @@ wire                  core_dmem_en;
 wire [STRB_WIDTH-1:0] core_dmem_wen;
 wire [ADDR_WIDTH-1:0] core_dmem_addr;
 wire [DATA_WIDTH-1:0] core_dmem_wr_data;
+wire [DATA_WIDTH-1:0] core_dmem_rd_data_b1;
+wire [DATA_WIDTH-1:0] core_dmem_rd_data_b2;
 wire [DATA_WIDTH-1:0] core_dmem_rd_data;
-wire                  core_dmem_ready;
 
-// Muxing between incoming msg data and core dmem access
-wire                  dmem_en;
-wire [STRB_WIDTH-1:0] dmem_wen;
-wire [ADDR_WIDTH-1:0] dmem_addr;
-wire [DATA_WIDTH-1:0] dmem_wr_data;
-wire [DATA_WIDTH-1:0] dmem_rd_data;
+reg core_dmem_bank_r;
+always @ (posedge core_clk)
+  if (core_reset)
+    core_dmem_bank_r <= 1'b0;
+  else
+    core_dmem_bank_r <= core_dmem_addr[LINE_ADDR_BITS];
 
-assign dmem_en      = core_msg_in_v_r || core_dmem_en; 
-assign dmem_wen     = core_msg_in_v_r ? core_msg_write_mask : core_dmem_wen;
-assign dmem_addr    = core_msg_in_v_r ? core_msg_in_addr_r  : core_dmem_addr;
-assign dmem_wr_data = core_msg_in_v_r ? core_msg_write_data : core_dmem_wr_data;
-
-assign core_dmem_rd_data = dmem_rd_data;
-assign core_dmem_ready   = !core_msg_in_v_r;
+assign core_dmem_rd_data = core_dmem_bank_r ? core_dmem_rd_data_b2 : core_dmem_rd_data_b1;
 
 // URAM cannot be initialized, so using BRAM for imem. 
 // Can be initialized through pcie if URAM is necessary.
@@ -1274,44 +1305,84 @@ if (TARGET_URAM && !SEPARATE_CLOCKS) begin: uram_dmem
 
   mem_2rw_uram #(
     .BYTES_PER_LINE(STRB_WIDTH),
-    .ADDR_WIDTH(DMEM_ADDR_WIDTH-LINE_ADDR_BITS)    
-  ) dmem (
+    .ADDR_WIDTH(DMEM_ADDR_WIDTH-LINE_ADDR_BITS-1)    
+  ) dmem_b1 (
     .clk(sys_clk),
   
-    .ena(data_dma_en),
-    .wena(data_dma_wen),
-    .addra(data_dma_addr[DMEM_ADDR_WIDTH-1:LINE_ADDR_BITS]),
-    .dina(data_dma_wr_data),
-    .douta(data_dma_rd_data),
+    .ena(data_dma_en_b1),
+    .wena(data_dma_wen_b1),
+    .addra(data_dma_addr_b1[DMEM_ADDR_WIDTH-1:LINE_ADDR_BITS+1]),
+    .dina(data_dma_wr_data_b1),
+    .douta(data_dma_rd_data_b1),
   
-    .enb(dmem_en),
-    .wenb(dmem_wen),
-    .addrb(dmem_addr[DMEM_ADDR_WIDTH-1:LINE_ADDR_BITS]),
-    .dinb(dmem_wr_data),
-    .doutb(dmem_rd_data)
+    .enb(core_dmem_en && !core_dmem_addr[LINE_ADDR_BITS]),
+    .wenb(core_dmem_wen),
+    .addrb(core_dmem_addr[DMEM_ADDR_WIDTH-1:LINE_ADDR_BITS+1]),
+    .dinb(core_dmem_wr_data),
+    .doutb(core_dmem_rd_data_b1)
+  );
+  
+  mem_2rw_uram #(
+    .BYTES_PER_LINE(STRB_WIDTH),
+    .ADDR_WIDTH(DMEM_ADDR_WIDTH-LINE_ADDR_BITS-1)    
+  ) dmem_b2 (
+    .clk(sys_clk),
+  
+    .ena(data_dma_en_b2),
+    .wena(data_dma_wen_b2),
+    .addra(data_dma_addr_b2[DMEM_ADDR_WIDTH-1:LINE_ADDR_BITS+1]),
+    .dina(data_dma_wr_data_b2),
+    .douta(data_dma_rd_data_b2),
+  
+    .enb(core_dmem_en && core_dmem_addr[LINE_ADDR_BITS]),
+    .wenb(core_dmem_wen),
+    .addrb(core_dmem_addr[DMEM_ADDR_WIDTH-1:LINE_ADDR_BITS+1]),
+    .dinb(core_dmem_wr_data),
+    .doutb(core_dmem_rd_data_b2)
   );
 
 end else begin: simple_dmem
 
   mem_2rw #(
     .BYTES_PER_LINE(STRB_WIDTH),
-    .ADDR_WIDTH(DMEM_ADDR_WIDTH-LINE_ADDR_BITS)    
-  ) dmem (
+    .ADDR_WIDTH(DMEM_ADDR_WIDTH-LINE_ADDR_BITS-1)    
+  ) dmem_b1 (
     .clka(sys_clk),
-    .ena(data_dma_en),
-    .rena((dma_dmem_op==DMEM_READ)),
-    .wena(data_dma_wen),
-    .addra(data_dma_addr[DMEM_ADDR_WIDTH-1:LINE_ADDR_BITS]),
-    .dina(data_dma_wr_data),
-    .douta(data_dma_rd_data),
+    .ena(data_dma_en_b1),
+    .rena(data_dma_rd_b1),
+    .wena(data_dma_wen_b1),
+    .addra(data_dma_addr_b1[DMEM_ADDR_WIDTH-1:LINE_ADDR_BITS+1]),
+    .dina(data_dma_wr_data_b1),
+    .douta(data_dma_rd_data_b1),
   
     .clkb(core_clk),
-    .enb(dmem_en),
-    .renb((~|core_dmem_wen) && !core_msg_in_v_r),
-    .wenb(dmem_wen),
-    .addrb(dmem_addr[DMEM_ADDR_WIDTH-1:LINE_ADDR_BITS]),
-    .dinb(dmem_wr_data),
-    .doutb(dmem_rd_data)
+    .enb(core_dmem_en && !core_dmem_addr[LINE_ADDR_BITS]),
+    .renb((~|core_dmem_wen)),
+    .wenb(core_dmem_wen),
+    .addrb(core_dmem_addr[DMEM_ADDR_WIDTH-1:LINE_ADDR_BITS+1]),
+    .dinb(core_dmem_wr_data),
+    .doutb(core_dmem_rd_data_b1)
+  );
+  
+  mem_2rw #(
+    .BYTES_PER_LINE(STRB_WIDTH),
+    .ADDR_WIDTH(DMEM_ADDR_WIDTH-LINE_ADDR_BITS-1)    
+  ) dmem_b2 (
+    .clka(sys_clk),
+    .ena(data_dma_en_b2),
+    .rena(data_dma_rd_b2),
+    .wena(data_dma_wen_b2),
+    .addra(data_dma_addr_b2[DMEM_ADDR_WIDTH-1:LINE_ADDR_BITS+1]),
+    .dina(data_dma_wr_data_b2),
+    .douta(data_dma_rd_data_b2),
+  
+    .clkb(core_clk),
+    .enb(core_dmem_en && core_dmem_addr[LINE_ADDR_BITS]),
+    .renb((~|core_dmem_wen)),
+    .wenb(core_dmem_wen),
+    .addrb(core_dmem_addr[DMEM_ADDR_WIDTH-1:LINE_ADDR_BITS+1]),
+    .dinb(core_dmem_wr_data),
+    .doutb(core_dmem_rd_data_b2)
   );
 
 end
@@ -1325,8 +1396,9 @@ always @(posedge sys_clk)
     out_of_bound <= 1'b0;
   else 
     out_of_bound <= out_of_bound || 
-                 ((data_dma_en && (|data_dma_addr[ADDR_WIDTH-1:DMEM_ADDR_WIDTH])) ||
-                 ((|ins_dma_wen)  && (|ins_dma_addr[ADDR_WIDTH-1:IMEM_ADDR_WIDTH])));
+                  (dma_dmem_wr_en && (|ram_cmd_wr_addr[ADDR_WIDTH-1:DMEM_ADDR_WIDTH])) ||
+                  (dma_dmem_rd_en && (|ram_cmd_rd_addr[ADDR_WIDTH-1:DMEM_ADDR_WIDTH])) ||
+                  ((|ins_dma_wen) && (|ins_dma_addr[ADDR_WIDTH-1:IMEM_ADDR_WIDTH]));
 
 wire core_interrupt, core_interrupt_ack;
 
@@ -1376,7 +1448,7 @@ riscvcore #(
     .ext_dmem_addr(core_dmem_addr),
     .ext_dmem_wr_data(core_dmem_wr_data),
     .ext_dmem_rd_data(core_dmem_rd_data),
-    .ext_dmem_ready(core_dmem_ready),
+    .ext_dmem_ready(1'b1),
     
     .ext_imem_ren(core_imem_ren),
     .ext_imem_addr(core_imem_addr),

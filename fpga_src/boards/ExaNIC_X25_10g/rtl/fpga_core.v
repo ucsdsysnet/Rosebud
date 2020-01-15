@@ -1262,8 +1262,8 @@ axis_switch_2lvl # (
     /*
      * AXI Stream inputs
      */
-    .s_clk(core_clk),
-    .s_rst(core_rst),
+    .s_clk(sys_clk),
+    .s_rst(sys_rst),
     .s_axis_tdata(core_msg_out_data),
     .s_axis_tkeep({CORE_COUNT{1'b0}}),
     .s_axis_tvalid(core_msg_out_valid),
@@ -1276,8 +1276,8 @@ axis_switch_2lvl # (
     /*
      * AXI Stream output
      */
-    .m_clk(core_clk),
-    .m_rst(core_rst),
+    .m_clk(sys_clk),
+    .m_rst(sys_rst),
     .m_axis_tdata(core_msg_merged_data),
     .m_axis_tkeep(),
     .m_axis_tvalid(core_msg_merged_valid),
