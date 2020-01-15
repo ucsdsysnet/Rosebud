@@ -112,13 +112,29 @@ distclean: clean
 	echo "exit" >> run_impl.tcl
 	vivado -nojournal -nolog -mode batch -source run_impl.tcl
 
+%.runs/impl_2/%_routed.dcp: %.runs/synth_1/%.dcp
+	echo "open_project $*.xpr" > run_impl.tcl
+	echo "create_pr_configuration -name config_2 -partitions { }  -greyboxes [list core_inst/riscv_cores[0].riscv_block_inst core_inst/riscv_cores[1].riscv_block_inst core_inst/riscv_cores[2].riscv_block_inst core_inst/riscv_cores[3].riscv_block_inst core_inst/riscv_cores[4].riscv_block_inst core_inst/riscv_cores[5].riscv_block_inst core_inst/riscv_cores[6].riscv_block_inst core_inst/riscv_cores[7].riscv_block_inst core_inst/riscv_cores[8].riscv_block_inst core_inst/riscv_cores[9].riscv_block_inst core_inst/riscv_cores[10].riscv_block_inst core_inst/riscv_cores[11].riscv_block_inst core_inst/riscv_cores[12].riscv_block_inst core_inst/riscv_cores[13].riscv_block_inst core_inst/riscv_cores[14].riscv_block_inst core_inst/riscv_cores[15].riscv_block_inst ]" >> run_impl.tcl
+	echo "set_property PR_CONFIGURATION config_1 [get_runs impl_1]" >> run_impl.tcl
+	echo "create_run impl_2 -parent_run impl_1 -flow {Vivado Implementation 2019} -pr_config config_2" >> run_impl.tcl
+	# echo "create_run impl_2 -parent_run synth_1 -flow {Vivado Implementation 2019} -strategy Performance_Retiming -pr_config config_2" >> run_impl.tcl
+	echo "reset_run impl_2" >> run_impl.tcl
+	echo "launch_runs impl_2 -jobs 24" >> run_impl.tcl
+	echo "wait_on_run impl_2" >> run_impl.tcl
+	echo "exit" >> run_impl.tcl
+	vivado -nojournal -nolog -mode batch -source run_impl.tcl
+
 # bit file
-%.bit: %.runs/impl_1/%_routed.dcp
+%.bit: %.runs/impl_1/%_routed.dcp %.runs/impl_2/%_routed.dcp
 	echo "open_project $*.xpr" > generate_bit.tcl
 	echo "open_run impl_1" >> generate_bit.tcl
 	echo "write_debug_probes -force debug_probes.ltx" >> generate_bit.tcl
 	echo "report_utilization -force -hierarchical  -file fpga_utilization_hierarchy_placed.rpt" >> generate_bit.tcl
-	echo "write_bitstream -force $*.bit" >> generate_bit.tcl
+	echo "write_bitstream -force $*.runs/impl_1/$*.bit" >> generate_bit.tcl
+	echo "open_run impl_2" >> generate_bit.tcl
+	echo "write_debug_probes -force debug_probes.ltx" >> generate_bit.tcl
+	echo "report_utilization -force -hierarchical  -file fpga_utilization_hierarchy_placed.rpt" >> generate_bit.tcl
+	echo "write_bitstream -force $*.runs/impl_2/$*.bit" >> generate_bit.tcl
 	echo "exit" >> generate_bit.tcl
 	vivado -nojournal -nolog -mode batch -source generate_bit.tcl
 	mkdir -p rev
