@@ -609,7 +609,6 @@ pcie_controller #
   .CORE_DESC_WIDTH(LVL1_DRAM_WIDTH),
   .CORE_COUNT(CORE_COUNT),        
   .CORE_ADDR_WIDTH(CORE_ADDR_WIDTH), 
-  .HDR_WIDTH(LVL2_DATA_WIDTH),
   .PCIE_SLOT_COUNT(PCIE_SLOT_COUNT),
   .IF_COUNT(V_IF_COUNT),
   .PORTS_PER_IF(PORTS_PER_V_IF),
@@ -782,7 +781,6 @@ loopback_msg_fifo # (
   .SLOT_WIDTH(SLOT_WIDTH),
   .PORT_COUNT(LB_PORT_COUNT),
   .FIRST_PORT(FIRST_LB_PORT),
-  .HDR_WIDTH(LVL2_DATA_WIDTH),
   .ID_TAG_WIDTH(ID_TAG_WIDTH)
 ) loopback_msg_fifo_inst (
     .clk(sys_clk),
@@ -1264,8 +1262,8 @@ axis_switch_2lvl # (
     /*
      * AXI Stream inputs
      */
-    .s_clk(sys_clk),
-    .s_rst(sys_rst),
+    .s_clk(core_clk),
+    .s_rst(core_rst),
     .s_axis_tdata(core_msg_out_data),
     .s_axis_tkeep({CORE_COUNT{1'b0}}),
     .s_axis_tvalid(core_msg_out_valid),
@@ -1278,8 +1276,8 @@ axis_switch_2lvl # (
     /*
      * AXI Stream output
      */
-    .m_clk(sys_clk),
-    .m_rst(sys_rst),
+    .m_clk(core_clk),
+    .m_rst(core_rst),
     .m_axis_tdata(core_msg_merged_data),
     .m_axis_tkeep(),
     .m_axis_tvalid(core_msg_merged_valid),

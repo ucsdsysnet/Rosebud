@@ -22,8 +22,7 @@ module pcie_cont_write # (
   parameter CORE_ADDR_WIDTH      = 16, 
   parameter AXIS_DATA_WIDTH      = 128, 
   parameter AXIS_KEEP_WIDTH      = 16, 
-  parameter AXIS_TAG_WIDTH       = 9,
-  parameter HDR_WIDTH            = 128
+  parameter AXIS_TAG_WIDTH       = 9
 ) ( 
   input  wire                                pcie_clk,
   input  wire                                pcie_rst,
@@ -81,11 +80,11 @@ wire                       axis_write_data_tready;
 wire                       axis_write_data_tlast;
 wire [AXIS_TAG_WIDTH-1:0]  axis_write_data_tuser;
 
-wire [HDR_WIDTH-1:0] tx_header;
+wire [63:0] tx_header;
 
 header_remover # (
   .DATA_WIDTH(AXIS_DATA_WIDTH),
-  .HDR_WIDTH(HDR_WIDTH),
+  .HDR_WIDTH(64),
   .USER_WIDTH(AXIS_TAG_WIDTH)
 ) tx_header_remover (
   .clk(pcie_clk),

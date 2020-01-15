@@ -608,7 +608,6 @@ pcie_controller #
   .CORE_DESC_WIDTH(LVL1_DRAM_WIDTH),
   .CORE_COUNT(CORE_COUNT),        
   .CORE_ADDR_WIDTH(CORE_ADDR_WIDTH), 
-  .HDR_WIDTH(LVL2_DATA_WIDTH),
   .PCIE_SLOT_COUNT(PCIE_SLOT_COUNT),
   .IF_COUNT(V_IF_COUNT),
   .PORTS_PER_IF(PORTS_PER_V_IF),
@@ -781,7 +780,6 @@ loopback_msg_fifo # (
   .SLOT_WIDTH(SLOT_WIDTH),
   .PORT_COUNT(LB_PORT_COUNT),
   .FIRST_PORT(FIRST_LB_PORT),
-  .HDR_WIDTH(LVL2_DATA_WIDTH),
   .ID_TAG_WIDTH(ID_TAG_WIDTH)
 ) loopback_msg_fifo_inst (
     .clk(sys_clk),
@@ -1263,8 +1261,8 @@ axis_switch_2lvl # (
     /*
      * AXI Stream inputs
      */
-    .s_clk(sys_clk),
-    .s_rst(sys_rst),
+    .s_clk(core_clk),
+    .s_rst(core_rst_r),
     .s_axis_tdata(core_msg_out_data),
     .s_axis_tkeep({CORE_COUNT{1'b0}}),
     .s_axis_tvalid(core_msg_out_valid),
@@ -1277,8 +1275,8 @@ axis_switch_2lvl # (
     /*
      * AXI Stream output
      */
-    .m_clk(sys_clk),
-    .m_rst(sys_rst),
+    .m_clk(core_clk),
+    .m_rst(core_rst_r),
     .m_axis_tdata(core_msg_merged_data),
     .m_axis_tkeep(),
     .m_axis_tvalid(core_msg_merged_valid),
@@ -1293,11 +1291,11 @@ reg [BC_MSG_CLUSTERS*CORE_MSG_WIDTH-1:0] core_msg_merged_data_r;
 reg [BC_MSG_CLUSTERS*CORE_WIDTH-1:0]     core_msg_merged_user_r;
 reg [BC_MSG_CLUSTERS-1:0]                core_msg_merged_valid_r;
 
-always @ (posedge sys_clk) begin
+always @ (posedge core_clk) begin
     core_msg_merged_data_r  <= {BC_MSG_CLUSTERS{core_msg_merged_data}};
     core_msg_merged_user_r  <= {BC_MSG_CLUSTERS{core_msg_merged_user}};
     core_msg_merged_valid_r <= {BC_MSG_CLUSTERS{core_msg_merged_valid}}; 
-    if (sys_rst)
+    if (core_rst_r)
       core_msg_merged_valid_r <= {BC_MSG_CLUSTERS{1'b0}};
 end
 
@@ -1310,11 +1308,11 @@ reg [CORE_COUNT-1:0]                core_msg_in_valid;
 
 localparam CORES_PER_CLUSTER = CORE_COUNT / BC_MSG_CLUSTERS;
 
-always @ (posedge sys_clk) begin
+always @ (posedge core_clk) begin
     core_msg_in_data  <= {CORES_PER_CLUSTER{core_msg_merged_data_r}};
     core_msg_in_user  <= {CORES_PER_CLUSTER{core_msg_merged_user_r}};
     core_msg_in_valid <= {CORES_PER_CLUSTER{core_msg_merged_valid_r}}; 
-    if (sys_rst)
+    if (core_rst_r)
     core_msg_in_valid <= {CORE_COUNT{1'b0}}; 
 end
 

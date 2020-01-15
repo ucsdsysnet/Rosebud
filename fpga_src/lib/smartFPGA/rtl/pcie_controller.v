@@ -62,7 +62,6 @@ module pcie_controller #
   parameter CORE_WIDTH              = $clog2(CORE_COUNT), 
   parameter CORE_ADDR_WIDTH         = 16, 
   parameter CORES_ADDR_WIDTH        = CORE_WIDTH+CORE_ADDR_WIDTH, 
-  parameter HDR_WIDTH               = 128,
   parameter CORES_DATA_FIFO_SIZE    = 1024,
   parameter CORES_CTRL_FIFO_SIZE    = 512,
   parameter PCIE_SLOT_COUNT         = 16,
@@ -951,8 +950,7 @@ pcie_cont_read # (
     .CORE_ADDR_WIDTH(CORE_ADDR_WIDTH),
     .AXIS_DATA_WIDTH(AXIS_DATA_WIDTH),
     .AXIS_KEEP_WIDTH(AXIS_KEEP_WIDTH),
-    .AXIS_TAG_WIDTH(AXIS_TAG_WIDTH),
-    .HDR_WIDTH(HDR_WIDTH)
+    .AXIS_TAG_WIDTH(AXIS_TAG_WIDTH)
 ) pcie_cont_read_inst( 
   .pcie_clk  (pcie_clk),
   .pcie_rst  (pcie_rst),
@@ -1021,8 +1019,7 @@ pcie_cont_write # (
     .CORE_ADDR_WIDTH(CORE_ADDR_WIDTH),
     .AXIS_DATA_WIDTH(AXIS_DATA_WIDTH),
     .AXIS_KEEP_WIDTH(AXIS_KEEP_WIDTH),
-    .AXIS_TAG_WIDTH(AXIS_TAG_WIDTH),
-    .HDR_WIDTH(HDR_WIDTH)
+    .AXIS_TAG_WIDTH(AXIS_TAG_WIDTH)
 ) pcie_cont_write_inst ( 
   .pcie_clk  (pcie_clk),
   .pcie_rst  (pcie_rst),
