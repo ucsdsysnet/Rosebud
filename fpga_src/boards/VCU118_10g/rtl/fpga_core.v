@@ -253,7 +253,7 @@ parameter PORT_COUNT       = INTERFACE_COUNT+V_PORT_COUNT+LB_PORT_COUNT+1;
 parameter ENABLE_ILA       = 0;
 
 // MAC and switching system parameters
-parameter LVL1_DATA_WIDTH  = 128;
+parameter LVL1_DATA_WIDTH  = 256;
 parameter LVL1_STRB_WIDTH  = LVL1_DATA_WIDTH/8;
 parameter LVL1_CTRL_WIDTH  = 32+4; //DON'T CHANGE
 parameter LVL1_DRAM_WIDTH  = 64; //DRAM CONTROL
@@ -289,7 +289,7 @@ parameter SLOT_WIDTH       = $clog2(SLOT_COUNT+1);
 parameter TAG_WIDTH        = (SLOT_WIDTH>5)? SLOT_WIDTH:5;
 parameter DMEM_SIZE_BYTES  = 32768;
 parameter CORE_MSG_WIDTH   = 4+$clog2(DMEM_SIZE_BYTES)+32;
-parameter LVL2_DATA_WIDTH  = 64;
+parameter LVL2_DATA_WIDTH  = 128;
 parameter LVL2_STRB_WIDTH  = LVL2_DATA_WIDTH/8;
 parameter CORE_ADDR_WIDTH  = 16;
 parameter ID_TAG_WIDTH     = CORE_WIDTH+TAG_WIDTH;
@@ -811,6 +811,7 @@ pcie_controller #
   .CORE_DESC_WIDTH(LVL1_DRAM_WIDTH),
   .CORE_COUNT(CORE_COUNT),        
   .CORE_ADDR_WIDTH(CORE_ADDR_WIDTH), 
+  .HDR_WIDTH(LVL2_DATA_WIDTH),
   .PCIE_SLOT_COUNT(PCIE_SLOT_COUNT),
   .IF_COUNT(V_IF_COUNT),
   .PORTS_PER_IF(PORTS_PER_V_IF),
@@ -983,6 +984,7 @@ loopback_msg_fifo # (
   .SLOT_WIDTH(SLOT_WIDTH),
   .PORT_COUNT(LB_PORT_COUNT),
   .FIRST_PORT(FIRST_LB_PORT),
+  .HDR_WIDTH(LVL2_DATA_WIDTH),
   .ID_TAG_WIDTH(ID_TAG_WIDTH)
 ) loopback_msg_fifo_inst (
     .clk(sys_clk),

@@ -22,7 +22,8 @@ module pcie_cont_read # (
   parameter CORE_ADDR_WIDTH      = 16, 
   parameter AXIS_DATA_WIDTH      = 128, 
   parameter AXIS_KEEP_WIDTH      = 16, 
-  parameter AXIS_TAG_WIDTH       = 9
+  parameter AXIS_TAG_WIDTH       = 9,
+  parameter HDR_WIDTH            = 128
 ) ( 
   input  wire                                pcie_clk,
   input  wire                                pcie_rst,
@@ -385,7 +386,7 @@ simple_fifo # (
 // PCIe address header adder
 header_adder # (
   .DATA_WIDTH(AXIS_DATA_WIDTH),
-  .HDR_WIDTH(64),
+  .HDR_WIDTH(HDR_WIDTH),
   .DEST_WIDTH(AXIS_TAG_WIDTH)
 ) rx_header_adder (
   .clk(pcie_clk),
@@ -399,7 +400,7 @@ header_adder # (
   .s_axis_tvalid(axis_read_data_tvalid),
   .s_axis_tready(axis_read_data_tready),
 
-  .header({{(32-CORE_ADDR_WIDTH){1'b0}},axis_read_data_tuser,32'd0}),
+  .header({{(HDR_WIDTH-32-CORE_ADDR_WIDTH){1'b0}},axis_read_data_tuser,32'd0}),
   .header_valid(axis_read_data_tvalid),
   .header_ready(), 
 

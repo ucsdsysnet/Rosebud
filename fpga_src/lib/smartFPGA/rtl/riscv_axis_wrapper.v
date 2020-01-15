@@ -317,17 +317,17 @@ wire                  m_axis_tlast;
 wire [PORT_WIDTH-1:0] m_axis_tdest;
 wire [TAG_WIDTH-1:0]  m_axis_tuser;
 
-wire [DATA_WIDTH-1:0]    data_m_axis_tdata_n;
-wire [STRB_WIDTH-1:0]    data_m_axis_tkeep_n;
-wire                     data_m_axis_tvalid_n;
-wire                     data_m_axis_tready_n;
-wire                     data_m_axis_tlast_n;
-wire [PORT_WIDTH-1:0]    data_m_axis_tdest_n;
-wire [TAG_WIDTH-1:0]     data_m_axis_tuser_n;
+wire [DATA_WIDTH-1:0] data_m_axis_tdata_n;
+wire [STRB_WIDTH-1:0] data_m_axis_tkeep_n;
+wire                  data_m_axis_tvalid_n;
+wire                  data_m_axis_tready_n;
+wire                  data_m_axis_tlast_n;
+wire [PORT_WIDTH-1:0] data_m_axis_tdest_n;
+wire [TAG_WIDTH-1:0]  data_m_axis_tuser_n;
  
-reg  [63:0]  m_header_r;
-reg          m_header_allowed_r;
-reg          m_header_v;
+reg  [DATA_WIDTH-1:0] m_header_r;
+reg                   m_header_allowed_r;
+reg                   m_header_v;
 
 wire [127:0] dram_wr_desc; 
 wire         dram_wr_valid;
@@ -349,9 +349,9 @@ always @ (posedge sys_clk)
 
 always @ (posedge sys_clk) 
   if (dram_wr_valid && dram_wr_ready)
-    m_header_r <= dram_wr_desc[127:64];
+    m_header_r <= {{(DATA_WIDTH-64){1'b0}}, dram_wr_desc[127:64]};
   else if (ctrl_in_valid && ctrl_in_desc[64+ID_TAG_WIDTH] && ctrl_in_ready)
-    m_header_r <= {{(64-ID_TAG_WIDTH){1'b0}},ctrl_in_desc[63+ID_TAG_WIDTH:64]};
+    m_header_r <= {{(DATA_WIDTH-ID_TAG_WIDTH){1'b0}},ctrl_in_desc[63+ID_TAG_WIDTH:64]};
 
 // Can get 1 cycle more efficient while output DMA is getting initialized 
 always @ (posedge sys_clk)

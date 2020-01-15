@@ -6,6 +6,7 @@ module loopback_msg_fifo # (
     parameter SLOT_WIDTH      = 3,
     parameter PORT_COUNT      = 2,
     parameter FIRST_PORT      = 2,
+    parameter HDR_WIDTH       = 64,
     parameter ID_TAG_WIDTH    = 5+CORE_WIDTH
 ) (
     input  wire                     clk,
@@ -36,14 +37,14 @@ generate
     wire                     int_axis_tvalid;
     wire                     int_axis_tlast;
     wire                     int_axis_tready;
-    wire [63:0]              dest_header;
+    wire [HDR_WIDTH-1:0]     dest_header;
 
     // no use fo s_axis_tuser
     assign m_axis_tuser[i*PORT_WIDTH +: PORT_WIDTH] = FIRST_PORT + i;
  
     header_remover # (
       .DATA_WIDTH(DATA_WIDTH),
-      .HDR_WIDTH(64),
+      .HDR_WIDTH(HDR_WIDTH),
       .USER_WIDTH(1),
       .DEST_WIDTH(1)
     ) dest_remover (
