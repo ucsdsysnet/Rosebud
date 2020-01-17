@@ -73,6 +73,8 @@ struct mqnic_dev {
     u8 __iomem *hw_addr;
     u8 __iomem *phc_hw_addr;
 
+    struct mutex state_lock;
+
     u8 base_mac[ETH_ALEN];
 
     char name[16];
@@ -145,6 +147,8 @@ struct mqnic_ring {
     u32 stride;
 
     u32 cpl_index;
+
+    u32 mtu;
 
     size_t buf_size;
     u8 *buf;
@@ -223,6 +227,7 @@ struct mqnic_port {
 
     u32 port_id;
     u32 port_features;
+    u32 port_mtu;
     u32 sched_count;
     u32 sched_offset;
     u32 sched_stride;
@@ -287,6 +292,8 @@ int mqnic_create_port(struct mqnic_priv *priv, struct mqnic_port **port_ptr, int
 void mqnic_destroy_port(struct mqnic_priv *priv, struct mqnic_port **port_ptr);
 int mqnic_activate_port(struct mqnic_port *port);
 void mqnic_deactivate_port(struct mqnic_port *port);
+u32 mqnic_port_get_rss_mask(struct mqnic_port *port);
+void mqnic_port_set_rss_mask(struct mqnic_port *port, u32 rss_mask);
 
 // mqnic_ptp.c
 void mqnic_register_phc(struct mqnic_dev *mdev);

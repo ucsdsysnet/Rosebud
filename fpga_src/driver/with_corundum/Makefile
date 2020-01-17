@@ -8,7 +8,14 @@ all:
 
 clean:
 	make -C /lib/modules/$(shell uname -r)/build M=$(PWD) clean
+	rm *.o.ur-safe
+
+load:
+	sudo insmod mqnic.ko	
+
+remove:
+	sudo rmmod mqnic
 
 reset: 
-	sudo ./pcie_hot_reset.sh 05:00.0
+	sudo ./pcie_hot_reset.sh 02:00.0
 

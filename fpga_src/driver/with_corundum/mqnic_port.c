@@ -61,6 +61,8 @@ int mqnic_create_port(struct mqnic_priv *priv, struct mqnic_port **port_ptr, int
     dev_info(dev, "Port ID: 0x%08x", port->port_id);
     port->port_features = ioread32(port->hw_addr+MQNIC_PORT_REG_PORT_FEATURES);
     dev_info(dev, "Port features: 0x%08x", port->port_features);
+    port->port_mtu = ioread32(port->hw_addr+MQNIC_PORT_REG_PORT_MTU);
+    dev_info(dev, "Port MTU: %d", port->port_mtu);
 
     port->sched_count = ioread32(port->hw_addr+MQNIC_PORT_REG_SCHED_COUNT);
     dev_info(dev, "Scheduler count: %d", port->sched_count);
@@ -106,5 +108,15 @@ void mqnic_deactivate_port(struct mqnic_port *port)
 {
     // disable schedulers
     iowrite32(0, port->hw_addr+MQNIC_PORT_REG_SCHED_ENABLE);
+}
+
+u32 mqnic_port_get_rss_mask(struct mqnic_port *port)
+{
+    return ioread32(port->hw_addr+MQNIC_PORT_REG_RSS_MASK);
+}
+
+void mqnic_port_set_rss_mask(struct mqnic_port *port, u32 rss_mask)
+{
+    iowrite32(rss_mask, port->hw_addr+MQNIC_PORT_REG_RSS_MASK);
 }
 

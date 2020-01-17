@@ -41,13 +41,14 @@ either expressed or implied, of The Regents of the University of California.
 #define MQNIC_MAX_SCHED 8
 
 #define MQNIC_MAX_EVENT_RINGS   256
-#define MQNIC_MAX_TX_RINGS      256
-#define MQNIC_MAX_TX_CPL_RINGS  256
-#define MQNIC_MAX_RX_RINGS      256
-#define MQNIC_MAX_RX_CPL_RINGS  256
+#define MQNIC_MAX_TX_RINGS      8192
+#define MQNIC_MAX_TX_CPL_RINGS  8192
+#define MQNIC_MAX_RX_RINGS      8192
+#define MQNIC_MAX_RX_CPL_RINGS  8192
 
 #define MQNIC_BOARD_ID_VCU108        0x10ee806c
 #define MQNIC_BOARD_ID_VCU118        0x10ee9076
+#define MQNIC_BOARD_ID_VCU1525       0x10ee95f5
 #define MQNIC_BOARD_ID_EXANIC_X10    0x1ce40003
 #define MQNIC_BOARD_ID_EXANIC_X25    0x1ce40009
 #define MQNIC_BOARD_ID_ADM_PCIE_9V3  0x41449003
@@ -65,6 +66,8 @@ either expressed or implied, of The Regents of the University of California.
 #define MQNIC_REG_IF_COUNT                0x0020
 #define MQNIC_REG_IF_STRIDE               0x0024
 #define MQNIC_REG_IF_CSR_OFFSET           0x002C
+
+#define MQNIC_REG_FPGA_ID                 0x0040
 
 #define MQNIC_REG_GPIO_OUT                0x0100
 #define MQNIC_REG_GPIO_IN                 0x0104
@@ -90,6 +93,9 @@ either expressed or implied, of The Regents of the University of California.
 #define MQNIC_PHC_REG_PTP_ADJ_NS          0x0054
 #define MQNIC_PHC_REG_PTP_ADJ_COUNT       0x0058
 #define MQNIC_PHC_REG_PTP_ADJ_ACTIVE      0x005C
+
+#define MQNIC_PHC_PEROUT_OFFSET           0x60
+#define MQNIC_PHC_PEROUT_STRIDE           0x40
 
 #define MQNIC_PHC_REG_PEROUT_CTRL         0x0000
 #define MQNIC_PHC_REG_PEROUT_STATUS       0x0004
@@ -128,16 +134,21 @@ either expressed or implied, of The Regents of the University of California.
 #define MQNIC_IF_FEATURE_PTP_TS           (1 << 4)
 #define MQNIC_IF_FEATURE_TX_CSUM          (1 << 8)
 #define MQNIC_IF_FEATURE_RX_CSUM          (1 << 9)
+#define MQNIC_IF_FEATURE_RX_HASH          (1 << 10)
 
 // Port CSRs
 #define MQNIC_PORT_REG_PORT_ID                    0x0000
 #define MQNIC_PORT_REG_PORT_FEATURES              0x0004
+#define MQNIC_PORT_REG_PORT_MTU                   0x0008
 
 #define MQNIC_PORT_REG_SCHED_COUNT                0x0010
 #define MQNIC_PORT_REG_SCHED_OFFSET               0x0014
 #define MQNIC_PORT_REG_SCHED_STRIDE               0x0018
 #define MQNIC_PORT_REG_SCHED_TYPE                 0x001C
 #define MQNIC_PORT_REG_SCHED_ENABLE               0x0040
+
+#define MQNIC_PORT_REG_RSS_MASK                   0x0080
+
 #define MQNIC_PORT_REG_TDMA_CTRL                  0x0100
 #define MQNIC_PORT_REG_TDMA_STATUS                0x0104
 #define MQNIC_PORT_REG_TDMA_TIMESLOT_COUNT        0x0108
@@ -162,6 +173,7 @@ either expressed or implied, of The Regents of the University of California.
 #define MQNIC_PORT_FEATURE_PTP_TS                 (1 << 4)
 #define MQNIC_PORT_FEATURE_TX_CSUM                (1 << 8)
 #define MQNIC_PORT_FEATURE_RX_CSUM                (1 << 9)
+#define MQNIC_PORT_FEATURE_RX_HASH                (1 << 10)
 
 #define MQNIC_QUEUE_STRIDE        0x00000020
 #define MQNIC_CPL_QUEUE_STRIDE    0x00000020
@@ -219,6 +231,13 @@ struct mqnic_cpl {
     __u32 ts_ns;
     __u16 ts_s;
     __u16 rx_csum;
+    __u32 rx_hash;
+    __u8 rx_hash_type;
+    __u8 rsvd1;
+    __u8 rsvd2;
+    __u8 rsvd3;
+    __u32 rsvd4;
+    __u32 rsvd5;
 };
 
 struct mqnic_event {

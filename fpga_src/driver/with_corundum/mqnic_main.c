@@ -247,7 +247,7 @@ static int mqnic_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
     // Set up interrupts
     for (k = 0; k < mqnic->msi_nvecs; k++)
     {
-        ret = pci_request_irq(pdev, k, mqnic_interrupt, 0, mqnic, "mqnic");
+        ret = pci_request_irq(pdev, k, mqnic_interrupt, 0, mqnic, "mqnic%d-%d", mqnic->id, k);
         if (ret < 0)
         {
             dev_err(dev, "Failed to request IRQ");
@@ -303,6 +303,7 @@ static int mqnic_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
 
     mqnic->misc_dev.name = mqnic->name;
     mqnic->misc_dev.fops = &mqnic_fops;
+    mqnic->misc_dev.parent = dev;
 
     ret = misc_register(&mqnic->misc_dev);
     if (ret)
@@ -312,6 +313,8 @@ static int mqnic_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
     }
 
     pci_save_state(pdev);
+
+    mutex_init(&mqnic->state_lock);
 
     // probe complete
     return 0;
