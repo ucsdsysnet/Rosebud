@@ -78,6 +78,7 @@ module header_adder # (
   assign m_axis_tvalid = (state==HDR) ? (s_axis_tvalid && header_valid) :
                          (state==MID) ? s_axis_tvalid : (state==LST);
 
+if (DATA_WIDTH!=HDR_WIDTH) begin
   assign m_axis_tdata = (state==HDR) ? {s_axis_tdata[DATA_WIDTH-HDR_WIDTH-1:0], header} : 
                         (state==MID) ? {s_axis_tdata[DATA_WIDTH-HDR_WIDTH-1:0], rest_tdata_r} : 
                                        {{(DATA_WIDTH-HDR_WIDTH){1'b0}},         rest_tdata_r};
@@ -85,7 +86,11 @@ module header_adder # (
   assign m_axis_tkeep = (state==HDR) ? {s_axis_tkeep[STRB_WIDTH-HDR_STRB-1:0], {HDR_STRB{1'b1}}} : 
                         (state==MID) ? {s_axis_tkeep[STRB_WIDTH-HDR_STRB-1:0], rest_tkeep_r} : 
                                        {{(STRB_WIDTH-HDR_STRB){1'b0}},         rest_tkeep_r};
-  
+end else begin
+  assign m_axis_tdata = (state==HDR) ? header           : rest_tdata_r;
+  assign m_axis_tkeep = (state==HDR) ? {HDR_STRB{1'b1}} : rest_tkeep_r;
+end
+
   assign m_axis_tdest = (state==HDR) ? s_axis_tdest : s_axis_tdest_r;
   assign m_axis_tuser = (state==HDR) ? s_axis_tuser : s_axis_tuser_r;
   assign m_axis_tlast = (state==LST) | (!strb_left && s_axis_tlast);
@@ -133,9 +138,15 @@ module header_remover # (
   reg [STRB_WIDTH-HDR_STRB-1:0]  rest_tkeep_r;
   reg [DEST_WIDTH-1:0]           s_axis_tdest_r;
   reg [USER_WIDTH-1:0]           s_axis_tuser_r;
-  
-  wire strb_left = |s_axis_tkeep[STRB_WIDTH-1:HDR_STRB];
-  
+
+  wire strb_left;
+
+if (STRB_WIDTH!=HDR_STRB) begin
+  assign strb_left = |s_axis_tkeep[STRB_WIDTH-1:HDR_STRB];
+end else begin
+  assign strb_left = 1'b0; 
+end
+
   // State machine. HDR while waiting or sending the header, 
   // LST when sending the last piece. MID in between
   localparam HDR = 2'b00;
@@ -162,24 +173,29 @@ module header_remover # (
       ERR: state <= ERR;
     endcase 
  
-  // Latch tdest and tuser at first cycle (for last cycle), and always latch tdata and tkeep
-  always @ (posedge clk) begin
+if (STRB_WIDTH!=HDR_STRB) begin
+  // Latch tdest and tuser at first cycle (for last cycle)
+  always @ (posedge clk) 
     if (s_axis_tvalid && s_axis_tready) begin
       rest_tdata_r <= s_axis_tdata[DATA_WIDTH-1:HDR_WIDTH];
       rest_tkeep_r <= s_axis_tkeep[STRB_WIDTH-1:HDR_STRB];
     end 
+end
+
+  // Always latch tdata and tkeep
+  always @ (posedge clk)
     if (state == HDR) begin
       header_r       <= s_axis_tdata[HDR_WIDTH-1:0];
       s_axis_tdest_r <= s_axis_tdest;
       s_axis_tuser_r <= s_axis_tuser;
     end
-  end
 
   assign header        = (state==HDR) ? s_axis_tdata[HDR_WIDTH-1:0] : header_r;
- 
+
   assign m_axis_tvalid = (state==HDR) ? (s_axis_tvalid && s_axis_tlast) :
                          (state==MID) ? s_axis_tvalid : (state==LST);
 
+if (DATA_WIDTH!=HDR_WIDTH) begin
   assign m_axis_tdata  = (state==HDR) ? {{HDR_WIDTH{1'b0}}, s_axis_tdata[DATA_WIDTH-1:HDR_WIDTH]} : 
                          (state==MID) ? {s_axis_tdata[HDR_WIDTH-1:0], rest_tdata_r} : 
                                        {{HDR_WIDTH{1'b0}}, rest_tdata_r};
@@ -187,7 +203,13 @@ module header_remover # (
   assign m_axis_tkeep  = (state==HDR) ? {{HDR_STRB{1'b0}}, s_axis_tkeep[STRB_WIDTH-1:HDR_STRB]} : 
                          (state==MID) ? {s_axis_tkeep[HDR_STRB-1:0], rest_tkeep_r} : 
                                        {{HDR_STRB{1'b0}}, rest_tkeep_r};
-  
+end else begin
+  // If there is no data after header, data would be set to single word of all zeros. 
+  // Otherwise it would be valid from the next cycle when valid is also asserted. 
+  assign m_axis_tdata  = (state==HDR) ? {DATA_WIDTH{1'b0}} : s_axis_tdata;
+  assign m_axis_tkeep  = (state==HDR) ? {STRB_WIDTH{1'b0}} : s_axis_tkeep;
+end
+
   assign m_axis_tdest  = (state==HDR) ? s_axis_tdest : s_axis_tdest_r;
   assign m_axis_tuser  = (state==HDR) ? s_axis_tuser : s_axis_tuser_r;
 
