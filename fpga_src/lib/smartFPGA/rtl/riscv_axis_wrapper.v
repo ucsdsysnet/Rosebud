@@ -151,7 +151,7 @@ wire [ADDR_WIDTH-1:0] slot_wr_addr;
 wire [SLOT_WIDTH-1:0] slot_wr_ptr;
 wire                  slot_wr_valid;
 wire                  slot_wr_ready;
-reg  [SLOT_WIDTH-1:0] s_slot_ptr;
+wire [SLOT_WIDTH-1:0] s_slot_ptr;
 wire [ADDR_WIDTH-1:0] slot_addr;
 integer j;
 
@@ -197,35 +197,23 @@ initial begin
   for (j=1;j<=SLOT_COUNT;j=j+1)
     slot_addr_lut[j] = SLOT_START_ADDR + ((j-1)*SLOT_ADDR_STEP);
 end
-
-// We wanna use LUTS instead of BRAM or REGS
-assign slot_addr = slot_addr_lut[s_slot_ptr]; 
  
 // Pipeline register to load from slot LUT or packet header
-reg  [DATA_WIDTH-1:0] s_axis_tdata;
-reg  [STRB_WIDTH-1:0] s_axis_tkeep;
-reg                   s_axis_tvalid;
+wire [DATA_WIDTH-1:0] data_s_axis_tdata_r;
+wire [STRB_WIDTH-1:0] data_s_axis_tkeep_r;
+wire                  data_s_axis_tvalid_r;
+wire                  data_s_axis_tready_r;
+wire                  data_s_axis_tlast_r;
+wire [TAG_WIDTH-1:0]  data_s_axis_tdest_r;
+wire [PORT_WIDTH-1:0] data_s_axis_tuser_r;
+
+wire [DATA_WIDTH-1:0] s_axis_tdata;
+wire [STRB_WIDTH-1:0] s_axis_tkeep;
+wire                  s_axis_tvalid;
 wire                  s_axis_tready;
-reg                   s_axis_tlast;
-reg  [TAG_WIDTH-1:0]  s_axis_tdest;
-reg  [PORT_WIDTH-1:0] s_axis_tuser;
-
-reg                   s_is_header; 
-reg                   s_is_header_r; 
-reg                   s_pot_header;
-reg  [ADDR_WIDTH-1:0] s_header_addr;
-wire [ADDR_WIDTH-1:0] s_base_addr;
-
-wire [DATA_WIDTH-1:0]    data_s_axis_tdata_r;
-wire [STRB_WIDTH-1:0]    data_s_axis_tkeep_r;
-wire                     data_s_axis_tvalid_r;
-wire                     data_s_axis_tready_r;
-wire                     data_s_axis_tlast_r;
-wire [TAG_WIDTH-1:0]     data_s_axis_tdest_r;
-wire [PORT_WIDTH-1:0]    data_s_axis_tuser_r;
-
-assign data_s_axis_tready_r = s_axis_tready;
-wire [PORT_WIDTH-1:0] dram_port = DRAM_PORT;
+wire                  s_axis_tlast;
+wire [TAG_WIDTH-1:0]  s_axis_tdest;
+wire [PORT_WIDTH-1:0] s_axis_tuser;
 
 // register input data
 axis_register # (
@@ -262,49 +250,49 @@ axis_register # (
     .m_axis_tuser (data_s_axis_tuser_r)
 );
 
-always @ (posedge sys_clk) begin
+wire [PORT_WIDTH-1:0] dram_port = DRAM_PORT;
+wire [ADDR_WIDTH-1:0] s_header_addr;
+wire [ADDR_WIDTH-1:0] s_base_addr;
+wire [63:0]           incoming_hdr;
+wire                  incoming_hdr_v;
 
-  // Determining the first word which potentially can be a header
-  if (sys_rst) begin
-    s_pot_header <= 1'b1;
-  end else if (data_s_axis_tvalid_r && data_s_axis_tready_r) begin
-    if (data_s_axis_tlast_r) 
-      s_pot_header <= 1'b1;
-    else 
-      s_pot_header <= 1'b0;
-  end
-  
-  // Latch slot and port and destination address only from first word 
-  if (data_s_axis_tvalid_r && data_s_axis_tready_r && s_pot_header) begin
-    s_axis_tdest  <= data_s_axis_tdest_r;
-    s_axis_tuser  <= data_s_axis_tuser_r;  
-    s_slot_ptr    <= data_s_axis_tdest_r[SLOT_WIDTH-1:0];
-    s_header_addr <= data_s_axis_tdata_r[32 +: ADDR_WIDTH];
-  end
+header_remover # (
+  .DATA_WIDTH(DATA_WIDTH),
+  .HDR_WIDTH(64),
+  .DEST_WIDTH(TAG_WIDTH),
+  .USER_WIDTH(PORT_WIDTH)
+) dram_header_remover (
+  .clk(sys_clk),
+  .rst(sys_rst),
 
-  // Register data and tkeep and tlast. Also mark first and second word
-  // so in case of header the first one is not valid and base address 
-  // is asserted with second word.
-  if (data_s_axis_tvalid_r && data_s_axis_tready_r) begin
-    s_axis_tdata  <= data_s_axis_tdata_r;
-    s_axis_tkeep  <= data_s_axis_tkeep_r; 
-    s_axis_tlast  <= data_s_axis_tlast_r;
-    s_is_header   <= (data_s_axis_tuser_r==dram_port) && s_pot_header;  
-    s_is_header_r <= s_is_header;
-  end
+  .has_header   (data_s_axis_tuser_r==dram_port),
 
-  // If there is data and ready is asserted pipeline can move. 
-  // If there is data in pipe but ready is not asserted valid stays asserted.
-  s_axis_tvalid <= ((data_s_axis_tvalid_r && data_s_axis_tready_r) || 
-                    (s_axis_tvalid && (!s_axis_tready)));
-  if (sys_rst) begin
-    s_axis_tvalid <= 1'b0;
-    s_is_header   <= 1'b0;
-    s_is_header_r <= 1'b0;
-  end
-end
-    
-assign s_base_addr = s_is_header_r ? s_header_addr : slot_addr;
+  .s_axis_tdata (data_s_axis_tdata_r),
+  .s_axis_tkeep (data_s_axis_tkeep_r),
+  .s_axis_tdest (data_s_axis_tdest_r),
+  .s_axis_tuser (data_s_axis_tuser_r),
+  .s_axis_tlast (data_s_axis_tlast_r),
+  .s_axis_tvalid(data_s_axis_tvalid_r),
+  .s_axis_tready(data_s_axis_tready_r),
+
+  .header       (incoming_hdr),
+  .header_valid (incoming_hdr_v),
+
+  .m_axis_tdata (s_axis_tdata),
+  .m_axis_tkeep (s_axis_tkeep),
+  .m_axis_tdest (s_axis_tdest),
+  .m_axis_tuser (s_axis_tuser),
+  .m_axis_tlast (s_axis_tlast),
+  .m_axis_tvalid(s_axis_tvalid),
+  .m_axis_tready(s_axis_tready)
+);
+
+assign s_slot_ptr    = s_axis_tdest[SLOT_WIDTH-1:0];
+assign s_header_addr = incoming_hdr[32 +: ADDR_WIDTH];
+
+// We want to use LUTS instead of BRAM or REGS
+assign slot_addr     = slot_addr_lut[s_slot_ptr]; 
+assign s_base_addr   = incoming_hdr_v ? s_header_addr : slot_addr;
 
 /////////////////////////////////////////////////////////////////////
 //////////// ATTACHING DRAM ADDR TO OUTGOING DRAM DATA //////////////
@@ -317,17 +305,17 @@ wire                  m_axis_tlast;
 wire [PORT_WIDTH-1:0] m_axis_tdest;
 wire [TAG_WIDTH-1:0]  m_axis_tuser;
 
-wire [DATA_WIDTH-1:0]    data_m_axis_tdata_n;
-wire [STRB_WIDTH-1:0]    data_m_axis_tkeep_n;
-wire                     data_m_axis_tvalid_n;
-wire                     data_m_axis_tready_n;
-wire                     data_m_axis_tlast_n;
-wire [PORT_WIDTH-1:0]    data_m_axis_tdest_n;
-wire [TAG_WIDTH-1:0]     data_m_axis_tuser_n;
+wire [DATA_WIDTH-1:0] data_m_axis_tdata_n;
+wire [STRB_WIDTH-1:0] data_m_axis_tkeep_n;
+wire                  data_m_axis_tvalid_n;
+wire                  data_m_axis_tready_n;
+wire                  data_m_axis_tlast_n;
+wire [PORT_WIDTH-1:0] data_m_axis_tdest_n;
+wire [TAG_WIDTH-1:0]  data_m_axis_tuser_n;
  
 reg  [63:0]  m_header_r;
-reg          m_header_allowed_r;
 reg          m_header_v;
+wire         m_header_ready;
 
 wire [127:0] dram_wr_desc; 
 wire         dram_wr_valid;
@@ -335,17 +323,6 @@ wire         dram_wr_ready;
 
 wire ctrl_in_valid, ctrl_in_ready;
 wire [ID_TAG_WIDTH+64:0] ctrl_in_desc;
-
-always @ (posedge sys_clk)
-  if (sys_rst)
-    m_header_allowed_r <= 1'b1;
-  else
-    if (m_axis_tvalid && m_axis_tready) begin
-      if (m_axis_tlast)
-        m_header_allowed_r <= 1'b1;
-      else
-        m_header_allowed_r <= 1'b0;
-    end
 
 always @ (posedge sys_clk) 
   if (dram_wr_valid && dram_wr_ready)
@@ -360,18 +337,38 @@ always @ (posedge sys_clk)
   else if ((dram_wr_valid && dram_wr_ready)||
            (ctrl_in_valid && ctrl_in_desc[64+ID_TAG_WIDTH] && ctrl_in_ready))
     m_header_v <= 1'b1;
-  else if (m_axis_tvalid && data_m_axis_tready_n && m_header_allowed_r)
+  else if (m_header_ready)
     m_header_v <= 1'b0;
 
-wire dram_addr_send = m_axis_tvalid && m_header_allowed_r && m_header_v;
+header_adder # (
+  .DATA_WIDTH(DATA_WIDTH),
+  .HDR_WIDTH(64),
+  .DEST_WIDTH(PORT_WIDTH),
+  .USER_WIDTH(TAG_WIDTH)
+) dram_loopback_hdr (
+  .clk(sys_clk),
+  .rst(sys_rst),
 
-assign data_m_axis_tdata_n = dram_addr_send ? m_header_r : m_axis_tdata;
-assign data_m_axis_tkeep_n = dram_addr_send ? {STRB_WIDTH{1'b1}} : m_axis_tkeep;
-assign data_m_axis_tlast_n = dram_addr_send ? 1'b0               : m_axis_tlast;
-assign data_m_axis_tdest_n = m_axis_tdest;
-assign data_m_axis_tuser_n = m_axis_tuser;
-assign m_axis_tready = (!dram_addr_send) && data_m_axis_tready_n;
-assign data_m_axis_tvalid_n = dram_addr_send || m_axis_tvalid;
+  .s_axis_tdata (m_axis_tdata),
+  .s_axis_tkeep (m_axis_tkeep),
+  .s_axis_tdest (m_axis_tdest),
+  .s_axis_tuser (m_axis_tuser),
+  .s_axis_tlast (m_axis_tlast),
+  .s_axis_tvalid(m_axis_tvalid),
+  .s_axis_tready(m_axis_tready),
+
+  .header      (m_header_r),
+  .header_valid(m_header_v),
+  .header_ready(m_header_ready),
+
+  .m_axis_tdata (data_m_axis_tdata_n),
+  .m_axis_tkeep (data_m_axis_tkeep_n),
+  .m_axis_tdest (data_m_axis_tdest_n),
+  .m_axis_tuser (data_m_axis_tuser_n),
+  .m_axis_tlast (data_m_axis_tlast_n),
+  .m_axis_tvalid(data_m_axis_tvalid_n),
+  .m_axis_tready(data_m_axis_tready_n)
+);
 
 // register output data
 axis_register # (
@@ -454,7 +451,7 @@ axis_dma # (
 
   .s_axis_tdata (s_axis_tdata),
   .s_axis_tkeep (s_axis_tkeep),
-  .s_axis_tvalid(s_axis_tvalid && !s_is_header),
+  .s_axis_tvalid(s_axis_tvalid),
   .s_axis_tready(s_axis_tready),
   .s_axis_tlast (s_axis_tlast),
   .s_axis_tdest (s_axis_tdest),

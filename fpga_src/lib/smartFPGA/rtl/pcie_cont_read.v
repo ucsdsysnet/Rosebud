@@ -386,7 +386,8 @@ simple_fifo # (
 header_adder # (
   .DATA_WIDTH(AXIS_DATA_WIDTH),
   .HDR_WIDTH(64),
-  .DEST_WIDTH(AXIS_TAG_WIDTH)
+  .DEST_WIDTH(AXIS_TAG_WIDTH),
+  .ALWAYS_HDR(1)
 ) rx_header_adder (
   .clk(pcie_clk),
   .rst(pcie_rst),

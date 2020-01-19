@@ -45,10 +45,12 @@ generate
       .DATA_WIDTH(DATA_WIDTH),
       .HDR_WIDTH(64),
       .USER_WIDTH(1),
-      .DEST_WIDTH(1)
+      .DEST_WIDTH(1),
+      .ALWAYS_HDR(1)
     ) dest_remover (
       .clk(clk),
       .rst(rst),
+      .has_header(1'b1),
         
       .s_axis_tdata (s_axis_tdata[i*DATA_WIDTH +: DATA_WIDTH]),
       .s_axis_tkeep (s_axis_tkeep[i*STRB_WIDTH +: STRB_WIDTH]),
@@ -59,6 +61,7 @@ generate
       .s_axis_tready(s_axis_tready[i]),
      
       .header(dest_header), 
+      .header_valid(),
     
       .m_axis_tdata (int_axis_tdata),
       .m_axis_tkeep (int_axis_tkeep),

@@ -85,10 +85,12 @@ wire [63:0] tx_header;
 header_remover # (
   .DATA_WIDTH(AXIS_DATA_WIDTH),
   .HDR_WIDTH(64),
-  .USER_WIDTH(AXIS_TAG_WIDTH)
+  .USER_WIDTH(AXIS_TAG_WIDTH),
+  .ALWAYS_HDR(1)
 ) tx_header_remover (
   .clk(pcie_clk),
   .rst(pcie_rst),
+  .has_header(1'b1),
 
   .s_axis_tdata (cores_tx_tdata),
   .s_axis_tkeep (cores_tx_tkeep),
@@ -99,6 +101,7 @@ header_remover # (
   .s_axis_tready(cores_tx_tready),
 
   .header(tx_header), 
+  .header_valid(),
 
   .m_axis_tdata (axis_write_data_tdata),
   .m_axis_tkeep (axis_write_data_tkeep),
