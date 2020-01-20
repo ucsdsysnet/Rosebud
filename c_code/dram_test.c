@@ -6,7 +6,9 @@ int main(void){
 
 	struct Desc packet;
 	unsigned int start_time, end_time;
-	
+  unsigned long long dram_rd_addr = 0x000000000000BBBB;
+  unsigned long long dram_wr_addr = 0x000000000000BCBB;
+
 	write_timer_interval(0x00000200);
 	set_masks(0x1F); //enable just errors 
 
@@ -17,7 +19,7 @@ int main(void){
 	packet.len  = 69;
 	packet.tag  = 12;
 	packet.data = (unsigned int*)0x220;
-	safe_dram_read_req(0x0, 0x0000BBBB, &packet);
+	safe_dram_read_req(&dram_rd_addr, &packet);
 
 	while (dram_flags()==0);
 	write_dram_flags(0);
@@ -25,7 +27,7 @@ int main(void){
 	packet.len  = 69;
 	packet.tag  = 12;
 	packet.data = (unsigned int*)0x220;
-	safe_dram_write(0x0, 0x0000BCBB, &packet);
+	safe_dram_write(&dram_wr_addr, &packet);
 
 	while (1){
 		if (in_pkt_ready()){

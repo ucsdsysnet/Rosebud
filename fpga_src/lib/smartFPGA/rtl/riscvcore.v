@@ -103,7 +103,7 @@ VexRiscv core (
 ///////////////////////////// IO WRITES ///////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////
 
-localparam DATA_DESC_ADDR = 4'b0000;//???;
+localparam SEND_DESC_ADDR = 4'b0000;//???;
 localparam WR_DRAM_ADDR   = 4'b0001;//???;
 localparam SLOT_LUT_ADDR  = 5'b00100;//??;
 localparam TIMER_STP_ADDR = 5'b00101;//??;
@@ -114,7 +114,7 @@ localparam DEBUG_REG_ADDR = 5'b00111;//??;
 // localparam RESERVED_8  = 4'b0101;//???;
 // localparam RESERVED_8  = 4'b0110;//???;
 
-localparam DATA_DESC_STRB = 7'b0111000;//;
+localparam SEND_DESC_STRB = 7'b0111000;//;
 localparam RD_DESC_STRB   = 7'b0111001;//;
 localparam DRAM_FLAG_RST  = 7'b0111010;//;
 localparam SLOT_LUT_STRB  = 7'b0111011;//;
@@ -129,14 +129,14 @@ localparam IO_WRITE_ADDRS = 1'b0;//??????;
 wire io_not_mem = dmem_addr[ADDR_WIDTH-1];
 wire io_write = io_not_mem && dmem_v && dmem_wr_en && ext_dmem_ready; 
 
-wire data_desc_wen  = io_write && (dmem_addr[6:3]==DATA_DESC_ADDR);
+wire data_desc_wen  = io_write && (dmem_addr[6:3]==SEND_DESC_ADDR);
 wire dram_addr_wen  = io_write && (dmem_addr[6:3]==WR_DRAM_ADDR);
 wire slot_info_wen  = io_write && (dmem_addr[6:2]==SLOT_LUT_ADDR);
 wire timer_step_wen = io_write && (dmem_addr[6:2]==TIMER_STP_ADDR);
 wire dram_flags_wen = io_write && (dmem_addr[6:2]==DRAM_FLAG_ADDR);
 wire debug_reg_wen  = io_write && (dmem_addr[6:2]==DEBUG_REG_ADDR);
 
-wire send_data_desc = io_write && (dmem_addr[6:0]==DATA_DESC_STRB);
+wire send_data_desc = io_write && (dmem_addr[6:0]==SEND_DESC_STRB);
 wire rd_desc_done   = io_write && (dmem_addr[6:0]==RD_DESC_STRB);
 wire dram_flag_rst  = io_write && (dmem_addr[6:0]==DRAM_FLAG_RST);
 wire slot_wen       = io_write && (dmem_addr[6:0]==SLOT_LUT_STRB);
