@@ -115,7 +115,6 @@ parameter MSG_WIDTH       = 15+36;
 parameter DATA_WIDTH      = 64;
 parameter STRB_WIDTH      = 8;
 
-
 parameter CORE_ADDR_WIDTH = 16;
 parameter IMEM_SIZE_BYTES = 8192;
 parameter DMEM_SIZE_BYTES = 32768;

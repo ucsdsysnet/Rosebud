@@ -421,8 +421,8 @@ end
 
 always @ (posedge clk)
     if (rst) begin
-		    dmem_read_ready    <= 1'b0;
-		    imem_read_ready    <= 1'b0;
+		    dmem_read_ready <= 1'b0;
+		    imem_read_ready <= 1'b0;
 		end else begin
 			  dmem_read_ready <= dmem_v && ext_dmem_ready;
 		    imem_read_ready <= imem_v;
