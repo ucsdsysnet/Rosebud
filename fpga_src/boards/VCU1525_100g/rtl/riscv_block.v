@@ -48,57 +48,57 @@ module riscv_block (
     // Incoming data
     input  wire [127:0] data_s_axis_tdata,   //DATA_WIDTH
     input  wire [15:0]  data_s_axis_tkeep,   //STRB_WIDTH
-    input  wire        data_s_axis_tvalid,
-    output wire        data_s_axis_tready,
-    input  wire        data_s_axis_tlast,
-    input  wire [4:0]  data_s_axis_tdest,   //TAG_WIDTH
-    input  wire [2:0]  data_s_axis_tuser,   //PORT_WIDTH
+    input  wire         data_s_axis_tvalid,
+    output wire         data_s_axis_tready,
+    input  wire         data_s_axis_tlast,
+    input  wire [4:0]   data_s_axis_tdest,   //TAG_WIDTH
+    input  wire [2:0]   data_s_axis_tuser,   //PORT_WIDTH
   
     // Outgoing data
     output wire [127:0] data_m_axis_tdata,   //DATA_WIDTH
     output wire [15:0]  data_m_axis_tkeep,   //STRB_WIDTH
-    output wire        data_m_axis_tvalid,
-    input  wire        data_m_axis_tready,
-    output wire        data_m_axis_tlast,
-    output wire [2:0]  data_m_axis_tdest,   //PORT_WIDTH
-    output wire [4:0]  data_m_axis_tuser,   //TAG_WIDTH
+    output wire         data_m_axis_tvalid,
+    input  wire         data_m_axis_tready,
+    output wire         data_m_axis_tlast,
+    output wire [2:0]   data_m_axis_tdest,   //PORT_WIDTH
+    output wire [4:0]   data_m_axis_tuser,   //TAG_WIDTH
   
     // ---------------- CTRL CHANNEL --------------- // 
     // Incoming control
-    input  wire [35:0] ctrl_s_axis_tdata,
-    input  wire        ctrl_s_axis_tvalid,
-    output wire        ctrl_s_axis_tready,
-    input  wire        ctrl_s_axis_tlast,
+    input  wire [35:0]  ctrl_s_axis_tdata,
+    input  wire         ctrl_s_axis_tvalid,
+    output wire         ctrl_s_axis_tready,
+    input  wire         ctrl_s_axis_tlast,
   
-    // Outgoing control
-    output wire [35:0] ctrl_m_axis_tdata,
-    output wire        ctrl_m_axis_tvalid,
-    input  wire        ctrl_m_axis_tready,
-    output wire        ctrl_m_axis_tlast,
+    // Outgoing control 
+    output wire [35:0]  ctrl_m_axis_tdata,
+    output wire         ctrl_m_axis_tvalid,
+    input  wire         ctrl_m_axis_tready,
+    output wire         ctrl_m_axis_tlast,
     
     // ------------ DRAM RD REQ CHANNEL ------------- // 
     // Incoming DRAM request
-    input  wire [63:0] dram_s_axis_tdata,
-    input  wire        dram_s_axis_tvalid,
-    output wire        dram_s_axis_tready,
-    input  wire        dram_s_axis_tlast,
+    input  wire [63:0]  dram_s_axis_tdata,
+    input  wire         dram_s_axis_tvalid,
+    output wire         dram_s_axis_tready,
+    input  wire         dram_s_axis_tlast,
   
     // Outgoing DRAM request
-    output wire [63:0] dram_m_axis_tdata,
-    output wire        dram_m_axis_tvalid,
-    input  wire        dram_m_axis_tready,
-    output wire        dram_m_axis_tlast,
+    output wire [63:0]  dram_m_axis_tdata,
+    output wire         dram_m_axis_tvalid,
+    input  wire         dram_m_axis_tready,
+    output wire         dram_m_axis_tlast,
 
     // ------------- CORE MSG CHANNEL -------------- // 
     // Core messages output  
-    output wire [50:0] core_msg_out_data,   //MSG_WIDTH
-    output wire        core_msg_out_valid,
-    input  wire        core_msg_out_ready,
+    output wire [50:0]  core_msg_out_data,   //MSG_WIDTH
+    output wire         core_msg_out_valid,
+    input  wire         core_msg_out_ready,
 
     // Core messages input
-    input  wire [50:0] core_msg_in_data,    //MSG_WIDTH
-    input  wire [3:0]  core_msg_in_user,    //CORE_ID_WIDTH
-    input  wire        core_msg_in_valid
+    input  wire [50:0]  core_msg_in_data,    //MSG_WIDTH
+    input  wire [3:0]   core_msg_in_user,    //CORE_ID_WIDTH
+    input  wire         core_msg_in_valid
 );
 
 (* KEEP = "TRUE" *) reg rst_r;
@@ -108,7 +108,7 @@ always @ (posedge clk)
 // Update if CORE_COUNT or PORT_COUNT has changed
 parameter CORE_ID_WIDTH   = 4;
 parameter PORT_WIDTH      = 3;
-parameter DRAM_PORT       = 6;
+parameter DRAM_PORT       = 4;
 parameter SLOT_COUNT      = 8;
 parameter TAG_WIDTH       = 5;
 parameter MSG_WIDTH       = 15+36;

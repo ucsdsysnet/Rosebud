@@ -143,20 +143,20 @@ wire cfgmclk_int;
 wire clk_161mhz_ref_int;
 
 wire clk_125mhz_mmcm_out;
-wire clk_250mhz_mmcm_out;
-wire clk_250mhz_2_mmcm_out;
+wire clk_253mhz_mmcm_out;
+wire clk_253mhz_2_mmcm_out;
 
 // Internal 125 MHz clock
 wire clk_125mhz_int;
 wire rst_125mhz_int;
 
 // Internal 250 MHz clock
-wire clk_250mhz_int;
-wire rst_250mhz_int;
+wire clk_253mhz_int;
+wire rst_253mhz_int;
 
 // Second Internal 250 MHz clock
-wire clk_250mhz_2_int;
-wire rst_250mhz_2_int;
+wire clk_253mhz_2_int;
+wire rst_253mhz_2_int;
 
 // Internal 156.25 MHz clock
 wire clk_156mhz_int;
@@ -210,9 +210,9 @@ clk_mmcm_inst (
     .PWRDWN(1'b0),
     .CLKOUT0(clk_125mhz_mmcm_out),
     .CLKOUT0B(),
-    .CLKOUT1(clk_250mhz_mmcm_out),
+    .CLKOUT1(clk_253mhz_mmcm_out),
     .CLKOUT1B(),
-    .CLKOUT2(clk_250mhz_2_mmcm_out),
+    .CLKOUT2(clk_253mhz_2_mmcm_out),
     .CLKOUT2B(),
     .CLKOUT3(),
     .CLKOUT3B(),
@@ -240,33 +240,33 @@ sync_reset_125mhz_inst (
 );
 
 BUFG
-clk_250mhz_bufg_inst (
-    .I(clk_250mhz_mmcm_out),
-    .O(clk_250mhz_int)
+clk_253mhz_bufg_inst (
+    .I(clk_253mhz_mmcm_out),
+    .O(clk_253mhz_int)
 );
 
 sync_reset #(
     .N(4)
 )
-sync_reset_250mhz_inst (
-    .clk(clk_250mhz_int),
+sync_reset_253mhz_inst (
+    .clk(clk_253mhz_int),
     .rst(~mmcm_locked),
-    .sync_reset_out(rst_250mhz_int)
+    .sync_reset_out(rst_253mhz_int)
 );
 
 BUFG
-clk_250mhz_2_bufg_inst (
-    .I(clk_250mhz_2_mmcm_out),
-    .O(clk_250mhz_2_int)
+clk_253mhz_2_bufg_inst (
+    .I(clk_253mhz_2_mmcm_out),
+    .O(clk_253mhz_2_int)
 );
 
 sync_reset #(
     .N(4)
 )
-sync_reset_250mhz_2_inst (
-    .clk(clk_250mhz_2_int),
+sync_reset_253mhz_2_inst (
+    .clk(clk_253mhz_2_int),
     .rst(~mmcm_locked),
-    .sync_reset_out(rst_250mhz_2_int)
+    .sync_reset_out(rst_253mhz_2_int)
 );
 
 // GPIO
@@ -1366,7 +1366,7 @@ fpga_core #(
     .BAR0_APERTURE(BAR0_APERTURE),
     .AXIS_ETH_DATA_WIDTH(AXIS_ETH_DATA_WIDTH),
     .AXIS_ETH_KEEP_WIDTH(AXIS_ETH_KEEP_WIDTH),
-    .SEPARATE_CLOCKS(1)
+    .SEPARATE_CLOCKS(0)
 ) core_inst (
     /*
      * Clock: 250 MHz
@@ -1374,10 +1374,10 @@ fpga_core #(
      */
     .pcie_clk(pcie_user_clk),
     .pcie_rst(pcie_user_reset),
-    .sys_clk(clk_250mhz_int),
-    .sys_rst(rst_250mhz_int),
-    .core_clk(clk_250mhz_2_int),
-    .core_rst(rst_250mhz_2_int),
+    .sys_clk(clk_253mhz_int),
+    .sys_rst(rst_253mhz_int),
+    .core_clk(clk_253mhz_int),
+    .core_rst(rst_253mhz_int),
 
     /*
      * GPIO

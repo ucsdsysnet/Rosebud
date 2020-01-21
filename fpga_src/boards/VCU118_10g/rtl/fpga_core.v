@@ -304,9 +304,11 @@ parameter FPGA_ID   = 32'h4B31093;
 // Separating reset per block and keeping it in sync with rest of the system
 (* KEEP = "TRUE" *) reg [CORE_COUNT-1:0] block_reset;
 (* KEEP = "TRUE" *) reg core_rst_r;
+(* KEEP = "TRUE" *) reg core_rst_rr;
 integer j;
 always @ (posedge core_clk) begin
-  core_rst_r <= core_rst;
+  core_rst_r  <= core_rst;
+  core_rst_rr <= core_rst_r;
   for (j=0; j<CORE_COUNT; j=j+1)
     block_reset[j] <= core_rst;
 end
@@ -1181,7 +1183,7 @@ axis_switch_2lvl # (
     .s_axis_tuser( {dram_rx_axis_tuser, loopback_rx_axis_tuser, sched_rx_axis_tuser}),
 
     .m_clk(core_clk),
-    .m_rst(core_rst_r),
+    .m_rst(core_rst_rr),
     .m_axis_tdata (data_s_axis_tdata),
     .m_axis_tkeep (data_s_axis_tkeep),
     .m_axis_tvalid(data_s_axis_tvalid),
@@ -1215,7 +1217,7 @@ axis_switch_2lvl # (
      * AXI Stream inputs
      */
     .s_clk(core_clk),
-    .s_rst(core_rst_r),
+    .s_rst(core_rst_rr),
     .s_axis_tdata(data_m_axis_tdata),
     .s_axis_tkeep(data_m_axis_tkeep),
     .s_axis_tvalid(data_m_axis_tvalid),
@@ -1278,7 +1280,7 @@ axis_switch_2lvl # (
      * AXI Stream outputs
      */
     .m_clk(core_clk),
-    .m_rst(core_rst_r),
+    .m_rst(core_rst_rr),
     .m_axis_tdata(ctrl_s_axis_tdata),
     .m_axis_tkeep(),
     .m_axis_tvalid(ctrl_s_axis_tvalid),
@@ -1312,7 +1314,7 @@ axis_switch_2lvl # (
      * AXI Stream inputs
      */
     .s_clk(core_clk),
-    .s_rst(core_rst_r),
+    .s_rst(core_rst_rr),
     .s_axis_tdata(ctrl_m_axis_tdata),
     .s_axis_tkeep({CORE_COUNT{1'b0}}),
     .s_axis_tvalid(ctrl_m_axis_tvalid),
@@ -1374,7 +1376,7 @@ axis_switch_2lvl # (
      * AXI Stream outputs
      */
     .m_clk(core_clk),
-    .m_rst(core_rst_r),
+    .m_rst(core_rst_rr),
     .m_axis_tdata(dram_s_axis_tdata),
     .m_axis_tkeep(),
     .m_axis_tvalid(dram_s_axis_tvalid),
@@ -1408,7 +1410,7 @@ axis_switch_2lvl # (
      * AXI Stream inputs
      */
     .s_clk(core_clk),
-    .s_rst(core_rst_r),
+    .s_rst(core_rst_rr),
     .s_axis_tdata(dram_m_axis_tdata),
     .s_axis_tkeep({CORE_COUNT{1'b0}}),
     .s_axis_tvalid(dram_m_axis_tvalid),
@@ -1465,7 +1467,7 @@ axis_switch_2lvl # (
      * AXI Stream inputs
      */
     .s_clk(core_clk),
-    .s_rst(core_rst_r),
+    .s_rst(core_rst_rr),
     .s_axis_tdata(core_msg_out_data),
     .s_axis_tkeep({CORE_COUNT{1'b0}}),
     .s_axis_tvalid(core_msg_out_valid),
@@ -1479,7 +1481,7 @@ axis_switch_2lvl # (
      * AXI Stream output
      */
     .m_clk(core_clk),
-    .m_rst(core_rst_r),
+    .m_rst(core_rst_rr),
     .m_axis_tdata(core_msg_merged_data),
     .m_axis_tkeep(),
     .m_axis_tvalid(core_msg_merged_valid),
@@ -1498,7 +1500,7 @@ always @ (posedge core_clk) begin
     core_msg_merged_data_r  <= {BC_MSG_CLUSTERS{core_msg_merged_data}};
     core_msg_merged_user_r  <= {BC_MSG_CLUSTERS{core_msg_merged_user}};
     core_msg_merged_valid_r <= {BC_MSG_CLUSTERS{core_msg_merged_valid}}; 
-    if (core_rst_r)
+    if (core_rst_rr)
       core_msg_merged_valid_r <= {BC_MSG_CLUSTERS{1'b0}};
 end
 
@@ -1515,7 +1517,7 @@ always @ (posedge core_clk) begin
     core_msg_in_data  <= {CORES_PER_CLUSTER{core_msg_merged_data_r}};
     core_msg_in_user  <= {CORES_PER_CLUSTER{core_msg_merged_user_r}};
     core_msg_in_valid <= {CORES_PER_CLUSTER{core_msg_merged_valid_r}}; 
-    if (core_rst_r)
+    if (core_rst_rr)
     core_msg_in_valid <= {CORE_COUNT{1'b0}}; 
 end
 
