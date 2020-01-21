@@ -5,4 +5,4 @@ edit:
 	vim src/main/scala/vexriscv/demo/GenSmallAndProductive.scala
 
 copy:
-	cp VexRiscv.v ../fpga_src/rtl/
+	cp VexRiscv.v ../fpga_src/lib/smartFPGA/rtl/

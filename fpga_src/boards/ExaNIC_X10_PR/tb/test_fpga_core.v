@@ -301,7 +301,7 @@ pcie_us_cfg #(
 )
 pcie_us_cfg_inst (
     .clk(pcie_clk),
-    .rst(pcie_reset),
+    .rst(pcie_rst),
 
     /*
      * Configuration outputs
@@ -332,7 +332,7 @@ pcie_us_msi #(
 )
 pcie_us_msi_inst (
     .clk(pcie_clk),
-    .rst(pcie_reset),
+    .rst(pcie_rst),
 
     .msi_irq(msi_irq),
 

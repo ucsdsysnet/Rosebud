@@ -8,3 +8,5 @@ compile:
 	./hex_gen.py -w ${WIDTH} -i ${NAME}.bin > ${NAME}.hex
 read_bin:
 	xxd -e ${NAME}.bin
+clean:
+	rm -f *.bin *.hex *.o *.asm

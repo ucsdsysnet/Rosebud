@@ -1,12 +1,10 @@
 #include "core.h"
+struct Desc packet;
+unsigned int start_time, end_time;
+volatile unsigned short * sh_test  = (volatile unsigned short *) 0x0700A;
 
 int main(void){
 
-	volatile unsigned short * sh_test  = (volatile unsigned short *) 0x0700A;
-
-	struct Desc packet;
-	unsigned int start_time, end_time;
-	
 	write_timer_interval(0x00000200);
 	set_masks(0x1F); //enable just errors 
 
