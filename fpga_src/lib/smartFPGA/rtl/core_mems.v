@@ -85,7 +85,7 @@ always @ (posedge clkb)
 assign douta = mem_out_a;
 assign doutb = mem_out_b;
 
-// For now before adding PCI-e DMA master for init
+// Mostly for test benches 
 integer j;
 initial begin
     // two nested loops for smaller number of iterations per loop
@@ -185,5 +185,17 @@ always @ (posedge clk)
 
 assign douta = mem_out_a;
 assign doutb = mem_out_b;
+
+// Only for simulation, URAM cannot be loaded during programming 
+integer j;
+initial begin
+    // two nested loops for smaller number of iterations per loop
+    // workaround for synthesizer complaints about large loop counts
+    for (i = 0; i < 2**(ADDR_WIDTH); i = i + 2**((ADDR_WIDTH-1)/2)) begin
+        for (j = i; j < i + 2**((ADDR_WIDTH-1)/2); j = j + 1) begin
+            mem[j] = {LINE_SIZE{1'b0}};
+        end
+    end
+end
 
 endmodule

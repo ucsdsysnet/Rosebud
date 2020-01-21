@@ -737,6 +737,7 @@ def bench():
           print("Firmware load")
           ins = bytearray(open(FIRMWARE, "rb").read())
           mem_data[0:len(ins)] = ins
+          mem_data[48059:48200] = bytearray([(x+10)%256 for x in range(141)])
 
           yield rc.mem_write(dev_pf0_bar0+0x00040C, struct.pack('<L', 0xffff))
           
@@ -761,7 +762,6 @@ def bench():
 
         if (TEST_PCIE):
           print("PCIE tests")
-          mem_data[48059:48200] = bytearray([(x+10)%256 for x in range(141)])
 
           # write pcie read descriptor
           yield rc.mem_write(dev_pf0_bar0+0x000440, struct.pack('<L', (mem_base+0x0000) & 0xffffffff))
