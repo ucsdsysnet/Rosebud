@@ -1366,7 +1366,7 @@ fpga_core #(
     .BAR0_APERTURE(BAR0_APERTURE),
     .AXIS_ETH_DATA_WIDTH(AXIS_ETH_DATA_WIDTH),
     .AXIS_ETH_KEEP_WIDTH(AXIS_ETH_KEEP_WIDTH),
-    .SEPARATE_CLOCKS(0)
+    .SEPARATE_CLOCKS(1)
 ) core_inst (
     /*
      * Clock: 250 MHz
@@ -1376,8 +1376,8 @@ fpga_core #(
     .pcie_rst(pcie_user_reset),
     .sys_clk(clk_253mhz_int),
     .sys_rst(rst_253mhz_int),
-    .core_clk(clk_253mhz_int),
-    .core_rst(rst_253mhz_int),
+    .core_clk(clk_253mhz_2_int),
+    .core_rst(rst_253mhz_2_int),
 
     /*
      * GPIO
