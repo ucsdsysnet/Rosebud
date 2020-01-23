@@ -208,7 +208,7 @@ parameter STG_F_DATA_DEPTH = 8192;
 parameter STG_F_CTRL_DEPTH = 32; // TKEEP is not enabled, so 32 words
 parameter STG_F_DRAM_DEPTH = 1024; 
 parameter V_MAC_FIFO_SIZE  = 1024;
-parameter CLUSTER_COUNT    = 2;
+parameter CLUSTER_COUNT    = 4;
 parameter BC_MSG_CLUSTERS  = 4;
 
 // PCIe parameters
@@ -688,7 +688,8 @@ pcie_controller #
   .IF_COUNT(V_IF_COUNT),
   .PORTS_PER_IF(PORTS_PER_V_IF),
   .RAM_PIPELINE(RAM_PIPELINE),
-  .CORE_REQ_PCIE_CLK(1)
+  .CORE_REQ_PCIE_CLK(1),
+  .AXIS_PIPE_LENGTH(2)
 ) pcie_controller_inst (
   .sys_clk(sys_clk),
   .sys_rst(sys_rst),

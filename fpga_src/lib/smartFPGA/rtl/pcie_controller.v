@@ -70,7 +70,8 @@ module pcie_controller #
   parameter PORTS_PER_IF            = 1,
   parameter PORT_COUNT              = ((IF_COUNT>0) ? IF_COUNT*PORTS_PER_IF : 1),
   parameter RAM_PIPELINE            = 4,
-  parameter CORE_REQ_PCIE_CLK       = 1 
+  parameter CORE_REQ_PCIE_CLK       = 1,
+  parameter AXIS_PIPE_LENGTH        = 1
 ) (
   input  wire                                  sys_clk,
   input  wire                                  sys_rst,
@@ -1071,7 +1072,21 @@ pcie_cont_write # (
 
 assign cores_dma_read_desc_ram_sel  = {CORE_RAM_SEL_WIDTH{1'b0}};
 assign cores_dma_write_desc_ram_sel = {CORE_RAM_SEL_WIDTH{1'b0}};
-    
+
+wire [PORT_COUNT*AXIS_DATA_WIDTH-1:0] tx_axis_tdata_n;
+wire [PORT_COUNT*AXIS_KEEP_WIDTH-1:0] tx_axis_tkeep_n;
+wire [PORT_COUNT-1:0]                 tx_axis_tvalid_n;
+wire [PORT_COUNT-1:0]                 tx_axis_tready_n;
+wire [PORT_COUNT-1:0]                 tx_axis_tlast_n;
+wire [PORT_COUNT-1:0]                 tx_axis_tuser_n;
+
+wire [PORT_COUNT*AXIS_DATA_WIDTH-1:0] rx_axis_tdata_n;
+wire [PORT_COUNT*AXIS_KEEP_WIDTH-1:0] rx_axis_tkeep_n;
+wire [PORT_COUNT-1:0]                 rx_axis_tvalid_n;
+wire [PORT_COUNT-1:0]                 rx_axis_tready_n;
+wire [PORT_COUNT-1:0]                 rx_axis_tlast_n;
+wire [PORT_COUNT-1:0]                 rx_axis_tuser_n;
+     
 genvar i;     
 
 generate
@@ -1538,14 +1553,14 @@ generate
       
           .m_clk(sys_clk),
           .m_rst(sys_rst),
-          .m_axis_tdata (tx_axis_tdata[i*AXIS_DATA_WIDTH +: AXIS_DATA_WIDTH]),
-          .m_axis_tkeep (tx_axis_tkeep[i*AXIS_KEEP_WIDTH +: AXIS_KEEP_WIDTH]),
-          .m_axis_tvalid(tx_axis_tvalid[i]),
-          .m_axis_tready(tx_axis_tready[i]),
-          .m_axis_tlast (tx_axis_tlast[i]),
+          .m_axis_tdata (tx_axis_tdata_n[i*AXIS_DATA_WIDTH +: AXIS_DATA_WIDTH]),
+          .m_axis_tkeep (tx_axis_tkeep_n[i*AXIS_KEEP_WIDTH +: AXIS_KEEP_WIDTH]),
+          .m_axis_tvalid(tx_axis_tvalid_n[i]),
+          .m_axis_tready(tx_axis_tready_n[i]),
+          .m_axis_tlast (tx_axis_tlast_n[i]),
           .m_axis_tid   (),
           .m_axis_tdest (),
-          .m_axis_tuser (tx_axis_tuser[i]),
+          .m_axis_tuser (tx_axis_tuser_n[i]),
       
           .s_status_overflow(),
           .s_status_bad_frame(),
@@ -1554,7 +1569,40 @@ generate
           .m_status_bad_frame(),
           .m_status_good_frame()
       );
-      
+
+      axis_pipeline_register # (
+          .DATA_WIDTH(AXIS_DATA_WIDTH),
+          .KEEP_ENABLE(1),
+          .KEEP_WIDTH(AXIS_KEEP_WIDTH),
+          .ID_ENABLE(0),
+          .DEST_ENABLE(0),
+          .USER_ENABLE(1),
+          .USER_WIDTH(1),
+          .REG_TYPE(2),
+          .LENGTH(AXIS_PIPE_LENGTH)
+      ) tx_pipeline_reg (
+          .clk(sys_clk),
+          .rst(sys_rst),
+          
+          .s_axis_tdata (tx_axis_tdata_n[i*AXIS_DATA_WIDTH +: AXIS_DATA_WIDTH]),
+          .s_axis_tkeep (tx_axis_tkeep_n[i*AXIS_KEEP_WIDTH +: AXIS_KEEP_WIDTH]),
+          .s_axis_tvalid(tx_axis_tvalid_n[i]),
+          .s_axis_tready(tx_axis_tready_n[i]),
+          .s_axis_tlast (tx_axis_tlast_n[i]),
+          .s_axis_tid   (8'd0),
+          .s_axis_tdest (8'd0),
+          .s_axis_tuser (tx_axis_tuser_n[i]),
+
+          .m_axis_tdata (tx_axis_tdata[i*AXIS_DATA_WIDTH +: AXIS_DATA_WIDTH]),
+          .m_axis_tkeep (tx_axis_tkeep[i*AXIS_KEEP_WIDTH +: AXIS_KEEP_WIDTH]),
+          .m_axis_tvalid(tx_axis_tvalid[i]),
+          .m_axis_tready(tx_axis_tready[i]),
+          .m_axis_tlast (tx_axis_tlast[i]),
+          .m_axis_tid   (),
+          .m_axis_tdest (),
+          .m_axis_tuser (tx_axis_tuser[i])
+      );
+ 
       axis_async_fifo_adapter # (
           .DEPTH(MAC_ASYNC_FIFO_SIZE),
           .S_DATA_WIDTH(AXIS_DATA_WIDTH),
@@ -1571,14 +1619,14 @@ generate
       ) rx_async_fifo_inst (
           .s_clk(sys_clk),
           .s_rst(sys_rst),
-          .s_axis_tdata (rx_axis_tdata[i*AXIS_DATA_WIDTH +: AXIS_DATA_WIDTH]),
-          .s_axis_tkeep (rx_axis_tkeep[i*AXIS_KEEP_WIDTH +: AXIS_KEEP_WIDTH]),
-          .s_axis_tvalid(rx_axis_tvalid[i]),
-          .s_axis_tready(rx_axis_tready[i]),
-          .s_axis_tlast (rx_axis_tlast[i]),
+          .s_axis_tdata (rx_axis_tdata_n[i*AXIS_DATA_WIDTH +: AXIS_DATA_WIDTH]),
+          .s_axis_tkeep (rx_axis_tkeep_n[i*AXIS_KEEP_WIDTH +: AXIS_KEEP_WIDTH]),
+          .s_axis_tvalid(rx_axis_tvalid_n[i]),
+          .s_axis_tready(rx_axis_tready_n[i]),
+          .s_axis_tlast (rx_axis_tlast_n[i]),
           .s_axis_tid   (8'd0),
           .s_axis_tdest (8'd0),
-          .s_axis_tuser (rx_axis_tuser[i]),
+          .s_axis_tuser (rx_axis_tuser_n[i]),
       
           .m_clk(pcie_clk),
           .m_rst(pcie_rst),
@@ -1598,6 +1646,40 @@ generate
           .m_status_bad_frame(),
           .m_status_good_frame()
       );
+
+      axis_pipeline_register # (
+          .DATA_WIDTH(AXIS_DATA_WIDTH),
+          .KEEP_ENABLE(1), 
+          .KEEP_WIDTH(AXIS_KEEP_WIDTH),
+          .ID_ENABLE(0),
+          .DEST_ENABLE(0),
+          .USER_ENABLE(1),
+          .USER_WIDTH(1),
+          .REG_TYPE(2),
+          .LENGTH(AXIS_PIPE_LENGTH)
+      ) rx_pipeline_reg (
+          .clk(sys_clk),
+          .rst(sys_rst),
+          
+          .s_axis_tdata (rx_axis_tdata[i*AXIS_DATA_WIDTH +: AXIS_DATA_WIDTH]),
+          .s_axis_tkeep (rx_axis_tkeep[i*AXIS_KEEP_WIDTH +: AXIS_KEEP_WIDTH]),
+          .s_axis_tvalid(rx_axis_tvalid[i]),
+          .s_axis_tready(rx_axis_tready[i]),
+          .s_axis_tlast (rx_axis_tlast[i]),
+          .s_axis_tid   (8'd0),
+          .s_axis_tdest (8'd0),
+          .s_axis_tuser (rx_axis_tuser[i]),
+          
+          .m_axis_tdata (rx_axis_tdata_n[i*AXIS_DATA_WIDTH +: AXIS_DATA_WIDTH]),
+          .m_axis_tkeep (rx_axis_tkeep_n[i*AXIS_KEEP_WIDTH +: AXIS_KEEP_WIDTH]),
+          .m_axis_tvalid(rx_axis_tvalid_n[i]),
+          .m_axis_tready(rx_axis_tready_n[i]),
+          .m_axis_tlast (rx_axis_tlast_n[i]),
+          .m_axis_tid   (),
+          .m_axis_tdest (),
+          .m_axis_tuser (rx_axis_tuser_n[i])
+      );
+
     end   
   end
 endgenerate 
