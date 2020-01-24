@@ -78,6 +78,7 @@ srcs.append("../lib/axis/rtl/axis_async_fifo_adapter.v")
 srcs.append("../lib/axis/rtl/axis_fifo.v")
 srcs.append("../lib/axis/rtl/axis_fifo_adapter.v")
 srcs.append("../lib/axis/rtl/axis_register.v")
+srcs.append("../lib/axis/rtl/axis_pipeline_register.v")
 srcs.append("../lib/axi/rtl/axil_interconnect.v")
 
 srcs.append("../lib/pcie/rtl/pcie_us_axil_master.v")

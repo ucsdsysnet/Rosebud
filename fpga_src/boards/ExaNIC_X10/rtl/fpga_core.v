@@ -611,7 +611,8 @@ pcie_controller #
   .IF_COUNT(V_IF_COUNT),
   .PORTS_PER_IF(PORTS_PER_V_IF),
   .RAM_PIPELINE(RAM_PIPELINE),
-  .CORE_REQ_PCIE_CLK(0)
+  .CORE_REQ_PCIE_CLK(0),
+  .AXIS_PIPE_LENGTH(2)
 ) pcie_controller_inst (
   .sys_clk(sys_clk),
   .sys_rst(sys_rst),
@@ -831,7 +832,7 @@ wire [CORE_WIDTH-1:0]                      sched_ctrl_s_axis_tuser;
 
 wire sched_trig_in, sched_trig_out, sched_trig_in_ack, sched_trig_out_ack;
 
-(* keep_hierarchy = "soft" *)
+(* keep_hierarchy = "yes" *)
 simple_scheduler # (
   .PORT_COUNT(PORT_COUNT),
   .INTERFACE_COUNT(INTERFACE_COUNT+V_PORT_COUNT),

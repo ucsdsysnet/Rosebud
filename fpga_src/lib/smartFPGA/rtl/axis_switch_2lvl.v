@@ -258,7 +258,55 @@ module axis_switch_2lvl_shrink # (
     parameter S_PER_CLUSTER     = S_COUNT/CLUSTER_COUNT;
     parameter STAGE_FIFO_ENABLE = (STAGE_FIFO_DEPTH>0);
 
-    
+    wire [S_COUNT*S_DATA_WIDTH-1:0] s_axis_tdata_r;
+    wire [S_COUNT*S_KEEP_WIDTH-1:0] s_axis_tkeep_r;
+    wire [S_COUNT-1:0]              s_axis_tvalid_r;
+    wire [S_COUNT-1:0]              s_axis_tready_r;
+    wire [S_COUNT-1:0]              s_axis_tlast_r;
+    wire [S_COUNT*ID_WIDTH-1:0]     s_axis_tid_r;
+    wire [S_COUNT*S_DEST_WIDTH-1:0] s_axis_tdest_r;
+    wire [S_COUNT*USER_WIDTH-1:0]   s_axis_tuser_r;
+     
+    genvar k;
+    generate        
+      for (k=0; k<S_COUNT; k=k+1) begin: input_registers
+        axis_pipeline_register # (
+              .DATA_WIDTH(S_DATA_WIDTH),
+              .KEEP_ENABLE(S_KEEP_ENABLE),
+              .KEEP_WIDTH(S_KEEP_WIDTH),
+              .DEST_ENABLE(S_DEST_ENABLE),
+              .DEST_WIDTH(S_DEST_WIDTH),
+              .USER_ENABLE(USER_ENABLE),
+              .USER_WIDTH(USER_WIDTH),
+              .ID_ENABLE(ID_ENABLE),
+              .ID_WIDTH(ID_WIDTH),
+              .REG_TYPE(S_REG_TYPE),
+              .LENGTH(1)
+        ) input_register (
+          .clk(s_clk),
+          .rst(s_rst),
+
+          .s_axis_tdata(s_axis_tdata[k*S_DATA_WIDTH +: S_DATA_WIDTH]),
+          .s_axis_tkeep(s_axis_tkeep[k*S_KEEP_WIDTH +: S_KEEP_WIDTH]),
+          .s_axis_tvalid(s_axis_tvalid[k]),
+          .s_axis_tready(s_axis_tready[k]),
+          .s_axis_tlast(s_axis_tlast[k]),
+          .s_axis_tid(s_axis_tid[k*ID_WIDTH +: ID_WIDTH]),
+          .s_axis_tdest(s_axis_tdest[k*S_DEST_WIDTH +: S_DEST_WIDTH]),
+          .s_axis_tuser(s_axis_tuser[k*USER_WIDTH +: USER_WIDTH]),
+
+          .m_axis_tdata(s_axis_tdata_r[k*S_DATA_WIDTH +: S_DATA_WIDTH]),
+          .m_axis_tkeep(s_axis_tkeep_r[k*S_KEEP_WIDTH +: S_KEEP_WIDTH]),
+          .m_axis_tvalid(s_axis_tvalid_r[k]),
+          .m_axis_tready(s_axis_tready_r[k]),
+          .m_axis_tlast(s_axis_tlast_r[k]),
+          .m_axis_tid(s_axis_tid_r[k*ID_WIDTH +: ID_WIDTH]),
+          .m_axis_tdest(s_axis_tdest_r[k*S_DEST_WIDTH +: S_DEST_WIDTH]),
+          .m_axis_tuser(s_axis_tuser_r[k*USER_WIDTH +: USER_WIDTH])
+        );
+      end
+    endgenerate
+
     // Level 1
     // First level doesn't do any routing, so no change to tdest
     wire [CLUSTER_COUNT*M_DATA_WIDTH-1:0] int_axis_tdata_f;
@@ -274,14 +322,14 @@ module axis_switch_2lvl_shrink # (
         if (S_PER_CLUSTER == 1) begin: bypass 
             // TODO add fifo if async
 
-            assign int_axis_tdata_f  = s_axis_tdata;
-            assign int_axis_tkeep_f  = s_axis_tkeep;
-            assign int_axis_tdest_f  = s_axis_tdest;
-            assign int_axis_tuser_f  = s_axis_tuser;
-            assign int_axis_tid_f    = s_axis_tid;
-            assign int_axis_tvalid_f = s_axis_tvalid;
-            assign int_axis_tlast_f  = s_axis_tlast;
-            assign s_axis_tready     = int_axis_tready_f;
+            assign int_axis_tdata_f  = s_axis_tdata_r;
+            assign int_axis_tkeep_f  = s_axis_tkeep_r;
+            assign int_axis_tdest_f  = s_axis_tdest_r;
+            assign int_axis_tuser_f  = s_axis_tuser_r;
+            assign int_axis_tid_f    = s_axis_tid_r;
+            assign int_axis_tvalid_f = s_axis_tvalid_r;
+            assign int_axis_tlast_f  = s_axis_tlast_r;
+            assign s_axis_tready_r   = int_axis_tready_f;
 
         end else begin: clusters
 
@@ -293,6 +341,15 @@ module axis_switch_2lvl_shrink # (
             wire [CLUSTER_COUNT-1:0]              int_axis_tvalid, 
                                                   int_axis_tready, 
                                                   int_axis_tlast;
+
+            wire [CLUSTER_COUNT*S_DATA_WIDTH-1:0] int_axis_tdata_r;
+            wire [CLUSTER_COUNT*S_KEEP_WIDTH-1:0] int_axis_tkeep_r;
+            wire [CLUSTER_COUNT*S_DEST_WIDTH-1:0] int_axis_tdest_r;
+            wire [CLUSTER_COUNT*USER_WIDTH-1:0]   int_axis_tuser_r;
+            wire [CLUSTER_COUNT*ID_WIDTH-1:0]     int_axis_tid_r;
+            wire [CLUSTER_COUNT-1:0]              int_axis_tvalid_r, 
+                                                  int_axis_tready_r, 
+                                                  int_axis_tlast_r;
              
             for (j=0; j<CLUSTER_COUNT; j=j+1) begin : arb_n_fifo
                 axis_arb_mux #
@@ -317,14 +374,14 @@ module axis_switch_2lvl_shrink # (
                     /*
                      * AXI Stream inputs
                      */
-                    .s_axis_tdata(s_axis_tdata[j*S_PER_CLUSTER*S_DATA_WIDTH +: S_PER_CLUSTER*S_DATA_WIDTH]),
-                    .s_axis_tkeep(s_axis_tkeep[j*S_PER_CLUSTER*S_KEEP_WIDTH +: S_PER_CLUSTER*S_KEEP_WIDTH]),
-                    .s_axis_tvalid(s_axis_tvalid[j*S_PER_CLUSTER +: S_PER_CLUSTER]),
-                    .s_axis_tready(s_axis_tready[j*S_PER_CLUSTER +: S_PER_CLUSTER]),
-                    .s_axis_tlast(s_axis_tlast[j*S_PER_CLUSTER +: S_PER_CLUSTER]),
-                    .s_axis_tid(s_axis_tid[j*S_PER_CLUSTER*ID_WIDTH +: S_PER_CLUSTER*ID_WIDTH]),
-                    .s_axis_tdest(s_axis_tdest[j*S_PER_CLUSTER*S_DEST_WIDTH +: S_PER_CLUSTER*S_DEST_WIDTH]),
-                    .s_axis_tuser(s_axis_tuser[j*S_PER_CLUSTER*USER_WIDTH +: S_PER_CLUSTER*USER_WIDTH]),
+                    .s_axis_tdata(s_axis_tdata_r[j*S_PER_CLUSTER*S_DATA_WIDTH +: S_PER_CLUSTER*S_DATA_WIDTH]),
+                    .s_axis_tkeep(s_axis_tkeep_r[j*S_PER_CLUSTER*S_KEEP_WIDTH +: S_PER_CLUSTER*S_KEEP_WIDTH]),
+                    .s_axis_tvalid(s_axis_tvalid_r[j*S_PER_CLUSTER +: S_PER_CLUSTER]),
+                    .s_axis_tready(s_axis_tready_r[j*S_PER_CLUSTER +: S_PER_CLUSTER]),
+                    .s_axis_tlast(s_axis_tlast_r[j*S_PER_CLUSTER +: S_PER_CLUSTER]),
+                    .s_axis_tid(s_axis_tid_r[j*S_PER_CLUSTER*ID_WIDTH +: S_PER_CLUSTER*ID_WIDTH]),
+                    .s_axis_tdest(s_axis_tdest_r[j*S_PER_CLUSTER*S_DEST_WIDTH +: S_PER_CLUSTER*S_DEST_WIDTH]),
+                    .s_axis_tuser(s_axis_tuser_r[j*S_PER_CLUSTER*USER_WIDTH +: S_PER_CLUSTER*USER_WIDTH]),
                 
                     /*
                      * AXI Stream outputs
@@ -338,6 +395,42 @@ module axis_switch_2lvl_shrink # (
                     .m_axis_tdest(int_axis_tdest[j*S_DEST_WIDTH +: S_DEST_WIDTH]),
                     .m_axis_tuser(int_axis_tuser[j*USER_WIDTH +: USER_WIDTH])
         
+                );
+                
+                axis_pipeline_register #
+                (
+                    .DATA_WIDTH(S_DATA_WIDTH),
+                    .KEEP_ENABLE(S_KEEP_ENABLE),
+                    .KEEP_WIDTH(S_KEEP_WIDTH),
+                    .DEST_ENABLE(S_DEST_ENABLE),
+                    .DEST_WIDTH(S_DEST_WIDTH),
+                    .USER_ENABLE(USER_ENABLE),
+                    .USER_WIDTH(USER_WIDTH),
+                    .ID_ENABLE(ID_ENABLE),
+                    .ID_WIDTH(ID_WIDTH),
+                    .REG_TYPE(M_REG_TYPE),
+                    .LENGTH(1)
+                ) sw_lvl1_register (
+                    .clk(s_clk),
+                    .rst(s_rst),
+
+                    .s_axis_tdata(int_axis_tdata[j*S_DATA_WIDTH +: S_DATA_WIDTH]),
+                    .s_axis_tkeep(int_axis_tkeep[j*S_KEEP_WIDTH +: S_KEEP_WIDTH]),
+                    .s_axis_tvalid(int_axis_tvalid[j]),
+                    .s_axis_tready(int_axis_tready[j]),
+                    .s_axis_tlast(int_axis_tlast[j]),
+                    .s_axis_tid(int_axis_tid[j*ID_WIDTH +: ID_WIDTH]),
+                    .s_axis_tdest(int_axis_tdest[j*S_DEST_WIDTH +: S_DEST_WIDTH]),
+                    .s_axis_tuser(int_axis_tuser[j*USER_WIDTH +: USER_WIDTH]),
+
+                    .m_axis_tdata(int_axis_tdata_r[j*S_DATA_WIDTH +: S_DATA_WIDTH]),
+                    .m_axis_tkeep(int_axis_tkeep_r[j*S_KEEP_WIDTH +: S_KEEP_WIDTH]),
+                    .m_axis_tvalid(int_axis_tvalid_r[j]),
+                    .m_axis_tready(int_axis_tready_r[j]),
+                    .m_axis_tlast(int_axis_tlast_r[j]),
+                    .m_axis_tid(int_axis_tid_r[j*ID_WIDTH +: ID_WIDTH]),
+                    .m_axis_tdest(int_axis_tdest_r[j*S_DEST_WIDTH +: S_DEST_WIDTH]),
+                    .m_axis_tuser(int_axis_tuser_r[j*USER_WIDTH +: USER_WIDTH])
                 );
     
                 if (STAGE_FIFO_ENABLE) begin: fifos
@@ -361,14 +454,14 @@ module axis_switch_2lvl_shrink # (
      
                             .s_clk(s_clk),
                             .s_rst(s_rst),
-                            .s_axis_tdata(int_axis_tdata[j*S_DATA_WIDTH +: S_DATA_WIDTH]),
-                            .s_axis_tkeep(int_axis_tkeep[j*S_KEEP_WIDTH +: S_KEEP_WIDTH]),
-                            .s_axis_tvalid(int_axis_tvalid[j]),
-                            .s_axis_tready(int_axis_tready[j]),
-                            .s_axis_tlast(int_axis_tlast[j]),
-                            .s_axis_tid(int_axis_tid[j*ID_WIDTH +: ID_WIDTH]),
-                            .s_axis_tdest(int_axis_tdest[j*S_DEST_WIDTH +: S_DEST_WIDTH]),
-                            .s_axis_tuser(int_axis_tuser[j*USER_WIDTH +: USER_WIDTH]),
+                            .s_axis_tdata(int_axis_tdata_r[j*S_DATA_WIDTH +: S_DATA_WIDTH]),
+                            .s_axis_tkeep(int_axis_tkeep_r[j*S_KEEP_WIDTH +: S_KEEP_WIDTH]),
+                            .s_axis_tvalid(int_axis_tvalid_r[j]),
+                            .s_axis_tready(int_axis_tready_r[j]),
+                            .s_axis_tlast(int_axis_tlast_r[j]),
+                            .s_axis_tid(int_axis_tid_r[j*ID_WIDTH +: ID_WIDTH]),
+                            .s_axis_tdest(int_axis_tdest_r[j*S_DEST_WIDTH +: S_DEST_WIDTH]),
+                            .s_axis_tuser(int_axis_tuser_r[j*USER_WIDTH +: USER_WIDTH]),
     
                             .m_clk(select_m_clk),
                             .m_rst(select_m_rst),
@@ -409,14 +502,14 @@ module axis_switch_2lvl_shrink # (
                             .clk(s_clk),
                             .rst(s_rst),
 
-                            .s_axis_tdata(int_axis_tdata[j*S_DATA_WIDTH +: S_DATA_WIDTH]),
-                            .s_axis_tkeep(int_axis_tkeep[j*S_KEEP_WIDTH +: S_KEEP_WIDTH]),
-                            .s_axis_tvalid(int_axis_tvalid[j]),
-                            .s_axis_tready(int_axis_tready[j]),
-                            .s_axis_tlast(int_axis_tlast[j]),
-                            .s_axis_tid(int_axis_tid[j*ID_WIDTH +: ID_WIDTH]),
-                            .s_axis_tdest(int_axis_tdest[j*S_DEST_WIDTH +: S_DEST_WIDTH]),
-                            .s_axis_tuser(int_axis_tuser[j*USER_WIDTH +: USER_WIDTH]),
+                            .s_axis_tdata(int_axis_tdata_r[j*S_DATA_WIDTH +: S_DATA_WIDTH]),
+                            .s_axis_tkeep(int_axis_tkeep_r[j*S_KEEP_WIDTH +: S_KEEP_WIDTH]),
+                            .s_axis_tvalid(int_axis_tvalid_r[j]),
+                            .s_axis_tready(int_axis_tready_r[j]),
+                            .s_axis_tlast(int_axis_tlast_r[j]),
+                            .s_axis_tid(int_axis_tid_r[j*ID_WIDTH +: ID_WIDTH]),
+                            .s_axis_tdest(int_axis_tdest_r[j*S_DEST_WIDTH +: S_DEST_WIDTH]),
+                            .s_axis_tuser(int_axis_tuser_r[j*USER_WIDTH +: USER_WIDTH]),
     
                             .m_axis_tdata(int_axis_tdata_f[j*M_DATA_WIDTH +: M_DATA_WIDTH]),
                             .m_axis_tkeep(int_axis_tkeep_f[j*M_KEEP_WIDTH +: M_KEEP_WIDTH]),
@@ -433,23 +526,32 @@ module axis_switch_2lvl_shrink # (
                         );
                     end
                 end else begin: no_fifo
-                    assign int_axis_tdata_f  = int_axis_tdata;
-                    assign int_axis_tkeep_f  = int_axis_tkeep;
-                    assign int_axis_tdest_f  = int_axis_tdest;
-                    assign int_axis_tuser_f  = int_axis_tuser;
-                    assign int_axis_tid_f    = int_axis_tid;
-                    assign int_axis_tvalid_f = int_axis_tvalid;
-                    assign int_axis_tlast_f  = int_axis_tlast;
-                    assign int_axis_tready   = int_axis_tready_f;
+                    assign int_axis_tdata_f  = int_axis_tdata_r;
+                    assign int_axis_tkeep_f  = int_axis_tkeep_r;
+                    assign int_axis_tdest_f  = int_axis_tdest_r;
+                    assign int_axis_tuser_f  = int_axis_tuser_r;
+                    assign int_axis_tid_f    = int_axis_tid_r;
+                    assign int_axis_tvalid_f = int_axis_tvalid_r;
+                    assign int_axis_tlast_f  = int_axis_tlast_r;
+                    assign int_axis_tready_r = int_axis_tready_f;
                 end
             end
         end
     endgenerate
     
-    wire [M_COUNT*S_DEST_WIDTH-1:0] m_axis_tdest_r;
-    
     // Level 2 
+    wire [M_COUNT*S_DEST_WIDTH-1:0] m_axis_tdest_r;
+    wire [M_COUNT*M_DATA_WIDTH-1:0] m_axis_tdata_n;
+    wire [M_COUNT*M_KEEP_WIDTH-1:0] m_axis_tkeep_n;
+    wire [M_COUNT-1:0]              m_axis_tvalid_n;
+    wire [M_COUNT-1:0]              m_axis_tready_n;
+    wire [M_COUNT-1:0]              m_axis_tlast_n;
+    wire [M_COUNT*ID_WIDTH-1:0]     m_axis_tid_n;
+    wire [M_COUNT*M_DEST_WIDTH-1:0] m_axis_tdest_n;
+    wire [M_COUNT*USER_WIDTH-1:0]   m_axis_tuser_n;
+     
     if (M_COUNT==1) begin: last_level_arbiter
+
         axis_arb_mux #
         (
             .S_COUNT(CLUSTER_COUNT),
@@ -484,6 +586,42 @@ module axis_switch_2lvl_shrink # (
             /*
              * AXI Stream outputs
              */
+            .m_axis_tdata(m_axis_tdata_n),
+            .m_axis_tkeep(m_axis_tkeep_n),
+            .m_axis_tvalid(m_axis_tvalid_n),
+            .m_axis_tready(m_axis_tready_n),
+            .m_axis_tlast(m_axis_tlast_n),
+            .m_axis_tid(m_axis_tid_n),
+            .m_axis_tdest(m_axis_tdest_n),
+            .m_axis_tuser(m_axis_tuser_n)
+        
+        );
+        
+        axis_pipeline_register # (
+            .DATA_WIDTH(M_DATA_WIDTH),
+            .KEEP_WIDTH(M_KEEP_WIDTH),
+            .KEEP_ENABLE(M_KEEP_ENABLE),
+            .DEST_ENABLE(S_DEST_ENABLE),
+            .DEST_WIDTH(S_DEST_WIDTH),
+            .USER_ENABLE(USER_ENABLE),
+            .USER_WIDTH(USER_WIDTH),
+            .ID_ENABLE(ID_ENABLE),
+            .ID_WIDTH(ID_WIDTH),
+            .REG_TYPE(S_REG_TYPE),
+            .LENGTH(1)
+        ) output_pipeline_register (
+            .clk(select_m_clk),
+            .rst(select_m_rst),
+
+            .s_axis_tdata(m_axis_tdata_n),
+            .s_axis_tkeep(m_axis_tkeep_n),
+            .s_axis_tvalid(m_axis_tvalid_n),
+            .s_axis_tready(m_axis_tready_n),
+            .s_axis_tlast(m_axis_tlast_n),
+            .s_axis_tid(m_axis_tid_n),
+            .s_axis_tdest(m_axis_tdest_n),
+            .s_axis_tuser(m_axis_tuser_n),
+
             .m_axis_tdata(m_axis_tdata),
             .m_axis_tkeep(m_axis_tkeep),
             .m_axis_tvalid(m_axis_tvalid),
@@ -492,8 +630,8 @@ module axis_switch_2lvl_shrink # (
             .m_axis_tid(m_axis_tid),
             .m_axis_tdest(m_axis_tdest_r),
             .m_axis_tuser(m_axis_tuser)
-        
         );
+
     
     end else begin: last_level_sw //M_COUNT!=1
     
