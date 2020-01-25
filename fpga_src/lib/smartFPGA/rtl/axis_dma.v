@@ -337,7 +337,8 @@ module axis_dma # (
   // Calculating offset, number of words and final tkeep in RD_INIT state
   reg [ADDR_WIDTH-1:0]          alligned_rd_addr;
   reg [MASK_BITS-1:0]           rd_offset;
-  reg [LEN_WIDTH-MASK_BITS-1:0] rd_word_count;
+  reg [LEN_WIDTH-MASK_BITS-1:0] rd_req_word_count;
+  reg [LEN_WIDTH-MASK_BITS-1:0] rd_recv_word_count;
   reg [STRB_WIDTH-1:0]          rd_final_tkeep;
   reg                           rd_len_is_int;
 
@@ -351,27 +352,34 @@ module axis_dma # (
   // a data was recieved address and remainig words are updated.
   always @ (posedge clk) begin
     if (rst) begin
-      rd_offset        <= 0;
-      rd_word_count    <= 0;
-      rd_final_tkeep   <= {STRB_WIDTH{1'b1}};
-      rd_len_is_int    <= 1'b1;
+      rd_offset          <= 0;
+      rd_req_word_count  <= 0;
+      rd_recv_word_count <= 0;
+      rd_final_tkeep     <= {STRB_WIDTH{1'b1}};
+      rd_len_is_int      <= 1'b1;
     end
     if (rd_state_r==RD_IDLE) begin
-      rd_offset        <= 0;
-      rd_word_count    <= 0;
-      rd_final_tkeep   <= {STRB_WIDTH{1'b1}};
-      rd_len_is_int    <= 1'b1;
+      rd_offset          <= 0;
+      rd_req_word_count  <= 0;
+      rd_recv_word_count <= 0;
+      rd_final_tkeep     <= {STRB_WIDTH{1'b1}};
+      rd_len_is_int      <= 1'b1;
     end 
     else if (rd_state_r==RD_INIT) begin
-      rd_offset        <= send_base_addr[MASK_BITS-1:0];
-      rd_word_count    <= send_len[LEN_WIDTH-1:MASK_BITS] + extra_words;
-      rd_final_tkeep   <= {{(STRB_WIDTH-1){1'b0}},{STRB_WIDTH{1'b1}}} >> tkeep_zeros;
-      alligned_rd_addr <= {send_base_addr[ADDR_WIDTH-1:MASK_BITS],{MASK_BITS{1'b0}}};
-      rd_len_is_int    <= (send_len[MASK_BITS-1:0]==0);
+      rd_offset          <= send_base_addr[MASK_BITS-1:0];
+      rd_req_word_count  <= send_len[LEN_WIDTH-1:MASK_BITS] + extra_words;
+      rd_recv_word_count <= send_len[LEN_WIDTH-1:MASK_BITS] + extra_words;
+      rd_final_tkeep     <= {{(STRB_WIDTH-1){1'b0}},{STRB_WIDTH{1'b1}}} >> tkeep_zeros;
+      alligned_rd_addr   <= {send_base_addr[ADDR_WIDTH-1:MASK_BITS],{MASK_BITS{1'b0}}};
+      rd_len_is_int      <= (send_len[MASK_BITS-1:0]==0);
     end 
-    else if (mem_rd_en && mem_rd_ready) begin
-      rd_word_count    <= rd_word_count - 1; 
-      alligned_rd_addr <= alligned_rd_addr + STRB_WIDTH;
+    else begin 
+      if (mem_rd_en && mem_rd_ready) begin
+        rd_req_word_count  <= rd_req_word_count - 1; 
+        alligned_rd_addr   <= alligned_rd_addr + STRB_WIDTH;
+      end
+      if (mem_rd_data_v && mem_rd_data_ready) 
+        rd_recv_word_count <= rd_recv_word_count - 1; 
     end
   end
 
@@ -385,7 +393,7 @@ module axis_dma # (
       data_left <= 2'd0;
     else if (rd_state_r != RD_PROC)
       data_left <= 2'd0;
-    else if ((rd_word_count == 0) && mem_rd_data_ready && mem_rd_data_v)
+    else if ((rd_recv_word_count == 1) && mem_rd_data_ready && mem_rd_data_v)
       // Both pipeline stages are full
       if (rd_offset == 0)
         data_left <= 2'd2;
@@ -449,9 +457,9 @@ module axis_dma # (
   // If I'm not ready to get data then I deassert my address valid too. 
   // The sender module has to keep its valid and data until ready! 
   assign mem_rd_data_ready = !(m_axis_tvalid && (!m_axis_tready));
-  assign mem_rd_en         = (rd_word_count > 0) && mem_rd_data_ready;
+  assign mem_rd_en         = (rd_req_word_count > 0) && mem_rd_data_ready;
   assign mem_rd_addr       = alligned_rd_addr;
-  assign mem_rd_last       = (rd_word_count == 1);
+  assign mem_rd_last       = (rd_req_word_count == 1);
 
   assign m_axis_tdata  = {read_reg_1,read_reg_2} >> {rd_offset,3'd0};
   assign m_axis_tvalid = read_reg_2_v;

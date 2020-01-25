@@ -86,6 +86,7 @@ assign douta = mem_out_a;
 assign doutb = mem_out_b;
 
 // Mostly for test benches 
+// synthesis translate_off
 integer j;
 initial begin
     // two nested loops for smaller number of iterations per loop
@@ -96,6 +97,7 @@ initial begin
         end
     end
 end
+// synthesis translate_on
 
 endmodule
 
@@ -187,6 +189,7 @@ assign douta = mem_out_a;
 assign doutb = mem_out_b;
 
 // Only for simulation, URAM cannot be loaded during programming 
+// synthesis translate_off
 integer j;
 initial begin
     // two nested loops for smaller number of iterations per loop
@@ -197,5 +200,6 @@ initial begin
         end
     end
 end
+// synthesis translate_on
 
 endmodule

@@ -1,14 +1,12 @@
 module riscvcore #(
   parameter DATA_WIDTH      = 64,
   parameter ADDR_WIDTH      = 16,
-  parameter IMEM_SIZE_BYTES = 8192,
-  parameter DMEM_SIZE_BYTES = 32768,
   parameter COHERENT_START  = 16'h6FFF,
   parameter CORE_ID_WIDTH   = 4,
   parameter STRB_WIDTH      = DATA_WIDTH/8,
   parameter LINE_ADDR_BITS  = $clog2(STRB_WIDTH),
-  parameter IMEM_ADDR_WIDTH = $clog2(IMEM_SIZE_BYTES),
-  parameter DMEM_ADDR_WIDTH = $clog2(DMEM_SIZE_BYTES),
+  parameter IMEM_ADDR_WIDTH = 16,
+  parameter DMEM_ADDR_WIDTH = 21,
   parameter SLOT_COUNT      = 8,
   parameter SLOT_WIDTH      = $clog2(SLOT_COUNT+1)
 )(
@@ -394,6 +392,7 @@ end else begin: width_convert_dmem
     localparam REMAINED_BITS  = 8*REMAINED_BYTES;
 
     always @ (posedge clk)
+      if (dmem_v && ext_dmem_ready)
         dmem_latched_addr <= dmem_addr[LINE_ADDR_BITS-1:2];
 
     assign dmem_data_out_shifted = dmem_data_out >> {dmem_latched_addr, 5'd0};
