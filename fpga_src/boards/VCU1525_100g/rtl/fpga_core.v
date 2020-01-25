@@ -689,7 +689,7 @@ pcie_controller #
   .PORTS_PER_IF(PORTS_PER_V_IF),
   .RAM_PIPELINE(RAM_PIPELINE),
   .CORE_REQ_PCIE_CLK(1),
-  .AXIS_PIPE_LENGTH(2)
+  .AXIS_PIPE_LENGTH(3)
 ) pcie_controller_inst (
   .sys_clk(sys_clk),
   .sys_rst(sys_rst),

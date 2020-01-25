@@ -15,6 +15,7 @@ module mem_1r1w # (
   output [LINE_SIZE-1 :0]     doutb
 );
 
+(* ram_style = "block" *)
 reg [LINE_SIZE-1:0] mem [0:(2**ADDR_WIDTH)-1];
 reg [LINE_SIZE-1:0] mem_out;
 integer i;
@@ -59,6 +60,7 @@ module mem_2rw_bram # (
   output [LINE_SIZE-1     :0] doutb
 );
 
+(* ram_style = "block" *)
 reg [LINE_SIZE-1:0] mem [0:(2**ADDR_WIDTH)-1];
 reg [LINE_SIZE-1:0] mem_out_a;
 reg [LINE_SIZE-1:0] mem_out_b;
