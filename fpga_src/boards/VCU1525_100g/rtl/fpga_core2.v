@@ -234,7 +234,7 @@ parameter DMEM_SIZE_BYTES  = 32768;
 parameter CORE_MSG_WIDTH   = 4+$clog2(DMEM_SIZE_BYTES)+32;
 parameter LVL2_DATA_WIDTH  = 128;
 parameter LVL2_STRB_WIDTH  = LVL2_DATA_WIDTH/8;
-parameter CORE_ADDR_WIDTH  = 16;
+parameter CORE_ADDR_WIDTH  = 22;
 parameter ID_TAG_WIDTH     = CORE_WIDTH+TAG_WIDTH;
 
 // FW and board IDs
