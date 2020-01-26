@@ -48,7 +48,6 @@ module mem_sys # (
   input  wire [ADDR_WIDTH-1:0]                    core_imem_addr,         
   output wire [DATA_WIDTH-1:0]                    core_imem_rd_data,      
   
-     
   input  wire [BC_MSG_ADDR_WIDTH-1:0]             bc_msg_in_addr,
   input  wire [STRB_WIDTH-1:0]                    bc_msg_in_wr_strb,
   input  wire [DATA_WIDTH-1:0]                    bc_msg_in_wr_data,
@@ -68,6 +67,21 @@ module mem_sys # (
 
   output wire                                     out_of_bound
 );
+  
+  reg [BC_MSG_ADDR_WIDTH-1:0] bc_msg_in_addr_r;
+  reg [STRB_WIDTH-1:0]        bc_msg_in_wr_strb_r;
+  reg [DATA_WIDTH-1:0]        bc_msg_in_wr_data_r;
+  reg                         bc_msg_in_valid_r;
+
+  always @ (posedge clk) begin
+    bc_msg_in_addr_r    <= bc_msg_in_addr;
+    bc_msg_in_wr_strb_r <= bc_msg_in_wr_strb;
+    bc_msg_in_wr_data_r <= bc_msg_in_wr_data;
+    bc_msg_in_valid_r   <= bc_msg_in_valid;
+    if (rst)
+      bc_msg_in_valid_r <= 1'b0;
+  end
+    
 
   ///////////////////////////////////////////////////////////////////////////
   ////////////////// Separate dma and core requests based on ////////////////
@@ -232,11 +246,11 @@ module mem_sys # (
     data_dma_fast_wen_b1     = {STRB_WIDTH{1'b0}};
     data_dma_fast_wr_data_b1 = fast_dma_cmd_wr_data; 
   
-    if (!bc_msg_in_addr[LINE_ADDR_BITS] && bc_msg_in_valid) begin
+    if (!bc_msg_in_addr_r[LINE_ADDR_BITS] && bc_msg_in_valid_r) begin
       data_dma_fast_en_b1      = 1'b1;
-      data_dma_fast_addr_b1    = bc_msg_in_addr[FAST_DMEM_ADDR_WIDTH-1:0];
-      data_dma_fast_wen_b1     = bc_msg_in_wr_strb;
-      data_dma_fast_wr_data_b1 = bc_msg_in_wr_data;
+      data_dma_fast_addr_b1    = bc_msg_in_addr_r[FAST_DMEM_ADDR_WIDTH-1:0];
+      data_dma_fast_wen_b1     = bc_msg_in_wr_strb_r;
+      data_dma_fast_wr_data_b1 = bc_msg_in_wr_data_r;
     end else if (!fast_dma_cmd_wr_addr[LINE_ADDR_BITS] && dma_fast_dmem_wr_en_r) begin
       data_dma_fast_en_b1      = 1'b1;
       dma_fast_wr_b1_gnt       = 1'b1;
@@ -256,11 +270,11 @@ module mem_sys # (
     data_dma_fast_wen_b2     = {STRB_WIDTH{1'b0}};
     data_dma_fast_wr_data_b2 = fast_dma_cmd_wr_data; 
   
-    if (bc_msg_in_addr[LINE_ADDR_BITS] && bc_msg_in_valid) begin
+    if (bc_msg_in_addr_r[LINE_ADDR_BITS] && bc_msg_in_valid_r) begin
       data_dma_fast_en_b2      = 1'b1;
-      data_dma_fast_addr_b2    = bc_msg_in_addr[FAST_DMEM_ADDR_WIDTH-1:0];
-      data_dma_fast_wen_b2     = bc_msg_in_wr_strb;
-      data_dma_fast_wr_data_b2 = bc_msg_in_wr_data;
+      data_dma_fast_addr_b2    = bc_msg_in_addr_r[FAST_DMEM_ADDR_WIDTH-1:0];
+      data_dma_fast_wen_b2     = bc_msg_in_wr_strb_r;
+      data_dma_fast_wr_data_b2 = bc_msg_in_wr_data_r;
     end else if (fast_dma_cmd_wr_addr[LINE_ADDR_BITS] && dma_fast_dmem_wr_en_r) begin
       data_dma_fast_en_b2      = 1'b1;
       dma_fast_wr_b2_gnt       = 1'b1;

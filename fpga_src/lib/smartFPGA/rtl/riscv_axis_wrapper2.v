@@ -1187,13 +1187,13 @@ parameter SLOW_DMEM_SEL_BITS = SLOW_DMEM_ADDR_WIDTH-$clog2(STRB_WIDTH)
 parameter ACC_MEM_BLOCKS     = 2**SLOW_DMEM_SEL_BITS;
 parameter ACC_ADDR_WIDTH     = $clog2(SLOW_M_B_LINES);
 
-wire [ACC_MEM_BLOCKS-1:0]                acc_en_b1;
+wire [ACC_MEM_BLOCKS-1:0]                acc_en_b1 = {ACC_MEM_BLOCKS{1'b0}};
 wire [ACC_MEM_BLOCKS*STRB_WIDTH-1:0]     acc_wen_b1;
 wire [ACC_MEM_BLOCKS*ACC_ADDR_WIDTH-1:0] acc_addr_b1;
 wire [ACC_MEM_BLOCKS*DATA_WIDTH-1:0]     acc_wr_data_b1;
 wire [ACC_MEM_BLOCKS*DATA_WIDTH-1:0]     acc_rd_data_b1;
 
-wire [ACC_MEM_BLOCKS-1:0]                acc_en_b2;          
+wire [ACC_MEM_BLOCKS-1:0]                acc_en_b2 = {ACC_MEM_BLOCKS{1'b0}};          
 wire [ACC_MEM_BLOCKS*STRB_WIDTH-1:0]     acc_wen_b2;
 wire [ACC_MEM_BLOCKS*ACC_ADDR_WIDTH-1:0] acc_addr_b2;
 wire [ACC_MEM_BLOCKS*DATA_WIDTH-1:0]     acc_wr_data_b2;
