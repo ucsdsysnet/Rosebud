@@ -28,22 +28,22 @@ import os
 import random
 
 import pcie
-import pcie_us
+import pcie_usp
 import eth_ep
 import xgmii_ep
 import axis_ep
+import udp_ep
 
 import struct
+import mqnic
 
 testbench = 'test_fpga_core'
 
 srcs = []
 
-srcs.append("../ip/ila_8x64_stub.v")
-srcs.append("../ip/ila_4x64_stub.v")
 srcs.append("../rtl/fpga_core.v")
-srcs.append("../rtl/pcie_config.v")
 srcs.append("../rtl/riscv_block.v")
+srcs.append("../rtl/pcie_config.v")
 
 srcs.append("../lib/smartFPGA/rtl/simple_fifo.v")
 srcs.append("../lib/smartFPGA/rtl/max_finder_tree.v")
@@ -122,14 +122,16 @@ build_cmd = "iverilog -o %s.vvp %s" % (testbench, src)
 def bench():
 
     # Parameters
-    AXIS_PCIE_DATA_WIDTH = 256
+    AXIS_PCIE_DATA_WIDTH = 512
     AXIS_PCIE_KEEP_WIDTH = (AXIS_PCIE_DATA_WIDTH/32)
-    AXIS_PCIE_RC_USER_WIDTH = 75
-    AXIS_PCIE_RQ_USER_WIDTH = 60
-    AXIS_PCIE_CQ_USER_WIDTH = 85
-    AXIS_PCIE_CC_USER_WIDTH = 33
-    RQ_SEQ_NUM_WIDTH = 4
+    AXIS_PCIE_RC_USER_WIDTH = 161
+    AXIS_PCIE_RQ_USER_WIDTH = 137
+    AXIS_PCIE_CQ_USER_WIDTH = 183
+    AXIS_PCIE_CC_USER_WIDTH = 81
+    RQ_SEQ_NUM_WIDTH = 6
     BAR0_APERTURE = 24
+    AXIS_ETH_DATA_WIDTH = 512
+    AXIS_ETH_KEEP_WIDTH = AXIS_ETH_DATA_WIDTH/8
 
     SEND_COUNT_0 = 50
     SEND_COUNT_1 = 50
@@ -139,7 +141,8 @@ def bench():
     TEST_SFP     = True
     TEST_PCIE    = True
     UPDATE_INS   = True
-    FIRMWARE     = "../../../../c_code/dram_test.bin"
+    FIRMWARE     = "../../../../c_code/basic_fw.bin"
+    # FIRMWARE     = "../../../../c_code/dram_test.bin"
     # FIRMWARE     = "../../../../c_code/inter_core.bin"
 
     # Inputs
@@ -152,15 +155,9 @@ def bench():
     sys_clk_to_pcie=Signal(bool(0))
     sys_rst_to_pcie=Signal(bool(0))
     current_test = Signal(intbv(0)[8:])
-    sfp_1_tx_clk = Signal(bool(0))
-    sfp_1_tx_rst = Signal(bool(0))
-    sfp_1_rx_clk = Signal(bool(0))
-    sfp_1_rx_rst = Signal(bool(0))
-    sfp_2_tx_clk = Signal(bool(0))
-    sfp_2_tx_rst = Signal(bool(0))
-    sfp_2_rx_clk = Signal(bool(0))
-    sfp_2_rx_rst = Signal(bool(0))
-
+    sw = Signal(intbv(0)[4:])
+    i2c_scl_i = Signal(bool(1))
+    i2c_sda_i = Signal(bool(1))
     m_axis_rq_tready = Signal(bool(0))
     s_axis_rc_tdata = Signal(intbv(0)[AXIS_PCIE_DATA_WIDTH:])
     s_axis_rc_tkeep = Signal(intbv(0)[AXIS_PCIE_KEEP_WIDTH:])
@@ -173,11 +170,13 @@ def bench():
     s_axis_cq_tuser = Signal(intbv(0)[AXIS_PCIE_CQ_USER_WIDTH:])
     s_axis_cq_tvalid = Signal(bool(0))
     m_axis_cc_tready = Signal(bool(0))
-    s_axis_rq_seq_num = Signal(intbv(0)[RQ_SEQ_NUM_WIDTH:])
-    s_axis_rq_seq_num_valid = Signal(bool(0))
-    pcie_tfc_nph_av = Signal(intbv(0)[2:])
-    pcie_tfc_npd_av = Signal(intbv(0)[2:])
-    cfg_max_payload = Signal(intbv(0)[3:])
+    s_axis_rq_seq_num_0 = Signal(intbv(0)[RQ_SEQ_NUM_WIDTH:])
+    s_axis_rq_seq_num_valid_0 = Signal(bool(0))
+    s_axis_rq_seq_num_1 = Signal(intbv(0)[RQ_SEQ_NUM_WIDTH:])
+    s_axis_rq_seq_num_valid_1 = Signal(bool(0))
+    pcie_tfc_nph_av = Signal(intbv(15)[4:])
+    pcie_tfc_npd_av = Signal(intbv(15)[4:])
+    cfg_max_payload = Signal(intbv(0)[2:])
     cfg_max_read_req = Signal(intbv(0)[3:])
     cfg_mgmt_read_data = Signal(intbv(0)[32:])
     cfg_mgmt_read_write_done = Signal(bool(0))
@@ -188,33 +187,42 @@ def bench():
     cfg_fc_cplh = Signal(intbv(0)[8:])
     cfg_fc_cpld = Signal(intbv(0)[12:])
     cfg_interrupt_msi_enable = Signal(intbv(0)[4:])
-    cfg_interrupt_msi_vf_enable = Signal(intbv(0)[8:])
     cfg_interrupt_msi_mmenable = Signal(intbv(0)[12:])
     cfg_interrupt_msi_mask_update = Signal(bool(0))
     cfg_interrupt_msi_data = Signal(intbv(0)[32:])
     cfg_interrupt_msi_sent = Signal(bool(0))
     cfg_interrupt_msi_fail = Signal(bool(0))
-    sfp_1_tx_clk = Signal(bool(0))
-    sfp_1_tx_rst = Signal(bool(0))
-    sfp_1_rx_clk = Signal(bool(0))
-    sfp_1_rx_rst = Signal(bool(0))
-    sfp_1_rxd = Signal(intbv(0)[64:])
-    sfp_1_rxc = Signal(intbv(0)[8:])
-    sfp_2_tx_clk = Signal(bool(0))
-    sfp_2_tx_rst = Signal(bool(0))
-    sfp_2_rx_clk = Signal(bool(0))
-    sfp_2_rx_rst = Signal(bool(0))
-    sfp_2_rxd = Signal(intbv(0)[64:])
-    sfp_2_rxc = Signal(intbv(0)[8:])
-    sfp_i2c_scl_i = Signal(bool(1))
-    sfp_1_i2c_sda_i = Signal(bool(1))
-    sfp_2_i2c_sda_i = Signal(bool(1))
-    eeprom_i2c_scl_i = Signal(bool(1))
-    eeprom_i2c_sda_i = Signal(bool(1))
-    flash_dq_i = Signal(intbv(0)[16:])
+    qsfp0_tx_clk = Signal(bool(0))
+    qsfp0_tx_rst = Signal(bool(0))
+    qsfp0_rx_clk = Signal(bool(0))
+    qsfp0_rx_rst = Signal(bool(0))
+    qsfp0_tx_axis_tready = Signal(bool(0))
+    qsfp0_rx_axis_tdata = Signal(intbv(0)[AXIS_ETH_DATA_WIDTH:])
+    qsfp0_rx_axis_tkeep = Signal(intbv(0)[AXIS_ETH_KEEP_WIDTH:])
+    qsfp0_rx_axis_tvalid = Signal(bool(0))
+    qsfp0_rx_axis_tlast = Signal(bool(0))
+    qsfp0_rx_axis_tuser = Signal(bool(0))
+    qsfp0_modprsl = Signal(bool(1))
+    qsfp0_intl = Signal(bool(1))
+    qsfp1_tx_clk = Signal(bool(0))
+    qsfp1_tx_rst = Signal(bool(0))
+    qsfp1_rx_clk = Signal(bool(0))
+    qsfp1_rx_rst = Signal(bool(0))
+    qsfp1_tx_axis_tready = Signal(bool(0))
+    qsfp1_rx_axis_tdata = Signal(intbv(0)[AXIS_ETH_DATA_WIDTH:])
+    qsfp1_rx_axis_tkeep = Signal(intbv(0)[AXIS_ETH_KEEP_WIDTH:])
+    qsfp1_rx_axis_tvalid = Signal(bool(0))
+    qsfp1_rx_axis_tlast = Signal(bool(0))
+    qsfp1_rx_axis_tuser = Signal(bool(0))
+    qsfp1_modprsl = Signal(bool(1))
+    qsfp1_intl = Signal(bool(1))
 
     # Outputs
-    sma_led = Signal(intbv(0)[2:])
+    led = Signal(intbv(0)[3:])
+    i2c_scl_o = Signal(bool(1))
+    i2c_scl_t = Signal(bool(1))
+    i2c_sda_o = Signal(bool(1))
+    i2c_sda_t = Signal(bool(1))
     m_axis_rq_tdata = Signal(intbv(0)[AXIS_PCIE_DATA_WIDTH:])
     m_axis_rq_tkeep = Signal(intbv(0)[AXIS_PCIE_KEEP_WIDTH:])
     m_axis_rq_tlast = Signal(bool(0))
@@ -229,7 +237,8 @@ def bench():
     m_axis_cc_tvalid = Signal(bool(0))
     status_error_cor = Signal(bool(0))
     status_error_uncor = Signal(bool(0))
-    cfg_mgmt_addr = Signal(intbv(0)[19:])
+    cfg_mgmt_addr = Signal(intbv(0)[10:])
+    cfg_mgmt_function_number = Signal(intbv(0)[8:])
     cfg_mgmt_write = Signal(bool(0))
     cfg_mgmt_write_data = Signal(intbv(0)[32:])
     cfg_mgmt_byte_enable = Signal(intbv(0)[4:])
@@ -237,95 +246,119 @@ def bench():
     cfg_fc_sel = Signal(intbv(4)[3:])
     cfg_interrupt_msi_int = Signal(intbv(0)[32:])
     cfg_interrupt_msi_pending_status = Signal(intbv(0)[32:])
-    cfg_interrupt_msi_select = Signal(intbv(0)[4:])
-    cfg_interrupt_msi_pending_status_function_num = Signal(intbv(0)[4:])
+    cfg_interrupt_msi_select = Signal(intbv(0)[2:])
+    cfg_interrupt_msi_pending_status_function_num = Signal(intbv(0)[2:])
     cfg_interrupt_msi_pending_status_data_enable = Signal(bool(0))
     cfg_interrupt_msi_attr = Signal(intbv(0)[3:])
     cfg_interrupt_msi_tph_present = Signal(bool(0))
     cfg_interrupt_msi_tph_type = Signal(intbv(0)[2:])
-    cfg_interrupt_msi_tph_st_tag = Signal(intbv(0)[9:])
-    cfg_interrupt_msi_function_number = Signal(intbv(0)[4:])
-    sfp_1_txd = Signal(intbv(0)[64:])
-    sfp_1_txc = Signal(intbv(0)[8:])
-    sfp_2_txd = Signal(intbv(0)[64:])
-    sfp_2_txc = Signal(intbv(0)[8:])
-    sfp_i2c_scl_o = Signal(bool(1))
-    sfp_i2c_scl_t = Signal(bool(1))
-    sfp_1_i2c_sda_o = Signal(bool(1))
-    sfp_1_i2c_sda_t = Signal(bool(1))
-    sfp_2_i2c_sda_o = Signal(bool(1))
-    sfp_2_i2c_sda_t = Signal(bool(1))
-    eeprom_i2c_scl_o = Signal(bool(1))
-    eeprom_i2c_scl_t = Signal(bool(1))
-    eeprom_i2c_sda_o = Signal(bool(1))
-    eeprom_i2c_sda_t = Signal(bool(1))
-    flash_dq_o = Signal(intbv(0)[16:])
-    flash_dq_oe = Signal(bool(0))
-    flash_addr = Signal(intbv(0)[23:])
-    flash_region = Signal(bool(0))
-    flash_region_oe = Signal(bool(0))
-    flash_ce_n = Signal(bool(1))
-    flash_oe_n = Signal(bool(1))
-    flash_we_n = Signal(bool(1))
-    flash_adv_n = Signal(bool(1))
+    cfg_interrupt_msi_tph_st_tag = Signal(intbv(0)[8:])
+    cfg_interrupt_msi_function_number = Signal(intbv(0)[8:])
+    qsfp0_tx_axis_tdata = Signal(intbv(0)[AXIS_ETH_DATA_WIDTH:])
+    qsfp0_tx_axis_tkeep = Signal(intbv(0)[AXIS_ETH_KEEP_WIDTH:])
+    qsfp0_tx_axis_tvalid = Signal(bool(0))
+    qsfp0_tx_axis_tlast = Signal(bool(0))
+    qsfp0_tx_axis_tuser = Signal(bool(0))
+    qsfp0_modsell = Signal(bool(0))
+    qsfp0_resetl = Signal(bool(0))
+    qsfp0_lpmode = Signal(bool(0))
+    qsfp1_tx_axis_tdata = Signal(intbv(0)[AXIS_ETH_DATA_WIDTH:])
+    qsfp1_tx_axis_tkeep = Signal(intbv(0)[AXIS_ETH_KEEP_WIDTH:])
+    qsfp1_tx_axis_tvalid = Signal(bool(0))
+    qsfp1_tx_axis_tlast = Signal(bool(0))
+    qsfp1_tx_axis_tuser = Signal(bool(0))
+    qsfp1_modsell = Signal(bool(0))
+    qsfp1_resetl = Signal(bool(0))
+    qsfp1_lpmode = Signal(bool(0))
 
     # sources and sinks
-    xgmii_source_0 = xgmii_ep.XGMIISource()
+    qsfp0_source = axis_ep.AXIStreamSource()
+    qsfp0_source_pause = Signal(bool(False))
 
-    xgmii_source_logic_0 = xgmii_source_0.create_logic(
-        clk=sfp_1_rx_clk,
-        rst=sfp_1_rx_rst,
-        txd=sfp_1_rxd,
-        txc=sfp_1_rxc,
-        name='xgmii_source_0'
+    qsfp0_source_logic = qsfp0_source.create_logic(
+        qsfp0_rx_clk,
+        qsfp0_rx_rst,
+        tdata=qsfp0_rx_axis_tdata,
+        tkeep=qsfp0_rx_axis_tkeep,
+        tvalid=qsfp0_rx_axis_tvalid,
+        tlast=qsfp0_rx_axis_tlast,
+        tuser=qsfp0_rx_axis_tuser,
+        pause=qsfp0_source_pause,
+        name='qsfp0_source'
     )
 
-    xgmii_sink_0 = xgmii_ep.XGMIISink()
+    qsfp0_sink = axis_ep.AXIStreamSink()
+    qsfp0_sink_pause = Signal(bool(False))
 
-    xgmii_sink_logic_0 = xgmii_sink_0.create_logic(
-        clk=sfp_1_tx_clk,
-        rst=sfp_1_tx_rst,
-        rxd=sfp_1_txd,
-        rxc=sfp_1_txc,
-        name='xgmii_sink_0'
-    )
-    
-    xgmii_source_1 = xgmii_ep.XGMIISource()
-
-    xgmii_source_logic_1 = xgmii_source_1.create_logic(
-        clk=sfp_2_rx_clk,
-        rst=sfp_2_rx_rst,
-        txd=sfp_2_rxd,
-        txc=sfp_2_rxc,
-        name='xgmii_source_1'
+    qsfp0_sink_logic = qsfp0_sink.create_logic(
+        qsfp0_tx_clk,
+        qsfp0_tx_rst,
+        tdata=qsfp0_tx_axis_tdata,
+        tkeep=qsfp0_tx_axis_tkeep,
+        tvalid=qsfp0_tx_axis_tvalid,
+        tready=qsfp0_tx_axis_tready,
+        tlast=qsfp0_tx_axis_tlast,
+        tuser=qsfp0_tx_axis_tuser,
+        pause=qsfp0_sink_pause,
+        name='qsfp0_sink'
     )
 
-    xgmii_sink_1 = xgmii_ep.XGMIISink()
+    qsfp1_source = axis_ep.AXIStreamSource()
+    qsfp1_source_pause = Signal(bool(False))
 
-    xgmii_sink_logic_1 = xgmii_sink_1.create_logic(
-        clk=sfp_2_tx_clk,
-        rst=sfp_2_tx_rst,
-        rxd=sfp_2_txd,
-        rxc=sfp_2_txc,
-        name='xgmii_sink_1'
+    qsfp1_source_logic = qsfp1_source.create_logic(
+        qsfp1_rx_clk,
+        qsfp1_rx_rst,
+        tdata=qsfp1_rx_axis_tdata,
+        tkeep=qsfp1_rx_axis_tkeep,
+        tvalid=qsfp1_rx_axis_tvalid,
+        tlast=qsfp1_rx_axis_tlast,
+        tuser=qsfp1_rx_axis_tuser,
+        pause=qsfp1_source_pause,
+        name='qsfp1_source'
     )
-    
+
+    qsfp1_sink = axis_ep.AXIStreamSink()
+    qsfp1_sink_pause = Signal(bool(False))
+
+    qsfp1_sink_logic = qsfp1_sink.create_logic(
+        qsfp1_tx_clk,
+        qsfp1_tx_rst,
+        tdata=qsfp1_tx_axis_tdata,
+        tkeep=qsfp1_tx_axis_tkeep,
+        tvalid=qsfp1_tx_axis_tvalid,
+        tready=qsfp1_tx_axis_tready,
+        tlast=qsfp1_tx_axis_tlast,
+        tuser=qsfp1_tx_axis_tuser,
+        pause=qsfp1_sink_pause,
+        name='qsfp1_sink'
+    )
+
     # PCIe devices
     rc = pcie.RootComplex()
 
+    rc.max_payload_size = 0x1 # 256 bytes
+    rc.max_read_request_size = 0x5 # 4096 bytes
+
+    driver = mqnic.Driver(rc)
     mem_base, mem_data = rc.alloc_region(16*1024*1024)
 
-    dev = pcie_us.UltrascalePCIe()
+    dev = pcie_usp.UltrascalePlusPCIe()
 
     dev.pcie_generation = 3
-    dev.pcie_link_width = 8
-    dev.user_clock_frequency = 256e6
+    dev.pcie_link_width = 16
+    dev.user_clock_frequency = 250e6
 
     dev.functions[0].msi_multiple_message_capable = 5
 
     dev.functions[0].configure_bar(0, 2**BAR0_APERTURE)
 
     rc.make_port().connect(dev)
+
+    cq_pause = Signal(bool(0))
+    cc_pause = Signal(bool(0))
+    rq_pause = Signal(bool(0))
+    rc_pause = Signal(bool(0))
 
     pcie_logic = dev.create_logic(
         # Completer reQuest Interface
@@ -336,7 +369,7 @@ def bench():
         m_axis_cq_tvalid=s_axis_cq_tvalid,
         m_axis_cq_tready=s_axis_cq_tready,
         #pcie_cq_np_req=pcie_cq_np_req,
-        pcie_cq_np_req=Signal(bool(1)),
+        pcie_cq_np_req=Signal(intbv(3)[2:]),
         #pcie_cq_np_req_count=pcie_cq_np_req_count,
 
         # Completer Completion Interface
@@ -354,10 +387,15 @@ def bench():
         s_axis_rq_tkeep=m_axis_rq_tkeep,
         s_axis_rq_tvalid=m_axis_rq_tvalid,
         s_axis_rq_tready=m_axis_rq_tready,
-        pcie_rq_seq_num=s_axis_rq_seq_num,
-        pcie_rq_seq_num_vld=s_axis_rq_seq_num_valid,
-        #pcie_rq_tag=pcie_rq_tag,
-        #pcie_rq_tag_vld=pcie_rq_tag_vld,
+        pcie_rq_seq_num0=s_axis_rq_seq_num_0,
+        pcie_rq_seq_num_vld0=s_axis_rq_seq_num_valid_0,
+        pcie_rq_seq_num1=s_axis_rq_seq_num_1,
+        pcie_rq_seq_num_vld1=s_axis_rq_seq_num_valid_1,
+        #pcie_rq_tag0=pcie_rq_tag0,
+        #pcie_rq_tag1=pcie_rq_tag1,
+        #pcie_rq_tag_av=pcie_rq_tag_av,
+        #pcie_rq_tag_vld0=pcie_rq_tag_vld0,
+        #pcie_rq_tag_vld1=pcie_rq_tag_vld1,
 
         # Requester Completion Interface
         m_axis_rc_tdata=s_axis_rc_tdata,
@@ -368,18 +406,19 @@ def bench():
         m_axis_rc_tready=s_axis_rc_tready,
 
         # Transmit Flow Control Interface
-        pcie_tfc_nph_av=pcie_tfc_nph_av,
-        pcie_tfc_npd_av=pcie_tfc_npd_av,
+        #pcie_tfc_nph_av=pcie_tfc_nph_av,
+        #pcie_tfc_npd_av=pcie_tfc_npd_av,
 
         # Configuration Management Interface
         cfg_mgmt_addr=cfg_mgmt_addr,
+        cfg_mgmt_function_number=cfg_mgmt_function_number,
         cfg_mgmt_write=cfg_mgmt_write,
         cfg_mgmt_write_data=cfg_mgmt_write_data,
         cfg_mgmt_byte_enable=cfg_mgmt_byte_enable,
         cfg_mgmt_read=cfg_mgmt_read,
         cfg_mgmt_read_data=cfg_mgmt_read_data,
         cfg_mgmt_read_write_done=cfg_mgmt_read_write_done,
-        #cfg_mgmt_type1_cfg_reg_access=cfg_mgmt_type1_cfg_reg_access,
+        #cfg_mgmt_debug_access=cfg_mgmt_debug_access,
 
         # Configuration Status Interface
         #cfg_phy_link_down=cfg_phy_link_down,
@@ -396,10 +435,12 @@ def bench():
         #cfg_err_cor_out=cfg_err_cor_out,
         #cfg_err_nonfatal_out=cfg_err_nonfatal_out,
         #cfg_err_fatal_out=cfg_err_fatal_out,
-        #cfg_ltr_enable=cfg_ltr_enable,
+        #cfg_local_err_out=cfg_local_err_out,
+        #cfg_local_err_valid=cfg_local_err_valid,
+        #cfg_rx_pm_state=cfg_rx_pm_state,
+        #cfg_tx_pm_state=cfg_tx_pm_state,
         #cfg_ltssm_state=cfg_ltssm_state,
         #cfg_rcb_status=cfg_rcb_status,
-        #cfg_dpa_substate_change=cfg_dpa_substate_change,
         #cfg_obff_enable=cfg_obff_enable,
         #cfg_pl_status_change=cfg_pl_status_change,
         #cfg_tph_requester_enable=cfg_tph_requester_enable,
@@ -427,18 +468,12 @@ def bench():
         cfg_fc_cpld=cfg_fc_cpld,
         cfg_fc_sel=cfg_fc_sel,
 
-        # Per-Function Status Interface
-        #cfg_per_func_status_control=cfg_per_func_status_control,
-        #cfg_per_func_status_data=cfg_per_func_status_data,
-
         # Configuration Control Interface
         #cfg_hot_reset_in=cfg_hot_reset_in,
         #cfg_hot_reset_out=cfg_hot_reset_out,
         #cfg_config_space_enable=cfg_config_space_enable,
-        #cfg_per_function_update_done=cfg_per_function_update_done,
-        #cfg_per_function_number=cfg_per_function_number,
-        #cfg_per_function_output_request=cfg_per_function_output_request,
         #cfg_dsn=cfg_dsn,
+        #cfg_ds_port_number=cfg_ds_port_number,
         #cfg_ds_bus_number=cfg_ds_bus_number,
         #cfg_ds_device_number=cfg_ds_device_number,
         #cfg_ds_function_number=cfg_ds_function_number,
@@ -458,7 +493,6 @@ def bench():
         #cfg_interrupt_sent=cfg_interrupt_sent,
         #cfg_interrupt_pending=cfg_interrupt_pending,
         cfg_interrupt_msi_enable=cfg_interrupt_msi_enable,
-        cfg_interrupt_msi_vf_enable=cfg_interrupt_msi_vf_enable,
         cfg_interrupt_msi_mmenable=cfg_interrupt_msi_mmenable,
         cfg_interrupt_msi_mask_update=cfg_interrupt_msi_mask_update,
         cfg_interrupt_msi_data=cfg_interrupt_msi_data,
@@ -476,8 +510,8 @@ def bench():
         #cfg_interrupt_msix_address=cfg_interrupt_msix_address,
         #cfg_interrupt_msix_data=cfg_interrupt_msix_data,
         #cfg_interrupt_msix_int=cfg_interrupt_msix_int,
-        #cfg_interrupt_msix_sent=cfg_interrupt_msix_sent,
-        #cfg_interrupt_msix_fail=cfg_interrupt_msix_fail,
+        #cfg_interrupt_msix_vec_pending=cfg_interrupt_msix_vec_pending,
+        #cfg_interrupt_msix_vec_pending_status=cfg_interrupt_msix_vec_pending_status,
         cfg_interrupt_msi_attr=cfg_interrupt_msi_attr,
         cfg_interrupt_msi_tph_present=cfg_interrupt_msi_tph_present,
         cfg_interrupt_msi_tph_type=cfg_interrupt_msi_tph_type,
@@ -500,9 +534,12 @@ def bench():
         sys_clk=sys_clk_to_pcie,
         sys_clk_gt=sys_clk_to_pcie,
         sys_reset=sys_rst_to_pcie,
-        #pcie_perstn0_out=pcie_perstn0_out,
-        #pcie_perstn1_in=pcie_perstn1_in,
-        #pcie_perstn1_out=pcie_perstn1_out
+        #phy_rdy_out=phy_rdy_out,
+
+        cq_pause=cq_pause,
+        cc_pause=cc_pause,
+        rq_pause=rq_pause,
+        rc_pause=rc_pause
     )
 
     # test frames
@@ -537,24 +574,14 @@ def bench():
         pcie_clk=pcie_clk,
         pcie_rst=pcie_rst,
         current_test=current_test,
-        sfp_1_rx_clk=sfp_1_rx_clk,
-        sfp_1_rx_rst=sfp_1_rx_rst,
-        sfp_1_tx_clk=sfp_1_tx_clk,
-        sfp_1_tx_rst=sfp_1_tx_rst,
-        sfp_2_rx_clk=sfp_2_rx_clk,
-        sfp_2_rx_rst=sfp_2_rx_rst,
-        sfp_2_tx_clk=sfp_2_tx_clk,
-        sfp_2_tx_rst=sfp_2_tx_rst,
-
-        sfp_1_rxd=sfp_1_rxd,
-        sfp_1_rxc=sfp_1_rxc,
-        sfp_1_txd=sfp_1_txd,
-        sfp_1_txc=sfp_1_txc,
-        sfp_2_rxd=sfp_2_rxd,
-        sfp_2_rxc=sfp_2_rxc,
-        sfp_2_txd=sfp_2_txd,
-        sfp_2_txc=sfp_2_txc,
-        sma_led=sma_led,
+        sw=sw,
+        led=led,
+        i2c_scl_i=i2c_scl_i,
+        i2c_scl_o=i2c_scl_o,
+        i2c_scl_t=i2c_scl_t,
+        i2c_sda_i=i2c_sda_i,
+        i2c_sda_o=i2c_sda_o,
+        i2c_sda_t=i2c_sda_t,
         m_axis_rq_tdata=m_axis_rq_tdata,
         m_axis_rq_tkeep=m_axis_rq_tkeep,
         m_axis_rq_tlast=m_axis_rq_tlast,
@@ -579,13 +606,16 @@ def bench():
         m_axis_cc_tready=m_axis_cc_tready,
         m_axis_cc_tuser=m_axis_cc_tuser,
         m_axis_cc_tvalid=m_axis_cc_tvalid,
-        s_axis_rq_seq_num=s_axis_rq_seq_num,
-        s_axis_rq_seq_num_valid=s_axis_rq_seq_num_valid,
+        s_axis_rq_seq_num_0=s_axis_rq_seq_num_0,
+        s_axis_rq_seq_num_valid_0=s_axis_rq_seq_num_valid_0,
+        s_axis_rq_seq_num_1=s_axis_rq_seq_num_1,
+        s_axis_rq_seq_num_valid_1=s_axis_rq_seq_num_valid_1,
         pcie_tfc_nph_av=pcie_tfc_nph_av,
         pcie_tfc_npd_av=pcie_tfc_npd_av,
         cfg_max_payload=cfg_max_payload,
         cfg_max_read_req=cfg_max_read_req,
         cfg_mgmt_addr=cfg_mgmt_addr,
+        cfg_mgmt_function_number=cfg_mgmt_function_number,
         cfg_mgmt_write=cfg_mgmt_write,
         cfg_mgmt_write_data=cfg_mgmt_write_data,
         cfg_mgmt_byte_enable=cfg_mgmt_byte_enable,
@@ -600,7 +630,6 @@ def bench():
         cfg_fc_cpld=cfg_fc_cpld,
         cfg_fc_sel=cfg_fc_sel,
         cfg_interrupt_msi_enable=cfg_interrupt_msi_enable,
-        cfg_interrupt_msi_vf_enable=cfg_interrupt_msi_vf_enable,
         cfg_interrupt_msi_int=cfg_interrupt_msi_int,
         cfg_interrupt_msi_sent=cfg_interrupt_msi_sent,
         cfg_interrupt_msi_fail=cfg_interrupt_msi_fail,
@@ -618,48 +647,63 @@ def bench():
         cfg_interrupt_msi_function_number=cfg_interrupt_msi_function_number,
         status_error_cor=status_error_cor,
         status_error_uncor=status_error_uncor,
-        sfp_i2c_scl_i=sfp_i2c_scl_i,
-        sfp_i2c_scl_o=sfp_i2c_scl_o,
-        sfp_i2c_scl_t=sfp_i2c_scl_t,
-        sfp_1_i2c_sda_i=sfp_1_i2c_sda_i,
-        sfp_1_i2c_sda_o=sfp_1_i2c_sda_o,
-        sfp_1_i2c_sda_t=sfp_1_i2c_sda_t,
-        sfp_2_i2c_sda_i=sfp_2_i2c_sda_i,
-        sfp_2_i2c_sda_o=sfp_2_i2c_sda_o,
-        sfp_2_i2c_sda_t=sfp_2_i2c_sda_t,
-        eeprom_i2c_scl_i=eeprom_i2c_scl_i,
-        eeprom_i2c_scl_o=eeprom_i2c_scl_o,
-        eeprom_i2c_scl_t=eeprom_i2c_scl_t,
-        eeprom_i2c_sda_i=eeprom_i2c_sda_i,
-        eeprom_i2c_sda_o=eeprom_i2c_sda_o,
-        eeprom_i2c_sda_t=eeprom_i2c_sda_t,
-        flash_dq_i=flash_dq_i,
-        flash_dq_o=flash_dq_o,
-        flash_dq_oe=flash_dq_oe,
-        flash_addr=flash_addr,
-        flash_region=flash_region,
-        flash_region_oe=flash_region_oe,
-        flash_ce_n=flash_ce_n,
-        flash_oe_n=flash_oe_n,
-        flash_we_n=flash_we_n,
-        flash_adv_n=flash_adv_n
+        qsfp0_tx_clk=qsfp0_tx_clk,
+        qsfp0_tx_rst=qsfp0_tx_rst,
+        qsfp0_tx_axis_tdata=qsfp0_tx_axis_tdata,
+        qsfp0_tx_axis_tkeep=qsfp0_tx_axis_tkeep,
+        qsfp0_tx_axis_tvalid=qsfp0_tx_axis_tvalid,
+        qsfp0_tx_axis_tready=qsfp0_tx_axis_tready,
+        qsfp0_tx_axis_tlast=qsfp0_tx_axis_tlast,
+        qsfp0_tx_axis_tuser=qsfp0_tx_axis_tuser,
+        qsfp0_rx_clk=qsfp0_rx_clk,
+        qsfp0_rx_rst=qsfp0_rx_rst,
+        qsfp0_rx_axis_tdata=qsfp0_rx_axis_tdata,
+        qsfp0_rx_axis_tkeep=qsfp0_rx_axis_tkeep,
+        qsfp0_rx_axis_tvalid=qsfp0_rx_axis_tvalid,
+        qsfp0_rx_axis_tlast=qsfp0_rx_axis_tlast,
+        qsfp0_rx_axis_tuser=qsfp0_rx_axis_tuser,
+        qsfp0_modprsl=qsfp0_modprsl,
+        qsfp0_modsell=qsfp0_modsell,
+        qsfp0_resetl=qsfp0_resetl,
+        qsfp0_intl=qsfp0_intl,
+        qsfp0_lpmode=qsfp0_lpmode,
+        qsfp1_tx_clk=qsfp1_tx_clk,
+        qsfp1_tx_rst=qsfp1_tx_rst,
+        qsfp1_tx_axis_tdata=qsfp1_tx_axis_tdata,
+        qsfp1_tx_axis_tkeep=qsfp1_tx_axis_tkeep,
+        qsfp1_tx_axis_tvalid=qsfp1_tx_axis_tvalid,
+        qsfp1_tx_axis_tready=qsfp1_tx_axis_tready,
+        qsfp1_tx_axis_tlast=qsfp1_tx_axis_tlast,
+        qsfp1_tx_axis_tuser=qsfp1_tx_axis_tuser,
+        qsfp1_rx_clk=qsfp1_rx_clk,
+        qsfp1_rx_rst=qsfp1_rx_rst,
+        qsfp1_rx_axis_tdata=qsfp1_rx_axis_tdata,
+        qsfp1_rx_axis_tkeep=qsfp1_rx_axis_tkeep,
+        qsfp1_rx_axis_tvalid=qsfp1_rx_axis_tvalid,
+        qsfp1_rx_axis_tlast=qsfp1_rx_axis_tlast,
+        qsfp1_rx_axis_tuser=qsfp1_rx_axis_tuser,
+        qsfp1_modprsl=qsfp1_modprsl,
+        qsfp1_modsell=qsfp1_modsell,
+        qsfp1_resetl=qsfp1_resetl,
+        qsfp1_intl=qsfp1_intl,
+        qsfp1_lpmode=qsfp1_lpmode
     )
 
-    @always(delay(2)) #25
+    @always(delay(3)) #25
     def clkgen():
         sys_clk.next = not sys_clk
-    
+
     @always(delay(3)) #27
     def clkgen3():
         core_clk.next = not core_clk
 
     @always(delay(3)) #32
-    def clkgen2():
-        sfp_1_tx_clk.next = not sfp_1_tx_clk
-        sfp_1_rx_clk.next = not sfp_1_rx_clk
-        sfp_2_tx_clk.next = not sfp_2_tx_clk
-        sfp_2_rx_clk.next = not sfp_2_rx_clk
-    
+    def qsfp_clkgen():
+        qsfp0_tx_clk.next = not qsfp0_tx_clk
+        qsfp0_rx_clk.next = not qsfp0_rx_clk
+        qsfp1_tx_clk.next = not qsfp1_tx_clk
+        qsfp1_rx_clk.next = not qsfp1_rx_clk
+
     @always_comb
     def clk_logic():
         sys_clk_to_pcie.next = sys_clk
@@ -671,10 +715,10 @@ def bench():
           test_frame_1.payload = bytes([i%256] + [x%256 for x in range(SIZE_0-1)])
           test_frame_1.update_fcs()
           axis_frame = test_frame_1.build_axis_fcs()
-          xgmii_source_0.send(b'\x55\x55\x55\x55\x55\x55\x55\xD5'+bytearray(axis_frame))
+          qsfp0_source.send(b'\x55\x55\x55\x55\x55\x55\x55\xD5'+bytearray(axis_frame))
           # yield delay(random.randrange(128))
-          yield sfp_1_rx_clk.posedge
-          # yield sfp_1_rx_clk.posedge
+          yield qsfp0_rx_clk.posedge
+          # yield qsfp0_rx_clk_1.posedge
 
     def port2():
         for i in range (0,SEND_COUNT_1):
@@ -685,41 +729,32 @@ def bench():
           test_frame_2.payload = bytes([i%256] + [x%256 for x in range(SIZE_1-1)])
           test_frame_2.update_fcs()
           axis_frame_2 = test_frame_2.build_axis_fcs()
-          xgmii_source_1.send(b'\x55\x55\x55\x55\x55\x55\x55\xD5'+bytearray(axis_frame_2))
+          qsfp1_source.send(b'\x55\x55\x55\x55\x55\x55\x55\xD5'+bytearray(axis_frame_2))
           # yield delay(random.randrange(128))
-          yield sfp_2_rx_clk.posedge
-          # yield sfp_2_rx_clk.posedge
+          yield qsfp1_rx_clk.posedge
+          # yield qsfp1_rx_clk_1.posedge
 
     @instance
     def check():
-        yield delay(1000)
+        yield delay(100)
         yield sys_clk.posedge
         sys_rst.next = 1
-        yield core_clk.posedge
         core_rst.next = 1
-        yield sfp_1_tx_clk.posedge
-        yield sfp_1_rx_clk.posedge
-        yield sfp_2_tx_clk.posedge
-        yield sfp_2_rx_clk.posedge
+        qsfp0_tx_rst.next = 1
+        qsfp0_rx_rst.next = 1
+        qsfp1_tx_rst.next = 1
+        qsfp1_rx_rst.next = 1
         yield sys_clk.posedge
-        sfp_1_tx_rst.next = 1
-        sfp_1_rx_rst.next = 1
-        sfp_2_tx_rst.next = 1
-        sfp_2_rx_rst.next = 1
-        yield sys_clk.posedge
-        yield sys_clk.posedge
+        yield delay(100)
         sys_rst.next = 0
-        yield core_clk.posedge
         core_rst.next = 0
-        yield sys_clk.posedge
-        yield sfp_1_tx_clk.posedge
-        sfp_1_tx_rst.next = 0
-        sfp_1_rx_rst.next = 0
-        sfp_2_tx_rst.next = 0
-        sfp_2_rx_rst.next = 0
-        yield sfp_1_tx_clk.posedge
+        qsfp0_tx_rst.next = 0
+        qsfp0_rx_rst.next = 0
+        qsfp1_tx_rst.next = 0
+        qsfp1_rx_rst.next = 0
         yield delay(2000)
         yield sys_clk.posedge
+        yield delay(100)
         yield sys_clk.posedge
         
         print("PCIe enumeration")
@@ -732,15 +767,15 @@ def bench():
 
         yield pcie_clk.posedge
 
-                # enable DMA
+        print("Firmware load")
+        ins = bytearray(open(FIRMWARE, "rb").read())
+        mem_data[0:len(ins)] = ins
+        mem_data[48059:48200] = bytearray([(x+10)%256 for x in range(141)])
+
+        # enable DMA
         yield rc.mem_write(dev_pf0_bar0+0x000400, struct.pack('<L', 1))
         
         if (UPDATE_INS):
-          print("Firmware load")
-          ins = bytearray(open(FIRMWARE, "rb").read())
-          mem_data[0:len(ins)] = ins
-          mem_data[48059:48200] = bytearray([(x+10)%256 for x in range(141)])
-
           yield rc.mem_write(dev_pf0_bar0+0x00040C, struct.pack('<L', 0xffff))
           
           # Load instruction memories
@@ -758,8 +793,9 @@ def bench():
               yield rc.mem_write(dev_pf0_bar0+0x000404, struct.pack('<L', ((i<<1)+0)))
               yield delay(20)
           
+          yield rc.mem_write(dev_pf0_bar0+0x00040C, struct.pack('<L', 0x0000))
+        
         yield rc.mem_write(dev_pf0_bar0+0x000408, struct.pack('<L', 0x0f00))
-        yield rc.mem_write(dev_pf0_bar0+0x00040C, struct.pack('<L', 0x0000))
 
         if (TEST_PCIE):
           print("PCIE tests")
@@ -837,8 +873,8 @@ def bench():
           lengths = []
           print ("send data from LAN")
           for j in range (0,SEND_COUNT_1):
-            yield xgmii_sink_0.wait()
-            rx_frame = xgmii_sink_0.recv()
+            yield qsfp0_sink.wait()
+            rx_frame = qsfp0_sink.recv()
             data = rx_frame.data
             print ("packet number from port 0:",j)
             for i in range(0, len(data), 16):
@@ -849,8 +885,8 @@ def bench():
             lengths.append(len(data)-8)
 
           for j in range (0,SEND_COUNT_0):
-            yield xgmii_sink_1.wait()
-            rx_frame = xgmii_sink_1.recv()
+            yield qsfp1_sink.wait()
+            rx_frame = qsfp1_sink.recv()
             data = rx_frame.data
             print ("packet number from port 1:",j)
             for i in range(0, len(data), 16):
@@ -864,19 +900,6 @@ def bench():
           # for i in range(0, len(data), 16):
           #     print(" ".join(("{:02x}".format(c) for c in bytearray(data[i:i+16]))))
           print ("lengths: " , lengths)
-
-          # eth_frame = eth_ep.EthFrame()
-          # eth_frame.parse_axis_fcs(rx_frame.data[8:])
-
-          # print(hex(eth_frame.eth_fcs))
-          # print(hex(eth_frame.calc_fcs()))
-
-          # assert len(eth_frame.payload.data) == 46
-          # assert eth_frame.eth_fcs == eth_frame.calc_fcs()
-          # assert eth_frame.eth_dest_mac == test_frame_1.eth_dest_mac
-          # assert eth_frame.eth_src_mac == test_frame_1.eth_src_mac
-          # assert eth_frame.eth_type == test_frame_1.eth_type
-          # assert eth_frame.payload.data.index(test_frame_1.payload.data) == 0
 
         raise StopSimulation
 

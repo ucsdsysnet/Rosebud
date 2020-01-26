@@ -457,7 +457,7 @@ module axis_dma # (
   // If I'm not ready to get data then I deassert my address valid too. 
   // The sender module has to keep its valid and data until ready! 
   assign mem_rd_data_ready = !(m_axis_tvalid && (!m_axis_tready));
-  assign mem_rd_en         = (rd_req_word_count > 0) && mem_rd_data_ready;
+  assign mem_rd_en         = (rd_req_word_count > 0);// && mem_rd_data_ready;
   assign mem_rd_addr       = alligned_rd_addr;
   assign mem_rd_last       = (rd_req_word_count == 1);
 
