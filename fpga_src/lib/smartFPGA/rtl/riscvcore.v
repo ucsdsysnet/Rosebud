@@ -1,7 +1,9 @@
 module riscvcore #(
   parameter DATA_WIDTH      = 64,
   parameter ADDR_WIDTH      = 16,
-  parameter COHERENT_START  = 16'h6FFF,
+  parameter BC_START_ADDR   = 16'h7000,
+  parameter BC_REGION_SIZE  = 4048,
+  parameter MSG_ADDR_WIDTH  = $clog2(BC_REGION_SIZE)-2,
   parameter CORE_ID_WIDTH   = 4,
   parameter STRB_WIDTH      = DATA_WIDTH/8,
   parameter LINE_ADDR_BITS  = $clog2(STRB_WIDTH),
@@ -44,7 +46,7 @@ module riscvcore #(
     input                        slot_wr_ready,
 
     output [31:0]                core_msg_data,
-    output [DMEM_ADDR_WIDTH-1:0] core_msg_addr,
+    output [MSG_ADDR_WIDTH-1:0]  core_msg_addr,
     output [3:0]                 core_msg_strb,
     output                       core_msg_valid,
     input                        core_msg_ready,
@@ -508,9 +510,9 @@ always @ (posedge clk)
 // Any write after the coherent point would become a message. No registering
 // to save a clock cycle, assuming proper power of 2 COHERENT START
 assign core_msg_data  = dmem_wr_data;
-assign core_msg_addr  = dmem_addr[DMEM_ADDR_WIDTH-1:0];
+assign core_msg_addr  = dmem_addr[MSG_ADDR_WIDTH+2-1:2];
 assign core_msg_strb  = dmem_word_write_mask[3:0];
 assign core_msg_valid = dmem_v && dmem_wr_en && 
-      (dmem_addr >= COHERENT_START) && (dmem_addr < (1 << DMEM_ADDR_WIDTH));
+      (dmem_addr >= BC_START_ADDR) && (dmem_addr < (BC_START_ADDR + BC_REGION_SIZE));
 
 endmodule

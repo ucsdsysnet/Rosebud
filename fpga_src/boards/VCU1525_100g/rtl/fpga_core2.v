@@ -235,7 +235,7 @@ parameter TAG_WIDTH        = (SLOT_WIDTH>5)? SLOT_WIDTH:5;
 parameter IMEM_SIZE       = 65536;
 parameter SLOW_DMEM_SIZE  = 1048576;
 parameter FAST_DMEM_SIZE  = 32768;
-parameter BC_REGION_SIZE  = 32768;
+parameter BC_REGION_SIZE  = 8192;
 parameter SLOW_M_B_LINES  = 4096;
 parameter FAST_M_B_LINES  = 1024;
 
@@ -243,6 +243,8 @@ parameter LVL2_DATA_WIDTH  = 128;
 parameter LVL2_STRB_WIDTH  = LVL2_DATA_WIDTH/8;
 parameter CORE_ADDR_WIDTH  = $clog2(SLOW_DMEM_SIZE)+2;
 parameter ID_TAG_WIDTH     = CORE_WIDTH+TAG_WIDTH;
+parameter BC_START_ADDR    = SLOW_DMEM_SIZE+FAST_DMEM_SIZE-BC_REGION_SIZE;
+parameter CORE_MSG_WIDTH   = 32+4+$clog2(BC_REGION_SIZE)-2;
 
 parameter RECV_DESC_DEPTH = 8;
 parameter SEND_DESC_DEPTH = 8;
@@ -1319,104 +1321,106 @@ axis_switch_2lvl # (
     .m_axis_tuser(dram_ctrl_m_axis_tuser)
 );
 
-// // Core internal messaging
-// wire [CORE_COUNT*CORE_MSG_WIDTH-1:0] core_msg_out_data;
-// wire [CORE_COUNT-1:0]                core_msg_out_valid;
-// wire [CORE_COUNT-1:0]                core_msg_out_ready;
-// 
-// wire [CORE_MSG_WIDTH-1:0]            core_msg_merged_data;
-// wire [CORE_WIDTH-1:0]                core_msg_merged_user;
-// wire                                 core_msg_merged_valid;
-// wire                                 core_msg_merged_ready;
-// 
-// axis_switch_2lvl # (
-//     .S_COUNT         (CORE_COUNT),
-//     .M_COUNT         (1),
-//     .S_DATA_WIDTH    (CORE_MSG_WIDTH),
-//     .S_KEEP_ENABLE   (0),
-//     .M_DATA_WIDTH    (CORE_MSG_WIDTH),
-//     .M_KEEP_ENABLE   (0),
-//     .M_DEST_ENABLE   (0),
-//     .ID_ENABLE       (0),
-//     .USER_ENABLE     (1),
-//     .USER_WIDTH      (CORE_WIDTH),
-//     .S_REG_TYPE      (2),
-//     .M_REG_TYPE      (2),
-//     .CLUSTER_COUNT   (BC_MSG_CLUSTERS),
-//     .STAGE_FIFO_DEPTH(0),
-//     .SEPARATE_CLOCKS(0)
-// ) cores_to_broadcaster (
-// 
-//     /*
-//      * AXI Stream inputs
-//      */
-//     .s_clk(core_clk),
-//     .s_rst(core_rst_rr),
-//     .s_axis_tdata(core_msg_out_data),
-//     .s_axis_tkeep({CORE_COUNT{1'b0}}),
-//     .s_axis_tvalid(core_msg_out_valid),
-//     .s_axis_tready(core_msg_out_ready),
-//     .s_axis_tlast({CORE_COUNT{1'b1}}),
-//     .s_axis_tid({CORE_COUNT{1'b0}}),
-//     .s_axis_tdest({CORE_COUNT{1'b0}}),
-//     .s_axis_tuser(ctrl_m_axis_tuser),
-// 
-//     /*
-//      * AXI Stream output
-//      */
-//     .m_clk(core_clk),
-//     .m_rst(core_rst_rr),
-//     .m_axis_tdata(core_msg_merged_data),
-//     .m_axis_tkeep(),
-//     .m_axis_tvalid(core_msg_merged_valid),
-//     .m_axis_tready(core_msg_merged_ready),
-//     .m_axis_tlast(),
-//     .m_axis_tid(),
-//     .m_axis_tdest(),
-//     .m_axis_tuser(core_msg_merged_user)
-// );
-// 
-// reg [BC_MSG_CLUSTERS*CORE_MSG_WIDTH-1:0] core_msg_merged_data_r;
-// reg [BC_MSG_CLUSTERS*CORE_WIDTH-1:0]     core_msg_merged_user_r;
-// reg [BC_MSG_CLUSTERS-1:0]                core_msg_merged_valid_r;
-// 
-// always @ (posedge core_clk) begin
-//     core_msg_merged_data_r  <= {BC_MSG_CLUSTERS{core_msg_merged_data}};
-//     core_msg_merged_user_r  <= {BC_MSG_CLUSTERS{core_msg_merged_user}};
-//     core_msg_merged_valid_r <= {BC_MSG_CLUSTERS{core_msg_merged_valid}}; 
-//     if (core_rst_rr)
-//       core_msg_merged_valid_r <= {BC_MSG_CLUSTERS{1'b0}};
-// end
-// 
-// assign core_msg_merged_ready = 1'b1;
-// 
-// // Broadcast the arbitted core messages.
-// reg [CORE_COUNT*CORE_MSG_WIDTH-1:0] core_msg_in_data;
-// reg [CORE_COUNT*CORE_WIDTH-1:0]     core_msg_in_user;
-// reg [CORE_COUNT-1:0]                core_msg_in_valid;
-// 
-// localparam CORES_PER_CLUSTER = CORE_COUNT / BC_MSG_CLUSTERS;
-// 
-// always @ (posedge core_clk) begin
-//     core_msg_in_data  <= {CORES_PER_CLUSTER{core_msg_merged_data_r}};
-//     core_msg_in_user  <= {CORES_PER_CLUSTER{core_msg_merged_user_r}};
-//     core_msg_in_valid <= {CORES_PER_CLUSTER{core_msg_merged_valid_r}}; 
-//     if (core_rst_rr)
-//     core_msg_in_valid <= {CORE_COUNT{1'b0}}; 
-// end
+// Core internal messaging
+wire [CORE_COUNT*CORE_MSG_WIDTH-1:0] core_msg_out_data;
+wire [CORE_COUNT-1:0]                core_msg_out_valid;
+wire [CORE_COUNT-1:0]                core_msg_out_ready;
+
+wire [CORE_MSG_WIDTH-1:0]            core_msg_merged_data;
+wire [CORE_WIDTH-1:0]                core_msg_merged_user;
+wire                                 core_msg_merged_valid;
+wire                                 core_msg_merged_ready;
+
+axis_switch_2lvl # (
+    .S_COUNT         (CORE_COUNT),
+    .M_COUNT         (1),
+    .S_DATA_WIDTH    (CORE_MSG_WIDTH),
+    .S_KEEP_ENABLE   (0),
+    .M_DATA_WIDTH    (CORE_MSG_WIDTH),
+    .M_KEEP_ENABLE   (0),
+    .M_DEST_ENABLE   (0),
+    .ID_ENABLE       (0),
+    .USER_ENABLE     (1),
+    .USER_WIDTH      (CORE_WIDTH),
+    .S_REG_TYPE      (2),
+    .M_REG_TYPE      (2),
+    .CLUSTER_COUNT   (BC_MSG_CLUSTERS),
+    .STAGE_FIFO_DEPTH(0),
+    .SEPARATE_CLOCKS(0)
+) cores_to_broadcaster (
+
+    /*
+     * AXI Stream inputs
+     */
+    .s_clk(core_clk),
+    .s_rst(core_rst_rr),
+    .s_axis_tdata(core_msg_out_data),
+    .s_axis_tkeep({CORE_COUNT{1'b0}}),
+    .s_axis_tvalid(core_msg_out_valid),
+    .s_axis_tready(core_msg_out_ready),
+    .s_axis_tlast({CORE_COUNT{1'b1}}),
+    .s_axis_tid({CORE_COUNT{1'b0}}),
+    .s_axis_tdest({CORE_COUNT{1'b0}}),
+    .s_axis_tuser(ctrl_m_axis_tuser),
+
+    /*
+     * AXI Stream output
+     */
+    .m_clk(core_clk),
+    .m_rst(core_rst_rr),
+    .m_axis_tdata(core_msg_merged_data),
+    .m_axis_tkeep(),
+    .m_axis_tvalid(core_msg_merged_valid),
+    .m_axis_tready(core_msg_merged_ready),
+    .m_axis_tlast(),
+    .m_axis_tid(),
+    .m_axis_tdest(),
+    .m_axis_tuser(core_msg_merged_user)
+);
+
+reg [BC_MSG_CLUSTERS*CORE_MSG_WIDTH-1:0] core_msg_merged_data_r;
+reg [BC_MSG_CLUSTERS*CORE_WIDTH-1:0]     core_msg_merged_user_r;
+reg [BC_MSG_CLUSTERS-1:0]                core_msg_merged_valid_r;
+
+always @ (posedge core_clk) begin
+    core_msg_merged_data_r  <= {BC_MSG_CLUSTERS{core_msg_merged_data}};
+    core_msg_merged_user_r  <= {BC_MSG_CLUSTERS{core_msg_merged_user}};
+    core_msg_merged_valid_r <= {BC_MSG_CLUSTERS{core_msg_merged_valid}}; 
+    if (core_rst_rr)
+      core_msg_merged_valid_r <= {BC_MSG_CLUSTERS{1'b0}};
+end
+
+assign core_msg_merged_ready = 1'b1;
+
+// Broadcast the arbitted core messages.
+reg [CORE_COUNT*CORE_MSG_WIDTH-1:0] core_msg_in_data;
+reg [CORE_COUNT*CORE_WIDTH-1:0]     core_msg_in_user;
+reg [CORE_COUNT-1:0]                core_msg_in_valid;
+
+localparam CORES_PER_CLUSTER = CORE_COUNT / BC_MSG_CLUSTERS;
+
+always @ (posedge core_clk) begin
+    core_msg_in_data  <= {CORES_PER_CLUSTER{core_msg_merged_data_r}};
+    core_msg_in_user  <= {CORES_PER_CLUSTER{core_msg_merged_user_r}};
+    core_msg_in_valid <= {CORES_PER_CLUSTER{core_msg_merged_valid_r}}; 
+    if (core_rst_rr)
+    core_msg_in_valid <= {CORE_COUNT{1'b0}}; 
+end
 
 // Instantiating riscv core wrappers
 genvar i;
 generate
   for (i=0; i<CORE_COUNT; i=i+1) begin: riscv_cores
     wire [CORE_WIDTH-1:0] core_id = i;
-    // (* keep_hierarchy = "soft" *)
+    (* keep_hierarchy = "yes" *)
     riscv_axis_wrapper #(
         .DATA_WIDTH(LVL2_DATA_WIDTH),
         .IMEM_SIZE(IMEM_SIZE),
         .SLOW_DMEM_SIZE(SLOW_DMEM_SIZE),
         .FAST_DMEM_SIZE(FAST_DMEM_SIZE),
         .BC_REGION_SIZE(BC_REGION_SIZE),
+        .MSG_WIDTH(CORE_MSG_WIDTH),
+        .BC_START_ADDR(BC_START_ADDR),
         .SLOW_M_B_LINES(SLOW_M_B_LINES),
         .FAST_M_B_LINES(FAST_M_B_LINES),
         .ADDR_WIDTH(CORE_ADDR_WIDTH),
@@ -1484,19 +1488,19 @@ generate
         .dram_m_axis_tdata (dram_m_axis_tdata[LVL2_DRAM_WIDTH*i +: LVL2_DRAM_WIDTH]),
         .dram_m_axis_tvalid(dram_m_axis_tvalid[i]),
         .dram_m_axis_tready(dram_m_axis_tready[i]),
-        .dram_m_axis_tlast (dram_m_axis_tlast[i])
+        .dram_m_axis_tlast (dram_m_axis_tlast[i]),
    
-        // // ------------- CORE MSG CHANNEL -------------- // 
-        // // Core messages output  
-        // .core_msg_out_data(core_msg_out_data[CORE_MSG_WIDTH*i +: CORE_MSG_WIDTH]),
-        // .core_msg_out_valid(core_msg_out_valid[i]),
-        // .core_msg_out_ready(core_msg_out_ready[i]),
+        // ------------- CORE MSG CHANNEL -------------- // 
+        // Core messages output  
+        .core_msg_out_data(core_msg_out_data[CORE_MSG_WIDTH*i +: CORE_MSG_WIDTH]),
+        .core_msg_out_valid(core_msg_out_valid[i]),
+        .core_msg_out_ready(core_msg_out_ready[i]),
 
-        // // Core messages input
-        // .core_msg_in_data(core_msg_in_data[CORE_MSG_WIDTH*i +: CORE_MSG_WIDTH]),
-        // .core_msg_in_user(core_msg_in_user[CORE_WIDTH*i +: CORE_WIDTH]),
-        // .core_msg_in_valid(core_msg_in_valid[i] && 
-        //                   (core_msg_in_user[CORE_WIDTH*i +: CORE_WIDTH]!=i))
+        // Core messages input
+        .core_msg_in_data(core_msg_in_data[CORE_MSG_WIDTH*i +: CORE_MSG_WIDTH]),
+        .core_msg_in_user(core_msg_in_user[CORE_WIDTH*i +: CORE_WIDTH]),
+        .core_msg_in_valid(core_msg_in_valid[i] && 
+                          (core_msg_in_user[CORE_WIDTH*i +: CORE_WIDTH]!=i))
     );
 
         assign dram_m_axis_tuser[CORE_WIDTH*i +: CORE_WIDTH]               = i;

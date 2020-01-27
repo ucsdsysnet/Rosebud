@@ -21,7 +21,8 @@ module riscv_axis_wrapper # (
     parameter SLOW_DMEM_SIZE  = 1048576,
     parameter FAST_DMEM_SIZE  = 32768,
     parameter BC_REGION_SIZE  = 4048,
-    parameter MSG_WIDTH       = 4+$clog2(BC_REGION_SIZE)+32,
+    parameter BC_START_ADDR   = SLOW_DMEM_SIZE+FAST_DMEM_SIZE-BC_REGION_SIZE,
+    parameter MSG_WIDTH       = 32+4+$clog2(BC_REGION_SIZE)-2,
     
     parameter RECV_DESC_DEPTH = 8,
     parameter SEND_DESC_DEPTH = 8,
@@ -88,18 +89,18 @@ module riscv_axis_wrapper # (
     output wire [63:0]              dram_m_axis_tdata,
     output wire                     dram_m_axis_tvalid,
     input  wire                     dram_m_axis_tready,
-    output wire                     dram_m_axis_tlast
+    output wire                     dram_m_axis_tlast,
 
-    // // ------------- CORE MSG CHANNEL -------------- // 
-    // // Core messages output  
-    // output wire [MSG_WIDTH-1:0]     core_msg_out_data,
-    // output wire                     core_msg_out_valid,
-    // input  wire                     core_msg_out_ready,
+    // ------------- CORE MSG CHANNEL -------------- // 
+    // Core messages output  
+    output wire [MSG_WIDTH-1:0]     core_msg_out_data,
+    output wire                     core_msg_out_valid,
+    input  wire                     core_msg_out_ready,
 
-    // // Core messages input
-    // input  wire [MSG_WIDTH-1:0]     core_msg_in_data,
-    // input  wire [CORE_ID_WIDTH-1:0] core_msg_in_user,
-    // input  wire                     core_msg_in_valid
+    // Core messages input
+    input  wire [MSG_WIDTH-1:0]     core_msg_in_data,
+    input  wire [CORE_ID_WIDTH-1:0] core_msg_in_user,
+    input  wire                     core_msg_in_valid
 );
     
 parameter SLOW_DMEM_ADDR_WIDTH = $clog2(SLOW_DMEM_SIZE);
@@ -949,71 +950,48 @@ assign ctrl_m_axis_tdata  = ctrl_m_axis_tdata_r;
 assign ctrl_m_axis_tlast  = ctrl_m_axis_tvalid;
 assign ctrl_out_ready     = (!ctrl_m_axis_tvalid_r) || ctrl_m_axis_tready;
 
-// /////////////////////////////////////////////////////////////////////
-// /////////////////////// BROADCAST MESSAGING /////////////////////////
-// /////////////////////////////////////////////////////////////////////
-// // A FIFO for outgoing core messages.
-// wire [31:0]                core_msg_data;
-// wire [14:0] core_msg_addr;
-// wire [3:0]                 core_msg_strb;
-// wire                       core_msg_valid;
-// wire                       core_msg_ready;
-// 
-// if (!SEPARATE_CLOCKS) begin: sync_core_msg_send_fifo
-//   simple_sync_fifo # (
-//     .DEPTH(MSG_FIFO_DEPTH),
-//     .DATA_WIDTH(MSG_WIDTH)
-//   ) core_msg_out_fifo (
-//     .clk(sys_clk),
-//     .rst(sys_rst || core_reset_r),
-//   
-//     .din_valid(core_msg_valid),
-//     .din({core_msg_strb, core_msg_addr, core_msg_data}),
-//     .din_ready(core_msg_ready),
-//    
-//     .dout_valid(core_msg_out_valid),
-//     .dout(core_msg_out_data),
-//     .dout_ready(core_msg_out_ready)
-//   );
-// end else begin: async_core_msg_send_fifo
-//   simple_async_fifo # (
-//     .DEPTH(MSG_FIFO_DEPTH),
-//     .DATA_WIDTH(MSG_WIDTH)
-//   ) core_msg_out_fifo (
-//     .async_rst(sys_rst || core_reset_r),
-//   
-//     .din_clk(core_clk),
-//     .din_valid(core_msg_valid),
-//     .din({core_msg_strb, core_msg_addr, core_msg_data}),
-//     .din_ready(core_msg_ready),
-//    
-//     .dout_clk(sys_clk),
-//     .dout_valid(core_msg_out_valid),
-//     .dout(core_msg_out_data),
-//     .dout_ready(core_msg_out_ready)
-//   );
-// end
-// 
-// // Register and width convert incoming core msg
-// reg [15:0] core_msg_in_addr_r;
-// reg [31:0] core_msg_in_data_r;
-// reg [3:0]  core_msg_in_strb_r;
-// reg        core_msg_in_v_r;
-// 
-// always @ (posedge sys_clk) begin
-//   core_msg_in_addr_r <= core_msg_in_data[31+16:32];
-//   core_msg_in_data_r <= core_msg_in_data[31:0];
-//   core_msg_in_strb_r <= core_msg_in_data[MSG_WIDTH-1:MSG_WIDTH-4];
-//   if (sys_rst)
-//     core_msg_in_v_r  <= 1'b0;
-//   else
-//     core_msg_in_v_r  <= core_msg_in_valid;
-// end
-// 
-// wire [STRB_WIDTH-1:0] core_msg_write_mask = {{STRB_WIDTH-4{1'b0}}, core_msg_in_strb_r[3:0]} 
-//                                          << {core_msg_in_addr_r[LINE_ADDR_BITS-1:2], 2'd0};
-// wire [DATA_WIDTH-1:0] core_msg_write_data = {{DATA_WIDTH-32{1'b0}}, core_msg_in_data_r} 
-//                                          << {core_msg_in_addr_r[LINE_ADDR_BITS-1:2], 5'd0};
+/////////////////////////////////////////////////////////////////////
+/////////////////////// BROADCAST MESSAGING /////////////////////////
+/////////////////////////////////////////////////////////////////////
+// A FIFO for outgoing core messages.
+wire [MSG_WIDTH-1:0] bc_msg_out_data;
+wire                 bc_msg_out_valid;
+wire                 bc_msg_out_ready;
+
+if (!SEPARATE_CLOCKS) begin: sync_core_msg_send_fifo
+  simple_sync_fifo # (
+    .DEPTH(MSG_FIFO_DEPTH),
+    .DATA_WIDTH(MSG_WIDTH)
+  ) core_msg_out_fifo (
+    .clk(sys_clk),
+    .rst(sys_rst || core_reset_r),
+  
+    .din_valid(bc_msg_out_valid),
+    .din(bc_msg_out_data),
+    .din_ready(bc_msg_out_ready),
+   
+    .dout_valid(core_msg_out_valid),
+    .dout(core_msg_out_data),
+    .dout_ready(core_msg_out_ready)
+  );
+end else begin: async_core_msg_send_fifo
+  simple_async_fifo # (
+    .DEPTH(MSG_FIFO_DEPTH),
+    .DATA_WIDTH(MSG_WIDTH)
+  ) core_msg_out_fifo (
+    .async_rst(sys_rst || core_reset_r),
+  
+    .din_clk(core_clk),
+    .din_valid(bc_msg_out_valid),
+    .din(bc_msg_out_data),
+    .din_ready(bc_msg_out_ready),
+   
+    .dout_clk(sys_clk),
+    .dout_valid(core_msg_out_valid),
+    .dout(core_msg_out_data),
+    .dout_ready(core_msg_out_ready)
+  );
+end
 
 /////////////////////////////////////////////////////////////////////
 //////// External memory access out of bound detection //////////////
@@ -1096,6 +1074,12 @@ if (PR_ENABLE) begin: PR_riscv_block
    
     .recv_dram_tag_valid(recv_dram_tag_v),    
     .recv_dram_tag(recv_dram_tag),
+
+    .bc_msg_in(core_msg_in_data),
+    .bc_msg_in_valid(core_msg_in_valid),
+    .bc_msg_out(bc_msg_out_data),
+    .bc_msg_out_valid(bc_msg_out_valid),
+    .bc_msg_out_ready(bc_msg_out_ready),
   
     .interrupt_in(core_interrupt),
     .interrupt_in_ack(core_interrupt_ack)
@@ -1109,6 +1093,8 @@ end else begin: normal_riscv_block
     .FAST_DMEM_SIZE(FAST_DMEM_SIZE),
     .SLOW_M_B_LINES(SLOW_M_B_LINES),
     .FAST_M_B_LINES(FAST_M_B_LINES),
+    .BC_REGION_SIZE(BC_REGION_SIZE),
+    .BC_START_ADDR(BC_START_ADDR),
     .CORE_ID_WIDTH(CORE_ID_WIDTH),
     .SLOT_COUNT(SLOT_COUNT),
     .ADDR_WIDTH(ADDR_WIDTH),
@@ -1153,6 +1139,12 @@ end else begin: normal_riscv_block
    
     .recv_dram_tag_valid(recv_dram_tag_v),    
     .recv_dram_tag(recv_dram_tag),
+    
+    .bc_msg_in(core_msg_in_data),
+    .bc_msg_in_valid(core_msg_in_valid),
+    .bc_msg_out(bc_msg_out_data),
+    .bc_msg_out_valid(bc_msg_out_valid),
+    .bc_msg_out_ready(bc_msg_out_ready),
   
     .interrupt_in(core_interrupt),
     .interrupt_in_ack(core_interrupt_ack)

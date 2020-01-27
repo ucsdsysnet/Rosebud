@@ -6,14 +6,14 @@ module riscv_block_PR (
   
   // DMA interface
   input  wire         dma_cmd_wr_en,
-  input  wire [16:0]  dma_cmd_wr_addr,
+  input  wire [15:0]  dma_cmd_wr_addr,
   input  wire [63:0]  dma_cmd_wr_data,
   input  wire [7:0]   dma_cmd_wr_strb,
   input  wire         dma_cmd_wr_last,
   output wire         dma_cmd_wr_ready,
   
   input  wire         dma_cmd_rd_en,
-  input  wire [16:0]  dma_cmd_rd_addr,
+  input  wire [15:0]  dma_cmd_rd_addr,
   input  wire         dma_cmd_rd_last,
   output wire         dma_cmd_rd_ready,
   
@@ -33,13 +33,20 @@ module riscv_block_PR (
 
   // Slot information from core
   output wire [3:0]   slot_wr_ptr, 
-  output wire [16:0]  slot_wr_addr,
+  output wire [15:0]  slot_wr_addr,
   output wire         slot_wr_valid,
   input  wire         slot_wr_ready,
  
   // Received DRAM infor to core
   input  wire [4:0]   recv_dram_tag,
   input  wire         recv_dram_tag_valid,
+
+  // Broadcast messages
+  input  wire [45:0]  bc_msg_in,
+  input  wire         bc_msg_in_valid,
+  output wire [45:0]  bc_msg_out,
+  output wire         bc_msg_out_valid,
+  input  wire         bc_msg_out_ready,
 
   // Interrupt to core
   input  wire         interrupt_in,
@@ -49,11 +56,14 @@ module riscv_block_PR (
 // Parameters that should match the wrapper and are used in ports
 parameter DATA_WIDTH     = 64;
 parameter STRB_WIDTH     = (DATA_WIDTH/8);
-parameter IMEM_SIZE      = 65536;
-parameter SLOW_DMEM_SIZE = 32768;
-parameter FAST_DMEM_SIZE = 32768;
+parameter IMEM_SIZE      = 16384;
+parameter SLOW_DMEM_SIZE = 16384;
+parameter FAST_DMEM_SIZE = 16384;
 parameter SLOW_M_B_LINES = 1024;
 parameter FAST_M_B_LINES = 1024;
+parameter BC_REGION_SIZE = 4096;
+parameter BC_START_ADDR  = SLOW_DMEM_SIZE+FAST_DMEM_SIZE-BC_REGION_SIZE;
+parameter MSG_WIDTH      = 32+4+$clog2(BC_REGION_SIZE)-2;
 parameter ADDR_WIDTH     = $clog2(SLOW_DMEM_SIZE)+2;
 parameter CORE_ID_WIDTH  = 4;
 parameter SLOT_COUNT     = 8;
@@ -66,7 +76,7 @@ parameter FAST_DMEM_ADDR_WIDTH = $clog2(FAST_DMEM_SIZE);
 parameter IMEM_ADDR_WIDTH      = $clog2(IMEM_SIZE);
 //parameter BC_MSG_ADDR_WIDTH    = $clog2(BC_REGION_SIZE);
 parameter REG_TYPE             = 2;
-parameter REG_LENGTH           = 1;
+parameter REG_LENGTH           = 2;
 
 parameter ACC_ADDR_WIDTH       = $clog2(SLOW_M_B_LINES);
 parameter SLOW_DMEM_SEL_BITS   = SLOW_DMEM_ADDR_WIDTH-$clog2(STRB_WIDTH)
@@ -243,6 +253,47 @@ simple_pipe_reg # (
   .m_ready(1'b1)
 );
 
+wire [MSG_WIDTH-1:0]  bc_msg_in_r;
+wire                  bc_msg_in_valid_r;
+
+simple_pipe_reg # (
+  .DATA_WIDTH(MSG_WIDTH), 
+  .REG_TYPE(REG_TYPE), 
+  .REG_LENGTH(REG_LENGTH)
+) bc_msg_in_reg (
+  .clk(sys_clk),
+  .rst(sys_rst_r),
+  
+  .s_data(bc_msg_in),
+  .s_valid(bc_msg_in_valid),
+  .s_ready(),
+
+  .m_data(bc_msg_in_r),
+  .m_valid(bc_msg_in_valid_r),
+  .m_ready(1'b1)
+);
+
+wire [MSG_WIDTH-1:0]  bc_msg_out_n;
+wire                  bc_msg_out_valid_n;
+wire                  bc_msg_out_ready_n;
+
+simple_pipe_reg # (
+  .DATA_WIDTH(MSG_WIDTH), 
+  .REG_TYPE(REG_TYPE), 
+  .REG_LENGTH(REG_LENGTH)
+) bc_msg_out_reg (
+  .clk(sys_clk),
+  .rst(sys_rst_r),
+  
+  .s_data(bc_msg_out_n),
+  .s_valid(bc_msg_out_valid_n),
+  .s_ready(bc_msg_out_ready_n),
+
+  .m_data(bc_msg_out),
+  .m_valid(bc_msg_out_valid),
+  .m_ready(bc_msg_out_ready)
+);
+
 ///////////////////////////////////////////////////////////////////////////////
 ////////////////////// RISCVCORE and MEMORY SYSTEM  ///////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -275,7 +326,9 @@ mem_sys # (
   .IMEM_SIZE(IMEM_SIZE),
   .SLOW_DMEM_SIZE(SLOW_DMEM_SIZE),
   .FAST_DMEM_SIZE(FAST_DMEM_SIZE),
-  // .BC_REGION_SIZE(BC_REGION_SIZE),
+  .BC_REGION_SIZE(BC_REGION_SIZE),
+  .BC_START_ADDR(BC_START_ADDR),
+  .MSG_WIDTH(MSG_WIDTH),
   .ADDR_WIDTH(ADDR_WIDTH),
   .SLOW_M_B_LINES(SLOW_M_B_LINES),
   .FAST_M_B_LINES(FAST_M_B_LINES)
@@ -310,10 +363,8 @@ mem_sys # (
   .core_imem_addr(core_imem_addr),
   .core_imem_rd_data(core_imem_rd_data),
   
-  // .bc_msg_in_addr(core_msg_in_addr_r),
-  // .bc_msg_in_wr_strb(core_msg_write_mask),
-  // .bc_msg_in_wr_data(core_msg_write_data),
-  // .bc_msg_in_valid(core_msg_in_v_r),
+  .bc_msg_in(bc_msg_in_r),
+  .bc_msg_in_valid(bc_msg_in_valid_r),
   
   .acc_en_b1(acc_en_b1),
   .acc_wen_b1(acc_wen_b1),
@@ -333,6 +384,8 @@ riscvcore #(
   .ADDR_WIDTH(ADDR_WIDTH),
   .IMEM_ADDR_WIDTH(IMEM_ADDR_WIDTH),
   .DMEM_ADDR_WIDTH(ADDR_WIDTH-1),    
+  .BC_START_ADDR(BC_START_ADDR),
+  .BC_REGION_SIZE(BC_REGION_SIZE),
   .SLOT_COUNT(SLOT_COUNT),
   .SLOT_WIDTH(SLOT_WIDTH),
   .CORE_ID_WIDTH(CORE_ID_WIDTH)
@@ -370,11 +423,11 @@ riscvcore #(
     .slot_wr_valid(slot_wr_valid_n),
     .slot_wr_ready(slot_wr_ready_n),
  
-    // .core_msg_data(core_msg_data),
-    // .core_msg_addr(core_msg_addr),
-    // .core_msg_strb(core_msg_strb),
-    // .core_msg_valid(core_msg_valid),
-    // .core_msg_ready(core_msg_ready),
+    .core_msg_data(bc_msg_out_n[31:0]),
+    .core_msg_addr(bc_msg_out_n[MSG_WIDTH-1:36]),
+    .core_msg_strb(bc_msg_out_n[35:32]),
+    .core_msg_valid(bc_msg_out_valid_n),
+    .core_msg_ready(bc_msg_out_ready_n),
 
     .interrupt_in(interrupt_in_r),
     .interrupt_in_ack(interrupt_in_ack_n)
