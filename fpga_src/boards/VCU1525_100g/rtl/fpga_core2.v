@@ -1345,7 +1345,7 @@ axis_switch_2lvl # (
     .S_REG_TYPE      (2),
     .M_REG_TYPE      (2),
     .CLUSTER_COUNT   (BC_MSG_CLUSTERS),
-    .STAGE_FIFO_DEPTH(0),
+    .STAGE_FIFO_DEPTH(16),
     .SEPARATE_CLOCKS(0)
 ) cores_to_broadcaster (
 
@@ -1353,7 +1353,7 @@ axis_switch_2lvl # (
      * AXI Stream inputs
      */
     .s_clk(core_clk),
-    .s_rst(core_rst_rr),
+    .s_rst(core_rst_r),
     .s_axis_tdata(core_msg_out_data),
     .s_axis_tkeep({CORE_COUNT{1'b0}}),
     .s_axis_tvalid(core_msg_out_valid),
@@ -1367,7 +1367,7 @@ axis_switch_2lvl # (
      * AXI Stream output
      */
     .m_clk(core_clk),
-    .m_rst(core_rst_rr),
+    .m_rst(core_rst_r),
     .m_axis_tdata(core_msg_merged_data),
     .m_axis_tkeep(),
     .m_axis_tvalid(core_msg_merged_valid),
@@ -1386,7 +1386,7 @@ always @ (posedge core_clk) begin
     core_msg_merged_data_r  <= {BC_MSG_CLUSTERS{core_msg_merged_data}};
     core_msg_merged_user_r  <= {BC_MSG_CLUSTERS{core_msg_merged_user}};
     core_msg_merged_valid_r <= {BC_MSG_CLUSTERS{core_msg_merged_valid}}; 
-    if (core_rst_rr)
+    if (core_rst_r)
       core_msg_merged_valid_r <= {BC_MSG_CLUSTERS{1'b0}};
 end
 
@@ -1403,10 +1403,39 @@ always @ (posedge core_clk) begin
     core_msg_in_data  <= {CORES_PER_CLUSTER{core_msg_merged_data_r}};
     core_msg_in_user  <= {CORES_PER_CLUSTER{core_msg_merged_user_r}};
     core_msg_in_valid <= {CORES_PER_CLUSTER{core_msg_merged_valid_r}}; 
-    if (core_rst_rr)
-    core_msg_in_valid <= {CORE_COUNT{1'b0}}; 
+    if (core_rst_r)
+        core_msg_in_valid <= {CORE_COUNT{1'b0}}; 
 end
 
+// Deassert write for the sender core. Later grouping can be implemented as well.
+reg [CORE_COUNT*CORE_MSG_WIDTH-1:0] core_msg_in_data_r;
+reg [CORE_COUNT*CORE_WIDTH-1:0]     core_msg_in_user_r;
+reg [CORE_COUNT-1:0]                core_msg_in_valid_r;
+
+integer n;
+always @ (posedge core_clk) begin
+    core_msg_in_data_r  <= core_msg_in_data;
+    core_msg_in_user_r  <= core_msg_in_user;
+    for (n=0; n<CORE_COUNT; n=n+1)
+        core_msg_in_valid_r[n] <= core_msg_in_valid[n] && 
+                                  (core_msg_in_user[CORE_WIDTH*n +: CORE_WIDTH]!=n);
+    if (core_rst_r)
+        core_msg_in_valid_r <= {CORE_COUNT{1'b0}}; 
+end
+
+// Additional register level. 
+reg [CORE_COUNT*CORE_MSG_WIDTH-1:0] core_msg_in_data_rr;
+reg [CORE_COUNT*CORE_WIDTH-1:0]     core_msg_in_user_rr;
+reg [CORE_COUNT-1:0]                core_msg_in_valid_rr;
+
+always @ (posedge core_clk) begin
+    core_msg_in_data_rr  <= core_msg_in_data_r;
+    core_msg_in_user_rr  <= core_msg_in_user_r;
+    core_msg_in_valid_rr <= core_msg_in_valid_r;
+    if (core_rst_r)
+        core_msg_in_valid_rr <= {CORE_COUNT{1'b0}}; 
+end
+ 
 // Instantiating riscv core wrappers
 genvar i;
 generate
@@ -1497,10 +1526,9 @@ generate
         .core_msg_out_ready(core_msg_out_ready[i]),
 
         // Core messages input
-        .core_msg_in_data(core_msg_in_data[CORE_MSG_WIDTH*i +: CORE_MSG_WIDTH]),
-        .core_msg_in_user(core_msg_in_user[CORE_WIDTH*i +: CORE_WIDTH]),
-        .core_msg_in_valid(core_msg_in_valid[i] && 
-                          (core_msg_in_user[CORE_WIDTH*i +: CORE_WIDTH]!=i))
+        .core_msg_in_data(core_msg_in_data_rr[CORE_MSG_WIDTH*i +: CORE_MSG_WIDTH]),
+        .core_msg_in_user(core_msg_in_user_rr[CORE_WIDTH*i +: CORE_WIDTH]),
+        .core_msg_in_valid(core_msg_in_valid_rr[i])
     );
 
         assign dram_m_axis_tuser[CORE_WIDTH*i +: CORE_WIDTH]               = i;
