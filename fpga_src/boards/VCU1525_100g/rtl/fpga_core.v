@@ -1441,7 +1441,7 @@ genvar i;
 generate
   for (i=0; i<CORE_COUNT; i=i+1) begin: riscv_cores
     wire [CORE_WIDTH-1:0] core_id = i;
-    (* keep_hierarchy = "yes" *)
+    (* keep_hierarchy = "soft" *)
     riscv_axis_wrapper #(
         .DATA_WIDTH(LVL2_DATA_WIDTH),
         .IMEM_SIZE(IMEM_SIZE),
@@ -1463,11 +1463,12 @@ generate
         .SLOT_START_ADDR(SLOT_START_ADDR),
         .SLOT_ADDR_STEP(SLOT_ADDR_STEP),
         .DRAM_PORT(DRAM_PORT),
-        .REG_TYPE(2),
+        .DATA_S_REG_TYPE(2),
+        .DATA_M_REG_TYPE(2),
+        .DRAM_M_REG_TYPE(2),
         .SEPARATE_CLOCKS(0),
         .PR_ENABLE(PR_ENABLE)
-    )
-    core_wrapper (
+    ) core_wrapper (
         .sys_clk(core_clk),
         .sys_rst(block_reset[i]),
         .core_clk(core_clk),

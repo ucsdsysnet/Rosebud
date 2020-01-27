@@ -1376,11 +1376,12 @@ generate
         .SLOT_START_ADDR(SLOT_START_ADDR),
         .SLOT_ADDR_STEP(SLOT_ADDR_STEP),
         .DRAM_PORT(DRAM_PORT),
-        .REG_TYPE(2),
+        .DATA_S_REG_TYPE(0),
+        .DATA_M_REG_TYPE(2),
+        .DRAM_M_REG_TYPE(0),
         .SEPARATE_CLOCKS(0),
         .PR_ENABLE(PR_ENABLE)
-    )
-    core_wrapper (
+    ) core_wrapper (
         .sys_clk(core_clk),
         .sys_rst(block_reset[i]),
         .core_clk(core_clk),
