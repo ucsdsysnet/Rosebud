@@ -41,7 +41,7 @@ srcs = []
 
 srcs.append("../ip/ila_8x64_stub.v")
 srcs.append("../ip/ila_4x64_stub.v")
-srcs.append("../rtl/fpga_core2.v")
+srcs.append("../rtl/fpga_core.v")
 srcs.append("../rtl/riscv_block_PR.v")
 srcs.append("../rtl/pcie_config.v")
 

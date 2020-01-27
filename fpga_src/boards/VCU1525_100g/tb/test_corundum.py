@@ -50,7 +50,7 @@ testbench = 'test_fpga_core'
 srcs = []
 
 srcs.append("../rtl/fpga_core.v")
-srcs.append("../rtl/riscv_block.v")
+srcs.append("../rtl/riscv_block_PR.v")
 srcs.append("../rtl/pcie_config.v")
 
 srcs.append("../lib/smartFPGA/rtl/simple_fifo.v")
@@ -60,7 +60,9 @@ srcs.append("../lib/smartFPGA/rtl/core_mems.v")
 srcs.append("../lib/smartFPGA/rtl/axis_dma.v")
 srcs.append("../lib/smartFPGA/rtl/VexRiscv.v")
 srcs.append("../lib/smartFPGA/rtl/riscvcore.v")
+srcs.append("../lib/smartFPGA/rtl/riscv_block.v")
 srcs.append("../lib/smartFPGA/rtl/riscv_axis_wrapper.v")
+srcs.append("../lib/smartFPGA/rtl/mem_sys.v")
 srcs.append("../lib/smartFPGA/rtl/simple_scheduler.v")
 srcs.append("../lib/smartFPGA/rtl/simple_sync_sig.v")
 srcs.append("../lib/smartFPGA/rtl/axis_switch.v")

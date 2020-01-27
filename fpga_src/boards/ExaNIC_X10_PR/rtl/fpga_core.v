@@ -185,6 +185,7 @@ parameter V_PORT_COUNT     = V_IF_COUNT * PORTS_PER_V_IF;
 parameter FIRST_LB_PORT    = INTERFACE_COUNT+V_PORT_COUNT+1-1;
 parameter PORT_COUNT       = INTERFACE_COUNT+V_PORT_COUNT+LB_PORT_COUNT+1;
 
+parameter PR_ENABLE        = 1;
 parameter ENABLE_ILA       = 0;
 
 // MAC and switching system parameters
@@ -222,12 +223,27 @@ parameter DRAM_PORT        = PORT_COUNT-1;
 parameter SLOT_COUNT       = 8;
 parameter SLOT_WIDTH       = $clog2(SLOT_COUNT+1);
 parameter TAG_WIDTH        = (SLOT_WIDTH>5)? SLOT_WIDTH:5;
-parameter DMEM_SIZE_BYTES  = 32768;
-parameter CORE_MSG_WIDTH   = 4+$clog2(DMEM_SIZE_BYTES)+32;
+
+parameter IMEM_SIZE       = 16384;
+parameter SLOW_DMEM_SIZE  = 16384;
+parameter FAST_DMEM_SIZE  = 16384;
+parameter BC_REGION_SIZE  = 4096;
+parameter SLOW_M_B_LINES  = 1024;
+parameter FAST_M_B_LINES  = 1024;
+
 parameter LVL2_DATA_WIDTH  = 64;
 parameter LVL2_STRB_WIDTH  = LVL2_DATA_WIDTH/8;
-parameter CORE_ADDR_WIDTH  = 16;
+parameter CORE_ADDR_WIDTH  = $clog2(SLOW_DMEM_SIZE)+2;
 parameter ID_TAG_WIDTH     = CORE_WIDTH+TAG_WIDTH;
+parameter BC_START_ADDR    = SLOW_DMEM_SIZE+FAST_DMEM_SIZE-BC_REGION_SIZE;
+parameter CORE_MSG_WIDTH   = 32+4+$clog2(BC_REGION_SIZE)-2;
+
+parameter RECV_DESC_DEPTH = 8;
+parameter SEND_DESC_DEPTH = 8;
+parameter DRAM_DESC_DEPTH = 16;
+parameter MSG_FIFO_DEPTH  = 16;
+parameter SLOT_START_ADDR = 16'h0;
+parameter SLOT_ADDR_STEP  = 16'h4000;
 
 // FW and board IDs
 parameter FW_ID     = 32'd0;
@@ -239,11 +255,9 @@ parameter FPGA_ID   = 32'h3823093;
 // Separating reset per block and keeping it in sync with rest of the system
 (* KEEP = "TRUE" *) reg [CORE_COUNT-1:0] block_reset;
 (* KEEP = "TRUE" *) reg core_rst_r;
-(* KEEP = "TRUE" *) reg core_rst_rr;
 integer j;
 always @ (posedge core_clk) begin
   core_rst_r  <= core_rst;
-  core_rst_rr <= core_rst_r;
   for (j=0; j<CORE_COUNT; j=j+1)
     block_reset[j] <= core_rst;
 end
@@ -652,7 +666,7 @@ pcie_controller #
   .m_axis_cc_tready  (m_axis_cc_tready),
   .m_axis_cc_tuser   (m_axis_cc_tuser),
   .m_axis_cc_tvalid  (m_axis_cc_tvalid),
-    
+
   .s_axis_rq_seq_num_0(s_axis_rq_seq_num),
   .s_axis_rq_seq_num_valid_0(s_axis_rq_seq_num_valid),
   .s_axis_rq_seq_num_1(4'd0),
@@ -760,20 +774,20 @@ pcie_controller #
 assign dram_rx_axis_tuser = DRAM_PORT;
 
 // Loopback inter core message FIFO
-wire [2*LVL1_DATA_WIDTH-1:0] loopback_tx_axis_tdata;
-wire [2*LVL1_STRB_WIDTH-1:0] loopback_tx_axis_tkeep;
-wire [2*ID_TAG_WIDTH-1:0]    loopback_tx_axis_tuser;
-wire [2-1:0]                 loopback_tx_axis_tvalid, 
-                             loopback_tx_axis_tready, 
-                             loopback_tx_axis_tlast;
+wire [LB_PORT_COUNT*LVL1_DATA_WIDTH-1:0] loopback_tx_axis_tdata;
+wire [LB_PORT_COUNT*LVL1_STRB_WIDTH-1:0] loopback_tx_axis_tkeep;
+wire [LB_PORT_COUNT*ID_TAG_WIDTH-1:0]    loopback_tx_axis_tuser;
+wire [LB_PORT_COUNT-1:0]                 loopback_tx_axis_tvalid, 
+                                         loopback_tx_axis_tready, 
+                                         loopback_tx_axis_tlast;
 
-wire [2*LVL1_DATA_WIDTH-1:0] loopback_rx_axis_tdata;
-wire [2*LVL1_STRB_WIDTH-1:0] loopback_rx_axis_tkeep;
-wire [2*ID_TAG_WIDTH-1:0]    loopback_rx_axis_tdest;
-wire [2*PORT_WIDTH-1:0]      loopback_rx_axis_tuser;
-wire [2-1:0]                 loopback_rx_axis_tvalid, 
-                             loopback_rx_axis_tready, 
-                             loopback_rx_axis_tlast;
+wire [LB_PORT_COUNT*LVL1_DATA_WIDTH-1:0] loopback_rx_axis_tdata;
+wire [LB_PORT_COUNT*LVL1_STRB_WIDTH-1:0] loopback_rx_axis_tkeep;
+wire [LB_PORT_COUNT*ID_TAG_WIDTH-1:0]    loopback_rx_axis_tdest;
+wire [LB_PORT_COUNT*PORT_WIDTH-1:0]      loopback_rx_axis_tuser;
+wire [LB_PORT_COUNT-1:0]                 loopback_rx_axis_tvalid, 
+                                         loopback_rx_axis_tready, 
+                                         loopback_rx_axis_tlast;
 
 loopback_msg_fifo # (
   .DATA_WIDTH(LVL1_DATA_WIDTH),
@@ -981,7 +995,7 @@ axis_switch_2lvl # (
     .s_axis_tuser( {dram_rx_axis_tuser, loopback_rx_axis_tuser, sched_rx_axis_tuser}),
 
     .m_clk(core_clk),
-    .m_rst(core_rst_rr),
+    .m_rst(core_rst_r),
     .m_axis_tdata (data_s_axis_tdata),
     .m_axis_tkeep (data_s_axis_tkeep),
     .m_axis_tvalid(data_s_axis_tvalid),
@@ -1015,7 +1029,7 @@ axis_switch_2lvl # (
      * AXI Stream inputs
      */
     .s_clk(core_clk),
-    .s_rst(core_rst_rr),
+    .s_rst(core_rst_r),
     .s_axis_tdata(data_m_axis_tdata),
     .s_axis_tkeep(data_m_axis_tkeep),
     .s_axis_tvalid(data_m_axis_tvalid),
@@ -1078,7 +1092,7 @@ axis_switch_2lvl # (
      * AXI Stream outputs
      */
     .m_clk(core_clk),
-    .m_rst(core_rst_rr),
+    .m_rst(core_rst_r),
     .m_axis_tdata(ctrl_s_axis_tdata),
     .m_axis_tkeep(),
     .m_axis_tvalid(ctrl_s_axis_tvalid),
@@ -1112,7 +1126,7 @@ axis_switch_2lvl # (
      * AXI Stream inputs
      */
     .s_clk(core_clk),
-    .s_rst(core_rst_rr),
+    .s_rst(core_rst_r),
     .s_axis_tdata(ctrl_m_axis_tdata),
     .s_axis_tkeep({CORE_COUNT{1'b0}}),
     .s_axis_tvalid(ctrl_m_axis_tvalid),
@@ -1174,7 +1188,7 @@ axis_switch_2lvl # (
      * AXI Stream outputs
      */
     .m_clk(core_clk),
-    .m_rst(core_rst_rr),
+    .m_rst(core_rst_r),
     .m_axis_tdata(dram_s_axis_tdata),
     .m_axis_tkeep(),
     .m_axis_tvalid(dram_s_axis_tvalid),
@@ -1208,7 +1222,7 @@ axis_switch_2lvl # (
      * AXI Stream inputs
      */
     .s_clk(core_clk),
-    .s_rst(core_rst_rr),
+    .s_rst(core_rst_r),
     .s_axis_tdata(dram_m_axis_tdata),
     .s_axis_tkeep({CORE_COUNT{1'b0}}),
     .s_axis_tvalid(dram_m_axis_tvalid),
@@ -1265,7 +1279,7 @@ axis_switch_2lvl # (
      * AXI Stream inputs
      */
     .s_clk(core_clk),
-    .s_rst(core_rst_rr),
+    .s_rst(core_rst_r),
     .s_axis_tdata(core_msg_out_data),
     .s_axis_tkeep({CORE_COUNT{1'b0}}),
     .s_axis_tvalid(core_msg_out_valid),
@@ -1279,7 +1293,7 @@ axis_switch_2lvl # (
      * AXI Stream output
      */
     .m_clk(core_clk),
-    .m_rst(core_rst_rr),
+    .m_rst(core_rst_r),
     .m_axis_tdata(core_msg_merged_data),
     .m_axis_tkeep(),
     .m_axis_tvalid(core_msg_merged_valid),
@@ -1298,7 +1312,7 @@ always @ (posedge core_clk) begin
     core_msg_merged_data_r  <= {BC_MSG_CLUSTERS{core_msg_merged_data}};
     core_msg_merged_user_r  <= {BC_MSG_CLUSTERS{core_msg_merged_user}};
     core_msg_merged_valid_r <= {BC_MSG_CLUSTERS{core_msg_merged_valid}}; 
-    if (core_rst_rr)
+    if (core_rst_r)
       core_msg_merged_valid_r <= {BC_MSG_CLUSTERS{1'b0}};
 end
 
@@ -1315,8 +1329,24 @@ always @ (posedge core_clk) begin
     core_msg_in_data  <= {CORES_PER_CLUSTER{core_msg_merged_data_r}};
     core_msg_in_user  <= {CORES_PER_CLUSTER{core_msg_merged_user_r}};
     core_msg_in_valid <= {CORES_PER_CLUSTER{core_msg_merged_valid_r}}; 
-    if (core_rst_rr)
-    core_msg_in_valid <= {CORE_COUNT{1'b0}}; 
+    if (core_rst_r)
+        core_msg_in_valid <= {CORE_COUNT{1'b0}}; 
+end
+
+// Deassert write for the sender core. Later grouping can be implemented as well.
+reg [CORE_COUNT*CORE_MSG_WIDTH-1:0] core_msg_in_data_r;
+reg [CORE_COUNT*CORE_WIDTH-1:0]     core_msg_in_user_r;
+reg [CORE_COUNT-1:0]                core_msg_in_valid_r;
+
+integer n;
+always @ (posedge core_clk) begin
+    core_msg_in_data_r  <= core_msg_in_data;
+    core_msg_in_user_r  <= core_msg_in_user;
+    for (n=0; n<CORE_COUNT; n=n+1)
+        core_msg_in_valid_r[n] <= core_msg_in_valid[n] && 
+                                  (core_msg_in_user[CORE_WIDTH*n +: CORE_WIDTH]!=n);
+    if (core_rst_r)
+        core_msg_in_valid_r <= {CORE_COUNT{1'b0}}; 
 end
 
 // Instantiating riscv core wrappers
@@ -1324,10 +1354,37 @@ genvar i;
 generate
   for (i=0; i<CORE_COUNT; i=i+1) begin: riscv_cores
     wire [CORE_WIDTH-1:0] core_id = i;
-    // (* keep_hierarchy = "soft" *)
-    riscv_block riscv_block_inst (
-        .clk(core_clk),
-        .rst(block_reset[i]),
+    (* keep_hierarchy = "soft" *)
+    riscv_axis_wrapper #(
+        .DATA_WIDTH(LVL2_DATA_WIDTH),
+        .IMEM_SIZE(IMEM_SIZE),
+        .SLOW_DMEM_SIZE(SLOW_DMEM_SIZE),
+        .FAST_DMEM_SIZE(FAST_DMEM_SIZE),
+        .BC_REGION_SIZE(BC_REGION_SIZE),
+        .MSG_WIDTH(CORE_MSG_WIDTH),
+        .BC_START_ADDR(BC_START_ADDR),
+        .SLOW_M_B_LINES(SLOW_M_B_LINES),
+        .FAST_M_B_LINES(FAST_M_B_LINES),
+        .ADDR_WIDTH(CORE_ADDR_WIDTH),
+        .SLOT_COUNT(SLOT_COUNT),
+        .RECV_DESC_DEPTH(RECV_DESC_DEPTH),
+        .SEND_DESC_DEPTH(SEND_DESC_DEPTH),
+        .DRAM_DESC_DEPTH(DRAM_DESC_DEPTH),
+        .MSG_FIFO_DEPTH(MSG_FIFO_DEPTH),
+        .PORT_WIDTH(PORT_WIDTH),
+        .CORE_ID_WIDTH(CORE_WIDTH),
+        .SLOT_START_ADDR(SLOT_START_ADDR),
+        .SLOT_ADDR_STEP(SLOT_ADDR_STEP),
+        .DRAM_PORT(DRAM_PORT),
+        .REG_TYPE(2),
+        .SEPARATE_CLOCKS(0),
+        .PR_ENABLE(PR_ENABLE)
+    )
+    core_wrapper (
+        .sys_clk(core_clk),
+        .sys_rst(block_reset[i]),
+        .core_clk(core_clk),
+        .core_rst(block_reset[i]),
         .core_id(core_id),
 
         // ---------------- DATA CHANNEL --------------- // 
@@ -1382,10 +1439,9 @@ generate
         .core_msg_out_ready(core_msg_out_ready[i]),
 
         // Core messages input
-        .core_msg_in_data(core_msg_in_data[CORE_MSG_WIDTH*i +: CORE_MSG_WIDTH]),
-        .core_msg_in_user(core_msg_in_user[CORE_WIDTH*i +: CORE_WIDTH]),
-        .core_msg_in_valid(core_msg_in_valid[i] && 
-                          (core_msg_in_user[CORE_WIDTH*i +: CORE_WIDTH]!=i))
+        .core_msg_in_data(core_msg_in_data_r[CORE_MSG_WIDTH*i +: CORE_MSG_WIDTH]),
+        .core_msg_in_user(core_msg_in_user_r[CORE_WIDTH*i +: CORE_WIDTH]),
+        .core_msg_in_valid(core_msg_in_valid_r[i])
     );
 
         assign dram_m_axis_tuser[CORE_WIDTH*i +: CORE_WIDTH]               = i;

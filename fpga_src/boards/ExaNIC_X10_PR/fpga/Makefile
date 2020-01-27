@@ -6,7 +6,7 @@ FPGA_ARCH = kintexu
 
 # Files for synthesis
 SYN_FILES  = rtl/fpga.v
-SYN_FILES += rtl/fpga_core2.v
+SYN_FILES += rtl/fpga_core.v
 SYN_FILES += rtl/riscv_block_PR.v
 SYN_FILES += rtl/pcie_config.v
 SYN_FILES += rtl/sync_reset.v

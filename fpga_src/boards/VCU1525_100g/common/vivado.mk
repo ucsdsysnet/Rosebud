@@ -114,7 +114,7 @@ distclean: clean
 
 %.runs/impl_2/%_routed.dcp: %.runs/synth_1/%.dcp
 	echo "open_project $*.xpr" > run_impl.tcl
-	echo "create_pr_configuration -name config_2 -partitions { }  -greyboxes [list core_inst/riscv_cores[0].core_wrapper/PR_riscv_block.riscv_block_inst core_inst/riscv_cores[1].core_wrapper/PR_riscv_block.riscv_block_inst core_inst/riscv_cores[2].core_wrapper/PR_riscv_block.riscv_block_inst core_inst/riscv_cores[3].core_wrapper/PR_riscv_block.riscv_block_inst core_inst/riscv_cores[4].core_wrapper/PR_riscv_block.riscv_block_inst core_inst/riscv_cores[5].core_wrapper/PR_riscv_block.riscv_block_inst core_inst/riscv_cores[6].core_wrapper/PR_riscv_block.riscv_block_inst core_inst/riscv_cores[7].core_wrapper/PR_riscv_block.riscv_block_inst core_inst/riscv_cores[8].core_wrapper/PR_riscv_block.riscv_block_inst core_inst/riscv_cores[9].core_wrapper/PR_riscv_block.riscv_block_inst core_inst/riscv_cores[10].core_wrapper/PR_riscv_block.riscv_block_inst core_inst/riscv_cores[11].core_wrapper/PR_riscv_block.riscv_block_inst core_inst/riscv_cores[12].core_wrapper/PR_riscv_block.riscv_block_inst core_inst/riscv_cores[13].core_wrapper/PR_riscv_block.riscv_block_inst core_inst/riscv_cores[14].core_wrapper/PR_riscv_block.riscv_block_inst core_inst/riscv_cores[15].core_wrapper/PR_riscv_block.riscv_block_inst ]" >> run_iml.tcl
+	echo "create_pr_configuration -name config_2 -partitions { }  -greyboxes [list core_inst/riscv_cores[0].core_wrapper/PR_riscv_block.riscv_block_inst core_inst/riscv_cores[1].core_wrapper/PR_riscv_block.riscv_block_inst core_inst/riscv_cores[2].core_wrapper/PR_riscv_block.riscv_block_inst core_inst/riscv_cores[3].core_wrapper/PR_riscv_block.riscv_block_inst core_inst/riscv_cores[4].core_wrapper/PR_riscv_block.riscv_block_inst core_inst/riscv_cores[5].core_wrapper/PR_riscv_block.riscv_block_inst core_inst/riscv_cores[6].core_wrapper/PR_riscv_block.riscv_block_inst core_inst/riscv_cores[7].core_wrapper/PR_riscv_block.riscv_block_inst core_inst/riscv_cores[8].core_wrapper/PR_riscv_block.riscv_block_inst core_inst/riscv_cores[9].core_wrapper/PR_riscv_block.riscv_block_inst core_inst/riscv_cores[10].core_wrapper/PR_riscv_block.riscv_block_inst core_inst/riscv_cores[11].core_wrapper/PR_riscv_block.riscv_block_inst core_inst/riscv_cores[12].core_wrapper/PR_riscv_block.riscv_block_inst core_inst/riscv_cores[13].core_wrapper/PR_riscv_block.riscv_block_inst core_inst/riscv_cores[14].core_wrapper/PR_riscv_block.riscv_block_inst core_inst/riscv_cores[15].core_wrapper/PR_riscv_block.riscv_block_inst ]" >> run_impl.tcl
 	echo "create_run impl_2 -parent_run impl_1 -flow {Vivado Implementation 2019} -pr_config config_2" >> run_impl.tcl
 	echo "reset_run impl_2" >> run_impl.tcl
 	echo "launch_runs impl_2 -jobs 12" >> run_impl.tcl
@@ -127,11 +127,11 @@ distclean: clean
 	echo "open_project $*.xpr" > generate_bit.tcl
 	echo "open_run impl_1" >> generate_bit.tcl
 	echo "write_debug_probes -force debug_probes.ltx" >> generate_bit.tcl
-	echo "report_utilization -force -hierarchical  -file fpga_utilization_hierarchy_placed.rpt" >> generate_bit.tcl
+	echo "report_utilization -force -hierarchical  -file fpga_utilization_hierarchy_placed_full.rpt" >> generate_bit.tcl
 	echo "write_bitstream -force $*.runs/impl_1/$*.bit" >> generate_bit.tcl
 	echo "open_run impl_2" >> generate_bit.tcl
 	echo "write_debug_probes -force debug_probes.ltx" >> generate_bit.tcl
-	echo "report_utilization -force -hierarchical  -file fpga_utilization_hierarchy_placed.rpt" >> generate_bit.tcl
+	echo "report_utilization -force -hierarchical  -file fpga_utilization_hierarchy_placed_grey.rpt" >> generate_bit.tcl
 	echo "write_bitstream -force $*.runs/impl_2/$*.bit" >> generate_bit.tcl
 	echo "exit" >> generate_bit.tcl
 	vivado -nojournal -nolog -mode batch -source generate_bit.tcl
