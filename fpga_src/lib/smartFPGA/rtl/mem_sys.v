@@ -48,10 +48,10 @@ module mem_sys # (
   input  wire [ADDR_WIDTH-1:0]                    core_imem_addr,         
   output wire [DATA_WIDTH-1:0]                    core_imem_rd_data,      
   
-  input  wire [BC_MSG_ADDR_WIDTH-1:0]             bc_msg_in_addr,
-  input  wire [STRB_WIDTH-1:0]                    bc_msg_in_wr_strb,
-  input  wire [DATA_WIDTH-1:0]                    bc_msg_in_wr_data,
-  input  wire                                     bc_msg_in_valid,
+  // input  wire [BC_MSG_ADDR_WIDTH-1:0]             bc_msg_in_addr,
+  // input  wire [STRB_WIDTH-1:0]                    bc_msg_in_wr_strb,
+  // input  wire [DATA_WIDTH-1:0]                    bc_msg_in_wr_data,
+  // input  wire                                     bc_msg_in_valid,
 
   input  wire [ACC_MEM_BLOCKS-1:0]                acc_en_b1,
   input  wire [ACC_MEM_BLOCKS*STRB_WIDTH-1:0]     acc_wen_b1,
@@ -63,24 +63,22 @@ module mem_sys # (
   input  wire [ACC_MEM_BLOCKS*STRB_WIDTH-1:0]     acc_wen_b2,
   input  wire [ACC_MEM_BLOCKS*ACC_ADDR_WIDTH-1:0] acc_addr_b2,
   input  wire [ACC_MEM_BLOCKS*DATA_WIDTH-1:0]     acc_wr_data_b2,
-  output wire [ACC_MEM_BLOCKS*DATA_WIDTH-1:0]     acc_rd_data_b2,
-
-  output wire                                     out_of_bound
+  output wire [ACC_MEM_BLOCKS*DATA_WIDTH-1:0]     acc_rd_data_b2
 );
   
-  reg [BC_MSG_ADDR_WIDTH-1:0] bc_msg_in_addr_r;
-  reg [STRB_WIDTH-1:0]        bc_msg_in_wr_strb_r;
-  reg [DATA_WIDTH-1:0]        bc_msg_in_wr_data_r;
-  reg                         bc_msg_in_valid_r;
+  // reg [BC_MSG_ADDR_WIDTH-1:0] bc_msg_in_addr_r;
+  // reg [STRB_WIDTH-1:0]        bc_msg_in_wr_strb_r;
+  // reg [DATA_WIDTH-1:0]        bc_msg_in_wr_data_r;
+  // reg                         bc_msg_in_valid_r;
 
-  always @ (posedge clk) begin
-    bc_msg_in_addr_r    <= bc_msg_in_addr;
-    bc_msg_in_wr_strb_r <= bc_msg_in_wr_strb;
-    bc_msg_in_wr_data_r <= bc_msg_in_wr_data;
-    bc_msg_in_valid_r   <= bc_msg_in_valid;
-    if (rst)
-      bc_msg_in_valid_r <= 1'b0;
-  end
+  // always @ (posedge clk) begin
+  //   bc_msg_in_addr_r    <= bc_msg_in_addr;
+  //   bc_msg_in_wr_strb_r <= bc_msg_in_wr_strb;
+  //   bc_msg_in_wr_data_r <= bc_msg_in_wr_data;
+  //   bc_msg_in_valid_r   <= bc_msg_in_valid;
+  //   if (rst)
+  //     bc_msg_in_valid_r <= 1'b0;
+  // end
     
 
   ///////////////////////////////////////////////////////////////////////////
@@ -88,12 +86,11 @@ module mem_sys # (
   /////////////// read/write and speed of memory to be accesssed ////////////
   ///////////////////////////////////////////////////////////////////////////
   
-  // We deassert read request if read results cannot be accepted, similar to adding a bubble into pipe
   wire dma_imem_wr_en      =   dma_cmd_wr_addr[ADDR_WIDTH-1]  && dma_cmd_wr_en;
   wire dma_fast_dmem_wr_en = (~dma_cmd_wr_addr[ADDR_WIDTH-1]) && ( dma_cmd_wr_addr[ADDR_WIDTH-2]) && dma_cmd_wr_en;
-  wire dma_fast_dmem_rd_en = (~dma_cmd_rd_addr[ADDR_WIDTH-1]) && ( dma_cmd_wr_addr[ADDR_WIDTH-2]) && dma_cmd_rd_en && dma_rd_resp_ready;
+  wire dma_fast_dmem_rd_en = (~dma_cmd_rd_addr[ADDR_WIDTH-1]) && ( dma_cmd_wr_addr[ADDR_WIDTH-2]) && dma_cmd_rd_en;
   wire dma_slow_dmem_wr_en = (~dma_cmd_wr_addr[ADDR_WIDTH-1]) && (~dma_cmd_wr_addr[ADDR_WIDTH-2]) && dma_cmd_wr_en;
-  wire dma_slow_dmem_rd_en = (~dma_cmd_rd_addr[ADDR_WIDTH-1]) && (~dma_cmd_wr_addr[ADDR_WIDTH-2]) && dma_cmd_rd_en && dma_rd_resp_ready;
+  wire dma_slow_dmem_rd_en = (~dma_cmd_rd_addr[ADDR_WIDTH-1]) && (~dma_cmd_wr_addr[ADDR_WIDTH-2]) && dma_cmd_rd_en;
   
   wire core_fast_dmem_en = core_dmem_en &&  core_dmem_addr[ADDR_WIDTH-2];
   wire core_slow_dmem_en = core_dmem_en && ~core_dmem_addr[ADDR_WIDTH-2];
@@ -246,12 +243,13 @@ module mem_sys # (
     data_dma_fast_wen_b1     = {STRB_WIDTH{1'b0}};
     data_dma_fast_wr_data_b1 = fast_dma_cmd_wr_data; 
   
-    if (!bc_msg_in_addr_r[LINE_ADDR_BITS] && bc_msg_in_valid_r) begin
-      data_dma_fast_en_b1      = 1'b1;
-      data_dma_fast_addr_b1    = bc_msg_in_addr_r[FAST_DMEM_ADDR_WIDTH-1:0];
-      data_dma_fast_wen_b1     = bc_msg_in_wr_strb_r;
-      data_dma_fast_wr_data_b1 = bc_msg_in_wr_data_r;
-    end else if (!fast_dma_cmd_wr_addr[LINE_ADDR_BITS] && dma_fast_dmem_wr_en_r) begin
+    // if (!bc_msg_in_addr_r[LINE_ADDR_BITS] && bc_msg_in_valid_r) begin
+    //   data_dma_fast_en_b1      = 1'b1;
+    //   data_dma_fast_addr_b1    = bc_msg_in_addr_r[FAST_DMEM_ADDR_WIDTH-1:0];
+    //   data_dma_fast_wen_b1     = bc_msg_in_wr_strb_r;
+    //   data_dma_fast_wr_data_b1 = bc_msg_in_wr_data_r;
+    // end else 
+    if (!fast_dma_cmd_wr_addr[LINE_ADDR_BITS] && dma_fast_dmem_wr_en_r) begin
       data_dma_fast_en_b1      = 1'b1;
       dma_fast_wr_b1_gnt       = 1'b1;
       data_dma_fast_wen_b1     = fast_dma_cmd_wr_strb;
@@ -270,12 +268,13 @@ module mem_sys # (
     data_dma_fast_wen_b2     = {STRB_WIDTH{1'b0}};
     data_dma_fast_wr_data_b2 = fast_dma_cmd_wr_data; 
   
-    if (bc_msg_in_addr_r[LINE_ADDR_BITS] && bc_msg_in_valid_r) begin
-      data_dma_fast_en_b2      = 1'b1;
-      data_dma_fast_addr_b2    = bc_msg_in_addr_r[FAST_DMEM_ADDR_WIDTH-1:0];
-      data_dma_fast_wen_b2     = bc_msg_in_wr_strb_r;
-      data_dma_fast_wr_data_b2 = bc_msg_in_wr_data_r;
-    end else if (fast_dma_cmd_wr_addr[LINE_ADDR_BITS] && dma_fast_dmem_wr_en_r) begin
+    // if (bc_msg_in_addr_r[LINE_ADDR_BITS] && bc_msg_in_valid_r) begin
+    //   data_dma_fast_en_b2      = 1'b1;
+    //   data_dma_fast_addr_b2    = bc_msg_in_addr_r[FAST_DMEM_ADDR_WIDTH-1:0];
+    //   data_dma_fast_wen_b2     = bc_msg_in_wr_strb_r;
+    //   data_dma_fast_wr_data_b2 = bc_msg_in_wr_data_r;
+    // end else 
+    if (fast_dma_cmd_wr_addr[LINE_ADDR_BITS] && dma_fast_dmem_wr_en_r) begin
       data_dma_fast_en_b2      = 1'b1;
       dma_fast_wr_b2_gnt       = 1'b1;
       data_dma_fast_wen_b2     = fast_dma_cmd_wr_strb;
@@ -423,9 +422,9 @@ module mem_sys # (
   
   // Two or more cycles response DMEM, potentially URAM
   wire [SLOW_DMEM_SEL_BITS-1:0] dmem_slow_rd_sel_b1 = 
-          dmem_slow_addr_b1[SLOW_DMEM_ADDR_WIDTH-1:ADDR_WIDTH-SLOW_DMEM_SEL_BITS-1];
+          dmem_slow_addr_b1[SLOW_DMEM_ADDR_WIDTH-1:SLOW_DMEM_ADDR_WIDTH-SLOW_DMEM_SEL_BITS];
   wire [SLOW_DMEM_SEL_BITS-1:0] dmem_slow_rd_sel_b2 = 
-          dmem_slow_addr_b2[SLOW_DMEM_ADDR_WIDTH-1:ADDR_WIDTH-SLOW_DMEM_SEL_BITS-1];
+          dmem_slow_addr_b2[SLOW_DMEM_ADDR_WIDTH-1:SLOW_DMEM_ADDR_WIDTH-SLOW_DMEM_SEL_BITS];
 
   wire [DATA_WIDTH-1:0] dmem_slow_rd_data_b1    [0:ACC_MEM_BLOCKS-1];
   wire [DATA_WIDTH-1:0] dmem_slow_rd_data_b2    [0:ACC_MEM_BLOCKS-1];
@@ -629,18 +628,6 @@ module mem_sys # (
   
   // DMA request ready responses
   assign dma_cmd_wr_ready = slow_dma_cmd_wr_ready && fast_dma_cmd_wr_ready; //imem always accepts 
-  assign dma_cmd_rd_ready = slow_dma_cmd_rd_ready && fast_dma_cmd_rd_ready
-                            && dma_rd_resp_ready;
-  
-  // always @ (posedge clk)
-  //   if (rst)
-  //     out_of_bound <= 1'b0;
-  //   else 
-  //     out_of_bound <= (dma_fast_dmem_wr_en && (ram_cmd_wr_addr[ADDR_WIDTH-1])) ||
-  //                     (dma_slow_dmem_wr_en && (|ram_cmd_wr_addr[ADDR_WIDTH-1:ADDR_WIDTH-2]))
-  //                     (dma_fast_dmem_rd_en && (ram_cmd_rd_addr[ADDR_WIDTH-1])) ||
-  //                     (dma_slow_dmem_rd_en && (|ram_cmd_rd_addr[ADDR_WIDTH-1:ADDR_WIDTH-2])) ||
-  //                     (dma_imem_wr_en      && (|ram_cmd_wr_addr[ADDR_WIDTH-1:IMEM_ADDR_WIDTH]));
-  assign out_of_bound = 1'b0;
-  
+  assign dma_cmd_rd_ready = slow_dma_cmd_rd_ready && fast_dma_cmd_rd_ready;
+   
 endmodule

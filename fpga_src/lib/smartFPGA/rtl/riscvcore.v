@@ -20,7 +20,7 @@ module riscvcore #(
     output [ADDR_WIDTH-1:0]      ext_dmem_addr,
     output [DATA_WIDTH-1:0]      ext_dmem_wr_data,
     input  [DATA_WIDTH-1:0]      ext_dmem_rd_data,
-    input                        ext_dmem_ready,
+    input                        ext_dmem_rd_valid,
 
     output                       ext_imem_ren,
     output [ADDR_WIDTH-1:0]      ext_imem_addr,
@@ -58,7 +58,7 @@ module riscvcore #(
 wire [31:0] imem_read_data, dmem_wr_data, dmem_read_data; 
 wire [31:0] imem_addr, dmem_addr;
 wire dmem_v, dmem_wr_en, imem_v;
-reg  dmem_read_ready, imem_read_ready;
+reg imem_read_ready;
 reg  imem_access_err, dmem_access_err;
 reg  io_access_data_err, io_byte_access_err;
 wire [1:0] dmem_byte_count;
@@ -66,6 +66,7 @@ wire [4:0] dmem_word_write_mask;
 reg timer_interrupt;
 wire dram_recv_any;
 reg [7:0]  mask_r;
+reg io_ready;
 
 VexRiscv core (
       .clk(clk),
@@ -79,12 +80,12 @@ VexRiscv core (
       .iBus_rsp_payload_inst(imem_read_data),
 
       .dBus_cmd_valid(dmem_v),
-      .dBus_cmd_ready(ext_dmem_ready), // CAN BE SEPARATED FOR IO
+      .dBus_cmd_ready(1'b1),
       .dBus_cmd_payload_wr(dmem_wr_en),
       .dBus_cmd_payload_address(dmem_addr),
       .dBus_cmd_payload_data(dmem_wr_data),
       .dBus_cmd_payload_size(dmem_byte_count),
-      .dBus_rsp_ready(dmem_read_ready),
+      .dBus_rsp_ready(ext_dmem_rd_valid || io_ready),
       .dBus_rsp_error((dmem_access_err && mask_r[1])    || 
                       (io_access_data_err && mask_r[2]) || 
                       (io_byte_access_err && mask_r[3])),
@@ -125,7 +126,7 @@ localparam IO_BYTE_ACCESS = 4'b0111;//??;
 localparam IO_WRITE_ADDRS = 1'b0;//??????;
 
 wire io_not_mem = dmem_addr[ADDR_WIDTH-1];
-wire io_write = io_not_mem && dmem_v && dmem_wr_en && ext_dmem_ready; 
+wire io_write = io_not_mem && dmem_v && dmem_wr_en; 
 
 wire data_desc_wen  = io_write && (dmem_addr[6:3]==SEND_DESC_ADDR);
 wire dram_addr_wen  = io_write && (dmem_addr[6:3]==WR_DRAM_ADDR);
@@ -232,7 +233,7 @@ localparam RD_ACT_SLOT_ADDR = 5'b11000;//??
 localparam IO_READ_ADDRS    = 1'b1;//??????;
 localparam IO_SPACE         = 64 + 36; 
 
-wire io_read  = io_not_mem && dmem_v && (!dmem_wr_en) && ext_dmem_ready;
+wire io_read  = io_not_mem && dmem_v && (!dmem_wr_en);
 
 wire in_desc_ren    = io_read  && (dmem_addr[6:3]==RD_DESC_ADDR);
 wire dram_flags_ren = io_read  && (dmem_addr[6:2]==RD_D_FLAGS_ADDR);
@@ -392,7 +393,7 @@ end else begin: width_convert_dmem
     localparam REMAINED_BITS  = 8*REMAINED_BYTES;
 
     always @ (posedge clk)
-      if (dmem_v && ext_dmem_ready)
+      if (dmem_v)
         dmem_latched_addr <= dmem_addr[LINE_ADDR_BITS-1:2];
 
     assign dmem_data_out_shifted = dmem_data_out >> {dmem_latched_addr, 5'd0};
@@ -420,10 +421,10 @@ end
 
 always @ (posedge clk)
     if (rst) begin
-		    dmem_read_ready <= 1'b0;
+		    io_ready        <= 1'b0;
 		    imem_read_ready <= 1'b0;
 		end else begin
-			  dmem_read_ready <= dmem_v && ext_dmem_ready;
+			  io_ready        <= io_read; 
 		    imem_read_ready <= imem_v;
     end
 
@@ -451,7 +452,7 @@ wire io_not_mem_r = dmem_addr_r[ADDR_WIDTH-1];
 always @ (posedge clk) begin
   imem_addr_r       <= imem_addr;
   dmem_addr_r       <= dmem_addr;
-  dmem_v_r          <= dmem_v && ext_dmem_ready;
+  dmem_v_r          <= dmem_v;
   imem_v_r          <= imem_v;
   dmem_wr_en_r      <= dmem_wr_en;
   dmem_byte_count_r <= dmem_byte_count;
@@ -509,7 +510,7 @@ always @ (posedge clk)
 assign core_msg_data  = dmem_wr_data;
 assign core_msg_addr  = dmem_addr[DMEM_ADDR_WIDTH-1:0];
 assign core_msg_strb  = dmem_word_write_mask[3:0];
-assign core_msg_valid = dmem_v && dmem_wr_en && ext_dmem_ready && 
+assign core_msg_valid = dmem_v && dmem_wr_en && 
       (dmem_addr >= COHERENT_START) && (dmem_addr < (1 << DMEM_ADDR_WIDTH));
 
 endmodule

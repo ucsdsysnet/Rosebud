@@ -188,3 +188,55 @@ assign dout_valid = ~empty_r;
 assign item_count   = item_count_r;
 
 endmodule
+
+module simple_pipe_reg # (
+  parameter DATA_WIDTH = 64,
+  parameter REG_TYPE   = 2,
+  parameter REG_LENGTH = 1
+) (
+  input  clk,
+  input  rst,
+
+  input  [DATA_WIDTH-1:0] s_data,
+  input                   s_valid,
+  output                  s_ready,
+
+  output [DATA_WIDTH-1:0] m_data,
+  output                  m_valid,
+  input                   m_ready
+);
+
+axis_pipeline_register # (
+  .DATA_WIDTH(DATA_WIDTH),
+  .KEEP_ENABLE(0), 
+  .KEEP_WIDTH(1),
+  .LAST_ENABLE(0),
+  .DEST_ENABLE(0),
+  .USER_ENABLE(0),
+  .ID_ENABLE(0),
+  .REG_TYPE(REG_TYPE), 
+  .LENGTH(REG_LENGTH)
+) simple_reg (
+  .clk(clk),
+  .rst(rst),
+
+  .s_axis_tdata(s_data),
+  .s_axis_tkeep(1'b0),
+  .s_axis_tvalid(s_valid),
+  .s_axis_tready(s_ready),
+  .s_axis_tlast(1'b0),
+  .s_axis_tid(8'd0),
+  .s_axis_tdest(8'd0),
+  .s_axis_tuser(1'b0),
+  
+  .m_axis_tdata(m_data),
+  .m_axis_tkeep(),
+  .m_axis_tvalid(m_valid),
+  .m_axis_tready(m_ready),
+  .m_axis_tlast(),
+  .m_axis_tid(),
+  .m_axis_tdest(),
+  .m_axis_tuser()
+);
+
+endmodule

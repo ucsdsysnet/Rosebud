@@ -42,17 +42,18 @@ testbench = 'test_fpga_core'
 srcs = []
 
 srcs.append("../rtl/fpga_core2.v")
-srcs.append("../rtl/riscv_block2.v")
+srcs.append("../rtl/riscv_block_PR.v")
 srcs.append("../rtl/pcie_config.v")
 
 srcs.append("../lib/smartFPGA/rtl/simple_fifo.v")
 srcs.append("../lib/smartFPGA/rtl/max_finder_tree.v")
 srcs.append("../lib/smartFPGA/rtl/slot_keeper.v")
-srcs.append("../lib/smartFPGA/rtl/core_mems2.v")
+srcs.append("../lib/smartFPGA/rtl/core_mems.v")
 srcs.append("../lib/smartFPGA/rtl/axis_dma.v")
 srcs.append("../lib/smartFPGA/rtl/VexRiscv.v")
-srcs.append("../lib/smartFPGA/rtl/riscvcore2.v")
-srcs.append("../lib/smartFPGA/rtl/riscv_axis_wrapper2.v")
+srcs.append("../lib/smartFPGA/rtl/riscvcore.v")
+srcs.append("../lib/smartFPGA/rtl/riscv_block.v")
+srcs.append("../lib/smartFPGA/rtl/riscv_axis_wrapper.v")
 srcs.append("../lib/smartFPGA/rtl/mem_sys.v")
 srcs.append("../lib/smartFPGA/rtl/simple_scheduler.v")
 srcs.append("../lib/smartFPGA/rtl/simple_sync_sig.v")
@@ -802,7 +803,7 @@ def bench():
           # write pcie read descriptor
           yield rc.mem_write(dev_pf0_bar0+0x000440, struct.pack('<L', (mem_base+0x0000) & 0xffffffff))
           yield rc.mem_write(dev_pf0_bar0+0x000444, struct.pack('<L', (mem_base+0x0000 >> 32) & 0xffffffff))
-          yield rc.mem_write(dev_pf0_bar0+0x000448, struct.pack('<L', ((4<<22)+0x000100) & 0xffffffff))
+          yield rc.mem_write(dev_pf0_bar0+0x000448, struct.pack('<L', ((4<<22)+0x100100) & 0xffffffff))
           # yield rc.mem_write(dev_pf0_bar0+0x00044C, struct.pack('<L', (((4<<16)+0x0100) >> 32) & 0xffffffff))
           yield rc.mem_write(dev_pf0_bar0+0x000450, struct.pack('<L', 0x400))
           yield rc.mem_write(dev_pf0_bar0+0x000454, struct.pack('<L', 0xAA))
@@ -816,7 +817,7 @@ def bench():
           # write pcie write descriptor
           yield rc.mem_write(dev_pf0_bar0+0x000460, struct.pack('<L', (mem_base+0x1000) & 0xffffffff))
           yield rc.mem_write(dev_pf0_bar0+0x000464, struct.pack('<L', (mem_base+0x1000 >> 32) & 0xffffffff))
-          yield rc.mem_write(dev_pf0_bar0+0x000468, struct.pack('<L', ((4<<22)+0x000100) & 0xffffffff))
+          yield rc.mem_write(dev_pf0_bar0+0x000468, struct.pack('<L', ((4<<22)+0x100100) & 0xffffffff))
           yield rc.mem_write(dev_pf0_bar0+0x000470, struct.pack('<L', 0x400))
           yield rc.mem_write(dev_pf0_bar0+0x000474, struct.pack('<L', 0x55))
 

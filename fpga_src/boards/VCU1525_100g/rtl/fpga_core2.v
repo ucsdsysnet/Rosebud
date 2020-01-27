@@ -193,6 +193,7 @@ parameter V_PORT_COUNT     = V_IF_COUNT * PORTS_PER_V_IF;
 parameter FIRST_LB_PORT    = INTERFACE_COUNT+V_PORT_COUNT+1-1;
 parameter PORT_COUNT       = INTERFACE_COUNT+V_PORT_COUNT+LB_PORT_COUNT+1;
 
+parameter PR_ENABLE        = 1;
 parameter ENABLE_ILA       = 0;
 
 // MAC and switching system parameters
@@ -230,12 +231,25 @@ parameter DRAM_PORT        = PORT_COUNT-1;
 parameter SLOT_COUNT       = 8;
 parameter SLOT_WIDTH       = $clog2(SLOT_COUNT+1);
 parameter TAG_WIDTH        = (SLOT_WIDTH>5)? SLOT_WIDTH:5;
-parameter DMEM_SIZE_BYTES  = 32768;
-parameter CORE_MSG_WIDTH   = 4+$clog2(DMEM_SIZE_BYTES)+32;
+
+parameter IMEM_SIZE       = 65536;
+parameter SLOW_DMEM_SIZE  = 1048576;
+parameter FAST_DMEM_SIZE  = 32768;
+parameter BC_REGION_SIZE  = 32768;
+parameter SLOW_M_B_LINES  = 4096;
+parameter FAST_M_B_LINES  = 1024;
+
 parameter LVL2_DATA_WIDTH  = 128;
 parameter LVL2_STRB_WIDTH  = LVL2_DATA_WIDTH/8;
-parameter CORE_ADDR_WIDTH  = 22;
+parameter CORE_ADDR_WIDTH  = $clog2(SLOW_DMEM_SIZE)+2;
 parameter ID_TAG_WIDTH     = CORE_WIDTH+TAG_WIDTH;
+
+parameter RECV_DESC_DEPTH = 8;
+parameter SEND_DESC_DEPTH = 8;
+parameter DRAM_DESC_DEPTH = 16;
+parameter MSG_FIFO_DEPTH  = 16;
+parameter SLOT_START_ADDR = 16'h0;
+parameter SLOT_ADDR_STEP  = 16'h4000;
 
 // FW and board IDs
 parameter FW_ID     = 32'd0;
@@ -247,11 +261,9 @@ parameter FPGA_ID   = 32'h4B31093;
 // Separating reset per block and keeping it in sync with rest of the system
 (* KEEP = "TRUE" *) reg [CORE_COUNT-1:0] block_reset;
 (* KEEP = "TRUE" *) reg core_rst_r;
-(* KEEP = "TRUE" *) reg core_rst_rr;
 integer j;
 always @ (posedge core_clk) begin
   core_rst_r  <= core_rst;
-  core_rst_rr <= core_rst_r;
   for (j=0; j<CORE_COUNT; j=j+1)
     block_reset[j] <= core_rst;
 end
@@ -688,8 +700,8 @@ pcie_controller #
   .IF_COUNT(V_IF_COUNT),
   .PORTS_PER_IF(PORTS_PER_V_IF),
   .RAM_PIPELINE(RAM_PIPELINE),
-  .CORE_REQ_PCIE_CLK(1),
-  .AXIS_PIPE_LENGTH(2)
+  .CORE_REQ_PCIE_CLK(0),
+  .AXIS_PIPE_LENGTH(3)
 ) pcie_controller_inst (
   .sys_clk(sys_clk),
   .sys_rst(sys_rst),
@@ -1055,7 +1067,7 @@ axis_switch_2lvl # (
     .s_axis_tuser( {dram_rx_axis_tuser, loopback_rx_axis_tuser, sched_rx_axis_tuser}),
 
     .m_clk(core_clk),
-    .m_rst(core_rst_rr),
+    .m_rst(core_rst_r),
     .m_axis_tdata (data_s_axis_tdata),
     .m_axis_tkeep (data_s_axis_tkeep),
     .m_axis_tvalid(data_s_axis_tvalid),
@@ -1089,7 +1101,7 @@ axis_switch_2lvl # (
      * AXI Stream inputs
      */
     .s_clk(core_clk),
-    .s_rst(core_rst_rr),
+    .s_rst(core_rst_r),
     .s_axis_tdata(data_m_axis_tdata),
     .s_axis_tkeep(data_m_axis_tkeep),
     .s_axis_tvalid(data_m_axis_tvalid),
@@ -1152,7 +1164,7 @@ axis_switch_2lvl # (
      * AXI Stream outputs
      */
     .m_clk(core_clk),
-    .m_rst(core_rst_rr),
+    .m_rst(core_rst_r),
     .m_axis_tdata(ctrl_s_axis_tdata),
     .m_axis_tkeep(),
     .m_axis_tvalid(ctrl_s_axis_tvalid),
@@ -1186,7 +1198,7 @@ axis_switch_2lvl # (
      * AXI Stream inputs
      */
     .s_clk(core_clk),
-    .s_rst(core_rst_rr),
+    .s_rst(core_rst_r),
     .s_axis_tdata(ctrl_m_axis_tdata),
     .s_axis_tkeep({CORE_COUNT{1'b0}}),
     .s_axis_tvalid(ctrl_m_axis_tvalid),
@@ -1233,8 +1245,8 @@ axis_switch_2lvl # (
     /*
      * AXI Stream inputs
      */
-    .s_clk(pcie_clk),
-    .s_rst(pcie_rst),
+    .s_clk(sys_clk),
+    .s_rst(sys_rst),
     .s_axis_tdata(dram_ctrl_s_axis_tdata),
     .s_axis_tkeep(1'b0),
     .s_axis_tvalid(dram_ctrl_s_axis_tvalid),
@@ -1248,7 +1260,7 @@ axis_switch_2lvl # (
      * AXI Stream outputs
      */
     .m_clk(core_clk),
-    .m_rst(core_rst_rr),
+    .m_rst(core_rst_r),
     .m_axis_tdata(dram_s_axis_tdata),
     .m_axis_tkeep(),
     .m_axis_tvalid(dram_s_axis_tvalid),
@@ -1282,7 +1294,7 @@ axis_switch_2lvl # (
      * AXI Stream inputs
      */
     .s_clk(core_clk),
-    .s_rst(core_rst_rr),
+    .s_rst(core_rst_r),
     .s_axis_tdata(dram_m_axis_tdata),
     .s_axis_tkeep({CORE_COUNT{1'b0}}),
     .s_axis_tvalid(dram_m_axis_tvalid),
@@ -1295,8 +1307,8 @@ axis_switch_2lvl # (
     /*
      * AXI Stream output
      */
-    .m_clk(pcie_clk),
-    .m_rst(pcie_rst),
+    .m_clk(sys_clk),
+    .m_rst(sys_rst),
     .m_axis_tdata(dram_ctrl_m_axis_tdata),
     .m_axis_tkeep(),
     .m_axis_tvalid(dram_ctrl_m_axis_tvalid),
@@ -1307,91 +1319,91 @@ axis_switch_2lvl # (
     .m_axis_tuser(dram_ctrl_m_axis_tuser)
 );
 
-// Core internal messaging
-wire [CORE_COUNT*CORE_MSG_WIDTH-1:0] core_msg_out_data;
-wire [CORE_COUNT-1:0]                core_msg_out_valid;
-wire [CORE_COUNT-1:0]                core_msg_out_ready;
-
-wire [CORE_MSG_WIDTH-1:0]            core_msg_merged_data;
-wire [CORE_WIDTH-1:0]                core_msg_merged_user;
-wire                                 core_msg_merged_valid;
-wire                                 core_msg_merged_ready;
-
-axis_switch_2lvl # (
-    .S_COUNT         (CORE_COUNT),
-    .M_COUNT         (1),
-    .S_DATA_WIDTH    (CORE_MSG_WIDTH),
-    .S_KEEP_ENABLE   (0),
-    .M_DATA_WIDTH    (CORE_MSG_WIDTH),
-    .M_KEEP_ENABLE   (0),
-    .M_DEST_ENABLE   (0),
-    .ID_ENABLE       (0),
-    .USER_ENABLE     (1),
-    .USER_WIDTH      (CORE_WIDTH),
-    .S_REG_TYPE      (2),
-    .M_REG_TYPE      (2),
-    .CLUSTER_COUNT   (BC_MSG_CLUSTERS),
-    .STAGE_FIFO_DEPTH(0),
-    .SEPARATE_CLOCKS(0)
-) cores_to_broadcaster (
-
-    /*
-     * AXI Stream inputs
-     */
-    .s_clk(core_clk),
-    .s_rst(core_rst_rr),
-    .s_axis_tdata(core_msg_out_data),
-    .s_axis_tkeep({CORE_COUNT{1'b0}}),
-    .s_axis_tvalid(core_msg_out_valid),
-    .s_axis_tready(core_msg_out_ready),
-    .s_axis_tlast({CORE_COUNT{1'b1}}),
-    .s_axis_tid({CORE_COUNT{1'b0}}),
-    .s_axis_tdest({CORE_COUNT{1'b0}}),
-    .s_axis_tuser(ctrl_m_axis_tuser),
-
-    /*
-     * AXI Stream output
-     */
-    .m_clk(core_clk),
-    .m_rst(core_rst_rr),
-    .m_axis_tdata(core_msg_merged_data),
-    .m_axis_tkeep(),
-    .m_axis_tvalid(core_msg_merged_valid),
-    .m_axis_tready(core_msg_merged_ready),
-    .m_axis_tlast(),
-    .m_axis_tid(),
-    .m_axis_tdest(),
-    .m_axis_tuser(core_msg_merged_user)
-);
-
-reg [BC_MSG_CLUSTERS*CORE_MSG_WIDTH-1:0] core_msg_merged_data_r;
-reg [BC_MSG_CLUSTERS*CORE_WIDTH-1:0]     core_msg_merged_user_r;
-reg [BC_MSG_CLUSTERS-1:0]                core_msg_merged_valid_r;
-
-always @ (posedge core_clk) begin
-    core_msg_merged_data_r  <= {BC_MSG_CLUSTERS{core_msg_merged_data}};
-    core_msg_merged_user_r  <= {BC_MSG_CLUSTERS{core_msg_merged_user}};
-    core_msg_merged_valid_r <= {BC_MSG_CLUSTERS{core_msg_merged_valid}}; 
-    if (core_rst_rr)
-      core_msg_merged_valid_r <= {BC_MSG_CLUSTERS{1'b0}};
-end
-
-assign core_msg_merged_ready = 1'b1;
-
-// Broadcast the arbitted core messages.
-reg [CORE_COUNT*CORE_MSG_WIDTH-1:0] core_msg_in_data;
-reg [CORE_COUNT*CORE_WIDTH-1:0]     core_msg_in_user;
-reg [CORE_COUNT-1:0]                core_msg_in_valid;
-
-localparam CORES_PER_CLUSTER = CORE_COUNT / BC_MSG_CLUSTERS;
-
-always @ (posedge core_clk) begin
-    core_msg_in_data  <= {CORES_PER_CLUSTER{core_msg_merged_data_r}};
-    core_msg_in_user  <= {CORES_PER_CLUSTER{core_msg_merged_user_r}};
-    core_msg_in_valid <= {CORES_PER_CLUSTER{core_msg_merged_valid_r}}; 
-    if (core_rst_rr)
-    core_msg_in_valid <= {CORE_COUNT{1'b0}}; 
-end
+// // Core internal messaging
+// wire [CORE_COUNT*CORE_MSG_WIDTH-1:0] core_msg_out_data;
+// wire [CORE_COUNT-1:0]                core_msg_out_valid;
+// wire [CORE_COUNT-1:0]                core_msg_out_ready;
+// 
+// wire [CORE_MSG_WIDTH-1:0]            core_msg_merged_data;
+// wire [CORE_WIDTH-1:0]                core_msg_merged_user;
+// wire                                 core_msg_merged_valid;
+// wire                                 core_msg_merged_ready;
+// 
+// axis_switch_2lvl # (
+//     .S_COUNT         (CORE_COUNT),
+//     .M_COUNT         (1),
+//     .S_DATA_WIDTH    (CORE_MSG_WIDTH),
+//     .S_KEEP_ENABLE   (0),
+//     .M_DATA_WIDTH    (CORE_MSG_WIDTH),
+//     .M_KEEP_ENABLE   (0),
+//     .M_DEST_ENABLE   (0),
+//     .ID_ENABLE       (0),
+//     .USER_ENABLE     (1),
+//     .USER_WIDTH      (CORE_WIDTH),
+//     .S_REG_TYPE      (2),
+//     .M_REG_TYPE      (2),
+//     .CLUSTER_COUNT   (BC_MSG_CLUSTERS),
+//     .STAGE_FIFO_DEPTH(0),
+//     .SEPARATE_CLOCKS(0)
+// ) cores_to_broadcaster (
+// 
+//     /*
+//      * AXI Stream inputs
+//      */
+//     .s_clk(core_clk),
+//     .s_rst(core_rst_rr),
+//     .s_axis_tdata(core_msg_out_data),
+//     .s_axis_tkeep({CORE_COUNT{1'b0}}),
+//     .s_axis_tvalid(core_msg_out_valid),
+//     .s_axis_tready(core_msg_out_ready),
+//     .s_axis_tlast({CORE_COUNT{1'b1}}),
+//     .s_axis_tid({CORE_COUNT{1'b0}}),
+//     .s_axis_tdest({CORE_COUNT{1'b0}}),
+//     .s_axis_tuser(ctrl_m_axis_tuser),
+// 
+//     /*
+//      * AXI Stream output
+//      */
+//     .m_clk(core_clk),
+//     .m_rst(core_rst_rr),
+//     .m_axis_tdata(core_msg_merged_data),
+//     .m_axis_tkeep(),
+//     .m_axis_tvalid(core_msg_merged_valid),
+//     .m_axis_tready(core_msg_merged_ready),
+//     .m_axis_tlast(),
+//     .m_axis_tid(),
+//     .m_axis_tdest(),
+//     .m_axis_tuser(core_msg_merged_user)
+// );
+// 
+// reg [BC_MSG_CLUSTERS*CORE_MSG_WIDTH-1:0] core_msg_merged_data_r;
+// reg [BC_MSG_CLUSTERS*CORE_WIDTH-1:0]     core_msg_merged_user_r;
+// reg [BC_MSG_CLUSTERS-1:0]                core_msg_merged_valid_r;
+// 
+// always @ (posedge core_clk) begin
+//     core_msg_merged_data_r  <= {BC_MSG_CLUSTERS{core_msg_merged_data}};
+//     core_msg_merged_user_r  <= {BC_MSG_CLUSTERS{core_msg_merged_user}};
+//     core_msg_merged_valid_r <= {BC_MSG_CLUSTERS{core_msg_merged_valid}}; 
+//     if (core_rst_rr)
+//       core_msg_merged_valid_r <= {BC_MSG_CLUSTERS{1'b0}};
+// end
+// 
+// assign core_msg_merged_ready = 1'b1;
+// 
+// // Broadcast the arbitted core messages.
+// reg [CORE_COUNT*CORE_MSG_WIDTH-1:0] core_msg_in_data;
+// reg [CORE_COUNT*CORE_WIDTH-1:0]     core_msg_in_user;
+// reg [CORE_COUNT-1:0]                core_msg_in_valid;
+// 
+// localparam CORES_PER_CLUSTER = CORE_COUNT / BC_MSG_CLUSTERS;
+// 
+// always @ (posedge core_clk) begin
+//     core_msg_in_data  <= {CORES_PER_CLUSTER{core_msg_merged_data_r}};
+//     core_msg_in_user  <= {CORES_PER_CLUSTER{core_msg_merged_user_r}};
+//     core_msg_in_valid <= {CORES_PER_CLUSTER{core_msg_merged_valid_r}}; 
+//     if (core_rst_rr)
+//     core_msg_in_valid <= {CORE_COUNT{1'b0}}; 
+// end
 
 // Instantiating riscv core wrappers
 genvar i;
@@ -1399,9 +1411,34 @@ generate
   for (i=0; i<CORE_COUNT; i=i+1) begin: riscv_cores
     wire [CORE_WIDTH-1:0] core_id = i;
     // (* keep_hierarchy = "soft" *)
-    riscv_block riscv_block_inst (
-        .clk(core_clk),
-        .rst(block_reset[i]),
+    riscv_axis_wrapper #(
+        .DATA_WIDTH(LVL2_DATA_WIDTH),
+        .IMEM_SIZE(IMEM_SIZE),
+        .SLOW_DMEM_SIZE(SLOW_DMEM_SIZE),
+        .FAST_DMEM_SIZE(FAST_DMEM_SIZE),
+        .BC_REGION_SIZE(BC_REGION_SIZE),
+        .SLOW_M_B_LINES(SLOW_M_B_LINES),
+        .FAST_M_B_LINES(FAST_M_B_LINES),
+        .ADDR_WIDTH(CORE_ADDR_WIDTH),
+        .SLOT_COUNT(SLOT_COUNT),
+        .RECV_DESC_DEPTH(RECV_DESC_DEPTH),
+        .SEND_DESC_DEPTH(SEND_DESC_DEPTH),
+        .DRAM_DESC_DEPTH(DRAM_DESC_DEPTH),
+        .MSG_FIFO_DEPTH(MSG_FIFO_DEPTH),
+        .PORT_WIDTH(PORT_WIDTH),
+        .CORE_ID_WIDTH(CORE_WIDTH),
+        .SLOT_START_ADDR(SLOT_START_ADDR),
+        .SLOT_ADDR_STEP(SLOT_ADDR_STEP),
+        .DRAM_PORT(DRAM_PORT),
+        .REG_TYPE(2),
+        .SEPARATE_CLOCKS(0),
+        .PR_ENABLE(PR_ENABLE)
+    )
+    core_wrapper (
+        .sys_clk(core_clk),
+        .sys_rst(block_reset[i]),
+        .core_clk(core_clk),
+        .core_rst(block_reset[i]),
         .core_id(core_id),
 
         // ---------------- DATA CHANNEL --------------- // 
@@ -1447,19 +1484,19 @@ generate
         .dram_m_axis_tdata (dram_m_axis_tdata[LVL2_DRAM_WIDTH*i +: LVL2_DRAM_WIDTH]),
         .dram_m_axis_tvalid(dram_m_axis_tvalid[i]),
         .dram_m_axis_tready(dram_m_axis_tready[i]),
-        .dram_m_axis_tlast (dram_m_axis_tlast[i]),
+        .dram_m_axis_tlast (dram_m_axis_tlast[i])
    
-        // ------------- CORE MSG CHANNEL -------------- // 
-        // Core messages output  
-        .core_msg_out_data(core_msg_out_data[CORE_MSG_WIDTH*i +: CORE_MSG_WIDTH]),
-        .core_msg_out_valid(core_msg_out_valid[i]),
-        .core_msg_out_ready(core_msg_out_ready[i]),
+        // // ------------- CORE MSG CHANNEL -------------- // 
+        // // Core messages output  
+        // .core_msg_out_data(core_msg_out_data[CORE_MSG_WIDTH*i +: CORE_MSG_WIDTH]),
+        // .core_msg_out_valid(core_msg_out_valid[i]),
+        // .core_msg_out_ready(core_msg_out_ready[i]),
 
-        // Core messages input
-        .core_msg_in_data(core_msg_in_data[CORE_MSG_WIDTH*i +: CORE_MSG_WIDTH]),
-        .core_msg_in_user(core_msg_in_user[CORE_WIDTH*i +: CORE_WIDTH]),
-        .core_msg_in_valid(core_msg_in_valid[i] && 
-                          (core_msg_in_user[CORE_WIDTH*i +: CORE_WIDTH]!=i))
+        // // Core messages input
+        // .core_msg_in_data(core_msg_in_data[CORE_MSG_WIDTH*i +: CORE_MSG_WIDTH]),
+        // .core_msg_in_user(core_msg_in_user[CORE_WIDTH*i +: CORE_WIDTH]),
+        // .core_msg_in_valid(core_msg_in_valid[i] && 
+        //                   (core_msg_in_user[CORE_WIDTH*i +: CORE_WIDTH]!=i))
     );
 
         assign dram_m_axis_tuser[CORE_WIDTH*i +: CORE_WIDTH]               = i;

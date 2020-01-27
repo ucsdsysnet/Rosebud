@@ -14,7 +14,7 @@ int main(void){
 
 	// Do this at the beginnig, so scheduler can fill the slots while 
 	// initializing other things.
-	init_slots(8, 0x200A, 2048);
+	init_slots(8, 0x10200A, 2048);
 	
 	packet.len  = 69;
 	packet.tag  = 12;

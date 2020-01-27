@@ -8,37 +8,34 @@
  */
 module riscv_axis_wrapper # (
     parameter DATA_WIDTH      = 64,   
-    parameter ADDR_WIDTH      = 16,
-    parameter SLOT_COUNT      = 8,
-    parameter IMEM_SIZE_BYTES = 8192,
-    parameter DMEM_SIZE_BYTES = 32768,
-    parameter COHERENT_START  = 16'h6FFF,
-    parameter INTERLEAVE      = 1,
-    parameter RECV_DESC_DEPTH = 8,
-    parameter SEND_DESC_DEPTH = 8,
-    parameter DRAM_DESC_DEPTH = 16,
-    parameter MSG_FIFO_DEPTH  = 16,
-    parameter PORT_WIDTH      = 2,
-    parameter LEN_WIDTH       = 16,
+    parameter PORT_WIDTH      = 3,
     parameter CORE_ID_WIDTH   = 4, 
-    parameter SLOT_START_ADDR = 16'h2000,
-    parameter SLOT_ADDR_STEP  = 16'h0800,
-    parameter DRAM_PORT       = 2,
-
+    parameter DRAM_PORT       = 6,
+    parameter SLOT_COUNT      = 8,
     parameter STRB_WIDTH      = (DATA_WIDTH/8),
     parameter SLOT_WIDTH      = $clog2(SLOT_COUNT+1), 
     parameter TAG_WIDTH       = (SLOT_WIDTH>5)? SLOT_WIDTH:5,
     parameter ID_TAG_WIDTH    = CORE_ID_WIDTH+TAG_WIDTH,
-    parameter DMEM_ADDR_WIDTH = $clog2(DMEM_SIZE_BYTES),
-    parameter IMEM_ADDR_WIDTH = $clog2(IMEM_SIZE_BYTES),
-    parameter LINE_ADDR_BITS  = $clog2(STRB_WIDTH),
-    parameter MSG_WIDTH       = 4+DMEM_ADDR_WIDTH+32,
+    
+    parameter IMEM_SIZE       = 65536,
+    parameter SLOW_DMEM_SIZE  = 1048576,
+    parameter FAST_DMEM_SIZE  = 32768,
+    parameter BC_REGION_SIZE  = 4048,
+    parameter MSG_WIDTH       = 4+$clog2(BC_REGION_SIZE)+32,
+    
+    parameter RECV_DESC_DEPTH = 8,
+    parameter SEND_DESC_DEPTH = 8,
+    parameter DRAM_DESC_DEPTH = 16,
+    parameter MSG_FIFO_DEPTH  = 16,
+    
+    parameter SLOW_M_B_LINES  = 4096,
+    parameter FAST_M_B_LINES  = 1024,
+    parameter SLOT_START_ADDR = 16'h0,
+    parameter SLOT_ADDR_STEP  = 16'h4000,
 
-    parameter DATA_S_REG_TYPE = 0,
-    parameter DATA_M_REG_TYPE = 2,
-    parameter DRAM_M_REG_TYPE = 0,
+    parameter REG_TYPE        = 2,
     parameter SEPARATE_CLOCKS = 1,
-    parameter TARGET_URAM     = 0
+    parameter PR_ENABLE       = 0
 )
 (
     input  wire                     sys_clk,
@@ -91,19 +88,25 @@ module riscv_axis_wrapper # (
     output wire [63:0]              dram_m_axis_tdata,
     output wire                     dram_m_axis_tvalid,
     input  wire                     dram_m_axis_tready,
-    output wire                     dram_m_axis_tlast,
+    output wire                     dram_m_axis_tlast
 
-    // ------------- CORE MSG CHANNEL -------------- // 
-    // Core messages output  
-    output wire [MSG_WIDTH-1:0]     core_msg_out_data,
-    output wire                     core_msg_out_valid,
-    input  wire                     core_msg_out_ready,
+    // // ------------- CORE MSG CHANNEL -------------- // 
+    // // Core messages output  
+    // output wire [MSG_WIDTH-1:0]     core_msg_out_data,
+    // output wire                     core_msg_out_valid,
+    // input  wire                     core_msg_out_ready,
 
-    // Core messages input
-    input  wire [MSG_WIDTH-1:0]     core_msg_in_data,
-    input  wire [CORE_ID_WIDTH-1:0] core_msg_in_user,
-    input  wire                     core_msg_in_valid
+    // // Core messages input
+    // input  wire [MSG_WIDTH-1:0]     core_msg_in_data,
+    // input  wire [CORE_ID_WIDTH-1:0] core_msg_in_user,
+    // input  wire                     core_msg_in_valid
 );
+    
+parameter SLOW_DMEM_ADDR_WIDTH = $clog2(SLOW_DMEM_SIZE);
+parameter FAST_DMEM_ADDR_WIDTH = $clog2(FAST_DMEM_SIZE);
+parameter IMEM_ADDR_WIDTH      = $clog2(IMEM_SIZE);
+parameter ADDR_WIDTH           = SLOW_DMEM_ADDR_WIDTH+2;
+parameter LINE_ADDR_BITS       = $clog2(STRB_WIDTH);
 
 /////////////////////////////////////////////////////////////////////
 //////////////////////// CORE RESET COMMAND /////////////////////////
@@ -198,15 +201,6 @@ initial begin
     slot_addr_lut[j] = SLOT_START_ADDR + ((j-1)*SLOT_ADDR_STEP);
 end
  
-// Pipeline register to load from slot LUT or packet header
-wire [DATA_WIDTH-1:0] data_s_axis_tdata_r;
-wire [STRB_WIDTH-1:0] data_s_axis_tkeep_r;
-wire                  data_s_axis_tvalid_r;
-wire                  data_s_axis_tready_r;
-wire                  data_s_axis_tlast_r;
-wire [TAG_WIDTH-1:0]  data_s_axis_tdest_r;
-wire [PORT_WIDTH-1:0] data_s_axis_tuser_r;
-
 wire [DATA_WIDTH-1:0] s_axis_tdata;
 wire [STRB_WIDTH-1:0] s_axis_tkeep;
 wire                  s_axis_tvalid;
@@ -214,41 +208,6 @@ wire                  s_axis_tready;
 wire                  s_axis_tlast;
 wire [TAG_WIDTH-1:0]  s_axis_tdest;
 wire [PORT_WIDTH-1:0] s_axis_tuser;
-
-// register input data
-axis_register # (
-    .DATA_WIDTH(DATA_WIDTH),
-    .KEEP_ENABLE(1),
-    .KEEP_WIDTH(STRB_WIDTH),
-    .LAST_ENABLE(1),
-    .ID_ENABLE(0),
-    .DEST_ENABLE(1),
-    .DEST_WIDTH(TAG_WIDTH),
-    .USER_ENABLE(1),
-    .USER_WIDTH(PORT_WIDTH),
-    .REG_TYPE(DATA_S_REG_TYPE)
-) data_s_reg_inst (
-    .clk(sys_clk),
-    .rst(sys_rst),
-    // AXI input
-    .s_axis_tdata (data_s_axis_tdata),
-    .s_axis_tkeep (data_s_axis_tkeep),
-    .s_axis_tvalid(data_s_axis_tvalid),
-    .s_axis_tready(data_s_axis_tready),
-    .s_axis_tlast (data_s_axis_tlast),
-    .s_axis_tid   (8'd0),
-    .s_axis_tdest (data_s_axis_tdest),
-    .s_axis_tuser (data_s_axis_tuser),
-    // AXI output
-    .m_axis_tdata (data_s_axis_tdata_r),
-    .m_axis_tkeep (data_s_axis_tkeep_r),
-    .m_axis_tvalid(data_s_axis_tvalid_r),
-    .m_axis_tready(data_s_axis_tready_r),
-    .m_axis_tlast (data_s_axis_tlast_r),
-    .m_axis_tid   (),
-    .m_axis_tdest (data_s_axis_tdest_r),
-    .m_axis_tuser (data_s_axis_tuser_r)
-);
 
 wire [PORT_WIDTH-1:0] dram_port = DRAM_PORT;
 wire [ADDR_WIDTH-1:0] s_header_addr;
@@ -265,15 +224,15 @@ header_remover # (
   .clk(sys_clk),
   .rst(sys_rst),
 
-  .has_header   (data_s_axis_tuser_r==dram_port),
+  .has_header   (data_s_axis_tuser==dram_port),
 
-  .s_axis_tdata (data_s_axis_tdata_r),
-  .s_axis_tkeep (data_s_axis_tkeep_r),
-  .s_axis_tdest (data_s_axis_tdest_r),
-  .s_axis_tuser (data_s_axis_tuser_r),
-  .s_axis_tlast (data_s_axis_tlast_r),
-  .s_axis_tvalid(data_s_axis_tvalid_r),
-  .s_axis_tready(data_s_axis_tready_r),
+  .s_axis_tdata (data_s_axis_tdata),
+  .s_axis_tkeep (data_s_axis_tkeep),
+  .s_axis_tdest (data_s_axis_tdest),
+  .s_axis_tuser (data_s_axis_tuser),
+  .s_axis_tlast (data_s_axis_tlast),
+  .s_axis_tvalid(data_s_axis_tvalid),
+  .s_axis_tready(data_s_axis_tready),
 
   .header       (incoming_hdr),
   .header_valid (incoming_hdr_v),
@@ -305,14 +264,6 @@ wire                  m_axis_tlast;
 wire [PORT_WIDTH-1:0] m_axis_tdest;
 wire [TAG_WIDTH-1:0]  m_axis_tuser;
 
-wire [DATA_WIDTH-1:0] data_m_axis_tdata_n;
-wire [STRB_WIDTH-1:0] data_m_axis_tkeep_n;
-wire                  data_m_axis_tvalid_n;
-wire                  data_m_axis_tready_n;
-wire                  data_m_axis_tlast_n;
-wire [PORT_WIDTH-1:0] data_m_axis_tdest_n;
-wire [TAG_WIDTH-1:0]  data_m_axis_tuser_n;
- 
 reg  [63:0]  m_header_r;
 reg          m_header_v;
 wire         m_header_ready;
@@ -361,48 +312,13 @@ header_adder # (
   .header_valid(m_header_v),
   .header_ready(m_header_ready),
 
-  .m_axis_tdata (data_m_axis_tdata_n),
-  .m_axis_tkeep (data_m_axis_tkeep_n),
-  .m_axis_tdest (data_m_axis_tdest_n),
-  .m_axis_tuser (data_m_axis_tuser_n),
-  .m_axis_tlast (data_m_axis_tlast_n),
-  .m_axis_tvalid(data_m_axis_tvalid_n),
-  .m_axis_tready(data_m_axis_tready_n)
-);
-
-// register output data
-axis_register # (
-    .DATA_WIDTH(DATA_WIDTH),
-    .KEEP_ENABLE(1),
-    .KEEP_WIDTH(STRB_WIDTH),
-    .LAST_ENABLE(1),
-    .ID_ENABLE(0),
-    .DEST_ENABLE(1),
-    .DEST_WIDTH(PORT_WIDTH),
-    .USER_ENABLE(1),
-    .USER_WIDTH(TAG_WIDTH),
-    .REG_TYPE(DATA_M_REG_TYPE)
-) data_m_reg_inst (
-    .clk(sys_clk),
-    .rst(sys_rst),
-    // AXI input
-    .s_axis_tdata (data_m_axis_tdata_n),
-    .s_axis_tkeep (data_m_axis_tkeep_n),
-    .s_axis_tvalid(data_m_axis_tvalid_n),
-    .s_axis_tready(data_m_axis_tready_n),
-    .s_axis_tlast (data_m_axis_tlast_n),
-    .s_axis_tid   (8'd0),
-    .s_axis_tdest (data_m_axis_tdest_n),
-    .s_axis_tuser (data_m_axis_tuser_n),
-    // AXI output
-    .m_axis_tdata (data_m_axis_tdata),
-    .m_axis_tkeep (data_m_axis_tkeep),
-    .m_axis_tvalid(data_m_axis_tvalid),
-    .m_axis_tready(data_m_axis_tready),
-    .m_axis_tlast (data_m_axis_tlast),
-    .m_axis_tid   (),
-    .m_axis_tdest (data_m_axis_tdest),
-    .m_axis_tuser (data_m_axis_tuser)
+  .m_axis_tdata (data_m_axis_tdata),
+  .m_axis_tkeep (data_m_axis_tkeep),
+  .m_axis_tdest (data_m_axis_tdest),
+  .m_axis_tuser (data_m_axis_tuser),
+  .m_axis_tlast (data_m_axis_tlast),
+  .m_axis_tvalid(data_m_axis_tvalid),
+  .m_axis_tready(data_m_axis_tready)
 );
 
 /////////////////////////////////////////////////////////////////////
@@ -427,7 +343,7 @@ wire                   ram_rd_resp_ready;
 wire                   recv_desc_valid;
 wire                   recv_desc_ready;
 wire                   recv_desc_fifo_ready;
-wire [LEN_WIDTH-1:0]   recv_desc_len;
+wire [15:0]            recv_desc_len;
 wire [TAG_WIDTH-1:0]   recv_desc_tdest;
 wire [PORT_WIDTH-1:0]  recv_desc_tuser;
 wire [ADDR_WIDTH-1:0]  recv_desc_addr;
@@ -440,7 +356,7 @@ wire send_desc_valid, send_desc_ready;
 axis_dma # (
   .DATA_WIDTH     (DATA_WIDTH),
   .ADDR_WIDTH     (ADDR_WIDTH),       
-  .LEN_WIDTH      (LEN_WIDTH),        
+  .LEN_WIDTH      (16),        
   .DEST_WIDTH_IN  (TAG_WIDTH),   
   .USER_WIDTH_IN  (PORT_WIDTH),   
   .DEST_WIDTH_OUT (PORT_WIDTH),  
@@ -477,7 +393,7 @@ axis_dma # (
   .mem_rd_en        (ram_cmd_rd_en),
   .mem_rd_addr      (ram_cmd_rd_addr),
   .mem_rd_last      (ram_cmd_rd_last),
-  .mem_rd_ready     (ram_cmd_rd_ready),
+  .mem_rd_ready     (ram_cmd_rd_ready && ram_rd_resp_ready),
   .mem_rd_data      (ram_rd_resp_data),
   .mem_rd_data_v    (ram_rd_resp_valid),
   .mem_rd_data_ready(ram_rd_resp_ready),
@@ -492,7 +408,7 @@ axis_dma # (
   .send_desc_valid(send_desc_valid),
   .send_desc_ready(send_desc_ready),
   .send_desc_addr(send_desc[ADDR_WIDTH+31:32]),
-  .send_desc_len(send_desc[LEN_WIDTH-1:0]),
+  .send_desc_len(send_desc[15:0]),
   .send_desc_tdest(send_desc[PORT_WIDTH+23:24]),
   .send_desc_tuser(send_desc[TAG_WIDTH+15:16]),
 
@@ -510,7 +426,7 @@ wire [63:0] recv_desc_f;
 wire [63:0] recv_desc = {recv_desc_addr,
                         {(8-PORT_WIDTH){1'b0}},recv_desc_tuser,
                         {(8-SLOT_WIDTH){1'b0}},recv_desc_tdest[SLOT_WIDTH-1:0],
-                        {(16-LEN_WIDTH){1'b0}},recv_desc_len};
+                        recv_desc_len};
 
 wire recv_from_dram = recv_desc_valid && (recv_desc_tuser==dram_port);
 wire recv_tag_zero  = recv_desc_valid && (recv_desc_tdest=={TAG_WIDTH{1'b0}});
@@ -699,13 +615,13 @@ end
 
 // A register to look up the send adddress based on slot
 reg  [ADDR_WIDTH-1:0] send_slot_addr [1:SLOT_COUNT];
-reg  [LEN_WIDTH-1:0]  send_slot_len  [1:SLOT_COUNT];
-wire [SLOT_WIDTH-1:0] ctrl_out_slot_ptr = core_ctrl_wr_desc_f[LEN_WIDTH +: SLOT_WIDTH];
+reg  [15:0]           send_slot_len  [1:SLOT_COUNT];
+wire [SLOT_WIDTH-1:0] ctrl_out_slot_ptr = core_ctrl_wr_desc_f[16 +: SLOT_WIDTH];
 
 always @ (posedge sys_clk)
   if (core_ctrl_wr_valid_f && core_ctrl_wr_ready_f) begin
     send_slot_addr [ctrl_out_slot_ptr] <= core_ctrl_wr_desc_f[32+:ADDR_WIDTH];
-    send_slot_len  [ctrl_out_slot_ptr] <= core_ctrl_wr_desc_f[LEN_WIDTH-1:0];
+    send_slot_len  [ctrl_out_slot_ptr] <= core_ctrl_wr_desc_f[15:0];
   end
 
 // A FIFO for dram write requests
@@ -802,7 +718,6 @@ assign data_send_ready = (core_data_wr_ready && core_data_wr) ||
 //////////////// DRAM READ REQUEST PARSER AND FIFO //////////////////
 /////////////////////////////////////////////////////////////////////
 
-
 reg  [35:0]           ctrl_s_axis_tdata_r;
 reg                   ctrl_s_axis_tvalid_r;
 reg  [SLOT_WIDTH-1:0] ctrl_in_slot_ptr;
@@ -825,7 +740,7 @@ wire ctrl_s_axis_fifo_ready;
 
 wire [ID_TAG_WIDTH+64:0] parsed_ctrl_desc = (ctrl_msg_type==4'd1) ? 
               {1'b1,ctrl_s_axis_tdata_r[ID_TAG_WIDTH-1:0],{(32-ADDR_WIDTH){1'b0}}, ctrl_send_addr,
-               ctrl_s_axis_tdata_r[31:16], {(16-LEN_WIDTH){1'b0}}, ctrl_lp_send_len} : 
+               ctrl_s_axis_tdata_r[31:16], ctrl_lp_send_len} : 
               {1'b0,{(ID_TAG_WIDTH+32-ADDR_WIDTH){1'b0}}, ctrl_send_addr,ctrl_s_axis_tdata_r[31:0]};
 
 // A desc FIFO for send data based on scheduler message
@@ -934,10 +849,6 @@ end
 assign dram_s_axis_tready = dram_req_ready;
 
 // Outgoing dram desc
-wire [63:0] dram_m_axis_tdata_n;
-wire        dram_m_axis_tvalid_n;
-wire        dram_m_axis_tready_n;
-wire        dram_m_axis_tlast_n;
 reg [1:0]   send_dram_rd_state;
 
 always @ (posedge sys_clk)
@@ -946,48 +857,16 @@ always @ (posedge sys_clk)
   else if (core_dram_rd_valid_f)
     case (send_dram_rd_state)
       2'd0: send_dram_rd_state <= 2'd1;
-      2'd1: if (dram_m_axis_tready_n) send_dram_rd_state <= 2'd2;
-      2'd2: if (dram_m_axis_tready_n) send_dram_rd_state <= 2'd0;
+      2'd1: if (dram_m_axis_tready) send_dram_rd_state <= 2'd2;
+      2'd2: if (dram_m_axis_tready) send_dram_rd_state <= 2'd0;
       2'd3: send_dram_rd_state <= 2'd3; // Error
     endcase
 
-assign dram_m_axis_tvalid_n = (send_dram_rd_state != 2'd0);
-assign dram_m_axis_tdata_n  = (send_dram_rd_state == 2'd2) ? core_dram_rd_desc_f[127:64] 
+assign dram_m_axis_tvalid   = (send_dram_rd_state != 2'd0);
+assign dram_m_axis_tdata    = (send_dram_rd_state == 2'd2) ? core_dram_rd_desc_f[127:64] 
                                                            : core_dram_rd_desc_f[63:0];
-assign dram_m_axis_tlast_n  = (send_dram_rd_state == 2'd2);
-assign core_dram_rd_ready_f = (send_dram_rd_state == 2'd2) && dram_m_axis_tready_n;
-
-// register output dram data
-axis_register # (
-    .DATA_WIDTH(64),
-    .KEEP_ENABLE(0),
-    .LAST_ENABLE(1),
-    .ID_ENABLE(0),
-    .DEST_ENABLE(0),
-    .USER_ENABLE(0),
-    .REG_TYPE(DRAM_M_REG_TYPE)
-) dram_m_reg_inst (
-    .clk(sys_clk),
-    .rst(sys_rst),
-    // AXI input
-    .s_axis_tdata (dram_m_axis_tdata_n),
-    .s_axis_tkeep (8'd0),
-    .s_axis_tvalid(dram_m_axis_tvalid_n),
-    .s_axis_tready(dram_m_axis_tready_n),
-    .s_axis_tlast (dram_m_axis_tlast_n),
-    .s_axis_tid   (8'd0),
-    .s_axis_tdest (8'd0),
-    .s_axis_tuser (1'd0),
-    // AXI output
-    .m_axis_tdata (dram_m_axis_tdata),
-    .m_axis_tkeep (),
-    .m_axis_tvalid(dram_m_axis_tvalid),
-    .m_axis_tready(dram_m_axis_tready),
-    .m_axis_tlast (dram_m_axis_tlast),
-    .m_axis_tid   (),
-    .m_axis_tdest (),
-    .m_axis_tuser ()
-);
+assign dram_m_axis_tlast    = (send_dram_rd_state == 2'd2);
+assign core_dram_rd_ready_f = (send_dram_rd_state == 2'd2) && dram_m_axis_tready;
 
 /////////////////////////////////////////////////////////////////////
 /////////////////////////// ARBITERS ////////////////////////////////
@@ -1070,334 +949,85 @@ assign ctrl_m_axis_tdata  = ctrl_m_axis_tdata_r;
 assign ctrl_m_axis_tlast  = ctrl_m_axis_tvalid;
 assign ctrl_out_ready     = (!ctrl_m_axis_tvalid_r) || ctrl_m_axis_tready;
 
-/////////////////////////////////////////////////////////////////////
-/////////////////////// BROADCAST MESSAGING /////////////////////////
-/////////////////////////////////////////////////////////////////////
-// A FIFO for outgoing core messages.
-wire [31:0]                core_msg_data;
-wire [DMEM_ADDR_WIDTH-1:0] core_msg_addr;
-wire [3:0]                 core_msg_strb;
-wire                       core_msg_valid;
-wire                       core_msg_ready;
-
-if (!SEPARATE_CLOCKS) begin: sync_core_msg_send_fifo
-  simple_sync_fifo # (
-    .DEPTH(MSG_FIFO_DEPTH),
-    .DATA_WIDTH(MSG_WIDTH)
-  ) core_msg_out_fifo (
-    .clk(sys_clk),
-    .rst(sys_rst || core_reset_r),
-  
-    .din_valid(core_msg_valid),
-    .din({core_msg_strb, core_msg_addr, core_msg_data}),
-    .din_ready(core_msg_ready),
-   
-    .dout_valid(core_msg_out_valid),
-    .dout(core_msg_out_data),
-    .dout_ready(core_msg_out_ready)
-  );
-end else begin: async_core_msg_send_fifo
-  simple_async_fifo # (
-    .DEPTH(MSG_FIFO_DEPTH),
-    .DATA_WIDTH(MSG_WIDTH)
-  ) core_msg_out_fifo (
-    .async_rst(sys_rst || core_reset_r),
-  
-    .din_clk(core_clk),
-    .din_valid(core_msg_valid),
-    .din({core_msg_strb, core_msg_addr, core_msg_data}),
-    .din_ready(core_msg_ready),
-   
-    .dout_clk(sys_clk),
-    .dout_valid(core_msg_out_valid),
-    .dout(core_msg_out_data),
-    .dout_ready(core_msg_out_ready)
-  );
-end
-
-// Register and width convert incoming core msg
-reg [DMEM_ADDR_WIDTH-1:0] core_msg_in_addr_r;
-reg [31:0]                core_msg_in_data_r;
-reg [3:0]                 core_msg_in_strb_r;
-reg                       core_msg_in_v_r;
-
-always @ (posedge sys_clk) begin
-  core_msg_in_addr_r <= core_msg_in_data[31+DMEM_ADDR_WIDTH:32];
-  core_msg_in_data_r <= core_msg_in_data[31:0];
-  core_msg_in_strb_r <= core_msg_in_data[MSG_WIDTH-1:MSG_WIDTH-4];
-  if (sys_rst)
-    core_msg_in_v_r  <= 1'b0;
-  else
-    core_msg_in_v_r  <= core_msg_in_valid;
-end
-
-wire [7:0]  core_msg_write_mask = {4'd0, core_msg_in_strb_r[3:0]} << {core_msg_in_addr_r[2], 2'd0};
-wire [63:0] core_msg_write_data = {32'd0, core_msg_in_data_r} << {core_msg_in_addr_r[2], 5'd0};
-
-/////////////////////////////////////////////////////////////////////
-/////////////// SPLITTER AND ARBITER FOR DMEM ACCESS ////////////////
-/////////////////////////////////////////////////////////////////////
-
-// if rd_resp is not ready we should deassert read requests
-wire read_reject = ram_rd_resp_valid && (!ram_rd_resp_ready);
-
-// Separation of dmem and imem on dma port based on address. 
-wire dma_imem_wr_en = ram_cmd_wr_addr[ADDR_WIDTH-1] && ram_cmd_wr_en;
-
-wire dma_dmem_wr_en = (~ram_cmd_wr_addr[ADDR_WIDTH-1]) && ram_cmd_wr_en;
-wire dma_dmem_rd_en = (~ram_cmd_rd_addr[ADDR_WIDTH-1]) && ram_cmd_rd_en && (!read_reject);
-
-// Arbiter for DMEM. We cannot read and write in the same cycle.
-// This can be done interleaved or full write after full read based on 
-// INTERLEAVE parameter. Also incoming core messages have higher priority.
-
-reg                   data_dma_en_b1;
-reg                   data_dma_wr_b1;
-reg                   data_dma_rd_b1;
-reg  [ADDR_WIDTH-1:0] data_dma_addr_b1;
-reg  [STRB_WIDTH-1:0] data_dma_wen_b1;
-reg  [DATA_WIDTH-1:0] data_dma_wr_data_b1;
-wire [DATA_WIDTH-1:0] data_dma_rd_data_b1;
-
-reg                   data_dma_en_b2;
-reg                   data_dma_wr_b2;
-reg                   data_dma_rd_b2;
-reg  [ADDR_WIDTH-1:0] data_dma_addr_b2;
-reg  [STRB_WIDTH-1:0] data_dma_wen_b2;
-reg  [DATA_WIDTH-1:0] data_dma_wr_data_b2;
-wire [DATA_WIDTH-1:0] data_dma_rd_data_b2;
-
-always @ (*) begin
-  data_dma_en_b1      = 1'b0;
-  data_dma_wr_b1      = 1'b0;
-  data_dma_rd_b1      = 1'b0;
-  data_dma_addr_b1    = {1'b0,ram_cmd_wr_addr[ADDR_WIDTH-2:0]};
-  data_dma_wen_b1     = {STRB_WIDTH{1'b0}};
-  data_dma_wr_data_b1 = ram_cmd_wr_data; 
-
-  if (!core_msg_in_addr_r[LINE_ADDR_BITS] && core_msg_in_v_r) begin
-    data_dma_en_b1      = 1'b1;
-    data_dma_addr_b1    = core_msg_in_addr_r;
-    data_dma_wen_b1     = core_msg_write_mask;
-    data_dma_wr_data_b1 = core_msg_write_data;
-  end else if (!ram_cmd_wr_addr[LINE_ADDR_BITS] && dma_dmem_wr_en) begin
-    data_dma_en_b1      = 1'b1;
-    data_dma_wr_b1      = 1'b1;
-    data_dma_wen_b1     = ram_cmd_wr_strb;
-  end else if (!ram_cmd_rd_addr[LINE_ADDR_BITS] && dma_dmem_rd_en) begin
-    data_dma_en_b1      = 1'b1;
-    data_dma_rd_b1      = 1'b1;
-    data_dma_addr_b1    = {1'b0, ram_cmd_rd_addr[ADDR_WIDTH-2:0]};
-  end
-end
-
-always @ (*) begin
-  data_dma_en_b2      = 1'b0;
-  data_dma_wr_b2      = 1'b0;
-  data_dma_rd_b2      = 1'b0;
-  data_dma_addr_b2    = {1'b0,ram_cmd_wr_addr[ADDR_WIDTH-2:0]};
-  data_dma_wen_b2     = {STRB_WIDTH{1'b0}};
-  data_dma_wr_data_b2 = ram_cmd_wr_data; 
-
-  if (core_msg_in_addr_r[LINE_ADDR_BITS] && core_msg_in_v_r) begin
-    data_dma_en_b2      = 1'b1;
-    data_dma_addr_b2    = core_msg_in_addr_r;
-    data_dma_wen_b2     = core_msg_write_mask;
-    data_dma_wr_data_b2 = core_msg_write_data;
-  end else if (ram_cmd_wr_addr[LINE_ADDR_BITS] && dma_dmem_wr_en) begin
-    data_dma_en_b2      = 1'b1;
-    data_dma_wr_b2      = 1'b1;
-    data_dma_wen_b2     = ram_cmd_wr_strb;
-  end else if (ram_cmd_rd_addr[LINE_ADDR_BITS] && dma_dmem_rd_en) begin
-    data_dma_en_b2      = 1'b1;
-    data_dma_rd_b2      = 1'b1;
-    data_dma_addr_b2    = {1'b0, ram_cmd_rd_addr[ADDR_WIDTH-2:0]};
-  end
-end
-
-reg data_dma_rd_b1_r;
-always @ (posedge sys_clk)
-  if (sys_rst)
-    data_dma_rd_b1_r <= 1'b0;
-  else if (dma_dmem_rd_en)
-    data_dma_rd_b1_r <= data_dma_rd_b1;
-
-assign ram_rd_resp_data = data_dma_rd_b1_r ? data_dma_rd_data_b1 : data_dma_rd_data_b2;
-
-// Signals to second port of the local IMEM of the core (just write)
-wire [STRB_WIDTH-1:0] ins_dma_wen     = ram_cmd_wr_strb & {STRB_WIDTH{dma_imem_wr_en}};
-wire [ADDR_WIDTH-1:0] ins_dma_addr    = {1'b0,ram_cmd_wr_addr[ADDR_WIDTH-2:0]};
-wire [DATA_WIDTH-1:0] ins_dma_wr_data = ram_cmd_wr_data;
+// /////////////////////////////////////////////////////////////////////
+// /////////////////////// BROADCAST MESSAGING /////////////////////////
+// /////////////////////////////////////////////////////////////////////
+// // A FIFO for outgoing core messages.
+// wire [31:0]                core_msg_data;
+// wire [14:0] core_msg_addr;
+// wire [3:0]                 core_msg_strb;
+// wire                       core_msg_valid;
+// wire                       core_msg_ready;
+// 
+// if (!SEPARATE_CLOCKS) begin: sync_core_msg_send_fifo
+//   simple_sync_fifo # (
+//     .DEPTH(MSG_FIFO_DEPTH),
+//     .DATA_WIDTH(MSG_WIDTH)
+//   ) core_msg_out_fifo (
+//     .clk(sys_clk),
+//     .rst(sys_rst || core_reset_r),
+//   
+//     .din_valid(core_msg_valid),
+//     .din({core_msg_strb, core_msg_addr, core_msg_data}),
+//     .din_ready(core_msg_ready),
+//    
+//     .dout_valid(core_msg_out_valid),
+//     .dout(core_msg_out_data),
+//     .dout_ready(core_msg_out_ready)
+//   );
+// end else begin: async_core_msg_send_fifo
+//   simple_async_fifo # (
+//     .DEPTH(MSG_FIFO_DEPTH),
+//     .DATA_WIDTH(MSG_WIDTH)
+//   ) core_msg_out_fifo (
+//     .async_rst(sys_rst || core_reset_r),
+//   
+//     .din_clk(core_clk),
+//     .din_valid(core_msg_valid),
+//     .din({core_msg_strb, core_msg_addr, core_msg_data}),
+//     .din_ready(core_msg_ready),
+//    
+//     .dout_clk(sys_clk),
+//     .dout_valid(core_msg_out_valid),
+//     .dout(core_msg_out_data),
+//     .dout_ready(core_msg_out_ready)
+//   );
+// end
+// 
+// // Register and width convert incoming core msg
+// reg [15:0] core_msg_in_addr_r;
+// reg [31:0] core_msg_in_data_r;
+// reg [3:0]  core_msg_in_strb_r;
+// reg        core_msg_in_v_r;
+// 
+// always @ (posedge sys_clk) begin
+//   core_msg_in_addr_r <= core_msg_in_data[31+16:32];
+//   core_msg_in_data_r <= core_msg_in_data[31:0];
+//   core_msg_in_strb_r <= core_msg_in_data[MSG_WIDTH-1:MSG_WIDTH-4];
+//   if (sys_rst)
+//     core_msg_in_v_r  <= 1'b0;
+//   else
+//     core_msg_in_v_r  <= core_msg_in_valid;
+// end
+// 
+// wire [STRB_WIDTH-1:0] core_msg_write_mask = {{STRB_WIDTH-4{1'b0}}, core_msg_in_strb_r[3:0]} 
+//                                          << {core_msg_in_addr_r[LINE_ADDR_BITS-1:2], 2'd0};
+// wire [DATA_WIDTH-1:0] core_msg_write_data = {{DATA_WIDTH-32{1'b0}}, core_msg_in_data_r} 
+//                                          << {core_msg_in_addr_r[LINE_ADDR_BITS-1:2], 5'd0};
 
 /////////////////////////////////////////////////////////////////////
-////////////////// VALID AND READY CONTROL SIGNALS //////////////////
+//////// External memory access out of bound detection //////////////
 /////////////////////////////////////////////////////////////////////
 
-// The ready signal is asserted at the end of cycle, 
-// meaning whether the request was accepted.
-assign ram_cmd_wr_ready = data_dma_wr_b1 || data_dma_wr_b2 || !dma_dmem_wr_en;
-assign ram_cmd_rd_ready = data_dma_rd_b1 || data_dma_rd_b2;
-
-// If there was a read request to any of the memories and one of them is accepted,
-// read_accpted would be 1. And since memory response is ready after a cycle
-// the valid would be asserted next cycle. If read is rejected the valid remains high.
-// During read_rejected cycle no new read can be processed and also since there is 
-// read enable signal for both memories the data would not change.
-reg read_rejected;
-reg read_accepted_r; 
-always @(posedge sys_clk) 
-  if(sys_rst) begin
-    read_accepted_r <= 1'b0;
-    read_rejected   <= 1'b0;
-  end else begin
-    read_accepted_r <= ram_cmd_rd_ready;
-    read_rejected   <= read_reject; 
-  end
-
-assign ram_rd_resp_valid = read_accepted_r || read_rejected;
-
-///////////////////////////////////////////////////////////////////////////
-//////////////////////////// MEMORY UNITS /////////////////////////////////
-///////////////////////////////////////////////////////////////////////////
-wire                  core_imem_ren;
-wire [ADDR_WIDTH-1:0] core_imem_addr;
-wire [DATA_WIDTH-1:0] core_imem_rd_data;
-
-wire                  core_dmem_en;
-wire [STRB_WIDTH-1:0] core_dmem_wen;
-wire [ADDR_WIDTH-1:0] core_dmem_addr;
-wire [DATA_WIDTH-1:0] core_dmem_wr_data;
-wire [DATA_WIDTH-1:0] core_dmem_rd_data_b1;
-wire [DATA_WIDTH-1:0] core_dmem_rd_data_b2;
-wire [DATA_WIDTH-1:0] core_dmem_rd_data;
-
-reg core_dmem_bank_r;
-always @ (posedge core_clk)
-  if (core_reset)
-    core_dmem_bank_r <= 1'b0;
-  else
-    core_dmem_bank_r <= core_dmem_addr[LINE_ADDR_BITS];
-
-assign core_dmem_rd_data = core_dmem_bank_r ? core_dmem_rd_data_b2 : core_dmem_rd_data_b1;
-
-// URAM cannot be initialized, so using BRAM for imem. 
-// Can be initialized through pcie if URAM is necessary.
-mem_1r1w #(
-  .BYTES_PER_LINE(STRB_WIDTH),
-  .ADDR_WIDTH(IMEM_ADDR_WIDTH-LINE_ADDR_BITS)    
-) imem (
-  .clka(sys_clk),
-  .ena(|(ins_dma_wen)),
-  .wea(ins_dma_wen),
-  .addra(ins_dma_addr[IMEM_ADDR_WIDTH-1:LINE_ADDR_BITS]),
-  .dina(ins_dma_wr_data),
-
-  .clkb(core_clk),
-  .enb(core_imem_ren),
-  .addrb(core_imem_addr[IMEM_ADDR_WIDTH-1:LINE_ADDR_BITS]),
-  .doutb(core_imem_rd_data)
-);
-
-if (TARGET_URAM && !SEPARATE_CLOCKS) begin: uram_dmem
-
-  mem_2rw_uram #(
-    .BYTES_PER_LINE(STRB_WIDTH),
-    .ADDR_WIDTH(DMEM_ADDR_WIDTH-LINE_ADDR_BITS-1)    
-  ) dmem_b1 (
-    .clk(sys_clk),
-  
-    .ena(data_dma_en_b1),
-    .wena(data_dma_wen_b1),
-    .addra(data_dma_addr_b1[DMEM_ADDR_WIDTH-1:LINE_ADDR_BITS+1]),
-    .dina(data_dma_wr_data_b1),
-    .douta(data_dma_rd_data_b1),
-  
-    .enb(core_dmem_en && !core_dmem_addr[LINE_ADDR_BITS]),
-    .wenb(core_dmem_wen),
-    .addrb(core_dmem_addr[DMEM_ADDR_WIDTH-1:LINE_ADDR_BITS+1]),
-    .dinb(core_dmem_wr_data),
-    .doutb(core_dmem_rd_data_b1)
-  );
-  
-  mem_2rw_uram #(
-    .BYTES_PER_LINE(STRB_WIDTH),
-    .ADDR_WIDTH(DMEM_ADDR_WIDTH-LINE_ADDR_BITS-1)    
-  ) dmem_b2 (
-    .clk(sys_clk),
-  
-    .ena(data_dma_en_b2),
-    .wena(data_dma_wen_b2),
-    .addra(data_dma_addr_b2[DMEM_ADDR_WIDTH-1:LINE_ADDR_BITS+1]),
-    .dina(data_dma_wr_data_b2),
-    .douta(data_dma_rd_data_b2),
-  
-    .enb(core_dmem_en && core_dmem_addr[LINE_ADDR_BITS]),
-    .wenb(core_dmem_wen),
-    .addrb(core_dmem_addr[DMEM_ADDR_WIDTH-1:LINE_ADDR_BITS+1]),
-    .dinb(core_dmem_wr_data),
-    .doutb(core_dmem_rd_data_b2)
-  );
-
-end else begin: simple_dmem
-
-  mem_2rw #(
-    .BYTES_PER_LINE(STRB_WIDTH),
-    .ADDR_WIDTH(DMEM_ADDR_WIDTH-LINE_ADDR_BITS-1)    
-  ) dmem_b1 (
-    .clka(sys_clk),
-    .ena(data_dma_en_b1),
-    .rena(data_dma_rd_b1),
-    .wena(data_dma_wen_b1),
-    .addra(data_dma_addr_b1[DMEM_ADDR_WIDTH-1:LINE_ADDR_BITS+1]),
-    .dina(data_dma_wr_data_b1),
-    .douta(data_dma_rd_data_b1),
-  
-    .clkb(core_clk),
-    .enb(core_dmem_en && !core_dmem_addr[LINE_ADDR_BITS]),
-    .renb((~|core_dmem_wen)),
-    .wenb(core_dmem_wen),
-    .addrb(core_dmem_addr[DMEM_ADDR_WIDTH-1:LINE_ADDR_BITS+1]),
-    .dinb(core_dmem_wr_data),
-    .doutb(core_dmem_rd_data_b1)
-  );
-  
-  mem_2rw #(
-    .BYTES_PER_LINE(STRB_WIDTH),
-    .ADDR_WIDTH(DMEM_ADDR_WIDTH-LINE_ADDR_BITS-1)    
-  ) dmem_b2 (
-    .clka(sys_clk),
-    .ena(data_dma_en_b2),
-    .rena(data_dma_rd_b2),
-    .wena(data_dma_wen_b2),
-    .addra(data_dma_addr_b2[DMEM_ADDR_WIDTH-1:LINE_ADDR_BITS+1]),
-    .dina(data_dma_wr_data_b2),
-    .douta(data_dma_rd_data_b2),
-  
-    .clkb(core_clk),
-    .enb(core_dmem_en && core_dmem_addr[LINE_ADDR_BITS]),
-    .renb((~|core_dmem_wen)),
-    .wenb(core_dmem_wen),
-    .addrb(core_dmem_addr[DMEM_ADDR_WIDTH-1:LINE_ADDR_BITS+1]),
-    .dinb(core_dmem_wr_data),
-    .doutb(core_dmem_rd_data_b2)
-  );
-
-end
-
-// External memory access out of bound detection
-reg out_of_bound;
 wire out_of_bound_clear;
-
-always @(posedge sys_clk)
-  if (sys_rst || out_of_bound_clear)
-    out_of_bound <= 1'b0;
-  else 
-    out_of_bound <= out_of_bound || 
-                  (dma_dmem_wr_en && (|ram_cmd_wr_addr[ADDR_WIDTH-1:DMEM_ADDR_WIDTH])) ||
-                  (dma_dmem_rd_en && (|ram_cmd_rd_addr[ADDR_WIDTH-1:DMEM_ADDR_WIDTH])) ||
-                  ((|ins_dma_wen) && (|ins_dma_addr[ADDR_WIDTH-1:IMEM_ADDR_WIDTH]));
-
+wire out_of_bound = 1'b0;
 wire core_interrupt, core_interrupt_ack;
+
+// always @(posedge sys_clk)
+//   if (sys_rst || out_of_bound_clear)
+//     out_of_bound <= 1'b0;
+//   else 
+//     out_of_bound <= out_of_bound || mem_out_of_bound;
 
 if (SEPARATE_CLOCKS) begin: async_interrupt
 
@@ -1423,60 +1053,110 @@ end else begin: direct_interrupt
 end
 
 /////////////////////////////////////////////////////////////////////
-/////////////////////////// RISCV CORE //////////////////////////////
+///////////////////// RISCV CORE & MEMORY SYSTEM ////////////////////
 /////////////////////////////////////////////////////////////////////
-riscvcore #(
-  .DATA_WIDTH(DATA_WIDTH),
-  .ADDR_WIDTH(ADDR_WIDTH),
-  .IMEM_ADDR_WIDTH($clog2(IMEM_SIZE_BYTES)),
-  .DMEM_ADDR_WIDTH($clog2(DMEM_SIZE_BYTES)),    
-  .COHERENT_START(COHERENT_START),
-  .SLOT_COUNT(SLOT_COUNT),
-  .SLOT_WIDTH(SLOT_WIDTH),
-  .CORE_ID_WIDTH(CORE_ID_WIDTH)
-) core (
-    .clk(core_clk),
-    .rst(core_reset),
-    .init_rst(init_rst),
+if (PR_ENABLE) begin: PR_riscv_block
+  riscv_block_PR riscv_block_inst (  
+    .sys_clk(sys_clk),
+    .sys_rst(sys_rst),
+    .core_rst(core_reset),
     .core_id(core_id),
-
-    .ext_dmem_en(core_dmem_en),
-    .ext_dmem_wen(core_dmem_wen),
-    .ext_dmem_addr(core_dmem_addr),
-    .ext_dmem_wr_data(core_dmem_wr_data),
-    .ext_dmem_rd_data(core_dmem_rd_data),
-    .ext_dmem_ready(1'b1),
     
-    .ext_imem_ren(core_imem_ren),
-    .ext_imem_addr(core_imem_addr),
-    .ext_imem_rd_data(core_imem_rd_data),
-    
+    .dma_cmd_wr_en(ram_cmd_wr_en),
+    .dma_cmd_wr_addr(ram_cmd_wr_addr),
+    .dma_cmd_wr_data(ram_cmd_wr_data),
+    .dma_cmd_wr_strb(ram_cmd_wr_strb),
+    .dma_cmd_wr_last(ram_cmd_wr_last),
+    .dma_cmd_wr_ready(ram_cmd_wr_ready),
+  
+     // We deassert read request if read results cannot be accepted, 
+     // similar to adding a bobble into pipe
+    .dma_cmd_rd_en(ram_cmd_rd_en && ram_rd_resp_ready),
+    .dma_cmd_rd_addr(ram_cmd_rd_addr),
+    .dma_cmd_rd_last(ram_cmd_rd_last),
+    .dma_cmd_rd_ready(ram_cmd_rd_ready),
+  
+    .dma_rd_resp_valid(ram_rd_resp_valid),
+    .dma_rd_resp_data(ram_rd_resp_data),
+    .dma_rd_resp_ready(ram_rd_resp_ready),
+      
     .in_desc(recv_desc_f),
     .in_desc_valid(recv_desc_valid_f),
     .in_desc_taken(recv_desc_ready_f),
     
-    .recv_dram_tag_valid(recv_dram_tag_v),    
-    .recv_dram_tag(recv_dram_tag),
-
     .data_desc(data_send_desc),
+    .dram_wr_addr(core_dram_addr),
     .data_desc_valid(data_send_valid),
     .data_desc_ready(data_send_ready),
-    
-    .dram_wr_addr(core_dram_addr),
     
     .slot_wr_ptr(slot_wr_ptr), 
     .slot_wr_addr(slot_wr_addr),
     .slot_wr_valid(slot_wr_valid),
     .slot_wr_ready(slot_wr_ready),
- 
-    .core_msg_data(core_msg_data),
-    .core_msg_addr(core_msg_addr),
-    .core_msg_strb(core_msg_strb),
-    .core_msg_valid(core_msg_valid),
-    .core_msg_ready(core_msg_ready),
-
+   
+    .recv_dram_tag_valid(recv_dram_tag_v),    
+    .recv_dram_tag(recv_dram_tag),
+  
     .interrupt_in(core_interrupt),
     .interrupt_in_ack(core_interrupt_ack)
-);
+  );
+end else begin: normal_riscv_block
+  riscv_block # (
+    .DATA_WIDTH(DATA_WIDTH),
+    .STRB_WIDTH(STRB_WIDTH),
+    .IMEM_SIZE(IMEM_SIZE),
+    .SLOW_DMEM_SIZE(SLOW_DMEM_SIZE),
+    .FAST_DMEM_SIZE(FAST_DMEM_SIZE),
+    .SLOW_M_B_LINES(SLOW_M_B_LINES),
+    .FAST_M_B_LINES(FAST_M_B_LINES),
+    .CORE_ID_WIDTH(CORE_ID_WIDTH),
+    .SLOT_COUNT(SLOT_COUNT),
+    .ADDR_WIDTH(ADDR_WIDTH),
+    .SLOT_WIDTH(SLOT_WIDTH)
+  ) riscv_inst (
+    .sys_clk(sys_clk),
+    .sys_rst(sys_rst),
+    .core_rst(core_reset),
+    .core_id(core_id),
+    
+    .dma_cmd_wr_en(ram_cmd_wr_en),
+    .dma_cmd_wr_addr(ram_cmd_wr_addr),
+    .dma_cmd_wr_data(ram_cmd_wr_data),
+    .dma_cmd_wr_strb(ram_cmd_wr_strb),
+    .dma_cmd_wr_last(ram_cmd_wr_last),
+    .dma_cmd_wr_ready(ram_cmd_wr_ready),
+  
+     // We deassert read request if read results cannot be accepted, 
+     // similar to adding a bobble into pipe
+    .dma_cmd_rd_en(ram_cmd_rd_en && ram_rd_resp_ready),
+    .dma_cmd_rd_addr(ram_cmd_rd_addr),
+    .dma_cmd_rd_last(ram_cmd_rd_last),
+    .dma_cmd_rd_ready(ram_cmd_rd_ready),
+  
+    .dma_rd_resp_valid(ram_rd_resp_valid),
+    .dma_rd_resp_data(ram_rd_resp_data),
+    .dma_rd_resp_ready(ram_rd_resp_ready),
+      
+    .in_desc(recv_desc_f),
+    .in_desc_valid(recv_desc_valid_f),
+    .in_desc_taken(recv_desc_ready_f),
+    
+    .data_desc(data_send_desc),
+    .dram_wr_addr(core_dram_addr),
+    .data_desc_valid(data_send_valid),
+    .data_desc_ready(data_send_ready),
+    
+    .slot_wr_ptr(slot_wr_ptr), 
+    .slot_wr_addr(slot_wr_addr),
+    .slot_wr_valid(slot_wr_valid),
+    .slot_wr_ready(slot_wr_ready),
+   
+    .recv_dram_tag_valid(recv_dram_tag_v),    
+    .recv_dram_tag(recv_dram_tag),
+  
+    .interrupt_in(core_interrupt),
+    .interrupt_in_ack(core_interrupt_ack)
+  );
+end 
 
 endmodule
