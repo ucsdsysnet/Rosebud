@@ -1250,14 +1250,6 @@ axis_switch_2lvl # (
 );
 
 // Core internal messaging
-wire [CORE_COUNT*CORE_MSG_WIDTH-1:0] bc_msg_out;
-wire [CORE_COUNT-1:0]                bc_msg_out_valid;
-wire [CORE_COUNT-1:0]                bc_msg_out_ready;
-
-reg  [CORE_COUNT*CORE_MSG_WIDTH-1:0] bc_msg_in;
-reg  [CORE_COUNT*CORE_WIDTH-1:0]     bc_msg_in_user;
-reg  [CORE_COUNT-1:0]                bc_msg_in_valid;
-
 wire [CORE_COUNT*CORE_MSG_WIDTH-1:0] core_msg_out_data;
 wire [CORE_COUNT-1:0]                core_msg_out_valid;
 wire [CORE_COUNT-1:0]                core_msg_out_ready;
@@ -1266,27 +1258,6 @@ wire [CORE_MSG_WIDTH-1:0]            core_msg_merged_data;
 wire [CORE_WIDTH-1:0]                core_msg_merged_user;
 wire                                 core_msg_merged_valid;
 wire                                 core_msg_merged_ready;
-
-genvar p;
-generate 
-    for (p=0; p<CORE_COUNT; p=p+1) begin: bc_msg_out_fifos
-        simple_sync_fifo # (
-          .DEPTH(MSG_FIFO_DEPTH),
-          .DATA_WIDTH(CORE_MSG_WIDTH)
-        ) core_msg_out_fifo (
-          .clk(core_clk),
-          .rst(core_rst_r),
-        
-          .din_valid(bc_msg_out_valid[p]),
-          .din(bc_msg_out[CORE_MSG_WIDTH*p +: CORE_MSG_WIDTH]),
-          .din_ready(bc_msg_out_ready[p]),
-
-          .dout_valid(core_msg_out_valid[p]),
-          .dout(core_msg_out_data[CORE_MSG_WIDTH*p +: CORE_MSG_WIDTH]),
-          .dout_ready(core_msg_out_ready[p])
-        );
-    end
-endgenerate
 
 axis_switch_2lvl # (
     .S_COUNT         (CORE_COUNT),
@@ -1364,33 +1335,17 @@ always @ (posedge core_clk) begin
         core_msg_in_valid <= {CORE_COUNT{1'b0}}; 
 end
 
-// Deassert write for the sender core. Later grouping can be implemented as well.
+// Additional register level. 
 reg [CORE_COUNT*CORE_MSG_WIDTH-1:0] core_msg_in_data_r;
 reg [CORE_COUNT*CORE_WIDTH-1:0]     core_msg_in_user_r;
 reg [CORE_COUNT-1:0]                core_msg_in_valid_r;
 
-integer n;
 always @ (posedge core_clk) begin
     core_msg_in_data_r  <= core_msg_in_data;
     core_msg_in_user_r  <= core_msg_in_user;
-    for (n=0; n<CORE_COUNT; n=n+1)
-        core_msg_in_valid_r[n] <= core_msg_in_valid[n] && 
-                                  (core_msg_in_user[CORE_WIDTH*n +: CORE_WIDTH]!=n);
+    core_msg_in_valid_r <= core_msg_in_valid;
     if (core_rst_r)
         core_msg_in_valid_r <= {CORE_COUNT{1'b0}}; 
-end
-
-// Additional register level. 
-reg [CORE_COUNT*CORE_MSG_WIDTH-1:0] core_msg_in_data_rr;
-reg [CORE_COUNT*CORE_WIDTH-1:0]     core_msg_in_user_rr;
-reg [CORE_COUNT-1:0]                core_msg_in_valid_rr;
-
-always @ (posedge core_clk) begin
-    bc_msg_in       <= core_msg_in_data_r;
-    bc_msg_in_user  <= core_msg_in_user_r;
-    bc_msg_in_valid <= core_msg_in_valid_r;
-    if (core_rst_r)
-        bc_msg_in_valid <= {CORE_COUNT{1'b0}}; 
 end
 
 // Instantiating riscv core wrappers
@@ -1431,7 +1386,14 @@ generate
         wire [4:0]                 recv_dram_tag;
         wire                       recv_dram_tag_valid;
 
-        (* keep_hierarchy = "soft" *)
+        wire [CORE_MSG_WIDTH-1:0] bc_msg_out;
+        wire                      bc_msg_out_valid;
+        wire                      bc_msg_out_ready;
+        
+        wire [CORE_MSG_WIDTH-1:0] bc_msg_in;
+        wire                      bc_msg_in_valid;
+
+        // (* keep_hierarchy = "soft" *)
         riscv_axis_wrapper #(
             .DATA_WIDTH(LVL2_DATA_WIDTH),
             .ADDR_WIDTH(CORE_ADDR_WIDTH),
@@ -1439,8 +1401,10 @@ generate
             .RECV_DESC_DEPTH(RECV_DESC_DEPTH),
             .SEND_DESC_DEPTH(SEND_DESC_DEPTH),
             .DRAM_DESC_DEPTH(DRAM_DESC_DEPTH),
+            .MSG_FIFO_DEPTH(MSG_FIFO_DEPTH),
             .PORT_WIDTH(PORT_WIDTH),
             .CORE_ID_WIDTH(CORE_WIDTH),
+            .MSG_WIDTH(CORE_MSG_WIDTH),
             .SLOT_START_ADDR(SLOT_START_ADDR),
             .SLOT_ADDR_STEP(SLOT_ADDR_STEP),
             .DRAM_PORT(DRAM_PORT),
@@ -1454,6 +1418,7 @@ generate
             .core_clk(core_clk),
             .core_rst(block_reset[i]),
 
+            .core_id(core_id),
             // ---------------- DATA CHANNEL --------------- // 
             // Incoming data
             .data_s_axis_tdata(data_s_axis_tdata[LVL2_DATA_WIDTH*i +: LVL2_DATA_WIDTH]),
@@ -1499,6 +1464,17 @@ generate
             .dram_m_axis_tready(dram_m_axis_tready[i]),
             .dram_m_axis_tlast(dram_m_axis_tlast[i]),
 
+            // ------------- CORE MSG CHANNEL -------------- // 
+            // Core messages output  
+            .core_msg_out(core_msg_out_data[CORE_MSG_WIDTH*i +: CORE_MSG_WIDTH]),
+            .core_msg_out_valid(core_msg_out_valid[i]),
+            .core_msg_out_ready(core_msg_out_ready[i]),
+
+            // Core messages input
+            .core_msg_in(core_msg_in_data_r[CORE_MSG_WIDTH*i +: CORE_MSG_WIDTH]),
+            .core_msg_in_user(core_msg_in_user_r[CORE_WIDTH*i +: CORE_WIDTH]),
+            .core_msg_in_valid(core_msg_in_valid_r[i]),
+
             // --------------------------------------------- //
             // ------- CONNECTION TO RISCV_BLOCK ----------- //
             // --------------------------------------------- //
@@ -1534,7 +1510,14 @@ generate
             .slot_wr_valid(slot_wr_valid),
             .slot_wr_ready(slot_wr_ready),
             .recv_dram_tag(recv_dram_tag),
-            .recv_dram_tag_valid(recv_dram_tag_valid)
+            .recv_dram_tag_valid(recv_dram_tag_valid),
+
+            .bc_msg_out(bc_msg_out),
+            .bc_msg_out_valid(bc_msg_out_valid),
+            .bc_msg_out_ready(bc_msg_out_ready),
+            .bc_msg_in(bc_msg_in),
+            .bc_msg_in_user(),
+            .bc_msg_in_valid(bc_msg_in_valid)
         );
 
     `ifndef PR_ENABLE
@@ -1595,11 +1578,11 @@ generate
             .recv_dram_tag(recv_dram_tag),
             .recv_dram_tag_valid(recv_dram_tag_valid),
 
-            .bc_msg_out(bc_msg_out[CORE_MSG_WIDTH*i +: CORE_MSG_WIDTH]),
-            .bc_msg_out_valid(bc_msg_out_valid[i]),
-            .bc_msg_out_ready(bc_msg_out_ready[i]),
-            .bc_msg_in(bc_msg_in[CORE_MSG_WIDTH*i +: CORE_MSG_WIDTH]),
-            .bc_msg_in_valid(bc_msg_in_valid[i])
+            .bc_msg_out(bc_msg_out),
+            .bc_msg_out_valid(bc_msg_out_valid),
+            .bc_msg_out_ready(bc_msg_out_ready),
+            .bc_msg_in(bc_msg_in),
+            .bc_msg_in_valid(bc_msg_in_valid)
         );
 
         assign dram_m_axis_tuser[CORE_WIDTH*i +: CORE_WIDTH]               = i;

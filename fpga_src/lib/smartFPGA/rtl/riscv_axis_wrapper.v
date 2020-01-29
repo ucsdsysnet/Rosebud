@@ -13,6 +13,7 @@ module riscv_axis_wrapper # (
     parameter DRAM_PORT       = 6,
     parameter SLOT_COUNT      = 8,
     parameter ADDR_WIDTH      = 16,
+    parameter MSG_WIDTH       = 46,
     parameter STRB_WIDTH      = (DATA_WIDTH/8),
     parameter SLOT_WIDTH      = $clog2(SLOT_COUNT+1), 
     parameter TAG_WIDTH       = (SLOT_WIDTH>5)? SLOT_WIDTH:5,
@@ -21,6 +22,7 @@ module riscv_axis_wrapper # (
     parameter RECV_DESC_DEPTH = 8,
     parameter SEND_DESC_DEPTH = 8,
     parameter DRAM_DESC_DEPTH = 16,
+    parameter MSG_FIFO_DEPTH  = 16,
     
     parameter SLOT_START_ADDR = 16'h0,
     parameter SLOT_ADDR_STEP  = 16'h4000,
@@ -36,6 +38,8 @@ module riscv_axis_wrapper # (
     input  wire                     sys_rst,
     input  wire                     core_clk,
     input  wire                     core_rst,
+    
+    input  wire [CORE_ID_WIDTH-1:0] core_id,
     
     // ---------------- DATA CHANNEL --------------- // 
     // Incoming data
@@ -81,6 +85,17 @@ module riscv_axis_wrapper # (
     output wire                     dram_m_axis_tvalid,
     input  wire                     dram_m_axis_tready,
     output wire                     dram_m_axis_tlast,
+    
+    // ------------- CORE MSG CHANNEL -------------- // 
+    // Core messages output 
+    output wire [MSG_WIDTH-1:0]     core_msg_out,
+    output wire                     core_msg_out_valid,
+    input  wire                     core_msg_out_ready,
+
+    // Core messages input
+    input  wire [MSG_WIDTH-1:0]     core_msg_in,
+    input  wire [CORE_ID_WIDTH-1:0] core_msg_in_user,
+    input  wire                     core_msg_in_valid,
 
     // --------------------------------------------- //
     // ------- CONNECTION TO RISCV_BLOCK ----------- //
@@ -125,8 +140,17 @@ module riscv_axis_wrapper # (
  
     // Received DRAM infor to core
     output wire [4:0]               recv_dram_tag,
-    output wire                     recv_dram_tag_valid
+    output wire                     recv_dram_tag_valid,
     
+    // Messages from the core
+    input  wire [MSG_WIDTH-1:0]     bc_msg_out,
+    input  wire                     bc_msg_out_valid,
+    output wire                     bc_msg_out_ready,
+
+    // Messages to the core
+    output reg  [MSG_WIDTH-1:0]     bc_msg_in,
+    output reg  [CORE_ID_WIDTH-1:0] bc_msg_in_user,
+    output reg                      bc_msg_in_valid
 );
     
 /////////////////////////////////////////////////////////////////////
@@ -1063,6 +1087,36 @@ assign ctrl_m_axis_tvalid = ctrl_m_axis_tvalid_r;
 assign ctrl_m_axis_tdata  = ctrl_m_axis_tdata_r;
 assign ctrl_m_axis_tlast  = ctrl_m_axis_tvalid;
 assign ctrl_out_ready     = (!ctrl_m_axis_tvalid_r) || ctrl_m_axis_tready;
+
+/////////////////////////////////////////////////////////////////////
+/////////////////////// BROADCAST MESSAGING /////////////////////////
+/////////////////////////////////////////////////////////////////////
+
+// Deassert write for the sender core. 
+// Later grouping can be implemented as well in the fpga_core module
+always @ (posedge sys_clk) begin
+  bc_msg_in       <= core_msg_in;
+  bc_msg_in_user  <= core_msg_in_user;
+  bc_msg_in_valid <= core_msg_in_valid && (core_msg_in_user!=core_id);
+  if (sys_rst)
+    bc_msg_in_valid <= 1'b0;
+end
+
+simple_sync_fifo # (
+  .DEPTH(MSG_FIFO_DEPTH),
+  .DATA_WIDTH(MSG_WIDTH)
+) core_msg_out_fifo (
+  .clk(sys_clk),
+  .rst(sys_rst || core_reset_r),
+
+  .din_valid(bc_msg_out_valid),
+  .din(bc_msg_out),
+  .din_ready(bc_msg_out_ready),
+ 
+  .dout_valid(core_msg_out_valid),
+  .dout(core_msg_out),
+  .dout_ready(core_msg_out_ready)
+);
 
 /////////////////////////////////////////////////////////////////////
 //////// External memory access out of bound detection //////////////
