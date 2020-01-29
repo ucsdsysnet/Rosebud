@@ -17,7 +17,10 @@ module riscv_block # (
   input  wire                     sys_clk,
   input  wire                     sys_rst,
   input  wire                     core_rst,
+  
   input  wire [CORE_ID_WIDTH-1:0] core_id,
+  input  wire                     core_interrupt,
+  output wire                     core_interrupt_ack,
   
   // DMA interface
   input  wire                     dma_cmd_wr_en,
@@ -41,10 +44,10 @@ module riscv_block # (
   input  wire                     in_desc_valid,
   output wire                     in_desc_taken,
 
-  output wire [63:0]              data_desc,
-  output wire [63:0]              dram_wr_addr,
-  output wire                     data_desc_valid,
-  input  wire                     data_desc_ready,
+  output wire [63:0]              out_desc,
+  output wire [63:0]              out_desc_dram_addr,
+  output wire                     out_desc_valid,
+  input  wire                     out_desc_ready,
 
   // Slot information from core
   output wire [SLOT_WIDTH-1:0]    slot_wr_ptr, 
@@ -55,17 +58,13 @@ module riscv_block # (
   // Received DRAM infor to core
   input  wire [4:0]               recv_dram_tag,
   input  wire                     recv_dram_tag_valid,
-  
+
   // Broadcast messages
   input  wire [MSG_WIDTH-1:0]     bc_msg_in,
   input  wire                     bc_msg_in_valid,
   output wire [MSG_WIDTH-1:0]     bc_msg_out,
   output wire                     bc_msg_out_valid,
-  input  wire                     bc_msg_out_ready,
-
-  // Interrupt to core
-  input  wire                     interrupt_in,
-  output wire                     interrupt_in_ack
+  input  wire                     bc_msg_out_ready
 );
 
 // Internal paramaters
@@ -198,10 +197,10 @@ riscvcore #(
     .recv_dram_tag_valid(recv_dram_tag_valid),    
     .recv_dram_tag(recv_dram_tag),
 
-    .data_desc(data_desc),
-    .dram_wr_addr(dram_wr_addr),
-    .data_desc_valid(data_desc_valid),
-    .data_desc_ready(data_desc_ready),
+    .data_desc(out_desc),
+    .dram_wr_addr(out_desc_dram_addr),
+    .data_desc_valid(out_desc_valid),
+    .data_desc_ready(out_desc_ready),
     
     .slot_wr_ptr(slot_wr_ptr), 
     .slot_wr_addr(slot_wr_addr),
@@ -214,8 +213,8 @@ riscvcore #(
     .core_msg_valid(bc_msg_out_valid),
     .core_msg_ready(bc_msg_out_ready),
 
-    .interrupt_in(interrupt_in),
-    .interrupt_in_ack(interrupt_in_ack)
+    .interrupt_in(core_interrupt),
+    .interrupt_in_ack(core_interrupt_ack)
 );
 
 endmodule

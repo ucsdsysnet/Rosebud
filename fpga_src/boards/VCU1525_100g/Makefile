@@ -19,7 +19,7 @@ $(SUBDIRS_CLEAN):
 
 .PHONY: clean
 clean: $(SUBDIRS_CLEAN)
-	-rm -rf $(TARGETS) vivado*
+	-rm -rf $(TARGETS) vivado* fpga/hd_visual
 
 program:
 	#djtgcfg prog -d Atlys --index 0 --file fpga/fpga.bit

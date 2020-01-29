@@ -94,7 +94,7 @@ distclean: clean
 	echo "update_compile_order -fileset riscv_block_PR" >> run_synth.tcl
 	echo "update_compile_order -fileset sources_1" >> run_synth.tcl
 	echo "reset_run synth_1" >> run_synth.tcl
-	echo "launch_runs synth_1 -jobs 12" >> run_synth.tcl
+	echo "launch_runs synth_1" >> run_synth.tcl
 	echo "wait_on_run synth_1" >> run_synth.tcl
 	echo "exit" >> run_synth.tcl
 	vivado -nojournal -nolog -mode batch -source run_synth.tcl
@@ -104,21 +104,20 @@ distclean: clean
 	echo "open_project $*.xpr" > run_impl.tcl
 	echo "set_property AUTO_INCREMENTAL_CHECKPOINT 1 [get_runs impl_1]" >> run_impl.tcl
 	echo "set_property PR_FLOW 1 [current_project]" >> run_impl.tcl
-	echo "create_pr_configuration -name config_1 -partitions [list core_inst/riscv_cores[0].core_wrapper/PR_riscv_block.riscv_block_inst:riscv_block_PR core_inst/riscv_cores[1].core_wrapper/PR_riscv_block.riscv_block_inst:riscv_block_PR core_inst/riscv_cores[2].core_wrapper/PR_riscv_block.riscv_block_inst:riscv_block_PR core_inst/riscv_cores[3].core_wrapper/PR_riscv_block.riscv_block_inst:riscv_block_PR core_inst/riscv_cores[4].core_wrapper/PR_riscv_block.riscv_block_inst:riscv_block_PR core_inst/riscv_cores[5].core_wrapper/PR_riscv_block.riscv_block_inst:riscv_block_PR core_inst/riscv_cores[6].core_wrapper/PR_riscv_block.riscv_block_inst:riscv_block_PR core_inst/riscv_cores[7].core_wrapper/PR_riscv_block.riscv_block_inst:riscv_block_PR core_inst/riscv_cores[8].core_wrapper/PR_riscv_block.riscv_block_inst:riscv_block_PR core_inst/riscv_cores[9].core_wrapper/PR_riscv_block.riscv_block_inst:riscv_block_PR core_inst/riscv_cores[10].core_wrapper/PR_riscv_block.riscv_block_inst:riscv_block_PR core_inst/riscv_cores[11].core_wrapper/PR_riscv_block.riscv_block_inst:riscv_block_PR core_inst/riscv_cores[12].core_wrapper/PR_riscv_block.riscv_block_inst:riscv_block_PR core_inst/riscv_cores[13].core_wrapper/PR_riscv_block.riscv_block_inst:riscv_block_PR core_inst/riscv_cores[14].core_wrapper/PR_riscv_block.riscv_block_inst:riscv_block_PR core_inst/riscv_cores[15].core_wrapper/PR_riscv_block.riscv_block_inst:riscv_block_PR ]" >> run_impl.tcl
+	echo "create_pr_configuration -name config_1 -partitions [list core_inst/riscv_cores[0].pr_wrapper:riscv_block_PR core_inst/riscv_cores[1].pr_wrapper:riscv_block_PR core_inst/riscv_cores[2].pr_wrapper:riscv_block_PR core_inst/riscv_cores[3].pr_wrapper:riscv_block_PR core_inst/riscv_cores[4].pr_wrapper:riscv_block_PR core_inst/riscv_cores[5].pr_wrapper:riscv_block_PR core_inst/riscv_cores[6].pr_wrapper:riscv_block_PR core_inst/riscv_cores[7].pr_wrapper:riscv_block_PR core_inst/riscv_cores[8].pr_wrapper:riscv_block_PR core_inst/riscv_cores[9].pr_wrapper:riscv_block_PR core_inst/riscv_cores[10].pr_wrapper:riscv_block_PR core_inst/riscv_cores[11].pr_wrapper:riscv_block_PR core_inst/riscv_cores[12].pr_wrapper:riscv_block_PR core_inst/riscv_cores[13].pr_wrapper:riscv_block_PR core_inst/riscv_cores[14].pr_wrapper:riscv_block_PR core_inst/riscv_cores[15].pr_wrapper:riscv_block_PR ]" >> run_impl.tcl
 	echo "set_property PR_CONFIGURATION config_1 [get_runs impl_1]" >> run_impl.tcl
 	echo "reset_run impl_1" >> run_impl.tcl
-	echo "launch_runs impl_1 -jobs 12" >> run_impl.tcl
+	echo "launch_runs impl_1" >> run_impl.tcl
 	echo "wait_on_run impl_1" >> run_impl.tcl
 	echo "exit" >> run_impl.tcl
 	vivado -nojournal -nolog -mode batch -source run_impl.tcl
 
 %.runs/impl_2/%_routed.dcp: %.runs/synth_1/%.dcp
 	echo "open_project $*.xpr" > run_impl.tcl
-	echo "create_pr_configuration -name config_2 -partitions { }  -greyboxes [list core_inst/riscv_cores[0].core_wrapper/PR_riscv_block.riscv_block_inst core_inst/riscv_cores[1].core_wrapper/PR_riscv_block.riscv_block_inst core_inst/riscv_cores[2].core_wrapper/PR_riscv_block.riscv_block_inst core_inst/riscv_cores[3].core_wrapper/PR_riscv_block.riscv_block_inst core_inst/riscv_cores[4].core_wrapper/PR_riscv_block.riscv_block_inst core_inst/riscv_cores[5].core_wrapper/PR_riscv_block.riscv_block_inst core_inst/riscv_cores[6].core_wrapper/PR_riscv_block.riscv_block_inst core_inst/riscv_cores[7].core_wrapper/PR_riscv_block.riscv_block_inst core_inst/riscv_cores[8].core_wrapper/PR_riscv_block.riscv_block_inst core_inst/riscv_cores[9].core_wrapper/PR_riscv_block.riscv_block_inst core_inst/riscv_cores[10].core_wrapper/PR_riscv_block.riscv_block_inst core_inst/riscv_cores[11].core_wrapper/PR_riscv_block.riscv_block_inst core_inst/riscv_cores[12].core_wrapper/PR_riscv_block.riscv_block_inst core_inst/riscv_cores[13].core_wrapper/PR_riscv_block.riscv_block_inst core_inst/riscv_cores[14].core_wrapper/PR_riscv_block.riscv_block_inst core_inst/riscv_cores[15].core_wrapper/PR_riscv_block.riscv_block_inst ]" >> run_impl.tcl
-	# echo "set_property PR_CONFIGURATION config_2 [get_runs impl_1]" >> run_impl.tcl
+	echo "create_pr_configuration -name config_2 -partitions { }  -greyboxes [list core_inst/riscv_cores[0].pr_wrapper core_inst/riscv_cores[1].pr_wrapper core_inst/riscv_cores[2].pr_wrapper core_inst/riscv_cores[3].pr_wrapper core_inst/riscv_cores[4].pr_wrapper core_inst/riscv_cores[5].pr_wrapper core_inst/riscv_cores[6].pr_wrapper core_inst/riscv_cores[7].pr_wrapper core_inst/riscv_cores[8].pr_wrapper core_inst/riscv_cores[9].pr_wrapper core_inst/riscv_cores[10].pr_wrapper core_inst/riscv_cores[11].pr_wrapper core_inst/riscv_cores[12].pr_wrapper core_inst/riscv_cores[13].pr_wrapper core_inst/riscv_cores[14].pr_wrapper core_inst/riscv_cores[15].pr_wrapper ]" >> run_impl.tcl
 	echo "create_run impl_2 -parent_run impl_1 -flow {Vivado Implementation 2019} -pr_config config_2" >> run_impl.tcl
 	echo "reset_run impl_2" >> run_impl.tcl
-	echo "launch_runs impl_2 -jobs 12" >> run_impl.tcl
+	echo "launch_runs impl_2" >> run_impl.tcl
 	echo "wait_on_run impl_2" >> run_impl.tcl
 	echo "exit" >> run_impl.tcl
 	vivado -nojournal -nolog -mode batch -source run_impl.tcl

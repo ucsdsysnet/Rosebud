@@ -12,33 +12,24 @@ module riscv_axis_wrapper # (
     parameter CORE_ID_WIDTH   = 4, 
     parameter DRAM_PORT       = 6,
     parameter SLOT_COUNT      = 8,
+    parameter ADDR_WIDTH      = 16,
     parameter STRB_WIDTH      = (DATA_WIDTH/8),
     parameter SLOT_WIDTH      = $clog2(SLOT_COUNT+1), 
     parameter TAG_WIDTH       = (SLOT_WIDTH>5)? SLOT_WIDTH:5,
     parameter ID_TAG_WIDTH    = CORE_ID_WIDTH+TAG_WIDTH,
     
-    parameter IMEM_SIZE       = 65536,
-    parameter SLOW_DMEM_SIZE  = 1048576,
-    parameter FAST_DMEM_SIZE  = 32768,
-    parameter BC_REGION_SIZE  = 4048,
-    parameter BC_START_ADDR   = SLOW_DMEM_SIZE+FAST_DMEM_SIZE-BC_REGION_SIZE,
-    parameter MSG_WIDTH       = 32+4+$clog2(BC_REGION_SIZE)-2,
-    
     parameter RECV_DESC_DEPTH = 8,
     parameter SEND_DESC_DEPTH = 8,
     parameter DRAM_DESC_DEPTH = 16,
-    parameter MSG_FIFO_DEPTH  = 16,
     
-    parameter SLOW_M_B_LINES  = 4096,
-    parameter FAST_M_B_LINES  = 1024,
     parameter SLOT_START_ADDR = 16'h0,
     parameter SLOT_ADDR_STEP  = 16'h4000,
 
     parameter DATA_S_REG_TYPE = 0,
     parameter DATA_M_REG_TYPE = 2,
     parameter DRAM_M_REG_TYPE = 0,
-    parameter SEPARATE_CLOCKS = 1,
-    parameter PR_ENABLE       = 0
+
+    parameter SEPARATE_CLOCKS = 1
 )
 (
     input  wire                     sys_clk,
@@ -46,8 +37,6 @@ module riscv_axis_wrapper # (
     input  wire                     core_clk,
     input  wire                     core_rst,
     
-    input  wire [CORE_ID_WIDTH-1:0] core_id,
-
     // ---------------- DATA CHANNEL --------------- // 
     // Incoming data
     input  wire [DATA_WIDTH-1:0]    data_s_axis_tdata,
@@ -93,24 +82,53 @@ module riscv_axis_wrapper # (
     input  wire                     dram_m_axis_tready,
     output wire                     dram_m_axis_tlast,
 
-    // ------------- CORE MSG CHANNEL -------------- // 
-    // Core messages output  
-    output wire [MSG_WIDTH-1:0]     core_msg_out_data,
-    output wire                     core_msg_out_valid,
-    input  wire                     core_msg_out_ready,
+    // --------------------------------------------- //
+    // ------- CONNECTION TO RISCV_BLOCK ----------- //
+    // --------------------------------------------- //
 
-    // Core messages input
-    input  wire [MSG_WIDTH-1:0]     core_msg_in_data,
-    input  wire [CORE_ID_WIDTH-1:0] core_msg_in_user,
-    input  wire                     core_msg_in_valid
+    output wire                     core_reset,
+    output wire                     core_interrupt,
+    input  wire                     core_interrupt_ack,
+    
+    // DMA interface
+    output wire                     dma_cmd_wr_en,
+    output wire [ADDR_WIDTH-1:0]    dma_cmd_wr_addr,
+    output wire [DATA_WIDTH-1:0]    dma_cmd_wr_data,
+    output wire [STRB_WIDTH-1:0]    dma_cmd_wr_strb,
+    output wire                     dma_cmd_wr_last,
+    input  wire                     dma_cmd_wr_ready,
+    
+    output wire                     dma_cmd_rd_en,
+    output wire [ADDR_WIDTH-1:0]    dma_cmd_rd_addr,
+    output wire                     dma_cmd_rd_last,
+    input  wire                     dma_cmd_rd_ready,
+    
+    input  wire                     dma_rd_resp_valid,
+    input  wire [DATA_WIDTH-1:0]    dma_rd_resp_data,
+    output wire                     dma_rd_resp_ready,
+      
+    // Descriptor to/from core 
+    output wire [63:0]              in_desc,
+    output wire                     in_desc_valid,
+    input  wire                     in_desc_taken,
+
+    input  wire [63:0]              out_desc,
+    input  wire [63:0]              out_desc_dram_addr,
+    input  wire                     out_desc_valid,
+    output wire                     out_desc_ready,
+
+    // Slot information from core
+    input  wire [SLOT_WIDTH-1:0]    slot_wr_ptr, 
+    input  wire [ADDR_WIDTH-1:0]    slot_wr_addr,
+    input  wire                     slot_wr_valid,
+    output wire                     slot_wr_ready,
+ 
+    // Received DRAM infor to core
+    output wire [4:0]               recv_dram_tag,
+    output wire                     recv_dram_tag_valid
+    
 );
     
-parameter SLOW_DMEM_ADDR_WIDTH = $clog2(SLOW_DMEM_SIZE);
-parameter FAST_DMEM_ADDR_WIDTH = $clog2(FAST_DMEM_SIZE);
-parameter IMEM_ADDR_WIDTH      = $clog2(IMEM_SIZE);
-parameter ADDR_WIDTH           = SLOW_DMEM_ADDR_WIDTH+2;
-parameter LINE_ADDR_BITS       = $clog2(STRB_WIDTH);
-
 /////////////////////////////////////////////////////////////////////
 //////////////////////// CORE RESET COMMAND /////////////////////////
 /////////////////////////////////////////////////////////////////////
@@ -124,7 +142,6 @@ always @ (posedge sys_clk)
     else if (reset_cmd)
         core_reset_r <= ctrl_s_axis_tdata[0];
 
-wire core_reset;
 if (!SEPARATE_CLOCKS) begin: same_reset
   assign core_reset = core_reset_r;
   assign init_rst   = sys_rst;
@@ -153,10 +170,6 @@ end
 
 // Internal lookup table for slot addresses
 reg  [ADDR_WIDTH-1:0] slot_addr_lut [1:SLOT_COUNT];
-wire [ADDR_WIDTH-1:0] slot_wr_addr;
-wire [SLOT_WIDTH-1:0] slot_wr_ptr;
-wire                  slot_wr_valid;
-wire                  slot_wr_ready;
 wire [SLOT_WIDTH-1:0] s_slot_ptr;
 wire [ADDR_WIDTH-1:0] slot_addr;
 integer j;
@@ -414,21 +427,8 @@ axis_register # (
 /////////////////////////////////////////////////////////////////////
 /////////// AXIS TO NATIVE MEM INTERFACE WITH DESCRIPTORS ///////////
 /////////////////////////////////////////////////////////////////////
-wire                   ram_cmd_wr_en;
-wire [ADDR_WIDTH-1:0]  ram_cmd_wr_addr;
-wire [DATA_WIDTH-1:0]  ram_cmd_wr_data;
-wire [STRB_WIDTH-1:0]  ram_cmd_wr_strb;
-wire                   ram_cmd_wr_last;
-wire                   ram_cmd_wr_ready;
-
-wire                   ram_cmd_rd_en;
-wire [ADDR_WIDTH-1:0]  ram_cmd_rd_addr;
-wire                   ram_cmd_rd_last;
-wire                   ram_cmd_rd_ready;
-
-wire                   ram_rd_resp_valid;
-wire [DATA_WIDTH-1:0]  ram_rd_resp_data;
-wire                   ram_rd_resp_ready;
+wire                   dma_cmd_rd_en_n;
+wire                   pkt_sent;
   
 wire                   recv_desc_valid;
 wire                   recv_desc_ready;
@@ -438,10 +438,12 @@ wire [TAG_WIDTH-1:0]   recv_desc_tdest;
 wire [PORT_WIDTH-1:0]  recv_desc_tuser;
 wire [ADDR_WIDTH-1:0]  recv_desc_addr;
 
-wire                   pkt_sent;
-
 wire [63:0] send_desc;
 wire send_desc_valid, send_desc_ready;
+
+// We deassert read request if read results cannot be accepted,
+// similar to adding a bobble into pipe
+assign dma_cmd_rd_en = dma_cmd_rd_en_n && dma_rd_resp_ready;
 
 axis_dma # (
   .DATA_WIDTH     (DATA_WIDTH),
@@ -473,20 +475,20 @@ axis_dma # (
   .m_axis_tdest (m_axis_tdest),
   .m_axis_tuser (m_axis_tuser),
   
-  .mem_wr_en   (ram_cmd_wr_en),
-  .mem_wr_strb (ram_cmd_wr_strb),
-  .mem_wr_addr (ram_cmd_wr_addr),
-  .mem_wr_data (ram_cmd_wr_data),
-  .mem_wr_last (ram_cmd_wr_last),
-  .mem_wr_ready(ram_cmd_wr_ready),
+  .mem_wr_en   (dma_cmd_wr_en),
+  .mem_wr_strb (dma_cmd_wr_strb),
+  .mem_wr_addr (dma_cmd_wr_addr),
+  .mem_wr_data (dma_cmd_wr_data),
+  .mem_wr_last (dma_cmd_wr_last),
+  .mem_wr_ready(dma_cmd_wr_ready),
   
-  .mem_rd_en        (ram_cmd_rd_en),
-  .mem_rd_addr      (ram_cmd_rd_addr),
-  .mem_rd_last      (ram_cmd_rd_last),
-  .mem_rd_ready     (ram_cmd_rd_ready && ram_rd_resp_ready),
-  .mem_rd_data      (ram_rd_resp_data),
-  .mem_rd_data_v    (ram_rd_resp_valid),
-  .mem_rd_data_ready(ram_rd_resp_ready),
+  .mem_rd_en        (dma_cmd_rd_en_n),
+  .mem_rd_addr      (dma_cmd_rd_addr),
+  .mem_rd_last      (dma_cmd_rd_last),
+  .mem_rd_ready     (dma_cmd_rd_ready && dma_rd_resp_ready),
+  .mem_rd_data      (dma_rd_resp_data),
+  .mem_rd_data_v    (dma_rd_resp_valid),
+  .mem_rd_data_ready(dma_rd_resp_ready),
   
   .recv_desc_valid(recv_desc_valid),
   .recv_desc_ready(recv_desc_ready),
@@ -510,9 +512,6 @@ axis_dma # (
 /////////////////// DATA IN DESCRIPTOR FIFO /////////////////////////
 /////////////////////////////////////////////////////////////////////
 // A desc FIFO for received data
-wire recv_desc_valid_f, recv_desc_ready_f;
-wire [63:0] recv_desc_f;
-
 wire [63:0] recv_desc = {recv_desc_addr,
                         {(8-PORT_WIDTH){1'b0}},recv_desc_tuser,
                         {(8-SLOT_WIDTH){1'b0}},recv_desc_tdest[SLOT_WIDTH-1:0],
@@ -522,21 +521,20 @@ wire recv_from_dram = recv_desc_valid && (recv_desc_tuser==dram_port);
 wire recv_tag_zero  = recv_desc_valid && (recv_desc_tdest=={TAG_WIDTH{1'b0}});
 
 if (!SEPARATE_CLOCKS) begin: normal_recv_data_fifo
-  simple_fifo # (
-    .ADDR_WIDTH($clog2(RECV_DESC_DEPTH)),
+  simple_sync_fifo # (
+    .DEPTH(RECV_DESC_DEPTH),
     .DATA_WIDTH(64)
   ) recvd_data_fifo (
     .clk(sys_clk),
-    .rst(sys_rst),
-    .clear(core_reset_r),
+    .rst(sys_rst || core_reset_r),
   
     .din_valid(recv_desc_valid && (!recv_from_dram) && (!recv_tag_zero)),
     .din(recv_desc),
     .din_ready(recv_desc_fifo_ready),
    
-    .dout_valid(recv_desc_valid_f),
-    .dout(recv_desc_f),
-    .dout_ready(recv_desc_ready_f)
+    .dout_valid(in_desc_valid),
+    .dout(in_desc),
+    .dout_ready(in_desc_taken)
   );
 
 end else begin: async_recv_data_fifo
@@ -552,16 +550,14 @@ end else begin: async_recv_data_fifo
     .din_ready(recv_desc_fifo_ready),
    
     .dout_clk(core_clk),
-    .dout_valid(recv_desc_valid_f),
-    .dout(recv_desc_f),
-    .dout_ready(recv_desc_ready_f)
+    .dout_valid(in_desc_valid),
+    .dout(in_desc),
+    .dout_ready(in_desc_taken)
   );
 
 end
 
-wire [4:0] recv_dram_tag;
 wire       recv_dram_tag_fifo_ready;
-wire       recv_dram_tag_v;
  
 if (SEPARATE_CLOCKS) begin: async_dram_flag_fifo
 
@@ -580,7 +576,7 @@ if (SEPARATE_CLOCKS) begin: async_dram_flag_fifo
     .din_ready(recv_dram_tag_fifo_ready),
    
     .dout_clk(core_clk),
-    .dout_valid(recv_dram_tag_v),
+    .dout_valid(recv_dram_tag_valid),
     .dout(recv_dram_tag),
     .dout_ready(1'b1)
   );
@@ -597,7 +593,7 @@ end else begin: direct_dram_flag
       recv_dram_tag_v_r <= 1'b0;
   end
   
-  assign recv_dram_tag_v          = recv_dram_tag_v_r;
+  assign recv_dram_tag_valid      = recv_dram_tag_v_r;
   assign recv_dram_tag            = recv_dram_tag_r;
   assign recv_dram_tag_fifo_ready = 1'b1;
 
@@ -609,16 +605,12 @@ assign recv_desc_ready = (recv_desc_fifo_ready && (!recv_from_dram))  ||
 /////////////////////////////////////////////////////////////////////
 //////////// PARSING CORE DESCRIPTOR AND FIFOS PER TYPE /////////////
 /////////////////////////////////////////////////////////////////////
-wire data_send_valid, data_send_ready;
-wire [63:0] data_send_desc;
-wire [63:0] core_dram_addr;
-
-wire core_data_wr =  (data_send_desc[63:60] == 4'd0);
-wire core_ctrl_wr = ((data_send_desc[63:60] == 4'd1) || 
-                     (data_send_desc[63:60] == 4'd2) || 
-                     (data_send_desc[63:60] == 4'd3));
-wire core_dram_wr =  (data_send_desc[63:60] == 4'd4);
-wire core_dram_rd =  (data_send_desc[63:60] == 4'd5);
+wire core_data_wr =  (out_desc[63:60] == 4'd0);
+wire core_ctrl_wr = ((out_desc[63:60] == 4'd1) || 
+                     (out_desc[63:60] == 4'd2) || 
+                     (out_desc[63:60] == 4'd3));
+wire core_dram_wr =  (out_desc[63:60] == 4'd4);
+wire core_dram_rd =  (out_desc[63:60] == 4'd5);
 
 // A desc FIFO for send data from core
 wire core_data_wr_ready;
@@ -626,16 +618,15 @@ wire core_data_wr_valid_f, core_data_wr_ready_f;
 wire [63:0] core_data_wr_desc_f;
 
 if (!SEPARATE_CLOCKS) begin: normal_send_data_fifo
-  simple_fifo # (
-    .ADDR_WIDTH($clog2(SEND_DESC_DEPTH)),
+  simple_sync_fifo # (
+    .DEPTH(SEND_DESC_DEPTH),
     .DATA_WIDTH(64)
   ) send_data_fifo (
     .clk(sys_clk),
-    .rst(sys_rst),
-    .clear(core_reset_r),
+    .rst(sys_rst || core_reset_r),
   
-    .din_valid(data_send_valid && core_data_wr),
-    .din(data_send_desc),
+    .din_valid(out_desc_valid && core_data_wr),
+    .din(out_desc),
     .din_ready(core_data_wr_ready),
    
     .dout_valid(core_data_wr_valid_f),
@@ -650,8 +641,8 @@ end else begin: async_send_data_fifo
     .async_rst(sys_rst || core_reset_r),
   
     .din_clk(core_clk),
-    .din_valid(data_send_valid && core_data_wr),
-    .din(data_send_desc),
+    .din_valid(out_desc_valid && core_data_wr),
+    .din(out_desc),
     .din_ready(core_data_wr_ready),
    
     .dout_clk(sys_clk),
@@ -668,16 +659,15 @@ wire core_ctrl_wr_valid_f, core_ctrl_wr_ready_f;
 wire [63:0] core_ctrl_wr_desc_f;
 
 if (!SEPARATE_CLOCKS) begin: normal_ctrl_send_fifo
-  simple_fifo # (
-    .ADDR_WIDTH($clog2(SEND_DESC_DEPTH)),
+  simple_sync_fifo # (
+    .DEPTH(SEND_DESC_DEPTH),
     .DATA_WIDTH(64)
   ) send_ctrl_fifo (
     .clk(sys_clk),
-    .rst(sys_rst),
-    .clear(core_reset_r),
+    .rst(sys_rst || core_reset_r),
   
-    .din_valid(data_send_valid && core_ctrl_wr),
-    .din(data_send_desc),
+    .din_valid(out_desc_valid && core_ctrl_wr),
+    .din(out_desc),
     .din_ready(core_ctrl_wr_ready),
    
     .dout_valid(core_ctrl_wr_valid_f),
@@ -692,8 +682,8 @@ end else begin: async_ctrl_send_fifo
     .async_rst(sys_rst || core_reset_r),
   
     .din_clk(core_clk),
-    .din_valid(data_send_valid && core_ctrl_wr),
-    .din(data_send_desc),
+    .din_valid(out_desc_valid && core_ctrl_wr),
+    .din(out_desc),
     .din_ready(core_ctrl_wr_ready),
    
     .dout_clk(sys_clk),
@@ -720,17 +710,16 @@ wire core_dram_wr_valid_f, core_dram_wr_ready_f;
 wire [127:0] core_dram_wr_desc_f;
 
 if (!SEPARATE_CLOCKS) begin: normal_dram_send_fifo
-  simple_fifo # (
-    .ADDR_WIDTH($clog2(DRAM_DESC_DEPTH)),
+  simple_sync_fifo # (
+    .DEPTH(DRAM_DESC_DEPTH),
     .DATA_WIDTH(128)
   ) dram_send_fifo (
     .clk(sys_clk),
-    .rst(sys_rst),
-    .clear(core_reset_r),
+    .rst(sys_rst || core_reset_r),
   
-    .din_valid(data_send_valid && core_dram_wr),
-    .din({core_dram_addr, data_send_desc[63:24+PORT_WIDTH],
-          dram_port, data_send_desc[23:0]}),
+    .din_valid(out_desc_valid && core_dram_wr),
+    .din({out_desc_dram_addr, out_desc[63:24+PORT_WIDTH],
+          dram_port, out_desc[23:0]}),
     .din_ready(core_dram_wr_ready),
    
     .dout_valid(core_dram_wr_valid_f),
@@ -745,9 +734,9 @@ end else begin: async_dram_send_fifo
     .async_rst(sys_rst || core_reset_r),
   
     .din_clk(core_clk),
-    .din_valid(data_send_valid && core_dram_wr),
-    .din({core_dram_addr, data_send_desc[63:24+PORT_WIDTH],
-          dram_port, data_send_desc[23:0]}),
+    .din_valid(out_desc_valid && core_dram_wr),
+    .din({out_desc_dram_addr, out_desc[63:24+PORT_WIDTH],
+          dram_port, out_desc[23:0]}),
     .din_ready(core_dram_wr_ready),
    
     .dout_clk(sys_clk),
@@ -770,8 +759,8 @@ if (!SEPARATE_CLOCKS) begin: normal_dram_ctrl_send_fifo
     .clk(sys_clk),
     .rst(sys_rst || core_reset_r),
   
-    .din_valid(data_send_valid && core_dram_rd),
-    .din({core_dram_addr, data_send_desc}),
+    .din_valid(out_desc_valid && core_dram_rd),
+    .din({out_desc_dram_addr, out_desc}),
     .din_ready(core_dram_rd_ready),
    
     .dout_valid(core_dram_rd_valid_f),
@@ -786,8 +775,8 @@ end else begin: async_dram_ctrl_send_fifo
     .async_rst(sys_rst || core_reset_r),
   
     .din_clk(core_clk),
-    .din_valid(data_send_valid && core_dram_rd),
-    .din({core_dram_addr, data_send_desc}),
+    .din_valid(out_desc_valid && core_dram_rd),
+    .din({out_desc_dram_addr, out_desc}),
     .din_ready(core_dram_rd_ready),
    
     .dout_clk(sys_clk),
@@ -797,7 +786,7 @@ end else begin: async_dram_ctrl_send_fifo
   );
 end
 
-assign data_send_ready = (core_data_wr_ready && core_data_wr) || 
+assign out_desc_ready = (core_data_wr_ready && core_data_wr) || 
                          (core_ctrl_wr_ready && core_ctrl_wr) ||
                          (core_dram_wr_ready && core_dram_wr) || 
                          (core_dram_rd_ready && core_dram_rd);
@@ -1076,56 +1065,11 @@ assign ctrl_m_axis_tlast  = ctrl_m_axis_tvalid;
 assign ctrl_out_ready     = (!ctrl_m_axis_tvalid_r) || ctrl_m_axis_tready;
 
 /////////////////////////////////////////////////////////////////////
-/////////////////////// BROADCAST MESSAGING /////////////////////////
-/////////////////////////////////////////////////////////////////////
-// A FIFO for outgoing core messages.
-wire [MSG_WIDTH-1:0] bc_msg_out_data;
-wire                 bc_msg_out_valid;
-wire                 bc_msg_out_ready;
-
-if (!SEPARATE_CLOCKS) begin: sync_core_msg_send_fifo
-  simple_sync_fifo # (
-    .DEPTH(MSG_FIFO_DEPTH),
-    .DATA_WIDTH(MSG_WIDTH)
-  ) core_msg_out_fifo (
-    .clk(sys_clk),
-    .rst(sys_rst || core_reset_r),
-  
-    .din_valid(bc_msg_out_valid),
-    .din(bc_msg_out_data),
-    .din_ready(bc_msg_out_ready),
-   
-    .dout_valid(core_msg_out_valid),
-    .dout(core_msg_out_data),
-    .dout_ready(core_msg_out_ready)
-  );
-end else begin: async_core_msg_send_fifo
-  simple_async_fifo # (
-    .DEPTH(MSG_FIFO_DEPTH),
-    .DATA_WIDTH(MSG_WIDTH)
-  ) core_msg_out_fifo (
-    .async_rst(sys_rst || core_reset_r),
-  
-    .din_clk(core_clk),
-    .din_valid(bc_msg_out_valid),
-    .din(bc_msg_out_data),
-    .din_ready(bc_msg_out_ready),
-   
-    .dout_clk(sys_clk),
-    .dout_valid(core_msg_out_valid),
-    .dout(core_msg_out_data),
-    .dout_ready(core_msg_out_ready)
-  );
-end
-
-/////////////////////////////////////////////////////////////////////
 //////// External memory access out of bound detection //////////////
 /////////////////////////////////////////////////////////////////////
 
 wire out_of_bound_clear;
 wire out_of_bound = 1'b0;
-wire core_interrupt, core_interrupt_ack;
-
 // always @(posedge sys_clk)
 //   if (sys_rst || out_of_bound_clear)
 //     out_of_bound <= 1'b0;
@@ -1154,126 +1098,5 @@ end else begin: direct_interrupt
    assign core_interrupt = out_of_bound;
    assign out_of_bound_clear = core_interrupt_ack;
 end
-
-/////////////////////////////////////////////////////////////////////
-///////////////////// RISCV CORE & MEMORY SYSTEM ////////////////////
-/////////////////////////////////////////////////////////////////////
-if (PR_ENABLE) begin: PR_riscv_block
-  riscv_block_PR riscv_block_inst (  
-    .sys_clk(sys_clk),
-    .sys_rst(sys_rst),
-    .core_rst(core_reset),
-    .core_id(core_id),
-    
-    .dma_cmd_wr_en(ram_cmd_wr_en),
-    .dma_cmd_wr_addr(ram_cmd_wr_addr),
-    .dma_cmd_wr_data(ram_cmd_wr_data),
-    .dma_cmd_wr_strb(ram_cmd_wr_strb),
-    .dma_cmd_wr_last(ram_cmd_wr_last),
-    .dma_cmd_wr_ready(ram_cmd_wr_ready),
-  
-     // We deassert read request if read results cannot be accepted, 
-     // similar to adding a bobble into pipe
-    .dma_cmd_rd_en(ram_cmd_rd_en && ram_rd_resp_ready),
-    .dma_cmd_rd_addr(ram_cmd_rd_addr),
-    .dma_cmd_rd_last(ram_cmd_rd_last),
-    .dma_cmd_rd_ready(ram_cmd_rd_ready),
-  
-    .dma_rd_resp_valid(ram_rd_resp_valid),
-    .dma_rd_resp_data(ram_rd_resp_data),
-    .dma_rd_resp_ready(ram_rd_resp_ready),
-      
-    .in_desc(recv_desc_f),
-    .in_desc_valid(recv_desc_valid_f),
-    .in_desc_taken(recv_desc_ready_f),
-    
-    .data_desc(data_send_desc),
-    .dram_wr_addr(core_dram_addr),
-    .data_desc_valid(data_send_valid),
-    .data_desc_ready(data_send_ready),
-    
-    .slot_wr_ptr(slot_wr_ptr), 
-    .slot_wr_addr(slot_wr_addr),
-    .slot_wr_valid(slot_wr_valid),
-    .slot_wr_ready(slot_wr_ready),
-   
-    .recv_dram_tag_valid(recv_dram_tag_v),    
-    .recv_dram_tag(recv_dram_tag),
-
-    .bc_msg_in(core_msg_in_data),
-    .bc_msg_in_valid(core_msg_in_valid),
-    .bc_msg_out(bc_msg_out_data),
-    .bc_msg_out_valid(bc_msg_out_valid),
-    .bc_msg_out_ready(bc_msg_out_ready),
-  
-    .interrupt_in(core_interrupt),
-    .interrupt_in_ack(core_interrupt_ack)
-  );
-end else begin: normal_riscv_block
-  riscv_block # (
-    .DATA_WIDTH(DATA_WIDTH),
-    .STRB_WIDTH(STRB_WIDTH),
-    .IMEM_SIZE(IMEM_SIZE),
-    .SLOW_DMEM_SIZE(SLOW_DMEM_SIZE),
-    .FAST_DMEM_SIZE(FAST_DMEM_SIZE),
-    .SLOW_M_B_LINES(SLOW_M_B_LINES),
-    .FAST_M_B_LINES(FAST_M_B_LINES),
-    .BC_REGION_SIZE(BC_REGION_SIZE),
-    .BC_START_ADDR(BC_START_ADDR),
-    .CORE_ID_WIDTH(CORE_ID_WIDTH),
-    .SLOT_COUNT(SLOT_COUNT),
-    .ADDR_WIDTH(ADDR_WIDTH),
-    .SLOT_WIDTH(SLOT_WIDTH)
-  ) riscv_inst (
-    .sys_clk(sys_clk),
-    .sys_rst(sys_rst),
-    .core_rst(core_reset),
-    .core_id(core_id),
-    
-    .dma_cmd_wr_en(ram_cmd_wr_en),
-    .dma_cmd_wr_addr(ram_cmd_wr_addr),
-    .dma_cmd_wr_data(ram_cmd_wr_data),
-    .dma_cmd_wr_strb(ram_cmd_wr_strb),
-    .dma_cmd_wr_last(ram_cmd_wr_last),
-    .dma_cmd_wr_ready(ram_cmd_wr_ready),
-  
-     // We deassert read request if read results cannot be accepted, 
-     // similar to adding a bobble into pipe
-    .dma_cmd_rd_en(ram_cmd_rd_en && ram_rd_resp_ready),
-    .dma_cmd_rd_addr(ram_cmd_rd_addr),
-    .dma_cmd_rd_last(ram_cmd_rd_last),
-    .dma_cmd_rd_ready(ram_cmd_rd_ready),
-  
-    .dma_rd_resp_valid(ram_rd_resp_valid),
-    .dma_rd_resp_data(ram_rd_resp_data),
-    .dma_rd_resp_ready(ram_rd_resp_ready),
-      
-    .in_desc(recv_desc_f),
-    .in_desc_valid(recv_desc_valid_f),
-    .in_desc_taken(recv_desc_ready_f),
-    
-    .data_desc(data_send_desc),
-    .dram_wr_addr(core_dram_addr),
-    .data_desc_valid(data_send_valid),
-    .data_desc_ready(data_send_ready),
-    
-    .slot_wr_ptr(slot_wr_ptr), 
-    .slot_wr_addr(slot_wr_addr),
-    .slot_wr_valid(slot_wr_valid),
-    .slot_wr_ready(slot_wr_ready),
-   
-    .recv_dram_tag_valid(recv_dram_tag_v),    
-    .recv_dram_tag(recv_dram_tag),
-    
-    .bc_msg_in(core_msg_in_data),
-    .bc_msg_in_valid(core_msg_in_valid),
-    .bc_msg_out(bc_msg_out_data),
-    .bc_msg_out_valid(bc_msg_out_valid),
-    .bc_msg_out_ready(bc_msg_out_ready),
-  
-    .interrupt_in(core_interrupt),
-    .interrupt_in_ack(core_interrupt_ack)
-  );
-end 
 
 endmodule
