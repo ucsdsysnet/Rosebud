@@ -39,7 +39,8 @@ module mem_sys # (
   input  wire                                     dma_rd_resp_ready,
   
   input  wire                                     core_dmem_en,           
-  input  wire [STRB_WIDTH-1:0]                    core_dmem_wen,          
+  input  wire                                     core_dmem_wen,           
+  input  wire [STRB_WIDTH-1:0]                    core_dmem_strb,          
   input  wire [ADDR_WIDTH-1:0]                    core_dmem_addr,         
   input  wire [DATA_WIDTH-1:0]                    core_dmem_wr_data,      
   output wire [DATA_WIDTH-1:0]                    core_dmem_rd_data,      
@@ -336,8 +337,8 @@ module mem_sys # (
   
     if (!core_dmem_addr[LINE_ADDR_BITS] && core_slow_dmem_en) begin
       dmem_slow_en_b1      = 1'b1;
-      dmem_slow_wen_b1     = core_dmem_wen;
-      core_slow_rd_b1      = ~(|core_dmem_wen);
+      dmem_slow_wen_b1     = core_dmem_strb;
+      core_slow_rd_b1      = !core_dmem_wen;
     end else if (!slow_dma_cmd_wr_addr[LINE_ADDR_BITS] && dma_slow_dmem_wr_en_r) begin
       dmem_slow_en_b1      = 1'b1;
       dma_slow_wr_b1_gnt   = 1'b1;
@@ -362,8 +363,8 @@ module mem_sys # (
   
     if (core_dmem_addr[LINE_ADDR_BITS] && core_slow_dmem_en) begin
       dmem_slow_en_b2      = 1'b1;
-      dmem_slow_wen_b2     = core_dmem_wen;
-      core_slow_rd_b2      = ~(|core_dmem_wen);
+      dmem_slow_wen_b2     = core_dmem_strb;
+      core_slow_rd_b2      = !core_dmem_wen;
     end else if (slow_dma_cmd_wr_addr[LINE_ADDR_BITS] && dma_slow_dmem_wr_en_r) begin
       dmem_slow_en_b2      = 1'b1;
       dma_slow_wr_b2_gnt   = 1'b1;
@@ -417,8 +418,8 @@ module mem_sys # (
   
     .clkb(clk),
     .enb(core_fast_dmem_en && !core_dmem_addr[LINE_ADDR_BITS]),
-    .renb((~|core_dmem_wen)),
-    .wenb(core_dmem_wen),
+    .renb(!core_dmem_wen),
+    .wenb(core_dmem_strb),
     .addrb(core_dmem_addr[FAST_DMEM_ADDR_WIDTH-1:LINE_ADDR_BITS+1]),
     .dinb(core_dmem_wr_data),
     .doutb(core_fast_rd_data_b1)
@@ -438,8 +439,8 @@ module mem_sys # (
   
     .clkb(clk),
     .enb(core_fast_dmem_en && core_dmem_addr[LINE_ADDR_BITS]),
-    .renb((~|core_dmem_wen)),
-    .wenb(core_dmem_wen),
+    .renb(!core_dmem_wen),
+    .wenb(core_dmem_strb),
     .addrb(core_dmem_addr[FAST_DMEM_ADDR_WIDTH-1:LINE_ADDR_BITS+1]),
     .dinb(core_dmem_wr_data),
     .doutb(core_fast_rd_data_b2)
@@ -605,8 +606,8 @@ module mem_sys # (
       dma_fast_rd_bank_r  <= dma_fast_rd_b2_gnt;
       
       core_fast_bank_r    <= core_dmem_addr[LINE_ADDR_BITS];
-      core_fast_rd_r      <= core_fast_dmem_en && ~(|core_dmem_wen);
-      core_slow_rd_r      <= core_slow_dmem_en && ~(|core_dmem_wen);
+      core_fast_rd_r      <= core_fast_dmem_en && !core_dmem_wen;
+      core_slow_rd_r      <= core_slow_dmem_en && !core_dmem_wen;
       core_slow_rd_rr     <= core_slow_rd_r;
       core_slow_rd_rrr    <= core_slow_rd_rr;
       core_slow_rd_b1_r   <= core_slow_rd_b1;

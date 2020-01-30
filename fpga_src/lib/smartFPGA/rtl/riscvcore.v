@@ -18,7 +18,8 @@ module riscvcore #(
     input  [CORE_ID_WIDTH-1:0]   core_id,
     
     output                       ext_dmem_en,
-    output [STRB_WIDTH-1:0]      ext_dmem_wen,
+    output                       ext_dmem_wen,
+    output [STRB_WIDTH-1:0]      ext_dmem_strb,
     output [ADDR_WIDTH-1:0]      ext_dmem_addr,
     output [DATA_WIDTH-1:0]      ext_dmem_wr_data,
     input  [DATA_WIDTH-1:0]      ext_dmem_rd_data,
@@ -59,16 +60,17 @@ module riscvcore #(
 // Core to memory signals
 wire [31:0] imem_read_data, dmem_wr_data, dmem_read_data; 
 wire [31:0] imem_addr, dmem_addr;
-wire dmem_v, dmem_wr_en, imem_v;
-reg imem_read_ready;
-reg  imem_access_err, dmem_access_err;
-reg  io_access_data_err, io_byte_access_err;
-wire [1:0] dmem_byte_count;
-wire [4:0] dmem_word_write_mask;
-reg timer_interrupt;
-wire dram_recv_any;
+wire [4:0]  dmem_word_write_mask;
+wire [1:0]  dmem_byte_count;
+wire        dmem_v, dmem_wr_en, imem_v;
+
 reg [7:0]  mask_r;
-reg io_ready;
+reg        imem_read_ready;
+reg        imem_access_err, dmem_access_err;
+reg        io_access_data_err, io_byte_access_err;
+reg        timer_interrupt;
+reg        io_ren_r;
+wire       dram_recv_any;
 
 VexRiscv core (
       .clk(clk),
@@ -87,7 +89,7 @@ VexRiscv core (
       .dBus_cmd_payload_address(dmem_addr),
       .dBus_cmd_payload_data(dmem_wr_data),
       .dBus_cmd_payload_size(dmem_byte_count),
-      .dBus_rsp_ready(ext_dmem_rd_valid || io_ready),
+      .dBus_rsp_ready(ext_dmem_rd_valid || io_ren_r),
       .dBus_rsp_error((dmem_access_err && mask_r[1])    || 
                       (io_access_data_err && mask_r[2]) || 
                       (io_byte_access_err && mask_r[3])),
@@ -127,7 +129,7 @@ localparam INTERRUPT_ACK  = 7'b0111101;//;
 localparam IO_BYTE_ACCESS = 4'b0111;//??;
 localparam IO_WRITE_ADDRS = 1'b0;//??????;
 
-wire io_not_mem = dmem_addr[ADDR_WIDTH-1];
+wire io_not_mem = dmem_addr[ADDR_WIDTH-1] && !dmem_addr[ADDR_WIDTH-2];
 wire io_write = io_not_mem && dmem_v && dmem_wr_en; 
 
 wire data_desc_wen  = io_write && (dmem_addr[6:3]==SEND_DESC_ADDR);
@@ -247,7 +249,6 @@ wire int_flags_ren  = io_read  && (dmem_addr[6:2]==RD_INT_F_ADDR);
 wire act_slots_ren  = io_read  && (dmem_addr[6:2]==RD_ACT_SLOT_ADDR);
 
 reg [31:0]         io_read_data;
-reg                io_ren_r;
 reg [63:0]         internal_timer;
 reg [31:0]         dram_recv_flag;
 reg [SLOT_COUNT:1] slots_in_prog;
@@ -256,8 +257,7 @@ always @ (posedge clk)
     if (rst)
         io_ren_r <= 1'b0;
     else
-        io_ren_r <= in_desc_ren || dram_flags_ren || stat_ren || id_ren || 
-                    timer_l_ren || timer_h_ren || int_flags_ren || act_slots_ren;
+        io_ren_r <= io_read; 
 
 always @ (posedge clk) begin
     if (in_desc_ren && in_desc_valid)
@@ -423,16 +423,15 @@ end
 
 always @ (posedge clk)
     if (rst) begin
-		    io_ready        <= 1'b0;
 		    imem_read_ready <= 1'b0;
 		end else begin
-			  io_ready        <= io_read; 
 		    imem_read_ready <= imem_v;
     end
 
 // connection to dmem and imem
   assign ext_dmem_en       = dmem_v && (!io_not_mem);
-  assign ext_dmem_wen      = dmem_line_write_mask;
+  assign ext_dmem_wen      = dmem_wr_en;
+  assign ext_dmem_strb     = dmem_line_write_mask;
   assign ext_dmem_addr     = dmem_addr;
   assign ext_dmem_wr_data  = dmem_data_in;
   assign dmem_data_out     = ext_dmem_rd_data;
