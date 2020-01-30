@@ -423,26 +423,26 @@ resize_pblock [get_pblocks pblock_32] -add {RAMB18_X9Y258:RAMB18_X9Y263}
 resize_pblock [get_pblocks pblock_32] -add {RAMB36_X9Y129:RAMB36_X9Y131}
 
 create_pblock pblock_33
-add_cells_to_pblock [get_pblocks pblock_33] [get_cells -quiet -hier -regexp {core_inst/.*/grow.axis_switch_2lvl_grow_inst/.*\[0\].sw_lvl2}]
-add_cells_to_pblock [get_pblocks pblock_33] [get_cells -quiet -hier -regexp {core_inst/.*/shrink.axis_switch_2lvl_shrink_inst/.*\[0\].sw_lvl1}]
+add_cells_to_pblock [get_pblocks pblock_33] [get_cells -quiet -hier -regexp {core_inst/.*/grow.axis_switch_2lvl_grow_inst/.*\[0\].*.stage_fifo}]
+add_cells_to_pblock [get_pblocks pblock_33] [get_cells -quiet -hier -regexp {core_inst/.*/shrink.axis_switch_2lvl_shrink_inst/.*\[0\].*.stage_fifo}]
 resize_pblock [get_pblocks pblock_33] -add {SLICE_X43Y300:SLICE_X59Y329}
 resize_pblock [get_pblocks pblock_33] -add {RAMB18_X3Y120:RAMB18_X4Y131}
 resize_pblock [get_pblocks pblock_33] -add {RAMB36_X3Y60:RAMB36_X4Y65}
 create_pblock pblock_34
-add_cells_to_pblock [get_pblocks pblock_34] [get_cells -quiet -hier -regexp {core_inst/.*/grow.axis_switch_2lvl_grow_inst/.*\[1\].sw_lvl2}]
-add_cells_to_pblock [get_pblocks pblock_34] [get_cells -quiet -hier -regexp {core_inst/.*/shrink.axis_switch_2lvl_shrink_inst/.*\[1\].sw_lvl1}]
+add_cells_to_pblock [get_pblocks pblock_34] [get_cells -quiet -hier -regexp {core_inst/.*/grow.axis_switch_2lvl_grow_inst/.*\[1\].*.stage_fifo}]
+add_cells_to_pblock [get_pblocks pblock_34] [get_cells -quiet -hier -regexp {core_inst/.*/shrink.axis_switch_2lvl_shrink_inst/.*\[1\].*.stage_fifo}]
 resize_pblock [get_pblocks pblock_34] -add {SLICE_X101Y300:SLICE_X116Y329}
 resize_pblock [get_pblocks pblock_34] -add {RAMB18_X7Y120:RAMB18_X8Y131}
 resize_pblock [get_pblocks pblock_34] -add {RAMB36_X7Y60:RAMB36_X8Y65}
 create_pblock pblock_35
-add_cells_to_pblock [get_pblocks pblock_35] [get_cells -quiet -hier -regexp {core_inst/.*/grow.axis_switch_2lvl_grow_inst/.*\[2\].sw_lvl2}]
-add_cells_to_pblock [get_pblocks pblock_35] [get_cells -quiet -hier -regexp {core_inst/.*/shrink.axis_switch_2lvl_shrink_inst/.*\[2\].sw_lvl1}]
+add_cells_to_pblock [get_pblocks pblock_35] [get_cells -quiet -hier -regexp {core_inst/.*/grow.axis_switch_2lvl_grow_inst/.*\[2\].*.stage_fifo}]
+add_cells_to_pblock [get_pblocks pblock_35] [get_cells -quiet -hier -regexp {core_inst/.*/shrink.axis_switch_2lvl_shrink_inst/.*\[2\].*.stage_fifo}]
 resize_pblock [get_pblocks pblock_35] -add {SLICE_X44Y510:SLICE_X59Y539}
 resize_pblock [get_pblocks pblock_35] -add {RAMB18_X3Y204:RAMB18_X4Y215}
 resize_pblock [get_pblocks pblock_35] -add {RAMB36_X3Y102:RAMB36_X4Y107}
 create_pblock pblock_36
-add_cells_to_pblock [get_pblocks pblock_36] [get_cells -quiet -hier -regexp {core_inst/.*/grow.axis_switch_2lvl_grow_inst/.*\[3\].sw_lvl2}]
-add_cells_to_pblock [get_pblocks pblock_36] [get_cells -quiet -hier -regexp {core_inst/.*/shrink.axis_switch_2lvl_shrink_inst/.*\[3\].sw_lvl1}]
+add_cells_to_pblock [get_pblocks pblock_36] [get_cells -quiet -hier -regexp {core_inst/.*/grow.axis_switch_2lvl_grow_inst/.*\[3\].*.stage_fifo}]
+add_cells_to_pblock [get_pblocks pblock_36] [get_cells -quiet -hier -regexp {core_inst/.*/shrink.axis_switch_2lvl_shrink_inst/.*\[3\].*.stage_fifo}]
 resize_pblock [get_pblocks pblock_36] -add {SLICE_X72Y600:SLICE_X87Y629}
 resize_pblock [get_pblocks pblock_36] -add {RAMB18_X5Y240:RAMB18_X6Y251}
 resize_pblock [get_pblocks pblock_36] -add {RAMB36_X5Y120:RAMB36_X6Y125}
