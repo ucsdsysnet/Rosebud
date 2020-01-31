@@ -9,6 +9,9 @@ module pcie_config # (
   parameter CORE_COUNT              = 16,
   parameter CORE_SLOT_WIDTH         = 4,
   parameter CORE_WIDTH              = $clog2(CORE_COUNT),
+  parameter INTERFACE_WIDTH         = 4,
+  parameter BYTE_COUNT_WIDTH        = 32,
+  parameter FRAME_COUNT_WIDTH       = 32,
   parameter IF_COUNT                = 2,
   parameter PORTS_PER_IF            = 1,
   parameter FW_ID                   = 32'd0,
@@ -97,12 +100,27 @@ module pcie_config # (
   output wire                               reset_value,
   output wire                               reset_valid,
   input  wire                               reset_ready,
-
+  
+  // Scheduler setting
   output wire [CORE_COUNT-1:0]              income_cores, 
   output wire [CORE_COUNT-1:0]              cores_to_be_reset,
-  output wire [CORE_WIDTH-1:0]              core_for_slot_count,
+
+  // Stat read from cores
+  output wire [CORE_WIDTH-1:0]              stat_read_core,
   input  wire [CORE_SLOT_WIDTH-1:0]         slot_count,
+  input  wire [BYTE_COUNT_WIDTH-1:0]        core_in_byte_count,
+  input  wire [FRAME_COUNT_WIDTH-1:0]       core_in_frame_count,
+  input  wire [BYTE_COUNT_WIDTH-1:0]        core_out_byte_count,
+  input  wire [FRAME_COUNT_WIDTH-1:0]       core_out_frame_count,
   
+  // Stat read from interfaces
+  output wire [INTERFACE_WIDTH-1:0]         stat_read_interface,
+  input  wire [BYTE_COUNT_WIDTH-1:0]        interface_in_byte_count,
+  input  wire [FRAME_COUNT_WIDTH-1:0]       interface_in_frame_count,
+  input  wire [BYTE_COUNT_WIDTH-1:0]        interface_out_byte_count,
+  input  wire [FRAME_COUNT_WIDTH-1:0]       interface_out_frame_count,
+  
+  // PCIe DMA enable and interrupts
   output reg                                pcie_dma_enable,
   input  wire [31:0]                        if_msi_irq,
   output wire [31:0]                        msi_irq
@@ -119,8 +137,19 @@ wire                       pcie_core_reset_ready;
 reg  [CORE_COUNT-1:0]      income_cores_r;
 reg  [CORE_COUNT-1:0]      income_cores_rr;
 reg  [CORE_COUNT-1:0]      cores_to_be_reset_r;
-reg  [CORE_WIDTH-1:0]      core_for_slot_count_r;
+reg  [CORE_WIDTH-1:0]      stat_read_core_r;
+reg  [INTERFACE_WIDTH-1:0] stat_read_interface_r;
 wire [CORE_SLOT_WIDTH-1:0] slot_count_r;
+
+wire [BYTE_COUNT_WIDTH-1:0]  core_in_byte_count_r;
+wire [BYTE_COUNT_WIDTH-1:0]  core_out_byte_count_r;
+wire [BYTE_COUNT_WIDTH-1:0]  interface_in_byte_count_r;
+wire [BYTE_COUNT_WIDTH-1:0]  interface_out_byte_count_r;
+
+wire [FRAME_COUNT_WIDTH-1:0] core_in_frame_count_r;
+wire [FRAME_COUNT_WIDTH-1:0] core_out_frame_count_r;
+wire [FRAME_COUNT_WIDTH-1:0] interface_in_frame_count_r;
+wire [FRAME_COUNT_WIDTH-1:0] interface_out_frame_count_r;
 
 // State registers for readback
 reg [HOST_DMA_TAG_WIDTH-1:0]  host_dma_read_status_tags;
@@ -172,7 +201,8 @@ always @(posedge pcie_clk) begin
         pcie_dma_enable            <= 1'b1;
         income_cores_r             <= {CORE_COUNT{1'b1}};
         cores_to_be_reset_r        <= {CORE_COUNT{1'b0}};
-        core_for_slot_count_r      <= {CORE_WIDTH{1'b0}};
+        stat_read_core_r           <= {CORE_WIDTH{1'b0}};
+        stat_read_interface_r      <= {INTERFACE_WIDTH{1'b0}};
   
         sfp_i2c_scl_o_r            <= 1'b1;
         sfp_1_i2c_sda_o_r          <= 1'b1;
@@ -254,7 +284,8 @@ always @(posedge pcie_clk) begin
                 end
                 16'h0408: income_cores_r <= axil_ctrl_wdata[CORE_COUNT-1:0];
                 16'h040C: cores_to_be_reset_r <= axil_ctrl_wdata[CORE_COUNT-1:0];
-                16'h0410: core_for_slot_count_r <= axil_ctrl_wdata[CORE_WIDTH-1:0];
+                16'h0410: stat_read_core_r <= axil_ctrl_wdata[CORE_WIDTH-1:0];
+                16'h0414: stat_read_interface_r <= axil_ctrl_wdata[CORE_WIDTH-1:0];
 
                 // DMA request
                 16'h0440: host_dma_read_desc_pcie_addr[31:0] <= axil_ctrl_wdata;
@@ -334,6 +365,14 @@ always @(posedge pcie_clk) begin
                 // Cores control and DMA request response
                 16'h0400: axil_ctrl_rdata <= pcie_dma_enable;
                 16'h0410: axil_ctrl_rdata <= slot_count_r;
+                16'h0414: axil_ctrl_rdata <= core_in_byte_count_r;
+                16'h0418: axil_ctrl_rdata <= core_out_byte_count_r;
+                16'h041C: axil_ctrl_rdata <= core_in_frame_count_r;
+                16'h0420: axil_ctrl_rdata <= core_out_frame_count_r;
+                16'h0424: axil_ctrl_rdata <= interface_in_byte_count_r;
+                16'h0428: axil_ctrl_rdata <= interface_out_byte_count_r;
+                16'h042C: axil_ctrl_rdata <= interface_in_frame_count_r;
+                16'h0430: axil_ctrl_rdata <= interface_out_frame_count_r;
                 16'h0458: axil_ctrl_rdata <= host_dma_read_status_tags;
                 16'h0478: axil_ctrl_rdata <= host_dma_write_status_tags;
             endcase
@@ -435,22 +474,28 @@ simple_async_fifo # (
 
 simple_sync_sig # (
   .RST_VAL(1'b0),
-  .WIDTH(CORE_COUNT+CORE_COUNT+CORE_WIDTH)
+  .WIDTH(CORE_COUNT+CORE_COUNT+INTERFACE_WIDTH+CORE_WIDTH)
 ) scheduler_cmd_syncer (
   .dst_clk(sys_clk),
   .dst_rst(sys_rst),
-  .in({income_cores_rr,cores_to_be_reset_r,core_for_slot_count_r}),
-  .out({income_cores,cores_to_be_reset,core_for_slot_count})
+  .in({income_cores_rr, cores_to_be_reset_r, stat_read_interface_r, stat_read_core_r}),
+  .out({income_cores, cores_to_be_reset, stat_read_interface, stat_read_core})
 );
 
 simple_sync_sig # (
   .RST_VAL(1'b0),
-  .WIDTH(CORE_SLOT_WIDTH)
+  .WIDTH(CORE_SLOT_WIDTH+(4*BYTE_COUNT_WIDTH)+(4*FRAME_COUNT_WIDTH))
 ) slot_count_syncer (
   .dst_clk(pcie_clk),
   .dst_rst(pcie_rst),
-  .in(slot_count),
-  .out(slot_count_r)
+  .in({interface_in_byte_count, interface_in_frame_count, 
+       interface_out_byte_count, interface_out_frame_count, 
+       slot_count, core_in_byte_count, core_in_frame_count, 
+       core_out_byte_count, core_out_frame_count}),
+  .out({interface_in_byte_count_r, interface_in_frame_count_r, 
+        interface_out_byte_count_r, interface_out_frame_count_r, 
+        slot_count_r, core_in_byte_count_r, core_in_frame_count_r, 
+        core_out_byte_count_r, core_out_frame_count_r})
 );
 
 endmodule

@@ -58,6 +58,8 @@ srcs.append("../lib/smartFPGA/rtl/mem_sys.v")
 srcs.append("../lib/smartFPGA/rtl/simple_scheduler.v")
 srcs.append("../lib/smartFPGA/rtl/simple_sync_sig.v")
 srcs.append("../lib/smartFPGA/rtl/axis_switch.v")
+srcs.append("../lib/smartFPGA/rtl/axis_stat.v")
+srcs.append("../lib/smartFPGA/rtl/stat_reader.v")
 srcs.append("../lib/smartFPGA/rtl/axis_switch_2lvl.v")
 srcs.append("../lib/smartFPGA/rtl/loopback_msg_fifo.v")
 srcs.append("../lib/smartFPGA/rtl/header.v")
@@ -120,6 +122,9 @@ srcs.append("../lib/corundum/rtl/event_mux.v")
 src = ' '.join(srcs)
 
 build_cmd = "iverilog -o %s.vvp %s" % (testbench, src)
+
+def B_2_int(x):
+  return int.from_bytes(x, byteorder='little')
 
 def bench():
 
@@ -734,7 +739,7 @@ def bench():
 
         yield pcie_clk.posedge
 
-                # enable DMA
+        # enable DMA
         yield rc.mem_write(dev_pf0_bar0+0x000400, struct.pack('<L', 1))
         
         if (UPDATE_INS):
@@ -811,31 +816,6 @@ def bench():
           yield port1(),None
           yield port2(),None
 
-          # yield delay(10000)
-          # val = yield from rc.mem_read(dev_pf0_bar0+0x000410, 4)
-          # print ("Moein read core 0 slot count:",val)
-          # yield rc.mem_write(dev_pf0_bar0+0x00040C, struct.pack('<L', 1))
-          # 
-          # while (val[0]!=0x08):
-          #   yield delay(2000)
-          #   val = yield from rc.mem_read(dev_pf0_bar0+0x000410, 4)
-          #   print ("Moein read core 0 slot count:",val)
-          # 
-          # yield rc.mem_write(dev_pf0_bar0+0x00040C, struct.pack('<L', 0))
-          # 
-          # yield rc.mem_write(dev_pf0_bar0+0x000410, struct.pack('<L', 5))
-          # yield delay(200)
-          # val = yield from rc.mem_read(dev_pf0_bar0+0x000410, 4)
-          # print ("Moein read core 5 slot count:",val)
-          # yield rc.mem_write(dev_pf0_bar0+0x00040C, struct.pack('<L', 0x0020))
-          # 
-          # while (val[0]!=0x08):
-          #   yield delay(2000)
-          #   val = yield from rc.mem_read(dev_pf0_bar0+0x000410, 4)
-          #   print ("Moein read core 5 slot count:",val)
-          # 
-          # yield rc.mem_write(dev_pf0_bar0+0x00040C, struct.pack('<L', 0))
-
           lengths = []
           print ("send data from LAN")
           for j in range (0,SEND_COUNT_1):
@@ -879,7 +859,30 @@ def bench():
           # assert eth_frame.eth_src_mac == test_frame_1.eth_src_mac
           # assert eth_frame.eth_type == test_frame_1.eth_type
           # assert eth_frame.payload.data.index(test_frame_1.payload.data) == 0
+          
+          yield delay(10000)
+          
+          for k in range (0,16):
+            yield rc.mem_write(dev_pf0_bar0+0x000410, struct.pack('<L', k))
+            yield delay(100)
+            slots      = yield from rc.mem_read(dev_pf0_bar0+0x000410, 4)
+            bytes_in   = yield from rc.mem_read(dev_pf0_bar0+0x000414, 4)
+            bytes_out  = yield from rc.mem_read(dev_pf0_bar0+0x000418, 4)
+            frames_in  = yield from rc.mem_read(dev_pf0_bar0+0x00041c, 4)
+            frames_out = yield from rc.mem_read(dev_pf0_bar0+0x000420, 4)
+            print ("Core %d stat read, slots: , bytes_in, byte_out, frames_in, frames_out" % (k))
+            print (B_2_int(slots),B_2_int(bytes_in),B_2_int(bytes_out),B_2_int(frames_in),B_2_int(frames_out))
 
+          for k in range (0,4):
+            yield rc.mem_write(dev_pf0_bar0+0x000414, struct.pack('<L', k))
+            yield delay(100)
+            bytes_in   = yield from rc.mem_read(dev_pf0_bar0+0x000424, 4)
+            bytes_out  = yield from rc.mem_read(dev_pf0_bar0+0x000428, 4)
+            frames_in  = yield from rc.mem_read(dev_pf0_bar0+0x00042C, 4)
+            frames_out = yield from rc.mem_read(dev_pf0_bar0+0x000430, 4)
+            print ("Interface %d stat read, bytes_in, byte_out, frames_in, frames_out" % (k))
+            print (B_2_int(bytes_in),B_2_int(bytes_out),B_2_int(frames_in),B_2_int(frames_out))
+          
         raise StopSimulation
 
     return instances()

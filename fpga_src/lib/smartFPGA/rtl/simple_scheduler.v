@@ -73,7 +73,7 @@ module simple_scheduler # (
 
   input  wire [CORE_COUNT-1:0]               income_cores, 
   input  wire [CORE_COUNT-1:0]               cores_to_be_reset,
-  input  wire [CORE_ID_WIDTH-1:0]            core_for_slot_count,
+  input  wire [CORE_ID_WIDTH-1:0]            stat_read_core,
   output wire [SLOT_WIDTH-1:0]               slot_count,
 
   input  wire                                trig_in,
@@ -249,8 +249,8 @@ module simple_scheduler # (
   endgenerate
   
   reg [$clog2(INTERFACE_COUNT)-1:0] dropped_count [0:CORE_COUNT-1];
-  assign slot_count = rx_desc_count[core_for_slot_count * SLOT_WIDTH +: SLOT_WIDTH] + 
-                      dropped_count[core_for_slot_count];
+  assign slot_count = rx_desc_count[stat_read_core * SLOT_WIDTH +: SLOT_WIDTH] + 
+                      dropped_count[stat_read_core];
 
   // Assing looback port
   wire [CORE_ID_WIDTH-1:0] loopback_port;
