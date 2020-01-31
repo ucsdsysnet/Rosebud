@@ -990,7 +990,7 @@ simple_scheduler # (
 
   .income_cores       (income_cores),
   .cores_to_be_reset  (cores_to_be_reset),
-  .core_for_slot_count(core_for_slot_count),
+  .stat_read_core     (core_for_slot_count),
   .slot_count         (slot_count),
 
   .trig_in     (sched_trig_in),
@@ -1242,7 +1242,7 @@ axis_switch_2lvl # (
     .CLUSTER_COUNT   (CLUSTER_COUNT),
     .STAGE_FIFO_DEPTH(STG_F_DRAM_DEPTH),
     .FRAME_FIFO(0),
-    .SEPARATE_CLOCKS(1)
+    .SEPARATE_CLOCKS(SEPARATE_CLOCKS)
 ) dram_ctrl_in_sw
 (
     /*
@@ -1290,7 +1290,7 @@ axis_switch_2lvl # (
     .CLUSTER_COUNT   (CLUSTER_COUNT),
     .STAGE_FIFO_DEPTH(STG_F_CTRL_DEPTH),
     .FRAME_FIFO(0),
-    .SEPARATE_CLOCKS(1)
+    .SEPARATE_CLOCKS(SEPARATE_CLOCKS)
 ) dram_ctrl_out_sw
 (
     /*
