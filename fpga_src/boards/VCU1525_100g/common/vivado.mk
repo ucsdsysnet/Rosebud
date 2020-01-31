@@ -89,8 +89,8 @@ distclean: clean
 %.runs/synth_1/%.dcp: %.xpr $(SYN_FILES_REL) $(INC_FILES_REL) $(XDC_FILES_REL)
 	echo "open_project $*.xpr" > run_synth.tcl
 	echo "set_property PR_FLOW 1 [current_project]" >> run_synth.tcl
-	echo "create_partition_def -name pr_riscv -module riscv_block_PR" >> run_synth.tcl
-	echo "create_reconfig_module -name riscv_block_PR -partition_def [get_partition_defs pr_riscv ]  -define_from riscv_block_PR" >> run_synth.tcl
+	echo "if {[llength [get_partition_defs  "pr_riscv"]]==0} then {create_partition_def -name pr_riscv -module riscv_block_PR}" >> run_synth.tcl
+	echo "if {[llength [get_reconfig_modules "riscv_block_PR"]]==0} then {create_reconfig_module -name riscv_block_PR -partition_def [get_partition_defs pr_riscv ]  -define_from riscv_block_PR}" >> run_synth.tcl
 	echo "update_compile_order -fileset riscv_block_PR" >> run_synth.tcl
 	echo "update_compile_order -fileset sources_1" >> run_synth.tcl
 	echo "reset_run synth_1" >> run_synth.tcl
@@ -104,7 +104,7 @@ distclean: clean
 	echo "open_project $*.xpr" > run_impl.tcl
 	echo "set_property AUTO_INCREMENTAL_CHECKPOINT 1 [get_runs impl_1]" >> run_impl.tcl
 	echo "set_property PR_FLOW 1 [current_project]" >> run_impl.tcl
-	echo "create_pr_configuration -name config_1 -partitions [list core_inst/riscv_cores[0].pr_wrapper:riscv_block_PR core_inst/riscv_cores[1].pr_wrapper:riscv_block_PR core_inst/riscv_cores[2].pr_wrapper:riscv_block_PR core_inst/riscv_cores[3].pr_wrapper:riscv_block_PR core_inst/riscv_cores[4].pr_wrapper:riscv_block_PR core_inst/riscv_cores[5].pr_wrapper:riscv_block_PR core_inst/riscv_cores[6].pr_wrapper:riscv_block_PR core_inst/riscv_cores[7].pr_wrapper:riscv_block_PR core_inst/riscv_cores[8].pr_wrapper:riscv_block_PR core_inst/riscv_cores[9].pr_wrapper:riscv_block_PR core_inst/riscv_cores[10].pr_wrapper:riscv_block_PR core_inst/riscv_cores[11].pr_wrapper:riscv_block_PR core_inst/riscv_cores[12].pr_wrapper:riscv_block_PR core_inst/riscv_cores[13].pr_wrapper:riscv_block_PR core_inst/riscv_cores[14].pr_wrapper:riscv_block_PR core_inst/riscv_cores[15].pr_wrapper:riscv_block_PR ]" >> run_impl.tcl
+	echo "if {[llength [get_pr_configurations  "config_1"]]==0} then {create_pr_configuration -name config_1 -partitions [list core_inst/riscv_cores[0].pr_wrapper:riscv_block_PR core_inst/riscv_cores[1].pr_wrapper:riscv_block_PR core_inst/riscv_cores[2].pr_wrapper:riscv_block_PR core_inst/riscv_cores[3].pr_wrapper:riscv_block_PR core_inst/riscv_cores[4].pr_wrapper:riscv_block_PR core_inst/riscv_cores[5].pr_wrapper:riscv_block_PR core_inst/riscv_cores[6].pr_wrapper:riscv_block_PR core_inst/riscv_cores[7].pr_wrapper:riscv_block_PR core_inst/riscv_cores[8].pr_wrapper:riscv_block_PR core_inst/riscv_cores[9].pr_wrapper:riscv_block_PR core_inst/riscv_cores[10].pr_wrapper:riscv_block_PR core_inst/riscv_cores[11].pr_wrapper:riscv_block_PR core_inst/riscv_cores[12].pr_wrapper:riscv_block_PR core_inst/riscv_cores[13].pr_wrapper:riscv_block_PR core_inst/riscv_cores[14].pr_wrapper:riscv_block_PR core_inst/riscv_cores[15].pr_wrapper:riscv_block_PR ]}" >> run_impl.tcl
 	echo "set_property PR_CONFIGURATION config_1 [get_runs impl_1]" >> run_impl.tcl
 	echo "set_property strategy Performance_ExtraTimingOpt [get_runs impl_1]" >> run_impl.tcl
 	echo "reset_run impl_1" >> run_impl.tcl
@@ -115,8 +115,8 @@ distclean: clean
 
 %.runs/impl_2/%_routed.dcp: %.runs/synth_1/%.dcp
 	echo "open_project $*.xpr" > run_impl.tcl
-	echo "create_pr_configuration -name config_2 -partitions { }  -greyboxes [list core_inst/riscv_cores[0].pr_wrapper core_inst/riscv_cores[1].pr_wrapper core_inst/riscv_cores[2].pr_wrapper core_inst/riscv_cores[3].pr_wrapper core_inst/riscv_cores[4].pr_wrapper core_inst/riscv_cores[5].pr_wrapper core_inst/riscv_cores[6].pr_wrapper core_inst/riscv_cores[7].pr_wrapper core_inst/riscv_cores[8].pr_wrapper core_inst/riscv_cores[9].pr_wrapper core_inst/riscv_cores[10].pr_wrapper core_inst/riscv_cores[11].pr_wrapper core_inst/riscv_cores[12].pr_wrapper core_inst/riscv_cores[13].pr_wrapper core_inst/riscv_cores[14].pr_wrapper core_inst/riscv_cores[15].pr_wrapper ]" >> run_impl.tcl
-	echo "create_run impl_2 -parent_run impl_1 -flow {Vivado Implementation 2019} -pr_config config_2" >> run_impl.tcl
+	echo "if {[llength [get_pr_configurations  "config_2"]]==0} then {create_pr_configuration -name config_2 -partitions { }  -greyboxes [list core_inst/riscv_cores[0].pr_wrapper core_inst/riscv_cores[1].pr_wrapper core_inst/riscv_cores[2].pr_wrapper core_inst/riscv_cores[3].pr_wrapper core_inst/riscv_cores[4].pr_wrapper core_inst/riscv_cores[5].pr_wrapper core_inst/riscv_cores[6].pr_wrapper core_inst/riscv_cores[7].pr_wrapper core_inst/riscv_cores[8].pr_wrapper core_inst/riscv_cores[9].pr_wrapper core_inst/riscv_cores[10].pr_wrapper core_inst/riscv_cores[11].pr_wrapper core_inst/riscv_cores[12].pr_wrapper core_inst/riscv_cores[13].pr_wrapper core_inst/riscv_cores[14].pr_wrapper core_inst/riscv_cores[15].pr_wrapper ]}" >> run_impl.tcl
+	echo "if {[llength [get_runs  "impl_2"]]==0} then {create_run impl_2 -parent_run impl_1 -flow {Vivado Implementation 2019} -pr_config config_2}" >> run_impl.tcl
 	echo "set_property strategy Performance_ExtraTimingOpt [get_runs impl_2]" >> run_impl.tcl
 	echo "reset_run impl_2" >> run_impl.tcl
 	echo "launch_runs impl_2" >> run_impl.tcl
