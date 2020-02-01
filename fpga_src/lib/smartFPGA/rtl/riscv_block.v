@@ -154,6 +154,7 @@ riscvcore #(
 wire [DATA_WIDTH-1:0] io_rd_data;
 wire [DATA_WIDTH-1:0] io_wr_data;
 wire [DATA_WIDTH-1:0] mem_rd_data;
+wire mem_rd_valid;
 
 wire io_not_mem = core_dmem_addr[ADDR_WIDTH-1] && core_dmem_addr[ADDR_WIDTH-2];
 wire io_write   = io_not_mem && core_dmem_en &&  core_dmem_wen; 
@@ -168,6 +169,7 @@ always @ (posedge sys_clk)
     io_read_r <= io_read;
 
 assign core_dmem_rd_data = io_read_r ? io_rd_data : mem_rd_data;
+assign core_dmem_rd_valid = io_read_r ? 1'b1 : mem_rd_valid;
 assign io_wr_data        = core_dmem_wr_data;
 
 ///////////////////////////////////////////////////////////////////////////
@@ -226,7 +228,7 @@ mem_sys # (
   .core_dmem_addr(core_dmem_addr),
   .core_dmem_wr_data(core_dmem_wr_data),
   .core_dmem_rd_data(mem_rd_data),
-  .core_dmem_rd_valid(core_dmem_rd_valid),
+  .core_dmem_rd_valid(mem_rd_valid),
 
   .core_imem_ren(core_imem_ren),
   .core_imem_addr(core_imem_addr),
