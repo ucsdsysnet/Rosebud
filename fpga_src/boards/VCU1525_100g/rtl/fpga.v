@@ -140,23 +140,24 @@ wire pcie_user_reset;
 
 wire cfgmclk_int;
 
-wire clk_161mhz_ref_int;
+wire clk_156mhz_ref_int;
+wire clk_156mhz_2_ref_int;
 
 wire clk_125mhz_mmcm_out;
-wire clk_253mhz_mmcm_out;
-wire clk_253mhz_2_mmcm_out;
+wire clk_250mhz_mmcm_out;
+wire clk_250mhz_2_mmcm_out;
 
 // Internal 125 MHz clock
 wire clk_125mhz_int;
 wire rst_125mhz_int;
 
 // Internal 250 MHz clock
-wire clk_253mhz_int;
-wire rst_253mhz_int;
+wire clk_250mhz_int;
+wire rst_250mhz_int;
 
 // Second Internal 250 MHz clock
-wire clk_253mhz_2_int;
-wire rst_253mhz_2_int;
+wire clk_250mhz_2_int;
+wire rst_250mhz_2_int;
 
 // Internal 156.25 MHz clock
 wire clk_156mhz_int;
@@ -165,22 +166,25 @@ wire rst_156mhz_int;
 wire mmcm_rst;
 wire mmcm_locked;
 wire mmcm_clkfb;
+wire mmcm_locked_2;
+wire mmcm_clkfb_2;
 
 // MMCM instance
-// 161.13 MHz in, 125 MHz out
+// 156.25 MHz in, 125 and 250 MHz out 
 // PFD range: 10 MHz to 500 MHz
 // VCO range: 800 MHz to 1600 MHz
-// M = 64, D = 11 sets Fvco = 937.5 MHz (in range)
-// Divide by 7.5 to get output frequency of 125 MHz
+// M = 64, D = 10 sets Fvco = 1000.0 MHz (in range)
+// Divide by 8 to get output frequency of 125 MHz
+// Divide by 4 to get output frequency of 250 MHz
 MMCME4_BASE #(
     .BANDWIDTH("OPTIMIZED"),
-    .CLKOUT0_DIVIDE_F(7.5),
+    .CLKOUT0_DIVIDE_F(8),
     .CLKOUT0_DUTY_CYCLE(0.5),
     .CLKOUT0_PHASE(0),
-    .CLKOUT1_DIVIDE(3.7),
+    .CLKOUT1_DIVIDE(4),
     .CLKOUT1_DUTY_CYCLE(0.5),
     .CLKOUT1_PHASE(0),
-    .CLKOUT2_DIVIDE(3.7),
+    .CLKOUT2_DIVIDE(1),
     .CLKOUT2_DUTY_CYCLE(0.5),
     .CLKOUT2_PHASE(0),
     .CLKOUT3_DIVIDE(1),
@@ -197,22 +201,22 @@ MMCME4_BASE #(
     .CLKOUT6_PHASE(0),
     .CLKFBOUT_MULT_F(64),
     .CLKFBOUT_PHASE(0),
-    .DIVCLK_DIVIDE(11),
+    .DIVCLK_DIVIDE(10),
     .REF_JITTER1(0.010),
-    .CLKIN1_PERIOD(6.206),
+    .CLKIN1_PERIOD(6.4),
     .STARTUP_WAIT("FALSE"),
     .CLKOUT4_CASCADE("FALSE")
 )
 clk_mmcm_inst (
-    .CLKIN1(clk_161mhz_ref_int),
+    .CLKIN1(clk_156mhz_ref_int),
     .CLKFBIN(mmcm_clkfb),
     .RST(mmcm_rst),
     .PWRDWN(1'b0),
     .CLKOUT0(clk_125mhz_mmcm_out),
     .CLKOUT0B(),
-    .CLKOUT1(clk_253mhz_mmcm_out),
+    .CLKOUT1(clk_250mhz_mmcm_out),
     .CLKOUT1B(),
-    .CLKOUT2(clk_253mhz_2_mmcm_out),
+    .CLKOUT2(),
     .CLKOUT2B(),
     .CLKOUT3(),
     .CLKOUT3B(),
@@ -222,6 +226,64 @@ clk_mmcm_inst (
     .CLKFBOUT(mmcm_clkfb),
     .CLKFBOUTB(),
     .LOCKED(mmcm_locked)
+);
+
+// MMCM instance
+// 156.25 MHz in, 250 MHz out 
+// PFD range: 10 MHz to 500 MHz
+// VCO range: 800 MHz to 1600 MHz
+// M = 64, D = 10 sets Fvco = 1000.0 MHz (in range)
+// Divide by 4 to get output frequency of 250 MHz
+MMCME4_BASE #(
+    .BANDWIDTH("OPTIMIZED"),
+    .CLKOUT0_DIVIDE_F(4),
+    .CLKOUT0_DUTY_CYCLE(0.5),
+    .CLKOUT0_PHASE(0),
+    .CLKOUT1_DIVIDE(1),
+    .CLKOUT1_DUTY_CYCLE(0.5),
+    .CLKOUT1_PHASE(0),
+    .CLKOUT2_DIVIDE(1),
+    .CLKOUT2_DUTY_CYCLE(0.5),
+    .CLKOUT2_PHASE(0),
+    .CLKOUT3_DIVIDE(1),
+    .CLKOUT3_DUTY_CYCLE(0.5),
+    .CLKOUT3_PHASE(0),
+    .CLKOUT4_DIVIDE(1),
+    .CLKOUT4_DUTY_CYCLE(0.5),
+    .CLKOUT4_PHASE(0),
+    .CLKOUT5_DIVIDE(1),
+    .CLKOUT5_DUTY_CYCLE(0.5),
+    .CLKOUT5_PHASE(0),
+    .CLKOUT6_DIVIDE(1),
+    .CLKOUT6_DUTY_CYCLE(0.5),
+    .CLKOUT6_PHASE(0),
+    .CLKFBOUT_MULT_F(64),
+    .CLKFBOUT_PHASE(0),
+    .DIVCLK_DIVIDE(10),
+    .REF_JITTER1(0.010),
+    .CLKIN1_PERIOD(6.4),
+    .STARTUP_WAIT("FALSE"),
+    .CLKOUT4_CASCADE("FALSE")
+)
+clk_mmcm_inst_2 (
+    .CLKIN1(clk_156mhz_2_ref_int),
+    .CLKFBIN(mmcm_clkfb_2),
+    .RST(mmcm_rst),
+    .PWRDWN(1'b0),
+    .CLKOUT0(clk_250mhz_2_mmcm_out),
+    .CLKOUT0B(),
+    .CLKOUT1(),
+    .CLKOUT1B(),
+    .CLKOUT2(),
+    .CLKOUT2B(),
+    .CLKOUT3(),
+    .CLKOUT3B(),
+    .CLKOUT4(),
+    .CLKOUT5(),
+    .CLKOUT6(),
+    .CLKFBOUT(mmcm_clkfb_2),
+    .CLKFBOUTB(),
+    .LOCKED(mmcm_locked_2)
 );
 
 BUFG
@@ -240,33 +302,33 @@ sync_reset_125mhz_inst (
 );
 
 BUFG
-clk_253mhz_bufg_inst (
-    .I(clk_253mhz_mmcm_out),
-    .O(clk_253mhz_int)
+clk_250mhz_bufg_inst (
+    .I(clk_250mhz_mmcm_out),
+    .O(clk_250mhz_int)
 );
 
 sync_reset #(
     .N(4)
 )
-sync_reset_253mhz_inst (
-    .clk(clk_253mhz_int),
+sync_reset_250mhz_inst (
+    .clk(clk_250mhz_int),
     .rst(~mmcm_locked),
-    .sync_reset_out(rst_253mhz_int)
+    .sync_reset_out(rst_250mhz_int)
 );
 
 BUFG
-clk_253mhz_2_bufg_inst (
-    .I(clk_253mhz_2_mmcm_out),
-    .O(clk_253mhz_2_int)
+clk_250mhz_2_bufg_inst (
+    .I(clk_250mhz_2_mmcm_out),
+    .O(clk_250mhz_2_int)
 );
 
 sync_reset #(
     .N(4)
 )
-sync_reset_253mhz_2_inst (
-    .clk(clk_253mhz_2_int),
-    .rst(~mmcm_locked),
-    .sync_reset_out(rst_253mhz_2_int)
+sync_reset_250mhz_2_inst (
+    .clk(clk_250mhz_2_int),
+    .rst(~mmcm_locked_2),
+    .sync_reset_out(rst_250mhz_2_int)
 );
 
 // GPIO
@@ -633,6 +695,23 @@ pcie4_uscale_plus_inst (
     .phy_rdy_out()
 );
 
+// Register seq num to improve timing
+(* KEEP = "TRUE" *) reg [RQ_SEQ_NUM_WIDTH-1:0] pcie_rq_seq_num0_r;
+(* KEEP = "TRUE" *) reg                        pcie_rq_seq_num_vld0_r;
+(* KEEP = "TRUE" *) reg [RQ_SEQ_NUM_WIDTH-1:0] pcie_rq_seq_num1_r;
+(* KEEP = "TRUE" *) reg                        pcie_rq_seq_num_vld1_r;
+
+always @ (posedge pcie_user_clk) begin
+    pcie_rq_seq_num0_r     <= pcie_rq_seq_num0;
+    pcie_rq_seq_num_vld0_r <= pcie_rq_seq_num_vld0;
+    pcie_rq_seq_num1_r     <= pcie_rq_seq_num1;
+    pcie_rq_seq_num_vld1_r <= pcie_rq_seq_num_vld1;
+    if (pcie_user_reset) begin
+        pcie_rq_seq_num_vld0_r <= 1'b0; 
+        pcie_rq_seq_num_vld1_r <= 1'b0; 
+    end
+end
+
 wire [31:0] msi_irq;
 wire ext_tag_enable;
 
@@ -701,6 +780,9 @@ wire [7:0]  pcie_tx_fc_ph_av  = cfg_fc_ph;
 wire [11:0] pcie_tx_fc_pd_av  = cfg_fc_pd;
 
 // CMAC
+assign qsfp0_refclk_reset = qsfp_refclk_reset_reg;
+assign qsfp0_fs = 2'b01;
+
 wire                           qsfp0_tx_clk_int;
 wire                           qsfp0_tx_rst_int;
 
@@ -726,6 +808,9 @@ wire [AXIS_ETH_KEEP_WIDTH-1:0] qsfp0_rx_axis_tkeep_int;
 wire                           qsfp0_rx_axis_tvalid_int;
 wire                           qsfp0_rx_axis_tlast_int;
 wire                           qsfp0_rx_axis_tuser_int;
+
+assign qsfp1_refclk_reset = qsfp_refclk_reset_reg;
+assign qsfp1_fs = 2'b01;
 
 wire                           qsfp1_tx_clk_int;
 wire                           qsfp1_tx_rst_int;
@@ -809,7 +894,7 @@ qsfp0_cmac_inst (
     .gt_loopback_in(12'd0), // input [11:0]
     .gt_rxrecclkout(), // output [3:0]
     .gt_powergoodout(), // output [3:0]
-    .gt_ref_clk_out(clk_161mhz_ref_int), // output
+    .gt_ref_clk_out(clk_156mhz_ref_int), // output
     .gtwiz_reset_tx_datapath(1'b0), // input
     .gtwiz_reset_rx_datapath(1'b0), // input
     .sys_reset(rst_125mhz_int), // input
@@ -1105,7 +1190,7 @@ qsfp1_cmac_inst (
     .gt_loopback_in(12'd0), // input [11:0]
     .gt_rxrecclkout(), // output [3:0]
     .gt_powergoodout(), // output [3:0]
-    .gt_ref_clk_out(), // output
+    .gt_ref_clk_out(clk_156mhz_2_ref_int), // output
     .gtwiz_reset_tx_datapath(1'b0), // input
     .gtwiz_reset_rx_datapath(1'b0), // input
     .sys_reset(rst_125mhz_int), // input
@@ -1369,15 +1454,14 @@ fpga_core #(
     .SEPARATE_CLOCKS(1)
 ) core_inst (
     /*
-     * Clock: 250 MHz
-     * Synchronous reset
+     * Clocks and Synchronous Resets
      */
     .pcie_clk(pcie_user_clk),
     .pcie_rst(pcie_user_reset),
-    .sys_clk(clk_253mhz_int),
-    .sys_rst(rst_253mhz_int),
-    .core_clk(clk_253mhz_2_int),
-    .core_rst(rst_253mhz_2_int),
+    .sys_clk(clk_250mhz_int),
+    .sys_rst(rst_250mhz_int),
+    .core_clk(clk_250mhz_2_int),
+    .core_rst(rst_250mhz_2_int),
 
     /*
      * GPIO
@@ -1426,10 +1510,10 @@ fpga_core #(
     .m_axis_cc_tuser(axis_cc_tuser),
     .m_axis_cc_tvalid(axis_cc_tvalid),
 
-    .s_axis_rq_seq_num_0(pcie_rq_seq_num0),
-    .s_axis_rq_seq_num_valid_0(pcie_rq_seq_num_vld0),
-    .s_axis_rq_seq_num_1(pcie_rq_seq_num1),
-    .s_axis_rq_seq_num_valid_1(pcie_rq_seq_num_vld1),
+    .s_axis_rq_seq_num_0(pcie_rq_seq_num0_r),
+    .s_axis_rq_seq_num_valid_0(pcie_rq_seq_num_vld0_r),
+    .s_axis_rq_seq_num_1(pcie_rq_seq_num1_r),
+    .s_axis_rq_seq_num_valid_1(pcie_rq_seq_num_vld1_r),
 
     .pcie_tx_fc_nph_av(pcie_tx_fc_nph_av),
     .pcie_tx_fc_ph_av(pcie_tx_fc_ph_av),

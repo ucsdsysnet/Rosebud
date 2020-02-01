@@ -1327,6 +1327,52 @@ wire [CORE_COUNT*CORE_MSG_WIDTH-1:0] core_msg_out_data;
 wire [CORE_COUNT-1:0]                core_msg_out_valid;
 wire [CORE_COUNT-1:0]                core_msg_out_ready;
 
+// Register core message outputs
+wire [CORE_COUNT*CORE_MSG_WIDTH-1:0] core_msg_out_data_r;
+wire [CORE_COUNT*CORE_WIDTH-1:0]     core_msg_out_user_r;
+wire [CORE_COUNT-1:0]                core_msg_out_valid_r;
+wire [CORE_COUNT-1:0]                core_msg_out_ready_r;
+
+genvar n;
+generate
+  for (n=0; n<CORE_COUNT; n=n+1) begin: bc_msg_out_regs
+    axis_pipeline_register # (
+      .DATA_WIDTH(CORE_MSG_WIDTH),
+      .KEEP_ENABLE(0),
+      .KEEP_WIDTH(1),
+      .LAST_ENABLE(0),
+      .DEST_ENABLE(0),
+      .USER_ENABLE(1),
+      .USER_WIDTH(CORE_WIDTH),
+      .ID_ENABLE(0),
+      .REG_TYPE(2),
+      .LENGTH(1)
+    ) bc_msg_out_register (
+      .clk(core_clk),
+      .rst(core_rst_r),
+    
+      .s_axis_tdata(core_msg_out_data[n*CORE_MSG_WIDTH +: CORE_MSG_WIDTH]),
+      .s_axis_tkeep(1'b0), 
+      .s_axis_tvalid(core_msg_out_valid[n]),
+      .s_axis_tready(core_msg_out_ready[n]),
+      .s_axis_tlast(1'b0),
+      .s_axis_tid(8'd0), 
+      .s_axis_tdest(8'd0),
+      .s_axis_tuser(ctrl_m_axis_tuser[n*CORE_WIDTH +: CORE_WIDTH]),
+    
+      .m_axis_tdata(core_msg_out_data_r[n*CORE_MSG_WIDTH +: CORE_MSG_WIDTH]),
+      .m_axis_tkeep(),
+      .m_axis_tvalid(core_msg_out_valid_r[n]),
+      .m_axis_tready(core_msg_out_ready_r[n]),
+      .m_axis_tlast(),
+      .m_axis_tid(),
+      .m_axis_tdest(),
+      .m_axis_tuser(core_msg_out_user_r[n*CORE_WIDTH +: CORE_WIDTH])
+    );
+  end
+endgenerate
+
+// Merge the boradcast messages
 wire [CORE_MSG_WIDTH-1:0]            core_msg_merged_data;
 wire [CORE_WIDTH-1:0]                core_msg_merged_user;
 wire                                 core_msg_merged_valid;
@@ -1355,14 +1401,14 @@ axis_switch_2lvl # (
      */
     .s_clk(core_clk),
     .s_rst(core_rst_r),
-    .s_axis_tdata(core_msg_out_data),
+    .s_axis_tdata(core_msg_out_data_r),
     .s_axis_tkeep({CORE_COUNT{1'b0}}),
-    .s_axis_tvalid(core_msg_out_valid),
-    .s_axis_tready(core_msg_out_ready),
+    .s_axis_tvalid(core_msg_out_valid_r),
+    .s_axis_tready(core_msg_out_ready_r),
     .s_axis_tlast({CORE_COUNT{1'b1}}),
     .s_axis_tid({CORE_COUNT{1'b0}}),
     .s_axis_tdest({CORE_COUNT{1'b0}}),
-    .s_axis_tuser(ctrl_m_axis_tuser),
+    .s_axis_tuser(core_msg_out_user_r),
 
     /*
      * AXI Stream output
@@ -1379,9 +1425,9 @@ axis_switch_2lvl # (
     .m_axis_tuser(core_msg_merged_user)
 );
 
-reg [BC_MSG_CLUSTERS*CORE_MSG_WIDTH-1:0] core_msg_merged_data_r;
-reg [BC_MSG_CLUSTERS*CORE_WIDTH-1:0]     core_msg_merged_user_r;
-reg [BC_MSG_CLUSTERS-1:0]                core_msg_merged_valid_r;
+(* KEEP = "TRUE" *) reg [BC_MSG_CLUSTERS*CORE_MSG_WIDTH-1:0] core_msg_merged_data_r;
+(* KEEP = "TRUE" *) reg [BC_MSG_CLUSTERS*CORE_WIDTH-1:0]     core_msg_merged_user_r;
+(* KEEP = "TRUE" *) reg [BC_MSG_CLUSTERS-1:0]                core_msg_merged_valid_r;
 
 always @ (posedge core_clk) begin
     core_msg_merged_data_r  <= {BC_MSG_CLUSTERS{core_msg_merged_data}};
@@ -1394,9 +1440,9 @@ end
 assign core_msg_merged_ready = 1'b1;
 
 // Broadcast the arbitted core messages.
-reg [CORE_COUNT*CORE_MSG_WIDTH-1:0] core_msg_in_data;
-reg [CORE_COUNT*CORE_WIDTH-1:0]     core_msg_in_user;
-reg [CORE_COUNT-1:0]                core_msg_in_valid;
+(* KEEP = "TRUE" *) reg [CORE_COUNT*CORE_MSG_WIDTH-1:0] core_msg_in_data;
+(* KEEP = "TRUE" *) reg [CORE_COUNT*CORE_WIDTH-1:0]     core_msg_in_user;
+(* KEEP = "TRUE" *) reg [CORE_COUNT-1:0]                core_msg_in_valid;
 
 localparam CORES_PER_CLUSTER = CORE_COUNT / BC_MSG_CLUSTERS;
 
@@ -1409,9 +1455,9 @@ always @ (posedge core_clk) begin
 end
 
 // Additional register level. 
-reg [CORE_COUNT*CORE_MSG_WIDTH-1:0] core_msg_in_data_r;
-reg [CORE_COUNT*CORE_WIDTH-1:0]     core_msg_in_user_r;
-reg [CORE_COUNT-1:0]                core_msg_in_valid_r;
+(* KEEP = "TRUE" *) reg [CORE_COUNT*CORE_MSG_WIDTH-1:0] core_msg_in_data_r;
+(* KEEP = "TRUE" *) reg [CORE_COUNT*CORE_WIDTH-1:0]     core_msg_in_user_r;
+(* KEEP = "TRUE" *) reg [CORE_COUNT-1:0]                core_msg_in_valid_r;
 
 always @ (posedge core_clk) begin
     core_msg_in_data_r  <= core_msg_in_data;
