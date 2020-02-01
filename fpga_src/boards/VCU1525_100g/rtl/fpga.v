@@ -141,7 +141,6 @@ wire pcie_user_reset;
 wire cfgmclk_int;
 
 wire clk_156mhz_ref_int;
-wire clk_156mhz_2_ref_int;
 
 wire clk_125mhz_mmcm_out;
 wire clk_250mhz_mmcm_out;
@@ -166,8 +165,6 @@ wire rst_156mhz_int;
 wire mmcm_rst;
 wire mmcm_locked;
 wire mmcm_clkfb;
-wire mmcm_locked_2;
-wire mmcm_clkfb_2;
 
 // MMCM instance
 // 156.25 MHz in, 125 and 250 MHz out 
@@ -178,13 +175,13 @@ wire mmcm_clkfb_2;
 // Divide by 4 to get output frequency of 250 MHz
 MMCME4_BASE #(
     .BANDWIDTH("OPTIMIZED"),
-    .CLKOUT0_DIVIDE_F(8),
+    .CLKOUT0_DIVIDE_F(8.0),
     .CLKOUT0_DUTY_CYCLE(0.5),
     .CLKOUT0_PHASE(0),
-    .CLKOUT1_DIVIDE(4),
+    .CLKOUT1_DIVIDE(4.0),
     .CLKOUT1_DUTY_CYCLE(0.5),
     .CLKOUT1_PHASE(0),
-    .CLKOUT2_DIVIDE(1),
+    .CLKOUT2_DIVIDE(4.0),
     .CLKOUT2_DUTY_CYCLE(0.5),
     .CLKOUT2_PHASE(0),
     .CLKOUT3_DIVIDE(1),
@@ -216,7 +213,7 @@ clk_mmcm_inst (
     .CLKOUT0B(),
     .CLKOUT1(clk_250mhz_mmcm_out),
     .CLKOUT1B(),
-    .CLKOUT2(),
+    .CLKOUT2(clk_250mhz_2_mmcm_out),
     .CLKOUT2B(),
     .CLKOUT3(),
     .CLKOUT3B(),
@@ -226,64 +223,6 @@ clk_mmcm_inst (
     .CLKFBOUT(mmcm_clkfb),
     .CLKFBOUTB(),
     .LOCKED(mmcm_locked)
-);
-
-// MMCM instance
-// 156.25 MHz in, 250 MHz out 
-// PFD range: 10 MHz to 500 MHz
-// VCO range: 800 MHz to 1600 MHz
-// M = 64, D = 10 sets Fvco = 1000.0 MHz (in range)
-// Divide by 4 to get output frequency of 250 MHz
-MMCME4_BASE #(
-    .BANDWIDTH("OPTIMIZED"),
-    .CLKOUT0_DIVIDE_F(4),
-    .CLKOUT0_DUTY_CYCLE(0.5),
-    .CLKOUT0_PHASE(0),
-    .CLKOUT1_DIVIDE(1),
-    .CLKOUT1_DUTY_CYCLE(0.5),
-    .CLKOUT1_PHASE(0),
-    .CLKOUT2_DIVIDE(1),
-    .CLKOUT2_DUTY_CYCLE(0.5),
-    .CLKOUT2_PHASE(0),
-    .CLKOUT3_DIVIDE(1),
-    .CLKOUT3_DUTY_CYCLE(0.5),
-    .CLKOUT3_PHASE(0),
-    .CLKOUT4_DIVIDE(1),
-    .CLKOUT4_DUTY_CYCLE(0.5),
-    .CLKOUT4_PHASE(0),
-    .CLKOUT5_DIVIDE(1),
-    .CLKOUT5_DUTY_CYCLE(0.5),
-    .CLKOUT5_PHASE(0),
-    .CLKOUT6_DIVIDE(1),
-    .CLKOUT6_DUTY_CYCLE(0.5),
-    .CLKOUT6_PHASE(0),
-    .CLKFBOUT_MULT_F(64),
-    .CLKFBOUT_PHASE(0),
-    .DIVCLK_DIVIDE(10),
-    .REF_JITTER1(0.010),
-    .CLKIN1_PERIOD(6.4),
-    .STARTUP_WAIT("FALSE"),
-    .CLKOUT4_CASCADE("FALSE")
-)
-clk_mmcm_inst_2 (
-    .CLKIN1(clk_156mhz_2_ref_int),
-    .CLKFBIN(mmcm_clkfb_2),
-    .RST(mmcm_rst),
-    .PWRDWN(1'b0),
-    .CLKOUT0(clk_250mhz_2_mmcm_out),
-    .CLKOUT0B(),
-    .CLKOUT1(),
-    .CLKOUT1B(),
-    .CLKOUT2(),
-    .CLKOUT2B(),
-    .CLKOUT3(),
-    .CLKOUT3B(),
-    .CLKOUT4(),
-    .CLKOUT5(),
-    .CLKOUT6(),
-    .CLKFBOUT(mmcm_clkfb_2),
-    .CLKFBOUTB(),
-    .LOCKED(mmcm_locked_2)
 );
 
 BUFG
@@ -327,7 +266,7 @@ sync_reset #(
 )
 sync_reset_250mhz_2_inst (
     .clk(clk_250mhz_2_int),
-    .rst(~mmcm_locked_2),
+    .rst(~mmcm_locked),
     .sync_reset_out(rst_250mhz_2_int)
 );
 
@@ -1190,7 +1129,7 @@ qsfp1_cmac_inst (
     .gt_loopback_in(12'd0), // input [11:0]
     .gt_rxrecclkout(), // output [3:0]
     .gt_powergoodout(), // output [3:0]
-    .gt_ref_clk_out(clk_156mhz_2_ref_int), // output
+    .gt_ref_clk_out(), // output
     .gtwiz_reset_tx_datapath(1'b0), // input
     .gtwiz_reset_rx_datapath(1'b0), // input
     .sys_reset(rst_125mhz_int), // input

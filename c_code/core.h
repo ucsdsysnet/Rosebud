@@ -69,8 +69,8 @@ inline void read_in_pkt (struct Desc* input_desc){
 // Writes
 
 inline void init_slots (const unsigned int slot_count, 
-											  const unsigned int start_addr, 
-												const unsigned int addr_step) {
+                        const unsigned int start_addr, 
+								        const unsigned int addr_step) {
 
 	for (int i=1; i<=slot_count; i++){
 		SLOT_ADDR = (i<<24) + start_addr + ((i-1)*addr_step);
@@ -83,6 +83,21 @@ inline void init_slots (const unsigned int slot_count,
 	SEND_DESC_TYPE = (3<<4);
 	asm volatile("" ::: "memory");
 	DATA_DESC_SEND = 1;
+	return;
+}
+
+inline void init_hdr_slots (const unsigned int slot_count, 
+								            const unsigned int start_hdr_addr, 
+								            const unsigned int hdr_addr_step) {
+
+	// TODO: Add checks for range and hdr_addr_step
+
+	for (int i=1; i<=slot_count; i++){
+		SLOT_ADDR = (1<<31) + (i<<24) + start_hdr_addr + ((i-1)*hdr_addr_step);
+		asm volatile("" ::: "memory");
+		UPDATE_SLOT = 1;
+	}
+
 	return;
 }
 
