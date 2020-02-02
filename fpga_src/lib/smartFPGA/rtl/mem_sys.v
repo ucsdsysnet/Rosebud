@@ -24,6 +24,8 @@ module mem_sys # (
   
   input  wire                                     dma_cmd_wr_en,
   input  wire [ADDR_WIDTH-1:0]                    dma_cmd_wr_addr,
+  input  wire                                     dma_cmd_hdr_wr_en,
+  input  wire [ADDR_WIDTH-1:0]                    dma_cmd_hdr_wr_addr,
   input  wire [DATA_WIDTH-1:0]                    dma_cmd_wr_data,
   input  wire [STRB_WIDTH-1:0]                    dma_cmd_wr_strb,
   input  wire                                     dma_cmd_wr_last,
@@ -114,11 +116,15 @@ module mem_sys # (
   /////////////// read/write and speed of memory to be accesssed ////////////
   ///////////////////////////////////////////////////////////////////////////
   
-  wire dma_imem_wr_en      =   dma_cmd_wr_addr[ADDR_WIDTH-1]  && dma_cmd_wr_en;
-  wire dma_fast_dmem_wr_en = (~dma_cmd_wr_addr[ADDR_WIDTH-1]) && ( dma_cmd_wr_addr[ADDR_WIDTH-2]) && dma_cmd_wr_en;
-  wire dma_fast_dmem_rd_en = (~dma_cmd_rd_addr[ADDR_WIDTH-1]) && ( dma_cmd_rd_addr[ADDR_WIDTH-2]) && dma_cmd_rd_en;
-  wire dma_slow_dmem_wr_en = (~dma_cmd_wr_addr[ADDR_WIDTH-1]) && (~dma_cmd_wr_addr[ADDR_WIDTH-2]) && dma_cmd_wr_en;
-  wire dma_slow_dmem_rd_en = (~dma_cmd_rd_addr[ADDR_WIDTH-1]) && (~dma_cmd_rd_addr[ADDR_WIDTH-2]) && dma_cmd_rd_en;
+  wire dma_imem_wr_en      =    dma_cmd_wr_addr[ADDR_WIDTH-1]  && dma_cmd_wr_en;
+  wire dma_fast_dmem_wr_en = ((~dma_cmd_wr_addr[ADDR_WIDTH-1]) && ( dma_cmd_wr_addr[ADDR_WIDTH-2]) 
+                              && dma_cmd_wr_en) || dma_cmd_hdr_wr_en;
+  wire dma_fast_dmem_rd_en =  (~dma_cmd_rd_addr[ADDR_WIDTH-1]) && ( dma_cmd_rd_addr[ADDR_WIDTH-2]) 
+                              && dma_cmd_rd_en;
+  wire dma_slow_dmem_wr_en =  (~dma_cmd_wr_addr[ADDR_WIDTH-1]) && (~dma_cmd_wr_addr[ADDR_WIDTH-2]) 
+                              && dma_cmd_wr_en;
+  wire dma_slow_dmem_rd_en =  (~dma_cmd_rd_addr[ADDR_WIDTH-1]) && (~dma_cmd_rd_addr[ADDR_WIDTH-2]) 
+                              && dma_cmd_rd_en;
   
   wire core_fast_dmem_en = core_dmem_en &&  core_dmem_addr[ADDR_WIDTH-2];
   wire core_slow_dmem_en = core_dmem_en && ~core_dmem_addr[ADDR_WIDTH-2];
@@ -153,7 +159,10 @@ module mem_sys # (
   reg                             dma_fast_wr_b1_gnt;
   reg                             dma_fast_wr_b2_gnt;
   wire                            dma_fast_dmem_wr_en_r;
+  wire                            slow_dma_cmd_wr_ready;
   
+  wire [ADDR_WIDTH-1:0] fast_dmem_dma_wr_addr = dma_cmd_hdr_wr_en ? dma_cmd_hdr_wr_addr : dma_cmd_wr_addr;
+
   simple_fifo # (
     .ADDR_WIDTH(2),
     .DATA_WIDTH(DATA_WIDTH+FAST_DMEM_ADDR_WIDTH+STRB_WIDTH)
@@ -162,8 +171,12 @@ module mem_sys # (
     .rst(rst),
     .clear(1'b0),
   
-    .din_valid(dma_fast_dmem_wr_en), 
-    .din({dma_cmd_wr_addr[FAST_DMEM_ADDR_WIDTH-1:0], dma_cmd_wr_strb, dma_cmd_wr_data}),
+    // Normally DMA writes to one of the FIFOes and ready check
+    // becomes redundant, but if packet header is written to both 
+    // slow and fast dmems, this would prevent from redundant 
+    // Entries if one of them is not ready.
+    .din_valid(dma_fast_dmem_wr_en && slow_dma_cmd_wr_ready), 
+    .din({fast_dmem_dma_wr_addr[FAST_DMEM_ADDR_WIDTH-1:0], dma_cmd_wr_strb, dma_cmd_wr_data}),
     .din_ready(fast_dma_cmd_wr_ready),
    
     .dout_valid(dma_fast_dmem_wr_en_r),
@@ -174,7 +187,6 @@ module mem_sys # (
   wire [SLOW_DMEM_ADDR_WIDTH-1:0] slow_dma_cmd_wr_addr;
   wire [DATA_WIDTH-1:0]           slow_dma_cmd_wr_data;
   wire [STRB_WIDTH-1:0]           slow_dma_cmd_wr_strb;
-  wire                            slow_dma_cmd_wr_ready;
   reg                             dma_slow_wr_b1_gnt;
   reg                             dma_slow_wr_b2_gnt;
   wire                            dma_slow_dmem_wr_en_r;
@@ -187,7 +199,11 @@ module mem_sys # (
     .rst(rst),
     .clear(1'b0),
   
-    .din_valid(dma_slow_dmem_wr_en), 
+    // Normally DMA writes to one of the FIFOes and ready check
+    // becomes redundant, but if packet header is written to both 
+    // slow and fast dmems, this would prevent from redundant 
+    // Entries if one of them is not ready.
+    .din_valid(dma_slow_dmem_wr_en && fast_dma_cmd_wr_ready), 
     .din({dma_cmd_wr_addr[SLOW_DMEM_ADDR_WIDTH-1:0], dma_cmd_wr_strb, dma_cmd_wr_data}),
     .din_ready(slow_dma_cmd_wr_ready),
    

@@ -100,7 +100,7 @@ module pcie_config # (
   output wire                               reset_value,
   output wire                               reset_valid,
   input  wire                               reset_ready,
-  
+
   // Scheduler setting
   output wire [CORE_COUNT-1:0]              income_cores, 
   output wire [CORE_COUNT-1:0]              cores_to_be_reset,

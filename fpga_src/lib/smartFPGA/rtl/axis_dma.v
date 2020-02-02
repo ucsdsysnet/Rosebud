@@ -6,6 +6,9 @@ module axis_dma # (
   parameter USER_WIDTH_OUT   = 8,
   parameter DEST_WIDTH_OUT   = 2, 
   parameter USER_WIDTH_IN    = 2, 
+  parameter MAX_PKT_HDR_SIZE = 128,
+  parameter HDR_ADDR_BITS    = $clog2(MAX_PKT_HDR_SIZE), 
+  parameter HDR_ADDR_WIDTH   = ADDR_WIDTH-HDR_ADDR_BITS,
   parameter STRB_WIDTH       = (DATA_WIDTH/8),
   parameter MASK_BITS        = $clog2(STRB_WIDTH)
 )(
@@ -23,6 +26,8 @@ module axis_dma # (
   input  wire [USER_WIDTH_IN-1:0]  s_axis_tuser,
 
   input  wire [ADDR_WIDTH-1:0]     wr_base_addr,
+  input  wire [HDR_ADDR_WIDTH-1:0] hdr_wr_addr_msb,
+  input  wire                      hdr_en,
   
   // Outgoing data
   output wire [DATA_WIDTH-1:0]     m_axis_tdata,
@@ -41,6 +46,9 @@ module axis_dma # (
   output wire [DATA_WIDTH-1:0]     mem_wr_data,
   output wire                      mem_wr_last,
   input  wire                      mem_wr_ready,
+  
+  output wire                      mem_hdr_wr_en,
+  output wire [ADDR_WIDTH-1:0]     mem_hdr_wr_addr,
 
   // Read port
   output wire                      mem_rd_en,
@@ -82,17 +90,19 @@ module axis_dma # (
   reg wr_state_n, wr_state_r;
   
   // wr signals
-  reg [ADDR_WIDTH-1:0]    wr_start_addr;
-  reg [USER_WIDTH_IN-1:0] wr_tuser;
-  reg [MASK_BITS:0]       wr_offset;
-  reg [DEST_WIDTH_IN-1:0] wr_tdest;
-  reg                     wr_strb_left;
-  reg                     wr_data_en;
-  reg                     wr_last;
-  wire                    wr_last_pkt;
-  wire                    wr_ready;
-  wire                    extra_cycle;
-  reg                     extra_cycle_r;
+  reg [ADDR_WIDTH-1:0]     wr_start_addr;
+  reg [USER_WIDTH_IN-1:0]  wr_tuser;
+  reg [MASK_BITS:0]        wr_offset;
+  reg [DEST_WIDTH_IN-1:0]  wr_tdest;
+  reg                      wr_strb_left;
+  reg [HDR_ADDR_WIDTH-1:0] hdr_msb_r;
+  reg                      hdr_en_r;
+  reg                      wr_data_en;
+  reg                      wr_last;
+  wire                     wr_last_pkt;
+  wire                     wr_ready;
+  wire                     extra_cycle;
+  reg                      extra_cycle_r;
 
   always @ (*) begin
     wr_state_n = wr_state_r;
@@ -118,11 +128,13 @@ module axis_dma # (
   always @ (posedge clk) begin
     if (latch_info) begin
       wr_start_addr <= wr_base_addr;
+      hdr_msb_r     <= hdr_wr_addr_msb;
+      hdr_en_r      <= hdr_en;
       wr_offset     <= {1'b1,{MASK_BITS{1'b0}}} - {1'b0, wr_base_addr[MASK_BITS-1:0]};
       wr_tdest      <= s_axis_tdest;
       wr_tuser      <= s_axis_tuser;
     end
-  
+ 
     // To improve timing do part of logic in the previous cycle
     if (extra_cycle && wr_data_en && wr_ready) 
       wr_strb_left <= 1'b0;
@@ -131,6 +143,12 @@ module axis_dma # (
                                          {1'b0, wr_base_addr[MASK_BITS-1:0]}));
     else if (s_axis_tvalid && s_axis_tready)
       wr_strb_left <= |(s_axis_tkeep >> wr_offset);
+
+    // Header send stops after reaching the 128 byte address cap for the first time
+    if (wr_data_en && wr_ready && (&wr_addr[HDR_ADDR_BITS-1:MASK_BITS]))
+      hdr_en_r      <= 1'b0;
+    if (rst)
+      hdr_en_r      <= 1'b0;
   end
 
   // two_stage pipeline register for the input from AXIS 
@@ -279,6 +297,9 @@ module axis_dma # (
   assign wr_ready    = mem_wr_ready;
   assign mem_wr_data = {wr_data_1,wr_data_2} >> {wr_offset,3'd0};
   assign mem_wr_strb = {wr_strb_1,wr_strb_2} >> wr_offset;
+  
+  assign mem_hdr_wr_en   = hdr_en_r && wr_data_en;
+  assign mem_hdr_wr_addr = {hdr_msb_r,wr_addr[HDR_ADDR_BITS-1:0]};
 
   ////////////////////////////////////////////////////////////////////////////////
   ///////////////////////// READ FROM MEM TO AIXS ////////////////////////////////

@@ -5,7 +5,7 @@
 #include "riscv_encoding.h"
 // time read is not supported by Vexriscv
 
-#define IO_START					0x8000
+#define IO_START 0x8000
 
 #define RECV_DESC	        (*((volatile struct Desc*)(IO_START + 0x0040)))
 #define DRAM_FLAGS  			(*((volatile unsigned int *)(IO_START + 0x0048)))

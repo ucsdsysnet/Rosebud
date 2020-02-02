@@ -10,6 +10,8 @@ module riscv_block_PR (
   // DMA interface
   input  wire         dma_cmd_wr_en,
   input  wire [15:0]  dma_cmd_wr_addr,
+  input  wire         dma_cmd_hdr_wr_en,
+  input  wire [15:0]  dma_cmd_hdr_wr_addr,
   input  wire [63:0]  dma_cmd_wr_data,
   input  wire [7:0]   dma_cmd_wr_strb,
   input  wire         dma_cmd_wr_last,
@@ -38,6 +40,7 @@ module riscv_block_PR (
   output wire [3:0]   slot_wr_ptr, 
   output wire [15:0]  slot_wr_addr,
   output wire         slot_wr_valid,
+  output wire         slot_for_hdr,
   input  wire         slot_wr_ready,
  
   // Received DRAM infor to core
@@ -102,24 +105,28 @@ end
 
 wire                  dma_cmd_wr_en_r;
 wire [ADDR_WIDTH-1:0] dma_cmd_wr_addr_r;
+wire                  dma_cmd_hdr_wr_en_r;
+wire [ADDR_WIDTH-1:0] dma_cmd_hdr_wr_addr_r;
 wire [DATA_WIDTH-1:0] dma_cmd_wr_data_r;
 wire [STRB_WIDTH-1:0] dma_cmd_wr_strb_r;
 wire                  dma_cmd_wr_last_r;
 wire                  dma_cmd_wr_ready_r;
 
 simple_pipe_reg # (
-  .DATA_WIDTH(DATA_WIDTH+ADDR_WIDTH+STRB_WIDTH+1),
+  .DATA_WIDTH(DATA_WIDTH+(2*ADDR_WIDTH)+STRB_WIDTH+2),
   .REG_TYPE(REG_TYPE), 
   .REG_LENGTH(REG_LENGTH)
 ) dma_wr_reg (
   .clk(sys_clk),
   .rst(sys_rst_r),
   
-  .s_data({dma_cmd_wr_data,dma_cmd_wr_addr,dma_cmd_wr_strb,dma_cmd_wr_last}),
+  .s_data({dma_cmd_wr_data, dma_cmd_wr_addr, dma_cmd_hdr_wr_addr,
+           dma_cmd_hdr_wr_en, dma_cmd_wr_strb, dma_cmd_wr_last}),
   .s_valid(dma_cmd_wr_en),
   .s_ready(dma_cmd_wr_ready),
 
-  .m_data({dma_cmd_wr_data_r,dma_cmd_wr_addr_r,dma_cmd_wr_strb_r,dma_cmd_wr_last_r}),
+  .m_data({dma_cmd_wr_data_r, dma_cmd_wr_addr_r, dma_cmd_hdr_wr_addr_r,
+           dma_cmd_hdr_wr_en_r, dma_cmd_wr_strb_r, dma_cmd_wr_last_r}),
   .m_valid(dma_cmd_wr_en_r),
   .m_ready(dma_cmd_wr_ready_r)
 );
@@ -213,21 +220,22 @@ simple_pipe_reg # (
 wire [SLOT_WIDTH-1:0] slot_wr_ptr_n;
 wire [ADDR_WIDTH-1:0] slot_wr_addr_n;
 wire                  slot_wr_valid_n;
+wire                  slot_for_hdr_n;
 wire                  slot_wr_ready_n;
 
 simple_pipe_reg # (
-  .DATA_WIDTH(ADDR_WIDTH+SLOT_WIDTH),
+  .DATA_WIDTH(ADDR_WIDTH+SLOT_WIDTH+1),
   .REG_TYPE(REG_TYPE), 
   .REG_LENGTH(REG_LENGTH)
 ) slot_info_reg (
   .clk(sys_clk),
   .rst(sys_rst_r),
   
-  .s_data({slot_wr_ptr_n,slot_wr_addr_n}),
+  .s_data({slot_wr_ptr_n, slot_wr_addr_n, slot_for_hdr_n}),
   .s_valid(slot_wr_valid_n),
   .s_ready(slot_wr_ready_n),
 
-  .m_data({slot_wr_ptr,slot_wr_addr}),
+  .m_data({slot_wr_ptr, slot_wr_addr, slot_for_hdr}),
   .m_valid(slot_wr_valid),
   .m_ready(slot_wr_ready)
 );
@@ -322,6 +330,8 @@ riscv_block # (
 
     .dma_cmd_wr_en(dma_cmd_wr_en_r),
     .dma_cmd_wr_addr(dma_cmd_wr_addr_r),
+    .dma_cmd_hdr_wr_en(dma_cmd_hdr_wr_en_r),
+    .dma_cmd_hdr_wr_addr(dma_cmd_hdr_wr_addr_r),
     .dma_cmd_wr_data(dma_cmd_wr_data_r),
     .dma_cmd_wr_strb(dma_cmd_wr_strb_r),
     .dma_cmd_wr_last(dma_cmd_wr_last_r),
@@ -345,6 +355,7 @@ riscv_block # (
     .slot_wr_ptr(slot_wr_ptr_n),
     .slot_wr_addr(slot_wr_addr_n),
     .slot_wr_valid(slot_wr_valid_n),
+    .slot_for_hdr(slot_for_hdr_n),
     .slot_wr_ready(slot_wr_ready_n),
     .recv_dram_tag(recv_dram_tag_r),
     .recv_dram_tag_valid(recv_dram_tag_valid_r),

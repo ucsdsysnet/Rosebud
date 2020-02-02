@@ -739,15 +739,15 @@ def bench():
 
         yield pcie_clk.posedge
 
+        print("Firmware load")
+        ins = bytearray(open(FIRMWARE, "rb").read())
+        mem_data[0:len(ins)] = ins
+        mem_data[48059:48200] = bytearray([(x+10)%256 for x in range(141)])
+
         # enable DMA
         yield rc.mem_write(dev_pf0_bar0+0x000400, struct.pack('<L', 1))
         
         if (UPDATE_INS):
-          print("Firmware load")
-          ins = bytearray(open(FIRMWARE, "rb").read())
-          mem_data[0:len(ins)] = ins
-          mem_data[48059:48200] = bytearray([(x+10)%256 for x in range(141)])
-
           yield rc.mem_write(dev_pf0_bar0+0x00040C, struct.pack('<L', 0xffff))
           
           # Load instruction memories
@@ -847,19 +847,6 @@ def bench():
           #     print(" ".join(("{:02x}".format(c) for c in bytearray(data[i:i+16]))))
           print ("lengths: " , lengths)
 
-          # eth_frame = eth_ep.EthFrame()
-          # eth_frame.parse_axis_fcs(rx_frame.data[8:])
-
-          # print(hex(eth_frame.eth_fcs))
-          # print(hex(eth_frame.calc_fcs()))
-
-          # assert len(eth_frame.payload.data) == 46
-          # assert eth_frame.eth_fcs == eth_frame.calc_fcs()
-          # assert eth_frame.eth_dest_mac == test_frame_1.eth_dest_mac
-          # assert eth_frame.eth_src_mac == test_frame_1.eth_src_mac
-          # assert eth_frame.eth_type == test_frame_1.eth_type
-          # assert eth_frame.payload.data.index(test_frame_1.payload.data) == 0
-          
           yield delay(10000)
           
           for k in range (0,16):

@@ -184,18 +184,22 @@ module fpga_core #
 
 `define PR_ENABLE
 
-parameter CORE_COUNT       = 16;
+parameter CORE_COUNT        = 16;
 
-parameter INTERFACE_COUNT  = 2;
-parameter V_IF_COUNT       = 1;
-parameter PORTS_PER_V_IF   = 1;
-parameter LB_PORT_COUNT    = 1;
+parameter INTERFACE_COUNT   = 2;
+parameter V_IF_COUNT        = 1;
+parameter PORTS_PER_V_IF    = 1;
+parameter LB_PORT_COUNT     = 1;
 
-parameter V_PORT_COUNT     = V_IF_COUNT * PORTS_PER_V_IF;
-parameter FIRST_LB_PORT    = INTERFACE_COUNT+V_PORT_COUNT+1-1;
-parameter PORT_COUNT       = INTERFACE_COUNT+V_PORT_COUNT+LB_PORT_COUNT+1;
+parameter V_PORT_COUNT      = V_IF_COUNT * PORTS_PER_V_IF;
+parameter FIRST_LB_PORT     = INTERFACE_COUNT+V_PORT_COUNT+1-1;
+parameter PORT_COUNT        = INTERFACE_COUNT+V_PORT_COUNT+LB_PORT_COUNT+1;
 
-parameter ENABLE_ILA       = 0;
+parameter IF_COUNT_WIDTH    = $clog2(INTERFACE_COUNT+V_PORT_COUNT);
+parameter BYTE_COUNT_WIDTH  = 32;
+parameter FRAME_COUNT_WIDTH = 32;
+parameter MAX_PKT_HDR_SIZE  = 128;
+parameter ENABLE_ILA        = 0;
 
 // MAC and switching system parameters
 parameter LVL1_DATA_WIDTH  = AXIS_ETH_DATA_WIDTH;
@@ -252,7 +256,8 @@ parameter SEND_DESC_DEPTH = 8;
 parameter DRAM_DESC_DEPTH = 16;
 parameter MSG_FIFO_DEPTH  = 16;
 parameter SLOT_START_ADDR = 16'h0;
-parameter SLOT_ADDR_STEP  = 16'h4000;
+parameter SLOT_ADDR_STEP  = 22'h004000;
+parameter HDR_START_ADDR  = 22'h104000;
 
 // FW and board IDs
 parameter FW_ID     = 32'd0;
@@ -492,10 +497,21 @@ wire                       reset_valid;
 wire                       reset_ready;
 wire [CORE_COUNT-1:0]      income_cores;
 wire [CORE_COUNT-1:0]      cores_to_be_reset;
-wire [CORE_WIDTH-1:0]      core_for_slot_count;
+wire [CORE_WIDTH-1:0]      stat_read_core;
+wire [CORE_WIDTH-1:0]      stat_read_core_r;
+wire [IF_COUNT_WIDTH-1:0]  stat_read_interface;
 wire [SLOT_WIDTH-1:0]      slot_count;
 wire                       pcie_dma_enable;
 wire [31:0]                vif_irq;
+
+wire [BYTE_COUNT_WIDTH-1:0]   core_in_byte_count;
+wire [BYTE_COUNT_WIDTH-1:0]   core_out_byte_count;
+wire [FRAME_COUNT_WIDTH-1:0]  core_in_frame_count;
+wire [FRAME_COUNT_WIDTH-1:0]  core_out_frame_count;
+wire [BYTE_COUNT_WIDTH-1:0]   interface_in_byte_count;
+wire [BYTE_COUNT_WIDTH-1:0]   interface_out_byte_count;
+wire [FRAME_COUNT_WIDTH-1:0]  interface_in_frame_count;
+wire [FRAME_COUNT_WIDTH-1:0]  interface_out_frame_count;
 
 // AXI lite connections
 wire [AXIL_ADDR_WIDTH-1:0]         axil_ctrl_awaddr;
@@ -560,6 +576,9 @@ pcie_config # (
   .AXIL_ADDR_WIDTH(AXIL_ADDR_WIDTH),
   .CORE_COUNT(CORE_COUNT),
   .CORE_SLOT_WIDTH(SLOT_WIDTH),
+  .INTERFACE_WIDTH(IF_COUNT_WIDTH),
+  .BYTE_COUNT_WIDTH(BYTE_COUNT_WIDTH), 
+  .FRAME_COUNT_WIDTH(FRAME_COUNT_WIDTH),
   .IF_COUNT(V_IF_COUNT),
   .PORTS_PER_IF(PORTS_PER_V_IF),
   .FW_ID(FW_ID),
@@ -641,12 +660,31 @@ pcie_config # (
 
   .income_cores       (income_cores),
   .cores_to_be_reset  (cores_to_be_reset),
-  .core_for_slot_count(core_for_slot_count),
-  .slot_count         (slot_count),
+
+  .stat_read_core      (stat_read_core),
+  .slot_count          (slot_count),
+  .core_in_byte_count  (core_in_byte_count),
+  .core_in_frame_count (core_in_frame_count),
+  .core_out_byte_count (core_out_byte_count),
+  .core_out_frame_count(core_out_frame_count),
+
+
+  .stat_read_interface      (stat_read_interface),
+  .interface_in_byte_count  (interface_in_byte_count),
+  .interface_in_frame_count (interface_in_frame_count),
+  .interface_out_byte_count (interface_out_byte_count),
+  .interface_out_frame_count(interface_out_frame_count),
 
   .pcie_dma_enable    (pcie_dma_enable),
   .if_msi_irq         (vif_irq),
   .msi_irq            (msi_irq)
+);
+
+simple_sync_sig # (.RST_VAL(1'b0),.WIDTH(CORE_WIDTH)) stat_read_core_reg (
+  .dst_clk(core_clk),
+  .dst_rst(core_rst_r),
+  .in(stat_read_core),
+  .out(stat_read_core_r)
 );
 
 if (V_PORT_COUNT==0) begin: no_veth
@@ -990,7 +1028,7 @@ simple_scheduler # (
 
   .income_cores       (income_cores),
   .cores_to_be_reset  (cores_to_be_reset),
-  .stat_read_core     (core_for_slot_count),
+  .stat_read_core     (stat_read_core),
   .slot_count         (slot_count),
 
   .trig_in     (sched_trig_in),
@@ -1080,7 +1118,49 @@ axis_switch_2lvl # (
     .m_axis_tdest (data_s_axis_tdest),
     .m_axis_tuser (data_s_axis_tuser)
 );
- 
+
+stat_reader # (
+  .KEEP_WIDTH(LVL1_STRB_WIDTH),
+  .PORT_COUNT(INTERFACE_COUNT+V_PORT_COUNT),
+  .BYTE_COUNT_WIDTH(BYTE_COUNT_WIDTH), 
+  .FRAME_COUNT_WIDTH(FRAME_COUNT_WIDTH),
+  .PORT_WIDTH(IF_COUNT_WIDTH)
+) interface_incoming_stat (
+  .clk(sys_clk),
+  .port_rst({INTERFACE_COUNT+V_PORT_COUNT{sys_rst}}),
+  .port_clear({INTERFACE_COUNT+V_PORT_COUNT{1'b0}}),
+
+  .monitor_axis_tkeep(sched_rx_axis_tkeep),
+  .monitor_axis_tvalid(sched_rx_axis_tvalid),
+  .monitor_axis_tready(sched_rx_axis_tready),
+  .monitor_axis_tlast(sched_rx_axis_tlast),
+
+  .port_select(stat_read_interface),
+  .byte_count(interface_in_byte_count),
+  .frame_count(interface_in_frame_count)
+);
+
+stat_reader # (
+  .KEEP_WIDTH(LVL2_STRB_WIDTH),
+  .PORT_COUNT(CORE_COUNT),
+  .BYTE_COUNT_WIDTH(BYTE_COUNT_WIDTH), 
+  .FRAME_COUNT_WIDTH(FRAME_COUNT_WIDTH),
+  .PORT_WIDTH(CORE_WIDTH)
+) core_incoming_stat (
+  .clk(core_clk),
+  .port_rst(block_reset),
+  .port_clear({CORE_COUNT{1'b0}}),
+
+  .monitor_axis_tkeep(data_s_axis_tkeep),
+  .monitor_axis_tvalid(data_s_axis_tvalid),
+  .monitor_axis_tready(data_s_axis_tready),
+  .monitor_axis_tlast(data_s_axis_tlast),
+
+  .port_select(stat_read_core_r),
+  .byte_count(core_in_byte_count),
+  .frame_count(core_in_frame_count)
+);
+
 axis_switch_2lvl # (
     .S_COUNT         (CORE_COUNT),
     .M_COUNT         (PORT_COUNT),
@@ -1128,6 +1208,48 @@ axis_switch_2lvl # (
     .m_axis_tdest(), 
     .m_axis_tuser( {dram_tx_axis_tuser, loopback_tx_axis_tuser, sched_tx_axis_tuser})
 
+);
+
+stat_reader # (
+  .KEEP_WIDTH(LVL1_STRB_WIDTH),
+  .PORT_COUNT(INTERFACE_COUNT+V_PORT_COUNT),
+  .BYTE_COUNT_WIDTH(BYTE_COUNT_WIDTH), 
+  .FRAME_COUNT_WIDTH(FRAME_COUNT_WIDTH),
+  .PORT_WIDTH(IF_COUNT_WIDTH)
+) interface_outgoing_stat (
+  .clk(sys_clk),
+  .port_rst({INTERFACE_COUNT+V_PORT_COUNT{sys_rst}}),
+  .port_clear({INTERFACE_COUNT+V_PORT_COUNT{1'b0}}),
+
+  .monitor_axis_tkeep(sched_tx_axis_tkeep),
+  .monitor_axis_tvalid(sched_tx_axis_tvalid),
+  .monitor_axis_tready(sched_tx_axis_tready),
+  .monitor_axis_tlast(sched_tx_axis_tlast),
+
+  .port_select(stat_read_interface),
+  .byte_count(interface_out_byte_count),
+  .frame_count(interface_out_frame_count)
+);
+
+stat_reader # (
+  .KEEP_WIDTH(LVL2_STRB_WIDTH),
+  .PORT_COUNT(CORE_COUNT),
+  .BYTE_COUNT_WIDTH(BYTE_COUNT_WIDTH), 
+  .FRAME_COUNT_WIDTH(FRAME_COUNT_WIDTH),
+  .PORT_WIDTH(CORE_WIDTH)
+) core_outgoing_stat (
+  .clk(core_clk),
+  .port_rst(block_reset),
+  .port_clear({CORE_COUNT{1'b0}}),
+
+  .monitor_axis_tkeep(data_m_axis_tkeep),
+  .monitor_axis_tvalid(data_m_axis_tvalid),
+  .monitor_axis_tready(data_m_axis_tready),
+  .monitor_axis_tlast(data_m_axis_tlast),
+
+  .port_select(stat_read_core_r),
+  .byte_count(core_out_byte_count),
+  .frame_count(core_out_frame_count)
 );
 
 axis_switch_2lvl # (
@@ -1478,6 +1600,8 @@ generate
         
         wire                       dma_cmd_wr_en;
         wire [CORE_ADDR_WIDTH-1:0] dma_cmd_wr_addr;
+        wire                       dma_cmd_hdr_wr_en;
+        wire [CORE_ADDR_WIDTH-1:0] dma_cmd_hdr_wr_addr;
         wire [LVL2_DATA_WIDTH-1:0] dma_cmd_wr_data;
         wire [LVL2_STRB_WIDTH-1:0] dma_cmd_wr_strb;
         wire                       dma_cmd_wr_last;
@@ -1501,6 +1625,7 @@ generate
         wire [SLOT_WIDTH-1:0]      slot_wr_ptr;
         wire [CORE_ADDR_WIDTH-1:0] slot_wr_addr;
         wire                       slot_wr_valid;
+        wire                       slot_for_hdr;
         wire                       slot_wr_ready;
         wire [4:0]                 recv_dram_tag;
         wire                       recv_dram_tag_valid;
@@ -1524,8 +1649,10 @@ generate
             .PORT_WIDTH(PORT_WIDTH),
             .CORE_ID_WIDTH(CORE_WIDTH),
             .MSG_WIDTH(CORE_MSG_WIDTH),
+            .MAX_PKT_HDR_SIZE(MAX_PKT_HDR_SIZE),
             .SLOT_START_ADDR(SLOT_START_ADDR),
             .SLOT_ADDR_STEP(SLOT_ADDR_STEP),
+            .HDR_START_ADDR(HDR_START_ADDR),
             .DRAM_PORT(DRAM_PORT),
             .DATA_S_REG_TYPE(2),
             .DATA_M_REG_TYPE(2),
@@ -1604,6 +1731,8 @@ generate
 
             .dma_cmd_wr_en(dma_cmd_wr_en),
             .dma_cmd_wr_addr(dma_cmd_wr_addr),
+            .dma_cmd_hdr_wr_en(dma_cmd_hdr_wr_en),
+            .dma_cmd_hdr_wr_addr(dma_cmd_hdr_wr_addr),
             .dma_cmd_wr_data(dma_cmd_wr_data),
             .dma_cmd_wr_strb(dma_cmd_wr_strb),
             .dma_cmd_wr_last(dma_cmd_wr_last),
@@ -1627,6 +1756,7 @@ generate
             .slot_wr_ptr(slot_wr_ptr),
             .slot_wr_addr(slot_wr_addr),
             .slot_wr_valid(slot_wr_valid),
+            .slot_for_hdr(slot_for_hdr),
             .slot_wr_ready(slot_wr_ready),
             .recv_dram_tag(recv_dram_tag),
             .recv_dram_tag_valid(recv_dram_tag_valid),
@@ -1670,6 +1800,8 @@ generate
 
             .dma_cmd_wr_en(dma_cmd_wr_en),
             .dma_cmd_wr_addr(dma_cmd_wr_addr),
+            .dma_cmd_hdr_wr_en(dma_cmd_hdr_wr_en),
+            .dma_cmd_hdr_wr_addr(dma_cmd_hdr_wr_addr),
             .dma_cmd_wr_data(dma_cmd_wr_data),
             .dma_cmd_wr_strb(dma_cmd_wr_strb),
             .dma_cmd_wr_last(dma_cmd_wr_last),
@@ -1693,6 +1825,7 @@ generate
             .slot_wr_ptr(slot_wr_ptr),
             .slot_wr_addr(slot_wr_addr),
             .slot_wr_valid(slot_wr_valid),
+            .slot_for_hdr(slot_for_hdr),
             .slot_wr_ready(slot_wr_ready),
             .recv_dram_tag(recv_dram_tag),
             .recv_dram_tag_valid(recv_dram_tag_valid),

@@ -44,6 +44,7 @@ module riscvcore #(
     output [SLOT_WIDTH-1:0]      slot_wr_ptr, 
     output [ADDR_WIDTH-1:0]      slot_wr_addr,
     output                       slot_wr_valid,
+    output                       slot_for_hdr,
     input                        slot_wr_ready,
 
     output [31:0]                core_msg_data,
@@ -213,6 +214,7 @@ end
 assign slot_wr_addr    = slot_info_data_r[ADDR_WIDTH-1:0]; 
 assign slot_wr_ptr     = slot_info_data_r[24+:SLOT_WIDTH];
 assign slot_wr_valid   = slot_wen && strb_asserted;
+assign slot_for_hdr    = slot_info_data_r[31];
 
 assign data_desc       = data_desc_data_r;
 assign data_desc_valid = data_desc_v_r;

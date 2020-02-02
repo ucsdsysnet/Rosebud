@@ -7,31 +7,33 @@
  * AXIS wrapper for RISCV cores with internal memory
  */
 module riscv_axis_wrapper # (
-    parameter DATA_WIDTH      = 64,   
-    parameter PORT_WIDTH      = 3,
-    parameter CORE_ID_WIDTH   = 4, 
-    parameter DRAM_PORT       = 6,
-    parameter SLOT_COUNT      = 8,
-    parameter ADDR_WIDTH      = 16,
-    parameter MSG_WIDTH       = 46,
-    parameter STRB_WIDTH      = (DATA_WIDTH/8),
-    parameter SLOT_WIDTH      = $clog2(SLOT_COUNT+1), 
-    parameter TAG_WIDTH       = (SLOT_WIDTH>5)? SLOT_WIDTH:5,
-    parameter ID_TAG_WIDTH    = CORE_ID_WIDTH+TAG_WIDTH,
+    parameter DATA_WIDTH       = 64,   
+    parameter PORT_WIDTH       = 3,
+    parameter CORE_ID_WIDTH    = 4, 
+    parameter DRAM_PORT        = 6,
+    parameter SLOT_COUNT       = 8,
+    parameter ADDR_WIDTH       = 16,
+    parameter MSG_WIDTH        = 46,
+    parameter STRB_WIDTH       = (DATA_WIDTH/8),
+    parameter SLOT_WIDTH       = $clog2(SLOT_COUNT+1), 
+    parameter TAG_WIDTH        = (SLOT_WIDTH>5)? SLOT_WIDTH:5,
+    parameter ID_TAG_WIDTH     = CORE_ID_WIDTH+TAG_WIDTH,
     
-    parameter RECV_DESC_DEPTH = 8,
-    parameter SEND_DESC_DEPTH = 8,
-    parameter DRAM_DESC_DEPTH = 16,
-    parameter MSG_FIFO_DEPTH  = 16,
+    parameter RECV_DESC_DEPTH  = 8,
+    parameter SEND_DESC_DEPTH  = 8,
+    parameter DRAM_DESC_DEPTH  = 16,
+    parameter MSG_FIFO_DEPTH   = 16,
     
-    parameter SLOT_START_ADDR = 16'h0,
-    parameter SLOT_ADDR_STEP  = 16'h4000,
+    parameter MAX_PKT_HDR_SIZE = 128,
+    parameter SLOT_START_ADDR  = 16'h0,
+    parameter SLOT_ADDR_STEP   = 16'h0400,
+    parameter HDR_START_ADDR   = 16'h5C00,
 
-    parameter DATA_S_REG_TYPE = 0,
-    parameter DATA_M_REG_TYPE = 2,
-    parameter DRAM_M_REG_TYPE = 0,
-
-    parameter SEPARATE_CLOCKS = 1
+    parameter DATA_S_REG_TYPE  = 0,
+    parameter DATA_M_REG_TYPE  = 2,
+    parameter DRAM_M_REG_TYPE  = 0,
+  
+    parameter SEPARATE_CLOCKS  = 1
 )
 (
     input  wire                     sys_clk,
@@ -108,6 +110,8 @@ module riscv_axis_wrapper # (
     // DMA interface
     output wire                     dma_cmd_wr_en,
     output wire [ADDR_WIDTH-1:0]    dma_cmd_wr_addr,
+    output wire                     dma_cmd_hdr_wr_en,
+    output wire [ADDR_WIDTH-1:0]    dma_cmd_hdr_wr_addr,
     output wire [DATA_WIDTH-1:0]    dma_cmd_wr_data,
     output wire [STRB_WIDTH-1:0]    dma_cmd_wr_strb,
     output wire                     dma_cmd_wr_last,
@@ -136,6 +140,7 @@ module riscv_axis_wrapper # (
     input  wire [SLOT_WIDTH-1:0]    slot_wr_ptr, 
     input  wire [ADDR_WIDTH-1:0]    slot_wr_addr,
     input  wire                     slot_wr_valid,
+    input  wire                     slot_for_hdr,
     output wire                     slot_wr_ready,
  
     // Received DRAM infor to core
@@ -191,54 +196,69 @@ end
 /////////////////////////////////////////////////////////////////////
 /////////// EXTRACTING BASE ADDR FROM/FOR INCOMING DATA /////////////
 /////////////////////////////////////////////////////////////////////
+parameter HDR_ADDR_BITS  = $clog2(MAX_PKT_HDR_SIZE);
+parameter HDR_ADDR_WIDTH = ADDR_WIDTH-HDR_ADDR_BITS;
 
 // Internal lookup table for slot addresses
 reg  [ADDR_WIDTH-1:0] slot_addr_lut [1:SLOT_COUNT];
 wire [SLOT_WIDTH-1:0] s_slot_ptr;
 wire [ADDR_WIDTH-1:0] slot_addr;
-integer j;
+
+reg  [HDR_ADDR_WIDTH-1:0] slot_hdr_addr_msb_lut [1:SLOT_COUNT];
+wire [HDR_ADDR_WIDTH-1:0] slot_hdr_msb;
 
 if (SEPARATE_CLOCKS) begin: slot_addr_async_fifo
 
   wire [ADDR_WIDTH-1:0] slot_wr_addr_r;
   wire [SLOT_WIDTH-1:0] slot_wr_ptr_r;
   wire                  slot_wr_valid_r;
+  wire                  slot_for_hdr_r;
   
   // There is at least a cycle between two write from core if value 
   // is changed, so even double core clock 4 entries are more than enough
   simple_async_fifo # (
     .DEPTH(4),
-    .DATA_WIDTH(ADDR_WIDTH+SLOT_WIDTH)
+    .DATA_WIDTH(ADDR_WIDTH+SLOT_WIDTH+1)
   ) slot_addr_wr_fifo (
     .async_rst(sys_rst),
   
     .din_clk(core_clk),
     .din_valid(slot_wr_valid),
-    .din({slot_wr_ptr, slot_wr_addr}),
+    .din({slot_wr_ptr, slot_wr_addr, slot_for_hdr}),
     .din_ready(slot_wr_ready),
    
     .dout_clk(sys_clk),
     .dout_valid(slot_wr_valid_r),
-    .dout({slot_wr_ptr_r, slot_wr_addr_r}),
+    .dout({slot_wr_ptr_r, slot_wr_addr_r, slot_for_hdr_r}),
     .dout_ready(1'b1)
   );
 
   always @ (posedge sys_clk)
-    if (slot_wr_valid_r)
-      slot_addr_lut[slot_wr_ptr_r] <= slot_wr_addr_r;
+    if (slot_wr_valid_r) 
+      if (slot_for_hdr_r)
+        slot_hdr_addr_msb_lut[slot_wr_ptr_r] <= slot_wr_addr_r[ADDR_WIDTH-1:HDR_ADDR_BITS];
+      else 
+        slot_addr_lut        [slot_wr_ptr_r] <= slot_wr_addr_r;
 
 end else begin: slot_addr_direct
 
   always @ (posedge sys_clk)
     if (slot_wr_valid)
-      slot_addr_lut[slot_wr_ptr] <= slot_wr_addr;
+      if (slot_for_hdr)
+        slot_hdr_addr_msb_lut[slot_wr_ptr] <= slot_wr_addr[ADDR_WIDTH-1:HDR_ADDR_BITS];
+      else 
+        slot_addr_lut        [slot_wr_ptr] <= slot_wr_addr;
+
   assign slot_wr_ready = 1'b1;
 
 end
 
+integer j;
 initial begin
-  for (j=1;j<=SLOT_COUNT;j=j+1)
-    slot_addr_lut[j] = SLOT_START_ADDR + ((j-1)*SLOT_ADDR_STEP);
+  for (j=1;j<=SLOT_COUNT;j=j+1) begin
+    slot_addr_lut[j]         = SLOT_START_ADDR + ((j-1)*SLOT_ADDR_STEP);
+    slot_hdr_addr_msb_lut[j] = (HDR_START_ADDR>>$clog2(MAX_PKT_HDR_SIZE)) + (j-1);
+  end
 end
  
 // Pipeline register to load from slot LUT or packet header
@@ -334,7 +354,8 @@ assign s_slot_ptr    = s_axis_tdest[SLOT_WIDTH-1:0];
 assign s_header_addr = incoming_hdr[32 +: ADDR_WIDTH];
 
 // We want to use LUTS instead of BRAM or REGS
-assign slot_addr     = slot_addr_lut[s_slot_ptr]; 
+assign slot_addr     = slot_addr_lut        [s_slot_ptr]; 
+assign slot_hdr_msb  = slot_hdr_addr_msb_lut[s_slot_ptr]; 
 assign s_base_addr   = incoming_hdr_v ? s_header_addr : slot_addr;
 
 /////////////////////////////////////////////////////////////////////
@@ -476,7 +497,9 @@ axis_dma # (
   .DEST_WIDTH_IN  (TAG_WIDTH),   
   .USER_WIDTH_IN  (PORT_WIDTH),   
   .DEST_WIDTH_OUT (PORT_WIDTH),  
-  .USER_WIDTH_OUT (TAG_WIDTH)  
+  .USER_WIDTH_OUT (TAG_WIDTH),
+  .MAX_PKT_HDR_SIZE(MAX_PKT_HDR_SIZE),
+  .HDR_ADDR_WIDTH  (HDR_ADDR_WIDTH)
 ) axis_dma_inst (
   .clk(sys_clk),
   .rst(sys_rst),
@@ -490,6 +513,8 @@ axis_dma # (
   .s_axis_tuser (s_axis_tuser),
 
   .wr_base_addr (s_base_addr),
+  .hdr_wr_addr_msb (slot_hdr_msb),
+  .hdr_en(!incoming_hdr_v),
 
   .m_axis_tdata (m_axis_tdata),
   .m_axis_tkeep (m_axis_tkeep),
@@ -505,6 +530,9 @@ axis_dma # (
   .mem_wr_data (dma_cmd_wr_data),
   .mem_wr_last (dma_cmd_wr_last),
   .mem_wr_ready(dma_cmd_wr_ready),
+  
+  .mem_hdr_wr_en(dma_cmd_hdr_wr_en),
+  .mem_hdr_wr_addr(dma_cmd_hdr_wr_addr),
   
   .mem_rd_en        (dma_cmd_rd_en_n),
   .mem_rd_addr      (dma_cmd_rd_addr),

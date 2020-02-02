@@ -634,22 +634,22 @@ pcie4_uscale_plus_inst (
     .phy_rdy_out()
 );
 
-// Register seq num to improve timing
-(* KEEP = "TRUE" *) reg [RQ_SEQ_NUM_WIDTH-1:0] pcie_rq_seq_num0_r;
-(* KEEP = "TRUE" *) reg                        pcie_rq_seq_num_vld0_r;
-(* KEEP = "TRUE" *) reg [RQ_SEQ_NUM_WIDTH-1:0] pcie_rq_seq_num1_r;
-(* KEEP = "TRUE" *) reg                        pcie_rq_seq_num_vld1_r;
-
-always @ (posedge pcie_user_clk) begin
-    pcie_rq_seq_num0_r     <= pcie_rq_seq_num0;
-    pcie_rq_seq_num_vld0_r <= pcie_rq_seq_num_vld0;
-    pcie_rq_seq_num1_r     <= pcie_rq_seq_num1;
-    pcie_rq_seq_num_vld1_r <= pcie_rq_seq_num_vld1;
-    if (pcie_user_reset) begin
-        pcie_rq_seq_num_vld0_r <= 1'b0; 
-        pcie_rq_seq_num_vld1_r <= 1'b0; 
-    end
-end
+// // Register seq num to improve timing
+// (* KEEP = "TRUE" *) reg [RQ_SEQ_NUM_WIDTH-1:0] pcie_rq_seq_num0_r;
+// (* KEEP = "TRUE" *) reg                        pcie_rq_seq_num_vld0_r;
+// (* KEEP = "TRUE" *) reg [RQ_SEQ_NUM_WIDTH-1:0] pcie_rq_seq_num1_r;
+// (* KEEP = "TRUE" *) reg                        pcie_rq_seq_num_vld1_r;
+// 
+// always @ (posedge pcie_user_clk) begin
+//     pcie_rq_seq_num0_r     <= pcie_rq_seq_num0;
+//     pcie_rq_seq_num_vld0_r <= pcie_rq_seq_num_vld0;
+//     pcie_rq_seq_num1_r     <= pcie_rq_seq_num1;
+//     pcie_rq_seq_num_vld1_r <= pcie_rq_seq_num_vld1;
+//     if (pcie_user_reset) begin
+//         pcie_rq_seq_num_vld0_r <= 1'b0; 
+//         pcie_rq_seq_num_vld1_r <= 1'b0; 
+//     end
+// end
 
 wire [31:0] msi_irq;
 wire ext_tag_enable;
@@ -1449,10 +1449,10 @@ fpga_core #(
     .m_axis_cc_tuser(axis_cc_tuser),
     .m_axis_cc_tvalid(axis_cc_tvalid),
 
-    .s_axis_rq_seq_num_0(pcie_rq_seq_num0_r),
-    .s_axis_rq_seq_num_valid_0(pcie_rq_seq_num_vld0_r),
-    .s_axis_rq_seq_num_1(pcie_rq_seq_num1_r),
-    .s_axis_rq_seq_num_valid_1(pcie_rq_seq_num_vld1_r),
+    .s_axis_rq_seq_num_0(pcie_rq_seq_num0),
+    .s_axis_rq_seq_num_valid_0(pcie_rq_seq_num_vld0),
+    .s_axis_rq_seq_num_1(pcie_rq_seq_num1),
+    .s_axis_rq_seq_num_valid_1(pcie_rq_seq_num_vld1),
 
     .pcie_tx_fc_nph_av(pcie_tx_fc_nph_av),
     .pcie_tx_fc_ph_av(pcie_tx_fc_ph_av),

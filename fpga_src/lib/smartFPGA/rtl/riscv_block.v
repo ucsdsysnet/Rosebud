@@ -25,6 +25,8 @@ module riscv_block # (
   // DMA interface
   input  wire                     dma_cmd_wr_en,
   input  wire [ADDR_WIDTH-1:0]    dma_cmd_wr_addr,
+  input  wire                     dma_cmd_hdr_wr_en,
+  input  wire [ADDR_WIDTH-1:0]    dma_cmd_hdr_wr_addr,
   input  wire [DATA_WIDTH-1:0]    dma_cmd_wr_data,
   input  wire [STRB_WIDTH-1:0]    dma_cmd_wr_strb,
   input  wire                     dma_cmd_wr_last,
@@ -53,6 +55,7 @@ module riscv_block # (
   output wire [SLOT_WIDTH-1:0]    slot_wr_ptr, 
   output wire [ADDR_WIDTH-1:0]    slot_wr_addr,
   output wire                     slot_wr_valid,
+  output wire                     slot_for_hdr,
   input  wire                     slot_wr_ready,
  
   // Received DRAM infor to core
@@ -136,6 +139,7 @@ riscvcore #(
   .slot_wr_ptr(slot_wr_ptr), 
   .slot_wr_addr(slot_wr_addr),
   .slot_wr_valid(slot_wr_valid),
+  .slot_for_hdr(slot_for_hdr),
   .slot_wr_ready(slot_wr_ready),
 
   .core_msg_data(bc_msg_out[31:0]),
@@ -208,6 +212,8 @@ mem_sys # (
   
   .dma_cmd_wr_en(dma_cmd_wr_en),
   .dma_cmd_wr_addr(dma_cmd_wr_addr),
+  .dma_cmd_hdr_wr_en(dma_cmd_hdr_wr_en),
+  .dma_cmd_hdr_wr_addr(dma_cmd_hdr_wr_addr),
   .dma_cmd_wr_data(dma_cmd_wr_data),
   .dma_cmd_wr_strb(dma_cmd_wr_strb),
   .dma_cmd_wr_last(dma_cmd_wr_last),

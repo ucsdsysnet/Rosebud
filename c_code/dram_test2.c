@@ -2,7 +2,7 @@
 
 int main(void){
 
-	volatile unsigned short * sh_test  = (volatile unsigned short *) 0x0700A;
+	// volatile unsigned short * sh_test  = (volatile unsigned short *) 0x0700A;
 
 	struct Desc packet;
 	unsigned int start_time, end_time;
@@ -14,7 +14,8 @@ int main(void){
 
 	// Do this at the beginnig, so scheduler can fill the slots while 
 	// initializing other things.
-	init_slots(8, 0x10200A, 2048);
+	init_hdr_slots(8, 0x104000, 128);
+	init_slots(8, 0x00000A, 16384);
 	
 	packet.len  = 69;
 	packet.tag  = 12;
@@ -32,20 +33,21 @@ int main(void){
 	while (1){
 		if (in_pkt_ready()){
 	 		
-			start_time = read_timer_low();
+			// start_time = read_timer_low();
 			read_in_pkt(&packet);
 
 			if (packet.port==0){
 				packet.port = 1;
-				*sh_test += 1;
+				// *sh_test += 1;
 			} else {
 				packet.port = 0;
-				*(sh_test+1) += 1;
+				// *(sh_test+1) += 1;
 			}
-			safe_pkt_done_msg(&packet);
+			safe_pkt_send(&packet);
+			// safe_pkt_done_msg(&packet);
 
-	 		end_time = read_timer_low();
-			write_debug (end_time - start_time);
+	 		// end_time = read_timer_low();
+			// write_debug (end_time - start_time);
 
   	}
   }
