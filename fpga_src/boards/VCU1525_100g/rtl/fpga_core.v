@@ -693,7 +693,7 @@ simple_sync_sig # (.RST_VAL(1'b0),.WIDTH(CORE_WIDTH)) stat_read_core_reg (
 
 simple_sync_sig # (.RST_VAL(1'b0),.WIDTH((2*BYTE_COUNT_WIDTH)+(2*FRAME_COUNT_WIDTH))) stat_read_core_results_reg (
   .dst_clk(sys_clk),
-  .dst_rst(sys_rst_r),
+  .dst_rst(sys_rst),
   .in( {core_in_byte_count,    core_out_byte_count, 
         core_in_frame_count,   core_out_frame_count}),
   .out({core_in_byte_count_r,  core_out_byte_count_r, 

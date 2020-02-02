@@ -32,7 +32,7 @@ localparam LAST_SEL_BITS     = $clog2(PORTS_PER_CLUSTER);
 
 always @ (posedge clk) begin
   port_select_r  <= port_select;
-  port_select_rr <= {PORTS_PER_CLUSTER{port_select_r[LAST_SEL_BITS-1:0]}};
+  port_select_rr <= {PORT_CLUSTERS{port_select_r[LAST_SEL_BITS-1:0]}};
 end
 
 wire [CEIL_PORT_COUNT*BYTE_COUNT_WIDTH-1:0]  byte_count_int;
@@ -70,15 +70,15 @@ generate
 endgenerate
 
 // Two step selection
-(* KEEP = "TRUE" *) reg [PORT_CLUSTERS*PORTS_PER_CLUSTER*BYTE_COUNT_WIDTH-1:0]  byte_count_int_r;
-(* KEEP = "TRUE" *) reg [PORT_CLUSTERS*PORTS_PER_CLUSTER*FRAME_COUNT_WIDTH-1:0] frame_count_int_r;
-(* KEEP = "TRUE" *) reg [PORT_CLUSTERS*BYTE_COUNT_WIDTH-1:0]  byte_count_int_rr;
-(* KEEP = "TRUE" *) reg [PORT_CLUSTERS*FRAME_COUNT_WIDTH-1:0] frame_count_int_rr;
+// (* KEEP = "TRUE" *) reg [PORT_COUNT*BYTE_COUNT_WIDTH-1:0]  byte_count_int_r;
+// (* KEEP = "TRUE" *) reg [PORT_COUNT*FRAME_COUNT_WIDTH-1:0] frame_count_int_r;
+reg [PORT_CLUSTERS*BYTE_COUNT_WIDTH-1:0]  byte_count_int_r;
+reg [PORT_CLUSTERS*FRAME_COUNT_WIDTH-1:0] frame_count_int_r;
 
-always @ (posedge clk) begin
-  byte_count_int_r  <= byte_count_int;
-  frame_count_int_r <= frame_count_int;
-end
+// always @ (posedge clk) begin
+//   byte_count_int_r  <= byte_count_int;
+//   frame_count_int_r <= frame_count_int;
+// end
 
 genvar j;
 generate
@@ -87,17 +87,17 @@ generate
     wire [LAST_SEL_BITS-1:0]                      cluster_port_sel  = 
                             port_select_rr[j*LAST_SEL_BITS +: LAST_SEL_BITS];
     wire [PORTS_PER_CLUSTER*BYTE_COUNT_WIDTH-1:0] cluster_byte_counts = 
-                        byte_count_int_r[j*PORTS_PER_CLUSTER*BYTE_COUNT_WIDTH 
-                                        +: PORTS_PER_CLUSTER*BYTE_COUNT_WIDTH];
+                        byte_count_int[j*PORTS_PER_CLUSTER*BYTE_COUNT_WIDTH 
+                                      +: PORTS_PER_CLUSTER*BYTE_COUNT_WIDTH];
     wire [PORTS_PER_CLUSTER*BYTE_COUNT_WIDTH-1:0] cluster_frame_counts = 
-                        frame_count_int_r[j*PORTS_PER_CLUSTER*FRAME_COUNT_WIDTH 
-                                         +: PORTS_PER_CLUSTER*FRAME_COUNT_WIDTH];
+                        frame_count_int[j*PORTS_PER_CLUSTER*FRAME_COUNT_WIDTH 
+                                       +: PORTS_PER_CLUSTER*FRAME_COUNT_WIDTH];
 
     // First level selection among ports in a cluster
     always @ (posedge clk) begin
-      byte_count_int_rr [j*BYTE_COUNT_WIDTH  +: BYTE_COUNT_WIDTH]  <= 
+      byte_count_int_r  [j*BYTE_COUNT_WIDTH  +: BYTE_COUNT_WIDTH]  <= 
           cluster_byte_counts [cluster_port_sel*BYTE_COUNT_WIDTH  +: BYTE_COUNT_WIDTH];
-      frame_count_int_rr[j*FRAME_COUNT_WIDTH +: FRAME_COUNT_WIDTH] <= 
+      frame_count_int_r [j*FRAME_COUNT_WIDTH +: FRAME_COUNT_WIDTH] <= 
           cluster_frame_counts[cluster_port_sel*FRAME_COUNT_WIDTH +: FRAME_COUNT_WIDTH];
     end
   end
@@ -105,9 +105,9 @@ endgenerate
 
 // 2nd and last level of selection
 always @ (posedge clk) begin
-  byte_count  <= byte_count_int_rr [port_select_r[PORT_WIDTH-1:LAST_SEL_BITS]*
+  byte_count  <= byte_count_int_r [port_select_r[PORT_WIDTH-1:LAST_SEL_BITS]*
                                     BYTE_COUNT_WIDTH  +: BYTE_COUNT_WIDTH ];
-  frame_count <= frame_count_int_rr[port_select_r[PORT_WIDTH-1:LAST_SEL_BITS]*
+  frame_count <= frame_count_int_r[port_select_r[PORT_WIDTH-1:LAST_SEL_BITS]*
                                     FRAME_COUNT_WIDTH +: FRAME_COUNT_WIDTH];
 end
 
