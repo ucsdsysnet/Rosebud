@@ -177,19 +177,52 @@ assign core_dmem_rd_valid = io_read_r ? 1'b1 : mem_rd_valid;
 assign io_wr_data        = core_dmem_wr_data;
 
 ///////////////////////////////////////////////////////////////////////////
-////////////////////////// ACCELERATROS ///////////////////////////////////
+////////////////////////// ACCELERATORS ///////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////
-wire [ACC_MEM_BLOCKS-1:0]                acc_en_b1 = {ACC_MEM_BLOCKS{1'b0}};
+wire [ACC_MEM_BLOCKS-1:0]                acc_en_b1;
 wire [ACC_MEM_BLOCKS*STRB_WIDTH-1:0]     acc_wen_b1;
 wire [ACC_MEM_BLOCKS*ACC_ADDR_WIDTH-1:0] acc_addr_b1;
 wire [ACC_MEM_BLOCKS*DATA_WIDTH-1:0]     acc_wr_data_b1;
 wire [ACC_MEM_BLOCKS*DATA_WIDTH-1:0]     acc_rd_data_b1;
 
-wire [ACC_MEM_BLOCKS-1:0]                acc_en_b2 = {ACC_MEM_BLOCKS{1'b0}};          
+wire [ACC_MEM_BLOCKS-1:0]                acc_en_b2;
 wire [ACC_MEM_BLOCKS*STRB_WIDTH-1:0]     acc_wen_b2;
 wire [ACC_MEM_BLOCKS*ACC_ADDR_WIDTH-1:0] acc_addr_b2;
 wire [ACC_MEM_BLOCKS*DATA_WIDTH-1:0]     acc_wr_data_b2;
 wire [ACC_MEM_BLOCKS*DATA_WIDTH-1:0]     acc_rd_data_b2;
+
+accel_wrap #(
+  .DATA_WIDTH(DATA_WIDTH),
+  .STRB_WIDTH(STRB_WIDTH),
+  .SLOW_DMEM_ADDR_WIDTH(SLOW_DMEM_ADDR_WIDTH),
+  .ADDR_WIDTH(ADDR_WIDTH-2),
+  .SLOW_M_B_LINES(SLOW_M_B_LINES),
+  .ACC_ADDR_WIDTH(ACC_ADDR_WIDTH),
+  .SLOW_DMEM_SEL_BITS(SLOW_DMEM_SEL_BITS),
+  .ACC_MEM_BLOCKS(ACC_MEM_BLOCKS)
+) accel_wrap_inst (
+  .clk(sys_clk),
+  .rst(core_rst),
+
+  .io_addr(core_dmem_addr),
+  .io_strb(core_dmem_strb),
+  .io_write(io_write),
+  .io_read(io_read),
+  .io_rd_data(io_rd_data),
+  .io_wr_data(io_wr_data),
+
+  .acc_en_b1(acc_en_b1),
+  .acc_wen_b1(acc_wen_b1),
+  .acc_addr_b1(acc_addr_b1),
+  .acc_wr_data_b1(acc_wr_data_b1),
+  .acc_rd_data_b1(acc_rd_data_b1),
+
+  .acc_en_b2(acc_en_b2),
+  .acc_wen_b2(acc_wen_b2),
+  .acc_addr_b2(acc_addr_b2),
+  .acc_wr_data_b2(acc_wr_data_b2),
+  .acc_rd_data_b2(acc_rd_data_b2)
+);
 
 ///////////////////////////////////////////////////////////////////////////
 /////////////////////// HYBRID MEMORY SYSTEM //////////////////////////////

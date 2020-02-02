@@ -13,6 +13,7 @@ SYN_FILES += rtl/sync_reset.v
 SYN_FILES += rtl/sync_signal.v
 SYN_FILES += lib/smartFPGA/rtl/riscvcore.v
 SYN_FILES += lib/smartFPGA/rtl/riscv_block.v
+SYN_FILES += lib/smartFPGA/rtl/accel_wrap.v
 SYN_FILES += lib/smartFPGA/rtl/VexRiscv.v
 SYN_FILES += lib/smartFPGA/rtl/core_mems.v
 SYN_FILES += lib/smartFPGA/rtl/slot_keeper.v
