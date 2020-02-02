@@ -43,7 +43,7 @@ struct Desc {
 	unsigned short len;
 	unsigned char  tag;
 	unsigned char  port; 
-	unsigned int*  data;
+	unsigned char* data;
 };
 
 // Reads
