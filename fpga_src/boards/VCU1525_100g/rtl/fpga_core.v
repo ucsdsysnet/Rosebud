@@ -508,6 +508,10 @@ wire [BYTE_COUNT_WIDTH-1:0]   core_in_byte_count;
 wire [BYTE_COUNT_WIDTH-1:0]   core_out_byte_count;
 wire [FRAME_COUNT_WIDTH-1:0]  core_in_frame_count;
 wire [FRAME_COUNT_WIDTH-1:0]  core_out_frame_count;
+wire [BYTE_COUNT_WIDTH-1:0]   core_in_byte_count_r;
+wire [BYTE_COUNT_WIDTH-1:0]   core_out_byte_count_r;
+wire [FRAME_COUNT_WIDTH-1:0]  core_in_frame_count_r;
+wire [FRAME_COUNT_WIDTH-1:0]  core_out_frame_count_r;
 wire [BYTE_COUNT_WIDTH-1:0]   interface_in_byte_count;
 wire [BYTE_COUNT_WIDTH-1:0]   interface_out_byte_count;
 wire [FRAME_COUNT_WIDTH-1:0]  interface_in_frame_count;
@@ -663,10 +667,10 @@ pcie_config # (
 
   .stat_read_core      (stat_read_core),
   .slot_count          (slot_count),
-  .core_in_byte_count  (core_in_byte_count),
-  .core_in_frame_count (core_in_frame_count),
-  .core_out_byte_count (core_out_byte_count),
-  .core_out_frame_count(core_out_frame_count),
+  .core_in_byte_count  (core_in_byte_count_r),
+  .core_in_frame_count (core_in_frame_count_r),
+  .core_out_byte_count (core_out_byte_count_r),
+  .core_out_frame_count(core_out_frame_count_r),
 
 
   .stat_read_interface      (stat_read_interface),
@@ -685,6 +689,15 @@ simple_sync_sig # (.RST_VAL(1'b0),.WIDTH(CORE_WIDTH)) stat_read_core_reg (
   .dst_rst(core_rst_r),
   .in(stat_read_core),
   .out(stat_read_core_r)
+);
+
+simple_sync_sig # (.RST_VAL(1'b0),.WIDTH((2*BYTE_COUNT_WIDTH)+(2*FRAME_COUNT_WIDTH))) stat_read_core_results_reg (
+  .dst_clk(sys_clk),
+  .dst_rst(sys_rst_r),
+  .in( {core_in_byte_count,    core_out_byte_count, 
+        core_in_frame_count,   core_out_frame_count}),
+  .out({core_in_byte_count_r,  core_out_byte_count_r, 
+        core_in_frame_count_r, core_out_frame_count_r})
 );
 
 if (V_PORT_COUNT==0) begin: no_veth
@@ -1124,7 +1137,8 @@ stat_reader # (
   .PORT_COUNT(INTERFACE_COUNT+V_PORT_COUNT),
   .BYTE_COUNT_WIDTH(BYTE_COUNT_WIDTH), 
   .FRAME_COUNT_WIDTH(FRAME_COUNT_WIDTH),
-  .PORT_WIDTH(IF_COUNT_WIDTH)
+  .PORT_WIDTH(IF_COUNT_WIDTH),
+  .PORT_CLUSTERS(2)
 ) interface_incoming_stat (
   .clk(sys_clk),
   .port_rst({INTERFACE_COUNT+V_PORT_COUNT{sys_rst}}),
@@ -1145,7 +1159,8 @@ stat_reader # (
   .PORT_COUNT(CORE_COUNT),
   .BYTE_COUNT_WIDTH(BYTE_COUNT_WIDTH), 
   .FRAME_COUNT_WIDTH(FRAME_COUNT_WIDTH),
-  .PORT_WIDTH(CORE_WIDTH)
+  .PORT_WIDTH(CORE_WIDTH),
+  .PORT_CLUSTERS(BC_MSG_CLUSTERS)
 ) core_incoming_stat (
   .clk(core_clk),
   .port_rst(block_reset),
@@ -1215,7 +1230,8 @@ stat_reader # (
   .PORT_COUNT(INTERFACE_COUNT+V_PORT_COUNT),
   .BYTE_COUNT_WIDTH(BYTE_COUNT_WIDTH), 
   .FRAME_COUNT_WIDTH(FRAME_COUNT_WIDTH),
-  .PORT_WIDTH(IF_COUNT_WIDTH)
+  .PORT_WIDTH(IF_COUNT_WIDTH),
+  .PORT_CLUSTERS(2)
 ) interface_outgoing_stat (
   .clk(sys_clk),
   .port_rst({INTERFACE_COUNT+V_PORT_COUNT{sys_rst}}),
@@ -1236,7 +1252,8 @@ stat_reader # (
   .PORT_COUNT(CORE_COUNT),
   .BYTE_COUNT_WIDTH(BYTE_COUNT_WIDTH), 
   .FRAME_COUNT_WIDTH(FRAME_COUNT_WIDTH),
-  .PORT_WIDTH(CORE_WIDTH)
+  .PORT_WIDTH(CORE_WIDTH),
+  .PORT_CLUSTERS(BC_MSG_CLUSTERS)
 ) core_outgoing_stat (
   .clk(core_clk),
   .port_rst(block_reset),

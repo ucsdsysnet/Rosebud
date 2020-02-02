@@ -879,8 +879,6 @@ def bench():
           #     print(" ".join(("{:02x}".format(c) for c in bytearray(data[i:i+16]))))
           print ("lengths: " , lengths)
 
-          yield delay(10000)
-          
           for k in range (0,16):
             yield rc.mem_write(dev_pf0_bar0+0x000410, struct.pack('<L', k))
             yield delay(100)

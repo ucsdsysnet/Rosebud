@@ -1399,8 +1399,8 @@ fpga_core #(
     .pcie_rst(pcie_user_reset),
     .sys_clk(clk_250mhz_int),
     .sys_rst(rst_250mhz_int),
-    .core_clk(clk_250mhz_2_int),
-    .core_rst(rst_250mhz_2_int),
+    .core_clk(clk_250mhz_int),
+    .core_rst(rst_250mhz_int),
 
     /*
      * GPIO
