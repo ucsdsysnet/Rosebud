@@ -502,6 +502,10 @@ always @ (posedge clk)
                                (io_not_mem_r && dmem_v_r && 
                                (dmem_byte_count_r != 2'd0) && (dmem_addr_r[6:3]==IO_BYTE_ACCESS)));
 
+        // TODO these checks are broken, remove this when fixed
+        dmem_access_err    <= 1'b0;
+        io_access_data_err <= 1'b0;
+
     end
 
 ///////////////////////////////////////////////////////////////////////////
