@@ -209,12 +209,24 @@ static int edev_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
     msleep(100);
     for (k=0; k<16; k++){
     	iowrite32(k,    edev->bar[0]+0x000410);
-    	dev_info(dev, "%d has %08x slots", k, ioread32(edev->bar[0]+0x000410));
+    	dev_info(dev, "core %d has %08x slots", k, ioread32(edev->bar[0]+0x000410));
+    	dev_info(dev, "core %d received %08x bytes", k, ioread32(edev->bar[0]+0x000414));
+    	dev_info(dev, "core %d sent %08x bytes", k, ioread32(edev->bar[0]+0x000418));
+    	dev_info(dev, "core %d received %08x frames", k, ioread32(edev->bar[0]+0x00041C));
+    	dev_info(dev, "core %d sent %08x frames", k, ioread32(edev->bar[0]+0x000420));
+    }
+    
+    for (k=0; k<4; k++){
+    	iowrite32(k,    edev->bar[0]+0x000414);
+    	dev_info(dev, "interface %d received %08x bytes", k, ioread32(edev->bar[0]+0x000424));
+    	dev_info(dev, "interface %d sent %08x bytes", k, ioread32(edev->bar[0]+0x000428));
+    	dev_info(dev, "interface %d received %08x frames", k, ioread32(edev->bar[0]+0x00042C));
+    	dev_info(dev, "interface %d sent %08x frames", k, ioread32(edev->bar[0]+0x000430));
     }
     
     iowrite32(0x0000, edev->bar[0]+0x00040C);
     dev_info(dev, "set incoming cores");
-    iowrite32(0xffff, edev->bar[0]+0x000408);
+    iowrite32(0x0110, edev->bar[0]+0x000408);
 
     dev_info(dev, "start copy to card");
     iowrite32(0x50100, edev->bar[0]+0x000448);
