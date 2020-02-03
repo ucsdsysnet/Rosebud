@@ -213,7 +213,7 @@ create_clock -period 10.000 -name pcie_mgt_refclk_1 [get_ports pcie_refclk_p]
 
 create_pblock pblock_1
 add_cells_to_pblock [get_pblocks pblock_1] [get_cells -quiet [list {core_inst/riscv_cores[0].pr_wrapper}]]
-resize_pblock [get_pblocks pblock_1] -add {SLICE_X13Y0:SLICE_X39Y119}
+resize_pblock [get_pblocks pblock_1] -add {SLICE_X13Y0:SLICE_X41Y119}
 resize_pblock [get_pblocks pblock_1] -add {DSP48E2_X1Y0:DSP48E2_X5Y47}
 resize_pblock [get_pblocks pblock_1] -add {RAMB18_X1Y0:RAMB18_X2Y47}
 resize_pblock [get_pblocks pblock_1] -add {RAMB36_X1Y0:RAMB36_X2Y23}
@@ -221,7 +221,7 @@ resize_pblock [get_pblocks pblock_1] -add {URAM288_X0Y0:URAM288_X0Y31}
 set_property SNAPPING_MODE ON [get_pblocks pblock_1]
 create_pblock pblock_2
 add_cells_to_pblock [get_pblocks pblock_2] [get_cells -quiet [list {core_inst/riscv_cores[1].pr_wrapper}]]
-resize_pblock [get_pblocks pblock_2] -add {SLICE_X49Y0:SLICE_X77Y119}
+resize_pblock [get_pblocks pblock_2] -add {SLICE_X49Y0:SLICE_X79Y119}
 resize_pblock [get_pblocks pblock_2] -add {DSP48E2_X7Y0:DSP48E2_X8Y47}
 resize_pblock [get_pblocks pblock_2] -add {RAMB18_X4Y0:RAMB18_X4Y47}
 resize_pblock [get_pblocks pblock_2] -add {RAMB36_X4Y0:RAMB36_X4Y23}
@@ -229,15 +229,15 @@ resize_pblock [get_pblocks pblock_2] -add {URAM288_X1Y0:URAM288_X1Y31}
 set_property SNAPPING_MODE ON [get_pblocks pblock_2]
 create_pblock pblock_3
 add_cells_to_pblock [get_pblocks pblock_3] [get_cells -quiet [list {core_inst/riscv_cores[2].pr_wrapper}]]
-resize_pblock [get_pblocks pblock_3] -add {SLICE_X87Y0:SLICE_X114Y119}
+resize_pblock [get_pblocks pblock_3] -add {SLICE_X85Y0:SLICE_X114Y119}
 resize_pblock [get_pblocks pblock_3] -add {DSP48E2_X10Y0:DSP48E2_X13Y47}
-resize_pblock [get_pblocks pblock_3] -add {RAMB18_X7Y0:RAMB18_X7Y47}
-resize_pblock [get_pblocks pblock_3] -add {RAMB36_X7Y0:RAMB36_X7Y23}
+resize_pblock [get_pblocks pblock_3] -add {RAMB18_X6Y0:RAMB18_X7Y47}
+resize_pblock [get_pblocks pblock_3] -add {RAMB36_X6Y0:RAMB36_X7Y23}
 resize_pblock [get_pblocks pblock_3] -add {URAM288_X2Y0:URAM288_X2Y31}
 set_property SNAPPING_MODE ON [get_pblocks pblock_3]
 create_pblock pblock_4
 add_cells_to_pblock [get_pblocks pblock_4] [get_cells -quiet [list {core_inst/riscv_cores[3].pr_wrapper}]]
-resize_pblock [get_pblocks pblock_4] -add {SLICE_X121Y0:SLICE_X147Y119}
+resize_pblock [get_pblocks pblock_4] -add {SLICE_X121Y0:SLICE_X149Y119}
 resize_pblock [get_pblocks pblock_4] -add {DSP48E2_X15Y0:DSP48E2_X16Y47}
 resize_pblock [get_pblocks pblock_4] -add {RAMB18_X9Y0:RAMB18_X9Y47}
 resize_pblock [get_pblocks pblock_4] -add {RAMB36_X9Y0:RAMB36_X9Y23}
@@ -245,7 +245,7 @@ resize_pblock [get_pblocks pblock_4] -add {URAM288_X3Y0:URAM288_X3Y31}
 set_property SNAPPING_MODE ON [get_pblocks pblock_4]
 create_pblock pblock_5
 add_cells_to_pblock [get_pblocks pblock_5] [get_cells -quiet [list {core_inst/riscv_cores[4].pr_wrapper}]]
-resize_pblock [get_pblocks pblock_5] -add {SLICE_X13Y150:SLICE_X40Y269}
+resize_pblock [get_pblocks pblock_5] -add {SLICE_X13Y150:SLICE_X41Y269}
 resize_pblock [get_pblocks pblock_5] -add {DSP48E2_X1Y60:DSP48E2_X5Y107}
 resize_pblock [get_pblocks pblock_5] -add {RAMB18_X1Y60:RAMB18_X2Y107}
 resize_pblock [get_pblocks pblock_5] -add {RAMB36_X1Y30:RAMB36_X2Y53}
@@ -253,7 +253,7 @@ resize_pblock [get_pblocks pblock_5] -add {URAM288_X0Y40:URAM288_X0Y71}
 set_property SNAPPING_MODE ON [get_pblocks pblock_5]
 create_pblock pblock_6
 add_cells_to_pblock [get_pblocks pblock_6] [get_cells -quiet [list {core_inst/riscv_cores[5].pr_wrapper}]]
-resize_pblock [get_pblocks pblock_6] -add {SLICE_X50Y150:SLICE_X77Y269}
+resize_pblock [get_pblocks pblock_6] -add {SLICE_X50Y150:SLICE_X79Y269}
 resize_pblock [get_pblocks pblock_6] -add {DSP48E2_X7Y60:DSP48E2_X8Y107}
 resize_pblock [get_pblocks pblock_6] -add {RAMB18_X4Y60:RAMB18_X4Y107}
 resize_pblock [get_pblocks pblock_6] -add {RAMB36_X4Y30:RAMB36_X4Y53}
@@ -269,7 +269,7 @@ resize_pblock [get_pblocks pblock_7] -add {URAM288_X2Y40:URAM288_X2Y71}
 set_property SNAPPING_MODE ON [get_pblocks pblock_7]
 create_pblock pblock_8
 add_cells_to_pblock [get_pblocks pblock_8] [get_cells -quiet [list {core_inst/riscv_cores[7].pr_wrapper}]]
-resize_pblock [get_pblocks pblock_8] -add {SLICE_X121Y150:SLICE_X147Y269}
+resize_pblock [get_pblocks pblock_8] -add {SLICE_X121Y150:SLICE_X149Y269}
 resize_pblock [get_pblocks pblock_8] -add {DSP48E2_X15Y60:DSP48E2_X16Y107}
 resize_pblock [get_pblocks pblock_8] -add {RAMB18_X9Y60:RAMB18_X9Y107}
 resize_pblock [get_pblocks pblock_8] -add {RAMB36_X9Y30:RAMB36_X9Y53}
@@ -309,7 +309,7 @@ resize_pblock [get_pblocks pblock_12] -add {URAM288_X3Y112:URAM288_X3Y143}
 set_property SNAPPING_MODE ON [get_pblocks pblock_12]
 create_pblock pblock_13
 add_cells_to_pblock [get_pblocks pblock_13] [get_cells -quiet [list {core_inst/riscv_cores[12].pr_wrapper}]]
-resize_pblock [get_pblocks pblock_13] -add {SLICE_X20Y780:SLICE_X46Y899}
+resize_pblock [get_pblocks pblock_13] -add {SLICE_X21Y780:SLICE_X48Y899}
 resize_pblock [get_pblocks pblock_13] -add {DSP48E2_X2Y312:DSP48E2_X6Y359}
 resize_pblock [get_pblocks pblock_13] -add {RAMB18_X2Y312:RAMB18_X2Y359}
 resize_pblock [get_pblocks pblock_13] -add {RAMB36_X2Y156:RAMB36_X2Y179}
@@ -317,15 +317,15 @@ resize_pblock [get_pblocks pblock_13] -add {URAM288_X0Y208:URAM288_X0Y239}
 set_property SNAPPING_MODE ON [get_pblocks pblock_13]
 create_pblock pblock_14
 add_cells_to_pblock [get_pblocks pblock_14] [get_cells -quiet [list {core_inst/riscv_cores[13].pr_wrapper}]]
-resize_pblock [get_pblocks pblock_14] -add {SLICE_X53Y780:SLICE_X79Y899}
-resize_pblock [get_pblocks pblock_14] -add {DSP48E2_X8Y312:DSP48E2_X8Y359}
+resize_pblock [get_pblocks pblock_14] -add {SLICE_X53Y780:SLICE_X82Y899}
+resize_pblock [get_pblocks pblock_14] -add {DSP48E2_X8Y312:DSP48E2_X9Y359}
 resize_pblock [get_pblocks pblock_14] -add {RAMB18_X4Y312:RAMB18_X4Y359}
 resize_pblock [get_pblocks pblock_14] -add {RAMB36_X4Y156:RAMB36_X4Y179}
 resize_pblock [get_pblocks pblock_14] -add {URAM288_X1Y208:URAM288_X1Y239}
 set_property SNAPPING_MODE ON [get_pblocks pblock_14]
 create_pblock pblock_15
 add_cells_to_pblock [get_pblocks pblock_15] [get_cells -quiet [list {core_inst/riscv_cores[14].pr_wrapper}]]
-resize_pblock [get_pblocks pblock_15] -add {SLICE_X84Y780:SLICE_X110Y899}
+resize_pblock [get_pblocks pblock_15] -add {SLICE_X86Y780:SLICE_X114Y899}
 resize_pblock [get_pblocks pblock_15] -add {DSP48E2_X10Y312:DSP48E2_X13Y359}
 resize_pblock [get_pblocks pblock_15] -add {RAMB18_X6Y312:RAMB18_X7Y359}
 resize_pblock [get_pblocks pblock_15] -add {RAMB36_X6Y156:RAMB36_X7Y179}
@@ -333,7 +333,7 @@ resize_pblock [get_pblocks pblock_15] -add {URAM288_X2Y208:URAM288_X2Y239}
 set_property SNAPPING_MODE ON [get_pblocks pblock_15]
 create_pblock pblock_16
 add_cells_to_pblock [get_pblocks pblock_16] [get_cells -quiet [list {core_inst/riscv_cores[15].pr_wrapper}]]
-resize_pblock [get_pblocks pblock_16] -add {SLICE_X119Y780:SLICE_X145Y899}
+resize_pblock [get_pblocks pblock_16] -add {SLICE_X119Y780:SLICE_X147Y899}
 resize_pblock [get_pblocks pblock_16] -add {DSP48E2_X15Y312:DSP48E2_X16Y359}
 resize_pblock [get_pblocks pblock_16] -add {RAMB18_X9Y312:RAMB18_X9Y359}
 resize_pblock [get_pblocks pblock_16] -add {RAMB36_X9Y156:RAMB36_X9Y179}
@@ -343,32 +343,32 @@ set_property SNAPPING_MODE ON [get_pblocks pblock_16]
 
 create_pblock pblock_17
 add_cells_to_pblock [get_pblocks pblock_17] [get_cells -quiet [list {core_inst/riscv_cores[0].core_wrapper}]]
-resize_pblock [get_pblocks pblock_17] -add {SLICE_X13Y120:SLICE_X39Y134}
+resize_pblock [get_pblocks pblock_17] -add {SLICE_X13Y120:SLICE_X41Y134}
 resize_pblock [get_pblocks pblock_17] -add {RAMB18_X1Y48:RAMB18_X2Y53}
 resize_pblock [get_pblocks pblock_17] -add {RAMB36_X1Y24:RAMB36_X2Y26}
 create_pblock pblock_18
 add_cells_to_pblock [get_pblocks pblock_18] [get_cells -quiet [list {core_inst/riscv_cores[1].core_wrapper}]]
-resize_pblock [get_pblocks pblock_18] -add {SLICE_X49Y120:SLICE_X77Y134}
+resize_pblock [get_pblocks pblock_18] -add {SLICE_X49Y120:SLICE_X79Y134}
 resize_pblock [get_pblocks pblock_18] -add {RAMB18_X4Y48:RAMB18_X4Y53}
 resize_pblock [get_pblocks pblock_18] -add {RAMB36_X4Y24:RAMB36_X4Y26}
 create_pblock pblock_19
 add_cells_to_pblock [get_pblocks pblock_19] [get_cells -quiet [list {core_inst/riscv_cores[2].core_wrapper}]]
-resize_pblock [get_pblocks pblock_19] -add {SLICE_X87Y120:SLICE_X114Y134}
-resize_pblock [get_pblocks pblock_19] -add {RAMB18_X7Y48:RAMB18_X7Y53}
-resize_pblock [get_pblocks pblock_19] -add {RAMB36_X7Y24:RAMB36_X7Y26}
+resize_pblock [get_pblocks pblock_19] -add {SLICE_X85Y120:SLICE_X114Y134}
+resize_pblock [get_pblocks pblock_19] -add {RAMB18_X6Y48:RAMB18_X7Y53}
+resize_pblock [get_pblocks pblock_19] -add {RAMB36_X6Y24:RAMB36_X7Y26}
 create_pblock pblock_20
 add_cells_to_pblock [get_pblocks pblock_20] [get_cells -quiet [list {core_inst/riscv_cores[3].core_wrapper}]]
-resize_pblock [get_pblocks pblock_20] -add {SLICE_X121Y120:SLICE_X147Y134}
+resize_pblock [get_pblocks pblock_20] -add {SLICE_X121Y120:SLICE_X149Y134}
 resize_pblock [get_pblocks pblock_20] -add {RAMB18_X9Y48:RAMB18_X9Y53}
 resize_pblock [get_pblocks pblock_20] -add {RAMB36_X9Y24:RAMB36_X9Y26}
 create_pblock pblock_21
 add_cells_to_pblock [get_pblocks pblock_21] [get_cells -quiet [list {core_inst/riscv_cores[4].core_wrapper}]]
-resize_pblock [get_pblocks pblock_21] -add {SLICE_X13Y270:SLICE_X40Y284}
+resize_pblock [get_pblocks pblock_21] -add {SLICE_X13Y270:SLICE_X41Y284}
 resize_pblock [get_pblocks pblock_21] -add {RAMB18_X1Y108:RAMB18_X2Y113}
 resize_pblock [get_pblocks pblock_21] -add {RAMB36_X1Y54:RAMB36_X2Y56}
 create_pblock pblock_22
 add_cells_to_pblock [get_pblocks pblock_22] [get_cells -quiet [list {core_inst/riscv_cores[5].core_wrapper}]]
-resize_pblock [get_pblocks pblock_22] -add {SLICE_X50Y270:SLICE_X77Y284}
+resize_pblock [get_pblocks pblock_22] -add {SLICE_X50Y270:SLICE_X79Y284}
 resize_pblock [get_pblocks pblock_22] -add {RAMB18_X4Y108:RAMB18_X4Y113}
 resize_pblock [get_pblocks pblock_22] -add {RAMB36_X4Y54:RAMB36_X4Y56}
 create_pblock pblock_23
@@ -378,7 +378,7 @@ resize_pblock [get_pblocks pblock_23] -add {RAMB18_X7Y108:RAMB18_X7Y113}
 resize_pblock [get_pblocks pblock_23] -add {RAMB36_X7Y54:RAMB36_X7Y56}
 create_pblock pblock_24
 add_cells_to_pblock [get_pblocks pblock_24] [get_cells -quiet [list {core_inst/riscv_cores[7].core_wrapper}]]
-resize_pblock [get_pblocks pblock_24] -add {SLICE_X121Y270:SLICE_X147Y284}
+resize_pblock [get_pblocks pblock_24] -add {SLICE_X121Y270:SLICE_X149Y284}
 resize_pblock [get_pblocks pblock_24] -add {RAMB18_X9Y108:RAMB18_X9Y113}
 resize_pblock [get_pblocks pblock_24] -add {RAMB36_X9Y54:RAMB36_X9Y56}
 create_pblock pblock_25
@@ -403,23 +403,24 @@ resize_pblock [get_pblocks pblock_28] -add {RAMB18_X8Y162:RAMB18_X9Y167}
 resize_pblock [get_pblocks pblock_28] -add {RAMB36_X8Y81:RAMB36_X9Y83}
 create_pblock pblock_29
 add_cells_to_pblock [get_pblocks pblock_29] [get_cells -quiet [list {core_inst/riscv_cores[12].core_wrapper}]]
-resize_pblock [get_pblocks pblock_29] -add {SLICE_X20Y765:SLICE_X46Y779}
+resize_pblock [get_pblocks pblock_29] -add {SLICE_X21Y765:SLICE_X48Y779}
 resize_pblock [get_pblocks pblock_29] -add {RAMB18_X2Y306:RAMB18_X2Y311}
 resize_pblock [get_pblocks pblock_29] -add {RAMB36_X2Y153:RAMB36_X2Y155}
 create_pblock pblock_30
 add_cells_to_pblock [get_pblocks pblock_30] [get_cells -quiet [list {core_inst/riscv_cores[13].core_wrapper}]]
-resize_pblock [get_pblocks pblock_30] -add {SLICE_X53Y765:SLICE_X79Y779}
+resize_pblock [get_pblocks pblock_30] -add {SLICE_X53Y765:SLICE_X82Y779}
 resize_pblock [get_pblocks pblock_30] -add {RAMB18_X4Y306:RAMB18_X4Y311}
 resize_pblock [get_pblocks pblock_30] -add {RAMB36_X4Y153:RAMB36_X4Y155}
 create_pblock pblock_31
 add_cells_to_pblock [get_pblocks pblock_31] [get_cells -quiet [list {core_inst/riscv_cores[14].core_wrapper}]]
-resize_pblock [get_pblocks pblock_31] -add {SLICE_X84Y765:SLICE_X110Y779}
+resize_pblock [get_pblocks pblock_31] -add {SLICE_X86Y765:SLICE_X114Y779}
 resize_pblock [get_pblocks pblock_31] -add {RAMB18_X6Y306:RAMB18_X7Y311}
 resize_pblock [get_pblocks pblock_31] -add {RAMB36_X6Y153:RAMB36_X7Y155}
 create_pblock pblock_32
 add_cells_to_pblock [get_pblocks pblock_32] [get_cells -quiet [list {core_inst/riscv_cores[15].core_wrapper}]]
-resize_pblock [get_pblocks pblock_32] -add {SLICE_X119Y765:SLICE_X145Y779}
+resize_pblock [get_pblocks pblock_32] -add {SLICE_X119Y765:SLICE_X147Y779}
 resize_pblock [get_pblocks pblock_32] -add {RAMB18_X9Y306:RAMB18_X9Y311}
 resize_pblock [get_pblocks pblock_32] -add {RAMB36_X9Y153:RAMB36_X9Y155}
+
 
 

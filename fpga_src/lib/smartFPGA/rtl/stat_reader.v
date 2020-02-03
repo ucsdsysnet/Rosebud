@@ -23,6 +23,18 @@ module stat_reader # (
   output reg  [FRAME_COUNT_WIDTH-1:0]     frame_count
 );
 
+(* KEEP = "TRUE" *) reg [PORT_COUNT*KEEP_WIDTH-1:0] monitor_axis_tkeep_r;
+(* KEEP = "TRUE" *) reg [PORT_COUNT-1:0]            monitor_axis_tvalid_r;
+(* KEEP = "TRUE" *) reg [PORT_COUNT-1:0]            monitor_axis_tready_r;
+(* KEEP = "TRUE" *) reg [PORT_COUNT-1:0]            monitor_axis_tlast_r;
+
+always @ (posedge clk) begin
+  monitor_axis_tkeep_r  <= monitor_axis_tkeep;
+  monitor_axis_tvalid_r <= monitor_axis_tvalid & ~port_rst;
+  monitor_axis_tready_r <= monitor_axis_tready;
+  monitor_axis_tlast_r  <= monitor_axis_tlast;
+end
+
 localparam CEIL_PORT_COUNT   = 2**($clog2(PORT_COUNT));
 localparam PORTS_PER_CLUSTER = CEIL_PORT_COUNT / PORT_CLUSTERS;
 localparam LAST_SEL_BITS     = $clog2(PORTS_PER_CLUSTER);
@@ -58,10 +70,10 @@ generate
       .rst(port_rst[i]),
       .clear(port_clear[i]),
     
-      .monitor_axis_tkeep(monitor_axis_tkeep[i*KEEP_WIDTH+:KEEP_WIDTH]),
-      .monitor_axis_tvalid(monitor_axis_tvalid[i]),
-      .monitor_axis_tready(monitor_axis_tready[i]),
-      .monitor_axis_tlast(monitor_axis_tlast[i]),
+      .monitor_axis_tkeep(monitor_axis_tkeep_r[i*KEEP_WIDTH+:KEEP_WIDTH]),
+      .monitor_axis_tvalid(monitor_axis_tvalid_r[i]),
+      .monitor_axis_tready(monitor_axis_tready_r[i]),
+      .monitor_axis_tlast(monitor_axis_tlast_r[i]),
     
       .byte_count(byte_count_int[i*BYTE_COUNT_WIDTH +: BYTE_COUNT_WIDTH]),
       .frame_count(frame_count_int[i*FRAME_COUNT_WIDTH +: FRAME_COUNT_WIDTH])
@@ -70,15 +82,15 @@ generate
 endgenerate
 
 // Two step selection
-// (* KEEP = "TRUE" *) reg [PORT_COUNT*BYTE_COUNT_WIDTH-1:0]  byte_count_int_r;
-// (* KEEP = "TRUE" *) reg [PORT_COUNT*FRAME_COUNT_WIDTH-1:0] frame_count_int_r;
-reg [PORT_CLUSTERS*BYTE_COUNT_WIDTH-1:0]  byte_count_int_r;
-reg [PORT_CLUSTERS*FRAME_COUNT_WIDTH-1:0] frame_count_int_r;
+(* KEEP = "TRUE" *) reg [CEIL_PORT_COUNT*BYTE_COUNT_WIDTH-1:0]  byte_count_int_r;
+(* KEEP = "TRUE" *) reg [CEIL_PORT_COUNT*FRAME_COUNT_WIDTH-1:0] frame_count_int_r;
+reg [PORT_CLUSTERS*BYTE_COUNT_WIDTH-1:0]  byte_count_int_rr;
+reg [PORT_CLUSTERS*FRAME_COUNT_WIDTH-1:0] frame_count_int_rr;
 
-// always @ (posedge clk) begin
-//   byte_count_int_r  <= byte_count_int;
-//   frame_count_int_r <= frame_count_int;
-// end
+always @ (posedge clk) begin
+  byte_count_int_r  <= byte_count_int;
+  frame_count_int_r <= frame_count_int;
+end
 
 genvar j;
 generate
@@ -87,28 +99,35 @@ generate
     wire [LAST_SEL_BITS-1:0]                      cluster_port_sel  = 
                             port_select_rr[j*LAST_SEL_BITS +: LAST_SEL_BITS];
     wire [PORTS_PER_CLUSTER*BYTE_COUNT_WIDTH-1:0] cluster_byte_counts = 
-                        byte_count_int[j*PORTS_PER_CLUSTER*BYTE_COUNT_WIDTH 
-                                      +: PORTS_PER_CLUSTER*BYTE_COUNT_WIDTH];
+                        byte_count_int_r[j*PORTS_PER_CLUSTER*BYTE_COUNT_WIDTH 
+                                        +: PORTS_PER_CLUSTER*BYTE_COUNT_WIDTH];
     wire [PORTS_PER_CLUSTER*BYTE_COUNT_WIDTH-1:0] cluster_frame_counts = 
-                        frame_count_int[j*PORTS_PER_CLUSTER*FRAME_COUNT_WIDTH 
-                                       +: PORTS_PER_CLUSTER*FRAME_COUNT_WIDTH];
+                        frame_count_int_r[j*PORTS_PER_CLUSTER*FRAME_COUNT_WIDTH 
+                                         +: PORTS_PER_CLUSTER*FRAME_COUNT_WIDTH];
 
     // First level selection among ports in a cluster
     always @ (posedge clk) begin
-      byte_count_int_r  [j*BYTE_COUNT_WIDTH  +: BYTE_COUNT_WIDTH]  <= 
+      byte_count_int_rr  [j*BYTE_COUNT_WIDTH  +: BYTE_COUNT_WIDTH]  <= 
           cluster_byte_counts [cluster_port_sel*BYTE_COUNT_WIDTH  +: BYTE_COUNT_WIDTH];
-      frame_count_int_r [j*FRAME_COUNT_WIDTH +: FRAME_COUNT_WIDTH] <= 
+      frame_count_int_rr [j*FRAME_COUNT_WIDTH +: FRAME_COUNT_WIDTH] <= 
           cluster_frame_counts[cluster_port_sel*FRAME_COUNT_WIDTH +: FRAME_COUNT_WIDTH];
     end
   end
 endgenerate
 
 // 2nd and last level of selection
-always @ (posedge clk) begin
-  byte_count  <= byte_count_int_r [port_select_r[PORT_WIDTH-1:LAST_SEL_BITS]*
-                                    BYTE_COUNT_WIDTH  +: BYTE_COUNT_WIDTH ];
-  frame_count <= frame_count_int_r[port_select_r[PORT_WIDTH-1:LAST_SEL_BITS]*
-                                    FRAME_COUNT_WIDTH +: FRAME_COUNT_WIDTH];
+if (PORT_CLUSTERS == 1) begin: single_cluster
+  always @ (posedge clk) begin
+    byte_count  <= byte_count_int_rr;
+    frame_count <= frame_count_int_rr;
+  end
+end else begin: cluster_select
+  always @ (posedge clk) begin
+    byte_count  <= byte_count_int_rr [port_select_r[PORT_WIDTH-1:LAST_SEL_BITS]*
+                                      BYTE_COUNT_WIDTH  +: BYTE_COUNT_WIDTH ];
+    frame_count <= frame_count_int_rr[port_select_r[PORT_WIDTH-1:LAST_SEL_BITS]*
+                                      FRAME_COUNT_WIDTH +: FRAME_COUNT_WIDTH];
+  end
 end
 
 endmodule

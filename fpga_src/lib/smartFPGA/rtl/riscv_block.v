@@ -204,7 +204,7 @@ accel_wrap #(
   .clk(sys_clk),
   .rst(core_rst),
 
-  .io_addr(core_dmem_addr),
+  .io_addr(core_dmem_addr[ADDR_WIDTH-3:0]),
   .io_strb(core_dmem_strb),
   .io_write(io_write),
   .io_read(io_read),

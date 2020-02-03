@@ -1051,7 +1051,8 @@ stat_reader # (
   .PORT_COUNT(INTERFACE_COUNT+V_PORT_COUNT),
   .BYTE_COUNT_WIDTH(BYTE_COUNT_WIDTH), 
   .FRAME_COUNT_WIDTH(FRAME_COUNT_WIDTH),
-  .PORT_WIDTH(IF_COUNT_WIDTH)
+  .PORT_WIDTH(IF_COUNT_WIDTH),
+  .PORT_CLUSTERS(1)
 ) interface_incoming_stat (
   .clk(sys_clk),
   .port_rst({INTERFACE_COUNT+V_PORT_COUNT{sys_rst}}),
@@ -1072,7 +1073,8 @@ stat_reader # (
   .PORT_COUNT(CORE_COUNT),
   .BYTE_COUNT_WIDTH(BYTE_COUNT_WIDTH), 
   .FRAME_COUNT_WIDTH(FRAME_COUNT_WIDTH),
-  .PORT_WIDTH(CORE_WIDTH)
+  .PORT_WIDTH(CORE_WIDTH),
+  .PORT_CLUSTERS(1)
 ) core_incoming_stat (
   .clk(core_clk),
   .port_rst(block_reset),
@@ -1142,7 +1144,8 @@ stat_reader # (
   .PORT_COUNT(INTERFACE_COUNT+V_PORT_COUNT),
   .BYTE_COUNT_WIDTH(BYTE_COUNT_WIDTH), 
   .FRAME_COUNT_WIDTH(FRAME_COUNT_WIDTH),
-  .PORT_WIDTH(IF_COUNT_WIDTH)
+  .PORT_WIDTH(IF_COUNT_WIDTH),
+  .PORT_CLUSTERS(1)
 ) interface_outgoing_stat (
   .clk(sys_clk),
   .port_rst({INTERFACE_COUNT+V_PORT_COUNT{sys_rst}}),
@@ -1163,7 +1166,8 @@ stat_reader # (
   .PORT_COUNT(CORE_COUNT),
   .BYTE_COUNT_WIDTH(BYTE_COUNT_WIDTH), 
   .FRAME_COUNT_WIDTH(FRAME_COUNT_WIDTH),
-  .PORT_WIDTH(CORE_WIDTH)
+  .PORT_WIDTH(CORE_WIDTH),
+  .PORT_CLUSTERS(1)
 ) core_outgoing_stat (
   .clk(core_clk),
   .port_rst(block_reset),

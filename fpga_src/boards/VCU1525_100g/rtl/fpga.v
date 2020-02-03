@@ -144,7 +144,7 @@ wire clk_156mhz_ref_int;
 
 wire clk_125mhz_mmcm_out;
 wire clk_250mhz_mmcm_out;
-wire clk_250mhz_2_mmcm_out;
+wire clk_233mhz_mmcm_out;
 
 // Internal 125 MHz clock
 wire clk_125mhz_int;
@@ -155,8 +155,8 @@ wire clk_250mhz_int;
 wire rst_250mhz_int;
 
 // Second Internal 250 MHz clock
-wire clk_250mhz_2_int;
-wire rst_250mhz_2_int;
+wire clk_233mhz_int;
+wire rst_233mhz_int;
 
 // Internal 156.25 MHz clock
 wire clk_156mhz_int;
@@ -181,7 +181,7 @@ MMCME4_BASE #(
     .CLKOUT1_DIVIDE(4.0),
     .CLKOUT1_DUTY_CYCLE(0.5),
     .CLKOUT1_PHASE(0),
-    .CLKOUT2_DIVIDE(4.0),
+    .CLKOUT2_DIVIDE(4.3),
     .CLKOUT2_DUTY_CYCLE(0.5),
     .CLKOUT2_PHASE(0),
     .CLKOUT3_DIVIDE(1),
@@ -213,7 +213,7 @@ clk_mmcm_inst (
     .CLKOUT0B(),
     .CLKOUT1(clk_250mhz_mmcm_out),
     .CLKOUT1B(),
-    .CLKOUT2(clk_250mhz_2_mmcm_out),
+    .CLKOUT2(clk_233mhz_mmcm_out),
     .CLKOUT2B(),
     .CLKOUT3(),
     .CLKOUT3B(),
@@ -256,18 +256,18 @@ sync_reset_250mhz_inst (
 );
 
 BUFG
-clk_250mhz_2_bufg_inst (
-    .I(clk_250mhz_2_mmcm_out),
-    .O(clk_250mhz_2_int)
+clk_233mhz_bufg_inst (
+    .I(clk_233mhz_mmcm_out),
+    .O(clk_233mhz_int)
 );
 
 sync_reset #(
     .N(4)
 )
-sync_reset_250mhz_2_inst (
-    .clk(clk_250mhz_2_int),
+sync_reset_233mhz_inst (
+    .clk(clk_233mhz_int),
     .rst(~mmcm_locked),
-    .sync_reset_out(rst_250mhz_2_int)
+    .sync_reset_out(rst_233mhz_int)
 );
 
 // GPIO
@@ -1399,8 +1399,8 @@ fpga_core #(
     .pcie_rst(pcie_user_reset),
     .sys_clk(clk_250mhz_int),
     .sys_rst(rst_250mhz_int),
-    .core_clk(clk_250mhz_int),
-    .core_rst(rst_250mhz_int),
+    .core_clk(clk_233mhz_int),
+    .core_rst(rst_233mhz_int),
 
     /*
      * GPIO
