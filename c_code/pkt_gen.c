@@ -22,7 +22,7 @@ int main(void){
 
 	pkt_num = 0;
 
-	packet.len  = 1024;
+	packet.len  = 9000;
 	packet.tag  = 0;
 
 	while (1){
