@@ -23,7 +23,7 @@ int main(void){
 			read_in_pkt(&packet);
 
 			if (packet.port<2){
-				packet.data = (unsigned int *)(((unsigned int)packet.data)-4);
+				packet.data = (unsigned char *)(((unsigned int)packet.data)-4);
 				*(unsigned short *)(packet.data) = (unsigned short)(packet.port);
 				*((unsigned short *)(packet.data)+1) = 1;
 				packet.len += 4;
@@ -38,7 +38,7 @@ int main(void){
 					} else {
 						packet.port = 0;
 					}
-					packet.data = (unsigned int *)(((unsigned int)packet.data)+4);
+					packet.data = (unsigned char *)(((unsigned int)packet.data)+4);
 					packet.len -= 4;
 					safe_pkt_send(&packet);
 				} else {

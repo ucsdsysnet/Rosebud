@@ -149,8 +149,8 @@ def bench():
     TEST_SFP     = True
     TEST_PCIE    = True
     UPDATE_INS   = True
-    FIRMWARE     = "../../../../c_code/basic_fw2.bin"
-    # FIRMWARE     = "../../../../c_code/dram_test2.bin"
+    # FIRMWARE     = "../../../../c_code/basic_fw2.bin"
+    FIRMWARE     = "../../../../c_code/dram_test2.bin"
 
     # Inputs
     sys_clk  = Signal(bool(0))

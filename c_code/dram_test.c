@@ -19,7 +19,7 @@ int main(void){
 	
 	packet.len  = 69;
 	packet.tag  = 12;
-	packet.data = (unsigned int*)0x220;
+	packet.data = (unsigned char*)0x220;
 	safe_dram_read_req(&dram_rd_addr, &packet);
 
 	while (dram_flags()==0);
@@ -27,7 +27,7 @@ int main(void){
 
 	packet.len  = 69;
 	packet.tag  = 12;
-	packet.data = (unsigned int*)0x220;
+	packet.data = (unsigned char*)0x220;
 	safe_dram_write(&dram_wr_addr, &packet);
 
 	while (1){
