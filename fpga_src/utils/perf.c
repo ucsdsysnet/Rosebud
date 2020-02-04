@@ -255,14 +255,14 @@ int main(int argc, char *argv[])
 
         for (int k=0; k<core_count; k++)
         {
-            printf("core %2d    %10ld    %10ld    %10ld    %10ld\n", k, core_rx_bytes[k], core_tx_bytes[k], core_rx_frames[k], core_tx_frames[k]);
+            printf("core %2d  %12ld  %12ld  %12ld  %12ld\n", k, core_rx_bytes[k], core_tx_bytes[k], core_rx_frames[k], core_tx_frames[k]);
             total_rx_bytes += core_rx_bytes[k];
             total_tx_bytes += core_tx_bytes[k];
             total_rx_frames += core_rx_frames[k];
             total_tx_frames += core_tx_frames[k];
         }
 
-        printf("total      %10ld    %10ld    %10ld    %10ld\n", total_rx_bytes, total_tx_bytes, total_rx_frames, total_tx_frames);
+        printf("total    %12ld  %12ld  %12ld  %12ld\n", total_rx_bytes, total_tx_bytes, total_rx_frames, total_tx_frames);
 
         total_rx_bytes = 0;
         total_tx_bytes = 0;
@@ -271,14 +271,14 @@ int main(int argc, char *argv[])
 
         for (int k=0; k<if_count; k++)
         {
-            printf("if   %2d    %10ld    %10ld    %10ld    %10ld\n", k, if_rx_bytes[k], if_tx_bytes[k], if_rx_frames[k], if_tx_frames[k]);
+            printf("if   %2d  %12ld  %12ld  %12ld  %12ld\n", k, if_rx_bytes[k], if_tx_bytes[k], if_rx_frames[k], if_tx_frames[k]);
             total_rx_bytes += if_rx_bytes[k];
             total_tx_bytes += if_tx_bytes[k];
             total_rx_frames += if_rx_frames[k];
             total_tx_frames += if_tx_frames[k];
         }
 
-        printf("total      %10ld    %10ld    %10ld    %10ld\n", total_rx_bytes, total_tx_bytes, total_rx_frames, total_tx_frames);
+        printf("total    %12ld  %12ld  %12ld  %12ld\n", total_rx_bytes, total_tx_bytes, total_rx_frames, total_tx_frames);
 
         if (output_file)
         {
