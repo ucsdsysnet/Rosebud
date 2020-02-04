@@ -241,16 +241,16 @@ int main(int argc, char *argv[])
             if_tx_frames_raw[k] = temp;
         }
 
-        printf("           RX bytes    TX bytes   RX frames   TX frames\n");
+        printf("             RX bytes      TX bytes     RX frames     TX frames\n");
 
         for (int k=0; k<core_count; k++)
         {
-            printf("core %2d    %8d    %8d    %8d    %8d\n", k, core_rx_bytes[k], core_tx_bytes[k], core_rx_frames[k], core_tx_frames[k]);
+            printf("core %2d    %10ld    %10ld    %10ld    %10ld\n", k, core_rx_bytes[k], core_tx_bytes[k], core_rx_frames[k], core_tx_frames[k]);
         }
 
         for (int k=0; k<if_count; k++)
         {
-            printf("if   %2d    %8d    %8d    %8d    %8d\n", k, if_rx_bytes[k], if_tx_bytes[k], if_rx_frames[k], if_tx_frames[k]);
+            printf("if   %2d    %10ld    %10ld    %10ld    %10ld\n", k, if_rx_bytes[k], if_tx_bytes[k], if_rx_frames[k], if_tx_frames[k]);
         }
 
         if (output_file)
@@ -261,7 +261,7 @@ int main(int argc, char *argv[])
             {
                 if (need_comma)
                     fprintf(output_file, ",");
-                fprintf(output_file, "%d,%d,%d,%d", core_rx_bytes[k], core_tx_bytes[k], core_rx_frames[k], core_tx_frames[k]);
+                fprintf(output_file, "%ld,%ld,%ld,%ld", core_rx_bytes[k], core_tx_bytes[k], core_rx_frames[k], core_tx_frames[k]);
                 need_comma = 1;
             }
 
@@ -269,7 +269,7 @@ int main(int argc, char *argv[])
             {
                 if (need_comma)
                     fprintf(output_file, ",");
-                fprintf(output_file, "%d,%d,%d,%d", if_rx_bytes[k], if_tx_bytes[k], if_rx_frames[k], if_tx_frames[k]);
+                fprintf(output_file, "%ld,%ld,%ld,%ld", if_rx_bytes[k], if_tx_bytes[k], if_rx_frames[k], if_tx_frames[k]);
                 need_comma = 1;
             }
 
