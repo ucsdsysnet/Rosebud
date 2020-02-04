@@ -53,13 +53,13 @@ struct Desc {
 inline _Bool in_pkt_ready (){return IN_PKT_READY;}
 inline _Bool update_slot_ready (){return UPDATE_SLOT_READY;}
 inline _Bool core_msg_ready (){return CORE_MSG_READY;}
-inline int core_id () {return CORE_ID;}
-inline int dram_flags () {return DRAM_FLAGS;}
-inline int active_slots () {return ACTIVE_SLOTS;}
+inline unsigned int core_id () {return CORE_ID;}
+inline unsigned int dram_flags () {return DRAM_FLAGS;}
+inline unsigned int active_slots () {return ACTIVE_SLOTS;}
 inline unsigned char interrupt_flags () {return INTERRUPT_FLAGS;}
 inline unsigned char read_masks (){return MASK_READ;}
-inline int read_timer_low () {return TIMER_32_L;}
-inline int read_timer_high () {return TIMER_32_H;}
+inline unsigned int read_timer_low () {return TIMER_32_L;}
+inline unsigned int read_timer_high () {return TIMER_32_H;}
 
 inline void read_in_pkt (struct Desc* input_desc){
 	*input_desc = RECV_DESC;
