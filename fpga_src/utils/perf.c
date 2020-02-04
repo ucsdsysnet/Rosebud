@@ -57,15 +57,21 @@ int main(int argc, char *argv[])
     char *device = NULL;
     struct mqnic *dev;
 
+    char *output_file_name = NULL;
+    FILE *output_file = NULL;
+
     name = strrchr(argv[0], '/');
     name = name ? 1+name : argv[0];
 
-    while ((opt = getopt(argc, argv, "d:h?")) != EOF)
+    while ((opt = getopt(argc, argv, "d:o:h?")) != EOF)
     {
         switch (opt)
         {
         case 'd':
             device = optarg;
+            break;
+        case 'o':
+            output_file_name = optarg;
             break;
         case 'h':
         case '?':
@@ -106,6 +112,8 @@ int main(int argc, char *argv[])
     int core_count = MAX_CORE_COUNT;
     int if_count = MAX_IF_COUNT;
 
+    char need_comma;
+
     uint32_t temp;
 
     uint32_t core_rx_bytes[MAX_CORE_COUNT];
@@ -127,6 +135,39 @@ int main(int argc, char *argv[])
     uint32_t if_tx_bytes_raw[MAX_IF_COUNT];
     uint32_t if_rx_frames_raw[MAX_IF_COUNT];
     uint32_t if_tx_frames_raw[MAX_IF_COUNT];
+
+    if (output_file_name)
+    {
+        output_file = fopen(output_file_name, "w");
+
+        if (!output_file)
+        {
+            perror("failed to open file");
+            ret = -1;
+            goto err;
+        }
+
+        need_comma = 0;
+
+        for (int k=0; k<core_count; k++)
+        {
+            if (need_comma)
+                fprintf(output_file, ",");
+            fprintf(output_file, "core_%d_rx_b,core_%d_tx_b,core_%d_rx_f,core_%d_tx_f", k, k, k, k);
+            need_comma = 1;
+        }
+
+        for (int k=0; k<if_count; k++)
+        {
+            if (need_comma)
+                fprintf(output_file, ",");
+            fprintf(output_file, "if_%d_rx_b,if_%d_tx_b,if_%d_rx_f,if_%d_tx_f", k, k, k, k);
+            need_comma = 1;
+        }
+
+        fprintf(output_file, "\n");
+        fflush(output_file);
+    }
 
     for (int k=0; k<core_count; k++)
     {
@@ -211,7 +252,33 @@ int main(int argc, char *argv[])
         {
             printf("if   %2d    %8d    %8d    %8d    %8d\n", k, if_rx_bytes[k], if_tx_bytes[k], if_rx_frames[k], if_tx_frames[k]);
         }
+
+        if (output_file)
+        {
+            need_comma = 0;
+
+            for (int k=0; k<core_count; k++)
+            {
+                if (need_comma)
+                    fprintf(output_file, ",");
+                fprintf(output_file, "%d,%d,%d,%d", core_rx_bytes[k], core_tx_bytes[k], core_rx_frames[k], core_tx_frames[k]);
+                need_comma = 1;
+            }
+
+            for (int k=0; k<if_count; k++)
+            {
+                if (need_comma)
+                    fprintf(output_file, ",");
+                fprintf(output_file, "%d,%d,%d,%d", if_rx_bytes[k], if_tx_bytes[k], if_rx_frames[k], if_tx_frames[k]);
+                need_comma = 1;
+            }
+
+            fprintf(output_file, "\n");
+            fflush(output_file);
+        }
     }
+
+err:
 
     mqnic_close(dev);
 
