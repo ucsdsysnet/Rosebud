@@ -141,16 +141,9 @@ def bench():
     AXIS_ETH_DATA_WIDTH = 512
     AXIS_ETH_KEEP_WIDTH = AXIS_ETH_DATA_WIDTH/8
 
-    SEND_COUNT_0 = 50
-    SEND_COUNT_1 = 50
-    SIZE_0       = 500 - 18 
-    SIZE_1       = 500 - 18
-    CHECK_PKT    = True
-    TEST_SFP     = True
-    TEST_PCIE    = True
+    PRINT_PKTS   = True
     UPDATE_INS   = True
-    FIRMWARE     = "../../../../c_code/basic_fw2.bin"
-    # FIRMWARE     = "../../../../c_code/dram_test2.bin"
+    FIRMWARE     = "../../../../c_code/pkt_gen.bin"
 
     # Inputs
     sys_clk  = Signal(bool(0))
@@ -549,25 +542,6 @@ def bench():
         rc_pause=rc_pause
     )
 
-    # test frames
-    test_frame_1 = eth_ep.EthFrame()
-    test_frame_1.eth_dest_mac = 0xDAD1D2D3D4D5
-    test_frame_1.eth_src_mac = 0x5A5152535455
-    test_frame_1.eth_type = 0x8000
-    test_frame_1.payload = bytes([0]+[x%256 for x in range(SIZE_0-1)])
-    test_frame_1.update_fcs()
-    axis_frame = test_frame_1.build_axis_fcs()
-    start_data_1 = bytearray(b'\x55\x55\x55\x55\x55\x55\x55\xD5' + bytearray(axis_frame))
-
-    test_frame_2 = eth_ep.EthFrame()
-    test_frame_2.eth_dest_mac = 0x5A5152535455
-    test_frame_2.eth_src_mac = 0xDAD1D2D3D4D5
-    test_frame_2.eth_type = 0x8000
-    test_frame_2.payload = bytes([0]+[x%256 for x in range(SIZE_1-1)])
-    test_frame_2.update_fcs()
-    axis_frame_2 = test_frame_2.build_axis_fcs()
-    start_data_2 = bytearray(b'\x55\x55\x55\x55\x55\x55\x55\xD5' + bytearray(axis_frame_2))
- 
     # DUT
     if os.system(build_cmd):
         raise Exception("Error running build command")
@@ -696,15 +670,15 @@ def bench():
         qsfp1_lpmode=qsfp1_lpmode
     )
 
-    @always(delay(3)) #25
+    @always(delay(2)) #25
     def clkgen():
         sys_clk.next = not sys_clk
 
-    @always(delay(3)) #27
+    @always(delay(2)) #27
     def clkgen3():
         core_clk.next = not core_clk
 
-    @always(delay(3)) #32
+    @always(delay(2)) #32
     def qsfp_clkgen():
         qsfp0_tx_clk.next = not qsfp0_tx_clk
         qsfp0_rx_clk.next = not qsfp0_rx_clk
@@ -715,31 +689,6 @@ def bench():
     def clk_logic():
         sys_clk_to_pcie.next = sys_clk
         sys_rst_to_pcie.next = not sys_rst
-
-    def port1():
-        for i in range (0,SEND_COUNT_0):
-          # test_frame_1.payload = bytes([x%256 for x in range(random.randrange(1980))])
-          test_frame_1.payload = bytes([i%256] + [x%256 for x in range(SIZE_0-1)])
-          test_frame_1.update_fcs()
-          axis_frame = test_frame_1.build_axis_fcs()
-          qsfp0_source.send(b'\x55\x55\x55\x55\x55\x55\x55\xD5'+bytearray(axis_frame))
-          # yield delay(random.randrange(128))
-          yield qsfp0_rx_clk.posedge
-          # yield qsfp0_rx_clk_1.posedge
-
-    def port2():
-        for i in range (0,SEND_COUNT_1):
-          # test_frame_2.payload = bytes([x%256 for x in range(10,10+random.randrange(300))])
-          # if (i%20==19):
-          #   test_frame_2.payload = bytes([x%256 for x in range(78-14)])
-          # else:
-          test_frame_2.payload = bytes([i%256] + [x%256 for x in range(SIZE_1-1)])
-          test_frame_2.update_fcs()
-          axis_frame_2 = test_frame_2.build_axis_fcs()
-          qsfp1_source.send(b'\x55\x55\x55\x55\x55\x55\x55\xD5'+bytearray(axis_frame_2))
-          # yield delay(random.randrange(128))
-          yield qsfp1_rx_clk.posedge
-          # yield qsfp1_rx_clk_1.posedge
 
     @instance
     def check():
@@ -799,107 +748,52 @@ def bench():
               yield rc.mem_write(dev_pf0_bar0+0x000404, struct.pack('<L', ((i<<1)+0)))
               yield delay(20)
           
-        yield rc.mem_write(dev_pf0_bar0+0x000408, struct.pack('<L', 0x0f00))
+        yield rc.mem_write(dev_pf0_bar0+0x000408, struct.pack('<L', 0x0000))
         yield rc.mem_write(dev_pf0_bar0+0x00040C, struct.pack('<L', 0x0000))
 
-        if (TEST_PCIE):
-          print("PCIE tests")
+        yield delay(10000)
+         
+        # put cores into reset
+        yield rc.mem_write(dev_pf0_bar0+0x00040C, struct.pack('<L', 0xffff))
 
-          # write pcie read descriptor
-          yield rc.mem_write(dev_pf0_bar0+0x000440, struct.pack('<L', (mem_base+0x0000) & 0xffffffff))
-          yield rc.mem_write(dev_pf0_bar0+0x000444, struct.pack('<L', (mem_base+0x0000 >> 32) & 0xffffffff))
-          yield rc.mem_write(dev_pf0_bar0+0x000448, struct.pack('<L', ((4<<22)+0x100100) & 0xffffffff))
-          # yield rc.mem_write(dev_pf0_bar0+0x00044C, struct.pack('<L', (((4<<16)+0x0100) >> 32) & 0xffffffff))
-          yield rc.mem_write(dev_pf0_bar0+0x000450, struct.pack('<L', 0x400))
-          yield rc.mem_write(dev_pf0_bar0+0x000454, struct.pack('<L', 0xAA))
+        for k in range (0,16):
+          yield rc.mem_write(dev_pf0_bar0+0x000410, struct.pack('<L', k))
+          yield delay(100)
+          slots      = yield from rc.mem_read(dev_pf0_bar0+0x000410, 4)
+          bytes_in   = yield from rc.mem_read(dev_pf0_bar0+0x000414, 4)
+          bytes_out  = yield from rc.mem_read(dev_pf0_bar0+0x000418, 4)
+          frames_in  = yield from rc.mem_read(dev_pf0_bar0+0x00041c, 4)
+          frames_out = yield from rc.mem_read(dev_pf0_bar0+0x000420, 4)
+          print ("Core %d stat read, slots: , bytes_in, byte_out, frames_in, frames_out" % (k))
+          print (B_2_int(slots),B_2_int(bytes_in),B_2_int(bytes_out),B_2_int(frames_in),B_2_int(frames_out))
 
-          yield delay(2000)
+        pkt_count=2*[0]
+        for k in range (0,2):
+          yield rc.mem_write(dev_pf0_bar0+0x000414, struct.pack('<L', k))
+          yield delay(100)
+          bytes_in   = yield from rc.mem_read(dev_pf0_bar0+0x000424, 4)
+          bytes_out  = yield from rc.mem_read(dev_pf0_bar0+0x000428, 4)
+          frames_in  = yield from rc.mem_read(dev_pf0_bar0+0x00042C, 4)
+          frames_out = yield from rc.mem_read(dev_pf0_bar0+0x000430, 4)
+          pkt_count[k] = B_2_int(frames_out);
+          print ("Interface %d stat read, bytes_in, byte_out, frames_in, frames_out" % (k))
+          print (B_2_int(bytes_in),B_2_int(bytes_out),B_2_int(frames_in),B_2_int(frames_out))
+        
+        if (PRINT_PKTS):
 
-          # read status
-          val = yield from rc.mem_read(dev_pf0_bar0+0x000458, 4)
-          print(val)
-
-          # write pcie write descriptor
-          yield rc.mem_write(dev_pf0_bar0+0x000460, struct.pack('<L', (mem_base+0x1000) & 0xffffffff))
-          yield rc.mem_write(dev_pf0_bar0+0x000464, struct.pack('<L', (mem_base+0x1000 >> 32) & 0xffffffff))
-          yield rc.mem_write(dev_pf0_bar0+0x000468, struct.pack('<L', ((4<<22)+0x100100) & 0xffffffff))
-          yield rc.mem_write(dev_pf0_bar0+0x000470, struct.pack('<L', 0x400))
-          yield rc.mem_write(dev_pf0_bar0+0x000474, struct.pack('<L', 0x55))
-
-          yield delay(2000)
-
-          # read status
-          val = yield from rc.mem_read(dev_pf0_bar0+0x000478, 4)
-          print(val)
-
-          data = mem_data[0x1000:(0x1000)+1024]
-          for i in range(0, len(data), 16):
-              print(" ".join(("{:02x}".format(c) for c in bytearray(data[i:i+16]))))
-
-          print("core to host write data")
-          data = mem_data[0xBCBB:(0xBCBB)+128]
-          for i in range(0, len(data), 16):
-              print(" ".join(("{:02x}".format(c) for c in bytearray(data[i:i+16]))))
-
-          assert mem_data[0:1024] == mem_data[0x1000:0x1000+1024]
-
-        yield delay(1000)
-       
-        if (TEST_SFP):
-          yield port1(),None
-          yield port2(),None
-
-          lengths = []
-          print ("send data from LAN")
-          for j in range (0,SEND_COUNT_1):
+          print ("packets from port 0:")
+          for j in range (0,pkt_count[0]):
             yield qsfp0_sink.wait()
             rx_frame = qsfp0_sink.recv()
             data = rx_frame.data
-            print ("packet number from port 0:",j)
-            for i in range(0, len(data), 16):
-                print(" ".join(("{:02x}".format(c) for c in bytearray(data[i:i+16]))))
-            if (CHECK_PKT):
-              assert rx_frame.data[0:22] == start_data_2[0:22]
-              assert rx_frame.data[23:-4] == start_data_2[23:-4]
-            lengths.append(len(data)-8)
+            print(" ".join(("{:02x}".format(c) for c in bytearray(data[0:8]))))
 
-          for j in range (0,SEND_COUNT_0):
+          print ("packets from port 1:")
+          for j in range (0,pkt_count[1]):
             yield qsfp1_sink.wait()
             rx_frame = qsfp1_sink.recv()
             data = rx_frame.data
-            print ("packet number from port 1:",j)
-            for i in range(0, len(data), 16):
-                print(" ".join(("{:02x}".format(c) for c in bytearray(data[i:i+16]))))
-            if (CHECK_PKT):
-              assert rx_frame.data[0:22] == start_data_1[0:22]
-              assert rx_frame.data[23:-4] == start_data_1[23:-4]
-            lengths.append(len(data)-8)
-
-          # print ("Very last packet:")
-          # for i in range(0, len(data), 16):
-          #     print(" ".join(("{:02x}".format(c) for c in bytearray(data[i:i+16]))))
-          print ("lengths: " , lengths)
-
-          for k in range (0,16):
-            yield rc.mem_write(dev_pf0_bar0+0x000410, struct.pack('<L', k))
-            yield delay(100)
-            slots      = yield from rc.mem_read(dev_pf0_bar0+0x000410, 4)
-            bytes_in   = yield from rc.mem_read(dev_pf0_bar0+0x000414, 4)
-            bytes_out  = yield from rc.mem_read(dev_pf0_bar0+0x000418, 4)
-            frames_in  = yield from rc.mem_read(dev_pf0_bar0+0x00041c, 4)
-            frames_out = yield from rc.mem_read(dev_pf0_bar0+0x000420, 4)
-            print ("Core %d stat read, slots: , bytes_in, byte_out, frames_in, frames_out" % (k))
-            print (B_2_int(slots),B_2_int(bytes_in),B_2_int(bytes_out),B_2_int(frames_in),B_2_int(frames_out))
-
-          for k in range (0,3):
-            yield rc.mem_write(dev_pf0_bar0+0x000414, struct.pack('<L', k))
-            yield delay(100)
-            bytes_in   = yield from rc.mem_read(dev_pf0_bar0+0x000424, 4)
-            bytes_out  = yield from rc.mem_read(dev_pf0_bar0+0x000428, 4)
-            frames_in  = yield from rc.mem_read(dev_pf0_bar0+0x00042C, 4)
-            frames_out = yield from rc.mem_read(dev_pf0_bar0+0x000430, 4)
-            print ("Interface %d stat read, bytes_in, byte_out, frames_in, frames_out" % (k))
-            print (B_2_int(bytes_in),B_2_int(bytes_out),B_2_int(frames_in),B_2_int(frames_out))
+            print(" ".join(("{:02x}".format(c) for c in bytearray(data[0:8]))))
           
         raise StopSimulation
 
