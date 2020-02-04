@@ -114,27 +114,27 @@ int main(int argc, char *argv[])
 
     char need_comma;
 
-    uint64_t temp;
+    uint32_t temp;
 
     uint64_t core_rx_bytes[MAX_CORE_COUNT];
     uint64_t core_tx_bytes[MAX_CORE_COUNT];
     uint64_t core_rx_frames[MAX_CORE_COUNT];
     uint64_t core_tx_frames[MAX_CORE_COUNT];
 
-    uint64_t core_rx_bytes_raw[MAX_CORE_COUNT];
-    uint64_t core_tx_bytes_raw[MAX_CORE_COUNT];
-    uint64_t core_rx_frames_raw[MAX_CORE_COUNT];
-    uint64_t core_tx_frames_raw[MAX_CORE_COUNT];
+    uint32_t core_rx_bytes_raw[MAX_CORE_COUNT];
+    uint32_t core_tx_bytes_raw[MAX_CORE_COUNT];
+    uint32_t core_rx_frames_raw[MAX_CORE_COUNT];
+    uint32_t core_tx_frames_raw[MAX_CORE_COUNT];
 
     uint64_t if_rx_bytes[MAX_IF_COUNT];
     uint64_t if_tx_bytes[MAX_IF_COUNT];
     uint64_t if_rx_frames[MAX_IF_COUNT];
     uint64_t if_tx_frames[MAX_IF_COUNT];
 
-    uint64_t if_rx_bytes_raw[MAX_IF_COUNT];
-    uint64_t if_tx_bytes_raw[MAX_IF_COUNT];
-    uint64_t if_rx_frames_raw[MAX_IF_COUNT];
-    uint64_t if_tx_frames_raw[MAX_IF_COUNT];
+    uint32_t if_rx_bytes_raw[MAX_IF_COUNT];
+    uint32_t if_tx_bytes_raw[MAX_IF_COUNT];
+    uint32_t if_rx_frames_raw[MAX_IF_COUNT];
+    uint32_t if_tx_frames_raw[MAX_IF_COUNT];
 
     if (output_file_name)
     {
