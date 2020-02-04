@@ -795,6 +795,7 @@ def bench():
             data = rx_frame.data
             print(" ".join(("{:02x}".format(c) for c in bytearray(data[0:8]))))
           
+        yield delay(10000)
         raise StopSimulation
 
     return instances()

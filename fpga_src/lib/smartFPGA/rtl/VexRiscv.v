@@ -1,5 +1,5 @@
 // Generator : SpinalHDL v1.3.6    git head : 9bf01e7f360e003fac1dd5ca8b8f4bffec0e52b8
-// Date      : 21/01/2020, 22:34:08
+// Date      : 04/02/2020, 02:52:14
 // Component : VexRiscv
 
 
@@ -2409,7 +2409,7 @@ module VexRiscv (
   assign CsrPlugin_misa_base = (2'b01);
   assign CsrPlugin_misa_extensions = (26'b00000000000000000001000010);
   assign CsrPlugin_mtvec_mode = (2'b00);
-  assign CsrPlugin_mtvec_base = (30'b000000000000000000000010100000);
+  assign CsrPlugin_mtvec_base = (30'b000000000000000000000000000001);
   assign _zz_101_ = (CsrPlugin_mip_MTIP && CsrPlugin_mie_MTIE);
   assign _zz_102_ = (CsrPlugin_mip_MSIP && CsrPlugin_mie_MSIE);
   assign _zz_103_ = (CsrPlugin_mip_MEIP && CsrPlugin_mie_MEIE);

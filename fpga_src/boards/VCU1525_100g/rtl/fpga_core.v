@@ -208,9 +208,9 @@ parameter LVL1_CTRL_WIDTH  = 32+4; //DON'T CHANGE
 parameter LVL1_DRAM_WIDTH  = 64; //DRAM CONTROL
 parameter LVL2_CTRL_WIDTH  = 32+4; //DON'T CHANGE
 parameter LVL2_DRAM_WIDTH  = 64; //DON'T CHANGE
-parameter TX_FIFO_DEPTH    = 32768;
+parameter TX_FIFO_DEPTH    = 8*32768;
 parameter RX_FIFO_DEPTH    = 32768;
-parameter STG_F_DATA_DEPTH = 8192;
+parameter STG_F_DATA_DEPTH = 32768;
 parameter STG_F_CTRL_DEPTH = 32; // TKEEP is not enabled, so 32 words
 parameter STG_F_DRAM_DEPTH = 1024; 
 parameter V_MAC_FIFO_SIZE  = 1024;
@@ -300,6 +300,18 @@ wire [INTERFACE_COUNT-1:0] port_rx_axis_tvalid;
 wire [INTERFACE_COUNT-1:0] port_rx_axis_tlast;
 wire [INTERFACE_COUNT-1:0] port_rx_axis_tuser;
 
+wire [INTERFACE_COUNT*AXIS_ETH_DATA_WIDTH-1:0] port_tx_axis_tdata_n;
+wire [INTERFACE_COUNT*AXIS_ETH_KEEP_WIDTH-1:0] port_tx_axis_tkeep_n;
+wire [INTERFACE_COUNT-1:0] port_tx_axis_tvalid_n;
+wire [INTERFACE_COUNT-1:0] port_tx_axis_tready_n;
+wire [INTERFACE_COUNT-1:0] port_tx_axis_tlast_n;
+
+wire [INTERFACE_COUNT*AXIS_ETH_DATA_WIDTH-1:0] port_rx_axis_tdata_r;
+wire [INTERFACE_COUNT*AXIS_ETH_KEEP_WIDTH-1:0] port_rx_axis_tkeep_r;
+wire [INTERFACE_COUNT-1:0] port_rx_axis_tvalid_r;
+wire [INTERFACE_COUNT-1:0] port_rx_axis_tready_r;
+wire [INTERFACE_COUNT-1:0] port_rx_axis_tlast_r;
+
 if (QSFP0_IND >= 0 && QSFP0_IND < INTERFACE_COUNT) begin
     assign port_tx_clk[QSFP0_IND] = qsfp0_tx_clk;
     assign port_tx_rst[QSFP0_IND] = qsfp0_tx_rst;
@@ -362,6 +374,39 @@ wire [(INTERFACE_COUNT+V_PORT_COUNT)-1:0] rx_axis_tvalid, rx_axis_tready, rx_axi
 genvar m;
 generate
     for (m=0;m<INTERFACE_COUNT;m=m+1) begin: MAC_async_FIFO
+        axis_pipeline_register # (
+            .DATA_WIDTH(LVL1_DATA_WIDTH),
+            .KEEP_ENABLE(LVL1_STRB_WIDTH > 1),
+            .KEEP_WIDTH(LVL1_STRB_WIDTH),
+            .LAST_ENABLE(1),
+            .ID_ENABLE(0),
+            .DEST_ENABLE(0),
+            .USER_ENABLE(0),
+            .REG_TYPE(2),
+            .LENGTH(2)
+        ) mac_tx_pipeline (
+            .rst(sys_rst),
+            .clk(sys_clk),
+
+            .s_axis_tdata(tx_axis_tdata[m*LVL1_DATA_WIDTH +: LVL1_DATA_WIDTH]),
+            .s_axis_tkeep(tx_axis_tkeep[m*LVL1_STRB_WIDTH +: LVL1_STRB_WIDTH]),
+            .s_axis_tvalid(tx_axis_tvalid[m +: 1]),
+            .s_axis_tready(tx_axis_tready[m +: 1]),
+            .s_axis_tlast(tx_axis_tlast[m +: 1]),
+            .s_axis_tid(8'd0),
+            .s_axis_tdest(8'd0),
+            .s_axis_tuser(1'b0),
+            
+            .m_axis_tdata(port_tx_axis_tdata_n[m*LVL1_DATA_WIDTH +: LVL1_DATA_WIDTH]),
+            .m_axis_tkeep(port_tx_axis_tkeep_n[m*LVL1_STRB_WIDTH +: LVL1_STRB_WIDTH]),
+            .m_axis_tvalid(port_tx_axis_tvalid_n[m +: 1]),
+            .m_axis_tready(port_tx_axis_tready_n[m +: 1]),
+            .m_axis_tlast(port_tx_axis_tlast_n[m +: 1]),
+            .m_axis_tid(),
+            .m_axis_tdest(),
+            .m_axis_tuser()
+        );
+
         axis_async_fifo #(
             .DEPTH(TX_FIFO_DEPTH),
             .DATA_WIDTH(AXIS_ETH_DATA_WIDTH),
@@ -382,11 +427,11 @@ generate
             .async_rst(sys_rst | port_tx_rst[m]),
             // AXI input
             .s_clk(sys_clk),
-            .s_axis_tdata(tx_axis_tdata[m*LVL1_DATA_WIDTH +: LVL1_DATA_WIDTH]),
-            .s_axis_tkeep(tx_axis_tkeep[m*LVL1_STRB_WIDTH +: LVL1_STRB_WIDTH]),
-            .s_axis_tvalid(tx_axis_tvalid[m +: 1]),
-            .s_axis_tready(tx_axis_tready[m +: 1]),
-            .s_axis_tlast(tx_axis_tlast[m +: 1]),
+            .s_axis_tdata(port_tx_axis_tdata_n[m*LVL1_DATA_WIDTH +: LVL1_DATA_WIDTH]),
+            .s_axis_tkeep(port_tx_axis_tkeep_n[m*LVL1_STRB_WIDTH +: LVL1_STRB_WIDTH]),
+            .s_axis_tvalid(port_tx_axis_tvalid_n[m]),
+            .s_axis_tready(port_tx_axis_tready_n[m]),
+            .s_axis_tlast(port_tx_axis_tlast_n[m]),
             .s_axis_tid(8'd0),
             .s_axis_tdest(8'd0),
             .s_axis_tuser(1'b0),
@@ -439,11 +484,11 @@ generate
             .s_axis_tuser(1'b0),
             // AXI output
             .m_clk(sys_clk),
-            .m_axis_tdata(rx_axis_tdata[m*LVL1_DATA_WIDTH +: LVL1_DATA_WIDTH]),
-            .m_axis_tkeep(rx_axis_tkeep[m*LVL1_STRB_WIDTH +: LVL1_STRB_WIDTH]),
-            .m_axis_tvalid(rx_axis_tvalid[m +: 1]),
-            .m_axis_tready(rx_axis_tready[m +: 1]),
-            .m_axis_tlast(rx_axis_tlast[m +: 1]),
+            .m_axis_tdata(port_rx_axis_tdata_r[m*LVL1_DATA_WIDTH +: LVL1_DATA_WIDTH]),
+            .m_axis_tkeep(port_rx_axis_tkeep_r[m*LVL1_STRB_WIDTH +: LVL1_STRB_WIDTH]),
+            .m_axis_tvalid(port_rx_axis_tvalid_r[m]),
+            .m_axis_tready(port_rx_axis_tready_r[m]),
+            .m_axis_tlast(port_rx_axis_tlast_r[m]),
             .m_axis_tid(),
             .m_axis_tdest(),
             .m_axis_tuser(),
@@ -455,6 +500,40 @@ generate
             .m_status_bad_frame(),
             .m_status_good_frame()
         );
+        
+        axis_pipeline_register # (
+            .DATA_WIDTH(LVL1_DATA_WIDTH),
+            .KEEP_ENABLE(LVL1_STRB_WIDTH > 1),
+            .KEEP_WIDTH(LVL1_STRB_WIDTH),
+            .LAST_ENABLE(1),
+            .ID_ENABLE(0),
+            .DEST_ENABLE(0),
+            .USER_ENABLE(0),
+            .REG_TYPE(2),
+            .LENGTH(2)
+        ) mac_rx_pipeline (
+            .rst(sys_rst),
+            .clk(sys_clk),
+
+            .s_axis_tdata(port_rx_axis_tdata_r[m*LVL1_DATA_WIDTH +: LVL1_DATA_WIDTH]),
+            .s_axis_tkeep(port_rx_axis_tkeep_r[m*LVL1_STRB_WIDTH +: LVL1_STRB_WIDTH]),
+            .s_axis_tvalid(port_rx_axis_tvalid_r[m]),
+            .s_axis_tready(port_rx_axis_tready_r[m]),
+            .s_axis_tlast(port_rx_axis_tlast_r[m]),
+            .s_axis_tid(8'd0),
+            .s_axis_tdest(8'd0),
+            .s_axis_tuser(1'b0),
+
+            .m_axis_tdata(rx_axis_tdata[m*LVL1_DATA_WIDTH +: LVL1_DATA_WIDTH]),
+            .m_axis_tkeep(rx_axis_tkeep[m*LVL1_STRB_WIDTH +: LVL1_STRB_WIDTH]),
+            .m_axis_tvalid(rx_axis_tvalid[m]),
+            .m_axis_tready(rx_axis_tready[m]),
+            .m_axis_tlast(rx_axis_tlast[m]),
+            .m_axis_tid(),
+            .m_axis_tdest(),
+            .m_axis_tuser()
+        );
+
     end
 endgenerate
 
@@ -1106,7 +1185,7 @@ axis_switch_2lvl # (
     .M_REG_TYPE      (2),
     .CLUSTER_COUNT   (CLUSTER_COUNT),
     .STAGE_FIFO_DEPTH(STG_F_DATA_DEPTH),
-    .FRAME_FIFO(1),
+    .FRAME_FIFO(0),
     .SEPARATE_CLOCKS(SEPARATE_CLOCKS)
 ) data_in_sw (
     .s_clk(sys_clk),

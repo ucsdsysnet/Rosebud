@@ -25,7 +25,7 @@ object GenSmallAndProductive extends App{
           catchAccessFault = true,
           earlyInjection = true
         ),
-        new CsrPlugin(CsrPluginConfig.smallest(0x00000280l)),
+        new CsrPlugin(CsrPluginConfig.smallest(0x00000004l)),
         new DecoderSimplePlugin(
           catchIllegalInstruction = true
         ),
