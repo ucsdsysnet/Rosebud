@@ -3,7 +3,7 @@ PREFIX=/usr/local
 BINDIR=$(DESTDIR)$(PREFIX)/bin
 
 CC=gcc
-CFLAGS=-O3 -Wall
+CFLAGS=-O3 -Wall -I../driver/mqnic
 
 BIN=perf
 
