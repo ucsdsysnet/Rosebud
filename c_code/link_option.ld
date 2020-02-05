@@ -1,10 +1,11 @@
 
-OUTPUT_FORMAT("elf32-littleriscv")
+OUTPUT_FORMAT("elf32-littleriscv", "elf32-littleriscv", "elf32-littleriscv")
 OUTPUT_ARCH(riscv)
 
 MEMORY
 {
-	MEM (rwx) : ORIGIN = 0x0, LENGTH = 8k
+	IMEM (x!rwai) : ORIGIN = 0x00000000, LENGTH = 64k
+  DMEM (rwa!xi) : ORIGIN = 0x00100000, LENGTH = 32k
 }
 
 ENTRY(_start)
@@ -19,18 +20,9 @@ SECTIONS
     *(.text .text*)
     . = ALIGN(4);
     _end_text = .;
-  } > MEM
+  } > IMEM
 
-  .data :
-  {
-    _start_data = .;
-    *(.data*)
-    *(.sdata*)
-    . = ALIGN(4);
-    _end_data = .;
-  } > MEM
-
-  .bss :
+  .bss (NOLOAD) :
   {
     _start_bss = .;
     *(.bss*)
@@ -38,9 +30,9 @@ SECTIONS
     . = ALIGN(4);
     _end_bss = .;
     _end = .;
-  } > MEM
+  } > DMEM
 
 }
 
 PROVIDE(_start_heap = _end);
-PROVIDE(_end_stack  = ORIGIN(MEM) + LENGTH(MEM));
+PROVIDE(_end_stack  = ORIGIN(DMEM) + LENGTH(DMEM));
