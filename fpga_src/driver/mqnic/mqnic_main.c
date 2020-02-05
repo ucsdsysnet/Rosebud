@@ -43,6 +43,7 @@ MODULE_VERSION(DRIVER_VERSION);
 MODULE_SUPPORTED_DEVICE(DRIVER_NAME);
 
 static const struct pci_device_id pci_ids[] = {
+    { PCI_DEVICE(0x1234, 0xbeef) },
     { PCI_DEVICE(0x1234, 0x1001) },
     { PCI_DEVICE(0x5543, 0x1001) },
     { 0 /* end */ }
