@@ -44,7 +44,8 @@ static void usage(char *name)
 {
     fprintf(stderr,
         "usage: %s [options]\n"
-        " -d name    device to open (/sys/bus/pci/devices/.../resource0)\n",
+        " -d name    device to open (/sys/bus/pci/devices/.../resource0)\n"
+        " -o file    output CSV file name (output.csv)\n",
         name);
 }
 
@@ -102,12 +103,6 @@ int main(int argc, char *argv[])
     printf("FW version: %d.%d\n", dev->fw_ver >> 16, dev->fw_ver & 0xffff);
     printf("Board ID: 0x%08x\n", dev->board_id);
     printf("Board version: %d.%d\n", dev->board_ver >> 16, dev->board_ver & 0xffff);
-    printf("PHC count: %d\n", dev->phc_count);
-    printf("PHC offset: 0x%08x\n", dev->phc_offset);
-    printf("PHC stride: 0x%08x\n", dev->phc_stride);
-    printf("IF count: %d\n", dev->if_count);
-    printf("IF stride: 0x%08x\n", dev->if_stride);
-    printf("IF CSR offset: 0x%08x\n", dev->if_csr_offset);
 
     int core_count = MAX_CORE_COUNT;
     int if_count = MAX_IF_COUNT;

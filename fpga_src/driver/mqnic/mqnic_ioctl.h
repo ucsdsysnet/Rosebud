@@ -48,4 +48,12 @@ struct mqnic_ioctl_info {
     size_t regs_size;
 };
 
+#define MQNIC_IOCTL_BLOCK_WRITE _IOW(MQNIC_IOCTL_TYPE, 0xf1, struct mqnic_ioctl_block_write)
+
+struct mqnic_ioctl_block_write {
+    void *data;
+    __u32 addr;
+    size_t len;
+};
+
 #endif /* MQNIC_IOCTL_H */
