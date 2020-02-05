@@ -107,6 +107,7 @@ fail_invalid_offset:
 static long mqnic_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 {
     struct mqnic_dev *mqnic = filp->private_data;
+    struct device *dev = &mqnic->pdev->dev;
 
     if (_IOC_TYPE(cmd) != MQNIC_IOCTL_TYPE)
         return -ENOTTY;
@@ -124,6 +125,53 @@ static long mqnic_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 
             if (copy_to_user((void *)arg, &ctl, sizeof(ctl)) != 0)
                 return -EFAULT;
+
+            return 0;
+        }
+    case MQNIC_IOCTL_BLOCK_WRITE:
+        {
+            struct mqnic_ioctl_block_write ctl;
+            u8 *buf;
+            dma_addr_t dma;
+
+            if (copy_from_user(&ctl, (void *)arg, sizeof(ctl)) != 0)
+                return -EFAULT;
+
+            if (ctl.len > 65536)
+                ctl.len = 65536;
+
+            dev_info(dev, "mqnic_ioctl: block write %ld bytes to address 0x%08x", ctl.len, ctl.addr);
+
+            // allocate DMA buffer
+            buf = dma_alloc_coherent(dev, 65536, &dma, GFP_KERNEL);
+
+            if (!buf)
+            {
+                dev_err(dev, "Failed to allocate DMA buffer");
+                return -ENOMEM;
+            }
+
+            if (copy_from_user(buf, ctl.data, ctl.len) != 0)
+            {
+                dma_free_coherent(dev, 65536, buf, dma);
+                return -EFAULT;
+            }
+
+            // enable DMA
+            iowrite32(0x1, mqnic->hw_addr+0x000400);
+
+            // write DMA address
+            iowrite32(dma&0xffffffff, mqnic->hw_addr+0x000440);
+            iowrite32((dma >> 32)&0xffffffff, mqnic->hw_addr+0x000444);
+
+            // initiate block transfer
+            iowrite32(ctl.addr, mqnic->hw_addr+0x000448);
+            iowrite32(ctl.len, mqnic->hw_addr+0x000450);
+            iowrite32(0, mqnic->hw_addr+0x000454);
+            msleep(100);
+
+            // free DMA buffer
+            dma_free_coherent(dev, 65536, buf, dma);
 
             return 0;
         }
