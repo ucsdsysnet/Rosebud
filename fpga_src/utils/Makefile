@@ -5,7 +5,7 @@ BINDIR=$(DESTDIR)$(PREFIX)/bin
 CC=gcc
 CFLAGS=-O3 -Wall -I../driver/mqnic
 
-BIN=dump perf
+BIN=dump perf rvfw
 
 all: $(BIN)
 
@@ -13,6 +13,9 @@ dump: dump.c mqnic.c
 	$(CC) $(CFLAGS) $^ -o $@
 
 perf: perf.c mqnic.c
+	$(CC) $(CFLAGS) $^ -o $@
+
+rvfw: rvfw.c mqnic.c
 	$(CC) $(CFLAGS) $^ -o $@
 
 install:
