@@ -20,15 +20,14 @@ int main(void){
 		pkt_data[i][0] = core_id();
 	}
 
-	pkt_num = 0;
-
-	packet.len  = 9000;
-	packet.tag  = 0;
+	pkt_num    = 0;
+	packet.len = 128;
+	packet.tag = 0;
 
 	while (1){
     for (i=0;i<16;i++) {
 			pkt_data[i][1] = pkt_num;
-		  packet.port = i & 0x1;
+	    packet.port = i & 0x1;
 			packet.data = (unsigned char *) pkt_data[i];
 		  safe_pkt_send(&packet);
 			pkt_num++;
