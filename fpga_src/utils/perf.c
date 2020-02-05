@@ -44,7 +44,8 @@ static void usage(char *name)
 {
     fprintf(stderr,
         "usage: %s [options]\n"
-        " -d name    device to open (/sys/bus/pci/devices/.../resource0)\n",
+        " -d name    device to open (/sys/bus/pci/devices/.../resource0)\n"
+        " -o file    output CSV file name (output.csv)\n",
         name);
 }
 
