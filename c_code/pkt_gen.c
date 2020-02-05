@@ -6,6 +6,9 @@ int main(void){
 	unsigned int pkt_num;
 	unsigned int * pkt_data[16];
 	int i;
+	unsigned int shift;
+
+	shift = (core_id()>>2) & 0x1;
 
 	write_timer_interval(0x00000200);
 	set_masks(0x1F); //enable just errors 
@@ -21,16 +24,17 @@ int main(void){
 	}
 
 	pkt_num    = 0;
-	packet.len = 128;
+	packet.len = 1500;
 	packet.tag = 0;
+	// packet.port = 0;
 
 	while (1){
-    for (i=0;i<16;i++) {
-			pkt_data[i][1] = pkt_num;
-	    packet.port = i & 0x1;
-			packet.data = (unsigned char *) pkt_data[i];
-		  safe_pkt_send(&packet);
-			pkt_num++;
+            for (i=0;i<16;i++) {
+	        pkt_data[i][1] = pkt_num;
+	        packet.port = (i+shift) & 0x1;
+		packet.data = (unsigned char *) pkt_data[i];
+		safe_pkt_send(&packet);
+		pkt_num++;
 	  } 
   }
   
