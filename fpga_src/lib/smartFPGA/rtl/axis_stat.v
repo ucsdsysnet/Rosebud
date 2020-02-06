@@ -13,20 +13,19 @@ module axis_stat # (
   input  wire                         monitor_axis_tvalid,
   input  wire                         monitor_axis_tready,
   input  wire                         monitor_axis_tlast,
+  input  wire                         monitor_drop_pulse,
 
   output reg  [BYTE_COUNT_WIDTH-1:0]  byte_count,
-  output reg  [FRAME_COUNT_WIDTH-1:0] frame_count
+  output reg  [FRAME_COUNT_WIDTH-1:0] frame_count,
+  output reg  [BYTE_COUNT_WIDTH-1:0]  drop_count
 );
 
 integer i, bit_cnt;
 
 always @ (posedge clk) begin
-  if (rst || clear) begin
-    byte_count  <= {BYTE_COUNT_WIDTH{1'b0}};
-    frame_count <= {FRAME_COUNT_WIDTH{1'b0}};
-  end else if (monitor_axis_tready && monitor_axis_tvalid) begin
-    // valid transfer cycle
 
+  // valid transfer cycle
+  if (monitor_axis_tready && monitor_axis_tvalid) begin
     if (KEEP_ENABLE) begin
       bit_cnt = 0;
       for (i = 0; i <= KEEP_WIDTH; i = i + 1) begin
@@ -41,6 +40,16 @@ always @ (posedge clk) begin
     if (monitor_axis_tlast)
       frame_count <= frame_count + 1;
   end
+  
+  if (monitor_drop_pulse)
+    drop_count <= drop_count + 1;
+  
+  if (rst || clear) begin
+    byte_count  <= {BYTE_COUNT_WIDTH{1'b0}};
+    frame_count <= {FRAME_COUNT_WIDTH{1'b0}};
+    drop_count  <= {FRAME_COUNT_WIDTH{1'b0}};
+  end 
+
 end
 
 endmodule

@@ -311,6 +311,8 @@ wire [INTERFACE_COUNT*AXIS_ETH_KEEP_WIDTH-1:0] port_rx_axis_tkeep_r;
 wire [INTERFACE_COUNT-1:0] port_rx_axis_tvalid_r;
 wire [INTERFACE_COUNT-1:0] port_rx_axis_tready_r;
 wire [INTERFACE_COUNT-1:0] port_rx_axis_tlast_r;
+wire [INTERFACE_COUNT-1:0] port_rx_axis_overflow_r;
+wire [INTERFACE_COUNT-1:0] port_rx_axis_bad_frame_r;
 
 if (QSFP0_IND >= 0 && QSFP0_IND < INTERFACE_COUNT) begin
     assign port_tx_clk[QSFP0_IND] = qsfp0_tx_clk;
@@ -371,6 +373,8 @@ wire [(INTERFACE_COUNT+V_PORT_COUNT)*LVL1_DATA_WIDTH-1:0] rx_axis_tdata;
 wire [(INTERFACE_COUNT+V_PORT_COUNT)*LVL1_STRB_WIDTH-1:0] rx_axis_tkeep;
 wire [(INTERFACE_COUNT+V_PORT_COUNT)-1:0] rx_axis_tvalid, rx_axis_tready, rx_axis_tlast;
 
+reg  [INTERFACE_COUNT-1:0] rx_drop, rx_drop_r;
+
 genvar m;
 generate
     for (m=0;m<INTERFACE_COUNT;m=m+1) begin: MAC_async_FIFO
@@ -385,8 +389,8 @@ generate
             .REG_TYPE(2),
             .LENGTH(2)
         ) mac_tx_pipeline (
-            .rst(sys_rst),
             .clk(sys_clk),
+            .rst(sys_rst),
 
             .s_axis_tdata(tx_axis_tdata[m*LVL1_DATA_WIDTH +: LVL1_DATA_WIDTH]),
             .s_axis_tkeep(tx_axis_tkeep[m*LVL1_STRB_WIDTH +: LVL1_STRB_WIDTH]),
@@ -496,8 +500,8 @@ generate
             .s_status_overflow(),
             .s_status_bad_frame(),
             .s_status_good_frame(),
-            .m_status_overflow(),
-            .m_status_bad_frame(),
+            .m_status_overflow(port_rx_axis_overflow_r[m]),
+            .m_status_bad_frame(port_rx_axis_bad_frame_r[m]),
             .m_status_good_frame()
         );
         
@@ -512,8 +516,8 @@ generate
             .REG_TYPE(2),
             .LENGTH(2)
         ) mac_rx_pipeline (
-            .rst(sys_rst),
             .clk(sys_clk),
+            .rst(sys_rst),
 
             .s_axis_tdata(port_rx_axis_tdata_r[m*LVL1_DATA_WIDTH +: LVL1_DATA_WIDTH]),
             .s_axis_tkeep(port_rx_axis_tkeep_r[m*LVL1_STRB_WIDTH +: LVL1_STRB_WIDTH]),
@@ -534,6 +538,14 @@ generate
             .m_axis_tuser()
         );
 
+      always @ (posedge sys_clk)
+        if (sys_rst) begin
+          rx_drop   <= {INTERFACE_COUNT{1'b0}};
+          rx_drop_r <= {INTERFACE_COUNT{1'b0}};
+        end else begin
+          rx_drop   <= port_rx_axis_overflow_r | port_rx_axis_bad_frame_r;
+          rx_drop_r <= rx_drop;
+        end
     end
 endgenerate
 
@@ -594,6 +606,7 @@ wire [FRAME_COUNT_WIDTH-1:0]  core_out_frame_count_r;
 wire [BYTE_COUNT_WIDTH-1:0]   interface_in_byte_count;
 wire [BYTE_COUNT_WIDTH-1:0]   interface_out_byte_count;
 wire [FRAME_COUNT_WIDTH-1:0]  interface_in_frame_count;
+wire [FRAME_COUNT_WIDTH-1:0]  interface_in_drop_count;
 wire [FRAME_COUNT_WIDTH-1:0]  interface_out_frame_count;
 
 // AXI lite connections
@@ -755,6 +768,7 @@ pcie_config # (
   .stat_read_interface      (stat_read_interface),
   .interface_in_byte_count  (interface_in_byte_count),
   .interface_in_frame_count (interface_in_frame_count),
+  .interface_in_drop_count  (interface_in_drop_count),
   .interface_out_byte_count (interface_out_byte_count),
   .interface_out_frame_count(interface_out_frame_count),
 
@@ -1244,10 +1258,12 @@ stat_reader # (
   .monitor_axis_tvalid(sched_rx_axis_tvalid),
   .monitor_axis_tready(sched_rx_axis_tready),
   .monitor_axis_tlast(sched_rx_axis_tlast),
+  .monitor_drop_pulse({{V_PORT_COUNT{1'b0}},rx_drop_r}),
 
   .port_select(stat_read_interface),
   .byte_count(interface_in_byte_count),
-  .frame_count(interface_in_frame_count)
+  .frame_count(interface_in_frame_count),
+  .drop_count(interface_in_drop_count)
 );
 
 stat_reader # (
@@ -1266,10 +1282,12 @@ stat_reader # (
   .monitor_axis_tvalid(data_s_axis_tvalid),
   .monitor_axis_tready(data_s_axis_tready),
   .monitor_axis_tlast(data_s_axis_tlast),
+  .monitor_drop_pulse({CORE_COUNT{1'b0}}),
 
   .port_select(stat_read_core_r),
   .byte_count(core_in_byte_count),
-  .frame_count(core_in_frame_count)
+  .frame_count(core_in_frame_count),
+  .drop_count()
 );
 
 axis_switch_2lvl # (
@@ -1337,10 +1355,12 @@ stat_reader # (
   .monitor_axis_tvalid(sched_tx_axis_tvalid),
   .monitor_axis_tready(sched_tx_axis_tready),
   .monitor_axis_tlast(sched_tx_axis_tlast),
+  .monitor_drop_pulse({INTERFACE_COUNT+V_PORT_COUNT{1'b0}}),
 
   .port_select(stat_read_interface),
   .byte_count(interface_out_byte_count),
-  .frame_count(interface_out_frame_count)
+  .frame_count(interface_out_frame_count),
+  .drop_count()
 );
 
 stat_reader # (
@@ -1354,6 +1374,7 @@ stat_reader # (
   .clk(core_clk),
   .port_rst(block_reset),
   .port_clear({CORE_COUNT{1'b0}}),
+  .monitor_drop_pulse({CORE_COUNT{1'b0}}),
 
   .monitor_axis_tkeep(data_m_axis_tkeep),
   .monitor_axis_tvalid(data_m_axis_tvalid),
@@ -1362,7 +1383,8 @@ stat_reader # (
 
   .port_select(stat_read_core_r),
   .byte_count(core_out_byte_count),
-  .frame_count(core_out_frame_count)
+  .frame_count(core_out_frame_count),
+  .drop_count()
 );
 
 axis_switch_2lvl # (
