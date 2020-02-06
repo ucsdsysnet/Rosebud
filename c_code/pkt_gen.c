@@ -24,16 +24,9 @@ int main(void){
 	}
 
 	pkt_num    = 0;
-	packet.len = 64;
+	packet.len = 9000;
 	packet.tag = 0;
-
-	if (two_ports==1)
-		if ((core_id() & 0x4)==0)
-			packet.port = 0;
-		else
-			packet.port = 1;
-	else
-		packet.port = 0;
+	packet.port = 0;
 
 	while (1){
 		for (i=0;i<16;i++) {

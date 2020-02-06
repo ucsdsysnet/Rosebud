@@ -1,11 +1,13 @@
 
+TEST=pkt_gen
+SIZE=9000
 PREFIX=/usr/local
 BINDIR=$(DESTDIR)$(PREFIX)/bin
-BIN_FILE=/home/moein/BumpinTheWire/c_code/latency.bin
-OUT_FILE=stat_read.csv
-DEV=mqnic1
+BIN_FILE=/home/moein/BumpinTheWire/c_code/$(TEST).bin
+OUT_FILE=$(TEST)_$(SIZE).csv
+DEV=mqnic0
 ENABLE=0xffff
-RECV=0xff00
+RECV=0xffff
 
 CC=gcc
 CFLAGS=-O3 -Wall -I../driver/mqnic
@@ -31,7 +33,7 @@ clean:
 	rm -f $(BIN)
 
 do:
-	make -C ~/c/
+	make -C ~/c/ NAME=$(TEST)
 	sudo ./rvfw -d /dev/$(DEV) -w $(BIN_FILE) -e $(ENABLE) -r $(RECV)
 	sudo ./perf -d /dev/$(DEV) -o $(OUT_FILE)
 

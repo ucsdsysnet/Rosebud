@@ -1,8 +1,6 @@
 #include "core2.h"
 
 struct Desc packet;
-unsigned int start_time, end_time;
-volatile unsigned short * sh_test  = (volatile unsigned short *) 0x0700A;
 
 int main(void){
 
@@ -16,14 +14,7 @@ int main(void){
 	
 	while (1){
 		if (in_pkt_ready()){
-	 		
 			read_in_pkt(&packet);
-
-			if (packet.port==0)
-				packet.port = 1;
-			else
-				packet.port = 0;
-			
 			safe_pkt_send(&packet);
   	}
   }
