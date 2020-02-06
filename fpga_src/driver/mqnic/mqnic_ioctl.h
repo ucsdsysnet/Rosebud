@@ -56,4 +56,12 @@ struct mqnic_ioctl_block_write {
     size_t len;
 };
 
+#define MQNIC_IOCTL_BLOCK_READ _IOW(MQNIC_IOCTL_TYPE, 0xf2, struct mqnic_ioctl_block_read)
+
+struct mqnic_ioctl_block_read {
+    void *data;
+    __u32 addr;
+    size_t len;
+};
+
 #endif /* MQNIC_IOCTL_H */

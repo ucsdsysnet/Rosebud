@@ -183,6 +183,61 @@ static long mqnic_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 
             return 0;
         }
+    case MQNIC_IOCTL_BLOCK_READ:
+        {
+            struct mqnic_ioctl_block_read ctl;
+            u8 *buf;
+            dma_addr_t dma;
+            int tag;
+            unsigned long t;
+
+            if (copy_from_user(&ctl, (void *)arg, sizeof(ctl)) != 0)
+                return -EFAULT;
+
+            if (ctl.len > 65536)
+                ctl.len = 65536;
+
+            dev_info(dev, "mqnic_ioctl: block read %ld bytes from address 0x%08x", ctl.len, ctl.addr);
+
+            // allocate DMA buffer
+            buf = dma_alloc_coherent(dev, 65536, &dma, GFP_KERNEL);
+
+            if (!buf)
+            {
+                dev_err(dev, "Failed to allocate DMA buffer");
+                return -ENOMEM;
+            }
+
+            // enable DMA
+            iowrite32(0x1, mqnic->hw_addr+0x000400);
+
+            // write DMA address
+            iowrite32(dma&0xffffffff, mqnic->hw_addr+0x000460);
+            iowrite32((dma >> 32)&0xffffffff, mqnic->hw_addr+0x000464);
+
+            // initiate block transfer
+            tag = ioread32(mqnic->hw_addr+0x000474); // dummy read
+            tag = (ioread32(mqnic->hw_addr+0x000478) & 0x7f) + 1;
+            iowrite32(ctl.addr, mqnic->hw_addr+0x000468);
+            iowrite32(ctl.len, mqnic->hw_addr+0x000470);
+            iowrite32(tag, mqnic->hw_addr+0x000474);
+
+            // wait for transfer to complete
+            t = jiffies + msecs_to_jiffies(200);
+            while (time_before(jiffies, t) && (ioread32(mqnic->hw_addr+0x000478) & 0xff) != tag) {}
+
+            // copy read data to userspace
+            if (copy_to_user(ctl.data, buf, ctl.len) != 0)
+            {
+                dma_free_coherent(dev, 65536, buf, dma);
+                return -EFAULT;
+            }
+
+            // free DMA buffer
+            dma_free_coherent(dev, 65536, buf, dma);
+
+            return 0;
+        }
     default:
         return -ENOTTY;
     }
