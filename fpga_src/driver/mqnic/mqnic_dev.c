@@ -133,6 +133,8 @@ static long mqnic_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
             struct mqnic_ioctl_block_write ctl;
             u8 *buf;
             dma_addr_t dma;
+            int tag;
+            unsigned long t;
 
             if (copy_from_user(&ctl, (void *)arg, sizeof(ctl)) != 0)
                 return -EFAULT;
@@ -151,6 +153,7 @@ static long mqnic_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
                 return -ENOMEM;
             }
 
+            // copy write data from userspace
             if (copy_from_user(buf, ctl.data, ctl.len) != 0)
             {
                 dma_free_coherent(dev, 65536, buf, dma);
@@ -165,10 +168,15 @@ static long mqnic_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
             iowrite32((dma >> 32)&0xffffffff, mqnic->hw_addr+0x000444);
 
             // initiate block transfer
+            tag = ioread32(mqnic->hw_addr+0x000454); // dummy read
+            tag = (ioread32(mqnic->hw_addr+0x000458) & 0x7f) + 1;
             iowrite32(ctl.addr, mqnic->hw_addr+0x000448);
             iowrite32(ctl.len, mqnic->hw_addr+0x000450);
-            iowrite32(0, mqnic->hw_addr+0x000454);
-            msleep(100);
+            iowrite32(tag, mqnic->hw_addr+0x000454);
+
+            // wait for transfer to complete
+            t = jiffies + msecs_to_jiffies(200);
+            while (time_before(jiffies, t) && (ioread32(mqnic->hw_addr+0x000458) & 0xff) != tag) {}
 
             // free DMA buffer
             dma_free_coherent(dev, 65536, buf, dma);
