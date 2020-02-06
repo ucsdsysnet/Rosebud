@@ -1,6 +1,11 @@
 
 PREFIX=/usr/local
 BINDIR=$(DESTDIR)$(PREFIX)/bin
+BIN_FILE=/home/moein/BumpinTheWire/c_code/latency.bin
+OUT_FILE=stat_read.csv
+DEV=mqnic1
+ENABLE=0xffff
+RECV=0xff00
 
 CC=gcc
 CFLAGS=-O3 -Wall -I../driver/mqnic
@@ -24,4 +29,9 @@ install:
 
 clean:
 	rm -f $(BIN)
+
+do:
+	make -C ~/c/
+	sudo ./rvfw -d /dev/$(DEV) -w $(BIN_FILE) -e $(ENABLE) -r $(RECV)
+	sudo ./perf -d /dev/$(DEV) -o $(OUT_FILE)
 

@@ -10,6 +10,7 @@ unsigned int * wr_ptr;
 int main(void){
 
   int i;
+  int k;
   unsigned int recv_time;
 
 	write_timer_interval(0x00000200);
@@ -24,7 +25,7 @@ int main(void){
 		pkt_data[i] = (unsigned int *)((8+i)*16384);
 	}
 
-	send_pkt.len = 1024;
+	send_pkt.len = 2048;
 	send_pkt.tag = 0;
 
 	if (two_ports==1)
@@ -38,29 +39,33 @@ int main(void){
 	wr_ptr = (unsigned int *) 0x80000;
 	i = 0;
 
-	while (1){
-		if (in_pkt_ready()){
-			recv_time = read_timer_low();
-			read_in_pkt(&recv_pkt);
-			
-			// Write send and recv time into memory and update the pointer
-			*wr_ptr = recv_time - (*((unsigned int *)recv_pkt.data)); 
-			wr_ptr+=1;
-			if (wr_ptr == (unsigned int *)0x100000)
-				wr_ptr = (unsigned int *) 0x80000;
+	if (core_id()<8){
+		while (1){
 
-			// Drop the packet
-			recv_pkt.len=0;
-			safe_pkt_done_msg (&recv_pkt); 
-		
+    		send_pkt.data = (unsigned char *) pkt_data[i];
+    		pkt_data[i][0] = read_timer_low();
+    		safe_pkt_send(&send_pkt);
+    		i++;
+    		if (i==8)
+    			i=0;
 		}
-    
-    send_pkt.data = (unsigned char *) pkt_data[i];
-    pkt_data[i][0] = read_timer_low();
-    safe_pkt_send(&send_pkt);
-    i++;
-    if (i==8)
-    	i=0;
+	} else {
+		while (1){ 
+			if (in_pkt_ready()){
+				recv_time = read_timer_low();
+				read_in_pkt(&recv_pkt);
+				// 
+				// Write send and recv time into memory and update the pointer
+				*wr_ptr = recv_time - (*((unsigned int *)recv_pkt.data)); 
+				wr_ptr+=1;
+				if (wr_ptr == (unsigned int *)0x100000)
+					wr_ptr = (unsigned int *) 0x80000;
+
+				// Drop the packet
+				recv_pkt.len=0;
+				safe_pkt_done_msg (&recv_pkt); 
+			}
+		}
 	}
 
   return 1;
