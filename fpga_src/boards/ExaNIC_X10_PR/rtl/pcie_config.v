@@ -378,7 +378,7 @@ always @(posedge pcie_clk) begin
             endcase
         end
         
-        if (axil_ctrl_arvalid && !axil_ctrl_rvalid && ({axil_ctrl_araddr[15:2], 2'd0}==16'h0454))
+        if (axil_ctrl_arvalid && !axil_ctrl_rvalid && ({axil_ctrl_araddr[15:2], 2'd0}==16'h0458))
             if (!host_dma_read_desc_status_valid)
                 host_dma_read_status_tags <= {HOST_DMA_TAG_WIDTH{1'b0}};
             else
@@ -386,7 +386,7 @@ always @(posedge pcie_clk) begin
         else if (host_dma_read_desc_status_valid)
           host_dma_read_status_tags <= host_dma_read_status_tags | host_dma_read_desc_status_tag;
         
-        if (axil_ctrl_arvalid && !axil_ctrl_rvalid && ({axil_ctrl_araddr[15:2], 2'd0}==16'h0474))
+        if (axil_ctrl_arvalid && !axil_ctrl_rvalid && ({axil_ctrl_araddr[15:2], 2'd0}==16'h0478))
             if (!host_dma_write_desc_status_valid)
                 host_dma_write_status_tags <= {HOST_DMA_TAG_WIDTH{1'b0}};
             else
