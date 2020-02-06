@@ -1,12 +1,12 @@
 #include "core2.h"
+struct Desc packet;
+unsigned int * pkt_data[16];
 
 int main(void){
 
-	struct Desc packet;
-	unsigned int pkt_num;
-	unsigned int * pkt_data[16];
-	int i;
-	unsigned int shift;
+  int i;
+  unsigned int shift;
+  unsigned int pkt_num;
 
 	shift = (core_id()>>2) & 0x1;
 
@@ -29,12 +29,12 @@ int main(void){
 	// packet.port = 0;
 
 	while (1){
-            for (i=0;i<16;i++) {
-	        pkt_data[i][1] = pkt_num;
-	        packet.port = (i+shift) & 0x1;
-		packet.data = (unsigned char *) pkt_data[i];
-		safe_pkt_send(&packet);
-		pkt_num++;
+    for (i=0;i<16;i++) {
+	    pkt_data[i][1] = pkt_num;
+	    packet.port = (i+shift) & 0x1;
+		  packet.data = (unsigned char *) pkt_data[i];
+		  safe_pkt_send(&packet);
+		  pkt_num++;
 	  } 
   }
   

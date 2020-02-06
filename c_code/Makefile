@@ -1,5 +1,5 @@
-NAME=basic_fw_re
-WIDTH=64
+NAME=pkt_gen
+WIDTH=128
 
 CC=riscv32-unknown-elf-gcc
 CC = riscv32-unknown-elf-gcc
