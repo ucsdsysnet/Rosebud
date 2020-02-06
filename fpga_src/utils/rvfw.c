@@ -46,7 +46,9 @@ static void usage(char *name)
     fprintf(stderr,
         "usage: %s [options]\n"
         " -d name    device to open (/sys/bus/pci/devices/.../resource0)\n"
-        " -w file    file to write\n",
+        " -w file    file to write\n"
+        " -e mask    core enable\n"
+        " -r mask    core rx enable\n",
         name);
 }
 
@@ -64,10 +66,13 @@ int main(int argc, char *argv[])
 
     char action_write = 0;
 
+    uint32_t core_enable = 0xffffffff;
+    uint32_t core_rx_enable = 0xffffffff;
+
     name = strrchr(argv[0], '/');
     name = name ? 1+name : argv[0];
 
-    while ((opt = getopt(argc, argv, "d:w:h?")) != EOF)
+    while ((opt = getopt(argc, argv, "d:w:e:r:h?")) != EOF)
     {
         switch (opt)
         {
@@ -77,6 +82,12 @@ int main(int argc, char *argv[])
         case 'w':
             action_write = 1;
             write_file_name = optarg;
+            break;
+        case 'e':
+            core_enable = strtoul(optarg, NULL, 0);
+            break;
+        case 'r':
+            core_rx_enable = strtoul(optarg, NULL, 0);
             break;
         case 'h':
         case '?':
@@ -102,6 +113,8 @@ int main(int argc, char *argv[])
         fprintf(stderr, "Failed to open device\n");
         return -1;
     }
+
+    core_rx_enable &= core_enable;
 
     printf("FW ID: 0x%08x\n", dev->fw_id);
     printf("FW version: %d.%d\n", dev->fw_ver >> 16, dev->fw_ver & 0xffff);
@@ -180,7 +193,8 @@ int main(int argc, char *argv[])
         printf("Release core resets...\n");
         for (int k=0; k<core_count; k++)
         {
-            mqnic_reg_write32(dev->regs, 0x000404, (k << 1) | 0);
+            if (core_enable & (1 << k))
+                mqnic_reg_write32(dev->regs, 0x000404, (k << 1) | 0);
             usleep(1000);
             printf(".");
             fflush(stdout);
@@ -190,8 +204,10 @@ int main(int argc, char *argv[])
         usleep(100000);
 
         printf("Enabling cores in scheduler...\n");
-        mqnic_reg_write32(dev->regs, 0x000408, 0xffffffff);
-        mqnic_reg_write32(dev->regs, 0x00040C, 0x00000000);
+        printf("Core enable mask: 0x%08x\n", core_enable);
+        printf("Core RX enable mask: 0x%08x\n", core_rx_enable);
+        mqnic_reg_write32(dev->regs, 0x000408, core_rx_enable);
+        mqnic_reg_write32(dev->regs, 0x00040C, ~core_enable);
 
         printf("Done!\n");
 
