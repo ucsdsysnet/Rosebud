@@ -125,6 +125,7 @@ int main(int argc, char *argv[])
         printf("interface %d tx bytes: %u\n", k, mqnic_reg_read32(dev->regs, 0x000428));
         printf("interface %d rx frames: %u\n", k, mqnic_reg_read32(dev->regs, 0x00042C));
         printf("interface %d tx frames: %u\n", k, mqnic_reg_read32(dev->regs, 0x000430));
+        printf("interface %d rx drops: %u\n", k, mqnic_reg_read32(dev->regs, 0x000434));
     }
 
 err:

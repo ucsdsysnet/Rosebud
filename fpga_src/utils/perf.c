@@ -125,16 +125,19 @@ int main(int argc, char *argv[])
     uint64_t if_tx_bytes[MAX_IF_COUNT];
     uint64_t if_rx_frames[MAX_IF_COUNT];
     uint64_t if_tx_frames[MAX_IF_COUNT];
+    uint64_t if_rx_drops[MAX_IF_COUNT];
 
     uint32_t if_rx_bytes_raw[MAX_IF_COUNT];
     uint32_t if_tx_bytes_raw[MAX_IF_COUNT];
     uint32_t if_rx_frames_raw[MAX_IF_COUNT];
     uint32_t if_tx_frames_raw[MAX_IF_COUNT];
+    uint32_t if_rx_drops_raw[MAX_IF_COUNT];
 
     uint64_t total_rx_bytes;
     uint64_t total_tx_bytes;
     uint64_t total_rx_frames;
     uint64_t total_tx_frames;
+    uint64_t total_rx_drops;
 
     if (output_file_name)
     {
@@ -161,7 +164,7 @@ int main(int argc, char *argv[])
         {
             if (need_comma)
                 fprintf(output_file, ",");
-            fprintf(output_file, "if_%d_rx_b,if_%d_tx_b,if_%d_rx_f,if_%d_tx_f", k, k, k, k);
+            fprintf(output_file, "if_%d_rx_b,if_%d_tx_b,if_%d_rx_f,if_%d_tx_f,if_%d_rx_drop", k, k, k, k, k);
             need_comma = 1;
         }
 
@@ -189,10 +192,12 @@ int main(int argc, char *argv[])
         if_tx_bytes[k] = 0;
         if_rx_frames[k] = 0;
         if_tx_frames[k] = 0;
+        if_rx_drops[k] = 0;
         if_rx_bytes_raw[k] = mqnic_reg_read32(dev->regs, 0x000424);
         if_tx_bytes_raw[k] = mqnic_reg_read32(dev->regs, 0x000428);
         if_rx_frames_raw[k] = mqnic_reg_read32(dev->regs, 0x00042C);
         if_tx_frames_raw[k] = mqnic_reg_read32(dev->regs, 0x000430);
+        if_rx_drops_raw[k] = mqnic_reg_read32(dev->regs, 0x000434);
     }
 
     while (1)
@@ -211,6 +216,7 @@ int main(int argc, char *argv[])
             if_tx_bytes[k] = 0;
             if_rx_frames[k] = 0;
             if_tx_frames[k] = 0;
+            if_rx_drops[k] = 0;
         }
 
         for (int n=0; n < 10; n++)
@@ -257,10 +263,14 @@ int main(int argc, char *argv[])
                 temp = mqnic_reg_read32(dev->regs, 0x000430);
                 if_tx_frames[k] += temp - if_tx_frames_raw[k];
                 if_tx_frames_raw[k] = temp;
+
+                temp = mqnic_reg_read32(dev->regs, 0x000434);
+                if_rx_drops[k] += temp - if_rx_drops_raw[k];
+                if_rx_drops_raw[k] = temp;
             }
         }
 
-        printf("             RX bytes      TX bytes     RX frames     TX frames\n");
+        printf("             RX bytes      TX bytes     RX frames     TX frames      RX drops\n");
 
         total_rx_bytes = 0;
         total_tx_bytes = 0;
@@ -282,17 +292,19 @@ int main(int argc, char *argv[])
         total_tx_bytes = 0;
         total_rx_frames = 0;
         total_tx_frames = 0;
+        total_rx_drops = 0;
 
         for (int k=0; k<if_count; k++)
         {
-            printf("if   %2d  %12ld  %12ld  %12ld  %12ld\n", k, if_rx_bytes[k], if_tx_bytes[k], if_rx_frames[k], if_tx_frames[k]);
+            printf("if   %2d  %12ld  %12ld  %12ld  %12ld  %12ld\n", k, if_rx_bytes[k], if_tx_bytes[k], if_rx_frames[k], if_tx_frames[k], if_rx_drops[k]);
             total_rx_bytes += if_rx_bytes[k];
             total_tx_bytes += if_tx_bytes[k];
             total_rx_frames += if_rx_frames[k];
             total_tx_frames += if_tx_frames[k];
+            total_rx_drops += if_rx_drops[k];
         }
 
-        printf("total    %12ld  %12ld  %12ld  %12ld\n", total_rx_bytes, total_tx_bytes, total_rx_frames, total_tx_frames);
+        printf("total    %12ld  %12ld  %12ld  %12ld  %12ld\n", total_rx_bytes, total_tx_bytes, total_rx_frames, total_tx_frames, total_rx_drops);
 
         if (output_file)
         {
@@ -310,7 +322,7 @@ int main(int argc, char *argv[])
             {
                 if (need_comma)
                     fprintf(output_file, ",");
-                fprintf(output_file, "%ld,%ld,%ld,%ld", if_rx_bytes[k], if_tx_bytes[k], if_rx_frames[k], if_tx_frames[k]);
+                fprintf(output_file, "%ld,%ld,%ld,%ld,%ld", if_rx_bytes[k], if_tx_bytes[k], if_rx_frames[k], if_tx_frames[k], if_rx_drops[k]);
                 need_comma = 1;
             }
 
