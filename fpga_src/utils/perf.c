@@ -31,6 +31,7 @@ either expressed or implied, of The Regents of the University of California.
 
 */
 
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -39,6 +40,13 @@ either expressed or implied, of The Regents of the University of California.
 
 #define MAX_CORE_COUNT 16
 #define MAX_IF_COUNT 2
+
+static volatile sig_atomic_t keep_running = 1;
+
+static void sig_handler(int _)
+{
+    keep_running = 0;
+}
 
 static void usage(char *name)
 {
@@ -63,6 +71,8 @@ int main(int argc, char *argv[])
 
     name = strrchr(argv[0], '/');
     name = name ? 1+name : argv[0];
+
+    signal(SIGINT, sig_handler);
 
     while ((opt = getopt(argc, argv, "d:o:h?")) != EOF)
     {
@@ -110,11 +120,17 @@ int main(int argc, char *argv[])
     char need_comma;
 
     uint32_t temp;
+    uint32_t updates = 0;
 
     uint64_t core_rx_bytes[MAX_CORE_COUNT];
     uint64_t core_tx_bytes[MAX_CORE_COUNT];
     uint64_t core_rx_frames[MAX_CORE_COUNT];
     uint64_t core_tx_frames[MAX_CORE_COUNT];
+
+    uint64_t total_core_rx_bytes[MAX_CORE_COUNT];
+    uint64_t total_core_tx_bytes[MAX_CORE_COUNT];
+    uint64_t total_core_rx_frames[MAX_CORE_COUNT];
+    uint64_t total_core_tx_frames[MAX_CORE_COUNT];
 
     uint32_t core_rx_bytes_raw[MAX_CORE_COUNT];
     uint32_t core_tx_bytes_raw[MAX_CORE_COUNT];
@@ -126,6 +142,12 @@ int main(int argc, char *argv[])
     uint64_t if_rx_frames[MAX_IF_COUNT];
     uint64_t if_tx_frames[MAX_IF_COUNT];
     uint64_t if_rx_drops[MAX_IF_COUNT];
+
+    uint64_t total_if_rx_bytes[MAX_IF_COUNT];
+    uint64_t total_if_tx_bytes[MAX_IF_COUNT];
+    uint64_t total_if_rx_frames[MAX_IF_COUNT];
+    uint64_t total_if_tx_frames[MAX_IF_COUNT];
+    uint64_t total_if_rx_drops[MAX_IF_COUNT];
 
     uint32_t if_rx_bytes_raw[MAX_IF_COUNT];
     uint32_t if_tx_bytes_raw[MAX_IF_COUNT];
@@ -179,6 +201,10 @@ int main(int argc, char *argv[])
         core_tx_bytes[k] = 0;
         core_rx_frames[k] = 0;
         core_tx_frames[k] = 0;
+        total_core_rx_bytes[k] = 0;
+        total_core_tx_bytes[k] = 0;
+        total_core_rx_frames[k] = 0;
+        total_core_tx_frames[k] = 0;
         core_rx_bytes_raw[k] = mqnic_reg_read32(dev->regs, 0x000414);
         core_tx_bytes_raw[k] = mqnic_reg_read32(dev->regs, 0x000418);
         core_rx_frames_raw[k] = mqnic_reg_read32(dev->regs, 0x00041C);
@@ -193,6 +219,11 @@ int main(int argc, char *argv[])
         if_rx_frames[k] = 0;
         if_tx_frames[k] = 0;
         if_rx_drops[k] = 0;
+        total_if_rx_bytes[k] = 0;
+        total_if_tx_bytes[k] = 0;
+        total_if_rx_frames[k] = 0;
+        total_if_tx_frames[k] = 0;
+        total_if_rx_drops[k] = 0;
         if_rx_bytes_raw[k] = mqnic_reg_read32(dev->regs, 0x000424);
         if_tx_bytes_raw[k] = mqnic_reg_read32(dev->regs, 0x000428);
         if_rx_frames_raw[k] = mqnic_reg_read32(dev->regs, 0x00042C);
@@ -200,7 +231,7 @@ int main(int argc, char *argv[])
         if_rx_drops_raw[k] = mqnic_reg_read32(dev->regs, 0x000434);
     }
 
-    while (1)
+    while (keep_running)
     {
         for (int k=0; k<core_count; k++)
         {
@@ -268,8 +299,15 @@ int main(int argc, char *argv[])
                 if_rx_drops[k] += temp - if_rx_drops_raw[k];
                 if_rx_drops_raw[k] = temp;
             }
+
+            if (!keep_running)
+                break;
         }
 
+        if (!keep_running)
+            break;
+
+        printf("\n");
         printf("             RX bytes      TX bytes     RX frames     TX frames      RX drops\n");
 
         total_rx_bytes = 0;
@@ -280,6 +318,10 @@ int main(int argc, char *argv[])
         for (int k=0; k<core_count; k++)
         {
             printf("core %2d  %12ld  %12ld  %12ld  %12ld\n", k, core_rx_bytes[k], core_tx_bytes[k], core_rx_frames[k], core_tx_frames[k]);
+            total_core_rx_bytes[k] += core_rx_bytes[k];
+            total_core_tx_bytes[k] += core_tx_bytes[k];
+            total_core_rx_frames[k] += core_rx_frames[k];
+            total_core_tx_frames[k] += core_tx_frames[k];
             total_rx_bytes += core_rx_bytes[k];
             total_tx_bytes += core_tx_bytes[k];
             total_rx_frames += core_rx_frames[k];
@@ -297,12 +339,19 @@ int main(int argc, char *argv[])
         for (int k=0; k<if_count; k++)
         {
             printf("if   %2d  %12ld  %12ld  %12ld  %12ld  %12ld\n", k, if_rx_bytes[k], if_tx_bytes[k], if_rx_frames[k], if_tx_frames[k], if_rx_drops[k]);
+            total_if_rx_bytes[k] += if_rx_bytes[k];
+            total_if_tx_bytes[k] += if_tx_bytes[k];
+            total_if_rx_frames[k] += if_rx_frames[k];
+            total_if_tx_frames[k] += if_tx_frames[k];
+            total_if_rx_drops[k] += if_rx_drops[k];
             total_rx_bytes += if_rx_bytes[k];
             total_tx_bytes += if_tx_bytes[k];
             total_rx_frames += if_rx_frames[k];
             total_tx_frames += if_tx_frames[k];
             total_rx_drops += if_rx_drops[k];
         }
+
+        updates++;
 
         printf("total    %12ld  %12ld  %12ld  %12ld  %12ld\n", total_rx_bytes, total_tx_bytes, total_rx_frames, total_tx_frames, total_rx_drops);
 
@@ -330,6 +379,86 @@ int main(int argc, char *argv[])
             fflush(output_file);
         }
     }
+
+    printf("\n");
+    printf("Totals (%d seconds):\n", updates);
+
+    printf("\n");
+    printf("             RX bytes      TX bytes     RX frames     TX frames      RX drops\n");
+
+    total_rx_bytes = 0;
+    total_tx_bytes = 0;
+    total_rx_frames = 0;
+    total_tx_frames = 0;
+
+    for (int k=0; k<core_count; k++)
+    {
+        printf("core %2d  %12ld  %12ld  %12ld  %12ld\n", k, total_core_rx_bytes[k], total_core_tx_bytes[k], total_core_rx_frames[k], total_core_tx_frames[k]);
+        total_rx_bytes += total_core_rx_bytes[k];
+        total_tx_bytes += total_core_tx_bytes[k];
+        total_rx_frames += total_core_rx_frames[k];
+        total_tx_frames += total_core_tx_frames[k];
+    }
+
+    printf("total    %12ld  %12ld  %12ld  %12ld\n", total_rx_bytes, total_tx_bytes, total_rx_frames, total_tx_frames);
+
+    total_rx_bytes = 0;
+    total_tx_bytes = 0;
+    total_rx_frames = 0;
+    total_tx_frames = 0;
+    total_rx_drops = 0;
+
+    for (int k=0; k<if_count; k++)
+    {
+        printf("if   %2d  %12ld  %12ld  %12ld  %12ld  %12ld\n", k, total_if_rx_bytes[k], total_if_tx_bytes[k], total_if_rx_frames[k], total_if_tx_frames[k], total_if_rx_drops[k]);
+        total_rx_bytes += total_if_rx_bytes[k];
+        total_tx_bytes += total_if_tx_bytes[k];
+        total_rx_frames += total_if_rx_frames[k];
+        total_tx_frames += total_if_tx_frames[k];
+        total_rx_drops += total_if_rx_drops[k];
+    }
+
+    printf("total    %12ld  %12ld  %12ld  %12ld  %12ld\n", total_rx_bytes, total_tx_bytes, total_rx_frames, total_tx_frames, total_rx_drops);
+
+    printf("\n");
+    printf("Averages (%d seconds):\n", updates);
+
+    printf("\n");
+    printf("             RX bytes      TX bytes     RX frames     TX frames      RX drops\n");
+
+    total_rx_bytes = 0;
+    total_tx_bytes = 0;
+    total_rx_frames = 0;
+    total_tx_frames = 0;
+
+    for (int k=0; k<core_count; k++)
+    {
+        printf("core %2d  %12ld  %12ld  %12ld  %12ld\n", k, total_core_rx_bytes[k]/updates, total_core_tx_bytes[k]/updates, total_core_rx_frames[k]/updates, total_core_tx_frames[k]/updates);
+        total_rx_bytes += total_core_rx_bytes[k];
+        total_tx_bytes += total_core_tx_bytes[k];
+        total_rx_frames += total_core_rx_frames[k];
+        total_tx_frames += total_core_tx_frames[k];
+    }
+
+    printf("total    %12ld  %12ld  %12ld  %12ld\n", total_rx_bytes/updates, total_tx_bytes/updates, total_rx_frames/updates, total_tx_frames/updates);
+
+    total_rx_bytes = 0;
+    total_tx_bytes = 0;
+    total_rx_frames = 0;
+    total_tx_frames = 0;
+    total_rx_drops = 0;
+
+    for (int k=0; k<if_count; k++)
+    {
+        printf("if   %2d  %12ld  %12ld  %12ld  %12ld  %12ld\n", k, total_if_rx_bytes[k]/updates, total_if_tx_bytes[k]/updates, total_if_rx_frames[k]/updates, total_if_tx_frames[k]/updates, total_if_rx_drops[k]/updates);
+        total_rx_bytes += total_if_rx_bytes[k];
+        total_tx_bytes += total_if_tx_bytes[k];
+        total_rx_frames += total_if_rx_frames[k];
+        total_tx_frames += total_if_tx_frames[k];
+        total_rx_drops += total_if_rx_drops[k];
+    }
+
+    printf("total    %12ld  %12ld  %12ld  %12ld  %12ld\n", total_rx_bytes/updates, total_tx_bytes/updates, total_rx_frames/updates, total_tx_frames/updates, total_rx_drops/updates);
 
 err:
 
