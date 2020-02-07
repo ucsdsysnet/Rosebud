@@ -34,17 +34,13 @@ module accel_wrap #(
 
 localparam LEN_WIDTH = 16;
 
-wire [SLOW_DMEM_ADDR_WIDTH-1:0] cmd_addr;
-wire [LEN_WIDTH-1:0]            cmd_len;
-wire                            cmd_valid;
-wire                            cmd_ready;
-
-wire                            status_match;
-wire                            status_done;
-
 reg [SLOW_DMEM_ADDR_WIDTH-1:0] cmd_addr_reg;
 reg [LEN_WIDTH-1:0]            cmd_len_reg;
 reg                            cmd_valid_reg;
+wire                           cmd_ready;
+
+wire                           status_match;
+wire                           status_done;
 
 reg [DATA_WIDTH-1:0] read_data_reg;
 
@@ -55,10 +51,10 @@ assign cmd_valid = cmd_valid_reg;
 assign io_rd_data = read_data_reg;
 
 always @(posedge clk) begin
-  cmd_valid_reg <= cmd_valid_reg && !cmd_ready;  
+  cmd_valid_reg <= cmd_valid_reg && !cmd_ready;
 
   if (io_write) begin
-    case (io_addr[7:0] & 8'hf8)
+    case (io_addr[7:0] & 8'hf0)
       8'h00: begin
         if (io_strb[0]) begin
           cmd_valid_reg <= cmd_valid_reg || io_wr_data[0];
@@ -66,10 +62,8 @@ always @(posedge clk) begin
         if (io_strb[7:4]) begin
           cmd_len_reg <= io_wr_data[63:32];
         end
-      end
-      8'h08: begin
-        if (io_strb[3:0]) begin
-          cmd_addr_reg <= io_wr_data[31:0];
+        if (io_strb[15:8]) begin
+          cmd_addr_reg <= io_wr_data[127:64];
         end
       end
     endcase
@@ -77,16 +71,14 @@ always @(posedge clk) begin
 
   if (io_read) begin
     read_data_reg <= 0;
-    case (io_addr[7:0] & 8'hf8)
+    case (io_addr[7:0] & 8'hf0)
       8'h00: begin
         read_data_reg[0] <= cmd_valid_reg;
         read_data_reg[1] <= cmd_ready;
         read_data_reg[8] <= status_done;
         read_data_reg[9] <= status_match;
         read_data_reg[63:32] <= cmd_len_reg;
-      end
-      8'h08: begin
-        read_data_reg <= cmd_addr_reg;
+        read_data_reg[127:64] <= cmd_addr_reg;
       end
     endcase
   end
@@ -109,9 +101,9 @@ regex_acc #(
   .clk(clk),
   .rst(rst),
 
-  .cmd_addr(cmd_addr),
-  .cmd_len(cmd_len),
-  .cmd_valid(cmd_valid),
+  .cmd_addr(cmd_addr_reg),
+  .cmd_len(cmd_len_reg),
+  .cmd_valid(cmd_valid_reg),
   .cmd_ready(cmd_ready),
 
   .status_match(status_match),
