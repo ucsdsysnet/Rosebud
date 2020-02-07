@@ -505,6 +505,7 @@ always @ (posedge clk)
         // TODO these checks are broken, remove this when fixed
         dmem_access_err    <= 1'b0;
         io_access_data_err <= 1'b0;
+        io_byte_access_err <= 1'b0;
 
     end
 
