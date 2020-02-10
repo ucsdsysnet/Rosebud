@@ -18,9 +18,8 @@ struct regex_accel_regs {
 struct slot_context {
 	int index;
 	struct Desc desc;
-	struct regex_accel_regs *regex_accel;
-	unsigned char *packet;
 	unsigned char *header;
+	struct regex_accel_regs *regex_accel;
 };
 
 struct slot_context context[SLOT_COUNT];
@@ -30,7 +29,7 @@ unsigned int active_accel_mask;
 inline void slot_rx_packet(struct slot_context *ctx)
 {
 	// start regex parsing
-	ctx->regex_accel->start = ctx->packet+14;
+	ctx->regex_accel->start = ctx->desc.data+14;
 	ctx->regex_accel->len = ctx->desc.len-14;
 	ctx->regex_accel->ctrl = 1;
 
@@ -75,9 +74,8 @@ int main(void)
 		context[i].index = i;
 		context[i].desc.tag = i+1;
 		context[i].desc.data = (unsigned char *)(SLOT_BASE + SLOT_OFFSET + i*SLOT_SIZE);
-		context[i].regex_accel = (struct regex_accel_regs *)(IO_START_EXT + i*16);
-		context[i].packet = (unsigned char *)(SLOT_BASE + SLOT_OFFSET + i*SLOT_SIZE);
 		context[i].header = (unsigned char *)(SLOT_HEADER_BASE + SLOT_OFFSET + i*SLOT_HEADER_SIZE);
+		context[i].regex_accel = (struct regex_accel_regs *)(IO_START_EXT + i*16);
 	}
 
 	while (1)
