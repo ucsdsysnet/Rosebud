@@ -1,71 +1,102 @@
 #include "core2.h"
-struct Desc packet;
-unsigned int start_time, end_time;
-volatile unsigned short * sh_test  = (volatile unsigned short *) 0x0700A;
+
+#define SLOT_COUNT 8
+#define SLOT_SIZE 16384
+#define SLOT_BASE 0x000000
+#define SLOT_OFFSET 0x00000A
+#define SLOT_HEADER_SIZE 128
+#define SLOT_HEADER_BASE 0x104000
 
 #define ACC_HASH_CTRL  (*((volatile unsigned int *)(IO_START_EXT + 0x0000)))
 #define ACC_HASH_BYTE  (*((volatile unsigned int *)(IO_START_EXT + 0x0004)))
 #define ACC_HASH_WORD  (*((volatile unsigned int *)(IO_START_EXT + 0x0008)))
 #define ACC_HASH_DWORD (*((volatile unsigned int *)(IO_START_EXT + 0x000C)))
 
-int main(void){
+struct slot_context {
+	int index;
+	struct Desc desc;
+	unsigned char *header;
+};
 
+struct slot_context context[SLOT_COUNT];
+
+inline void slot_rx_packet(struct slot_context *ctx)
+{
 	long int hash;
 
+	// parse header and compute flow hash
+	
+	// reset hash module
+	ACC_HASH_CTRL = 0;
+
+	// check eth type
+	if (*((unsigned short *)(ctx->header+12)) == 0x0008)
+	{
+		// IPv4 packet
+		// IPv4 addresses
+		ACC_HASH_DWORD = *((unsigned long *)(ctx->header+26));
+		ACC_HASH_DWORD = *((unsigned long *)(ctx->header+30));
+
+		// check IHL and protocol
+		if (ctx->header[14] == 0x45 && (ctx->header[23] == 0x06 || ctx->header[23] == 0x11))
+		{
+			// TCP or UDP ports
+			ACC_HASH_DWORD = *((unsigned long *)(ctx->header+34));
+		}
+	}
+
+	// read hash
+	hash = ACC_HASH_CTRL;
+
+	// swap port
+	if (ctx->desc.port==0)
+		ctx->desc.port = 1;
+	else
+		ctx->desc.port = 0;
+	
+	safe_pkt_done_msg(&ctx->desc);
+}
+
+int main(void)
+{
 	write_timer_interval(0x00000200);
 	set_masks(0x1F); //enable just errors 
 
-	// Do this at the beginnig, so scheduler can fill the slots while 
+	// Do this at the beginning, so scheduler can fill the slots while
 	// initializing other things.
-	init_hdr_slots(8, 0x104000, 128);
-	init_slots(8, 0x00000A, 16384);
+	init_hdr_slots(SLOT_COUNT, SLOT_HEADER_BASE, SLOT_HEADER_SIZE);
+	init_slots(SLOT_COUNT, SLOT_BASE+SLOT_OFFSET, SLOT_SIZE);
 
-	ACC_HASH_CTRL = 0;
-	ACC_HASH_DWORD = 0xbb950942;
-	ACC_HASH_DWORD = 0x50648ea1;
-	ACC_HASH_WORD = 0xea0a;
-	ACC_HASH_WORD = 0xe606;
-	hash = ACC_HASH_CTRL;
-	hash = ACC_HASH_CTRL;
-	hash = ACC_HASH_CTRL;
+	// init slot context structures
+	for (int i = 0; i < SLOT_COUNT; i++)
+	{
+		context[i].index = i;
+		context[i].desc.tag = i+1;
+		context[i].desc.data = (unsigned char *)(SLOT_BASE + SLOT_OFFSET + i*SLOT_SIZE);
+		context[i].header = (unsigned char *)(SLOT_HEADER_BASE + SLOT_OFFSET + i*SLOT_HEADER_SIZE);
+	}
 
-	while (1){
-		if (in_pkt_ready()){
-	 		
-			read_in_pkt(&packet);
+	while (1)
+	{
+		// check for new packets
+		if (in_pkt_ready())
+		{
+			struct Desc desc;
+			int index;
 
-			// parse header and compute flow hash
-			// check eth type
-			if (*((unsigned short *)(packet.data+12)) == 0x0008)
-			{
-				// IPv4 packet
-				ACC_HASH_CTRL = 0;
-				// IPv4 addresses
-				ACC_HASH_DWORD = *((unsigned long *)(packet.data+26));
-				ACC_HASH_DWORD = *((unsigned long *)(packet.data+30));
+			// read descriptor
+			read_in_pkt(&desc);
 
-				// check IHL and protocol
-				if (packet.data[14] == 0x45 && (packet.data[23] == 0x06 || packet.data[23] == 0x11))
-				{
-					// TCP or UDP ports
-					ACC_HASH_DWORD = *((unsigned long *)(packet.data+34));
-				}
+			// compute index
+			index = desc.tag-1;
 
-				hash = ACC_HASH_CTRL;
-				hash = ACC_HASH_CTRL;
-				hash = ACC_HASH_CTRL;
-			}
+			// copy descriptor into context
+			context[index].desc = desc;
 
+			// handle packet
+			slot_rx_packet(&context[index]);
+		}
+	}
 
-			// swap port
-			if (packet.port==0)
-				packet.port = 1;
-			else
-				packet.port = 0;
-			
-			safe_pkt_done_msg(&packet);
-  	}
-  }
-  
-  return 1;
+	return 1;
 }
