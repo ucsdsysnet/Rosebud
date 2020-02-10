@@ -217,7 +217,7 @@ always @(posedge pcie_clk) begin
         axil_ctrl_rvalid  <= axil_ctrl_rvalid && !axil_ctrl_rready;
 
         host_dma_read_desc_valid         <= host_dma_read_desc_valid && !host_dma_read_desc_ready;
-        host_dma_write_desc_valid        <= host_dma_write_desc_valid && !host_dma_read_desc_ready;
+        host_dma_write_desc_valid        <= host_dma_write_desc_valid && !host_dma_write_desc_ready;
         pcie_core_reset_valid            <= pcie_core_reset_valid && !pcie_core_reset_ready; 
 
         if (axil_ctrl_awvalid && axil_ctrl_wvalid && !axil_ctrl_bvalid) begin

@@ -41,7 +41,7 @@ end
 
 localparam CEIL_PORT_COUNT   = 2**($clog2(PORT_COUNT));
 localparam PORTS_PER_CLUSTER = CEIL_PORT_COUNT / PORT_CLUSTERS;
-localparam LAST_SEL_BITS     = $clog2(PORTS_PER_CLUSTER);
+localparam LAST_SEL_BITS     = (PORTS_PER_CLUSTER>1) ? $clog2(PORTS_PER_CLUSTER) : 1 ;
 
 (* KEEP = "TRUE" *) reg [PORT_WIDTH-1:0]                  port_select_r;
 (* KEEP = "TRUE" *) reg [PORT_CLUSTERS*LAST_SEL_BITS-1:0] port_select_rr;
