@@ -313,8 +313,8 @@ axis_register # (
 );
 
 wire [PORT_WIDTH-1:0] dram_port = DRAM_PORT;
-wire [24:0]           s_header_addr;
-wire [24:0]           s_base_addr;
+wire [25:0]           s_header_addr;
+wire [25:0]           s_base_addr;
 wire [63:0]           incoming_hdr;
 wire                  incoming_hdr_v;
 
@@ -350,12 +350,12 @@ header_remover # (
 );
 
 assign s_slot_ptr    = s_axis_tdest[SLOT_WIDTH-1:0];
-assign s_header_addr = incoming_hdr[32 +: 25];
+assign s_header_addr = incoming_hdr[32 +: 26];
 
 // We want to use LUTS instead of BRAM or REGS
 assign slot_addr     = slot_addr_lut        [s_slot_ptr]; 
 assign slot_hdr_msb  = slot_hdr_addr_msb_lut[s_slot_ptr]; 
-assign s_base_addr   = incoming_hdr_v ? s_header_addr : slot_addr;
+assign s_base_addr   = incoming_hdr_v ? s_header_addr : {1'b0,slot_addr};
 
 /////////////////////////////////////////////////////////////////////
 //////////// ATTACHING DRAM ADDR TO OUTGOING DRAM DATA //////////////
@@ -512,7 +512,7 @@ axis_dma # (
   .s_axis_tdest (s_axis_tdest),
   .s_axis_tuser (s_axis_tuser),
 
-  .wr_base_addr ({1'b0,s_base_addr}),
+  .wr_base_addr (s_base_addr),
   .hdr_wr_addr_msb (slot_hdr_msb),
   .hdr_en(!incoming_hdr_v),
 

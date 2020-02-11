@@ -103,6 +103,7 @@ wire        ext_io_rd_valid;
 wire        core_imem_ren;
 wire [24:0] core_imem_addr;
 wire [31:0] core_imem_rd_data;
+wire        core_imem_rd_valid;
 
 riscvcore #(
   .BC_START_ADDR(BC_START_ADDR),
@@ -136,6 +137,7 @@ riscvcore #(
   .ext_imem_ren(core_imem_ren),
   .ext_imem_addr(core_imem_addr),
   .ext_imem_rd_data(core_imem_rd_data),
+  .ext_imem_rd_valid(core_imem_rd_valid),
   
   .in_desc(in_desc),
   .in_desc_valid(in_desc_valid),
@@ -261,6 +263,7 @@ mem_sys # (
   .core_imem_ren(core_imem_ren),
   .core_imem_addr(core_imem_addr),
   .core_imem_rd_data(core_imem_rd_data),
+  .core_imem_rd_valid(core_imem_rd_valid),
   
   .bc_msg_in(bc_msg_in),
   .bc_msg_in_valid(bc_msg_in_valid),

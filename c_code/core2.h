@@ -5,7 +5,7 @@
 #include "riscv_encoding.h"
 // time read is not supported by Vexriscv
 
-#define IO_START					0x200000
+#define IO_START					0x000000
 #define IO_START_INT      (IO_START)
 #define IO_START_EXT      (IO_START | (IO_START >> 1))
 

@@ -50,6 +50,7 @@ module mem_sys # (
   input  wire                                     core_imem_ren,
   input  wire [24:0]                              core_imem_addr,         
   output wire [31:0]                              core_imem_rd_data,      
+  output wire                                     core_imem_rd_valid,      
   
   input  wire [MSG_WIDTH-1:0]                     bc_msg_in,
   input  wire                                     bc_msg_in_valid,
@@ -451,7 +452,16 @@ module mem_sys # (
     .addrb(core_imem_addr[IMEM_ADDR_WIDTH-1:LINE_ADDR_BITS]),
     .doutb(core_imem_rd_data_w)
   );
-  
+ 
+  reg core_imem_ren_r; 
+  always @ (posedge clk)
+    if (rst)
+        core_imem_ren_r <= 1'b0;
+    else
+        core_imem_ren_r <= core_imem_ren;
+
+  assign core_imem_rd_valid = core_imem_ren_r;
+
   // Single cycle response DMEM, potentially BRAM
   wire [DATA_WIDTH-1:0] core_fast_rd_data_b1;
   wire [DATA_WIDTH-1:0] core_fast_rd_data_b2;

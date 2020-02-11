@@ -5,7 +5,7 @@ OUTPUT_ARCH(riscv)
 MEMORY
 {
 	IMEM (x!rwai) : ORIGIN = 0x00000000, LENGTH = 64k
-  DMEM (rwa!xi) : ORIGIN = 0x00100000, LENGTH = 32k
+  DMEM (rwa!xi) : ORIGIN = 0x00800000, LENGTH = 32k
 }
 
 ENTRY(_start)

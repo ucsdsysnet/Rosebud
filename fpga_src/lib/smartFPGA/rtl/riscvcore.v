@@ -32,6 +32,7 @@ module riscvcore #(
     output                       ext_imem_ren,
     output [24:0]                ext_imem_addr,
     input  [31:0]                ext_imem_rd_data,
+    input                        ext_imem_rd_valid,
 
     input  [63:0]                in_desc,
     input                        in_desc_valid,
@@ -63,14 +64,13 @@ module riscvcore #(
 
 
 // Core to memory signals
-wire [31:0] imem_read_data, dmem_wr_data, dmem_read_data; 
-wire [31:0] imem_addr, dmem_addr;
+wire [31:0] dmem_wr_data, dmem_read_data; 
+wire [31:0] dmem_addr, imem_addr;
 wire [4:0]  dmem_wr_strb;
 wire [1:0]  dmem_byte_count;
-wire        dmem_v, dmem_wr_en, imem_v;
+wire        dmem_v, dmem_wr_en;
 
 reg [7:0]  mask_r;
-reg        imem_read_ready;
 reg        imem_access_err, dmem_access_err;
 reg        io_access_data_err, io_byte_access_err;
 reg        timer_interrupt;
@@ -81,12 +81,12 @@ VexRiscv core (
       .clk(clk),
       .reset(rst),
 
-      .iBus_cmd_valid(imem_v),
+      .iBus_cmd_valid(ext_imem_ren),
       .iBus_cmd_ready(1'b1),
       .iBus_cmd_payload_pc(imem_addr),
-      .iBus_rsp_valid(imem_read_ready),
+      .iBus_rsp_valid(ext_imem_rd_valid),
       .iBus_rsp_payload_error(imem_access_err && mask_r[0]),
-      .iBus_rsp_payload_inst(imem_read_data),
+      .iBus_rsp_payload_inst(ext_imem_rd_data),
 
       .dBus_cmd_valid(dmem_v),
       .dBus_cmd_ready(1'b1),
@@ -111,6 +111,7 @@ assign dmem_wr_strb = ((!dmem_wr_en) || (!dmem_v)) ? 5'h0 :
 								     	 (dmem_byte_count == 2'd0) ? (5'h01 << dmem_addr[1:0]) :
                        (dmem_byte_count == 2'd1) ? (5'h03 << dmem_addr[1:0]) :
                        5'h0f;
+assign ext_imem_addr = imem_addr;
 
 // Memory address decoding 
 wire internal_io = dmem_addr[24:22]==3'b000;
@@ -394,7 +395,6 @@ always @ (posedge clk)
 assign dmem_read_data = io_ren_r ? io_read_data   : ext_io_rd_valid ? 
                                    ext_io_rd_data : ext_mem_rd_data;
 assign ext_mem_wr_data = dmem_wr_data;
-assign imem_read_data = ext_imem_rd_data;
 
 // connection to dmem and imem
   assign ext_dmem_en       = dmem_v && data_mem;
@@ -408,9 +408,6 @@ assign imem_read_data = ext_imem_rd_data;
   assign ext_io_strb       = dmem_wr_strb[3:0];
   assign ext_io_addr       = dmem_addr[21:0];
   assign ext_io_wr_data    = dmem_wr_data;
-
-  assign ext_imem_ren     = imem_v;
-  assign ext_imem_addr    = imem_addr;
 
 ///////////////////////////////////////////////////////////////////////////
 /////////////////////// ADDRESS ERROR CATCHING ////////////////////////////
