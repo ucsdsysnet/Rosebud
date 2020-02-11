@@ -9,16 +9,16 @@ module riscv_block_PR (
   
   // DMA interface
   input  wire         dma_cmd_wr_en,
-  input  wire [21:0]  dma_cmd_wr_addr,
+  input  wire [25:0]  dma_cmd_wr_addr,
   input  wire         dma_cmd_hdr_wr_en,
-  input  wire [21:0]  dma_cmd_hdr_wr_addr,
+  input  wire [23:0]  dma_cmd_hdr_wr_addr,
   input  wire [127:0] dma_cmd_wr_data,
   input  wire [15:0]  dma_cmd_wr_strb,
   input  wire         dma_cmd_wr_last,
   output wire         dma_cmd_wr_ready,
   
   input  wire         dma_cmd_rd_en,
-  input  wire [21:0]  dma_cmd_rd_addr,
+  input  wire [25:0]  dma_cmd_rd_addr,
   input  wire         dma_cmd_rd_last,
   output wire         dma_cmd_rd_ready,
   
@@ -38,7 +38,7 @@ module riscv_block_PR (
 
   // Slot information from core
   output wire [3:0]   slot_wr_ptr, 
-  output wire [21:0]  slot_wr_addr,
+  output wire [24:0]  slot_wr_addr,
   output wire         slot_wr_valid,
   output wire         slot_for_hdr,
   input  wire         slot_wr_ready,
@@ -66,24 +66,13 @@ parameter FAST_M_B_LINES = 1024;
 parameter BC_REGION_SIZE = 8192;
 parameter BC_START_ADDR  = SLOW_DMEM_SIZE+FAST_DMEM_SIZE-BC_REGION_SIZE;
 parameter MSG_WIDTH      = 32+4+$clog2(BC_REGION_SIZE)-2;
-parameter ADDR_WIDTH     = $clog2(SLOW_DMEM_SIZE)+2;
 parameter CORE_ID_WIDTH  = 4;
 parameter SLOT_COUNT     = 8;
 parameter SLOT_WIDTH     = $clog2(SLOT_COUNT+1);
 
-// Internal paramaters
-parameter LINE_ADDR_BITS       = $clog2(STRB_WIDTH);
-parameter SLOW_DMEM_ADDR_WIDTH = $clog2(SLOW_DMEM_SIZE);
-parameter FAST_DMEM_ADDR_WIDTH = $clog2(FAST_DMEM_SIZE);
-parameter IMEM_ADDR_WIDTH      = $clog2(IMEM_SIZE);
 //parameter BC_MSG_ADDR_WIDTH    = $clog2(BC_REGION_SIZE);
 parameter REG_TYPE             = 2;
 parameter REG_LENGTH           = 2;
-
-parameter ACC_ADDR_WIDTH       = $clog2(SLOW_M_B_LINES);
-parameter SLOW_DMEM_SEL_BITS   = SLOW_DMEM_ADDR_WIDTH-$clog2(STRB_WIDTH)
-                                 -1-$clog2(SLOW_M_B_LINES);
-parameter ACC_MEM_BLOCKS       = 2**SLOW_DMEM_SEL_BITS;
 
 ///////////////////////////////////////////////////////////////////////////////
 /////////////////// Register input and outputs ////////////////////////////////
@@ -104,16 +93,16 @@ always @ (posedge sys_clk) begin
 end
 
 wire                  dma_cmd_wr_en_r;
-wire [ADDR_WIDTH-1:0] dma_cmd_wr_addr_r;
+wire [25:0]           dma_cmd_wr_addr_r;
 wire                  dma_cmd_hdr_wr_en_r;
-wire [ADDR_WIDTH-1:0] dma_cmd_hdr_wr_addr_r;
+wire [23:0]           dma_cmd_hdr_wr_addr_r;
 wire [DATA_WIDTH-1:0] dma_cmd_wr_data_r;
 wire [STRB_WIDTH-1:0] dma_cmd_wr_strb_r;
 wire                  dma_cmd_wr_last_r;
 wire                  dma_cmd_wr_ready_r;
 
 simple_pipe_reg # (
-  .DATA_WIDTH(DATA_WIDTH+(2*ADDR_WIDTH)+STRB_WIDTH+2),
+  .DATA_WIDTH(DATA_WIDTH+24+26+STRB_WIDTH+2),
   .REG_TYPE(REG_TYPE), 
   .REG_LENGTH(REG_LENGTH)
 ) dma_wr_reg (
@@ -132,12 +121,12 @@ simple_pipe_reg # (
 );
 
 wire                  dma_cmd_rd_en_r;
-wire [ADDR_WIDTH-1:0] dma_cmd_rd_addr_r;
+wire [25:0]           dma_cmd_rd_addr_r;
 wire                  dma_cmd_rd_last_r;
 wire                  dma_cmd_rd_ready_r;
 
 simple_pipe_reg # (
-  .DATA_WIDTH(ADDR_WIDTH+1),
+  .DATA_WIDTH(26+1),
   .REG_TYPE(REG_TYPE), 
   .REG_LENGTH(REG_LENGTH)
 ) dma_rd_reg (
@@ -218,13 +207,13 @@ simple_pipe_reg # (
 );
 
 wire [SLOT_WIDTH-1:0] slot_wr_ptr_n;
-wire [ADDR_WIDTH-1:0] slot_wr_addr_n;
+wire [24:0]           slot_wr_addr_n;
 wire                  slot_wr_valid_n;
 wire                  slot_for_hdr_n;
 wire                  slot_wr_ready_n;
 
 simple_pipe_reg # (
-  .DATA_WIDTH(ADDR_WIDTH+SLOT_WIDTH+1),
+  .DATA_WIDTH(25+SLOT_WIDTH+1),
   .REG_TYPE(REG_TYPE), 
   .REG_LENGTH(REG_LENGTH)
 ) slot_info_reg (
@@ -317,7 +306,6 @@ riscv_block # (
     .MSG_WIDTH(MSG_WIDTH),
     .CORE_ID_WIDTH(CORE_ID_WIDTH),
     .SLOT_COUNT(SLOT_COUNT),
-    .ADDR_WIDTH(ADDR_WIDTH),
     .SLOT_WIDTH(SLOT_WIDTH)
 ) riscv_block_inst (
     .sys_clk(sys_clk),

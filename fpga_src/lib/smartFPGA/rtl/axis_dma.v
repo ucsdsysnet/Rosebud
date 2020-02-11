@@ -8,7 +8,8 @@ module axis_dma # (
   parameter USER_WIDTH_IN    = 2, 
   parameter MAX_PKT_HDR_SIZE = 128,
   parameter HDR_ADDR_BITS    = $clog2(MAX_PKT_HDR_SIZE), 
-  parameter HDR_ADDR_WIDTH   = ADDR_WIDTH-HDR_ADDR_BITS,
+  parameter HDR_ADDR_WIDTH   = ADDR_WIDTH,
+  parameter HDR_MSB_WIDTH    = HDR_ADDR_WIDTH-HDR_ADDR_BITS,
   parameter STRB_WIDTH       = (DATA_WIDTH/8),
   parameter MASK_BITS        = $clog2(STRB_WIDTH)
 )(
@@ -26,7 +27,7 @@ module axis_dma # (
   input  wire [USER_WIDTH_IN-1:0]  s_axis_tuser,
 
   input  wire [ADDR_WIDTH-1:0]     wr_base_addr,
-  input  wire [HDR_ADDR_WIDTH-1:0] hdr_wr_addr_msb,
+  input  wire [HDR_MSB_WIDTH-1:0]  hdr_wr_addr_msb,
   input  wire                      hdr_en,
   
   // Outgoing data
@@ -48,7 +49,7 @@ module axis_dma # (
   input  wire                      mem_wr_ready,
   
   output wire                      mem_hdr_wr_en,
-  output wire [ADDR_WIDTH-1:0]     mem_hdr_wr_addr,
+  output wire [HDR_ADDR_WIDTH-1:0] mem_hdr_wr_addr,
 
   // Read port
   output wire                      mem_rd_en,

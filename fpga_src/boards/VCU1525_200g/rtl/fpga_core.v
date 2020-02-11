@@ -246,7 +246,6 @@ parameter FAST_M_B_LINES  = 1024;
 
 parameter LVL2_DATA_WIDTH  = 256;
 parameter LVL2_STRB_WIDTH  = LVL2_DATA_WIDTH/8;
-parameter CORE_ADDR_WIDTH  = $clog2(SLOW_DMEM_SIZE)+2;
 parameter ID_TAG_WIDTH     = CORE_WIDTH+TAG_WIDTH;
 parameter BC_START_ADDR    = SLOW_DMEM_SIZE+FAST_DMEM_SIZE-BC_REGION_SIZE;
 parameter CORE_MSG_WIDTH   = 32+4+$clog2(BC_REGION_SIZE)-2;
@@ -842,7 +841,7 @@ pcie_controller #
   .CORE_SLOT_WIDTH(SLOT_WIDTH),
   .CORE_DESC_WIDTH(LVL1_DRAM_WIDTH),
   .CORE_COUNT(CORE_COUNT),        
-  .CORE_ADDR_WIDTH(CORE_ADDR_WIDTH), 
+  .CORE_ADDR_WIDTH(26), 
   .PCIE_SLOT_COUNT(PCIE_SLOT_COUNT),
   .IF_COUNT(V_IF_COUNT),
   .PORTS_PER_IF(PORTS_PER_V_IF),
@@ -1734,15 +1733,15 @@ generate
         wire                       core_interrupt_ack;
         
         wire                       dma_cmd_wr_en;
-        wire [CORE_ADDR_WIDTH-1:0] dma_cmd_wr_addr;
+        wire [25:0]                dma_cmd_wr_addr;
         wire                       dma_cmd_hdr_wr_en;
-        wire [CORE_ADDR_WIDTH-1:0] dma_cmd_hdr_wr_addr;
+        wire [23:0]                dma_cmd_hdr_wr_addr;
         wire [128-1:0]             dma_cmd_wr_data;
         wire [16-1:0]              dma_cmd_wr_strb;
         wire                       dma_cmd_wr_last;
         wire                       dma_cmd_wr_ready;
         wire                       dma_cmd_rd_en;
-        wire [CORE_ADDR_WIDTH-1:0] dma_cmd_rd_addr;
+        wire [25:0]                dma_cmd_rd_addr;
         wire                       dma_cmd_rd_last;
         wire                       dma_cmd_rd_ready;
         wire                       dma_rd_resp_valid;
@@ -1758,7 +1757,7 @@ generate
         wire                       out_desc_ready;
 
         wire [SLOT_WIDTH-1:0]      slot_wr_ptr;
-        wire [CORE_ADDR_WIDTH-1:0] slot_wr_addr;
+        wire [24:0]                slot_wr_addr;
         wire                       slot_wr_valid;
         wire                       slot_for_hdr;
         wire                       slot_wr_ready;
@@ -1775,7 +1774,6 @@ generate
         // (* keep_hierarchy = "soft" *)
         riscv_axis_wrapper #(
             .DATA_WIDTH(128),
-            .ADDR_WIDTH(CORE_ADDR_WIDTH),
             .SLOT_COUNT(SLOT_COUNT),
             .RECV_DESC_DEPTH(RECV_DESC_DEPTH),
             .SEND_DESC_DEPTH(SEND_DESC_DEPTH),
@@ -2003,7 +2001,6 @@ generate
             .MSG_WIDTH(CORE_MSG_WIDTH),
             .CORE_ID_WIDTH(CORE_WIDTH),
             .SLOT_COUNT(SLOT_COUNT),
-            .ADDR_WIDTH(CORE_ADDR_WIDTH),
             .SLOT_WIDTH(SLOT_WIDTH)
         ) riscv_block_inst (
     `else 

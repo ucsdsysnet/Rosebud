@@ -11,7 +11,6 @@ module riscv_block # (
   parameter FAST_M_B_LINES = 1024,
   parameter CORE_ID_WIDTH  = 4,
   parameter SLOT_COUNT     = 8,
-  parameter ADDR_WIDTH     = $clog2(SLOW_DMEM_SIZE)+2,
   parameter SLOT_WIDTH     = $clog2(SLOT_COUNT+1)
 ) (
   input  wire                     sys_clk,
@@ -24,16 +23,16 @@ module riscv_block # (
   
   // DMA interface
   input  wire                     dma_cmd_wr_en,
-  input  wire [ADDR_WIDTH-1:0]    dma_cmd_wr_addr,
+  input  wire [25:0]              dma_cmd_wr_addr,
   input  wire                     dma_cmd_hdr_wr_en,
-  input  wire [ADDR_WIDTH-1:0]    dma_cmd_hdr_wr_addr,
+  input  wire [23:0]              dma_cmd_hdr_wr_addr,
   input  wire [DATA_WIDTH-1:0]    dma_cmd_wr_data,
   input  wire [STRB_WIDTH-1:0]    dma_cmd_wr_strb,
   input  wire                     dma_cmd_wr_last,
   output wire                     dma_cmd_wr_ready,
   
   input  wire                     dma_cmd_rd_en,
-  input  wire [ADDR_WIDTH-1:0]    dma_cmd_rd_addr,
+  input  wire [25:0]              dma_cmd_rd_addr,
   input  wire                     dma_cmd_rd_last,
   output wire                     dma_cmd_rd_ready,
   
@@ -53,7 +52,7 @@ module riscv_block # (
 
   // Slot information from core
   output wire [SLOT_WIDTH-1:0]    slot_wr_ptr, 
-  output wire [ADDR_WIDTH-1:0]    slot_wr_addr,
+  output wire [24:0]              slot_wr_addr,
   output wire                     slot_wr_valid,
   output wire                     slot_for_hdr,
   input  wire                     slot_wr_ready,
@@ -84,23 +83,28 @@ parameter ACC_MEM_BLOCKS       = 2**SLOW_DMEM_SEL_BITS;
 ///////////////////////////////////////////////////////////////////////////
 //////////////////////////// RISCV CORE ///////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////
-wire                                     core_dmem_en;
-wire                                     core_dmem_wen;
-wire [STRB_WIDTH-1:0]                    core_dmem_strb;
-wire [ADDR_WIDTH-1:0]                    core_dmem_addr;
-wire [DATA_WIDTH-1:0]                    core_dmem_wr_data;
-wire [DATA_WIDTH-1:0]                    core_dmem_rd_data;
-wire                                     core_dmem_rd_valid;
+wire        core_dmem_en;
+wire        core_pmem_en;
+wire        core_dmem_wen;
+wire [3:0]  core_dmem_strb;
+wire [24:0] core_dmem_addr;
+wire [31:0] core_dmem_wr_data;
+wire [31:0] core_dmem_rd_data;
+wire        core_dmem_rd_valid;
 
-wire                                     core_imem_ren;
-wire [ADDR_WIDTH-1:0]                    core_imem_addr;
-wire [DATA_WIDTH-1:0]                    core_imem_rd_data;
+wire        ext_io_en;
+wire        ext_io_wen;
+wire [3:0]  ext_io_strb;
+wire [21:0] ext_io_addr;
+wire [31:0] ext_io_wr_data;
+wire [31:0] ext_io_rd_data;
+wire        ext_io_rd_valid;
+
+wire        core_imem_ren;
+wire [24:0] core_imem_addr;
+wire [31:0] core_imem_rd_data;
 
 riscvcore #(
-  .DATA_WIDTH(DATA_WIDTH),
-  .ADDR_WIDTH(ADDR_WIDTH),
-  .IMEM_ADDR_WIDTH(IMEM_ADDR_WIDTH),
-  .DMEM_ADDR_WIDTH(ADDR_WIDTH-1),    
   .BC_START_ADDR(BC_START_ADDR),
   .BC_REGION_SIZE(BC_REGION_SIZE),
   .SLOT_COUNT(SLOT_COUNT),
@@ -113,13 +117,22 @@ riscvcore #(
   .core_id(core_id),
 
   .ext_dmem_en(core_dmem_en),
-  .ext_dmem_wen(core_dmem_wen),
-  .ext_dmem_strb(core_dmem_strb),
-  .ext_dmem_addr(core_dmem_addr),
-  .ext_dmem_wr_data(core_dmem_wr_data),
-  .ext_dmem_rd_data(core_dmem_rd_data),
-  .ext_dmem_rd_valid(core_dmem_rd_valid),
-  
+  .ext_pmem_en(core_pmem_en),
+  .ext_mem_wen(core_dmem_wen),
+  .ext_mem_strb(core_dmem_strb),
+  .ext_mem_addr(core_dmem_addr),
+  .ext_mem_wr_data(core_dmem_wr_data),
+  .ext_mem_rd_data(core_dmem_rd_data),
+  .ext_mem_rd_valid(core_dmem_rd_valid),
+    
+  .ext_io_en(ext_io_en),
+  .ext_io_wen(ext_io_wen),
+  .ext_io_strb(ext_io_strb),
+  .ext_io_addr(ext_io_addr),
+  .ext_io_wr_data(ext_io_wr_data),
+  .ext_io_rd_data(ext_io_rd_data),
+  .ext_io_rd_valid(ext_io_rd_valid),
+ 
   .ext_imem_ren(core_imem_ren),
   .ext_imem_addr(core_imem_addr),
   .ext_imem_rd_data(core_imem_rd_data),
@@ -153,30 +166,6 @@ riscvcore #(
 );
 
 ///////////////////////////////////////////////////////////////////////////
-///////////////////////// MEMORY MAPPED IO ////////////////////////////////
-///////////////////////////////////////////////////////////////////////////
-wire [DATA_WIDTH-1:0] io_rd_data;
-wire [DATA_WIDTH-1:0] io_wr_data;
-wire [DATA_WIDTH-1:0] mem_rd_data;
-wire mem_rd_valid;
-
-wire io_not_mem = core_dmem_addr[ADDR_WIDTH-1] && core_dmem_addr[ADDR_WIDTH-2];
-wire io_write   = io_not_mem && core_dmem_en &&  core_dmem_wen; 
-wire io_read    = io_not_mem && core_dmem_en && !core_dmem_wen;
-
-// IO read data should be available the next cycle
-reg  io_read_r;
-always @ (posedge sys_clk)
-  if (sys_rst)
-    io_read_r <= 1'b0;
-  else
-    io_read_r <= io_read;
-
-assign core_dmem_rd_data = io_read_r ? io_rd_data : mem_rd_data;
-assign core_dmem_rd_valid = io_read_r ? 1'b1 : mem_rd_valid;
-assign io_wr_data        = core_dmem_wr_data;
-
-///////////////////////////////////////////////////////////////////////////
 ////////////////////////// ACCELERATORS ///////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////
 wire [ACC_MEM_BLOCKS-1:0]                acc_en_b1;
@@ -195,7 +184,6 @@ accel_wrap #(
   .DATA_WIDTH(DATA_WIDTH),
   .STRB_WIDTH(STRB_WIDTH),
   .SLOW_DMEM_ADDR_WIDTH(SLOW_DMEM_ADDR_WIDTH),
-  .ADDR_WIDTH(ADDR_WIDTH-2),
   .SLOW_M_B_LINES(SLOW_M_B_LINES),
   .ACC_ADDR_WIDTH(ACC_ADDR_WIDTH),
   .SLOW_DMEM_SEL_BITS(SLOW_DMEM_SEL_BITS),
@@ -203,14 +191,15 @@ accel_wrap #(
 ) accel_wrap_inst (
   .clk(sys_clk),
   .rst(core_rst),
-
-  .io_addr(core_dmem_addr[ADDR_WIDTH-3:0]),
-  .io_strb(core_dmem_strb),
-  .io_write(io_write),
-  .io_read(io_read),
-  .io_rd_data(io_rd_data),
-  .io_wr_data(io_wr_data),
-
+  
+  .io_en(ext_io_en),
+  .io_wen(ext_io_wen),
+  .io_strb(ext_io_strb),
+  .io_addr(ext_io_addr),
+  .io_wr_data(ext_io_wr_data),
+  .io_rd_data(ext_io_rd_data),
+  .io_rd_valid(ext_io_rd_valid),
+ 
   .acc_en_b1(acc_en_b1),
   .acc_wen_b1(acc_wen_b1),
   .acc_addr_b1(acc_addr_b1),
@@ -236,7 +225,6 @@ mem_sys # (
   .BC_REGION_SIZE(BC_REGION_SIZE),
   .BC_START_ADDR(BC_START_ADDR),
   .MSG_WIDTH(MSG_WIDTH),
-  .ADDR_WIDTH(ADDR_WIDTH),
   .SLOW_M_B_LINES(SLOW_M_B_LINES),
   .FAST_M_B_LINES(FAST_M_B_LINES)
 ) memories (
@@ -261,13 +249,14 @@ mem_sys # (
   .dma_rd_resp_data(dma_rd_resp_data),
   .dma_rd_resp_ready(dma_rd_resp_ready),
   
-  .core_dmem_en(core_dmem_en && !io_not_mem), 
+  .core_dmem_en(core_dmem_en), 
+  .core_pmem_en(core_pmem_en), 
   .core_dmem_wen(core_dmem_wen), 
   .core_dmem_strb(core_dmem_strb),
   .core_dmem_addr(core_dmem_addr),
   .core_dmem_wr_data(core_dmem_wr_data),
-  .core_dmem_rd_data(mem_rd_data),
-  .core_dmem_rd_valid(mem_rd_valid),
+  .core_dmem_rd_data(core_dmem_rd_data),
+  .core_dmem_rd_valid(core_dmem_rd_valid),
 
   .core_imem_ren(core_imem_ren),
   .core_imem_addr(core_imem_addr),
@@ -288,6 +277,5 @@ mem_sys # (
   .acc_wr_data_b2(acc_wr_data_b2),
   .acc_rd_data_b2(acc_rd_data_b2)
 );
-
 
 endmodule

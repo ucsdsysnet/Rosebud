@@ -1,14 +1,9 @@
 module riscvcore #(
-  parameter DATA_WIDTH      = 64,
-  parameter ADDR_WIDTH      = 16,
   parameter BC_START_ADDR   = 16'h7000,
   parameter BC_REGION_SIZE  = 4048,
   parameter MSG_ADDR_WIDTH  = $clog2(BC_REGION_SIZE)-2,
+  
   parameter CORE_ID_WIDTH   = 4,
-  parameter STRB_WIDTH      = DATA_WIDTH/8,
-  parameter LINE_ADDR_BITS  = $clog2(STRB_WIDTH),
-  parameter IMEM_ADDR_WIDTH = 16,
-  parameter DMEM_ADDR_WIDTH = 21,
   parameter SLOT_COUNT      = 8,
   parameter SLOT_WIDTH      = $clog2(SLOT_COUNT+1)
 )(
@@ -18,16 +13,25 @@ module riscvcore #(
     input  [CORE_ID_WIDTH-1:0]   core_id,
     
     output                       ext_dmem_en,
-    output                       ext_dmem_wen,
-    output [STRB_WIDTH-1:0]      ext_dmem_strb,
-    output [ADDR_WIDTH-1:0]      ext_dmem_addr,
-    output [DATA_WIDTH-1:0]      ext_dmem_wr_data,
-    input  [DATA_WIDTH-1:0]      ext_dmem_rd_data,
-    input                        ext_dmem_rd_valid,
+    output                       ext_pmem_en,
+    output                       ext_mem_wen,
+    output [3:0]                 ext_mem_strb,
+    output [24:0]                ext_mem_addr,
+    output [31:0]                ext_mem_wr_data,
+    input  [31:0]                ext_mem_rd_data,
+    input                        ext_mem_rd_valid,
+    
+    output                       ext_io_en,
+    output                       ext_io_wen,
+    output [3:0]                 ext_io_strb,
+    output [21:0]                ext_io_addr,
+    output [31:0]                ext_io_wr_data,
+    input  [31:0]                ext_io_rd_data,
+    input                        ext_io_rd_valid,
 
     output                       ext_imem_ren,
-    output [ADDR_WIDTH-1:0]      ext_imem_addr,
-    input  [DATA_WIDTH-1:0]      ext_imem_rd_data,
+    output [24:0]                ext_imem_addr,
+    input  [31:0]                ext_imem_rd_data,
 
     input  [63:0]                in_desc,
     input                        in_desc_valid,
@@ -42,7 +46,7 @@ module riscvcore #(
     input                        data_desc_ready,
 
     output [SLOT_WIDTH-1:0]      slot_wr_ptr, 
-    output [ADDR_WIDTH-1:0]      slot_wr_addr,
+    output [24:0]                slot_wr_addr,
     output                       slot_wr_valid,
     output                       slot_for_hdr,
     input                        slot_wr_ready,
@@ -61,7 +65,7 @@ module riscvcore #(
 // Core to memory signals
 wire [31:0] imem_read_data, dmem_wr_data, dmem_read_data; 
 wire [31:0] imem_addr, dmem_addr;
-wire [4:0]  dmem_word_write_mask;
+wire [4:0]  dmem_wr_strb;
 wire [1:0]  dmem_byte_count;
 wire        dmem_v, dmem_wr_en, imem_v;
 
@@ -90,10 +94,9 @@ VexRiscv core (
       .dBus_cmd_payload_address(dmem_addr),
       .dBus_cmd_payload_data(dmem_wr_data),
       .dBus_cmd_payload_size(dmem_byte_count),
-      .dBus_rsp_ready(ext_dmem_rd_valid || io_ren_r),
-      .dBus_rsp_error((dmem_access_err && mask_r[1])    || 
-                      (io_access_data_err && mask_r[2]) || 
-                      (io_byte_access_err && mask_r[3])),
+      .dBus_rsp_ready(ext_dmem_rd_valid || io_ren_r || ext_io_rd_valid),
+      .dBus_rsp_error((dmem_access_err  || io_access_data_err || 
+                       io_byte_access_err) && mask_r[1]),
       .dBus_rsp_data(dmem_read_data),
       
       .timerInterrupt(timer_interrupt && mask_r[5]), 
@@ -102,6 +105,18 @@ VexRiscv core (
                          (in_desc_valid && mask_r[7])),
       .softwareInterrupt(1'b0)
 );
+
+// Conversion from core dmem_byte_count to normal byte mask
+assign dmem_wr_strb = ((!dmem_wr_en) || (!dmem_v)) ? 5'h0 : 
+								     	 (dmem_byte_count == 2'd0) ? (5'h01 << dmem_addr[1:0]) :
+                       (dmem_byte_count == 2'd1) ? (5'h03 << dmem_addr[1:0]) :
+                       5'h0f;
+
+// Memory address decoding 
+wire internal_io = dmem_addr[24:22]==3'b000;
+wire external_io = dmem_addr[24:22]==3'b001;
+wire data_mem    = dmem_addr[24:23]==2'b01;
+wire packet_mem  = dmem_addr[24]   ==1'b1;
 
 ///////////////////////////////////////////////////////////////////////////
 ///////////////////////////// IO WRITES ///////////////////////////////////
@@ -130,8 +145,7 @@ localparam INTERRUPT_ACK  = 7'b0111101;//;
 localparam IO_BYTE_ACCESS = 4'b0111;//??;
 localparam IO_WRITE_ADDRS = 1'b0;//??????;
 
-wire io_not_mem = dmem_addr[ADDR_WIDTH-1] && !dmem_addr[ADDR_WIDTH-2];
-wire io_write = io_not_mem && dmem_v && dmem_wr_en; 
+wire io_write = internal_io && dmem_v && dmem_wr_en; 
 
 wire data_desc_wen  = io_write && (dmem_addr[6:3]==SEND_DESC_ADDR);
 wire dram_addr_wen  = io_write && (dmem_addr[6:3]==WR_DRAM_ADDR);
@@ -157,7 +171,7 @@ reg data_desc_v_r;
 
 assign dram_wr_addr = dram_wr_addr_r;
 // Byte writable data_desc
-wire [7:0]  wr_desc_mask = {4'd0, dmem_word_write_mask[3:0]} << {dmem_addr[2], 2'd0};
+wire [7:0]  wr_desc_mask = {4'd0, dmem_wr_strb[3:0]} << {dmem_addr[2], 2'd0};
 wire [63:0] wr_desc_din  = {dmem_wr_data, dmem_wr_data}; //replicate the data
 
 // byte output is replicated on all 4 locations, so first bit is correct no matter
@@ -211,7 +225,7 @@ always @ (posedge clk) begin
     end
 end
 
-assign slot_wr_addr    = slot_info_data_r[ADDR_WIDTH-1:0]; 
+assign slot_wr_addr    = slot_info_data_r[24:0];
 assign slot_wr_ptr     = slot_info_data_r[24+:SLOT_WIDTH];
 assign slot_wr_valid   = slot_wen && strb_asserted;
 assign slot_for_hdr    = slot_info_data_r[31];
@@ -239,7 +253,7 @@ localparam RD_ACT_SLOT_ADDR = 5'b11000;//??
 localparam IO_READ_ADDRS    = 1'b1;//??????;
 localparam IO_SPACE         = 64 + 36; 
 
-wire io_read  = io_not_mem && dmem_v && (!dmem_wr_en);
+wire io_read  = internal_io && dmem_v && (!dmem_wr_en);
 
 wire in_desc_ren    = io_read  && (dmem_addr[6:3]==RD_DESC_ADDR);
 wire dram_flags_ren = io_read  && (dmem_addr[6:2]==RD_D_FLAGS_ADDR);
@@ -374,98 +388,33 @@ always @ (posedge clk)
 // TODO: Add error catching
 
 ///////////////////////////////////////////////////////////////////////////
-/////////////////////// WORD LENGTH ADJUSTMENT ////////////////////////////
+////////////////////////// DATA SELECTION /////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////
-wire [DATA_WIDTH-1:0] imem_data_out;
-wire [DATA_WIDTH-1:0] dmem_data_in, dmem_data_out; 
-wire [STRB_WIDTH-1:0] dmem_line_write_mask;
-
-// Conversion from core dmem_byte_count to normal byte mask
-assign dmem_word_write_mask = ((!dmem_wr_en) || (!dmem_v)) ? 5'h0 : 
-								     			 	  (dmem_byte_count == 2'd0) ? (5'h01 << dmem_addr[1:0]) :
-                              (dmem_byte_count == 2'd1) ? (5'h03 << dmem_addr[1:0]) :
-                              5'h0f;
-
-if (STRB_WIDTH==4) begin: same_width_dmem
-    assign dmem_read_data = io_ren_r ? io_read_data : dmem_data_out;
-    assign dmem_line_write_mask = dmem_word_write_mask[3:0];
-    assign dmem_data_in   = dmem_wr_data;
-end else begin: width_convert_dmem
-    wire [DATA_WIDTH-1:0] dmem_data_out_shifted; 
-    reg  [LINE_ADDR_BITS-3:0] dmem_latched_addr;
-    localparam REMAINED_BYTES = STRB_WIDTH-4;
-    localparam REMAINED_BITS  = 8*REMAINED_BYTES;
-
-    always @ (posedge clk)
-      if (dmem_v)
-        dmem_latched_addr <= dmem_addr[LINE_ADDR_BITS-1:2];
-
-    assign dmem_data_out_shifted = dmem_data_out >> {dmem_latched_addr, 5'd0};
-    assign dmem_read_data = io_ren_r ? io_read_data : dmem_data_out_shifted[31:0];
-    assign dmem_line_write_mask = 
-                         {{REMAINED_BYTES{1'b0}}, dmem_word_write_mask[3:0]} 
-                         << {dmem_addr[LINE_ADDR_BITS-1:2], 2'd0};
-    assign dmem_data_in =  
-                         {{REMAINED_BITS{1'b0}}, dmem_wr_data} 
-                         << {dmem_addr[LINE_ADDR_BITS-1:2], 5'd0};
-end
-
-if (STRB_WIDTH==4) begin: same_width_imem
-    assign imem_read_data = imem_data_out;
-end else begin: width_convert_imem
-    wire [DATA_WIDTH-1:0] imem_data_out_shifted;
-    reg [LINE_ADDR_BITS-3:0] imem_latched_addr;
-
-    always @ (posedge clk)
-        imem_latched_addr <= imem_addr[LINE_ADDR_BITS-1:2];
-
-    assign imem_data_out_shifted = imem_data_out >> {imem_latched_addr, 5'd0};
-    assign imem_read_data = imem_data_out_shifted[31:0];
-end
-
-always @ (posedge clk)
-    if (rst) begin
-		    imem_read_ready <= 1'b0;
-		end else begin
-		    imem_read_ready <= imem_v;
-    end
+    
+assign dmem_read_data = io_ren_r ? io_read_data   : ext_io_rd_valid ? 
+                                   ext_io_rd_data : ext_mem_rd_data;
+assign ext_mem_wr_data = dmem_wr_data;
+assign imem_read_data = ext_imem_rd_data;
 
 // connection to dmem and imem
-  assign ext_dmem_en       = dmem_v && (!io_not_mem);
-  assign ext_dmem_wen      = dmem_wr_en;
-  assign ext_dmem_strb     = dmem_line_write_mask;
-  assign ext_dmem_addr     = dmem_addr;
-  assign ext_dmem_wr_data  = dmem_data_in;
-  assign dmem_data_out     = ext_dmem_rd_data;
+  assign ext_dmem_en       = dmem_v && data_mem;
+  assign ext_pmem_en       = dmem_v && packet_mem;
+  assign ext_mem_wen       = dmem_wr_en;
+  assign ext_mem_strb      = dmem_wr_strb[3:0];
+  assign ext_mem_addr      = dmem_addr;
+    
+  assign ext_io_en         = dmem_v && external_io;
+  assign ext_io_wen        = dmem_wr_en;
+  assign ext_io_strb       = dmem_wr_strb[3:0];
+  assign ext_io_addr       = dmem_addr[21:0];
+  assign ext_io_wr_data    = dmem_wr_data;
 
   assign ext_imem_ren     = imem_v;
   assign ext_imem_addr    = imem_addr;
-  assign imem_data_out    = ext_imem_rd_data;
 
 ///////////////////////////////////////////////////////////////////////////
 /////////////////////// ADDRESS ERROR CATCHING ////////////////////////////
 ///////////////////////////////////////////////////////////////////////////
-// Register addresses and enables for error catching 
-reg [31:0] imem_addr_r, dmem_addr_r;
-reg dmem_v_r, dmem_wr_en_r, imem_v_r;
-reg [1:0] dmem_byte_count_r;
-
-wire io_not_mem_r = dmem_addr_r[ADDR_WIDTH-1];
-
-always @ (posedge clk) begin
-  imem_addr_r       <= imem_addr;
-  dmem_addr_r       <= dmem_addr;
-  dmem_v_r          <= dmem_v;
-  imem_v_r          <= imem_v;
-  dmem_wr_en_r      <= dmem_wr_en;
-  dmem_byte_count_r <= dmem_byte_count;
-  if (rst) begin
-    dmem_v_r        <= 1'b0;
-    imem_v_r        <= 1'b0;
-    dmem_wr_en_r    <= 1'b0;
-  end 
-end
-
 // Register the error ack so a simple sync reg would be enough to respond
 // assuming the code waits a cycle before resetting it, which is the case
 // when responding to an interrupt. 
@@ -478,36 +427,52 @@ always @ (posedge clk)
 
 assign interrupt_in_ack = ext_err_ack;
 
+// // Register addresses and enables for error catching 
+// reg [31:0] imem_addr_r, dmem_addr_r;
+// reg dmem_v_r, dmem_wr_en_r, imem_v_r;
+// reg [1:0] dmem_byte_count_r;
+// reg io_not_mem_r;
+// 
+// always @ (posedge clk) begin
+//   imem_addr_r       <= imem_addr;
+//   dmem_addr_r       <= dmem_addr;
+//   dmem_v_r          <= dmem_v;
+//   imem_v_r          <= imem_v;
+//   dmem_wr_en_r      <= dmem_wr_en;
+//   dmem_byte_count_r <= dmem_byte_count;
+//   io_not_mem_r      <= internal_io;
+//   if (rst) begin
+//     dmem_v_r        <= 1'b0;
+//     imem_v_r        <= 1'b0;
+//     dmem_wr_en_r    <= 1'b0;
+//     io_not_mem_r    <= 1'b0;
+//   end 
+// end
+
 // Each error stays asserted until it is reset by corresponding bit when interrupt_ack is asserted
-always @ (posedge clk)
-    if (rst) begin
+always @ (posedge clk) begin
+    // if (rst) begin
         imem_access_err    <= 1'b0;
         dmem_access_err    <= 1'b0;
         io_access_data_err <= 1'b0;
         io_byte_access_err <= 1'b0;
-		end else begin
-        imem_access_err    <= !(interrupt_ack && wr_desc_din[8]) && (imem_access_err || 
-                              (imem_v_r && (imem_addr_r >= (1 << IMEM_ADDR_WIDTH))));
+		// end else begin
+        // imem_access_err    <= !(interrupt_ack && wr_desc_din[8]) && (imem_access_err || 
+        //                       (imem_v_r && (imem_addr_r >= (1 << IMEM_ADDR_WIDTH))));
 
-        dmem_access_err    <= !(interrupt_ack && wr_desc_din[9]) && (dmem_access_err || 
-                                (dmem_v_r && ((!io_not_mem_r && (dmem_addr_r >= (1 << DMEM_ADDR_WIDTH)))
-                                              || (dmem_addr_r >= ((1 << (ADDR_WIDTH-1))+IO_SPACE)))));
-                       
-        io_access_data_err <= !(interrupt_ack && wr_desc_din[10]) && (io_access_data_err || 
-                                (io_not_mem_r && dmem_v_r && 
-                                ((dmem_wr_en_r && !(dmem_addr_r[6]==IO_WRITE_ADDRS)) || 
-                                (!dmem_wr_en_r && !(dmem_addr_r[6]==IO_READ_ADDRS)))));
+        // dmem_access_err    <= !(interrupt_ack && wr_desc_din[9]) && (dmem_access_err || 
+        //                         (dmem_v_r && ((!io_not_mem_r && (dmem_addr_r >= (1 << DMEM_ADDR_WIDTH)))
+        //                                       || (dmem_addr_r >= ((1 << (ADDR_WIDTH-1))+IO_SPACE)))));
+        //                
+        // io_access_data_err <= !(interrupt_ack && wr_desc_din[10]) && (io_access_data_err || 
+        //                         (io_not_mem_r && dmem_v_r && 
+        //                         ((dmem_wr_en_r && !(dmem_addr_r[6]==IO_WRITE_ADDRS)) || 
+        //                         (!dmem_wr_en_r && !(dmem_addr_r[6]==IO_READ_ADDRS)))));
 
-        io_byte_access_err <= !(interrupt_ack && wr_desc_din[11]) && (io_byte_access_err || 
-                               (io_not_mem_r && dmem_v_r && 
-                               (dmem_byte_count_r != 2'd0) && (dmem_addr_r[6:3]==IO_BYTE_ACCESS)));
-
-        // TODO these checks are broken, remove this when fixed
-        dmem_access_err    <= 1'b0;
-        io_access_data_err <= 1'b0;
-        io_byte_access_err <= 1'b0;
-
-    end
+        // io_byte_access_err <= !(interrupt_ack && wr_desc_din[11]) && (io_byte_access_err || 
+        //                        (io_not_mem_r && dmem_v_r && 
+        //                        (dmem_byte_count_r != 2'd0) && (dmem_addr_r[6:3]==IO_BYTE_ACCESS)));
+end
 
 ///////////////////////////////////////////////////////////////////////////
 ///////////////////// CORE BROADCAST MESSAGING ////////////////////////////
@@ -517,7 +482,7 @@ always @ (posedge clk)
 // to save a clock cycle, assuming proper power of 2 COHERENT START
 assign core_msg_data  = dmem_wr_data;
 assign core_msg_addr  = dmem_addr[MSG_ADDR_WIDTH+2-1:2];
-assign core_msg_strb  = dmem_word_write_mask[3:0];
+assign core_msg_strb  = dmem_wr_strb[3:0];
 assign core_msg_valid = dmem_v && dmem_wr_en && 
       (dmem_addr >= BC_START_ADDR) && (dmem_addr < (BC_START_ADDR + BC_REGION_SIZE));
 

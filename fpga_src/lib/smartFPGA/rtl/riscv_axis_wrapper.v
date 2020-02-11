@@ -12,7 +12,6 @@ module riscv_axis_wrapper # (
     parameter CORE_ID_WIDTH    = 4, 
     parameter DRAM_PORT        = 6,
     parameter SLOT_COUNT       = 8,
-    parameter ADDR_WIDTH       = 16,
     parameter MSG_WIDTH        = 46,
     parameter STRB_WIDTH       = (DATA_WIDTH/8),
     parameter SLOT_WIDTH       = $clog2(SLOT_COUNT+1), 
@@ -109,16 +108,16 @@ module riscv_axis_wrapper # (
     
     // DMA interface
     output wire                     dma_cmd_wr_en,
-    output wire [ADDR_WIDTH-1:0]    dma_cmd_wr_addr,
+    output wire [25:0]              dma_cmd_wr_addr,
     output wire                     dma_cmd_hdr_wr_en,
-    output wire [ADDR_WIDTH-1:0]    dma_cmd_hdr_wr_addr,
+    output wire [23:0]              dma_cmd_hdr_wr_addr,
     output wire [DATA_WIDTH-1:0]    dma_cmd_wr_data,
     output wire [STRB_WIDTH-1:0]    dma_cmd_wr_strb,
     output wire                     dma_cmd_wr_last,
     input  wire                     dma_cmd_wr_ready,
     
     output wire                     dma_cmd_rd_en,
-    output wire [ADDR_WIDTH-1:0]    dma_cmd_rd_addr,
+    output wire [25:0]              dma_cmd_rd_addr,
     output wire                     dma_cmd_rd_last,
     input  wire                     dma_cmd_rd_ready,
     
@@ -138,7 +137,7 @@ module riscv_axis_wrapper # (
 
     // Slot information from core
     input  wire [SLOT_WIDTH-1:0]    slot_wr_ptr, 
-    input  wire [ADDR_WIDTH-1:0]    slot_wr_addr,
+    input  wire [24:0]              slot_wr_addr,
     input  wire                     slot_wr_valid,
     input  wire                     slot_for_hdr,
     output wire                     slot_wr_ready,
@@ -197,19 +196,19 @@ end
 /////////// EXTRACTING BASE ADDR FROM/FOR INCOMING DATA /////////////
 /////////////////////////////////////////////////////////////////////
 parameter HDR_ADDR_BITS  = $clog2(MAX_PKT_HDR_SIZE);
-parameter HDR_ADDR_WIDTH = ADDR_WIDTH-HDR_ADDR_BITS;
+parameter HDR_MSB_WIDTH = 24-HDR_ADDR_BITS;
 
 // Internal lookup table for slot addresses
-reg  [ADDR_WIDTH-1:0] slot_addr_lut [1:SLOT_COUNT];
+reg  [24:0] slot_addr_lut [1:SLOT_COUNT];
+wire [24:0] slot_addr;
 wire [SLOT_WIDTH-1:0] s_slot_ptr;
-wire [ADDR_WIDTH-1:0] slot_addr;
 
-reg  [HDR_ADDR_WIDTH-1:0] slot_hdr_addr_msb_lut [1:SLOT_COUNT];
-wire [HDR_ADDR_WIDTH-1:0] slot_hdr_msb;
+reg  [HDR_MSB_WIDTH-1:0] slot_hdr_addr_msb_lut [1:SLOT_COUNT];
+wire [HDR_MSB_WIDTH-1:0] slot_hdr_msb;
 
 if (SEPARATE_CLOCKS) begin: slot_addr_async_fifo
 
-  wire [ADDR_WIDTH-1:0] slot_wr_addr_r;
+  wire [24:0]           slot_wr_addr_r;
   wire [SLOT_WIDTH-1:0] slot_wr_ptr_r;
   wire                  slot_wr_valid_r;
   wire                  slot_for_hdr_r;
@@ -218,7 +217,7 @@ if (SEPARATE_CLOCKS) begin: slot_addr_async_fifo
   // is changed, so even double core clock 4 entries are more than enough
   simple_async_fifo # (
     .DEPTH(4),
-    .DATA_WIDTH(ADDR_WIDTH+SLOT_WIDTH+1)
+    .DATA_WIDTH(24+SLOT_WIDTH+1)
   ) slot_addr_wr_fifo (
     .async_rst(sys_rst),
   
@@ -236,7 +235,7 @@ if (SEPARATE_CLOCKS) begin: slot_addr_async_fifo
   always @ (posedge sys_clk)
     if (slot_wr_valid_r) 
       if (slot_for_hdr_r)
-        slot_hdr_addr_msb_lut[slot_wr_ptr_r] <= slot_wr_addr_r[ADDR_WIDTH-1:HDR_ADDR_BITS];
+        slot_hdr_addr_msb_lut[slot_wr_ptr_r] <= slot_wr_addr_r[24:HDR_ADDR_BITS];
       else 
         slot_addr_lut        [slot_wr_ptr_r] <= slot_wr_addr_r;
 
@@ -245,7 +244,7 @@ end else begin: slot_addr_direct
   always @ (posedge sys_clk)
     if (slot_wr_valid)
       if (slot_for_hdr)
-        slot_hdr_addr_msb_lut[slot_wr_ptr] <= slot_wr_addr[ADDR_WIDTH-1:HDR_ADDR_BITS];
+        slot_hdr_addr_msb_lut[slot_wr_ptr] <= slot_wr_addr[24:HDR_ADDR_BITS];
       else 
         slot_addr_lut        [slot_wr_ptr] <= slot_wr_addr;
 
@@ -314,8 +313,8 @@ axis_register # (
 );
 
 wire [PORT_WIDTH-1:0] dram_port = DRAM_PORT;
-wire [ADDR_WIDTH-1:0] s_header_addr;
-wire [ADDR_WIDTH-1:0] s_base_addr;
+wire [24:0]           s_header_addr;
+wire [24:0]           s_base_addr;
 wire [63:0]           incoming_hdr;
 wire                  incoming_hdr_v;
 
@@ -351,7 +350,7 @@ header_remover # (
 );
 
 assign s_slot_ptr    = s_axis_tdest[SLOT_WIDTH-1:0];
-assign s_header_addr = incoming_hdr[32 +: ADDR_WIDTH];
+assign s_header_addr = incoming_hdr[32 +: 25];
 
 // We want to use LUTS instead of BRAM or REGS
 assign slot_addr     = slot_addr_lut        [s_slot_ptr]; 
@@ -481,7 +480,7 @@ wire                   recv_desc_fifo_ready;
 wire [15:0]            recv_desc_len;
 wire [TAG_WIDTH-1:0]   recv_desc_tdest;
 wire [PORT_WIDTH-1:0]  recv_desc_tuser;
-wire [ADDR_WIDTH-1:0]  recv_desc_addr;
+wire [25:0]            recv_desc_addr;
 
 wire [63:0] send_desc;
 wire send_desc_valid, send_desc_ready;
@@ -492,14 +491,15 @@ assign dma_cmd_rd_en = dma_cmd_rd_en_n && dma_rd_resp_ready;
 
 axis_dma # (
   .DATA_WIDTH     (DATA_WIDTH),
-  .ADDR_WIDTH     (ADDR_WIDTH),       
+  .ADDR_WIDTH     (26),       
   .LEN_WIDTH      (16),        
   .DEST_WIDTH_IN  (TAG_WIDTH),   
   .USER_WIDTH_IN  (PORT_WIDTH),   
   .DEST_WIDTH_OUT (PORT_WIDTH),  
   .USER_WIDTH_OUT (TAG_WIDTH),
   .MAX_PKT_HDR_SIZE(MAX_PKT_HDR_SIZE),
-  .HDR_ADDR_WIDTH  (HDR_ADDR_WIDTH)
+  .HDR_MSB_WIDTH  (HDR_MSB_WIDTH),
+  .HDR_ADDR_WIDTH (24)
 ) axis_dma_inst (
   .clk(sys_clk),
   .rst(sys_rst),
@@ -512,7 +512,7 @@ axis_dma # (
   .s_axis_tdest (s_axis_tdest),
   .s_axis_tuser (s_axis_tuser),
 
-  .wr_base_addr (s_base_addr),
+  .wr_base_addr ({1'b0,s_base_addr}),
   .hdr_wr_addr_msb (slot_hdr_msb),
   .hdr_en(!incoming_hdr_v),
 
@@ -551,7 +551,7 @@ axis_dma # (
 
   .send_desc_valid(send_desc_valid),
   .send_desc_ready(send_desc_ready),
-  .send_desc_addr(send_desc[ADDR_WIDTH+31:32]),
+  .send_desc_addr({1'b0,send_desc[32+:25]}),
   .send_desc_len(send_desc[15:0]),
   .send_desc_tdest(send_desc[PORT_WIDTH+23:24]),
   .send_desc_tuser(send_desc[TAG_WIDTH+15:16]),
@@ -564,7 +564,7 @@ axis_dma # (
 /////////////////// DATA IN DESCRIPTOR FIFO /////////////////////////
 /////////////////////////////////////////////////////////////////////
 // A desc FIFO for received data
-wire [63:0] recv_desc = {recv_desc_addr,
+wire [63:0] recv_desc = {6'd0,recv_desc_addr,
                         {(8-PORT_WIDTH){1'b0}},recv_desc_tuser,
                         {(8-SLOT_WIDTH){1'b0}},recv_desc_tdest[SLOT_WIDTH-1:0],
                         recv_desc_len};
@@ -746,13 +746,13 @@ end else begin: async_ctrl_send_fifo
 end
 
 // A register to look up the send adddress based on slot
-reg  [ADDR_WIDTH-1:0] send_slot_addr [1:SLOT_COUNT];
+reg  [24:0]           send_slot_addr [1:SLOT_COUNT];
 reg  [15:0]           send_slot_len  [1:SLOT_COUNT];
 wire [SLOT_WIDTH-1:0] ctrl_out_slot_ptr = core_ctrl_wr_desc_f[16 +: SLOT_WIDTH];
 
 always @ (posedge sys_clk)
   if (core_ctrl_wr_valid_f && core_ctrl_wr_ready_f) begin
-    send_slot_addr [ctrl_out_slot_ptr] <= core_ctrl_wr_desc_f[32+:ADDR_WIDTH];
+    send_slot_addr [ctrl_out_slot_ptr] <= core_ctrl_wr_desc_f[32+:25];
     send_slot_len  [ctrl_out_slot_ptr] <= core_ctrl_wr_desc_f[15:0];
   end
 
@@ -864,15 +864,15 @@ always @ (posedge sys_clk) begin
     ctrl_s_axis_tvalid_r <= 1'b0;
 end
   
-wire [ADDR_WIDTH-1:0] ctrl_send_addr   = send_slot_addr[ctrl_in_slot_ptr];
-wire [ADDR_WIDTH-1:0] ctrl_lp_send_len = send_slot_len [ctrl_in_slot_ptr];
-wire [3:0]            ctrl_msg_type    = ctrl_s_axis_tdata_r[35:32];
+wire [24:0] ctrl_send_addr   = send_slot_addr[ctrl_in_slot_ptr];
+wire [24:0] ctrl_lp_send_len = send_slot_len [ctrl_in_slot_ptr];
+wire [3:0]  ctrl_msg_type    = ctrl_s_axis_tdata_r[35:32];
 wire ctrl_s_axis_fifo_ready;
 
 wire [ID_TAG_WIDTH+64:0] parsed_ctrl_desc = (ctrl_msg_type==4'd1) ? 
-              {1'b1,ctrl_s_axis_tdata_r[ID_TAG_WIDTH-1:0],{(32-ADDR_WIDTH){1'b0}}, ctrl_send_addr,
+              {1'b1,ctrl_s_axis_tdata_r[ID_TAG_WIDTH-1:0],7'd0, ctrl_send_addr,
                ctrl_s_axis_tdata_r[31:16], ctrl_lp_send_len} : 
-              {1'b0,{(ID_TAG_WIDTH+32-ADDR_WIDTH){1'b0}}, ctrl_send_addr,ctrl_s_axis_tdata_r[31:0]};
+              {1'b0,{(ID_TAG_WIDTH+7){1'b0}}, ctrl_send_addr,ctrl_s_axis_tdata_r[31:0]};
 
 // A desc FIFO for send data based on scheduler message
 
