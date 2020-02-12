@@ -123,7 +123,7 @@ wire packet_mem  = dmem_addr[24]   ==1'b1;
 ///////////////////////////// IO WRITES ///////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////
 
-localparam SEND_DESC_ADDR = 4'b0000;//???;
+localparam SEND_DESC_ADDR = 4'b0100;//???;
 localparam WR_DRAM_ADDR   = 4'b0001;//???;
 localparam SLOT_LUT_ADDR  = 5'b00100;//??;
 localparam TIMER_STP_ADDR = 5'b00101;//??;
@@ -226,10 +226,12 @@ always @ (posedge clk) begin
     end
 end
 
-assign slot_wr_addr    = slot_info_data_r[24:0];
-assign slot_wr_ptr     = slot_info_data_r[24+:SLOT_WIDTH];
-assign slot_wr_valid   = slot_wen && strb_asserted;
+// Slot header goes to data mem and packet to packet mem, 
+// So MSB of slot_wr_addr is determined by being header or not. 
 assign slot_for_hdr    = slot_info_data_r[31];
+assign slot_wr_valid   = slot_wen && strb_asserted;
+assign slot_wr_addr    = {~slot_for_hdr,slot_info_data_r[23:0]};
+assign slot_wr_ptr     = slot_info_data_r[24+:SLOT_WIDTH];
 
 assign data_desc       = data_desc_data_r;
 assign data_desc_valid = data_desc_v_r;

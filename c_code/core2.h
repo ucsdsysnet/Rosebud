@@ -18,8 +18,8 @@
 #define MASK_READ      		(*((volatile unsigned char *)(IO_START + 0x005D)))
 #define ACTIVE_SLOTS			(*((volatile unsigned int *)(IO_START + 0x0060)))
 
-#define SEND_DESC				  (*((volatile struct   Desc*)(IO_START + 0x0000)))
-#define SEND_DESC_TYPE    (*((volatile unsigned char*)(IO_START + 0x0007)))
+#define SEND_DESC				  (*((volatile struct   Desc*)(IO_START + 0x0020)))
+#define SEND_DESC_TYPE    (*((volatile unsigned char*)(IO_START + 0x0027)))
 #define DRAM_ADDR      	  (*((volatile unsigned long long *)(IO_START + 0x0008)))
 #define SLOT_ADDR  			  (*((volatile unsigned int *)(IO_START + 0x0010))) 
 #define TIMER_INTERVAL   	(*((volatile unsigned int *)(IO_START + 0x0014)))
@@ -75,7 +75,7 @@ inline void init_slots (const unsigned int slot_count,
 												const unsigned int addr_step) {
 
 	for (int i=1; i<=slot_count; i++){
-		SLOT_ADDR = (i<<24) + start_addr + ((i-1)*addr_step);
+		SLOT_ADDR = (i<<24) + (start_addr&0x00ffffff) + ((i-1)*addr_step);
 		asm volatile("" ::: "memory");
 		UPDATE_SLOT = 1;
 	}
@@ -95,7 +95,7 @@ inline void init_hdr_slots (const unsigned int slot_count,
 	// TODO: Add checks for range and hdr_addr_step
 
 	for (int i=1; i<=slot_count; i++){
-		SLOT_ADDR = (1<<31) + (i<<24) + start_hdr_addr + ((i-1)*hdr_addr_step);
+		SLOT_ADDR = (1<<31) + (i<<24) + (start_hdr_addr&0x00ffffff) + ((i-1)*hdr_addr_step);
 		asm volatile("" ::: "memory");
 		UPDATE_SLOT = 1;
 	}
