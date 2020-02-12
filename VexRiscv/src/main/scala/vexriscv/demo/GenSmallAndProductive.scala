@@ -13,6 +13,8 @@ object GenSmallAndProductive extends App{
       plugins = List(
         new BSWAP32,
         new BSWAP16,
+        // new FIRST1,
+        new LEAD_ZERO,
         new IBusSimplePlugin(
           resetVector = 0x00000000l,
           cmdForkOnSecondStage = false,
