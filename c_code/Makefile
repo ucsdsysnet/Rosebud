@@ -11,7 +11,7 @@ NM = riscv32-unknown-elf-nm
 
 compile:
 	rm -f ${NAME}.bin ${NAME}.hex ${NAME}.o ${NAME}.asm
-	$(CC) -nostdlib -O2 -T link_option.ld -mbranch-cost=3 -o ${NAME}.o startup.S int_handler.c ${NAME}.c
+	$(CC) -march=rv32i -mabi=ilp32 -nostdlib -fno-delete-null-pointer-checks -O2 -T link_option.ld -mbranch-cost=3 -o ${NAME}.o startup.S int_handler.c ${NAME}.c
 	$(OBJCOPY) -O binary ${NAME}.o ${NAME}.bin
 	$(OBJDUMP) -h -S ${NAME}.o > ${NAME}.asm 
 	./hex_gen.py -w ${WIDTH} -i ${NAME}.bin > ${NAME}.hex
