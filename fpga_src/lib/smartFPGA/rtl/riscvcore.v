@@ -1,8 +1,4 @@
 module riscvcore #(
-  parameter BC_START_ADDR   = 16'h7000,
-  parameter BC_REGION_SIZE  = 4048,
-  parameter MSG_ADDR_WIDTH  = $clog2(BC_REGION_SIZE)-2,
-  
   parameter CORE_ID_WIDTH   = 4,
   parameter SLOT_COUNT      = 8,
   parameter SLOT_WIDTH      = $clog2(SLOT_COUNT+1)
@@ -12,27 +8,20 @@ module riscvcore #(
     input                        init_rst,
     input  [CORE_ID_WIDTH-1:0]   core_id,
     
-    output                       ext_dmem_en,
-    output                       ext_pmem_en,
-    output                       ext_mem_wen,
-    output [3:0]                 ext_mem_strb,
-    output [24:0]                ext_mem_addr,
-    output [31:0]                ext_mem_wr_data,
-    input  [31:0]                ext_mem_rd_data,
-    input                        ext_mem_rd_valid,
+    output                       dmem_en,
+    output                       pmem_en,
+    output                       exio_en,
+    output                       mem_wen,
+    output [3:0]                 mem_strb,
+    output [24:0]                mem_addr,
+    output [31:0]                mem_wr_data,
+    input  [31:0]                mem_rd_data,
+    input                        mem_rd_valid,
     
-    output                       ext_io_en,
-    output                       ext_io_wen,
-    output [3:0]                 ext_io_strb,
-    output [21:0]                ext_io_addr,
-    output [31:0]                ext_io_wr_data,
-    input  [31:0]                ext_io_rd_data,
-    input                        ext_io_rd_valid,
-
-    output                       ext_imem_ren,
-    output [24:0]                ext_imem_addr,
-    input  [31:0]                ext_imem_rd_data,
-    input                        ext_imem_rd_valid,
+    output                       imem_ren,
+    output [24:0]                imem_addr,
+    input  [31:0]                imem_rd_data,
+    input                        imem_rd_valid,
 
     input  [63:0]                in_desc,
     input                        in_desc_valid,
@@ -41,10 +30,10 @@ module riscvcore #(
     input  [4:0]                 recv_dram_tag,
     input                        recv_dram_tag_valid,
 
-    output [63:0]                data_desc,
-    output                       data_desc_valid,
-    output [63:0]                dram_wr_addr,
-    input                        data_desc_ready,
+    output [63:0]                out_desc,
+    output                       out_desc_valid,
+    output [63:0]                out_desc_dram_addr,
+    input                        out_desc_ready,
 
     output [SLOT_WIDTH-1:0]      slot_wr_ptr, 
     output [24:0]                slot_wr_addr,
@@ -52,20 +41,14 @@ module riscvcore #(
     output                       slot_for_hdr,
     input                        slot_wr_ready,
 
-    output [31:0]                core_msg_data,
-    output [MSG_ADDR_WIDTH-1:0]  core_msg_addr,
-    output [3:0]                 core_msg_strb,
-    output                       core_msg_valid,
     input                        core_msg_ready,
-
     input                        interrupt_in,
     output                       interrupt_in_ack
 );
 
-
 // Core to memory signals
 wire [31:0] dmem_wr_data, dmem_read_data; 
-wire [31:0] dmem_addr, imem_addr;
+wire [31:0] dmem_addr, imem_addr_n;
 wire [4:0]  dmem_wr_strb;
 wire [1:0]  dmem_byte_count;
 wire        dmem_v, dmem_wr_en;
@@ -81,12 +64,12 @@ VexRiscv core (
       .clk(clk),
       .reset(rst),
 
-      .iBus_cmd_valid(ext_imem_ren),
+      .iBus_cmd_valid(imem_ren),
       .iBus_cmd_ready(1'b1),
-      .iBus_cmd_payload_pc(imem_addr),
-      .iBus_rsp_valid(ext_imem_rd_valid),
+      .iBus_cmd_payload_pc(imem_addr_n),
+      .iBus_rsp_valid(imem_rd_valid),
       .iBus_rsp_payload_error(imem_access_err && mask_r[0]),
-      .iBus_rsp_payload_inst(ext_imem_rd_data),
+      .iBus_rsp_payload_inst(imem_rd_data),
 
       .dBus_cmd_valid(dmem_v),
       .dBus_cmd_ready(1'b1),
@@ -94,7 +77,7 @@ VexRiscv core (
       .dBus_cmd_payload_address(dmem_addr),
       .dBus_cmd_payload_data(dmem_wr_data),
       .dBus_cmd_payload_size(dmem_byte_count),
-      .dBus_rsp_ready(ext_dmem_rd_valid || io_ren_r || ext_io_rd_valid),
+      .dBus_rsp_ready(mem_rd_valid || io_ren_r),
       .dBus_rsp_error((dmem_access_err  || io_access_data_err || 
                        io_byte_access_err) && mask_r[1]),
       .dBus_rsp_data(dmem_read_data),
@@ -111,7 +94,7 @@ assign dmem_wr_strb = ((!dmem_wr_en) || (!dmem_v)) ? 5'h0 :
 								     	 (dmem_byte_count == 2'd0) ? (5'h01 << dmem_addr[1:0]) :
                        (dmem_byte_count == 2'd1) ? (5'h03 << dmem_addr[1:0]) :
                        5'h0f;
-assign ext_imem_addr = imem_addr;
+assign imem_addr = imem_addr_n[24:0];
 
 // Memory address decoding 
 wire internal_io = dmem_addr[24:22]==3'b000;
@@ -170,8 +153,8 @@ reg [63:0] data_desc_data_r;
 reg [31:0] slot_info_data_r;
 reg data_desc_v_r;
 
-assign dram_wr_addr = dram_wr_addr_r;
-// Byte writable data_desc
+assign out_desc_dram_addr = dram_wr_addr_r;
+// Byte writable out_desc
 wire [7:0]  wr_desc_mask = {4'd0, dmem_wr_strb[3:0]} << {dmem_addr[2], 2'd0};
 wire [63:0] wr_desc_din  = {dmem_wr_data, dmem_wr_data}; //replicate the data
 
@@ -221,7 +204,7 @@ always @ (posedge clk) begin
     else begin
         if (send_data_desc && strb_asserted)
             data_desc_v_r <= 1'b1;
-        if (data_desc_v_r && data_desc_ready)
+        if (data_desc_v_r && out_desc_ready)
             data_desc_v_r <= 1'b0;
     end
 end
@@ -233,8 +216,8 @@ assign slot_wr_valid   = slot_wen && strb_asserted;
 assign slot_wr_addr    = {~slot_for_hdr,slot_info_data_r[23:0]};
 assign slot_wr_ptr     = slot_info_data_r[24+:SLOT_WIDTH];
 
-assign data_desc       = data_desc_data_r;
-assign data_desc_valid = data_desc_v_r;
+assign out_desc       = data_desc_data_r;
+assign out_desc_valid = data_desc_v_r;
 
 ///////////////////////////////////////////////////////////////////////////
 ////////////////////////////// IO READS ///////////////////////////////////
@@ -290,7 +273,7 @@ always @ (posedge clk) begin
 
     if (stat_ren)
         io_read_data <= {7'd0,core_msg_ready, 7'd0,slot_wr_ready,
-                         7'd0,data_desc_ready, 7'd0,in_desc_valid};
+                         7'd0,out_desc_ready, 7'd0,in_desc_valid};
 
     if (id_ren)
         io_read_data <= {{(32-CORE_ID_WIDTH){1'b0}},core_id};
@@ -376,17 +359,17 @@ assign dram_recv_any = | dram_recv_flag;
 ///////////////////////////////////////////////////////////////////////////
 //////////////////////// ACTIVE SLOTS STATE/// ////////////////////////////
 ///////////////////////////////////////////////////////////////////////////
-wire done_w_slot = ((data_desc[63:60] == 4'd0) ||
-                    (data_desc[63:60] == 4'd1) ||
-                    (data_desc[63:60] == 4'd2));
+wire done_w_slot = ((out_desc[63:60] == 4'd0) ||
+                    (out_desc[63:60] == 4'd1) ||
+                    (out_desc[63:60] == 4'd2));
 
 always @ (posedge clk)
     if (init_rst)
         slots_in_prog <= {SLOT_COUNT{1'b0}};
     else if (in_desc_valid && in_desc_taken)
         slots_in_prog[in_desc[16+:SLOT_WIDTH]]   <= 1'b1;
-    else if (done_w_slot && data_desc_valid && data_desc_ready)
-        slots_in_prog[data_desc[16+:SLOT_WIDTH]] <= 1'b0;
+    else if (done_w_slot && out_desc_valid && out_desc_ready)
+        slots_in_prog[out_desc[16+:SLOT_WIDTH]] <= 1'b0;
 
 // TODO: Add error catching
 
@@ -394,23 +377,14 @@ always @ (posedge clk)
 ////////////////////////// DATA SELECTION /////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////
     
-assign dmem_read_data = io_ren_r ? io_read_data   : ext_io_rd_valid ? 
-                                   ext_io_rd_data : ext_mem_rd_data;
-assign ext_mem_wr_data = dmem_wr_data;
-
-// connection to dmem and imem
-  assign ext_dmem_en       = dmem_v && data_mem;
-  assign ext_pmem_en       = dmem_v && packet_mem;
-  assign ext_mem_wen       = dmem_wr_en;
-  assign ext_mem_strb      = dmem_wr_strb[3:0];
-  assign ext_mem_addr      = dmem_addr;
+assign dmem_read_data = io_ren_r ? io_read_data : mem_rd_data;
+assign mem_wr_data    = dmem_wr_data;
+assign dmem_en        = dmem_v && data_mem;
+assign pmem_en        = dmem_v && packet_mem;
+assign mem_wen        = dmem_wr_en;
+assign mem_strb       = dmem_wr_strb[3:0];
+assign mem_addr       = dmem_addr;
     
-  assign ext_io_en         = dmem_v && external_io;
-  assign ext_io_wen        = dmem_wr_en;
-  assign ext_io_strb       = dmem_wr_strb[3:0];
-  assign ext_io_addr       = dmem_addr[21:0];
-  assign ext_io_wr_data    = dmem_wr_data;
-
 ///////////////////////////////////////////////////////////////////////////
 /////////////////////// ADDRESS ERROR CATCHING ////////////////////////////
 ///////////////////////////////////////////////////////////////////////////
@@ -472,17 +446,5 @@ always @ (posedge clk) begin
         //                        (io_not_mem_r && dmem_v_r && 
         //                        (dmem_byte_count_r != 2'd0) && (dmem_addr_r[6:3]==IO_BYTE_ACCESS)));
 end
-
-///////////////////////////////////////////////////////////////////////////
-///////////////////// CORE BROADCAST MESSAGING ////////////////////////////
-///////////////////////////////////////////////////////////////////////////
-
-// Any write after the coherent point would become a message. No registering
-// to save a clock cycle, assuming proper power of 2 COHERENT START
-assign core_msg_data  = dmem_wr_data;
-assign core_msg_addr  = dmem_addr[MSG_ADDR_WIDTH+2-1:2];
-assign core_msg_strb  = dmem_wr_strb[3:0];
-assign core_msg_valid = dmem_v && dmem_wr_en && 
-      (dmem_addr >= BC_START_ADDR) && (dmem_addr < (BC_START_ADDR + BC_REGION_SIZE));
 
 endmodule
