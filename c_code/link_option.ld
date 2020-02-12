@@ -4,7 +4,7 @@ OUTPUT_ARCH(riscv)
 
 MEMORY
 {
-	IMEM (x!rwai) : ORIGIN = 0x00000000, LENGTH = 64k
+  IMEM (x!rwai) : ORIGIN = 0x0000000, LENGTH = 64k
   DMEM (rwa!xi) : ORIGIN = 0x00800000, LENGTH = 32k
 }
 
@@ -12,8 +12,7 @@ ENTRY(_start)
 
 SECTIONS
 {
-  . = 0x00000;
-  .text ALIGN(4) :
+  .text :
   {
     _start_text = .;
     KEEP(*(.vectors))
