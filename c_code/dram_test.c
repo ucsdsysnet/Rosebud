@@ -1,4 +1,4 @@
-#include "core.h"
+#include "core2.h"
 
 int main(void){
 
@@ -14,12 +14,12 @@ int main(void){
 
 	// Do this at the beginnig, so scheduler can fill the slots while 
 	// initializing other things.
-	init_hdr_slots(4, 0x5C00, 128);
+	init_hdr_slots(8, 0x801C00, 128);
 	init_slots(8, 0x000A, 2048);
 	
 	packet.len  = 69;
 	packet.tag  = 12;
-	packet.data = (unsigned char*)0x220;
+	packet.data = (unsigned char*)0x800020;
 	safe_dram_read_req(&dram_rd_addr, &packet);
 
 	while (dram_flags()==0);
@@ -27,7 +27,7 @@ int main(void){
 
 	packet.len  = 69;
 	packet.tag  = 12;
-	packet.data = (unsigned char*)0x220;
+	packet.data = (unsigned char*)0x800020;
 	safe_dram_write(&dram_wr_addr, &packet);
 
 	while (1){

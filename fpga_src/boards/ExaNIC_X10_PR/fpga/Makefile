@@ -19,6 +19,7 @@ SYN_FILES += lib/smartFPGA/rtl/slot_keeper.v
 SYN_FILES += lib/smartFPGA/rtl/simple_fifo.v
 SYN_FILES += lib/smartFPGA/rtl/simple_scheduler.v
 SYN_FILES += lib/smartFPGA/rtl/max_finder_tree.v
+SYN_FILES += lib/smartFPGA/rtl/accel_wrap.v
 SYN_FILES += lib/smartFPGA/rtl/axis_dma.v
 SYN_FILES += lib/smartFPGA/rtl/axis_stat.v
 SYN_FILES += lib/smartFPGA/rtl/stat_reader.v
@@ -34,10 +35,10 @@ SYN_FILES += lib/smartFPGA/rtl/pcie_cont_read.v
 SYN_FILES += lib/smartFPGA/rtl/pcie_cont_write.v
 SYN_FILES += lib/smartFPGA/rtl/corundum.v
 
-SYN_FILES += accel/regex/rtl/accel_wrap_regex.v
-SYN_FILES += accel/regex/rtl/re_hw.v
-SYN_FILES += accel/regex/rtl/re_sql.v
-SYN_FILES += accel/regex/rtl/regex_acc.v
+# SYN_FILES += accel/regex/rtl/accel_wrap_regex.v
+# SYN_FILES += accel/regex/rtl/re_hw.v
+# SYN_FILES += accel/regex/rtl/re_sql.v
+# SYN_FILES += accel/regex/rtl/regex_acc.v
 
 # SYN_FILES += lib/axis/rtl/axis_switch.v
 SYN_FILES += lib/axis/rtl/axis_arb_mux.v

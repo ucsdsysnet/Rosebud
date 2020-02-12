@@ -173,7 +173,7 @@ simple_pipe_reg # (
   .REG_LENGTH(REG_LENGTH)
 ) in_desc_reg (
   .clk(sys_clk),
-  .rst(sys_rst_r),
+  .rst(sys_rst_r || core_rst_r),
   
   .s_data(in_desc),
   .s_valid(in_desc_valid),
@@ -195,7 +195,7 @@ simple_pipe_reg # (
   .REG_LENGTH(REG_LENGTH)
 ) out_desc_reg (
   .clk(sys_clk),
-  .rst(sys_rst_r),
+  .rst(sys_rst_r || core_rst_r),
   
   .s_data({out_desc_dram_addr_n,out_desc_n}),
   .s_valid(out_desc_valid_n),
@@ -218,7 +218,7 @@ simple_pipe_reg # (
   .REG_LENGTH(REG_LENGTH)
 ) slot_info_reg (
   .clk(sys_clk),
-  .rst(sys_rst_r),
+  .rst(sys_rst_r || core_rst_r),
   
   .s_data({slot_wr_ptr_n, slot_wr_addr_n, slot_for_hdr_n}),
   .s_valid(slot_wr_valid_n),
@@ -238,7 +238,7 @@ simple_pipe_reg # (
   .REG_LENGTH(REG_LENGTH)
 ) dram_tag_reg (
   .clk(sys_clk),
-  .rst(sys_rst_r),
+  .rst(sys_rst_r || core_rst_r),
   
   .s_data(recv_dram_tag),
   .s_valid(recv_dram_tag_valid),
@@ -258,7 +258,7 @@ simple_pipe_reg # (
   .REG_LENGTH(REG_LENGTH)
 ) bc_msg_in_reg (
   .clk(sys_clk),
-  .rst(sys_rst_r),
+  .rst(sys_rst_r || core_rst_r),
   
   .s_data(bc_msg_in),
   .s_valid(bc_msg_in_valid),
@@ -279,7 +279,7 @@ simple_pipe_reg # (
   .REG_LENGTH(REG_LENGTH)
 ) bc_msg_out_reg (
   .clk(sys_clk),
-  .rst(sys_rst_r),
+  .rst(sys_rst_r || core_rst_r),
   
   .s_data(bc_msg_out_n),
   .s_valid(bc_msg_out_valid_n),

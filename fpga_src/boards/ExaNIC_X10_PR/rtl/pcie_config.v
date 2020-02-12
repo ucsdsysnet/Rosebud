@@ -117,6 +117,7 @@ module pcie_config # (
   output wire [INTERFACE_WIDTH-1:0]         stat_read_interface,
   input  wire [BYTE_COUNT_WIDTH-1:0]        interface_in_byte_count,
   input  wire [FRAME_COUNT_WIDTH-1:0]       interface_in_frame_count,
+  input  wire [FRAME_COUNT_WIDTH-1:0]       interface_in_drop_count,
   input  wire [BYTE_COUNT_WIDTH-1:0]        interface_out_byte_count,
   input  wire [FRAME_COUNT_WIDTH-1:0]       interface_out_frame_count,
   
@@ -149,6 +150,7 @@ wire [BYTE_COUNT_WIDTH-1:0]  interface_out_byte_count_r;
 wire [FRAME_COUNT_WIDTH-1:0] core_in_frame_count_r;
 wire [FRAME_COUNT_WIDTH-1:0] core_out_frame_count_r;
 wire [FRAME_COUNT_WIDTH-1:0] interface_in_frame_count_r;
+wire [FRAME_COUNT_WIDTH-1:0] interface_in_drop_count_r;
 wire [FRAME_COUNT_WIDTH-1:0] interface_out_frame_count_r;
 
 // State registers for readback
@@ -373,6 +375,7 @@ always @(posedge pcie_clk) begin
                 16'h0428: axil_ctrl_rdata <= interface_out_byte_count_r;
                 16'h042C: axil_ctrl_rdata <= interface_in_frame_count_r;
                 16'h0430: axil_ctrl_rdata <= interface_out_frame_count_r;
+                16'h0434: axil_ctrl_rdata <= interface_in_drop_count_r;
                 16'h0458: axil_ctrl_rdata <= host_dma_read_status_tags;
                 16'h0478: axil_ctrl_rdata <= host_dma_write_status_tags;
             endcase
@@ -484,15 +487,15 @@ simple_sync_sig # (
 
 simple_sync_sig # (
   .RST_VAL(1'b0),
-  .WIDTH(CORE_SLOT_WIDTH+(4*BYTE_COUNT_WIDTH)+(4*FRAME_COUNT_WIDTH))
+  .WIDTH(CORE_SLOT_WIDTH+(4*BYTE_COUNT_WIDTH)+(5*FRAME_COUNT_WIDTH))
 ) slot_count_syncer (
   .dst_clk(pcie_clk),
   .dst_rst(pcie_rst),
-  .in({interface_in_byte_count, interface_in_frame_count, 
+  .in({interface_in_byte_count, interface_in_frame_count, interface_in_drop_count,
        interface_out_byte_count, interface_out_frame_count, 
        slot_count, core_in_byte_count, core_in_frame_count, 
        core_out_byte_count, core_out_frame_count}),
-  .out({interface_in_byte_count_r, interface_in_frame_count_r, 
+  .out({interface_in_byte_count_r, interface_in_frame_count_r, interface_in_drop_count_r,
         interface_out_byte_count_r, interface_out_frame_count_r, 
         slot_count_r, core_in_byte_count_r, core_in_frame_count_r, 
         core_out_byte_count_r, core_out_frame_count_r})
