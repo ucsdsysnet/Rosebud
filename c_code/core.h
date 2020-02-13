@@ -5,39 +5,41 @@
 #include "riscv_encoding.h"
 // time read is not supported by Vexriscv
 
-#define IO_START          0x8000
-#define IO_START_INT      (IO_START)
-#define IO_START_EXT      (IO_START | (IO_START >> 1))
+#define IO_BASE           0x00000000
+#define IO_INT_BASE       0x00000000
+#define IO_EXT_BASE       0x00400000
+#define DMEM_BASE         0x00800000
+#define PMEM_BASE         0x01000000
 
-#define RECV_DESC         (*((volatile struct Desc*)(IO_START + 0x0040)))
-#define DRAM_FLAGS        (*((volatile unsigned int *)(IO_START + 0x0048)))
-#define CORE_ID           (*((volatile unsigned int *)(IO_START + 0x0050)))
-#define TIMER_32_L        (*((volatile unsigned int *)(IO_START + 0x0054)))
-#define TIMER_32_H        (*((volatile unsigned int *)(IO_START + 0x0058)))
-#define INTERRUPT_FLAGS   (*((volatile unsigned char *)(IO_START + 0x005C)))
-#define MASK_READ         (*((volatile unsigned char *)(IO_START + 0x005D)))
-#define ACTIVE_SLOTS      (*((volatile unsigned int *)(IO_START + 0x0060)))
+#define RECV_DESC         (*((volatile struct Desc*)(IO_INT_BASE + 0x0040)))
+#define DRAM_FLAGS        (*((volatile unsigned int *)(IO_INT_BASE + 0x0048)))
+#define CORE_ID           (*((volatile unsigned int *)(IO_INT_BASE + 0x0050)))
+#define TIMER_32_L        (*((volatile unsigned int *)(IO_INT_BASE + 0x0054)))
+#define TIMER_32_H        (*((volatile unsigned int *)(IO_INT_BASE + 0x0058)))
+#define INTERRUPT_FLAGS   (*((volatile unsigned char *)(IO_INT_BASE + 0x005C)))
+#define MASK_READ         (*((volatile unsigned char *)(IO_INT_BASE + 0x005D)))
+#define ACTIVE_SLOTS      (*((volatile unsigned int *)(IO_INT_BASE + 0x0060)))
 
-#define SEND_DESC         (*((volatile struct   Desc*)(IO_START + 0x0000)))
-#define SEND_DESC_TYPE    (*((volatile unsigned char*)(IO_START + 0x0007)))
-#define DRAM_ADDR         (*((volatile unsigned long long *)(IO_START + 0x0008)))
-#define SLOT_ADDR         (*((volatile unsigned int *)(IO_START + 0x0010)))
-#define TIMER_INTERVAL    (*((volatile unsigned int *)(IO_START + 0x0014)))
-#define DRAM_FLAG_WR      (*((volatile unsigned int *)(IO_START + 0x0018)))
-#define DEBUG_REG         (*((volatile unsigned int *)(IO_START + 0x001C)))
+#define SEND_DESC         (*((volatile struct   Desc*)(IO_INT_BASE + 0x0020)))
+#define SEND_DESC_TYPE    (*((volatile unsigned char*)(IO_INT_BASE + 0x0027)))
+#define DRAM_ADDR         (*((volatile unsigned long long *)(IO_INT_BASE + 0x0008)))
+#define SLOT_ADDR         (*((volatile unsigned int *)(IO_INT_BASE + 0x0010)))
+#define TIMER_INTERVAL    (*((volatile unsigned int *)(IO_INT_BASE + 0x0014)))
+#define DRAM_FLAG_WR      (*((volatile unsigned int *)(IO_INT_BASE + 0x0018)))
+#define DEBUG_REG         (*((volatile unsigned int *)(IO_INT_BASE + 0x001C)))
 
-#define DATA_DESC_SEND    (*((volatile unsigned char *)(IO_START + 0x0038)))
-#define RECV_DESC_RELEASE (*((volatile unsigned char *)(IO_START + 0x0039)))
-#define DRAM_FLAG_RST     (*((volatile unsigned char *)(IO_START + 0x003A)))
-#define UPDATE_SLOT       (*((volatile unsigned char *)(IO_START + 0x003B)))
-#define MASK_WRITE        (*((volatile unsigned char *)(IO_START + 0x003C)))
-#define INTERRUPT_ACK     (*((volatile unsigned char *)(IO_START + 0x003D)))
+#define DATA_DESC_SEND    (*((volatile unsigned char *)(IO_INT_BASE + 0x0038)))
+#define RECV_DESC_RELEASE (*((volatile unsigned char *)(IO_INT_BASE + 0x0039)))
+#define DRAM_FLAG_RST     (*((volatile unsigned char *)(IO_INT_BASE + 0x003A)))
+#define UPDATE_SLOT       (*((volatile unsigned char *)(IO_INT_BASE + 0x003B)))
+#define MASK_WRITE        (*((volatile unsigned char *)(IO_INT_BASE + 0x003C)))
+#define INTERRUPT_ACK     (*((volatile unsigned char *)(IO_INT_BASE + 0x003D)))
 
-#define STATUS_RD         (IO_START + 0x004C)
-#define IN_PKT_READY      (*((volatile unsigned char *)(IO_START + 0x004C))==1)
-#define DATA_DESC_READY   (*((volatile unsigned char *)(IO_START + 0x004D))==1)
-#define UPDATE_SLOT_READY (*((volatile unsigned char *)(IO_START + 0x004E))==1)
-#define CORE_MSG_READY    (*((volatile unsigned char *)(IO_START + 0x004E))==1)
+#define STATUS_RD         (IO_INT_BASE + 0x004C)
+#define IN_PKT_READY      (*((volatile unsigned char *)(IO_INT_BASE + 0x004C))==1)
+#define DATA_DESC_READY   (*((volatile unsigned char *)(IO_INT_BASE + 0x004D))==1)
+#define UPDATE_SLOT_READY (*((volatile unsigned char *)(IO_INT_BASE + 0x004E))==1)
+#define CORE_MSG_READY    (*((volatile unsigned char *)(IO_INT_BASE + 0x004E))==1)
 
 extern void int_handler(void) __attribute__((interrupt));
 
