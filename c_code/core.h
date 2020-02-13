@@ -41,8 +41,6 @@
 #define UPDATE_SLOT_READY (*((volatile unsigned char *)(IO_INT_BASE + 0x004E))==1)
 #define CORE_MSG_READY    (*((volatile unsigned char *)(IO_INT_BASE + 0x004E))==1)
 
-extern void int_handler(void) __attribute__((interrupt));
-
 struct Desc {
 	unsigned short len;
 	unsigned char  tag;
