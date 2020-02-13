@@ -7,7 +7,8 @@ module riscvcore #(
   parameter DMEM_SIZE       = 32768,
   parameter PMEM_SIZE       = 1048576,
   parameter PMEM_SEG_SIZE   = 131072,
-  parameter PMEM_SEG_COUNT  = 8
+  parameter PMEM_SEG_COUNT  = 8,
+  parameter BC_REGION_SIZE  = 4048
 )(
     input                        clk,
     input                        rst,
@@ -223,7 +224,7 @@ localparam RD_DMEM_SIZE     = 5'b11010;
 localparam RD_PMEM_SIZE     = 5'b11011;
 localparam RD_PMEM_SEG_SIZE = 5'b11100;
 localparam RD_PMEM_SEG_CNT  = 5'b11101;
-// localparam RESERVED      = 5'b11110;
+localparam RD_BC_SIZE       = 5'b11110;
 // localparam RESERVED      = 5'b11111;
 
 reg [31:0]         io_read_data;
@@ -259,6 +260,7 @@ always @ (posedge clk)
             RD_PMEM_SIZE:     io_read_data <= PMEM_SIZE;
             RD_PMEM_SEG_SIZE: io_read_data <= PMEM_SEG_SIZE;
             RD_PMEM_SEG_CNT:  io_read_data <= PMEM_SEG_COUNT;
+            RD_BC_SIZE:       io_read_data <= BC_REGION_SIZE;
             // default is to keep the value
         endcase 
 

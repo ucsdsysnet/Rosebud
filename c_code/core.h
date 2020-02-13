@@ -26,8 +26,9 @@
 #define IMEM_SIZE         (*((volatile unsigned int *)(IO_INT_BASE + 0x0064)))
 #define DMEM_SIZE         (*((volatile unsigned int *)(IO_INT_BASE + 0x0068)))
 #define PMEM_SIZE         (*((volatile unsigned int *)(IO_INT_BASE + 0x006C)))
-#define PMEM_SGE_SIZE     (*((volatile unsigned int *)(IO_INT_BASE + 0x0070)))
-#define PMEM_SGE_COUNT    (*((volatile unsigned int *)(IO_INT_BASE + 0x0074)))
+#define PMEM_SEG_SIZE     (*((volatile unsigned int *)(IO_INT_BASE + 0x0070)))
+#define PMEM_SEG_COUNT    (*((volatile unsigned int *)(IO_INT_BASE + 0x0074)))
+#define BC_REGION_SIZE    (*((volatile unsigned int *)(IO_INT_BASE + 0x0078)))
 
 #define SEND_DESC         (*((volatile struct   Desc*)(IO_INT_BASE + 0x0008)))
 #define SEND_DESC_TYPE    (*((volatile unsigned char*)(IO_INT_BASE + 0x000F)))
