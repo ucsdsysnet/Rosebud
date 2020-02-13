@@ -35,9 +35,11 @@ _start:
     # clear BSS
     la a0, _start_bss
     la a1, _end_bss
+    j 2f
 1:
     sw zero, 0(a0)
     addi a0, a0, 4
+2:
     blt a0, a1, 1b
 
     # enable timer and external interrupts
