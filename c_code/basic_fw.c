@@ -1,7 +1,5 @@
 #include "core.h"
 struct Desc packet;
-unsigned int start_time, end_time;
-volatile unsigned short * sh_test  = (volatile unsigned short *) 0x0700A;
 
 int main(void){
 

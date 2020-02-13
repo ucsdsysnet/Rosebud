@@ -1,11 +1,9 @@
 #include "core.h"
+	
+struct Desc packet;
 
 int main(void){
 
-	volatile unsigned short * sh_test  = (volatile unsigned short *) 0x0700A;
-
-	struct Desc packet;
-	unsigned int start_time, end_time;
 	int offset = 0; 
 	int id=core_id();
 
