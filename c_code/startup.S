@@ -26,12 +26,23 @@ dummy_handler:
 _start:
     # set initial SP
     la sp, _end_stack
+
+    # clear BSS
+    la a0, _start_bss
+    la a1, _end_bss
+1:
+    sw zero, 0(a0)
+    addi a0, a0, 4
+    blt a0, a1, 1b
+
     # enable timer and external interrupts
     li a0, 0x880
     csrw mie,a0
+
     # enable interrupts
     li a0, 0x1808
     csrw mstatus,a0
+
     # jump to main
     jal main
 
