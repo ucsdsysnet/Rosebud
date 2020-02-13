@@ -119,9 +119,9 @@ always @* begin
     // handle read data
     if (ctrl_en_reg) begin
         if (!ctrl_addr_reg[LINE_ADDR_BITS]) begin
-            re_data_next = acc_rd_data_b1[ctrl_addr_reg[LINE_ADDR_BITS-1:0]*8 +: 8];
+            re_data_next = acc_rd_data_b1[(ctrl_addr_reg[LINE_ADDR_BITS-1:0]*8)+(SLOW_DMEM_SEL_BITS > 0 ? addr_reg[LINE_ADDR_BITS+1+ACC_ADDR_WIDTH +: SLOW_DMEM_SEL_BITS_MIN1]*DATA_WIDTH : 0) +: 8];
         end else begin
-            re_data_next = acc_rd_data_b2[ctrl_addr_reg[LINE_ADDR_BITS-1:0]*8 +: 8];
+            re_data_next = acc_rd_data_b2[(ctrl_addr_reg[LINE_ADDR_BITS-1:0]*8)+(SLOW_DMEM_SEL_BITS > 0 ? addr_reg[LINE_ADDR_BITS+1+ACC_ADDR_WIDTH +: SLOW_DMEM_SEL_BITS_MIN1]*DATA_WIDTH : 0) +: 8];
         end
 
         status_match_next = status_match_reg | re_match;
