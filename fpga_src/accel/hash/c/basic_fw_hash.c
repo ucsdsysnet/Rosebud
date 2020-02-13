@@ -68,7 +68,7 @@ int main(void)
 {
 	// set slot configuration parameters
 	slot_count = 8;
-	slot_size = 32768;
+	slot_size = 0x20000;
 	header_slot_base = DMEM_BASE+0x4000;
 	header_slot_size = 128;
 
