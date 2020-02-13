@@ -5,41 +5,50 @@
 #include "riscv_encoding.h"
 // time read is not supported by Vexriscv
 
+#define ctz(src) ({ unsigned int __tmp; \
+  asm volatile ("TAIL_ZERO(%0,%1)": "=r"(__tmp) : "r" (src)); \
+  __tmp; })
+
 #define IO_BASE           0x00000000
 #define IO_INT_BASE       0x00000000
 #define IO_EXT_BASE       0x00400000
 #define DMEM_BASE         0x00800000
 #define PMEM_BASE         0x01000000
 
-#define RECV_DESC         (*((volatile struct Desc*)(IO_INT_BASE + 0x0040)))
-#define DRAM_FLAGS        (*((volatile unsigned int *)(IO_INT_BASE + 0x0048)))
-#define CORE_ID           (*((volatile unsigned int *)(IO_INT_BASE + 0x0050)))
-#define TIMER_32_L        (*((volatile unsigned int *)(IO_INT_BASE + 0x0054)))
-#define TIMER_32_H        (*((volatile unsigned int *)(IO_INT_BASE + 0x0058)))
-#define INTERRUPT_FLAGS   (*((volatile unsigned char *)(IO_INT_BASE + 0x005C)))
-#define MASK_READ         (*((volatile unsigned char *)(IO_INT_BASE + 0x005D)))
-#define ACTIVE_SLOTS      (*((volatile unsigned int *)(IO_INT_BASE + 0x0060)))
+#define RECV_DESC	        (*((volatile struct Desc*)(IO_INT_BASE + 0x0040)))
+#define DRAM_FLAGS  			(*((volatile unsigned int *)(IO_INT_BASE + 0x0048)))
+#define CORE_ID     			(*((volatile unsigned int *)(IO_INT_BASE + 0x0050)))
+#define TIMER_32_L   			(*((volatile unsigned int *)(IO_INT_BASE + 0x0054)))
+#define TIMER_32_H   			(*((volatile unsigned int *)(IO_INT_BASE + 0x0058)))
+#define INTERRUPT_FLAGS		(*((volatile unsigned char *)(IO_INT_BASE + 0x005C)))
+#define MASK_READ      		(*((volatile unsigned char *)(IO_INT_BASE + 0x005D)))
+#define ACTIVE_SLOTS			(*((volatile unsigned int *)(IO_INT_BASE + 0x0060)))
+#define IMEM_SIZE	     		(*((volatile unsigned int *)(IO_INT_BASE + 0x0064)))
+#define DMEM_SIZE	     		(*((volatile unsigned int *)(IO_INT_BASE + 0x0068)))
+#define PMEM_SIZE	     		(*((volatile unsigned int *)(IO_INT_BASE + 0x006C)))
+#define PMEM_SGE_SIZE	 		(*((volatile unsigned int *)(IO_INT_BASE + 0x0070)))
+#define PMEM_SGE_COUNT		(*((volatile unsigned int *)(IO_INT_BASE + 0x0074)))
 
-#define SEND_DESC         (*((volatile struct   Desc*)(IO_INT_BASE + 0x0020)))
-#define SEND_DESC_TYPE    (*((volatile unsigned char*)(IO_INT_BASE + 0x0027)))
-#define DRAM_ADDR         (*((volatile unsigned long long *)(IO_INT_BASE + 0x0008)))
-#define SLOT_ADDR         (*((volatile unsigned int *)(IO_INT_BASE + 0x0010)))
-#define TIMER_INTERVAL    (*((volatile unsigned int *)(IO_INT_BASE + 0x0014)))
-#define DRAM_FLAG_WR      (*((volatile unsigned int *)(IO_INT_BASE + 0x0018)))
-#define DEBUG_REG         (*((volatile unsigned int *)(IO_INT_BASE + 0x001C)))
+#define SEND_DESC				  (*((volatile struct   Desc*)(IO_INT_BASE + 0x0008)))
+#define SEND_DESC_TYPE    (*((volatile unsigned char*)(IO_INT_BASE + 0x000F)))
+#define DRAM_ADDR      	  (*((volatile unsigned long long *)(IO_INT_BASE + 0x0010)))
+#define SLOT_ADDR  			  (*((volatile unsigned int *)(IO_INT_BASE + 0x0018))) 
+#define TIMER_INTERVAL   	(*((volatile unsigned int *)(IO_INT_BASE + 0x001C)))
+#define DRAM_FLAG_WR   		(*((volatile unsigned int *)(IO_INT_BASE + 0x0020)))
+#define DEBUG_REG     		(*((volatile unsigned int *)(IO_INT_BASE + 0x0024)))
 
-#define DATA_DESC_SEND    (*((volatile unsigned char *)(IO_INT_BASE + 0x0038)))
-#define RECV_DESC_RELEASE (*((volatile unsigned char *)(IO_INT_BASE + 0x0039)))
-#define DRAM_FLAG_RST     (*((volatile unsigned char *)(IO_INT_BASE + 0x003A)))
-#define UPDATE_SLOT       (*((volatile unsigned char *)(IO_INT_BASE + 0x003B)))
-#define MASK_WRITE        (*((volatile unsigned char *)(IO_INT_BASE + 0x003C)))
-#define INTERRUPT_ACK     (*((volatile unsigned char *)(IO_INT_BASE + 0x003D)))
+#define DATA_DESC_SEND		(*((volatile unsigned char *)(IO_INT_BASE + 0x0028)))
+#define RECV_DESC_RELEASE (*((volatile unsigned char *)(IO_INT_BASE + 0x002C)))
+#define DRAM_FLAG_RST  		(*((volatile unsigned char *)(IO_INT_BASE + 0x0030))) 
+#define UPDATE_SLOT       (*((volatile unsigned char *)(IO_INT_BASE + 0x0034))) 
+#define MASK_WRITE  		  (*((volatile unsigned char *)(IO_INT_BASE + 0x0038))) 
+#define INTERRUPT_ACK		  (*((volatile unsigned char *)(IO_INT_BASE + 0x003C)))
 
-#define STATUS_RD         (IO_INT_BASE + 0x004C)
+#define STATUS_RD   			(IO_INT_BASE + 0x004C) 
 #define IN_PKT_READY      (*((volatile unsigned char *)(IO_INT_BASE + 0x004C))==1)
 #define DATA_DESC_READY   (*((volatile unsigned char *)(IO_INT_BASE + 0x004D))==1)
 #define UPDATE_SLOT_READY (*((volatile unsigned char *)(IO_INT_BASE + 0x004E))==1)
-#define CORE_MSG_READY    (*((volatile unsigned char *)(IO_INT_BASE + 0x004E))==1)
+#define CORE_MSG_READY    (*((volatile unsigned char *)(IO_INT_BASE + 0x004F))==1)
 
 struct Desc {
 	unsigned short len;
@@ -71,11 +80,11 @@ inline void read_in_pkt (struct Desc* input_desc){
 // Writes
 
 inline void init_slots (const unsigned int slot_count, 
-                        const unsigned int start_addr, 
-								        const unsigned int addr_step) {
+											  const unsigned int start_addr, 
+												const unsigned int addr_step) {
 
 	for (int i=1; i<=slot_count; i++){
-		SLOT_ADDR = (i<<24) + start_addr + ((i-1)*addr_step);
+		SLOT_ADDR = (i<<24) + (start_addr&0x00ffffff) + ((i-1)*addr_step);
 		asm volatile("" ::: "memory");
 		UPDATE_SLOT = 1;
 	}
@@ -95,7 +104,7 @@ inline void init_hdr_slots (const unsigned int slot_count,
 	// TODO: Add checks for range and hdr_addr_step
 
 	for (int i=1; i<=slot_count; i++){
-		SLOT_ADDR = (1<<31) + (i<<24) + start_hdr_addr + ((i-1)*hdr_addr_step);
+		SLOT_ADDR = (1<<31) + (i<<24) + (start_hdr_addr&0x00ffffff) + ((i-1)*hdr_addr_step);
 		asm volatile("" ::: "memory");
 		UPDATE_SLOT = 1;
 	}

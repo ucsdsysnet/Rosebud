@@ -2,10 +2,10 @@ module riscv_block # (
   parameter DATA_WIDTH     = 128,
   parameter STRB_WIDTH     = (DATA_WIDTH/8),
   parameter IMEM_SIZE      = 65536,
-  parameter SLOW_DMEM_SIZE = 1048576,
-  parameter FAST_DMEM_SIZE = 32768,
+  parameter PMEM_SIZE      = 1048576,
+  parameter DMEM_SIZE      = 32768,
   parameter BC_REGION_SIZE = 4048,
-  parameter BC_START_ADDR  = SLOW_DMEM_SIZE+FAST_DMEM_SIZE-BC_REGION_SIZE,
+  parameter BC_START_ADDR  = PMEM_SIZE+DMEM_SIZE-BC_REGION_SIZE,
   parameter MSG_ADDR_WIDTH = $clog2(BC_REGION_SIZE)-2,
   parameter MSG_WIDTH      = 32+4+MSG_ADDR_WIDTH,
   parameter SLOW_M_B_LINES = 4096,
@@ -72,14 +72,14 @@ module riscv_block # (
 
 // Internal paramaters
 parameter LINE_ADDR_BITS       = $clog2(STRB_WIDTH);
-parameter SLOW_DMEM_ADDR_WIDTH = $clog2(SLOW_DMEM_SIZE);
-parameter FAST_DMEM_ADDR_WIDTH = $clog2(FAST_DMEM_SIZE);
+parameter PMEM_ADDR_WIDTH = $clog2(PMEM_SIZE);
+parameter DMEM_ADDR_WIDTH = $clog2(DMEM_SIZE);
 parameter IMEM_ADDR_WIDTH      = $clog2(IMEM_SIZE);
 
 parameter ACC_ADDR_WIDTH       = $clog2(SLOW_M_B_LINES);
-parameter SLOW_DMEM_SEL_BITS   = SLOW_DMEM_ADDR_WIDTH-$clog2(STRB_WIDTH)
+parameter PMEM_SEL_BITS   = PMEM_ADDR_WIDTH-$clog2(STRB_WIDTH)
                                  -1-$clog2(SLOW_M_B_LINES);
-parameter ACC_MEM_BLOCKS       = 2**SLOW_DMEM_SEL_BITS;
+parameter ACC_MEM_BLOCKS       = 2**PMEM_SEL_BITS;
 
 ///////////////////////////////////////////////////////////////////////////
 //////////////////////////// RISCV CORE ///////////////////////////////////
@@ -110,7 +110,12 @@ assign core_mem_rd_valid = core_exio_rd_valid | core_dmem_rd_valid;
 riscvcore #(
   .SLOT_COUNT(SLOT_COUNT),
   .SLOT_WIDTH(SLOT_WIDTH),
-  .CORE_ID_WIDTH(CORE_ID_WIDTH)
+  .CORE_ID_WIDTH(CORE_ID_WIDTH),
+  .IMEM_SIZE(IMEM_SIZE),
+  .DMEM_SIZE(DMEM_SIZE),
+  .PMEM_SIZE(PMEM_SIZE),
+  .PMEM_SEG_SIZE(PMEM_SIZE/ACC_MEM_BLOCKS),
+  .PMEM_SEG_COUNT(ACC_MEM_BLOCKS)
 ) core (
   .clk(sys_clk),
   .rst(core_rst),
@@ -180,10 +185,10 @@ wire [ACC_MEM_BLOCKS*DATA_WIDTH-1:0]     acc_rd_data_b2;
 accel_wrap #(
   .DATA_WIDTH(DATA_WIDTH),
   .STRB_WIDTH(STRB_WIDTH),
-  .SLOW_DMEM_ADDR_WIDTH(SLOW_DMEM_ADDR_WIDTH),
+  .PMEM_ADDR_WIDTH(PMEM_ADDR_WIDTH),
   .SLOW_M_B_LINES(SLOW_M_B_LINES),
   .ACC_ADDR_WIDTH(ACC_ADDR_WIDTH),
-  .SLOW_DMEM_SEL_BITS(SLOW_DMEM_SEL_BITS),
+  .PMEM_SEL_BITS(PMEM_SEL_BITS),
   .ACC_MEM_BLOCKS(ACC_MEM_BLOCKS)
 ) accel_wrap_inst (
   .clk(sys_clk),
@@ -217,8 +222,8 @@ mem_sys # (
   .DATA_WIDTH(DATA_WIDTH),
   .STRB_WIDTH(STRB_WIDTH),
   .IMEM_SIZE(IMEM_SIZE),
-  .SLOW_DMEM_SIZE(SLOW_DMEM_SIZE),
-  .FAST_DMEM_SIZE(FAST_DMEM_SIZE),
+  .PMEM_SIZE(PMEM_SIZE),
+  .DMEM_SIZE(DMEM_SIZE),
   .BC_REGION_SIZE(BC_REGION_SIZE),
   .BC_START_ADDR(BC_START_ADDR),
   .MSG_WIDTH(MSG_WIDTH),

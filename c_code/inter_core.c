@@ -14,7 +14,7 @@ int main(void){
 
 	// Do this at the beginnig, so scheduler can fill the slots while 
 	// initializing other things.
-	init_hdr_slots(4, 0x5C00, 128);
+	init_hdr_slots(8, 0x801C00, 128);
 	init_slots(8, 0x000A, 2048);
 
 	while (1){

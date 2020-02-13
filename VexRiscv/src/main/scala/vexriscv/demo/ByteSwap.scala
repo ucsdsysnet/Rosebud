@@ -190,9 +190,9 @@ class FIRST1 extends Plugin[VexRiscv]{
 //       |RS2||RS1|   |RD |
 //
 //Note :  RS1, RS2, RD positions follow the RISC-V spec and are common for all instruction of the ISA
-class LEAD_ZERO extends Plugin[VexRiscv]{
+class TAIL_ZERO extends Plugin[VexRiscv]{
   //Define the concept of IS_BSWAP_16 signals, which specify if the current instruction is destined for ths plugin
-  object IS_LEAD_ZERO extends Stageable(Bool)
+  object IS_TAIL_ZERO extends Stageable(Bool)
 
   //Callback to setup the plugin and ask for different services
   override def setup(pipeline: VexRiscv): Unit = {
@@ -202,7 +202,7 @@ class LEAD_ZERO extends Plugin[VexRiscv]{
     val decoderService = pipeline.service(classOf[DecoderService])
 
     //Specify the IS_BSWAP_16 default value when instruction are decoded
-    decoderService.addDefault(IS_LEAD_ZERO, False)
+    decoderService.addDefault(IS_TAIL_ZERO, False)
 
     //Specify the instruction decoding which should be applied when the instruction match the 'key' parttern
     decoderService.add(
@@ -210,7 +210,7 @@ class LEAD_ZERO extends Plugin[VexRiscv]{
 
       //Decoding specification when the 'key' pattern is recognized in the instruction
       List(
-        IS_LEAD_ZERO             -> True,
+        IS_TAIL_ZERO             -> True,
         REGFILE_WRITE_VALID      -> True, //Enable the register file write
         BYPASSABLE_EXECUTE_STAGE -> True, //Notify the hazard management unit that the instruction result is already accessible in the EXECUTE stage (Bypass ready)
         BYPASSABLE_MEMORY_STAGE  -> True, //Same as above but for the memory stage
@@ -236,7 +236,7 @@ class LEAD_ZERO extends Plugin[VexRiscv]{
       rd(31 downto 6) := 0
 
       //When the instruction is a SIMD_ADD one, then write the result into the register file data path.
-      when(execute.input(IS_LEAD_ZERO)) {
+      when(execute.input(IS_TAIL_ZERO)) {
         execute.output(REGFILE_WRITE_DATA) := rd.asBits
       }
     }

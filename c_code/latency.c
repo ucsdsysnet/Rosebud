@@ -1,4 +1,4 @@
-#include "core2.h"
+#include "core.h"
 
 struct Desc send_pkt;
 struct Desc recv_pkt;
@@ -26,7 +26,7 @@ int main(void){
 
 	// Do this at the beginnig, so scheduler can fill the slots while 
 	// initializing other things.
-	init_hdr_slots(8, 0x104000, 128);
+	init_hdr_slots(8, 0x804000, 128);
 	init_slots(8, 0x000000, 16384);
 
 	for (i=0;i<8;i++){

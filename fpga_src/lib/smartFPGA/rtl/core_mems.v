@@ -32,10 +32,6 @@ always @ (posedge clkb)
 
 assign doutb = mem_out;
 
-initial begin
-    $readmemh("../../../../c_code/default.hex", mem);
-end 
-
 endmodule
 
 module mem_2rw_bram # (

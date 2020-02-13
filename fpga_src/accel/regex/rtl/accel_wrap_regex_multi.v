@@ -1,15 +1,15 @@
 module accel_wrap #(
-  parameter IO_DATA_WIDTH        = 32,
-  parameter IO_STRB_WIDTH        = (IO_DATA_WIDTH/8),
-  parameter IO_ADDR_WIDTH        = 22,
-  parameter DATA_WIDTH           = 128,
-  parameter STRB_WIDTH           = (DATA_WIDTH/8),
-  parameter SLOW_DMEM_ADDR_WIDTH = 8,
-  parameter SLOW_M_B_LINES       = 4096,
-  parameter ACC_ADDR_WIDTH       = $clog2(SLOW_M_B_LINES),
-  parameter SLOW_DMEM_SEL_BITS   = SLOW_DMEM_ADDR_WIDTH-$clog2(STRB_WIDTH)
-                                   -1-$clog2(SLOW_M_B_LINES),
-  parameter ACC_MEM_BLOCKS       = 2**SLOW_DMEM_SEL_BITS
+  parameter IO_DATA_WIDTH   = 32,
+  parameter IO_STRB_WIDTH   = (IO_DATA_WIDTH/8),
+  parameter IO_ADDR_WIDTH   = 22,
+  parameter DATA_WIDTH      = 128,
+  parameter STRB_WIDTH      = (DATA_WIDTH/8),
+  parameter PMEM_ADDR_WIDTH = 8,
+  parameter SLOW_M_B_LINES  = 4096,
+  parameter ACC_ADDR_WIDTH  = $clog2(SLOW_M_B_LINES),
+  parameter PMEM_SEL_BITS   = PMEM_ADDR_WIDTH-$clog2(STRB_WIDTH)
+                              -1-$clog2(SLOW_M_B_LINES),
+  parameter ACC_MEM_BLOCKS  = 2**PMEM_SEL_BITS
 ) (
   input  wire                                     clk,
   input  wire                                     rst,
@@ -39,7 +39,7 @@ localparam ACCEL_COUNT = ACC_MEM_BLOCKS;
 
 localparam LEN_WIDTH = 16;
 
-reg [SLOW_DMEM_ADDR_WIDTH-1:0] cmd_addr_reg[ACCEL_COUNT-1:0];
+reg [PMEM_ADDR_WIDTH-1:0] cmd_addr_reg[ACCEL_COUNT-1:0];
 reg [LEN_WIDTH-1:0]            cmd_len_reg[ACCEL_COUNT-1:0];
 reg [ACCEL_COUNT-1:0]          cmd_valid_reg;
 wire [ACCEL_COUNT-1:0]         cmd_ready;
@@ -116,10 +116,10 @@ for (n = 0; n < ACCEL_COUNT; n = n + 1) begin
   regex_acc #(
     .DATA_WIDTH(DATA_WIDTH),
     .STRB_WIDTH(STRB_WIDTH),
-    .SLOW_DMEM_ADDR_WIDTH(SLOW_DMEM_ADDR_WIDTH),
+    .PMEM_ADDR_WIDTH(PMEM_ADDR_WIDTH),
     .SLOW_M_B_LINES(SLOW_M_B_LINES),
     .ACC_ADDR_WIDTH(ACC_ADDR_WIDTH),
-    .SLOW_DMEM_SEL_BITS(0),
+    .PMEM_SEL_BITS(0),
     .ACC_MEM_BLOCKS(1)
   ) regex_acc_inst (
     .clk(clk),

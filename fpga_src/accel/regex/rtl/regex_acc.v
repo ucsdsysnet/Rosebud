@@ -1,18 +1,18 @@
 module regex_acc #(
-    parameter DATA_WIDTH           = 128,
-    parameter STRB_WIDTH           = (DATA_WIDTH/8),
-    parameter SLOW_DMEM_ADDR_WIDTH = 8,
-    parameter SLOW_M_B_LINES       = 4096,
-    parameter ACC_ADDR_WIDTH       = $clog2(SLOW_M_B_LINES),
-    parameter SLOW_DMEM_SEL_BITS   = SLOW_DMEM_ADDR_WIDTH-$clog2(STRB_WIDTH)
-                                     -1-$clog2(SLOW_M_B_LINES),
-    parameter ACC_MEM_BLOCKS       = 2**SLOW_DMEM_SEL_BITS,
-    parameter LEN_WIDTH            = 16
+    parameter DATA_WIDTH      = 128,
+    parameter STRB_WIDTH      = (DATA_WIDTH/8),
+    parameter PMEM_ADDR_WIDTH = 8,
+    parameter SLOW_M_B_LINES  = 4096,
+    parameter ACC_ADDR_WIDTH  = $clog2(SLOW_M_B_LINES),
+    parameter PMEM_SEL_BITS   = PMEM_ADDR_WIDTH-$clog2(STRB_WIDTH)
+                                -1-$clog2(SLOW_M_B_LINES),
+    parameter ACC_MEM_BLOCKS  = 2**PMEM_SEL_BITS,
+    parameter LEN_WIDTH       = 16
 ) (
     input  wire                                     clk,
     input  wire                                     rst,
 
-    input  wire [SLOW_DMEM_ADDR_WIDTH-1:0]          cmd_addr,
+    input  wire [PMEM_ADDR_WIDTH-1:0]          cmd_addr,
     input  wire [LEN_WIDTH-1:0]                     cmd_len,
     input  wire                                     cmd_valid,
     output wire                                     cmd_ready,
@@ -35,9 +35,9 @@ module regex_acc #(
 
 // Internal paramaters
 parameter LINE_ADDR_BITS       = $clog2(STRB_WIDTH);
-parameter SLOW_DMEM_SEL_BITS_MIN1 = SLOW_DMEM_SEL_BITS>0 ? SLOW_DMEM_SEL_BITS : 1;
+parameter PMEM_SEL_BITS_MIN1 = PMEM_SEL_BITS>0 ? PMEM_SEL_BITS : 1;
 
-reg [SLOW_DMEM_ADDR_WIDTH-1:0] addr_reg = 0, addr_next;
+reg [PMEM_ADDR_WIDTH-1:0] addr_reg = 0, addr_next;
 reg [LEN_WIDTH-1:0] len_reg = 0, len_next;
 
 reg cmd_ready_reg = 1'b0, cmd_ready_next;
@@ -61,12 +61,12 @@ assign cmd_ready = cmd_ready_reg;
 assign status_match = status_match_reg;
 assign status_done = status_done_reg;
 
-assign acc_en_b1 = (!addr_reg[LINE_ADDR_BITS] && rd_en_reg) ? (SLOW_DMEM_SEL_BITS > 0 ? 1 << addr_reg[LINE_ADDR_BITS+1+ACC_ADDR_WIDTH +: SLOW_DMEM_SEL_BITS_MIN1] : 1'b1) : 0;
+assign acc_en_b1 = (!addr_reg[LINE_ADDR_BITS] && rd_en_reg) ? (PMEM_SEL_BITS > 0 ? 1 << addr_reg[LINE_ADDR_BITS+1+ACC_ADDR_WIDTH +: PMEM_SEL_BITS_MIN1] : 1'b1) : 0;
 assign acc_wen_b1 = 0;
 assign acc_addr_b1 = {ACC_MEM_BLOCKS{addr_reg[LINE_ADDR_BITS+1 +: ACC_ADDR_WIDTH]}};
 assign acc_wr_data_b1 = 0;
 
-assign acc_en_b2 = (addr_reg[LINE_ADDR_BITS] && rd_en_reg) ? (SLOW_DMEM_SEL_BITS > 0 ? 1 << addr_reg[LINE_ADDR_BITS+1+ACC_ADDR_WIDTH +: SLOW_DMEM_SEL_BITS_MIN1] : 1'b1) : 0;
+assign acc_en_b2 = (addr_reg[LINE_ADDR_BITS] && rd_en_reg) ? (PMEM_SEL_BITS > 0 ? 1 << addr_reg[LINE_ADDR_BITS+1+ACC_ADDR_WIDTH +: PMEM_SEL_BITS_MIN1] : 1'b1) : 0;
 assign acc_wen_b2 = 0;
 assign acc_addr_b2 = {ACC_MEM_BLOCKS{addr_reg[LINE_ADDR_BITS+1 +: ACC_ADDR_WIDTH]}};
 assign acc_wr_data_b2 = 0;
@@ -119,9 +119,9 @@ always @* begin
     // handle read data
     if (ctrl_en_reg) begin
         if (!ctrl_addr_reg[LINE_ADDR_BITS]) begin
-            re_data_next = acc_rd_data_b1[(ctrl_addr_reg[LINE_ADDR_BITS-1:0]*8)+(SLOW_DMEM_SEL_BITS > 0 ? addr_reg[LINE_ADDR_BITS+1+ACC_ADDR_WIDTH +: SLOW_DMEM_SEL_BITS_MIN1]*DATA_WIDTH : 0) +: 8];
+            re_data_next = acc_rd_data_b1[(ctrl_addr_reg[LINE_ADDR_BITS-1:0]*8)+(PMEM_SEL_BITS > 0 ? addr_reg[LINE_ADDR_BITS+1+ACC_ADDR_WIDTH +: PMEM_SEL_BITS_MIN1]*DATA_WIDTH : 0) +: 8];
         end else begin
-            re_data_next = acc_rd_data_b2[(ctrl_addr_reg[LINE_ADDR_BITS-1:0]*8)+(SLOW_DMEM_SEL_BITS > 0 ? addr_reg[LINE_ADDR_BITS+1+ACC_ADDR_WIDTH +: SLOW_DMEM_SEL_BITS_MIN1]*DATA_WIDTH : 0) +: 8];
+            re_data_next = acc_rd_data_b2[(ctrl_addr_reg[LINE_ADDR_BITS-1:0]*8)+(PMEM_SEL_BITS > 0 ? addr_reg[LINE_ADDR_BITS+1+ACC_ADDR_WIDTH +: PMEM_SEL_BITS_MIN1]*DATA_WIDTH : 0) +: 8];
         end
 
         status_match_next = status_match_reg | re_match;

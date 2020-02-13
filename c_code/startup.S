@@ -1,3 +1,8 @@
+# #define r_type_insn(_f7, _rs2, _rs1, _f3, _rd, _opc) \
+# .word (((_f7) << 25) | ((_rs2) << 20) | ((_rs1) << 15) | ((_f3) << 12) | ((_rd) << 7) | ((_opc) << 0))
+# 
+# #define TAIL_ZERO(_rd, _rs1) \
+#   r_type_insn(0b0000011, 0b00000, _rs1, 0b011, _rd, 0b0110011)
 
 .section .vectors
 .align 4

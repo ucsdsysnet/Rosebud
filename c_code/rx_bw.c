@@ -1,4 +1,4 @@
-#include "core2.h"
+#include "core.h"
 
 struct Desc packet;
 struct Desc recv_pkt;
@@ -15,7 +15,7 @@ int main(void){
 
 	// Do this at the beginnig, so scheduler can fill the slots while 
 	// initializing other things.
-	init_hdr_slots(5, 0x104000, 128);
+	init_hdr_slots(5, 0x804000, 128);
 	init_slots(5, 0x00000A, 16384);
 
 	for (i=0;i<16;i++){
@@ -27,14 +27,14 @@ int main(void){
 	}
 
 	pkt_num    = 0;
-	packet.len = 9000;
+	packet.len = 64;
 	packet.tag = 0;
 	packet.port = 0;
 
 	if (core_id()<8) {
 		while (1){
 			for (i=0;i<16;i++) {
-				for(k=0;k<250;k++);
+				for(k=0;k<10;k++);
 				pkt_data[i][1] = pkt_num;
 				packet.data = (unsigned char *) pkt_data[i];
 				safe_pkt_send(&packet);

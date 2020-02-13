@@ -216,26 +216,26 @@ parameter AXIL_DATA_WIDTH     = 32;
 parameter AXIL_STRB_WIDTH     = (AXIL_DATA_WIDTH/8);
 parameter AXIL_ADDR_WIDTH     = BAR0_APERTURE;
 
-// RISCV parameters, should match riscv_block
-parameter CORE_WIDTH       = $clog2(CORE_COUNT);
-parameter PORT_WIDTH       = $clog2(PORT_COUNT);
-parameter DRAM_PORT        = PORT_COUNT-1;
-parameter SLOT_COUNT       = 8;
-parameter SLOT_WIDTH       = $clog2(SLOT_COUNT+1);
-parameter TAG_WIDTH        = (SLOT_WIDTH>5)? SLOT_WIDTH:5;
+// RISCV parameters, shoul match riscv_block
+parameter CORE_WIDTH      = $clog2(CORE_COUNT);
+parameter PORT_WIDTH      = $clog2(PORT_COUNT);
+parameter DRAM_PORT       = PORT_COUNT-1;
+parameter SLOT_COUNT      = 8;
+parameter SLOT_WIDTH      = $clog2(SLOT_COUNT+1);
+parameter TAG_WIDTH       = (SLOT_WIDTH>5)? SLOT_WIDTH:5;
 
 parameter IMEM_SIZE       = 16384;
-parameter SLOW_DMEM_SIZE  = 16384;
-parameter FAST_DMEM_SIZE  = 16384;
+parameter PMEM_SIZE       = 16384;
+parameter DMEM_SIZE       = 16384;
 parameter BC_REGION_SIZE  = 4096;
 parameter SLOW_M_B_LINES  = 1024;
 parameter FAST_M_B_LINES  = 1024;
 
-parameter LVL2_DATA_WIDTH  = 64;
-parameter LVL2_STRB_WIDTH  = LVL2_DATA_WIDTH/8;
-parameter ID_TAG_WIDTH     = CORE_WIDTH+TAG_WIDTH;
-parameter BC_START_ADDR    = SLOW_DMEM_SIZE+FAST_DMEM_SIZE-BC_REGION_SIZE;
-parameter CORE_MSG_WIDTH   = 32+4+$clog2(BC_REGION_SIZE)-2;
+parameter LVL2_DATA_WIDTH = 64;
+parameter LVL2_STRB_WIDTH = LVL2_DATA_WIDTH/8;
+parameter ID_TAG_WIDTH    = CORE_WIDTH+TAG_WIDTH;
+parameter BC_START_ADDR   = PMEM_SIZE+DMEM_SIZE-BC_REGION_SIZE;
+parameter CORE_MSG_WIDTH  = 32+4+$clog2(BC_REGION_SIZE)-2;
 
 parameter RECV_DESC_DEPTH = 8;
 parameter SEND_DESC_DEPTH = 8;
@@ -1740,8 +1740,8 @@ generate
             .DATA_WIDTH(LVL2_DATA_WIDTH),
             .STRB_WIDTH(LVL2_STRB_WIDTH),
             .IMEM_SIZE(IMEM_SIZE),
-            .SLOW_DMEM_SIZE(SLOW_DMEM_SIZE),
-            .FAST_DMEM_SIZE(FAST_DMEM_SIZE),
+            .PMEM_SIZE(PMEM_SIZE),
+            .DMEM_SIZE(DMEM_SIZE),
             .SLOW_M_B_LINES(SLOW_M_B_LINES),
             .FAST_M_B_LINES(FAST_M_B_LINES),
             .BC_REGION_SIZE(BC_REGION_SIZE),

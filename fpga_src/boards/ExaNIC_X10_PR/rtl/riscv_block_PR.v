@@ -59,12 +59,12 @@ module riscv_block_PR (
 parameter DATA_WIDTH     = 64;
 parameter STRB_WIDTH     = (DATA_WIDTH/8);
 parameter IMEM_SIZE      = 16384;
-parameter SLOW_DMEM_SIZE = 16384;
-parameter FAST_DMEM_SIZE = 16384;
+parameter PMEM_SIZE      = 16384;
+parameter DMEM_SIZE      = 16384;
 parameter SLOW_M_B_LINES = 1024;
 parameter FAST_M_B_LINES = 1024;
 parameter BC_REGION_SIZE = 4096;
-parameter BC_START_ADDR  = SLOW_DMEM_SIZE+FAST_DMEM_SIZE-BC_REGION_SIZE;
+parameter BC_START_ADDR  = PMEM_SIZE+DMEM_SIZE-BC_REGION_SIZE;
 parameter MSG_WIDTH      = 32+4+$clog2(BC_REGION_SIZE)-2;
 parameter CORE_ID_WIDTH  = 4;
 parameter SLOT_COUNT     = 8;
@@ -297,8 +297,8 @@ riscv_block # (
     .DATA_WIDTH(DATA_WIDTH),
     .STRB_WIDTH(STRB_WIDTH),
     .IMEM_SIZE(IMEM_SIZE),
-    .SLOW_DMEM_SIZE(SLOW_DMEM_SIZE),
-    .FAST_DMEM_SIZE(FAST_DMEM_SIZE),
+    .PMEM_SIZE(PMEM_SIZE),
+    .DMEM_SIZE(DMEM_SIZE),
     .SLOW_M_B_LINES(SLOW_M_B_LINES),
     .FAST_M_B_LINES(FAST_M_B_LINES),
     .BC_REGION_SIZE(BC_REGION_SIZE),

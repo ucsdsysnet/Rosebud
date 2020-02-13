@@ -238,8 +238,8 @@ parameter SLOT_WIDTH       = $clog2(SLOT_COUNT+1);
 parameter TAG_WIDTH        = (SLOT_WIDTH>5)? SLOT_WIDTH:5;
 
 parameter IMEM_SIZE       = 65536;
-parameter SLOW_DMEM_SIZE  = 1048576;
-parameter FAST_DMEM_SIZE  = 32768;
+parameter PMEM_SIZE       = 1048576;
+parameter DMEM_SIZE       = 32768;
 parameter BC_REGION_SIZE  = 8192;
 parameter SLOW_M_B_LINES  = 4096;
 parameter FAST_M_B_LINES  = 1024;
@@ -247,7 +247,7 @@ parameter FAST_M_B_LINES  = 1024;
 parameter LVL2_DATA_WIDTH  = 256;
 parameter LVL2_STRB_WIDTH  = LVL2_DATA_WIDTH/8;
 parameter ID_TAG_WIDTH     = CORE_WIDTH+TAG_WIDTH;
-parameter BC_START_ADDR    = SLOW_DMEM_SIZE+FAST_DMEM_SIZE-BC_REGION_SIZE;
+parameter BC_START_ADDR    = PMEM_SIZE+DMEM_SIZE-BC_REGION_SIZE;
 parameter CORE_MSG_WIDTH   = 32+4+$clog2(BC_REGION_SIZE)-2;
 
 parameter RECV_DESC_DEPTH = 8;
@@ -1992,8 +1992,8 @@ generate
             .DATA_WIDTH(128), 
             .STRB_WIDTH(16),
             .IMEM_SIZE(IMEM_SIZE),
-            .SLOW_DMEM_SIZE(SLOW_DMEM_SIZE),
-            .FAST_DMEM_SIZE(FAST_DMEM_SIZE),
+            .PMEM_SIZE(PMEM_SIZE),
+            .DMEM_SIZE(DMEM_SIZE),
             .SLOW_M_B_LINES(SLOW_M_B_LINES),
             .FAST_M_B_LINES(FAST_M_B_LINES),
             .BC_REGION_SIZE(BC_REGION_SIZE),
