@@ -381,6 +381,7 @@ assign dmem_read_data = io_ren_r ? io_read_data : mem_rd_data;
 assign mem_wr_data    = dmem_wr_data;
 assign dmem_en        = dmem_v && data_mem;
 assign pmem_en        = dmem_v && packet_mem;
+assign exio_en        = dmem_v && external_io;
 assign mem_wen        = dmem_wr_en;
 assign mem_strb       = dmem_wr_strb[3:0];
 assign mem_addr       = dmem_addr;
