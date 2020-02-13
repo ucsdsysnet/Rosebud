@@ -328,6 +328,8 @@ always @(posedge pcie_clk) begin
                 
                 // Cores control and DMA request response
                 16'h0400: axil_ctrl_rdata <= pcie_dma_enable;
+                16'h0408: axil_ctrl_rdata <= income_cores_r;
+                16'h040C: axil_ctrl_rdata <= cores_to_be_reset_r;
                 16'h0410: axil_ctrl_rdata <= slot_count_r;
                 16'h0414: axil_ctrl_rdata <= core_in_byte_count_r;
                 16'h0418: axil_ctrl_rdata <= core_out_byte_count_r;

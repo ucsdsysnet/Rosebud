@@ -350,36 +350,37 @@ module simple_scheduler # (
 
   assign ctrl_out_ready = (!ctrl_out_valid_r) || ctrl_out_ready_r; 
 
-  // Core reset command
-  reg  [CORE_ID_WIDTH:0] core_rst_counter;
-  wire core_reset_in_prog = (core_rst_counter < CORE_COUNT);
-  wire [CORE_ID_WIDTH:0] reordered_core_rst_counter;
+  // // Core reset command
+  // reg  [CORE_ID_WIDTH:0] core_rst_counter;
+  // wire core_reset_in_prog = (core_rst_counter < CORE_COUNT);
+  // wire [CORE_ID_WIDTH:0] reordered_core_rst_counter;
 
-  // Reordering of reset for alleviating congestion on lvl 2 switches
-  // during startup
-  if (LVL2_SW_PORTS==1)
-    assign reordered_core_rst_counter = core_rst_counter[CORE_ID_WIDTH-1:0];
-  else
-    assign reordered_core_rst_counter = {core_rst_counter[LVL1_BITS-1:0],
-                                         core_rst_counter[CORE_ID_WIDTH-1:LVL1_BITS]};
+  // // Reordering of reset for alleviating congestion on lvl 2 switches
+  // // during startup
+  // if (LVL2_SW_PORTS==1)
+  //   assign reordered_core_rst_counter = core_rst_counter[CORE_ID_WIDTH-1:0];
+  // else
+  //   assign reordered_core_rst_counter = {core_rst_counter[LVL1_BITS-1:0],
+  //                                        core_rst_counter[CORE_ID_WIDTH-1:LVL1_BITS]};
 
-  always @ (posedge clk)
-    if (rst)
-        core_rst_counter <= 0;
-    else
-      if (ctrl_m_axis_tvalid && ctrl_m_axis_tready && core_reset_in_prog)
-        core_rst_counter <= core_rst_counter + 1;
+  // always @ (posedge clk)
+  //   if (rst)
+  //       core_rst_counter <= 0;
+  //   else
+  //     if (ctrl_m_axis_tvalid && ctrl_m_axis_tready && core_reset_in_prog)
+  //       core_rst_counter <= core_rst_counter + 1;
   // making the descriptor type to be 0, so core would send out.
-  assign ctrl_m_axis_tdata  = core_reset_in_prog ? {{(CTRL_WIDTH-1){1'b1}}, 1'b0} :
+  assign ctrl_m_axis_tdata  = // core_reset_in_prog ? {{(CTRL_WIDTH-1){1'b1}}, 1'b0} :
                                reset_valid       ? {{(CTRL_WIDTH-1){1'b1}}, reset_value} 
                                                  : ctrl_out_desc_r;
-  assign ctrl_m_axis_tvalid = core_reset_in_prog || reset_valid || ctrl_out_valid_r;
+  assign ctrl_m_axis_tvalid = // core_reset_in_prog || 
+                              reset_valid || ctrl_out_valid_r;
   assign ctrl_m_axis_tlast  = ctrl_m_axis_tvalid;
-  assign ctrl_m_axis_tdest  = core_reset_in_prog ? reordered_core_rst_counter : 
+  assign ctrl_m_axis_tdest  = // core_reset_in_prog ? reordered_core_rst_counter : 
                               reset_valid        ? reset_dest : ctrl_out_dest_r;
 
-  assign ctrl_out_ready_r   = (!core_reset_in_prog) && (!reset_valid) && ctrl_m_axis_tready;
-  assign reset_ready        = !core_reset_in_prog;
+  assign ctrl_out_ready_r   = (!reset_valid) && ctrl_m_axis_tready; // && (!core_reset_in_prog);
+  assign reset_ready        = 1'b1; // !core_reset_in_prog;
 
   // Selecting the core with most available slots
   // Since slots start from 1, SLOT WIDTH is already 1 bit extra
