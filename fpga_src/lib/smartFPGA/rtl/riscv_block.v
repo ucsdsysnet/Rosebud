@@ -105,6 +105,7 @@ wire [31:0] core_imem_rd_data;
 wire        core_imem_rd_valid;
 
 assign core_mem_rd_data = core_exio_rd_valid ? core_exio_rd_data : core_dmem_rd_data;
+assign core_mem_rd_valid = core_exio_rd_valid | core_dmem_rd_valid;
 
 riscvcore #(
   .SLOT_COUNT(SLOT_COUNT),
