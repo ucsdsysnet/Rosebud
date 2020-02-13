@@ -127,7 +127,7 @@ int main(void)
 			slot_rx_packet(&context[index]);
 		}
 
-		// check accelerators
+		// handle accelerator done
 		if (accel_active && ACC_REGEX_CTRL & 0x0100)
 		{
 			// done
@@ -135,16 +135,14 @@ int main(void)
 			regex_done(&context[accel_active_slot]);
 		}
 
-		if (!accel_active)
+		// handle slots waiting for the accelerator
+		if (!accel_active && accel_slot_waiting_head != accel_slot_waiting_tail)
 		{
-			if (accel_slot_waiting_head != accel_slot_waiting_tail)
-			{
-				regex_start(&context[accel_slot_waiting_queue[accel_slot_waiting_tail]]);
+			regex_start(&context[accel_slot_waiting_queue[accel_slot_waiting_tail]]);
 
-				accel_slot_waiting_tail++;
-				if (accel_slot_waiting_tail >= slot_count)
-					accel_slot_waiting_tail = 0;
-			}
+			accel_slot_waiting_tail++;
+			if (accel_slot_waiting_tail >= slot_count)
+				accel_slot_waiting_tail = 0;
 		}
 	}
 
