@@ -34,4 +34,3 @@ SECTIONS
 }
 
 PROVIDE(_start_heap = _end);
-PROVIDE(_end_stack  = ORIGIN(DMEM) + (LENGTH(DMEM) - 8k));
