@@ -28,7 +28,10 @@ unsigned int header_slot_size;
 
 char accel_active_slot;
 char accel_active;
-unsigned int accel_slot_waiting_mask;
+
+int accel_slot_waiting_queue[MAX_SLOT_COUNT];
+int accel_slot_waiting_head;
+int accel_slot_waiting_tail;
 
 inline void slot_rx_packet(struct slot_context *ctx)
 {
@@ -39,13 +42,15 @@ inline void slot_rx_packet(struct slot_context *ctx)
 		ctx->desc.port = 0;
 
 	// need accelerator
-	accel_slot_waiting_mask |= 1 << ctx->index;
+	accel_slot_waiting_queue[accel_slot_waiting_head] = ctx->index;
+
+	accel_slot_waiting_head++;
+	if (accel_slot_waiting_head >= slot_count)
+		accel_slot_waiting_head = 0;
 }
 
 inline void regex_start(struct slot_context *ctx)
 {
-	accel_slot_waiting_mask &= ~(1 << ctx->index);
-
 	// start regex parsing
 	ACC_REGEX_START = ctx->desc.data+14;
 	ACC_REGEX_LEN = 64;
@@ -89,7 +94,8 @@ int main(void)
 
 	accel_active_slot = 0;
 	accel_active = 0;
-	accel_slot_waiting_mask = 0;
+	accel_slot_waiting_head = 0;
+	accel_slot_waiting_tail = 0;
 
 	// init slot context structures
 	for (int i = 0; i < slot_count; i++)
@@ -131,14 +137,13 @@ int main(void)
 
 		if (!accel_active)
 		{
-			for (int i = 0; i < slot_count; i++)
+			if (accel_slot_waiting_head != accel_slot_waiting_tail)
 			{
-				if (accel_slot_waiting_mask & (1 << i))
-				{
-					// handle packet
-					regex_start(&context[i]);
-					break;
-				}
+				regex_start(&context[accel_slot_waiting_queue[accel_slot_waiting_tail]]);
+
+				accel_slot_waiting_tail++;
+				if (accel_slot_waiting_tail >= slot_count)
+					accel_slot_waiting_tail = 0;
 			}
 		}
 	}
