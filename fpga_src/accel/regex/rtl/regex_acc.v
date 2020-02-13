@@ -2,7 +2,6 @@ module regex_acc #(
     parameter DATA_WIDTH           = 128,
     parameter STRB_WIDTH           = (DATA_WIDTH/8),
     parameter SLOW_DMEM_ADDR_WIDTH = 8,
-    parameter ADDR_WIDTH           = SLOW_DMEM_ADDR_WIDTH+2,
     parameter SLOW_M_B_LINES       = 4096,
     parameter ACC_ADDR_WIDTH       = $clog2(SLOW_M_B_LINES),
     parameter SLOW_DMEM_SEL_BITS   = SLOW_DMEM_ADDR_WIDTH-$clog2(STRB_WIDTH)

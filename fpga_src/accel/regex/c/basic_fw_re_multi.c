@@ -1,13 +1,15 @@
-#include "core2.h"
+#include "core.h"
 
-#define SLOT_COUNT 8
-#define SLOT_SIZE 16384
-#define SLOT_BASE 0x000000
-#define SLOT_OFFSET 0x00000A
-#define SLOT_HEADER_SIZE 128
-#define SLOT_HEADER_BASE 0x104000
+// maximum number of slots (number of context objects)
+#define MAX_SLOT_COUNT 8
 
-#define ACC_REGEX_STATUS (*((volatile unsigned int *)(IO_START_EXT + 0x0080)))
+// packet start offset
+// DWORD align Ethernet payload
+// provide space for header modifications
+#define PKT_OFFSET 10
+
+// Regex accelerator control registers
+#define ACC_REGEX_STATUS (*((volatile unsigned int *)(IO_EXT_BASE + 0x0080)))
 
 struct regex_accel_regs {
 	volatile unsigned int ctrl;
@@ -22,7 +24,12 @@ struct slot_context {
 	struct regex_accel_regs *regex_accel;
 };
 
-struct slot_context context[SLOT_COUNT];
+struct slot_context context[MAX_SLOT_COUNT];
+
+unsigned int slot_count;
+unsigned int slot_size;
+unsigned int header_slot_base;
+unsigned int header_slot_size;
 
 unsigned int active_accel_mask;
 
@@ -58,24 +65,30 @@ inline void regex_done(struct slot_context *ctx)
 
 int main(void)
 {
+	// set slot configuration parameters
+	slot_count = 8;
+	slot_size = 0x20000;
+	header_slot_base = DMEM_BASE+0x4000;
+	header_slot_size = 128;
+
 	write_timer_interval(0x00000200);
-	set_masks(0x1F); //enable just errors
+	set_masks(0x1F); //enable just errors 
 
 	// Do this at the beginning, so scheduler can fill the slots while
 	// initializing other things.
-	init_hdr_slots(SLOT_COUNT, SLOT_HEADER_BASE, SLOT_HEADER_SIZE);
-	init_slots(SLOT_COUNT, SLOT_BASE+SLOT_OFFSET, SLOT_SIZE);
+	init_hdr_slots(slot_count, header_slot_base, header_slot_size);
+	init_slots(slot_count, PKT_OFFSET, slot_size);
 
 	active_accel_mask = 0;
 
 	// init slot context structures
-	for (int i = 0; i < SLOT_COUNT; i++)
+	for (int i = 0; i < slot_count; i++)
 	{
 		context[i].index = i;
 		context[i].desc.tag = i+1;
-		context[i].desc.data = (unsigned char *)(SLOT_BASE + SLOT_OFFSET + i*SLOT_SIZE);
-		context[i].header = (unsigned char *)(SLOT_HEADER_BASE + SLOT_OFFSET + i*SLOT_HEADER_SIZE);
-		context[i].regex_accel = (struct regex_accel_regs *)(IO_START_EXT + i*16);
+		context[i].desc.data = (unsigned char *)(PMEM_BASE + PKT_OFFSET + i*slot_size);
+		context[i].header = (unsigned char *)(header_slot_base + PKT_OFFSET + i*header_slot_size);
+		context[i].regex_accel = (struct regex_accel_regs *)(IO_EXT_BASE + i*16);
 	}
 
 	while (1)
@@ -105,7 +118,7 @@ int main(void)
 		temp = ACC_REGEX_STATUS & active_accel_mask;
 		if (temp)
 		{
-			for (int i = 0; i < SLOT_COUNT; i++)
+			for (int i = 0; i < slot_count; i++)
 			{
 				if (temp & (1 << i))
 				{

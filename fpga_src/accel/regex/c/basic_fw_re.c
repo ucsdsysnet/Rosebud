@@ -1,55 +1,107 @@
-#include "core2.h"
-struct Desc packet;
-unsigned int start_time, end_time;
-volatile unsigned short * sh_test  = (volatile unsigned short *) 0x0700A;
+#include "core.h"
 
-#define ACC_REGEX_CTRL (*((volatile unsigned int *)(IO_START_EXT + 0x0000)))
-#define ACC_REGEX_LEN (*((volatile unsigned int *)(IO_START_EXT + 0x0004)))
-#define ACC_REGEX_START (*((volatile unsigned int *)(IO_START_EXT + 0x0008)))
+// maximum number of slots (number of context objects)
+#define MAX_SLOT_COUNT 8
 
-int main(void){
+// packet start offset
+// DWORD align Ethernet payload
+// provide space for header modifications
+#define PKT_OFFSET 10
+
+// Regex accelerator control registers
+#define ACC_REGEX_CTRL (*((volatile unsigned int *)(IO_EXT_BASE + 0x0000)))
+#define ACC_REGEX_LEN (*((volatile unsigned int *)(IO_EXT_BASE + 0x0004)))
+#define ACC_REGEX_START (*((volatile unsigned int *)(IO_EXT_BASE + 0x0008)))
+
+struct slot_context {
+	int index;
+	struct Desc desc;
+	unsigned char *header;
+};
+
+struct slot_context context[MAX_SLOT_COUNT];
+
+unsigned int slot_count;
+unsigned int slot_size;
+unsigned int header_slot_base;
+unsigned int header_slot_size;
+
+inline void slot_rx_packet(struct slot_context *ctx)
+{
+	// start regex parsing
+	ACC_REGEX_START = ctx->desc.data+14;
+	ACC_REGEX_LEN = 64;
+	ACC_REGEX_CTRL = 1;
+
+	// // wait for accelerator operation to complete
+	// need some delay here...
+	// while (!(ACC_REGEX_CTRL & 0x0100)) {};
+
+	// swap port
+	if (ctx->desc.port==0)
+		ctx->desc.port = 1;
+	else
+		ctx->desc.port = 0;
+
+	// wait for accelerator operation to complete
+	while (!(ACC_REGEX_CTRL & 0x0100)) {};
+
+	// check for match
+	if (ACC_REGEX_CTRL & 0x0200)
+	{
+		// drop packet
+		ctx->desc.len = 0;
+	}
+
+	safe_pkt_done_msg(&ctx->desc);
+}
+
+int main(void)
+{
+	// set slot configuration parameters
+	slot_count = 8;
+	slot_size = 0x20000;
+	header_slot_base = DMEM_BASE+0x4000;
+	header_slot_size = 128;
 
 	write_timer_interval(0x00000200);
 	set_masks(0x1F); //enable just errors 
 
-	// Do this at the beginnig, so scheduler can fill the slots while 
+	// Do this at the beginning, so scheduler can fill the slots while
 	// initializing other things.
-	init_hdr_slots(8, 0x104000, 128);
-	init_slots(8, 0x00000A, 16384);
-	
-	while (1){
-		if (in_pkt_ready()){
-	 		
-			read_in_pkt(&packet);
+	init_hdr_slots(slot_count, header_slot_base, header_slot_size);
+	init_slots(slot_count, PKT_OFFSET, slot_size);
 
-			// start regex parsing
-			ACC_REGEX_START = packet.data+14;
-			ACC_REGEX_LEN = 64;
-			ACC_REGEX_CTRL = 1;
+	// init slot context structures
+	for (int i = 0; i < slot_count; i++)
+	{
+		context[i].index = i;
+		context[i].desc.tag = i+1;
+		context[i].desc.data = (unsigned char *)(PMEM_BASE + PKT_OFFSET + i*slot_size);
+		context[i].header = (unsigned char *)(header_slot_base + PKT_OFFSET + i*header_slot_size);
+	}
 
-			// // wait for accelerator operation to complete
-			// need some delay here...
-			// while (!(ACC_REGEX_CTRL & 0x0100)) {};
+	while (1)
+	{
+		// check for new packets
+		if (in_pkt_ready())
+		{
+			struct Desc desc;
+			int index;
 
-			// swap port
-			if (packet.port==0)
-				packet.port = 1;
-			else
-				packet.port = 0;
+			// read descriptor
+			read_in_pkt(&desc);
 
-			// wait for accelerator operation to complete
-			while (!(ACC_REGEX_CTRL & 0x0100)) {};
+			// compute index
+			index = desc.tag-1;
 
-			// check for match
-			if (ACC_REGEX_CTRL & 0x0200)
-			{
-				// drop packet
-				packet.len = 0;
-			}
-			
-			safe_pkt_done_msg(&packet);
-  	}
-  }
-  
-  return 1;
+			// copy descriptor into context
+			context[index].desc = desc;
+
+			// handle packet
+			slot_rx_packet(&context[index]);
+		}
+	}
+
+	return 1;
 }
