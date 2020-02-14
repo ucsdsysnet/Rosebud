@@ -779,7 +779,6 @@ def bench():
         print("Firmware load")
         ins = bytearray(open(FIRMWARE, "rb").read())
         mem_data[0:len(ins)] = ins
-        mem_data[48059:48200] = bytearray([(x+10)%256 for x in range(141)])
 
         # enable DMA
         yield rc.mem_write(dev_pf0_bar0+0x000400, struct.pack('<L', 1))
@@ -835,11 +834,6 @@ def bench():
           print(val)
 
           data = mem_data[0x1000:(0x1000)+1024]
-          for i in range(0, len(data), 16):
-              print(" ".join(("{:02x}".format(c) for c in bytearray(data[i:i+16]))))
-
-          print("core to host write data")
-          data = mem_data[0xBCBB:(0xBCBB)+128]
           for i in range(0, len(data), 16):
               print(" ".join(("{:02x}".format(c) for c in bytearray(data[i:i+16]))))
 
@@ -911,7 +905,7 @@ def bench():
           test_frame_1.payload = b"E\x00\x00\x9c\x00\x00@\x00@\x11\\\xaeB\t\x95\xbb\xa1\x8edP\n\xea\x06\xe6\x00\x88?[" + bytes([x%256 for x in range(SIZE_0)])
           qsfp0_source.send(bytearray(test_frame_1.build_axis()))
 
-          yield delay(10000)
+          yield delay(1000)
           
         raise StopSimulation
 

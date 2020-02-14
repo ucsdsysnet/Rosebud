@@ -125,7 +125,7 @@ assign mem_addr       = dmem_addr;
 ///////////////////////////////////////////////////////////////////////////
 
 // localparam RESERVED      = 5'b00000; NULL pointer
-// localparam RESERVED      = 5'b00001; 
+localparam SEND_DESC_TYPE   = 5'b00001; 
 localparam SEND_DESC_ADDR_L = 5'b00010; 
 localparam SEND_DESC_ADDR_H = 5'b00011; 
 localparam WR_DRAM_ADDR_L   = 5'b00100; 
@@ -145,9 +145,10 @@ reg [63:0] dram_wr_addr_r;
 reg [31:0] timer_step_r;
 reg [31:0] debug_reg;
 
-reg [63:0] data_desc_data_r;
+reg [63:0] out_desc_data_r;
+reg [3:0]  out_desc_type_r;
 reg [31:0] slot_info_data_r;
-reg data_desc_v_r;
+reg out_desc_v_r;
 
 integer i;
 always @ (posedge clk) begin
@@ -155,8 +156,8 @@ always @ (posedge clk) begin
         for (i = 0; i < 4; i = i + 1) 
             if (dmem_wr_strb[i] == 1'b1) 
                 case (dmem_addr[6:2])
-                    SEND_DESC_ADDR_L: data_desc_data_r[i*8 +: 8]    <= mem_wr_data[i*8 +: 8];
-                    SEND_DESC_ADDR_H: data_desc_data_r[32+i*8 +: 8] <= mem_wr_data[i*8 +: 8];
+                    SEND_DESC_ADDR_L: out_desc_data_r[i*8 +: 8]    <= mem_wr_data[i*8 +: 8];
+                    SEND_DESC_ADDR_H: out_desc_data_r[32+i*8 +: 8] <= mem_wr_data[i*8 +: 8];
                     WR_DRAM_ADDR_L:   dram_wr_addr_r[i*8 +: 8]      <= mem_wr_data[i*8 +: 8];
                     WR_DRAM_ADDR_H:   dram_wr_addr_r[32+i*8 +: 8]   <= mem_wr_data[i*8 +: 8];
                     SLOT_LUT_ADDR:    slot_info_data_r[i*8 +: 8]    <= mem_wr_data[i*8 +: 8];
@@ -164,8 +165,10 @@ always @ (posedge clk) begin
                     DEBUG_REG_ADDR:   debug_reg[i*8 +: 8]           <= mem_wr_data[i*8 +: 8];
                 endcase
 
+        if (dmem_addr[6:2]==SEND_DESC_TYPE)
+            out_desc_type_r <= mem_wr_data[3:0];
         if (dmem_addr[6:2]==MASK_WR)
-            mask_r <= mem_wr_data[7:0];
+            mask_r          <= mem_wr_data[7:0];
     end
 
     if (rst) begin
@@ -177,7 +180,7 @@ end
 // Remaining addresses
 wire timer_step_wen = io_write && (dmem_addr[6:2]==TIMER_STP_ADDR);
 wire dram_flags_wen = io_write && (dmem_addr[6:2]==DRAM_FLAG_ADDR);
-wire send_data_desc = io_write && (dmem_addr[6:2]==SEND_DESC_STRB) && mem_wr_data[0];
+wire send_out_desc  = io_write && (dmem_addr[6:2]==SEND_DESC_STRB) && mem_wr_data[0];
 wire dram_flag_rst  = io_write && (dmem_addr[6:2]==DRAM_FLAG_RST);
 wire interrupt_ack  = io_write && (dmem_addr[6:2]==INTERRUPT_ACK);
 
@@ -185,12 +188,12 @@ wire temp = io_write && (dmem_addr[6:2]==SEND_DESC_ADDR_H);
 
 always @ (posedge clk) begin
     if (rst) 
-            data_desc_v_r <= 1'b0;
+            out_desc_v_r <= 1'b0;
     else begin
-        if (send_data_desc)
-            data_desc_v_r <= 1'b1;
-        if (data_desc_v_r && out_desc_ready)
-            data_desc_v_r <= 1'b0;
+        if (send_out_desc)
+            out_desc_v_r <= 1'b1;
+        if (out_desc_v_r && out_desc_ready)
+            out_desc_v_r <= 1'b0;
     end
 end
 
@@ -201,8 +204,8 @@ assign slot_wr_valid   = io_write && (dmem_addr[6:2]==SLOT_LUT_STRB) && mem_wr_d
 assign slot_wr_addr    = {~slot_for_hdr,slot_info_data_r[23:0]};
 assign slot_wr_ptr     = slot_info_data_r[24+:SLOT_WIDTH];
 
-assign out_desc           = data_desc_data_r;
-assign out_desc_valid     = data_desc_v_r;
+assign out_desc           = {out_desc_type_r, out_desc_data_r[59:0]};
+assign out_desc_valid     = out_desc_v_r;
 assign out_desc_dram_addr = dram_wr_addr_r;
 assign in_desc_taken      = io_write && (dmem_addr[6:2]==RD_DESC_STRB) && mem_wr_data[0];
 

@@ -357,7 +357,7 @@ module axis_dma # (
                     (m_axis_tvalid && m_axis_tready && m_axis_tlast);
 
   // Calculating offset, number of words and final tkeep in RD_INIT state
-  reg [ADDR_WIDTH-1:0]          alligned_rd_addr;
+  reg [ADDR_WIDTH-1:0]          aligned_rd_addr;
   reg [MASK_BITS-1:0]           rd_offset;
   reg [LEN_WIDTH-MASK_BITS-1:0] rd_req_word_count;
   reg [LEN_WIDTH-MASK_BITS-1:0] rd_recv_word_count;
@@ -392,13 +392,13 @@ module axis_dma # (
       rd_req_word_count  <= send_len[LEN_WIDTH-1:MASK_BITS] + extra_words;
       rd_recv_word_count <= send_len[LEN_WIDTH-1:MASK_BITS] + extra_words;
       rd_final_tkeep     <= {{(STRB_WIDTH-1){1'b0}},{STRB_WIDTH{1'b1}}} >> tkeep_zeros;
-      alligned_rd_addr   <= {send_base_addr[ADDR_WIDTH-1:MASK_BITS],{MASK_BITS{1'b0}}};
+      aligned_rd_addr    <= {send_base_addr[ADDR_WIDTH-1:MASK_BITS],{MASK_BITS{1'b0}}};
       rd_len_is_int      <= (send_len[MASK_BITS-1:0]==0);
     end 
     else begin 
       if (mem_rd_en && mem_rd_ready) begin
         rd_req_word_count  <= rd_req_word_count - 1; 
-        alligned_rd_addr   <= alligned_rd_addr + STRB_WIDTH;
+        aligned_rd_addr    <= aligned_rd_addr + STRB_WIDTH;
       end
       if (mem_rd_data_v && mem_rd_data_ready) 
         rd_recv_word_count <= rd_recv_word_count - 1; 
@@ -480,7 +480,7 @@ module axis_dma # (
   // The sender module has to keep its valid and data until ready! 
   assign mem_rd_data_ready = !(m_axis_tvalid && (!m_axis_tready));
   assign mem_rd_en         = (rd_req_word_count > 0);// && mem_rd_data_ready;
-  assign mem_rd_addr       = alligned_rd_addr;
+  assign mem_rd_addr       = aligned_rd_addr;
   assign mem_rd_last       = (rd_req_word_count == 1);
 
   assign m_axis_tdata  = {read_reg_1,read_reg_2} >> {rd_offset,3'd0};

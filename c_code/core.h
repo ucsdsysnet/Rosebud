@@ -30,8 +30,8 @@
 #define PMEM_SEG_COUNT    (*((volatile unsigned int *)(IO_INT_BASE + 0x0074)))
 #define BC_REGION_SIZE    (*((volatile unsigned int *)(IO_INT_BASE + 0x0078)))
 
+#define SEND_DESC_TYPE    (*((volatile unsigned char*)(IO_INT_BASE + 0x0004)))
 #define SEND_DESC         (*((volatile struct   Desc*)(IO_INT_BASE + 0x0008)))
-#define SEND_DESC_TYPE    (*((volatile unsigned char*)(IO_INT_BASE + 0x000F)))
 #define DRAM_ADDR         (*((volatile unsigned long long *)(IO_INT_BASE + 0x0010)))
 #define SLOT_ADDR         (*((volatile unsigned int *)(IO_INT_BASE + 0x0018)))
 #define TIMER_INTERVAL    (*((volatile unsigned int *)(IO_INT_BASE + 0x001C)))
@@ -92,7 +92,7 @@ inline void init_slots (const unsigned int slot_count,
 
 	SEND_DESC.len  = (unsigned short) addr_step;
 	SEND_DESC.tag  = (unsigned char)  slot_count;
-	SEND_DESC_TYPE = (3<<4);
+	SEND_DESC_TYPE = 3;
 	asm volatile("" ::: "memory");
 	DATA_DESC_SEND = 1;
 	return;
@@ -145,7 +145,7 @@ inline void set_masks (const unsigned char masks){
 
 inline void pkt_done_msg (const struct Desc* output_desc){
 	SEND_DESC      = *output_desc;
-	SEND_DESC_TYPE = (1<<4);
+	SEND_DESC_TYPE = 1;
 	asm volatile("" ::: "memory");
 	DATA_DESC_SEND = 1;
 	return;
@@ -153,7 +153,7 @@ inline void pkt_done_msg (const struct Desc* output_desc){
 
 inline void safe_pkt_done_msg (const struct Desc* output_desc){
 	SEND_DESC      = *output_desc;
-	SEND_DESC_TYPE = (1<<4);
+	SEND_DESC_TYPE = 1;
 	while(!DATA_DESC_READY);
 	asm volatile("" ::: "memory");
 	DATA_DESC_SEND = 1;
@@ -162,6 +162,7 @@ inline void safe_pkt_done_msg (const struct Desc* output_desc){
 
 inline void pkt_send (const struct Desc* output_desc){
 	SEND_DESC = *output_desc;
+	SEND_DESC_TYPE = 0;
 	asm volatile("" ::: "memory");
 	DATA_DESC_SEND = 1;
 	return;
@@ -169,6 +170,7 @@ inline void pkt_send (const struct Desc* output_desc){
 
 inline void safe_pkt_send (const struct Desc* output_desc){
 	SEND_DESC = *output_desc;
+	SEND_DESC_TYPE = 0;
 	while(!DATA_DESC_READY);
 	asm volatile("" ::: "memory");
 	DATA_DESC_SEND = 1;
@@ -179,7 +181,7 @@ inline void safe_pkt_send (const struct Desc* output_desc){
 inline void dram_write (const unsigned long long * dram_addr, const struct Desc* output_desc){
 	DRAM_ADDR      = * dram_addr;
 	SEND_DESC      = *output_desc;
-	SEND_DESC_TYPE = (4<<4);
+	SEND_DESC_TYPE = 4;
 	asm volatile("" ::: "memory");
 	DATA_DESC_SEND = 1;
 	return;
@@ -189,7 +191,7 @@ inline void dram_write (const unsigned long long * dram_addr, const struct Desc*
 inline void safe_dram_write (const unsigned long long * dram_addr, const struct Desc* output_desc){
 	DRAM_ADDR      = * dram_addr;
 	SEND_DESC      = *output_desc;
-	SEND_DESC_TYPE = (4<<4);
+	SEND_DESC_TYPE = 4;
 	while(!DATA_DESC_READY);
 	asm volatile("" ::: "memory");
 	DATA_DESC_SEND = 1;
@@ -200,7 +202,7 @@ inline void safe_dram_write (const unsigned long long * dram_addr, const struct 
 inline void dram_read_req (const unsigned long long * dram_addr, const struct Desc* output_desc){
 	DRAM_ADDR      = * dram_addr;
 	SEND_DESC      = *output_desc;
-	SEND_DESC_TYPE = (5<<4);
+	SEND_DESC_TYPE = 5;
 	asm volatile("" ::: "memory");
 	DATA_DESC_SEND = 1;
 	return;
@@ -210,7 +212,7 @@ inline void dram_read_req (const unsigned long long * dram_addr, const struct De
 inline void safe_dram_read_req (const unsigned long long * dram_addr, const struct Desc* output_desc){
 	DRAM_ADDR      = * dram_addr;
 	SEND_DESC      = *output_desc;
-	SEND_DESC_TYPE = (5<<4);
+	SEND_DESC_TYPE = 5;
 	while(!DATA_DESC_READY);
 	asm volatile("" ::: "memory");
 	DATA_DESC_SEND = 1;
@@ -219,7 +221,7 @@ inline void safe_dram_read_req (const unsigned long long * dram_addr, const stru
 
 inline void send_to_core (const struct Desc* output_desc){
 	SEND_DESC      = *output_desc;
-	SEND_DESC_TYPE = (2<<4);
+	SEND_DESC_TYPE = 2;
 	asm volatile("" ::: "memory");
 	DATA_DESC_SEND = 1;
 	return;
@@ -227,7 +229,7 @@ inline void send_to_core (const struct Desc* output_desc){
 
 inline void safe_send_to_core (const struct Desc* output_desc){
 	SEND_DESC      = *output_desc;
-	SEND_DESC_TYPE = (2<<4);
+	SEND_DESC_TYPE = 2;
 	while(!DATA_DESC_READY);
 	asm volatile("" ::: "memory");
 	DATA_DESC_SEND = 1;
