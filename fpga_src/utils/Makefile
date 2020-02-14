@@ -37,6 +37,5 @@ do:
 	sudo ./perf -d /dev/$(DEV) -o $(OUT_FILE)
 
 reset: 
-	sudo ./pcie_hot_reset.sh 01:00.0
-	sudo ./pcie_hot_reset.sh 02:00.0
+	sudo sh -c "lspci -d 1234:1001 | cut -d ' ' -f 1 | xargs -L 1 ./pcie_hot_reset.sh"
 
