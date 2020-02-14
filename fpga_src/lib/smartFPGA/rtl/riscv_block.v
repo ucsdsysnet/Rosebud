@@ -5,7 +5,7 @@ module riscv_block # (
   parameter PMEM_SIZE      = 1048576,
   parameter DMEM_SIZE      = 32768,
   parameter BC_REGION_SIZE = 4048,
-  parameter BC_START_ADDR  = PMEM_SIZE+DMEM_SIZE-BC_REGION_SIZE,
+  parameter BC_START_ADDR  = 32'h01000000+PMEM_SIZE-BC_REGION_SIZE,
   parameter MSG_ADDR_WIDTH = $clog2(BC_REGION_SIZE)-2,
   parameter MSG_WIDTH      = 32+4+MSG_ADDR_WIDTH,
   parameter SLOW_M_B_LINES = 4096,
