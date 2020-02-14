@@ -45,6 +45,7 @@ static void free_bars(struct example_dev *edev, struct pci_dev *pdev);
 
 static const struct pci_device_id pci_ids[] = {
     { PCI_DEVICE(0x1234, 0xbeef) },
+    { PCI_DEVICE(0x1234, 0x1001) },
     { 0 /* end */ }
 };
 
@@ -173,16 +174,16 @@ static int edev_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
     iowrite32(0x0000, edev->bar[0]+0x000408);
     iowrite32(0xffff, edev->bar[0]+0x00040C);
 
-    for (k=0; k<16; k++){
-    	iowrite32(k,    edev->bar[0]+0x000410);
-    	dev_info(dev, "%d has %08x slots", k, ioread32(edev->bar[0]+0x000410));
-    }
-    msleep(100);
-    for (k=0; k<16; k++){
-    	iowrite32(k,    edev->bar[0]+0x000410);
-    	dev_info(dev, "%d has %08x slots", k, ioread32(edev->bar[0]+0x000410));
-    }
-    msleep(100);
+    // for (k=0; k<16; k++){
+    // 	iowrite32(k,    edev->bar[0]+0x000410);
+    // 	dev_info(dev, "%d has %08x slots", k, ioread32(edev->bar[0]+0x000410));
+    // }
+    // msleep(100);
+    // for (k=0; k<16; k++){
+    // 	iowrite32(k,    edev->bar[0]+0x000410);
+    // 	dev_info(dev, "%d has %08x slots", k, ioread32(edev->bar[0]+0x000410));
+    // }
+    // msleep(100);
 
     for (k=0; k<16; k++){
     	dev_info(dev, "Reset core %d",k);
@@ -191,64 +192,72 @@ static int edev_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
     }
     for (k=0; k<16; k++){
     	dev_info(dev, "updating core %d instructions",k);
-    	iowrite32(((k<<22)+(1<<21)), edev->bar[0]+0x000448);
+    	iowrite32(((k<<26)+(1<<25)), edev->bar[0]+0x000448);
     	iowrite32(test_bin_len, edev->bar[0]+0x000450);
     	iowrite32(1<<k, edev->bar[0]+0x000454);
     	msleep(100);
     }
-    for (k=0; k<16; k++){
+    
+    msleep(1);
+
+    dev_info(dev, "Read status");
+    dev_info(dev, "%08x", ioread32(edev->bar[0]+0x000458));
+    
+    // * ((unsigned long long *)(edev->dma_region)) = (unsigned long long) (edev->dma_region_addr);
+    
+    for (k=0; k<16; k+=1){
     	iowrite32((k<<1)+0, edev->bar[0]+0x000404);
     	msleep(20);
-	    dev_info(dev, "Done resetting core %d",k);
+            dev_info(dev, "Done resetting core %d",k);
     }
     
-    for (k=0; k<16; k++){
-    	iowrite32(k,    edev->bar[0]+0x000410);
-    	dev_info(dev, "core %d has %08x slots", k, ioread32(edev->bar[0]+0x000410));
-    	dev_info(dev, "core %d received %08x bytes", k, ioread32(edev->bar[0]+0x000414));
-    	dev_info(dev, "core %d sent %08x bytes", k, ioread32(edev->bar[0]+0x000418));
-    	dev_info(dev, "core %d received %08x frames", k, ioread32(edev->bar[0]+0x00041C));
-    	dev_info(dev, "core %d sent %08x frames", k, ioread32(edev->bar[0]+0x000420));
-    }
-    
-    for (k=0; k<4; k++){
-    	iowrite32(k,    edev->bar[0]+0x000414);
-    	dev_info(dev, "interface %d received %08x bytes", k, ioread32(edev->bar[0]+0x000424));
-    	dev_info(dev, "interface %d sent %08x bytes", k, ioread32(edev->bar[0]+0x000428));
-    	dev_info(dev, "interface %d received %08x frames", k, ioread32(edev->bar[0]+0x00042C));
-    	dev_info(dev, "interface %d sent %08x frames", k, ioread32(edev->bar[0]+0x000430));
-    }
+    // for (k=0; k<16; k++){
+    // 	iowrite32(k,    edev->bar[0]+0x000410);
+    // 	dev_info(dev, "core %d has %08x slots", k, ioread32(edev->bar[0]+0x000410));
+    // 	dev_info(dev, "core %d received %08x bytes", k, ioread32(edev->bar[0]+0x000414));
+    // 	dev_info(dev, "core %d sent %08x bytes", k, ioread32(edev->bar[0]+0x000418));
+    // 	dev_info(dev, "core %d received %08x frames", k, ioread32(edev->bar[0]+0x00041C));
+    // 	dev_info(dev, "core %d sent %08x frames", k, ioread32(edev->bar[0]+0x000420));
+    // }
+    // 
+    // for (k=0; k<4; k++){
+    // 	iowrite32(k,    edev->bar[0]+0x000414);
+    // 	dev_info(dev, "interface %d received %08x bytes", k, ioread32(edev->bar[0]+0x000424));
+    // 	dev_info(dev, "interface %d sent %08x bytes", k, ioread32(edev->bar[0]+0x000428));
+    // 	dev_info(dev, "interface %d received %08x frames", k, ioread32(edev->bar[0]+0x00042C));
+    // 	dev_info(dev, "interface %d sent %08x frames", k, ioread32(edev->bar[0]+0x000430));
+    // }
     
     dev_info(dev, "set incoming cores");
     iowrite32(0x0000, edev->bar[0]+0x000408);
     dev_info(dev, "Take cores from reset");
     iowrite32(0x0000, edev->bar[0]+0x00040C);
 
-    // dev_info(dev, "start copy to card");
-    // iowrite32(0x50100, edev->bar[0]+0x000448);
-    // iowrite32(256, edev->bar[0]+0x000450);
-    // iowrite32(1<<17, edev->bar[0]+0x000454);
+    dev_info(dev, "start copy to card");
+    iowrite32(5<<26|0x800200, edev->bar[0]+0x000448);
+    iowrite32(256, edev->bar[0]+0x000450);
+    iowrite32(1<<17, edev->bar[0]+0x000454);
 
-    // msleep(1);
-    // 
-    // dev_info(dev, "Read status");
-    // dev_info(dev, "%08x", ioread32(edev->bar[0]+0x000458));
+    msleep(1);
+    
+    dev_info(dev, "Read status");
+    dev_info(dev, "%08x", ioread32(edev->bar[0]+0x000458));
 
-    // dev_info(dev, "start copy to host");
-    // iowrite32((edev->dma_region_addr+0x0200)&0xffffffff, edev->bar[0]+0x000460);
-    // iowrite32(((edev->dma_region_addr+0x0200) >> 32)&0xffffffff, edev->bar[0]+0x000464);
-    // iowrite32(0x50100, edev->bar[0]+0x000468);
-    // // iowrite32(0, edev->bar[0]+0x00046C);
-    // iowrite32(256, edev->bar[0]+0x000470);
-    // iowrite32(0x55, edev->bar[0]+0x000474);
+    dev_info(dev, "start copy to host");
+    iowrite32((edev->dma_region_addr+0x0400)&0xffffffff, edev->bar[0]+0x000460);
+    iowrite32(((edev->dma_region_addr+0x0400) >> 32)&0xffffffff, edev->bar[0]+0x000464);
+    iowrite32(5<<26|0x800200, edev->bar[0]+0x000468);
+    // iowrite32(0, edev->bar[0]+0x00046C);
+    iowrite32(256, edev->bar[0]+0x000470);
+    iowrite32(0x55, edev->bar[0]+0x000474);
 
-    // msleep(1);
+    msleep(1000);
 
-    // dev_info(dev, "Read status");
-    // dev_info(dev, "%08x", ioread32(edev->bar[0]+0x000478));
+    dev_info(dev, "Read status");
+    dev_info(dev, "%08x", ioread32(edev->bar[0]+0x000478));
 
-    // dev_info(dev, "read test data");
-    // print_hex_dump(KERN_INFO, "", DUMP_PREFIX_NONE, 16, 1, edev->dma_region+0x0200, 256, true);
+    dev_info(dev, "read test data");
+    print_hex_dump(KERN_INFO, "", DUMP_PREFIX_NONE, 16, 1, edev->dma_region+0x0400, 256, true);
 
     // probe complete
     return 0;

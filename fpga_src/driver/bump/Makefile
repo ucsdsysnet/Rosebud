@@ -18,7 +18,10 @@ update: clean all
 
 load: clean all
 	sudo insmod example.ko	
+	sudo ./pcie_hot_reset.sh 01:00.0
 	sudo ./pcie_hot_reset.sh 02:00.0
+	sudo rmmod -s example
 
 reset: 
+	sudo ./pcie_hot_reset.sh 01:00.0
 	sudo ./pcie_hot_reset.sh 02:00.0

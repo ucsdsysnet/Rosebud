@@ -39,7 +39,7 @@ either expressed or implied, of The Regents of the University of California.
 #include "mqnic.h"
 
 #define MAX_CORE_COUNT 16
-#define MAX_IF_COUNT 2
+#define MAX_IF_COUNT 3
 
 static volatile sig_atomic_t keep_running = 1;
 

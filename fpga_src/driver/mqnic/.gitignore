@@ -1,0 +1,7 @@
+*.o
+*.cmd
+Module.symvers
+modules.order
+mqnic.ko
+mqnic.mod.c
+.tmp_versions

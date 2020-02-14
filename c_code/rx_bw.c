@@ -15,11 +15,11 @@ int main(void){
 
 	// Do this at the beginnig, so scheduler can fill the slots while 
 	// initializing other things.
-	init_hdr_slots(5, 0x804000, 128);
-	init_slots(5, 0x00000A, 16384);
+	init_hdr_slots(8, 0x804000, 128);
+	init_slots(8, 0x00000A, 16384);
 
 	for (i=0;i<16;i++){
-		pkt_data[i] = (unsigned int *)(0+i*16384);
+		pkt_data[i] = (unsigned int *)(0x01000000+i*16384);
 		pkt_data[i][0] = core_id();
 		pkt_data[i][2] = 0xdeadbeef;
 		pkt_data[i][3] = 0xdeadbeef;
@@ -27,11 +27,11 @@ int main(void){
 	}
 
 	pkt_num    = 0;
-	packet.len = 64;
+	packet.len = 512;
 	packet.tag = 0;
 	packet.port = 0;
 
-	if (core_id()<8) {
+	if (core_id()<12) {
 		while (1){
 			for (i=0;i<16;i++) {
 				for(k=0;k<10;k++);

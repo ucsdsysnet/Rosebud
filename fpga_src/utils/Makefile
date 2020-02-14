@@ -1,13 +1,12 @@
-
-TEST=pkt_gen
-SIZE=9000
+TEST=rx_bw
+SIZE=64
 PREFIX=/usr/local
 BINDIR=$(DESTDIR)$(PREFIX)/bin
 BIN_FILE=/home/moein/BumpinTheWire/c_code/$(TEST).bin
 OUT_FILE=$(TEST)_$(SIZE).csv
 DEV=mqnic0
 ENABLE=0xffff
-RECV=0xffff
+RECV=0xf000
 
 CC=gcc
 CFLAGS=-O3 -Wall -I../driver/mqnic
@@ -36,4 +35,8 @@ do:
 	make -C ~/c/ NAME=$(TEST)
 	sudo ./rvfw -d /dev/$(DEV) -w $(BIN_FILE) -e $(ENABLE) -r $(RECV)
 	sudo ./perf -d /dev/$(DEV) -o $(OUT_FILE)
+
+reset: 
+	sudo ./pcie_hot_reset.sh 01:00.0
+	sudo ./pcie_hot_reset.sh 02:00.0
 

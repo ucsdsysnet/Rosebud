@@ -176,7 +176,7 @@ int main(int argc, char *argv[])
         {
             struct mqnic_ioctl_block_write ctl;
 
-            ctl.addr = (k<<22) | (1<<21);
+            ctl.addr = (k<<26) | (1<<25);
             ctl.data = segment;
             ctl.len = len;
 
