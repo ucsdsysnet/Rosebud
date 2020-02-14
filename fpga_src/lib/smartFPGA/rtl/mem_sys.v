@@ -155,16 +155,17 @@ module mem_sys # (
   ////////////////// Separate dma and core requests based on ////////////////
   /////////////// read/write and speed of memory to be accesssed ////////////
   ///////////////////////////////////////////////////////////////////////////
-  wire imem_addr =  dma_cmd_wr_addr[25];
-  wire pmem_addr = ~dma_cmd_wr_addr[25] && dma_cmd_wr_addr[24];
-  wire dmem_addr = ~dma_cmd_wr_addr[25] && ~dma_cmd_wr_addr[24]; 
+  wire dmem_wr_addr = ~dma_cmd_wr_addr[25] && ~dma_cmd_wr_addr[24]; 
+  wire dmem_rd_addr = ~dma_cmd_rd_addr[25] && ~dma_cmd_rd_addr[24]; 
+  wire pmem_wr_addr = ~dma_cmd_wr_addr[25] && dma_cmd_wr_addr[24];
+  wire pmem_rd_addr = ~dma_cmd_rd_addr[25] && dma_cmd_rd_addr[24];
+  wire imem_addr    =  dma_cmd_wr_addr[25];
 
-  wire dma_imem_wr_en      =  imem_addr && dma_cmd_wr_en;
-  wire dma_fast_dmem_wr_en = (dmem_addr && dma_cmd_wr_en) || dma_cmd_hdr_wr_en;
-  wire dma_fast_dmem_rd_en =  dmem_addr && dma_cmd_rd_en;
-
-  wire dma_slow_dmem_wr_en =  pmem_addr && dma_cmd_wr_en;
-  wire dma_slow_dmem_rd_en =  pmem_addr && dma_cmd_rd_en;
+  wire dma_fast_dmem_wr_en = (dmem_wr_addr && dma_cmd_wr_en) || dma_cmd_hdr_wr_en;
+  wire dma_fast_dmem_rd_en =  dmem_rd_addr && dma_cmd_rd_en;
+  wire dma_slow_dmem_wr_en =  pmem_wr_addr && dma_cmd_wr_en;
+  wire dma_slow_dmem_rd_en =  pmem_rd_addr && dma_cmd_rd_en;
+  wire dma_imem_wr_en      =  imem_addr    && dma_cmd_wr_en;
   
   // Shallow FIFOs for dma requests to spread them for meeting timing
   wire [IMEM_ADDR_WIDTH-1:0] dma_imem_wr_addr;

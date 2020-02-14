@@ -1,7 +1,5 @@
 #include "core.h"
 
-#define two_ports 1
-
 struct Desc packet;
 unsigned int * pkt_data[16];
 
@@ -19,7 +17,7 @@ int main(void){
 	init_slots(8, 0x00000A, 16384);
 
 	for (i=0;i<16;i++){
-		pkt_data[i] = (unsigned int *)(0+i*16384);
+		pkt_data[i] = (unsigned int *)(0x01000000+i*16384);
 		pkt_data[i][0] = core_id();
 	}
 

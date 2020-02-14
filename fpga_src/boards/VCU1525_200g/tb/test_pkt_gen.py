@@ -741,8 +741,8 @@ def bench():
               # write pcie read descriptor
               yield rc.mem_write(dev_pf0_bar0+0x000440, struct.pack('<L', (mem_base+0x0000) & 0xffffffff))
               yield rc.mem_write(dev_pf0_bar0+0x000444, struct.pack('<L', (mem_base+0x0000 >> 32) & 0xffffffff))
-              yield rc.mem_write(dev_pf0_bar0+0x000448, struct.pack('<L', ((i<<22)+(1<<21)) & 0xffffffff))
-              yield rc.mem_write(dev_pf0_bar0+0x000450, struct.pack('<L', 0x400))
+              yield rc.mem_write(dev_pf0_bar0+0x000448, struct.pack('<L', ((i<<26)+(1<<25)) & 0xffffffff))
+              yield rc.mem_write(dev_pf0_bar0+0x000450, struct.pack('<L', len(ins)))
               yield rc.mem_write(dev_pf0_bar0+0x000454, struct.pack('<L', 0xAA))
               yield delay(100)
               
@@ -796,7 +796,7 @@ def bench():
             data = rx_frame.data
             print(" ".join(("{:02x}".format(c) for c in bytearray(data[0:8]))))
           
-        yield delay(10000)
+        yield delay(1000)
         raise StopSimulation
 
     return instances()
