@@ -67,13 +67,16 @@ inline void slot_rx_packet(struct slot_context *ctx)
 int main(void)
 {
 	// set slot configuration parameters
-	slot_count = 8;
-	slot_size = 0x20000;
-	header_slot_base = DMEM_BASE+0x4000;
+	slot_count = PMEM_SEG_COUNT;
+	slot_size = PMEM_SEG_SIZE;
+	header_slot_base = DMEM_BASE + (DMEM_SIZE >> 1);
 	header_slot_size = 128;
 
+	if (slot_count > MAX_SLOT_COUNT)
+		slot_count = MAX_SLOT_COUNT;
+
 	write_timer_interval(0x00000200);
-	set_masks(0x1F); //enable just errors 
+	set_masks(0x1F); //enable just errors
 
 	// Do this at the beginning, so scheduler can fill the slots while
 	// initializing other things.
