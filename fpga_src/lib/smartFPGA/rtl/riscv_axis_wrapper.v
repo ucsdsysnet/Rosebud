@@ -915,7 +915,7 @@ simple_fifo # (
 ) pkt_sent_fifo (
   .clk(sys_clk),
   .rst(sys_rst),
-  .clear(core_reset_r),
+  .clear(1'b0),
 
   .din_valid(pkt_sent && (!pkt_sent_is_dram)), 
   .din(latched_send_desc),
@@ -941,7 +941,7 @@ simple_fifo # (
 ) recvd_dram_rd_fifo (
   .clk(sys_clk),
   .rst(sys_rst),
-  .clear(core_reset_r),
+  .clear(1'b0),
 
   .din_valid(dram_req_valid),
   .din({dram_req_high, dram_req_low}),
