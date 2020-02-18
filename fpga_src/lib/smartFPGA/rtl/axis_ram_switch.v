@@ -400,7 +400,7 @@ generate
             drop_next = drop_reg && !(port_axis_tvalid && port_axis_tready && port_axis_tlast);
             select_valid_next = select_valid_reg && !(port_axis_tvalid && port_axis_tready && port_axis_tlast);
 
-            if (port_axis_tvalid && !select_valid_reg) begin
+            if (port_axis_tvalid && !select_valid_reg && !drop_reg) begin
                 select_next = 1'b0;
                 select_valid_next = 1'b0;
                 drop_next = 1'b1;
@@ -412,20 +412,20 @@ generate
                     for (k = 0; k < M_COUNT; k = k + 1) begin
                         if (M_BASE == 0) begin
                             // M_BASE is zero, route with $clog2(M_COUNT) MSBs of tdest as port index
-                            if (s_axis_tdest[m*DEST_WIDTH+(DEST_WIDTH-CL_M_COUNT) +: CL_M_COUNT] == k && (M_CONNECT & (1 << (m+k*S_COUNT)))) begin
+                            if (port_axis_tdest[DEST_WIDTH-CL_M_COUNT +: CL_M_COUNT] == k && (M_CONNECT & (1 << (m+k*S_COUNT)))) begin
                                 select_next = k;
                                 select_valid_next = 1'b1;
                                 drop_next = 1'b0;
                             end
                         end else if (M_TOP == 0) begin
                             // M_TOP is zero, assume equal to M_BASE
-                            if (s_axis_tdest[m*DEST_WIDTH +: DEST_WIDTH] == M_BASE[k*DEST_WIDTH +: DEST_WIDTH] && (M_CONNECT & (1 << (m+k*S_COUNT)))) begin
+                            if (port_axis_tdest == M_BASE[k*DEST_WIDTH +: DEST_WIDTH] && (M_CONNECT & (1 << (m+k*S_COUNT)))) begin
                                 select_next = k;
                                 select_valid_next = 1'b1;
                                 drop_next = 1'b0;
                             end
                         end else begin
-                            if (s_axis_tdest[m*DEST_WIDTH +: DEST_WIDTH] >= M_BASE[k*DEST_WIDTH +: DEST_WIDTH] && s_axis_tdest[m*DEST_WIDTH +: DEST_WIDTH] <= M_TOP[k*DEST_WIDTH +: DEST_WIDTH] && (M_CONNECT & (1 << (m+k*S_COUNT)))) begin
+                            if (port_axis_tdest >= M_BASE[k*DEST_WIDTH +: DEST_WIDTH] && port_axis_tdest <= M_TOP[k*DEST_WIDTH +: DEST_WIDTH] && (M_CONNECT & (1 << (m+k*S_COUNT)))) begin
                                 select_next = k;
                                 select_valid_next = 1'b1;
                                 drop_next = 1'b0;
@@ -492,7 +492,7 @@ generate
         // empty when pointers match exactly
         wire empty = wr_ptr_reg == rd_ptr_reg;
         // overflow within packet
-        wire full_wr = wr_ptr_reg == (rd_ptr_reg ^ {1'b1, {ADDR_WIDTH{1'b0}}});
+        wire full_wr = wr_ptr_cur_reg == (wr_ptr_reg ^ {1'b1, {ADDR_WIDTH{1'b0}}});
 
         reg drop_frame_reg = 1'b0, drop_frame_next;
         reg overflow_reg = 1'b0, overflow_next;
@@ -939,7 +939,7 @@ generate
                         cmd_status_id_next = id_reg;
                         cmd_status_valid_next = 1 << src_reg;
                     end
-                end else if (cmd_valid_mux) begin
+                end else if (cmd_valid_mux && !cmd_ready_reg) begin
                     // fetch new command
                     cmd_ready_next = 1'b1;
                     rd_ptr_next = cmd_addr_mux;
