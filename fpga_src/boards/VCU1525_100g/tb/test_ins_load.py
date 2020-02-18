@@ -59,9 +59,10 @@ srcs.append("../lib/smartFPGA/rtl/mem_sys.v")
 srcs.append("../lib/smartFPGA/rtl/simple_scheduler.v")
 srcs.append("../lib/smartFPGA/rtl/simple_sync_sig.v")
 srcs.append("../lib/smartFPGA/rtl/axis_switch.v")
+srcs.append("../lib/smartFPGA/rtl/axis_ram_switch.v")
 srcs.append("../lib/smartFPGA/rtl/axis_stat.v")
 srcs.append("../lib/smartFPGA/rtl/stat_reader.v")
-srcs.append("../lib/smartFPGA/rtl/axis_switch_2lvl.v")
+srcs.append("../lib/smartFPGA/rtl/axis_switch_2lvl_2.v")
 srcs.append("../lib/smartFPGA/rtl/loopback_msg_fifo.v")
 srcs.append("../lib/smartFPGA/rtl/header.v")
 srcs.append("../lib/smartFPGA/rtl/pcie_controller.v")
@@ -792,7 +793,7 @@ def bench():
               # write pcie read descriptor
               yield rc.mem_write(dev_pf0_bar0+0x000440, struct.pack('<L', (mem_base+0x0000) & 0xffffffff))
               yield rc.mem_write(dev_pf0_bar0+0x000444, struct.pack('<L', (mem_base+0x0000 >> 32) & 0xffffffff))
-              yield rc.mem_write(dev_pf0_bar0+0x000448, struct.pack('<L', ((i<<22)+(1<<21)) & 0xffffffff))
+              yield rc.mem_write(dev_pf0_bar0+0x000448, struct.pack('<L', ((i<<26)+(1<<25)) & 0xffffffff))
               yield rc.mem_write(dev_pf0_bar0+0x000450, struct.pack('<L', len(ins)))
               yield rc.mem_write(dev_pf0_bar0+0x000454, struct.pack('<L', 0xAA))
               yield delay(2000)
@@ -808,7 +809,7 @@ def bench():
           # write pcie read descriptor
           yield rc.mem_write(dev_pf0_bar0+0x000440, struct.pack('<L', (mem_base+0x0000) & 0xffffffff))
           yield rc.mem_write(dev_pf0_bar0+0x000444, struct.pack('<L', (mem_base+0x0000 >> 32) & 0xffffffff))
-          yield rc.mem_write(dev_pf0_bar0+0x000448, struct.pack('<L', ((4<<22)+0x100100) & 0xffffffff))
+          yield rc.mem_write(dev_pf0_bar0+0x000448, struct.pack('<L', ((4<<26)+0x800100) & 0xffffffff))
           # yield rc.mem_write(dev_pf0_bar0+0x00044C, struct.pack('<L', (((4<<16)+0x0100) >> 32) & 0xffffffff))
           yield rc.mem_write(dev_pf0_bar0+0x000450, struct.pack('<L', 0x400))
           yield rc.mem_write(dev_pf0_bar0+0x000454, struct.pack('<L', 0xAA))
@@ -822,7 +823,7 @@ def bench():
           # write pcie write descriptor
           yield rc.mem_write(dev_pf0_bar0+0x000460, struct.pack('<L', (mem_base+0x1000) & 0xffffffff))
           yield rc.mem_write(dev_pf0_bar0+0x000464, struct.pack('<L', (mem_base+0x1000 >> 32) & 0xffffffff))
-          yield rc.mem_write(dev_pf0_bar0+0x000468, struct.pack('<L', ((4<<22)+0x100100) & 0xffffffff))
+          yield rc.mem_write(dev_pf0_bar0+0x000468, struct.pack('<L', ((4<<26)+0x800100) & 0xffffffff))
           yield rc.mem_write(dev_pf0_bar0+0x000470, struct.pack('<L', 0x400))
           yield rc.mem_write(dev_pf0_bar0+0x000474, struct.pack('<L', 0x55))
 
@@ -848,6 +849,11 @@ def bench():
         if (TEST_SFP):
           yield port1(),None
           yield port2(),None
+        
+          yield delay (200)
+          yield rc.mem_write(dev_pf0_bar0+0x00040C, struct.pack('<L', 0x0100))
+          yield delay (200)
+          yield rc.mem_write(dev_pf0_bar0+0x00040C, struct.pack('<L', 0x0000))
 
           lengths = []
           print ("send data from LAN")

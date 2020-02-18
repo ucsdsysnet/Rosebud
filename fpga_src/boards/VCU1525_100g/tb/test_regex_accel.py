@@ -776,7 +776,6 @@ def bench():
         print("Firmware load")
         ins = bytearray(open(FIRMWARE, "rb").read())
         mem_data[0:len(ins)] = ins
-        mem_data[48059:48200] = bytearray([(x+10)%256 for x in range(141)])
 
         # enable DMA
         yield rc.mem_write(dev_pf0_bar0+0x000400, struct.pack('<L', 1))
@@ -791,7 +790,7 @@ def bench():
               # write pcie read descriptor
               yield rc.mem_write(dev_pf0_bar0+0x000440, struct.pack('<L', (mem_base+0x0000) & 0xffffffff))
               yield rc.mem_write(dev_pf0_bar0+0x000444, struct.pack('<L', (mem_base+0x0000 >> 32) & 0xffffffff))
-              yield rc.mem_write(dev_pf0_bar0+0x000448, struct.pack('<L', ((i<<22)+(1<<21)) & 0xffffffff))
+              yield rc.mem_write(dev_pf0_bar0+0x000448, struct.pack('<L', ((i<<26)+(1<<25)) & 0xffffffff))
               yield rc.mem_write(dev_pf0_bar0+0x000450, struct.pack('<L', len(ins)))
               yield rc.mem_write(dev_pf0_bar0+0x000454, struct.pack('<L', 0xAA))
               yield delay(2000)
@@ -807,8 +806,8 @@ def bench():
           # write pcie read descriptor
           yield rc.mem_write(dev_pf0_bar0+0x000440, struct.pack('<L', (mem_base+0x0000) & 0xffffffff))
           yield rc.mem_write(dev_pf0_bar0+0x000444, struct.pack('<L', (mem_base+0x0000 >> 32) & 0xffffffff))
-          yield rc.mem_write(dev_pf0_bar0+0x000448, struct.pack('<L', ((4<<22)+0x100100) & 0xffffffff))
-          # yield rc.mem_write(dev_pf0_bar0+0x00044C, struct.pack('<L', (((4<<16)+0x0100) >> 32) & 0xffffffff))
+          yield rc.mem_write(dev_pf0_bar0+0x000448, struct.pack('<L', ((4<<26)+0x800100) & 0xffffffff))
+          # yield rc.mem_write(dev_pf0_bar0+0x00044C, struct.pack('<L', (((4<<26)+0x0100) >> 32) & 0xffffffff))
           yield rc.mem_write(dev_pf0_bar0+0x000450, struct.pack('<L', 0x400))
           yield rc.mem_write(dev_pf0_bar0+0x000454, struct.pack('<L', 0xAA))
 
@@ -821,7 +820,7 @@ def bench():
           # write pcie write descriptor
           yield rc.mem_write(dev_pf0_bar0+0x000460, struct.pack('<L', (mem_base+0x1000) & 0xffffffff))
           yield rc.mem_write(dev_pf0_bar0+0x000464, struct.pack('<L', (mem_base+0x1000 >> 32) & 0xffffffff))
-          yield rc.mem_write(dev_pf0_bar0+0x000468, struct.pack('<L', ((4<<22)+0x100100) & 0xffffffff))
+          yield rc.mem_write(dev_pf0_bar0+0x000468, struct.pack('<L', ((4<<26)+0x800100) & 0xffffffff))
           yield rc.mem_write(dev_pf0_bar0+0x000470, struct.pack('<L', 0x400))
           yield rc.mem_write(dev_pf0_bar0+0x000474, struct.pack('<L', 0x55))
 
@@ -832,11 +831,6 @@ def bench():
           print(val)
 
           data = mem_data[0x1000:(0x1000)+1024]
-          for i in range(0, len(data), 16):
-              print(" ".join(("{:02x}".format(c) for c in bytearray(data[i:i+16]))))
-
-          print("core to host write data")
-          data = mem_data[0xBCBB:(0xBCBB)+128]
           for i in range(0, len(data), 16):
               print(" ".join(("{:02x}".format(c) for c in bytearray(data[i:i+16]))))
 
@@ -919,7 +913,7 @@ def bench():
           test_frame_1.payload = b"page.php?id=this%20is%20fine" + bytes([i%256] + [x%256 for x in range(SIZE_0-1)])
           qsfp0_source.send(test_frame_1.build_axis())
 
-          yield delay(10000)
+          yield delay(1000)
           
         raise StopSimulation
 

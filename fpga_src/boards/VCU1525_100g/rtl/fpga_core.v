@@ -238,17 +238,16 @@ parameter SLOT_WIDTH       = $clog2(SLOT_COUNT+1);
 parameter TAG_WIDTH        = (SLOT_WIDTH>5)? SLOT_WIDTH:5;
 
 parameter IMEM_SIZE       = 65536;
-parameter SLOW_DMEM_SIZE  = 1048576;
-parameter FAST_DMEM_SIZE  = 32768;
+parameter PMEM_SIZE       = 1048576;
+parameter DMEM_SIZE       = 32768;
 parameter BC_REGION_SIZE  = 8192;
 parameter SLOW_M_B_LINES  = 4096;
 parameter FAST_M_B_LINES  = 1024;
 
 parameter LVL2_DATA_WIDTH  = 128;
 parameter LVL2_STRB_WIDTH  = LVL2_DATA_WIDTH/8;
-parameter CORE_ADDR_WIDTH  = $clog2(SLOW_DMEM_SIZE)+2;
 parameter ID_TAG_WIDTH     = CORE_WIDTH+TAG_WIDTH;
-parameter BC_START_ADDR    = SLOW_DMEM_SIZE+FAST_DMEM_SIZE-BC_REGION_SIZE;
+parameter BC_START_ADDR    = 32'h01000000+PMEM_SIZE-BC_REGION_SIZE;
 parameter CORE_MSG_WIDTH   = 32+4+$clog2(BC_REGION_SIZE)-2;
 
 parameter RECV_DESC_DEPTH = 8;
@@ -311,6 +310,8 @@ wire [INTERFACE_COUNT*AXIS_ETH_KEEP_WIDTH-1:0] port_rx_axis_tkeep_r;
 wire [INTERFACE_COUNT-1:0] port_rx_axis_tvalid_r;
 wire [INTERFACE_COUNT-1:0] port_rx_axis_tready_r;
 wire [INTERFACE_COUNT-1:0] port_rx_axis_tlast_r;
+wire [INTERFACE_COUNT-1:0] port_rx_axis_overflow_r;
+wire [INTERFACE_COUNT-1:0] port_rx_axis_bad_frame_r;
 
 if (QSFP0_IND >= 0 && QSFP0_IND < INTERFACE_COUNT) begin
     assign port_tx_clk[QSFP0_IND] = qsfp0_tx_clk;
@@ -371,6 +372,8 @@ wire [(INTERFACE_COUNT+V_PORT_COUNT)*LVL1_DATA_WIDTH-1:0] rx_axis_tdata;
 wire [(INTERFACE_COUNT+V_PORT_COUNT)*LVL1_STRB_WIDTH-1:0] rx_axis_tkeep;
 wire [(INTERFACE_COUNT+V_PORT_COUNT)-1:0] rx_axis_tvalid, rx_axis_tready, rx_axis_tlast;
 
+reg  [INTERFACE_COUNT-1:0] rx_drop, rx_drop_r;
+
 genvar m;
 generate
     for (m=0;m<INTERFACE_COUNT;m=m+1) begin: MAC_async_FIFO
@@ -385,8 +388,8 @@ generate
             .REG_TYPE(2),
             .LENGTH(2)
         ) mac_tx_pipeline (
-            .rst(sys_rst),
             .clk(sys_clk),
+            .rst(sys_rst),
 
             .s_axis_tdata(tx_axis_tdata[m*LVL1_DATA_WIDTH +: LVL1_DATA_WIDTH]),
             .s_axis_tkeep(tx_axis_tkeep[m*LVL1_STRB_WIDTH +: LVL1_STRB_WIDTH]),
@@ -496,8 +499,8 @@ generate
             .s_status_overflow(),
             .s_status_bad_frame(),
             .s_status_good_frame(),
-            .m_status_overflow(),
-            .m_status_bad_frame(),
+            .m_status_overflow(port_rx_axis_overflow_r[m]),
+            .m_status_bad_frame(port_rx_axis_bad_frame_r[m]),
             .m_status_good_frame()
         );
         
@@ -512,8 +515,8 @@ generate
             .REG_TYPE(2),
             .LENGTH(2)
         ) mac_rx_pipeline (
-            .rst(sys_rst),
             .clk(sys_clk),
+            .rst(sys_rst),
 
             .s_axis_tdata(port_rx_axis_tdata_r[m*LVL1_DATA_WIDTH +: LVL1_DATA_WIDTH]),
             .s_axis_tkeep(port_rx_axis_tkeep_r[m*LVL1_STRB_WIDTH +: LVL1_STRB_WIDTH]),
@@ -534,6 +537,14 @@ generate
             .m_axis_tuser()
         );
 
+      always @ (posedge sys_clk)
+        if (sys_rst) begin
+          rx_drop   <= {INTERFACE_COUNT{1'b0}};
+          rx_drop_r <= {INTERFACE_COUNT{1'b0}};
+        end else begin
+          rx_drop   <= port_rx_axis_overflow_r | port_rx_axis_bad_frame_r;
+          rx_drop_r <= rx_drop;
+        end
     end
 endgenerate
 
@@ -594,6 +605,7 @@ wire [FRAME_COUNT_WIDTH-1:0]  core_out_frame_count_r;
 wire [BYTE_COUNT_WIDTH-1:0]   interface_in_byte_count;
 wire [BYTE_COUNT_WIDTH-1:0]   interface_out_byte_count;
 wire [FRAME_COUNT_WIDTH-1:0]  interface_in_frame_count;
+wire [FRAME_COUNT_WIDTH-1:0]  interface_in_drop_count;
 wire [FRAME_COUNT_WIDTH-1:0]  interface_out_frame_count;
 
 // AXI lite connections
@@ -755,6 +767,7 @@ pcie_config # (
   .stat_read_interface      (stat_read_interface),
   .interface_in_byte_count  (interface_in_byte_count),
   .interface_in_frame_count (interface_in_frame_count),
+  .interface_in_drop_count  (interface_in_drop_count),
   .interface_out_byte_count (interface_out_byte_count),
   .interface_out_frame_count(interface_out_frame_count),
 
@@ -828,7 +841,7 @@ pcie_controller #
   .CORE_SLOT_WIDTH(SLOT_WIDTH),
   .CORE_DESC_WIDTH(LVL1_DRAM_WIDTH),
   .CORE_COUNT(CORE_COUNT),        
-  .CORE_ADDR_WIDTH(CORE_ADDR_WIDTH), 
+  .CORE_ADDR_WIDTH(26), 
   .PCIE_SLOT_COUNT(PCIE_SLOT_COUNT),
   .IF_COUNT(V_IF_COUNT),
   .PORTS_PER_IF(PORTS_PER_V_IF),
@@ -1227,10 +1240,12 @@ stat_reader # (
   .monitor_axis_tvalid(sched_rx_axis_tvalid),
   .monitor_axis_tready(sched_rx_axis_tready),
   .monitor_axis_tlast(sched_rx_axis_tlast),
+  .monitor_drop_pulse({{V_PORT_COUNT{1'b0}},rx_drop_r}),
 
   .port_select(stat_read_interface),
   .byte_count(interface_in_byte_count),
-  .frame_count(interface_in_frame_count)
+  .frame_count(interface_in_frame_count),
+  .drop_count(interface_in_drop_count)
 );
 
 stat_reader # (
@@ -1249,10 +1264,12 @@ stat_reader # (
   .monitor_axis_tvalid(data_s_axis_tvalid),
   .monitor_axis_tready(data_s_axis_tready),
   .monitor_axis_tlast(data_s_axis_tlast),
+  .monitor_drop_pulse({CORE_COUNT{1'b0}}),
 
   .port_select(stat_read_core_r),
   .byte_count(core_in_byte_count),
-  .frame_count(core_in_frame_count)
+  .frame_count(core_in_frame_count),
+  .drop_count()
 );
 
 axis_switch_2lvl # (
@@ -1320,10 +1337,12 @@ stat_reader # (
   .monitor_axis_tvalid(sched_tx_axis_tvalid),
   .monitor_axis_tready(sched_tx_axis_tready),
   .monitor_axis_tlast(sched_tx_axis_tlast),
+  .monitor_drop_pulse({INTERFACE_COUNT+V_PORT_COUNT{1'b0}}),
 
   .port_select(stat_read_interface),
   .byte_count(interface_out_byte_count),
-  .frame_count(interface_out_frame_count)
+  .frame_count(interface_out_frame_count),
+  .drop_count()
 );
 
 stat_reader # (
@@ -1337,6 +1356,7 @@ stat_reader # (
   .clk(core_clk),
   .port_rst(block_reset),
   .port_clear({CORE_COUNT{1'b0}}),
+  .monitor_drop_pulse({CORE_COUNT{1'b0}}),
 
   .monitor_axis_tkeep(data_m_axis_tkeep),
   .monitor_axis_tvalid(data_m_axis_tvalid),
@@ -1345,7 +1365,8 @@ stat_reader # (
 
   .port_select(stat_read_core_r),
   .byte_count(core_out_byte_count),
-  .frame_count(core_out_frame_count)
+  .frame_count(core_out_frame_count),
+  .drop_count()
 );
 
 axis_switch_2lvl # (
@@ -1695,21 +1716,21 @@ generate
         wire                       core_interrupt_ack;
         
         wire                       dma_cmd_wr_en;
-        wire [CORE_ADDR_WIDTH-1:0] dma_cmd_wr_addr;
+        wire [25:0]                dma_cmd_wr_addr;
         wire                       dma_cmd_hdr_wr_en;
-        wire [CORE_ADDR_WIDTH-1:0] dma_cmd_hdr_wr_addr;
-        wire [LVL2_DATA_WIDTH-1:0] dma_cmd_wr_data;
-        wire [LVL2_STRB_WIDTH-1:0] dma_cmd_wr_strb;
+        wire [23:0]                dma_cmd_hdr_wr_addr;
+        wire [128-1:0]             dma_cmd_wr_data;
+        wire [16-1:0]              dma_cmd_wr_strb;
         wire                       dma_cmd_wr_last;
         wire                       dma_cmd_wr_ready;
         wire                       dma_cmd_rd_en;
-        wire [CORE_ADDR_WIDTH-1:0] dma_cmd_rd_addr;
+        wire [25:0]                dma_cmd_rd_addr;
         wire                       dma_cmd_rd_last;
         wire                       dma_cmd_rd_ready;
         wire                       dma_rd_resp_valid;
-        wire [LVL2_DATA_WIDTH-1:0] dma_rd_resp_data;
+        wire [128-1:0]             dma_rd_resp_data;
         wire                       dma_rd_resp_ready;
-          
+
         wire [63:0]                in_desc;
         wire                       in_desc_valid;
         wire                       in_desc_taken;
@@ -1719,7 +1740,7 @@ generate
         wire                       out_desc_ready;
 
         wire [SLOT_WIDTH-1:0]      slot_wr_ptr;
-        wire [CORE_ADDR_WIDTH-1:0] slot_wr_addr;
+        wire [24:0]                slot_wr_addr;
         wire                       slot_wr_valid;
         wire                       slot_for_hdr;
         wire                       slot_wr_ready;
@@ -1736,7 +1757,6 @@ generate
         // (* keep_hierarchy = "soft" *)
         riscv_axis_wrapper #(
             .DATA_WIDTH(LVL2_DATA_WIDTH),
-            .ADDR_WIDTH(CORE_ADDR_WIDTH),
             .SLOT_COUNT(SLOT_COUNT),
             .RECV_DESC_DEPTH(RECV_DESC_DEPTH),
             .SEND_DESC_DEPTH(SEND_DESC_DEPTH),
@@ -1870,8 +1890,8 @@ generate
             .DATA_WIDTH(LVL2_DATA_WIDTH),
             .STRB_WIDTH(LVL2_STRB_WIDTH),
             .IMEM_SIZE(IMEM_SIZE),
-            .SLOW_DMEM_SIZE(SLOW_DMEM_SIZE),
-            .FAST_DMEM_SIZE(FAST_DMEM_SIZE),
+            .PMEM_SIZE(PMEM_SIZE),
+            .DMEM_SIZE(DMEM_SIZE),
             .SLOW_M_B_LINES(SLOW_M_B_LINES),
             .FAST_M_B_LINES(FAST_M_B_LINES),
             .BC_REGION_SIZE(BC_REGION_SIZE),
@@ -1879,7 +1899,6 @@ generate
             .MSG_WIDTH(CORE_MSG_WIDTH),
             .CORE_ID_WIDTH(CORE_WIDTH),
             .SLOT_COUNT(SLOT_COUNT),
-            .ADDR_WIDTH(CORE_ADDR_WIDTH),
             .SLOT_WIDTH(SLOT_WIDTH)
         ) riscv_block_inst (
     `else 

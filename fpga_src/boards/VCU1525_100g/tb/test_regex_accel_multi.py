@@ -54,8 +54,9 @@ srcs.append("../lib/smartFPGA/rtl/VexRiscv.v")
 srcs.append("../lib/smartFPGA/rtl/riscvcore.v")
 srcs.append("../lib/smartFPGA/rtl/riscv_block.v")
 # srcs.append("../lib/smartFPGA/rtl/accel_wrap.v")
-srcs.append("../../../accel/hash/rtl/accel_wrap_hash.v")
-srcs.append("../../../accel/hash/rtl/hash_acc.v")
+srcs.append("../../../accel/regex/rtl/accel_wrap_regex_multi.v")
+srcs.append("../../../accel/regex/rtl/regex_acc.v")
+srcs.append("../../../accel/regex/rtl/re_sql.v")
 srcs.append("../lib/smartFPGA/rtl/riscv_axis_wrapper.v")
 srcs.append("../lib/smartFPGA/rtl/mem_sys.v")
 srcs.append("../lib/smartFPGA/rtl/simple_scheduler.v")
@@ -152,7 +153,7 @@ def bench():
     TEST_PCIE    = True
     TEST_ACC     = True
     UPDATE_INS   = True
-    FIRMWARE     = "../../../accel/hash/c/basic_fw_hash.bin"
+    FIRMWARE     = "../../../accel/regex/c/basic_fw_re_multi.bin"
 
     # Inputs
     sys_clk  = Signal(bool(0))
@@ -557,7 +558,6 @@ def bench():
     test_frame_1.eth_src_mac = 0x5A5152535455
     test_frame_1.eth_type = 0x8000
     test_frame_1.payload = bytes([0]+[x%256 for x in range(SIZE_0-1)])
-    test_frame_1.update_fcs()
     axis_frame = test_frame_1.build_axis()
     start_data_1 = bytearray(axis_frame)
 
@@ -566,7 +566,6 @@ def bench():
     test_frame_2.eth_src_mac = 0xDAD1D2D3D4D5
     test_frame_2.eth_type = 0x8000
     test_frame_2.payload = bytes([0]+[x%256 for x in range(SIZE_1-1)])
-    test_frame_2.update_fcs()
     axis_frame_2 = test_frame_2.build_axis()
     start_data_2 = bytearray(axis_frame_2)
  
@@ -722,7 +721,6 @@ def bench():
         for i in range (0,SEND_COUNT_0):
           # test_frame_1.payload = bytes([x%256 for x in range(random.randrange(1980))])
           test_frame_1.payload = bytes([i%256] + [x%256 for x in range(SIZE_0-1)])
-          test_frame_1.update_fcs()
           axis_frame = test_frame_1.build_axis()
           qsfp0_source.send(bytearray(axis_frame))
           # yield delay(random.randrange(128))
@@ -736,7 +734,6 @@ def bench():
           #   test_frame_2.payload = bytes([x%256 for x in range(78-14)])
           # else:
           test_frame_2.payload = bytes([i%256] + [x%256 for x in range(SIZE_1-1)])
-          test_frame_2.update_fcs()
           axis_frame_2 = test_frame_2.build_axis()
           qsfp1_source.send(bytearray(axis_frame_2))
           # yield delay(random.randrange(128))
@@ -898,12 +895,23 @@ def bench():
             print (B_2_int(bytes_in),B_2_int(bytes_out),B_2_int(frames_in),B_2_int(frames_out))
        
         if (TEST_ACC):
-          # Hash of this UDP header is 0x51ccc178
-          test_frame_1.eth_dest_mac = 0xDAD1D2D3D4D5
-          test_frame_1.eth_src_mac = 0x5A5152535455
-          test_frame_1.eth_type = 0x0800
-          test_frame_1.payload = b"E\x00\x00\x9c\x00\x00@\x00@\x11\\\xaeB\t\x95\xbb\xa1\x8edP\n\xea\x06\xe6\x00\x88?[" + bytes([x%256 for x in range(SIZE_0)])
-          qsfp0_source.send(bytearray(test_frame_1.build_axis()))
+          test_frame_1.payload = b"page.php?id=12345" + bytes([i%256] + [x%256 for x in range(SIZE_0-1)])
+          qsfp0_source.send(test_frame_1.build_axis())
+
+          test_frame_1.payload = b"page.php?id=%27%3B%20SELECT%20%2A%20FROM%20users%3B%20--" + bytes([i%256] + [x%256 for x in range(SIZE_0-1)])
+          qsfp0_source.send(test_frame_1.build_axis())
+
+          test_frame_1.payload = b"page.php?id=%27%3B%20INSERT%20INTO%20users%20VALUES%20%28%27skroob%27%2C%20%271234%27%29%3B%20--" + bytes([i%256] + [x%256 for x in range(SIZE_0-1)])
+          qsfp0_source.send(test_frame_1.build_axis())
+
+          test_frame_1.payload = b"page.php?id=%27%3B%20DELETE%20FROM%20prod_data%3B%20--" + bytes([i%256] + [x%256 for x in range(SIZE_0-1)])
+          qsfp0_source.send(test_frame_1.build_axis())
+
+          test_frame_1.payload = b"page.php?id=%27%3B%20UPDATE%20users%20SET%20password%20%3D%20%271234%27%20WHERE%20username%20%3D%20%27skroob%27%20prod_data%3B%20--" + bytes([i%256] + [x%256 for x in range(SIZE_0-1)])
+          qsfp0_source.send(test_frame_1.build_axis())
+
+          test_frame_1.payload = b"page.php?id=this%20is%20fine" + bytes([i%256] + [x%256 for x in range(SIZE_0-1)])
+          qsfp0_source.send(test_frame_1.build_axis())
 
           yield delay(1000)
           
