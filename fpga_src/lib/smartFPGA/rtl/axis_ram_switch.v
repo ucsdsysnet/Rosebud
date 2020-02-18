@@ -131,8 +131,30 @@ module axis_ram_switch #
     output wire [S_COUNT-1:0]              status_good_frame
 );
 
+function [M_COUNT*DEST_WIDTH-1:0] mem_base (input [31:0] trail_bits);
+    integer i;
+    begin
+        for (i=0;i<M_COUNT;i=i+1)
+            mem_base[i*DEST_WIDTH +: DEST_WIDTH] = i << trail_bits;
+    end
+endfunction
+
+function [M_COUNT*DEST_WIDTH-1:0] mem_top (input [M_COUNT*DEST_WIDTH-1:0] m_base);
+    integer i;
+    begin
+        for (i=0;i<M_COUNT-1;i=i+1)
+            mem_top[i*DEST_WIDTH +: DEST_WIDTH] = 
+              ((m_base[(i+1)*DEST_WIDTH +: DEST_WIDTH]-1) != m_base[i*DEST_WIDTH +: DEST_WIDTH]) ? 
+               (m_base[(i+1)*DEST_WIDTH +: DEST_WIDTH]-1) :  m_base[i*DEST_WIDTH +: DEST_WIDTH]; 
+
+        mem_top[(M_COUNT-1)*DEST_WIDTH +: DEST_WIDTH] = {DEST_WIDTH{1'b1}};
+    end
+endfunction
+
 parameter CL_S_COUNT = $clog2(S_COUNT);
 parameter CL_M_COUNT = $clog2(M_COUNT);
+parameter FULL_M_BASE = (M_BASE==0) ? mem_base(DEST_WIDTH-CL_M_COUNT) : M_BASE;
+parameter FULL_M_TOP  = ((M_BASE==0)||(M_TOP==0)) ? mem_top(FULL_M_BASE) : M_TOP;
 
 // force keep width to 1 when disabled
 parameter S_KEEP_WIDTH_INT = S_KEEP_ENABLE ? S_KEEP_WIDTH : 1;
@@ -180,36 +202,20 @@ initial begin
         $finish;
     end
 
-    if (M_BASE == 0) begin
-        // M_BASE is zero, route with tdest as port index
-    end else if (M_TOP == 0) begin
-        // M_TOP is zero, assume equal to M_BASE
-        for (i = 0; i < M_COUNT; i = i + 1) begin
-            for (j = i+1; j < M_COUNT; j = j + 1) begin
-                if (M_BASE[i*DEST_WIDTH +: DEST_WIDTH] == M_BASE[j*DEST_WIDTH +: DEST_WIDTH]) begin
-                    $display("%d: %08x", i, M_BASE[i*DEST_WIDTH +: DEST_WIDTH]);
-                    $display("%d: %08x", j, M_BASE[j*DEST_WIDTH +: DEST_WIDTH]);
-                    $error("Error: ranges overlap (instance %m)");
-                    $finish;
-                end
-            end
+    for (i = 0; i < M_COUNT; i = i + 1) begin
+        if (FULL_M_BASE[i*DEST_WIDTH +: DEST_WIDTH] > FULL_M_TOP[i*DEST_WIDTH +: DEST_WIDTH]) begin
+            $error("Error: invalid range (instance %m)");
+            $finish;
         end
-    end else begin
-        for (i = 0; i < M_COUNT; i = i + 1) begin
-            if (M_BASE[i*DEST_WIDTH +: DEST_WIDTH] > M_TOP[i*DEST_WIDTH +: DEST_WIDTH]) begin
-                $error("Error: invalid range (instance %m)");
-                $finish;
-            end
-        end
+    end
 
-        for (i = 0; i < M_COUNT; i = i + 1) begin
-            for (j = i+1; j < M_COUNT; j = j + 1) begin
-                if (M_BASE[i*DEST_WIDTH +: DEST_WIDTH] <= M_TOP[j*DEST_WIDTH +: DEST_WIDTH] && M_BASE[j*DEST_WIDTH +: DEST_WIDTH] <= M_TOP[i*DEST_WIDTH +: DEST_WIDTH]) begin
-                    $display("%d: %08x-%08x", i, M_BASE[i*DEST_WIDTH +: DEST_WIDTH], M_TOP[i*DEST_WIDTH +: DEST_WIDTH]);
-                    $display("%d: %08x-%08x", j, M_BASE[j*DEST_WIDTH +: DEST_WIDTH], M_TOP[j*DEST_WIDTH +: DEST_WIDTH]);
-                    $error("Error: ranges overlap (instance %m)");
-                    $finish;
-                end
+    for (i = 0; i < M_COUNT; i = i + 1) begin
+        for (j = i+1; j < M_COUNT; j = j + 1) begin
+            if (FULL_M_BASE[i*DEST_WIDTH +: DEST_WIDTH] <= FULL_M_TOP[j*DEST_WIDTH +: DEST_WIDTH] && FULL_M_BASE[j*DEST_WIDTH +: DEST_WIDTH] <= FULL_M_TOP[i*DEST_WIDTH +: DEST_WIDTH]) begin
+                $display("%d: %08x-%08x", i, FULL_M_BASE[i*DEST_WIDTH +: DEST_WIDTH], FULL_M_TOP[i*DEST_WIDTH +: DEST_WIDTH]);
+                $display("%d: %08x-%08x", j, FULL_M_BASE[j*DEST_WIDTH +: DEST_WIDTH], FULL_M_TOP[j*DEST_WIDTH +: DEST_WIDTH]);
+                $error("Error: ranges overlap (instance %m)");
+                $finish;
             end
         end
     end
@@ -410,26 +416,10 @@ generate
                     drop_next = 1'b0;
                 end else begin
                     for (k = 0; k < M_COUNT; k = k + 1) begin
-                        if (M_BASE == 0) begin
-                            // M_BASE is zero, route with $clog2(M_COUNT) MSBs of tdest as port index
-                            if (port_axis_tdest[DEST_WIDTH-CL_M_COUNT +: CL_M_COUNT] == k && (M_CONNECT & (1 << (m+k*S_COUNT)))) begin
-                                select_next = k;
-                                select_valid_next = 1'b1;
-                                drop_next = 1'b0;
-                            end
-                        end else if (M_TOP == 0) begin
-                            // M_TOP is zero, assume equal to M_BASE
-                            if (port_axis_tdest == M_BASE[k*DEST_WIDTH +: DEST_WIDTH] && (M_CONNECT & (1 << (m+k*S_COUNT)))) begin
-                                select_next = k;
-                                select_valid_next = 1'b1;
-                                drop_next = 1'b0;
-                            end
-                        end else begin
-                            if (port_axis_tdest >= M_BASE[k*DEST_WIDTH +: DEST_WIDTH] && port_axis_tdest <= M_TOP[k*DEST_WIDTH +: DEST_WIDTH] && (M_CONNECT & (1 << (m+k*S_COUNT)))) begin
-                                select_next = k;
-                                select_valid_next = 1'b1;
-                                drop_next = 1'b0;
-                            end
+                        if (port_axis_tdest >= FULL_M_BASE[k*DEST_WIDTH +: DEST_WIDTH] && port_axis_tdest <= FULL_M_TOP[k*DEST_WIDTH +: DEST_WIDTH] && (M_CONNECT & (1 << (m+k*S_COUNT)))) begin
+                            select_next = k;
+                            select_valid_next = 1'b1;
+                            drop_next = 1'b0;
                         end
                     end
                 end
