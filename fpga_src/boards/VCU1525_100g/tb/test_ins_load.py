@@ -62,7 +62,7 @@ srcs.append("../lib/smartFPGA/rtl/axis_switch.v")
 srcs.append("../lib/smartFPGA/rtl/axis_ram_switch.v")
 srcs.append("../lib/smartFPGA/rtl/axis_stat.v")
 srcs.append("../lib/smartFPGA/rtl/stat_reader.v")
-srcs.append("../lib/smartFPGA/rtl/axis_switch_2lvl_2.v")
+srcs.append("../lib/smartFPGA/rtl/axis_switch_2lvl.v")
 srcs.append("../lib/smartFPGA/rtl/loopback_msg_fifo.v")
 srcs.append("../lib/smartFPGA/rtl/header.v")
 srcs.append("../lib/smartFPGA/rtl/pcie_controller.v")
@@ -850,10 +850,10 @@ def bench():
           yield port1(),None
           yield port2(),None
         
-          yield delay (200)
-          yield rc.mem_write(dev_pf0_bar0+0x00040C, struct.pack('<L', 0x0100))
-          yield delay (200)
-          yield rc.mem_write(dev_pf0_bar0+0x00040C, struct.pack('<L', 0x0000))
+          # yield delay (200)
+          # yield rc.mem_write(dev_pf0_bar0+0x00040C, struct.pack('<L', 0x0100))
+          # yield delay (200)
+          # yield rc.mem_write(dev_pf0_bar0+0x00040C, struct.pack('<L', 0x0000))
 
           lengths = []
           print ("send data from LAN")

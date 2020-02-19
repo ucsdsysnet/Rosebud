@@ -28,6 +28,7 @@ SYN_FILES += lib/smartFPGA/rtl/mem_sys.v
 SYN_FILES += lib/smartFPGA/rtl/riscv_axis_wrapper.v
 SYN_FILES += lib/smartFPGA/rtl/simple_sync_sig.v
 SYN_FILES += lib/smartFPGA/rtl/axis_switch.v
+SYN_FILES += lib/smartFPGA/rtl/axis_ram_switch.v
 SYN_FILES += lib/smartFPGA/rtl/axis_switch_2lvl.v
 SYN_FILES += lib/smartFPGA/rtl/loopback_msg_fifo.v
 SYN_FILES += lib/smartFPGA/rtl/header.v

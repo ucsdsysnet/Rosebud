@@ -1198,8 +1198,9 @@ axis_switch_2lvl # (
     .M_REG_TYPE      (2),
     .CLUSTER_COUNT   (CLUSTER_COUNT),
     .STAGE_FIFO_DEPTH(STG_F_DATA_DEPTH),
-    .FRAME_FIFO(0),
-    .SEPARATE_CLOCKS(SEPARATE_CLOCKS)
+    .FRAME_FIFO      (0),
+    .SEPARATE_CLOCKS (SEPARATE_CLOCKS),
+    .USE_SIMPLE_SW   (0)
 ) data_in_sw (
     .s_clk(sys_clk),
     .s_rst(sys_rst),
@@ -1288,8 +1289,9 @@ axis_switch_2lvl # (
     .M_REG_TYPE      (2),
     .CLUSTER_COUNT   (CLUSTER_COUNT),
     .STAGE_FIFO_DEPTH(STG_F_DATA_DEPTH),
-    .FRAME_FIFO(1),
-    .SEPARATE_CLOCKS(SEPARATE_CLOCKS)
+    .FRAME_FIFO      (1),
+    .SEPARATE_CLOCKS (SEPARATE_CLOCKS),
+    .USE_SIMPLE_SW   (0)
 ) data_out_sw (
     /*
      * AXI Stream inputs
@@ -1384,8 +1386,9 @@ axis_switch_2lvl # (
     .M_REG_TYPE      (2),
     .CLUSTER_COUNT   (CLUSTER_COUNT),
     .STAGE_FIFO_DEPTH(STG_F_CTRL_DEPTH),
-    .FRAME_FIFO(0),
-    .SEPARATE_CLOCKS(SEPARATE_CLOCKS)
+    .FRAME_FIFO      (0),
+    .SEPARATE_CLOCKS (SEPARATE_CLOCKS),
+    .USE_SIMPLE_SW   (1)
 ) ctrl_in_sw
 (
     /*
@@ -1432,8 +1435,9 @@ axis_switch_2lvl # (
     .M_REG_TYPE      (2),
     .CLUSTER_COUNT   (CLUSTER_COUNT),
     .STAGE_FIFO_DEPTH(STG_F_CTRL_DEPTH),
-    .FRAME_FIFO(0),
-    .SEPARATE_CLOCKS(SEPARATE_CLOCKS)
+    .FRAME_FIFO      (0),
+    .SEPARATE_CLOCKS(SEPARATE_CLOCKS),
+    .USE_SIMPLE_SW   (1)
 ) ctrl_out_sw
 (
     /*
@@ -1480,8 +1484,9 @@ axis_switch_2lvl # (
     .M_REG_TYPE      (2),
     .CLUSTER_COUNT   (CLUSTER_COUNT),
     .STAGE_FIFO_DEPTH(STG_F_DRAM_DEPTH),
-    .FRAME_FIFO(0),
-    .SEPARATE_CLOCKS(SEPARATE_CLOCKS)
+    .FRAME_FIFO      (0),
+    .SEPARATE_CLOCKS (SEPARATE_CLOCKS),
+    .USE_SIMPLE_SW   (1)
 ) dram_ctrl_in_sw
 (
     /*
@@ -1528,8 +1533,9 @@ axis_switch_2lvl # (
     .M_REG_TYPE      (2),
     .CLUSTER_COUNT   (CLUSTER_COUNT),
     .STAGE_FIFO_DEPTH(STG_F_CTRL_DEPTH),
-    .FRAME_FIFO(0),
-    .SEPARATE_CLOCKS(SEPARATE_CLOCKS)
+    .FRAME_FIFO      (0),
+    .SEPARATE_CLOCKS (SEPARATE_CLOCKS),
+    .USE_SIMPLE_SW   (1)
 ) dram_ctrl_out_sw
 (
     /*
@@ -1632,7 +1638,8 @@ axis_switch_2lvl # (
     .M_REG_TYPE      (2),
     .CLUSTER_COUNT   (BC_MSG_CLUSTERS),
     .STAGE_FIFO_DEPTH(16),
-    .SEPARATE_CLOCKS(0)
+    .SEPARATE_CLOCKS (0),
+    .USE_SIMPLE_SW   (1)
 ) cores_to_broadcaster (
 
     /*
