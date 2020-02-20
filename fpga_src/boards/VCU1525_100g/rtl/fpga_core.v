@@ -1753,6 +1753,7 @@ generate
         wire                       slot_wr_ready;
         wire [4:0]                 recv_dram_tag;
         wire                       recv_dram_tag_valid;
+        wire [SLOT_COUNT-1:0]      active_slots;
 
         wire [CORE_MSG_WIDTH-1:0] bc_msg_out;
         wire                      bc_msg_out_valid;
@@ -1779,13 +1780,10 @@ generate
             .DRAM_PORT(DRAM_PORT),
             .DATA_S_REG_TYPE(2),
             .DATA_M_REG_TYPE(2),
-            .DRAM_M_REG_TYPE(2),
-            .SEPARATE_CLOCKS(0)
+            .DRAM_M_REG_TYPE(2)
         ) core_wrapper (
-            .sys_clk(core_clk),
-            .sys_rst(block_reset[i]),
-            .core_clk(core_clk),
-            .core_rst(block_reset[i]),
+            .clk(core_clk),
+            .rst(block_reset[i]),
 
             .core_id(core_id),
             // ---------------- DATA CHANNEL --------------- // 
@@ -1883,6 +1881,7 @@ generate
             .slot_wr_ready(slot_wr_ready),
             .recv_dram_tag(recv_dram_tag),
             .recv_dram_tag_valid(recv_dram_tag_valid),
+            .active_slots(active_slots),
 
             .bc_msg_out(bc_msg_out),
             .bc_msg_out_valid(bc_msg_out_valid),
@@ -1951,6 +1950,7 @@ generate
             .slot_wr_ready(slot_wr_ready),
             .recv_dram_tag(recv_dram_tag),
             .recv_dram_tag_valid(recv_dram_tag_valid),
+            .active_slots(active_slots),
 
             .bc_msg_out(bc_msg_out),
             .bc_msg_out_valid(bc_msg_out_valid),

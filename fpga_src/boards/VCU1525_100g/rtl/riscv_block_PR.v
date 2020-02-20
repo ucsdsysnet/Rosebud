@@ -43,9 +43,10 @@ module riscv_block_PR (
   output wire         slot_for_hdr,
   input  wire         slot_wr_ready,
  
-  // Received DRAM infor to core
+  // Received DRAM and active slots info to core
   input  wire [4:0]   recv_dram_tag,
   input  wire         recv_dram_tag_valid,
+  input  wire [7:0]   active_slots,
 
   // Broadcast messages
   input  wire [46:0]  bc_msg_in,
@@ -248,6 +249,24 @@ simple_pipe_reg # (
   .m_valid(recv_dram_tag_valid_r),
   .m_ready(1'b1)
 );
+  
+wire [SLOT_COUNT-1:0] active_slots_r;
+simple_pipe_reg # (
+  .DATA_WIDTH(SLOT_COUNT), 
+  .REG_TYPE(REG_TYPE), 
+  .REG_LENGTH(REG_LENGTH)
+) active_slots_reg (
+  .clk(sys_clk),
+  .rst(sys_rst_r || core_rst_r),
+  
+  .s_data(active_slots),
+  .s_valid(1'b1),
+  .s_ready(),
+
+  .m_data(active_slots_r),
+  .m_valid(),
+  .m_ready(1'b1)
+);
 
 wire [MSG_WIDTH-1:0]  bc_msg_in_r;
 wire                  bc_msg_in_valid_r;
@@ -347,6 +366,7 @@ riscv_block # (
     .slot_wr_ready(slot_wr_ready_n),
     .recv_dram_tag(recv_dram_tag_r),
     .recv_dram_tag_valid(recv_dram_tag_valid_r),
+    .active_slots(active_slots),
 
     .bc_msg_out(bc_msg_out_n),
     .bc_msg_out_valid(bc_msg_out_valid_n),

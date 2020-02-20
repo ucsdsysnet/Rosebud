@@ -58,9 +58,10 @@ module riscv_block # (
   output wire                     slot_for_hdr,
   input  wire                     slot_wr_ready,
  
-  // Received DRAM infor to core
+  // Received DRAM and active slot info to core
   input  wire [4:0]               recv_dram_tag,
   input  wire                     recv_dram_tag_valid,
+  input  wire [SLOT_COUNT-1:0]    active_slots,
 
   // Broadcast messages
   input  wire [MSG_WIDTH-1:0]     bc_msg_in,
@@ -144,6 +145,7 @@ riscvcore #(
   
   .recv_dram_tag_valid(recv_dram_tag_valid),    
   .recv_dram_tag(recv_dram_tag),
+  .active_slots(active_slots),
 
   .out_desc(out_desc),
   .out_desc_dram_addr(out_desc_dram_addr),

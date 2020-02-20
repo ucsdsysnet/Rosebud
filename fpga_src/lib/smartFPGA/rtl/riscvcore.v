@@ -36,6 +36,7 @@ module riscvcore #(
 
     input  [4:0]                 recv_dram_tag,
     input                        recv_dram_tag_valid,
+    input  [SLOT_COUNT-1:0]      active_slots,
 
     output [63:0]                out_desc,
     output                       out_desc_valid,
@@ -233,7 +234,6 @@ localparam MAX_SLOT_CNT     = 5'b11111;
 reg [31:0]         io_read_data;
 reg [31:0]         dram_recv_flag;
 reg [63:0]         internal_timer;
-reg [SLOT_COUNT:1] slots_in_prog;
 
 always @ (posedge clk)
     if (rst)
@@ -257,7 +257,7 @@ always @ (posedge clk)
                                                timer_interrupt, interrupt_in, 
                                                io_access_err, pmem_access_err,
                                                dmem_access_err, imem_access_err};
-            RD_ACT_SLOT_ADDR: io_read_data <= {{(32-SLOT_COUNT){1'b0}}, slots_in_prog};
+            RD_ACT_SLOT_ADDR: io_read_data <= {{(32-SLOT_COUNT){1'b0}}, active_slots};
             RD_IMEM_SIZE:     io_read_data <= IMEM_SIZE;
             RD_DMEM_SIZE:     io_read_data <= DMEM_SIZE;
             RD_PMEM_SIZE:     io_read_data <= PMEM_SIZE;
@@ -326,23 +326,6 @@ always @ (posedge clk)
   end
 
 assign dram_recv_any = | dram_recv_flag;
-
-///////////////////////////////////////////////////////////////////////////
-//////////////////////// ACTIVE SLOTS STATE/// ////////////////////////////
-///////////////////////////////////////////////////////////////////////////
-wire done_w_slot = ((out_desc[63:60] == 4'd0) ||
-                    (out_desc[63:60] == 4'd1) ||
-                    (out_desc[63:60] == 4'd2));
-
-always @ (posedge clk)
-    if (init_rst)
-        slots_in_prog <= {SLOT_COUNT{1'b0}};
-    else if (in_desc_valid && in_desc_taken)
-        slots_in_prog[in_desc[16+:SLOT_WIDTH]]  <= 1'b1;
-    else if (done_w_slot && out_desc_valid && out_desc_ready)
-        slots_in_prog[out_desc[16+:SLOT_WIDTH]] <= 1'b0;
-
-// TODO: Add error catching
 
 ///////////////////////////////////////////////////////////////////////////
 /////////////////////// ADDRESS ERROR CATCHING ////////////////////////////
