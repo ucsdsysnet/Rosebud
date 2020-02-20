@@ -1,14 +1,14 @@
 module riscvcore #(
-  parameter CORE_ID_WIDTH   = 4,
-  parameter SLOT_COUNT      = 8,
-  parameter SLOT_WIDTH      = $clog2(SLOT_COUNT+1),
+  parameter CORE_ID_WIDTH  = 4,
+  parameter SLOT_COUNT     = 8,
+  parameter SLOT_WIDTH     = $clog2(SLOT_COUNT+1),
 
-  parameter IMEM_SIZE       = 65536,
-  parameter DMEM_SIZE       = 32768,
-  parameter PMEM_SIZE       = 1048576,
-  parameter PMEM_SEG_SIZE   = 131072,
-  parameter PMEM_SEG_COUNT  = 8,
-  parameter BC_REGION_SIZE  = 4048
+  parameter IMEM_SIZE      = 65536,
+  parameter DMEM_SIZE      = 32768,
+  parameter PMEM_SIZE      = 1048576,
+  parameter PMEM_SEG_SIZE  = 131072,
+  parameter PMEM_SEG_COUNT = 8,
+  parameter BC_REGION_SIZE = 4048
 )(
     input                        clk,
     input                        rst,
@@ -125,7 +125,7 @@ assign mem_addr       = dmem_addr;
 ///////////////////////////////////////////////////////////////////////////
 
 // localparam RESERVED      = 5'b00000; NULL pointer
-localparam SEND_DESC_TYPE   = 5'b00001; 
+// localparam RESERVED      = 5'b00001; 
 localparam SEND_DESC_ADDR_L = 5'b00010; 
 localparam SEND_DESC_ADDR_H = 5'b00011; 
 localparam WR_DRAM_ADDR_L   = 5'b00100; 
@@ -134,7 +134,7 @@ localparam SLOT_LUT_ADDR    = 5'b00110;
 localparam TIMER_STP_ADDR   = 5'b00111;
 localparam DRAM_FLAG_ADDR   = 5'b01000;
 localparam DEBUG_REG_ADDR   = 5'b01001;
-localparam SEND_DESC_STRB   = 5'b01010;
+localparam SEND_DESC_TYPE   = 5'b01010;
 localparam RD_DESC_STRB     = 5'b01011;
 localparam DRAM_FLAG_RST    = 5'b01100;
 localparam SLOT_LUT_STRB    = 5'b01101;
@@ -165,7 +165,7 @@ always @ (posedge clk) begin
                     DEBUG_REG_ADDR:   debug_reg[i*8 +: 8]           <= mem_wr_data[i*8 +: 8];
                 endcase
 
-        if (dmem_addr[6:2]==SEND_DESC_TYPE)
+        if (dmem_addr[6:2]==SEND_DESC_TYPE) // it's both type and strb
             out_desc_type_r <= mem_wr_data[3:0];
         if (dmem_addr[6:2]==MASK_WR)
             mask_r          <= mem_wr_data[7:0];
@@ -180,7 +180,7 @@ end
 // Remaining addresses
 wire timer_step_wen = io_write && (dmem_addr[6:2]==TIMER_STP_ADDR);
 wire dram_flags_wen = io_write && (dmem_addr[6:2]==DRAM_FLAG_ADDR);
-wire send_out_desc  = io_write && (dmem_addr[6:2]==SEND_DESC_STRB) && mem_wr_data[0];
+wire send_out_desc  = io_write && (dmem_addr[6:2]==SEND_DESC_TYPE);
 wire dram_flag_rst  = io_write && (dmem_addr[6:2]==DRAM_FLAG_RST);
 wire interrupt_ack  = io_write && (dmem_addr[6:2]==INTERRUPT_ACK);
 
@@ -228,7 +228,7 @@ localparam RD_PMEM_SIZE     = 5'b11011;
 localparam RD_PMEM_SEG_SIZE = 5'b11100;
 localparam RD_PMEM_SEG_CNT  = 5'b11101;
 localparam RD_BC_SIZE       = 5'b11110;
-// localparam RESERVED      = 5'b11111;
+localparam MAX_SLOT_CNT     = 5'b11111;
 
 reg [31:0]         io_read_data;
 reg [31:0]         dram_recv_flag;
@@ -264,6 +264,7 @@ always @ (posedge clk)
             RD_PMEM_SEG_SIZE: io_read_data <= PMEM_SEG_SIZE;
             RD_PMEM_SEG_CNT:  io_read_data <= PMEM_SEG_COUNT;
             RD_BC_SIZE:       io_read_data <= BC_REGION_SIZE;
+            MAX_SLOT_CNT:     io_read_data <= SLOT_COUNT;
             // default is to keep the value
         endcase 
 
