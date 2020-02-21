@@ -1,7 +1,7 @@
 #include "core.h"
 
 // maximum number of slots (number of context objects)
-#define MAX_SLOT_COUNT 8
+#define MAX_CTX_COUNT 8
 
 // packet start offset
 // DWORD align Ethernet payload
@@ -24,7 +24,7 @@ struct slot_context {
 	struct regex_accel_regs *regex_accel;
 };
 
-struct slot_context context[MAX_SLOT_COUNT];
+struct slot_context context[MAX_CTX_COUNT];
 
 unsigned int slot_count;
 unsigned int slot_size;
@@ -71,8 +71,8 @@ int main(void)
 	header_slot_base = DMEM_BASE + (DMEM_SIZE >> 1);
 	header_slot_size = 128;
 
-	if (slot_count > MAX_SLOT_COUNT)
-		slot_count = MAX_SLOT_COUNT;
+	if (slot_count > MAX_CTX_COUNT)
+		slot_count = MAX_CTX_COUNT;
 
 	// Do this at the beginning, so scheduler can fill the slots while
 	// initializing other things.
