@@ -1613,6 +1613,10 @@ generate
         
         wire [CORE_MSG_WIDTH-1:0] bc_msg_in;
         wire                      bc_msg_in_valid;
+  
+        wire [7:0]                core_errors;
+        wire [7:0]                mem_fifo_fulls;
+        wire                      ready_to_evict;
 
         // (* keep_hierarchy = "soft" *)
         riscv_axis_wrapper #(
@@ -1742,7 +1746,11 @@ generate
             .bc_msg_out_ready(bc_msg_out_ready),
             .bc_msg_in(bc_msg_in),
             .bc_msg_in_user(),
-            .bc_msg_in_valid(bc_msg_in_valid)
+            .bc_msg_in_valid(bc_msg_in_valid),
+    
+            .core_errors(core_errors),
+            .mem_fifo_fulls(mem_fifo_fulls),
+            .ready_to_evict(ready_to_evict)
         );
 
     `ifndef PR_ENABLE
@@ -1812,7 +1820,11 @@ generate
             .bc_msg_out_valid(bc_msg_out_valid),
             .bc_msg_out_ready(bc_msg_out_ready),
             .bc_msg_in(bc_msg_in),
-            .bc_msg_in_valid(bc_msg_in_valid)
+            .bc_msg_in_valid(bc_msg_in_valid),
+
+            .core_errors(core_errors),
+            .mem_fifo_fulls(mem_fifo_fulls),
+            .ready_to_evict(ready_to_evict)
         );
 
         assign dram_m_axis_tuser[CORE_WIDTH*i +: CORE_WIDTH]               = i;

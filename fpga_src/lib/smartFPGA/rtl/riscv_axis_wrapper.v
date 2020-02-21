@@ -154,7 +154,12 @@ module riscv_axis_wrapper # (
     // Messages to the core
     output reg  [MSG_WIDTH-1:0]     bc_msg_in,
     output reg  [CORE_ID_WIDTH-1:0] bc_msg_in_user,
-    output reg                      bc_msg_in_valid
+    output reg                      bc_msg_in_valid,
+
+    // Incoming status
+    input  wire [7:0]               core_errors,
+    input  wire [7:0]               mem_fifo_fulls,
+    input  wire                     ready_to_evict
 );
     
 /////////////////////////////////////////////////////////////////////

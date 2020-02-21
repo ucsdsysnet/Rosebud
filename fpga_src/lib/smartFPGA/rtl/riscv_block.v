@@ -71,19 +71,24 @@ module riscv_block # (
   input  wire                     bc_msg_in_valid,
   output wire [MSG_WIDTH-1:0]     bc_msg_out,
   output wire                     bc_msg_out_valid,
-  input  wire                     bc_msg_out_ready
+  input  wire                     bc_msg_out_ready,
+
+  // Status
+  output wire [7:0]               core_errors,
+  output wire [7:0]               mem_fifo_fulls,
+  output wire                     ready_to_evict
 );
 
 // Internal paramaters
-parameter LINE_ADDR_BITS       = $clog2(STRB_WIDTH);
+parameter LINE_ADDR_BITS  = $clog2(STRB_WIDTH);
 parameter PMEM_ADDR_WIDTH = $clog2(PMEM_SIZE);
 parameter DMEM_ADDR_WIDTH = $clog2(DMEM_SIZE);
-parameter IMEM_ADDR_WIDTH      = $clog2(IMEM_SIZE);
+parameter IMEM_ADDR_WIDTH = $clog2(IMEM_SIZE);
 
-parameter ACC_ADDR_WIDTH       = $clog2(SLOW_M_B_LINES);
+parameter ACC_ADDR_WIDTH  = $clog2(SLOW_M_B_LINES);
 parameter PMEM_SEL_BITS   = PMEM_ADDR_WIDTH-$clog2(STRB_WIDTH)
-                                 -1-$clog2(SLOW_M_B_LINES);
-parameter ACC_MEM_BLOCKS       = 2**PMEM_SEL_BITS;
+                            -1-$clog2(SLOW_M_B_LINES);
+parameter ACC_MEM_BLOCKS  = 2**PMEM_SEL_BITS;
 
 ///////////////////////////////////////////////////////////////////////////
 //////////////////////////// RISCV CORE ///////////////////////////////////
@@ -170,7 +175,9 @@ riscvcore #(
   .evict_int(evict_int),
   .evict_int_ack(evict_int_ack),
   .poke_int(poke_int),
-  .poke_int_ack(poke_int_ack)
+  .poke_int_ack(poke_int_ack),
+  .core_errors(core_errors),
+  .ready_to_evict(ready_to_evict)
 );
 
 // Broadcast messaging
@@ -294,7 +301,9 @@ mem_sys # (
   .acc_wen_b2(acc_wen_b2),
   .acc_addr_b2(acc_addr_b2),
   .acc_wr_data_b2(acc_wr_data_b2),
-  .acc_rd_data_b2(acc_rd_data_b2)
+  .acc_rd_data_b2(acc_rd_data_b2),
+
+  .mem_fifo_fulls(mem_fifo_fulls)
 );
   
 endmodule

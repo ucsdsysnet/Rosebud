@@ -55,7 +55,12 @@ module riscv_block_PR (
   input  wire         bc_msg_in_valid,
   output wire [46:0]  bc_msg_out,
   output wire         bc_msg_out_valid,
-  input  wire         bc_msg_out_ready
+  input  wire         bc_msg_out_ready,
+  
+  // Status
+  output reg  [7:0]   core_errors,
+  output reg  [7:0]   mem_fifo_fulls,
+  output reg          ready_to_evict
 );
 
 // Parameters that should match the wrapper and are used in ports
@@ -82,18 +87,28 @@ parameter REG_LENGTH     = 2;
 (* KEEP = "TRUE" *) reg rst_r;
 (* KEEP = "TRUE" *) reg core_rst_r;
 
-reg  [3:0] core_id_r;
-reg poke_int_r, evict_int_r;
-wire poke_int_ack_n, evict_int_ack_n;
+reg [3:0]            core_id_r;
+reg [SLOT_COUNT-1:0] active_slots_r;
+reg                  poke_int_r, evict_int_r;
+
+wire [7:0] core_errors_n, mem_fifo_fulls_n;
+wire       poke_int_ack_n, evict_int_ack_n;
+wire       ready_to_evict_n;
 
 always @ (posedge clk) begin
   rst_r          <= rst;
-  core_rst_r         <= core_rst;
-  core_id_r          <= core_id;
-  poke_int_r         <= poke_int;
-  evict_int_r        <= evict_int;
-  poke_int_ack       <= poke_int_ack_n;
-  evict_int_ack      <= evict_int_ack_n;
+  core_rst_r     <= core_rst;
+
+  core_id_r      <= core_id;
+  poke_int_r     <= poke_int;
+  evict_int_r    <= evict_int;
+  active_slots_r <= active_slots;
+
+  poke_int_ack   <= poke_int_ack_n;
+  evict_int_ack  <= evict_int_ack_n;
+  core_errors    <= core_errors_n;
+  mem_fifo_fulls <= mem_fifo_fulls_n;
+  ready_to_evict <= ready_to_evict_n;
 end
 
 wire                  dma_cmd_wr_en_r;
@@ -124,10 +139,10 @@ simple_pipe_reg # (
   .m_ready(dma_cmd_wr_ready_r)
 );
 
-wire                  dma_cmd_rd_en_r;
-wire [25:0]           dma_cmd_rd_addr_r;
-wire                  dma_cmd_rd_last_r;
-wire                  dma_cmd_rd_ready_r;
+wire        dma_cmd_rd_en_r;
+wire [25:0] dma_cmd_rd_addr_r;
+wire        dma_cmd_rd_last_r;
+wire        dma_cmd_rd_ready_r;
 
 simple_pipe_reg # (
   .DATA_WIDTH(26+1),
@@ -253,24 +268,6 @@ simple_pipe_reg # (
   .m_ready(1'b1)
 );
 
-wire [SLOT_COUNT-1:0] active_slots_r;
-simple_pipe_reg # (
-  .DATA_WIDTH(SLOT_COUNT), 
-  .REG_TYPE(REG_TYPE), 
-  .REG_LENGTH(REG_LENGTH)
-) active_slots_reg (
-  .clk(clk),
-  .rst(rst_r || core_rst_r),
-  
-  .s_data(active_slots),
-  .s_valid(1'b1),
-  .s_ready(),
-
-  .m_data(active_slots_r),
-  .m_valid(),
-  .m_ready(1'b1)
-);
-
 wire [MSG_WIDTH-1:0]  bc_msg_in_r;
 wire                  bc_msg_in_valid_r;
 
@@ -371,13 +368,17 @@ riscv_block # (
     .slot_wr_ready(slot_wr_ready_n),
     .recv_dram_tag(recv_dram_tag_r),
     .recv_dram_tag_valid(recv_dram_tag_valid_r),
-    .active_slots(active_slots),
+    .active_slots(active_slots_r),
 
     .bc_msg_out(bc_msg_out_n),
     .bc_msg_out_valid(bc_msg_out_valid_n),
     .bc_msg_out_ready(bc_msg_out_ready_n),
     .bc_msg_in(bc_msg_in_r),
-    .bc_msg_in_valid(bc_msg_in_valid_r)
+    .bc_msg_in_valid(bc_msg_in_valid_r),
+
+    .core_errors(core_errors_n),
+    .mem_fifo_fulls(mem_fifo_fulls_n),
+    .ready_to_evict(ready_to_evict_n)
 );
 
 endmodule
