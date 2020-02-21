@@ -246,7 +246,7 @@ assign core_status_ready = 1'b1;
 ///////////////////// GENERATE WRAPPER STATUS ///////////////////////
 /////////////////////////////////////////////////////////////////////
 
-wire [SLOT_COUNT-1:0] active_slots;
+wire [31:0] slots_status;
 wire [7:0]  max_slot_count = SLOT_COUNT;
 wire [15:0] bc_region_size = BC_REGION_SIZE;
 
@@ -257,7 +257,7 @@ always @ (posedge clk) begin
     wrapper_status_addr  <= 2'd0;
     wrapper_status_valid <= 1'b1;
   end else begin
-    wrapper_status_data  <= active_slots;
+    wrapper_status_data  <= slots_status;
     wrapper_status_addr  <= 2'd1;
     wrapper_status_valid <= 1'b1;
   end
@@ -585,6 +585,8 @@ wire [63:0] recv_desc = {6'd0,recv_desc_addr,
 wire recv_from_dram = recv_desc_valid && (recv_desc_tuser==dram_port);
 wire recv_tag_zero  = recv_desc_valid && (recv_desc_tdest=={TAG_WIDTH{1'b0}});
 
+wire in_desc_valid_n;
+
 simple_sync_fifo # (
   .DEPTH(RECV_DESC_DEPTH),
   .DATA_WIDTH(64)
@@ -596,7 +598,7 @@ simple_sync_fifo # (
   .din(recv_desc),
   .din_ready(recv_desc_fifo_ready),
 
-  .dout_valid(in_desc_valid),
+  .dout_valid(in_desc_valid_n),
   .dout(in_desc),
   .dout_ready(in_desc_taken)
 );
@@ -632,6 +634,8 @@ wire core_ctrl_wr = ((out_desc_type == 4'd1) ||
 wire core_dram_wr =  (out_desc_type == 4'd4);
 wire core_dram_rd =  (out_desc_type == 4'd5);
 
+reg out_desc_err; // Disables output data/ctrl desc fifos until core reset
+
 // A desc FIFO for send data from core
 wire core_data_wr_ready;
 wire core_data_wr_valid_f, core_data_wr_ready_f;
@@ -642,7 +646,7 @@ simple_sync_fifo # (
   .DATA_WIDTH(64)
 ) send_data_fifo (
   .clk(clk),
-  .rst(rst || core_reset_r),
+  .rst(rst || core_reset_r || out_desc_err),
 
   .din_valid(out_desc_valid && core_data_wr),
   .din(out_desc),
@@ -664,7 +668,7 @@ simple_sync_fifo # (
   .DATA_WIDTH(64)
 ) send_ctrl_fifo (
   .clk(clk),
-  .rst(rst || core_reset_r),
+  .rst(rst || core_reset_r || out_desc_err),
 
   .din_valid(out_desc_valid && core_ctrl_wr),
   .din(out_desc),
@@ -1043,31 +1047,84 @@ simple_sync_fifo # (
 wire done_w_slot = ((out_desc_type == 4'd0) ||
                     (out_desc_type == 4'd1) ||
                     (out_desc_type == 4'd2)) &&
-                    out_desc_valid && out_desc_ready;
+                    out_desc_valid ;
 
 reg [SLOT_COUNT:1] slots_in_prog;
-always @ (posedge clk)
-  if (rst)
-      slots_in_prog <= {SLOT_COUNT{1'b0}};
-  else if (in_desc_valid && in_desc_taken)
-      slots_in_prog[in_desc[16+:SLOT_WIDTH]]  <= 1'b1;
-  else if (done_w_slot)
-      slots_in_prog[out_desc[16+:SLOT_WIDTH]] <= 1'b0;
+reg [SLOT_COUNT:1] slots_to_send;
+reg [SLOT_COUNT:1] override_in_slot_err;
+reg [SLOT_COUNT:1] override_out_slot_err;
+reg [SLOT_COUNT:1] invalid_out_slot_err;
 
-assign active_slots = slots_in_prog;
+always @ (posedge clk) begin  
+  if (in_desc_valid_n && in_desc_taken)
+    slots_in_prog[in_desc[16+:SLOT_WIDTH]]  <= 1'b1;
+  if (done_w_slot && out_desc_ready)
+    slots_in_prog[out_desc[16+:SLOT_WIDTH]] <= 1'b0;
+  
+  if (pkt_sent_valid_f && pkt_sent_ready_f)
+    slots_to_send[pkt_sent_desc_f[16+:SLOT_WIDTH]] <= 1'b0;
+  if (done_w_slot && out_desc_ready)
+    slots_to_send[out_desc[16+:SLOT_WIDTH]] <= 1'b1;
+  
+  if (rst || core_reset) begin
+    slots_in_prog <= {SLOT_COUNT{1'b0}};
+    slots_to_send <= {SLOT_COUNT{1'b0}};
+  end 
+end
 
 /////////////////////////////////////////////////////////////////////
 ///////////////////////// ERROR CATCHING ////////////////////////////
 /////////////////////////////////////////////////////////////////////
 
-wire invalid_out_desc = (out_desc_type>4'd5) && out_desc_valid;
-reg invalid_out_desc_r;
+reg in_desc_err; // Deasserts in_desc_valid until core_reset
+
+always @ (posedge clk) begin
+  if (in_desc_valid_n && slots_in_prog[in_desc[16+:SLOT_WIDTH]]) begin
+    override_in_slot_err [in_desc[16+:SLOT_WIDTH]]  <= 1'b1; 
+    in_desc_err                                     <= 1'b1;
+  end
+
+  if (done_w_slot && !slots_in_prog[out_desc[16+:SLOT_WIDTH]]) begin
+    invalid_out_slot_err [out_desc[16+:SLOT_WIDTH]] <= 1'b1; 
+    out_desc_err                                    <= 1'b1;
+  end 
+
+  if (done_w_slot && slots_to_send[out_desc[16+:SLOT_WIDTH]]) begin
+    override_out_slot_err[out_desc[16+:SLOT_WIDTH]] <= 1'b1; 
+    out_desc_err                                    <= 1'b1;
+  end
+
+  if (rst || core_reset) begin
+    override_in_slot_err  <= {SLOT_COUNT{1'b0}};
+    override_out_slot_err <= {SLOT_COUNT{1'b0}};
+    invalid_out_slot_err  <= {SLOT_COUNT{1'b0}};
+    in_desc_err           <= 1'b0;
+    out_desc_err          <= 1'b0;
+  end
+end
+
+assign in_desc_valid = in_desc_valid_n && !in_desc_err;
+
+assign      slots_status    = {{(16-SLOT_COUNT){1'b0}}, slots_to_send, 
+                               {(16-SLOT_COUNT){1'b0}}, slots_in_prog}; 
+wire [31:0] core_slot_err   = {{(16-SLOT_COUNT){1'b0}}, override_out_slot_err, 
+                               {(16-SLOT_COUNT){1'b0}}, invalid_out_slot_err}; 
+
+reg invalid_out_desc;
 always @ (posedge clk)
   if (rst || core_reset)
-    invalid_out_desc_r <= 1'b0;
-  else
-    invalid_out_desc_r <= invalid_out_desc_r || invalid_out_desc;
+    invalid_out_desc <= 1'b0;
+  else if ((out_desc_type>4'd5) && out_desc_valid)
+    invalid_out_desc <= 1'b1; 
 
-// TODO: Add slot error catching
+wire [31:0] wrapper_error = {13'd0, in_desc_err, out_desc_err, invalid_out_desc, 
+												     {(16-SLOT_COUNT){1'b0}}, override_in_slot_err};
+
+wire [31:0] fifo_fulls = 
+        {13'd0, !recv_desc_fifo_ready, !ctrl_s_axis_tready, !dram_req_ready,
+         10'd0, !core_data_wr_ready,   !core_ctrl_wr_ready, !core_dram_wr_ready,
+                !core_dram_rd_ready,   !pkt_sent_ready,     !bc_msg_out_ready};
+
+// wrapper_fifo_fulls, wrapper_errors, slots_status, core_slot_err, core_stat_reg
 
 endmodule
