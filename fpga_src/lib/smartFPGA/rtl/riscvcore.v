@@ -1,20 +1,15 @@
 module riscvcore #(
-  parameter CORE_ID_WIDTH  = 4,
-  parameter SLOT_COUNT     = 8,
-  parameter SLOT_WIDTH     = $clog2(SLOT_COUNT+1),
-
   parameter IMEM_SIZE      = 65536,
   parameter DMEM_SIZE      = 32768,
   parameter PMEM_SIZE      = 1048576,
   parameter PMEM_SEG_SIZE  = 131072,
-  parameter PMEM_SEG_COUNT = 8,
-  parameter BC_REGION_SIZE = 4048
+  parameter PMEM_SEG_COUNT = 8
 )(
     input                        clk,
     input                        rst,
     input                        init_rst,
-    input  [CORE_ID_WIDTH-1:0]   core_id,
 
+    // Data memory interface
     output                       dmem_en,
     output                       pmem_en,
     output                       exio_en,
@@ -25,41 +20,51 @@ module riscvcore #(
     input  [31:0]                mem_rd_data,
     input                        mem_rd_valid,
 
+    // Instruction memory interface
     output                       imem_ren,
     output [24:0]                imem_addr,
     input  [31:0]                imem_rd_data,
     input                        imem_rd_valid,
 
+    // Packet descriptor input and output
     input  [63:0]                in_desc,
     input                        in_desc_valid,
     output                       in_desc_taken,
-
-    input  [4:0]                 recv_dram_tag,
-    input                        recv_dram_tag_valid,
-    input  [SLOT_COUNT-1:0]      active_slots,
 
     output [63:0]                out_desc,
     output                       out_desc_valid,
     output [63:0]                out_desc_dram_addr,
     input                        out_desc_ready,
 
-    output [SLOT_WIDTH-1:0]      slot_wr_ptr,
-    output [24:0]                slot_wr_addr,
-    output                       slot_wr_valid,
-    output                       slot_for_hdr,
-    input                        slot_wr_ready,
-
+    // Status and debug input
+    input  [31:0]                active_slots,
+    input  [15:0]                bc_region_size,
+    input  [7:0]                 core_id,
+    input  [7:0]                 max_slot_count,
+    input  [63:0]                debug_in,
     input                        core_msg_ready,
+
+    // slot addr write, debug and status output
+    output [31:0]                slot_wr_data,
+    output                       slot_wr_valid,
+    input                        slot_wr_ready,
+    output [63:0]                debug_out,
+    output                       debug_out_l_valid,
+    output                       debug_out_h_valid,
     output [7:0]                 core_errors,
     output                       ready_to_evict,
 
+    // External IO error
     input                        ext_io_err,
     output                       ext_io_err_ack,
 
+    // Interrupts
     input                        evict_int,
     output                       evict_int_ack,
     input                        poke_int,
-    output                       poke_int_ack
+    output                       poke_int_ack,
+    input  [4:0]                 recv_dram_tag,
+    input                        recv_dram_tag_valid
 );
 
 // Core to memory signals
@@ -114,16 +119,18 @@ assign dmem_wr_strb = ((!mem_wen) || (!dmem_v)) ? 5'h0 :
                        5'h0f;
 
 // Memory address decoding
-wire   internal_io = dmem_addr[24:22]==3'b000;
-wire   external_io = dmem_addr[24:22]==3'b001;
-wire   data_mem    = dmem_addr[24:23]==2'b01;
-wire   packet_mem  = dmem_addr[24]   ==1'b1;
+wire internal_io = dmem_addr[24:22]==3'b000;
+wire external_io = dmem_addr[24:22]==3'b001;
+wire data_mem    = dmem_addr[24:23]==2'b01;
+wire packet_mem  = dmem_addr[24]   ==1'b1;
 
-wire   io_read     = internal_io && dmem_v && (!mem_wen);
-wire   io_write    = internal_io && dmem_v && mem_wen;
-assign dmem_en     = dmem_v && data_mem;
-assign pmem_en     = dmem_v && packet_mem;
-assign exio_en     = dmem_v && external_io;
+assign dmem_en   = dmem_v && data_mem;
+assign pmem_en   = dmem_v && packet_mem;
+assign exio_en   = dmem_v && external_io;
+
+wire [5:0] io_addr  = dmem_addr[7:2];
+wire       io_read  = internal_io && dmem_v && (!mem_wen);
+wire       io_write = internal_io && dmem_v && mem_wen;
 
 // selecting input/output data
 assign imem_addr      = imem_addr_n[24:0];
@@ -135,72 +142,85 @@ assign mem_addr       = dmem_addr;
 ///////////////////////////// IO WRITES ///////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////
 
-// localparam RESERVED      = 5'b00000; NULL pointer
-// localparam RESERVED      = 5'b00001;
-localparam SEND_DESC_ADDR_L = 5'b00010;
-localparam SEND_DESC_ADDR_H = 5'b00011;
-localparam WR_DRAM_ADDR_L   = 5'b00100;
-localparam WR_DRAM_ADDR_H   = 5'b00101;
-localparam SLOT_LUT_ADDR    = 5'b00110;
-localparam TIMER_STP_ADDR   = 5'b00111;
-localparam DRAM_FLAG_ADDR   = 5'b01000;
-localparam DEBUG_REG_ADDR   = 5'b01001;
-localparam SEND_DESC_TYPE   = 5'b01010;
-localparam RD_DESC_STRB     = 5'b01011;
-localparam DRAM_FLAG_RST    = 5'b01100;
-localparam SLOT_LUT_STRB    = 5'b01101;
-localparam MASK_WR          = 5'b01110;
-localparam INTERRUPT_ACK    = 5'b01111;
+// localparam RESERVED      = 6'b000000; NULL pointer
+// localparam RESERVED      = 6'b000001;
+localparam SEND_DESC_ADDR_L = 6'b000010;
+localparam SEND_DESC_ADDR_H = 6'b000011;
+localparam WR_DRAM_ADDR_L   = 6'b000100;
+localparam WR_DRAM_ADDR_H   = 6'b000101;
+localparam SLOT_LUT_ADDR    = 6'b000110;
+localparam TIMER_STP_ADDR   = 6'b000111;
+localparam DRAM_FLAG_ADDR   = 6'b001000;
+localparam READY_TO_EVICT   = 6'b001001;
+localparam SEND_DESC_TYPE   = 6'b001010;
+localparam RD_DESC_STRB     = 6'b001011;
+localparam DRAM_FLAG_RST    = 6'b001100;
+localparam SLOT_LUT_STRB    = 6'b001101;
+localparam MASK_WR          = 6'b001110;
+localparam INTERRUPT_ACK    = 6'b001111;
+localparam DEBUG_REG_ADDR_L = 6'b010000;
+localparam DEBUG_REG_ADDR_H = 6'b010001;
 
 reg [63:0] dram_wr_addr_r;
 reg [31:0] timer_step_r;
-reg [31:0] debug_reg;
+reg [63:0] debug_register;
 
 reg [63:0] out_desc_data_r;
 reg [3:0]  out_desc_type_r;
 reg [31:0] slot_info_data_r;
-reg out_desc_v_r;
+reg        ready_to_evict_r;
 
 integer i;
 always @ (posedge clk) begin
     if (io_write) begin
         for (i = 0; i < 4; i = i + 1)
             if (dmem_wr_strb[i] == 1'b1)
-                case (dmem_addr[6:2])
+                case (io_addr)
                     SEND_DESC_ADDR_L: out_desc_data_r[i*8 +: 8]    <= mem_wr_data[i*8 +: 8];
                     SEND_DESC_ADDR_H: out_desc_data_r[32+i*8 +: 8] <= mem_wr_data[i*8 +: 8];
-                    WR_DRAM_ADDR_L:   dram_wr_addr_r[i*8 +: 8]      <= mem_wr_data[i*8 +: 8];
-                    WR_DRAM_ADDR_H:   dram_wr_addr_r[32+i*8 +: 8]   <= mem_wr_data[i*8 +: 8];
-                    SLOT_LUT_ADDR:    slot_info_data_r[i*8 +: 8]    <= mem_wr_data[i*8 +: 8];
-                    TIMER_STP_ADDR:   timer_step_r[i*8 +: 8]        <= mem_wr_data[i*8 +: 8];
-                    DEBUG_REG_ADDR:   debug_reg[i*8 +: 8]           <= mem_wr_data[i*8 +: 8];
+                    WR_DRAM_ADDR_L:   dram_wr_addr_r[i*8 +: 8]     <= mem_wr_data[i*8 +: 8];
+                    WR_DRAM_ADDR_H:   dram_wr_addr_r[32+i*8 +: 8]  <= mem_wr_data[i*8 +: 8];
+                    SLOT_LUT_ADDR:    slot_info_data_r[i*8 +: 8]   <= mem_wr_data[i*8 +: 8];
+                    TIMER_STP_ADDR:   timer_step_r[i*8 +: 8]       <= mem_wr_data[i*8 +: 8];
+                    DEBUG_REG_ADDR_L: debug_register[i*8 +: 8]     <= mem_wr_data[i*8 +: 8];
+                    DEBUG_REG_ADDR_H: debug_register[32+i*8 +: 8]  <= mem_wr_data[i*8 +: 8];
                 endcase
 
-        if (dmem_addr[6:2]==SEND_DESC_TYPE) // it's both type and strb
+        if (io_addr==SEND_DESC_TYPE) // it's both type and strb
             out_desc_type_r <= mem_wr_data[3:0];
-        if (dmem_addr[6:2]==MASK_WR)
+        if (io_addr==MASK_WR)
             mask_r          <= mem_wr_data[7:0];
+        if (io_addr==READY_TO_EVICT)
+            ready_to_evict_r <= mem_wr_data[0];
+
     end
 
     if (rst) begin
-      timer_step_r <= 32'h00000001;
-      mask_r       <= 8'hC0;
+      timer_step_r     <= 32'h00000001;
+      mask_r           <= 8'hC0;
+      ready_to_evict_r <= 1'b0; 
     end
 end
 
 // Remaining addresses
-wire timer_step_wen = io_write && (dmem_addr[6:2]==TIMER_STP_ADDR);
-wire dram_flags_wen = io_write && (dmem_addr[6:2]==DRAM_FLAG_ADDR);
-wire send_out_desc  = io_write && (dmem_addr[6:2]==SEND_DESC_TYPE);
-wire dram_flag_rst  = io_write && (dmem_addr[6:2]==DRAM_FLAG_RST);
-wire interrupt_ack  = io_write && (dmem_addr[6:2]==INTERRUPT_ACK);
+wire timer_step_wen = io_write && (io_addr==TIMER_STP_ADDR);
+wire dram_flags_wen = io_write && (io_addr==DRAM_FLAG_ADDR);
+wire send_out_desc  = io_write && (io_addr==SEND_DESC_TYPE);
+wire dram_flag_rst  = io_write && (io_addr==DRAM_FLAG_RST);
+wire interrupt_ack  = io_write && (io_addr==INTERRUPT_ACK);
+wire debug_reg_wr_l = io_write && (io_addr==DEBUG_REG_ADDR_L);
+wire debug_reg_wr_h = io_write && (io_addr==DEBUG_REG_ADDR_H);
 
-wire temp = io_write && (dmem_addr[6:2]==SEND_DESC_ADDR_H);
+reg out_desc_v_r, debug_reg_wr_l_r, debug_reg_wr_h_r;
 
 always @ (posedge clk) begin
-    if (rst)
-            out_desc_v_r <= 1'b0;
-    else begin
+    if (rst) begin
+            out_desc_v_r     <= 1'b0;
+            debug_reg_wr_l_r <= 1'b0;
+            debug_reg_wr_h_r <= 1'b0;
+    end else begin
+        debug_reg_wr_l_r <= debug_reg_wr_l;
+        debug_reg_wr_h_r <= debug_reg_wr_h;
         if (send_out_desc)
             out_desc_v_r <= 1'b1;
         if (out_desc_v_r && out_desc_ready)
@@ -208,42 +228,46 @@ always @ (posedge clk) begin
     end
 end
 
-// Slot header goes to data mem and packet to packet mem,
-// So MSB of slot_wr_addr is determined by being header or not.
-assign slot_for_hdr    = slot_info_data_r[31];
-assign slot_wr_valid   = io_write && (dmem_addr[6:2]==SLOT_LUT_STRB) && mem_wr_data[0];
-assign slot_wr_addr    = {~slot_for_hdr,slot_info_data_r[23:0]};
-assign slot_wr_ptr     = slot_info_data_r[24+:SLOT_WIDTH];
+assign slot_wr_valid      = io_write && (io_addr==SLOT_LUT_STRB) && mem_wr_data[0];
+assign slot_wr_data       = slot_info_data_r;
+
+assign debug_out          = debug_register;
+assign debug_out_l_valid  = debug_reg_wr_l_r;
+assign debug_out_h_valid  = debug_reg_wr_h_r;
 
 assign out_desc           = {out_desc_type_r, out_desc_data_r[59:0]};
 assign out_desc_valid     = out_desc_v_r;
 assign out_desc_dram_addr = dram_wr_addr_r;
-assign in_desc_taken      = io_write && (dmem_addr[6:2]==RD_DESC_STRB) && mem_wr_data[0];
+assign in_desc_taken      = io_write && (io_addr==RD_DESC_STRB) && mem_wr_data[0];
+
+assign ready_to_evict     = ready_to_evict_r;
 
 ///////////////////////////////////////////////////////////////////////////
 ////////////////////////////// IO READS ///////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////
 
-localparam RD_DESC_ADDR_L   = 5'b10000;
-localparam RD_DESC_ADDR_H   = 5'b10001;
-localparam RD_D_FLAGS_ADDR  = 5'b10010;
-localparam RD_STAT_ADDR     = 5'b10011;
-localparam RD_ID_ADDR       = 5'b10100;
-localparam RD_TIMER_L_ADDR  = 5'b10101;
-localparam RD_TIMER_H_ADDR  = 5'b10110;
-localparam RD_INT_F_ADDR    = 5'b10111;
-localparam RD_ACT_SLOT_ADDR = 5'b11000;
-localparam RD_IMEM_SIZE     = 5'b11001;
-localparam RD_DMEM_SIZE     = 5'b11010;
-localparam RD_PMEM_SIZE     = 5'b11011;
-localparam RD_PMEM_SEG_SIZE = 5'b11100;
-localparam RD_PMEM_SEG_CNT  = 5'b11101;
-localparam RD_BC_SIZE       = 5'b11110;
-localparam MAX_SLOT_CNT     = 5'b11111;
+localparam RD_DESC_ADDR_L   = 6'b100000;
+localparam RD_DESC_ADDR_H   = 6'b100001;
+localparam RD_D_FLAGS_ADDR  = 6'b100010;
+localparam RD_STAT_ADDR     = 6'b100011;
+localparam RD_ID_ADDR       = 6'b100100;
+localparam RD_TIMER_L_ADDR  = 6'b100101;
+localparam RD_TIMER_H_ADDR  = 6'b100110;
+localparam RD_INT_F_ADDR    = 6'b100111;
+localparam RD_ACT_SLOT_ADDR = 6'b101000;
+localparam RD_IMEM_SIZE     = 6'b101001;
+localparam RD_DMEM_SIZE     = 6'b101010;
+localparam RD_PMEM_SIZE     = 6'b101011;
+localparam RD_PMEM_SEG_SIZE = 6'b101100;
+localparam RD_PMEM_SEG_CNT  = 6'b101101;
+localparam RD_BC_SIZE       = 6'b101110;
+localparam MAX_SLOT_CNT     = 6'b101111;
+localparam DEBUG_IN_ADDR_L  = 6'b110000;
+localparam DEBUG_IN_ADDR_H  = 6'b110001;
 
-reg [31:0]         io_read_data;
-reg [31:0]         dram_recv_flag;
-reg [63:0]         internal_timer;
+reg [31:0] io_read_data;
+reg [31:0] dram_recv_flag;
+reg [63:0] internal_timer;
 
 always @ (posedge clk)
     if (rst)
@@ -253,13 +277,13 @@ always @ (posedge clk)
 
 always @ (posedge clk)
     if (io_read)
-        case (dmem_addr[6:2])
+        case (io_addr)
             RD_DESC_ADDR_L:   if (in_desc_valid) io_read_data <= in_desc[31:0];
             RD_DESC_ADDR_H:   if (in_desc_valid) io_read_data <= in_desc[63:32];
             RD_D_FLAGS_ADDR:  io_read_data <= dram_recv_flag;
             RD_STAT_ADDR:     io_read_data <= {7'd0,core_msg_ready, 7'd0,slot_wr_ready,
                                                7'd0,out_desc_ready, 7'd0,in_desc_valid};
-            RD_ID_ADDR:       io_read_data <= {{(32-CORE_ID_WIDTH){1'b0}},core_id};
+            RD_ID_ADDR:       io_read_data <= {24'd0, core_id};
             RD_TIMER_L_ADDR:  io_read_data <= internal_timer[31:0];
             RD_TIMER_H_ADDR:  io_read_data <= internal_timer[63:32];
             RD_INT_F_ADDR:    io_read_data <= {8'd0,
@@ -268,14 +292,16 @@ always @ (posedge clk)
                                                mask_r,
                                                4'd0, io_access_err, pmem_access_err,
                                                dmem_access_err, imem_access_err};
-            RD_ACT_SLOT_ADDR: io_read_data <= {{(32-SLOT_COUNT){1'b0}}, active_slots};
+            RD_ACT_SLOT_ADDR: io_read_data <= active_slots;
             RD_IMEM_SIZE:     io_read_data <= IMEM_SIZE;
             RD_DMEM_SIZE:     io_read_data <= DMEM_SIZE;
             RD_PMEM_SIZE:     io_read_data <= PMEM_SIZE;
             RD_PMEM_SEG_SIZE: io_read_data <= PMEM_SEG_SIZE;
             RD_PMEM_SEG_CNT:  io_read_data <= PMEM_SEG_COUNT;
-            RD_BC_SIZE:       io_read_data <= BC_REGION_SIZE;
-            MAX_SLOT_CNT:     io_read_data <= SLOT_COUNT;
+            RD_BC_SIZE:       io_read_data <= bc_region_size;
+            MAX_SLOT_CNT:     io_read_data <= max_slot_count;
+            DEBUG_IN_ADDR_L:  io_read_data <= debug_in[31:0];
+            DEBUG_IN_ADDR_H:  io_read_data <= debug_in[63:32];
             // default is to keep the value
         endcase
 
@@ -379,7 +405,7 @@ always @ (posedge clk)
                              (pmem_en_r && (dmem_addr_r[23:0] >= PMEM_SIZE)));
 
         io_access_err   <= !(interrupt_ack && mem_wr_data[7]) && (io_access_err ||
-                             (intio_en_r && (dmem_addr_r[21:0] >= 22'h000080)));
+                             (intio_en_r && (dmem_addr_r[21:0] >= 22'h000100)));
     end
 
 assign timer_int_ack  = interrupt_ack && mem_wr_data[0];
@@ -388,6 +414,5 @@ assign evict_int_ack  = interrupt_ack && mem_wr_data[2];
 assign ext_io_err_ack = interrupt_ack && mem_wr_data[3];
 
 assign core_errors    = {3'd0, ext_io_err, io_access_err, pmem_access_err, dmem_access_err, imem_access_err};
-assign ready_to_evict = 1'b0;
 
 endmodule

@@ -199,7 +199,7 @@ parameter TX_FIFO_DEPTH    = 32768;
 parameter RX_FIFO_DEPTH    = 32768;
 parameter STG_F_DATA_DEPTH = 8192;
 parameter STG_F_CTRL_DEPTH = 32; // TKEEP is not enabled, so 32 words
-parameter STG_F_DRAM_DEPTH = 4096; 
+parameter STG_F_DRAM_DEPTH = 4096;
 parameter V_MAC_FIFO_SIZE  = 1024;
 parameter CLUSTER_COUNT    = 4;
 parameter BC_MSG_CLUSTERS  = 4;
@@ -271,12 +271,12 @@ assign sma_term_en = 1'b0;
 // ETH interfaces renaming
 wire [INTERFACE_COUNT-1:0]    sfp_tx_clk = {sfp_2_tx_clk, sfp_1_tx_clk};
 wire [INTERFACE_COUNT-1:0]    sfp_tx_rst = {sfp_2_tx_rst, sfp_2_tx_rst};
-wire [INTERFACE_COUNT*64-1:0] sfp_txd;  
-wire [INTERFACE_COUNT*8-1:0]  sfp_txc; 
+wire [INTERFACE_COUNT*64-1:0] sfp_txd;
+wire [INTERFACE_COUNT*8-1:0]  sfp_txc;
 wire [INTERFACE_COUNT-1:0]    sfp_rx_clk = {sfp_2_rx_clk, sfp_1_rx_clk};
 wire [INTERFACE_COUNT-1:0]    sfp_rx_rst = {sfp_2_rx_rst, sfp_1_rx_rst};
 wire [INTERFACE_COUNT*64-1:0] sfp_rxd    = {sfp_2_rxd,    sfp_1_rxd};
-wire [INTERFACE_COUNT*8-1:0]  sfp_rxc    = {sfp_2_rxc,    sfp_1_rxc};   
+wire [INTERFACE_COUNT*8-1:0]  sfp_rxc    = {sfp_2_rxc,    sfp_1_rxc};
 
 assign sfp_1_txd = sfp_txd[63:0];
 assign sfp_1_txc = sfp_txc[7:0];
@@ -319,7 +319,7 @@ generate
             .tx_rst(sfp_tx_rst[l]),
             .logic_clk(sys_clk),
             .logic_rst(sys_rst),
-        
+
             /*
              * XGMII interface
              */
@@ -327,7 +327,7 @@ generate
             .xgmii_rxc(sfp_rxc[l*8  +:8]),
             .xgmii_txd(sfp_txd[l*64 +:64]),
             .xgmii_txc(sfp_txc[l*8  +:8]),
-            
+
             /*
              * AXI input
              */
@@ -337,7 +337,7 @@ generate
             .tx_axis_tready(tx_axis_tready[l]),
             .tx_axis_tlast(tx_axis_tlast[l]),
             .tx_axis_tuser(1'b0),
-        
+
             /*
              * AXI output
              */
@@ -347,25 +347,25 @@ generate
             .rx_axis_tready(rx_axis_tready[l]),
             .rx_axis_tlast(rx_axis_tlast[l]),
             .rx_axis_tuser(),
-        
+
             /*
              * Status
              */
             .rx_fifo_overflow(port_rx_axis_overflow[l]),
-            .rx_fifo_good_frame(), 
+            .rx_fifo_good_frame(),
             .tx_error_underflow(),
-            .tx_fifo_overflow(), 
+            .tx_fifo_overflow(),
             .tx_fifo_bad_frame(),
-            .tx_fifo_good_frame(), 
+            .tx_fifo_good_frame(),
             .rx_error_bad_frame(port_rx_axis_bad_frame[l]),
             .rx_error_bad_fcs(),
             .rx_fifo_bad_frame(),
-        
+
             /*
              * Configuration
              */
             .ifg_delay(8'd12),
-        
+
             /*
              * PTP not used
              */
@@ -388,22 +388,22 @@ generate
     end
 endgenerate
 
-// PCIE and DRAM controller 
+// PCIE and DRAM controller
 
-// DRAM DMA controller data 
+// DRAM DMA controller data
 wire [LVL1_DATA_WIDTH-1:0] dram_tx_axis_tdata;
 wire [LVL1_STRB_WIDTH-1:0] dram_tx_axis_tkeep;
 wire [ID_TAG_WIDTH-1:0]    dram_tx_axis_tuser;
-wire                       dram_tx_axis_tvalid, 
-                           dram_tx_axis_tready, 
+wire                       dram_tx_axis_tvalid,
+                           dram_tx_axis_tready,
                            dram_tx_axis_tlast;
 
 wire [LVL1_DATA_WIDTH-1:0] dram_rx_axis_tdata;
 wire [LVL1_STRB_WIDTH-1:0] dram_rx_axis_tkeep;
 wire [ID_TAG_WIDTH-1:0]    dram_rx_axis_tdest;
 wire [PORT_WIDTH-1:0]      dram_rx_axis_tuser;
-wire                       dram_rx_axis_tvalid, 
-                           dram_rx_axis_tready, 
+wire                       dram_rx_axis_tvalid,
+                           dram_rx_axis_tready,
                            dram_rx_axis_tlast;
 
 // outgoing channel
@@ -468,7 +468,7 @@ wire [AXIL_DATA_WIDTH-1:0]         axil_ctrl_rdata;
 wire [1:0]                         axil_ctrl_rresp;
 wire                               axil_ctrl_rvalid;
 wire                               axil_ctrl_rready;
- 
+
 // DMA requests from Host
 wire [PCIE_ADDR_WIDTH-1:0]     host_dma_read_desc_pcie_addr;
 wire [PCIE_RAM_ADDR_WIDTH-1:0] host_dma_read_desc_ram_addr;
@@ -490,17 +490,17 @@ wire                           host_dma_write_desc_status_valid;
 
 // Virtual MAC ports
 parameter V_PORT_COUNT_MIN1 = (V_PORT_COUNT>0) ? V_PORT_COUNT:1;
-  
+
 wire [V_PORT_COUNT_MIN1*LVL1_DATA_WIDTH-1:0] v_tx_axis_tdata;
 wire [V_PORT_COUNT_MIN1*LVL1_STRB_WIDTH-1:0] v_tx_axis_tkeep;
-wire [V_PORT_COUNT_MIN1-1:0] v_tx_axis_tvalid, v_tx_axis_tready, 
+wire [V_PORT_COUNT_MIN1-1:0] v_tx_axis_tvalid, v_tx_axis_tready,
                              v_tx_axis_tlast,  v_tx_axis_tuser;
 
 wire [V_PORT_COUNT_MIN1*LVL1_DATA_WIDTH-1:0] v_rx_axis_tdata;
 wire [V_PORT_COUNT_MIN1*LVL1_STRB_WIDTH-1:0] v_rx_axis_tkeep;
-wire [V_PORT_COUNT_MIN1-1:0] v_rx_axis_tvalid, v_rx_axis_tready, 
+wire [V_PORT_COUNT_MIN1-1:0] v_rx_axis_tvalid, v_rx_axis_tready,
                              v_rx_axis_tlast;
- 
+
 pcie_config # (
   .PCIE_ADDR_WIDTH(PCIE_ADDR_WIDTH),
   .PCIE_RAM_ADDR_WIDTH(PCIE_RAM_ADDR_WIDTH),
@@ -512,7 +512,7 @@ pcie_config # (
   .CORE_COUNT(CORE_COUNT),
   .CORE_SLOT_WIDTH(SLOT_WIDTH),
   .INTERFACE_WIDTH(IF_COUNT_WIDTH),
-  .BYTE_COUNT_WIDTH(BYTE_COUNT_WIDTH), 
+  .BYTE_COUNT_WIDTH(BYTE_COUNT_WIDTH),
   .FRAME_COUNT_WIDTH(FRAME_COUNT_WIDTH),
   .IF_COUNT(V_IF_COUNT),
   .PORTS_PER_IF(PORTS_PER_V_IF),
@@ -526,7 +526,7 @@ pcie_config # (
   .sys_rst(sys_rst),
   .pcie_clk(pcie_clk),
   .pcie_rst(pcie_rst),
-  
+
   // AXI lite
   .axil_ctrl_awaddr(axil_ctrl_awaddr),
   .axil_ctrl_awprot(axil_ctrl_awprot),
@@ -557,7 +557,7 @@ pcie_config # (
   .host_dma_read_desc_ready       (host_dma_read_desc_ready),
   .host_dma_read_desc_status_tag  (host_dma_read_desc_status_tag),
   .host_dma_read_desc_status_valid(host_dma_read_desc_status_valid),
-  
+
   .host_dma_write_desc_pcie_addr   (host_dma_write_desc_pcie_addr),
   .host_dma_write_desc_ram_addr    (host_dma_write_desc_ram_addr),
   .host_dma_write_desc_len         (host_dma_write_desc_len),
@@ -566,7 +566,7 @@ pcie_config # (
   .host_dma_write_desc_ready       (host_dma_write_desc_ready),
   .host_dma_write_desc_status_tag  (host_dma_write_desc_status_tag),
   .host_dma_write_desc_status_valid(host_dma_write_desc_status_valid),
-  
+
   // I2C
   .sfp_i2c_scl_i(sfp_i2c_scl_i),
   .sfp_i2c_scl_o(sfp_i2c_scl_o),
@@ -595,8 +595,8 @@ pcie_config # (
   .flash_ce_n(flash_ce_n),
   .flash_oe_n(flash_oe_n),
   .flash_we_n(flash_we_n),
-  .flash_adv_n(flash_adv_n),    
-  
+  .flash_adv_n(flash_adv_n),
+
   // Cores reset
   .reset_dest (reset_dest),
   .reset_value(reset_value),
@@ -636,9 +636,9 @@ simple_sync_sig # (.RST_VAL(1'b0),.WIDTH(CORE_WIDTH)) stat_read_core_reg (
 simple_sync_sig # (.RST_VAL(1'b0),.WIDTH((2*BYTE_COUNT_WIDTH)+(2*FRAME_COUNT_WIDTH))) stat_read_core_results_reg (
   .dst_clk(sys_clk),
   .dst_rst(sys_rst),
-  .in( {core_in_byte_count,    core_out_byte_count, 
+  .in( {core_in_byte_count,    core_out_byte_count,
         core_in_frame_count,   core_out_frame_count}),
-  .out({core_in_byte_count_r,  core_out_byte_count_r, 
+  .out({core_in_byte_count_r,  core_out_byte_count_r,
         core_in_frame_count_r, core_out_frame_count_r})
 );
 
@@ -647,26 +647,26 @@ if (V_PORT_COUNT==0) begin: no_veth
   assign v_rx_axis_tready = 1'b0;
   assign v_tx_axis_tdata  = {LVL1_DATA_WIDTH{1'b0}};
   assign v_tx_axis_tkeep  = {LVL1_STRB_WIDTH{1'b0}};
-  assign v_tx_axis_tvalid = 1'b0; 
+  assign v_tx_axis_tvalid = 1'b0;
   assign v_tx_axis_tlast  = 1'b0;
-  assign v_tx_axis_tuser  = 1'b0; 
+  assign v_tx_axis_tuser  = 1'b0;
 
 end else begin: virtual_eth_connections
- 
+
   assign rx_axis_tdata[INTERFACE_COUNT*LVL1_DATA_WIDTH +: V_PORT_COUNT*LVL1_DATA_WIDTH] = v_rx_axis_tdata;
   assign rx_axis_tkeep[INTERFACE_COUNT*LVL1_STRB_WIDTH +: V_PORT_COUNT*LVL1_STRB_WIDTH] = v_rx_axis_tkeep;
   assign rx_axis_tvalid[INTERFACE_COUNT +: V_PORT_COUNT]                                = v_rx_axis_tvalid;
   assign rx_axis_tlast[INTERFACE_COUNT +: V_PORT_COUNT]                                 = v_rx_axis_tlast;
-  assign v_rx_axis_tready = rx_axis_tready[INTERFACE_COUNT +: V_PORT_COUNT]; 
+  assign v_rx_axis_tready = rx_axis_tready[INTERFACE_COUNT +: V_PORT_COUNT];
 
   assign v_tx_axis_tdata  = tx_axis_tdata[INTERFACE_COUNT*LVL1_DATA_WIDTH +: V_PORT_COUNT*LVL1_DATA_WIDTH];
   assign v_tx_axis_tkeep  = tx_axis_tkeep[INTERFACE_COUNT*LVL1_STRB_WIDTH +: V_PORT_COUNT*LVL1_STRB_WIDTH];
   assign v_tx_axis_tvalid = tx_axis_tvalid[INTERFACE_COUNT +: V_PORT_COUNT];
   assign v_tx_axis_tlast  = tx_axis_tlast[INTERFACE_COUNT +: V_PORT_COUNT];
-  assign v_tx_axis_tuser  = {V_PORT_COUNT{1'b0}}; 
+  assign v_tx_axis_tuser  = {V_PORT_COUNT{1'b0}};
   assign tx_axis_tready[INTERFACE_COUNT +: V_PORT_COUNT] = v_tx_axis_tready;
 end
-  
+
 pcie_controller #
 (
   .AXIS_PCIE_DATA_WIDTH(AXIS_PCIE_DATA_WIDTH),
@@ -687,11 +687,11 @@ pcie_controller #
   .AXIL_ADDR_WIDTH(AXIL_ADDR_WIDTH),
   .AXIS_DATA_WIDTH(LVL1_DATA_WIDTH),
   .AXIS_KEEP_WIDTH(LVL1_STRB_WIDTH),
-  .AXIS_TAG_WIDTH(ID_TAG_WIDTH),  
+  .AXIS_TAG_WIDTH(ID_TAG_WIDTH),
   .CORE_SLOT_WIDTH(SLOT_WIDTH),
   .CORE_DESC_WIDTH(LVL1_DRAM_WIDTH),
-  .CORE_COUNT(CORE_COUNT),        
-  .CORE_ADDR_WIDTH(26), 
+  .CORE_COUNT(CORE_COUNT),
+  .CORE_ADDR_WIDTH(26),
   .PCIE_SLOT_COUNT(PCIE_SLOT_COUNT),
   .IF_COUNT(V_IF_COUNT),
   .PORTS_PER_IF(PORTS_PER_V_IF),
@@ -739,7 +739,7 @@ pcie_controller #
   .s_axis_rq_seq_num_valid_0(s_axis_rq_seq_num_valid),
   .s_axis_rq_seq_num_1(4'd0),
   .s_axis_rq_seq_num_valid_1(1'b0),
-  
+
   .pcie_tx_fc_nph_av(pcie_tx_fc_nph_av),
   .pcie_tx_fc_ph_av(pcie_tx_fc_ph_av),
   .pcie_tx_fc_pd_av(pcie_tx_fc_pd_av),
@@ -751,29 +751,29 @@ pcie_controller #
 
   .status_error_cor  (status_error_cor),
   .status_error_uncor(status_error_uncor),
-  
+
   // Cores data
   .cores_tx_axis_tdata (dram_tx_axis_tdata),
   .cores_tx_axis_tkeep (dram_tx_axis_tkeep),
   .cores_tx_axis_tuser (dram_tx_axis_tuser),
-  .cores_tx_axis_tvalid(dram_tx_axis_tvalid), 
-  .cores_tx_axis_tready(dram_tx_axis_tready), 
+  .cores_tx_axis_tvalid(dram_tx_axis_tvalid),
+  .cores_tx_axis_tready(dram_tx_axis_tready),
   .cores_tx_axis_tlast (dram_tx_axis_tlast),
-  
+
   .cores_rx_axis_tdata (dram_rx_axis_tdata),
   .cores_rx_axis_tkeep (dram_rx_axis_tkeep),
   .cores_rx_axis_tdest (dram_rx_axis_tdest),
-  .cores_rx_axis_tvalid(dram_rx_axis_tvalid), 
-  .cores_rx_axis_tready(dram_rx_axis_tready), 
+  .cores_rx_axis_tvalid(dram_rx_axis_tvalid),
+  .cores_rx_axis_tready(dram_rx_axis_tready),
   .cores_rx_axis_tlast (dram_rx_axis_tlast),
-  
+
   // Cores DRAM requests
   .cores_ctrl_s_axis_tdata (dram_ctrl_m_axis_tdata),
   .cores_ctrl_s_axis_tvalid(dram_ctrl_m_axis_tvalid),
   .cores_ctrl_s_axis_tready(dram_ctrl_m_axis_tready),
   .cores_ctrl_s_axis_tlast (dram_ctrl_m_axis_tlast),
   .cores_ctrl_s_axis_tuser (dram_ctrl_m_axis_tuser),
-  
+
   .cores_ctrl_m_axis_tdata (dram_ctrl_s_axis_tdata),
   .cores_ctrl_m_axis_tvalid(dram_ctrl_s_axis_tvalid),
   .cores_ctrl_m_axis_tready(dram_ctrl_s_axis_tready),
@@ -789,7 +789,7 @@ pcie_controller #
   .host_dma_read_desc_ready       (host_dma_read_desc_ready),
   .host_dma_read_desc_status_tag  (host_dma_read_desc_status_tag),
   .host_dma_read_desc_status_valid(host_dma_read_desc_status_valid),
-  
+
   .host_dma_write_desc_pcie_addr   (host_dma_write_desc_pcie_addr),
   .host_dma_write_desc_ram_addr    (host_dma_write_desc_ram_addr),
   .host_dma_write_desc_len         (host_dma_write_desc_len),
@@ -798,7 +798,7 @@ pcie_controller #
   .host_dma_write_desc_ready       (host_dma_write_desc_ready),
   .host_dma_write_desc_status_tag  (host_dma_write_desc_status_tag),
   .host_dma_write_desc_status_valid(host_dma_write_desc_status_valid),
-  
+
   // AXI lite
   .axil_ctrl_awaddr(axil_ctrl_awaddr),
   .axil_ctrl_awprot(axil_ctrl_awprot),
@@ -821,13 +821,13 @@ pcie_controller #
   .axil_ctrl_rready(axil_ctrl_rready),
 
   // Virtual ports
-  .tx_axis_tdata(v_rx_axis_tdata), 
+  .tx_axis_tdata(v_rx_axis_tdata),
   .tx_axis_tkeep(v_rx_axis_tkeep),
   .tx_axis_tvalid(v_rx_axis_tvalid),
   .tx_axis_tready(v_rx_axis_tready),
   .tx_axis_tlast(v_rx_axis_tlast),
   .tx_axis_tuser(),
-  
+
   .rx_axis_tdata(v_tx_axis_tdata),
   .rx_axis_tkeep(v_tx_axis_tkeep),
   .rx_axis_tvalid(v_tx_axis_tvalid),
@@ -845,23 +845,23 @@ assign dram_rx_axis_tuser = DRAM_PORT;
 wire [LB_PORT_COUNT*LVL1_DATA_WIDTH-1:0] loopback_tx_axis_tdata;
 wire [LB_PORT_COUNT*LVL1_STRB_WIDTH-1:0] loopback_tx_axis_tkeep;
 wire [LB_PORT_COUNT*ID_TAG_WIDTH-1:0]    loopback_tx_axis_tuser;
-wire [LB_PORT_COUNT-1:0]                 loopback_tx_axis_tvalid, 
-                                         loopback_tx_axis_tready, 
+wire [LB_PORT_COUNT-1:0]                 loopback_tx_axis_tvalid,
+                                         loopback_tx_axis_tready,
                                          loopback_tx_axis_tlast;
 
 wire [LB_PORT_COUNT*LVL1_DATA_WIDTH-1:0] loopback_rx_axis_tdata;
 wire [LB_PORT_COUNT*LVL1_STRB_WIDTH-1:0] loopback_rx_axis_tkeep;
 wire [LB_PORT_COUNT*ID_TAG_WIDTH-1:0]    loopback_rx_axis_tdest;
 wire [LB_PORT_COUNT*PORT_WIDTH-1:0]      loopback_rx_axis_tuser;
-wire [LB_PORT_COUNT-1:0]                 loopback_rx_axis_tvalid, 
-                                         loopback_rx_axis_tready, 
+wire [LB_PORT_COUNT-1:0]                 loopback_rx_axis_tvalid,
+                                         loopback_rx_axis_tready,
                                          loopback_rx_axis_tlast;
 
 loopback_msg_fifo # (
   .DATA_WIDTH(LVL1_DATA_WIDTH),
   .STRB_WIDTH(LVL1_STRB_WIDTH),
   .PORT_WIDTH(PORT_WIDTH),
-  .CORE_WIDTH(CORE_WIDTH), 
+  .CORE_WIDTH(CORE_WIDTH),
   .SLOT_WIDTH(SLOT_WIDTH),
   .PORT_COUNT(LB_PORT_COUNT),
   .FIRST_PORT(FIRST_LB_PORT),
@@ -876,7 +876,7 @@ loopback_msg_fifo # (
     .s_axis_tready(loopback_tx_axis_tready),
     .s_axis_tlast (loopback_tx_axis_tlast),
     .s_axis_tuser (loopback_tx_axis_tuser),
-  
+
     .m_axis_tdata (loopback_rx_axis_tdata),
     .m_axis_tkeep (loopback_rx_axis_tkeep),
     .m_axis_tvalid(loopback_rx_axis_tvalid),
@@ -887,22 +887,22 @@ loopback_msg_fifo # (
 );
 
 
-// Scheduler 
+// Scheduler
 wire [(INTERFACE_COUNT+V_PORT_COUNT)*LVL1_DATA_WIDTH-1:0] sched_tx_axis_tdata;
 wire [(INTERFACE_COUNT+V_PORT_COUNT)*LVL1_STRB_WIDTH-1:0] sched_tx_axis_tkeep;
 wire [(INTERFACE_COUNT+V_PORT_COUNT)*ID_TAG_WIDTH-1:0]    sched_tx_axis_tuser;
-wire [(INTERFACE_COUNT+V_PORT_COUNT)-1:0]                 sched_tx_axis_tvalid, 
-                                                          sched_tx_axis_tready, 
+wire [(INTERFACE_COUNT+V_PORT_COUNT)-1:0]                 sched_tx_axis_tvalid,
+                                                          sched_tx_axis_tready,
                                                           sched_tx_axis_tlast;
 
 wire [(INTERFACE_COUNT+V_PORT_COUNT)*LVL1_DATA_WIDTH-1:0] sched_rx_axis_tdata;
 wire [(INTERFACE_COUNT+V_PORT_COUNT)*LVL1_STRB_WIDTH-1:0] sched_rx_axis_tkeep;
 wire [(INTERFACE_COUNT+V_PORT_COUNT)*ID_TAG_WIDTH-1:0]    sched_rx_axis_tdest;
 wire [(INTERFACE_COUNT+V_PORT_COUNT)*PORT_WIDTH-1:0]      sched_rx_axis_tuser;
-wire [(INTERFACE_COUNT+V_PORT_COUNT)-1:0]                 sched_rx_axis_tvalid, 
-                                                          sched_rx_axis_tready, 
+wire [(INTERFACE_COUNT+V_PORT_COUNT)-1:0]                 sched_rx_axis_tvalid,
+                                                          sched_rx_axis_tready,
                                                           sched_rx_axis_tlast;
-    
+
 wire [LVL1_CTRL_WIDTH-1:0]                 sched_ctrl_m_axis_tdata;
 wire                                       sched_ctrl_m_axis_tvalid;
 wire                                       sched_ctrl_m_axis_tready;
@@ -936,16 +936,16 @@ simple_scheduler # (
   // Data line to/from Eth interfaces
   .tx_axis_tdata(tx_axis_tdata),
   .tx_axis_tkeep(tx_axis_tkeep),
-  .tx_axis_tvalid(tx_axis_tvalid), 
-  .tx_axis_tready(tx_axis_tready), 
+  .tx_axis_tvalid(tx_axis_tvalid),
+  .tx_axis_tready(tx_axis_tready),
   .tx_axis_tlast(tx_axis_tlast),
-  
+
   .rx_axis_tdata(rx_axis_tdata),
   .rx_axis_tkeep(rx_axis_tkeep),
-  .rx_axis_tvalid(rx_axis_tvalid), 
-  .rx_axis_tready(rx_axis_tready), 
+  .rx_axis_tvalid(rx_axis_tvalid),
+  .rx_axis_tready(rx_axis_tready),
   .rx_axis_tlast(rx_axis_tlast),
-  
+
   // DATA lines to/from cores
   .data_m_axis_tdata(sched_rx_axis_tdata),
   .data_m_axis_tkeep(sched_rx_axis_tkeep),
@@ -954,14 +954,14 @@ simple_scheduler # (
   .data_m_axis_tvalid(sched_rx_axis_tvalid),
   .data_m_axis_tready(sched_rx_axis_tready),
   .data_m_axis_tlast(sched_rx_axis_tlast),
-  
+
   .data_s_axis_tdata(sched_tx_axis_tdata),
   .data_s_axis_tkeep(sched_tx_axis_tkeep),
   .data_s_axis_tuser(sched_tx_axis_tuser),
-  .data_s_axis_tvalid(sched_tx_axis_tvalid), 
-  .data_s_axis_tready(sched_tx_axis_tready), 
+  .data_s_axis_tvalid(sched_tx_axis_tvalid),
+  .data_s_axis_tready(sched_tx_axis_tready),
   .data_s_axis_tlast(sched_tx_axis_tlast),
-      
+
   // Control lines to/from cores
   .ctrl_m_axis_tdata(sched_ctrl_m_axis_tdata),
   .ctrl_m_axis_tvalid(sched_ctrl_m_axis_tvalid),
@@ -974,7 +974,7 @@ simple_scheduler # (
   .ctrl_s_axis_tready(sched_ctrl_s_axis_tready),
   .ctrl_s_axis_tlast(sched_ctrl_s_axis_tlast),
   .ctrl_s_axis_tuser(sched_ctrl_s_axis_tuser),
-  
+
   // Cores reset
   .reset_dest (reset_dest),
   .reset_value(reset_value),
@@ -997,38 +997,38 @@ wire [CORE_COUNT*LVL2_DATA_WIDTH-1:0] data_s_axis_tdata;
 wire [CORE_COUNT*LVL2_STRB_WIDTH-1:0] data_s_axis_tkeep;
 wire [CORE_COUNT*TAG_WIDTH-1:0]       data_s_axis_tdest;
 wire [CORE_COUNT*PORT_WIDTH-1:0]      data_s_axis_tuser;
-wire [CORE_COUNT-1:0]                 data_s_axis_tvalid, 
-                                      data_s_axis_tready, 
+wire [CORE_COUNT-1:0]                 data_s_axis_tvalid,
+                                      data_s_axis_tready,
                                       data_s_axis_tlast;
 
 wire [CORE_COUNT*LVL2_DATA_WIDTH-1:0] data_m_axis_tdata;
 wire [CORE_COUNT*LVL2_STRB_WIDTH-1:0] data_m_axis_tkeep;
 wire [CORE_COUNT*PORT_WIDTH-1:0]      data_m_axis_tdest;
 wire [CORE_COUNT*ID_TAG_WIDTH-1:0]    data_m_axis_tuser;
-wire [CORE_COUNT-1:0]                 data_m_axis_tvalid, 
-                                      data_m_axis_tready, 
+wire [CORE_COUNT-1:0]                 data_m_axis_tvalid,
+                                      data_m_axis_tready,
                                       data_m_axis_tlast;
 
 wire [CORE_COUNT*LVL2_CTRL_WIDTH-1:0] ctrl_s_axis_tdata;
-wire [CORE_COUNT-1:0]                 ctrl_s_axis_tvalid, 
-                                      ctrl_s_axis_tready, 
+wire [CORE_COUNT-1:0]                 ctrl_s_axis_tvalid,
+                                      ctrl_s_axis_tready,
                                       ctrl_s_axis_tlast;
 
 wire [CORE_COUNT*LVL2_CTRL_WIDTH-1:0] ctrl_m_axis_tdata;
 wire [CORE_COUNT*CORE_WIDTH-1:0]      ctrl_m_axis_tuser;
-wire [CORE_COUNT-1:0]                 ctrl_m_axis_tvalid, 
-                                      ctrl_m_axis_tready, 
+wire [CORE_COUNT-1:0]                 ctrl_m_axis_tvalid,
+                                      ctrl_m_axis_tready,
                                       ctrl_m_axis_tlast;
 
 wire [CORE_COUNT*LVL2_DRAM_WIDTH-1:0] dram_s_axis_tdata;
-wire [CORE_COUNT-1:0]                 dram_s_axis_tvalid, 
-                                      dram_s_axis_tready, 
+wire [CORE_COUNT-1:0]                 dram_s_axis_tvalid,
+                                      dram_s_axis_tready,
                                       dram_s_axis_tlast;
 
 wire [CORE_COUNT*LVL2_DRAM_WIDTH-1:0] dram_m_axis_tdata;
 wire [CORE_COUNT*CORE_WIDTH-1:0]      dram_m_axis_tuser;
-wire [CORE_COUNT-1:0]                 dram_m_axis_tvalid, 
-                                      dram_m_axis_tready, 
+wire [CORE_COUNT-1:0]                 dram_m_axis_tvalid,
+                                      dram_m_axis_tready,
                                       dram_m_axis_tlast;
 
 axis_switch_2lvl # (
@@ -1078,7 +1078,7 @@ axis_switch_2lvl # (
 stat_reader # (
   .KEEP_WIDTH(LVL1_STRB_WIDTH),
   .PORT_COUNT(INTERFACE_COUNT+V_PORT_COUNT),
-  .BYTE_COUNT_WIDTH(BYTE_COUNT_WIDTH), 
+  .BYTE_COUNT_WIDTH(BYTE_COUNT_WIDTH),
   .FRAME_COUNT_WIDTH(FRAME_COUNT_WIDTH),
   .PORT_WIDTH(IF_COUNT_WIDTH),
   .PORT_CLUSTERS(1)
@@ -1102,7 +1102,7 @@ stat_reader # (
 stat_reader # (
   .KEEP_WIDTH(LVL2_STRB_WIDTH),
   .PORT_COUNT(CORE_COUNT),
-  .BYTE_COUNT_WIDTH(BYTE_COUNT_WIDTH), 
+  .BYTE_COUNT_WIDTH(BYTE_COUNT_WIDTH),
   .FRAME_COUNT_WIDTH(FRAME_COUNT_WIDTH),
   .PORT_WIDTH(CORE_WIDTH),
   .PORT_CLUSTERS(1)
@@ -1167,8 +1167,8 @@ axis_switch_2lvl # (
     .m_axis_tvalid({dram_tx_axis_tvalid,loopback_tx_axis_tvalid,sched_tx_axis_tvalid}),
     .m_axis_tready({dram_tx_axis_tready,loopback_tx_axis_tready,sched_tx_axis_tready}),
     .m_axis_tlast( {dram_tx_axis_tlast, loopback_tx_axis_tlast, sched_tx_axis_tlast}),
-    .m_axis_tid(),                      
-    .m_axis_tdest(), 
+    .m_axis_tid(),
+    .m_axis_tdest(),
     .m_axis_tuser( {dram_tx_axis_tuser, loopback_tx_axis_tuser, sched_tx_axis_tuser})
 
 );
@@ -1176,7 +1176,7 @@ axis_switch_2lvl # (
 stat_reader # (
   .KEEP_WIDTH(LVL1_STRB_WIDTH),
   .PORT_COUNT(INTERFACE_COUNT+V_PORT_COUNT),
-  .BYTE_COUNT_WIDTH(BYTE_COUNT_WIDTH), 
+  .BYTE_COUNT_WIDTH(BYTE_COUNT_WIDTH),
   .FRAME_COUNT_WIDTH(FRAME_COUNT_WIDTH),
   .PORT_WIDTH(IF_COUNT_WIDTH),
   .PORT_CLUSTERS(1)
@@ -1200,7 +1200,7 @@ stat_reader # (
 stat_reader # (
   .KEEP_WIDTH(LVL2_STRB_WIDTH),
   .PORT_COUNT(CORE_COUNT),
-  .BYTE_COUNT_WIDTH(BYTE_COUNT_WIDTH), 
+  .BYTE_COUNT_WIDTH(BYTE_COUNT_WIDTH),
   .FRAME_COUNT_WIDTH(FRAME_COUNT_WIDTH),
   .PORT_WIDTH(CORE_WIDTH),
   .PORT_CLUSTERS(1)
@@ -1445,16 +1445,16 @@ generate
     ) bc_msg_out_register (
       .clk(core_clk),
       .rst(core_rst_r),
-    
+
       .s_axis_tdata(core_msg_out_data[n*CORE_MSG_WIDTH +: CORE_MSG_WIDTH]),
-      .s_axis_tkeep(1'b0), 
+      .s_axis_tkeep(1'b0),
       .s_axis_tvalid(core_msg_out_valid[n]),
       .s_axis_tready(core_msg_out_ready[n]),
       .s_axis_tlast(1'b0),
-      .s_axis_tid(8'd0), 
+      .s_axis_tid(8'd0),
       .s_axis_tdest(8'd0),
       .s_axis_tuser(ctrl_m_axis_tuser[n*CORE_WIDTH +: CORE_WIDTH]),
-    
+
       .m_axis_tdata(core_msg_out_data_r[n*CORE_MSG_WIDTH +: CORE_MSG_WIDTH]),
       .m_axis_tkeep(),
       .m_axis_tvalid(core_msg_out_valid_r[n]),
@@ -1528,7 +1528,7 @@ axis_switch_2lvl # (
 always @ (posedge core_clk) begin
     core_msg_merged_data_r  <= {BC_MSG_CLUSTERS{core_msg_merged_data}};
     core_msg_merged_user_r  <= {BC_MSG_CLUSTERS{core_msg_merged_user}};
-    core_msg_merged_valid_r <= {BC_MSG_CLUSTERS{core_msg_merged_valid}}; 
+    core_msg_merged_valid_r <= {BC_MSG_CLUSTERS{core_msg_merged_valid}};
     if (core_rst_r)
       core_msg_merged_valid_r <= {BC_MSG_CLUSTERS{1'b0}};
 end
@@ -1545,12 +1545,12 @@ localparam CORES_PER_CLUSTER = CORE_COUNT / BC_MSG_CLUSTERS;
 always @ (posedge core_clk) begin
     core_msg_in_data  <= {CORES_PER_CLUSTER{core_msg_merged_data_r}};
     core_msg_in_user  <= {CORES_PER_CLUSTER{core_msg_merged_user_r}};
-    core_msg_in_valid <= {CORES_PER_CLUSTER{core_msg_merged_valid_r}}; 
+    core_msg_in_valid <= {CORES_PER_CLUSTER{core_msg_merged_valid_r}};
     if (core_rst_r)
-        core_msg_in_valid <= {CORE_COUNT{1'b0}}; 
+        core_msg_in_valid <= {CORE_COUNT{1'b0}};
 end
 
-// Additional register level. 
+// Additional register level.
 (* KEEP = "TRUE" *) reg [CORE_COUNT*CORE_MSG_WIDTH-1:0] core_msg_in_data_r;
 (* KEEP = "TRUE" *) reg [CORE_COUNT*CORE_WIDTH-1:0]     core_msg_in_user_r;
 (* KEEP = "TRUE" *) reg [CORE_COUNT-1:0]                core_msg_in_valid_r;
@@ -1560,7 +1560,7 @@ always @ (posedge core_clk) begin
     core_msg_in_user_r  <= core_msg_in_user;
     core_msg_in_valid_r <= core_msg_in_valid;
     if (core_rst_r)
-        core_msg_in_valid_r <= {CORE_COUNT{1'b0}}; 
+        core_msg_in_valid_r <= {CORE_COUNT{1'b0}};
 end
 
 // Instantiating riscv core wrappers
@@ -1573,7 +1573,7 @@ generate
         wire                       evict_int_ack;
         wire                       poke_int;
         wire                       poke_int_ack;
-        
+
         wire                       dma_cmd_wr_en;
         wire [25:0]                dma_cmd_wr_addr;
         wire                       dma_cmd_hdr_wr_en;
@@ -1598,25 +1598,25 @@ generate
         wire                       out_desc_valid;
         wire                       out_desc_ready;
 
-        wire [SLOT_WIDTH-1:0]      slot_wr_ptr;
-        wire [24:0]                slot_wr_addr;
-        wire                       slot_wr_valid;
-        wire                       slot_for_hdr;
-        wire                       slot_wr_ready;
         wire [4:0]                 recv_dram_tag;
         wire                       recv_dram_tag_valid;
-        wire [SLOT_COUNT-1:0]      active_slots;
 
         wire [CORE_MSG_WIDTH-1:0] bc_msg_out;
         wire                      bc_msg_out_valid;
         wire                      bc_msg_out_ready;
-        
+
         wire [CORE_MSG_WIDTH-1:0] bc_msg_in;
         wire                      bc_msg_in_valid;
-  
-        wire [7:0]                core_errors;
-        wire [7:0]                mem_fifo_fulls;
-        wire                      ready_to_evict;
+
+        wire [31:0]               wrapper_status_data;
+        wire [1:0]                wrapper_status_addr;
+        wire                      wrapper_status_valid;
+        wire                      wrapper_status_ready;
+
+        wire [31:0]               core_status_data;
+        wire [1:0]                core_status_addr;
+        wire                      core_status_valid;
+        wire                      core_status_ready;
 
         // (* keep_hierarchy = "soft" *)
         riscv_axis_wrapper #(
@@ -1628,6 +1628,7 @@ generate
             .MSG_FIFO_DEPTH(MSG_FIFO_DEPTH),
             .PORT_WIDTH(PORT_WIDTH),
             .CORE_ID_WIDTH(CORE_WIDTH),
+            .BC_REGION_SIZE(BC_REGION_SIZE),
             .MSG_WIDTH(CORE_MSG_WIDTH),
             .MAX_PKT_HDR_SIZE(MAX_PKT_HDR_SIZE),
             .SLOT_START_ADDR(SLOT_START_ADDR),
@@ -1642,7 +1643,7 @@ generate
             .rst(block_reset[i]),
 
             .core_id(core_id),
-            // ---------------- DATA CHANNEL --------------- // 
+            // ---------------- DATA CHANNEL --------------- //
             // Incoming data
             .data_s_axis_tdata(data_s_axis_tdata[LVL2_DATA_WIDTH*i +: LVL2_DATA_WIDTH]),
             .data_s_axis_tkeep(data_s_axis_tkeep[LVL2_STRB_WIDTH*i +: LVL2_STRB_WIDTH]),
@@ -1651,7 +1652,7 @@ generate
             .data_s_axis_tlast(data_s_axis_tlast[i]),
             .data_s_axis_tdest(data_s_axis_tdest[TAG_WIDTH*i +: TAG_WIDTH]),
             .data_s_axis_tuser(data_s_axis_tuser[PORT_WIDTH*i +: PORT_WIDTH]),
-  
+
             // Outgoing data
             .data_m_axis_tdata(data_m_axis_tdata[LVL2_DATA_WIDTH*i +: LVL2_DATA_WIDTH]),
             .data_m_axis_tkeep(data_m_axis_tkeep[LVL2_STRB_WIDTH*i +: LVL2_STRB_WIDTH]),
@@ -1660,35 +1661,35 @@ generate
             .data_m_axis_tlast(data_m_axis_tlast[i]),
             .data_m_axis_tdest(data_m_axis_tdest[PORT_WIDTH*i +: PORT_WIDTH]),
             .data_m_axis_tuser(data_m_axis_tuser[ID_TAG_WIDTH*i +: TAG_WIDTH]),
-  
-            // ---------------- CTRL CHANNEL --------------- // 
+
+            // ---------------- CTRL CHANNEL --------------- //
             // Incoming control
             .ctrl_s_axis_tdata(ctrl_s_axis_tdata[LVL2_CTRL_WIDTH*i +: LVL2_CTRL_WIDTH]),
             .ctrl_s_axis_tvalid(ctrl_s_axis_tvalid[i]),
             .ctrl_s_axis_tready(ctrl_s_axis_tready[i]),
             .ctrl_s_axis_tlast(ctrl_s_axis_tlast[i]),
-  
+
             // Outgoing control
             .ctrl_m_axis_tdata(ctrl_m_axis_tdata[LVL2_CTRL_WIDTH*i +: LVL2_CTRL_WIDTH]),
             .ctrl_m_axis_tvalid(ctrl_m_axis_tvalid[i]),
             .ctrl_m_axis_tready(ctrl_m_axis_tready[i]),
             .ctrl_m_axis_tlast(ctrl_m_axis_tlast[i]),
-        
-            // ------------ DRAM RD REQ CHANNEL ------------- // 
+
+            // ------------ DRAM RD REQ CHANNEL ------------- //
             // Incoming DRAM request
             .dram_s_axis_tdata(dram_s_axis_tdata[LVL2_DRAM_WIDTH*i +: LVL2_DRAM_WIDTH]),
             .dram_s_axis_tvalid(dram_s_axis_tvalid[i]),
             .dram_s_axis_tready(dram_s_axis_tready[i]),
             .dram_s_axis_tlast(dram_s_axis_tlast[i]),
-  
+
             // Outgoing DRAM request
             .dram_m_axis_tdata(dram_m_axis_tdata[LVL2_DRAM_WIDTH*i +: LVL2_DRAM_WIDTH]),
             .dram_m_axis_tvalid(dram_m_axis_tvalid[i]),
             .dram_m_axis_tready(dram_m_axis_tready[i]),
             .dram_m_axis_tlast(dram_m_axis_tlast[i]),
 
-            // ------------- CORE MSG CHANNEL -------------- // 
-            // Core messages output  
+            // ------------- CORE MSG CHANNEL -------------- //
+            // Core messages output
             .core_msg_out(core_msg_out_data[CORE_MSG_WIDTH*i +: CORE_MSG_WIDTH]),
             .core_msg_out_valid(core_msg_out_valid[i]),
             .core_msg_out_ready(core_msg_out_ready[i]),
@@ -1732,14 +1733,8 @@ generate
             .out_desc_valid(out_desc_valid),
             .out_desc_ready(out_desc_ready),
 
-            .slot_wr_ptr(slot_wr_ptr),
-            .slot_wr_addr(slot_wr_addr),
-            .slot_wr_valid(slot_wr_valid),
-            .slot_for_hdr(slot_for_hdr),
-            .slot_wr_ready(slot_wr_ready),
             .recv_dram_tag(recv_dram_tag),
             .recv_dram_tag_valid(recv_dram_tag_valid),
-            .active_slots(active_slots),
 
             .bc_msg_out(bc_msg_out),
             .bc_msg_out_valid(bc_msg_out_valid),
@@ -1747,10 +1742,15 @@ generate
             .bc_msg_in(bc_msg_in),
             .bc_msg_in_user(),
             .bc_msg_in_valid(bc_msg_in_valid),
-    
-            .core_errors(core_errors),
-            .mem_fifo_fulls(mem_fifo_fulls),
-            .ready_to_evict(ready_to_evict)
+
+            .wrapper_status_data(wrapper_status_data),
+            .wrapper_status_addr(wrapper_status_addr),
+            .wrapper_status_valid(wrapper_status_valid),
+            .wrapper_status_ready(wrapper_status_ready),
+            .core_status_data(core_status_data),
+            .core_status_addr(core_status_addr),
+            .core_status_valid(core_status_valid),
+            .core_status_ready(core_status_ready)
         );
 
     `ifndef PR_ENABLE
@@ -1769,7 +1769,7 @@ generate
             .SLOT_COUNT(SLOT_COUNT),
             .SLOT_WIDTH(SLOT_WIDTH)
         ) riscv_block_inst (
-    `else 
+    `else
         riscv_block_PR # (
         ) pr_wrapper (
     `endif
@@ -1777,7 +1777,6 @@ generate
             .rst(block_reset[i]),
             .core_rst(core_reset),
 
-            .core_id(core_id),
             .evict_int(evict_int),
             .evict_int_ack(evict_int_ack),
             .poke_int(poke_int),
@@ -1807,14 +1806,8 @@ generate
             .out_desc_valid(out_desc_valid),
             .out_desc_ready(out_desc_ready),
 
-            .slot_wr_ptr(slot_wr_ptr),
-            .slot_wr_addr(slot_wr_addr),
-            .slot_wr_valid(slot_wr_valid),
-            .slot_for_hdr(slot_for_hdr),
-            .slot_wr_ready(slot_wr_ready),
             .recv_dram_tag(recv_dram_tag),
             .recv_dram_tag_valid(recv_dram_tag_valid),
-            .active_slots(active_slots),
 
             .bc_msg_out(bc_msg_out),
             .bc_msg_out_valid(bc_msg_out_valid),
@@ -1822,9 +1815,14 @@ generate
             .bc_msg_in(bc_msg_in),
             .bc_msg_in_valid(bc_msg_in_valid),
 
-            .core_errors(core_errors),
-            .mem_fifo_fulls(mem_fifo_fulls),
-            .ready_to_evict(ready_to_evict)
+            .wrapper_status_data(wrapper_status_data),
+            .wrapper_status_addr(wrapper_status_addr),
+            .wrapper_status_valid(wrapper_status_valid),
+            .wrapper_status_ready(wrapper_status_ready),
+            .core_status_data(core_status_data),
+            .core_status_addr(core_status_addr),
+            .core_status_valid(core_status_valid),
+            .core_status_ready(core_status_ready)
         );
 
         assign dram_m_axis_tuser[CORE_WIDTH*i +: CORE_WIDTH]               = i;
@@ -1832,7 +1830,7 @@ generate
         assign data_m_axis_tuser[(ID_TAG_WIDTH*i)+TAG_WIDTH +: CORE_WIDTH] = i;
 
     end
-        
+
 endgenerate
 
 // ILA
@@ -1872,7 +1870,7 @@ if (ENABLE_ILA) begin: ILA_inst
       data_m_lsb_third_4 [l*16+:16] <= data_m_axis_tdata [((8+l)*LVL2_DATA_WIDTH)+16 +:16];
       data_s_lsb_third_4 [l*16+:16] <= data_s_axis_tdata [((8+l)*LVL2_DATA_WIDTH)+16 +:16];
     end
-      
+
   reg [CORE_COUNT-1:0] data_m_axis_tvalid_r;
   reg [CORE_COUNT-1:0] data_m_axis_tready_r;
   reg [CORE_COUNT-1:0] data_m_axis_tlast_r;
@@ -1883,10 +1881,10 @@ if (ENABLE_ILA) begin: ILA_inst
   reg [CORE_COUNT-1:0] ctrl_s_axis_tready_r;
   reg [CORE_COUNT-1:0] ctrl_m_axis_tvalid_r;
   reg [CORE_COUNT-1:0] ctrl_m_axis_tready_r;
-  
+
   reg [CORE_COUNT*PORT_WIDTH-1:0] data_m_axis_tdest_r;
   reg [CORE_COUNT*PORT_WIDTH-1:0] data_s_axis_tuser_r;
-  
+
   always @ (posedge sys_clk) begin
     data_m_axis_tvalid_r <= data_m_axis_tvalid;
     data_m_axis_tready_r <= data_m_axis_tready;
@@ -1904,15 +1902,15 @@ if (ENABLE_ILA) begin: ILA_inst
 
   ila_8x64 debugger3 (
     .clk    (sys_clk),
- 
+
     .trig_out(sched_trig_in),
     .trig_out_ack(sched_trig_in_ack),
     .trig_in (sched_trig_out),
     .trig_in_ack(sched_trig_out_ack),
- 
+
     .probe0({data_s_axis_tvalid_r,
              data_s_axis_tready_r,
-             ctrl_s_axis_tvalid_r, 
+             ctrl_s_axis_tvalid_r,
              ctrl_s_axis_tready_r}),
 
     .probe1(data_s_slot),
@@ -1922,13 +1920,13 @@ if (ENABLE_ILA) begin: ILA_inst
     .probe3(ctrl_s_msg_slot),
     .probe4({data_m_axis_tvalid_r,
              data_m_axis_tready_r,
-             ctrl_m_axis_tvalid_r, 
+             ctrl_m_axis_tvalid_r,
              ctrl_m_axis_tready_r}),
     .probe5(data_m_slot),
     .probe6({data_m_axis_tdest_r,
              data_m_axis_tlast_r}),
     .probe7(ctrl_m_msg_slot)
-    
+
     // .probe3(data_s_16_31_2nds),
     // .probe7(data_m_16_31_2nds)
 

@@ -7,22 +7,23 @@
  * AXIS wrapper for RISCV cores with internal memory
  */
 module riscv_axis_wrapper # (
-    parameter DATA_WIDTH       = 64,   
+    parameter DATA_WIDTH       = 64,
     parameter PORT_WIDTH       = 3,
-    parameter CORE_ID_WIDTH    = 4, 
+    parameter CORE_ID_WIDTH    = 4,
     parameter DRAM_PORT        = 6,
     parameter SLOT_COUNT       = 8,
     parameter MSG_WIDTH        = 46,
+    parameter BC_REGION_SIZE   = 4096,
     parameter STRB_WIDTH       = (DATA_WIDTH/8),
-    parameter SLOT_WIDTH       = $clog2(SLOT_COUNT+1), 
+    parameter SLOT_WIDTH       = $clog2(SLOT_COUNT+1),
     parameter TAG_WIDTH        = (SLOT_WIDTH>5)? SLOT_WIDTH:5,
     parameter ID_TAG_WIDTH     = CORE_ID_WIDTH+TAG_WIDTH,
-    
+
     parameter RECV_DESC_DEPTH  = 8,
     parameter SEND_DESC_DEPTH  = 8,
     parameter DRAM_DESC_DEPTH  = 16,
     parameter MSG_FIFO_DEPTH   = 16,
-    
+
     parameter MAX_PKT_HDR_SIZE = 128,
     parameter SLOT_START_ADDR  = 16'h0,
     parameter SLOT_ADDR_STEP   = 16'h0400,
@@ -35,10 +36,10 @@ module riscv_axis_wrapper # (
 (
     input  wire                     clk,
     input  wire                     rst,
-    
+
     input  wire [CORE_ID_WIDTH-1:0] core_id,
-    
-    // ---------------- DATA CHANNEL --------------- // 
+
+    // ---------------- DATA CHANNEL --------------- //
     // Incoming data
     input  wire [DATA_WIDTH-1:0]    data_s_axis_tdata,
     input  wire [STRB_WIDTH-1:0]    data_s_axis_tkeep,
@@ -47,7 +48,7 @@ module riscv_axis_wrapper # (
     input  wire                     data_s_axis_tlast,
     input  wire [TAG_WIDTH-1:0]     data_s_axis_tdest,
     input  wire [PORT_WIDTH-1:0]    data_s_axis_tuser,
-  
+
     // Outgoing data
     output wire [DATA_WIDTH-1:0]    data_m_axis_tdata,
     output wire [STRB_WIDTH-1:0]    data_m_axis_tkeep,
@@ -56,35 +57,35 @@ module riscv_axis_wrapper # (
     output wire                     data_m_axis_tlast,
     output wire [PORT_WIDTH-1:0]    data_m_axis_tdest,
     output wire [TAG_WIDTH-1:0]     data_m_axis_tuser,
-  
-    // ---------------- CTRL CHANNEL --------------- // 
+
+    // ---------------- CTRL CHANNEL --------------- //
     // Incoming control
     input  wire [35:0]              ctrl_s_axis_tdata,
     input  wire                     ctrl_s_axis_tvalid,
     output wire                     ctrl_s_axis_tready,
     input  wire                     ctrl_s_axis_tlast,
-  
+
     // Outgoing control
     output wire [35:0]              ctrl_m_axis_tdata,
     output wire                     ctrl_m_axis_tvalid,
     input  wire                     ctrl_m_axis_tready,
     output wire                     ctrl_m_axis_tlast,
-    
-    // ------------ DRAM RD REQ CHANNEL ------------- // 
+
+    // ------------ DRAM RD REQ CHANNEL ------------- //
     // Incoming DRAM request
     input  wire [63:0]              dram_s_axis_tdata,
     input  wire                     dram_s_axis_tvalid,
     output wire                     dram_s_axis_tready,
     input  wire                     dram_s_axis_tlast,
-  
+
     // Outgoing DRAM request
     output wire [63:0]              dram_m_axis_tdata,
     output wire                     dram_m_axis_tvalid,
     input  wire                     dram_m_axis_tready,
     output wire                     dram_m_axis_tlast,
-    
-    // ------------- CORE MSG CHANNEL -------------- // 
-    // Core messages output 
+
+    // ------------- CORE MSG CHANNEL -------------- //
+    // Core messages output
     output wire [MSG_WIDTH-1:0]     core_msg_out,
     output wire                     core_msg_out_valid,
     input  wire                     core_msg_out_ready,
@@ -104,7 +105,7 @@ module riscv_axis_wrapper # (
     input  wire                     evict_int_ack,
     output wire                     poke_int,
     input  wire                     poke_int_ack,
-    
+
     // DMA interface
     output wire                     dma_cmd_wr_en,
     output wire [25:0]              dma_cmd_wr_addr,
@@ -114,17 +115,17 @@ module riscv_axis_wrapper # (
     output wire [STRB_WIDTH-1:0]    dma_cmd_wr_strb,
     output wire                     dma_cmd_wr_last,
     input  wire                     dma_cmd_wr_ready,
-    
+
     output wire                     dma_cmd_rd_en,
     output wire [25:0]              dma_cmd_rd_addr,
     output wire                     dma_cmd_rd_last,
     input  wire                     dma_cmd_rd_ready,
-    
+
     input  wire                     dma_rd_resp_valid,
     input  wire [DATA_WIDTH-1:0]    dma_rd_resp_data,
     output wire                     dma_rd_resp_ready,
-      
-    // Descriptor to/from core 
+
+    // Descriptor to/from core
     output wire [63:0]              in_desc,
     output wire                     in_desc_valid,
     input  wire                     in_desc_taken,
@@ -134,18 +135,10 @@ module riscv_axis_wrapper # (
     input  wire                     out_desc_valid,
     output wire                     out_desc_ready,
 
-    // Slot information from core
-    input  wire [SLOT_WIDTH-1:0]    slot_wr_ptr, 
-    input  wire [24:0]              slot_wr_addr,
-    input  wire                     slot_wr_valid,
-    input  wire                     slot_for_hdr,
-    output wire                     slot_wr_ready,
- 
-    // Received DRAM and active slots info to core
+    // Received DRAM info to core
     output wire [4:0]               recv_dram_tag,
     output wire                     recv_dram_tag_valid,
-    output wire [SLOT_COUNT-1:0]    active_slots,
-    
+
     // Messages from the core
     input  wire [MSG_WIDTH-1:0]     bc_msg_out,
     input  wire                     bc_msg_out_valid,
@@ -156,12 +149,19 @@ module riscv_axis_wrapper # (
     output reg  [CORE_ID_WIDTH-1:0] bc_msg_in_user,
     output reg                      bc_msg_in_valid,
 
-    // Incoming status
-    input  wire [7:0]               core_errors,
-    input  wire [7:0]               mem_fifo_fulls,
-    input  wire                     ready_to_evict
+    // Status channel to core
+    output reg  [31:0]              wrapper_status_data,
+    output reg  [1:0]               wrapper_status_addr,
+    output reg                      wrapper_status_valid,
+    input  wire                     wrapper_status_ready,
+
+    // Status channel from core
+    input  wire [31:0]              core_status_data,
+    input  wire [1:0]               core_status_addr,
+    input  wire                     core_status_valid,
+    output wire                     core_status_ready
 );
-    
+
 /////////////////////////////////////////////////////////////////////
 ///////////////////// CORE RESET & INT COMMANDS /////////////////////
 /////////////////////////////////////////////////////////////////////
@@ -184,13 +184,12 @@ always @ (posedge clk) begin
         core_poke_r  <= 1'b1;
     if (ctrl_s_axis_tvalid && (ctrl_cmd == 4'h9))
         core_evict_r <= 1'b1;
-   
+
     if (rst) begin
         core_reset_r <= 1'b1;
         core_poke_r  <= 1'b0;
         core_evict_r <= 1'b0;
-    end 
-
+    end
 end
 
 assign core_reset = core_reset_r;
@@ -198,28 +197,17 @@ assign poke_int   = core_poke_r;
 assign evict_int  = core_evict_r;
 
 /////////////////////////////////////////////////////////////////////
-/////////// EXTRACTING BASE ADDR FROM/FOR INCOMING DATA /////////////
+/////////////////////// DECODE CORE STATUS //////////////////////////
 /////////////////////////////////////////////////////////////////////
-parameter HDR_ADDR_BITS  = $clog2(MAX_PKT_HDR_SIZE);
-parameter HDR_MSB_WIDTH = 24-HDR_ADDR_BITS;
 
 // Internal lookup table for slot addresses
-reg  [24:0] slot_addr_lut [1:SLOT_COUNT];
-wire [24:0] slot_addr;
-wire [SLOT_WIDTH-1:0] s_slot_ptr;
+parameter HDR_ADDR_BITS = $clog2(MAX_PKT_HDR_SIZE);
+parameter HDR_MSB_WIDTH = 24-HDR_ADDR_BITS;
 
-reg  [HDR_MSB_WIDTH-1:0] slot_hdr_addr_msb_lut [1:SLOT_COUNT];
-wire [HDR_MSB_WIDTH-1:0] slot_hdr_msb;
+reg [24:0]              slot_addr_lut         [1:SLOT_COUNT];
+reg [HDR_MSB_WIDTH-1:0] slot_hdr_addr_msb_lut [1:SLOT_COUNT];
 
-always @ (posedge clk)
-  if (slot_wr_valid)
-    if (slot_for_hdr)
-      slot_hdr_addr_msb_lut[slot_wr_ptr] <= slot_wr_addr[24:HDR_ADDR_BITS];
-    else 
-      slot_addr_lut        [slot_wr_ptr] <= slot_wr_addr;
-
-assign slot_wr_ready = 1'b1;
-
+// Default values for slot addr table
 integer j;
 initial begin
   for (j=1;j<=SLOT_COUNT;j=j+1) begin
@@ -227,7 +215,62 @@ initial begin
     slot_hdr_addr_msb_lut[j] = (HDR_START_ADDR>>$clog2(MAX_PKT_HDR_SIZE)) + (j-1);
   end
 end
- 
+
+wire [SLOT_WIDTH-1:0] slot_wr_ptr  = core_status_data[24+:SLOT_WIDTH];
+wire                  slot_for_hdr = core_status_data[31];
+// Slot header goes to data mem and packet to packet mem,
+// So MSB of slot_wr_addr is determined by being header or not.
+wire [24:0]           slot_wr_addr = {~slot_for_hdr,core_status_data[23:0]};
+
+reg [31:0] core_stat_reg, core_debug_l, core_debug_h;
+
+always @ (posedge clk) begin
+  if (core_status_valid)
+    case (core_status_addr)
+      2'b00: core_stat_reg <= core_status_data;
+      2'b01:
+        if (slot_for_hdr)
+          slot_hdr_addr_msb_lut[slot_wr_ptr] <= slot_wr_addr[24:HDR_ADDR_BITS];
+        else
+          slot_addr_lut        [slot_wr_ptr] <= slot_wr_addr;
+      2'b10: core_debug_l <= core_status_data;
+      2'b11: core_debug_h <= core_status_data;
+    endcase
+  if (rst)
+    core_stat_reg <= 32'd0;
+end
+
+assign core_status_ready = 1'b1;
+
+/////////////////////////////////////////////////////////////////////
+///////////////////// GENERATE WRAPPER STATUS ///////////////////////
+/////////////////////////////////////////////////////////////////////
+
+wire [SLOT_COUNT-1:0] active_slots;
+wire [7:0]  max_slot_count = SLOT_COUNT;
+wire [15:0] bc_region_size = BC_REGION_SIZE;
+
+always @ (posedge clk) begin
+  if (core_reset) begin
+    wrapper_status_data  <= {{(8-CORE_ID_WIDTH){1'b0}}, core_id,
+                             max_slot_count, bc_region_size};
+    wrapper_status_addr  <= 2'd0;
+    wrapper_status_valid <= 1'b1;
+  end else begin
+    wrapper_status_data  <= active_slots;
+    wrapper_status_addr  <= 2'd1;
+    wrapper_status_valid <= 1'b1;
+  end
+  if (rst)
+    wrapper_status_valid <= 1'b0;
+end
+
+// For debug use wrapper_status_ready
+
+/////////////////////////////////////////////////////////////////////
+/////////// EXTRACTING BASE ADDR FROM/FOR INCOMING DATA /////////////
+/////////////////////////////////////////////////////////////////////
+
 // Pipeline register to load from slot LUT or packet header
 wire [DATA_WIDTH-1:0] data_s_axis_tdata_r;
 wire [STRB_WIDTH-1:0] data_s_axis_tkeep_r;
@@ -281,8 +324,6 @@ axis_register # (
 );
 
 wire [PORT_WIDTH-1:0] dram_port = DRAM_PORT;
-wire [25:0]           s_header_addr;
-wire [25:0]           s_base_addr;
 wire [63:0]           incoming_hdr;
 wire                  incoming_hdr_v;
 
@@ -317,12 +358,16 @@ header_remover # (
   .m_axis_tready(s_axis_tready)
 );
 
-assign s_slot_ptr    = s_axis_tdest[SLOT_WIDTH-1:0];
-assign s_header_addr = incoming_hdr[32 +: 26];
+wire [24:0]              slot_addr;
+wire [HDR_MSB_WIDTH-1:0] slot_hdr_msb;
+wire [25:0]              s_base_addr;
+
+wire [SLOT_WIDTH-1:0] s_slot_ptr    = s_axis_tdest[SLOT_WIDTH-1:0];
+wire [25:0]           s_header_addr = incoming_hdr[32 +: 26];
 
 // We want to use LUTS instead of BRAM or REGS
-assign slot_addr     = slot_addr_lut        [s_slot_ptr]; 
-assign slot_hdr_msb  = slot_hdr_addr_msb_lut[s_slot_ptr]; 
+assign slot_addr     = slot_addr_lut        [s_slot_ptr];
+assign slot_hdr_msb  = slot_hdr_addr_msb_lut[s_slot_ptr];
 assign s_base_addr   = incoming_hdr_v ? s_header_addr : {1'b0,slot_addr};
 
 /////////////////////////////////////////////////////////////////////
@@ -348,20 +393,20 @@ reg  [63:0]  m_header_r;
 reg          m_header_v;
 wire         m_header_ready;
 
-wire [127:0] dram_wr_desc; 
+wire [127:0] dram_wr_desc;
 wire         dram_wr_valid;
 wire         dram_wr_ready;
 
 wire ctrl_in_valid, ctrl_in_ready;
 wire [ID_TAG_WIDTH+64:0] ctrl_in_desc;
 
-always @ (posedge clk) 
+always @ (posedge clk)
   if (dram_wr_valid && dram_wr_ready)
     m_header_r <= dram_wr_desc[127:64];
   else if (ctrl_in_valid && ctrl_in_desc[64+ID_TAG_WIDTH] && ctrl_in_ready)
     m_header_r <= {{(64-ID_TAG_WIDTH){1'b0}},ctrl_in_desc[63+ID_TAG_WIDTH:64]};
 
-// Can get 1 cycle more efficient while output DMA is getting initialized 
+// Can get 1 cycle more efficient while output DMA is getting initialized
 always @ (posedge clk)
   if (rst)
     m_header_v <= 1'b0;
@@ -441,7 +486,7 @@ axis_register # (
 /////////////////////////////////////////////////////////////////////
 wire                   dma_cmd_rd_en_n;
 wire                   pkt_sent;
-  
+
 wire                   recv_desc_valid;
 wire                   recv_desc_ready;
 wire                   recv_desc_fifo_ready;
@@ -459,11 +504,11 @@ assign dma_cmd_rd_en = dma_cmd_rd_en_n && dma_rd_resp_ready;
 
 axis_dma # (
   .DATA_WIDTH     (DATA_WIDTH),
-  .ADDR_WIDTH     (26),       
-  .LEN_WIDTH      (16),        
-  .DEST_WIDTH_IN  (TAG_WIDTH),   
-  .USER_WIDTH_IN  (PORT_WIDTH),   
-  .DEST_WIDTH_OUT (PORT_WIDTH),  
+  .ADDR_WIDTH     (26),
+  .LEN_WIDTH      (16),
+  .DEST_WIDTH_IN  (TAG_WIDTH),
+  .USER_WIDTH_IN  (PORT_WIDTH),
+  .DEST_WIDTH_OUT (PORT_WIDTH),
   .USER_WIDTH_OUT (TAG_WIDTH),
   .MAX_PKT_HDR_SIZE(MAX_PKT_HDR_SIZE),
   .HDR_MSB_WIDTH  (HDR_MSB_WIDTH),
@@ -491,17 +536,17 @@ axis_dma # (
   .m_axis_tlast (m_axis_tlast),
   .m_axis_tdest (m_axis_tdest),
   .m_axis_tuser (m_axis_tuser),
-  
+
   .mem_wr_en   (dma_cmd_wr_en),
   .mem_wr_strb (dma_cmd_wr_strb),
   .mem_wr_addr (dma_cmd_wr_addr),
   .mem_wr_data (dma_cmd_wr_data),
   .mem_wr_last (dma_cmd_wr_last),
   .mem_wr_ready(dma_cmd_wr_ready),
-  
+
   .mem_hdr_wr_en(dma_cmd_hdr_wr_en),
   .mem_hdr_wr_addr(dma_cmd_hdr_wr_addr),
-  
+
   .mem_rd_en        (dma_cmd_rd_en_n),
   .mem_rd_addr      (dma_cmd_rd_addr),
   .mem_rd_last      (dma_cmd_rd_last),
@@ -509,7 +554,7 @@ axis_dma # (
   .mem_rd_data      (dma_rd_resp_data),
   .mem_rd_data_v    (dma_rd_resp_valid),
   .mem_rd_data_ready(dma_rd_resp_ready),
-  
+
   .recv_desc_valid(recv_desc_valid),
   .recv_desc_ready(recv_desc_ready),
   .recv_desc_len  (recv_desc_len),
@@ -550,14 +595,14 @@ simple_sync_fifo # (
   .din_valid(recv_desc_valid && (!recv_from_dram) && (!recv_tag_zero)),
   .din(recv_desc),
   .din_ready(recv_desc_fifo_ready),
- 
+
   .dout_valid(in_desc_valid),
   .dout(in_desc),
   .dout_ready(in_desc_taken)
 );
 
 wire       recv_dram_tag_fifo_ready;
- 
+
 reg [4:0] recv_dram_tag_r;
 reg       recv_dram_tag_v_r;
 
@@ -572,8 +617,8 @@ assign recv_dram_tag_valid      = recv_dram_tag_v_r;
 assign recv_dram_tag            = recv_dram_tag_r;
 assign recv_dram_tag_fifo_ready = 1'b1;
 
-assign recv_desc_ready = (recv_desc_fifo_ready && (!recv_from_dram))  || 
-                         (recv_from_dram && recv_dram_tag_fifo_ready) || 
+assign recv_desc_ready = (recv_desc_fifo_ready && (!recv_from_dram))  ||
+                         (recv_from_dram && recv_dram_tag_fifo_ready) ||
                          recv_tag_zero;
 /////////////////////////////////////////////////////////////////////
 //////////// PARSING CORE DESCRIPTOR AND FIFOS PER TYPE /////////////
@@ -581,8 +626,8 @@ assign recv_desc_ready = (recv_desc_fifo_ready && (!recv_from_dram))  ||
 wire [3:0] out_desc_type = out_desc[63:60];
 
 wire core_data_wr =  (out_desc_type == 4'd0);
-wire core_ctrl_wr = ((out_desc_type == 4'd1) || 
-                     (out_desc_type == 4'd2) || 
+wire core_ctrl_wr = ((out_desc_type == 4'd1) ||
+                     (out_desc_type == 4'd2) ||
                      (out_desc_type == 4'd3));
 wire core_dram_wr =  (out_desc_type == 4'd4);
 wire core_dram_rd =  (out_desc_type == 4'd5);
@@ -602,7 +647,7 @@ simple_sync_fifo # (
   .din_valid(out_desc_valid && core_data_wr),
   .din(out_desc),
   .din_ready(core_data_wr_ready),
- 
+
   .dout_valid(core_data_wr_valid_f),
   .dout(core_data_wr_desc_f),
   .dout_ready(core_data_wr_ready_f)
@@ -624,7 +669,7 @@ simple_sync_fifo # (
   .din_valid(out_desc_valid && core_ctrl_wr),
   .din(out_desc),
   .din_ready(core_ctrl_wr_ready),
- 
+
   .dout_valid(core_ctrl_wr_valid_f),
   .dout(core_ctrl_wr_desc_f),
   .dout_ready(core_ctrl_wr_ready_f)
@@ -657,7 +702,7 @@ simple_sync_fifo # (
   .din({out_desc_dram_addr, out_desc[63:24+PORT_WIDTH],
         dram_port, out_desc[23:0]}),
   .din_ready(core_dram_wr_ready),
- 
+
   .dout_valid(core_dram_wr_valid_f),
   .dout(core_dram_wr_desc_f),
   .dout_ready(core_dram_wr_ready_f)
@@ -678,15 +723,15 @@ simple_sync_fifo # (
   .din_valid(out_desc_valid && core_dram_rd),
   .din({out_desc_dram_addr, out_desc}),
   .din_ready(core_dram_rd_ready),
- 
+
   .dout_valid(core_dram_rd_valid_f),
   .dout(core_dram_rd_desc_f),
   .dout_ready(core_dram_rd_ready_f)
 );
 
-assign out_desc_ready = (core_data_wr_ready && core_data_wr) || 
+assign out_desc_ready = (core_data_wr_ready && core_data_wr) ||
                          (core_ctrl_wr_ready && core_ctrl_wr) ||
-                         (core_dram_wr_ready && core_dram_wr) || 
+                         (core_dram_wr_ready && core_dram_wr) ||
                          (core_dram_rd_ready && core_dram_rd);
 
 /////////////////////////////////////////////////////////////////////
@@ -702,22 +747,22 @@ always @ (posedge clk) begin
   if (ctrl_s_axis_tvalid && ctrl_s_axis_tready) begin
     ctrl_s_axis_tdata_r  <= ctrl_s_axis_tdata;
     ctrl_in_slot_ptr     <= ctrl_s_axis_tdata[16+:SLOT_WIDTH];
-  end 
-  ctrl_s_axis_tvalid_r <= ((ctrl_s_axis_tvalid && ctrl_desc_cmd && ctrl_s_axis_tready) || 
+  end
+  ctrl_s_axis_tvalid_r <= ((ctrl_s_axis_tvalid && ctrl_desc_cmd && ctrl_s_axis_tready) ||
                            (ctrl_s_axis_tvalid_r && (!ctrl_s_axis_tready)));
 
   if (rst)
     ctrl_s_axis_tvalid_r <= 1'b0;
 end
-  
+
 wire [24:0] ctrl_send_addr   = send_slot_addr[ctrl_in_slot_ptr];
 wire [24:0] ctrl_lp_send_len = send_slot_len [ctrl_in_slot_ptr];
 wire [3:0]  ctrl_msg_type    = ctrl_s_axis_tdata_r[35:32];
 wire ctrl_s_axis_fifo_ready;
 
-wire [ID_TAG_WIDTH+64:0] parsed_ctrl_desc = (ctrl_msg_type==4'd1) ? 
+wire [ID_TAG_WIDTH+64:0] parsed_ctrl_desc = (ctrl_msg_type==4'd1) ?
               {1'b1,ctrl_s_axis_tdata_r[ID_TAG_WIDTH-1:0],7'd0, ctrl_send_addr,
-               ctrl_s_axis_tdata_r[31:16], ctrl_lp_send_len} : 
+               ctrl_s_axis_tdata_r[31:16], ctrl_lp_send_len} :
               {1'b0,{(ID_TAG_WIDTH+7){1'b0}}, ctrl_send_addr,ctrl_s_axis_tdata_r[31:0]};
 
 // A desc FIFO for send data based on scheduler message
@@ -731,9 +776,9 @@ simple_fifo # (
   .clear(core_reset_r),
 
   .din_valid(ctrl_s_axis_tvalid_r),
-  .din(parsed_ctrl_desc), 
+  .din(parsed_ctrl_desc),
   .din_ready(ctrl_s_axis_tready),
- 
+
   .dout_valid(ctrl_in_valid),
   .dout(ctrl_in_desc),
   .dout_ready(ctrl_in_ready)
@@ -741,11 +786,11 @@ simple_fifo # (
 
 /////////////////////////////////////////////////////////////////////
 
-// Latch the output descriptor and send it to controller when 
+// Latch the output descriptor and send it to controller when
 // it is transmitted
 wire pkt_sent_ready; // should always be ready
 reg [63:0] latched_send_desc;
-always @ (posedge clk) 
+always @ (posedge clk)
     if (send_desc_valid && send_desc_ready && pkt_sent_ready)
         latched_send_desc <= send_desc;
 
@@ -763,10 +808,10 @@ simple_fifo # (
   .rst(rst),
   .clear(1'b0),
 
-  .din_valid(pkt_sent && (!pkt_sent_is_dram)), 
+  .din_valid(pkt_sent && (!pkt_sent_is_dram)),
   .din(latched_send_desc),
   .din_ready(pkt_sent_ready),
- 
+
   .dout_valid(pkt_sent_valid_f),
   .dout(pkt_sent_desc_f),
   .dout_ready(pkt_sent_ready_f)
@@ -792,7 +837,7 @@ simple_fifo # (
   .din_valid(dram_req_valid),
   .din({dram_req_high, dram_req_low}),
   .din_ready(dram_req_ready),
- 
+
   .dout_valid(dram_in_valid),
   .dout(dram_in_desc),
   .dout_ready(dram_in_ready)
@@ -819,7 +864,7 @@ always @ (posedge clk) begin
   else
       dram_req_valid <= 1'b0;
 
-  if (rst) 
+  if (rst)
       dram_req_valid <= 1'b0;
 end
 
@@ -844,7 +889,7 @@ always @ (posedge clk)
     endcase
 
 assign dram_m_axis_tvalid_n = (send_dram_rd_state != 2'd0);
-assign dram_m_axis_tdata_n  = (send_dram_rd_state == 2'd2) ? core_dram_rd_desc_f[127:64] 
+assign dram_m_axis_tdata_n  = (send_dram_rd_state == 2'd2) ? core_dram_rd_desc_f[127:64]
                                                            : core_dram_rd_desc_f[63:0];
 assign dram_m_axis_tlast_n  = (send_dram_rd_state == 2'd2);
 assign core_dram_rd_ready_f = (send_dram_rd_state == 2'd2) && dram_m_axis_tready_n;
@@ -905,24 +950,24 @@ assign dram_wr_desc  = dram_select ? core_dram_wr_desc_f : dram_in_desc;
 assign core_dram_wr_ready_f =   dram_select  && core_dram_wr_valid_f && dram_wr_ready;
 assign dram_in_ready       = (!dram_select) && dram_in_valid && dram_wr_ready;
 
-// Arbiter between packets and DRAM out data, round robin 
+// Arbiter between packets and DRAM out data, round robin
 reg dram_next_selection_r;
 always @ (posedge clk)
   if (rst)
     dram_next_selection_r <= 1'b0;
-  else if (dram_wr_valid && dram_wr_ready) 
+  else if (dram_wr_valid && dram_wr_ready)
     dram_next_selection_r <= 1'b0;
   else if (send_pkt_valid && send_pkt_ready)
     dram_next_selection_r <= 1'b1;
 
-reg dram_out_select; 
+reg dram_out_select;
 always @ (*)
   if (!dram_wr_valid)
     dram_out_select = 1'b0;
   else if (!send_pkt_valid)
     dram_out_select = 1'b1;
   else
-    dram_out_select = dram_next_selection_r; 
+    dram_out_select = dram_next_selection_r;
 
 assign dram_wr_ready   = dram_wr_valid && dram_out_select && send_desc_ready && pkt_sent_ready;
 assign send_pkt_ready  = send_pkt_valid && !dram_out_select && send_desc_ready && pkt_sent_ready;
@@ -935,7 +980,7 @@ wire [63:0] ctrl_out_data;
 wire ctrl_out_valid, ctrl_out_ready;
 
 wire   ctrl_select          = pkt_sent_valid_f;
-assign ctrl_out_valid       = pkt_sent_valid_f || core_ctrl_wr_valid_f; 
+assign ctrl_out_valid       = pkt_sent_valid_f || core_ctrl_wr_valid_f;
 assign ctrl_out_data        = ctrl_select ? pkt_sent_desc_f : core_ctrl_wr_desc_f;
 assign core_ctrl_wr_ready_f = ctrl_out_ready && (!ctrl_select);
 assign pkt_sent_ready_f     = ctrl_out_ready &&   ctrl_select ;
@@ -955,7 +1000,7 @@ always @ (posedge clk) begin
     ctrl_m_axis_tvalid_r <= 1'b0;
     ctrl_m_axis_tdata_r  <= 36'd0;
   end
-end 
+end
 
 assign ctrl_m_axis_tvalid = ctrl_m_axis_tvalid_r;
 assign ctrl_m_axis_tdata  = ctrl_m_axis_tdata_r;
@@ -966,7 +1011,7 @@ assign ctrl_out_ready     = (!ctrl_m_axis_tvalid_r) || ctrl_m_axis_tready;
 /////////////////////// BROADCAST MESSAGING /////////////////////////
 /////////////////////////////////////////////////////////////////////
 
-// Deassert write for the sender core. 
+// Deassert write for the sender core.
 // Later grouping can be implemented as well in the fpga_core module
 always @ (posedge clk) begin
   bc_msg_in       <= core_msg_in;
@@ -986,7 +1031,7 @@ simple_sync_fifo # (
   .din_valid(bc_msg_out_valid),
   .din(bc_msg_out),
   .din_ready(bc_msg_out_ready),
- 
+
   .dout_valid(core_msg_out_valid),
   .dout(core_msg_out),
   .dout_ready(core_msg_out_ready)
@@ -997,7 +1042,7 @@ simple_sync_fifo # (
 ///////////////////////////////////////////////////////////////////////////
 wire done_w_slot = ((out_desc_type == 4'd0) ||
                     (out_desc_type == 4'd1) ||
-                    (out_desc_type == 4'd2)) && 
+                    (out_desc_type == 4'd2)) &&
                     out_desc_valid && out_desc_ready;
 
 reg [SLOT_COUNT:1] slots_in_prog;
@@ -1018,7 +1063,7 @@ assign active_slots = slots_in_prog;
 wire invalid_out_desc = (out_desc_type>4'd5) && out_desc_valid;
 reg invalid_out_desc_r;
 always @ (posedge clk)
-  if (rst || core_reset) 
+  if (rst || core_reset)
     invalid_out_desc_r <= 1'b0;
   else
     invalid_out_desc_r <= invalid_out_desc_r || invalid_out_desc;

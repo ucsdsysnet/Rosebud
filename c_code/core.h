@@ -15,43 +15,47 @@
 #define DMEM_BASE         0x00800000
 #define PMEM_BASE         0x01000000
 
-#define RECV_DESC         (*((volatile struct Desc*)(IO_INT_BASE + 0x0040)))
-#define DRAM_FLAGS        (*((volatile unsigned int *)(IO_INT_BASE + 0x0048)))
-#define CORE_ID           (*((unsigned int *)(IO_INT_BASE + 0x0050)))
-#define TIMER_32_L        (*((volatile unsigned int *)(IO_INT_BASE + 0x0054)))
-#define TIMER_32_H        (*((volatile unsigned int *)(IO_INT_BASE + 0x0058)))
-#define FLAGS_REG         (*((volatile unsigned int *)(IO_INT_BASE + 0x005C)))
-#define ERROR_FLAGS       (*((volatile unsigned char *)(IO_INT_BASE + 0x005C)))
-#define MASK_READ         (*((volatile unsigned char *)(IO_INT_BASE + 0x005D)))
-#define INTERRUPT_FLAGS   (*((volatile unsigned char *)(IO_INT_BASE + 0x005E)))
-#define ACTIVE_SLOTS      (*((volatile unsigned int *)(IO_INT_BASE + 0x0060)))
-#define IMEM_SIZE         (*((unsigned int *)(IO_INT_BASE + 0x0064)))
-#define DMEM_SIZE         (*((unsigned int *)(IO_INT_BASE + 0x0068)))
-#define PMEM_SIZE         (*((unsigned int *)(IO_INT_BASE + 0x006C)))
-#define PMEM_SEG_SIZE     (*((unsigned int *)(IO_INT_BASE + 0x0070)))
-#define PMEM_SEG_COUNT    (*((unsigned int *)(IO_INT_BASE + 0x0074)))
-#define BC_REGION_SIZE    (*((unsigned int *)(IO_INT_BASE + 0x0078)))
-#define MAX_SLOT_COUNT    (*((unsigned int *)(IO_INT_BASE + 0x007C)))
+#define RECV_DESC         (*((volatile struct Desc*)        (IO_INT_BASE + 0x0080)))
+#define DRAM_FLAGS        (*((volatile unsigned int *)      (IO_INT_BASE + 0x0088)))
+#define CORE_ID           (*((unsigned int *)               (IO_INT_BASE + 0x0090)))
+#define TIMER_32_L        (*((volatile unsigned int *)      (IO_INT_BASE + 0x0094)))
+#define TIMER_32_H        (*((volatile unsigned int *)      (IO_INT_BASE + 0x0098)))
+#define FLAGS_REG         (*((volatile unsigned int *)      (IO_INT_BASE + 0x009C)))
+#define ERROR_FLAGS       (*((volatile unsigned char *)     (IO_INT_BASE + 0x009C)))
+#define MASK_READ         (*((volatile unsigned char *)     (IO_INT_BASE + 0x009D)))
+#define INTERRUPT_FLAGS   (*((volatile unsigned char *)     (IO_INT_BASE + 0x009E)))
+#define ACTIVE_SLOTS      (*((volatile unsigned int *)      (IO_INT_BASE + 0x00A0)))
+#define IMEM_SIZE         (*((unsigned int *)               (IO_INT_BASE + 0x00A4)))
+#define DMEM_SIZE         (*((unsigned int *)               (IO_INT_BASE + 0x00A8)))
+#define PMEM_SIZE         (*((unsigned int *)               (IO_INT_BASE + 0x00AC)))
+#define PMEM_SEG_SIZE     (*((unsigned int *)               (IO_INT_BASE + 0x00B0)))
+#define PMEM_SEG_COUNT    (*((unsigned int *)               (IO_INT_BASE + 0x00B4)))
+#define BC_REGION_SIZE    (*((unsigned int *)               (IO_INT_BASE + 0x00B8)))
+#define MAX_SLOT_COUNT    (*((unsigned int *)               (IO_INT_BASE + 0x00BC)))
+#define DEBUG_IN_L        (*((unsigned int *)               (IO_INT_BASE + 0x00C0)))
+#define DEBUG_IN_H        (*((unsigned int *)               (IO_INT_BASE + 0x00C4)))
 
-#define SEND_DESC         (*((volatile struct   Desc*)(IO_INT_BASE + 0x0008)))
+#define SEND_DESC         (*((volatile struct   Desc*)      (IO_INT_BASE + 0x0008)))
 #define DRAM_ADDR         (*((volatile unsigned long long *)(IO_INT_BASE + 0x0010)))
-#define SLOT_ADDR         (*((volatile unsigned int *)(IO_INT_BASE + 0x0018)))
-#define TIMER_INTERVAL    (*((volatile unsigned int *)(IO_INT_BASE + 0x001C)))
-#define DRAM_FLAG_WR      (*((volatile unsigned int *)(IO_INT_BASE + 0x0020)))
-#define DEBUG_REG         (*((volatile unsigned int *)(IO_INT_BASE + 0x0024)))
+#define SLOT_ADDR         (*((volatile unsigned int *)      (IO_INT_BASE + 0x0018)))
+#define TIMER_INTERVAL    (*((volatile unsigned int *)      (IO_INT_BASE + 0x001C)))
+#define DRAM_FLAG_WR      (*((volatile unsigned int *)      (IO_INT_BASE + 0x0020)))
+#define READY_TO_EVICT    (*((volatile unsigned int *)      (IO_INT_BASE + 0x0024)))
+#define SEND_DESC_TYPE    (*((volatile unsigned char *)     (IO_INT_BASE + 0x0028)))
+#define RECV_DESC_RELEASE (*((volatile unsigned char *)     (IO_INT_BASE + 0x002C)))
+#define DRAM_FLAG_RST     (*((volatile unsigned char *)     (IO_INT_BASE + 0x0030)))
+#define UPDATE_SLOT       (*((volatile unsigned char *)     (IO_INT_BASE + 0x0034)))
+#define MASK_WRITE        (*((volatile unsigned char *)     (IO_INT_BASE + 0x0038)))
+#define INTERRUPT_ACK     (*((volatile unsigned char *)     (IO_INT_BASE + 0x003C)))
+#define DEBUG_OUT         (*((volatile unsigned long long *)(IO_INT_BASE + 0x0040)))
+#define DEBUG_OUT_L       (*((volatile unsigned int *)      (IO_INT_BASE + 0x0040)))
+#define DEBUG_OUT_H       (*((volatile unsigned int *)      (IO_INT_BASE + 0x0044)))
 
-#define SEND_DESC_TYPE    (*((volatile unsigned char *)(IO_INT_BASE + 0x0028)))
-#define RECV_DESC_RELEASE (*((volatile unsigned char *)(IO_INT_BASE + 0x002C)))
-#define DRAM_FLAG_RST     (*((volatile unsigned char *)(IO_INT_BASE + 0x0030)))
-#define UPDATE_SLOT       (*((volatile unsigned char *)(IO_INT_BASE + 0x0034)))
-#define MASK_WRITE        (*((volatile unsigned char *)(IO_INT_BASE + 0x0038)))
-#define INTERRUPT_ACK     (*((volatile unsigned char *)(IO_INT_BASE + 0x003C)))
-
-#define STATUS_RD         (IO_INT_BASE + 0x004C)
-#define IN_PKT_READY      (*((volatile unsigned char *)(IO_INT_BASE + 0x004C))==1)
-#define DATA_DESC_READY   (*((volatile unsigned char *)(IO_INT_BASE + 0x004D))==1)
-#define UPDATE_SLOT_READY (*((volatile unsigned char *)(IO_INT_BASE + 0x004E))==1)
-#define CORE_MSG_READY    (*((volatile unsigned char *)(IO_INT_BASE + 0x004F))==1)
+#define STATUS_RD                                           (IO_INT_BASE + 0x008C)
+#define IN_PKT_READY      (*((volatile unsigned char *)     (IO_INT_BASE + 0x008C))==1)
+#define DATA_DESC_READY   (*((volatile unsigned char *)     (IO_INT_BASE + 0x008D))==1)
+#define UPDATE_SLOT_READY (*((volatile unsigned char *)     (IO_INT_BASE + 0x008E))==1)
+#define CORE_MSG_READY    (*((volatile unsigned char *)     (IO_INT_BASE + 0x008F))==1)
 
 // MASK BITS:    DATA_MEM_ERR | IMEM_ERR | EXT_IO_ERR | EVICT_INT | POKE_INT | TIMER_INT | RECV_DRAM_DATA_INT | PACKET_INT
 // FLAGS BITS:   8 BITS RESERVED 
@@ -132,8 +136,8 @@ inline void write_dram_flags (const unsigned int val){
 	return;
 }
 
-inline void write_debug (const unsigned int val){
-	DEBUG_REG=val;
+inline void write_debug (const unsigned long long val){
+	DEBUG_OUT=val;
 	return;
 }
 
