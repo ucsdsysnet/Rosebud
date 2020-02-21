@@ -27,9 +27,9 @@ _start:
     # set initial SP
     # SP = DMEM_BASE + DMEM_SIZE - BC_REGION_SIZE
     li t0, 0x00800000 # DMEM_BASE
-    lw t1, 0x0068(zero) # read DMEM_SIZE
+    lw t1, 0x00A8(zero) # read DMEM_SIZE
     add t0, t0, t1
-    lw t1, 0x0078(zero) # read BC_REGION_SIZE
+    lw t1, 0x00B8(zero) # read BC_REGION_SIZE
     sub sp, t0, t1
 
     # clear BSS

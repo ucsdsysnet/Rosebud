@@ -811,7 +811,6 @@ def bench():
           yield rc.mem_write(dev_pf0_bar0+0x000440, struct.pack('<L', (mem_base+0x0000) & 0xffffffff))
           yield rc.mem_write(dev_pf0_bar0+0x000444, struct.pack('<L', (mem_base+0x0000 >> 32) & 0xffffffff))
           yield rc.mem_write(dev_pf0_bar0+0x000448, struct.pack('<L', ((4<<26)+0x800100) & 0xffffffff))
-          # yield rc.mem_write(dev_pf0_bar0+0x00044C, struct.pack('<L', (((4<<26)+0x0100) >> 32) & 0xffffffff))
           yield rc.mem_write(dev_pf0_bar0+0x000450, struct.pack('<L', 0x400))
           yield rc.mem_write(dev_pf0_bar0+0x000454, struct.pack('<L', 0xAA))
 
