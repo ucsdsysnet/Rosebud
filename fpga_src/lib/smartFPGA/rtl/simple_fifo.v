@@ -182,10 +182,10 @@ always @ (posedge clk)
 assign empty = empty_r; 
 assign full  = full_r; 
 
-assign din_ready  = ~full_r & ~rst;
+assign din_ready  = ~full_r & ~rst & ~clear;
 assign dout_valid = ~empty_r;
 
-assign item_count   = item_count_r;
+assign item_count = item_count_r;
 
 endmodule
 

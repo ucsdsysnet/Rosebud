@@ -78,7 +78,7 @@ parameter SLOT_COUNT     = 8;
 parameter SLOT_WIDTH     = $clog2(SLOT_COUNT+1);
 
 parameter REG_TYPE       = 2;
-parameter REG_LENGTH     = 2;
+parameter REG_LENGTH     = 1;
 
 ///////////////////////////////////////////////////////////////////////////////
 /////////////////// Register input and outputs ////////////////////////////////

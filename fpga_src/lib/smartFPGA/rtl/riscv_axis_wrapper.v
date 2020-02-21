@@ -592,7 +592,7 @@ simple_sync_fifo # (
   .DATA_WIDTH(64)
 ) recvd_data_fifo (
   .clk(clk),
-  .rst(rst || core_reset_r),
+  .rst(rst), // || core_reset_r),
 
   .din_valid(recv_desc_valid && (!recv_from_dram) && (!recv_tag_zero)),
   .din(recv_desc),
@@ -641,12 +641,14 @@ wire core_data_wr_ready;
 wire core_data_wr_valid_f, core_data_wr_ready_f;
 wire [63:0] core_data_wr_desc_f;
 
-simple_sync_fifo # (
-  .DEPTH(SEND_DESC_DEPTH),
+simple_fifo # (
+  // .DEPTH(SEND_DESC_DEPTH),
+  .ADDR_WIDTH($clog2(SEND_DESC_DEPTH)),
   .DATA_WIDTH(64)
 ) send_data_fifo (
   .clk(clk),
-  .rst(rst || core_reset_r || out_desc_err),
+  .rst(rst || core_reset_r),
+  .clear(out_desc_err),
 
   .din_valid(out_desc_valid && core_data_wr),
   .din(out_desc),
@@ -663,12 +665,14 @@ wire core_ctrl_wr_ready;
 wire core_ctrl_wr_valid_f, core_ctrl_wr_ready_f;
 wire [63:0] core_ctrl_wr_desc_f;
 
-simple_sync_fifo # (
-  .DEPTH(SEND_DESC_DEPTH),
+simple_fifo # (
+  // .DEPTH(SEND_DESC_DEPTH),
+  .ADDR_WIDTH($clog2(SEND_DESC_DEPTH)),
   .DATA_WIDTH(64)
 ) send_ctrl_fifo (
   .clk(clk),
-  .rst(rst || core_reset_r || out_desc_err),
+  .rst(rst || core_reset_r),
+  .clear(out_desc_err),
 
   .din_valid(out_desc_valid && core_ctrl_wr),
   .din(out_desc),
@@ -695,12 +699,14 @@ wire core_dram_wr_ready;
 wire core_dram_wr_valid_f, core_dram_wr_ready_f;
 wire [127:0] core_dram_wr_desc_f;
 
-simple_sync_fifo # (
-  .DEPTH(DRAM_DESC_DEPTH),
+simple_fifo # (
+  // .DEPTH(DRAM_DESC_DEPTH),
+  .ADDR_WIDTH($clog2(DRAM_DESC_DEPTH)),
   .DATA_WIDTH(128)
 ) dram_send_fifo (
   .clk(clk),
   .rst(rst || core_reset_r),
+  .clear(1'b0),
 
   .din_valid(out_desc_valid && core_dram_wr),
   .din({out_desc_dram_addr, out_desc[63:24+PORT_WIDTH],
@@ -717,12 +723,14 @@ wire core_dram_rd_ready;
 wire core_dram_rd_valid_f, core_dram_rd_ready_f;
 wire [127:0] core_dram_rd_desc_f;
 
-simple_sync_fifo # (
-  .DEPTH(DRAM_DESC_DEPTH),
+simple_fifo # (
+  // .DEPTH(DRAM_DESC_DEPTH),
+  .ADDR_WIDTH($clog2(DRAM_DESC_DEPTH)),
   .DATA_WIDTH(128)
 ) send_dram_ctrl_fifo (
   .clk(clk),
   .rst(rst || core_reset_r),
+  .clear(1'b0),
 
   .din_valid(out_desc_valid && core_dram_rd),
   .din({out_desc_dram_addr, out_desc}),
@@ -777,7 +785,7 @@ simple_fifo # (
 ) recvd_ctrl_fifo (
   .clk(clk),
   .rst(rst),
-  .clear(core_reset_r),
+  .clear(1'b0), //core_reset_r),
 
   .din_valid(ctrl_s_axis_tvalid_r),
   .din(parsed_ctrl_desc),
