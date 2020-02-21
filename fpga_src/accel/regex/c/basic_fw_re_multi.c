@@ -71,6 +71,9 @@ int main(void)
 	header_slot_base = DMEM_BASE + (DMEM_SIZE >> 1);
 	header_slot_size = 128;
 
+	if (slot_count > MAX_SLOT_COUNT)
+		slot_count = MAX_SLOT_COUNT;
+
 	if (slot_count > MAX_CTX_COUNT)
 		slot_count = MAX_CTX_COUNT;
 
