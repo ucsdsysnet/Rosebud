@@ -43,14 +43,14 @@ assign error = 1'b0;
 localparam LEN_WIDTH = 16;
 
 reg [PMEM_ADDR_WIDTH-1:0] cmd_addr_reg;
-reg [LEN_WIDTH-1:0]            cmd_len_reg;
-reg                            cmd_valid_reg;
-wire                           cmd_ready;
+reg [LEN_WIDTH-1:0]       cmd_len_reg;
+reg                       cmd_valid_reg;
+wire                      cmd_ready;
 
-wire                           status_match;
-wire                           status_done;
+wire                      status_match;
+wire                      status_done;
 
-reg [DATA_WIDTH-1:0] read_data_reg;
+reg [IO_DATA_WIDTH-1:0] read_data_reg;
 reg read_data_valid_reg;
 
 assign io_rd_data = read_data_reg;

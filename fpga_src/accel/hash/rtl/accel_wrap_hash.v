@@ -57,7 +57,7 @@ reg         hash_clear_reg = 0;
 
 wire [31:0]  hash_out;
 
-reg [DATA_WIDTH-1:0] read_data_reg;
+reg [IO_DATA_WIDTH-1:0] read_data_reg;
 reg read_data_valid_reg;
 
 assign io_rd_data = read_data_reg;

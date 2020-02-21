@@ -45,14 +45,14 @@ localparam ACCEL_COUNT = ACC_MEM_BLOCKS;
 localparam LEN_WIDTH = 16;
 
 reg [PMEM_ADDR_WIDTH-1:0] cmd_addr_reg[ACCEL_COUNT-1:0];
-reg [LEN_WIDTH-1:0]            cmd_len_reg[ACCEL_COUNT-1:0];
-reg [ACCEL_COUNT-1:0]          cmd_valid_reg;
-wire [ACCEL_COUNT-1:0]         cmd_ready;
+reg [LEN_WIDTH-1:0]       cmd_len_reg[ACCEL_COUNT-1:0];
+reg [ACCEL_COUNT-1:0]     cmd_valid_reg;
+wire [ACCEL_COUNT-1:0]    cmd_ready;
 
-wire [ACCEL_COUNT-1:0]         status_match;
-wire [ACCEL_COUNT-1:0]         status_done;
+wire [ACCEL_COUNT-1:0]    status_match;
+wire [ACCEL_COUNT-1:0]    status_done;
 
-reg [DATA_WIDTH-1:0] read_data_reg;
+reg [IO_DATA_WIDTH-1:0] read_data_reg;
 reg read_data_valid_reg;
 
 assign io_rd_data = read_data_reg;
