@@ -99,8 +99,11 @@ module riscv_axis_wrapper # (
     // --------------------------------------------- //
 
     output wire                     core_reset,
-    output wire                     core_interrupt,
-    input  wire                     core_interrupt_ack,
+
+    output wire                     evict_int,
+    input  wire                     evict_int_ack,
+    output wire                     poke_int,
+    input  wire                     poke_int_ack,
     
     // DMA interface
     output wire                     dma_cmd_wr_en,
@@ -155,18 +158,39 @@ module riscv_axis_wrapper # (
 );
     
 /////////////////////////////////////////////////////////////////////
-//////////////////////// CORE RESET COMMAND /////////////////////////
+///////////////////// CORE RESET & INT COMMANDS /////////////////////
 /////////////////////////////////////////////////////////////////////
-wire reset_cmd = ctrl_s_axis_tvalid && (&ctrl_s_axis_tdata[35:32]);
-reg  core_reset_r;
+wire [3:0] ctrl_cmd = ctrl_s_axis_tdata[35:32];
+wire ctrl_desc_cmd  = (ctrl_cmd == 4'h0) || (ctrl_cmd == 4'h1);
 
-always @ (posedge clk)
-    if (rst) 
-        core_reset_r <= 1'b1;
-    else if (reset_cmd)
+reg core_reset_r;
+reg core_poke_r;
+reg core_evict_r;
+
+always @ (posedge clk) begin
+    if (poke_int_ack)
+        core_poke_r  <= 1'b0;
+    if (evict_int_ack)
+        core_evict_r <= 1'b0;
+
+    if (ctrl_s_axis_tvalid && (ctrl_cmd == 4'hF))
         core_reset_r <= ctrl_s_axis_tdata[0];
+    if (ctrl_s_axis_tvalid && (ctrl_cmd == 4'h8))
+        core_poke_r  <= 1'b1;
+    if (ctrl_s_axis_tvalid && (ctrl_cmd == 4'h9))
+        core_evict_r <= 1'b1;
+   
+    if (rst) begin
+        core_reset_r <= 1'b1;
+        core_poke_r  <= 1'b0;
+        core_evict_r <= 1'b0;
+    end 
+
+end
 
 assign core_reset = core_reset_r;
+assign poke_int   = core_poke_r;
+assign evict_int  = core_evict_r;
 
 /////////////////////////////////////////////////////////////////////
 /////////// EXTRACTING BASE ADDR FROM/FOR INCOMING DATA /////////////
@@ -674,7 +698,7 @@ always @ (posedge clk) begin
     ctrl_s_axis_tdata_r  <= ctrl_s_axis_tdata;
     ctrl_in_slot_ptr     <= ctrl_s_axis_tdata[16+:SLOT_WIDTH];
   end 
-  ctrl_s_axis_tvalid_r <= ((ctrl_s_axis_tvalid && !reset_cmd && ctrl_s_axis_tready) || 
+  ctrl_s_axis_tvalid_r <= ((ctrl_s_axis_tvalid && ctrl_desc_cmd && ctrl_s_axis_tready) || 
                            (ctrl_s_axis_tvalid_r && (!ctrl_s_axis_tready)));
 
   if (rst)
@@ -982,8 +1006,6 @@ always @ (posedge clk)
 
 assign active_slots = slots_in_prog;
 
-// TODO: Add error catching
-
 /////////////////////////////////////////////////////////////////////
 ///////////////////////// ERROR CATCHING ////////////////////////////
 /////////////////////////////////////////////////////////////////////
@@ -996,15 +1018,6 @@ always @ (posedge clk)
   else
     invalid_out_desc_r <= invalid_out_desc_r || invalid_out_desc;
 
-wire out_of_bound_clear;
-wire out_of_bound = 1'b0;
-// always @(posedge clk)
-//   if (rst || out_of_bound_clear)
-//     out_of_bound <= 1'b0;
-//   else 
-//     out_of_bound <= out_of_bound || mem_out_of_bound;
-
-assign core_interrupt = out_of_bound;
-assign out_of_bound_clear = core_interrupt_ack;
+// TODO: Add slot error catching
 
 endmodule

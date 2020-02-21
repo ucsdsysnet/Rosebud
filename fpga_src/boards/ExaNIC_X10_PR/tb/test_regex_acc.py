@@ -62,6 +62,7 @@ srcs.append("../lib/smartFPGA/rtl/mem_sys.v")
 srcs.append("../lib/smartFPGA/rtl/simple_scheduler.v")
 srcs.append("../lib/smartFPGA/rtl/simple_sync_sig.v")
 srcs.append("../lib/smartFPGA/rtl/axis_switch.v")
+srcs.append("../lib/smartFPGA/rtl/axis_ram_switch.v")
 srcs.append("../lib/smartFPGA/rtl/axis_stat.v")
 srcs.append("../lib/smartFPGA/rtl/stat_reader.v")
 srcs.append("../lib/smartFPGA/rtl/axis_switch_2lvl.v")
@@ -761,8 +762,7 @@ def bench():
               # write pcie read descriptor
               yield rc.mem_write(dev_pf0_bar0+0x000440, struct.pack('<L', (mem_base+0x0000) & 0xffffffff))
               yield rc.mem_write(dev_pf0_bar0+0x000444, struct.pack('<L', (mem_base+0x0000 >> 32) & 0xffffffff))
-              yield rc.mem_write(dev_pf0_bar0+0x000448, struct.pack('<L', ((i<<16)+(1<<15)) & 0xffffffff))
-              # yield rc.mem_write(dev_pf0_bar0+0x00044C, struct.pack('<L', (((i<<16)+0x8000) >> 32) & 0xffffffff))
+              yield rc.mem_write(dev_pf0_bar0+0x000448, struct.pack('<L', ((i<<26)+(1<<25)) & 0xffffffff))
               yield rc.mem_write(dev_pf0_bar0+0x000450, struct.pack('<L', len(ins)))
               yield rc.mem_write(dev_pf0_bar0+0x000454, struct.pack('<L', 0xAA))
               yield delay(2000)
@@ -778,7 +778,7 @@ def bench():
           # write pcie read descriptor
           yield rc.mem_write(dev_pf0_bar0+0x000440, struct.pack('<L', (mem_base+0x0000) & 0xffffffff))
           yield rc.mem_write(dev_pf0_bar0+0x000444, struct.pack('<L', (mem_base+0x0000 >> 32) & 0xffffffff))
-          yield rc.mem_write(dev_pf0_bar0+0x000448, struct.pack('<L', ((4<<16)+0x0100) & 0xffffffff))
+          yield rc.mem_write(dev_pf0_bar0+0x000448, struct.pack('<L', ((4<<26)+0x800100) & 0xffffffff))
           # yield rc.mem_write(dev_pf0_bar0+0x00044C, struct.pack('<L', (((4<<16)+0x0100) >> 32) & 0xffffffff))
           yield rc.mem_write(dev_pf0_bar0+0x000450, struct.pack('<L', 0x400))
           yield rc.mem_write(dev_pf0_bar0+0x000454, struct.pack('<L', 0xAA))
@@ -792,8 +792,7 @@ def bench():
           # write pcie write descriptor
           yield rc.mem_write(dev_pf0_bar0+0x000460, struct.pack('<L', (mem_base+0x1000) & 0xffffffff))
           yield rc.mem_write(dev_pf0_bar0+0x000464, struct.pack('<L', (mem_base+0x1000 >> 32) & 0xffffffff))
-          yield rc.mem_write(dev_pf0_bar0+0x000468, struct.pack('<L', ((4<<16)+0x0100) & 0xffffffff))
-          # yield rc.mem_write(dev_pf0_bar0+0x00046C, struct.pack('<L', (0x40100 >> 32) & 0xffffffff))
+          yield rc.mem_write(dev_pf0_bar0+0x000468, struct.pack('<L', ((4<<26)+0x800100) & 0xffffffff))
           yield rc.mem_write(dev_pf0_bar0+0x000470, struct.pack('<L', 0x400))
           yield rc.mem_write(dev_pf0_bar0+0x000474, struct.pack('<L', 0x55))
 
@@ -851,8 +850,6 @@ def bench():
           #     print(" ".join(("{:02x}".format(c) for c in bytearray(data[i:i+16]))))
           print ("lengths: " , lengths)
 
-          yield delay(10000)
-          
           for k in range (0,16):
             yield rc.mem_write(dev_pf0_bar0+0x000410, struct.pack('<L', k))
             yield delay(100)

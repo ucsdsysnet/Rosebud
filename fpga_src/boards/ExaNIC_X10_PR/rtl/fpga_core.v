@@ -216,7 +216,7 @@ parameter AXIL_DATA_WIDTH     = 32;
 parameter AXIL_STRB_WIDTH     = (AXIL_DATA_WIDTH/8);
 parameter AXIL_ADDR_WIDTH     = BAR0_APERTURE;
 
-// RISCV parameters, shoul match riscv_block
+// RISCV parameters, should match riscv_block
 parameter CORE_WIDTH      = $clog2(CORE_COUNT);
 parameter PORT_WIDTH      = $clog2(PORT_COUNT);
 parameter DRAM_PORT       = PORT_COUNT-1;
@@ -234,7 +234,7 @@ parameter FAST_M_B_LINES  = 1024;
 parameter LVL2_DATA_WIDTH = 64;
 parameter LVL2_STRB_WIDTH = LVL2_DATA_WIDTH/8;
 parameter ID_TAG_WIDTH    = CORE_WIDTH+TAG_WIDTH;
-parameter BC_START_ADDR   = PMEM_SIZE+DMEM_SIZE-BC_REGION_SIZE;
+parameter BC_START_ADDR   = 32'h01000000+PMEM_SIZE-BC_REGION_SIZE;
 parameter CORE_MSG_WIDTH  = 32+4+$clog2(BC_REGION_SIZE)-2;
 
 parameter RECV_DESC_DEPTH = 8;
@@ -1048,8 +1048,9 @@ axis_switch_2lvl # (
     .M_REG_TYPE      (2),
     .CLUSTER_COUNT   (CLUSTER_COUNT),
     .STAGE_FIFO_DEPTH(STG_F_DATA_DEPTH),
-    .FRAME_FIFO(0),
-    .SEPARATE_CLOCKS(SEPARATE_CLOCKS)
+    .FRAME_FIFO      (0),
+    .SEPARATE_CLOCKS (SEPARATE_CLOCKS),
+    .USE_SIMPLE_SW   (0)
 ) data_in_sw (
     .s_clk(sys_clk),
     .s_rst(sys_rst),
@@ -1138,8 +1139,9 @@ axis_switch_2lvl # (
     .M_REG_TYPE      (2),
     .CLUSTER_COUNT   (CLUSTER_COUNT),
     .STAGE_FIFO_DEPTH(STG_F_DATA_DEPTH),
-    .FRAME_FIFO(1),
-    .SEPARATE_CLOCKS(SEPARATE_CLOCKS)
+    .FRAME_FIFO      (1),
+    .SEPARATE_CLOCKS (SEPARATE_CLOCKS),
+    .USE_SIMPLE_SW   (0)
 ) data_out_sw (
     /*
      * AXI Stream inputs
@@ -1234,8 +1236,9 @@ axis_switch_2lvl # (
     .M_REG_TYPE      (2),
     .CLUSTER_COUNT   (CLUSTER_COUNT),
     .STAGE_FIFO_DEPTH(STG_F_CTRL_DEPTH),
-    .FRAME_FIFO(0),
-    .SEPARATE_CLOCKS(SEPARATE_CLOCKS)
+    .FRAME_FIFO      (0),
+    .SEPARATE_CLOCKS (SEPARATE_CLOCKS),
+    .USE_SIMPLE_SW   (1)
 ) ctrl_in_sw
 (
     /*
@@ -1282,8 +1285,9 @@ axis_switch_2lvl # (
     .M_REG_TYPE      (2),
     .CLUSTER_COUNT   (CLUSTER_COUNT),
     .STAGE_FIFO_DEPTH(STG_F_CTRL_DEPTH),
-    .FRAME_FIFO(0),
-    .SEPARATE_CLOCKS(SEPARATE_CLOCKS)
+    .FRAME_FIFO      (0),
+    .SEPARATE_CLOCKS (SEPARATE_CLOCKS),
+    .USE_SIMPLE_SW   (1)
 ) ctrl_out_sw
 (
     /*
@@ -1330,8 +1334,9 @@ axis_switch_2lvl # (
     .M_REG_TYPE      (2),
     .CLUSTER_COUNT   (CLUSTER_COUNT),
     .STAGE_FIFO_DEPTH(STG_F_DRAM_DEPTH),
-    .FRAME_FIFO(0),
-    .SEPARATE_CLOCKS(SEPARATE_CLOCKS)
+    .FRAME_FIFO      (0),
+    .SEPARATE_CLOCKS (SEPARATE_CLOCKS),
+    .USE_SIMPLE_SW   (1)
 ) dram_ctrl_in_sw
 (
     /*
@@ -1378,8 +1383,9 @@ axis_switch_2lvl # (
     .M_REG_TYPE      (2),
     .CLUSTER_COUNT   (CLUSTER_COUNT),
     .STAGE_FIFO_DEPTH(STG_F_CTRL_DEPTH),
-    .FRAME_FIFO(0),
-    .SEPARATE_CLOCKS(SEPARATE_CLOCKS)
+    .FRAME_FIFO      (0),
+    .SEPARATE_CLOCKS (SEPARATE_CLOCKS),
+    .USE_SIMPLE_SW   (1)
 ) dram_ctrl_out_sw
 (
     /*
@@ -1482,7 +1488,8 @@ axis_switch_2lvl # (
     .M_REG_TYPE      (2),
     .CLUSTER_COUNT   (BC_MSG_CLUSTERS),
     .STAGE_FIFO_DEPTH(0),
-    .SEPARATE_CLOCKS(0)
+    .SEPARATE_CLOCKS (0),
+    .USE_SIMPLE_SW   (1)
 ) cores_to_broadcaster (
 
     /*
@@ -1562,8 +1569,10 @@ generate
     for (i=0; i<CORE_COUNT; i=i+1) begin: riscv_cores
         wire [CORE_WIDTH-1:0]      core_id = i;
         wire                       core_reset;
-        wire                       core_interrupt;
-        wire                       core_interrupt_ack;
+        wire                       evict_int;
+        wire                       evict_int_ack;
+        wire                       poke_int;
+        wire                       poke_int_ack;
         
         wire                       dma_cmd_wr_en;
         wire [25:0]                dma_cmd_wr_addr;
@@ -1580,7 +1589,7 @@ generate
         wire                       dma_rd_resp_valid;
         wire [LVL2_DATA_WIDTH-1:0] dma_rd_resp_data;
         wire                       dma_rd_resp_ready;
-          
+
         wire [63:0]                in_desc;
         wire                       in_desc_valid;
         wire                       in_desc_taken;
@@ -1596,6 +1605,7 @@ generate
         wire                       slot_wr_ready;
         wire [4:0]                 recv_dram_tag;
         wire                       recv_dram_tag_valid;
+        wire [SLOT_COUNT-1:0]      active_slots;
 
         wire [CORE_MSG_WIDTH-1:0] bc_msg_out;
         wire                      bc_msg_out_valid;
@@ -1622,13 +1632,10 @@ generate
             .DRAM_PORT(DRAM_PORT),
             .DATA_S_REG_TYPE(0),
             .DATA_M_REG_TYPE(2),
-            .DRAM_M_REG_TYPE(0),
-            .SEPARATE_CLOCKS(0)
+            .DRAM_M_REG_TYPE(0)
         ) core_wrapper (
-            .sys_clk(core_clk),
-            .sys_rst(block_reset[i]),
-            .core_clk(core_clk),
-            .core_rst(block_reset[i]),
+            .clk(core_clk),
+            .rst(block_reset[i]),
 
             .core_id(core_id),
             // ---------------- DATA CHANNEL --------------- // 
@@ -1692,8 +1699,10 @@ generate
             // --------------------------------------------- //
 
             .core_reset(core_reset),
-            .core_interrupt(core_interrupt),
-            .core_interrupt_ack(core_interrupt_ack),
+            .evict_int(evict_int),
+            .evict_int_ack(evict_int_ack),
+            .poke_int(poke_int),
+            .poke_int_ack(poke_int_ack),
 
             .dma_cmd_wr_en(dma_cmd_wr_en),
             .dma_cmd_wr_addr(dma_cmd_wr_addr),
@@ -1726,6 +1735,7 @@ generate
             .slot_wr_ready(slot_wr_ready),
             .recv_dram_tag(recv_dram_tag),
             .recv_dram_tag_valid(recv_dram_tag_valid),
+            .active_slots(active_slots),
 
             .bc_msg_out(bc_msg_out),
             .bc_msg_out_valid(bc_msg_out_valid),
@@ -1755,13 +1765,15 @@ generate
         riscv_block_PR # (
         ) pr_wrapper (
     `endif
-            .sys_clk(core_clk),
-            .sys_rst(block_reset[i]),
+            .clk(core_clk),
+            .rst(block_reset[i]),
             .core_rst(core_reset),
 
             .core_id(core_id),
-            .core_interrupt(core_interrupt),
-            .core_interrupt_ack(core_interrupt_ack),
+            .evict_int(evict_int),
+            .evict_int_ack(evict_int_ack),
+            .poke_int(poke_int),
+            .poke_int_ack(poke_int_ack),
 
             .dma_cmd_wr_en(dma_cmd_wr_en),
             .dma_cmd_wr_addr(dma_cmd_wr_addr),
@@ -1794,6 +1806,7 @@ generate
             .slot_wr_ready(slot_wr_ready),
             .recv_dram_tag(recv_dram_tag),
             .recv_dram_tag_valid(recv_dram_tag_valid),
+            .active_slots(active_slots),
 
             .bc_msg_out(bc_msg_out),
             .bc_msg_out_valid(bc_msg_out_valid),

@@ -14,13 +14,16 @@ module riscv_block # (
   parameter SLOT_COUNT     = 8,
   parameter SLOT_WIDTH     = $clog2(SLOT_COUNT+1)
 ) (
-  input  wire                     sys_clk,
-  input  wire                     sys_rst,
+  input  wire                     clk,
+  input  wire                     rst,
   input  wire                     core_rst,
   
   input  wire [CORE_ID_WIDTH-1:0] core_id,
-  input  wire                     core_interrupt,
-  output wire                     core_interrupt_ack,
+
+  input  wire                     evict_int,
+  output wire                     evict_int_ack,
+  input  wire                     poke_int,
+  output wire                     poke_int_ack,
   
   // DMA interface
   input  wire                     dma_cmd_wr_en,
@@ -105,6 +108,8 @@ wire [24:0] core_imem_addr;
 wire [31:0] core_imem_rd_data;
 wire        core_imem_rd_valid;
 
+wire ext_io_err, ext_io_err_ack;
+
 assign core_mem_rd_data = core_exio_rd_valid ? core_exio_rd_data : core_dmem_rd_data;
 assign core_mem_rd_valid = core_exio_rd_valid | core_dmem_rd_valid;
 
@@ -119,9 +124,9 @@ riscvcore #(
   .PMEM_SEG_COUNT(ACC_MEM_BLOCKS),
   .BC_REGION_SIZE(BC_REGION_SIZE)
 ) core (
-  .clk(sys_clk),
+  .clk(clk),
   .rst(core_rst),
-  .init_rst(sys_rst),
+  .init_rst(rst),
   .core_id(core_id),
 
   .dmem_en(core_dmem_en),
@@ -159,8 +164,13 @@ riscvcore #(
   .slot_wr_ready(slot_wr_ready),
 
   .core_msg_ready(bc_msg_out_ready),
-  .interrupt_in(core_interrupt),
-  .interrupt_in_ack(core_interrupt_ack)
+  .ext_io_err(ext_io_err),
+  .ext_io_err_ack(ext_io_err_ack),
+
+  .evict_int(evict_int),
+  .evict_int_ack(evict_int_ack),
+  .poke_int(poke_int),
+  .poke_int_ack(poke_int_ack)
 );
 
 // Broadcast messaging
@@ -194,7 +204,7 @@ accel_wrap #(
   .PMEM_SEL_BITS(PMEM_SEL_BITS),
   .ACC_MEM_BLOCKS(ACC_MEM_BLOCKS)
 ) accel_wrap_inst (
-  .clk(sys_clk),
+  .clk(clk),
   .rst(core_rst),
   
   .io_en(core_exio_en),
@@ -215,7 +225,10 @@ accel_wrap #(
   .acc_wen_b2(acc_wen_b2),
   .acc_addr_b2(acc_addr_b2),
   .acc_wr_data_b2(acc_wr_data_b2),
-  .acc_rd_data_b2(acc_rd_data_b2)
+  .acc_rd_data_b2(acc_rd_data_b2),
+
+  .error(ext_io_err),
+  .error_ack(ext_io_err_ack)
 );
 
 ///////////////////////////////////////////////////////////////////////////
@@ -233,8 +246,8 @@ mem_sys # (
   .SLOW_M_B_LINES(SLOW_M_B_LINES),
   .FAST_M_B_LINES(FAST_M_B_LINES)
 ) memories (
-  .clk(sys_clk),
-  .rst(sys_rst),
+  .clk(clk),
+  .rst(rst),
   
   .dma_cmd_wr_en(dma_cmd_wr_en),
   .dma_cmd_wr_addr(dma_cmd_wr_addr),

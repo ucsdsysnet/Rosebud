@@ -230,12 +230,12 @@ parameter AXIL_STRB_WIDTH     = (AXIL_DATA_WIDTH/8);
 parameter AXIL_ADDR_WIDTH     = BAR0_APERTURE;
 
 // RISCV parameters, should match riscv_block
-parameter CORE_WIDTH       = $clog2(CORE_COUNT);
-parameter PORT_WIDTH       = $clog2(PORT_COUNT);
-parameter DRAM_PORT        = PORT_COUNT-1;
-parameter SLOT_COUNT       = 8;
-parameter SLOT_WIDTH       = $clog2(SLOT_COUNT+1);
-parameter TAG_WIDTH        = (SLOT_WIDTH>5)? SLOT_WIDTH:5;
+parameter CORE_WIDTH      = $clog2(CORE_COUNT);
+parameter PORT_WIDTH      = $clog2(PORT_COUNT);
+parameter DRAM_PORT       = PORT_COUNT-1;
+parameter SLOT_COUNT      = 8;
+parameter SLOT_WIDTH      = $clog2(SLOT_COUNT+1);
+parameter TAG_WIDTH       = (SLOT_WIDTH>5)? SLOT_WIDTH:5;
 
 parameter IMEM_SIZE       = 65536;
 parameter PMEM_SIZE       = 1048576;
@@ -244,11 +244,11 @@ parameter BC_REGION_SIZE  = 8192;
 parameter SLOW_M_B_LINES  = 4096;
 parameter FAST_M_B_LINES  = 1024;
 
-parameter LVL2_DATA_WIDTH  = 128;
-parameter LVL2_STRB_WIDTH  = LVL2_DATA_WIDTH/8;
-parameter ID_TAG_WIDTH     = CORE_WIDTH+TAG_WIDTH;
-parameter BC_START_ADDR    = 32'h01000000+PMEM_SIZE-BC_REGION_SIZE;
-parameter CORE_MSG_WIDTH   = 32+4+$clog2(BC_REGION_SIZE)-2;
+parameter LVL2_DATA_WIDTH = 128;
+parameter LVL2_STRB_WIDTH = LVL2_DATA_WIDTH/8;
+parameter ID_TAG_WIDTH    = CORE_WIDTH+TAG_WIDTH;
+parameter BC_START_ADDR   = 32'h01000000+PMEM_SIZE-BC_REGION_SIZE;
+parameter CORE_MSG_WIDTH  = 32+4+$clog2(BC_REGION_SIZE)-2;
 
 parameter RECV_DESC_DEPTH = 8;
 parameter SEND_DESC_DEPTH = 8;
@@ -1436,7 +1436,7 @@ axis_switch_2lvl # (
     .CLUSTER_COUNT   (CLUSTER_COUNT),
     .STAGE_FIFO_DEPTH(STG_F_CTRL_DEPTH),
     .FRAME_FIFO      (0),
-    .SEPARATE_CLOCKS(SEPARATE_CLOCKS),
+    .SEPARATE_CLOCKS (SEPARATE_CLOCKS),
     .USE_SIMPLE_SW   (1)
 ) ctrl_out_sw
 (
@@ -1719,15 +1719,17 @@ generate
     for (i=0; i<CORE_COUNT; i=i+1) begin: riscv_cores
         wire [CORE_WIDTH-1:0]      core_id = i;
         wire                       core_reset;
-        wire                       core_interrupt;
-        wire                       core_interrupt_ack;
+        wire                       evict_int;
+        wire                       evict_int_ack;
+        wire                       poke_int;
+        wire                       poke_int_ack;
         
         wire                       dma_cmd_wr_en;
         wire [25:0]                dma_cmd_wr_addr;
         wire                       dma_cmd_hdr_wr_en;
         wire [23:0]                dma_cmd_hdr_wr_addr;
-        wire [128-1:0]             dma_cmd_wr_data;
-        wire [16-1:0]              dma_cmd_wr_strb;
+        wire [LVL2_DATA_WIDTH-1:0] dma_cmd_wr_data;
+        wire [LVL2_STRB_WIDTH-1:0] dma_cmd_wr_strb;
         wire                       dma_cmd_wr_last;
         wire                       dma_cmd_wr_ready;
         wire                       dma_cmd_rd_en;
@@ -1735,7 +1737,7 @@ generate
         wire                       dma_cmd_rd_last;
         wire                       dma_cmd_rd_ready;
         wire                       dma_rd_resp_valid;
-        wire [128-1:0]             dma_rd_resp_data;
+        wire [LVL2_DATA_WIDTH-1:0] dma_rd_resp_data;
         wire                       dma_rd_resp_ready;
 
         wire [63:0]                in_desc;
@@ -1847,8 +1849,10 @@ generate
             // --------------------------------------------- //
 
             .core_reset(core_reset),
-            .core_interrupt(core_interrupt),
-            .core_interrupt_ack(core_interrupt_ack),
+            .evict_int(evict_int),
+            .evict_int_ack(evict_int_ack),
+            .poke_int(poke_int),
+            .poke_int_ack(poke_int_ack),
 
             .dma_cmd_wr_en(dma_cmd_wr_en),
             .dma_cmd_wr_addr(dma_cmd_wr_addr),
@@ -1911,13 +1915,15 @@ generate
         riscv_block_PR # (
         ) pr_wrapper (
     `endif
-            .sys_clk(core_clk),
-            .sys_rst(block_reset[i]),
+            .clk(core_clk),
+            .rst(block_reset[i]),
             .core_rst(core_reset),
 
             .core_id(core_id),
-            .core_interrupt(core_interrupt),
-            .core_interrupt_ack(core_interrupt_ack),
+            .evict_int(evict_int),
+            .evict_int_ack(evict_int_ack),
+            .poke_int(poke_int),
+            .poke_int_ack(poke_int_ack),
 
             .dma_cmd_wr_en(dma_cmd_wr_en),
             .dma_cmd_wr_addr(dma_cmd_wr_addr),

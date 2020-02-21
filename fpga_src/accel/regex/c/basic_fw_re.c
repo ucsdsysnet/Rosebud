@@ -67,9 +67,6 @@ int main(void)
 	if (slot_count > MAX_SLOT_COUNT)
 		slot_count = MAX_SLOT_COUNT;
 
-	write_timer_interval(0x00000200);
-	set_masks(0x1F); //enable just errors
-
 	// Do this at the beginning, so scheduler can fill the slots while
 	// initializing other things.
 	init_hdr_slots(slot_count, header_slot_base, header_slot_size);

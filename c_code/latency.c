@@ -10,7 +10,7 @@ unsigned int * rd_ptr;
 unsigned int count;
 
 void int_handler(void) {safe_pkt_send(&summary_pkt);
-			interrupt_ack(0x20);}
+                        interrupt_ack(0x01);}
 
 int main(void){
 
@@ -21,7 +21,7 @@ int main(void){
 	write_timer_interval(0x17D7840);
 	// Use for full rate
 	// if ((core_id()&0x1)!=0)
-	// 	set_masks(0x20); //enable timer
+	// 	set_masks(0x02); //enable only timer
 
 
 	// Do this at the beginnig, so scheduler can fill the slots while 

@@ -20,8 +20,10 @@
 #define CORE_ID           (*((unsigned int *)(IO_INT_BASE + 0x0050)))
 #define TIMER_32_L        (*((volatile unsigned int *)(IO_INT_BASE + 0x0054)))
 #define TIMER_32_H        (*((volatile unsigned int *)(IO_INT_BASE + 0x0058)))
-#define INTERRUPT_FLAGS   (*((volatile unsigned char *)(IO_INT_BASE + 0x005C)))
+#define FLAGS_REG         (*((volatile unsigned int *)(IO_INT_BASE + 0x005C)))
+#define ERROR_FLAGS       (*((volatile unsigned char *)(IO_INT_BASE + 0x005C)))
 #define MASK_READ         (*((volatile unsigned char *)(IO_INT_BASE + 0x005D)))
+#define INTERRUPT_FLAGS   (*((volatile unsigned char *)(IO_INT_BASE + 0x005E)))
 #define ACTIVE_SLOTS      (*((volatile unsigned int *)(IO_INT_BASE + 0x0060)))
 #define IMEM_SIZE         (*((unsigned int *)(IO_INT_BASE + 0x0064)))
 #define DMEM_SIZE         (*((unsigned int *)(IO_INT_BASE + 0x0068)))
@@ -51,6 +53,13 @@
 #define UPDATE_SLOT_READY (*((volatile unsigned char *)(IO_INT_BASE + 0x004E))==1)
 #define CORE_MSG_READY    (*((volatile unsigned char *)(IO_INT_BASE + 0x004F))==1)
 
+// MASK BITS:    DATA_MEM_ERR | IMEM_ERR | EXT_IO_ERR | EVICT_INT | POKE_INT | TIMER_INT | RECV_DRAM_DATA_INT | PACKET_INT
+// FLAGS BITS:   8 BITS RESERVED 
+//               - | - | EXT_IO_ERR | EVICT_INT | POKE_INT | TIMER | DRAM_DATA_ARRIVED | PACKET_ARRIVED
+//               MASK READ BACK
+//               - | - | - | - | INT_IO_ACCESS_ERR | PMEM_ACCESS_ERR | DMEM_ACCESS_ERR | IMEM_ACCESS_ERR 
+// INT ACK BITS: INT_IO_ACCESS_ERR | PMEM_ACCESS_ERR | DMEM_ACCESS_ERR | IMEM_ACCESS_ERR | EXT_IO_ERR | EVICT_INT | POKE_INT | TIMER
+ 
 struct Desc {
 	unsigned short len;
 	unsigned char  tag;
@@ -67,6 +76,7 @@ inline unsigned int core_id () {return CORE_ID;}
 inline unsigned int dram_flags () {return DRAM_FLAGS;}
 inline unsigned int active_slots () {return ACTIVE_SLOTS;}
 inline unsigned char interrupt_flags () {return INTERRUPT_FLAGS;}
+inline unsigned char error_flags () {return ERROR_FLAGS;}
 inline unsigned char read_masks () {return MASK_READ;}
 inline unsigned int read_timer_low () {return TIMER_32_L;}
 inline unsigned int read_timer_high () {return TIMER_32_H;}

@@ -32,8 +32,13 @@ module accel_wrap #(
   output wire [ACC_MEM_BLOCKS*STRB_WIDTH-1:0]     acc_wen_b2,
   output wire [ACC_MEM_BLOCKS*ACC_ADDR_WIDTH-1:0] acc_addr_b2,
   output wire [ACC_MEM_BLOCKS*DATA_WIDTH-1:0]     acc_wr_data_b2,
-  input  wire [ACC_MEM_BLOCKS*DATA_WIDTH-1:0]     acc_rd_data_b2
+  input  wire [ACC_MEM_BLOCKS*DATA_WIDTH-1:0]     acc_rd_data_b2,
+
+  output wire                                     error,
+  input  wire                                     error_ack
 );
+
+assign error = 1'b0;
 
 assign acc_en_b1 = 0;
 assign acc_wen_b1 = 0;

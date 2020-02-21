@@ -50,8 +50,13 @@ module riscvcore #(
     input                        slot_wr_ready,
 
     input                        core_msg_ready,
-    input                        interrupt_in,
-    output                       interrupt_in_ack
+    input                        ext_io_err,
+    output                       ext_io_err_ack,
+
+    input                        evict_int,
+    output                       evict_int_ack,
+    input                        poke_int,
+    output                       poke_int_ack
 );
 
 // Core to memory signals
@@ -76,7 +81,7 @@ VexRiscv core (
       .iBus_cmd_ready(1'b1),
       .iBus_cmd_payload_pc(imem_addr_n),
       .iBus_rsp_valid(imem_rd_valid),
-      .iBus_rsp_payload_error(imem_access_err && mask_r[0]),
+      .iBus_rsp_payload_error(imem_access_err && mask_r[6]),
       .iBus_rsp_payload_inst(imem_rd_data),
 
       .dBus_cmd_valid(dmem_v),
@@ -87,13 +92,15 @@ VexRiscv core (
       .dBus_cmd_payload_size(dmem_byte_count),
       .dBus_rsp_ready(mem_rd_valid || io_ren_r),
       .dBus_rsp_error((dmem_access_err  || io_access_err || 
-                       pmem_access_err) && mask_r[1]),
+                       pmem_access_err) && mask_r[7]),
       .dBus_rsp_data(dmem_read_data),
       
-      .timerInterrupt(timer_interrupt && mask_r[5]), 
-      .externalInterrupt((interrupt_in && mask_r[4])  || 
-                         (dram_recv_any && mask_r[6]) || 
-                         (in_desc_valid && mask_r[7])),
+      .timerInterrupt(timer_interrupt   && mask_r[2]),
+      .externalInterrupt((ext_io_err    && mask_r[5]) ||
+                         (evict_int     && mask_r[4]) ||
+                         (poke_int      && mask_r[3]) ||
+                         (dram_recv_any && mask_r[1]) ||
+                         (in_desc_valid && mask_r[0])),
       .softwareInterrupt(1'b0)
 );
 
@@ -174,7 +181,7 @@ always @ (posedge clk) begin
 
     if (rst) begin
       timer_step_r <= 32'h00000001;
-      mask_r       <= 8'h1F;
+      mask_r       <= 8'hC0;
     end
 end
 
@@ -252,10 +259,11 @@ always @ (posedge clk)
             RD_ID_ADDR:       io_read_data <= {{(32-CORE_ID_WIDTH){1'b0}},core_id};
             RD_TIMER_L_ADDR:  io_read_data <= internal_timer[31:0];
             RD_TIMER_H_ADDR:  io_read_data <= internal_timer[63:32];
-            RD_INT_F_ADDR:    io_read_data <= {16'd0, mask_r, 
-                                               in_desc_valid, dram_recv_any, 
-                                               timer_interrupt, interrupt_in, 
-                                               io_access_err, pmem_access_err,
+            RD_INT_F_ADDR:    io_read_data <= {8'd0,
+                                               2'd0, ext_io_err, evict_int, poke_int, 
+                                               timer_interrupt, dram_recv_any, in_desc_valid,
+                                               mask_r,
+                                               4'd0, io_access_err, pmem_access_err,
                                                dmem_access_err, imem_access_err};
             RD_ACT_SLOT_ADDR: io_read_data <= {{(32-SLOT_COUNT){1'b0}}, active_slots};
             RD_IMEM_SIZE:     io_read_data <= IMEM_SIZE;
@@ -278,6 +286,7 @@ always @ (posedge clk)
     internal_timer <= internal_timer + 64'd1;
 
 reg [31:0] interrupt_time;
+wire timer_int_ack;
 
 always @ (posedge clk)
   if (rst || timer_step_wen) begin
@@ -288,7 +297,7 @@ always @ (posedge clk)
     timer_interrupt <= 1'b1;
   end else begin
     interrupt_time  <= interrupt_time + 32'd1;
-    if (interrupt_ack && mem_wr_data[5])
+    if (timer_int_ack)
       timer_interrupt <= 1'b0;
   end
 
@@ -328,20 +337,8 @@ always @ (posedge clk)
 assign dram_recv_any = | dram_recv_flag;
 
 ///////////////////////////////////////////////////////////////////////////
-/////////////////////// ADDRESS ERROR CATCHING ////////////////////////////
+///////////// ADDRESS ERROR CATCHING & INTERRUPT ACK //////////////////////
 ///////////////////////////////////////////////////////////////////////////
-// Register the error ack so a simple sync reg would be enough to respond
-// assuming the code waits a cycle before resetting it, which is the case
-// when responding to an interrupt. 
-reg ext_err_ack;
-always @ (posedge clk)
-  if (rst || (interrupt_ack && mem_wr_data[4]))
-    ext_err_ack <= 1'b0;
-  else if (interrupt_ack && mem_wr_data[4])
-    ext_err_ack <= 1'b1;
-
-assign interrupt_in_ack = ext_err_ack;
-
 // Register addresses and enables for error catching 
 reg [31:0] imem_addr_r, dmem_addr_r;
 reg imem_ren_r, dmem_en_r, pmem_en_r, intio_en_r;
@@ -354,7 +351,7 @@ always @ (posedge clk) begin
   dmem_en_r         <= dmem_en;
   pmem_en_r         <= pmem_en;
   if (rst) begin
-    imem_ren_r        <= 1'b0; 
+    imem_ren_r      <= 1'b0;
     intio_en_r      <= 1'b0;
     dmem_en_r       <= 1'b0; 
     pmem_en_r       <= 1'b0; 
@@ -362,24 +359,29 @@ always @ (posedge clk) begin
 end
 
 // Each error stays asserted until it is reset by corresponding bit when interrupt_ack is asserted
-always @ (posedge clk) 
+always @ (posedge clk)
     if (rst) begin
         imem_access_err <= 1'b0;
         dmem_access_err <= 1'b0;
         pmem_access_err <= 1'b0;
         io_access_err   <= 1'b0;
 		end else begin
-        imem_access_err <= !(interrupt_ack && mem_wr_data[0]) && (imem_access_err || 
+        imem_access_err <= !(interrupt_ack && mem_wr_data[4]) && (imem_access_err ||
                            (imem_ren_r && (imem_addr_r >= IMEM_SIZE)));
 
-        dmem_access_err <= !(interrupt_ack && mem_wr_data[1]) && (dmem_access_err || 
+        dmem_access_err <= !(interrupt_ack && mem_wr_data[5]) && (dmem_access_err ||
                              (dmem_en_r && (dmem_addr_r[22:0] >= DMEM_SIZE)));
         
-        pmem_access_err <= !(interrupt_ack && mem_wr_data[2]) && (pmem_access_err || 
+        pmem_access_err <= !(interrupt_ack && mem_wr_data[6]) && (pmem_access_err ||
                              (pmem_en_r && (dmem_addr_r[23:0] >= PMEM_SIZE)));
                        
-        io_access_err   <= !(interrupt_ack && mem_wr_data[3]) && (io_access_err || 
+        io_access_err   <= !(interrupt_ack && mem_wr_data[7]) && (io_access_err ||
                              (intio_en_r && (dmem_addr_r[21:0] >= 22'h000080)));
     end
+
+assign timer_int_ack  = interrupt_ack && mem_wr_data[0];
+assign poke_int_ack   = interrupt_ack && mem_wr_data[1];
+assign evict_int_ack  = interrupt_ack && mem_wr_data[2];
+assign ext_io_err_ack = interrupt_ack && mem_wr_data[3];
 
 endmodule

@@ -1,11 +1,13 @@
 module riscv_block_PR (  
-  input  wire         sys_clk,
-  input               sys_rst,
+  input  wire         clk,
+  input               rst,
   input  wire         core_rst,
 
   input  wire [3:0]   core_id,
-  input  wire         core_interrupt,
-  output reg          core_interrupt_ack,
+  input  wire         evict_int,
+  output reg          evict_int_ack,
+  input  wire         poke_int,
+  output reg          poke_int_ack,
   
   // DMA interface
   input  wire         dma_cmd_wr_en,
@@ -43,9 +45,10 @@ module riscv_block_PR (
   output wire         slot_for_hdr,
   input  wire         slot_wr_ready,
  
-  // Received DRAM infor to core
+  // Received DRAM and active slots info to core
   input  wire [4:0]   recv_dram_tag,
   input  wire         recv_dram_tag_valid,
+  input  wire [7:0]   active_slots,
 
   // Broadcast messages
   input  wire [45:0]  bc_msg_in,
@@ -64,32 +67,33 @@ parameter DMEM_SIZE      = 16384;
 parameter SLOW_M_B_LINES = 1024;
 parameter FAST_M_B_LINES = 1024;
 parameter BC_REGION_SIZE = 4096;
-parameter BC_START_ADDR  = PMEM_SIZE+DMEM_SIZE-BC_REGION_SIZE;
+parameter BC_START_ADDR  = 32'h01000000+PMEM_SIZE-BC_REGION_SIZE;
 parameter MSG_WIDTH      = 32+4+$clog2(BC_REGION_SIZE)-2;
 parameter CORE_ID_WIDTH  = 4;
 parameter SLOT_COUNT     = 8;
 parameter SLOT_WIDTH     = $clog2(SLOT_COUNT+1);
 
-//parameter BC_MSG_ADDR_WIDTH    = $clog2(BC_REGION_SIZE);
-parameter REG_TYPE             = 2;
-parameter REG_LENGTH           = 2;
+parameter REG_TYPE       = 2;
+parameter REG_LENGTH     = 1;
 
 ///////////////////////////////////////////////////////////////////////////////
 /////////////////// Register input and outputs ////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
-(* KEEP = "TRUE" *) reg sys_rst_r;
+(* KEEP = "TRUE" *) reg rst_r;
 (* KEEP = "TRUE" *) reg core_rst_r;
 
 reg  [3:0] core_id_r;
-reg        core_interrupt_r;
-wire       core_interrupt_ack_n;
+reg poke_int_r, evict_int_r;
+wire poke_int_ack_n, evict_int_ack_n;
 
-always @ (posedge sys_clk) begin
-  sys_rst_r          <= sys_rst;
+always @ (posedge clk) begin
+  rst_r          <= rst;
   core_rst_r         <= core_rst;
   core_id_r          <= core_id;
-  core_interrupt_r   <= core_interrupt;
-  core_interrupt_ack <= core_interrupt_ack_n;
+  poke_int_r         <= poke_int;
+  evict_int_r        <= evict_int;
+  poke_int_ack       <= poke_int_ack_n;
+  evict_int_ack      <= evict_int_ack_n;
 end
 
 wire                  dma_cmd_wr_en_r;
@@ -106,8 +110,8 @@ simple_pipe_reg # (
   .REG_TYPE(REG_TYPE), 
   .REG_LENGTH(REG_LENGTH)
 ) dma_wr_reg (
-  .clk(sys_clk),
-  .rst(sys_rst_r),
+  .clk(clk),
+  .rst(rst_r),
   
   .s_data({dma_cmd_wr_data, dma_cmd_wr_addr, dma_cmd_hdr_wr_addr,
            dma_cmd_hdr_wr_en, dma_cmd_wr_strb, dma_cmd_wr_last}),
@@ -130,8 +134,8 @@ simple_pipe_reg # (
   .REG_TYPE(REG_TYPE), 
   .REG_LENGTH(REG_LENGTH)
 ) dma_rd_reg (
-  .clk(sys_clk),
-  .rst(sys_rst_r),
+  .clk(clk),
+  .rst(rst_r),
   
   .s_data({dma_cmd_rd_addr,dma_cmd_rd_last}),
   .s_valid(dma_cmd_rd_en),
@@ -151,8 +155,8 @@ simple_pipe_reg # (
   .REG_TYPE(REG_TYPE), 
   .REG_LENGTH(REG_LENGTH)
 ) dma_rd_resp_reg (
-  .clk(sys_clk),
-  .rst(sys_rst_r),
+  .clk(clk),
+  .rst(rst_r),
   
   .s_data(dma_rd_resp_data_n),
   .s_valid(dma_rd_resp_valid_n),
@@ -172,8 +176,8 @@ simple_pipe_reg # (
   .REG_TYPE(REG_TYPE), 
   .REG_LENGTH(REG_LENGTH)
 ) in_desc_reg (
-  .clk(sys_clk),
-  .rst(sys_rst_r || core_rst_r),
+  .clk(clk),
+  .rst(rst_r || core_rst_r),
   
   .s_data(in_desc),
   .s_valid(in_desc_valid),
@@ -194,8 +198,8 @@ simple_pipe_reg # (
   .REG_TYPE(REG_TYPE), 
   .REG_LENGTH(REG_LENGTH)
 ) out_desc_reg (
-  .clk(sys_clk),
-  .rst(sys_rst_r || core_rst_r),
+  .clk(clk),
+  .rst(rst_r || core_rst_r),
   
   .s_data({out_desc_dram_addr_n,out_desc_n}),
   .s_valid(out_desc_valid_n),
@@ -217,8 +221,8 @@ simple_pipe_reg # (
   .REG_TYPE(REG_TYPE), 
   .REG_LENGTH(REG_LENGTH)
 ) slot_info_reg (
-  .clk(sys_clk),
-  .rst(sys_rst_r || core_rst_r),
+  .clk(clk),
+  .rst(rst_r || core_rst_r),
   
   .s_data({slot_wr_ptr_n, slot_wr_addr_n, slot_for_hdr_n}),
   .s_valid(slot_wr_valid_n),
@@ -237,8 +241,8 @@ simple_pipe_reg # (
   .REG_TYPE(REG_TYPE), 
   .REG_LENGTH(REG_LENGTH)
 ) dram_tag_reg (
-  .clk(sys_clk),
-  .rst(sys_rst_r || core_rst_r),
+  .clk(clk),
+  .rst(rst_r || core_rst_r),
   
   .s_data(recv_dram_tag),
   .s_valid(recv_dram_tag_valid),
@@ -246,6 +250,24 @@ simple_pipe_reg # (
 
   .m_data(recv_dram_tag_r),
   .m_valid(recv_dram_tag_valid_r),
+  .m_ready(1'b1)
+);
+
+wire [SLOT_COUNT-1:0] active_slots_r;
+simple_pipe_reg # (
+  .DATA_WIDTH(SLOT_COUNT), 
+  .REG_TYPE(REG_TYPE), 
+  .REG_LENGTH(REG_LENGTH)
+) active_slots_reg (
+  .clk(clk),
+  .rst(rst_r || core_rst_r),
+  
+  .s_data(active_slots),
+  .s_valid(1'b1),
+  .s_ready(),
+
+  .m_data(active_slots_r),
+  .m_valid(),
   .m_ready(1'b1)
 );
 
@@ -257,8 +279,8 @@ simple_pipe_reg # (
   .REG_TYPE(REG_TYPE), 
   .REG_LENGTH(REG_LENGTH)
 ) bc_msg_in_reg (
-  .clk(sys_clk),
-  .rst(sys_rst_r || core_rst_r),
+  .clk(clk),
+  .rst(rst_r || core_rst_r),
   
   .s_data(bc_msg_in),
   .s_valid(bc_msg_in_valid),
@@ -278,8 +300,8 @@ simple_pipe_reg # (
   .REG_TYPE(REG_TYPE), 
   .REG_LENGTH(REG_LENGTH)
 ) bc_msg_out_reg (
-  .clk(sys_clk),
-  .rst(sys_rst_r || core_rst_r),
+  .clk(clk),
+  .rst(rst_r || core_rst_r),
   
   .s_data(bc_msg_out_n),
   .s_valid(bc_msg_out_valid_n),
@@ -308,13 +330,15 @@ riscv_block # (
     .SLOT_COUNT(SLOT_COUNT),
     .SLOT_WIDTH(SLOT_WIDTH)
 ) riscv_block_inst (
-    .sys_clk(sys_clk),
-    .sys_rst(sys_rst_r),
+    .clk(clk),
+    .rst(rst_r),
     .core_rst(core_rst_r),
 
     .core_id(core_id_r),
-    .core_interrupt(core_interrupt_r),
-    .core_interrupt_ack(core_interrupt_ack_n),
+    .evict_int(evict_int_r),
+    .evict_int_ack(evict_int_ack_n),
+    .poke_int(poke_int_r),
+    .poke_int_ack(poke_int_ack_n),
 
     .dma_cmd_wr_en(dma_cmd_wr_en_r),
     .dma_cmd_wr_addr(dma_cmd_wr_addr_r),
@@ -347,6 +371,7 @@ riscv_block # (
     .slot_wr_ready(slot_wr_ready_n),
     .recv_dram_tag(recv_dram_tag_r),
     .recv_dram_tag_valid(recv_dram_tag_valid_r),
+    .active_slots(active_slots),
 
     .bc_msg_out(bc_msg_out_n),
     .bc_msg_out_valid(bc_msg_out_valid_n),
