@@ -86,10 +86,11 @@ module pcie_config # (
   output reg                                qsfp1_lpmode,
     
   // Cores reset
-  output wire [CORE_WIDTH-1:0]              reset_dest,
-  output wire                               reset_value,
-  output wire                               reset_valid,
-  input  wire                               reset_ready,
+  output wire [3:0]                         host_cmd,
+  output wire [31:0]                        host_cmd_data,
+  output wire [CORE_WIDTH-1:0]              host_cmd_dest,
+  output wire                               host_cmd_valid,
+  input  wire                               host_cmd_ready,
 
   // Scheduler setting
   output wire [CORE_COUNT-1:0]              income_cores, 
@@ -119,9 +120,11 @@ parameter IF_AXIL_ADDR_WIDTH  = AXIL_ADDR_WIDTH-$clog2(IF_COUNT);
 parameter AXIL_CSR_ADDR_WIDTH = IF_AXIL_ADDR_WIDTH-5-$clog2((PORTS_PER_IF+3)/8);
 
 // Registers set by AXIL
-reg  [CORE_WIDTH+1-1:0]     pcie_core_reset;
-reg                         pcie_core_reset_valid;
-wire                        pcie_core_reset_ready;
+reg  [CORE_WIDTH-1:0]       host_cmd_dest_r;
+reg  [3:0]                  host_cmd_r;
+reg  [31:0]                 host_cmd_data_r;
+reg                         host_cmd_valid_r;
+wire                        host_cmd_ready_r;
 reg  [CORE_COUNT-1:0]       income_cores_r;
 reg  [CORE_COUNT-1:0]       income_cores_rr;
 reg  [CORE_COUNT-1:0]       cores_to_be_reset_r;
@@ -185,7 +188,7 @@ always @(posedge pcie_clk) begin
 
         host_dma_read_desc_valid   <= 1'b0;
         host_dma_write_desc_valid  <= 1'b0;
-        pcie_core_reset_valid      <= 1'b0;
+        host_cmd_valid_r           <= 1'b0;
         host_dma_read_status_tags  <= {HOST_DMA_TAG_WIDTH{1'b0}};
         host_dma_write_status_tags <= {HOST_DMA_TAG_WIDTH{1'b0}};
         pcie_dma_enable            <= 1'b1;
@@ -213,7 +216,7 @@ always @(posedge pcie_clk) begin
 
         host_dma_read_desc_valid  <= host_dma_read_desc_valid && !host_dma_read_desc_ready;
         host_dma_write_desc_valid <= host_dma_write_desc_valid && !host_dma_write_desc_ready;
-        pcie_core_reset_valid     <= pcie_core_reset_valid && !pcie_core_reset_ready; 
+        host_cmd_valid_r          <= host_cmd_valid_r && !host_cmd_ready_r; 
 
         if (axil_ctrl_awvalid && axil_ctrl_wvalid && !axil_ctrl_bvalid) begin
             // write operation
@@ -243,14 +246,16 @@ always @(posedge pcie_clk) begin
 
                 // Cores control
                 16'h0400: pcie_dma_enable <= axil_ctrl_wdata;
-                16'h0404: begin 
-                    pcie_core_reset       <= axil_ctrl_wdata[CORE_WIDTH:0];
-                    pcie_core_reset_valid <= 1'b1;
+                16'h0404: host_cmd_data_r <= axil_ctrl_wdata;
+                16'h0408: begin 
+                    host_cmd_r       <= axil_ctrl_wdata[0+:CORE_WIDTH];
+                    host_cmd_dest_r  <= axil_ctrl_wdata[8+:4];
+                    host_cmd_valid_r <= 1'b1;
                 end
-                16'h0408: income_cores_r <= axil_ctrl_wdata[CORE_COUNT-1:0];
-                16'h040C: cores_to_be_reset_r <= axil_ctrl_wdata[CORE_COUNT-1:0];
-                16'h0410: stat_read_core_r <= axil_ctrl_wdata[CORE_WIDTH+4-1:0];
-                16'h0414: stat_read_interface_r <= axil_ctrl_wdata[CORE_WIDTH-1:0];
+                16'h040C: income_cores_r <= axil_ctrl_wdata[CORE_COUNT-1:0];
+                16'h0410: cores_to_be_reset_r <= axil_ctrl_wdata[CORE_COUNT-1:0];
+                16'h0414: stat_read_core_r <= axil_ctrl_wdata[CORE_WIDTH+4-1:0];
+                16'h0418: stat_read_interface_r <= axil_ctrl_wdata[CORE_WIDTH-1:0];
 
                 // DMA request
                 16'h0440: host_dma_read_desc_pcie_addr[31:0] <= axil_ctrl_wdata;
@@ -321,15 +326,15 @@ always @(posedge pcie_clk) begin
                 
                 // Cores control and DMA request response
                 16'h0400: axil_ctrl_rdata <= pcie_dma_enable;
-                16'h0408: axil_ctrl_rdata <= income_cores_r;
-                16'h040C: axil_ctrl_rdata <= cores_to_be_reset_r;
-                16'h0418: axil_ctrl_rdata <= slot_count_r;
-                16'h041C: axil_ctrl_rdata <= core_stat_data_r;
-                16'h0420: axil_ctrl_rdata <= interface_in_byte_count_r;
-                16'h0424: axil_ctrl_rdata <= interface_out_byte_count_r;
-                16'h0428: axil_ctrl_rdata <= interface_in_frame_count_r;
-                16'h042C: axil_ctrl_rdata <= interface_out_frame_count_r;
-                16'h0430: axil_ctrl_rdata <= interface_in_drop_count_r;
+                16'h040C: axil_ctrl_rdata <= income_cores_r;
+                16'h0410: axil_ctrl_rdata <= cores_to_be_reset_r;
+                16'h0420: axil_ctrl_rdata <= slot_count_r;
+                16'h0424: axil_ctrl_rdata <= core_stat_data_r;
+                16'h0428: axil_ctrl_rdata <= interface_in_byte_count_r;
+                16'h042C: axil_ctrl_rdata <= interface_out_byte_count_r;
+                16'h0430: axil_ctrl_rdata <= interface_in_frame_count_r;
+                16'h0434: axil_ctrl_rdata <= interface_out_frame_count_r;
+                16'h0438: axil_ctrl_rdata <= interface_in_drop_count_r;
                 16'h0458: axil_ctrl_rdata <= host_dma_read_status_tags;
                 16'h0478: axil_ctrl_rdata <= host_dma_write_status_tags;
             endcase
@@ -439,30 +444,30 @@ always @ (posedge pcie_clk)
 
 // Time domain crossing
 simple_async_fifo # (
-  .DEPTH(3),
-  .DATA_WIDTH(CORE_WIDTH+1)
+  .DEPTH(4),
+  .DATA_WIDTH(CORE_WIDTH+4)
 ) cores_reset_cmd_async_fifo (
   .async_rst(sys_rst),
 
   .din_clk(pcie_clk),
-  .din_valid(pcie_core_reset_valid),
-  .din(pcie_core_reset),
-  .din_ready(pcie_core_reset_ready),
+  .din_valid(host_cmd_valid_r),
+  .din({host_cmd_dest_r, host_cmd_r}),
+  .din_ready(host_cmd_ready_r),
  
   .dout_clk(sys_clk),
-  .dout_valid(reset_valid),
-  .dout({reset_dest,reset_value}),
-  .dout_ready(reset_ready)
+  .dout_valid(host_cmd_valid),
+  .dout({host_cmd_dest, host_cmd}),
+  .dout_ready(host_cmd_ready)
 );
 
 simple_sync_sig # (
   .RST_VAL(1'b0),
-  .WIDTH(CORE_COUNT+CORE_COUNT+INTERFACE_WIDTH+CORE_WIDTH+4)
+  .WIDTH(CORE_COUNT+CORE_COUNT+INTERFACE_WIDTH+CORE_WIDTH+4+32)
 ) scheduler_cmd_syncer (
   .dst_clk(sys_clk),
   .dst_rst(sys_rst),
-  .in({income_cores_rr, cores_to_be_reset_r, stat_read_interface_r, stat_read_core_r}),
-  .out({income_cores, cores_to_be_reset, stat_read_interface, stat_read_core})
+  .in({income_cores_rr, cores_to_be_reset_r, stat_read_interface_r, stat_read_core_r, host_cmd_data_r}),
+  .out({income_cores, cores_to_be_reset, stat_read_interface, stat_read_core, host_cmd_data})
 );
 
 simple_sync_sig # (
