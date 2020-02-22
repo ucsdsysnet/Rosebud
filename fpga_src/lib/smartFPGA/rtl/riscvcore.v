@@ -14,6 +14,7 @@ module riscvcore #(
     output                       pmem_en,
     output                       exio_en,
     output                       mem_wen,
+    input                        mem_ready,
     output [3:0]                 mem_strb,
     output [24:0]                mem_addr,
     output [31:0]                mem_wr_data,
@@ -93,7 +94,7 @@ VexRiscv core (
       .iBus_rsp_payload_inst(imem_rd_data),
 
       .dBus_cmd_valid(dmem_v),
-      .dBus_cmd_ready(1'b1),
+      .dBus_cmd_ready(mem_ready),
       .dBus_cmd_payload_wr(mem_wen),
       .dBus_cmd_payload_address(dmem_addr),
       .dBus_cmd_payload_data(mem_wr_data),

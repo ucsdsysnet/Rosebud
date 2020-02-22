@@ -9,7 +9,7 @@ module mem_sys # (
   parameter DMEM_ADDR_WIDTH = $clog2(DMEM_SIZE),
   parameter IMEM_ADDR_WIDTH = $clog2(IMEM_SIZE),
   parameter MSG_WIDTH       = 32+4+$clog2(BC_REGION_SIZE)-2,
-  parameter BC_START_ADDR   = PMEM_SIZE+DMEM_SIZE-BC_REGION_SIZE,
+  parameter BC_START_ADDR   = 32'h00800000+DMEM_SIZE-BC_REGION_SIZE,
   parameter SLOW_M_B_LINES  = 4096,
   parameter FAST_M_B_LINES  = 1024,
   parameter ACC_ADDR_WIDTH  = $clog2(SLOW_M_B_LINES),

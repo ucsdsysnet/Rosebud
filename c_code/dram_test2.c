@@ -6,6 +6,7 @@ int main(void){
 
 	unsigned long long dram_rd_addr = 0x000000000000BBBB;
 	unsigned long long dram_wr_addr = 0x000000000000BCBB;
+  int i;
 
 	// Do this at the beginnig, so scheduler can fill the slots while 
 	// initializing other things.
@@ -27,6 +28,9 @@ int main(void){
 
   DEBUG_OUT_L = 0xDEADBEEF;
   DEBUG_OUT_H = 0xABCDDCBA;
+
+  for (i=0x806000;i<0x806100;i+=4)
+    * ((volatile unsigned int *)i) = 0xdeadbeef;
 
 	while (1){
 		if (in_pkt_ready()){

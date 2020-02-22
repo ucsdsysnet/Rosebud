@@ -810,7 +810,7 @@ simple_fifo # (
 ) recvd_ctrl_fifo (
   .clk(clk),
   .rst(rst),
-  .clear(1'b0), //core_reset_r),
+  .clear(1'b0),
 
   .din_valid(ctrl_s_axis_tvalid_r),
   .din(parsed_ctrl_desc),

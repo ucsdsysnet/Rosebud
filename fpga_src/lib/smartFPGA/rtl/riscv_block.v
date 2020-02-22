@@ -5,7 +5,7 @@ module riscv_block # (
   parameter PMEM_SIZE      = 1048576,
   parameter DMEM_SIZE      = 32768,
   parameter BC_REGION_SIZE = 4048,
-  parameter BC_START_ADDR  = 32'h01000000+PMEM_SIZE-BC_REGION_SIZE,
+  parameter BC_START_ADDR  = 32'h00800000+DMEM_SIZE-BC_REGION_SIZE,
   parameter MSG_ADDR_WIDTH = $clog2(BC_REGION_SIZE)-2,
   parameter MSG_WIDTH      = 32+4+MSG_ADDR_WIDTH,
   parameter SLOW_M_B_LINES = 4096,
@@ -139,6 +139,7 @@ wire        core_dmem_en;
 wire        core_pmem_en;
 wire        core_exio_en;
 wire        core_mem_wen;
+wire        core_mem_ready;
 wire [3:0]  core_mem_strb;
 wire [24:0] core_mem_addr;
 wire [31:0] core_mem_wr_data;
@@ -157,8 +158,9 @@ wire        core_imem_rd_valid;
 
 wire ext_io_err, ext_io_err_ack;
 
-assign core_mem_rd_data = core_exio_rd_valid ? core_exio_rd_data : core_dmem_rd_data;
-assign core_mem_rd_valid = core_exio_rd_valid | core_dmem_rd_valid;
+assign core_mem_rd_data  = core_exio_rd_valid ?  core_exio_rd_data : core_dmem_rd_data;
+assign core_mem_rd_valid = core_exio_rd_valid || core_dmem_rd_valid;
+assign core_mem_ready    = !bc_msg_out_valid  || bc_msg_out_ready;
 
 riscvcore #(
   .IMEM_SIZE(IMEM_SIZE),
@@ -175,6 +177,7 @@ riscvcore #(
   .pmem_en(core_pmem_en),
   .exio_en(core_exio_en),
   .mem_wen(core_mem_wen),
+  .mem_ready(core_mem_ready),
   .mem_strb(core_mem_strb),
   .mem_addr(core_mem_addr),
   .mem_wr_data(core_mem_wr_data),
@@ -227,7 +230,7 @@ assign bc_msg_out[31:0]           = core_mem_wr_data;
 assign bc_msg_out[35:32]          = core_mem_strb;
 assign bc_msg_out[MSG_WIDTH-1:36] = core_mem_addr[MSG_ADDR_WIDTH+2-1:2];
 assign bc_msg_out_valid           = core_dmem_en && core_mem_wen &&
-                                   (core_mem_addr >= BC_START_ADDR);
+                    (&core_mem_addr[$clog2(DMEM_SIZE)-1:$clog2(BC_REGION_SIZE)]);
 
 ///////////////////////////////////////////////////////////////////////////
 ////////////////////////// ACCELERATORS ///////////////////////////////////
