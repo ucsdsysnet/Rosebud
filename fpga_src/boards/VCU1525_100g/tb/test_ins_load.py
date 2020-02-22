@@ -884,30 +884,34 @@ def bench():
           # print ("Very last packet:")
           # for i in range(0, len(data), 16):
           #     print(" ".join(("{:02x}".format(c) for c in bytearray(data[i:i+16]))))
-          print ("lengths: " , lengths)
+          # print ("lengths: " , lengths)
             
-          for k in range (0,16):
+          for k in range (8,12):
             yield rc.mem_write(dev_pf0_bar0+0x000410, struct.pack('<L', k<<4|0))
-            yield delay(30)
+            yield delay(100)
             slots      = yield from rc.mem_read(dev_pf0_bar0+0x000418, 4)
+            # slots      = yield from rc.mem_read(dev_pf0_bar0+0x000418, 4)
             bytes_in   = yield from rc.mem_read(dev_pf0_bar0+0x00041C, 4)
             yield rc.mem_write(dev_pf0_bar0+0x000410, struct.pack('<L', k<<4|1))
-            yield delay(30)
+            yield delay(100)
+            # frames_in  = yield from rc.mem_read(dev_pf0_bar0+0x00041C, 4)
             frames_in  = yield from rc.mem_read(dev_pf0_bar0+0x00041C, 4)
             yield rc.mem_write(dev_pf0_bar0+0x000410, struct.pack('<L', k<<4|2))
-            yield delay(30)
+            yield delay(100)
+            # bytes_out  = yield from rc.mem_read(dev_pf0_bar0+0x00041C, 4)
             bytes_out  = yield from rc.mem_read(dev_pf0_bar0+0x00041C, 4)
             yield rc.mem_write(dev_pf0_bar0+0x000410, struct.pack('<L', k<<4|3))
-            yield delay(30)
+            yield delay(100)
+            # frames_out = yield from rc.mem_read(dev_pf0_bar0+0x00041C, 4)
             frames_out = yield from rc.mem_read(dev_pf0_bar0+0x00041C, 4)
-            yield delay(30)
+            yield delay(100)
 
             print ("Core %d stat read, slots: , bytes_in, byte_out, frames_in, frames_out" % (k))
             print (B_2_int(slots),B_2_int(bytes_in),B_2_int(bytes_out),B_2_int(frames_in),B_2_int(frames_out))
 
-          for k in range (0,3):
+          for k in range (0,1):
             yield rc.mem_write(dev_pf0_bar0+0x000414, struct.pack('<L', k))
-            yield delay(30)
+            yield delay(100)
             bytes_in   = yield from rc.mem_read(dev_pf0_bar0+0x000420, 4)
             bytes_out  = yield from rc.mem_read(dev_pf0_bar0+0x000424, 4)
             frames_in  = yield from rc.mem_read(dev_pf0_bar0+0x000428, 4)
