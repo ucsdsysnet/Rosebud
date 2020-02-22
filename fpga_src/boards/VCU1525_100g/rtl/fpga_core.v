@@ -587,21 +587,15 @@ wire                       reset_valid;
 wire                       reset_ready;
 wire [CORE_COUNT-1:0]      income_cores;
 wire [CORE_COUNT-1:0]      cores_to_be_reset;
-wire [CORE_WIDTH-1:0]      stat_read_core;
-wire [CORE_WIDTH-1:0]      stat_read_core_r;
+wire [CORE_WIDTH+4-1:0]    stat_read_core;
+wire [CORE_WIDTH+4-1:0]    stat_read_core_r;
 wire [IF_COUNT_WIDTH-1:0]  stat_read_interface;
 wire [SLOT_WIDTH-1:0]      slot_count;
 wire                       pcie_dma_enable;
 wire [31:0]                vif_irq;
 
-wire [BYTE_COUNT_WIDTH-1:0]   core_in_byte_count;
-wire [BYTE_COUNT_WIDTH-1:0]   core_out_byte_count;
-wire [FRAME_COUNT_WIDTH-1:0]  core_in_frame_count;
-wire [FRAME_COUNT_WIDTH-1:0]  core_out_frame_count;
-wire [BYTE_COUNT_WIDTH-1:0]   core_in_byte_count_r;
-wire [BYTE_COUNT_WIDTH-1:0]   core_out_byte_count_r;
-wire [FRAME_COUNT_WIDTH-1:0]  core_in_frame_count_r;
-wire [FRAME_COUNT_WIDTH-1:0]  core_out_frame_count_r;
+reg  [31:0]                   core_stat_data_muxed;
+wire [31:0]                   core_stat_data_muxed_r;
 wire [BYTE_COUNT_WIDTH-1:0]   interface_in_byte_count;
 wire [BYTE_COUNT_WIDTH-1:0]   interface_out_byte_count;
 wire [FRAME_COUNT_WIDTH-1:0]  interface_in_frame_count;
@@ -753,16 +747,12 @@ pcie_config # (
   .reset_valid(reset_valid),
   .reset_ready(reset_ready),
 
-  .income_cores       (income_cores),
-  .cores_to_be_reset  (cores_to_be_reset),
+  .income_cores     (income_cores),
+  .cores_to_be_reset(cores_to_be_reset),
 
-  .stat_read_core      (stat_read_core),
-  .slot_count          (slot_count),
-  .core_in_byte_count  (core_in_byte_count_r),
-  .core_in_frame_count (core_in_frame_count_r),
-  .core_out_byte_count (core_out_byte_count_r),
-  .core_out_frame_count(core_out_frame_count_r),
-
+  .stat_read_core    (stat_read_core),
+  .slot_count        (slot_count),
+  .core_stat_data    (core_stat_data_muxed_r),
 
   .stat_read_interface      (stat_read_interface),
   .interface_in_byte_count  (interface_in_byte_count),
@@ -776,20 +766,18 @@ pcie_config # (
   .msi_irq            (msi_irq)
 );
 
-simple_sync_sig # (.RST_VAL(1'b0),.WIDTH(CORE_WIDTH)) stat_read_core_reg (
+simple_sync_sig # (.RST_VAL(1'b0),.WIDTH(CORE_WIDTH+4)) stat_read_core_reg (
   .dst_clk(core_clk),
   .dst_rst(core_rst_r),
   .in(stat_read_core),
   .out(stat_read_core_r)
 );
 
-simple_sync_sig # (.RST_VAL(1'b0),.WIDTH((2*BYTE_COUNT_WIDTH)+(2*FRAME_COUNT_WIDTH))) stat_read_core_results_reg (
+simple_sync_sig # (.RST_VAL(1'b0),.WIDTH(32)) core_stat_data_reg (
   .dst_clk(sys_clk),
   .dst_rst(sys_rst),
-  .in( {core_in_byte_count,    core_out_byte_count,
-        core_in_frame_count,   core_out_frame_count}),
-  .out({core_in_byte_count_r,  core_out_byte_count_r,
-        core_in_frame_count_r, core_out_frame_count_r})
+  .in(core_stat_data_muxed),
+  .out(core_stat_data_muxed_r)
 );
 
 if (V_PORT_COUNT==0) begin: no_veth
@@ -1131,10 +1119,10 @@ simple_scheduler # (
   .reset_valid(reset_valid),
   .reset_ready(reset_ready),
 
-  .income_cores       (income_cores),
-  .cores_to_be_reset  (cores_to_be_reset),
-  .stat_read_core     (stat_read_core),
-  .slot_count         (slot_count),
+  .income_cores     (income_cores),
+  .cores_to_be_reset(cores_to_be_reset),
+  .stat_read_core   (stat_read_core[4 +: CORE_WIDTH]),
+  .slot_count       (slot_count),
 
   .trig_in     (sched_trig_in),
   .trig_in_ack (sched_trig_in_ack),
@@ -1249,30 +1237,6 @@ stat_reader # (
   .drop_count(interface_in_drop_count)
 );
 
-stat_reader # (
-  .KEEP_WIDTH(LVL2_STRB_WIDTH),
-  .PORT_COUNT(CORE_COUNT),
-  .BYTE_COUNT_WIDTH(BYTE_COUNT_WIDTH),
-  .FRAME_COUNT_WIDTH(FRAME_COUNT_WIDTH),
-  .PORT_WIDTH(CORE_WIDTH),
-  .PORT_CLUSTERS(BC_MSG_CLUSTERS)
-) core_incoming_stat (
-  .clk(core_clk),
-  .port_rst(block_reset),
-  .port_clear({CORE_COUNT{1'b0}}),
-
-  .monitor_axis_tkeep(data_s_axis_tkeep),
-  .monitor_axis_tvalid(data_s_axis_tvalid),
-  .monitor_axis_tready(data_s_axis_tready),
-  .monitor_axis_tlast(data_s_axis_tlast),
-  .monitor_drop_pulse({CORE_COUNT{1'b0}}),
-
-  .port_select(stat_read_core_r),
-  .byte_count(core_in_byte_count),
-  .frame_count(core_in_frame_count),
-  .drop_count()
-);
-
 axis_switch_2lvl # (
     .S_COUNT         (CORE_COUNT),
     .M_COUNT         (PORT_COUNT),
@@ -1344,30 +1308,6 @@ stat_reader # (
   .port_select(stat_read_interface),
   .byte_count(interface_out_byte_count),
   .frame_count(interface_out_frame_count),
-  .drop_count()
-);
-
-stat_reader # (
-  .KEEP_WIDTH(LVL2_STRB_WIDTH),
-  .PORT_COUNT(CORE_COUNT),
-  .BYTE_COUNT_WIDTH(BYTE_COUNT_WIDTH),
-  .FRAME_COUNT_WIDTH(FRAME_COUNT_WIDTH),
-  .PORT_WIDTH(CORE_WIDTH),
-  .PORT_CLUSTERS(BC_MSG_CLUSTERS)
-) core_outgoing_stat (
-  .clk(core_clk),
-  .port_rst(block_reset),
-  .port_clear({CORE_COUNT{1'b0}}),
-  .monitor_drop_pulse({CORE_COUNT{1'b0}}),
-
-  .monitor_axis_tkeep(data_m_axis_tkeep),
-  .monitor_axis_tvalid(data_m_axis_tvalid),
-  .monitor_axis_tready(data_m_axis_tready),
-  .monitor_axis_tlast(data_m_axis_tlast),
-
-  .port_select(stat_read_core_r),
-  .byte_count(core_out_byte_count),
-  .frame_count(core_out_frame_count),
   .drop_count()
 );
 
@@ -1713,6 +1653,52 @@ always @ (posedge core_clk) begin
         core_msg_in_valid_r <= {CORE_COUNT{1'b0}};
 end
 
+// Selecting core for stat readback
+localparam LAST_SEL_BITS = CORE_WIDTH+4-$clog2(BC_MSG_CLUSTERS); 
+
+wire [CORE_COUNT*4-1:0]  core_stat_addr;
+wire [CORE_COUNT*32-1:0] core_stat_data;
+
+(* KEEP = "TRUE" *) reg [CORE_WIDTH+4-1:0] core_select_r;
+(* KEEP = "TRUE" *) reg [BC_MSG_CLUSTERS*LAST_SEL_BITS-1:0] core_select_rr;
+(* KEEP = "TRUE" *) reg [CORE_COUNT*32-1:0] core_stat_data_r;
+reg [BC_MSG_CLUSTERS*32-1:0] core_stat_data_rr;
+
+always @ (posedge core_clk) begin
+  core_select_r    <= stat_read_core_r;
+  core_select_rr   <= {BC_MSG_CLUSTERS{core_select_r[LAST_SEL_BITS-1:0]}};
+  core_stat_data_r <= core_stat_data;
+end
+
+genvar p;
+generate
+  for (p=0; p<BC_MSG_CLUSTERS; p=p+1) begin : in_cluster_stat_sel
+
+    wire [$clog2(CORES_PER_CLUSTER)-1:0] cluster_core_sel =
+      core_select_rr[p*LAST_SEL_BITS+4+:$clog2(CORES_PER_CLUSTER)];  
+
+    assign core_stat_addr[p*CORES_PER_CLUSTER*4 +: 4*CORES_PER_CLUSTER] =
+      {CORES_PER_CLUSTER{core_select_rr[p*LAST_SEL_BITS +: 4]}};
+    
+    wire [CORES_PER_CLUSTER*32-1:0]  cluster_stat_data = 
+                        core_stat_data_r[p*CORES_PER_CLUSTER*32 
+                                        +: CORES_PER_CLUSTER*32];
+    always @ (posedge core_clk) 
+      core_stat_data_rr [p*32 +: 32] <= 
+          cluster_stat_data [cluster_core_sel*32 +: 32];
+
+  end
+endgenerate
+
+if (BC_MSG_CLUSTERS == 1) begin: single_cluster
+  always @ (posedge core_clk)
+    core_stat_data_muxed <= core_stat_data_rr;
+end else begin: cluster_stat_sel
+  always @ (posedge core_clk) 
+    core_stat_data_muxed <= 
+      core_stat_data_rr[core_select_r[CORE_WIDTH+4-1:LAST_SEL_BITS]*32  +: 32];
+end
+
 // Instantiating riscv core wrappers
 genvar i;
 generate
@@ -1848,6 +1834,10 @@ generate
             .core_msg_in(core_msg_in_data_r[CORE_MSG_WIDTH*i +: CORE_MSG_WIDTH]),
             .core_msg_in_user(core_msg_in_user_r[CORE_WIDTH*i +: CORE_WIDTH]),
             .core_msg_in_valid(core_msg_in_valid_r[i]),
+    
+            // ---------- STATUS READBACK CHANNEL ---------- //
+            .stat_addr(core_stat_addr[4*i +: 4]),
+            .stat_data(core_stat_data[32*i +: 32]),
 
             // --------------------------------------------- //
             // ------- CONNECTION TO RISCV_BLOCK ----------- //

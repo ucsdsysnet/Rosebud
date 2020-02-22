@@ -94,6 +94,10 @@ module riscv_axis_wrapper # (
     input  wire [MSG_WIDTH-1:0]     core_msg_in,
     input  wire [CORE_ID_WIDTH-1:0] core_msg_in_user,
     input  wire                     core_msg_in_valid,
+    
+    // ---------- STATUS READBACK CHANNEL ---------- //
+    input  wire [3:0]               stat_addr,
+    output reg  [31:0]              stat_data,
 
     // --------------------------------------------- //
     // ------- CONNECTION TO RISCV_BLOCK ----------- //
@@ -1125,14 +1129,85 @@ always @ (posedge clk)
   else if ((out_desc_type>4'd5) && out_desc_valid)
     invalid_out_desc <= 1'b1; 
 
-wire [31:0] wrapper_error = {13'd0, in_desc_err, out_desc_err, invalid_out_desc, 
-												     {(16-SLOT_COUNT){1'b0}}, override_in_slot_err};
+wire [31:0] wrapper_errs = {13'd0, in_desc_err, out_desc_err, invalid_out_desc, 
+												   {(16-SLOT_COUNT){1'b0}}, override_in_slot_err};
 
-wire [31:0] fifo_fulls = 
+wire [31:0] wrapper_fifo_fulls = 
         {13'd0, !recv_desc_fifo_ready, !ctrl_s_axis_tready, !dram_req_ready,
          10'd0, !core_data_wr_ready,   !core_ctrl_wr_ready, !core_dram_wr_ready,
                 !core_dram_rd_ready,   !pkt_sent_ready,     !bc_msg_out_ready};
 
-// wrapper_fifo_fulls, wrapper_errors, slots_status, core_slot_err, core_stat_reg
+/////////////////////////////////////////////////////////////////////
+//////////////////////// STAT COLLECTION ////////////////////////////
+/////////////////////////////////////////////////////////////////////
+wire [31:0] incoming_byte_count, incoming_frame_count;
+wire [31:0] outgoing_byte_count, outgoing_frame_count;
+
+axis_stat # (
+  .KEEP_WIDTH(STRB_WIDTH),
+  .KEEP_ENABLE(1),
+  .BYTE_COUNT_WIDTH (32),
+  .FRAME_COUNT_WIDTH(32)
+) incoming_stat_inst (
+  .clk(clk),
+  .rst(rst),
+  .clear(1'b0),
+
+  .monitor_axis_tkeep (data_s_axis_tkeep),
+  .monitor_axis_tvalid(data_s_axis_tvalid),
+  .monitor_axis_tready(data_s_axis_tready),
+  .monitor_axis_tlast (data_s_axis_tlast),
+  .monitor_drop_pulse (1'b0),
+
+  .byte_count(incoming_byte_count),
+  .frame_count(incoming_frame_count),
+  .drop_count()
+);
+
+axis_stat # (
+  .KEEP_WIDTH(STRB_WIDTH),
+  .KEEP_ENABLE(1),
+  .BYTE_COUNT_WIDTH (32),
+  .FRAME_COUNT_WIDTH(32)
+) outgoing_stat_inst (
+  .clk(clk),
+  .rst(rst),
+  .clear(1'b0),
+
+  .monitor_axis_tkeep (data_m_axis_tkeep),
+  .monitor_axis_tvalid(data_m_axis_tvalid),
+  .monitor_axis_tready(data_m_axis_tready),
+  .monitor_axis_tlast (data_m_axis_tlast),
+  .monitor_drop_pulse (1'b0),
+
+  .byte_count(outgoing_byte_count),
+  .frame_count(outgoing_frame_count),
+  .drop_count()
+);
+
+reg [3:0] stat_addr_r;
+
+always @ (posedge clk) begin
+  stat_addr_r <= stat_addr;
+
+  case (stat_addr_r)
+    4'h0: stat_data <= incoming_byte_count;
+    4'h1: stat_data <= incoming_frame_count;
+    4'h2: stat_data <= outgoing_byte_count;
+    4'h3: stat_data <= outgoing_frame_count;
+    4'h4: stat_data <= core_debug_l;
+    4'h5: stat_data <= core_debug_h;
+    4'h6: stat_data <= 32'd0;
+    4'h7: stat_data <= 32'd0;
+    4'h8: stat_data <= core_stat_reg;
+    4'h9: stat_data <= slots_status;
+    4'hA: stat_data <= wrapper_fifo_fulls;
+    4'hB: stat_data <= core_slot_err;
+    4'hC: stat_data <= wrapper_errs;
+    4'hD: stat_data <= 32'd0;
+    4'hE: stat_data <= 32'd0;
+    4'hF: stat_data <= 32'd0;
+  endcase
+end
 
 endmodule
