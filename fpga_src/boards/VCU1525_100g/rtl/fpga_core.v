@@ -764,6 +764,7 @@ pcie_config # (
   .interface_out_frame_count(interface_out_frame_count),
 
   .pcie_dma_enable    (pcie_dma_enable),
+  .corundum_loopback  (),
   .if_msi_irq         (vif_irq),
   .msi_irq            (msi_irq)
 );

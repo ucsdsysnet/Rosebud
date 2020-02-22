@@ -111,6 +111,7 @@ module pcie_config # (
   
   // PCIe DMA enable and interrupts
   output reg                                pcie_dma_enable,
+  output reg                                corundum_loopback,
   input  wire [31:0]                        if_msi_irq,
   output wire [31:0]                        msi_irq
 );
@@ -192,6 +193,7 @@ always @(posedge pcie_clk) begin
         host_dma_read_status_tags  <= {HOST_DMA_TAG_WIDTH{1'b0}};
         host_dma_write_status_tags <= {HOST_DMA_TAG_WIDTH{1'b0}};
         pcie_dma_enable            <= 1'b1;
+        corundum_loopback          <= 1'b0;
         income_cores_r             <= {CORE_COUNT{1'b1}};
         cores_to_be_reset_r        <= {CORE_COUNT{1'b0}};
         stat_read_core_r           <= {CORE_WIDTH+4{1'b0}};
@@ -245,7 +247,7 @@ always @(posedge pcie_clk) begin
                 end
 
                 // Cores control
-                16'h0400: pcie_dma_enable <= axil_ctrl_wdata;
+                16'h0400: pcie_dma_enable <= axil_ctrl_wdata[0];
                 16'h0404: host_cmd_data_r <= axil_ctrl_wdata;
                 16'h0408: begin 
                     host_cmd_r       <= axil_ctrl_wdata[0+:CORE_WIDTH];
@@ -274,6 +276,7 @@ always @(posedge pcie_clk) begin
                     host_dma_write_desc_tag <= axil_ctrl_wdata;
                     host_dma_write_desc_valid <= 1'b1;
                 end
+                16'h0480: corundum_loopback <= axil_ctrl_wdata[0];
             endcase
         end
 
@@ -337,6 +340,7 @@ always @(posedge pcie_clk) begin
                 16'h0438: axil_ctrl_rdata <= interface_in_drop_count_r;
                 16'h0458: axil_ctrl_rdata <= host_dma_read_status_tags;
                 16'h0478: axil_ctrl_rdata <= host_dma_write_status_tags;
+                16'h0480: axil_ctrl_rdata <= corundum_loopback;
             endcase
         end
         

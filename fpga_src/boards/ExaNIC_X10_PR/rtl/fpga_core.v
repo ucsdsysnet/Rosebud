@@ -420,11 +420,12 @@ wire                       dram_ctrl_s_axis_tready;
 wire                       dram_ctrl_s_axis_tlast;
 wire [CORE_WIDTH-1:0]      dram_ctrl_s_axis_tdest;
 
-// Cores reset
-wire [CORE_WIDTH-1:0]      reset_dest;
-wire                       reset_value;
-wire                       reset_valid;
-wire                       reset_ready;
+// pcie_config connections 
+wire [3:0]                 host_cmd;
+wire [CORE_WIDTH-1:0]      host_cmd_dest;
+wire [31:0]                host_cmd_data;
+wire                       host_cmd_valid;
+wire                       host_cmd_ready;
 wire [CORE_COUNT-1:0]      income_cores;
 wire [CORE_COUNT-1:0]      cores_to_be_reset;
 wire [CORE_WIDTH+4-1:0]    stat_read_core;
@@ -591,11 +592,12 @@ pcie_config # (
   .flash_we_n(flash_we_n),
   .flash_adv_n(flash_adv_n),
 
-  // Cores reset
-  .reset_dest (reset_dest),
-  .reset_value(reset_value),
-  .reset_valid(reset_valid),
-  .reset_ready(reset_ready),
+  // Host commands to cores
+  .host_cmd      (host_cmd),
+  .host_cmd_dest (host_cmd_dest),
+  .host_cmd_data (host_cmd_data),
+  .host_cmd_valid(host_cmd_valid),
+  .host_cmd_ready(host_cmd_ready),
 
   .income_cores     (income_cores),
   .cores_to_be_reset(cores_to_be_reset),
@@ -612,6 +614,7 @@ pcie_config # (
   .interface_out_frame_count(interface_out_frame_count),
 
   .pcie_dma_enable    (pcie_dma_enable),
+  .corundum_loopback  (),
   .if_msi_irq         (vif_irq),
   .msi_irq            (msi_irq)
 );
@@ -963,11 +966,12 @@ simple_scheduler # (
   .ctrl_s_axis_tlast(sched_ctrl_s_axis_tlast),
   .ctrl_s_axis_tuser(sched_ctrl_s_axis_tuser),
 
-  // Cores reset
-  .reset_dest (reset_dest),
-  .reset_value(reset_value),
-  .reset_valid(reset_valid),
-  .reset_ready(reset_ready),
+  // Host commands to cores
+  .host_cmd      (host_cmd),
+  .host_cmd_dest (host_cmd_dest),
+  .host_cmd_data (host_cmd_data),
+  .host_cmd_valid(host_cmd_valid),
+  .host_cmd_ready(host_cmd_ready),
 
   .income_cores     (income_cores),
   .cores_to_be_reset(cores_to_be_reset),
@@ -1587,22 +1591,22 @@ generate
         wire [4:0]                 recv_dram_tag;
         wire                       recv_dram_tag_valid;
 
-        wire [CORE_MSG_WIDTH-1:0] bc_msg_out;
-        wire                      bc_msg_out_valid;
-        wire                      bc_msg_out_ready;
+        wire [CORE_MSG_WIDTH-1:0]  bc_msg_out;
+        wire                       bc_msg_out_valid;
+        wire                       bc_msg_out_ready;
 
-        wire [CORE_MSG_WIDTH-1:0] bc_msg_in;
-        wire                      bc_msg_in_valid;
+        wire [CORE_MSG_WIDTH-1:0]  bc_msg_in;
+        wire                       bc_msg_in_valid;
 
-        wire [31:0]               wrapper_status_data;
-        wire [1:0]                wrapper_status_addr;
-        wire                      wrapper_status_valid;
-        wire                      wrapper_status_ready;
+        wire [31:0]                wrapper_status_data;
+        wire [1:0]                 wrapper_status_addr;
+        wire                       wrapper_status_valid;
+        wire                       wrapper_status_ready;
 
-        wire [31:0]               core_status_data;
-        wire [1:0]                core_status_addr;
-        wire                      core_status_valid;
-        wire                      core_status_ready;
+        wire [31:0]                core_status_data;
+        wire [1:0]                 core_status_addr;
+        wire                       core_status_valid;
+        wire                       core_status_ready;
 
         // (* keep_hierarchy = "soft" *)
         riscv_axis_wrapper #(

@@ -175,25 +175,40 @@ wire ctrl_desc_cmd  = (ctrl_cmd == 4'h0) || (ctrl_cmd == 4'h1);
 reg core_reset_r;
 reg core_poke_r;
 reg core_evict_r;
+reg [31:0] host_debug_l,   host_debug_h;
+reg        host_debug_l_v, host_debug_h_v;
 
 always @ (posedge clk) begin
-    if (poke_int_ack)
-        core_poke_r  <= 1'b0;
-    if (evict_int_ack)
-        core_evict_r <= 1'b0;
+  if (poke_int_ack)
+      core_poke_r  <= 1'b0;
+  if (evict_int_ack)
+      core_evict_r <= 1'b0;
 
-    if (ctrl_s_axis_tvalid && (ctrl_cmd == 4'hF))
-        core_reset_r <= ctrl_s_axis_tdata[0];
-    if (ctrl_s_axis_tvalid && (ctrl_cmd == 4'h8))
-        core_poke_r  <= 1'b1;
-    if (ctrl_s_axis_tvalid && (ctrl_cmd == 4'h9))
-        core_evict_r <= 1'b1;
+  host_debug_l_v <= host_debug_l_v && !wrapper_status_ready;
+  host_debug_h_v <= host_debug_h_v && !wrapper_status_ready;
 
-    if (rst) begin
-        core_reset_r <= 1'b1;
-        core_poke_r  <= 1'b0;
-        core_evict_r <= 1'b0;
-    end
+  if (ctrl_s_axis_tvalid)
+    case(ctrl_cmd)
+      4'h8: begin 
+        host_debug_l   <= ctrl_s_axis_tdata[31:0]; 
+        host_debug_l_v <= 1'b1;
+      end
+      4'h9: begin 
+        host_debug_h   <= ctrl_s_axis_tdata[31:0]; 
+        host_debug_h_v <= 1'b1;
+      end
+      4'hC: core_poke_r  <= ctrl_s_axis_tdata[0];
+      4'hD: core_evict_r <= ctrl_s_axis_tdata[0];
+      4'hF: core_reset_r <= ctrl_s_axis_tdata[0];
+    endcase
+
+  if (rst) begin
+      core_reset_r   <= 1'b1;
+      core_poke_r    <= 1'b0;
+      core_evict_r   <= 1'b0;
+      host_debug_l_v <= 1'b0;
+      host_debug_h_v <= 1'b0;
+  end
 end
 
 assign core_reset = core_reset_r;
@@ -260,6 +275,14 @@ always @ (posedge clk) begin
                              max_slot_count, bc_region_size};
     wrapper_status_addr  <= 2'd0;
     wrapper_status_valid <= 1'b1;
+  end else if (host_debug_l_v) begin
+    wrapper_status_data  <= host_debug_l;
+    wrapper_status_addr  <= 2'd2;
+    wrapper_status_valid <= 1'b1;
+  end else if (host_debug_h_v) begin
+    wrapper_status_data  <= host_debug_h;
+    wrapper_status_addr  <= 2'd3;
+    wrapper_status_valid <= 1'b1;
   end else begin
     wrapper_status_data  <= slots_status;
     wrapper_status_addr  <= 2'd1;
@@ -268,8 +291,6 @@ always @ (posedge clk) begin
   if (rst)
     wrapper_status_valid <= 1'b0;
 end
-
-// For debug use wrapper_status_ready
 
 /////////////////////////////////////////////////////////////////////
 /////////// EXTRACTING BASE ADDR FROM/FOR INCOMING DATA /////////////

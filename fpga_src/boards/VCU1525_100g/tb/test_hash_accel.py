@@ -152,7 +152,6 @@ def bench():
     TEST_SFP     = True
     TEST_PCIE    = True
     TEST_ACC     = True
-    UPDATE_INS   = True
     FIRMWARE     = "../../../accel/hash/c/basic_fw_hash.bin"
 
     # Inputs
@@ -784,25 +783,33 @@ def bench():
         # enable DMA
         yield rc.mem_write(dev_pf0_bar0+0x000400, struct.pack('<L', 1))
         
-        if (UPDATE_INS):
-          yield rc.mem_write(dev_pf0_bar0+0x00040C, struct.pack('<L', 0xffff))
-          
-          # Load instruction memories
-          for i in range (0,16):
-              yield rc.mem_write(dev_pf0_bar0+0x000404, struct.pack('<L', ((i<<1)+1)))
-              yield delay(20)
-              # write pcie read descriptor
-              yield rc.mem_write(dev_pf0_bar0+0x000440, struct.pack('<L', (mem_base+0x0000) & 0xffffffff))
-              yield rc.mem_write(dev_pf0_bar0+0x000444, struct.pack('<L', (mem_base+0x0000 >> 32) & 0xffffffff))
-              yield rc.mem_write(dev_pf0_bar0+0x000448, struct.pack('<L', ((i<<26)+(1<<25)) & 0xffffffff))
-              yield rc.mem_write(dev_pf0_bar0+0x000450, struct.pack('<L', len(ins)))
-              yield rc.mem_write(dev_pf0_bar0+0x000454, struct.pack('<L', 0xAA))
-              yield delay(2000)
-              yield rc.mem_write(dev_pf0_bar0+0x000404, struct.pack('<L', ((i<<1)+0)))
-              yield delay(20)
-          
-        yield rc.mem_write(dev_pf0_bar0+0x000408, struct.pack('<L', 0x0f00))
-        yield rc.mem_write(dev_pf0_bar0+0x00040C, struct.pack('<L', 0x0000))
+        yield rc.mem_write(dev_pf0_bar0+0x000410, struct.pack('<L', 0xffff))
+        yield rc.mem_write(dev_pf0_bar0+0x000404, struct.pack('<L', 0x0001))
+        yield delay(100)
+
+        # Load instruction memories
+        for i in range (0,16):
+            yield rc.mem_write(dev_pf0_bar0+0x000408, struct.pack('<L', ((i<<8)|0xf)))
+            yield delay(20)
+            # write pcie read descriptor
+            yield rc.mem_write(dev_pf0_bar0+0x000440, struct.pack('<L', (mem_base+0x0000) & 0xffffffff))
+            yield rc.mem_write(dev_pf0_bar0+0x000444, struct.pack('<L', (mem_base+0x0000 >> 32) & 0xffffffff))
+            yield rc.mem_write(dev_pf0_bar0+0x000448, struct.pack('<L', ((i<<26)+(1<<25)) & 0xffffffff))
+            yield rc.mem_write(dev_pf0_bar0+0x000450, struct.pack('<L', len(ins)))
+            yield rc.mem_write(dev_pf0_bar0+0x000454, struct.pack('<L', 0xAA))
+            yield delay(1000)
+
+        yield rc.mem_write(dev_pf0_bar0+0x000404, struct.pack('<L', 0x0000))
+        yield delay(100)
+
+        for i in range (0,16):
+            yield rc.mem_write(dev_pf0_bar0+0x000408, struct.pack('<L', ((i<<8)|0xf)))
+
+        yield delay(2000)
+        yield rc.mem_write(dev_pf0_bar0+0x000404, struct.pack('<L', 0x1234ABCD))
+
+        yield rc.mem_write(dev_pf0_bar0+0x00040C, struct.pack('<L', 0x0f00))
+        yield rc.mem_write(dev_pf0_bar0+0x000410, struct.pack('<L', 0x0000))
 
         if (TEST_PCIE):
           print("PCIE tests")

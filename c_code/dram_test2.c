@@ -25,6 +25,9 @@ int main(void){
 	packet.data = (unsigned char*)0x800020;
 	safe_dram_write(&dram_wr_addr, &packet);
 
+  DEBUG_OUT_L = 0xDEADBEEF;
+  DEBUG_OUT_H = 0xABCDDCBA;
+
 	while (1){
 		if (in_pkt_ready()){
 	 		
@@ -37,8 +40,9 @@ int main(void){
 			}
 			safe_pkt_send(&packet);
 			// safe_pkt_done_msg(&packet);
-
   	}
+    DEBUG_OUT_L = DEBUG_IN_L;
+    DEBUG_OUT_H = DEBUG_IN_H;
   }
   
   return 1;

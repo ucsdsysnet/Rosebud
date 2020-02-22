@@ -56,7 +56,7 @@ srcs.append("../lib/smartFPGA/rtl/riscv_block.v")
 srcs.append("../lib/smartFPGA/rtl/accel_wrap.v")
 srcs.append("../lib/smartFPGA/rtl/riscv_axis_wrapper.v")
 srcs.append("../lib/smartFPGA/rtl/mem_sys.v")
-srcs.append("../lib/smartFPGA/rtl/simple_scheduler2.v")
+srcs.append("../lib/smartFPGA/rtl/simple_scheduler.v")
 srcs.append("../lib/smartFPGA/rtl/simple_sync_sig.v")
 srcs.append("../lib/smartFPGA/rtl/axis_switch.v")
 srcs.append("../lib/smartFPGA/rtl/axis_ram_switch.v")
@@ -786,7 +786,6 @@ def bench():
         yield rc.mem_write(dev_pf0_bar0+0x000404, struct.pack('<L', 0x0001))
         yield delay(100)
 
-        
         # Load instruction memories
         for i in range (0,16):
             yield rc.mem_write(dev_pf0_bar0+0x000408, struct.pack('<L', ((i<<8)|0xf)))
@@ -797,16 +796,17 @@ def bench():
             yield rc.mem_write(dev_pf0_bar0+0x000448, struct.pack('<L', ((i<<26)+(1<<25)) & 0xffffffff))
             yield rc.mem_write(dev_pf0_bar0+0x000450, struct.pack('<L', len(ins)))
             yield rc.mem_write(dev_pf0_bar0+0x000454, struct.pack('<L', 0xAA))
-            yield delay(2000)
+            yield delay(1000)
 
         yield rc.mem_write(dev_pf0_bar0+0x000404, struct.pack('<L', 0x0000))
         yield delay(100)
 
         for i in range (0,16):
             yield rc.mem_write(dev_pf0_bar0+0x000408, struct.pack('<L', ((i<<8)|0xf)))
-            
+
         yield delay(2000)
-        
+        yield rc.mem_write(dev_pf0_bar0+0x000404, struct.pack('<L', 0x1234ABCD))
+
         yield rc.mem_write(dev_pf0_bar0+0x00040C, struct.pack('<L', 0x0f00))
         yield rc.mem_write(dev_pf0_bar0+0x000410, struct.pack('<L', 0x0000))
 
@@ -817,7 +817,6 @@ def bench():
           yield rc.mem_write(dev_pf0_bar0+0x000440, struct.pack('<L', (mem_base+0x0000) & 0xffffffff))
           yield rc.mem_write(dev_pf0_bar0+0x000444, struct.pack('<L', (mem_base+0x0000 >> 32) & 0xffffffff))
           yield rc.mem_write(dev_pf0_bar0+0x000448, struct.pack('<L', ((4<<26)+0x800100) & 0xffffffff))
-          # yield rc.mem_write(dev_pf0_bar0+0x00044C, struct.pack('<L', (((4<<16)+0x0100) >> 32) & 0xffffffff))
           yield rc.mem_write(dev_pf0_bar0+0x000450, struct.pack('<L', 0x400))
           yield rc.mem_write(dev_pf0_bar0+0x000454, struct.pack('<L', 0xAA))
 
@@ -826,6 +825,16 @@ def bench():
           # read status
           val = yield from rc.mem_read(dev_pf0_bar0+0x000458, 4)
           print(val)
+
+          for i in range (0,16):
+              yield rc.mem_write(dev_pf0_bar0+0x000408, struct.pack('<L', ((i<<8)|0x8)))
+              yield delay (200)
+              yield rc.mem_write(dev_pf0_bar0+0x000408, struct.pack('<L', ((i<<8)|0x9)))
+              yield delay (200)
+              yield rc.mem_write(dev_pf0_bar0+0x000408, struct.pack('<L', ((i<<8)|0xC)))
+              yield delay (200)
+              yield rc.mem_write(dev_pf0_bar0+0x000408, struct.pack('<L', ((i<<8)|0xD)))
+              yield delay (200)
 
           # write pcie write descriptor
           yield rc.mem_write(dev_pf0_bar0+0x000460, struct.pack('<L', (mem_base+0x1000) & 0xffffffff))
@@ -897,26 +906,28 @@ def bench():
             yield rc.mem_write(dev_pf0_bar0+0x000414, struct.pack('<L', k<<4|0))
             yield delay(100)
             slots      = yield from rc.mem_read(dev_pf0_bar0+0x000420, 4)
-            # slots      = yield from rc.mem_read(dev_pf0_bar0+0x000418, 4)
             bytes_in   = yield from rc.mem_read(dev_pf0_bar0+0x000424, 4)
             yield rc.mem_write(dev_pf0_bar0+0x000414, struct.pack('<L', k<<4|1))
             yield delay(100)
-            # frames_in  = yield from rc.mem_read(dev_pf0_bar0+0x00041C, 4)
             frames_in  = yield from rc.mem_read(dev_pf0_bar0+0x000424, 4)
             yield rc.mem_write(dev_pf0_bar0+0x000414, struct.pack('<L', k<<4|2))
             yield delay(100)
-            # bytes_out  = yield from rc.mem_read(dev_pf0_bar0+0x00041C, 4)
             bytes_out  = yield from rc.mem_read(dev_pf0_bar0+0x000424, 4)
             yield rc.mem_write(dev_pf0_bar0+0x000414, struct.pack('<L', k<<4|3))
             yield delay(100)
-            # frames_out = yield from rc.mem_read(dev_pf0_bar0+0x00041C, 4)
             frames_out = yield from rc.mem_read(dev_pf0_bar0+0x000424, 4)
+            yield rc.mem_write(dev_pf0_bar0+0x000414, struct.pack('<L', k<<4|4))
+            yield delay(100)
+            debug_l = yield from rc.mem_read(dev_pf0_bar0+0x000424, 4)
+            yield rc.mem_write(dev_pf0_bar0+0x000414, struct.pack('<L', k<<4|5))
+            yield delay(100)
+            debug_h = yield from rc.mem_read(dev_pf0_bar0+0x000424, 4)
             yield delay(100)
 
-            print ("Core %d stat read, slots: , bytes_in, byte_out, frames_in, frames_out" % (k))
-            print (B_2_int(slots),B_2_int(bytes_in),B_2_int(bytes_out),B_2_int(frames_in),B_2_int(frames_out))
+            print ("Core %d stat read, slots: , bytes_in, byte_out, frames_in, frames_out, debug_l, debug_h" % (k))
+            print (B_2_int(slots),B_2_int(bytes_in),B_2_int(bytes_out),B_2_int(frames_in),B_2_int(frames_out),debug_l[::-1].hex(),debug_h[::-1].hex())
 
-          for k in range (0,1):
+          for k in range (0,2):
             yield rc.mem_write(dev_pf0_bar0+0x000418, struct.pack('<L', k))
             yield delay(100)
             bytes_in   = yield from rc.mem_read(dev_pf0_bar0+0x000428, 4)

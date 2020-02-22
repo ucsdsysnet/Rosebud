@@ -40,7 +40,6 @@ module riscv_block_PR (
   // Received DRAM and active slots info to core
   input  wire [4:0]   recv_dram_tag,
   input  wire         recv_dram_tag_valid,
-  input  wire [7:0]   active_slots,
 
   // Broadcast messages
   input  wire [45:0]  bc_msg_in,
