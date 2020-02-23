@@ -901,6 +901,55 @@ module axis_ram_sw_shrink # (
     wire select_m_rst = SEPARATE_CLOCKS ? m_rst : s_rst;
 
     parameter S_PER_CLUSTER = S_COUNT/CLUSTER_COUNT;
+    
+    wire [S_COUNT*S_DATA_WIDTH-1:0] s_axis_tdata_r;
+    wire [S_COUNT*S_KEEP_WIDTH-1:0] s_axis_tkeep_r;
+    wire [S_COUNT-1:0]              s_axis_tvalid_r;
+    wire [S_COUNT-1:0]              s_axis_tready_r;
+    wire [S_COUNT-1:0]              s_axis_tlast_r;
+    wire [S_COUNT*ID_WIDTH-1:0]     s_axis_tid_r;
+    wire [S_COUNT*S_DEST_WIDTH-1:0] s_axis_tdest_r;
+    wire [S_COUNT*USER_WIDTH-1:0]   s_axis_tuser_r;
+     
+    genvar k;
+    generate        
+      for (k=0; k<S_COUNT; k=k+1) begin: input_registers
+        axis_pipeline_register # (
+              .DATA_WIDTH(S_DATA_WIDTH),
+              .KEEP_ENABLE(S_KEEP_ENABLE),
+              .KEEP_WIDTH(S_KEEP_WIDTH),
+              .DEST_ENABLE(S_DEST_ENABLE),
+              .DEST_WIDTH(S_DEST_WIDTH),
+              .USER_ENABLE(USER_ENABLE),
+              .USER_WIDTH(USER_WIDTH),
+              .ID_ENABLE(ID_ENABLE),
+              .ID_WIDTH(ID_WIDTH),
+              .REG_TYPE(S_REG_TYPE),
+              .LENGTH(1)
+        ) input_register (
+          .clk(s_clk),
+          .rst(s_rst),
+
+          .s_axis_tdata(s_axis_tdata[k*S_DATA_WIDTH +: S_DATA_WIDTH]),
+          .s_axis_tkeep(s_axis_tkeep[k*S_KEEP_WIDTH +: S_KEEP_WIDTH]),
+          .s_axis_tvalid(s_axis_tvalid[k]),
+          .s_axis_tready(s_axis_tready[k]),
+          .s_axis_tlast(s_axis_tlast[k]),
+          .s_axis_tid(s_axis_tid[k*ID_WIDTH +: ID_WIDTH]),
+          .s_axis_tdest(s_axis_tdest[k*S_DEST_WIDTH +: S_DEST_WIDTH]),
+          .s_axis_tuser(s_axis_tuser[k*USER_WIDTH +: USER_WIDTH]),
+
+          .m_axis_tdata(s_axis_tdata_r[k*S_DATA_WIDTH +: S_DATA_WIDTH]),
+          .m_axis_tkeep(s_axis_tkeep_r[k*S_KEEP_WIDTH +: S_KEEP_WIDTH]),
+          .m_axis_tvalid(s_axis_tvalid_r[k]),
+          .m_axis_tready(s_axis_tready_r[k]),
+          .m_axis_tlast(s_axis_tlast_r[k]),
+          .m_axis_tid(s_axis_tid_r[k*ID_WIDTH +: ID_WIDTH]),
+          .m_axis_tdest(s_axis_tdest_r[k*S_DEST_WIDTH +: S_DEST_WIDTH]),
+          .m_axis_tuser(s_axis_tuser_r[k*USER_WIDTH +: USER_WIDTH])
+        );
+      end
+    endgenerate
 
     // Level 1
     // First level doesn't do any routing, so no change to tdest
@@ -950,14 +999,14 @@ module axis_ram_sw_shrink # (
                 /*
                  * AXI Stream inputs
                  */
-                .s_axis_tdata(s_axis_tdata[j*S_PER_CLUSTER*S_DATA_WIDTH +: S_PER_CLUSTER*S_DATA_WIDTH]),
-                .s_axis_tkeep(s_axis_tkeep[j*S_PER_CLUSTER*S_KEEP_WIDTH +: S_PER_CLUSTER*S_KEEP_WIDTH]),
-                .s_axis_tvalid(s_axis_tvalid[j*S_PER_CLUSTER +: S_PER_CLUSTER]),
-                .s_axis_tready(s_axis_tready[j*S_PER_CLUSTER +: S_PER_CLUSTER]),
-                .s_axis_tlast(s_axis_tlast[j*S_PER_CLUSTER +: S_PER_CLUSTER]),
-                .s_axis_tid(s_axis_tid[j*S_PER_CLUSTER*ID_WIDTH +: S_PER_CLUSTER*ID_WIDTH]),
-                .s_axis_tdest(s_axis_tdest[j*S_PER_CLUSTER*S_DEST_WIDTH +: S_PER_CLUSTER*S_DEST_WIDTH]),
-                .s_axis_tuser(s_axis_tuser[j*S_PER_CLUSTER*USER_WIDTH +: S_PER_CLUSTER*USER_WIDTH]),
+                .s_axis_tdata(s_axis_tdata_r[j*S_PER_CLUSTER*S_DATA_WIDTH +: S_PER_CLUSTER*S_DATA_WIDTH]),
+                .s_axis_tkeep(s_axis_tkeep_r[j*S_PER_CLUSTER*S_KEEP_WIDTH +: S_PER_CLUSTER*S_KEEP_WIDTH]),
+                .s_axis_tvalid(s_axis_tvalid_r[j*S_PER_CLUSTER +: S_PER_CLUSTER]),
+                .s_axis_tready(s_axis_tready_r[j*S_PER_CLUSTER +: S_PER_CLUSTER]),
+                .s_axis_tlast(s_axis_tlast_r[j*S_PER_CLUSTER +: S_PER_CLUSTER]),
+                .s_axis_tid(s_axis_tid_r[j*S_PER_CLUSTER*ID_WIDTH +: S_PER_CLUSTER*ID_WIDTH]),
+                .s_axis_tdest(s_axis_tdest_r[j*S_PER_CLUSTER*S_DEST_WIDTH +: S_PER_CLUSTER*S_DEST_WIDTH]),
+                .s_axis_tuser(s_axis_tuser_r[j*S_PER_CLUSTER*USER_WIDTH +: S_PER_CLUSTER*USER_WIDTH]),
             
                 /*
                  * AXI Stream outputs
@@ -1561,6 +1610,15 @@ module axis_ram_sw_grow # (
     wire [CLUSTER_COUNT-1:0]              int_axis_tvalid, 
                                           int_axis_tready, 
                                           int_axis_tlast;
+
+    wire [M_COUNT*M_DATA_WIDTH-1:0]       m_axis_tdata_n;
+    wire [M_COUNT*M_KEEP_WIDTH-1:0]       m_axis_tkeep_n;
+    wire [M_COUNT-1:0]                    m_axis_tvalid_n;
+    wire [M_COUNT-1:0]                    m_axis_tready_n;
+    wire [M_COUNT-1:0]                    m_axis_tlast_n;
+    wire [M_COUNT*ID_WIDTH-1:0]           m_axis_tid_n;
+    wire [M_COUNT*M_DEST_WIDTH-1:0]       m_axis_tdest_n;
+    wire [M_COUNT*USER_WIDTH-1:0]         m_axis_tuser_n;
     
     // Data channel switch
     axis_switch #
@@ -1713,14 +1771,14 @@ module axis_ram_sw_grow # (
                 .s_axis_tdest(int_axis_tdest_f[j*S_DEST_WIDTH +: INT_DEST_WIDTH]),
                 .s_axis_tuser(int_axis_tuser_f[j*USER_WIDTH +: USER_WIDTH]),
             
-                .m_axis_tdata(m_axis_tdata[j*M_PER_CLUSTER*M_DATA_WIDTH +: M_PER_CLUSTER*M_DATA_WIDTH]),
-                .m_axis_tkeep(m_axis_tkeep[j*M_PER_CLUSTER*M_KEEP_WIDTH +: M_PER_CLUSTER*M_KEEP_WIDTH]),
-                .m_axis_tvalid(m_axis_tvalid[j*M_PER_CLUSTER +: M_PER_CLUSTER]),
-                .m_axis_tready(m_axis_tready[j*M_PER_CLUSTER +: M_PER_CLUSTER]),
-                .m_axis_tid(m_axis_tid[j*M_PER_CLUSTER*ID_WIDTH +: M_PER_CLUSTER*ID_WIDTH]),
-                .m_axis_tlast(m_axis_tlast[j*M_PER_CLUSTER +: M_PER_CLUSTER]),
+                .m_axis_tdata(m_axis_tdata_n[j*M_PER_CLUSTER*M_DATA_WIDTH +: M_PER_CLUSTER*M_DATA_WIDTH]),
+                .m_axis_tkeep(m_axis_tkeep_n[j*M_PER_CLUSTER*M_KEEP_WIDTH +: M_PER_CLUSTER*M_KEEP_WIDTH]),
+                .m_axis_tvalid(m_axis_tvalid_n[j*M_PER_CLUSTER +: M_PER_CLUSTER]),
+                .m_axis_tready(m_axis_tready_n[j*M_PER_CLUSTER +: M_PER_CLUSTER]),
+                .m_axis_tid(m_axis_tid_n[j*M_PER_CLUSTER*ID_WIDTH +: M_PER_CLUSTER*ID_WIDTH]),
+                .m_axis_tlast(m_axis_tlast_n[j*M_PER_CLUSTER +: M_PER_CLUSTER]),
                 .m_axis_tdest(m_axis_tdest_r[j*M_PER_CLUSTER*INT_DEST_WIDTH +: M_PER_CLUSTER*INT_DEST_WIDTH]),
-                .m_axis_tuser(m_axis_tuser[j*M_PER_CLUSTER*USER_WIDTH +: M_PER_CLUSTER*USER_WIDTH]),
+                .m_axis_tuser(m_axis_tuser_n[j*M_PER_CLUSTER*USER_WIDTH +: M_PER_CLUSTER*USER_WIDTH]),
 
                 .status_overflow(),
                 .status_bad_frame(),
@@ -1728,10 +1786,50 @@ module axis_ram_sw_grow # (
             );
                         
             for (i=0; i<M_COUNT; i=i+1) begin: tdest_cut
-                assign m_axis_tdest[i*M_DEST_WIDTH +: M_DEST_WIDTH] = 
+                assign m_axis_tdest_n[i*M_DEST_WIDTH +: M_DEST_WIDTH] = 
                    M_DEST_ENABLE ? m_axis_tdest_r[i*INT_DEST_WIDTH +: M_DEST_WIDTH] : 1'b0;
             end
         end
+    endgenerate
+    
+    genvar k;
+    generate        
+      for (k=0; k<M_COUNT; k=k+1) begin: output_registers
+        axis_pipeline_register # (
+              .DATA_WIDTH(M_DATA_WIDTH),
+              .KEEP_ENABLE(M_KEEP_ENABLE),
+              .KEEP_WIDTH(M_KEEP_WIDTH),
+              .DEST_ENABLE(M_DEST_ENABLE),
+              .DEST_WIDTH(M_DEST_WIDTH),
+              .USER_ENABLE(USER_ENABLE),
+              .USER_WIDTH(USER_WIDTH),
+              .ID_ENABLE(ID_ENABLE),
+              .ID_WIDTH(ID_WIDTH),
+              .REG_TYPE(M_REG_TYPE),
+              .LENGTH(1)
+        ) output_register (
+          .clk(select_m_clk),
+          .rst(select_m_rst),
+
+          .s_axis_tdata(m_axis_tdata_n[k*M_DATA_WIDTH +: M_DATA_WIDTH]),
+          .s_axis_tkeep(m_axis_tkeep_n[k*M_KEEP_WIDTH +: M_KEEP_WIDTH]),
+          .s_axis_tvalid(m_axis_tvalid_n[k]),
+          .s_axis_tready(m_axis_tready_n[k]),
+          .s_axis_tlast(m_axis_tlast_n[k]),
+          .s_axis_tid(m_axis_tid_n[k*ID_WIDTH +: ID_WIDTH]),
+          .s_axis_tdest(m_axis_tdest_n[k*M_DEST_WIDTH +: M_DEST_WIDTH]),
+          .s_axis_tuser(m_axis_tuser_n[k*USER_WIDTH +: USER_WIDTH]),
+
+          .m_axis_tdata(m_axis_tdata[k*M_DATA_WIDTH +: M_DATA_WIDTH]),
+          .m_axis_tkeep(m_axis_tkeep[k*M_KEEP_WIDTH +: M_KEEP_WIDTH]),
+          .m_axis_tvalid(m_axis_tvalid[k]),
+          .m_axis_tready(m_axis_tready[k]),
+          .m_axis_tlast(m_axis_tlast[k]),
+          .m_axis_tid(m_axis_tid[k*ID_WIDTH +: ID_WIDTH]),
+          .m_axis_tdest(m_axis_tdest[k*M_DEST_WIDTH +: M_DEST_WIDTH]),
+          .m_axis_tuser(m_axis_tuser[k*USER_WIDTH +: USER_WIDTH])
+        );
+      end
     endgenerate
  
 endmodule
