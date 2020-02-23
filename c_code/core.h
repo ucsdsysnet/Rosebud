@@ -126,6 +126,21 @@ inline void init_hdr_slots (const unsigned int slot_count,
 	return;
 }
 
+inline void init_desc_slots (const unsigned int slot_count,
+	                          const unsigned int start_desc_addr,
+	                          const unsigned int desc_addr_step) {
+
+	// TODO: Add checks for range and hdr_addr_step
+
+	for (int i=1; i<=slot_count; i++){
+		SLOT_ADDR = (3<<30) + (i<<24) + (start_desc_addr&0x00ffffff) + ((i-1)*desc_addr_step);
+		asm volatile("" ::: "memory");
+		UPDATE_SLOT = 1;
+	}
+
+	return;
+}
+
 inline void write_timer_interval (const unsigned int val){
 	TIMER_INTERVAL=val;
 	return;

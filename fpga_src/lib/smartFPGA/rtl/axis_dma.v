@@ -28,6 +28,7 @@ module axis_dma # (
 
   input  wire [ADDR_WIDTH-1:0]     wr_base_addr,
   input  wire [HDR_MSB_WIDTH-1:0]  hdr_wr_addr_msb,
+  input  wire [HDR_ADDR_WIDTH-1:0] slot_desc_addr,
   input  wire                      hdr_en,
   
   // Outgoing data
@@ -69,6 +70,7 @@ module axis_dma # (
   output wire [LEN_WIDTH-1:0]      recv_desc_len,
   output wire [DEST_WIDTH_IN-1:0]  recv_desc_tdest,
   output wire [USER_WIDTH_IN-1:0]  recv_desc_tuser,
+  output wire [HDR_ADDR_WIDTH-1:0] recv_desc_desc_addr,
 
   // Input send descriptor
   input  wire                      send_desc_valid,
@@ -96,7 +98,8 @@ module axis_dma # (
   reg [MASK_BITS:0]        wr_offset;
   reg [DEST_WIDTH_IN-1:0]  wr_tdest;
   reg                      wr_strb_left;
-  reg [HDR_ADDR_WIDTH-1:0] hdr_msb_r;
+  reg [HDR_MSB_WIDTH-1:0]  hdr_msb_r;
+  reg [HDR_ADDR_WIDTH-1:0] desc_addr_r;
   reg                      hdr_en_r;
   reg                      wr_data_en;
   reg                      wr_last;
@@ -130,6 +133,7 @@ module axis_dma # (
     if (latch_info) begin
       wr_start_addr <= wr_base_addr;
       hdr_msb_r     <= hdr_wr_addr_msb;
+      desc_addr_r   <= slot_desc_addr; 
       hdr_en_r      <= hdr_en;
       wr_offset     <= {1'b1,{MASK_BITS{1'b0}}} - {1'b0, wr_base_addr[MASK_BITS-1:0]};
       wr_tdest      <= s_axis_tdest;
@@ -267,11 +271,13 @@ module axis_dma # (
   end
 
   // Latching the descriptor 
-  reg [LEN_WIDTH-1:0]     recv_desc_len_r;
-  reg [DEST_WIDTH_IN-1:0] recv_desc_tdest_r;
-  reg [USER_WIDTH_IN-1:0] recv_desc_tuser_r;
-  reg [ADDR_WIDTH-1:0]    recv_desc_addr_r;
-  reg        recv_desc_v_r;
+  reg [LEN_WIDTH-1:0]      recv_desc_len_r;
+  reg [DEST_WIDTH_IN-1:0]  recv_desc_tdest_r;
+  reg [USER_WIDTH_IN-1:0]  recv_desc_tuser_r;
+  reg [ADDR_WIDTH-1:0]     recv_desc_addr_r;
+  reg [HDR_ADDR_WIDTH-1:0] recv_desc_desc_addr_r;
+  reg                      recv_desc_v_r;
+
   always @ (posedge clk) begin
     if ((wr_last_pkt && wr_ready && (!desc_block)) 
         || (desc_late_write && recv_desc_ready)) begin
@@ -279,6 +285,7 @@ module axis_dma # (
       recv_desc_tdest_r <= wr_tdest;
       recv_desc_tuser_r <= wr_tuser;
       recv_desc_addr_r  <= wr_start_addr;
+      recv_desc_desc_addr_r <= desc_addr_r;
       recv_desc_v_r     <= 1'b1;
     end else if (recv_desc_v_r && recv_desc_ready)
       recv_desc_v_r     <= 1'b0;
@@ -291,6 +298,7 @@ module axis_dma # (
   assign recv_desc_tdest = recv_desc_tdest_r;
   assign recv_desc_tuser = recv_desc_tuser_r;
   assign recv_desc_addr  = recv_desc_addr_r;
+  assign recv_desc_desc_addr = recv_desc_desc_addr_r;
   
   assign mem_wr_en   = wr_data_en;
   assign mem_wr_addr = wr_addr;
