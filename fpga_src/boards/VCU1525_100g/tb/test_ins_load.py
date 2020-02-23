@@ -932,15 +932,16 @@ def bench():
             print ("Core %d stat read, slots: , bytes_in, byte_out, frames_in, frames_out, debug_l, debug_h" % (k))
             print (B_2_int(slots),B_2_int(bytes_in),B_2_int(bytes_out),B_2_int(frames_in),B_2_int(frames_out),debug_l[::-1].hex(),debug_h[::-1].hex())
 
-          for k in range (0,2):
+          for k in range (0,3):
             yield rc.mem_write(dev_pf0_bar0+0x000418, struct.pack('<L', k))
             yield delay(100)
             bytes_in   = yield from rc.mem_read(dev_pf0_bar0+0x000428, 4)
             bytes_out  = yield from rc.mem_read(dev_pf0_bar0+0x00042C, 4)
             frames_in  = yield from rc.mem_read(dev_pf0_bar0+0x000430, 4)
             frames_out = yield from rc.mem_read(dev_pf0_bar0+0x000434, 4)
-            print ("Interface %d stat read, bytes_in, byte_out, frames_in, frames_out" % (k))
-            print (B_2_int(bytes_in),B_2_int(bytes_out),B_2_int(frames_in),B_2_int(frames_out))
+            desc       = yield from rc.mem_read(dev_pf0_bar0+0x00043C, 4)
+            print ("Interface %d stat read, bytes_in, byte_out, frames_in, frames_out, loaded desc" % (k))
+            print (B_2_int(bytes_in),B_2_int(bytes_out),B_2_int(frames_in),B_2_int(frames_out),desc[::-1].hex())
           
         raise StopSimulation
 

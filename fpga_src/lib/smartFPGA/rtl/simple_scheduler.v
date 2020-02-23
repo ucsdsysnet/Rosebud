@@ -74,8 +74,11 @@ module simple_scheduler # (
 
   input  wire [CORE_COUNT-1:0]               income_cores, 
   input  wire [CORE_COUNT-1:0]               cores_to_be_reset,
+
   input  wire [CORE_ID_WIDTH-1:0]            stat_read_core,
-  output wire [SLOT_WIDTH-1:0]               slot_count,
+  output reg  [SLOT_WIDTH-1:0]               slot_count,
+  input  wire [INTERFACE_WIDTH-1:0]          stat_read_interface,
+  output reg  [ID_TAG_WIDTH-1:0]             loaded_desc,
 
   input  wire                                trig_in,
   output wire                                trig_in_ack,
@@ -249,9 +252,10 @@ module simple_scheduler # (
     end
   endgenerate
   
-  reg [$clog2(INTERFACE_COUNT)-1:0] dropped_count [0:CORE_COUNT-1];
-  assign slot_count = rx_desc_count[stat_read_core * SLOT_WIDTH +: SLOT_WIDTH] + 
-                      dropped_count[stat_read_core];
+  always @ (posedge clk) begin
+    slot_count  <= rx_desc_count[stat_read_core * SLOT_WIDTH +: SLOT_WIDTH];
+    loaded_desc <= dest_r[stat_read_interface * ID_TAG_WIDTH +: ID_TAG_WIDTH];
+  end
 
   // Assing looback port
   wire [CORE_ID_WIDTH-1:0] loopback_port;
@@ -373,6 +377,7 @@ module simple_scheduler # (
         reordered_rx_desc_count[(k*CLUSTER_COUNT+l)*SLOT_WIDTH +: SLOT_WIDTH] = 
                   rx_desc_count[(l*LVL2_SW_PORTS+k)*SLOT_WIDTH +: SLOT_WIDTH];
         // Priority to inter core messages, and only income_cores are available for selection
+        // cores_to_be_reset would remove the core from income_cores
         reordered_masks [k*CLUSTER_COUNT+l] = income_cores[l*LVL2_SW_PORTS+k] &&
                                              !(pkt_to_core_valid[l*LVL2_SW_PORTS+k] &&
                                                arb_to_core_ready[l*LVL2_SW_PORTS+k]);
@@ -430,48 +435,17 @@ module simple_scheduler # (
     .grant_encoded(selected_port_enc)
     );
 
-  integer n;
-  reg [CORE_COUNT-1:0] dropped [0:INTERFACE_COUNT-1];
-
   always @ (posedge clk) begin
-
     dest_r_v <= dest_r_v & (~sending_last_word);
     if (rx_desc_pop) begin
       dest_r_v[selected_port_enc] <= 1'b1;
       dest_r[selected_port_enc*ID_TAG_WIDTH +: ID_TAG_WIDTH] <= rx_desc_data;
     end
 
-    for (n=0; n<INTERFACE_COUNT; n=n+1) begin
-      // cores_to_be_reset or actual reset would flush dest_r
-      if (cores_to_be_reset[dest_r[(n*ID_TAG_WIDTH)+TAG_WIDTH +: CORE_ID_WIDTH]])
-        dest_r_v[n] <= 1'b0;
-
-      if (host_cmd_valid && host_cmd_ready && (dest_r[(n*ID_TAG_WIDTH)+TAG_WIDTH +: CORE_ID_WIDTH] == host_cmd_dest)) 
-        dest_r_v[n] <= 1'b0;
-
-      // If preparing for reset we remember if any desc was dropped, used for slots which were in controller before reset 
-      // Drop means it was valid, and not being used for a packet
-      if (cores_to_be_reset[dest_r[(n*ID_TAG_WIDTH)+TAG_WIDTH +: CORE_ID_WIDTH]] && dest_r_v[n] && !rx_axis_tvalid[n]) 
-        dropped[n][dest_r[(n*ID_TAG_WIDTH)+TAG_WIDTH +: CORE_ID_WIDTH]] <= 1'b1;
-      if (host_cmd_valid && host_cmd_ready) begin
-        dropped[n][host_cmd_dest] <= 1'b0;
-      end
-
-      if (rst) begin
-        dest_r_v[n] <= 1'b0;
-        dropped[n]  <= {CORE_COUNT{1'b0}};
-      end
-    end
+    if (rst) 
+      dest_r_v <= {INTERFACE_COUNT{1'b0}};
       
   end
-
-  integer p,q;
-  always @(*)
-    for (q=0; q<CORE_COUNT; q=q+1) begin
-      dropped_count[q] = 0;
-      for (p=0; p<INTERFACE_COUNT; p=p+1)
-        dropped_count[q] = dropped_count[q] + dropped[p][q];
-    end
 
   genvar j;
   generate

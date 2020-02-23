@@ -432,6 +432,7 @@ wire [CORE_WIDTH+4-1:0]    stat_read_core;
 wire [CORE_WIDTH+4-1:0]    stat_read_core_r;
 wire [IF_COUNT_WIDTH-1:0]  stat_read_interface;
 wire [SLOT_WIDTH-1:0]      slot_count;
+wire [ID_TAG_WIDTH-1:0]    interface_loaded_desc;
 wire                       pcie_dma_enable;
 wire [31:0]                vif_irq;
 
@@ -506,6 +507,7 @@ pcie_config # (
   .AXIL_ADDR_WIDTH(AXIL_ADDR_WIDTH),
   .CORE_COUNT(CORE_COUNT),
   .CORE_SLOT_WIDTH(SLOT_WIDTH),
+  .ID_TAG_WIDTH(ID_TAG_WIDTH),
   .INTERFACE_WIDTH(IF_COUNT_WIDTH),
   .BYTE_COUNT_WIDTH(BYTE_COUNT_WIDTH),
   .FRAME_COUNT_WIDTH(FRAME_COUNT_WIDTH),
@@ -612,6 +614,7 @@ pcie_config # (
   .interface_in_drop_count  (interface_in_drop_count),
   .interface_out_byte_count (interface_out_byte_count),
   .interface_out_frame_count(interface_out_frame_count),
+  .interface_loaded_desc    (interface_loaded_desc),
 
   .pcie_dma_enable    (pcie_dma_enable),
   .corundum_loopback  (),
@@ -977,6 +980,8 @@ simple_scheduler # (
   .cores_to_be_reset(cores_to_be_reset),
   .stat_read_core   (stat_read_core[4 +: CORE_WIDTH]),
   .slot_count       (slot_count),
+  .stat_read_interface(stat_read_interface),
+  .loaded_desc(interface_loaded_desc),
 
   .trig_in     (sched_trig_in),
   .trig_in_ack (sched_trig_in_ack),

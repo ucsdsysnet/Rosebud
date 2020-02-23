@@ -130,7 +130,7 @@ assign core_status_addr = slot_wr_valid   ? 2'd1 :
 assign core_status_data = slot_wr_valid   ? slot_wr_data :
                           debug_out_l_valid ? debug_out[31:0] :
                           debug_out_h_valid ? debug_out[63:32] :
-                          {15'd0, ready_to_evict, mem_fifo_fulls, core_errors};
+                          {14'd0, core_rst, ready_to_evict, mem_fifo_fulls, core_errors};
 assign slot_wr_ready    = core_status_ready;
 ///////////////////////////////////////////////////////////////////////////
 //////////////////////////// RISCV CORE ///////////////////////////////////

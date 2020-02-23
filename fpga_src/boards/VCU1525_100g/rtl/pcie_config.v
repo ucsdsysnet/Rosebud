@@ -9,6 +9,7 @@ module pcie_config # (
   parameter CORE_COUNT              = 16,
   parameter CORE_SLOT_WIDTH         = 4,
   parameter CORE_WIDTH              = $clog2(CORE_COUNT),
+  parameter ID_TAG_WIDTH            = 9,
   parameter INTERFACE_WIDTH         = 4,
   parameter BYTE_COUNT_WIDTH        = 32,
   parameter FRAME_COUNT_WIDTH       = 32,
@@ -108,6 +109,7 @@ module pcie_config # (
   input  wire [FRAME_COUNT_WIDTH-1:0]       interface_in_drop_count,
   input  wire [BYTE_COUNT_WIDTH-1:0]        interface_out_byte_count,
   input  wire [FRAME_COUNT_WIDTH-1:0]       interface_out_frame_count,
+  input  wire [ID_TAG_WIDTH-1:0]            interface_loaded_desc,
   
   // PCIe DMA enable and interrupts
   output reg                                pcie_dma_enable,
@@ -137,8 +139,9 @@ wire [BYTE_COUNT_WIDTH-1:0] core_stat_data_r;
 wire [BYTE_COUNT_WIDTH-1:0]  interface_in_byte_count_r;
 wire [BYTE_COUNT_WIDTH-1:0]  interface_out_byte_count_r;
 wire [FRAME_COUNT_WIDTH-1:0] interface_in_frame_count_r;
-wire [FRAME_COUNT_WIDTH-1:0] interface_in_drop_count_r;
 wire [FRAME_COUNT_WIDTH-1:0] interface_out_frame_count_r;
+wire [FRAME_COUNT_WIDTH-1:0] interface_in_drop_count_r;
+wire [ID_TAG_WIDTH-1:0]      interface_loaded_desc_r;
 
 // State registers for readback
 reg [HOST_DMA_TAG_WIDTH-1:0]  host_dma_read_status_tags;
@@ -338,6 +341,7 @@ always @(posedge pcie_clk) begin
                 16'h0430: axil_ctrl_rdata <= interface_in_frame_count_r;
                 16'h0434: axil_ctrl_rdata <= interface_out_frame_count_r;
                 16'h0438: axil_ctrl_rdata <= interface_in_drop_count_r;
+                16'h043C: axil_ctrl_rdata <= interface_loaded_desc_r;
                 16'h0458: axil_ctrl_rdata <= host_dma_read_status_tags;
                 16'h0478: axil_ctrl_rdata <= host_dma_write_status_tags;
                 16'h0480: axil_ctrl_rdata <= corundum_loopback;
@@ -476,15 +480,15 @@ simple_sync_sig # (
 
 simple_sync_sig # (
   .RST_VAL(1'b0),
-  .WIDTH(CORE_SLOT_WIDTH+(2*BYTE_COUNT_WIDTH)+(3*FRAME_COUNT_WIDTH)+32)
+  .WIDTH((2*BYTE_COUNT_WIDTH)+(3*FRAME_COUNT_WIDTH)+ID_TAG_WIDTH+32+CORE_SLOT_WIDTH)
 ) slot_count_syncer (
   .dst_clk(pcie_clk),
   .dst_rst(pcie_rst),
   .in({interface_in_byte_count, interface_in_frame_count, interface_in_drop_count,
-       interface_out_byte_count, interface_out_frame_count, 
+       interface_out_byte_count, interface_out_frame_count, interface_loaded_desc,
        slot_count, core_stat_data}), 
   .out({interface_in_byte_count_r, interface_in_frame_count_r, interface_in_drop_count_r,
-        interface_out_byte_count_r, interface_out_frame_count_r, 
+        interface_out_byte_count_r, interface_out_frame_count_r, interface_loaded_desc_r,
         slot_count_r, core_stat_data_r})
 );
 

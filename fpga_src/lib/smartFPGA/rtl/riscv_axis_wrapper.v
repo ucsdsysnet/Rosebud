@@ -610,22 +610,24 @@ wire [63:0] recv_desc = {6'd0,recv_desc_addr,
 wire recv_from_dram = recv_desc_valid && (recv_desc_tuser==dram_port);
 wire recv_tag_zero  = recv_desc_valid && (recv_desc_tdest=={TAG_WIDTH{1'b0}});
 
-wire in_desc_valid_n;
+wire        in_desc_valid_n;
+wire [63:0] in_desc_n;
+wire        in_desc_ready_n;
 
 simple_sync_fifo # (
   .DEPTH(RECV_DESC_DEPTH),
   .DATA_WIDTH(64)
 ) recvd_data_fifo (
   .clk(clk),
-  .rst(rst), // || core_reset_r),
+  .rst(rst),
 
   .din_valid(recv_desc_valid && (!recv_from_dram) && (!recv_tag_zero)),
   .din(recv_desc),
   .din_ready(recv_desc_fifo_ready),
 
   .dout_valid(in_desc_valid_n),
-  .dout(in_desc),
-  .dout_ready(in_desc_taken)
+  .dout(in_desc_n),
+  .dout_ready(in_desc_ready_n)
 );
 
 wire       recv_dram_tag_fifo_ready;
@@ -667,12 +669,11 @@ wire core_data_wr_valid_f, core_data_wr_ready_f;
 wire [63:0] core_data_wr_desc_f;
 
 simple_fifo # (
-  // .DEPTH(SEND_DESC_DEPTH),
   .ADDR_WIDTH($clog2(SEND_DESC_DEPTH)),
   .DATA_WIDTH(64)
 ) send_data_fifo (
   .clk(clk),
-  .rst(rst || core_reset_r),
+  .rst(rst),
   .clear(out_desc_err),
 
   .din_valid(out_desc_valid && core_data_wr),
@@ -691,12 +692,11 @@ wire core_ctrl_wr_valid_f, core_ctrl_wr_ready_f;
 wire [63:0] core_ctrl_wr_desc_f;
 
 simple_fifo # (
-  // .DEPTH(SEND_DESC_DEPTH),
   .ADDR_WIDTH($clog2(SEND_DESC_DEPTH)),
   .DATA_WIDTH(64)
 ) send_ctrl_fifo (
   .clk(clk),
-  .rst(rst || core_reset_r),
+  .rst(rst),
   .clear(out_desc_err),
 
   .din_valid(out_desc_valid && core_ctrl_wr),
@@ -725,12 +725,11 @@ wire core_dram_wr_valid_f, core_dram_wr_ready_f;
 wire [127:0] core_dram_wr_desc_f;
 
 simple_fifo # (
-  // .DEPTH(DRAM_DESC_DEPTH),
   .ADDR_WIDTH($clog2(DRAM_DESC_DEPTH)),
   .DATA_WIDTH(128)
 ) dram_send_fifo (
   .clk(clk),
-  .rst(rst || core_reset_r),
+  .rst(rst),
   .clear(1'b0),
 
   .din_valid(out_desc_valid && core_dram_wr),
@@ -749,12 +748,12 @@ wire core_dram_rd_valid_f, core_dram_rd_ready_f;
 wire [127:0] core_dram_rd_desc_f;
 
 simple_fifo # (
-  // .DEPTH(DRAM_DESC_DEPTH),
   .ADDR_WIDTH($clog2(DRAM_DESC_DEPTH)),
   .DATA_WIDTH(128)
 ) send_dram_ctrl_fifo (
   .clk(clk),
-  .rst(rst || core_reset_r),
+  // After core reset no need to get the DRAM data anymore
+  .rst(rst || core_reset_r), 
   .clear(1'b0),
 
   .din_valid(out_desc_valid && core_dram_rd),
@@ -1063,7 +1062,7 @@ simple_sync_fifo # (
   .DATA_WIDTH(MSG_WIDTH)
 ) core_msg_out_fifo (
   .clk(clk),
-  .rst(rst || core_reset_r),
+  .rst(rst),
 
   .din_valid(bc_msg_out_valid),
   .din(bc_msg_out),
@@ -1089,10 +1088,10 @@ reg [SLOT_COUNT:1] override_out_slot_err;
 reg [SLOT_COUNT:1] invalid_out_slot_err;
 
 always @ (posedge clk) begin  
-  if (in_desc_valid_n && in_desc_taken)
-    slots_in_prog[in_desc[16+:SLOT_WIDTH]]  <= 1'b1;
+  if (in_desc_valid_n && in_desc_ready_n)
+    slots_in_prog[in_desc_n[16+:SLOT_WIDTH]] <= 1'b1;
   if (done_w_slot && out_desc_ready)
-    slots_in_prog[out_desc[16+:SLOT_WIDTH]] <= 1'b0;
+    slots_in_prog[out_desc[16+:SLOT_WIDTH]]  <= 1'b0;
   
   if (pkt_sent_valid_f && pkt_sent_ready_f)
     slots_to_send[pkt_sent_desc_f[16+:SLOT_WIDTH]] <= 1'b0;
@@ -1108,13 +1107,16 @@ end
 /////////////////////////////////////////////////////////////////////
 ///////////////////////// ERROR CATCHING ////////////////////////////
 /////////////////////////////////////////////////////////////////////
-
-reg in_desc_err; // Deasserts in_desc_valid until core_reset
+reg in_desc_drop;
 
 always @ (posedge clk) begin
-  if (in_desc_valid_n && slots_in_prog[in_desc[16+:SLOT_WIDTH]]) begin
-    override_in_slot_err [in_desc[16+:SLOT_WIDTH]]  <= 1'b1; 
-    in_desc_err                                     <= 1'b1;
+  // Drop on the fly packet if slot is already in the wrapper 
+  in_desc_drop  <= 1'b0;
+  if (in_desc_valid_n && in_desc_ready_n && 
+                (slots_to_send[in_desc_n[16+:SLOT_WIDTH]] || 
+                 slots_in_prog[in_desc_n[16+:SLOT_WIDTH]])) begin
+    override_in_slot_err [in_desc_n[16+:SLOT_WIDTH]]  <= 1'b1; 
+    in_desc_drop                                      <= 1'b1;
   end
 
   if (done_w_slot && !slots_in_prog[out_desc[16+:SLOT_WIDTH]]) begin
@@ -1131,17 +1133,10 @@ always @ (posedge clk) begin
     override_in_slot_err  <= {SLOT_COUNT{1'b0}};
     override_out_slot_err <= {SLOT_COUNT{1'b0}};
     invalid_out_slot_err  <= {SLOT_COUNT{1'b0}};
-    in_desc_err           <= 1'b0;
+    in_desc_drop          <= 1'b0;
     out_desc_err          <= 1'b0;
   end
 end
-
-assign in_desc_valid = in_desc_valid_n && !in_desc_err;
-
-assign      slots_status    = {{(16-SLOT_COUNT){1'b0}}, slots_to_send, 
-                               {(16-SLOT_COUNT){1'b0}}, slots_in_prog}; 
-wire [31:0] core_slot_err   = {{(16-SLOT_COUNT){1'b0}}, override_out_slot_err, 
-                               {(16-SLOT_COUNT){1'b0}}, invalid_out_slot_err}; 
 
 reg invalid_out_desc;
 always @ (posedge clk)
@@ -1150,13 +1145,40 @@ always @ (posedge clk)
   else if ((out_desc_type>4'd5) && out_desc_valid)
     invalid_out_desc <= 1'b1; 
 
-wire [31:0] wrapper_errs = {13'd0, in_desc_err, out_desc_err, invalid_out_desc, 
+// One pipeline register to handle in_desc drop
+reg         in_desc_valid_r;
+reg  [63:0] in_desc_r;
+
+always @ (posedge clk) begin
+  if (in_desc_valid_n && in_desc_ready_n) begin
+    in_desc_valid_r <= 1'b1;
+    in_desc_r       <= in_desc_n;
+  end else if (in_desc_taken || in_desc_drop) begin
+    in_desc_valid_r <= 1'b0;
+  end
+
+  if (rst) begin 
+    in_desc_valid_r <= 1'b0;
+  end
+end
+
+assign in_desc_ready_n = in_desc_taken || in_desc_drop || !in_desc_valid_r;
+assign in_desc_valid   = in_desc_valid_r && !in_desc_drop;
+assign in_desc         = in_desc_r;
+
+// Debug readback words
+wire [31:0] wrapper_errs = {14'd0, out_desc_err, invalid_out_desc, 
 												   {(16-SLOT_COUNT){1'b0}}, override_in_slot_err};
 
 wire [31:0] wrapper_fifo_fulls = 
         {13'd0, !recv_desc_fifo_ready, !ctrl_s_axis_tready, !dram_req_ready,
          10'd0, !core_data_wr_ready,   !core_ctrl_wr_ready, !core_dram_wr_ready,
                 !core_dram_rd_ready,   !pkt_sent_ready,     !bc_msg_out_ready};
+
+assign      slots_status    = {{(16-SLOT_COUNT){1'b0}}, slots_to_send, 
+                               {(16-SLOT_COUNT){1'b0}}, slots_in_prog}; 
+wire [31:0] core_slot_err   = {{(16-SLOT_COUNT){1'b0}}, override_out_slot_err, 
+                               {(16-SLOT_COUNT){1'b0}}, invalid_out_slot_err}; 
 
 /////////////////////////////////////////////////////////////////////
 //////////////////////// STAT COLLECTION ////////////////////////////
