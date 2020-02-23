@@ -1164,6 +1164,32 @@ wire [31:0] wrapper_fifo_fulls =
 wire [31:0] incoming_byte_count, incoming_frame_count;
 wire [31:0] outgoing_byte_count, outgoing_frame_count;
 
+(* KEEP = "TRUE" *) reg [STRB_WIDTH-1:0] data_s_axis_tkeep_mon;
+(* KEEP = "TRUE" *) reg                  data_s_axis_tvalid_mon;
+(* KEEP = "TRUE" *) reg                  data_s_axis_tready_mon;
+(* KEEP = "TRUE" *) reg                  data_s_axis_tlast_mon;
+
+(* KEEP = "TRUE" *) reg [STRB_WIDTH-1:0] data_m_axis_tkeep_mon;
+(* KEEP = "TRUE" *) reg                  data_m_axis_tvalid_mon;
+(* KEEP = "TRUE" *) reg                  data_m_axis_tready_mon;
+(* KEEP = "TRUE" *) reg                  data_m_axis_tlast_mon;
+
+always @ (posedge clk) begin
+  data_s_axis_tkeep_mon  <= data_s_axis_tkeep;
+  data_s_axis_tvalid_mon <= data_s_axis_tvalid;
+  data_s_axis_tready_mon <= data_s_axis_tready;
+  data_s_axis_tlast_mon  <= data_s_axis_tlast;
+  data_m_axis_tkeep_mon  <= data_m_axis_tkeep;
+  data_m_axis_tvalid_mon <= data_m_axis_tvalid;
+  data_m_axis_tready_mon <= data_m_axis_tready;
+  data_m_axis_tlast_mon  <= data_m_axis_tlast;
+
+  if (rst) begin
+    data_s_axis_tvalid_mon <= 1'b0;
+    data_m_axis_tvalid_mon <= 1'b0; 
+  end 
+end
+
 axis_stat # (
   .KEEP_WIDTH(STRB_WIDTH),
   .KEEP_ENABLE(1),
@@ -1174,10 +1200,10 @@ axis_stat # (
   .rst(rst),
   .clear(1'b0),
 
-  .monitor_axis_tkeep (data_s_axis_tkeep),
-  .monitor_axis_tvalid(data_s_axis_tvalid),
-  .monitor_axis_tready(data_s_axis_tready),
-  .monitor_axis_tlast (data_s_axis_tlast),
+  .monitor_axis_tkeep (data_s_axis_tkeep_mon),
+  .monitor_axis_tvalid(data_s_axis_tvalid_mon),
+  .monitor_axis_tready(data_s_axis_tready_mon),
+  .monitor_axis_tlast (data_s_axis_tlast_mon),
   .monitor_drop_pulse (1'b0),
 
   .byte_count(incoming_byte_count),
@@ -1195,10 +1221,10 @@ axis_stat # (
   .rst(rst),
   .clear(1'b0),
 
-  .monitor_axis_tkeep (data_m_axis_tkeep),
-  .monitor_axis_tvalid(data_m_axis_tvalid),
-  .monitor_axis_tready(data_m_axis_tready),
-  .monitor_axis_tlast (data_m_axis_tlast),
+  .monitor_axis_tkeep (data_m_axis_tkeep_mon),
+  .monitor_axis_tvalid(data_m_axis_tvalid_mon),
+  .monitor_axis_tready(data_m_axis_tready_mon),
+  .monitor_axis_tlast (data_m_axis_tlast_mon),
   .monitor_drop_pulse (1'b0),
 
   .byte_count(outgoing_byte_count),

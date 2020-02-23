@@ -45,8 +45,8 @@ int main(void){
 			safe_pkt_send(&packet);
 			// safe_pkt_done_msg(&packet);
   	}
-    DEBUG_OUT_L = DEBUG_IN_L;
-    DEBUG_OUT_H = DEBUG_IN_H;
+    // DEBUG_OUT_L = DEBUG_IN_L;
+    // DEBUG_OUT_H = DEBUG_IN_H;
   }
   
   return 1;
