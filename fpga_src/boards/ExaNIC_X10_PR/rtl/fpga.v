@@ -126,7 +126,6 @@ wire pcie_user_reset;
 wire clk_100mhz_ibufg;
 wire clk_125mhz_mmcm_out;
 wire clk_200mhz_mmcm_out;
-wire clk_183mhz_mmcm_out;
 
 // Internal 125 MHz clock
 wire clk_125mhz_int;
@@ -135,10 +134,6 @@ wire rst_125mhz_int;
 // Internal 200mhz MHz clock
 wire clk_200mhz_int;
 wire rst_200mhz_int;
-
-// Internal 183mhz MHz clock
-wire clk_183mhz_int;
-wire rst_183mhz_int;
 
 // Internal 156.25 MHz clock
 wire clk_156mhz_int;
@@ -171,7 +166,7 @@ MMCME3_BASE #(
     .CLKOUT0_DIVIDE_F(8),
     .CLKOUT0_DUTY_CYCLE(0.5),
     .CLKOUT0_PHASE(0),
-    .CLKOUT1_DIVIDE(5),
+    .CLKOUT1_DIVIDE(5.0),
     .CLKOUT1_DUTY_CYCLE(0.5),
     .CLKOUT1_PHASE(0),
     .CLKOUT2_DIVIDE(1),
@@ -248,79 +243,6 @@ sync_reset_200mhz_inst (
     .sync_reset_out(rst_200mhz_int)
 );
 
-
-// MMCM instance
-// 100 MHz in, 200mhz MHz out
-// PFD range: 10 MHz to 500 MHz
-// VCO range: 600 MHz to 1440 MHz
-// M = 10, D = 1 sets Fvco = 1000 MHz (in range)
-// Divide by 8 to get output frequency of 125 MHz
-MMCME3_BASE #(
-    .BANDWIDTH("OPTIMIZED"),
-    .CLKOUT0_DIVIDE_F(6),
-    .CLKOUT0_DUTY_CYCLE(0.5),
-    .CLKOUT0_PHASE(0),
-    .CLKOUT1_DIVIDE(1),
-    .CLKOUT1_DUTY_CYCLE(0.5),
-    .CLKOUT1_PHASE(0),
-    .CLKOUT2_DIVIDE(1),
-    .CLKOUT2_DUTY_CYCLE(0.5),
-    .CLKOUT2_PHASE(0),
-    .CLKOUT3_DIVIDE(1),
-    .CLKOUT3_DUTY_CYCLE(0.5),
-    .CLKOUT3_PHASE(0),
-    .CLKOUT4_DIVIDE(1),
-    .CLKOUT4_DUTY_CYCLE(0.5),
-    .CLKOUT4_PHASE(0),
-    .CLKOUT5_DIVIDE(1),
-    .CLKOUT5_DUTY_CYCLE(0.5),
-    .CLKOUT5_PHASE(0),
-    .CLKOUT6_DIVIDE(1),
-    .CLKOUT6_DUTY_CYCLE(0.5),
-    .CLKOUT6_PHASE(0),
-    .CLKFBOUT_MULT_F(11),
-    .CLKFBOUT_PHASE(0),
-    .DIVCLK_DIVIDE(1),
-    .REF_JITTER1(0.010),
-    .CLKIN1_PERIOD(10.0),
-    .STARTUP_WAIT("FALSE"),
-    .CLKOUT4_CASCADE("FALSE")
-)
-clk_mmcm_inst2 (
-    .CLKIN1(clk_100mhz_ibufg),
-    .CLKFBIN(mmcm_clkfb2),
-    .RST(mmcm_rst),
-    .PWRDWN(1'b0),
-    .CLKOUT0(clk_183mhz_mmcm_out),
-    .CLKOUT0B(),
-    .CLKOUT1(),
-    .CLKOUT1B(),
-    .CLKOUT2(),
-    .CLKOUT2B(),
-    .CLKOUT3(),
-    .CLKOUT3B(),
-    .CLKOUT4(),
-    .CLKOUT5(),
-    .CLKOUT6(),
-    .CLKFBOUT(mmcm_clkfb2),
-    .CLKFBOUTB(),
-    .LOCKED(mmcm_locked2)
-);
-
-BUFG
-clk_183mhz_bufg_inst (
-    .I(clk_183mhz_mmcm_out),
-    .O(clk_183mhz_int)
-);
-
-sync_reset #(
-    .N(4)
-)
-sync_reset_183mhz_inst (
-    .clk(clk_183mhz_int),
-    .rst(~mmcm_locked2),
-    .sync_reset_out(rst_183mhz_int)
-);
 // GPIO
 wire sfp_i2c_scl_i;
 wire sfp_i2c_scl_o;
@@ -1016,7 +938,7 @@ fpga_core #(
     .AXIS_PCIE_CC_USER_WIDTH(AXIS_PCIE_CC_USER_WIDTH),
     .RQ_SEQ_NUM_WIDTH(RQ_SEQ_NUM_WIDTH),
     .BAR0_APERTURE(BAR0_APERTURE),
-    .SEPARATE_CLOCKS(1)
+    .SEPARATE_CLOCKS(0)
 )
 core_inst (
     /*
@@ -1027,8 +949,8 @@ core_inst (
     .pcie_rst(pcie_user_reset),
     .sys_clk(clk_200mhz_int),
     .sys_rst(rst_200mhz_int),
-    .core_clk(clk_183mhz_int),
-    .core_rst(rst_183mhz_int),
+    .core_clk(clk_200mhz_int),
+    .core_rst(rst_200mhz_int),
 
     /*
      * GPIO
