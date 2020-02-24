@@ -93,6 +93,7 @@ module mem_sys # (
     reg  [LINE_ADDR_BITS-3:0] core_dmem_latched_addr;
     reg  [LINE_ADDR_BITS-3:0] core_imem_latched_addr;
 
+    // Core does not change the address before receiving the data
     always @ (posedge clk)
       if (core_dmem_en || core_pmem_en)
         core_dmem_latched_addr <= core_dmem_addr[LINE_ADDR_BITS-1:2];
@@ -407,55 +408,76 @@ module mem_sys # (
   reg  [DATA_WIDTH-1:0]      pmem_wr_data_b2;
 
   always @ (*) begin
-    pmem_en_b1         = 1'b0;
     dma_pmem_wr_b1_gnt = 1'b0;
     dma_pmem_rd_b1_gnt = 1'b0;
-    core_pmem_rd_b1    = 1'b0;
-    pmem_addr_b1       = core_dmem_addr[PMEM_ADDR_WIDTH-1:0];
-    pmem_wen_b1        = {STRB_WIDTH{1'b0}};
-    pmem_wr_data_b1    = core_dmem_wr_data_w;
+
+    if (core_dmem_addr[LINE_ADDR_BITS] || !core_pmem_en) 
+      if (!dma_pmem_cmd_wr_addr[LINE_ADDR_BITS] && dma_pmem_wr_en_r)
+        dma_pmem_wr_b1_gnt = 1'b1;
+      else if (!dma_pmem_cmd_rd_addr[LINE_ADDR_BITS] && dma_pmem_rd_en_r) 
+        dma_pmem_rd_b1_gnt = 1'b1;
+  end
+ 
+  // Register level for inputs to PMEM, 1st cycle latency of PMEM
+  always @ (posedge clk) begin
+    pmem_en_b1      <= 1'b0;
+    core_pmem_rd_b1 <= 1'b0;
+    pmem_addr_b1    <= core_dmem_addr[PMEM_ADDR_WIDTH-1:0];
+    pmem_wen_b1     <= {STRB_WIDTH{1'b0}};
+    pmem_wr_data_b1 <= core_dmem_wr_data_w;
 
     if (!core_dmem_addr[LINE_ADDR_BITS] && core_pmem_en) begin
-      pmem_en_b1         = 1'b1;
-      pmem_wen_b1        = core_dmem_strb_w;
-      core_pmem_rd_b1    = !core_dmem_wen;
+      pmem_en_b1      <= 1'b1;
+      pmem_wen_b1     <= core_dmem_strb_w;
+      core_pmem_rd_b1 <= !core_dmem_wen;
     end else if (!dma_pmem_cmd_wr_addr[LINE_ADDR_BITS] && dma_pmem_wr_en_r) begin
-      pmem_en_b1         = 1'b1;
-      dma_pmem_wr_b1_gnt = 1'b1;
-      pmem_addr_b1       = dma_pmem_cmd_wr_addr;
-      pmem_wen_b1        = dma_pmem_cmd_wr_strb;
-      pmem_wr_data_b1    = dma_pmem_cmd_wr_data;
+      pmem_en_b1      <= 1'b1;
+      pmem_addr_b1    <= dma_pmem_cmd_wr_addr;
+      pmem_wen_b1     <= dma_pmem_cmd_wr_strb;
+      pmem_wr_data_b1 <= dma_pmem_cmd_wr_data;
     end else if (!dma_pmem_cmd_rd_addr[LINE_ADDR_BITS] && dma_pmem_rd_en_r) begin
-      pmem_en_b1         = 1'b1;
-      dma_pmem_rd_b1_gnt = 1'b1;
-      pmem_addr_b1       = dma_pmem_cmd_rd_addr;
+      pmem_en_b1      <= 1'b1;
+      pmem_addr_b1    <= dma_pmem_cmd_rd_addr;
     end
+    
+    if (rst)
+      pmem_en_b1 <= 1'b0;
   end
 
   always @ (*) begin
-    pmem_en_b2      = 1'b0;
     dma_pmem_wr_b2_gnt = 1'b0;
     dma_pmem_rd_b2_gnt = 1'b0;
-    core_pmem_rd_b2    = 1'b0;
-    pmem_addr_b2       = core_dmem_addr[PMEM_ADDR_WIDTH-1:0];
-    pmem_wen_b2        = {STRB_WIDTH{1'b0}};
-    pmem_wr_data_b2    = core_dmem_wr_data_w;
+
+    if (!core_dmem_addr[LINE_ADDR_BITS] || !core_pmem_en) 
+      if (dma_pmem_cmd_wr_addr[LINE_ADDR_BITS] && dma_pmem_wr_en_r)
+        dma_pmem_wr_b2_gnt = 1'b1;
+      else if (dma_pmem_cmd_rd_addr[LINE_ADDR_BITS] && dma_pmem_rd_en_r)
+        dma_pmem_rd_b2_gnt = 1'b1;
+  end
+
+  always @ (posedge clk) begin
+    pmem_en_b2      <= 1'b0;
+    core_pmem_rd_b2 <= 1'b0;
+    pmem_addr_b2    <= core_dmem_addr[PMEM_ADDR_WIDTH-1:0];
+    pmem_wen_b2     <= {STRB_WIDTH{1'b0}};
+    pmem_wr_data_b2 <= core_dmem_wr_data_w;
 
     if (core_dmem_addr[LINE_ADDR_BITS] && core_pmem_en) begin
-      pmem_en_b2         = 1'b1;
-      pmem_wen_b2        = core_dmem_strb_w;
-      core_pmem_rd_b2    = !core_dmem_wen;
+      pmem_en_b2      <= 1'b1;
+      pmem_wen_b2     <= core_dmem_strb_w;
+      core_pmem_rd_b2 <= !core_dmem_wen;
     end else if (dma_pmem_cmd_wr_addr[LINE_ADDR_BITS] && dma_pmem_wr_en_r) begin
-      pmem_en_b2         = 1'b1;
-      dma_pmem_wr_b2_gnt = 1'b1;
-      pmem_addr_b2       = dma_pmem_cmd_wr_addr;
-      pmem_wen_b2        = dma_pmem_cmd_wr_strb;
-      pmem_wr_data_b2    = dma_pmem_cmd_wr_data;
+      pmem_en_b2      <= 1'b1;
+      pmem_addr_b2    <= dma_pmem_cmd_wr_addr;
+      pmem_wen_b2     <= dma_pmem_cmd_wr_strb;
+      pmem_wr_data_b2 <= dma_pmem_cmd_wr_data;
     end else if (dma_pmem_cmd_rd_addr[LINE_ADDR_BITS] && dma_pmem_rd_en_r) begin
-      pmem_en_b2         = 1'b1;
-      dma_pmem_rd_b2_gnt = 1'b1;
-      pmem_addr_b2       = dma_pmem_cmd_rd_addr;
+      pmem_en_b2      <= 1'b1;
+      pmem_addr_b2    <= dma_pmem_cmd_rd_addr;
     end
+    
+    if (rst)
+      pmem_en_b2 <= 1'b0;
   end
 
   ///////////////////////////////////////////////////////////////////////////
@@ -535,7 +557,7 @@ module mem_sys # (
     .doutb(core_dmem_rd_data_b2)
   );
 
-  // Two or more cycles response DMEM, potentially URAM
+  // Two or more cycles response PMEM, potentially URAM
   parameter PMEM_SEL_BITS_MIN1 = PMEM_SEL_BITS>0 ? PMEM_SEL_BITS : 1;
 
   wire [PMEM_SEL_BITS_MIN1-1:0]   pmem_rd_sel_b1;
@@ -598,10 +620,10 @@ module mem_sys # (
         .doutb(acc_rd_data_b2[i*DATA_WIDTH +: DATA_WIDTH])
       );
 
-      // 2nd cycle of pmem mem
   end
   endgenerate
 
+  // register PMEM output, 3rd cycle of PMEM latency
   always @ (posedge clk) begin
     pmem_rd_data_b1_r <= pmem_rd_data_b1;
     pmem_rd_data_b2_r <= pmem_rd_data_b2;
@@ -621,7 +643,7 @@ module mem_sys # (
   reg  [DATA_WIDTH-1:0] core_pmem_rd_data;
   wire [DATA_WIDTH-1:0] dma_dmem_rd_data;
   reg                   core_pmem_rd_b1_rr;
-  reg                   dma_pmem_rd_bank_rr;
+  reg                   dma_pmem_rd_bank_rrr;
   reg                   dma_dmem_rd_bank_r;
 
   if (PMEM_SEL_BITS>0) begin
@@ -633,22 +655,21 @@ module mem_sys # (
       pmem_rd_sel_b2_rr <= pmem_rd_sel_b2_r;
     end
 
-    // 3rd cycle of pmem mem
+    // 4th cycle of PMEM latency
     always @ (posedge clk) begin
-      core_pmem_rd_data <= core_pmem_rd_b1_rr  ? pmem_rd_data_b1_r[pmem_rd_sel_b1_rr*DATA_WIDTH +: DATA_WIDTH]
-                                               : pmem_rd_data_b2_r[pmem_rd_sel_b2_rr*DATA_WIDTH +: DATA_WIDTH];
-      dma_pmem_rd_data  <= dma_pmem_rd_bank_rr ? pmem_rd_data_b2_r[pmem_rd_sel_b2_rr*DATA_WIDTH +: DATA_WIDTH]
-                                               : pmem_rd_data_b1_r[pmem_rd_sel_b1_rr*DATA_WIDTH +: DATA_WIDTH];
+      core_pmem_rd_data <= core_pmem_rd_b1_rr   ? pmem_rd_data_b1_r[pmem_rd_sel_b1_rr*DATA_WIDTH +: DATA_WIDTH]
+                                                : pmem_rd_data_b2_r[pmem_rd_sel_b2_rr*DATA_WIDTH +: DATA_WIDTH];
+      dma_pmem_rd_data  <= dma_pmem_rd_bank_rrr ? pmem_rd_data_b2_r[pmem_rd_sel_b2_rr*DATA_WIDTH +: DATA_WIDTH]
+                                                : pmem_rd_data_b1_r[pmem_rd_sel_b1_rr*DATA_WIDTH +: DATA_WIDTH];
     end
 
   end else begin
 
-    // 3rd cycle of pmem mem
     always @ (posedge clk) begin
-      core_pmem_rd_data <= core_pmem_rd_b1_rr  ? pmem_rd_data_b1_r
-                                               : pmem_rd_data_b2_r;
-      dma_pmem_rd_data  <= dma_pmem_rd_bank_rr ? pmem_rd_data_b2_r
-                                               : pmem_rd_data_b1_r;
+      core_pmem_rd_data <= core_pmem_rd_b1_rr   ? pmem_rd_data_b1_r
+                                                : pmem_rd_data_b2_r;
+      dma_pmem_rd_data  <= dma_pmem_rd_bank_rrr ? pmem_rd_data_b2_r
+                                                : pmem_rd_data_b1_r;
     end
   end
 
@@ -659,48 +680,57 @@ module mem_sys # (
   reg dma_pmem_rd_gnt_r;
   reg dma_pmem_rd_gnt_rr;
   reg dma_pmem_rd_gnt_rrr;
+  reg dma_pmem_rd_gnt_rrrr;
   reg dma_dmem_rd_gnt_r;
   reg dma_pmem_rd_bank_r;
+  reg dma_pmem_rd_bank_rr;
 
   reg core_dmem_bank_r;
   reg core_pmem_rd_r;
   reg core_dmem_rd_r;
   reg core_pmem_rd_rr;
   reg core_pmem_rd_rrr;
+  reg core_pmem_rd_rrrr;
   reg core_pmem_rd_b1_r;
 
   always @(posedge clk)
     if(rst) begin
-      dma_pmem_rd_gnt_r   <= 1'b0;
-      dma_pmem_rd_gnt_rr  <= 1'b0;
-      dma_pmem_rd_gnt_rrr <= 1'b0;
-      dma_dmem_rd_gnt_r   <= 1'b0;
-      dma_pmem_rd_bank_rr <= 1'b0;
-      dma_dmem_rd_bank_r  <= 1'b0;
+      dma_pmem_rd_gnt_r    <= 1'b0;
+      dma_pmem_rd_gnt_rr   <= 1'b0;
+      dma_pmem_rd_gnt_rrr  <= 1'b0;
+      dma_pmem_rd_gnt_rrrr <= 1'b0;
+      dma_dmem_rd_gnt_r    <= 1'b0;
+      dma_pmem_rd_bank_rr  <= 1'b0;
+      dma_pmem_rd_bank_rrr <= 1'b0;
+      dma_dmem_rd_bank_r   <= 1'b0;
 
-      core_dmem_bank_r    <= 1'b0;
-      core_pmem_rd_r      <= 1'b0;
-      core_dmem_rd_r      <= 1'b0;
-      core_pmem_rd_rr     <= 1'b0;
-      core_pmem_rd_rrr    <= 1'b0;
-      core_pmem_rd_b1_r   <= 1'b0;
-      core_pmem_rd_b1_rr  <= 1'b0;
+      core_dmem_bank_r     <= 1'b0;
+      core_pmem_rd_r       <= 1'b0;
+      core_dmem_rd_r       <= 1'b0;
+      core_pmem_rd_rr      <= 1'b0;
+      core_pmem_rd_rrr     <= 1'b0;
+      core_pmem_rd_rrrr    <= 1'b0;
+      core_pmem_rd_b1_r    <= 1'b0;
+      core_pmem_rd_b1_rr   <= 1'b0;
     end else begin
-      dma_pmem_rd_gnt_r   <= dma_pmem_rd_b1_gnt || dma_pmem_rd_b2_gnt;
-      dma_pmem_rd_gnt_rr  <= dma_pmem_rd_gnt_r;
-      dma_pmem_rd_gnt_rrr <= dma_pmem_rd_gnt_rr;
-      dma_dmem_rd_gnt_r   <= dma_dmem_rd_b1_gnt || dma_dmem_rd_b2_gnt;
-      dma_pmem_rd_bank_r  <= dma_pmem_rd_b2_gnt;
-      dma_pmem_rd_bank_rr <= dma_pmem_rd_bank_r;
-      dma_dmem_rd_bank_r  <= dma_dmem_rd_b2_gnt;
+      dma_pmem_rd_gnt_r    <= dma_pmem_rd_b1_gnt || dma_pmem_rd_b2_gnt;
+      dma_pmem_rd_gnt_rr   <= dma_pmem_rd_gnt_r;
+      dma_pmem_rd_gnt_rrr  <= dma_pmem_rd_gnt_rr;
+      dma_pmem_rd_gnt_rrrr <= dma_pmem_rd_gnt_rrr;
+      dma_dmem_rd_gnt_r    <= dma_dmem_rd_b1_gnt || dma_dmem_rd_b2_gnt;
+      dma_pmem_rd_bank_r   <= dma_pmem_rd_b2_gnt;
+      dma_pmem_rd_bank_rr  <= dma_pmem_rd_bank_r;
+      dma_pmem_rd_bank_rrr <= dma_pmem_rd_bank_rr;
+      dma_dmem_rd_bank_r   <= dma_dmem_rd_b2_gnt;
 
-      core_dmem_bank_r    <= core_dmem_addr[LINE_ADDR_BITS];
-      core_dmem_rd_r      <= core_dmem_en && !core_dmem_wen;
-      core_pmem_rd_r      <= core_pmem_en && !core_dmem_wen;
-      core_pmem_rd_rr     <= core_pmem_rd_r;
-      core_pmem_rd_rrr    <= core_pmem_rd_rr;
-      core_pmem_rd_b1_r   <= core_pmem_rd_b1;
-      core_pmem_rd_b1_rr  <= core_pmem_rd_b1_r;
+      core_dmem_bank_r     <= core_dmem_addr[LINE_ADDR_BITS];
+      core_dmem_rd_r       <= core_dmem_en && !core_dmem_wen;
+      core_pmem_rd_r       <= core_pmem_en && !core_dmem_wen;
+      core_pmem_rd_rr      <= core_pmem_rd_r;
+      core_pmem_rd_rrr     <= core_pmem_rd_rr;
+      core_pmem_rd_rrrr    <= core_pmem_rd_rrr;
+      core_pmem_rd_b1_r    <= core_pmem_rd_b1;
+      core_pmem_rd_b1_rr   <= core_pmem_rd_b1_r;
     end
 
   ////////////////////////////////////////////////////////////////////
@@ -744,7 +774,7 @@ module mem_sys # (
     .rst(rst),
     .clear(1'b0),
 
-    .din_valid(dma_pmem_rd_gnt_rrr),
+    .din_valid(dma_pmem_rd_gnt_rrrr),
     .din(dma_pmem_rd_data),
     .din_ready(),
     // never gets full since if not readyed a bubble is
@@ -758,12 +788,12 @@ module mem_sys # (
   );
 
   // Selecting output data based on state
-  assign core_dmem_rd_data_w = core_pmem_rd_rrr    ? core_pmem_rd_data :
+  assign core_dmem_rd_data_w = core_pmem_rd_rrrr   ? core_pmem_rd_data :
                                core_dmem_bank_r    ? core_dmem_rd_data_b2 : core_dmem_rd_data_b1;
   assign dma_rd_resp_data    = dma_pmem_fifo_valid ? dma_pmem_fifo_rd_data : dma_dmem_fifo_rd_data;
 
   // Asserting valids
-  assign core_dmem_rd_valid = core_pmem_rd_rrr    || core_dmem_rd_r;
+  assign core_dmem_rd_valid = core_pmem_rd_rrrr   || core_dmem_rd_r;
   assign dma_rd_resp_valid  = dma_pmem_fifo_valid || dma_dmem_fifo_valid;
 
   // DMA request ready responses

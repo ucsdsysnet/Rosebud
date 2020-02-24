@@ -11,10 +11,10 @@ object GenSmallAndProductive extends App{
   def cpu() = new VexRiscv(
     config = VexRiscvConfig(
       plugins = List(
-        new BSWAP32,
-        new BSWAP16,
+        // new BSWAP32,
+        // new BSWAP16,
         // new FIRST1,
-        new TAIL_ZERO,
+        // new TAIL_ZERO,
         new IBusSimplePlugin(
           resetVector = 0x00000000l,
           cmdForkOnSecondStage = false,
