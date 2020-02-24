@@ -189,7 +189,7 @@ parameter MAX_PKT_HDR_SIZE  = 128;
 parameter ENABLE_ILA        = 0;
 
 // MAC and switching system parameters
-parameter LVL1_DATA_WIDTH  = 128;
+parameter LVL1_DATA_WIDTH  = 64;
 parameter LVL1_STRB_WIDTH  = LVL1_DATA_WIDTH/8;
 parameter LVL1_CTRL_WIDTH  = 32+4; //DON'T CHANGE
 parameter LVL1_DRAM_WIDTH  = 64; //DRAM CONTROL
