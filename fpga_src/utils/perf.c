@@ -196,7 +196,6 @@ int main(int argc, char *argv[])
 
     for (int k=0; k<core_count; k++)
     {
-        mqnic_reg_write32(dev->regs, 0x000410, k);
         core_rx_bytes[k] = 0;
         core_tx_bytes[k] = 0;
         core_rx_frames[k] = 0;
@@ -205,15 +204,23 @@ int main(int argc, char *argv[])
         total_core_tx_bytes[k] = 0;
         total_core_rx_frames[k] = 0;
         total_core_tx_frames[k] = 0;
-        core_rx_bytes_raw[k] = mqnic_reg_read32(dev->regs, 0x000414);
-        core_tx_bytes_raw[k] = mqnic_reg_read32(dev->regs, 0x000418);
-        core_rx_frames_raw[k] = mqnic_reg_read32(dev->regs, 0x00041C);
-        core_tx_frames_raw[k] = mqnic_reg_read32(dev->regs, 0x000420);
+        mqnic_reg_write32(dev->regs, 0x000414, k<<4|0x0);
+        core_rx_bytes_raw[k] = mqnic_reg_read32(dev->regs, 0x000424); //dummy read
+        core_rx_bytes_raw[k] = mqnic_reg_read32(dev->regs, 0x000424);
+        mqnic_reg_write32(dev->regs, 0x000414, k<<4|0x1);
+        core_tx_bytes_raw[k] = mqnic_reg_read32(dev->regs, 0x000424); //dummy read
+        core_tx_bytes_raw[k] = mqnic_reg_read32(dev->regs, 0x000424);
+        mqnic_reg_write32(dev->regs, 0x000414, k<<4|0x2);
+        core_rx_frames_raw[k] = mqnic_reg_read32(dev->regs, 0x000424); //dummy read
+        core_rx_frames_raw[k] = mqnic_reg_read32(dev->regs, 0x000424);
+        mqnic_reg_write32(dev->regs, 0x000414, k<<4|0x3);
+        core_tx_frames_raw[k] = mqnic_reg_read32(dev->regs, 0x000424); //dummy read
+        core_tx_frames_raw[k] = mqnic_reg_read32(dev->regs, 0x000424);
     }
 
     for (int k=0; k<if_count; k++)
     {
-        mqnic_reg_write32(dev->regs, 0x000414, k);
+        mqnic_reg_write32(dev->regs, 0x000418, k);
         if_rx_bytes[k] = 0;
         if_tx_bytes[k] = 0;
         if_rx_frames[k] = 0;
@@ -224,11 +231,11 @@ int main(int argc, char *argv[])
         total_if_rx_frames[k] = 0;
         total_if_tx_frames[k] = 0;
         total_if_rx_drops[k] = 0;
-        if_rx_bytes_raw[k] = mqnic_reg_read32(dev->regs, 0x000424);
-        if_tx_bytes_raw[k] = mqnic_reg_read32(dev->regs, 0x000428);
-        if_rx_frames_raw[k] = mqnic_reg_read32(dev->regs, 0x00042C);
-        if_tx_frames_raw[k] = mqnic_reg_read32(dev->regs, 0x000430);
-        if_rx_drops_raw[k] = mqnic_reg_read32(dev->regs, 0x000434);
+        if_rx_bytes_raw[k] = mqnic_reg_read32(dev->regs, 0x000428);
+        if_tx_bytes_raw[k] = mqnic_reg_read32(dev->regs, 0x00042C);
+        if_rx_frames_raw[k] = mqnic_reg_read32(dev->regs, 0x000430);
+        if_tx_frames_raw[k] = mqnic_reg_read32(dev->regs, 0x000434);
+        if_rx_drops_raw[k] = mqnic_reg_read32(dev->regs, 0x000438);
     }
 
     while (keep_running)
@@ -256,46 +263,52 @@ int main(int argc, char *argv[])
 
             for (int k=0; k<core_count; k++)
             {
-                mqnic_reg_write32(dev->regs, 0x000410, k);
-
-                temp = mqnic_reg_read32(dev->regs, 0x000414);
+        	mqnic_reg_write32(dev->regs, 0x000414, k<<4|0x0);
+                temp = mqnic_reg_read32(dev->regs, 0x000424); //dummy read
+                temp = mqnic_reg_read32(dev->regs, 0x000424);
                 core_rx_bytes[k] += temp - core_rx_bytes_raw[k];
                 core_rx_bytes_raw[k] = temp;
 
-                temp = mqnic_reg_read32(dev->regs, 0x000418);
+        	mqnic_reg_write32(dev->regs, 0x000414, k<<4|0x1);
+                temp = mqnic_reg_read32(dev->regs, 0x000424); //dummy read
+                temp = mqnic_reg_read32(dev->regs, 0x000424);
                 core_tx_bytes[k] += temp - core_tx_bytes_raw[k];
                 core_tx_bytes_raw[k] = temp;
 
-                temp = mqnic_reg_read32(dev->regs, 0x00041C);
+        	mqnic_reg_write32(dev->regs, 0x000414, k<<4|0x2);
+                temp = mqnic_reg_read32(dev->regs, 0x000424); //dummy read
+                temp = mqnic_reg_read32(dev->regs, 0x000424);
                 core_rx_frames[k] += temp - core_rx_frames_raw[k];
                 core_rx_frames_raw[k] = temp;
 
-                temp = mqnic_reg_read32(dev->regs, 0x000420);
+        	mqnic_reg_write32(dev->regs, 0x000414, k<<4|0x3);
+                temp = mqnic_reg_read32(dev->regs, 0x000424); //dummy read
+                temp = mqnic_reg_read32(dev->regs, 0x000424);
                 core_tx_frames[k] += temp - core_tx_frames_raw[k];
                 core_tx_frames_raw[k] = temp;
             }
 
             for (int k=0; k<if_count; k++)
             {
-                mqnic_reg_write32(dev->regs, 0x000414, k);
+                mqnic_reg_write32(dev->regs, 0x000418, k);
 
-                temp = mqnic_reg_read32(dev->regs, 0x000424);
+                temp = mqnic_reg_read32(dev->regs, 0x000428);
                 if_rx_bytes[k] += temp - if_rx_bytes_raw[k];
                 if_rx_bytes_raw[k] = temp;
 
-                temp = mqnic_reg_read32(dev->regs, 0x000428);
+                temp = mqnic_reg_read32(dev->regs, 0x00042C);
                 if_tx_bytes[k] += temp - if_tx_bytes_raw[k];
                 if_tx_bytes_raw[k] = temp;
 
-                temp = mqnic_reg_read32(dev->regs, 0x00042C);
+                temp = mqnic_reg_read32(dev->regs, 0x000430);
                 if_rx_frames[k] += temp - if_rx_frames_raw[k];
                 if_rx_frames_raw[k] = temp;
 
-                temp = mqnic_reg_read32(dev->regs, 0x000430);
+                temp = mqnic_reg_read32(dev->regs, 0x000434);
                 if_tx_frames[k] += temp - if_tx_frames_raw[k];
                 if_tx_frames_raw[k] = temp;
 
-                temp = mqnic_reg_read32(dev->regs, 0x000434);
+                temp = mqnic_reg_read32(dev->regs, 0x000438);
                 if_rx_drops[k] += temp - if_rx_drops_raw[k];
                 if_rx_drops_raw[k] = temp;
             }

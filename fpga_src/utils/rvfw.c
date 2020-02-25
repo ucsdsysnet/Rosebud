@@ -122,7 +122,6 @@ int main(int argc, char *argv[])
     printf("Board version: %d.%d\n", dev->board_ver >> 16, dev->board_ver & 0xffff);
 
     int core_count = MAX_CORE_COUNT;
-    int if_count = MAX_IF_COUNT;
 
     int segment_size = 65536;
 
@@ -156,15 +155,15 @@ int main(int argc, char *argv[])
         fclose(write_file);
 
         printf("Disabling cores in scheduler...\n");
-        mqnic_reg_write32(dev->regs, 0x000408, 0x00000000);
-        mqnic_reg_write32(dev->regs, 0x00040C, 0xffffffff);
+        mqnic_reg_write32(dev->regs, 0x000410, 0xffffffff);
+        mqnic_reg_write32(dev->regs, 0x000404, 0x00000001);
 
         usleep(100000);
 
         printf("Placing cores in reset...\n");
         for (int k=0; k<core_count; k++)
         {
-            mqnic_reg_write32(dev->regs, 0x000404, (k << 1) | 1);
+            mqnic_reg_write32(dev->regs, 0x000408, (k << 8) | 0xf);
             usleep(1000);
             printf(".");
             fflush(stdout);
@@ -191,10 +190,12 @@ int main(int argc, char *argv[])
         printf("\n");
 
         printf("Release core resets...\n");
+        mqnic_reg_write32(dev->regs, 0x000404, 0x00000000);
+        usleep(100000);
         for (int k=0; k<core_count; k++)
         {
             if (core_enable & (1 << k))
-                mqnic_reg_write32(dev->regs, 0x000404, (k << 1) | 0);
+                mqnic_reg_write32(dev->regs, 0x000408, (k << 8) | 0xf);
             usleep(1000);
             printf(".");
             fflush(stdout);
@@ -206,8 +207,8 @@ int main(int argc, char *argv[])
         printf("Enabling cores in scheduler...\n");
         printf("Core enable mask: 0x%08x\n", core_enable);
         printf("Core RX enable mask: 0x%08x\n", core_rx_enable);
-        mqnic_reg_write32(dev->regs, 0x000408, core_rx_enable);
-        mqnic_reg_write32(dev->regs, 0x00040C, ~core_enable);
+        mqnic_reg_write32(dev->regs, 0x00040C, core_rx_enable);
+        mqnic_reg_write32(dev->regs, 0x000410, ~core_enable);
 
         printf("Done!\n");
 
