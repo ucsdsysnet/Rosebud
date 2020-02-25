@@ -144,7 +144,6 @@ wire clk_156mhz_ref_int;
 
 wire clk_125mhz_mmcm_out;
 wire clk_250mhz_mmcm_out;
-wire clk_233mhz_mmcm_out;
 
 // Internal 125 MHz clock
 wire clk_125mhz_int;
@@ -153,10 +152,6 @@ wire rst_125mhz_int;
 // Internal 250 MHz clock
 wire clk_250mhz_int;
 wire rst_250mhz_int;
-
-// Second Internal 250 MHz clock
-wire clk_233mhz_int;
-wire rst_233mhz_int;
 
 // Internal 156.25 MHz clock
 wire clk_156mhz_int;
@@ -178,10 +173,10 @@ MMCME4_BASE #(
     .CLKOUT0_DIVIDE_F(8.0),
     .CLKOUT0_DUTY_CYCLE(0.5),
     .CLKOUT0_PHASE(0),
-    .CLKOUT1_DIVIDE(5.0),
+    .CLKOUT1_DIVIDE(4.0),
     .CLKOUT1_DUTY_CYCLE(0.5),
     .CLKOUT1_PHASE(0),
-    .CLKOUT2_DIVIDE(5.0),
+    .CLKOUT2_DIVIDE(1),
     .CLKOUT2_DUTY_CYCLE(0.5),
     .CLKOUT2_PHASE(0),
     .CLKOUT3_DIVIDE(1),
@@ -213,7 +208,7 @@ clk_mmcm_inst (
     .CLKOUT0B(),
     .CLKOUT1(clk_250mhz_mmcm_out),
     .CLKOUT1B(),
-    .CLKOUT2(clk_233mhz_mmcm_out),
+    .CLKOUT2(),
     .CLKOUT2B(),
     .CLKOUT3(),
     .CLKOUT3B(),
@@ -253,21 +248,6 @@ sync_reset_250mhz_inst (
     .clk(clk_250mhz_int),
     .rst(~mmcm_locked),
     .sync_reset_out(rst_250mhz_int)
-);
-
-BUFG
-clk_233mhz_bufg_inst (
-    .I(clk_233mhz_mmcm_out),
-    .O(clk_233mhz_int)
-);
-
-sync_reset #(
-    .N(4)
-)
-sync_reset_233mhz_inst (
-    .clk(clk_233mhz_int),
-    .rst(~mmcm_locked),
-    .sync_reset_out(rst_233mhz_int)
 );
 
 // GPIO
