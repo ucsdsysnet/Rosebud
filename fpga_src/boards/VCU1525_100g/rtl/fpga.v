@@ -143,7 +143,6 @@ wire cfgmclk_int;
 wire clk_161mhz_ref_int;
 
 wire clk_125mhz_mmcm_out;
-wire clk_250mhz_mmcm_out;
 
 // Internal 125 MHz clock
 wire clk_125mhz_int;
@@ -173,7 +172,7 @@ MMCME4_BASE #(
     .CLKOUT0_DIVIDE_F(7.5),
     .CLKOUT0_DUTY_CYCLE(0.5),
     .CLKOUT0_PHASE(0),
-    .CLKOUT1_DIVIDE(3.8),
+    .CLKOUT1_DIVIDE(1),
     .CLKOUT1_DUTY_CYCLE(0.5),
     .CLKOUT1_PHASE(0),
     .CLKOUT2_DIVIDE(1),
@@ -206,7 +205,7 @@ clk_mmcm_inst (
     .PWRDWN(1'b0),
     .CLKOUT0(clk_125mhz_mmcm_out),
     .CLKOUT0B(),
-    .CLKOUT1(clk_250mhz_mmcm_out),
+    .CLKOUT1(),
     .CLKOUT1B(),
     .CLKOUT2(),
     .CLKOUT2B(),
@@ -237,7 +236,7 @@ sync_reset_125mhz_inst (
 
 BUFG
 clk_250mhz_bufg_inst (
-    .I(clk_250mhz_mmcm_out),
+    .I(pcie_user_clk),
     .O(clk_250mhz_int)
 );
 
@@ -246,7 +245,7 @@ sync_reset #(
 )
 sync_reset_250mhz_inst (
     .clk(clk_250mhz_int),
-    .rst(~mmcm_locked),
+    .rst(pcie_user_reset),
     .sync_reset_out(rst_250mhz_int)
 );
 
@@ -1377,14 +1376,10 @@ fpga_core #(
      */
     .pcie_clk(pcie_user_clk),
     .pcie_rst(pcie_user_reset),
-    .sys_clk(pcie_user_clk),
-    .sys_rst(pcie_user_reset),
-    .core_clk(pcie_user_clk),
-    .core_rst(pcie_user_reset),
-    // .sys_clk(clk_250mhz_int),
-    // .sys_rst(rst_250mhz_int),
-    // .core_clk(clk_250mhz_int),
-    // .core_rst(rst_250mhz_int),
+    .sys_clk(clk_250mhz_int),
+    .sys_rst(rst_250mhz_int),
+    .core_clk(clk_250mhz_int),
+    .core_rst(rst_250mhz_int),
 
     /*
      * GPIO
