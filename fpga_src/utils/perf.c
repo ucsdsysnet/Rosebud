@@ -35,8 +35,10 @@ either expressed or implied, of The Regents of the University of California.
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #include "mqnic.h"
+#include "timespec.h"
 
 #define MAX_CORE_COUNT 16
 #define MAX_IF_COUNT 3
@@ -161,6 +163,10 @@ int main(int argc, char *argv[])
     uint64_t total_tx_frames;
     uint64_t total_rx_drops;
 
+    struct timespec desired_time;
+    struct timespec current_time;
+    struct timespec sleep_time;
+
     if (output_file_name)
     {
         output_file = fopen(output_file_name, "w");
@@ -193,6 +199,8 @@ int main(int argc, char *argv[])
         fprintf(output_file, "\n");
         fflush(output_file);
     }
+
+    clock_gettime(CLOCK_MONOTONIC, &desired_time);
 
     for (int k=0; k<core_count; k++)
     {
@@ -259,29 +267,34 @@ int main(int argc, char *argv[])
 
         for (int n=0; n < 10; n++)
         {
-            usleep(100000);
+
+            desired_time = timespec_add(timespec_from_ms(100), desired_time);
+            clock_gettime(CLOCK_MONOTONIC, &current_time);
+            // printf("Current time: %ld\n", timespec_to_ms(current_time));
+            sleep_time = timespec_sub(desired_time, current_time);
+            nanosleep(&sleep_time, NULL);
 
             for (int k=0; k<core_count; k++)
             {
-        	mqnic_reg_write32(dev->regs, 0x000414, k<<4|0x0);
+                mqnic_reg_write32(dev->regs, 0x000414, k<<4|0x0);
                 temp = mqnic_reg_read32(dev->regs, 0x000424); //dummy read
                 temp = mqnic_reg_read32(dev->regs, 0x000424);
                 core_rx_bytes[k] += temp - core_rx_bytes_raw[k];
                 core_rx_bytes_raw[k] = temp;
 
-        	mqnic_reg_write32(dev->regs, 0x000414, k<<4|0x1);
+                mqnic_reg_write32(dev->regs, 0x000414, k<<4|0x1);
                 temp = mqnic_reg_read32(dev->regs, 0x000424); //dummy read
                 temp = mqnic_reg_read32(dev->regs, 0x000424);
                 core_tx_bytes[k] += temp - core_tx_bytes_raw[k];
                 core_tx_bytes_raw[k] = temp;
 
-        	mqnic_reg_write32(dev->regs, 0x000414, k<<4|0x2);
+                mqnic_reg_write32(dev->regs, 0x000414, k<<4|0x2);
                 temp = mqnic_reg_read32(dev->regs, 0x000424); //dummy read
                 temp = mqnic_reg_read32(dev->regs, 0x000424);
                 core_rx_frames[k] += temp - core_rx_frames_raw[k];
                 core_rx_frames_raw[k] = temp;
 
-        	mqnic_reg_write32(dev->regs, 0x000414, k<<4|0x3);
+                mqnic_reg_write32(dev->regs, 0x000414, k<<4|0x3);
                 temp = mqnic_reg_read32(dev->regs, 0x000424); //dummy read
                 temp = mqnic_reg_read32(dev->regs, 0x000424);
                 core_tx_frames[k] += temp - core_tx_frames_raw[k];
