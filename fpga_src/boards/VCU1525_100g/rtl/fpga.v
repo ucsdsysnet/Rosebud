@@ -140,7 +140,7 @@ wire pcie_user_reset;
 
 wire cfgmclk_int;
 
-wire clk_156mhz_ref_int;
+wire clk_161mhz_ref_int;
 
 wire clk_125mhz_mmcm_out;
 wire clk_250mhz_mmcm_out;
@@ -162,18 +162,18 @@ wire mmcm_locked;
 wire mmcm_clkfb;
 
 // MMCM instance
-// 156.25 MHz in, 125 and 250 MHz out 
+// 161.13 MHz in, 125 and 250 MHz out 
 // PFD range: 10 MHz to 500 MHz
 // VCO range: 800 MHz to 1600 MHz
-// M = 64, D = 10 sets Fvco = 1000.0 MHz (in range)
-// Divide by 8 to get output frequency of 125 MHz
+// M = 64, D = 11 sets Fvco = 937.5 MHz (in range)
+// Divide by 7.5 to get output frequency of 125 MHz
 // Divide by 4 to get output frequency of 250 MHz
 MMCME4_BASE #(
     .BANDWIDTH("OPTIMIZED"),
-    .CLKOUT0_DIVIDE_F(8.0),
+    .CLKOUT0_DIVIDE_F(7.5),
     .CLKOUT0_DUTY_CYCLE(0.5),
     .CLKOUT0_PHASE(0),
-    .CLKOUT1_DIVIDE(4.0),
+    .CLKOUT1_DIVIDE(3.8),
     .CLKOUT1_DUTY_CYCLE(0.5),
     .CLKOUT1_PHASE(0),
     .CLKOUT2_DIVIDE(1),
@@ -193,14 +193,14 @@ MMCME4_BASE #(
     .CLKOUT6_PHASE(0),
     .CLKFBOUT_MULT_F(64),
     .CLKFBOUT_PHASE(0),
-    .DIVCLK_DIVIDE(10),
+    .DIVCLK_DIVIDE(11),
     .REF_JITTER1(0.010),
-    .CLKIN1_PERIOD(6.4),
+    .CLKIN1_PERIOD(6.206),
     .STARTUP_WAIT("FALSE"),
     .CLKOUT4_CASCADE("FALSE")
 )
 clk_mmcm_inst (
-    .CLKIN1(clk_156mhz_ref_int),
+    .CLKIN1(clk_161mhz_ref_int),
     .CLKFBIN(mmcm_clkfb),
     .RST(mmcm_rst),
     .PWRDWN(1'b0),
@@ -700,7 +700,7 @@ wire [11:0] pcie_tx_fc_pd_av  = cfg_fc_pd;
 
 // CMAC
 assign qsfp0_refclk_reset = qsfp_refclk_reset_reg;
-assign qsfp0_fs = 2'b01;
+assign qsfp0_fs = 2'b10;
 
 wire                           qsfp0_tx_clk_int;
 wire                           qsfp0_tx_rst_int;
@@ -729,7 +729,7 @@ wire                           qsfp0_rx_axis_tlast_int;
 wire                           qsfp0_rx_axis_tuser_int;
 
 assign qsfp1_refclk_reset = qsfp_refclk_reset_reg;
-assign qsfp1_fs = 2'b01;
+assign qsfp1_fs = 2'b10;
 
 wire                           qsfp1_tx_clk_int;
 wire                           qsfp1_tx_rst_int;
@@ -813,7 +813,7 @@ qsfp0_cmac_inst (
     .gt_loopback_in(12'd0), // input [11:0]
     .gt_rxrecclkout(), // output [3:0]
     .gt_powergoodout(), // output [3:0]
-    .gt_ref_clk_out(clk_156mhz_ref_int), // output
+    .gt_ref_clk_out(clk_161mhz_ref_int), // output
     .gtwiz_reset_tx_datapath(1'b0), // input
     .gtwiz_reset_rx_datapath(1'b0), // input
     .sys_reset(rst_125mhz_int), // input
@@ -1377,10 +1377,14 @@ fpga_core #(
      */
     .pcie_clk(pcie_user_clk),
     .pcie_rst(pcie_user_reset),
-    .sys_clk(clk_250mhz_int),
-    .sys_rst(rst_250mhz_int),
-    .core_clk(clk_250mhz_int),
-    .core_rst(rst_250mhz_int),
+    .sys_clk(pcie_user_clk),
+    .sys_rst(pcie_user_reset),
+    .core_clk(pcie_user_clk),
+    .core_rst(pcie_user_reset),
+    // .sys_clk(clk_250mhz_int),
+    // .sys_rst(rst_250mhz_int),
+    // .core_clk(clk_250mhz_int),
+    // .core_rst(rst_250mhz_int),
 
     /*
      * GPIO

@@ -226,7 +226,7 @@ parameter HDR_MSB_WIDTH = 24-HDR_ADDR_BITS;
 
 reg [24:0]              slot_addr_lut         [1:SLOT_COUNT];
 reg [HDR_MSB_WIDTH-1:0] slot_hdr_addr_msb_lut [1:SLOT_COUNT];
-reg [23:0]              slot_desc_addr_lut    [1:SLOT_COUNT];
+// reg [23:0]              slot_desc_addr_lut    [1:SLOT_COUNT];
 
 // Default values for slot addr table
 integer j;
@@ -234,13 +234,13 @@ initial begin
   for (j=1;j<=SLOT_COUNT;j=j+1) begin
     slot_addr_lut[j]         = SLOT_START_ADDR + ((j-1)*SLOT_ADDR_STEP);
     slot_hdr_addr_msb_lut[j] = (HDR_START_ADDR>>$clog2(MAX_PKT_HDR_SIZE)) + (j-1);
-    slot_desc_addr_lut[j]    = DESC_START_ADDR + ((j-1)*16);
+    // slot_desc_addr_lut[j]    = DESC_START_ADDR + ((j-1)*16);
   end
 end
 
 wire [SLOT_WIDTH-1:0] slot_wr_ptr   = core_status_data[24+:SLOT_WIDTH];
-wire                  slot_for_hdr  = core_status_data[31] && !core_status_data[30];
-wire                  slot_for_desc = core_status_data[31] &&  core_status_data[30];
+wire                  slot_for_hdr  = core_status_data[31]; // && !core_status_data[30];
+// wire                  slot_for_desc = core_status_data[31] &&  core_status_data[30];
 // Slot header goes to data mem and packet to packet mem,
 // So MSB of slot_wr_addr is determined by being header or not.
 wire [24:0]           slot_wr_addr = {~core_status_data[31], core_status_data[23:0]};
@@ -254,8 +254,8 @@ always @ (posedge clk) begin
       2'b01:
         if (slot_for_hdr)
           slot_hdr_addr_msb_lut[slot_wr_ptr] <= slot_wr_addr[24:HDR_ADDR_BITS];
-        else if (slot_for_desc)
-          slot_desc_addr_lut[slot_wr_ptr]    <= slot_wr_addr[23:0];
+        //else if (slot_for_desc)
+        //  slot_desc_addr_lut[slot_wr_ptr]    <= slot_wr_addr[23:0];
         else
           slot_addr_lut        [slot_wr_ptr] <= slot_wr_addr;
       2'b10: core_debug_l <= core_status_data;
@@ -390,7 +390,7 @@ header_remover # (
 );
 
 wire [24:0]              slot_addr;
-wire [23:0]              slot_desc_addr;
+// wire [23:0]              slot_desc_addr;
 wire [HDR_MSB_WIDTH-1:0] slot_hdr_msb;
 wire [25:0]              s_base_addr;
 
@@ -400,7 +400,7 @@ wire [25:0]           s_header_addr = incoming_hdr[32 +: 26];
 // We want to use LUTS instead of BRAM or REGS
 assign slot_addr      = slot_addr_lut        [s_slot_ptr];
 assign slot_hdr_msb   = slot_hdr_addr_msb_lut[s_slot_ptr];
-assign slot_desc_addr = slot_desc_addr_lut   [s_slot_ptr];
+// assign slot_desc_addr = slot_desc_addr_lut   [s_slot_ptr];
 assign s_base_addr    = incoming_hdr_v ? s_header_addr : {1'b0,slot_addr};
 
 /////////////////////////////////////////////////////////////////////
@@ -527,7 +527,7 @@ wire [15:0]            recv_desc_len;
 wire [TAG_WIDTH-1:0]   recv_desc_tdest;
 wire [PORT_WIDTH-1:0]  recv_desc_tuser;
 wire [25:0]            recv_desc_addr;
-wire [23:0]            recv_desc_desc_addr;
+// wire [23:0]            recv_desc_desc_addr;
 
 wire [63:0] send_desc;
 wire send_desc_valid, send_desc_ready;
@@ -561,7 +561,7 @@ axis_dma # (
 
   .wr_base_addr (s_base_addr),
   .hdr_wr_addr_msb(slot_hdr_msb),
-  .slot_desc_addr (slot_desc_addr),
+  // .slot_desc_addr (slot_desc_addr),
   .hdr_en(!incoming_hdr_v),
 
   .m_axis_tdata (m_axis_tdata),
@@ -596,7 +596,7 @@ axis_dma # (
   .recv_desc_tdest(recv_desc_tdest),
   .recv_desc_tuser(recv_desc_tuser),
   .recv_desc_addr (recv_desc_addr),
-  .recv_desc_desc_addr(recv_desc_desc_addr),
+  // .recv_desc_desc_addr(recv_desc_desc_addr),
 
   .send_desc_valid(send_desc_valid),
   .send_desc_ready(send_desc_ready),
