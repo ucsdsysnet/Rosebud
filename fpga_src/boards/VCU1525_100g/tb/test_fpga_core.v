@@ -388,7 +388,7 @@ fpga_core #(
     .BAR0_APERTURE(BAR0_APERTURE),
     .AXIS_ETH_DATA_WIDTH(AXIS_ETH_DATA_WIDTH),
     .AXIS_ETH_KEEP_WIDTH(AXIS_ETH_KEEP_WIDTH),
-    .SEPARATE_CLOCKS(1)
+    .SEPARATE_CLOCKS(0)
 ) UUT (
     .pcie_clk(pcie_clk),
     .pcie_rst(pcie_rst),

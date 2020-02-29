@@ -786,7 +786,14 @@ def bench():
         yield rc.mem_write(dev_pf0_bar0+0x000410, struct.pack('<L', 0xffff))
         yield rc.mem_write(dev_pf0_bar0+0x000404, struct.pack('<L', 0x0001))
         yield delay(100)
+            
+        for k in range (0,16):
+            yield rc.mem_write(dev_pf0_bar0+0x000414, struct.pack('<L', k<<4|8))
+            core_stat = yield from rc.mem_read(dev_pf0_bar0+0x000424, 4) #dummy
+            core_stat = yield from rc.mem_read(dev_pf0_bar0+0x000424, 4)
+            print("core ",k,"stat:",core_stat[::-1].hex())
 
+ 
         # Load instruction memories
         for i in range (0,16):
             yield rc.mem_write(dev_pf0_bar0+0x000408, struct.pack('<L', ((i<<8)|0xf)))

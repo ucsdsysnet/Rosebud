@@ -143,7 +143,6 @@ def bench():
     AXIS_ETH_KEEP_WIDTH = AXIS_ETH_DATA_WIDTH/8
 
     PRINT_PKTS   = True
-    UPDATE_INS   = True
     FIRMWARE     = "../../../../c_code/pkt_gen.bin"
 
     # Inputs
@@ -732,55 +731,66 @@ def bench():
         # enable DMA
         yield rc.mem_write(dev_pf0_bar0+0x000400, struct.pack('<L', 1))
         
-        if (UPDATE_INS):
-          yield rc.mem_write(dev_pf0_bar0+0x00040C, struct.pack('<L', 0xffff))
-          
-          # Load instruction memories
-          for i in range (0,16):
-              yield rc.mem_write(dev_pf0_bar0+0x000404, struct.pack('<L', ((i<<1)+1)))
-              yield delay(20)
-              # write pcie read descriptor
-              yield rc.mem_write(dev_pf0_bar0+0x000440, struct.pack('<L', (mem_base+0x0000) & 0xffffffff))
-              yield rc.mem_write(dev_pf0_bar0+0x000444, struct.pack('<L', (mem_base+0x0000 >> 32) & 0xffffffff))
-              yield rc.mem_write(dev_pf0_bar0+0x000448, struct.pack('<L', ((i<<26)+(1<<25)) & 0xffffffff))
-              yield rc.mem_write(dev_pf0_bar0+0x000450, struct.pack('<L', len(ins)))
-              yield rc.mem_write(dev_pf0_bar0+0x000454, struct.pack('<L', 0xAA))
-              yield delay(100)
-              
-          for i in range (0,1):
-              yield rc.mem_write(dev_pf0_bar0+0x000404, struct.pack('<L', ((i<<1)+0)))
-          
-        yield rc.mem_write(dev_pf0_bar0+0x000408, struct.pack('<L', 0x0000))
+        yield rc.mem_write(dev_pf0_bar0+0x000410, struct.pack('<L', 0xffff))
+        yield rc.mem_write(dev_pf0_bar0+0x000404, struct.pack('<L', 0x0001))
+        yield delay(100)
+
+        # Load instruction memories
+        for i in range (0,16):
+            yield rc.mem_write(dev_pf0_bar0+0x000408, struct.pack('<L', ((i<<8)|0xf)))
+            yield delay(20)
+            # write pcie read descriptor
+            yield rc.mem_write(dev_pf0_bar0+0x000440, struct.pack('<L', (mem_base+0x0000) & 0xffffffff))
+            yield rc.mem_write(dev_pf0_bar0+0x000444, struct.pack('<L', (mem_base+0x0000 >> 32) & 0xffffffff))
+            yield rc.mem_write(dev_pf0_bar0+0x000448, struct.pack('<L', ((i<<26)+(1<<25)) & 0xffffffff))
+            yield rc.mem_write(dev_pf0_bar0+0x000450, struct.pack('<L', len(ins)))
+            yield rc.mem_write(dev_pf0_bar0+0x000454, struct.pack('<L', 0xAA))
+            yield delay(1000)
+
+        print("Taking cores out of reset")
+        yield rc.mem_write(dev_pf0_bar0+0x000404, struct.pack('<L', 0x0000))
+        yield delay(100)
+
+        for i in range (0,16):
+            yield rc.mem_write(dev_pf0_bar0+0x000408, struct.pack('<L', ((i<<8)|0xf)))
+
+        yield delay(3000)
+
         yield rc.mem_write(dev_pf0_bar0+0x00040C, struct.pack('<L', 0x0000))
-
-        yield delay(5000)
-         
-        # put cores into reset
-        yield rc.mem_write(dev_pf0_bar0+0x00040C, struct.pack('<L', 0xffff))
-
-        for k in range (0,16):
-          yield rc.mem_write(dev_pf0_bar0+0x000410, struct.pack('<L', k))
-          yield delay(100)
-          slots      = yield from rc.mem_read(dev_pf0_bar0+0x000410, 4)
-          bytes_in   = yield from rc.mem_read(dev_pf0_bar0+0x000414, 4)
-          bytes_out  = yield from rc.mem_read(dev_pf0_bar0+0x000418, 4)
-          frames_in  = yield from rc.mem_read(dev_pf0_bar0+0x00041c, 4)
-          frames_out = yield from rc.mem_read(dev_pf0_bar0+0x000420, 4)
-          print ("Core %d stat read, slots: , bytes_in, byte_out, frames_in, frames_out" % (k))
-          print (B_2_int(slots),B_2_int(bytes_in),B_2_int(bytes_out),B_2_int(frames_in),B_2_int(frames_out))
-
-        pkt_count=2*[0]
-        for k in range (0,2):
-          yield rc.mem_write(dev_pf0_bar0+0x000414, struct.pack('<L', k))
-          yield delay(100)
-          bytes_in   = yield from rc.mem_read(dev_pf0_bar0+0x000424, 4)
-          bytes_out  = yield from rc.mem_read(dev_pf0_bar0+0x000428, 4)
-          frames_in  = yield from rc.mem_read(dev_pf0_bar0+0x00042C, 4)
-          frames_out = yield from rc.mem_read(dev_pf0_bar0+0x000430, 4)
-          pkt_count[k] = B_2_int(frames_out);
-          print ("Interface %d stat read, bytes_in, byte_out, frames_in, frames_out" % (k))
-          print (B_2_int(bytes_in),B_2_int(bytes_out),B_2_int(frames_in),B_2_int(frames_out))
+        yield rc.mem_write(dev_pf0_bar0+0x000410, struct.pack('<L', 0x0000))
+        yield delay(1000)
         
+        # # put cores into reset
+        # yield rc.mem_write(dev_pf0_bar0+0x000404, struct.pack('<L', 0x0001))
+        # yield delay(100)
+
+        # for i in range (0,16):
+        #     yield rc.mem_write(dev_pf0_bar0+0x000408, struct.pack('<L', ((i<<8)|0xf)))
+
+        print ("Read core stat")  
+        for k in range (8,12):
+          yield rc.mem_write(dev_pf0_bar0+0x000414, struct.pack('<L', k<<4|2))
+          yield delay(100)
+          slots      = yield from rc.mem_read(dev_pf0_bar0+0x000420, 4)
+          bytes_out  = yield from rc.mem_read(dev_pf0_bar0+0x000424, 4)
+          yield rc.mem_write(dev_pf0_bar0+0x000414, struct.pack('<L', k<<4|3))
+          yield delay(100)
+          frames_out = yield from rc.mem_read(dev_pf0_bar0+0x000424, 4)
+
+          print ("Core %d stat read, slots, byte_out, frames_out" % (k))
+          print (B_2_int(slots),B_2_int(bytes_out),B_2_int(frames_out))
+
+        print ("Read interface stat")  
+        pkt_count = 2*[0]
+        for k in range (0,2):
+          yield rc.mem_write(dev_pf0_bar0+0x000418, struct.pack('<L', k))
+          yield delay(100)
+          bytes_out  = yield from rc.mem_read(dev_pf0_bar0+0x00042C, 4)
+          frames_out = yield from rc.mem_read(dev_pf0_bar0+0x000434, 4)
+          pkt_count[k] = B_2_int(frames_out);
+          print ("Interface %d stat read, byte_out, frames_out" % (k))
+          print (B_2_int(bytes_out),B_2_int(frames_out))
+ 
         if (PRINT_PKTS):
 
           print ("packets from port 0:")

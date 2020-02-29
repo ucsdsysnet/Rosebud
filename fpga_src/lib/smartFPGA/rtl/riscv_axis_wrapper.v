@@ -1087,10 +1087,22 @@ simple_sync_fifo # (
 ///////////////////////////////////////////////////////////////////////////
 //////////////////////// ACTIVE SLOTS STATE/// ////////////////////////////
 ///////////////////////////////////////////////////////////////////////////
+// Non-DRAM related output descs
 wire done_w_slot = ((out_desc_type == 4'd0) ||
                     (out_desc_type == 4'd1) ||
                     (out_desc_type == 4'd2)) &&
-                    out_desc_valid ;
+                    out_desc_valid && out_desc_ready;
+
+// A set of registers for better timing
+reg [SLOT_WIDTH-1:0] out_desc_slot_r;
+reg                  done_w_slot_r;
+
+always @ (posedge clk) begin
+  out_desc_slot_r <= out_desc[16+:SLOT_WIDTH];
+  done_w_slot_r   <= done_w_slot;
+  if (rst)
+    done_w_slot_r <= 1'b0;
+end
 
 reg [SLOT_COUNT:1] slots_in_prog;
 reg [SLOT_COUNT:1] slots_to_send;
@@ -1098,16 +1110,19 @@ reg [SLOT_COUNT:1] override_in_slot_err;
 reg [SLOT_COUNT:1] override_out_slot_err;
 reg [SLOT_COUNT:1] invalid_out_slot_err;
 
+wire [SLOT_WIDTH-1:0] in_desc_slot_n  = in_desc_n[16+:SLOT_WIDTH];
+wire [SLOT_WIDTH-1:0] pkt_sent_slot_f = pkt_sent_desc_f[16+:SLOT_WIDTH];
+
 always @ (posedge clk) begin  
   if (in_desc_valid_n && in_desc_ready_n)
-    slots_in_prog[in_desc_n[16+:SLOT_WIDTH]] <= 1'b1;
-  if (done_w_slot && out_desc_ready)
-    slots_in_prog[out_desc[16+:SLOT_WIDTH]]  <= 1'b0;
+    slots_in_prog[in_desc_slot_n]  <= 1'b1;
+  if (done_w_slot_r)
+    slots_in_prog[out_desc_slot_r] <= 1'b0;
   
   if (pkt_sent_valid_f && pkt_sent_ready_f)
-    slots_to_send[pkt_sent_desc_f[16+:SLOT_WIDTH]] <= 1'b0;
-  if (done_w_slot && out_desc_ready)
-    slots_to_send[out_desc[16+:SLOT_WIDTH]] <= 1'b1;
+    slots_to_send[pkt_sent_slot_f] <= 1'b0;
+  if (done_w_slot_r)
+    slots_to_send[out_desc_slot_r] <= 1'b1;
   
   if (rst || core_reset) begin
     slots_in_prog <= {SLOT_COUNT{1'b0}};
@@ -1118,26 +1133,26 @@ end
 /////////////////////////////////////////////////////////////////////
 ///////////////////////// ERROR CATCHING ////////////////////////////
 /////////////////////////////////////////////////////////////////////
-reg in_desc_drop;
+reg in_desc_drop;  
 
 always @ (posedge clk) begin
   // Drop on the fly packet if slot is already in the wrapper 
   in_desc_drop  <= 1'b0;
   if (in_desc_valid_n && in_desc_ready_n && 
-                (slots_to_send[in_desc_n[16+:SLOT_WIDTH]] || 
-                 slots_in_prog[in_desc_n[16+:SLOT_WIDTH]])) begin
-    override_in_slot_err [in_desc_n[16+:SLOT_WIDTH]]  <= 1'b1; 
-    in_desc_drop                                      <= 1'b1;
+                (slots_to_send[in_desc_slot_n] || 
+                 slots_in_prog[in_desc_slot_n])) begin
+    override_in_slot_err [in_desc_slot_n] <= 1'b1; 
+    in_desc_drop                          <= 1'b1;
   end
 
-  if (done_w_slot && !slots_in_prog[out_desc[16+:SLOT_WIDTH]]) begin
-    invalid_out_slot_err [out_desc[16+:SLOT_WIDTH]] <= 1'b1; 
-    out_desc_err                                    <= 1'b1;
+  if (done_w_slot_r && (out_desc_slot_r!=0) && !slots_in_prog[out_desc_slot_r]) begin
+    invalid_out_slot_err [out_desc_slot_r] <= 1'b1; 
+    out_desc_err                           <= 1'b1;
   end 
 
-  if (done_w_slot && slots_to_send[out_desc[16+:SLOT_WIDTH]]) begin
-    override_out_slot_err[out_desc[16+:SLOT_WIDTH]] <= 1'b1; 
-    out_desc_err                                    <= 1'b1;
+  if (done_w_slot_r && (out_desc_slot_r!=0) && slots_to_send[out_desc_slot_r]) begin
+    override_out_slot_err[out_desc_slot_r] <= 1'b1; 
+    out_desc_err                           <= 1'b1;
   end
 
   if (rst || core_reset) begin
