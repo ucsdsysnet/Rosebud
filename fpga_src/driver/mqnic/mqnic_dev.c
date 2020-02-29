@@ -79,7 +79,7 @@ static int mqnic_map_registers(struct mqnic_dev *mqnic, struct vm_area_struct *v
         dev_dbg(dev, "mqnic_map_registers: Mapped registers region at phys: 0x%pap, virt: 0x%p", &mqnic->hw_regs_phys, (void *)vma->vm_start);
     }
 
-    return ret;    
+    return ret;
 }
 
 static int mqnic_mmap(struct file *filp, struct vm_area_struct *vma)
@@ -133,7 +133,8 @@ static long mqnic_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
             struct mqnic_ioctl_block_write ctl;
             u8 *buf;
             dma_addr_t dma;
-            int tag;
+            int tag = 0;
+            int new_tag = 0;
             unsigned long t;
 
             if (copy_from_user(&ctl, (void *)arg, sizeof(ctl)) != 0)
@@ -176,7 +177,12 @@ static long mqnic_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 
             // wait for transfer to complete
             t = jiffies + msecs_to_jiffies(200);
-            while (time_before(jiffies, t) && (ioread32(mqnic->hw_addr+0x000458) & 0xff) != tag) {}
+            while (time_before(jiffies, t)){
+                new_tag = (ioread32(mqnic->hw_addr+0x000458) & 0xff);
+                if (new_tag==tag) break;
+            }
+
+            dev_info(dev, "mqnic_ioctl: block write tag %d recieved tag %d", tag, new_tag);
 
             // free DMA buffer
             dma_free_coherent(dev, 65536, buf, dma);
@@ -188,7 +194,8 @@ static long mqnic_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
             struct mqnic_ioctl_block_read ctl;
             u8 *buf;
             dma_addr_t dma;
-            int tag;
+            int tag=0;
+            int new_tag=0;
             unsigned long t;
 
             if (copy_from_user(&ctl, (void *)arg, sizeof(ctl)) != 0)
@@ -223,8 +230,13 @@ static long mqnic_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
             iowrite32(tag, mqnic->hw_addr+0x000474);
 
             // wait for transfer to complete
-            t = jiffies + msecs_to_jiffies(200);
-            while (time_before(jiffies, t) && (ioread32(mqnic->hw_addr+0x000478) & 0xff) != tag) {}
+	    t = jiffies + msecs_to_jiffies(200);
+            while (time_before(jiffies, t)){
+                new_tag = (ioread32(mqnic->hw_addr+0x000478) & 0xffffffff);
+                if (new_tag==tag) break;
+            }
+	    
+            dev_info(dev, "mqnic_ioctl: block read tag %d recieved tag %d", tag, new_tag);
 
             // copy read data to userspace
             if (copy_to_user(ctl.data, buf, ctl.len) != 0)

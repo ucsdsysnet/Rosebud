@@ -128,7 +128,9 @@ int main(int argc, char *argv[])
     if (action_write)
     {
         char *segment = calloc(segment_size, 1);
+        char *r_segment = calloc(segment_size, 1);
         memset(segment, 0xff, segment_size);
+        memset(r_segment, 0xff, segment_size);
         size_t len;
 
         // read binary file
@@ -189,6 +191,42 @@ int main(int argc, char *argv[])
         }
         printf("\n");
 
+        // Host Write and Readback test
+	struct mqnic_ioctl_block_write ctl;
+        struct mqnic_ioctl_block_read ctl2;
+
+        ctl.addr = (4<<26) | (0x1000100);
+        ctl.data = segment;
+        ctl.len = len;
+
+        if (ioctl(dev->fd, MQNIC_IOCTL_BLOCK_WRITE, &ctl) != 0)
+        {
+            perror("MQNIC_IOCTL_BLOCK_WRITE ioctl failed");
+        }
+        usleep(1000);
+
+        printf("Write Buffer:\n");
+        for (int k=0; k<ctl.len;k+=16){
+            for (int i=0; i<16;i++)
+                printf("%02x ", (int)*(((char*)ctl.data)+k+i) & 0xff);
+            printf("\n");
+        }
+
+        ctl2.addr = (4<<26) | (0x1000100);
+        ctl2.data = r_segment;
+        ctl2.len = len;
+        if (ioctl(dev->fd, MQNIC_IOCTL_BLOCK_READ, &ctl2) != 0){
+            perror("MQNIC_IOCTL_BLOCK_READ ioctl failed");
+        }
+        usleep(1000);
+
+        printf("Read values:\n");
+        for (int k=0; k<ctl2.len;k+=16){
+            for (int i=0; i<16;i++)
+                printf("%02x ", (int)*(((char*)ctl2.data)+k+i) & 0xff);
+            printf("\n");
+        }
+
         printf("Release core resets...\n");
         mqnic_reg_write32(dev->regs, 0x000404, 0x00000000);
         usleep(100000);
@@ -203,12 +241,20 @@ int main(int argc, char *argv[])
         printf("\n");
 
         usleep(100000);
+        
+	printf("Core stats after taking out of reset\n");
+	for (int k=0; k<core_count; k++)
+        {
+	    mqnic_reg_write32(dev->regs, 0x000414, k<<4|8);
+            mqnic_reg_read32(dev->regs, 0x000424); //dummy read
+	    printf("core %d status: %08x\n", k, mqnic_reg_read32(dev->regs, 0x000424));
+	}
 
         printf("Enabling cores in scheduler...\n");
         printf("Core enable mask: 0x%08x\n", core_enable);
         printf("Core RX enable mask: 0x%08x\n", core_rx_enable);
-        mqnic_reg_write32(dev->regs, 0x00040C, core_rx_enable);
         mqnic_reg_write32(dev->regs, 0x000410, ~core_enable);
+        mqnic_reg_write32(dev->regs, 0x00040C, core_rx_enable);
 
         printf("Done!\n");
 

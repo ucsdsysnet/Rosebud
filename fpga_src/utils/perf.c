@@ -286,6 +286,11 @@ int main(int argc, char *argv[])
                 temp = mqnic_reg_read32(dev->regs, 0x000424);
                 core_tx_frames[k] += temp - core_tx_frames_raw[k];
                 core_tx_frames_raw[k] = temp;
+
+                // read some core status
+                // mqnic_reg_write32(dev->regs, 0x000414, k<<4|0x8);
+                // mqnic_reg_read32(dev->regs, 0x000424); //dummy read
+                // printf("core %d status: %08x\n", k, mqnic_reg_read32(dev->regs, 0x000424));
             }
 
             for (int k=0; k<if_count; k++)
