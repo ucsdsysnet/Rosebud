@@ -215,10 +215,10 @@ int main(int argc, char *argv[])
         mqnic_reg_write32(dev->regs, 0x000414, k<<4|0x0);
         core_rx_bytes_raw[k] = mqnic_reg_read32(dev->regs, 0x000424); //dummy read
         core_rx_bytes_raw[k] = mqnic_reg_read32(dev->regs, 0x000424);
-        mqnic_reg_write32(dev->regs, 0x000414, k<<4|0x1);
+        mqnic_reg_write32(dev->regs, 0x000414, k<<4|0x2);
         core_tx_bytes_raw[k] = mqnic_reg_read32(dev->regs, 0x000424); //dummy read
         core_tx_bytes_raw[k] = mqnic_reg_read32(dev->regs, 0x000424);
-        mqnic_reg_write32(dev->regs, 0x000414, k<<4|0x2);
+        mqnic_reg_write32(dev->regs, 0x000414, k<<4|0x1);
         core_rx_frames_raw[k] = mqnic_reg_read32(dev->regs, 0x000424); //dummy read
         core_rx_frames_raw[k] = mqnic_reg_read32(dev->regs, 0x000424);
         mqnic_reg_write32(dev->regs, 0x000414, k<<4|0x3);
@@ -282,13 +282,13 @@ int main(int argc, char *argv[])
                 core_rx_bytes[k] += temp - core_rx_bytes_raw[k];
                 core_rx_bytes_raw[k] = temp;
 
-                mqnic_reg_write32(dev->regs, 0x000414, k<<4|0x1);
+                mqnic_reg_write32(dev->regs, 0x000414, k<<4|0x2);
                 temp = mqnic_reg_read32(dev->regs, 0x000424); //dummy read
                 temp = mqnic_reg_read32(dev->regs, 0x000424);
                 core_tx_bytes[k] += temp - core_tx_bytes_raw[k];
                 core_tx_bytes_raw[k] = temp;
 
-                mqnic_reg_write32(dev->regs, 0x000414, k<<4|0x2);
+                mqnic_reg_write32(dev->regs, 0x000414, k<<4|0x1);
                 temp = mqnic_reg_read32(dev->regs, 0x000424); //dummy read
                 temp = mqnic_reg_read32(dev->regs, 0x000424);
                 core_rx_frames[k] += temp - core_rx_frames_raw[k];
