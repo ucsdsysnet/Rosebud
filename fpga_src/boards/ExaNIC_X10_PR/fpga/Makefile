@@ -68,8 +68,8 @@ SYN_FILES += lib/eth/rtl/eth_phy_10g_rx_if.v
 SYN_FILES += lib/eth/rtl/eth_phy_10g_tx_if.v
 SYN_FILES += lib/eth/rtl/xgmii_baser_dec_64.v
 SYN_FILES += lib/eth/rtl/xgmii_baser_enc_64.v
-SYN_FILES += lib/eth/rtl/eth_axis_rx_64.v
-SYN_FILES += lib/eth/rtl/eth_axis_tx_64.v
+SYN_FILES += lib/eth/rtl/eth_axis_rx.v
+SYN_FILES += lib/eth/rtl/eth_axis_tx.v
 SYN_FILES += lib/eth/rtl/eth_arb_mux.v
 
 SYN_FILES += lib/pcie/rtl/pcie_us_axil_master.v

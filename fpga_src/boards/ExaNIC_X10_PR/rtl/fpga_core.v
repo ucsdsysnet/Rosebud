@@ -1515,7 +1515,7 @@ end
 // Selecting core for stat readback
 localparam LAST_SEL_BITS = CORE_WIDTH+4-$clog2(BC_MSG_CLUSTERS); 
 
-wire [CORE_COUNT*4-1:0]  core_stat_addr;
+(* KEEP = "TRUE" *) reg  [CORE_COUNT*4-1:0] core_stat_addr;
 wire [CORE_COUNT*32-1:0] core_stat_data;
 
 (* KEEP = "TRUE" *) reg [CORE_WIDTH+4-1:0] core_select_r;
@@ -1536,15 +1536,17 @@ generate
     wire [$clog2(CORES_PER_CLUSTER)-1:0] cluster_core_sel =
       core_select_rr[p*LAST_SEL_BITS+4+:$clog2(CORES_PER_CLUSTER)];  
 
-    assign core_stat_addr[p*CORES_PER_CLUSTER*4 +: 4*CORES_PER_CLUSTER] =
-      {CORES_PER_CLUSTER{core_select_rr[p*LAST_SEL_BITS +: 4]}};
     
     wire [CORES_PER_CLUSTER*32-1:0]  cluster_stat_data = 
                         core_stat_data_r[p*CORES_PER_CLUSTER*32 
                                         +: CORES_PER_CLUSTER*32];
-    always @ (posedge core_clk) 
+    always @ (posedge core_clk) begin
       core_stat_data_rr [p*32 +: 32] <= 
           cluster_stat_data [cluster_core_sel*32 +: 32];
+    
+    core_stat_addr[p*CORES_PER_CLUSTER*4 +: 4*CORES_PER_CLUSTER] <=
+      {CORES_PER_CLUSTER{core_select_rr[p*LAST_SEL_BITS +: 4]}};
+    end
 
   end
 endgenerate

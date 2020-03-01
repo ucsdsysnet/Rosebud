@@ -142,7 +142,7 @@ def bench():
     AXIS_ETH_DATA_WIDTH = 512
     AXIS_ETH_KEEP_WIDTH = AXIS_ETH_DATA_WIDTH/8
 
-    PRINT_PKTS   = True
+    PRINT_PKTS   = False
     FIRMWARE     = "../../../../c_code/pkt_gen.bin"
 
     # Inputs
@@ -754,18 +754,16 @@ def bench():
         for i in range (0,16):
             yield rc.mem_write(dev_pf0_bar0+0x000408, struct.pack('<L', ((i<<8)|0xf)))
 
-        yield delay(500)
-
         yield rc.mem_write(dev_pf0_bar0+0x00040C, struct.pack('<L', 0x0000))
         yield rc.mem_write(dev_pf0_bar0+0x000410, struct.pack('<L', 0x0000))
-        yield delay(1000)
-        
-        # # put cores into reset
-        # yield rc.mem_write(dev_pf0_bar0+0x000404, struct.pack('<L', 0x0001))
-        # yield delay(100)
+        yield delay(10000)
 
-        # for i in range (0,16):
-        #     yield rc.mem_write(dev_pf0_bar0+0x000408, struct.pack('<L', ((i<<8)|0xf)))
+        # put cores into reset
+        yield rc.mem_write(dev_pf0_bar0+0x000404, struct.pack('<L', 0x0001))
+        yield delay(100)
+
+        for i in range (0,16):
+            yield rc.mem_write(dev_pf0_bar0+0x000408, struct.pack('<L', ((i<<8)|0xf)))
 
         print ("Read core stat")  
         for k in range (8,12):
