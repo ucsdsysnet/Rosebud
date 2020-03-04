@@ -87,7 +87,7 @@ int main(void){
                 slow_down--;
                 if (slow_down == 0){
                   safe_pkt_send(&summary_pkt);
-                  slow_down = 40;
+                  slow_down = SLOW_DOWN_RATE;
                 }
 	      } else
                 safe_pkt_send(&summary_pkt);
