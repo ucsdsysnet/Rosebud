@@ -8,7 +8,9 @@ unsigned int * pkt_data[8];
 unsigned int * wr_ptr;
 unsigned int count;
 
-#define congestion 0
+#define CONGESTION 1
+#define INTR_BASED  0
+#define SLOW_DOWN_RATE 40
 
 void __attribute__((interrupt)) int_handler(void) {
   safe_pkt_send(&summary_pkt);
@@ -22,6 +24,7 @@ int main(void){
   int i;
   volatile int k;
   unsigned int recv_time;
+  int slow_down;
 
   // Do this at the beginnig, so scheduler can fill the slots while 
   // initializing other things.
@@ -46,17 +49,18 @@ int main(void){
 
   i = 0;
   count = 0;
-  
+  slow_down = SLOW_DOWN_RATE;
+
   // Setting timer interval to 100ms, and enable it for odd cores
   write_timer_interval(0x17D7840);
-  if (congestion==1)
+  if (INTR_BASED==1)
     if ((core_id()&0x1)!=0)
       set_masks(0x04); //enable only timer
 
   if ((core_id()&0x1)==0){
     while (1){
       for (i=0;i<8;i++) {
-        if (congestion==0)
+        if (CONGESTION==0)
           for (k=0;k<100000;k++);
         send_pkt.data = (unsigned char *) pkt_data[i];
         pkt_data[i][0] = read_timer_low();
@@ -73,17 +77,25 @@ int main(void){
           *wr_ptr = recv_time - (*((unsigned int *)recv_pkt.data)); 
           wr_ptr+=1;
           
-          if (congestion==0){
+          if (INTR_BASED==1){
+            if (wr_ptr == (unsigned int *) 0x10F0000)
+              wr_ptr = (unsigned int *) 0x1080000;
+          } else {
             count+=4;
             if (count==1500){
-              safe_pkt_send(&summary_pkt);
+              if (SLOW_DOWN_RATE!=0){
+                slow_down--;
+                if (slow_down == 0){
+                  safe_pkt_send(&summary_pkt);
+                  slow_down = 40;
+                }
+	      } else
+                safe_pkt_send(&summary_pkt);
+                
               count = 0; 
               wr_ptr = (unsigned int *) 0x1080000;
             }
-          } else {
-            if (wr_ptr == (unsigned int *) 0x10F0000)
-              wr_ptr = (unsigned int *) 0x1080000;
-	  }
+          }
         }
         // Drop the packet
         recv_pkt.len=0;
