@@ -143,7 +143,6 @@ def bench():
     AXIS_ETH_KEEP_WIDTH = AXIS_ETH_DATA_WIDTH/8
 
     PRINT_PKTS   = True
-    UPDATE_INS   = True
     FIRMWARE     = "../../../../c_code/latency.bin"
 
     # Inputs
@@ -743,76 +742,69 @@ def bench():
         print("Firmware load")
         ins = bytearray(open(FIRMWARE, "rb").read())
         mem_data[0:len(ins)] = ins
+        mem_data[48059:48200] = bytearray([(x+10)%256 for x in range(141)])
 
         # enable DMA
         yield rc.mem_write(dev_pf0_bar0+0x000400, struct.pack('<L', 1))
         
-        if (UPDATE_INS):
-          yield rc.mem_write(dev_pf0_bar0+0x00040C, struct.pack('<L', 0xffff))
-          
-          # Load instruction memories
-          for i in range (0,16):
-              yield rc.mem_write(dev_pf0_bar0+0x000404, struct.pack('<L', ((i<<1)+1)))
-              yield delay(20)
-              # write pcie read descriptor
-              yield rc.mem_write(dev_pf0_bar0+0x000440, struct.pack('<L', (mem_base+0x0000) & 0xffffffff))
-              yield rc.mem_write(dev_pf0_bar0+0x000444, struct.pack('<L', (mem_base+0x0000 >> 32) & 0xffffffff))
-              yield rc.mem_write(dev_pf0_bar0+0x000448, struct.pack('<L', ((i<<22)+(1<<21)) & 0xffffffff))
-              yield rc.mem_write(dev_pf0_bar0+0x000450, struct.pack('<L', 0x400))
-              yield rc.mem_write(dev_pf0_bar0+0x000454, struct.pack('<L', 0xAA))
-              yield delay(100)
-              
-          for i in range (0,16):
-              yield rc.mem_write(dev_pf0_bar0+0x000404, struct.pack('<L', ((i<<1)+0)))
-          
-        yield rc.mem_write(dev_pf0_bar0+0x000408, struct.pack('<L', 0xff00))
-        yield rc.mem_write(dev_pf0_bar0+0x00040C, struct.pack('<L', 0x0000))
+        yield rc.mem_write(dev_pf0_bar0+0x000410, struct.pack('<L', 0xffff))
+        yield rc.mem_write(dev_pf0_bar0+0x000404, struct.pack('<L', 0x0001))
+        yield delay(100)
+        
+        # Load instruction memories
+        for i in range (0,16):
+            yield rc.mem_write(dev_pf0_bar0+0x000408, struct.pack('<L', ((i<<8)|0xf)))
+            yield delay(20)
+            # write pcie read descriptor
+            yield rc.mem_write(dev_pf0_bar0+0x000440, struct.pack('<L', (mem_base+0x0000) & 0xffffffff))
+            yield rc.mem_write(dev_pf0_bar0+0x000444, struct.pack('<L', (mem_base+0x0000 >> 32) & 0xffffffff))
+            yield rc.mem_write(dev_pf0_bar0+0x000448, struct.pack('<L', ((i<<26)+(1<<25)) & 0xffffffff))
+            yield rc.mem_write(dev_pf0_bar0+0x000450, struct.pack('<L', len(ins)))
+            yield rc.mem_write(dev_pf0_bar0+0x000454, struct.pack('<L', 0xAA))
+            yield delay(1000)
+
+        yield rc.mem_write(dev_pf0_bar0+0x000404, struct.pack('<L', 0x0000))
+        yield delay(100)
+
+        for i in range (0,16):
+            yield rc.mem_write(dev_pf0_bar0+0x000408, struct.pack('<L', ((i<<8)|0xf)))
+
+        yield delay(1000)
+
+        yield rc.mem_write(dev_pf0_bar0+0x00040C, struct.pack('<L', 0x0002))
+        yield rc.mem_write(dev_pf0_bar0+0x000410, struct.pack('<L', 0x0000))
+  
 
         yield delay(10000)
         
         # put cores into reset
-        yield rc.mem_write(dev_pf0_bar0+0x00040C, struct.pack('<L', 0xffff))
-        
+        yield rc.mem_write(dev_pf0_bar0+0x000404, struct.pack('<L', 0x0001))
+        yield delay(100)
+
+        for i in range (0,16):
+            yield rc.mem_write(dev_pf0_bar0+0x000408, struct.pack('<L', ((i<<8)|0xf)))
+
+        yield delay(1000)
+
         # read stored values from one core
         yield rc.mem_write(dev_pf0_bar0+0x000460, struct.pack('<L', (mem_base+0x1000) & 0xffffffff))
         yield rc.mem_write(dev_pf0_bar0+0x000464, struct.pack('<L', (mem_base+0x1000 >> 32) & 0xffffffff))
-        yield rc.mem_write(dev_pf0_bar0+0x000468, struct.pack('<L', ((8<<22)+0x80000) & 0xffffffff))
+        yield rc.mem_write(dev_pf0_bar0+0x000468, struct.pack('<L', ((1<<26)+0x01080000) & 0xffffffff))
         yield rc.mem_write(dev_pf0_bar0+0x000470, struct.pack('<L', 0x800))
         yield rc.mem_write(dev_pf0_bar0+0x000474, struct.pack('<L', 0x55))
 
         yield delay(2000)
 
-        data = mem_data[0x1000:(0x1000)+512]
+        val = yield from rc.mem_read(dev_pf0_bar0+0x000478, 4)
+        print(val)
+
+        data = mem_data[0x1000:(0x1000)+256]
         for i in range(0, len(data), 8):
             swap1 = bytearray(data[i:i+4])
             swap1.reverse()
             swap2 = bytearray(data[i+4:i+8])
             swap2.reverse()
-            print(" ".join(("{:02x}".format(c) for c in swap1+swap2)))
-
-        # for k in range (0,16):
-        #   yield rc.mem_write(dev_pf0_bar0+0x000410, struct.pack('<L', k))
-        #   yield delay(100)
-        #   slots      = yield from rc.mem_read(dev_pf0_bar0+0x000410, 4)
-        #   bytes_in   = yield from rc.mem_read(dev_pf0_bar0+0x000414, 4)
-        #   bytes_out  = yield from rc.mem_read(dev_pf0_bar0+0x000418, 4)
-        #   frames_in  = yield from rc.mem_read(dev_pf0_bar0+0x00041c, 4)
-        #   frames_out = yield from rc.mem_read(dev_pf0_bar0+0x000420, 4)
-        #   print ("Core %d stat read, slots: , bytes_in, byte_out, frames_in, frames_out" % (k))
-        #   print (B_2_int(slots),B_2_int(bytes_in),B_2_int(bytes_out),B_2_int(frames_in),B_2_int(frames_out))
-
-        # pkt_count=2*[0]
-        # for k in range (0,2):
-        #   yield rc.mem_write(dev_pf0_bar0+0x000414, struct.pack('<L', k))
-        #   yield delay(100)
-        #   bytes_in   = yield from rc.mem_read(dev_pf0_bar0+0x000424, 4)
-        #   bytes_out  = yield from rc.mem_read(dev_pf0_bar0+0x000428, 4)
-        #   frames_in  = yield from rc.mem_read(dev_pf0_bar0+0x00042C, 4)
-        #   frames_out = yield from rc.mem_read(dev_pf0_bar0+0x000430, 4)
-        #   pkt_count[k] = B_2_int(frames_out);
-        #   print ("Interface %d stat read, bytes_in, byte_out, frames_in, frames_out" % (k))
-        #   print (B_2_int(bytes_in),B_2_int(bytes_out),B_2_int(frames_in),B_2_int(frames_out))
-        
+            print("".join(("{:02x}".format(c) for c in swap1)),"".join(("{:02x}".format(c) for c in swap2)))
         yield delay(1000)
         raise StopSimulation
 

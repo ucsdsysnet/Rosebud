@@ -1,6 +1,6 @@
 #include "core.h"
 
-void int_handler(void) {
+void __attribute__((interrupt)) int_handler(void) {
 	int cause = read_csr(mcause);
 	if(cause < 0){ //interrupt
 	  char int_flag = interrupt_flags();

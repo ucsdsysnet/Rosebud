@@ -186,6 +186,17 @@ inline void safe_pkt_done_msg (const struct Desc* output_desc){
 	return;
 }
 
+inline void atomic_safe_pkt_done_msg (const struct Desc* output_desc){
+  unsigned char m = MASK_READ;
+  MASK_WRITE = 0;
+  SEND_DESC      = *output_desc;
+	while(!DATA_DESC_READY);
+	asm volatile("" ::: "memory");
+	SEND_DESC_TYPE = 1;
+	MASK_WRITE = m;
+	return;
+}
+
 inline void pkt_send (const struct Desc* output_desc){
 	SEND_DESC = *output_desc;
 	asm volatile("" ::: "memory");
