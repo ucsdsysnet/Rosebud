@@ -250,8 +250,8 @@ parameter ID_TAG_WIDTH    = CORE_WIDTH+TAG_WIDTH;
 parameter BC_START_ADDR   = 32'h00800000+DMEM_SIZE-BC_REGION_SIZE;
 parameter CORE_MSG_WIDTH  = 32+4+$clog2(BC_REGION_SIZE)-2;
 
-parameter RECV_DESC_DEPTH = 8;
-parameter SEND_DESC_DEPTH = 8;
+parameter RECV_DESC_DEPTH = SLOT_COUNT;
+parameter SEND_DESC_DEPTH = SLOT_COUNT;
 parameter DRAM_DESC_DEPTH = 16;
 parameter MSG_FIFO_DEPTH  = 16;
 parameter SLOT_START_ADDR = 16'h0;
@@ -1916,9 +1916,7 @@ generate
             .BC_REGION_SIZE(BC_REGION_SIZE),
             .BC_START_ADDR(BC_START_ADDR),
             .MSG_WIDTH(CORE_MSG_WIDTH),
-            .CORE_ID_WIDTH(CORE_WIDTH),
-            .SLOT_COUNT(SLOT_COUNT),
-            .SLOT_WIDTH(SLOT_WIDTH)
+            .CORE_ID_WIDTH(CORE_WIDTH)
         ) riscv_block_inst (
     `else
         riscv_block_PR # (

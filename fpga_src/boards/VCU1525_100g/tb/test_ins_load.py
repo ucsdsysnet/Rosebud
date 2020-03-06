@@ -144,14 +144,15 @@ def bench():
 
     SEND_COUNT_0 = 50
     SEND_COUNT_1 = 50
-    SIZE_0       = 500 - 18 
-    SIZE_1       = 500 - 18
+    SIZE_0       = 500 - 14
+    SIZE_1       = 500 - 14
     CHECK_PKT    = True
     TEST_SFP     = True
     TEST_PCIE    = True
     TEST_DEBUG   = False
     # FIRMWARE     = "../../../../c_code/basic_fw2.bin"
     FIRMWARE     = "../../../../c_code/dram_test2.bin"
+    # FIRMWARE     = "../../../../c_code/drop.bin"
 
     # Inputs
     sys_clk  = Signal(bool(0))
@@ -557,8 +558,8 @@ def bench():
     test_frame_1.eth_type = 0x8000
     test_frame_1.payload = bytes([0]+[x%256 for x in range(SIZE_0-1)])
     test_frame_1.update_fcs()
-    axis_frame = test_frame_1.build_axis_fcs()
-    start_data_1 = bytearray(b'\x55\x55\x55\x55\x55\x55\x55\xD5' + bytearray(axis_frame))
+    axis_frame = test_frame_1.build_axis()
+    start_data_1 = bytearray(axis_frame)
 
     test_frame_2 = eth_ep.EthFrame()
     test_frame_2.eth_dest_mac = 0x5A5152535455
@@ -566,8 +567,8 @@ def bench():
     test_frame_2.eth_type = 0x8000
     test_frame_2.payload = bytes([0]+[x%256 for x in range(SIZE_1-1)])
     test_frame_2.update_fcs()
-    axis_frame_2 = test_frame_2.build_axis_fcs()
-    start_data_2 = bytearray(b'\x55\x55\x55\x55\x55\x55\x55\xD5' + bytearray(axis_frame_2))
+    axis_frame_2 = test_frame_2.build_axis()
+    start_data_2 = bytearray(axis_frame_2)
  
     # DUT
     if os.system(build_cmd):
@@ -722,8 +723,8 @@ def bench():
           # test_frame_1.payload = bytes([x%256 for x in range(random.randrange(1980))])
           test_frame_1.payload = bytes([i%256] + [x%256 for x in range(SIZE_0-1)])
           test_frame_1.update_fcs()
-          axis_frame = test_frame_1.build_axis_fcs()
-          qsfp0_source.send(b'\x55\x55\x55\x55\x55\x55\x55\xD5'+bytearray(axis_frame))
+          axis_frame = test_frame_1.build_axis()
+          qsfp0_source.send(bytearray(axis_frame))
           # yield delay(random.randrange(128))
           yield qsfp0_rx_clk.posedge
           # yield qsfp0_rx_clk_1.posedge
@@ -736,8 +737,8 @@ def bench():
           # else:
           test_frame_2.payload = bytes([i%256] + [x%256 for x in range(SIZE_1-1)])
           test_frame_2.update_fcs()
-          axis_frame_2 = test_frame_2.build_axis_fcs()
-          qsfp1_source.send(b'\x55\x55\x55\x55\x55\x55\x55\xD5'+bytearray(axis_frame_2))
+          axis_frame_2 = test_frame_2.build_axis()
+          qsfp1_source.send(bytearray(axis_frame_2))
           # yield delay(random.randrange(128))
           yield qsfp1_rx_clk.posedge
           # yield qsfp1_rx_clk_1.posedge
@@ -814,7 +815,7 @@ def bench():
 
         yield delay(1000)
 
-        yield rc.mem_write(dev_pf0_bar0+0x00040C, struct.pack('<L', 0x0f00))
+        yield rc.mem_write(dev_pf0_bar0+0x00040C, struct.pack('<L', 0xffff))
         yield rc.mem_write(dev_pf0_bar0+0x000410, struct.pack('<L', 0x0000))
         yield delay(1000)
         
@@ -893,8 +894,8 @@ def bench():
             for i in range(0, len(data), 16):
                 print(" ".join(("{:02x}".format(c) for c in bytearray(data[i:i+16]))))
             if (CHECK_PKT):
-              assert rx_frame.data[0:22] == start_data_2[0:22]
-              assert rx_frame.data[23:-4] == start_data_2[23:-4]
+              assert rx_frame.data[0:14] == start_data_2[0:14]
+              assert rx_frame.data[15:] == start_data_2[15:]
             lengths.append(len(data)-8)
 
           for j in range (0,SEND_COUNT_0):
@@ -905,8 +906,8 @@ def bench():
             for i in range(0, len(data), 16):
                 print(" ".join(("{:02x}".format(c) for c in bytearray(data[i:i+16]))))
             if (CHECK_PKT):
-              assert rx_frame.data[0:22] == start_data_1[0:22]
-              assert rx_frame.data[23:-4] == start_data_1[23:-4]
+              assert rx_frame.data[0:14] == start_data_1[0:14]
+              assert rx_frame.data[15:] == start_data_1[15:]
             lengths.append(len(data)-8)
 
           # print ("Very last packet:")

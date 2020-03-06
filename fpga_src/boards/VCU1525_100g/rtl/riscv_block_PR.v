@@ -73,8 +73,6 @@ parameter BC_REGION_SIZE = 8192;
 parameter BC_START_ADDR  = 32'h01000000+PMEM_SIZE-BC_REGION_SIZE;
 parameter MSG_WIDTH      = 32+4+$clog2(BC_REGION_SIZE)-2;
 parameter CORE_ID_WIDTH  = 4;
-parameter SLOT_COUNT     = 8;
-parameter SLOT_WIDTH     = $clog2(SLOT_COUNT+1);
 
 parameter REG_TYPE       = 2;
 parameter REG_LENGTH     = 1;
@@ -330,9 +328,7 @@ riscv_block # (
     .BC_REGION_SIZE(BC_REGION_SIZE),
     .BC_START_ADDR(BC_START_ADDR),
     .MSG_WIDTH(MSG_WIDTH),
-    .CORE_ID_WIDTH(CORE_ID_WIDTH),
-    .SLOT_COUNT(SLOT_COUNT),
-    .SLOT_WIDTH(SLOT_WIDTH)
+    .CORE_ID_WIDTH(CORE_ID_WIDTH)
 ) riscv_block_inst (
     .clk(clk),
     .rst(rst_r),

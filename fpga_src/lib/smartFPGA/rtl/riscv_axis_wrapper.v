@@ -19,8 +19,8 @@ module riscv_axis_wrapper # (
     parameter TAG_WIDTH        = (SLOT_WIDTH>5)? SLOT_WIDTH:5,
     parameter ID_TAG_WIDTH     = CORE_ID_WIDTH+TAG_WIDTH,
 
-    parameter RECV_DESC_DEPTH  = 8,
-    parameter SEND_DESC_DEPTH  = 8,
+    parameter RECV_DESC_DEPTH  = SLOT_COUNT,
+    parameter SEND_DESC_DEPTH  = SLOT_COUNT,
     parameter DRAM_DESC_DEPTH  = 16,
     parameter MSG_FIFO_DEPTH   = 16,
 
@@ -1068,12 +1068,13 @@ always @ (posedge clk) begin
     bc_msg_in_valid <= 1'b0;
 end
 
-simple_sync_fifo # (
-  .DEPTH(MSG_FIFO_DEPTH),
+simple_fifo # (
+  .ADDR_WIDTH($clog2(MSG_FIFO_DEPTH)),
   .DATA_WIDTH(MSG_WIDTH)
 ) core_msg_out_fifo (
   .clk(clk),
   .rst(rst),
+  .clear(1'b0),
 
   .din_valid(bc_msg_out_valid),
   .din(bc_msg_out),

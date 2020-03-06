@@ -189,7 +189,7 @@ end
 
 // If there is space in FIFO and some slot available we can accept the host dma request
 // Similar for core requests, but it has lower priority than host_dma_read request
-assign cores_ctrl_s_tready = pcie_dma_read_desc_ready && selected_rx_slot_v && 
+assign cores_ctrl_s_tready = pcie_dma_read_desc_ready_r && selected_rx_slot_v &&
                              !host_dma_read_desc_valid;
 
 assign host_dma_read_desc_status_tag   = host_dma_read_desc_status_tag_r;

@@ -10,9 +10,7 @@ module riscv_block # (
   parameter MSG_WIDTH      = 32+4+MSG_ADDR_WIDTH,
   parameter SLOW_M_B_LINES = 4096,
   parameter FAST_M_B_LINES = 1024,
-  parameter CORE_ID_WIDTH  = 4,
-  parameter SLOT_COUNT     = 8,
-  parameter SLOT_WIDTH     = $clog2(SLOT_COUNT+1)
+  parameter CORE_ID_WIDTH  = 4
 ) (
   input  wire                     clk,
   input  wire                     rst,
