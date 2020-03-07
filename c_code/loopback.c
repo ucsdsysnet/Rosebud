@@ -12,7 +12,7 @@ int main(void){
 	while (1){
 		if (in_pkt_ready()){
 			read_in_pkt(&packet);
-			safe_pkt_send(&packet);
+			pkt_send(&packet);
   	}
   }
   

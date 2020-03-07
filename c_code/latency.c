@@ -13,7 +13,7 @@ unsigned int count;
 #define SLOW_DOWN_RATE 40
 
 void __attribute__((interrupt)) int_handler(void) {
-  safe_pkt_send(&summary_pkt);
+  pkt_send(&summary_pkt);
   // Update for next time if new data doesn't roll back
   summary_pkt.data=((unsigned char*) wr_ptr);
   interrupt_ack(0x01);
@@ -64,7 +64,7 @@ int main(void){
           for (k=0;k<100000;k++);
         send_pkt.data = (unsigned char *) pkt_data[i];
         pkt_data[i][0] = read_timer_low();
-        safe_pkt_send(&send_pkt);
+        pkt_send(&send_pkt);
       }
     }
   } else {
@@ -86,11 +86,11 @@ int main(void){
               if (SLOW_DOWN_RATE!=0){
                 slow_down--;
                 if (slow_down == 0){
-                  safe_pkt_send(&summary_pkt);
+                  pkt_send(&summary_pkt);
                   slow_down = SLOW_DOWN_RATE;
                 }
 	      } else
-                safe_pkt_send(&summary_pkt);
+                pkt_send(&summary_pkt);
                 
               count = 0; 
               wr_ptr = (unsigned int *) 0x1080000;
@@ -100,7 +100,7 @@ int main(void){
         // Drop the packet
         recv_pkt.len=0;
         // Since we have interrupts we need atomic version of it.
-        atomic_safe_pkt_done_msg (&recv_pkt); 
+        atomic_pkt_send (&recv_pkt); 
       }
     }
   }

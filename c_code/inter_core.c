@@ -23,7 +23,7 @@ int main(void){
 				*((unsigned short *)(packet.data)+1) = 1;
 				packet.len += 4;
 				packet.port = (char)(id+4); 
-				safe_send_to_core(&packet);
+				send_to_core(&packet);
 			}
 			else {
 				*((unsigned short *)(packet.data)+1) += 1;
@@ -35,10 +35,10 @@ int main(void){
 					}
 					packet.data = (unsigned char *)(((unsigned int)packet.data)+4);
 					packet.len -= 4;
-					safe_pkt_send(&packet);
+					pkt_send(&packet);
 				} else {
 					packet.port = (char)(id+4);
-					safe_send_to_core(&packet);
+					send_to_core(&packet);
 				}
 			}
   	}

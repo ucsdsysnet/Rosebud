@@ -30,7 +30,7 @@ int main(void){
 		for (i=0;i<16;i++) {
 			pkt_data[i][1] = pkt_num;
 			packet.data = (unsigned char *) pkt_data[i];
-			safe_pkt_send(&packet);
+			pkt_send(&packet);
 			pkt_num++;
 		} 
 	}

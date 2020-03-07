@@ -48,7 +48,7 @@ int main(void){
 			count++;
 			wr_ptr++;
 			if (count==1500){
-				safe_pkt_send(&summary_pkt);
+				pkt_send(&summary_pkt);
 				count = 0; 
 				wr_ptr = (unsigned int *) 0x1080000;
 			}

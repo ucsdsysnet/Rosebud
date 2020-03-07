@@ -37,7 +37,7 @@ int main(void){
 				for(k=0;k<10;k++);
 				pkt_data[i][1] = pkt_num;
 				packet.data = (unsigned char *) pkt_data[i];
-				safe_pkt_send(&packet);
+				pkt_send(&packet);
 				pkt_num++;
 			} 
 		}
@@ -47,7 +47,7 @@ int main(void){
 				// Drop the packet
 				read_in_pkt(&recv_pkt);
 				recv_pkt.len=0;
-				safe_pkt_done_msg (&recv_pkt); 
+				pkt_send (&recv_pkt); 
 			}
 		}
 

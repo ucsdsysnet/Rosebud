@@ -126,20 +126,20 @@ inline void init_hdr_slots (const unsigned int slot_count,
 	return;
 }
 
-inline void init_desc_slots (const unsigned int slot_count,
-	                          const unsigned int start_desc_addr,
-	                          const unsigned int desc_addr_step) {
-
-	// TODO: Add checks for range and hdr_addr_step
-
-	for (int i=1; i<=slot_count; i++){
-		SLOT_ADDR = (3<<30) + (i<<24) + (start_desc_addr&0x00ffffff) + ((i-1)*desc_addr_step);
-		asm volatile("" ::: "memory");
-		UPDATE_SLOT = 1;
-	}
-
-	return;
-}
+// inline void init_desc_slots (const unsigned int slot_count,
+// 	                          const unsigned int start_desc_addr,
+// 	                          const unsigned int desc_addr_step) {
+// 
+// 	// TODO: Add checks for range and hdr_addr_step
+// 
+// 	for (int i=1; i<=slot_count; i++){
+// 		SLOT_ADDR = (3<<30) + (i<<24) + (start_desc_addr&0x00ffffff) + ((i-1)*desc_addr_step);
+// 		asm volatile("" ::: "memory");
+// 		UPDATE_SLOT = 1;
+// 	}
+// 
+// 	return;
+// }
 
 inline void write_timer_interval (const unsigned int val){
 	TIMER_INTERVAL=val;
@@ -178,25 +178,6 @@ inline void pkt_done_msg (const struct Desc* output_desc){
 	return;
 }
 
-inline void safe_pkt_done_msg (const struct Desc* output_desc){
-	SEND_DESC      = *output_desc;
-	while(!DATA_DESC_READY);
-	asm volatile("" ::: "memory");
-	SEND_DESC_TYPE = 1;
-	return;
-}
-
-inline void atomic_safe_pkt_done_msg (const struct Desc* output_desc){
-  unsigned char m = MASK_READ;
-  MASK_WRITE = 0;
-  SEND_DESC      = *output_desc;
-	while(!DATA_DESC_READY);
-	asm volatile("" ::: "memory");
-	SEND_DESC_TYPE = 1;
-	MASK_WRITE = m;
-	return;
-}
-
 inline void pkt_send (const struct Desc* output_desc){
 	SEND_DESC = *output_desc;
 	asm volatile("" ::: "memory");
@@ -204,28 +185,20 @@ inline void pkt_send (const struct Desc* output_desc){
 	return;
 }
 
-inline void safe_pkt_send (const struct Desc* output_desc){
-	SEND_DESC = *output_desc;
-	while(!DATA_DESC_READY);
-	asm volatile("" ::: "memory");
-	SEND_DESC_TYPE = 0;
-	return;
+inline void atomic_pkt_send (const struct Desc* output_desc){
+  unsigned char m = MASK_READ;
+  MASK_WRITE = 0;
+  SEND_DESC = *output_desc;
+  asm volatile("" ::: "memory");
+  SEND_DESC_TYPE = 0;
+  MASK_WRITE = m;
+  return;
 }
 
 // port would get overwritten by hardware
 inline void dram_write (const unsigned long long * dram_addr, const struct Desc* output_desc){
 	DRAM_ADDR      = * dram_addr;
 	SEND_DESC      = *output_desc;
-	asm volatile("" ::: "memory");
-	SEND_DESC_TYPE = 4;
-	return;
-}
-
-// port would get overwritten by hardware
-inline void safe_dram_write (const unsigned long long * dram_addr, const struct Desc* output_desc){
-	DRAM_ADDR      = * dram_addr;
-	SEND_DESC      = *output_desc;
-	while(!DATA_DESC_READY);
 	asm volatile("" ::: "memory");
 	SEND_DESC_TYPE = 4;
 	return;
@@ -240,26 +213,8 @@ inline void dram_read_req (const unsigned long long * dram_addr, const struct De
 	return;
 }
 
-// There is no port for DRAM request. 	
-inline void safe_dram_read_req (const unsigned long long * dram_addr, const struct Desc* output_desc){
-	DRAM_ADDR      = * dram_addr;
-	SEND_DESC      = *output_desc;
-	while(!DATA_DESC_READY);
-	asm volatile("" ::: "memory");
-	SEND_DESC_TYPE = 5;
-	return;
-}
-
 inline void send_to_core (const struct Desc* output_desc){
 	SEND_DESC      = *output_desc;
-	asm volatile("" ::: "memory");
-	SEND_DESC_TYPE = 2;
-	return;
-}
-
-inline void safe_send_to_core (const struct Desc* output_desc){
-	SEND_DESC      = *output_desc;
-	while(!DATA_DESC_READY);
 	asm volatile("" ::: "memory");
 	SEND_DESC_TYPE = 2;
 	return;

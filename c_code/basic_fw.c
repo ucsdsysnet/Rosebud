@@ -18,7 +18,7 @@ int main(void){
 			else
 				packet.port = 0;
 			
-			safe_pkt_done_msg(&packet);
+			pkt_done_msg(&packet);
   	}
   }
   

@@ -81,6 +81,7 @@ reg        io_access_err, pmem_access_err;
 reg        timer_interrupt;
 reg        io_ren_r;
 wire       dram_recv_any;
+wire       io_we_ready;
 
 VexRiscv core (
       .clk(clk),
@@ -94,7 +95,7 @@ VexRiscv core (
       .iBus_rsp_payload_inst(imem_rd_data),
 
       .dBus_cmd_valid(dmem_v),
-      .dBus_cmd_ready(mem_ready),
+      .dBus_cmd_ready(mem_ready && io_wr_ready),
       .dBus_cmd_payload_wr(mem_wen),
       .dBus_cmd_payload_address(dmem_addr),
       .dBus_cmd_payload_data(mem_wr_data),
@@ -239,6 +240,7 @@ assign debug_out_h_valid  = debug_reg_wr_h_r;
 assign out_desc           = {out_desc_type_r, out_desc_data_r[59:0]};
 assign out_desc_valid     = out_desc_v_r;
 assign out_desc_dram_addr = dram_wr_addr_r;
+assign io_wr_ready        = !send_out_desc || out_desc_ready;
 assign in_desc_taken      = io_write && (io_addr==RD_DESC_STRB) && mem_wr_data[0];
 
 assign ready_to_evict     = ready_to_evict_r;

@@ -14,7 +14,7 @@ void __attribute__((interrupt)) int_handler(void) {
 			struct Desc packet;
 			read_in_pkt(&packet);
 			packet.len=0;
-			safe_pkt_done_msg(&packet);
+			pkt_done_msg(&packet);
 
 			} else if (int_flag & 0x02) { // dram interrupt
 				write_debug (dram_flags());
