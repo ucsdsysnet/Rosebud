@@ -1521,50 +1521,50 @@ wire [CORE_COUNT*CORE_MSG_WIDTH-1:0] core_msg_out_data;
 wire [CORE_COUNT-1:0]                core_msg_out_valid;
 wire [CORE_COUNT-1:0]                core_msg_out_ready;
 
-// Register core message outputs
-wire [CORE_COUNT*CORE_MSG_WIDTH-1:0] core_msg_out_data_r;
-wire [CORE_COUNT*CORE_WIDTH-1:0]     core_msg_out_user_r;
-wire [CORE_COUNT-1:0]                core_msg_out_valid_r;
-wire [CORE_COUNT-1:0]                core_msg_out_ready_r;
-
-genvar n;
-generate
-  for (n=0; n<CORE_COUNT; n=n+1) begin: bc_msg_out_regs
-    axis_pipeline_register # (
-      .DATA_WIDTH(CORE_MSG_WIDTH),
-      .KEEP_ENABLE(0),
-      .KEEP_WIDTH(1),
-      .LAST_ENABLE(0),
-      .DEST_ENABLE(0),
-      .USER_ENABLE(1),
-      .USER_WIDTH(CORE_WIDTH),
-      .ID_ENABLE(0),
-      .REG_TYPE(2),
-      .LENGTH(1)
-    ) bc_msg_out_register (
-      .clk(core_clk),
-      .rst(core_rst_r),
-
-      .s_axis_tdata(core_msg_out_data[n*CORE_MSG_WIDTH +: CORE_MSG_WIDTH]),
-      .s_axis_tkeep(1'b0),
-      .s_axis_tvalid(core_msg_out_valid[n]),
-      .s_axis_tready(core_msg_out_ready[n]),
-      .s_axis_tlast(1'b0),
-      .s_axis_tid(8'd0),
-      .s_axis_tdest(8'd0),
-      .s_axis_tuser(ctrl_m_axis_tuser[n*CORE_WIDTH +: CORE_WIDTH]),
-
-      .m_axis_tdata(core_msg_out_data_r[n*CORE_MSG_WIDTH +: CORE_MSG_WIDTH]),
-      .m_axis_tkeep(),
-      .m_axis_tvalid(core_msg_out_valid_r[n]),
-      .m_axis_tready(core_msg_out_ready_r[n]),
-      .m_axis_tlast(),
-      .m_axis_tid(),
-      .m_axis_tdest(),
-      .m_axis_tuser(core_msg_out_user_r[n*CORE_WIDTH +: CORE_WIDTH])
-    );
-  end
-endgenerate
+// // Register core message outputs
+// wire [CORE_COUNT*CORE_MSG_WIDTH-1:0] core_msg_out_data_r;
+// wire [CORE_COUNT*CORE_WIDTH-1:0]     core_msg_out_user_r;
+// wire [CORE_COUNT-1:0]                core_msg_out_valid_r;
+// wire [CORE_COUNT-1:0]                core_msg_out_ready_r;
+// 
+// genvar n;
+// generate
+//   for (n=0; n<CORE_COUNT; n=n+1) begin: bc_msg_out_regs
+//     axis_pipeline_register # (
+//       .DATA_WIDTH(CORE_MSG_WIDTH),
+//       .KEEP_ENABLE(0),
+//       .KEEP_WIDTH(1),
+//       .LAST_ENABLE(0),
+//       .DEST_ENABLE(0),
+//       .USER_ENABLE(1),
+//       .USER_WIDTH(CORE_WIDTH),
+//       .ID_ENABLE(0),
+//       .REG_TYPE(2),
+//       .LENGTH(1)
+//     ) bc_msg_out_register (
+//       .clk(core_clk),
+//       .rst(core_rst_r),
+// 
+//       .s_axis_tdata(core_msg_out_data[n*CORE_MSG_WIDTH +: CORE_MSG_WIDTH]),
+//       .s_axis_tkeep(1'b0),
+//       .s_axis_tvalid(core_msg_out_valid[n]),
+//       .s_axis_tready(core_msg_out_ready[n]),
+//       .s_axis_tlast(1'b0),
+//       .s_axis_tid(8'd0),
+//       .s_axis_tdest(8'd0),
+//       .s_axis_tuser(ctrl_m_axis_tuser[n*CORE_WIDTH +: CORE_WIDTH]),
+// 
+//       .m_axis_tdata(core_msg_out_data_r[n*CORE_MSG_WIDTH +: CORE_MSG_WIDTH]),
+//       .m_axis_tkeep(),
+//       .m_axis_tvalid(core_msg_out_valid_r[n]),
+//       .m_axis_tready(core_msg_out_ready_r[n]),
+//       .m_axis_tlast(),
+//       .m_axis_tid(),
+//       .m_axis_tdest(),
+//       .m_axis_tuser(core_msg_out_user_r[n*CORE_WIDTH +: CORE_WIDTH])
+//     );
+//   end
+// endgenerate
 
 // Merge the boradcast messages
 wire [CORE_MSG_WIDTH-1:0]            core_msg_merged_data;
@@ -1572,51 +1572,26 @@ wire [CORE_WIDTH-1:0]                core_msg_merged_user;
 wire                                 core_msg_merged_valid;
 wire                                 core_msg_merged_ready;
 
-axis_switch_2lvl # (
+axis_simple_arb_2lvl # (
     .S_COUNT         (CORE_COUNT),
-    .M_COUNT         (1),
-    .S_DATA_WIDTH    (CORE_MSG_WIDTH),
-    .S_KEEP_ENABLE   (0),
-    .M_DATA_WIDTH    (CORE_MSG_WIDTH),
-    .M_KEEP_ENABLE   (0),
-    .M_DEST_ENABLE   (0),
-    .ID_ENABLE       (0),
+    .DATA_WIDTH      (CORE_MSG_WIDTH),
     .USER_ENABLE     (1),
     .USER_WIDTH      (CORE_WIDTH),
-    .S_REG_TYPE      (2),
-    .M_REG_TYPE      (2),
     .CLUSTER_COUNT   (BC_MSG_CLUSTERS),
-    .STAGE_FIFO_DEPTH(16),
-    .SEPARATE_CLOCKS (0),
-    .USE_SIMPLE_SW   (1)
+    .STAGE_FIFO_DEPTH(16)
 ) cores_to_broadcaster (
 
-    /*
-     * AXI Stream inputs
-     */
-    .s_clk(core_clk),
-    .s_rst(core_rst_r),
-    .s_axis_tdata(core_msg_out_data_r),
-    .s_axis_tkeep({CORE_COUNT{1'b0}}),
-    .s_axis_tvalid(core_msg_out_valid_r),
-    .s_axis_tready(core_msg_out_ready_r),
-    .s_axis_tlast({CORE_COUNT{1'b1}}),
-    .s_axis_tid({CORE_COUNT{1'b0}}),
-    .s_axis_tdest({CORE_COUNT{1'b0}}),
-    .s_axis_tuser(core_msg_out_user_r),
+    .clk(core_clk),
+    .rst(core_rst_r),
 
-    /*
-     * AXI Stream output
-     */
-    .m_clk(core_clk),
-    .m_rst(core_rst_r),
+    .s_axis_tdata(core_msg_out_data),
+    .s_axis_tvalid(core_msg_out_valid),
+    .s_axis_tready(core_msg_out_ready),
+    .s_axis_tuser(ctrl_m_axis_tuser),
+
     .m_axis_tdata(core_msg_merged_data),
-    .m_axis_tkeep(),
     .m_axis_tvalid(core_msg_merged_valid),
     .m_axis_tready(core_msg_merged_ready),
-    .m_axis_tlast(),
-    .m_axis_tid(),
-    .m_axis_tdest(),
     .m_axis_tuser(core_msg_merged_user)
 );
 

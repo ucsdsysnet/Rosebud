@@ -13,7 +13,7 @@ module axis_switch_2lvl # (
     // tkeep signal width (words per cycle)
     parameter S_KEEP_WIDTH = S_KEEP_ENABLE ? (S_DATA_WIDTH/8) : 1,
     // no need for tdest if there is only single output
-    parameter S_DEST_ENABLE = (M_COUNT >1), 
+    parameter S_DEST_ENABLE = (M_COUNT >1),
     // tdest signal width
     // must be wide enough to uniquely address outputs
     parameter S_DEST_WIDTH = S_DEST_ENABLE ? $clog2(M_COUNT) : 1,
@@ -23,7 +23,7 @@ module axis_switch_2lvl # (
     parameter M_KEEP_ENABLE = (M_DATA_WIDTH>8),
     // tkeep signal width (words per cycle)
     parameter M_KEEP_WIDTH  = M_KEEP_ENABLE ? (M_DATA_WIDTH/8) : 1,
-    // output tdest signal 
+    // output tdest signal
     parameter M_DEST_ENABLE = (S_DEST_ENABLE && (S_DEST_WIDTH > $clog2(M_COUNT))),
     // output tdest width
     parameter M_DEST_WIDTH  = M_DEST_ENABLE ? S_DEST_WIDTH-$clog2(M_COUNT) : 1,
@@ -132,7 +132,7 @@ if (S_COUNT >= M_COUNT) begin: shrink
             .s_axis_tid   (s_axis_tid),
             .s_axis_tdest (s_axis_tdest),
             .s_axis_tuser (s_axis_tuser),
-  
+
             .m_clk        (m_clk),
             .m_rst        (m_rst),
             .m_axis_tdata (m_axis_tdata),
@@ -181,7 +181,7 @@ if (S_COUNT >= M_COUNT) begin: shrink
             .s_axis_tid   (s_axis_tid),
             .s_axis_tdest (s_axis_tdest),
             .s_axis_tuser (s_axis_tuser),
-  
+
             .m_clk        (m_clk),
             .m_rst        (m_rst),
             .m_axis_tdata (m_axis_tdata),
@@ -232,7 +232,7 @@ end else begin: grow
             .s_axis_tid   (s_axis_tid),
             .s_axis_tdest (s_axis_tdest),
             .s_axis_tuser (s_axis_tuser),
-  
+
             .m_clk        (m_clk),
             .m_rst        (m_rst),
             .m_axis_tdata (m_axis_tdata),
@@ -281,7 +281,7 @@ end else begin: grow
             .s_axis_tid   (s_axis_tid),
             .s_axis_tdest (s_axis_tdest),
             .s_axis_tuser (s_axis_tuser),
-  
+
             .m_clk        (m_clk),
             .m_rst        (m_rst),
             .m_axis_tdata (m_axis_tdata),
@@ -352,7 +352,7 @@ module axis_simple_sw_shrink # (
     output wire [M_COUNT*M_DEST_WIDTH-1:0] m_axis_tdest,
     output wire [M_COUNT*USER_WIDTH-1:0]   m_axis_tuser
 );
-    
+
     wire select_m_clk = SEPARATE_CLOCKS ? m_clk : s_clk;
     wire select_m_rst = SEPARATE_CLOCKS ? m_rst : s_rst;
 
@@ -367,9 +367,9 @@ module axis_simple_sw_shrink # (
     wire [S_COUNT*ID_WIDTH-1:0]     s_axis_tid_r;
     wire [S_COUNT*S_DEST_WIDTH-1:0] s_axis_tdest_r;
     wire [S_COUNT*USER_WIDTH-1:0]   s_axis_tuser_r;
-     
+
     genvar k;
-    generate        
+    generate
       for (k=0; k<S_COUNT; k=k+1) begin: input_registers
         axis_pipeline_register # (
               .DATA_WIDTH(S_DATA_WIDTH),
@@ -419,8 +419,8 @@ module axis_simple_sw_shrink # (
                                           int_axis_tready_f,
                                           int_axis_tlast_f;
     genvar j;
-    generate 
-        if (S_PER_CLUSTER == 1) begin: bypass 
+    generate
+        if (S_PER_CLUSTER == 1) begin: bypass
             // TODO add fifo if async
 
             assign int_axis_tdata_f  = s_axis_tdata_r;
@@ -439,8 +439,8 @@ module axis_simple_sw_shrink # (
             wire [CLUSTER_COUNT*S_DEST_WIDTH-1:0] int_axis_tdest;
             wire [CLUSTER_COUNT*USER_WIDTH-1:0]   int_axis_tuser;
             wire [CLUSTER_COUNT*ID_WIDTH-1:0]     int_axis_tid;
-            wire [CLUSTER_COUNT-1:0]              int_axis_tvalid, 
-                                                  int_axis_tready, 
+            wire [CLUSTER_COUNT-1:0]              int_axis_tvalid,
+                                                  int_axis_tready,
                                                   int_axis_tlast;
 
             wire [CLUSTER_COUNT*S_DATA_WIDTH-1:0] int_axis_tdata_r;
@@ -448,8 +448,8 @@ module axis_simple_sw_shrink # (
             wire [CLUSTER_COUNT*S_DEST_WIDTH-1:0] int_axis_tdest_r;
             wire [CLUSTER_COUNT*USER_WIDTH-1:0]   int_axis_tuser_r;
             wire [CLUSTER_COUNT*ID_WIDTH-1:0]     int_axis_tid_r;
-            wire [CLUSTER_COUNT-1:0]              int_axis_tvalid_r, 
-                                                  int_axis_tready_r, 
+            wire [CLUSTER_COUNT-1:0]              int_axis_tvalid_r,
+                                                  int_axis_tready_r,
                                                   int_axis_tlast_r;
 
             for (j=0; j<CLUSTER_COUNT; j=j+1) begin : arb_n_fifo
@@ -468,10 +468,10 @@ module axis_simple_sw_shrink # (
                     .ARB_TYPE(ARB_TYPE),
                     .LSB_PRIORITY(LSB_PRIORITY)
                 ) sw_lvl1 (
-    
+
                     .clk(s_clk),
                     .rst(s_rst),
-                
+
                     /*
                      * AXI Stream inputs
                      */
@@ -483,7 +483,7 @@ module axis_simple_sw_shrink # (
                     .s_axis_tid(s_axis_tid_r[j*S_PER_CLUSTER*ID_WIDTH +: S_PER_CLUSTER*ID_WIDTH]),
                     .s_axis_tdest(s_axis_tdest_r[j*S_PER_CLUSTER*S_DEST_WIDTH +: S_PER_CLUSTER*S_DEST_WIDTH]),
                     .s_axis_tuser(s_axis_tuser_r[j*S_PER_CLUSTER*USER_WIDTH +: S_PER_CLUSTER*USER_WIDTH]),
-                
+
                     /*
                      * AXI Stream outputs
                      */
@@ -495,9 +495,9 @@ module axis_simple_sw_shrink # (
                     .m_axis_tid(int_axis_tid[j*ID_WIDTH +: ID_WIDTH]),
                     .m_axis_tdest(int_axis_tdest[j*S_DEST_WIDTH +: S_DEST_WIDTH]),
                     .m_axis_tuser(int_axis_tuser[j*USER_WIDTH +: USER_WIDTH])
-        
+
                 );
-                
+
                 axis_pipeline_register #
                 (
                     .DATA_WIDTH(S_DATA_WIDTH),
@@ -533,7 +533,7 @@ module axis_simple_sw_shrink # (
                     .m_axis_tdest(int_axis_tdest_r[j*S_DEST_WIDTH +: S_DEST_WIDTH]),
                     .m_axis_tuser(int_axis_tuser_r[j*USER_WIDTH +: USER_WIDTH])
                 );
-    
+
                 if (STAGE_FIFO_ENABLE) begin: fifos
                     if (SEPARATE_CLOCKS) begin: async_fifos
                         axis_async_fifo_adapter # (
@@ -552,7 +552,7 @@ module axis_simple_sw_shrink # (
                             .ID_WIDTH(ID_WIDTH),
                             .FRAME_FIFO(FRAME_FIFO)
                         ) stage_fifo (
-     
+
                             .s_clk(s_clk),
                             .s_rst(s_rst),
                             .s_axis_tdata(int_axis_tdata_r[j*S_DATA_WIDTH +: S_DATA_WIDTH]),
@@ -563,7 +563,7 @@ module axis_simple_sw_shrink # (
                             .s_axis_tid(int_axis_tid_r[j*ID_WIDTH +: ID_WIDTH]),
                             .s_axis_tdest(int_axis_tdest_r[j*S_DEST_WIDTH +: S_DEST_WIDTH]),
                             .s_axis_tuser(int_axis_tuser_r[j*USER_WIDTH +: USER_WIDTH]),
-    
+
                             .m_clk(select_m_clk),
                             .m_rst(select_m_rst),
                             .m_axis_tdata(int_axis_tdata_f[j*M_DATA_WIDTH +: M_DATA_WIDTH]),
@@ -574,7 +574,7 @@ module axis_simple_sw_shrink # (
                             .m_axis_tid(int_axis_tid_f[j*ID_WIDTH +: ID_WIDTH]),
                             .m_axis_tdest(int_axis_tdest_f[j*S_DEST_WIDTH +: S_DEST_WIDTH]),
                             .m_axis_tuser(int_axis_tuser_f[j*USER_WIDTH +: USER_WIDTH]),
-    
+
                             .s_status_overflow(),
                             .s_status_bad_frame(),
                             .s_status_good_frame(),
@@ -599,7 +599,7 @@ module axis_simple_sw_shrink # (
                             .ID_WIDTH(ID_WIDTH),
                             .FRAME_FIFO(FRAME_FIFO)
                         ) stage_fifo (
-     
+
                             .clk(s_clk),
                             .rst(s_rst),
 
@@ -611,7 +611,7 @@ module axis_simple_sw_shrink # (
                             .s_axis_tid(int_axis_tid_r[j*ID_WIDTH +: ID_WIDTH]),
                             .s_axis_tdest(int_axis_tdest_r[j*S_DEST_WIDTH +: S_DEST_WIDTH]),
                             .s_axis_tuser(int_axis_tuser_r[j*USER_WIDTH +: USER_WIDTH]),
-    
+
                             .m_axis_tdata(int_axis_tdata_f[j*M_DATA_WIDTH +: M_DATA_WIDTH]),
                             .m_axis_tkeep(int_axis_tkeep_f[j*M_KEEP_WIDTH +: M_KEEP_WIDTH]),
                             .m_axis_tvalid(int_axis_tvalid_f[j]),
@@ -620,7 +620,7 @@ module axis_simple_sw_shrink # (
                             .m_axis_tid(int_axis_tid_f[j*ID_WIDTH +: ID_WIDTH]),
                             .m_axis_tdest(int_axis_tdest_f[j*S_DEST_WIDTH +: S_DEST_WIDTH]),
                             .m_axis_tuser(int_axis_tuser_f[j*USER_WIDTH +: USER_WIDTH]),
-    
+
                             .status_overflow(),
                             .status_bad_frame(),
                             .status_good_frame()
@@ -641,8 +641,8 @@ module axis_simple_sw_shrink # (
             end
         end
     endgenerate
-    
-    // Level 2 
+
+    // Level 2
     wire [M_COUNT*S_DEST_WIDTH-1:0] m_axis_tdest_r;
     wire [M_COUNT*M_DATA_WIDTH-1:0] m_axis_tdata_n;
     wire [M_COUNT*M_KEEP_WIDTH-1:0] m_axis_tkeep_n;
@@ -652,7 +652,7 @@ module axis_simple_sw_shrink # (
     wire [M_COUNT*ID_WIDTH-1:0]     m_axis_tid_n;
     wire [M_COUNT*M_DEST_WIDTH-1:0] m_axis_tdest_n;
     wire [M_COUNT*USER_WIDTH-1:0]   m_axis_tuser_n;
-     
+
     if (M_COUNT==1) begin: last_level_arbiter
 
         axis_arb_mux #
@@ -673,7 +673,7 @@ module axis_simple_sw_shrink # (
         (
             .clk(select_m_clk),
             .rst(select_m_rst),
-        
+
             /*
              * AXI Stream inputs
              */
@@ -685,7 +685,7 @@ module axis_simple_sw_shrink # (
             .s_axis_tid(int_axis_tid_f),
             .s_axis_tdest(int_axis_tdest_f),
             .s_axis_tuser(int_axis_tuser_f),
-        
+
             /*
              * AXI Stream outputs
              */
@@ -697,9 +697,9 @@ module axis_simple_sw_shrink # (
             .m_axis_tid(m_axis_tid_n),
             .m_axis_tdest(m_axis_tdest_n),
             .m_axis_tuser(m_axis_tuser_n)
-        
+
         );
-        
+
         axis_pipeline_register # (
             .DATA_WIDTH(M_DATA_WIDTH),
             .KEEP_WIDTH(M_KEEP_WIDTH),
@@ -735,9 +735,9 @@ module axis_simple_sw_shrink # (
             .m_axis_tuser(m_axis_tuser)
         );
 
-    
+
     end else begin: last_level_sw //M_COUNT!=1
-    
+
         axis_switch #
         (
             .S_COUNT(CLUSTER_COUNT),
@@ -758,7 +758,7 @@ module axis_simple_sw_shrink # (
         (
             .clk(select_m_clk),
             .rst(select_m_rst),
-        
+
             /*
              * AXI Stream inputs
              */
@@ -770,7 +770,7 @@ module axis_simple_sw_shrink # (
             .s_axis_tid(int_axis_tid_f),
             .s_axis_tdest(int_axis_tdest_f),
             .s_axis_tuser(int_axis_tuser_f),
-        
+
             /*
              * AXI Stream outputs
              */
@@ -786,12 +786,266 @@ module axis_simple_sw_shrink # (
     end
 
     genvar i;
-    generate        
+    generate
         for (i=0; i<M_COUNT; i=i+1) begin: tdest_cut
-            assign m_axis_tdest[i*M_DEST_WIDTH +: M_DEST_WIDTH] = 
+            assign m_axis_tdest[i*M_DEST_WIDTH +: M_DEST_WIDTH] =
                 M_DEST_ENABLE ? m_axis_tdest_r[i*S_DEST_WIDTH +: M_DEST_WIDTH] : 1'b0;
         end
     endgenerate
+
+endmodule
+
+module axis_simple_arb_2lvl # (
+    parameter S_COUNT          = 16,
+    parameter DATA_WIDTH       = 8,
+    parameter USER_ENABLE      = 1,
+    parameter USER_WIDTH       = 1,
+    parameter ARB_TYPE         = "ROUND_ROBIN",
+    parameter LSB_PRIORITY     = "HIGH",
+    parameter CLUSTER_COUNT    = 4,
+    parameter STAGE_FIFO_DEPTH = 64
+) (
+    input  wire                          clk,
+    input  wire                          rst,
+
+    input  wire [S_COUNT*DATA_WIDTH-1:0] s_axis_tdata,
+    input  wire [S_COUNT-1:0]            s_axis_tvalid,
+    output wire [S_COUNT-1:0]            s_axis_tready,
+    input  wire [S_COUNT*USER_WIDTH-1:0] s_axis_tuser,
+
+    output wire [DATA_WIDTH-1:0]         m_axis_tdata,
+    output wire                          m_axis_tvalid,
+    input  wire                          m_axis_tready,
+    output wire [USER_WIDTH-1:0]         m_axis_tuser
+);
+
+    parameter S_PER_CLUSTER     = S_COUNT/CLUSTER_COUNT;
+    parameter STAGE_FIFO_ENABLE = (STAGE_FIFO_DEPTH>0);
+
+    wire [S_COUNT*DATA_WIDTH-1:0] s_axis_tdata_r;
+    wire [S_COUNT-1:0]            s_axis_tvalid_r;
+    wire [S_COUNT-1:0]            s_axis_tready_r;
+    wire [S_COUNT*USER_WIDTH-1:0] s_axis_tuser_r;
+
+    genvar k;
+    generate
+      for (k=0; k<S_COUNT; k=k+1) begin: input_registers
+        axis_pipeline_register # (
+              .DATA_WIDTH(DATA_WIDTH),
+              .KEEP_ENABLE(0),
+              .KEEP_WIDTH(1),
+              .DEST_ENABLE(0),
+              .USER_ENABLE(USER_ENABLE),
+              .USER_WIDTH(USER_WIDTH),
+              .ID_ENABLE(0),
+              .REG_TYPE(2),
+              .LENGTH(1)
+        ) input_register (
+          .clk(clk),
+          .rst(rst),
+
+          .s_axis_tdata(s_axis_tdata[k*DATA_WIDTH +: DATA_WIDTH]),
+          .s_axis_tkeep(1'b1),
+          .s_axis_tvalid(s_axis_tvalid[k]),
+          .s_axis_tready(s_axis_tready[k]),
+          .s_axis_tlast(1'b1),
+          .s_axis_tid(8'd0),
+          .s_axis_tdest(8'd0),
+          .s_axis_tuser(s_axis_tuser[k*USER_WIDTH +: USER_WIDTH]),
+
+          .m_axis_tdata(s_axis_tdata_r[k*DATA_WIDTH +: DATA_WIDTH]),
+          .m_axis_tkeep(),
+          .m_axis_tvalid(s_axis_tvalid_r[k]),
+          .m_axis_tready(s_axis_tready_r[k]),
+          .m_axis_tlast(),
+          .m_axis_tid(),
+          .m_axis_tdest(),
+          .m_axis_tuser(s_axis_tuser_r[k*USER_WIDTH +: USER_WIDTH])
+        );
+      end
+    endgenerate
+
+    // Level 1
+    wire [CLUSTER_COUNT*DATA_WIDTH-1:0] int_axis_tdata_f;
+    wire [CLUSTER_COUNT*USER_WIDTH-1:0] int_axis_tuser_f;
+    wire [CLUSTER_COUNT-1:0]            int_axis_tvalid_f,
+                                        int_axis_tready_f;
+    genvar j;
+    generate
+        if (S_PER_CLUSTER == 1) begin: bypass
+            // TODO add fifo if async
+
+            assign int_axis_tdata_f  = s_axis_tdata_r;
+            assign int_axis_tuser_f  = s_axis_tuser_r;
+            assign int_axis_tvalid_f = s_axis_tvalid_r;
+            assign s_axis_tready_r   = int_axis_tready_f;
+
+        end else begin: clusters
+
+            wire [CLUSTER_COUNT*DATA_WIDTH-1:0] int_axis_tdata;
+            wire [CLUSTER_COUNT*USER_WIDTH-1:0] int_axis_tuser;
+            wire [CLUSTER_COUNT-1:0]            int_axis_tvalid,
+                                                int_axis_tready;
+
+            wire [CLUSTER_COUNT*DATA_WIDTH-1:0] int_axis_tdata_r;
+            wire [CLUSTER_COUNT*USER_WIDTH-1:0] int_axis_tuser_r;
+            wire [CLUSTER_COUNT-1:0]            int_axis_tvalid_r,
+                                                int_axis_tready_r;
+
+            for (j=0; j<CLUSTER_COUNT; j=j+1) begin : arb_n_fifo
+                axis_arb_mux #
+                (
+                    .S_COUNT(S_PER_CLUSTER),
+                    .DATA_WIDTH(DATA_WIDTH),
+                    .KEEP_ENABLE(0),
+                    .KEEP_WIDTH(1),
+                    .DEST_ENABLE(0),
+                    .USER_ENABLE(USER_ENABLE),
+                    .USER_WIDTH(USER_WIDTH),
+                    .ID_ENABLE(0),
+                    .ARB_TYPE(ARB_TYPE),
+                    .LSB_PRIORITY(LSB_PRIORITY)
+                ) arb_lvl1 (
+
+                    .clk(clk),
+                    .rst(rst),
+
+                    /*
+                     * AXI Stream inputs
+                     */
+                    .s_axis_tdata(s_axis_tdata_r[j*S_PER_CLUSTER*DATA_WIDTH +: S_PER_CLUSTER*DATA_WIDTH]),
+                    .s_axis_tkeep({S_PER_CLUSTER{1'b1}}),
+                    .s_axis_tvalid(s_axis_tvalid_r[j*S_PER_CLUSTER +: S_PER_CLUSTER]),
+                    .s_axis_tready(s_axis_tready_r[j*S_PER_CLUSTER +: S_PER_CLUSTER]),
+                    .s_axis_tlast({S_PER_CLUSTER{1'b1}}),
+                    .s_axis_tid({S_PER_CLUSTER{8'd0}}),
+                    .s_axis_tdest({S_PER_CLUSTER{8'd0}}),
+                    .s_axis_tuser(s_axis_tuser_r[j*S_PER_CLUSTER*USER_WIDTH +: S_PER_CLUSTER*USER_WIDTH]),
+
+                    /*
+                     * AXI Stream outputs
+                     */
+                    .m_axis_tdata(int_axis_tdata[j*DATA_WIDTH +: DATA_WIDTH]),
+                    .m_axis_tkeep(),
+                    .m_axis_tvalid(int_axis_tvalid[j]),
+                    .m_axis_tready(int_axis_tready[j]),
+                    .m_axis_tlast(),
+                    .m_axis_tid(),
+                    .m_axis_tdest(),
+                    .m_axis_tuser(int_axis_tuser[j*USER_WIDTH +: USER_WIDTH])
+
+                );
+
+                if (STAGE_FIFO_ENABLE) begin: fifos
+
+                    simple_fifo # (
+                      .ADDR_WIDTH($clog2(STAGE_FIFO_DEPTH)),
+                      .DATA_WIDTH(DATA_WIDTH+USER_WIDTH)
+                    ) stage_fifo (
+                      .clk(clk),
+                      .rst(rst),
+                      .clear(1'b0),
+
+                      .din_valid(int_axis_tvalid[j]),
+                      .din({int_axis_tdata[j*DATA_WIDTH +: DATA_WIDTH],
+                            int_axis_tuser[j*USER_WIDTH +: USER_WIDTH]}),
+                      .din_ready(int_axis_tready[j]),
+
+                      .dout_valid(int_axis_tvalid_f[j]),
+                      .dout({int_axis_tdata_f[j*DATA_WIDTH +: DATA_WIDTH],
+                            int_axis_tuser_f[j*USER_WIDTH +: USER_WIDTH]}),
+                      .dout_ready(int_axis_tready_f[j])
+                    );
+
+                end else begin: no_fifo
+                    assign int_axis_tdata_f  = int_axis_tdata;
+                    assign int_axis_tuser_f  = int_axis_tuser;
+                    assign int_axis_tvalid_f = int_axis_tvalid;
+                    assign int_axis_tready   = int_axis_tready_f;
+                end
+            end
+        end
+    endgenerate
+
+    // Level 2
+    wire [DATA_WIDTH-1:0] m_axis_tdata_n;
+    wire                  m_axis_tvalid_n;
+    wire                  m_axis_tready_n;
+    wire [USER_WIDTH-1:0] m_axis_tuser_n;
+
+    axis_arb_mux #
+    (
+        .S_COUNT(CLUSTER_COUNT),
+        .DATA_WIDTH(DATA_WIDTH),
+        .KEEP_WIDTH(1),
+        .KEEP_ENABLE(0),
+        .DEST_ENABLE(0),
+        .USER_ENABLE(USER_ENABLE),
+        .USER_WIDTH(USER_WIDTH),
+        .ARB_TYPE(ARB_TYPE),
+        .LSB_PRIORITY(LSB_PRIORITY)
+    ) arb_lvl2
+    (
+        .clk(clk),
+        .rst(rst),
+
+        /*
+         * AXI Stream inputs
+         */
+        .s_axis_tdata(int_axis_tdata_f),
+        .s_axis_tkeep({CLUSTER_COUNT{1'b1}}),
+        .s_axis_tvalid(int_axis_tvalid_f),
+        .s_axis_tready(int_axis_tready_f),
+        .s_axis_tlast({CLUSTER_COUNT{1'b1}}),
+        .s_axis_tid({CLUSTER_COUNT{8'd0}}),
+        .s_axis_tdest({CLUSTER_COUNT{8'd0}}),
+        .s_axis_tuser(int_axis_tuser_f),
+
+        /*
+         * AXI Stream outputs
+         */
+        .m_axis_tdata(m_axis_tdata_n),
+        .m_axis_tkeep(),
+        .m_axis_tvalid(m_axis_tvalid_n),
+        .m_axis_tready(m_axis_tready_n),
+        .m_axis_tlast(),
+        .m_axis_tid(),
+        .m_axis_tdest(),
+        .m_axis_tuser(m_axis_tuser_n)
+    );
+
+    axis_pipeline_register # (
+        .DATA_WIDTH(DATA_WIDTH),
+        .KEEP_WIDTH(1),
+        .KEEP_ENABLE(0),
+        .DEST_ENABLE(0),
+        .USER_ENABLE(USER_ENABLE),
+        .USER_WIDTH(USER_WIDTH),
+        .ID_ENABLE(0),
+        .REG_TYPE(2),
+        .LENGTH(1)
+    ) output_pipeline_register (
+        .clk(clk),
+        .rst(rst),
+
+        .s_axis_tdata(m_axis_tdata_n),
+        .s_axis_tkeep(1'b1),
+        .s_axis_tvalid(m_axis_tvalid_n),
+        .s_axis_tready(m_axis_tready_n),
+        .s_axis_tlast(1'b1),
+        .s_axis_tid(8'd0),
+        .s_axis_tdest(8'd0),
+        .s_axis_tuser(m_axis_tuser_n),
+
+        .m_axis_tdata(m_axis_tdata),
+        .m_axis_tkeep(),
+        .m_axis_tvalid(m_axis_tvalid),
+        .m_axis_tready(m_axis_tready),
+        .m_axis_tlast(),
+        .m_axis_tid(),
+        .m_axis_tdest(),
+        .m_axis_tuser(m_axis_tuser)
+    );
 
 endmodule
 
@@ -849,12 +1103,12 @@ module axis_ram_sw_shrink # (
     output wire [M_COUNT*M_DEST_WIDTH-1:0] m_axis_tdest,
     output wire [M_COUNT*USER_WIDTH-1:0]   m_axis_tuser
 );
-    
+
     wire select_m_clk = SEPARATE_CLOCKS ? m_clk : s_clk;
     wire select_m_rst = SEPARATE_CLOCKS ? m_rst : s_rst;
 
     parameter S_PER_CLUSTER = S_COUNT/CLUSTER_COUNT;
-    
+
     wire [S_COUNT*S_DATA_WIDTH-1:0] s_axis_tdata_r;
     wire [S_COUNT*S_KEEP_WIDTH-1:0] s_axis_tkeep_r;
     wire [S_COUNT-1:0]              s_axis_tvalid_r;
@@ -863,9 +1117,9 @@ module axis_ram_sw_shrink # (
     wire [S_COUNT*ID_WIDTH-1:0]     s_axis_tid_r;
     wire [S_COUNT*S_DEST_WIDTH-1:0] s_axis_tdest_r;
     wire [S_COUNT*USER_WIDTH-1:0]   s_axis_tuser_r;
-     
+
     genvar k;
-    generate        
+    generate
       for (k=0; k<S_COUNT; k=k+1) begin: input_registers
         axis_pipeline_register # (
               .DATA_WIDTH(S_DATA_WIDTH),
@@ -911,8 +1165,8 @@ module axis_ram_sw_shrink # (
     wire [CLUSTER_COUNT*S_DEST_WIDTH-1:0] int_axis_tdest;
     wire [CLUSTER_COUNT*USER_WIDTH-1:0]   int_axis_tuser;
     wire [CLUSTER_COUNT*ID_WIDTH-1:0]     int_axis_tid;
-    wire [CLUSTER_COUNT-1:0]              int_axis_tvalid, 
-                                          int_axis_tready, 
+    wire [CLUSTER_COUNT-1:0]              int_axis_tvalid,
+                                          int_axis_tready,
                                           int_axis_tlast;
 
 
@@ -921,11 +1175,11 @@ module axis_ram_sw_shrink # (
     wire [CLUSTER_COUNT*S_DEST_WIDTH-1:0] int_axis_tdest_f;
     wire [CLUSTER_COUNT*USER_WIDTH-1:0]   int_axis_tuser_f;
     wire [CLUSTER_COUNT*ID_WIDTH-1:0]     int_axis_tid_f;
-    wire [CLUSTER_COUNT-1:0]              int_axis_tvalid_f, 
-                                          int_axis_tready_f, 
+    wire [CLUSTER_COUNT-1:0]              int_axis_tvalid_f,
+                                          int_axis_tready_f,
                                           int_axis_tlast_f;
     genvar j;
-    generate 
+    generate
         for (j=0; j<CLUSTER_COUNT; j=j+1) begin : axis_ram_sw_n_fifo
             axis_ram_switch # (
                 .FIFO_DEPTH(STAGE_FIFO_DEPTH),
@@ -948,7 +1202,7 @@ module axis_ram_sw_shrink # (
             ) sw_lvl1 (
                 .clk(s_clk),
                 .rst(s_rst),
-            
+
                 /*
                  * AXI Stream inputs
                  */
@@ -960,7 +1214,7 @@ module axis_ram_sw_shrink # (
                 .s_axis_tid(s_axis_tid_r[j*S_PER_CLUSTER*ID_WIDTH +: S_PER_CLUSTER*ID_WIDTH]),
                 .s_axis_tdest(s_axis_tdest_r[j*S_PER_CLUSTER*S_DEST_WIDTH +: S_PER_CLUSTER*S_DEST_WIDTH]),
                 .s_axis_tuser(s_axis_tuser_r[j*S_PER_CLUSTER*USER_WIDTH +: S_PER_CLUSTER*USER_WIDTH]),
-            
+
                 /*
                  * AXI Stream outputs
                  */
@@ -972,7 +1226,7 @@ module axis_ram_sw_shrink # (
                 .m_axis_tid(int_axis_tid[j*ID_WIDTH +: ID_WIDTH]),
                 .m_axis_tdest(int_axis_tdest[j*S_DEST_WIDTH +: S_DEST_WIDTH]),
                 .m_axis_tuser(int_axis_tuser[j*USER_WIDTH +: USER_WIDTH]),
- 
+
                 .status_overflow(),
                 .status_bad_frame(),
                 .status_good_frame()
@@ -1042,7 +1296,7 @@ module axis_ram_sw_shrink # (
                 ) middle_pipeline_register (
                     .clk(select_m_clk),
                     .rst(select_m_rst),
-                    
+
                     .s_axis_tdata(int_axis_tdata[j*M_DATA_WIDTH +: M_DATA_WIDTH]),
                     .s_axis_tkeep(int_axis_tkeep[j*M_KEEP_WIDTH +: M_KEEP_WIDTH]),
                     .s_axis_tvalid(int_axis_tvalid[j]),
@@ -1062,11 +1316,11 @@ module axis_ram_sw_shrink # (
                     .m_axis_tuser(int_axis_tuser_f[j*USER_WIDTH +: USER_WIDTH])
                 );
 
-            end 
+            end
         end
     endgenerate
-    
-    // Level 2 
+
+    // Level 2
     wire [M_COUNT*S_DEST_WIDTH-1:0] m_axis_tdest_r;
     wire [M_COUNT*M_DATA_WIDTH-1:0] m_axis_tdata_n;
     wire [M_COUNT*M_KEEP_WIDTH-1:0] m_axis_tkeep_n;
@@ -1076,7 +1330,7 @@ module axis_ram_sw_shrink # (
     wire [M_COUNT*ID_WIDTH-1:0]     m_axis_tid_n;
     wire [M_COUNT*M_DEST_WIDTH-1:0] m_axis_tdest_n;
     wire [M_COUNT*USER_WIDTH-1:0]   m_axis_tuser_n;
-     
+
     if (M_COUNT==1) begin: last_level_arbiter
 
         axis_arb_mux #
@@ -1097,7 +1351,7 @@ module axis_ram_sw_shrink # (
         (
             .clk(select_m_clk),
             .rst(select_m_rst),
-        
+
             /*
              * AXI Stream inputs
              */
@@ -1109,7 +1363,7 @@ module axis_ram_sw_shrink # (
             .s_axis_tid(int_axis_tid_f),
             .s_axis_tdest(int_axis_tdest_f),
             .s_axis_tuser(int_axis_tuser_f),
-        
+
             /*
              * AXI Stream outputs
              */
@@ -1121,9 +1375,9 @@ module axis_ram_sw_shrink # (
             .m_axis_tid(m_axis_tid_n),
             .m_axis_tdest(m_axis_tdest_n),
             .m_axis_tuser(m_axis_tuser_n)
-        
+
         );
-        
+
         axis_pipeline_register # (
             .DATA_WIDTH(M_DATA_WIDTH),
             .KEEP_WIDTH(M_KEEP_WIDTH),
@@ -1160,7 +1414,7 @@ module axis_ram_sw_shrink # (
         );
 
     end else begin: last_level_sw //M_COUNT!=1
-    
+
         axis_switch #
         (
             .S_COUNT(CLUSTER_COUNT),
@@ -1181,7 +1435,7 @@ module axis_ram_sw_shrink # (
         (
             .clk(select_m_clk),
             .rst(select_m_rst),
-        
+
             /*
              * AXI Stream inputs
              */
@@ -1193,7 +1447,7 @@ module axis_ram_sw_shrink # (
             .s_axis_tid(int_axis_tid_f),
             .s_axis_tdest(int_axis_tdest_f),
             .s_axis_tuser(int_axis_tuser_f),
-        
+
             /*
              * AXI Stream outputs
              */
@@ -1209,9 +1463,9 @@ module axis_ram_sw_shrink # (
     end
 
     genvar i;
-    generate        
+    generate
         for (i=0; i<M_COUNT; i=i+1) begin: tdest_cut
-            assign m_axis_tdest[i*M_DEST_WIDTH +: M_DEST_WIDTH] = 
+            assign m_axis_tdest[i*M_DEST_WIDTH +: M_DEST_WIDTH] =
                 M_DEST_ENABLE ? m_axis_tdest_r[i*S_DEST_WIDTH +: M_DEST_WIDTH] : 1'b0;
         end
     endgenerate
@@ -1274,7 +1528,7 @@ module axis_simple_sw_grow # (
 );
     wire select_m_clk = SEPARATE_CLOCKS ? m_clk : s_clk;
     wire select_m_rst = SEPARATE_CLOCKS ? m_rst : s_rst;
-    
+
     parameter M_PER_CLUSTER     = M_COUNT/CLUSTER_COUNT;
     parameter INT_DEST_WIDTH    = S_DEST_WIDTH-$clog2(CLUSTER_COUNT);
     parameter STAGE_FIFO_ENABLE = (STAGE_FIFO_DEPTH>0);
@@ -1285,10 +1539,10 @@ module axis_simple_sw_grow # (
     wire [CLUSTER_COUNT*S_DEST_WIDTH-1:0] int_axis_tdest;
     wire [CLUSTER_COUNT*USER_WIDTH-1:0]   int_axis_tuser;
     wire [CLUSTER_COUNT*ID_WIDTH-1:0]     int_axis_tid;
-    wire [CLUSTER_COUNT-1:0]              int_axis_tvalid, 
-                                          int_axis_tready, 
+    wire [CLUSTER_COUNT-1:0]              int_axis_tvalid,
+                                          int_axis_tready,
                                           int_axis_tlast;
-    
+
     // Data channel switch
     axis_switch #
     (
@@ -1310,7 +1564,7 @@ module axis_simple_sw_grow # (
     (
         .clk(s_clk),
         .rst(s_rst),
-    
+
         /*
          * AXI Stream inputs
          */
@@ -1322,7 +1576,7 @@ module axis_simple_sw_grow # (
         .s_axis_tid(s_axis_tid),
         .s_axis_tdest(s_axis_tdest),
         .s_axis_tuser(s_axis_tuser),
-    
+
         /*
          * AXI Stream outputs
          */
@@ -1335,11 +1589,11 @@ module axis_simple_sw_grow # (
         .m_axis_tdest(int_axis_tdest),
         .m_axis_tuser(int_axis_tuser)
     );
-    
-    // Level 2 
+
+    // Level 2
     genvar i,j;
-    generate 
-        if (M_PER_CLUSTER == 1) begin: bypass 
+    generate
+        if (M_PER_CLUSTER == 1) begin: bypass
             // TODO add fifo if async
 
             assign m_axis_tdata    = int_axis_tdata;
@@ -1349,12 +1603,12 @@ module axis_simple_sw_grow # (
             assign m_axis_tvalid   = int_axis_tvalid;
             assign m_axis_tlast    = int_axis_tlast;
             assign int_axis_tready = m_axis_tready;
-            
+
             for (j=0; j<CLUSTER_COUNT; j=j+1) begin: tdest_cut
-                assign m_axis_tdest[j*M_DEST_WIDTH +: M_DEST_WIDTH] = 
+                assign m_axis_tdest[j*M_DEST_WIDTH +: M_DEST_WIDTH] =
                     M_DEST_ENABLE ? int_axis_tdest[j*S_DEST_WIDTH +: M_DEST_WIDTH] : 1'b0;
             end
-        
+
         end else begin: clusters
 
             wire [CLUSTER_COUNT*M_DATA_WIDTH-1:0] int_axis_tdata_f;
@@ -1362,13 +1616,13 @@ module axis_simple_sw_grow # (
             wire [CLUSTER_COUNT*S_DEST_WIDTH-1:0] int_axis_tdest_f;
             wire [CLUSTER_COUNT*USER_WIDTH-1:0]   int_axis_tuser_f;
             wire [CLUSTER_COUNT*ID_WIDTH-1:0]     int_axis_tid_f;
-            wire [CLUSTER_COUNT-1:0]              int_axis_tvalid_f, 
-                                                  int_axis_tready_f, 
+            wire [CLUSTER_COUNT-1:0]              int_axis_tvalid_f,
+                                                  int_axis_tready_f,
                                                   int_axis_tlast_f;
-            
+
             wire [M_COUNT*INT_DEST_WIDTH-1:0]     m_axis_tdest_r;
-            
-    
+
+
             for (j=0; j<CLUSTER_COUNT; j=j+1) begin : fifo_n_switch
                 if (STAGE_FIFO_ENABLE) begin: fifos
                     if (SEPARATE_CLOCKS) begin: async_fifos
@@ -1398,7 +1652,7 @@ module axis_simple_sw_grow # (
                             .s_axis_tid(int_axis_tid[j*ID_WIDTH +: ID_WIDTH]),
                             .s_axis_tdest(int_axis_tdest[j*S_DEST_WIDTH +: INT_DEST_WIDTH]),
                             .s_axis_tuser(int_axis_tuser[j*USER_WIDTH +: USER_WIDTH]),
-    
+
                             .m_clk(select_m_clk),
                             .m_rst(select_m_rst),
                             .m_axis_tdata(int_axis_tdata_f[j*M_DATA_WIDTH +: M_DATA_WIDTH]),
@@ -1409,7 +1663,7 @@ module axis_simple_sw_grow # (
                             .m_axis_tid(int_axis_tid_f[j*ID_WIDTH +: ID_WIDTH]),
                             .m_axis_tdest(int_axis_tdest_f[j*S_DEST_WIDTH +: INT_DEST_WIDTH]),
                             .m_axis_tuser(int_axis_tuser_f[j*USER_WIDTH +: USER_WIDTH]),
-         
+
                             .s_status_overflow(),
                             .s_status_bad_frame(),
                             .s_status_good_frame(),
@@ -1436,7 +1690,7 @@ module axis_simple_sw_grow # (
                         ) stage_fifo (
                             .clk(s_clk),
                             .rst(s_rst),
-    
+
                             .s_axis_tdata(int_axis_tdata[j*S_DATA_WIDTH +: S_DATA_WIDTH]),
                             .s_axis_tkeep(int_axis_tkeep[j*S_KEEP_WIDTH +: S_KEEP_WIDTH]),
                             .s_axis_tvalid(int_axis_tvalid[j]),
@@ -1445,7 +1699,7 @@ module axis_simple_sw_grow # (
                             .s_axis_tid(int_axis_tid[j*ID_WIDTH +: ID_WIDTH]),
                             .s_axis_tdest(int_axis_tdest[j*S_DEST_WIDTH +: INT_DEST_WIDTH]),
                             .s_axis_tuser(int_axis_tuser[j*USER_WIDTH +: USER_WIDTH]),
-    
+
                             .m_axis_tdata(int_axis_tdata_f[j*M_DATA_WIDTH +: M_DATA_WIDTH]),
                             .m_axis_tkeep(int_axis_tkeep_f[j*M_KEEP_WIDTH +: M_KEEP_WIDTH]),
                             .m_axis_tvalid(int_axis_tvalid_f[j]),
@@ -1454,7 +1708,7 @@ module axis_simple_sw_grow # (
                             .m_axis_tid(int_axis_tid_f[j*ID_WIDTH +: ID_WIDTH]),
                             .m_axis_tdest(int_axis_tdest_f[j*S_DEST_WIDTH +: INT_DEST_WIDTH]),
                             .m_axis_tuser(int_axis_tuser_f[j*USER_WIDTH +: USER_WIDTH]),
-         
+
                             .status_overflow(),
                             .status_bad_frame(),
                             .status_good_frame()
@@ -1469,7 +1723,7 @@ module axis_simple_sw_grow # (
                     assign int_axis_tvalid_f = int_axis_tvalid;
                     assign int_axis_tlast_f  = int_axis_tlast;
                     assign int_axis_tready   = int_axis_tready_f;
-                end 
+                end
 
                 axis_switch #
                 (
@@ -1491,7 +1745,7 @@ module axis_simple_sw_grow # (
                 (
                     .clk(select_m_clk),
                     .rst(select_m_rst),
-                
+
                     .s_axis_tdata(int_axis_tdata_f[j*M_DATA_WIDTH +: M_DATA_WIDTH]),
                     .s_axis_tkeep(int_axis_tkeep_f[j*M_KEEP_WIDTH +: M_KEEP_WIDTH]),
                     .s_axis_tvalid(int_axis_tvalid_f[j]),
@@ -1500,7 +1754,7 @@ module axis_simple_sw_grow # (
                     .s_axis_tid(int_axis_tid_f[j*ID_WIDTH +: ID_WIDTH]),
                     .s_axis_tdest(int_axis_tdest_f[j*S_DEST_WIDTH +: INT_DEST_WIDTH]),
                     .s_axis_tuser(int_axis_tuser_f[j*USER_WIDTH +: USER_WIDTH]),
-                
+
                     .m_axis_tdata(m_axis_tdata[j*M_PER_CLUSTER*M_DATA_WIDTH +: M_PER_CLUSTER*M_DATA_WIDTH]),
                     .m_axis_tkeep(m_axis_tkeep[j*M_PER_CLUSTER*M_KEEP_WIDTH +: M_PER_CLUSTER*M_KEEP_WIDTH]),
                     .m_axis_tvalid(m_axis_tvalid[j*M_PER_CLUSTER +: M_PER_CLUSTER]),
@@ -1513,12 +1767,12 @@ module axis_simple_sw_grow # (
             end
 
             for (i=0; i<M_COUNT; i=i+1) begin: tdest_cut
-                assign m_axis_tdest[i*M_DEST_WIDTH +: M_DEST_WIDTH] = 
+                assign m_axis_tdest[i*M_DEST_WIDTH +: M_DEST_WIDTH] =
                    M_DEST_ENABLE ? m_axis_tdest_r[i*INT_DEST_WIDTH +: M_DEST_WIDTH] : 1'b0;
             end
         end
     endgenerate
- 
+
 endmodule
 
 module axis_ram_sw_grow # (
@@ -1577,7 +1831,7 @@ module axis_ram_sw_grow # (
 );
     wire select_m_clk = SEPARATE_CLOCKS ? m_clk : s_clk;
     wire select_m_rst = SEPARATE_CLOCKS ? m_rst : s_rst;
-    
+
     parameter M_PER_CLUSTER     = M_COUNT/CLUSTER_COUNT;
     parameter INT_DEST_WIDTH    = S_DEST_WIDTH-$clog2(CLUSTER_COUNT);
     parameter STAGE_FIFO_ENABLE = (STAGE_FIFO_DEPTH>0);
@@ -1588,8 +1842,8 @@ module axis_ram_sw_grow # (
     wire [CLUSTER_COUNT*S_DEST_WIDTH-1:0] int_axis_tdest;
     wire [CLUSTER_COUNT*USER_WIDTH-1:0]   int_axis_tuser;
     wire [CLUSTER_COUNT*ID_WIDTH-1:0]     int_axis_tid;
-    wire [CLUSTER_COUNT-1:0]              int_axis_tvalid, 
-                                          int_axis_tready, 
+    wire [CLUSTER_COUNT-1:0]              int_axis_tvalid,
+                                          int_axis_tready,
                                           int_axis_tlast;
 
     wire [M_COUNT*M_DATA_WIDTH-1:0]       m_axis_tdata_n;
@@ -1600,7 +1854,7 @@ module axis_ram_sw_grow # (
     wire [M_COUNT*ID_WIDTH-1:0]           m_axis_tid_n;
     wire [M_COUNT*M_DEST_WIDTH-1:0]       m_axis_tdest_n;
     wire [M_COUNT*USER_WIDTH-1:0]         m_axis_tuser_n;
-    
+
     // Data channel switch
     axis_switch #
     (
@@ -1622,7 +1876,7 @@ module axis_ram_sw_grow # (
     (
         .clk(s_clk),
         .rst(s_rst),
-    
+
         /*
          * AXI Stream inputs
          */
@@ -1634,7 +1888,7 @@ module axis_ram_sw_grow # (
         .s_axis_tid(s_axis_tid),
         .s_axis_tdest(s_axis_tdest),
         .s_axis_tuser(s_axis_tuser),
-    
+
         /*
          * AXI Stream outputs
          */
@@ -1647,21 +1901,21 @@ module axis_ram_sw_grow # (
         .m_axis_tdest(int_axis_tdest),
         .m_axis_tuser(int_axis_tuser)
     );
-            
+
     wire [CLUSTER_COUNT*S_DATA_WIDTH-1:0] int_axis_tdata_f;
     wire [CLUSTER_COUNT*S_KEEP_WIDTH-1:0] int_axis_tkeep_f;
     wire [CLUSTER_COUNT*S_DEST_WIDTH-1:0] int_axis_tdest_f;
     wire [CLUSTER_COUNT*USER_WIDTH-1:0]   int_axis_tuser_f;
     wire [CLUSTER_COUNT*ID_WIDTH-1:0]     int_axis_tid_f;
-    wire [CLUSTER_COUNT-1:0]              int_axis_tvalid_f, 
-                                          int_axis_tready_f, 
+    wire [CLUSTER_COUNT-1:0]              int_axis_tvalid_f,
+                                          int_axis_tready_f,
                                           int_axis_tlast_f;
-    
+
     wire [M_COUNT*INT_DEST_WIDTH-1:0]     m_axis_tdest_r;
-     
-    // Level 2 
+
+    // Level 2
     genvar i,j;
-    generate 
+    generate
         for (j=0; j<CLUSTER_COUNT; j=j+1) begin : fifo_n_ram_sw
             if (SEPARATE_CLOCKS) begin: async_fifo
                 axis_async_fifo_adapter # (
@@ -1690,7 +1944,7 @@ module axis_ram_sw_grow # (
                     .s_axis_tid(int_axis_tid[j*ID_WIDTH +: ID_WIDTH]),
                     .s_axis_tdest(int_axis_tdest[j*S_DEST_WIDTH +: INT_DEST_WIDTH]),
                     .s_axis_tuser(int_axis_tuser[j*USER_WIDTH +: USER_WIDTH]),
-    
+
                     .m_clk(select_m_clk),
                     .m_rst(select_m_rst),
                     .m_axis_tdata(int_axis_tdata_f[j*S_DATA_WIDTH +: S_DATA_WIDTH]),
@@ -1701,7 +1955,7 @@ module axis_ram_sw_grow # (
                     .m_axis_tid(int_axis_tid_f[j*ID_WIDTH +: ID_WIDTH]),
                     .m_axis_tdest(int_axis_tdest_f[j*S_DEST_WIDTH +: INT_DEST_WIDTH]),
                     .m_axis_tuser(int_axis_tuser_f[j*USER_WIDTH +: USER_WIDTH]),
-     
+
                     .s_status_overflow(),
                     .s_status_bad_frame(),
                     .s_status_good_frame(),
@@ -1736,7 +1990,7 @@ module axis_ram_sw_grow # (
                     .s_axis_tid(int_axis_tid[j*ID_WIDTH +: ID_WIDTH]),
                     .s_axis_tdest(int_axis_tdest[j*S_DEST_WIDTH +: INT_DEST_WIDTH]),
                     .s_axis_tuser(int_axis_tuser[j*USER_WIDTH +: USER_WIDTH]),
-    
+
                     .m_axis_tdata(int_axis_tdata_f[j*S_DATA_WIDTH +: S_DATA_WIDTH]),
                     .m_axis_tkeep(int_axis_tkeep_f[j*S_KEEP_WIDTH +: S_KEEP_WIDTH]),
                     .m_axis_tvalid(int_axis_tvalid_f[j]),
@@ -1746,8 +2000,8 @@ module axis_ram_sw_grow # (
                     .m_axis_tdest(int_axis_tdest_f[j*S_DEST_WIDTH +: INT_DEST_WIDTH]),
                     .m_axis_tuser(int_axis_tuser_f[j*USER_WIDTH +: USER_WIDTH])
                 );
-            end 
-            
+            end
+
             axis_ram_switch # (
                 .FIFO_DEPTH(STAGE_FIFO_DEPTH),
                 .CMD_FIFO_DEPTH(128),
@@ -1769,7 +2023,7 @@ module axis_ram_sw_grow # (
             ) sw_lvl2 (
                 .clk(select_m_clk),
                 .rst(select_m_rst),
-            
+
                 .s_axis_tdata(int_axis_tdata_f[j*S_DATA_WIDTH +: S_DATA_WIDTH]),
                 .s_axis_tkeep(int_axis_tkeep_f[j*S_KEEP_WIDTH +: S_KEEP_WIDTH]),
                 .s_axis_tvalid(int_axis_tvalid_f[j]),
@@ -1778,7 +2032,7 @@ module axis_ram_sw_grow # (
                 .s_axis_tid(int_axis_tid_f[j*ID_WIDTH +: ID_WIDTH]),
                 .s_axis_tdest(int_axis_tdest_f[j*S_DEST_WIDTH +: INT_DEST_WIDTH]),
                 .s_axis_tuser(int_axis_tuser_f[j*USER_WIDTH +: USER_WIDTH]),
-            
+
                 .m_axis_tdata(m_axis_tdata_n[j*M_PER_CLUSTER*M_DATA_WIDTH +: M_PER_CLUSTER*M_DATA_WIDTH]),
                 .m_axis_tkeep(m_axis_tkeep_n[j*M_PER_CLUSTER*M_KEEP_WIDTH +: M_PER_CLUSTER*M_KEEP_WIDTH]),
                 .m_axis_tvalid(m_axis_tvalid_n[j*M_PER_CLUSTER +: M_PER_CLUSTER]),
@@ -1792,16 +2046,16 @@ module axis_ram_sw_grow # (
                 .status_bad_frame(),
                 .status_good_frame()
             );
-                        
+
             for (i=0; i<M_COUNT; i=i+1) begin: tdest_cut
-                assign m_axis_tdest_n[i*M_DEST_WIDTH +: M_DEST_WIDTH] = 
+                assign m_axis_tdest_n[i*M_DEST_WIDTH +: M_DEST_WIDTH] =
                    M_DEST_ENABLE ? m_axis_tdest_r[i*INT_DEST_WIDTH +: M_DEST_WIDTH] : 1'b0;
             end
         end
     endgenerate
-    
+
     genvar k;
-    generate        
+    generate
       for (k=0; k<M_COUNT; k=k+1) begin: output_registers
         axis_pipeline_register # (
               .DATA_WIDTH(M_DATA_WIDTH),
@@ -1839,5 +2093,5 @@ module axis_ram_sw_grow # (
         );
       end
     endgenerate
- 
+
 endmodule
