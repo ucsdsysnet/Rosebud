@@ -147,8 +147,8 @@ def bench():
 
     SEND_COUNT_0 = 50
     SEND_COUNT_1 = 50
-    SIZE_0       = 500 - 18 
-    SIZE_1       = 500 - 18
+    SIZE_0       = 500 - 14
+    SIZE_1       = 500 - 14
     CHECK_PKT    = True
     TEST_SFP     = True
     TEST_PCIE    = True
@@ -874,11 +874,6 @@ def bench():
               assert rx_frame.data[0:14] == start_data_1[0:14]
               assert rx_frame.data[15:] == start_data_1[15:]
             lengths.append(len(data)-8)
-
-          # print ("Very last packet:")
-          # for i in range(0, len(data), 16):
-          #     print(" ".join(("{:02x}".format(c) for c in bytearray(data[i:i+16]))))
-          print ("lengths: " , lengths)
 
         if (TEST_ACC):
           test_frame_1.payload = b"page.php?id=12345" + bytes([i%256] + [x%256 for x in range(SIZE_0-1)])

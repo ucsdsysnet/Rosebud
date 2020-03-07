@@ -146,8 +146,8 @@ def bench():
 
     SEND_COUNT_0 = 50
     SEND_COUNT_1 = 50
-    SIZE_0       = 500 - 18 
-    SIZE_1       = 500 - 18
+    SIZE_0       = 500 - 14
+    SIZE_1       = 500 - 14
     CHECK_PKT    = True
     TEST_SFP     = True
     TEST_PCIE    = True
@@ -557,7 +557,6 @@ def bench():
     test_frame_1.eth_src_mac = 0x5A5152535455
     test_frame_1.eth_type = 0x8000
     test_frame_1.payload = bytes([0]+[x%256 for x in range(SIZE_0-1)])
-    test_frame_1.update_fcs()
     axis_frame = test_frame_1.build_axis()
     start_data_1 = bytearray(axis_frame)
 
@@ -566,7 +565,6 @@ def bench():
     test_frame_2.eth_src_mac = 0xDAD1D2D3D4D5
     test_frame_2.eth_type = 0x8000
     test_frame_2.payload = bytes([0]+[x%256 for x in range(SIZE_1-1)])
-    test_frame_2.update_fcs()
     axis_frame_2 = test_frame_2.build_axis()
     start_data_2 = bytearray(axis_frame_2)
  
@@ -722,7 +720,6 @@ def bench():
         for i in range (0,SEND_COUNT_0):
           # test_frame_1.payload = bytes([x%256 for x in range(random.randrange(1980))])
           test_frame_1.payload = bytes([i%256] + [x%256 for x in range(SIZE_0-1)])
-          test_frame_1.update_fcs()
           axis_frame = test_frame_1.build_axis()
           qsfp0_source.send(bytearray(axis_frame))
           # yield delay(random.randrange(128))
@@ -736,7 +733,6 @@ def bench():
           #   test_frame_2.payload = bytes([x%256 for x in range(78-14)])
           # else:
           test_frame_2.payload = bytes([i%256] + [x%256 for x in range(SIZE_1-1)])
-          test_frame_2.update_fcs()
           axis_frame_2 = test_frame_2.build_axis()
           qsfp1_source.send(bytearray(axis_frame_2))
           # yield delay(random.randrange(128))
@@ -877,11 +873,6 @@ def bench():
               assert rx_frame.data[0:14] == start_data_1[0:14]
               assert rx_frame.data[15:] == start_data_1[15:]
             lengths.append(len(data)-8)
-
-          # print ("Very last packet:")
-          # for i in range(0, len(data), 16):
-          #     print(" ".join(("{:02x}".format(c) for c in bytearray(data[i:i+16]))))
-          print ("lengths: " , lengths)
 
         if (TEST_ACC):
           # Hash of this UDP header is 0x51ccc178

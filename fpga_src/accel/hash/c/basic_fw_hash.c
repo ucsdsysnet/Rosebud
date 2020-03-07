@@ -9,10 +9,11 @@
 #define PKT_OFFSET 10
 
 // Hash accelerator control registers
-#define ACC_HASH_CTRL  (*((volatile unsigned int *)(IO_EXT_BASE + 0x0000)))
-#define ACC_HASH_BYTE  (*((volatile unsigned int *)(IO_EXT_BASE + 0x0004)))
-#define ACC_HASH_WORD  (*((volatile unsigned int *)(IO_EXT_BASE + 0x0008)))
-#define ACC_HASH_DWORD (*((volatile unsigned int *)(IO_EXT_BASE + 0x000C)))
+#define ACC_HASH_CTRL  (*((volatile unsigned int *)(IO_EXT_BASE + 0x0100)))
+#define ACC_HASH_BYTE  (*((volatile unsigned int *)(IO_EXT_BASE + 0x0104)))
+#define ACC_HASH_WORD  (*((volatile unsigned int *)(IO_EXT_BASE + 0x0108)))
+#define ACC_HASH_DWORD (*((volatile unsigned int *)(IO_EXT_BASE + 0x010C)))
+#define ACC_HASH_READ  (*((volatile unsigned int *)(IO_EXT_BASE + 0x0110)))
 
 struct slot_context {
 	int index;
@@ -53,7 +54,7 @@ inline void slot_rx_packet(struct slot_context *ctx)
 	}
 
 	// read hash
-	hash = ACC_HASH_CTRL;
+	hash = ACC_HASH_READ;
 
 	// swap port
 	if (ctx->desc.port==0)
@@ -61,7 +62,7 @@ inline void slot_rx_packet(struct slot_context *ctx)
 	else
 		ctx->desc.port = 0;
 	
-	safe_pkt_done_msg(&ctx->desc);
+	pkt_send(&ctx->desc);
 }
 
 int main(void)

@@ -53,7 +53,7 @@ inline void slot_rx_packet(struct slot_context *ctx)
 		ctx->desc.len = 0;
 	}
 
-	safe_pkt_done_msg(&ctx->desc);
+	pkt_send(&ctx->desc);
 }
 
 int main(void)

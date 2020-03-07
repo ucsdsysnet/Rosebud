@@ -557,7 +557,6 @@ def bench():
     test_frame_1.eth_src_mac = 0x5A5152535455
     test_frame_1.eth_type = 0x8000
     test_frame_1.payload = bytes([0]+[x%256 for x in range(SIZE_0-1)])
-    test_frame_1.update_fcs()
     axis_frame = test_frame_1.build_axis()
     start_data_1 = bytearray(axis_frame)
 
@@ -566,7 +565,6 @@ def bench():
     test_frame_2.eth_src_mac = 0xDAD1D2D3D4D5
     test_frame_2.eth_type = 0x8000
     test_frame_2.payload = bytes([0]+[x%256 for x in range(SIZE_1-1)])
-    test_frame_2.update_fcs()
     axis_frame_2 = test_frame_2.build_axis()
     start_data_2 = bytearray(axis_frame_2)
  
@@ -722,7 +720,6 @@ def bench():
         for i in range (0,SEND_COUNT_0):
           # test_frame_1.payload = bytes([x%256 for x in range(random.randrange(1980))])
           test_frame_1.payload = bytes([i%256] + [x%256 for x in range(SIZE_0-1)])
-          test_frame_1.update_fcs()
           axis_frame = test_frame_1.build_axis()
           qsfp0_source.send(bytearray(axis_frame))
           # yield delay(random.randrange(128))
@@ -736,7 +733,6 @@ def bench():
           #   test_frame_2.payload = bytes([x%256 for x in range(78-14)])
           # else:
           test_frame_2.payload = bytes([i%256] + [x%256 for x in range(SIZE_1-1)])
-          test_frame_2.update_fcs()
           axis_frame_2 = test_frame_2.build_axis()
           qsfp1_source.send(bytearray(axis_frame_2))
           # yield delay(random.randrange(128))
@@ -848,7 +844,7 @@ def bench():
           # read status
           val = yield from rc.mem_read(dev_pf0_bar0+0x000458, 4)
           print(val)
-          
+
           # write pcie write descriptor
           yield rc.mem_write(dev_pf0_bar0+0x000460, struct.pack('<L', (mem_base+0x1000) & 0xffffffff))
           yield rc.mem_write(dev_pf0_bar0+0x000464, struct.pack('<L', (mem_base+0x1000 >> 32) & 0xffffffff))
@@ -909,11 +905,6 @@ def bench():
               assert rx_frame.data[0:14] == start_data_1[0:14]
               assert rx_frame.data[15:] == start_data_1[15:]
             lengths.append(len(data)-8)
-
-          # print ("Very last packet:")
-          # for i in range(0, len(data), 16):
-          #     print(" ".join(("{:02x}".format(c) for c in bytearray(data[i:i+16]))))
-          # print ("lengths: " , lengths)
 
           for k in range (8,12):
             yield rc.mem_write(dev_pf0_bar0+0x000414, struct.pack('<L', k<<4|0))

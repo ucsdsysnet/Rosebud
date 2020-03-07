@@ -71,26 +71,26 @@ always @(posedge clk) begin
 
   if (io_en && io_wen) begin
     hash_data_reg <= io_wr_data;
-    case (io_addr[7:0] & ({IO_ADDR_WIDTH{1'b1}} << 2))
-      8'h00: begin
+    case (io_addr[8:0] & ({IO_ADDR_WIDTH{1'b1}} << 2))
+      9'h100: begin
         hash_clear_reg <= 1'b1;
       end
-      8'h04: begin
+      9'h104: begin
         hash_data_len_reg <= 1;
         hash_data_valid_reg <= 1'b1;
       end
-      8'h08: begin
+      9'h108: begin
         hash_data_len_reg <= 2;
         hash_data_valid_reg <= 1'b1;
       end
-      8'h0C: begin
+      9'h10C: begin
         hash_data_len_reg <= 0;
         hash_data_valid_reg <= 1'b1;
       end
     endcase
   end
 
-  if (io_en && ~io_wen) begin
+  if (io_en && ~io_wen && ({io_addr[8:2],2'b00}==9'h110)) begin
     read_data_reg <= hash_out;
     read_data_valid_reg <= 1'b1;
   end

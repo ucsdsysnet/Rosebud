@@ -60,7 +60,7 @@ inline void regex_done(struct slot_context *ctx)
 		ctx->desc.len = 0;
 	}
 
-	safe_pkt_done_msg(&ctx->desc);
+	pkt_send(&ctx->desc);
 }
 
 int main(void)
