@@ -14,7 +14,7 @@ SYN_FILES += rtl/sync_reset.v
 SYN_FILES += rtl/sync_signal.v
 SYN_FILES += lib/smartFPGA/rtl/riscvcore.v
 SYN_FILES += lib/smartFPGA/rtl/riscv_block.v
-SYN_FILES += lib/smartFPGA/rtl/accel_wrap.v
+# SYN_FILES += lib/smartFPGA/rtl/accel_wrap.v
 SYN_FILES += lib/smartFPGA/rtl/VexRiscv.v
 SYN_FILES += lib/smartFPGA/rtl/core_mems.v
 SYN_FILES += lib/smartFPGA/rtl/slot_keeper.v
@@ -36,6 +36,11 @@ SYN_FILES += lib/smartFPGA/rtl/pcie_controller.v
 SYN_FILES += lib/smartFPGA/rtl/pcie_cont_read.v
 SYN_FILES += lib/smartFPGA/rtl/pcie_cont_write.v
 SYN_FILES += lib/smartFPGA/rtl/corundum.v
+
+SYN_FILES += accel/merged/rtl/accel_wrap_merged.v
+SYN_FILES += accel/regex/rtl/re_sql.v
+SYN_FILES += accel/regex/rtl/regex_acc.v
+SYN_FILES += accel/hash/rtl/hash_acc.v
 
 # SYN_FILES += lib/axis/rtl/axis_switch.v
 SYN_FILES += lib/axis/rtl/axis_arb_mux.v
