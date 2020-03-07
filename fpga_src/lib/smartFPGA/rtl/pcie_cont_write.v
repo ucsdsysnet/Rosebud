@@ -227,7 +227,7 @@ always @ (posedge pcie_clk) begin
   if ((axis_write_desc_valid && axis_write_desc_ready) && pcie_dma_write_desc_status_valid)
     tx_slot <= (tx_slot & (~selected_tx_slot_1hot))
                 | ({{(PCIE_SLOT_COUNT-1){1'b0}},1'b1} << pcie_dma_write_desc_status_tag);
-  if (axis_write_desc_valid && axis_write_desc_ready) 
+  else if (axis_write_desc_valid && axis_write_desc_ready) 
     tx_slot <= tx_slot & (~selected_tx_slot_1hot);
   else if (pcie_dma_write_desc_status_valid) 
     tx_slot <= tx_slot | ({{(PCIE_SLOT_COUNT-1){1'b0}},1'b1} << pcie_dma_write_desc_status_tag);

@@ -176,7 +176,7 @@ always @ (posedge pcie_clk) begin
   else if ((host_dma_read_desc_valid && host_dma_read_desc_ready)|| 
            (cores_ctrl_s_tvalid && cores_ctrl_s_tready))
     rx_slot <= rx_slot & (~selected_rx_slot_1hot);
-  if (axis_read_desc_status_valid)
+  else if (axis_read_desc_status_valid)
     rx_slot <= rx_slot | ({{(PCIE_SLOT_COUNT-1){1'b0}},1'b1} << axis_read_desc_status_tag);
 
   if (pcie_rst) begin
