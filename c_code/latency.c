@@ -35,7 +35,7 @@ int main(void){
     pkt_data[i] = (unsigned int *)(0x01000000+(i*16384));
   }
 
-  send_pkt.len = 9000;
+  send_pkt.len = 64;
   send_pkt.tag = 0;
   // Half of the cores send, so one port is enough
   send_pkt.port = 0;

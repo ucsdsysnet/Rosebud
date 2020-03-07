@@ -144,6 +144,7 @@ def bench():
 
     PRINT_PKTS   = True
     FIRMWARE     = "../../../../c_code/latency.bin"
+    # FIRMWARE     = "../../../../c_code/bc_test.bin"
 
     # Inputs
     sys_clk  = Signal(bool(0))

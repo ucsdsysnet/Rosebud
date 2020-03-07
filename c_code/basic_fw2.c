@@ -11,8 +11,11 @@ int main(void){
 	
 	while (1){
 		if (in_pkt_ready()){
-			read_in_pkt(&packet);
-			pkt_send(&packet);
+	      SEND_DESC = RECV_DESC;
+	      asm volatile("" ::: "memory");
+	      RECV_DESC_RELEASE = 1;
+	      asm volatile("" ::: "memory");
+	      SEND_DESC_TYPE = 0;
   	}
   }
   
