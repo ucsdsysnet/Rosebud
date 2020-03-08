@@ -1,4 +1,4 @@
-module riscv_block_PR_RegEx (
+module riscv_block_PR_w_accel (
   input  wire         clk,
   input               rst,
   input  wire         core_rst,

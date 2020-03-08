@@ -147,12 +147,12 @@ def bench():
     SIZE_0       = 500 - 14
     SIZE_1       = 500 - 14
     CHECK_PKT    = True
-    TEST_SFP     = True
+    TEST_SFP     = False
     TEST_PCIE    = True
     TEST_DEBUG   = False
     # FIRMWARE     = "../../../../c_code/basic_fw2.bin"
     FIRMWARE     = "../../../../c_code/dram_test2.bin"
-    # FIRMWARE     = "../../../../c_code/drop.bin"
+    FIRMWARE     = "../../../../c_code/drop.bin"
 
     # Inputs
     sys_clk  = Signal(bool(0))
@@ -696,11 +696,11 @@ def bench():
         qsfp1_lpmode=qsfp1_lpmode
     )
 
-    @always(delay(3)) #25
+    @always(delay(2)) #25
     def clkgen():
         sys_clk.next = not sys_clk
 
-    @always(delay(3)) #27
+    @always(delay(2)) #27
     def clkgen3():
         core_clk.next = not core_clk
 
@@ -905,21 +905,28 @@ def bench():
               assert rx_frame.data[0:14] == start_data_1[0:14]
               assert rx_frame.data[15:] == start_data_1[15:]
             lengths.append(len(data)-8)
+        
+        yield delay(2000)
 
-          for k in range (8,12):
-            yield rc.mem_write(dev_pf0_bar0+0x000414, struct.pack('<L', k<<4|0))
-            yield delay(100)
-            slots      = yield from rc.mem_read(dev_pf0_bar0+0x000420, 4)
-            bytes_in   = yield from rc.mem_read(dev_pf0_bar0+0x000424, 4)
-            yield rc.mem_write(dev_pf0_bar0+0x000414, struct.pack('<L', k<<4|1))
-            yield delay(100)
-            frames_in  = yield from rc.mem_read(dev_pf0_bar0+0x000424, 4)
-            yield rc.mem_write(dev_pf0_bar0+0x000414, struct.pack('<L', k<<4|2))
-            yield delay(100)
-            bytes_out  = yield from rc.mem_read(dev_pf0_bar0+0x000424, 4)
-            yield rc.mem_write(dev_pf0_bar0+0x000414, struct.pack('<L', k<<4|3))
-            yield delay(100)
-            frames_out = yield from rc.mem_read(dev_pf0_bar0+0x000424, 4)
+        for k in range (8,12):
+          yield rc.mem_write(dev_pf0_bar0+0x000414, struct.pack('<L', k<<4|0))
+          yield delay(100)
+          slots      = yield from rc.mem_read(dev_pf0_bar0+0x000420, 4)
+          bytes_in   = yield from rc.mem_read(dev_pf0_bar0+0x000424, 4)
+          yield rc.mem_write(dev_pf0_bar0+0x000414, struct.pack('<L', k<<4|1))
+          yield delay(100)
+          frames_in  = yield from rc.mem_read(dev_pf0_bar0+0x000424, 4)
+          yield rc.mem_write(dev_pf0_bar0+0x000414, struct.pack('<L', k<<4|2))
+          yield delay(100)
+          bytes_out  = yield from rc.mem_read(dev_pf0_bar0+0x000424, 4)
+          yield rc.mem_write(dev_pf0_bar0+0x000414, struct.pack('<L', k<<4|3))
+          yield delay(100)
+          frames_out = yield from rc.mem_read(dev_pf0_bar0+0x000424, 4)
+          
+          print ("Core %d stat read, slots: , bytes_in, byte_out, frames_in, frames_out" % (k))
+          print (B_2_int(slots),B_2_int(bytes_in),B_2_int(bytes_out),B_2_int(frames_in),B_2_int(frames_out))
+        
+          if (TEST_DEBUG):
             yield rc.mem_write(dev_pf0_bar0+0x000414, struct.pack('<L', k<<4|4))
             yield delay(100)
             debug_l = yield from rc.mem_read(dev_pf0_bar0+0x000424, 4)
@@ -927,21 +934,20 @@ def bench():
             yield delay(100)
             debug_h = yield from rc.mem_read(dev_pf0_bar0+0x000424, 4)
             yield delay(100)
+            print ("debug_l, debug_h" % (k))
+            print (debug_l[::-1].hex(),debug_h[::-1].hex())
 
-            print ("Core %d stat read, slots: , bytes_in, byte_out, frames_in, frames_out, debug_l, debug_h" % (k))
-            print (B_2_int(slots),B_2_int(bytes_in),B_2_int(bytes_out),B_2_int(frames_in),B_2_int(frames_out),debug_l[::-1].hex(),debug_h[::-1].hex())
-
-          for k in range (0,3):
-            yield rc.mem_write(dev_pf0_bar0+0x000418, struct.pack('<L', k))
-            yield delay(100)
-            bytes_in   = yield from rc.mem_read(dev_pf0_bar0+0x000428, 4)
-            bytes_out  = yield from rc.mem_read(dev_pf0_bar0+0x00042C, 4)
-            frames_in  = yield from rc.mem_read(dev_pf0_bar0+0x000430, 4)
-            frames_out = yield from rc.mem_read(dev_pf0_bar0+0x000434, 4)
-            desc       = yield from rc.mem_read(dev_pf0_bar0+0x00043C, 4)
-            print ("Interface %d stat read, bytes_in, byte_out, frames_in, frames_out, loaded desc" % (k))
-            print (B_2_int(bytes_in),B_2_int(bytes_out),B_2_int(frames_in),B_2_int(frames_out),desc[::-1].hex())
-          
+        for k in range (0,3):
+          yield rc.mem_write(dev_pf0_bar0+0x000418, struct.pack('<L', k))
+          yield delay(100)
+          bytes_in   = yield from rc.mem_read(dev_pf0_bar0+0x000428, 4)
+          bytes_out  = yield from rc.mem_read(dev_pf0_bar0+0x00042C, 4)
+          frames_in  = yield from rc.mem_read(dev_pf0_bar0+0x000430, 4)
+          frames_out = yield from rc.mem_read(dev_pf0_bar0+0x000434, 4)
+          desc       = yield from rc.mem_read(dev_pf0_bar0+0x00043C, 4)
+          print ("Interface %d stat read, bytes_in, byte_out, frames_in, frames_out, loaded desc" % (k))
+          print (B_2_int(bytes_in),B_2_int(bytes_out),B_2_int(frames_in),B_2_int(frames_out),desc[::-1].hex())
+        
         raise StopSimulation
 
     return instances()

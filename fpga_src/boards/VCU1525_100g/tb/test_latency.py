@@ -679,7 +679,7 @@ def bench():
     def clkgen3():
         core_clk.next = not core_clk
 
-    @always(delay(2)) #32
+    @always(delay(3)) #32
     def qsfp_clkgen():
         qsfp0_tx_clk.next = not qsfp0_tx_clk
         qsfp0_rx_clk.next = not qsfp0_rx_clk
