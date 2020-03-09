@@ -64,13 +64,11 @@ module riscv_axis_wrapper # (
     input  wire [35:0]              ctrl_s_axis_tdata,
     input  wire                     ctrl_s_axis_tvalid,
     output wire                     ctrl_s_axis_tready,
-    input  wire                     ctrl_s_axis_tlast,
 
     // Outgoing control
     output wire [35:0]              ctrl_m_axis_tdata,
     output wire                     ctrl_m_axis_tvalid,
     input  wire                     ctrl_m_axis_tready,
-    output wire                     ctrl_m_axis_tlast,
 
     // ------------ DRAM RD REQ CHANNEL ------------- //
     // Incoming DRAM request
@@ -1051,7 +1049,6 @@ end
 
 assign ctrl_m_axis_tvalid = ctrl_m_axis_tvalid_r;
 assign ctrl_m_axis_tdata  = ctrl_m_axis_tdata_r;
-assign ctrl_m_axis_tlast  = ctrl_m_axis_tvalid;
 assign ctrl_out_ready     = (!ctrl_m_axis_tvalid_r) || ctrl_m_axis_tready;
 
 /////////////////////////////////////////////////////////////////////

@@ -56,13 +56,11 @@ module simple_scheduler # (
   output wire [CTRL_WIDTH-1:0]               ctrl_m_axis_tdata,
   output wire                                ctrl_m_axis_tvalid,
   input  wire                                ctrl_m_axis_tready,
-  output wire                                ctrl_m_axis_tlast,
   output wire [CORE_ID_WIDTH-1:0]            ctrl_m_axis_tdest,
 
   input  wire [CTRL_WIDTH-1:0]               ctrl_s_axis_tdata,
   input  wire                                ctrl_s_axis_tvalid,
   output wire                                ctrl_s_axis_tready,
-  input  wire                                ctrl_s_axis_tlast,
   input  wire [CORE_ID_WIDTH-1:0]            ctrl_s_axis_tuser,
 
   // Cores reset
@@ -359,7 +357,6 @@ module simple_scheduler # (
   assign ctrl_m_axis_tdata  = host_cmd_valid ? {host_cmd, host_cmd_data} 
                                              : ctrl_out_desc_r;
   assign ctrl_m_axis_tvalid = host_cmd_valid || ctrl_out_valid_r;
-  assign ctrl_m_axis_tlast  = ctrl_m_axis_tvalid;
   assign ctrl_m_axis_tdest  = host_cmd_valid ? host_cmd_dest : ctrl_out_dest_r;
 
   assign ctrl_out_ready_r   = (!host_cmd_valid) && ctrl_m_axis_tready;

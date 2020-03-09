@@ -152,7 +152,7 @@ def bench():
     TEST_DEBUG   = False
     # FIRMWARE     = "../../../../c_code/basic_fw2.bin"
     FIRMWARE     = "../../../../c_code/dram_test2.bin"
-    FIRMWARE     = "../../../../c_code/drop.bin"
+    # FIRMWARE     = "../../../../c_code/drop.bin"
 
     # Inputs
     sys_clk  = Signal(bool(0))
