@@ -144,10 +144,10 @@ def bench():
 
     SEND_COUNT_0 = 50
     SEND_COUNT_1 = 50
-    SIZE_0       = 500 - 14
-    SIZE_1       = 500 - 14
+    SIZE_0       = 512 - 14
+    SIZE_1       = 512 - 14
     CHECK_PKT    = True
-    TEST_SFP     = False
+    TEST_SFP     = True
     TEST_PCIE    = True
     TEST_DEBUG   = False
     # FIRMWARE     = "../../../../c_code/basic_fw2.bin"

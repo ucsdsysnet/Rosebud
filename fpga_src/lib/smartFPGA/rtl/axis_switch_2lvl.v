@@ -1132,7 +1132,7 @@ module axis_ram_sw_shrink # (
               .ID_ENABLE(ID_ENABLE),
               .ID_WIDTH(ID_WIDTH),
               .REG_TYPE(S_REG_TYPE),
-              .LENGTH(1)
+              .LENGTH(2)
         ) input_register (
           .clk(s_clk),
           .rst(s_rst),
@@ -2068,7 +2068,7 @@ module axis_ram_sw_grow # (
               .ID_ENABLE(ID_ENABLE),
               .ID_WIDTH(ID_WIDTH),
               .REG_TYPE(M_REG_TYPE),
-              .LENGTH(1)
+              .LENGTH(2)
         ) output_register (
           .clk(select_m_clk),
           .rst(select_m_rst),

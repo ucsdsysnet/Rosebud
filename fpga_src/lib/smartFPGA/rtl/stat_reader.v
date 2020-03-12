@@ -85,7 +85,8 @@ generate
     
       .byte_count(byte_count_int[i*BYTE_COUNT_WIDTH +: BYTE_COUNT_WIDTH]),
       .frame_count(frame_count_int[i*FRAME_COUNT_WIDTH +: FRAME_COUNT_WIDTH]),
-      .drop_count(drop_count_int[i*FRAME_COUNT_WIDTH +: FRAME_COUNT_WIDTH])
+      .drop_count(drop_count_int[i*FRAME_COUNT_WIDTH +: FRAME_COUNT_WIDTH]),
+      .stall_count()
     );
   end
 endgenerate

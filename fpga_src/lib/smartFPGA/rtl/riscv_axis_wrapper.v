@@ -166,10 +166,26 @@ module riscv_axis_wrapper # (
 );
 
 /////////////////////////////////////////////////////////////////////
-///////////////////// CORE RESET & INT COMMANDS /////////////////////
+//////////////////// PARSING SCHEDULER COMMANDS /////////////////////
 /////////////////////////////////////////////////////////////////////
-wire [3:0] ctrl_cmd = ctrl_s_axis_tdata[35:32];
-wire ctrl_desc_cmd  = (ctrl_cmd == 4'h0) || (ctrl_cmd == 4'h1);
+reg  [35:0]           ctrl_s_axis_tdata_r;
+reg                   ctrl_s_axis_tvalid_r;
+reg  [SLOT_WIDTH-1:0] ctrl_in_slot_ptr;
+wire                  ctrl_s_fifo_ready; 
+
+always @ (posedge clk) begin
+  if (ctrl_s_axis_tvalid && ctrl_s_axis_tready) begin
+    ctrl_s_axis_tdata_r  <= ctrl_s_axis_tdata;
+    ctrl_in_slot_ptr     <= ctrl_s_axis_tdata[16+:SLOT_WIDTH];
+  end
+  ctrl_s_axis_tvalid_r <= ((ctrl_s_axis_tvalid && ctrl_s_axis_tready) ||
+                           (ctrl_s_axis_tvalid_r && (!ctrl_s_axis_tready)));
+
+  if (rst)
+    ctrl_s_axis_tvalid_r <= 1'b0;
+end
+
+wire [3:0]  ctrl_cmd = ctrl_s_axis_tdata_r[35:32];
 
 reg core_reset_r;
 reg core_poke_r;
@@ -186,19 +202,19 @@ always @ (posedge clk) begin
   host_debug_l_v <= host_debug_l_v && !wrapper_status_ready;
   host_debug_h_v <= host_debug_h_v && !wrapper_status_ready;
 
-  if (ctrl_s_axis_tvalid)
-    case(ctrl_cmd)
+  if (ctrl_s_axis_tvalid_r)
+    case(ctrl_cmd) // We always accept commands with 1 in MSB
       4'h8: begin 
-        host_debug_l   <= ctrl_s_axis_tdata[31:0]; 
+        host_debug_l   <= ctrl_s_axis_tdata_r[31:0]; 
         host_debug_l_v <= 1'b1;
       end
       4'h9: begin 
-        host_debug_h   <= ctrl_s_axis_tdata[31:0]; 
+        host_debug_h   <= ctrl_s_axis_tdata_r[31:0]; 
         host_debug_h_v <= 1'b1;
       end
-      4'hC: core_poke_r  <= ctrl_s_axis_tdata[0];
-      4'hD: core_evict_r <= ctrl_s_axis_tdata[0];
-      4'hF: core_reset_r <= ctrl_s_axis_tdata[0];
+      4'hC: core_poke_r  <= ctrl_s_axis_tdata_r[0];
+      4'hD: core_evict_r <= ctrl_s_axis_tdata_r[0];
+      4'hF: core_reset_r <= ctrl_s_axis_tdata_r[0];
     endcase
 
   if (rst) begin
@@ -213,6 +229,12 @@ end
 assign core_reset = core_reset_r;
 assign poke_int   = core_poke_r;
 assign evict_int  = core_evict_r;
+
+// It can become blocking for interrupt messages, but anyways it can 
+// become blocking in the switch if there are 2 messages for the FIFO
+// back to back, and this FIFO almost always has room based on number 
+// of slots. 
+assign ctrl_s_axis_tready = ctrl_s_fifo_ready;
 
 /////////////////////////////////////////////////////////////////////
 /////////////////////// DECODE CORE STATUS //////////////////////////
@@ -785,27 +807,11 @@ assign out_desc_ready = (core_data_wr_ready && core_data_wr) ||
 //////////////// DRAM READ REQUEST PARSER AND FIFO //////////////////
 /////////////////////////////////////////////////////////////////////
 
-reg  [35:0]           ctrl_s_axis_tdata_r;
-reg                   ctrl_s_axis_tvalid_r;
-reg  [SLOT_WIDTH-1:0] ctrl_in_slot_ptr;
-always @ (posedge clk) begin
-  if (ctrl_s_axis_tvalid && ctrl_s_axis_tready) begin
-    ctrl_s_axis_tdata_r  <= ctrl_s_axis_tdata;
-    ctrl_in_slot_ptr     <= ctrl_s_axis_tdata[16+:SLOT_WIDTH];
-  end
-  ctrl_s_axis_tvalid_r <= ((ctrl_s_axis_tvalid && ctrl_desc_cmd && ctrl_s_axis_tready) ||
-                           (ctrl_s_axis_tvalid_r && (!ctrl_s_axis_tready)));
-
-  if (rst)
-    ctrl_s_axis_tvalid_r <= 1'b0;
-end
-
 wire [24:0] ctrl_send_addr   = send_slot_addr[ctrl_in_slot_ptr];
 wire [24:0] ctrl_lp_send_len = send_slot_len [ctrl_in_slot_ptr];
-wire [3:0]  ctrl_msg_type    = ctrl_s_axis_tdata_r[35:32];
-wire ctrl_s_axis_fifo_ready;
 
-wire [ID_TAG_WIDTH+64:0] parsed_ctrl_desc = (ctrl_msg_type==4'd1) ?
+wire ctrl_desc_cmd = (ctrl_cmd == 4'h0) || (ctrl_cmd == 4'h1);
+wire [ID_TAG_WIDTH+64:0] parsed_ctrl_desc = (ctrl_cmd==4'd1) ?
               {1'b1,ctrl_s_axis_tdata_r[ID_TAG_WIDTH-1:0],7'd0, ctrl_send_addr,
                ctrl_s_axis_tdata_r[31:16], ctrl_lp_send_len} :
               {1'b0,{(ID_TAG_WIDTH+7){1'b0}}, ctrl_send_addr,ctrl_s_axis_tdata_r[31:0]};
@@ -820,9 +826,9 @@ simple_fifo # (
   .rst(rst),
   .clear(1'b0),
 
-  .din_valid(ctrl_s_axis_tvalid_r),
+  .din_valid(ctrl_s_axis_tvalid_r && ctrl_desc_cmd),
   .din(parsed_ctrl_desc),
-  .din_ready(ctrl_s_axis_tready),
+  .din_ready(ctrl_s_fifo_ready),
 
   .dout_valid(ctrl_in_valid),
   .dout(ctrl_in_desc),
@@ -1195,7 +1201,7 @@ wire [31:0] wrapper_errs = {14'd0, out_desc_err, invalid_out_desc,
 												   {(16-SLOT_COUNT){1'b0}}, override_in_slot_err};
 
 wire [31:0] wrapper_fifo_fulls = 
-        {13'd0, !recv_desc_fifo_ready, !ctrl_s_axis_tready, !dram_req_ready,
+        {13'd0, !recv_desc_fifo_ready, !ctrl_s_fifo_ready, !dram_req_ready,
          10'd0, !core_data_wr_ready,   !core_ctrl_wr_ready, !core_dram_wr_ready,
                 !core_dram_rd_ready,   !pkt_sent_ready,     !bc_msg_out_ready};
 
@@ -1207,8 +1213,8 @@ wire [31:0] core_slot_err   = {{(16-SLOT_COUNT){1'b0}}, override_out_slot_err,
 /////////////////////////////////////////////////////////////////////
 //////////////////////// STAT COLLECTION ////////////////////////////
 /////////////////////////////////////////////////////////////////////
-wire [31:0] incoming_byte_count, incoming_frame_count;
-wire [31:0] outgoing_byte_count, outgoing_frame_count;
+wire [31:0] incoming_byte_count, incoming_frame_count, incoming_stall_count;
+wire [31:0] outgoing_byte_count, outgoing_frame_count, outgoing_stall_count;
 
 (* KEEP = "TRUE" *) reg [STRB_WIDTH-1:0] data_s_axis_tkeep_mon;
 (* KEEP = "TRUE" *) reg                  data_s_axis_tvalid_mon;
@@ -1254,7 +1260,8 @@ axis_stat # (
 
   .byte_count(incoming_byte_count),
   .frame_count(incoming_frame_count),
-  .drop_count()
+  .drop_count(),
+  .stall_count(incoming_stall_count)
 );
 
 axis_stat # (
@@ -1275,7 +1282,8 @@ axis_stat # (
 
   .byte_count(outgoing_byte_count),
   .frame_count(outgoing_frame_count),
-  .drop_count()
+  .drop_count(),
+  .stall_count(outgoing_stall_count)
 );
 
 reg [3:0] stat_addr_r;
@@ -1290,8 +1298,8 @@ always @ (posedge clk) begin
     4'h3: stat_data <= outgoing_frame_count;
     4'h4: stat_data <= core_debug_l;
     4'h5: stat_data <= core_debug_h;
-    4'h6: stat_data <= 32'd0;
-    4'h7: stat_data <= 32'd0;
+    4'h6: stat_data <= incoming_stall_count;
+    4'h7: stat_data <= outgoing_stall_count;
     4'h8: stat_data <= core_stat_reg;
     4'h9: stat_data <= slots_status;
     4'hA: stat_data <= wrapper_fifo_fulls;

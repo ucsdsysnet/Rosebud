@@ -17,7 +17,8 @@ module axis_stat # (
 
   output reg  [BYTE_COUNT_WIDTH-1:0]  byte_count,
   output reg  [FRAME_COUNT_WIDTH-1:0] frame_count,
-  output reg  [BYTE_COUNT_WIDTH-1:0]  drop_count
+  output reg  [BYTE_COUNT_WIDTH-1:0]  drop_count,
+  output reg  [BYTE_COUNT_WIDTH-1:0]  stall_count
 );
 
 integer i, bit_cnt;
@@ -41,13 +42,18 @@ always @ (posedge clk) begin
       frame_count <= frame_count + 1;
   end
   
+  if (!monitor_axis_tready && monitor_axis_tvalid)
+    stall_count <= stall_count + 1;
+  
   if (monitor_drop_pulse)
     drop_count <= drop_count + 1;
+ 
   
   if (rst || clear) begin
     byte_count  <= {BYTE_COUNT_WIDTH{1'b0}};
     frame_count <= {FRAME_COUNT_WIDTH{1'b0}};
     drop_count  <= {FRAME_COUNT_WIDTH{1'b0}};
+    stall_count  <= {FRAME_COUNT_WIDTH{1'b0}};
   end 
 
 end

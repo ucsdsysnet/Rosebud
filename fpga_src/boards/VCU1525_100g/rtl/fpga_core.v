@@ -207,10 +207,10 @@ parameter LVL1_STRB_WIDTH  = AXIS_ETH_KEEP_WIDTH;
 parameter CTRL_WIDTH       = 32+4; //DON'T CHANGE
 parameter LVL1_DRAM_WIDTH  = 64; //DRAM CONTROL
 parameter LVL2_DRAM_WIDTH  = 64; //DON'T CHANGE
-parameter TX_FIFO_DEPTH    = 4*32768;
-parameter RX_FIFO_DEPTH    = 32768;
+parameter RX_FIFO_DEPTH    = 4*32768;
+parameter TX_FIFO_DEPTH    = 32768;
 parameter STG_F_DATA_DEPTH = 32768;
-parameter STG_F_CTRL_DEPTH = 32; // TKEEP is not enabled, so 32 words
+parameter STG_F_CTRL_DEPTH = 64; // TKEEP is not enabled, so 64 words
 parameter STG_F_DRAM_DEPTH = 1024;
 parameter V_MAC_FIFO_SIZE  = 1024;
 parameter CLUSTER_COUNT    = 4;
@@ -1342,7 +1342,7 @@ axis_switch_2lvl # (
     .s_axis_tkeep(1'b0),
     .s_axis_tvalid(sched_ctrl_m_axis_tvalid),
     .s_axis_tready(sched_ctrl_m_axis_tready),
-    .s_axis_tlast(1'b1),
+    .s_axis_tlast(sched_ctrl_m_axis_tvalid),
     .s_axis_tid(1'b0),
     .s_axis_tdest(sched_ctrl_m_axis_tdest),
     .s_axis_tuser(1'b0),
