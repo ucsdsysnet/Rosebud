@@ -177,46 +177,59 @@ generate
 
     for (m = 0; m < S_COUNT; m = m + 1) begin : s_ifaces
 
-        // decoding
-        reg [CL_M_COUNT-1:0] select_reg = 0, select_next;
-        reg drop_reg = 1'b0, drop_next;
-        reg select_valid_reg = 1'b0, select_valid_next;
-
+        // simple decoding
+        reg [CL_M_COUNT-1:0] select;
         integer k;
 
-        always @* begin
-            select_next = select_reg;
-            drop_next = drop_reg && !(int_s_axis_tvalid[m] && int_s_axis_tready[m] && int_s_axis_tlast[m]);
-            select_valid_next = select_valid_reg && !(int_s_axis_tvalid[m] && int_s_axis_tready[m] && int_s_axis_tlast[m]);
+        always @* 
+            for (k = 0; k < M_COUNT; k = k + 1) 
+                if (int_s_axis_tdest[m*DEST_WIDTH +: DEST_WIDTH] >= FULL_M_BASE[k*DEST_WIDTH +: DEST_WIDTH] && 
+                    int_s_axis_tdest[m*DEST_WIDTH +: DEST_WIDTH] <= FULL_M_TOP[k*DEST_WIDTH +: DEST_WIDTH]  && (M_CONNECT & (1 << (m+k*S_COUNT)))) 
+                        select = k;
 
-            if (int_s_axis_tvalid[m] && !select_valid_reg) begin
-                select_next = 1'b0;
-                select_valid_next = 1'b0;
-                drop_next = 1'b1;
-                for (k = 0; k < M_COUNT; k = k + 1) begin
-                    if (int_s_axis_tdest[m*DEST_WIDTH +: DEST_WIDTH] >= FULL_M_BASE[k*DEST_WIDTH +: DEST_WIDTH] && int_s_axis_tdest[m*DEST_WIDTH +: DEST_WIDTH] <= FULL_M_TOP[k*DEST_WIDTH +: DEST_WIDTH] && (M_CONNECT & (1 << (m+k*S_COUNT)))) begin
-                        select_next = k;
-                        select_valid_next = 1'b1;
-                        drop_next = 1'b0;
-                    end
-                end
-            end
-        end
+        assign int_axis_tvalid[m*M_COUNT +: M_COUNT] = int_s_axis_tvalid[m] << select;
+        assign int_s_axis_tready[m] = int_axis_tready[select*S_COUNT+m];
 
-        always @(posedge clk) begin
-            if (rst) begin
-                select_valid_reg <= 1'b0;
-            end else begin
-                select_valid_reg <= select_valid_next;
-            end
+        // // decoding
+        // reg [CL_M_COUNT-1:0] select_reg = 0, select_next;
+        // reg drop_reg = 1'b0, drop_next;
+        // reg select_valid_reg = 1'b0, select_valid_next;
 
-            select_reg <= select_next;
-            drop_reg <= drop_next;
-        end
+        // integer k;
 
-        // forwarding
-        assign int_axis_tvalid[m*M_COUNT +: M_COUNT] = (int_s_axis_tvalid[m] && select_valid_reg && !drop_reg) << select_reg;
-        assign int_s_axis_tready[m] = int_axis_tready[select_reg*S_COUNT+m] || drop_reg;
+        // always @* begin
+        //     select_next = select_reg;
+        //     drop_next = drop_reg && !(int_s_axis_tvalid[m] && int_s_axis_tready[m] && int_s_axis_tlast[m]);
+        //     select_valid_next = select_valid_reg && !(int_s_axis_tvalid[m] && int_s_axis_tready[m] && int_s_axis_tlast[m]);
+
+        //     if (int_s_axis_tvalid[m] && !select_valid_reg) begin
+        //         select_next = 1'b0;
+        //         select_valid_next = 1'b0;
+        //         drop_next = 1'b1;
+        //         for (k = 0; k < M_COUNT; k = k + 1) begin
+        //             if (int_s_axis_tdest[m*DEST_WIDTH +: DEST_WIDTH] >= FULL_M_BASE[k*DEST_WIDTH +: DEST_WIDTH] && int_s_axis_tdest[m*DEST_WIDTH +: DEST_WIDTH] <= FULL_M_TOP[k*DEST_WIDTH +: DEST_WIDTH] && (M_CONNECT & (1 << (m+k*S_COUNT)))) begin
+        //                 select_next = k;
+        //                 select_valid_next = 1'b1;
+        //                 drop_next = 1'b0;
+        //             end
+        //         end
+        //     end
+        // end
+
+        // always @(posedge clk) begin
+        //     if (rst) begin
+        //         select_valid_reg <= 1'b0;
+        //     end else begin
+        //         select_valid_reg <= select_valid_next;
+        //     end
+
+        //     select_reg <= select_next;
+        //     drop_reg <= drop_next;
+        // end
+
+        // // forwarding
+        // assign int_axis_tvalid[m*M_COUNT +: M_COUNT] = (int_s_axis_tvalid[m] && select_valid_reg && !drop_reg) << select_reg;
+        // assign int_s_axis_tready[m] = int_axis_tready[select_reg*S_COUNT+m] || drop_reg;
 
         // S side register
         axis_register #(
