@@ -400,26 +400,73 @@ module simple_scheduler # (
   
   // Adding tdest and tuser to input data from eth, dest based on 
   // rx_desc_fifo and stamp the incoming port
-  reg  [INTERFACE_COUNT*ID_TAG_WIDTH-1:0] dest_r;
-  wire [INTERFACE_WIDTH-1:0] selected_port_enc;
-  wire [INTERFACE_COUNT-1:0] sending_last_word;
-  reg  [INTERFACE_COUNT-1:0] dest_r_v;
   wire [INTERFACE_COUNT-1:0] selected_port;
+  wire [INTERFACE_WIDTH-1:0] selected_port_enc;
   wire selected_port_v;
+
+  reg  [INTERFACE_COUNT*ID_TAG_WIDTH-1:0] dest;
+  reg  [INTERFACE_COUNT*ID_TAG_WIDTH-1:0] dest_r;
+  reg  [INTERFACE_COUNT*ID_TAG_WIDTH-1:0] dest_rr;
+
+  assign rx_desc_pop                           = selected_port_v && max_valid;
+  wire [INTERFACE_COUNT-1:0] port_desc_avail   = {INTERFACE_COUNT{rx_desc_pop}} & selected_port;
+  wire [INTERFACE_COUNT-1:0] port_valid        = rx_axis_tvalid & rx_axis_tready;
+  wire [INTERFACE_COUNT-1:0] sending_last_word = port_valid & rx_axis_tlast;
   
-  wire [ID_TAG_WIDTH-1:0] rx_desc_data; 
+  // State machine per port
+  reg [1:0] port_state [0:INTERFACE_COUNT-1];
+  localparam STALL = 2'b00; // Don't accept until getting a desc
+  localparam FIRST = 2'b01; // Ready to get new packet
+  localparam WAIT  = 2'b10; // Accept while waiting for new desc
+  localparam MID   = 2'b11; // Desc ready, wait for end of the packet
+
+  integer n;
+  always @ (posedge clk)
+      for (n=0; n<INTERFACE_COUNT; n=n+1) 
+          if (rst) begin
+              port_state[n] <= STALL;
+          end else begin
+              case (port_state[n])
+                  STALL: if (port_desc_avail[n]) 
+                            port_state[n] <= FIRST;
+                  FIRST: if (sending_last_word[n]) 
+                            port_state[n] <= STALL; 
+                         else if (port_valid[n]) 
+                            port_state[n] <= WAIT;
+                  WAIT:  if (port_desc_avail[n] && sending_last_word[n]) 
+                            port_state[n] <= FIRST;
+                         else if (port_desc_avail[n]) 
+                            port_state[n] <= MID;
+                         else if (sending_last_word[n]) 
+                            port_state[n] <= STALL;
+                  MID:   if (sending_last_word[n]) 
+                            port_state[n] <= FIRST;
+              endcase
+              // When a packet starts latch the tdest
+              if ((port_state[n] == FIRST) && port_valid[n])
+                  dest_rr[n*ID_TAG_WIDTH +: ID_TAG_WIDTH] <= dest_r[n*ID_TAG_WIDTH +: ID_TAG_WIDTH];
+          end
+
+  wire [1:0] state_0 = port_state[0];
+  wire [1:0] state_1 = port_state[1];
+  wire [1:0] state_2 = port_state[2];
+
+  // Desc request and port ready
+  integer p;
+  reg [INTERFACE_COUNT-1:0] desc_req;
+  reg [INTERFACE_COUNT-1:0] port_not_stall;
+  always @ (*) 
+      for (p=0; p<INTERFACE_COUNT; p=p+1) begin
+          // When a packet starts we ask for new desc, or if we are in stall or wait. 
+          // If request in FIRST is responded during WAIT it would be cancedlled by !selected_port
+          desc_req[p] = !(selected_port[p]) && ((port_state[p]==STALL) || (port_state[p]==WAIT) ||
+                          ((port_state[p]==FIRST) && port_valid[p]));
+          port_not_stall[p] = (port_state[p]!=STALL);
+          dest[p*ID_TAG_WIDTH +: ID_TAG_WIDTH] = (port_state[p]==FIRST) ?
+              dest_r[p*ID_TAG_WIDTH +: ID_TAG_WIDTH] : dest_rr[p*ID_TAG_WIDTH +: ID_TAG_WIDTH];
+      end
   
-  assign rx_desc_data       = {selected_desc, {(TAG_WIDTH-SLOT_WIDTH){1'b0}}, 
-                              rx_desc_slot[selected_desc*SLOT_WIDTH +: SLOT_WIDTH]};
- 
-  assign sending_last_word = rx_axis_tvalid & rx_axis_tlast & rx_axis_tready;
-  assign rx_desc_pop = selected_port_v && max_valid;
-  // If one of the descriptors are not valid or a last word is being sent 
-  // that means they need a new descriptor. If a descriptor is being assigned 
-  // or there is no descriptors available the request would be masked.
-  wire [INTERFACE_COUNT-1:0] desc_req = ((~dest_r_v)|sending_last_word) & 
-                                        {INTERFACE_COUNT{max_valid}} & (~selected_port);
-  
+  // arbiter among ports for desc request
   arbiter # (.PORTS(INTERFACE_COUNT),.TYPE("ROUND_ROBIN")) port_selector (
     .clk(clk),
     .rst(rst),
@@ -432,18 +479,14 @@ module simple_scheduler # (
     .grant_encoded(selected_port_enc)
     );
 
-  always @ (posedge clk) begin
-    dest_r_v <= dest_r_v & (~sending_last_word);
-    if (rx_desc_pop) begin
-      dest_r_v[selected_port_enc] <= 1'b1;
+  // Load the new desc
+  wire [ID_TAG_WIDTH-1:0] rx_desc_data = {selected_desc, {(TAG_WIDTH-SLOT_WIDTH){1'b0}}, 
+                                          rx_desc_slot[selected_desc*SLOT_WIDTH +: SLOT_WIDTH]};
+  
+  always @ (posedge clk) 
+    if (rx_desc_pop) 
       dest_r[selected_port_enc*ID_TAG_WIDTH +: ID_TAG_WIDTH] <= rx_desc_data;
-    end
-
-    if (rst) 
-      dest_r_v <= {INTERFACE_COUNT{1'b0}};
-      
-  end
-
+ 
   genvar j;
   generate
     for (j=0; j<INTERFACE_COUNT;j=j+1)
@@ -452,10 +495,10 @@ module simple_scheduler # (
 
   assign data_m_axis_tdata  = rx_axis_tdata;
   assign data_m_axis_tkeep  = rx_axis_tkeep;
-  assign data_m_axis_tvalid = rx_axis_tvalid & dest_r_v; 
+  assign data_m_axis_tvalid = rx_axis_tvalid & port_not_stall; 
   assign data_m_axis_tlast  = rx_axis_tlast;
-  assign data_m_axis_tdest  = dest_r;
-  assign rx_axis_tready     = data_m_axis_tready & dest_r_v;
+  assign data_m_axis_tdest  = dest;
+  assign rx_axis_tready     = data_m_axis_tready & port_not_stall;
   
   assign tx_axis_tdata      = data_s_axis_tdata;
   assign tx_axis_tkeep      = data_s_axis_tkeep;
@@ -528,7 +571,6 @@ if (ENABLE_ILA) begin
        ctrl_s_axis_tvalid,
        ctrl_s_axis_tready,
        slot_insert_err,
-       dest_r_v,
        msg_type,
        rx_axis_tvalid, 
        max_valid_r,
