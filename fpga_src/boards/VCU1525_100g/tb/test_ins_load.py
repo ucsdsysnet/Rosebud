@@ -56,6 +56,7 @@ srcs.append("../lib/smartFPGA/rtl/riscv_block.v")
 srcs.append("../lib/smartFPGA/rtl/accel_wrap.v")
 srcs.append("../lib/smartFPGA/rtl/riscv_axis_wrapper.v")
 srcs.append("../lib/smartFPGA/rtl/mem_sys.v")
+srcs.append("../lib/smartFPGA/rtl/simple_arbiter.v")
 srcs.append("../lib/smartFPGA/rtl/simple_scheduler.v")
 srcs.append("../lib/smartFPGA/rtl/simple_sync_sig.v")
 srcs.append("../lib/smartFPGA/rtl/axis_switch.v")
@@ -145,8 +146,8 @@ def bench():
 
     SEND_COUNT_0 = 100
     SEND_COUNT_1 = 100
-    SIZE_0       = 512 - 14
-    SIZE_1       = 512 - 14
+    SIZE_0       = 9000 - 14
+    SIZE_1       = 9000 - 14
     CHECK_PKT    = True
     TEST_SFP     = True
     TEST_PCIE    = True
