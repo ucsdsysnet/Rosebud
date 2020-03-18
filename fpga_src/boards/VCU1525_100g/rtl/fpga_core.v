@@ -1058,7 +1058,7 @@ wire [CORE_WIDTH-1:0] sched_ctrl_s_axis_tuser;
 
 wire sched_trig_in, sched_trig_out, sched_trig_in_ack, sched_trig_out_ack;
 
-(* keep_hierarchy = "yes" *)
+// (* keep_hierarchy = "yes" *)
 simple_scheduler # (
   .PORT_COUNT(PORT_COUNT),
   .INTERFACE_COUNT(INTERFACE_COUNT+V_PORT_COUNT),

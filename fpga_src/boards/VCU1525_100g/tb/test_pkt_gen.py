@@ -71,12 +71,6 @@ srcs.append("../lib/smartFPGA/rtl/pcie_cont_read.v")
 srcs.append("../lib/smartFPGA/rtl/pcie_cont_write.v")
 srcs.append("../lib/smartFPGA/rtl/corundum.v")
 
-srcs.append("../lib/eth/rtl/eth_mac_10g_fifo.v")
-srcs.append("../lib/eth/rtl/eth_mac_10g.v")
-srcs.append("../lib/eth/rtl/axis_xgmii_rx_64.v")
-srcs.append("../lib/eth/rtl/axis_xgmii_tx_64.v")
-srcs.append("../lib/eth/rtl/lfsr.v")
-
 srcs.append("../lib/axis/rtl/arbiter.v")
 srcs.append("../lib/axis/rtl/priority_encoder.v")
 srcs.append("../lib/axis/rtl/axis_adapter.v")
@@ -103,7 +97,6 @@ srcs.append("../lib/pcie/rtl/pcie_tag_manager.v")
 srcs.append("../lib/pcie/rtl/pcie_us_cfg.v")
 srcs.append("../lib/pcie/rtl/pcie_us_msi.v")
 srcs.append("../lib/pcie/rtl/pulse_merge.v")
-srcs.append("%s.v" % testbench)
 
 srcs.append("../lib/corundum/rtl/interface.v")
 srcs.append("../lib/corundum/rtl/port.v")
@@ -121,6 +114,8 @@ srcs.append("../lib/corundum/rtl/rx_hash.v")
 srcs.append("../lib/corundum/rtl/tx_scheduler_rr.v")
 srcs.append("../lib/corundum/rtl/tdma_scheduler.v")
 srcs.append("../lib/corundum/rtl/event_mux.v")
+
+srcs.append("%s.v" % testbench)
 
 src = ' '.join(srcs)
 
@@ -757,7 +752,7 @@ def bench():
 
         yield rc.mem_write(dev_pf0_bar0+0x00040C, struct.pack('<L', 0x0000))
         yield rc.mem_write(dev_pf0_bar0+0x000410, struct.pack('<L', 0x0000))
-        yield delay(10000)
+        yield delay(20000)
 
         # put cores into reset
         yield rc.mem_write(dev_pf0_bar0+0x000404, struct.pack('<L', 0x0001))

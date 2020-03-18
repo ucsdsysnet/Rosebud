@@ -16,9 +16,7 @@ module simple_scheduler # (
   parameter TAG_WIDTH       = (SLOT_WIDTH>5)? SLOT_WIDTH:5,
   parameter ID_TAG_WIDTH    = CORE_ID_WIDTH+TAG_WIDTH,
   parameter STRB_WIDTH      = DATA_WIDTH/8,
-  parameter CLUSTER_COUNT   = CORE_COUNT,
-  parameter LVL2_SW_PORTS   = CORE_COUNT/CLUSTER_COUNT,
-  parameter LVL1_BITS       = $clog2(CLUSTER_COUNT)
+  parameter CLUSTER_COUNT   = CORE_COUNT
 ) (
   input                                           clk,
   input                                           rst,
@@ -191,7 +189,7 @@ module simple_scheduler # (
   
   // Slot descriptor fifos, addressing msg type 0&3 requests
   wire [CORE_COUNT*SLOT_WIDTH-1:0] rx_desc_count;
-  wire [CORE_ID_WIDTH-1:0] selected_desc;
+  wire [CORE_ID_WIDTH-1:0] selected_rx_core;
   wire [CORE_COUNT-1:0]    rx_desc_slot_pop;
   
   reg  [CORE_COUNT-1:0] enq_slot_v;
@@ -202,7 +200,6 @@ module simple_scheduler # (
     input_slot <= ctrl_s_axis_tdata[16 +: SLOT_WIDTH];
 
   wire rx_desc_pop; 
-  wire max_valid;
 
   wire [CORE_COUNT-1:0] core_slot_err;
   reg  slot_insert_err;
@@ -214,7 +211,7 @@ module simple_scheduler # (
   genvar i;
   generate 
     for (i=0;i<CORE_COUNT;i=i+1) begin
-      assign rx_desc_slot_pop[i]    = (rx_desc_pop && (selected_desc==i)) || 
+      assign rx_desc_slot_pop[i]    = (rx_desc_pop && (selected_rx_core==i)) || 
                                       (pkt_to_core_valid[i] && arb_to_core_ready[i] && (~cores_to_be_reset[i]));
       // Register valid for better timing closure
       always @ (posedge clk)
@@ -364,45 +361,56 @@ module simple_scheduler # (
 
   // Selecting the core with most available slots
   // Since slots start from 1, SLOT WIDTH is already 1 bit extra
-  reg  [CORE_COUNT*SLOT_WIDTH-1:0] reordered_rx_desc_count;
-  wire [CORE_ID_WIDTH-1:0]         reordered_selected_desc;
-  reg  [CORE_COUNT-1:0]            reordered_masks;
-  integer k,l;
-  always @ (*)
-    for (k=0; k<LVL2_SW_PORTS; k=k+1)
-      for (l=0; l<CLUSTER_COUNT; l=l+1) begin
-        reordered_rx_desc_count[(k*CLUSTER_COUNT+l)*SLOT_WIDTH +: SLOT_WIDTH] = 
-                  rx_desc_count[(l*LVL2_SW_PORTS+k)*SLOT_WIDTH +: SLOT_WIDTH];
-        // Priority to inter core messages, and only income_cores are available for selection
-        // cores_to_be_reset would remove the core from income_cores
-        reordered_masks [k*CLUSTER_COUNT+l] = income_cores[l*LVL2_SW_PORTS+k] &&
-                                             !(pkt_to_core_valid[l*LVL2_SW_PORTS+k] &&
-                                               arb_to_core_ready[l*LVL2_SW_PORTS+k]);
-      end
+  localparam CLUSTER_CORES      = CORE_COUNT/CLUSTER_COUNT;
+  localparam CLUSTER_WIDTH      = $clog2(CLUSTER_COUNT);
+  localparam CLUSTER_CORE_WIDTH = $clog2(CLUSTER_CORES);
 
-  max_finder_tree # (
-    .PORT_COUNT(CORE_COUNT),
-    .DATA_WIDTH(SLOT_WIDTH)
-  ) core_selector ( 
-    .values(reordered_rx_desc_count),
-    .valids(reordered_masks),
-    .max_val(),
-    .max_ptr(reordered_selected_desc),
-    .max_valid(max_valid)
-  );
+  wire [CLUSTER_COUNT-1:0] cluster_max_valid;
+  wire [CLUSTER_WIDTH-1:0] selected_cluster;
+  wire [CLUSTER_CORE_WIDTH-1:0] selected_cluster_core [0:CLUSTER_COUNT-1];
+  wire [CORE_COUNT-1:0] masks = income_cores & ~(pkt_to_core_valid & arb_to_core_ready);
 
-  if (LVL2_SW_PORTS==1)
-    assign selected_desc = reordered_selected_desc;
-  else 
-    assign selected_desc = {reordered_selected_desc[LVL1_BITS-1:0],
-                           reordered_selected_desc[CORE_ID_WIDTH-1:LVL1_BITS]};
+  genvar k;
+  generate
+    for (k=0; k<CLUSTER_COUNT; k=k+1) begin
+      max_finder_tree # (
+        .PORT_COUNT(CLUSTER_CORES),
+        .DATA_WIDTH(SLOT_WIDTH)
+      ) core_selector ( 
+        .values(rx_desc_count[k*CLUSTER_CORES*SLOT_WIDTH +: CLUSTER_CORES*SLOT_WIDTH]),
+        .valids(masks[k*CLUSTER_CORES +: CLUSTER_CORES]),
+        .max_val(),
+        .max_ptr(selected_cluster_core[k]),
+        .max_valid(cluster_max_valid[k])
+      );
+    end
+  endgenerate
 
+  wire max_valid;
+  wire selected_port_v;
   
+  simple_arbiter # (
+      .PORTS(CLUSTER_COUNT),
+      .TYPE("ROUND_ROBIN"),
+      .LSB_PRIORITY("HIGH")
+  ) max_slot_arbiter (
+      .clk(clk),
+      .rst(rst),
+  
+      .request(cluster_max_valid),
+      .taken(selected_port_v), // equal to rx_desc_pop
+  
+      .grant(),
+      .grant_valid (max_valid),
+      .grant_encoded(selected_cluster)
+  );
+    
+  assign selected_rx_core = {selected_cluster, selected_cluster_core[selected_cluster]};
+
   // Adding tdest and tuser to input data from eth, dest based on 
   // rx_desc_fifo and stamp the incoming port
   wire [INTERFACE_COUNT-1:0] selected_port;
   wire [INTERFACE_WIDTH-1:0] selected_port_enc;
-  wire selected_port_v;
 
   reg  [INTERFACE_COUNT*ID_TAG_WIDTH-1:0] dest;
   reg  [INTERFACE_COUNT*ID_TAG_WIDTH-1:0] dest_r;
@@ -467,7 +475,11 @@ module simple_scheduler # (
       end
   
   // arbiter among ports for desc request
-  arbiter # (.PORTS(INTERFACE_COUNT),.TYPE("ROUND_ROBIN")) port_selector (
+  arbiter # (
+    .PORTS(INTERFACE_COUNT),
+    .TYPE("ROUND_ROBIN"),
+    .LSB_PRIORITY("HIGH")
+  ) port_selector (
     .clk(clk),
     .rst(rst),
     
@@ -477,11 +489,11 @@ module simple_scheduler # (
     .grant(selected_port),
     .grant_valid(selected_port_v),
     .grant_encoded(selected_port_enc)
-    );
+  );
 
   // Load the new desc
-  wire [ID_TAG_WIDTH-1:0] rx_desc_data = {selected_desc, {(TAG_WIDTH-SLOT_WIDTH){1'b0}}, 
-                                          rx_desc_slot[selected_desc*SLOT_WIDTH +: SLOT_WIDTH]};
+  wire [ID_TAG_WIDTH-1:0] rx_desc_data = {selected_rx_core, {(TAG_WIDTH-SLOT_WIDTH){1'b0}}, 
+                                          rx_desc_slot[selected_rx_core*SLOT_WIDTH +: SLOT_WIDTH]};
   
   always @ (posedge clk) 
     if (rx_desc_pop) 

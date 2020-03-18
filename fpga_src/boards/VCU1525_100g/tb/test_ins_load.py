@@ -71,12 +71,6 @@ srcs.append("../lib/smartFPGA/rtl/pcie_cont_read.v")
 srcs.append("../lib/smartFPGA/rtl/pcie_cont_write.v")
 srcs.append("../lib/smartFPGA/rtl/corundum.v")
 
-# srcs.append("../lib/eth/rtl/eth_mac_10g_fifo.v")
-# srcs.append("../lib/eth/rtl/eth_mac_10g.v")
-# srcs.append("../lib/eth/rtl/axis_xgmii_rx_64.v")
-# srcs.append("../lib/eth/rtl/axis_xgmii_tx_64.v")
-# srcs.append("../lib/eth/rtl/lfsr.v")
-
 srcs.append("../lib/axis/rtl/arbiter.v")
 srcs.append("../lib/axis/rtl/priority_encoder.v")
 srcs.append("../lib/axis/rtl/axis_adapter.v")
@@ -891,6 +885,8 @@ def bench():
               print ("packet number from port 0:",j)
               for i in range(0, len(data), 16):
                   print(" ".join(("{:02x}".format(c) for c in bytearray(data[i:i+16]))))
+            else:
+              print (".")
             if (CHECK_PKT):
               assert rx_frame.data[0:14] == start_data_1[0:14]
               assert rx_frame.data[15:] == start_data_1[15:]
@@ -904,6 +900,8 @@ def bench():
               print ("packet number from port 1:",j)
               for i in range(0, len(data), 16):
                   print(" ".join(("{:02x}".format(c) for c in bytearray(data[i:i+16]))))
+            else:
+              print (".")
             if (CHECK_PKT):
               assert rx_frame.data[0:14] == start_data_2[0:14]
               assert rx_frame.data[15:] == start_data_2[15:]
