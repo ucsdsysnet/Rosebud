@@ -97,16 +97,16 @@ if (REG_TYPE > 1) begin
     (* KEEP = "TRUE" *) reg                  m_axis_tvalid_reg = 1'b0, m_axis_tvalid_next;
     (* KEEP = "TRUE" *) reg                  m_axis_tlast_reg  = 1'b0;
     reg [ID_WIDTH-1:0]   m_axis_tid_reg    = {ID_WIDTH{1'b0}};
-    reg [DEST_WIDTH-1:0] m_axis_tdest_reg  = {DEST_WIDTH{1'b0}};
-    reg [USER_WIDTH-1:0] m_axis_tuser_reg  = {USER_WIDTH{1'b0}};
+    (* KEEP = "TRUE" *) reg [DEST_WIDTH-1:0] m_axis_tdest_reg  = {DEST_WIDTH{1'b0}};
+    (* KEEP = "TRUE" *) reg [USER_WIDTH-1:0] m_axis_tuser_reg  = {USER_WIDTH{1'b0}};
 
     (* KEEP = "TRUE" *) reg [DATA_WIDTH-1:0] temp_m_axis_tdata_reg  = {DATA_WIDTH{1'b0}};
     (* KEEP = "TRUE" *) reg [KEEP_WIDTH-1:0] temp_m_axis_tkeep_reg  = {KEEP_WIDTH{1'b0}};
     (* KEEP = "TRUE" *) reg                  temp_m_axis_tvalid_reg = 1'b0, temp_m_axis_tvalid_next;
     (* KEEP = "TRUE" *) reg                  temp_m_axis_tlast_reg  = 1'b0;
     reg [ID_WIDTH-1:0]   temp_m_axis_tid_reg    = {ID_WIDTH{1'b0}};
-    reg [DEST_WIDTH-1:0] temp_m_axis_tdest_reg  = {DEST_WIDTH{1'b0}};
-    reg [USER_WIDTH-1:0] temp_m_axis_tuser_reg  = {USER_WIDTH{1'b0}};
+    (* KEEP = "TRUE" *) reg [DEST_WIDTH-1:0] temp_m_axis_tdest_reg  = {DEST_WIDTH{1'b0}};
+    (* KEEP = "TRUE" *) reg [USER_WIDTH-1:0] temp_m_axis_tuser_reg  = {USER_WIDTH{1'b0}};
 
     // datapath control
     reg store_axis_input_to_output;

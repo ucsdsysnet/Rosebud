@@ -752,7 +752,7 @@ module axis_simple_sw_shrink # (
             .ID_WIDTH(ID_WIDTH),
             .ARB_TYPE(ARB_TYPE),
             .LSB_PRIORITY(LSB_PRIORITY),
-            .S_REG_TYPE(0),
+            .S_REG_TYPE(2),
             .M_REG_TYPE(M_REG_TYPE)
         ) sw_lvl2
         (

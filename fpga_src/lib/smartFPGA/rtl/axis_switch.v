@@ -177,60 +177,6 @@ generate
 
     for (m = 0; m < S_COUNT; m = m + 1) begin : s_ifaces
 
-        // simple decoding
-        reg [CL_M_COUNT-1:0] select;
-        integer k;
-
-        always @* 
-            for (k = 0; k < M_COUNT; k = k + 1) 
-                if (int_s_axis_tdest[m*DEST_WIDTH +: DEST_WIDTH] >= FULL_M_BASE[k*DEST_WIDTH +: DEST_WIDTH] && 
-                    int_s_axis_tdest[m*DEST_WIDTH +: DEST_WIDTH] <= FULL_M_TOP[k*DEST_WIDTH +: DEST_WIDTH]  && (M_CONNECT & (1 << (m+k*S_COUNT)))) 
-                        select = k;
-
-        assign int_axis_tvalid[m*M_COUNT +: M_COUNT] = int_s_axis_tvalid[m] << select;
-        assign int_s_axis_tready[m] = int_axis_tready[select*S_COUNT+m];
-
-        // // decoding
-        // reg [CL_M_COUNT-1:0] select_reg = 0, select_next;
-        // reg drop_reg = 1'b0, drop_next;
-        // reg select_valid_reg = 1'b0, select_valid_next;
-
-        // integer k;
-
-        // always @* begin
-        //     select_next = select_reg;
-        //     drop_next = drop_reg && !(int_s_axis_tvalid[m] && int_s_axis_tready[m] && int_s_axis_tlast[m]);
-        //     select_valid_next = select_valid_reg && !(int_s_axis_tvalid[m] && int_s_axis_tready[m] && int_s_axis_tlast[m]);
-
-        //     if (int_s_axis_tvalid[m] && !select_valid_reg) begin
-        //         select_next = 1'b0;
-        //         select_valid_next = 1'b0;
-        //         drop_next = 1'b1;
-        //         for (k = 0; k < M_COUNT; k = k + 1) begin
-        //             if (int_s_axis_tdest[m*DEST_WIDTH +: DEST_WIDTH] >= FULL_M_BASE[k*DEST_WIDTH +: DEST_WIDTH] && int_s_axis_tdest[m*DEST_WIDTH +: DEST_WIDTH] <= FULL_M_TOP[k*DEST_WIDTH +: DEST_WIDTH] && (M_CONNECT & (1 << (m+k*S_COUNT)))) begin
-        //                 select_next = k;
-        //                 select_valid_next = 1'b1;
-        //                 drop_next = 1'b0;
-        //             end
-        //         end
-        //     end
-        // end
-
-        // always @(posedge clk) begin
-        //     if (rst) begin
-        //         select_valid_reg <= 1'b0;
-        //     end else begin
-        //         select_valid_reg <= select_valid_next;
-        //     end
-
-        //     select_reg <= select_next;
-        //     drop_reg <= drop_next;
-        // end
-
-        // // forwarding
-        // assign int_axis_tvalid[m*M_COUNT +: M_COUNT] = (int_s_axis_tvalid[m] && select_valid_reg && !drop_reg) << select_reg;
-        // assign int_s_axis_tready[m] = int_axis_tready[select_reg*S_COUNT+m] || drop_reg;
-
         // S side register
         axis_register #(
             .DATA_WIDTH(DATA_WIDTH),
@@ -267,49 +213,98 @@ generate
             .m_axis_tdest(int_s_axis_tdest[m*DEST_WIDTH +: DEST_WIDTH]),
             .m_axis_tuser(int_s_axis_tuser[m*USER_WIDTH +: USER_WIDTH])
         );
+
+        // simple decoding
+        reg [CL_M_COUNT-1:0] select;
+        integer k;
+
+        always @ (*) 
+            for (k = 0; k < M_COUNT; k = k + 1) 
+                if (int_s_axis_tdest[m*DEST_WIDTH +: DEST_WIDTH] >= FULL_M_BASE[k*DEST_WIDTH +: DEST_WIDTH] && 
+                    int_s_axis_tdest[m*DEST_WIDTH +: DEST_WIDTH] <= FULL_M_TOP[k*DEST_WIDTH +: DEST_WIDTH]  && (M_CONNECT & (1 << (m+k*S_COUNT)))) 
+                        select = k;
+
+        assign int_axis_tvalid[m*M_COUNT +: M_COUNT] = int_s_axis_tvalid[m] << select;
+        assign int_s_axis_tready[m] = int_axis_tready[select*S_COUNT+m];
+
     end // s_ifaces
 
     for (n = 0; n < M_COUNT; n = n + 1) begin : m_ifaces
 
         // arbitration
         wire [S_COUNT-1:0] request;
-        wire [S_COUNT-1:0] acknowledge;
-        wire [S_COUNT-1:0] grant;
         wire grant_valid;
         wire [CL_S_COUNT-1:0] grant_encoded;
+        reg  [CL_S_COUNT-1:0] grant_encoded_r;
+        
+        // mux
+        reg [DATA_WIDTH-1:0] s_axis_tdata_mux;
+        reg [KEEP_WIDTH-1:0] s_axis_tkeep_mux;
+        reg                  s_axis_tvalid_mux;
+        wire                 s_axis_tready_mux;
+        reg                  s_axis_tlast_mux;
+        reg [ID_WIDTH-1:0]   s_axis_tid_mux;
+        reg [DEST_WIDTH-1:0] s_axis_tdest_mux;
+        reg [USER_WIDTH-1:0] s_axis_tuser_mux;
 
-        arbiter #(
+        // FSM
+        reg state;
+        localparam IDLE = 1'b0;
+        localparam PROC = 1'b1;
+
+        always @ (posedge clk)
+            if (rst) begin
+                state <= IDLE;
+                grant_encoded_r <= 0;
+            end else begin
+                case (state)
+                    IDLE: if (grant_valid && s_axis_tready_mux && (!s_axis_tlast_mux))    state <= PROC;
+                    PROC: if (s_axis_tlast_mux && s_axis_tvalid_mux && s_axis_tready_mux) state <= IDLE;
+                endcase
+                if (state == IDLE) // && grant_valid && s_axis_tready_mux
+                    grant_encoded_r <= grant_encoded;
+            end
+        
+        for (m = 0; m < S_COUNT; m = m + 1) begin
+            assign request[m] = int_axis_tvalid[m*M_COUNT+n];
+        end
+
+        simple_arbiter #(
             .PORTS(S_COUNT),
             .TYPE(ARB_TYPE),
-            .BLOCK("ACKNOWLEDGE"),
             .LSB_PRIORITY(LSB_PRIORITY)
         )
         arb_inst (
             .clk(clk),
             .rst(rst),
             .request(request),
-            .acknowledge(acknowledge),
-            .grant(grant),
+            .taken(s_axis_tready_mux && (state==IDLE)),
+            .grant(),
             .grant_valid(grant_valid),
             .grant_encoded(grant_encoded)
         );
+        
+        always @ (*)
+            if (state == IDLE) begin
+                s_axis_tdata_mux   = int_s_axis_tdata[grant_encoded*DATA_WIDTH +: DATA_WIDTH];
+                s_axis_tkeep_mux   = int_s_axis_tkeep[grant_encoded*KEEP_WIDTH +: KEEP_WIDTH];
+                s_axis_tvalid_mux  = int_axis_tvalid [grant_encoded*M_COUNT+n] && grant_valid;
+                s_axis_tlast_mux   = int_s_axis_tlast[grant_encoded];
+                s_axis_tid_mux     = int_s_axis_tid  [grant_encoded*ID_WIDTH +: ID_WIDTH];
+                s_axis_tdest_mux   = int_s_axis_tdest[grant_encoded*DEST_WIDTH +: DEST_WIDTH];
+                s_axis_tuser_mux   = int_s_axis_tuser[grant_encoded*USER_WIDTH +: USER_WIDTH];
+            end else begin
+                s_axis_tdata_mux   = int_s_axis_tdata[grant_encoded_r*DATA_WIDTH +: DATA_WIDTH];
+                s_axis_tkeep_mux   = int_s_axis_tkeep[grant_encoded_r*KEEP_WIDTH +: KEEP_WIDTH];
+                s_axis_tvalid_mux  = int_axis_tvalid [grant_encoded_r*M_COUNT+n];
+                s_axis_tlast_mux   = int_s_axis_tlast[grant_encoded_r];
+                s_axis_tid_mux     = int_s_axis_tid  [grant_encoded_r*ID_WIDTH +: ID_WIDTH];
+                s_axis_tdest_mux   = int_s_axis_tdest[grant_encoded_r*DEST_WIDTH +: DEST_WIDTH];
+                s_axis_tuser_mux   = int_s_axis_tuser[grant_encoded_r*USER_WIDTH +: USER_WIDTH];
+            end
 
-        // mux
-        wire [DATA_WIDTH-1:0] s_axis_tdata_mux   = int_s_axis_tdata[grant_encoded*DATA_WIDTH +: DATA_WIDTH];
-        wire [KEEP_WIDTH-1:0] s_axis_tkeep_mux   = int_s_axis_tkeep[grant_encoded*KEEP_WIDTH +: KEEP_WIDTH];
-        wire                  s_axis_tvalid_mux  = int_axis_tvalid[grant_encoded*M_COUNT+n] && grant_valid;
-        wire                  s_axis_tready_mux;
-        wire                  s_axis_tlast_mux   = int_s_axis_tlast[grant_encoded];
-        wire [ID_WIDTH-1:0]   s_axis_tid_mux     = int_s_axis_tid[grant_encoded*ID_WIDTH +: ID_WIDTH];
-        wire [DEST_WIDTH-1:0] s_axis_tdest_mux   = int_s_axis_tdest[grant_encoded*DEST_WIDTH +: DEST_WIDTH];
-        wire [USER_WIDTH-1:0] s_axis_tuser_mux   = int_s_axis_tuser[grant_encoded*USER_WIDTH +: USER_WIDTH];
-
-        assign int_axis_tready[n*S_COUNT +: S_COUNT] = (grant_valid && s_axis_tready_mux) << grant_encoded;
-
-        for (m = 0; m < S_COUNT; m = m + 1) begin
-            assign request[m] = int_axis_tvalid[m*M_COUNT+n] && !grant[m];
-            assign acknowledge[m] = grant[m] && int_axis_tvalid[m*M_COUNT+n] && s_axis_tlast_mux && s_axis_tready_mux;
-        end
+        assign int_axis_tready[n*S_COUNT +: S_COUNT] = (state==IDLE) ? (s_axis_tready_mux << grant_encoded) : 
+                                                                       (s_axis_tready_mux << grant_encoded_r);
 
         // M side register
         axis_register #(
