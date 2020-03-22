@@ -128,16 +128,22 @@ int main(int argc, char *argv[])
     uint64_t core_tx_bytes[MAX_CORE_COUNT];
     uint64_t core_rx_frames[MAX_CORE_COUNT];
     uint64_t core_tx_frames[MAX_CORE_COUNT];
+    uint64_t core_rx_stalls[MAX_CORE_COUNT];
+    uint64_t core_tx_stalls[MAX_CORE_COUNT];
 
     uint64_t total_core_rx_bytes[MAX_CORE_COUNT];
     uint64_t total_core_tx_bytes[MAX_CORE_COUNT];
     uint64_t total_core_rx_frames[MAX_CORE_COUNT];
     uint64_t total_core_tx_frames[MAX_CORE_COUNT];
+    uint64_t total_core_rx_stalls[MAX_CORE_COUNT];
+    uint64_t total_core_tx_stalls[MAX_CORE_COUNT];
 
     uint32_t core_rx_bytes_raw[MAX_CORE_COUNT];
     uint32_t core_tx_bytes_raw[MAX_CORE_COUNT];
     uint32_t core_rx_frames_raw[MAX_CORE_COUNT];
     uint32_t core_tx_frames_raw[MAX_CORE_COUNT];
+    uint32_t core_rx_stalls_raw[MAX_CORE_COUNT];
+    uint32_t core_tx_stalls_raw[MAX_CORE_COUNT];
 
     uint64_t if_rx_bytes[MAX_IF_COUNT];
     uint64_t if_tx_bytes[MAX_IF_COUNT];
@@ -161,6 +167,8 @@ int main(int argc, char *argv[])
     uint64_t total_tx_bytes;
     uint64_t total_rx_frames;
     uint64_t total_tx_frames;
+    uint64_t total_rx_stalls;
+    uint64_t total_tx_stalls;
     uint64_t total_rx_drops;
 
     struct timespec desired_time;
@@ -224,6 +232,12 @@ int main(int argc, char *argv[])
         mqnic_reg_write32(dev->regs, 0x000414, k<<4|0x3);
         core_tx_frames_raw[k] = mqnic_reg_read32(dev->regs, 0x000424); //dummy read
         core_tx_frames_raw[k] = mqnic_reg_read32(dev->regs, 0x000424);
+        mqnic_reg_write32(dev->regs, 0x000414, k<<4|0x6);
+        core_rx_stalls_raw[k] = mqnic_reg_read32(dev->regs, 0x000424); //dummy read
+        core_rx_stalls_raw[k] = mqnic_reg_read32(dev->regs, 0x000424);
+        mqnic_reg_write32(dev->regs, 0x000414, k<<4|0x7);
+        core_tx_stalls_raw[k] = mqnic_reg_read32(dev->regs, 0x000424); //dummy read
+        core_tx_stalls_raw[k] = mqnic_reg_read32(dev->regs, 0x000424);
     }
 
     for (int k=0; k<if_count; k++)
@@ -254,6 +268,8 @@ int main(int argc, char *argv[])
             core_tx_bytes[k] = 0;
             core_rx_frames[k] = 0;
             core_tx_frames[k] = 0;
+            core_rx_stalls[k] = 0;
+            core_tx_stalls[k] = 0;
         }
 
         for (int k=0; k<if_count; k++)
@@ -300,11 +316,25 @@ int main(int argc, char *argv[])
                 core_tx_frames[k] += temp - core_tx_frames_raw[k];
                 core_tx_frames_raw[k] = temp;
 
-                // read some core status
-                // mqnic_reg_write32(dev->regs, 0x000414, k<<4|0x8);
+                mqnic_reg_write32(dev->regs, 0x000414, k<<4|0x6);
+                temp = mqnic_reg_read32(dev->regs, 0x000424); //dummy read
+                temp = mqnic_reg_read32(dev->regs, 0x000424);
+                core_rx_stalls[k] += temp - core_rx_stalls_raw[k];
+                core_rx_stalls_raw[k] = temp;
+
+                mqnic_reg_write32(dev->regs, 0x000414, k<<4|0x7);
+                temp = mqnic_reg_read32(dev->regs, 0x000424); //dummy read
+                temp = mqnic_reg_read32(dev->regs, 0x000424);
+                core_tx_stalls[k] += temp - core_tx_stalls_raw[k];
+                core_tx_stalls_raw[k] = temp;
+
+                // // read some core status
+                // mqnic_reg_write32(dev->regs, 0x000414, k<<4|0x9);
                 // mqnic_reg_read32(dev->regs, 0x000424); //dummy read
-                // printf("core %d status: %08x\n", k, mqnic_reg_read32(dev->regs, 0x000424));
+                // printf("core %d status: %08x ", k, mqnic_reg_read32(dev->regs, 0x000424));
             }
+
+	    // printf("\n");
 
             for (int k=0; k<if_count; k++)
             {
@@ -339,27 +369,33 @@ int main(int argc, char *argv[])
             break;
 
         printf("\n");
-        printf("             RX bytes      TX bytes     RX frames     TX frames      RX drops\n");
+        printf("             RX bytes      TX bytes     RX frames     TX frames      RX drops      RX stalls      TX stalls\n");
 
         total_rx_bytes = 0;
         total_tx_bytes = 0;
         total_rx_frames = 0;
         total_tx_frames = 0;
+        total_rx_stalls = 0;
+        total_tx_stalls = 0;
 
         for (int k=0; k<core_count; k++)
         {
-            printf("core %2d  %12ld  %12ld  %12ld  %12ld\n", k, core_rx_bytes[k], core_tx_bytes[k], core_rx_frames[k], core_tx_frames[k]);
+            printf("core %2d  %12ld  %12ld  %12ld  %12ld                %12ld     %12ld\n", k, core_rx_bytes[k], core_tx_bytes[k], core_rx_frames[k], core_tx_frames[k], core_rx_stalls[k], core_tx_stalls[k]);
             total_core_rx_bytes[k] += core_rx_bytes[k];
             total_core_tx_bytes[k] += core_tx_bytes[k];
             total_core_rx_frames[k] += core_rx_frames[k];
             total_core_tx_frames[k] += core_tx_frames[k];
+            total_core_rx_stalls[k] += core_rx_stalls[k];
+            total_core_tx_stalls[k] += core_tx_stalls[k];
             total_rx_bytes += core_rx_bytes[k];
             total_tx_bytes += core_tx_bytes[k];
             total_rx_frames += core_rx_frames[k];
             total_tx_frames += core_tx_frames[k];
+            total_rx_stalls += core_rx_stalls[k];
+            total_tx_stalls += core_tx_stalls[k];
         }
 
-        printf("total    %12ld  %12ld  %12ld  %12ld\n", total_rx_bytes, total_tx_bytes, total_rx_frames, total_tx_frames);
+        printf("total    %12ld  %12ld  %12ld  %12ld                %12ld     %12ld\n", total_rx_bytes, total_tx_bytes, total_rx_frames, total_tx_frames, total_rx_stalls, total_tx_stalls);
 
         total_rx_bytes = 0;
         total_tx_bytes = 0;

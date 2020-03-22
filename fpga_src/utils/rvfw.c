@@ -192,7 +192,7 @@ int main(int argc, char *argv[])
         printf("\n");
 
         // Host Write and Readback test
-	struct mqnic_ioctl_block_write ctl;
+        struct mqnic_ioctl_block_write ctl;
         struct mqnic_ioctl_block_read ctl2;
 
         ctl.addr = (4<<26) | (0x1000100);
@@ -232,29 +232,38 @@ int main(int argc, char *argv[])
         usleep(100000);
         for (int k=0; k<core_count; k++)
         {
-            if (core_enable & (1 << k))
+            if (core_enable & (1 << k)){
                 mqnic_reg_write32(dev->regs, 0x000408, (k << 8) | 0xf);
+                mqnic_reg_write32(dev->regs, 0x000408, (k << 8) | 0xf);
+            }
             usleep(1000);
             printf(".");
             fflush(stdout);
         }
         printf("\n");
 
-        usleep(100000);
+        usleep(1000000);
         
-	printf("Core stats after taking out of reset\n");
-	for (int k=0; k<core_count; k++)
-        {
-	    mqnic_reg_write32(dev->regs, 0x000414, k<<4|8);
+        printf("Core stats after taking out of reset\n");
+        for (int k=0; k<core_count; k++){
+            mqnic_reg_write32(dev->regs, 0x000414, k<<4|8);
             mqnic_reg_read32(dev->regs, 0x000424); //dummy read
-	    printf("core %d status: %08x\n", k, mqnic_reg_read32(dev->regs, 0x000424));
-	}
+            printf("core %d status: %08x\n", k, mqnic_reg_read32(dev->regs, 0x000424));
+        }
 
         printf("Enabling cores in scheduler...\n");
         printf("Core enable mask: 0x%08x\n", core_enable);
-        printf("Core RX enable mask: 0x%08x\n", core_rx_enable);
         mqnic_reg_write32(dev->regs, 0x000410, ~core_enable);
+        mqnic_reg_write32(dev->regs, 0x000410, ~core_enable);
+        mqnic_reg_read32(dev->regs, 0x000410); //dummy read
+        unsigned int temp = mqnic_reg_read32(dev->regs, 0x000410);
+        printf("core enable readback %08x\n",  ~temp);
+
+        printf("Core RX enable mask: 0x%08x\n", core_rx_enable);
         mqnic_reg_write32(dev->regs, 0x00040C, core_rx_enable);
+        mqnic_reg_write32(dev->regs, 0x00040C, core_rx_enable);
+        mqnic_reg_read32(dev->regs, 0x00040C); //dummy read
+        printf("core RX enable readback %08x\n",  mqnic_reg_read32(dev->regs, 0x00040C));
 
         printf("Done!\n");
 
@@ -267,7 +276,4 @@ err:
 
     return ret;
 }
-
-
-
 
