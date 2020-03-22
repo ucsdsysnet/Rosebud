@@ -447,10 +447,6 @@ module simple_scheduler # (
                   dest_rr[n*ID_TAG_WIDTH +: ID_TAG_WIDTH] <= dest_r[n*ID_TAG_WIDTH +: ID_TAG_WIDTH];
           end
 
-  wire [1:0] state_0 = port_state[0];
-  wire [1:0] state_1 = port_state[1];
-  wire [1:0] state_2 = port_state[2];
-
   // Desc request and port ready
   integer p;
   reg [INTERFACE_COUNT-1:0] desc_req;
@@ -513,43 +509,19 @@ if (ENABLE_ILA) begin
   reg [INTERFACE_COUNT-1:0] desc_req_r;
   reg max_valid_r, rx_desc_pop_r;
   reg [ID_TAG_WIDTH-1:0] rx_desc_data_r; 
-
+  reg [1:0] port0_state_r, port1_state_r, port2_state_r;
+  reg [1:0] selected_port_enc_r;
   always @ (posedge clk) begin
-    rx_desc_count_r <= rx_desc_count;
-    desc_req_r      <= desc_req;
-    max_valid_r     <= max_valid;
-    rx_desc_pop_r   <= rx_desc_pop;
-    rx_desc_data_r  <= rx_desc_data;
+    rx_desc_count_r     <= rx_desc_count;
+    desc_req_r          <= desc_req;
+    max_valid_r         <= max_valid;
+    rx_desc_pop_r       <= rx_desc_pop;
+    rx_desc_data_r      <= rx_desc_data;
+    port0_state_r       <= port_state[0];
+    port1_state_r       <= port_state[1];
+    port2_state_r       <= port_state[2];
+    selected_port_enc_r <= selected_port_enc;
   end
-
-  reg [15:0] rx_count_0, rx_count_1, tx_count_0, tx_count_1;
-  always @ (posedge clk)
-    if (rst) begin
-        rx_count_0 <= 16'd0;
-        rx_count_1 <= 16'd0;
-        tx_count_0 <= 16'd0;
-        tx_count_1 <= 16'd0;
-    end else begin
-      if (rx_axis_tlast[0] && rx_axis_tvalid[0])
-        rx_count_0 <= 16'd0;
-      else if (rx_axis_tvalid[0])
-        rx_count_0 <= rx_count_0 + 16'd1;
-
-      if (rx_axis_tlast[1] && rx_axis_tvalid[1])
-        rx_count_1 <= 16'd0;
-      else if (rx_axis_tvalid[1])
-        rx_count_1 <= rx_count_1 + 16'd1;
-
-      if (tx_axis_tlast[0] && tx_axis_tvalid[0])
-        tx_count_0 <= 16'd0;
-      else if (tx_axis_tvalid[0])
-        tx_count_0 <= tx_count_0 + 16'd1;
-
-      if (tx_axis_tlast[1] && tx_axis_tvalid[1])
-        tx_count_1 <= 16'd0;
-      else if (tx_axis_tvalid[1])
-        tx_count_1 <= tx_count_1 + 16'd1;
-    end
 
   ila_4x64 debugger1 (
     .clk    (clk),
@@ -560,26 +532,27 @@ if (ENABLE_ILA) begin
     .trig_in_ack(trig_in_ack),
  
     .probe0 ({
-       sending_last_word,
-       data_m_axis_tdest,
-       rst,
-       data_m_axis_tuser,
+       data_m_axis_tdest[17:0],
        ctrl_m_axis_tdest,
        ctrl_s_axis_tuser,
        ctrl_m_axis_tvalid,
        ctrl_m_axis_tready,
        ctrl_s_axis_tvalid,
        ctrl_s_axis_tready,
+       rst,
        slot_insert_err,
        msg_type,
-       rx_axis_tvalid, 
+       rx_axis_tvalid[1:0], 
+       rx_axis_tlast[1:0],
+       rx_axis_tvalid[1:0],
        max_valid_r,
        rx_desc_pop_r,
        desc_req_r,
-       // rx_axis_tready,
-       // rx_axis_tkeep,
-       rx_axis_tlast,
-       rx_desc_data_r
+       rx_desc_data_r,
+       port2_state_r,
+       port1_state_r,
+       port0_state_r,
+       selected_port_enc_r
      }),
     
     .probe1 ({

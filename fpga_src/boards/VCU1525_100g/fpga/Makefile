@@ -97,6 +97,7 @@ XDC_FILES += lib/smartFPGA/syn/simple_sync_sig.tcl
 XCI_FILES = ip/pcie4_uscale_plus_0.xci
 XCI_FILES += ip/cmac_usplus_0.xci
 XCI_FILES += ip/cmac_usplus_1.xci
+XCI_FILES += ip/ila_4x64.xci
 
 include ../common/vivado.mk
 
