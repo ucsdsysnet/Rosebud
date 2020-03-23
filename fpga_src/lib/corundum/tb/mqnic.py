@@ -294,7 +294,7 @@ class EqRing(object):
         print("%d events in queue" % (self.head_ptr - eq_tail_ptr))
 
         while (self.head_ptr != eq_tail_ptr):
-            event_data = struct.unpack_from("<HH", self.buf, eq_index*MQNIC_EVENT_SIZE)
+            event_data = struct.unpack_from("<HH", self.buf, eq_index*self.stride)
 
             print("Event data: "+repr(event_data))
 
@@ -543,7 +543,7 @@ class RxRing(object):
         self.rx_info[index] = pkt
 
         # write descriptor
-        struct.pack_into("<LLQ", self.buf, index*16, 0, len(pkt[1]), pkt[0])
+        struct.pack_into("<LLQ", self.buf, index*self.stride, 0, len(pkt[1])-10, pkt[0]+10)
 
     def refill_buffers(self):
         missing = self.size - (self.head_ptr - self.clean_tail_ptr)
@@ -688,27 +688,27 @@ class Interface(object):
         self.ports = []
 
         for k in range(self.event_queue_count):
-            q = EqRing(self, 1024, 16, self.index, self.hw_addr + self.event_queue_offset + k*MQNIC_EVENT_QUEUE_STRIDE)
+            q = EqRing(self, 1024, MQNIC_EVENT_SIZE, self.index, self.hw_addr + self.event_queue_offset + k*MQNIC_EVENT_QUEUE_STRIDE)
             yield from q.init()
             self.event_queues.append(q)
 
         for k in range(self.tx_queue_count):
-            q = TxRing(self, 1024, 16, k, self.hw_addr + self.tx_queue_offset + k*MQNIC_QUEUE_STRIDE)
+            q = TxRing(self, 1024, MQNIC_DESC_SIZE, k, self.hw_addr + self.tx_queue_offset + k*MQNIC_QUEUE_STRIDE)
             yield from q.init()
             self.tx_queues.append(q)
 
         for k in range(self.tx_cpl_queue_count):
-            q = CqRing(self, 1024, 32, k, self.hw_addr + self.tx_cpl_queue_offset + k*MQNIC_CPL_QUEUE_STRIDE)
+            q = CqRing(self, 1024, MQNIC_CPL_SIZE, k, self.hw_addr + self.tx_cpl_queue_offset + k*MQNIC_CPL_QUEUE_STRIDE)
             yield from q.init()
             self.tx_cpl_queues.append(q)
 
         for k in range(self.rx_queue_count):
-            q = RxRing(self, 1024, 16, k, self.hw_addr + self.rx_queue_offset + k*MQNIC_QUEUE_STRIDE)
+            q = RxRing(self, 1024, MQNIC_DESC_SIZE, k, self.hw_addr + self.rx_queue_offset + k*MQNIC_QUEUE_STRIDE)
             yield from q.init()
             self.rx_queues.append(q)
 
         for k in range(self.rx_cpl_queue_count):
-            q = CqRing(self, 1024, 32, k, self.hw_addr + self.rx_cpl_queue_offset + k*MQNIC_CPL_QUEUE_STRIDE)
+            q = CqRing(self, 1024, MQNIC_CPL_SIZE, k, self.hw_addr + self.rx_cpl_queue_offset + k*MQNIC_CPL_QUEUE_STRIDE)
             yield from q.init()
             self.rx_cpl_queues.append(q)
 
@@ -724,7 +724,7 @@ class Interface(object):
             yield from q.arm()
 
         for q in self.rx_cpl_queues:
-            yield from q.activate(0) # TODO
+            yield from q.activate(q.index % self.event_queue_count)
             q.ring_index = q.index
             q.handler = None # TODO
             yield from q.arm()
@@ -733,7 +733,7 @@ class Interface(object):
             yield from q.activate(q.index)
 
         for q in self.tx_cpl_queues:
-            yield from q.activate(0) # TODO
+            yield from q.activate(q.index % self.event_queue_count)
             q.ring_index = q.index
             q.handler = None # TODO
             yield from q.arm()
@@ -799,7 +799,7 @@ class Interface(object):
         cq_index = cq_tail_ptr & cq_ring.size_mask
 
         while (cq_ring.head_ptr != cq_tail_ptr):
-            cpl_data = struct.unpack_from("<HHHxxQ", cq_ring.buf, cq_index*MQNIC_CPL_SIZE)
+            cpl_data = struct.unpack_from("<HHHxxQ", cq_ring.buf, cq_index*cq_ring.stride)
             ring_index = cpl_data[1]
 
             print(cpl_data)
@@ -842,7 +842,7 @@ class Interface(object):
         cq_index = cq_tail_ptr & cq_ring.size_mask
 
         while (cq_ring.head_ptr != cq_tail_ptr):
-            cpl_data = struct.unpack_from("<HHHxxLHH", cq_ring.buf, cq_index*MQNIC_CPL_SIZE)
+            cpl_data = struct.unpack_from("<HHHxxLHH", cq_ring.buf, cq_index*cq_ring.stride)
             ring_index = cpl_data[1]
 
             print(cpl_data)
@@ -853,7 +853,7 @@ class Interface(object):
             length = cpl_data[2]
 
             skb = Packet()
-            skb.data = pkt[1][:length]
+            skb.data = pkt[1][10:length+10]
             skb.timestamp_ns = cpl_data[3]
             skb.timestamp_s = cpl_data[4]
             skb.rx_checksum = cpl_data[5]
@@ -915,7 +915,7 @@ class Interface(object):
         ring.tx_info[index] = pkt
 
         # put data in packet buffer
-        pkt[1][0:len(data)] = data
+        pkt[1][10:len(data)+10] = data
 
         csum_cmd = 0
 
@@ -923,7 +923,7 @@ class Interface(object):
             csum_cmd = 0x8000 | (csum_offset << 8) | csum_start
 
         # write descriptor
-        struct.pack_into("<HHLQ", ring.buf, index*16, 0, csum_cmd, len(data), pkt[0])
+        struct.pack_into("<HHLQ", ring.buf, index*ring.stride, 0, csum_cmd, len(data), pkt[0]+10)
 
         ring.head_ptr += 1;
 
@@ -995,6 +995,13 @@ class Driver(object):
         print("IF stride: {:#010x}".format(self.if_stride))
         self.if_csr_offset = yield from self.rc.mem_read_dword(self.hw_addr+MQNIC_REG_IF_CSR_OFFSET)
         print("IF CSR offset: {:#010x}".format(self.if_csr_offset))
+
+        # enable bus mastering
+        val = yield from self.rc.config_read_word(self.dev_id, 0x04)
+        yield from self.rc.config_write_word(self.dev_id, 0x04, val | 4)
+
+        # configure MSI
+        yield from self.rc.configure_msi(self.dev_id)
 
         self.interfaces = []
 
