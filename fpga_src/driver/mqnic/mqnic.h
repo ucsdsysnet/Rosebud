@@ -115,15 +115,17 @@ struct mqnic_dev {
 
 struct mqnic_tx_info {
     struct sk_buff *skb;
-    dma_addr_t dma_addr;
-    int len;
+    DEFINE_DMA_UNMAP_ADDR(dma_addr);
+    DEFINE_DMA_UNMAP_LEN(len);
     int ts_requested;
 };
 
 struct mqnic_rx_info {
-    struct sk_buff *skb;
+    struct page *page;
+    u32 page_order;
+    u32 page_offset;
     dma_addr_t dma_addr;
-    int len;
+    u32 len;
 };
 
 struct mqnic_ring {
@@ -149,6 +151,7 @@ struct mqnic_ring {
     u32 cpl_index;
 
     u32 mtu;
+    u32 page_order;
 
     size_t buf_size;
     u8 *buf;
@@ -338,7 +341,7 @@ void mqnic_tx_read_tail_ptr(struct mqnic_ring *ring);
 void mqnic_tx_write_head_ptr(struct mqnic_ring *ring);
 void mqnic_free_tx_desc(struct mqnic_priv *priv, struct mqnic_ring *ring, int index, int napi_budget);
 int mqnic_free_tx_buf(struct mqnic_priv *priv, struct mqnic_ring *ring);
-bool mqnic_process_tx_cq(struct net_device *ndev, struct mqnic_cq_ring *cq_ring, int napi_budget);
+int mqnic_process_tx_cq(struct net_device *ndev, struct mqnic_cq_ring *cq_ring, int napi_budget);
 void mqnic_tx_irq(struct mqnic_cq_ring *cq);
 int mqnic_poll_tx_cq(struct napi_struct *napi, int budget);
 netdev_tx_t mqnic_start_xmit(struct sk_buff *skb, struct net_device *dev);
@@ -356,7 +359,7 @@ void mqnic_free_rx_desc(struct mqnic_priv *priv, struct mqnic_ring *ring, int in
 int mqnic_free_rx_buf(struct mqnic_priv *priv, struct mqnic_ring *ring);
 int mqnic_prepare_rx_desc(struct mqnic_priv *priv, struct mqnic_ring *ring, int index);
 void mqnic_refill_rx_buffers(struct mqnic_priv *priv, struct mqnic_ring *ring);
-bool mqnic_process_rx_cq(struct net_device *ndev, struct mqnic_cq_ring *cq_ring, int napi_budget);
+int mqnic_process_rx_cq(struct net_device *ndev, struct mqnic_cq_ring *cq_ring, int napi_budget);
 void mqnic_rx_irq(struct mqnic_cq_ring *cq);
 int mqnic_poll_rx_cq(struct napi_struct *napi, int budget);
 

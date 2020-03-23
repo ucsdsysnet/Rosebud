@@ -166,11 +166,12 @@ void mqnic_rx_write_head_ptr(struct mqnic_ring *ring)
 void mqnic_free_rx_desc(struct mqnic_priv *priv, struct mqnic_ring *ring, int index)
 {
     struct mqnic_rx_info *rx_info = &ring->rx_info[index];
+    struct page *page = rx_info->page;
 
-    dma_unmap_single(priv->dev, rx_info->dma_addr, rx_info->len, PCI_DMA_FROMDEVICE);
+    dma_unmap_page(priv->dev, dma_unmap_addr(rx_info, dma_addr), dma_unmap_len(rx_info, len), PCI_DMA_FROMDEVICE);
     rx_info->dma_addr = 0;
-    napi_consume_skb(rx_info->skb, 0);
-    rx_info->skb = NULL;
+    __free_pages(page, rx_info->page_order);
+    rx_info->page = NULL;
 }
 
 int mqnic_free_rx_buf(struct mqnic_priv *priv, struct mqnic_ring *ring)
@@ -196,40 +197,45 @@ int mqnic_free_rx_buf(struct mqnic_priv *priv, struct mqnic_ring *ring)
 int mqnic_prepare_rx_desc(struct mqnic_priv *priv, struct mqnic_ring *ring, int index)
 {
     struct mqnic_rx_info *rx_info = &ring->rx_info[index];
-    struct mqnic_desc *rx_desc = (struct mqnic_desc *)(ring->buf + index * sizeof(*rx_desc));
-    struct sk_buff *skb = rx_info->skb;
+    struct mqnic_desc *rx_desc = (struct mqnic_desc *)(ring->buf + index*ring->stride);
+    struct page *page = rx_info->page;
+    u32 page_order = ring->page_order;
+    u32 len = PAGE_SIZE << page_order;
+    dma_addr_t dma_addr;
 
-    rx_info->len = ring->mtu+ETH_HLEN;
-
-    if (unlikely(skb))
+    if (unlikely(page))
     {
         dev_err(&priv->mdev->pdev->dev, "mqnic_prepare_rx_desc skb not yet processed on port %d", priv->port);
         return -1;
     }
 
-    skb = netdev_alloc_skb_ip_align(priv->ndev, rx_info->len);
-    if (unlikely(!skb))
+    page = dev_alloc_pages(page_order);
+    if (unlikely(!page))
     {
-        dev_err(&priv->mdev->pdev->dev, "mqnic_prepare_rx_desc failed to allocate skb on port %d", priv->port);
+        dev_err(&priv->mdev->pdev->dev, "mqnic_prepare_rx_desc failed to allocate memory on port %d", priv->port);
         return -1;
     }
 
-    rx_info->skb = skb;
+    // map page
+    dma_addr = dma_map_page(priv->dev, page, 0, len, PCI_DMA_FROMDEVICE);
 
-map_skb:
-    // map skb
-    rx_info->dma_addr = dma_map_single(priv->dev, skb->data, rx_info->len, PCI_DMA_FROMDEVICE);
-
-    if (unlikely(dma_mapping_error(priv->dev, rx_info->dma_addr)))
+    if (unlikely(dma_mapping_error(priv->dev, dma_addr)))
     {
-        dev_err(&priv->mdev->pdev->dev, "mqnic_prepare_rx_desc failed to map skb on port %d", priv->port);
-        napi_consume_skb(rx_info->skb, 0);
+        dev_err(&priv->mdev->pdev->dev, "mqnic_prepare_rx_desc DMA mapping failed on port %d", priv->port);
+        __free_pages(page, page_order);
         return -1;
     }
 
     // write descriptor
-    rx_desc->len = rx_info->len;
-    rx_desc->addr = rx_info->dma_addr;
+    rx_desc->len = len;
+    rx_desc->addr = dma_addr;
+
+    // update rx_info
+    rx_info->page = page;
+    rx_info->page_order = page_order;
+    rx_info->page_offset = 0;
+    rx_info->dma_addr = dma_addr;
+    rx_info->len = len;
 
     return 0;
 }
@@ -253,23 +259,25 @@ void mqnic_refill_rx_buffers(struct mqnic_priv *priv, struct mqnic_ring *ring)
     mqnic_rx_write_head_ptr(ring);
 }
 
-bool mqnic_process_rx_cq(struct net_device *ndev, struct mqnic_cq_ring *cq_ring, int napi_budget)
+int mqnic_process_rx_cq(struct net_device *ndev, struct mqnic_cq_ring *cq_ring, int napi_budget)
 {
     struct mqnic_priv *priv = netdev_priv(ndev);
     struct mqnic_ring *ring = priv->rx_ring[cq_ring->ring_index];
     struct mqnic_rx_info *rx_info;
     struct mqnic_cpl *cpl;
     struct sk_buff *skb;
+    struct page *page;
     u32 cq_index;
     u32 cq_tail_ptr;
     u32 ring_index;
     u32 ring_clean_tail_ptr;
     int done = 0;
     int budget = napi_budget;
+    u32 len;
 
     if (unlikely(!priv->port_up))
     {
-        return true;
+        return done;
     }
 
     // process completion queue
@@ -283,24 +291,24 @@ bool mqnic_process_rx_cq(struct net_device *ndev, struct mqnic_cq_ring *cq_ring,
 
     while (cq_ring->head_ptr != cq_tail_ptr && done < budget)
     {
-        cpl = (struct mqnic_cpl *)(cq_ring->buf + cq_index * MQNIC_CPL_SIZE);
+        cpl = (struct mqnic_cpl *)(cq_ring->buf + cq_index*cq_ring->stride);
         ring_index = cpl->index & ring->size_mask;
         rx_info = &ring->rx_info[ring_index];
-        skb = rx_info->skb;
+        page = rx_info->page;
 
-        if (unlikely(!skb))
+        if (unlikely(!page))
         {
-            dev_err(&priv->mdev->pdev->dev, "mqnic_process_rx_cq ring %d null SKB at index %d", cq_ring->ring_index, ring_index);
+            dev_err(&priv->mdev->pdev->dev, "mqnic_process_rx_cq ring %d null page at index %d", cq_ring->ring_index, ring_index);
             print_hex_dump(KERN_ERR, "", DUMP_PREFIX_NONE, 16, 1, cpl, MQNIC_CPL_SIZE, true);
             break;
         }
 
-        // set length
-        if (cpl->len <= rx_info->len)
+        skb = napi_get_frags(&cq_ring->napi);
+        if (unlikely(!skb))
         {
-            skb_put(skb, cpl->len);
+            dev_err(&priv->mdev->pdev->dev, "mqnic_process_rx_cq ring %d failed to allocate skb", cq_ring->ring_index);
+            break;
         }
-        skb->protocol = eth_type_trans(skb, priv->ndev);
 
         // RX hardware timestamp
         if (priv->if_features & MQNIC_IF_FEATURE_PTP_TS)
@@ -311,21 +319,30 @@ bool mqnic_process_rx_cq(struct net_device *ndev, struct mqnic_cq_ring *cq_ring,
         skb_record_rx_queue(skb, cq_ring->ring_index);
 
         // RX hardware checksum
-        if ((ndev->features & NETIF_F_RXCSUM) &&
-            (skb->protocol == htons(ETH_P_IP) || skb->protocol == htons(ETH_P_IPV6)) &&
-            (skb->len >= 64)) {
-
+        if (ndev->features & NETIF_F_RXCSUM)
+        {
             skb->csum = be16_to_cpu(cpl->rx_csum);
             skb->ip_summed = CHECKSUM_COMPLETE;
         }
 
         // unmap
-        dma_unmap_single(priv->dev, rx_info->dma_addr, rx_info->len, PCI_DMA_FROMDEVICE);
+        dma_unmap_page(priv->dev, dma_unmap_addr(rx_info, dma_addr), dma_unmap_len(rx_info, len), PCI_DMA_FROMDEVICE);
         rx_info->dma_addr = 0;
 
+        len = min_t(u32, cpl->len, rx_info->len);
+
+        dma_sync_single_range_for_cpu(priv->dev, rx_info->dma_addr, rx_info->page_offset, rx_info->len, PCI_DMA_FROMDEVICE);
+
+        __skb_fill_page_desc(skb, 0, page, rx_info->page_offset, len);
+        rx_info->page = NULL;
+
+        skb_shinfo(skb)->nr_frags = 1;
+        skb->len = len;
+        skb->data_len = len;
+        skb->truesize += rx_info->len;
+
         // hand off SKB
-        napi_gro_receive(&cq_ring->napi, skb);
-        rx_info->skb = NULL;
+        napi_gro_frags(&cq_ring->napi);
 
         ring->packets++;
         ring->bytes += cpl->len;
@@ -351,7 +368,7 @@ bool mqnic_process_rx_cq(struct net_device *ndev, struct mqnic_cq_ring *cq_ring,
     {
         rx_info = &ring->rx_info[ring_index];
 
-        if (rx_info->skb)
+        if (rx_info->page)
             break;
 
         ring_clean_tail_ptr++;
@@ -364,7 +381,7 @@ bool mqnic_process_rx_cq(struct net_device *ndev, struct mqnic_cq_ring *cq_ring,
     // replenish buffers
     mqnic_refill_rx_buffers(priv, ring);
 
-    return done < budget;
+    return done;
 }
 
 void mqnic_rx_irq(struct mqnic_cq_ring *cq)
@@ -385,16 +402,19 @@ int mqnic_poll_rx_cq(struct napi_struct *napi, int budget)
 {
     struct mqnic_cq_ring *cq_ring = container_of(napi, struct mqnic_cq_ring, napi);
     struct net_device *ndev = cq_ring->ndev;
+    int done;
 
-    if (!mqnic_process_rx_cq(ndev, cq_ring, budget))
+    done = mqnic_process_rx_cq(ndev, cq_ring, budget);
+
+    if (done == budget)
     {
-       return budget;
+        return done;
     }
 
     napi_complete(napi);
 
     mqnic_arm_cq(cq_ring);
 
-    return 0;
+    return done;
 }
 
