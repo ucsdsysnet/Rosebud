@@ -252,18 +252,18 @@ int main(int argc, char *argv[])
         }
 
         printf("Enabling cores in scheduler...\n");
+        printf("Core RX enable mask: 0x%08x\n", core_rx_enable);
+        mqnic_reg_write32(dev->regs, 0x00040C, core_rx_enable);
+        mqnic_reg_write32(dev->regs, 0x00040C, core_rx_enable);
+        mqnic_reg_read32(dev->regs, 0x00040C); //dummy read
+        printf("core RX enable readback %08x\n",  mqnic_reg_read32(dev->regs, 0x00040C));
+
         printf("Core enable mask: 0x%08x\n", core_enable);
         mqnic_reg_write32(dev->regs, 0x000410, ~core_enable);
         mqnic_reg_write32(dev->regs, 0x000410, ~core_enable);
         mqnic_reg_read32(dev->regs, 0x000410); //dummy read
         unsigned int temp = mqnic_reg_read32(dev->regs, 0x000410);
         printf("core enable readback %08x\n",  ~temp);
-
-        printf("Core RX enable mask: 0x%08x\n", core_rx_enable);
-        mqnic_reg_write32(dev->regs, 0x00040C, core_rx_enable);
-        mqnic_reg_write32(dev->regs, 0x00040C, core_rx_enable);
-        mqnic_reg_read32(dev->regs, 0x00040C); //dummy read
-        printf("core RX enable readback %08x\n",  mqnic_reg_read32(dev->regs, 0x00040C));
 
         printf("Done!\n");
 

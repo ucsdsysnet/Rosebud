@@ -7,6 +7,7 @@ OUT_FILE=$(TEST)_$(SIZE).csv
 DEV=mqnic0
 ENABLE=0xffff
 RECV=0xffff
+DEBUG=8
 
 CC=gcc
 CFLAGS=-O3 -Wall -I../driver/mqnic
@@ -34,7 +35,7 @@ clean:
 do:
 	make -C ../../c_code/ NAME=$(TEST)
 	sudo ./rvfw -d /dev/$(DEV) -w $(BIN_FILE) -e $(ENABLE) -r $(RECV)
-	sudo ./perf -d /dev/$(DEV) -o $(OUT_FILE)
+	sudo ./perf -d /dev/$(DEV) -o $(OUT_FILE) -g $(DEBUG)
 
 reset: 
 	sudo sh -c "lspci -d 1234:1001 | cut -d ' ' -f 1 | xargs -L 1 ./pcie_hot_reset.sh"

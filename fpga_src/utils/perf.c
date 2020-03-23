@@ -55,7 +55,8 @@ static void usage(char *name)
     fprintf(stderr,
         "usage: %s [options]\n"
         " -d name    device to open (/sys/bus/pci/devices/.../resource0)\n"
-        " -o file    output CSV file name (output.csv)\n",
+        " -o file    output CSV file name (output.csv)\n"
+        " -g reg     debug register number (8)\n",
         name);
 }
 
@@ -71,12 +72,14 @@ int main(int argc, char *argv[])
     char *output_file_name = NULL;
     FILE *output_file = NULL;
 
+    int debug_reg = 0x0;
+
     name = strrchr(argv[0], '/');
     name = name ? 1+name : argv[0];
 
     signal(SIGINT, sig_handler);
 
-    while ((opt = getopt(argc, argv, "d:o:h?")) != EOF)
+    while ((opt = getopt(argc, argv, "d:o:g:h?")) != EOF)
     {
         switch (opt)
         {
@@ -85,6 +88,9 @@ int main(int argc, char *argv[])
             break;
         case 'o':
             output_file_name = optarg;
+            break;
+        case 'g':
+            debug_reg = atoi(optarg);
             break;
         case 'h':
         case '?':
@@ -120,6 +126,9 @@ int main(int argc, char *argv[])
     int if_count = MAX_IF_COUNT;
 
     char need_comma;
+    
+    uint64_t core_slots[MAX_CORE_COUNT];
+    bool extra_slot_count = false; 
 
     uint32_t temp;
     uint32_t updates = 0;
@@ -327,14 +336,26 @@ int main(int argc, char *argv[])
                 temp = mqnic_reg_read32(dev->regs, 0x000424);
                 core_tx_stalls[k] += temp - core_tx_stalls_raw[k];
                 core_tx_stalls_raw[k] = temp;
+                
+                mqnic_reg_write32(dev->regs, 0x000414, k<<4);
+                mqnic_reg_read32(dev->regs, 0x000420); //dummy read
+                core_slots[k] = mqnic_reg_read32(dev->regs, 0x000420); //dummy read
+                
+                if (extra_slot_count){
+                    printf("core %d has %ld slots in scheduler. ", k, core_slots[k]);
+                }
 
-                // // read some core status
-                // mqnic_reg_write32(dev->regs, 0x000414, k<<4|0x9);
-                // mqnic_reg_read32(dev->regs, 0x000424); //dummy read
-                // printf("core %d status: %08x ", k, mqnic_reg_read32(dev->regs, 0x000424));
+                // read some core status
+                if (debug_reg>=8){
+                    mqnic_reg_write32(dev->regs, 0x000414, k<<4|debug_reg);
+                    mqnic_reg_read32(dev->regs, 0x000424); //dummy read
+                    temp = mqnic_reg_read32(dev->regs, 0x000424); 
+                    if (temp!=0)
+                      printf("core %d status: %08x ", k, temp);
+                }
             }
 
-	    // printf("\n");
+      	    // printf("\n");
 
             for (int k=0; k<if_count; k++)
             {
@@ -369,7 +390,7 @@ int main(int argc, char *argv[])
             break;
 
         printf("\n");
-        printf("             RX bytes      TX bytes     RX frames     TX frames      RX drops      RX stalls      TX stalls\n");
+        printf("             RX bytes      TX bytes     RX frames     TX frames      RX drops      RX stalls      TX stalls    Avail slots\n");
 
         total_rx_bytes = 0;
         total_tx_bytes = 0;
@@ -380,7 +401,7 @@ int main(int argc, char *argv[])
 
         for (int k=0; k<core_count; k++)
         {
-            printf("core %2d  %12ld  %12ld  %12ld  %12ld                %12ld     %12ld\n", k, core_rx_bytes[k], core_tx_bytes[k], core_rx_frames[k], core_tx_frames[k], core_rx_stalls[k], core_tx_stalls[k]);
+            printf("core %2d  %12ld  %12ld  %12ld  %12ld                 %12ld   %12ld   %12ld\n", k, core_rx_bytes[k], core_tx_bytes[k], core_rx_frames[k], core_tx_frames[k], core_rx_stalls[k], core_tx_stalls[k], core_slots[k]);
             total_core_rx_bytes[k] += core_rx_bytes[k];
             total_core_tx_bytes[k] += core_tx_bytes[k];
             total_core_rx_frames[k] += core_rx_frames[k];
@@ -395,7 +416,7 @@ int main(int argc, char *argv[])
             total_tx_stalls += core_tx_stalls[k];
         }
 
-        printf("total    %12ld  %12ld  %12ld  %12ld                %12ld     %12ld\n", total_rx_bytes, total_tx_bytes, total_rx_frames, total_tx_frames, total_rx_stalls, total_tx_stalls);
+        printf("total    %12ld  %12ld  %12ld  %12ld                 %12ld   %12ld\n", total_rx_bytes, total_tx_bytes, total_rx_frames, total_tx_frames, total_rx_stalls, total_tx_stalls);
 
         total_rx_bytes = 0;
         total_tx_bytes = 0;
