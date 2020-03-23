@@ -840,7 +840,8 @@ simple_fifo # (
 // Latch the output descriptor and send it to controller when
 // it is transmitted
 wire pkt_sent_ready; // should always be ready
-reg [63:0] latched_send_desc;
+(* KEEP = "TRUE" *) reg [63:0] latched_send_desc;
+
 always @ (posedge clk)
     if (send_desc_valid && send_desc_ready && pkt_sent_ready)
         latched_send_desc <= send_desc;
@@ -1098,8 +1099,8 @@ wire done_w_slot = ((out_desc_type == 4'd0) ||
                     out_desc_valid && out_desc_ready;
 
 // A set of registers for better timing
-reg [SLOT_WIDTH-1:0] out_desc_slot_r;
-reg                  done_w_slot_r;
+(* KEEP = "TRUE" *) reg [SLOT_WIDTH-1:0] out_desc_slot_r;
+(* KEEP = "TRUE" *) reg                  done_w_slot_r;
 
 always @ (posedge clk) begin
   out_desc_slot_r <= out_desc[16+:SLOT_WIDTH];

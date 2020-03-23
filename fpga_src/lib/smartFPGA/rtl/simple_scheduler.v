@@ -523,7 +523,7 @@ if (ENABLE_ILA) begin
     selected_port_enc_r <= selected_port_enc;
   end
 
-  ila_3x64 debugger1 (
+  ila_2x64 debugger1 (
     .clk    (clk),
  
     .trig_out(trig_out),
@@ -557,9 +557,9 @@ if (ENABLE_ILA) begin
     
     .probe1 ({
        ctrl_m_axis_tdata[31:0],
-       ctrl_s_axis_tdata[31:0]}),
+       ctrl_s_axis_tdata[31:0]})
   
-    .probe2 (rx_desc_count_r)
+    // .probe2 (rx_desc_count_r),
 
     // .probe3 ({rx_desc_slot_v, rx_desc_slot_pop,
     //           cores_to_be_reset, income_cores})
