@@ -98,6 +98,7 @@ XCI_FILES = ip/pcie4_uscale_plus_0.xci
 XCI_FILES += ip/cmac_usplus_0.xci
 XCI_FILES += ip/cmac_usplus_1.xci
 XCI_FILES += ip/ila_4x64.xci
+XCI_FILES += ip/ila_3x64.xci
 
 include ../common/vivado.mk
 

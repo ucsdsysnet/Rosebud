@@ -1069,7 +1069,7 @@ simple_scheduler # (
   .CLUSTER_COUNT(CLUSTER_COUNT),
   .LOOPBACK_PORT(FIRST_LB_PORT),
   .LOOPBACK_COUNT(LB_PORT_COUNT),
-  .ENABLE_ILA(ENABLE_ILA)
+  .ENABLE_ILA(1) // ENABLE_ILA)
 ) scheduler (
   .clk(sys_clk),
   .rst(sys_rst),

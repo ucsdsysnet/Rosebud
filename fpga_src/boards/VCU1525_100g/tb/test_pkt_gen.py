@@ -44,6 +44,8 @@ srcs = []
 srcs.append("../rtl/fpga_core.v")
 srcs.append("../rtl/riscv_block_PR.v")
 srcs.append("../rtl/pcie_config.v")
+srcs.append("../ip/ila_4x64_stub.v")
+srcs.append("../ip/ila_3x64_stub.v")
 
 srcs.append("../lib/smartFPGA/rtl/simple_fifo.v")
 srcs.append("../lib/smartFPGA/rtl/max_finder_tree.v")
@@ -752,7 +754,7 @@ def bench():
 
         yield rc.mem_write(dev_pf0_bar0+0x00040C, struct.pack('<L', 0x0000))
         yield rc.mem_write(dev_pf0_bar0+0x000410, struct.pack('<L', 0x0000))
-        yield delay(20000)
+        yield delay(200000)
 
         # put cores into reset
         yield rc.mem_write(dev_pf0_bar0+0x000404, struct.pack('<L', 0x0001))

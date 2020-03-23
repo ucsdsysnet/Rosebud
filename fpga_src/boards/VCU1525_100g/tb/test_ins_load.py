@@ -44,6 +44,8 @@ srcs = []
 srcs.append("../rtl/fpga_core.v")
 srcs.append("../rtl/riscv_block_PR.v")
 srcs.append("../rtl/pcie_config.v")
+srcs.append("../ip/ila_4x64_stub.v")
+srcs.append("../ip/ila_3x64_stub.v")
 
 srcs.append("../lib/smartFPGA/rtl/simple_fifo.v")
 srcs.append("../lib/smartFPGA/rtl/max_finder_tree.v")
@@ -138,18 +140,19 @@ def bench():
     AXIS_ETH_DATA_WIDTH = 512
     AXIS_ETH_KEEP_WIDTH = AXIS_ETH_DATA_WIDTH/8
 
-    SEND_COUNT_0 = 100
-    SEND_COUNT_1 = 100
-    SIZE_0       = 9000 - 14
-    SIZE_1       = 9000 - 14
+    SEND_COUNT_0 = 200
+    SEND_COUNT_1 = 200
+    SIZE_0       = 128 - 14
+    SIZE_1       = 128 - 14
     CHECK_PKT    = True
+    DROP_TEST    = True
     TEST_SFP     = True
     TEST_PCIE    = True
     TEST_DEBUG   = False
     PRINT_PKTS   = False
-    FIRMWARE     = "../../../../c_code/basic_fw2.bin"
+    # FIRMWARE     = "../../../../c_code/basic_fw2.bin"
     # FIRMWARE     = "../../../../c_code/dram_test2.bin"
-    # FIRMWARE     = "../../../../c_code/drop.bin"
+    FIRMWARE     = "../../../../c_code/drop.bin"
 
     # Inputs
     sys_clk  = Signal(bool(0))
@@ -867,6 +870,7 @@ def bench():
         yield delay(1000)
        
         if (TEST_SFP):
+          print ("send data from LAN")
           yield port1(),None
           yield port2(),None
         
@@ -875,39 +879,39 @@ def bench():
           # yield delay (200)
           # yield rc.mem_write(dev_pf0_bar0+0x00040C, struct.pack('<L', 0x0000))
 
-          lengths = []
-          print ("send data from LAN")
-          for j in range (0,SEND_COUNT_1):
-            yield qsfp0_sink.wait()
-            rx_frame = qsfp0_sink.recv()
-            data = rx_frame.data
-            if (PRINT_PKTS):
-              print ("packet number from port 0:",j)
-              for i in range(0, len(data), 16):
-                  print(" ".join(("{:02x}".format(c) for c in bytearray(data[i:i+16]))))
-            else:
-              print (".")
-            if (CHECK_PKT):
-              assert rx_frame.data[0:14] == start_data_1[0:14]
-              assert rx_frame.data[15:] == start_data_1[15:]
-            lengths.append(len(data)-8)
+          if (not DROP_TEST):
+            lengths = []
+            for j in range (0,SEND_COUNT_1):
+              yield qsfp0_sink.wait()
+              rx_frame = qsfp0_sink.recv()
+              data = rx_frame.data
+              if (PRINT_PKTS):
+                print ("packet number from port 0:",j)
+                for i in range(0, len(data), 16):
+                    print(" ".join(("{:02x}".format(c) for c in bytearray(data[i:i+16]))))
+              else:
+                print (".")
+              if (CHECK_PKT):
+                assert rx_frame.data[0:14] == start_data_1[0:14]
+                assert rx_frame.data[15:] == start_data_1[15:]
+              lengths.append(len(data)-8)
 
-          for j in range (0,SEND_COUNT_0):
-            yield qsfp1_sink.wait()
-            rx_frame = qsfp1_sink.recv()
-            data = rx_frame.data
-            if (PRINT_PKTS):
-              print ("packet number from port 1:",j)
-              for i in range(0, len(data), 16):
-                  print(" ".join(("{:02x}".format(c) for c in bytearray(data[i:i+16]))))
-            else:
-              print (".")
-            if (CHECK_PKT):
-              assert rx_frame.data[0:14] == start_data_2[0:14]
-              assert rx_frame.data[15:] == start_data_2[15:]
-            lengths.append(len(data)-8)
+            for j in range (0,SEND_COUNT_0):
+              yield qsfp1_sink.wait()
+              rx_frame = qsfp1_sink.recv()
+              data = rx_frame.data
+              if (PRINT_PKTS):
+                print ("packet number from port 1:",j)
+                for i in range(0, len(data), 16):
+                    print(" ".join(("{:02x}".format(c) for c in bytearray(data[i:i+16]))))
+              else:
+                print (".")
+              if (CHECK_PKT):
+                assert rx_frame.data[0:14] == start_data_2[0:14]
+                assert rx_frame.data[15:] == start_data_2[15:]
+              lengths.append(len(data)-8)
         
-        yield delay(2000)
+        yield delay(20000)
 
         for k in range (8,12):
           yield rc.mem_write(dev_pf0_bar0+0x000414, struct.pack('<L', k<<4|0))
