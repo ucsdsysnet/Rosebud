@@ -808,7 +808,7 @@ assign out_desc_ready = (core_data_wr_ready && core_data_wr) ||
 /////////////////////////////////////////////////////////////////////
 
 wire [24:0] ctrl_send_addr   = send_slot_addr[ctrl_in_slot_ptr];
-wire [24:0] ctrl_lp_send_len = send_slot_len [ctrl_in_slot_ptr];
+wire [15:0] ctrl_lp_send_len = send_slot_len [ctrl_in_slot_ptr];
 
 wire ctrl_desc_cmd = (ctrl_cmd == 4'h0) || (ctrl_cmd == 4'h1);
 wire [ID_TAG_WIDTH+64:0] parsed_ctrl_desc = (ctrl_cmd==4'd1) ?
