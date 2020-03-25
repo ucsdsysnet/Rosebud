@@ -439,5 +439,6 @@ add_cells_to_pblock [get_pblocks pblock_35] [get_cells -quiet [list core_inst/sc
 resize_pblock [get_pblocks pblock_35] -add {CLOCKREGION_X2Y7:CLOCKREGION_X3Y8}
 set_property EXCLUDE_PLACEMENT 1 [get_pblocks pblock_35]
 
-
-
+create_pblock pblock_36
+add_cells_to_pblock [get_pblocks pblock_36] [get_cells -quiet [list core_inst/pcie_controller_inst/dma_if_pcie_us_inst]]
+resize_pblock [get_pblocks pblock_36] -add {CLOCKREGION_X4Y6:CLOCKREGION_X5Y8}
