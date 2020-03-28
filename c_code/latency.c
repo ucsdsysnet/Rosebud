@@ -4,7 +4,7 @@ struct Desc send_pkt;
 struct Desc recv_pkt;
 struct Desc summary_pkt;
 
-unsigned int * pkt_data[8];
+unsigned int * pkt_data[16];
 unsigned int * wr_ptr;
 unsigned int count;
 
@@ -31,7 +31,7 @@ int main(void){
   init_hdr_slots(8, 0x804000, 128);
   init_slots(8, 0x1000000, 16384);
 
-  for (i=0;i<8;i++){
+  for (i=0;i<16;i++){
     pkt_data[i] = (unsigned int *)(0x01000000+(i*16384));
   }
 
@@ -47,7 +47,6 @@ int main(void){
   wr_ptr = (unsigned int *) 0x1080000;
   summary_pkt.data=((unsigned char*) wr_ptr);
 
-  i = 0;
   count = 0;
   slow_down = SLOW_DOWN_RATE;
 
@@ -58,8 +57,9 @@ int main(void){
       set_masks(0x04); //enable only timer
 
   if ((core_id()&0x1)==0){
+  // if ((core_id())>=8){
     while (1){
-      for (i=0;i<8;i++) {
+      for (i=0;i<16;i++) {
         if (CONGESTION==0)
           for (k=0;k<100000;k++);
         send_pkt.data = (unsigned char *) pkt_data[i];
@@ -100,7 +100,8 @@ int main(void){
         // Drop the packet
         recv_pkt.len=0;
         // Since we have interrupts we need atomic version of it.
-        atomic_pkt_send (&recv_pkt); 
+        // atomic_pkt_send (&recv_pkt); 
+        pkt_send (&recv_pkt); 
       }
     }
   }
