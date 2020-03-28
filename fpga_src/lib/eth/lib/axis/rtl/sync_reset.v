@@ -1,6 +1,6 @@
 /*
 
-Copyright (c) 2014-2018 Alex Forencich
+Copyright (c) 2014-2020 Alex Forencich
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -24,29 +24,34 @@ THE SOFTWARE.
 
 // Language: Verilog-2001
 
-`timescale 1 ns / 1 ps
+`timescale 1ns / 1ps
 
 /*
  * Synchronizes an active-high asynchronous reset signal to a given clock by
  * using a pipeline of N registers.
  */
-module sync_reset #(
-    parameter N=2 // depth of synchronizer
-)(
-    input wire clk,
-    input wire rst,
-    output wire sync_reset_out
+module sync_reset #
+(
+    // depth of synchronizer
+    parameter N = 2
+)
+(
+    input  wire clk,
+    input  wire rst,
+    output wire out
 );
 
+(* srl_style = "register" *)
 reg [N-1:0] sync_reg = {N{1'b1}};
 
-assign sync_reset_out = sync_reg[N-1];
+assign out = sync_reg[N-1];
 
 always @(posedge clk or posedge rst) begin
-    if (rst)
+    if (rst) begin
         sync_reg <= {N{1'b1}};
-    else
+    end else begin
         sync_reg <= {sync_reg[N-2:0], 1'b0};
+    end
 end
 
 endmodule
