@@ -17,8 +17,8 @@ module axis_stat # (
 
   output reg  [BYTE_COUNT_WIDTH-1:0]  byte_count,
   output reg  [FRAME_COUNT_WIDTH-1:0] frame_count,
-  output reg  [BYTE_COUNT_WIDTH-1:0]  drop_count,
-  output reg  [BYTE_COUNT_WIDTH-1:0]  stall_count
+  output reg  [FRAME_COUNT_WIDTH-1:0] drop_count,
+  output reg  [FRAME_COUNT_WIDTH-1:0] stall_count
 );
 
 integer i, bit_cnt;

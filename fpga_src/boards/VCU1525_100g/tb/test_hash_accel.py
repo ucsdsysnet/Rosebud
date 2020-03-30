@@ -44,6 +44,9 @@ srcs = []
 srcs.append("../rtl/fpga_core.v")
 srcs.append("../rtl/riscv_block_PR.v")
 srcs.append("../rtl/pcie_config.v")
+srcs.append("../ip/ila_4x64_stub.v")
+srcs.append("../ip/ila_3x64_stub.v")
+srcs.append("../ip/ila_2x64_stub.v")
 
 srcs.append("../lib/smartFPGA/rtl/simple_fifo.v")
 srcs.append("../lib/smartFPGA/rtl/max_finder_tree.v")
@@ -75,12 +78,6 @@ srcs.append("../lib/smartFPGA/rtl/pcie_controller.v")
 srcs.append("../lib/smartFPGA/rtl/pcie_cont_read.v")
 srcs.append("../lib/smartFPGA/rtl/pcie_cont_write.v")
 srcs.append("../lib/smartFPGA/rtl/corundum.v")
-
-srcs.append("../lib/eth/rtl/eth_mac_10g_fifo.v")
-srcs.append("../lib/eth/rtl/eth_mac_10g.v")
-srcs.append("../lib/eth/rtl/axis_xgmii_rx_64.v")
-srcs.append("../lib/eth/rtl/axis_xgmii_tx_64.v")
-srcs.append("../lib/eth/rtl/lfsr.v")
 
 srcs.append("../lib/axis/rtl/arbiter.v")
 srcs.append("../lib/axis/rtl/priority_encoder.v")
@@ -700,15 +697,15 @@ def bench():
         qsfp1_lpmode=qsfp1_lpmode
     )
 
-    @always(delay(3)) #25
+    @always(delay(2)) #25
     def clkgen():
         sys_clk.next = not sys_clk
 
-    @always(delay(3)) #27
+    @always(delay(2)) #27
     def clkgen3():
         core_clk.next = not core_clk
 
-    @always(delay(3)) #32
+    @always(delay(2)) #32
     def qsfp_clkgen():
         qsfp0_tx_clk.next = not qsfp0_tx_clk
         qsfp0_rx_clk.next = not qsfp0_rx_clk
@@ -728,7 +725,6 @@ def bench():
           qsfp0_source.send(bytearray(axis_frame))
           # yield delay(random.randrange(128))
           yield qsfp0_rx_clk.posedge
-          # yield qsfp0_rx_clk_1.posedge
 
     def port2():
         for i in range (0,SEND_COUNT_1):
@@ -741,7 +737,6 @@ def bench():
           qsfp1_source.send(bytearray(axis_frame_2))
           # yield delay(random.randrange(128))
           yield qsfp1_rx_clk.posedge
-          # yield qsfp1_rx_clk_1.posedge
 
     @instance
     def check():

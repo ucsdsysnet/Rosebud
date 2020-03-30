@@ -44,6 +44,9 @@ srcs = []
 srcs.append("../rtl/fpga_core.v")
 srcs.append("../rtl/riscv_block_PR.v")
 srcs.append("../rtl/pcie_config.v")
+srcs.append("../ip/ila_4x64_stub.v")
+srcs.append("../ip/ila_3x64_stub.v")
+srcs.append("../ip/ila_2x64_stub.v")
 
 srcs.append("../lib/smartFPGA/rtl/simple_fifo.v")
 srcs.append("../lib/smartFPGA/rtl/max_finder_tree.v")
@@ -70,12 +73,6 @@ srcs.append("../lib/smartFPGA/rtl/pcie_controller.v")
 srcs.append("../lib/smartFPGA/rtl/pcie_cont_read.v")
 srcs.append("../lib/smartFPGA/rtl/pcie_cont_write.v")
 srcs.append("../lib/smartFPGA/rtl/corundum.v")
-
-srcs.append("../lib/eth/rtl/eth_mac_10g_fifo.v")
-srcs.append("../lib/eth/rtl/eth_mac_10g.v")
-srcs.append("../lib/eth/rtl/axis_xgmii_rx_64.v")
-srcs.append("../lib/eth/rtl/axis_xgmii_tx_64.v")
-srcs.append("../lib/eth/rtl/lfsr.v")
 
 srcs.append("../lib/axis/rtl/arbiter.v")
 srcs.append("../lib/axis/rtl/priority_encoder.v")
@@ -773,11 +770,10 @@ def bench():
 
         yield delay(1000)
 
-        yield rc.mem_write(dev_pf0_bar0+0x00040C, struct.pack('<L', 0x0002))
+        yield rc.mem_write(dev_pf0_bar0+0x00040C, struct.pack('<L', 0xaaaa))
         yield rc.mem_write(dev_pf0_bar0+0x000410, struct.pack('<L', 0x0000))
   
-
-        yield delay(10000)
+        yield delay(500000)
         
         # put cores into reset
         yield rc.mem_write(dev_pf0_bar0+0x000404, struct.pack('<L', 0x0001))
@@ -791,11 +787,11 @@ def bench():
         # read stored values from one core
         yield rc.mem_write(dev_pf0_bar0+0x000460, struct.pack('<L', (mem_base+0x1000) & 0xffffffff))
         yield rc.mem_write(dev_pf0_bar0+0x000464, struct.pack('<L', (mem_base+0x1000 >> 32) & 0xffffffff))
-        yield rc.mem_write(dev_pf0_bar0+0x000468, struct.pack('<L', ((1<<26)+0x01080000) & 0xffffffff))
+        yield rc.mem_write(dev_pf0_bar0+0x000468, struct.pack('<L', ((5<<26)+0x01080000) & 0xffffffff))
         yield rc.mem_write(dev_pf0_bar0+0x000470, struct.pack('<L', 0x800))
         yield rc.mem_write(dev_pf0_bar0+0x000474, struct.pack('<L', 0x55))
 
-        yield delay(2000)
+        yield delay(20000)
 
         val = yield from rc.mem_read(dev_pf0_bar0+0x000478, 4)
         print(val)

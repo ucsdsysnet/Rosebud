@@ -590,18 +590,16 @@ wire [CORE_COUNT-1:0]      cores_to_be_reset;
 wire [CORE_WIDTH+4-1:0]    stat_read_core;
 wire [CORE_WIDTH+4-1:0]    stat_read_core_r;
 wire [IF_COUNT_WIDTH-1:0]  stat_read_interface;
+wire [1:0]                 stat_read_addr;
 wire [SLOT_WIDTH-1:0]      slot_count;
 wire [ID_TAG_WIDTH-1:0]    interface_loaded_desc;
 wire                       pcie_dma_enable;
 wire [31:0]                vif_irq;
 
-reg  [31:0]                   core_stat_data_muxed;
-wire [31:0]                   core_stat_data_muxed_r;
-wire [BYTE_COUNT_WIDTH-1:0]   interface_in_byte_count;
-wire [BYTE_COUNT_WIDTH-1:0]   interface_out_byte_count;
-wire [FRAME_COUNT_WIDTH-1:0]  interface_in_frame_count;
-wire [FRAME_COUNT_WIDTH-1:0]  interface_in_drop_count;
-wire [FRAME_COUNT_WIDTH-1:0]  interface_out_frame_count;
+reg  [31:0]                core_stat_data_muxed;
+wire [31:0]                core_stat_data_muxed_r;
+wire [31:0]                interface_in_stat_data; 
+wire [31:0]                interface_out_stat_data;
 
 // AXI lite connections
 wire [AXIL_ADDR_WIDTH-1:0]         axil_ctrl_awaddr;
@@ -668,8 +666,6 @@ pcie_config # (
   .CORE_SLOT_WIDTH(SLOT_WIDTH),
   .ID_TAG_WIDTH(ID_TAG_WIDTH),
   .INTERFACE_WIDTH(IF_COUNT_WIDTH),
-  .BYTE_COUNT_WIDTH(BYTE_COUNT_WIDTH),
-  .FRAME_COUNT_WIDTH(FRAME_COUNT_WIDTH),
   .IF_COUNT(V_IF_COUNT),
   .PORTS_PER_IF(PORTS_PER_V_IF),
   .FW_ID(FW_ID),
@@ -757,14 +753,12 @@ pcie_config # (
   .slot_count        (slot_count),
   .core_stat_data    (core_stat_data_muxed_r),
 
-  .stat_read_interface      (stat_read_interface),
-  .interface_in_byte_count  (interface_in_byte_count),
-  .interface_in_frame_count (interface_in_frame_count),
-  .interface_in_drop_count  (interface_in_drop_count),
-  .interface_out_byte_count (interface_out_byte_count),
-  .interface_out_frame_count(interface_out_frame_count),
-  .interface_loaded_desc    (interface_loaded_desc),
-
+  .stat_read_interface     (stat_read_interface),
+  .stat_read_addr          (stat_read_addr),
+  .interface_in_stat_data  (interface_in_stat_data), 
+  .interface_out_stat_data (interface_out_stat_data), 
+  .interface_loaded_desc   (interface_loaded_desc),
+  
   .pcie_dma_enable    (pcie_dma_enable),
   .corundum_loopback  (),
   .if_msi_irq         (vif_irq),
@@ -1121,12 +1115,12 @@ simple_scheduler # (
   .host_cmd_valid(host_cmd_valid),
   .host_cmd_ready(host_cmd_ready),
 
-  .income_cores     (income_cores),
-  .cores_to_be_reset(cores_to_be_reset),
-  .stat_read_core   (stat_read_core[4 +: CORE_WIDTH]),
-  .slot_count       (slot_count),
+  .income_cores       (income_cores),
+  .cores_to_be_reset  (cores_to_be_reset),
+  .stat_read_core     (stat_read_core[4 +: CORE_WIDTH]),
+  .slot_count         (slot_count),
   .stat_read_interface(stat_read_interface),
-  .loaded_desc(interface_loaded_desc),
+  .loaded_desc        (interface_loaded_desc),
 
   .trig_in     (sched_trig_in),
   .trig_in_ack (sched_trig_in_ack),
@@ -1234,9 +1228,8 @@ stat_reader # (
   .monitor_drop_pulse({{V_PORT_COUNT{1'b0}},rx_drop_r}),
 
   .port_select(stat_read_interface),
-  .byte_count(interface_in_byte_count),
-  .frame_count(interface_in_frame_count),
-  .drop_count(interface_in_drop_count)
+  .stat_addr(stat_read_addr),
+  .stat_data(interface_in_stat_data)
 );
 
 axis_switch_2lvl # (
@@ -1308,9 +1301,8 @@ stat_reader # (
   .monitor_drop_pulse({INTERFACE_COUNT+V_PORT_COUNT{1'b0}}),
 
   .port_select(stat_read_interface),
-  .byte_count(interface_out_byte_count),
-  .frame_count(interface_out_frame_count),
-  .drop_count()
+  .stat_addr(stat_read_addr),
+  .stat_data(interface_out_stat_data)
 );
 
 axis_switch_2lvl # (

@@ -46,6 +46,7 @@ srcs.append("../rtl/riscv_block_PR.v")
 srcs.append("../rtl/pcie_config.v")
 srcs.append("../ip/ila_4x64_stub.v")
 srcs.append("../ip/ila_3x64_stub.v")
+srcs.append("../ip/ila_2x64_stub.v")
 
 srcs.append("../lib/smartFPGA/rtl/simple_fifo.v")
 srcs.append("../lib/smartFPGA/rtl/max_finder_tree.v")
@@ -779,10 +780,12 @@ def bench():
         print ("Read interface stat")  
         pkt_count = 2*[0]
         for k in range (0,2):
-          yield rc.mem_write(dev_pf0_bar0+0x000418, struct.pack('<L', k))
+          yield rc.mem_write(dev_pf0_bar0+0x000418, struct.pack('<L', k<<8|0))
           yield delay(100)
           bytes_out  = yield from rc.mem_read(dev_pf0_bar0+0x00042C, 4)
-          frames_out = yield from rc.mem_read(dev_pf0_bar0+0x000434, 4)
+          yield rc.mem_write(dev_pf0_bar0+0x000418, struct.pack('<L', k<<8|1))
+          yield delay(100)
+          frames_out = yield from rc.mem_read(dev_pf0_bar0+0x00042C, 4)
           pkt_count[k] = B_2_int(frames_out);
           print ("Interface %d stat read, byte_out, frames_out" % (k))
           print (B_2_int(bytes_out),B_2_int(frames_out))
