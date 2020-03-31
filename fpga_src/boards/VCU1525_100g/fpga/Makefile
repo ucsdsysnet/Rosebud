@@ -28,7 +28,7 @@ SYN_FILES += lib/smartFPGA/rtl/stat_reader.v
 SYN_FILES += lib/smartFPGA/rtl/mem_sys.v
 SYN_FILES += lib/smartFPGA/rtl/riscv_axis_wrapper.v
 SYN_FILES += lib/smartFPGA/rtl/simple_sync_sig.v
-SYN_FILES += lib/smartFPGA/rtl/axis_switch.v
+SYN_FILES += lib/smartFPGA/rtl/simple_axis_switch.v
 SYN_FILES += lib/smartFPGA/rtl/axis_ram_switch.v
 SYN_FILES += lib/smartFPGA/rtl/axis_switch_2lvl.v
 SYN_FILES += lib/smartFPGA/rtl/loopback_msg_fifo.v
@@ -97,9 +97,9 @@ XDC_FILES += lib/smartFPGA/syn/simple_sync_sig.tcl
 XCI_FILES = ip/pcie4_uscale_plus_0.xci
 XCI_FILES += ip/cmac_usplus_0.xci
 XCI_FILES += ip/cmac_usplus_1.xci
-XCI_FILES += ip/ila_4x64.xci
-XCI_FILES += ip/ila_3x64.xci
-XCI_FILES += ip/ila_2x64.xci
+# XCI_FILES += ip/ila_4x64.xci
+# XCI_FILES += ip/ila_3x64.xci
+# XCI_FILES += ip/ila_2x64.xci
 
 include ../common/vivado.mk
 

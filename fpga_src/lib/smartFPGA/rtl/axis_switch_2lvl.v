@@ -738,7 +738,7 @@ module axis_simple_sw_shrink # (
 
     end else begin: last_level_sw //M_COUNT!=1
 
-        axis_switch #
+        simple_axis_switch #
         (
             .S_COUNT(CLUSTER_COUNT),
             .M_COUNT(M_COUNT),
@@ -1415,7 +1415,7 @@ module axis_ram_sw_shrink # (
 
     end else begin: last_level_sw //M_COUNT!=1
 
-        axis_switch #
+        simple_axis_switch #
         (
             .S_COUNT(CLUSTER_COUNT),
             .M_COUNT(M_COUNT),
@@ -1544,7 +1544,7 @@ module axis_simple_sw_grow # (
                                           int_axis_tlast;
 
     // Data channel switch
-    axis_switch #
+    simple_axis_switch #
     (
         .S_COUNT(S_COUNT),
         .M_COUNT(CLUSTER_COUNT),
@@ -1725,7 +1725,7 @@ module axis_simple_sw_grow # (
                     assign int_axis_tready   = int_axis_tready_f;
                 end
 
-                axis_switch #
+                simple_axis_switch #
                 (
                     .S_COUNT(1),
                     .M_COUNT(M_PER_CLUSTER),
@@ -1856,7 +1856,7 @@ module axis_ram_sw_grow # (
     wire [M_COUNT*USER_WIDTH-1:0]         m_axis_tuser_n;
 
     // Data channel switch
-    axis_switch #
+    simple_axis_switch #
     (
         .S_COUNT(S_COUNT),
         .M_COUNT(CLUSTER_COUNT),

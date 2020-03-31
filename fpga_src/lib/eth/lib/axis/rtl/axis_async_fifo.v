@@ -498,6 +498,7 @@ always @(posedge m_clk) begin
         rd_ptr_reg <= {ADDR_WIDTH+1{1'b0}};
         rd_ptr_gray_reg <= {ADDR_WIDTH+1{1'b0}};
         mem_read_data_valid_reg <= 1'b0;
+        mem_read_data_reg <= {WIDTH{1'b0}};
     end else begin
         rd_ptr_reg <= rd_ptr_next;
         rd_ptr_gray_reg <= rd_ptr_gray_next;
@@ -526,6 +527,7 @@ end
 always @(posedge m_clk) begin
     if (m_rst_sync3_reg) begin
         m_axis_tvalid_reg <= 1'b0;
+        m_axis_reg <= {WIDTH{1'b0}};
     end else begin
         m_axis_tvalid_reg <= m_axis_tvalid_next;
     end

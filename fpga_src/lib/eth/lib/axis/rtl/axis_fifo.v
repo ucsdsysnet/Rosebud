@@ -303,6 +303,7 @@ always @(posedge clk) begin
     if (rst) begin
         rd_ptr_reg <= {ADDR_WIDTH+1{1'b0}};
         mem_read_data_valid_reg <= 1'b0;
+        mem_read_data_reg <= {WIDTH{1'b0}};
     end else begin
         rd_ptr_reg <= rd_ptr_next;
         mem_read_data_valid_reg <= mem_read_data_valid_next;
@@ -330,6 +331,7 @@ end
 always @(posedge clk) begin
     if (rst) begin
         m_axis_tvalid_reg <= 1'b0;
+        m_axis_reg <= {WIDTH{1'b0}};
     end else begin
         m_axis_tvalid_reg <= m_axis_tvalid_next;
     end

@@ -159,6 +159,8 @@ if (REG_TYPE > 1) begin
             s_axis_tready_reg <= 1'b0;
             m_axis_tvalid_reg <= 1'b0;
             temp_m_axis_tvalid_reg <= 1'b0;
+            m_axis_tdest_reg       <= {DEST_WIDTH{1'b0}};
+            temp_m_axis_tdest_reg  <= {DEST_WIDTH{1'b0}};
         end else begin
             s_axis_tready_reg <= s_axis_tready_early;
             m_axis_tvalid_reg <= m_axis_tvalid_next;
@@ -240,6 +242,7 @@ end else if (REG_TYPE == 1) begin
         if (rst) begin
             s_axis_tready_reg <= 1'b0;
             m_axis_tvalid_reg <= 1'b0;
+            m_axis_tdest_reg  <= {DEST_WIDTH{1'b0}};
         end else begin
             s_axis_tready_reg <= s_axis_tready_early;
             m_axis_tvalid_reg <= m_axis_tvalid_next;

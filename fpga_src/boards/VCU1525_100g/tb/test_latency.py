@@ -62,7 +62,7 @@ srcs.append("../lib/smartFPGA/rtl/mem_sys.v")
 srcs.append("../lib/smartFPGA/rtl/simple_arbiter.v")
 srcs.append("../lib/smartFPGA/rtl/simple_scheduler.v")
 srcs.append("../lib/smartFPGA/rtl/simple_sync_sig.v")
-srcs.append("../lib/smartFPGA/rtl/axis_switch.v")
+srcs.append("../lib/smartFPGA/rtl/simple_axis_switch.v")
 srcs.append("../lib/smartFPGA/rtl/axis_ram_switch.v")
 srcs.append("../lib/smartFPGA/rtl/axis_stat.v")
 srcs.append("../lib/smartFPGA/rtl/stat_reader.v")
@@ -773,7 +773,7 @@ def bench():
         yield rc.mem_write(dev_pf0_bar0+0x00040C, struct.pack('<L', 0xaaaa))
         yield rc.mem_write(dev_pf0_bar0+0x000410, struct.pack('<L', 0x0000))
   
-        yield delay(500000)
+        yield delay(200000)
         
         # put cores into reset
         yield rc.mem_write(dev_pf0_bar0+0x000404, struct.pack('<L', 0x0001))
