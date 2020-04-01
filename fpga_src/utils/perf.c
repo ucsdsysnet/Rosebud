@@ -158,6 +158,8 @@ int main(int argc, char *argv[])
     uint64_t if_tx_bytes[MAX_IF_COUNT];
     uint64_t if_rx_frames[MAX_IF_COUNT];
     uint64_t if_tx_frames[MAX_IF_COUNT];
+    uint64_t if_rx_stalls[MAX_IF_COUNT];
+    uint64_t if_tx_stalls[MAX_IF_COUNT];
     uint64_t if_rx_drops[MAX_IF_COUNT];
 
     uint64_t total_if_rx_bytes[MAX_IF_COUNT];
@@ -170,6 +172,8 @@ int main(int argc, char *argv[])
     uint32_t if_tx_bytes_raw[MAX_IF_COUNT];
     uint32_t if_rx_frames_raw[MAX_IF_COUNT];
     uint32_t if_tx_frames_raw[MAX_IF_COUNT];
+    uint32_t if_rx_stalls_raw[MAX_IF_COUNT];
+    uint32_t if_tx_stalls_raw[MAX_IF_COUNT];
     uint32_t if_rx_drops_raw[MAX_IF_COUNT];
 
     uint64_t total_rx_bytes;
@@ -229,6 +233,7 @@ int main(int argc, char *argv[])
         total_core_tx_bytes[k] = 0;
         total_core_rx_frames[k] = 0;
         total_core_tx_frames[k] = 0;
+        
         mqnic_reg_write32(dev->regs, 0x000414, k<<4|0x0);
         core_rx_bytes_raw[k] = mqnic_reg_read32(dev->regs, 0x000424); //dummy read
         core_rx_bytes_raw[k] = mqnic_reg_read32(dev->regs, 0x000424);
@@ -251,22 +256,37 @@ int main(int argc, char *argv[])
 
     for (int k=0; k<if_count; k++)
     {
-        mqnic_reg_write32(dev->regs, 0x000418, k);
         if_rx_bytes[k] = 0;
         if_tx_bytes[k] = 0;
         if_rx_frames[k] = 0;
         if_tx_frames[k] = 0;
+        if_rx_stalls[k] = 0;
+        if_tx_stalls[k] = 0;
         if_rx_drops[k] = 0;
         total_if_rx_bytes[k] = 0;
         total_if_tx_bytes[k] = 0;
         total_if_rx_frames[k] = 0;
         total_if_tx_frames[k] = 0;
         total_if_rx_drops[k] = 0;
+        
+        mqnic_reg_write32(dev->regs, 0x000418, k<<8|0);
+        if_rx_bytes_raw[k] = mqnic_reg_read32(dev->regs, 0x000428); // dummy read
         if_rx_bytes_raw[k] = mqnic_reg_read32(dev->regs, 0x000428);
+        if_tx_bytes_raw[k] = mqnic_reg_read32(dev->regs, 0x00042C); // dummy read
         if_tx_bytes_raw[k] = mqnic_reg_read32(dev->regs, 0x00042C);
-        if_rx_frames_raw[k] = mqnic_reg_read32(dev->regs, 0x000430);
-        if_tx_frames_raw[k] = mqnic_reg_read32(dev->regs, 0x000434);
-        if_rx_drops_raw[k] = mqnic_reg_read32(dev->regs, 0x000438);
+        mqnic_reg_write32(dev->regs, 0x000418, k<<8|1);
+        if_rx_frames_raw[k] = mqnic_reg_read32(dev->regs, 0x000428); // dummy read
+        if_rx_frames_raw[k] = mqnic_reg_read32(dev->regs, 0x000428);
+        if_tx_frames_raw[k] = mqnic_reg_read32(dev->regs, 0x00042C); // dummy read
+        if_tx_frames_raw[k] = mqnic_reg_read32(dev->regs, 0x00042C);
+        mqnic_reg_write32(dev->regs, 0x000418, k<<8|3);
+        if_rx_stalls_raw[k] = mqnic_reg_read32(dev->regs, 0x000428); // dummy read
+        if_rx_stalls_raw[k] = mqnic_reg_read32(dev->regs, 0x000428);
+        if_tx_stalls_raw[k] = mqnic_reg_read32(dev->regs, 0x00042C); // dummy read
+        if_tx_stalls_raw[k] = mqnic_reg_read32(dev->regs, 0x00042C);
+        mqnic_reg_write32(dev->regs, 0x000418, k<<8|2);
+        if_rx_drops_raw[k] = mqnic_reg_read32(dev->regs, 0x000428); // dummy read
+        if_rx_drops_raw[k] = mqnic_reg_read32(dev->regs, 0x000428);
     }
 
     while (keep_running)
@@ -287,6 +307,8 @@ int main(int argc, char *argv[])
             if_tx_bytes[k] = 0;
             if_rx_frames[k] = 0;
             if_tx_frames[k] = 0;
+            if_rx_stalls[k] = 0;
+            if_tx_stalls[k] = 0;
             if_rx_drops[k] = 0;
         }
 
@@ -359,25 +381,42 @@ int main(int argc, char *argv[])
 
             for (int k=0; k<if_count; k++)
             {
-                mqnic_reg_write32(dev->regs, 0x000418, k);
-
+                mqnic_reg_write32(dev->regs, 0x000418, k<<8|0);
+                temp = mqnic_reg_read32(dev->regs, 0x000428); // dummy read
                 temp = mqnic_reg_read32(dev->regs, 0x000428);
                 if_rx_bytes[k] += temp - if_rx_bytes_raw[k];
                 if_rx_bytes_raw[k] = temp;
 
+                temp = mqnic_reg_read32(dev->regs, 0x00042C); // dummy read
                 temp = mqnic_reg_read32(dev->regs, 0x00042C);
                 if_tx_bytes[k] += temp - if_tx_bytes_raw[k];
                 if_tx_bytes_raw[k] = temp;
 
-                temp = mqnic_reg_read32(dev->regs, 0x000430);
+                mqnic_reg_write32(dev->regs, 0x000418, k<<8|1);
+                temp = mqnic_reg_read32(dev->regs, 0x000428); // dummy read
+                temp = mqnic_reg_read32(dev->regs, 0x000428);
                 if_rx_frames[k] += temp - if_rx_frames_raw[k];
                 if_rx_frames_raw[k] = temp;
 
-                temp = mqnic_reg_read32(dev->regs, 0x000434);
+                temp = mqnic_reg_read32(dev->regs, 0x00042C); // dummy read
+                temp = mqnic_reg_read32(dev->regs, 0x00042C);
                 if_tx_frames[k] += temp - if_tx_frames_raw[k];
                 if_tx_frames_raw[k] = temp;
 
-                temp = mqnic_reg_read32(dev->regs, 0x000438);
+                mqnic_reg_write32(dev->regs, 0x000418, k<<8|3);
+                temp = mqnic_reg_read32(dev->regs, 0x000428); // dummy read
+                temp = mqnic_reg_read32(dev->regs, 0x000428);
+                if_rx_stalls[k] += temp - if_rx_stalls_raw[k];
+                if_rx_stalls_raw[k] = temp;
+
+                temp = mqnic_reg_read32(dev->regs, 0x00042C); // dummy read
+                temp = mqnic_reg_read32(dev->regs, 0x00042C);
+                if_tx_stalls[k] += temp - if_tx_stalls_raw[k];
+                if_tx_stalls_raw[k] = temp;
+
+                mqnic_reg_write32(dev->regs, 0x000418, k<<8|2);
+                temp = mqnic_reg_read32(dev->regs, 0x000428); // dummy read
+                temp = mqnic_reg_read32(dev->regs, 0x000428);
                 if_rx_drops[k] += temp - if_rx_drops_raw[k];
                 if_rx_drops_raw[k] = temp;
             }
@@ -426,7 +465,7 @@ int main(int argc, char *argv[])
 
         for (int k=0; k<if_count; k++)
         {
-            printf("if   %2d  %12ld  %12ld  %12ld  %12ld  %12ld\n", k, if_rx_bytes[k], if_tx_bytes[k], if_rx_frames[k], if_tx_frames[k], if_rx_drops[k]);
+            printf("if   %2d  %12ld  %12ld  %12ld  %12ld  %12ld   %12ld   %12ld\n", k, if_rx_bytes[k], if_tx_bytes[k], if_rx_frames[k], if_tx_frames[k], if_rx_drops[k], if_rx_stalls[k], if_tx_stalls[k]);
             total_if_rx_bytes[k] += if_rx_bytes[k];
             total_if_tx_bytes[k] += if_tx_bytes[k];
             total_if_rx_frames[k] += if_rx_frames[k];
@@ -436,12 +475,14 @@ int main(int argc, char *argv[])
             total_tx_bytes += if_tx_bytes[k];
             total_rx_frames += if_rx_frames[k];
             total_tx_frames += if_tx_frames[k];
+            total_rx_stalls += if_rx_stalls[k];
+            total_tx_stalls += if_tx_stalls[k];
             total_rx_drops += if_rx_drops[k];
         }
 
         updates++;
 
-        printf("total    %12ld  %12ld  %12ld  %12ld  %12ld\n", total_rx_bytes, total_tx_bytes, total_rx_frames, total_tx_frames, total_rx_drops);
+        printf("total    %12ld  %12ld  %12ld  %12ld  %12ld   %12ld   %12ld\n", total_rx_bytes, total_tx_bytes, total_rx_frames, total_tx_frames, total_rx_drops, total_rx_stalls, total_tx_stalls);
 
         if (output_file)
         {
@@ -488,7 +529,7 @@ int main(int argc, char *argv[])
         total_tx_frames += total_core_tx_frames[k];
     }
 
-    printf("total    %12ld  %12ld  %12ld  %12ld\n", total_rx_bytes, total_tx_bytes, total_rx_frames, total_tx_frames);
+    printf("total    %12ld  %12ld %12ld   %12ld\n", total_rx_bytes, total_tx_bytes, total_rx_frames, total_tx_frames);
 
     total_rx_bytes = 0;
     total_tx_bytes = 0;
@@ -538,7 +579,7 @@ int main(int argc, char *argv[])
 
     for (int k=0; k<if_count; k++)
     {
-        printf("if   %2d  %12ld  %12ld  %12ld  %12ld  %12ld\n", k, total_if_rx_bytes[k]/updates, total_if_tx_bytes[k]/updates, total_if_rx_frames[k]/updates, total_if_tx_frames[k]/updates, total_if_rx_drops[k]/updates);
+        printf("if   %2d  %12ld  %12ld  %12ld  %12ld %12ld\n", k, total_if_rx_bytes[k]/updates, total_if_tx_bytes[k]/updates, total_if_rx_frames[k]/updates, total_if_tx_frames[k]/updates, total_if_rx_drops[k]/updates);
         total_rx_bytes += total_if_rx_bytes[k];
         total_tx_bytes += total_if_tx_bytes[k];
         total_rx_frames += total_if_rx_frames[k];
@@ -546,7 +587,7 @@ int main(int argc, char *argv[])
         total_rx_drops += total_if_rx_drops[k];
     }
 
-    printf("total    %12ld  %12ld  %12ld  %12ld  %12ld\n", total_rx_bytes/updates, total_tx_bytes/updates, total_rx_frames/updates, total_tx_frames/updates, total_rx_drops/updates);
+    printf("total    %12ld  %12ld  %12ld  %12ld %12ld\n", total_rx_bytes/updates, total_tx_bytes/updates, total_rx_frames/updates, total_tx_frames/updates, total_rx_drops/updates);
 
 err:
 
