@@ -126,13 +126,15 @@ genvar j;
 generate
   for (j=0; j<PORT_CLUSTERS; j=j+1) begin : select_lvl1
     // Selecting each cluster bits
-    wire [LAST_SEL_BITS-1:0] cluster_port_sel  = 
+    wire [LAST_SEL_BITS-1:0] cluster_port_sel = 
                             port_select_rr[j*LAST_SEL_BITS +: LAST_SEL_BITS];
+		
+		wire [PORTS_PER_CLUSTER*32-1:0] cluster_stat_data = 
+	           stat_data_int_r[j*PORTS_PER_CLUSTER*32 +: PORTS_PER_CLUSTER*32];
 
     // First level selection among ports in a cluster
     always @ (posedge clk)
-      stat_data_int_rr[j*32+:32]<=
-              stat_data_int_r [cluster_port_sel*32+:32];
+      stat_data_int_rr[j*32+:32]<= cluster_stat_data[cluster_port_sel*32+:32];
   end
 endgenerate
 

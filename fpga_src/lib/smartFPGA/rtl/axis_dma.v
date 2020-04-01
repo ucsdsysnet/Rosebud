@@ -349,9 +349,7 @@ module axis_dma # (
 
   
   always @ (posedge clk)
-    if (rst)
-      send_tdest      <= 0;
-    else if (send_desc_ready && send_desc_valid) begin
+    if (send_desc_ready && send_desc_valid) begin
       send_base_addr  <= send_desc_addr;
       send_len        <= send_desc_len;
       send_tdest      <= send_desc_tdest;

@@ -163,11 +163,11 @@ generate
         );
 
         // Select CL_M_COUNT MSB bits for destination 
-        wire [DEST_WIDTH-1:0] temp_tdest = int_s_axis_tdest[m*DEST_WIDTH +: DEST_WIDTH];
-        wire [CL_M_COUNT-1:0] select = temp_tdest[DEST_WIDTH-1:DEST_WIDTH-CL_M_COUNT];
+        wire [CL_M_COUNT-1:0] select = int_s_axis_tdest[((m+1)*DEST_WIDTH)-1-:CL_M_COUNT];
 
-        // assign select = int_s_axis_tdest[((m+1)*DEST_WIDTH)-CL_M_COUNT +: CL_M_COUNT];
-        assign int_axis_tvalid[m*M_COUNT +: M_COUNT] = int_s_axis_tvalid[m] << select;
+        // Making simulator happy! 
+        assign int_axis_tvalid[m*M_COUNT +: M_COUNT] = int_s_axis_tvalid[m] ? 
+                                           (int_s_axis_tvalid[m] << select) : {M_COUNT{1'b0}};
         assign int_s_axis_tready[m] = int_axis_tready[select*S_COUNT+m];
 
     end // s_ifaces

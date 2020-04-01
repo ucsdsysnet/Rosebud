@@ -425,7 +425,6 @@ module simple_scheduler # (
       for (n=0; n<INTERFACE_COUNT; n=n+1) 
           if (rst) begin
               port_state[n] <= STALL;
-              dest_rr       <= {INTERFACE_COUNT*ID_TAG_WIDTH{1'b0}};
           end else begin
               case (port_state[n])
                   STALL: if (port_desc_avail[n]) 
@@ -480,12 +479,9 @@ module simple_scheduler # (
   wire [ID_TAG_WIDTH-1:0] rx_desc_data = {selected_desc, {(TAG_WIDTH-SLOT_WIDTH){1'b0}}, 
                                           rx_desc_slot[selected_desc*SLOT_WIDTH +: SLOT_WIDTH]};
   
-  always @ (posedge clk) begin
+  always @ (posedge clk)
     if (rx_desc_pop) 
       dest_r[selected_port_enc*ID_TAG_WIDTH +: ID_TAG_WIDTH] <= rx_desc_data;
-    if (rst)
-      dest_r <= {INTERFACE_COUNT*ID_TAG_WIDTH{1'b0}};
-  end
 
   genvar j;
   generate
