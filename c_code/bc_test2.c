@@ -21,35 +21,26 @@ int main(void){
     bc_write = (volatile unsigned int *)(0x806000+((core_id()+1)<<2));
   wr_ptr = (unsigned int *) 0x1080000;
         
-  summary_pkt.len=1500;
+  summary_pkt.len=1496;
   summary_pkt.port=2;
   summary_pkt.tag=0;
   summary_pkt.data=((unsigned char*) wr_ptr);
 
-  if (core_id()==0){
-    while (1){
-      for(k=0;k<100;k++);
-      * bc_write = read_timer_low();
-    }
-  } else {
-    while(1){
-      temp = * bc_read;
-      while (1){
-        time  = read_timer_low();
-        temp2 = *bc_read;
-        if (temp!=temp2) break;
-      }
+  while(1){
+    temp = * bc_read;
+    temp2 = read_timer_low();
+    * bc_write = temp2; 
+    * wr_ptr = temp;
+    * (wr_ptr+1) = temp2;
 
-      * wr_ptr = time - temp2;
-      * bc_write = read_timer_low();
+    count+=8;
+    wr_ptr+=2;
 
-      count+4;
-      wr_ptr++;
-      if (count==1500){
-        pkt_send(&summary_pkt);
-        count = 0; 
-        wr_ptr = (unsigned int *) 0x1080000;
-      }
+    // Sending 1 in 10 packets
+    if (count==14960){
+      pkt_send(&summary_pkt);
+      count = 0; 
+      wr_ptr = (unsigned int *) 0x1080000;
     }
   }
   
