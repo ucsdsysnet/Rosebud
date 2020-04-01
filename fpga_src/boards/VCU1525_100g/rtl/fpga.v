@@ -148,10 +148,6 @@ wire clk_125mhz_mmcm_out;
 wire clk_125mhz_int;
 wire rst_125mhz_int;
 
-// Internal 250 MHz clock
-wire clk_250mhz_int;
-wire rst_250mhz_int;
-
 // Internal 156.25 MHz clock
 wire clk_156mhz_int;
 wire rst_156mhz_int;
@@ -232,21 +228,6 @@ sync_reset_125mhz_inst (
     .clk(clk_125mhz_int),
     .rst(~mmcm_locked),
     .sync_reset_out(rst_125mhz_int)
-);
-
-BUFG
-clk_250mhz_bufg_inst (
-    .I(pcie_user_clk),
-    .O(clk_250mhz_int)
-);
-
-sync_reset #(
-    .N(4)
-)
-sync_reset_250mhz_inst (
-    .clk(clk_250mhz_int),
-    .rst(pcie_user_reset),
-    .sync_reset_out(rst_250mhz_int)
 );
 
 // GPIO
@@ -1376,10 +1357,10 @@ fpga_core #(
      */
     .pcie_clk(pcie_user_clk),
     .pcie_rst(pcie_user_reset),
-    .sys_clk(clk_250mhz_int),
-    .sys_rst(rst_250mhz_int),
-    .core_clk(clk_250mhz_int),
-    .core_rst(rst_250mhz_int),
+    .sys_clk(pcie_user_clk),
+    .sys_rst(pcie_user_reset),
+    .core_clk(pcie_user_clk),
+    .core_rst(pcie_user_reset),
 
     /*
      * GPIO

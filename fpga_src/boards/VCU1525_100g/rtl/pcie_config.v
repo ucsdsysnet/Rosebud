@@ -17,7 +17,8 @@ module pcie_config # (
   parameter FW_VER                  = {16'd0, 16'd1},
   parameter BOARD_ID                = {16'h1ce4, 16'h0003},
   parameter BOARD_VER               = {16'd0, 16'd1},
-  parameter FPGA_ID                 = 32'h3823093
+  parameter FPGA_ID                 = 32'h3823093,
+  parameter SEPARATE_CLOCKS         = 1
 ) (
   input  wire                           sys_clk,
   input  wire                           sys_rst,
@@ -443,44 +444,85 @@ always @ (posedge pcie_clk)
   else
     income_cores_rr <= income_cores_r & (~cores_to_be_reset_r);
 
-// Time domain crossing
-simple_async_fifo # (
-  .DEPTH(4),
-  .DATA_WIDTH(CORE_WIDTH+4)
-) cores_reset_cmd_async_fifo (
-  .async_rst(sys_rst),
-
-  .din_clk(pcie_clk),
-  .din_valid(host_cmd_valid_r),
-  .din({host_cmd_dest_r, host_cmd_r}),
-  .din_ready(host_cmd_ready_r),
- 
-  .dout_clk(sys_clk),
-  .dout_valid(host_cmd_valid),
-  .dout({host_cmd_dest, host_cmd}),
-  .dout_ready(host_cmd_ready)
-);
-
-simple_sync_sig # (
-  .RST_VAL(1'b0),
-  .WIDTH(CORE_COUNT+CORE_COUNT+INTERFACE_WIDTH+2+CORE_WIDTH+4+32)
-) scheduler_cmd_syncer (
-  .dst_clk(sys_clk),
-  .dst_rst(sys_rst),
-  .in({income_cores_rr, cores_to_be_reset_r, stat_read_interface_r, stat_read_addr_r, stat_read_core_r, host_cmd_data_r}),
-  .out({income_cores, cores_to_be_reset, stat_read_interface, stat_read_addr, stat_read_core, host_cmd_data})
-);
-
-simple_sync_sig # (
-  .RST_VAL(1'b0),
-  .WIDTH(2*32+ID_TAG_WIDTH+CORE_SLOT_WIDTH+32)
-) slot_count_syncer (
-  .dst_clk(pcie_clk),
-  .dst_rst(pcie_rst),
-  .in({interface_in_stat_data, interface_out_stat_data, 
-       interface_loaded_desc, slot_count, core_stat_data}), 
-  .out({interface_in_stat_data_r, interface_out_stat_data_r, 
-        interface_loaded_desc_r, slot_count_r, core_stat_data_r})
-);
+if (SEPARATE_CLOCKS) begin
+  // Time domain crossing
+  simple_async_fifo # (
+    .DEPTH(4),
+    .DATA_WIDTH(CORE_WIDTH+4)
+  ) cores_reset_cmd_async_fifo (
+    .async_rst(sys_rst),
+  
+    .din_clk(pcie_clk),
+    .din_valid(host_cmd_valid_r),
+    .din({host_cmd_dest_r, host_cmd_r}),
+    .din_ready(host_cmd_ready_r),
+   
+    .dout_clk(sys_clk),
+    .dout_valid(host_cmd_valid),
+    .dout({host_cmd_dest, host_cmd}),
+    .dout_ready(host_cmd_ready)
+  );
+  
+  simple_sync_sig # (
+    .RST_VAL(1'b0),
+    .WIDTH(CORE_COUNT+CORE_COUNT+INTERFACE_WIDTH+2+CORE_WIDTH+4+32)
+  ) scheduler_cmd_syncer (
+    .dst_clk(sys_clk),
+    .dst_rst(sys_rst),
+    .in({income_cores_rr, cores_to_be_reset_r, stat_read_interface_r, stat_read_addr_r, stat_read_core_r, host_cmd_data_r}),
+    .out({income_cores, cores_to_be_reset, stat_read_interface, stat_read_addr, stat_read_core, host_cmd_data})
+  );
+  
+  simple_sync_sig # (
+    .RST_VAL(1'b0),
+    .WIDTH(2*32+ID_TAG_WIDTH+CORE_SLOT_WIDTH+32)
+  ) slot_count_syncer (
+    .dst_clk(pcie_clk),
+    .dst_rst(pcie_rst),
+    .in({interface_in_stat_data, interface_out_stat_data, 
+         interface_loaded_desc, slot_count, core_stat_data}), 
+    .out({interface_in_stat_data_r, interface_out_stat_data_r, 
+          interface_loaded_desc_r, slot_count_r, core_stat_data_r})
+  );
+end else begin
+  simple_sync_fifo # (
+    .DEPTH(4),
+    .DATA_WIDTH(CORE_WIDTH+4)
+  ) cores_reset_cmd_async_fifo (
+    .clk(pcie_clk),
+    .rst(pcie_rst),
+  
+    .din_valid(host_cmd_valid_r),
+    .din({host_cmd_dest_r, host_cmd_r}),
+    .din_ready(host_cmd_ready_r),
+   
+    .dout_valid(host_cmd_valid),
+    .dout({host_cmd_dest, host_cmd}),
+    .dout_ready(host_cmd_ready)
+  );
+  
+  // Used for improving timing
+  simple_sync_sig # (
+    .RST_VAL(1'b0),
+    .WIDTH(CORE_COUNT+CORE_COUNT+INTERFACE_WIDTH+2+CORE_WIDTH+4+32)
+  ) scheduler_cmd_syncer (
+    .dst_clk(pcie_clk),
+    .dst_rst(pcie_rst),
+    .in({income_cores_rr, cores_to_be_reset_r, stat_read_interface_r, stat_read_addr_r, stat_read_core_r, host_cmd_data_r}),
+    .out({income_cores, cores_to_be_reset, stat_read_interface, stat_read_addr, stat_read_core, host_cmd_data})
+  );
+  
+  simple_sync_sig # (
+    .RST_VAL(1'b0),
+    .WIDTH(2*32+ID_TAG_WIDTH+CORE_SLOT_WIDTH+32)
+  ) slot_count_syncer (
+    .dst_clk(pcie_clk),
+    .dst_rst(pcie_rst),
+    .in({interface_in_stat_data, interface_out_stat_data, 
+         interface_loaded_desc, slot_count, core_stat_data}), 
+    .out({interface_in_stat_data_r, interface_out_stat_data_r, 
+          interface_loaded_desc_r, slot_count_r, core_stat_data_r})
+  );
+end
 
 endmodule

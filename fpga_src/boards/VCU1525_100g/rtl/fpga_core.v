@@ -672,7 +672,8 @@ pcie_config # (
   .FW_VER(FW_VER),
   .BOARD_ID(BOARD_ID),
   .BOARD_VER(BOARD_VER),
-  .FPGA_ID(FPGA_ID)
+  .FPGA_ID(FPGA_ID),
+  .SEPARATE_CLOCKS(SEPARATE_CLOCKS)
 ) pcie_config_inst (
   .sys_clk(sys_clk),
   .sys_rst(sys_rst),
@@ -765,19 +766,24 @@ pcie_config # (
   .msi_irq            (msi_irq)
 );
 
-simple_sync_sig # (.RST_VAL(1'b0),.WIDTH(CORE_WIDTH+4)) stat_read_core_reg (
-  .dst_clk(core_clk),
-  .dst_rst(core_rst_r),
-  .in(stat_read_core),
-  .out(stat_read_core_r)
-);
-
-simple_sync_sig # (.RST_VAL(1'b0),.WIDTH(32)) core_stat_data_reg (
-  .dst_clk(sys_clk),
-  .dst_rst(sys_rst),
-  .in(core_stat_data_muxed),
-  .out(core_stat_data_muxed_r)
-);
+if (SEPARATE_CLOCKS) begin
+  simple_sync_sig # (.RST_VAL(1'b0),.WIDTH(CORE_WIDTH+4)) stat_read_core_reg (
+    .dst_clk(core_clk),
+    .dst_rst(core_rst_r),
+    .in(stat_read_core),
+    .out(stat_read_core_r)
+  );
+  
+  simple_sync_sig # (.RST_VAL(1'b0),.WIDTH(32)) core_stat_data_reg (
+    .dst_clk(sys_clk),
+    .dst_rst(sys_rst),
+    .in(core_stat_data_muxed),
+    .out(core_stat_data_muxed_r)
+  );
+end else begin
+  assign stat_read_core_r = stat_read_core;
+  assign core_stat_data_muxed_r = core_stat_data_muxed;
+end
 
 if (V_PORT_COUNT==0) begin: no_veth
 
@@ -833,7 +839,7 @@ pcie_controller #
   .IF_COUNT(V_IF_COUNT),
   .PORTS_PER_IF(PORTS_PER_V_IF),
   .RAM_PIPELINE(RAM_PIPELINE),
-  .CORE_REQ_PCIE_CLK(0),
+  .CORE_REQ_PCIE_CLK(1),
   .AXIS_PIPE_LENGTH(3)
 ) pcie_controller_inst (
   .sys_clk(sys_clk),

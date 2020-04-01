@@ -392,10 +392,10 @@ fpga_core #(
 ) UUT (
     .pcie_clk(pcie_clk),
     .pcie_rst(pcie_rst),
-    .sys_clk(sys_clk),
-    .sys_rst(sys_rst),
-    .core_clk(core_clk),
-    .core_rst(core_rst),
+    .sys_clk(pcie_clk),
+    .sys_rst(pcie_rst),
+    .core_clk(pcie_clk),
+    .core_rst(pcie_rst),
 
     .sw(sw),
     .led(led),

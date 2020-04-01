@@ -8,8 +8,8 @@ module simple_sync_sig # (
   output [WIDTH-1:0] out
 );
 
-reg [WIDTH-1:0] sync_reg_1;
-reg [WIDTH-1:0] sync_reg_2;
+(* KEEP = "TRUE" *) reg [WIDTH-1:0] sync_reg_1;
+(* KEEP = "TRUE" *) reg [WIDTH-1:0] sync_reg_2;
 
 always @ (posedge dst_clk)
   if (dst_rst) begin
