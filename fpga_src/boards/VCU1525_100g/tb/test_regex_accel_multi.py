@@ -150,8 +150,8 @@ def bench():
     SIZE_0       = 500 - 14
     SIZE_1       = 500 - 14
     CHECK_PKT    = True
-    TEST_SFP     = True
-    TEST_PCIE    = True
+    TEST_SFP     = False
+    TEST_PCIE    = False
     TEST_ACC     = True
     FIRMWARE     = "../../../accel/regex/c/basic_fw_re_multi.bin"
 
@@ -892,7 +892,7 @@ def bench():
           test_frame_1.payload = b"page.php?id=this%20is%20fine" + bytes([i%256] + [x%256 for x in range(SIZE_0-1)])
           qsfp0_source.send(test_frame_1.build_axis())
 
-          yield delay(1000)
+          yield delay(20000)
           
         raise StopSimulation
 

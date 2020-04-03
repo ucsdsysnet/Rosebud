@@ -454,17 +454,62 @@ axis_async_fifo # (
   
 localparam CORE_DESC_STRB_WIDTH = CORE_DESC_WIDTH/8;
 
-wire [127:0]          cores_ctrl_s_tdata;
-wire                  cores_ctrl_s_tvalid;
-wire                  cores_ctrl_s_tready;
-wire [CORE_WIDTH-1:0] cores_ctrl_s_tuser;
+wire [CORE_DESC_WIDTH-1:0] cores_ctrl_s_axis_tdata_r;
+wire                       cores_ctrl_s_axis_tvalid_r;
+wire                       cores_ctrl_s_axis_tready_r;
+wire                       cores_ctrl_s_axis_last_r;
+wire [CORE_WIDTH-1:0]      cores_ctrl_s_axis_tuser_r;
 
-wire  [127:0]         cores_ctrl_m_tdata;
-wire                  cores_ctrl_m_tvalid;
-wire [CORE_WIDTH-1:0] cores_ctrl_m_tdest;
-wire                  cores_ctrl_m_tready;
+wire [127:0]               cores_ctrl_s_tdata;
+wire                       cores_ctrl_s_tvalid;
+wire                       cores_ctrl_s_tready;
+wire [CORE_WIDTH-1:0]      cores_ctrl_s_tuser;
+
+wire [127:0]               cores_ctrl_m_tdata;
+wire                       cores_ctrl_m_tvalid;
+wire [CORE_WIDTH-1:0]      cores_ctrl_m_tdest;
+wire                       cores_ctrl_m_tready;
+
+wire [CORE_DESC_WIDTH-1:0] cores_ctrl_m_axis_tdata_n;
+wire                       cores_ctrl_m_axis_tvalid_n;
+wire [CORE_WIDTH-1:0]      cores_ctrl_m_axis_tdest_n;
+wire                       cores_ctrl_m_axis_tlast_n;
+wire                       cores_ctrl_m_axis_tready_n;
 
 if(CORE_REQ_PCIE_CLK) begin: cores_ctrl_fifos
+    axis_pipeline_register # (
+        .DATA_WIDTH(CORE_DESC_WIDTH),
+        .KEEP_ENABLE(0),
+        .KEEP_WIDTH(1),
+        .LAST_ENABLE(1),
+        .ID_ENABLE(0),
+        .DEST_ENABLE(0),
+        .USER_ENABLE(1),
+        .USER_WIDTH(CORE_WIDTH),
+        .REG_TYPE(2),
+        .LENGTH(1)
+    ) cores_ctrl_s_axis_reg (
+        .clk(pcie_clk),
+        .rst(pcie_rst),
+        .s_axis_tdata (cores_ctrl_s_axis_tdata),
+        .s_axis_tkeep (1'b1),
+        .s_axis_tvalid(cores_ctrl_s_axis_tvalid),
+        .s_axis_tready(cores_ctrl_s_axis_tready),
+        .s_axis_tlast (cores_ctrl_s_axis_tlast),
+        .s_axis_tid   (8'd0),
+        .s_axis_tdest (8'd0),
+        .s_axis_tuser (cores_ctrl_s_axis_tuser),
+    
+        .m_axis_tdata (cores_ctrl_s_axis_tdata_r),
+        .m_axis_tkeep (),
+        .m_axis_tvalid(cores_ctrl_s_axis_tvalid_r),
+        .m_axis_tready(cores_ctrl_s_axis_tready_r),
+        .m_axis_tlast (cores_ctrl_s_axis_tlast_r),
+        .m_axis_tid   (),
+        .m_axis_tdest (),
+        .m_axis_tuser (cores_ctrl_s_axis_tuser_r)
+    );
+
     axis_fifo_adapter # (
         .DEPTH(CORES_CTRL_FIFO_SIZE),
         .S_DATA_WIDTH(CORE_DESC_WIDTH),
@@ -481,14 +526,14 @@ if(CORE_REQ_PCIE_CLK) begin: cores_ctrl_fifos
     ) cores_ctrl_s_axis_async_fifo (
         .clk(pcie_clk),
         .rst(pcie_rst),
-        .s_axis_tdata (cores_ctrl_s_axis_tdata),
+        .s_axis_tdata (cores_ctrl_s_axis_tdata_r),
         .s_axis_tkeep ({CORE_DESC_STRB_WIDTH{1'b1}}),
-        .s_axis_tvalid(cores_ctrl_s_axis_tvalid),
-        .s_axis_tready(cores_ctrl_s_axis_tready),
-        .s_axis_tlast (cores_ctrl_s_axis_tlast),
+        .s_axis_tvalid(cores_ctrl_s_axis_tvalid_r),
+        .s_axis_tready(cores_ctrl_s_axis_tready_r),
+        .s_axis_tlast (cores_ctrl_s_axis_tlast_r),
         .s_axis_tid   (8'd0),
         .s_axis_tdest (8'd0),
-        .s_axis_tuser (cores_ctrl_s_axis_tuser),
+        .s_axis_tuser (cores_ctrl_s_axis_tuser_r),
     
         .m_axis_tdata (cores_ctrl_s_tdata),
         .m_axis_tkeep (),
@@ -529,6 +574,43 @@ if(CORE_REQ_PCIE_CLK) begin: cores_ctrl_fifos
         .s_axis_tdest (cores_ctrl_m_tdest),
         .s_axis_tuser (1'b0),
     
+        .m_axis_tdata (cores_ctrl_m_axis_tdata_n),
+        .m_axis_tkeep (),
+        .m_axis_tvalid(cores_ctrl_m_axis_tvalid_n),
+        .m_axis_tready(cores_ctrl_m_axis_tready_n),
+        .m_axis_tlast (cores_ctrl_m_axis_tlast_n),
+        .m_axis_tid   (),
+        .m_axis_tdest (cores_ctrl_m_axis_tdest_n),
+        .m_axis_tuser (),
+    
+        .status_overflow(),
+        .status_bad_frame(),
+        .status_good_frame()
+    );
+    
+    axis_pipeline_register # (
+        .DATA_WIDTH(CORE_DESC_WIDTH),
+        .KEEP_ENABLE(0),
+        .KEEP_WIDTH(1),
+        .LAST_ENABLE(1),
+        .ID_ENABLE(0),
+        .DEST_ENABLE(1),
+        .DEST_WIDTH(CORE_WIDTH),
+        .USER_ENABLE(0),
+        .REG_TYPE(2),
+        .LENGTH(1)
+    ) cores_ctrl_m_axis_reg (
+        .clk(pcie_clk),
+        .rst(pcie_rst),
+        .s_axis_tdata (cores_ctrl_m_axis_tdata_n),
+        .s_axis_tkeep (1'b1),
+        .s_axis_tvalid(cores_ctrl_m_axis_tvalid_n),
+        .s_axis_tready(cores_ctrl_m_axis_tready_n),
+        .s_axis_tlast (cores_ctrl_m_axis_tlast_n),
+        .s_axis_tid   (8'd0),
+        .s_axis_tdest (cores_ctrl_m_axis_tdest_n),
+        .s_axis_tuser (1'b0),
+    
         .m_axis_tdata (cores_ctrl_m_axis_tdata),
         .m_axis_tkeep (),
         .m_axis_tvalid(cores_ctrl_m_axis_tvalid),
@@ -536,14 +618,41 @@ if(CORE_REQ_PCIE_CLK) begin: cores_ctrl_fifos
         .m_axis_tlast (cores_ctrl_m_axis_tlast),
         .m_axis_tid   (),
         .m_axis_tdest (cores_ctrl_m_axis_tdest),
-        .m_axis_tuser (),
-    
-        .status_overflow(),
-        .status_bad_frame(),
-        .status_good_frame()
+        .m_axis_tuser ()
     );
-
 end else begin: cores_ctrl_async_fifos
+    axis_pipeline_register # (
+        .DATA_WIDTH(CORE_DESC_WIDTH),
+        .KEEP_ENABLE(0),
+        .KEEP_WIDTH(1),
+        .LAST_ENABLE(1),
+        .ID_ENABLE(0),
+        .DEST_ENABLE(0),
+        .USER_ENABLE(1),
+        .USER_WIDTH(CORE_WIDTH),
+        .REG_TYPE(2),
+        .LENGTH(1)
+    ) cores_ctrl_s_axis_reg (
+        .clk(sys_clk),
+        .rst(sys_rst),
+        .s_axis_tdata (cores_ctrl_s_axis_tdata),
+        .s_axis_tkeep (1'b1),
+        .s_axis_tvalid(cores_ctrl_s_axis_tvalid),
+        .s_axis_tready(cores_ctrl_s_axis_tready),
+        .s_axis_tlast (cores_ctrl_s_axis_tlast),
+        .s_axis_tid   (8'd0),
+        .s_axis_tdest (8'd0),
+        .s_axis_tuser (cores_ctrl_s_axis_tuser),
+    
+        .m_axis_tdata (cores_ctrl_s_axis_tdata_r),
+        .m_axis_tkeep (),
+        .m_axis_tvalid(cores_ctrl_s_axis_tvalid_r),
+        .m_axis_tready(cores_ctrl_s_axis_tready_r),
+        .m_axis_tlast (cores_ctrl_s_axis_tlast_r),
+        .m_axis_tid   (),
+        .m_axis_tdest (),
+        .m_axis_tuser (cores_ctrl_s_axis_tuser_r)
+    );
 
     axis_async_fifo_adapter # (
         .DEPTH(CORES_CTRL_FIFO_SIZE),
@@ -561,14 +670,14 @@ end else begin: cores_ctrl_async_fifos
     ) cores_ctrl_s_axis_async_fifo (
         .s_clk(sys_clk),
         .s_rst(sys_rst),
-        .s_axis_tdata (cores_ctrl_s_axis_tdata),
+        .s_axis_tdata (cores_ctrl_s_axis_tdata_r),
         .s_axis_tkeep ({CORE_DESC_STRB_WIDTH{1'b1}}),
-        .s_axis_tvalid(cores_ctrl_s_axis_tvalid),
-        .s_axis_tready(cores_ctrl_s_axis_tready),
-        .s_axis_tlast (cores_ctrl_s_axis_tlast),
+        .s_axis_tvalid(cores_ctrl_s_axis_tvalid_r),
+        .s_axis_tready(cores_ctrl_s_axis_tready_r),
+        .s_axis_tlast (cores_ctrl_s_axis_tlast_r),
         .s_axis_tid   (8'd0),
         .s_axis_tdest (8'd0),
-        .s_axis_tuser (cores_ctrl_s_axis_tuser),
+        .s_axis_tuser (cores_ctrl_s_axis_tuser_r),
     
         .m_clk(pcie_clk),
         .m_rst(pcie_rst),
@@ -616,13 +725,13 @@ end else begin: cores_ctrl_async_fifos
     
         .m_clk(sys_clk),
         .m_rst(sys_rst),
-        .m_axis_tdata (cores_ctrl_m_axis_tdata),
+        .m_axis_tdata (cores_ctrl_m_axis_tdata_n),
         .m_axis_tkeep (),
-        .m_axis_tvalid(cores_ctrl_m_axis_tvalid),
-        .m_axis_tready(cores_ctrl_m_axis_tready),
-        .m_axis_tlast (cores_ctrl_m_axis_tlast),
+        .m_axis_tvalid(cores_ctrl_m_axis_tvalid_n),
+        .m_axis_tready(cores_ctrl_m_axis_tready_n),
+        .m_axis_tlast (cores_ctrl_m_axis_tlast_n),
         .m_axis_tid   (),
-        .m_axis_tdest (cores_ctrl_m_axis_tdest),
+        .m_axis_tdest (cores_ctrl_m_axis_tdest_n),
         .m_axis_tuser (),
     
         .s_status_overflow(),
@@ -632,6 +741,40 @@ end else begin: cores_ctrl_async_fifos
         .m_status_bad_frame(),
         .m_status_good_frame()
     );
+
+    axis_pipeline_register # (
+        .DATA_WIDTH(CORE_DESC_WIDTH),
+        .KEEP_ENABLE(0),
+        .KEEP_WIDTH(1),
+        .LAST_ENABLE(1),
+        .ID_ENABLE(0),
+        .DEST_ENABLE(1),
+        .DEST_WIDTH(CORE_WIDTH),
+        .USER_ENABLE(0),
+        .REG_TYPE(2),
+        .LENGTH(1)
+    ) cores_ctrl_m_axis_reg (
+        .clk(sys_clk),
+        .rst(sys_rst),
+        .s_axis_tdata (cores_ctrl_m_axis_tdata_n),
+        .s_axis_tkeep (1'b1),
+        .s_axis_tvalid(cores_ctrl_m_axis_tvalid_n),
+        .s_axis_tready(cores_ctrl_m_axis_tready_n),
+        .s_axis_tlast (cores_ctrl_m_axis_tlast_n),
+        .s_axis_tid   (8'd0),
+        .s_axis_tdest (cores_ctrl_m_axis_tdest_n),
+        .s_axis_tuser (1'b0),
+    
+        .m_axis_tdata (cores_ctrl_m_axis_tdata),
+        .m_axis_tkeep (),
+        .m_axis_tvalid(cores_ctrl_m_axis_tvalid),
+        .m_axis_tready(cores_ctrl_m_axis_tready),
+        .m_axis_tlast (cores_ctrl_m_axis_tlast),
+        .m_axis_tid   (),
+        .m_axis_tdest (cores_ctrl_m_axis_tdest),
+        .m_axis_tuser ()
+    );
+
 end
 
 // -------------------------------------------------------------------//

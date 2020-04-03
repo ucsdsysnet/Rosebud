@@ -142,7 +142,8 @@ def bench():
     AXIS_ETH_KEEP_WIDTH = AXIS_ETH_DATA_WIDTH/8
 
     PRINT_PKTS   = False
-    FIRMWARE     = "../../../../c_code/pkt_gen.bin"
+    # FIRMWARE     = "../../../../c_code/pkt_gen.bin"
+    FIRMWARE     = "../../../../c_code/reg_test.bin"
 
     # Inputs
     sys_clk  = Signal(bool(0))

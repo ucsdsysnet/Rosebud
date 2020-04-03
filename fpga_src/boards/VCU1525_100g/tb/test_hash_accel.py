@@ -150,8 +150,8 @@ def bench():
     SIZE_0       = 500 - 14
     SIZE_1       = 500 - 14
     CHECK_PKT    = True
-    TEST_SFP     = True
-    TEST_PCIE    = True
+    TEST_SFP     = False
+    TEST_PCIE    = False
     TEST_ACC     = True
     FIRMWARE     = "../../../accel/hash/c/basic_fw_hash.bin"
 
@@ -881,7 +881,7 @@ def bench():
           test_frame_1.payload = b"E\x00\x00\x9c\x00\x00@\x00@\x11\\\xaeB\t\x95\xbb\xa1\x8edP\n\xea\x06\xe6\x00\x88?[" + bytes([x%256 for x in range(SIZE_0)])
           qsfp0_source.send(bytearray(test_frame_1.build_axis()))
 
-          yield delay(1000)
+          yield delay(20000)
           
         raise StopSimulation
 

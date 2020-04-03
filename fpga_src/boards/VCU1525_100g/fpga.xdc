@@ -431,7 +431,7 @@ resize_pblock [get_pblocks pblock_33] -add {RAMB18_X0Y240:RAMB18_X1Y359}
 resize_pblock [get_pblocks pblock_33] -add {RAMB36_X0Y120:RAMB36_X1Y179}
 
 create_pblock pblock_34
-add_cells_to_pblock [get_pblocks pblock_34] [get_cells -quiet [list core_inst/ctrl_in_sw/grow.axis_switch_2lvl_grow_inst/sw_lvl1 core_inst/data_in_sw/grow.axis_switch_2lvl_grow_inst/sw_lvl1 core_inst/data_out_sw/shrink.axis_switch_2lvl_shrink_inst/last_level_sw.sw_lvl2 core_inst/dram_ctrl_in_sw/grow.axis_switch_2lvl_grow_inst/sw_lvl1 core_inst/dram_ctrl_out_sw/shrink.axis_switch_2lvl_shrink_inst/last_level_arbiter.sw_lvl2 core_inst/interface_incoming_stat core_inst/interface_outgoing_stat core_inst/loopback_msg_fifo_inst core_inst/pcie_controller_inst pcie4_uscale_plus_inst pcie_us_cfg_inst pcie_us_msi_inst sync_reset_125mhz_inst sync_reset_250mhz_inst]]
+add_cells_to_pblock [get_pblocks pblock_34] [get_cells -quiet [list core_inst/ctrl_in_sw/grow.axis_switch_2lvl_grow_inst/sw_lvl1 core_inst/data_in_sw/grow.axis_switch_2lvl_grow_inst/sw_lvl1 core_inst/data_out_sw/shrink.axis_switch_2lvl_shrink_inst/last_level_sw.sw_lvl2 core_inst/dram_ctrl_in_sw/grow.axis_switch_2lvl_grow_inst/sw_lvl1 core_inst/dram_ctrl_out_sw/shrink.axis_switch_2lvl_shrink_inst/last_level_arbiter.sw_lvl2 core_core_inst/loopback_msg_fifo_inst core_inst/pcie_controller_inst pcie4_uscale_plus_inst pcie_us_cfg_inst pcie_us_msi_inst sync_reset_125mhz_inst sync_reset_250mhz_inst core_inst/stat_read_core_reg core_inst/core_stat_data_reg]]
 resize_pblock [get_pblocks pblock_34] -add {SLR1}
 
 create_pblock pblock_35
@@ -440,5 +440,5 @@ resize_pblock [get_pblocks pblock_35] -add {CLOCKREGION_X2Y7:CLOCKREGION_X3Y8}
 set_property EXCLUDE_PLACEMENT 1 [get_pblocks pblock_35]
 
 create_pblock pblock_36
-add_cells_to_pblock [get_pblocks pblock_36] [get_cells -quiet [list core_inst/pcie_controller_inst/dma_if_pcie_us_inst]]
+add_cells_to_pblock [get_pblocks pblock_36] [get_cells -quiet [list core_inst/pcie_controller_inst/dma_if_pcie_us_inst core_inst/pcie_config_inst]]
 resize_pblock [get_pblocks pblock_36] -add {CLOCKREGION_X4Y6:CLOCKREGION_X5Y8}

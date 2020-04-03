@@ -781,8 +781,19 @@ if (SEPARATE_CLOCKS) begin
     .out(core_stat_data_muxed_r)
   );
 end else begin
-  assign stat_read_core_r = stat_read_core;
-  assign core_stat_data_muxed_r = core_stat_data_muxed;
+  simple_sync_sig # (.RST_VAL(1'b0),.WIDTH(CORE_WIDTH+4)) stat_read_core_reg (
+    .dst_clk(pcie_clk),
+    .dst_rst(pcie_rst),
+    .in(stat_read_core),
+    .out(stat_read_core_r)
+  );
+  
+  simple_sync_sig # (.RST_VAL(1'b0),.WIDTH(32)) core_stat_data_reg (
+    .dst_clk(pcie_clk),
+    .dst_rst(pcie_rst),
+    .in(core_stat_data_muxed),
+    .out(core_stat_data_muxed_r)
+  );
 end
 
 if (V_PORT_COUNT==0) begin: no_veth
@@ -840,7 +851,7 @@ pcie_controller #
   .PORTS_PER_IF(PORTS_PER_V_IF),
   .RAM_PIPELINE(RAM_PIPELINE),
   .CORE_REQ_PCIE_CLK(1),
-  .AXIS_PIPE_LENGTH(3)
+  .AXIS_PIPE_LENGTH(2)
 ) pcie_controller_inst (
   .sys_clk(sys_clk),
   .sys_rst(sys_rst),
