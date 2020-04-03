@@ -46,7 +46,8 @@ static void usage(char *name)
     fprintf(stderr,
         "usage: %s [options]\n"
         " -d name    device to open (/sys/bus/pci/devices/.../resource0)\n"
-        " -w file    file to write\n"
+        " -i file    instruction memory binary\n"
+        " -m file    data memory binary\n"
         " -e mask    core enable\n"
         " -r mask    core rx enable\n",
         name);
@@ -61,10 +62,12 @@ int main(int argc, char *argv[])
     char *device = NULL;
     struct mqnic *dev;
 
-    char *write_file_name = NULL;
+    char *instr_bin = NULL;
+    char *data_bin = NULL;
     FILE *write_file = NULL;
 
     char action_write = 0;
+    char load_dmem    = 0;
 
     uint32_t core_enable = 0xffffffff;
     uint32_t core_rx_enable = 0xffffffff;
@@ -72,16 +75,21 @@ int main(int argc, char *argv[])
     name = strrchr(argv[0], '/');
     name = name ? 1+name : argv[0];
 
-    while ((opt = getopt(argc, argv, "d:w:e:r:h?")) != EOF)
+    while ((opt = getopt(argc, argv, "d:i:m:e:r:h?")) != EOF)
     {
         switch (opt)
         {
         case 'd':
             device = optarg;
             break;
-        case 'w':
+        case 'i':
             action_write = 1;
-            write_file_name = optarg;
+            instr_bin = optarg;
+            break;
+        case 'm':
+            action_write = 1;
+            load_dmem    = 1;
+            data_bin = optarg;
             break;
         case 'e':
             core_enable = strtoul(optarg, NULL, 0);
@@ -127,34 +135,68 @@ int main(int argc, char *argv[])
 
     if (action_write)
     {
-        char *segment = calloc(segment_size, 1);
+        char *i_segment = calloc(segment_size, 1);
+        char *d_segment = calloc(segment_size, 1);
         char *r_segment = calloc(segment_size, 1);
-        memset(segment, 0xff, segment_size);
+        memset(i_segment, 0xff, segment_size);
+        memset(d_segment, 0xff, segment_size);
         memset(r_segment, 0xff, segment_size);
-        size_t len;
+        size_t ins_len;
+        size_t data_len = 0;
 
-        // read binary file
-        printf("Reading binary file \"%s\"...\n", write_file_name);
-        write_file = fopen(write_file_name, "rb");
+        // read instruction binary file
+        printf("Reading binary file \"%s\"...\n", instr_bin);
+        write_file = fopen(instr_bin, "rb");
         fseek(write_file, 0, SEEK_END);
-        len = ftell(write_file);
+        ins_len = ftell(write_file);
         rewind(write_file);
 
-        if (len > segment_size)
+        if (ins_len > segment_size)
         {
-            len = segment_size;
+            ins_len = segment_size;
         }
 
-        printf("Reading %lu bytes...\n", len);
-        if (fread(segment, 1, len, write_file) < len)
+        printf("Reading %lu bytes...\n", ins_len);
+        if (fread(i_segment, 1, ins_len, write_file) < ins_len)
         {
             fprintf(stderr, "Error reading file\n");
-            free(segment);
+            free(i_segment);
             ret = -1;
             goto err;
         }
 
         fclose(write_file);
+
+        // read instruction binary file
+        if (load_dmem) {
+            printf("Reading binary file \"%s\"...\n", data_bin);
+            write_file = fopen(data_bin, "rb");
+            fseek(write_file, 0, SEEK_END);
+            data_len = ftell(write_file);
+            rewind(write_file);
+
+            if (data_len==0) {
+                printf("Empty Data mem file\n");
+                load_dmem = 0;
+            } else {
+
+                if (data_len > segment_size)
+                {
+                    data_len = segment_size;
+                }
+
+                
+                printf("Reading %lu bytes...\n", data_len);
+                if (fread(d_segment, 1, data_len, write_file) < data_len)
+                {
+                    fprintf(stderr, "Error reading file\n");
+                    free(d_segment);
+                    ret = -1;
+                    goto err;
+                }
+            }
+            fclose(write_file);
+        }
 
         printf("Disabling cores in scheduler...\n");
         mqnic_reg_write32(dev->regs, 0x000410, 0xffffffff);
@@ -172,18 +214,29 @@ int main(int argc, char *argv[])
         }
         printf("\n");
 
-        printf("Write core instruction memory...\n");
+        printf("Write core instruction and data memories...\n");
         for (int k=0; k<core_count; k++)
         {
             struct mqnic_ioctl_block_write ctl;
 
             ctl.addr = (k<<26) | (1<<25);
-            ctl.data = segment;
-            ctl.len = len;
+            ctl.data = i_segment;
+            ctl.len = ins_len;
 
             if (ioctl(dev->fd, MQNIC_IOCTL_BLOCK_WRITE, &ctl) != 0)
             {
                 perror("MQNIC_IOCTL_BLOCK_WRITE ioctl failed");
+            }
+            
+            if (load_dmem) {
+                ctl.addr = (k<<26) | (1<<23);
+                ctl.data = d_segment;
+                ctl.len = data_len;
+
+                if (ioctl(dev->fd, MQNIC_IOCTL_BLOCK_WRITE, &ctl) != 0)
+                {
+                    perror("MQNIC_IOCTL_BLOCK_WRITE ioctl failed");
+                }
             }
 
             printf(".");
@@ -196,8 +249,8 @@ int main(int argc, char *argv[])
         struct mqnic_ioctl_block_read ctl2;
 
         ctl.addr = (4<<26) | (0x1000100);
-        ctl.data = segment;
-        ctl.len = len;
+        ctl.data = i_segment;
+        ctl.len = ins_len;
 
         if (ioctl(dev->fd, MQNIC_IOCTL_BLOCK_WRITE, &ctl) != 0)
         {
@@ -214,7 +267,7 @@ int main(int argc, char *argv[])
 
         ctl2.addr = (4<<26) | (0x1000100);
         ctl2.data = r_segment;
-        ctl2.len = len;
+        ctl2.len = ins_len;
         if (ioctl(dev->fd, MQNIC_IOCTL_BLOCK_READ, &ctl2) != 0){
             perror("MQNIC_IOCTL_BLOCK_READ ioctl failed");
         }
@@ -267,7 +320,9 @@ int main(int argc, char *argv[])
 
         printf("Done!\n");
 
-        free(segment);
+        free(i_segment);
+        free(d_segment);
+        free(r_segment);
     }
 
 err:

@@ -2,7 +2,8 @@ TEST=basic_fw2
 SIZE=9000
 PREFIX=/usr/local
 BINDIR=$(DESTDIR)$(PREFIX)/bin
-BIN_FILE=/home/moein/BumpinTheWire/c_code/$(TEST).bin
+INS_BIN_FILE=/home/moein/BumpinTheWire/c_code/$(TEST)_ins.bin
+DATA_BIN_FILE=/home/moein/BumpinTheWire/c_code/$(TEST)_data.bin
 OUT_FILE=$(TEST)_$(SIZE).csv
 DEV=mqnic0
 ENABLE=0xffff
@@ -34,7 +35,7 @@ clean:
 
 do:
 	make -C ../../c_code/ NAME=$(TEST)
-	sudo ./rvfw -d /dev/$(DEV) -w $(BIN_FILE) -e $(ENABLE) -r $(RECV)
+	sudo ./rvfw -d /dev/$(DEV) -i $(INS_BIN_FILE) -m $(DATA_BIN_FILE) -e $(ENABLE) -r $(RECV)
 	sudo ./perf -d /dev/$(DEV) -o $(OUT_FILE) -g $(DEBUG)
 
 reset: 
