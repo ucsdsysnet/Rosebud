@@ -10,7 +10,7 @@ unsigned int count;
 
 #define CONGESTION 1
 #define INTR_BASED  0
-#define SLOW_DOWN_RATE 40
+#define SLOW_DOWN_RATE 20
 
 void __attribute__((interrupt)) int_handler(void) {
   pkt_send(&summary_pkt);
@@ -35,7 +35,7 @@ int main(void){
     pkt_data[i] = (unsigned int *)(0x01000000+(i*16384));
   }
 
-  send_pkt.len = 64;
+  send_pkt.len = 1024;
   send_pkt.tag = 0;
   // Half of the cores send, so one port is enough
   send_pkt.port = 0;
@@ -89,7 +89,7 @@ int main(void){
                   pkt_send(&summary_pkt);
                   slow_down = SLOW_DOWN_RATE;
                 }
-	      } else
+	            } else
                 pkt_send(&summary_pkt);
                 
               count = 0; 

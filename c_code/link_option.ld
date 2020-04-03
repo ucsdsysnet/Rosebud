@@ -6,6 +6,7 @@ MEMORY
 {
   IMEM (x!rwai) : ORIGIN = 0x02000000, LENGTH = 64k
   DMEM (rwa!xi) : ORIGIN = 0x00800000, LENGTH = 32k
+  PMEM (rwa!xi) : ORIGIN = 0x01000000, LENGTH = 1m
 }
 
 ENTRY(_start)
@@ -20,6 +21,15 @@ SECTIONS
     . = ALIGN(4);
     _end_text = .;
   } > IMEM
+
+  .data :
+  {
+    _start_data = .;
+    KEEP(*(.vectors))
+    *(.data .data*)
+    . = ALIGN(4);
+    _end_data = .;
+  } > DMEM
 
   .bss (NOLOAD) :
   {
