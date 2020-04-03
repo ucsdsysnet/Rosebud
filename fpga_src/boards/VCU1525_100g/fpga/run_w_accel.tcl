@@ -12,7 +12,7 @@ add_files -norecurse /home/moein/BumpinTheWire/fpga_src/lib/eth/lib/axis/rtl/axi
 if {[llength [get_pr_configurations  "w_accel_config"]]==0} then {create_pr_configuration -name w_accel_config -partitions [list core_inst/riscv_cores[0].pr_wrapper:riscv_block_PR_w_accel core_inst/riscv_cores[1].pr_wrapper:riscv_block_PR_w_accel core_inst/riscv_cores[2].pr_wrapper:riscv_block_PR_w_accel core_inst/riscv_cores[3].pr_wrapper:riscv_block_PR_w_accel core_inst/riscv_cores[4].pr_wrapper:riscv_block_PR_w_accel core_inst/riscv_cores[5].pr_wrapper:riscv_block_PR_w_accel core_inst/riscv_cores[6].pr_wrapper:riscv_block_PR_w_accel core_inst/riscv_cores[7].pr_wrapper:riscv_block_PR_w_accel core_inst/riscv_cores[8].pr_wrapper:riscv_block_PR_w_accel core_inst/riscv_cores[9].pr_wrapper:riscv_block_PR_w_accel core_inst/riscv_cores[10].pr_wrapper:riscv_block_PR_w_accel core_inst/riscv_cores[11].pr_wrapper:riscv_block_PR_w_accel core_inst/riscv_cores[12].pr_wrapper:riscv_block_PR_w_accel core_inst/riscv_cores[13].pr_wrapper:riscv_block_PR_w_accel core_inst/riscv_cores[14].pr_wrapper:riscv_block_PR_w_accel core_inst/riscv_cores[15].pr_wrapper:riscv_block_PR_w_accel ]}
 
 if {[llength [get_runs "impl_w_accel"]]==0} then {create_run impl_w_accel -parent_run impl_1 -flow {Vivado Implementation 2019} -pr_config w_accel_config}
-# set_property strategy Performance_ExtraTimingOpt [get_runs impl_w_accel]
+set_property strategy Performance_ExtraTimingOpt [get_runs impl_w_accel]
 
 update_compile_order -fileset riscv_block_PR_w_accel
 update_compile_order -fileset sources_1

@@ -151,10 +151,7 @@ def bench():
     TEST_PCIE    = True
     TEST_DEBUG   = False
     PRINT_PKTS   = False
-    # FIRMWARE     = "../../../../c_code/basic_fw2.bin"
-    # FIRMWARE     = "../../../../c_code/dram_test2.bin"
-    # FIRMWARE     = "../../../../c_code/drop.bin"
-    FIRMWARE     = "../../../../c_code/inter_core.bin"
+    FIRMWARE     = "../../../../c_code/inter_core_ins.bin"
 
     # Inputs
     sys_clk  = Signal(bool(0))

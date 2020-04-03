@@ -141,8 +141,8 @@ def bench():
     AXIS_ETH_KEEP_WIDTH = AXIS_ETH_DATA_WIDTH/8
 
     PRINT_PKTS   = True
-    FIRMWARE     = "../../../../c_code/latency.bin"
-    # FIRMWARE     = "../../../../c_code/bc_test.bin"
+    FIRMWARE     = "../../../../c_code/latency_ins.bin"
+    # FIRMWARE     = "../../../../c_code/bc_test2_ins.bin"
 
     # Inputs
     sys_clk  = Signal(bool(0))
@@ -773,7 +773,7 @@ def bench():
         yield rc.mem_write(dev_pf0_bar0+0x00040C, struct.pack('<L', 0xaaaa))
         yield rc.mem_write(dev_pf0_bar0+0x000410, struct.pack('<L', 0x0000))
   
-        yield delay(200000)
+        yield delay(50000)
         
         # put cores into reset
         yield rc.mem_write(dev_pf0_bar0+0x000404, struct.pack('<L', 0x0001))
@@ -791,7 +791,7 @@ def bench():
         yield rc.mem_write(dev_pf0_bar0+0x000470, struct.pack('<L', 0x800))
         yield rc.mem_write(dev_pf0_bar0+0x000474, struct.pack('<L', 0x55))
 
-        yield delay(20000)
+        yield delay(3000)
 
         val = yield from rc.mem_read(dev_pf0_bar0+0x000478, 4)
         print(val)
