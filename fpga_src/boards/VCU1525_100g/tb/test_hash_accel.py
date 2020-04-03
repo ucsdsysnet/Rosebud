@@ -153,7 +153,7 @@ def bench():
     TEST_SFP     = False
     TEST_PCIE    = False
     TEST_ACC     = True
-    FIRMWARE     = "../../../accel/hash/c/basic_fw_hash.bin"
+    FIRMWARE     = "../../../accel/hash/c/basic_fw_hash_ins.bin"
 
     # Inputs
     sys_clk  = Signal(bool(0))

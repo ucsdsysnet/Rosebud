@@ -141,9 +141,10 @@ def bench():
     AXIS_ETH_DATA_WIDTH = 512
     AXIS_ETH_KEEP_WIDTH = AXIS_ETH_DATA_WIDTH/8
 
-    PRINT_PKTS   = False
-    # FIRMWARE     = "../../../../c_code/pkt_gen.bin"
-    FIRMWARE     = "../../../../c_code/reg_test.bin"
+    PRINT_PKTS   = True
+    # FIRMWARE     = "../../../../c_code/pkt_gen_ins.bin"
+    FIRMWARE     = "../../../../c_code/reg_test_ins.bin"
+    DATA         = "../../../../c_code/reg_test_data.bin"
 
     # Inputs
     sys_clk  = Signal(bool(0))
@@ -724,7 +725,8 @@ def bench():
         yield pcie_clk.posedge
 
         print("Firmware load")
-        ins = bytearray(open(FIRMWARE, "rb").read())
+        ins  = bytearray(open(FIRMWARE, "rb").read())
+        data = bytearray(open(DATA, "rb").read())
         mem_data[0:len(ins)] = ins
         mem_data[48059:48200] = bytearray([(x+10)%256 for x in range(141)])
 
@@ -745,6 +747,17 @@ def bench():
             yield rc.mem_write(dev_pf0_bar0+0x000448, struct.pack('<L', ((i<<26)+(1<<25)) & 0xffffffff))
             yield rc.mem_write(dev_pf0_bar0+0x000450, struct.pack('<L', len(ins)))
             yield rc.mem_write(dev_pf0_bar0+0x000454, struct.pack('<L', 0xAA))
+            yield delay(1000)
+        
+        mem_data[0:len(data)] = data
+        # Load data memories
+        for i in range (0,16):
+            # write pcie read descriptor
+            yield rc.mem_write(dev_pf0_bar0+0x000440, struct.pack('<L', (mem_base+0x0000) & 0xffffffff))
+            yield rc.mem_write(dev_pf0_bar0+0x000444, struct.pack('<L', (mem_base+0x0000 >> 32) & 0xffffffff))
+            yield rc.mem_write(dev_pf0_bar0+0x000448, struct.pack('<L', ((i<<26)+(1<<23)) & 0xffffffff))
+            yield rc.mem_write(dev_pf0_bar0+0x000450, struct.pack('<L', len(data)))
+            yield rc.mem_write(dev_pf0_bar0+0x000454, struct.pack('<L', 0xBB))
             yield delay(1000)
 
         print("Taking cores out of reset")

@@ -146,14 +146,14 @@ def bench():
     SIZE_0       = 128 - 14
     SIZE_1       = 128 - 14
     CHECK_PKT    = True
-    DROP_TEST    = True
+    DROP_TEST    = False
     TEST_SFP     = True
     TEST_PCIE    = True
     TEST_DEBUG   = False
-    PRINT_PKTS   = False
-    # FIRMWARE     = "../../../../c_code/basic_fw2.bin"
-    # FIRMWARE     = "../../../../c_code/dram_test2.bin"
-    FIRMWARE     = "../../../../c_code/drop.bin"
+    PRINT_PKTS   = True
+    FIRMWARE     = "../../../../c_code/basic_fw2_ins.bin"
+    # FIRMWARE     = "../../../../c_code/dram_test2_ins.bin"
+    # FIRMWARE     = "../../../../c_code/drop_ins.bin"
 
     # Inputs
     sys_clk  = Signal(bool(0))
