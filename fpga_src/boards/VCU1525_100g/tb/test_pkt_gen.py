@@ -807,14 +807,14 @@ def bench():
         if (PRINT_PKTS):
 
           print ("packets from port 0:")
-          for j in range (0,pkt_count[0]):
+          for j in range (0,min(pkt_count[0],250)):
             yield qsfp0_sink.wait()
             rx_frame = qsfp0_sink.recv()
             data = rx_frame.data
             print(" ".join(("{:02x}".format(c) for c in bytearray(data[0:8]))))
 
           print ("packets from port 1:")
-          for j in range (0,pkt_count[1]):
+          for j in range (0,min(pkt_count[1],250)):
             yield qsfp1_sink.wait()
             rx_frame = qsfp1_sink.recv()
             data = rx_frame.data
