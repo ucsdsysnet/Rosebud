@@ -30,9 +30,9 @@ int main(void){
   for (i=0;i<16;i++){
     pkt_data[i] = (unsigned char *)(0x01000000+i*16384);
     if ((i&0x1)==0)
-      basic_memcpy(pkt_data[i], hdr1, 60);
+      basic_memcpy(pkt_data[i]+pkt_len[i]-60, hdr1, 60);
     else
-      basic_memcpy(pkt_data[i], hdr2, 60);
+      basic_memcpy(pkt_data[i]+pkt_len[i]-60, hdr2, 60);
     pkt_data[i][0] = (char) core_id();
     
   }
