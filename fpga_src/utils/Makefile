@@ -3,12 +3,19 @@ SIZE=9000
 PREFIX=/usr/local
 BINDIR=$(DESTDIR)$(PREFIX)/bin
 INS_BIN_FILE=/home/moein/BumpinTheWire/c_code/$(TEST)_ins.bin
-DATA_BIN_FILE=/home/moein/BumpinTheWire/c_code/$(TEST)_data.bin
+DATA_MAP_FILE=/home/moein/BumpinTheWire/c_code/$(TEST).map
 OUT_FILE=$(TEST)_$(SIZE).csv
 DEV=mqnic0
 ENABLE=0xffff
 RECV=0xffff
 DEBUG=8
+ifneq ("$(wildcard $(DATA_MAP_FILE))","")
+	DMAP_FLAG = -m $(DATA_MAP_FILE)
+else
+	DMAP_FLAG= 
+endif
+
+DMAP=0
 
 CC=gcc
 CFLAGS=-O3 -Wall -I../driver/mqnic
@@ -35,7 +42,7 @@ clean:
 
 do:
 	make -C ../../c_code/ NAME=$(TEST)
-	sudo ./rvfw -d /dev/$(DEV) -i $(INS_BIN_FILE) -m $(DATA_BIN_FILE) -e $(ENABLE) -r $(RECV)
+	sudo ./rvfw -d /dev/$(DEV) -i $(INS_BIN_FILE) $(DMAP_FLAG) -e $(ENABLE) -r $(RECV)
 	sudo ./perf -d /dev/$(DEV) -o $(OUT_FILE) -g $(DEBUG)
 
 reset: 

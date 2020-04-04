@@ -47,7 +47,7 @@ static void usage(char *name)
         "usage: %s [options]\n"
         " -d name    device to open (/sys/bus/pci/devices/.../resource0)\n"
         " -i file    instruction memory binary\n"
-        " -m file    data memory binary\n"
+        " -m file    memory map for data memory binary(ies)\n"
         " -e mask    core enable\n"
         " -r mask    core rx enable\n",
         name);
@@ -63,8 +63,9 @@ int main(int argc, char *argv[])
     struct mqnic *dev;
 
     char *instr_bin = NULL;
-    char *data_bin = NULL;
+    char *data_map = NULL;
     FILE *write_file = NULL;
+    FILE *map_file = NULL;
 
     char action_write = 0;
     char load_dmem    = 0;
@@ -89,7 +90,7 @@ int main(int argc, char *argv[])
         case 'm':
             action_write = 1;
             load_dmem    = 1;
-            data_bin = optarg;
+            data_map = optarg;
             break;
         case 'e':
             core_enable = strtoul(optarg, NULL, 0);
@@ -130,6 +131,7 @@ int main(int argc, char *argv[])
     printf("Board version: %d.%d\n", dev->board_ver >> 16, dev->board_ver & 0xffff);
 
     int core_count = MAX_CORE_COUNT;
+    int test_pcie = 0;
 
     int segment_size = 65536;
 
@@ -138,10 +140,8 @@ int main(int argc, char *argv[])
         char *i_segment = calloc(segment_size, 1);
         char *d_segment = calloc(segment_size, 1);
         char *r_segment = calloc(segment_size, 1);
-        memset(i_segment, 0xff, segment_size);
-        memset(d_segment, 0xff, segment_size);
-        memset(r_segment, 0xff, segment_size);
         size_t ins_len;
+        size_t map_len = 0;
         size_t data_len = 0;
 
         // read instruction binary file
@@ -161,41 +161,27 @@ int main(int argc, char *argv[])
         {
             fprintf(stderr, "Error reading file\n");
             free(i_segment);
+            free(d_segment);
+            free(r_segment);
             ret = -1;
             goto err;
         }
 
         fclose(write_file);
 
-        // read instruction binary file
+        // read data memory map file
         if (load_dmem) {
-            printf("Reading binary file \"%s\"...\n", data_bin);
-            write_file = fopen(data_bin, "rb");
-            fseek(write_file, 0, SEEK_END);
-            data_len = ftell(write_file);
-            rewind(write_file);
-
-            if (data_len==0) {
-                printf("Empty Data mem file\n");
+            printf("Reading memory map file \"%s\"...\n", data_map);
+            map_file = fopen(data_map, "r");
+            fseek(map_file, 0, SEEK_END);
+            map_len = ftell(map_file);
+            rewind(map_file);
+            
+            if (map_len==0) {
+                printf("Empty Data mem map file\n");
                 load_dmem = 0;
-            } else {
-
-                if (data_len > segment_size)
-                {
-                    data_len = segment_size;
-                }
-
-                
-                printf("Reading %lu bytes...\n", data_len);
-                if (fread(d_segment, 1, data_len, write_file) < data_len)
-                {
-                    fprintf(stderr, "Error reading file\n");
-                    free(d_segment);
-                    ret = -1;
-                    goto err;
-                }
+                fclose(map_file);
             }
-            fclose(write_file);
         }
 
         printf("Disabling cores in scheduler...\n");
@@ -214,7 +200,7 @@ int main(int argc, char *argv[])
         }
         printf("\n");
 
-        printf("Write core instruction and data memories...\n");
+        printf("Write core instruction memories...\n");
         for (int k=0; k<core_count; k++)
         {
             struct mqnic_ioctl_block_write ctl;
@@ -228,56 +214,106 @@ int main(int argc, char *argv[])
                 perror("MQNIC_IOCTL_BLOCK_WRITE ioctl failed");
             }
             
-            if (load_dmem) {
-                ctl.addr = (k<<26) | (1<<23);
-                ctl.data = d_segment;
-                ctl.len = data_len;
-
-                if (ioctl(dev->fd, MQNIC_IOCTL_BLOCK_WRITE, &ctl) != 0)
-                {
-                    perror("MQNIC_IOCTL_BLOCK_WRITE ioctl failed");
-                }
-            }
-
             printf(".");
             fflush(stdout);
         }
         printf("\n");
 
-        // Host Write and Readback test
-        struct mqnic_ioctl_block_write ctl;
-        struct mqnic_ioctl_block_read ctl2;
+        if (load_dmem) {
+            printf("Write data memory files ...\n");
+            char line[256];
+            while (fgets(line, sizeof(line), map_file)) {
+                char * data_bin = strtok(line, " ");
+                char * addr     = strtok(NULL, " \n");
+                if (strtok(NULL, " \n")!=NULL){
+                    fprintf(stderr, "Error in data map file\n");
+                    free(i_segment);
+                    free(d_segment);
+                    free(r_segment);
+                    ret = -1;
+                    goto err;
+                }
 
-        ctl.addr = (4<<26) | (0x1000100);
-        ctl.data = i_segment;
-        ctl.len = ins_len;
+                printf("Reading binary file \"%s\"...\n", data_bin);
+                write_file = fopen(data_bin, "rb");
+                fseek(write_file, 0, SEEK_END);
+                data_len = ftell(write_file);
+                rewind(write_file);
 
-        if (ioctl(dev->fd, MQNIC_IOCTL_BLOCK_WRITE, &ctl) != 0)
-        {
-            perror("MQNIC_IOCTL_BLOCK_WRITE ioctl failed");
+                if (data_len > segment_size)
+                {
+                    data_len = segment_size;
+                }
+                
+                printf("Reading %lu bytes...\n", data_len);
+                if (fread(d_segment, 1, data_len, write_file) < data_len)
+                {
+                    fprintf(stderr, "Error reading file\n");
+                    free(i_segment);
+                    free(d_segment);
+                    free(r_segment);
+                    ret = -1;
+                    goto err;
+                }
+                
+                fclose(write_file);
+            
+                printf("Writing to address %s\n", addr);
+                for (int k=0; k<core_count; k++){
+                    struct mqnic_ioctl_block_write ctl;
+
+                    ctl.addr = (k<<26) | (int)strtol(addr, NULL, 0);
+                    ctl.data = d_segment;
+                    ctl.len = data_len;
+
+                    if (ioctl(dev->fd, MQNIC_IOCTL_BLOCK_WRITE, &ctl) != 0)
+                    {
+                        perror("MQNIC_IOCTL_BLOCK_WRITE ioctl failed");
+                    }
+            
+                    printf(".");
+                    fflush(stdout);
+                }
+                printf("\n");
+            }
         }
-        usleep(1000);
 
-        printf("Write Buffer:\n");
-        for (int k=0; k<ctl.len;k+=16){
-            for (int i=0; i<16;i++)
-                printf("%02x ", (int)*(((char*)ctl.data)+k+i) & 0xff);
-            printf("\n");
-        }
+        if (test_pcie){
+            // Host Write and Readback test
+            struct mqnic_ioctl_block_write ctl;
+            struct mqnic_ioctl_block_read ctl2;
 
-        ctl2.addr = (4<<26) | (0x1000100);
-        ctl2.data = r_segment;
-        ctl2.len = ins_len;
-        if (ioctl(dev->fd, MQNIC_IOCTL_BLOCK_READ, &ctl2) != 0){
-            perror("MQNIC_IOCTL_BLOCK_READ ioctl failed");
-        }
-        usleep(1000);
+            ctl.addr = (4<<26) | (0x1000100);
+            ctl.data = i_segment;
+            ctl.len = ins_len;
 
-        printf("Read values:\n");
-        for (int k=0; k<ctl2.len;k+=16){
-            for (int i=0; i<16;i++)
-                printf("%02x ", (int)*(((char*)ctl2.data)+k+i) & 0xff);
-            printf("\n");
+            if (ioctl(dev->fd, MQNIC_IOCTL_BLOCK_WRITE, &ctl) != 0)
+            {
+                perror("MQNIC_IOCTL_BLOCK_WRITE ioctl failed");
+            }
+            usleep(1000);
+
+            printf("Write Buffer:\n");
+            for (int k=0; k<ctl.len;k+=16){
+                for (int i=0; i<16;i++)
+                    printf("%02x ", (int)*(((char*)ctl.data)+k+i) & 0xff);
+                printf("\n");
+            }
+
+            ctl2.addr = (4<<26) | (0x1000100);
+            ctl2.data = r_segment;
+            ctl2.len = ins_len;
+            if (ioctl(dev->fd, MQNIC_IOCTL_BLOCK_READ, &ctl2) != 0){
+                perror("MQNIC_IOCTL_BLOCK_READ ioctl failed");
+            }
+            usleep(1000);
+
+            printf("Read values:\n");
+            for (int k=0; k<ctl2.len;k+=16){
+                for (int i=0; i<16;i++)
+                    printf("%02x ", (int)*(((char*)ctl2.data)+k+i) & 0xff);
+                printf("\n");
+            }
         }
 
         printf("Release core resets...\n");
@@ -294,7 +330,7 @@ int main(int argc, char *argv[])
             fflush(stdout);
         }
         printf("\n");
-
+        
         usleep(1000000);
         
         printf("Core stats after taking out of reset\n");
