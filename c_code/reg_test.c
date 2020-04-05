@@ -3,8 +3,10 @@
 struct Desc packet;
 unsigned char * pkt_data[16];
 unsigned int pkt_len[16] = {65,128,256,512,1024,2048,4096,9000,9000,2048,4096,1024,1500,256,128,1024};
+// unsigned int pkt_len[16] = {[0 ... 15] = 1500};
 char hdr1[60] = "    page.php?id=%27%3B%20SELECT%20%2A%20FROM%20users%3B%20--";
 char hdr2[60] = "    page.php?id=%27%3B%20DELETE%20FROM%20prod_data%3B%20--  ";
+char hdr3[60] = "    page.php?id=                                          --";
 
 void basic_memcpy(char *dest, char *src, int n) 
 { 

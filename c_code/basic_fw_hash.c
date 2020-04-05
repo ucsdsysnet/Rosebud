@@ -42,7 +42,7 @@ inline void slot_rx_packet(struct slot_context *ctx)
 	{
 		// IPv4 packet
 		// IPv4 addresses
-		ACC_HASH_DWORD = *((unsigned int *)(ctx->header+26));
+    ACC_HASH_DWORD = *((unsigned int *)(ctx->header+26));
 		ACC_HASH_DWORD = *((unsigned int *)(ctx->header+30));
 
 		// check IHL and protocol
@@ -51,10 +51,10 @@ inline void slot_rx_packet(struct slot_context *ctx)
 			// TCP or UDP ports
 			ACC_HASH_DWORD = *((unsigned int *)(ctx->header+34));
 		}
-	}
-
-	// read hash
+	
+  // read hash
 	hash = ACC_HASH_READ;
+	}
 
 	// swap port
 	if (ctx->desc.port==0)

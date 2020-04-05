@@ -8,17 +8,20 @@
 // provide space for header modifications
 #define PKT_OFFSET 10
 
-// Hash accelerator control registers
-#define ACC_HASH_CTRL  (*((volatile unsigned int *)(IO_EXT_BASE + 0x0100)))
-#define ACC_HASH_BYTE  (*((volatile unsigned int *)(IO_EXT_BASE + 0x0104)))
-#define ACC_HASH_WORD  (*((volatile unsigned int *)(IO_EXT_BASE + 0x0108)))
-#define ACC_HASH_DWORD (*((volatile unsigned int *)(IO_EXT_BASE + 0x010C)))
-#define ACC_HASH_READ  (*((volatile unsigned int *)(IO_EXT_BASE + 0x0110)))
+// Regex accelerator control registers
+#define ACC_REGEX_STATUS (*((volatile unsigned int *)(IO_EXT_BASE + 0x0080)))
+
+struct regex_accel_regs {
+	volatile unsigned int ctrl;
+	volatile unsigned int len;
+	volatile unsigned int start;
+};
 
 struct slot_context {
 	int index;
 	struct Desc desc;
 	unsigned char *header;
+	struct regex_accel_regs *regex_accel;
 };
 
 struct slot_context context[MAX_CTX_COUNT];
@@ -28,40 +31,35 @@ unsigned int slot_size;
 unsigned int header_slot_base;
 unsigned int header_slot_size;
 
+unsigned int active_accel_mask;
+
 inline void slot_rx_packet(struct slot_context *ctx)
 {
-	long int hash;
+	// start regex parsing
+	ctx->regex_accel->start = ctx->desc.data+14;
+	ctx->regex_accel->len = ctx->desc.len-14;
+	ctx->regex_accel->ctrl = 1;
 
-	// parse header and compute flow hash
-	
-	// reset hash module
-	ACC_HASH_CTRL = 0;
-
-	// check eth type
-	if (*((unsigned short *)(ctx->header+12)) == 0x0008)
-	{
-		// IPv4 packet
-		// IPv4 addresses
-		ACC_HASH_DWORD = *((unsigned int *)(ctx->header+26));
-		ACC_HASH_DWORD = *((unsigned int *)(ctx->header+30));
-
-		// check IHL and protocol
-		if (ctx->header[14] == 0x45 && (ctx->header[23] == 0x06 || ctx->header[23] == 0x11))
-		{
-			// TCP or UDP ports
-			ACC_HASH_DWORD = *((unsigned int *)(ctx->header+34));
-		}
-	}
-
-	// read hash
-	hash = ACC_HASH_READ;
+	active_accel_mask |= 1 << ctx->index;
 
 	// swap port
 	if (ctx->desc.port==0)
 		ctx->desc.port = 1;
 	else
 		ctx->desc.port = 0;
-	
+}
+
+inline void regex_done(struct slot_context *ctx)
+{
+	active_accel_mask &= ~(1 << ctx->index);
+
+	// check for match
+	if (ctx->regex_accel->ctrl & 0x0200)
+	{
+		// drop packet
+		ctx->desc.len = 0;
+	}
+
 	pkt_send(&ctx->desc);
 }
 
@@ -84,6 +82,8 @@ int main(void)
 	init_hdr_slots(slot_count, header_slot_base, header_slot_size);
 	init_slots(slot_count, PKT_OFFSET, slot_size);
 
+	active_accel_mask = 0;
+
 	// init slot context structures
 	for (int i = 0; i < slot_count; i++)
 	{
@@ -91,10 +91,13 @@ int main(void)
 		context[i].desc.tag = i+1;
 		context[i].desc.data = (unsigned char *)(PMEM_BASE + PKT_OFFSET + i*slot_size);
 		context[i].header = (unsigned char *)(header_slot_base + PKT_OFFSET + i*header_slot_size);
+		context[i].regex_accel = (struct regex_accel_regs *)(IO_EXT_BASE + i*16);
 	}
 
 	while (1)
 	{
+		unsigned int temp;
+
 		// check for new packets
 		if (in_pkt_ready())
 		{
@@ -112,6 +115,20 @@ int main(void)
 
 			// handle packet
 			slot_rx_packet(&context[index]);
+		}
+
+		// check accelerators
+		temp = ACC_REGEX_STATUS & active_accel_mask;
+		if (temp)
+		{
+			for (int i = 0; i < slot_count; i++)
+			{
+				if (temp & (1 << i))
+				{
+					// handle packet
+					regex_done(&context[i]);
+				}
+			}
 		}
 	}
 

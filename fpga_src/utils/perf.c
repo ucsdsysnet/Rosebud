@@ -368,7 +368,7 @@ int main(int argc, char *argv[])
                 }
 
                 // read some core status
-                if (debug_reg>=8){
+                if ((debug_reg>=8) || (debug_reg==4) || (debug_reg==5)){
                     mqnic_reg_write32(dev->regs, 0x000414, k<<4|debug_reg);
                     mqnic_reg_read32(dev->regs, 0x000424); //dummy read
                     temp = mqnic_reg_read32(dev->regs, 0x000424); 

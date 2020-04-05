@@ -133,7 +133,7 @@ int main(int argc, char *argv[])
     int core_count = MAX_CORE_COUNT;
     int test_pcie = 0;
 
-    int segment_size = 65536;
+    int segment_size = 256*1024;
 
     if (action_write)
     {
