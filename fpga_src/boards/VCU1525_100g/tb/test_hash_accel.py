@@ -145,14 +145,15 @@ def bench():
     AXIS_ETH_DATA_WIDTH = 512
     AXIS_ETH_KEEP_WIDTH = AXIS_ETH_DATA_WIDTH/8
 
-    SEND_COUNT_0 = 50
-    SEND_COUNT_1 = 50
-    SIZE_0       = 500 - 14
-    SIZE_1       = 500 - 14
+    SEND_COUNT_0 = 500
+    SEND_COUNT_1 = 500
+    SIZE_0       = 1500 - 14
+    SIZE_1       = 1500 - 14
     CHECK_PKT    = True
-    TEST_SFP     = False
+    TEST_SFP     = True
     TEST_PCIE    = False
     TEST_ACC     = True
+    PRINT_PKTS   = True
     FIRMWARE     = "../../../accel/hash/c/basic_fw_hash_ins.bin"
 
     # Inputs
@@ -803,7 +804,7 @@ def bench():
         yield delay(2000)
         yield rc.mem_write(dev_pf0_bar0+0x000404, struct.pack('<L', 0x1234ABCD))
 
-        yield rc.mem_write(dev_pf0_bar0+0x00040C, struct.pack('<L', 0x0f00))
+        yield rc.mem_write(dev_pf0_bar0+0x00040C, struct.pack('<L', 0xffff))
         yield rc.mem_write(dev_pf0_bar0+0x000410, struct.pack('<L', 0x0000))
 
         if (TEST_PCIE):
@@ -853,9 +854,12 @@ def bench():
             yield qsfp0_sink.wait()
             rx_frame = qsfp0_sink.recv()
             data = rx_frame.data
-            print ("packet number from port 0:",j)
-            for i in range(0, len(data), 16):
-                print(" ".join(("{:02x}".format(c) for c in bytearray(data[i:i+16]))))
+            if (PRINT_PKTS):
+              print ("packet number from port 0:",j)
+              for i in range(0, len(data), 16):
+                 print(" ".join(("{:02x}".format(c) for c in bytearray(data[i:i+16]))))
+            else:
+                print (".")
             if (CHECK_PKT):
               assert rx_frame.data[0:14] == start_data_2[0:14]
               assert rx_frame.data[15:] == start_data_2[15:]
@@ -865,9 +869,12 @@ def bench():
             yield qsfp1_sink.wait()
             rx_frame = qsfp1_sink.recv()
             data = rx_frame.data
-            print ("packet number from port 1:",j)
-            for i in range(0, len(data), 16):
-                print(" ".join(("{:02x}".format(c) for c in bytearray(data[i:i+16]))))
+            if (PRINT_PKTS):
+              print ("packet number from port 1:",j)
+              for i in range(0, len(data), 16):
+                  print(" ".join(("{:02x}".format(c) for c in bytearray(data[i:i+16]))))
+            else:
+                print (".")
             if (CHECK_PKT):
               assert rx_frame.data[0:14] == start_data_1[0:14]
               assert rx_frame.data[15:] == start_data_1[15:]
