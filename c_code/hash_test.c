@@ -33,7 +33,7 @@ int main(void){
 
   for (i=0;i<16;i++){
     pkt_data[i] = (unsigned char *)(0x01000000+i*16384);
-    basic_memcpy(pkt_data[i], udp_hdr, 34);
+    basic_memcpy(pkt_data[i], udp_hdr, 42);
   }
 
   pkt_num    = 0;

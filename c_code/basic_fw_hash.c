@@ -1,7 +1,6 @@
 #include "core.h"
 
 // maximum number of slots (number of context objects)
-#define MAX_SLOT_COUNT 8
 #define MAX_CTX_COUNT 8
 
 // packet start offset
@@ -46,20 +45,16 @@ inline void slot_rx_packet(struct slot_context *ctx)
     ACC_HASH_DWORD = *((unsigned int *)(ctx->header+26));
     ACC_HASH_DWORD = *((unsigned int *)(ctx->header+30));
 
-    // DEBUG_OUT_L = *((unsigned int *)(ctx->header+26));
-    DEBUG_OUT_H = *((unsigned int *)(ctx->header+30));
-
     // check IHL and protocol
     if (ctx->header[14] == 0x45 && (ctx->header[23] == 0x06 || ctx->header[23] == 0x11))
     {
       // TCP or UDP ports
-      DEBUG_OUT_L    = *((unsigned int *)(ctx->header+34));
       ACC_HASH_DWORD = *((unsigned int *)(ctx->header+34));
     }
 
   // read hash
   hash = ACC_HASH_READ;
-  // write_debug(hash);
+  write_debug(hash);
   }
 
   // swap port
