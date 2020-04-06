@@ -1,6 +1,7 @@
 #include "core.h"
 
 // maximum number of slots (number of context objects)
+#define MAX_SLOT_COUNT 8
 #define MAX_CTX_COUNT 8
 
 // packet start offset
@@ -30,7 +31,7 @@ unsigned int header_slot_size;
 
 inline void slot_rx_packet(struct slot_context *ctx)
 {
-  long int hash;
+  unsigned int hash;
 
   // parse header and compute flow hash
 
@@ -45,15 +46,20 @@ inline void slot_rx_packet(struct slot_context *ctx)
     ACC_HASH_DWORD = *((unsigned int *)(ctx->header+26));
     ACC_HASH_DWORD = *((unsigned int *)(ctx->header+30));
 
+    // DEBUG_OUT_L = *((unsigned int *)(ctx->header+26));
+    DEBUG_OUT_H = *((unsigned int *)(ctx->header+30));
+
     // check IHL and protocol
     if (ctx->header[14] == 0x45 && (ctx->header[23] == 0x06 || ctx->header[23] == 0x11))
     {
       // TCP or UDP ports
+      DEBUG_OUT_L    = *((unsigned int *)(ctx->header+34));
       ACC_HASH_DWORD = *((unsigned int *)(ctx->header+34));
     }
 
   // read hash
   hash = ACC_HASH_READ;
+  // write_debug(hash);
   }
 
   // swap port
@@ -70,7 +76,7 @@ int main(void)
   // set slot configuration parameters
   slot_count = PMEM_SEG_COUNT;
   slot_size = PMEM_SEG_SIZE;
-  header_slot_base = DMEM_BASE + (DMEM_SIZE >> 1);
+  header_slot_base = DMEM_BASE + (DMEM_SIZE >> 2);
   header_slot_size = 128;
 
   if (slot_count > MAX_SLOT_COUNT)
@@ -84,6 +90,7 @@ int main(void)
   init_hdr_slots(slot_count, header_slot_base, header_slot_size);
   init_slots(slot_count, PKT_OFFSET, slot_size);
 
+  write_debug(0);
   // init slot context structures
   for (int i = 0; i < slot_count; i++)
   {

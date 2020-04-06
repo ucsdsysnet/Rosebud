@@ -5,9 +5,10 @@ unsigned char * pkt_data[16];
 // unsigned int pkt_len[16] = {65,128,256,512,1024,2048,4096,9000,9000,2048,4096,1024,1500,256,128,1024};
 unsigned int pkt_len[16] = {[0 ... 15] = 1500};
 
-char udp_hdr [34] = "\xAB\xAB\xAB\xAB\xAB\xAB\xCD\xCD\xCD\xCD\xCD\xCD\x08\x00"
-                    "\x45\x00\x05\xCE\x00\x00\x00\x00\x00\x11\x00\x00"
-                    "\xC0\xA8\x01\x01\xC0\xA8\x01\x02";
+char udp_hdr [42] = "\xAB\xAB\xAB\xAB\xAB\xAB\xCD\xCD\xCD\xCD\xCD\xCD\x08\x00" //Ethernet header
+                    "\x45\x00\x05\xCE\x00\x00\x00\x00\x00\x11\x00\x00"  // IP hedaer for UDP and packet size 1500, crc=0
+                    "\xC0\xA8\x01\x01\xC0\xA8\x01\x02"  //IP addresses 192.168.1.1,2
+                    "\xAA\xAA\xBB\xBB\x05\xBA\x00\x00"; //UDP header for packet size 1500, crc=0, 0xAAAA and 0xBBBB ports
 
 void basic_memcpy(char *dest, char *src, int n) 
 { 
