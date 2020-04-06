@@ -147,14 +147,13 @@ def bench():
 
     SEND_COUNT_0 = 500
     SEND_COUNT_1 = 500
-    SIZE_0       = 1500 - 14
-    SIZE_1       = 1500 - 14
+    SIZE_0       = 1500 - 14 - 28
+    SIZE_1       = 1500 - 14 - 28
     CHECK_PKT    = True
-    TEST_SFP     = True
-    TEST_PCIE    = False
     TEST_ACC     = True
+    TEST_PCIE    = False
     PRINT_PKTS   = True
-    FIRMWARE     = "../../../accel/hash/c/basic_fw_hash_ins.bin"
+    FIRMWARE     = "../../../../c_code/basic_fw_hash_ins.bin"
 
     # Inputs
     sys_clk  = Signal(bool(0))
@@ -557,19 +556,25 @@ def bench():
     test_frame_1 = eth_ep.EthFrame()
     test_frame_1.eth_dest_mac = 0xDAD1D2D3D4D5
     test_frame_1.eth_src_mac = 0x5A5152535455
-    test_frame_1.eth_type = 0x8000
-    test_frame_1.payload = bytes([0]+[x%256 for x in range(SIZE_0-1)])
+    test_frame_1.eth_type = 0x0800
+    test_frame_1.payload = b"\x45\x00\x05\xCE\x00\x00\x00\x00\x00\x11" +\
+                           b"\x00\x00\xC0\xA8\x01\x01\xC0\xA8\x01\x02" +\
+                           b"\xAA\xAA\xBB\xBB\x05\xBA\x00\x00" +\
+                           bytes([x%256 for x in range(SIZE_0)])
     axis_frame = test_frame_1.build_axis()
     start_data_1 = bytearray(axis_frame)
 
     test_frame_2 = eth_ep.EthFrame()
-    test_frame_2.eth_dest_mac = 0x5A5152535455
-    test_frame_2.eth_src_mac = 0xDAD1D2D3D4D5
-    test_frame_2.eth_type = 0x8000
-    test_frame_2.payload = bytes([0]+[x%256 for x in range(SIZE_1-1)])
-    axis_frame_2 = test_frame_2.build_axis()
-    start_data_2 = bytearray(axis_frame_2)
- 
+    test_frame_2.eth_dest_mac = 0xDAD1D2D3D4D5
+    test_frame_2.eth_src_mac = 0x5A5152535455
+    test_frame_2.eth_type = 0x0800
+    test_frame_2.payload = b"\x45\x00\x05\xCE\x00\x00\x00\x00\x00\x11" +\
+                           b"\x00\x00\xC0\xA8\x01\x01\xC0\xA8\x01\x02" +\
+                           b"\xAA\xAA\xBB\xBB\x05\xBA\x00\x00" +\
+                           bytes([x%256 for x in range(SIZE_0)])
+    axis_frame = test_frame_2.build_axis()
+    start_data_2 = bytearray(axis_frame)
+
     # DUT
     if os.system(build_cmd):
         raise Exception("Error running build command")
@@ -720,22 +725,13 @@ def bench():
 
     def port1():
         for i in range (0,SEND_COUNT_0):
-          # test_frame_1.payload = bytes([x%256 for x in range(random.randrange(1980))])
-          test_frame_1.payload = bytes([i%256] + [x%256 for x in range(SIZE_0-1)])
-          axis_frame = test_frame_1.build_axis()
-          qsfp0_source.send(bytearray(axis_frame))
+          qsfp0_source.send(bytearray(test_frame_1.build_axis()))
           # yield delay(random.randrange(128))
           yield qsfp0_rx_clk.posedge
 
     def port2():
         for i in range (0,SEND_COUNT_1):
-          # test_frame_2.payload = bytes([x%256 for x in range(10,10+random.randrange(300))])
-          # if (i%20==19):
-          #   test_frame_2.payload = bytes([x%256 for x in range(78-14)])
-          # else:
-          test_frame_2.payload = bytes([i%256] + [x%256 for x in range(SIZE_1-1)])
-          axis_frame_2 = test_frame_2.build_axis()
-          qsfp1_source.send(bytearray(axis_frame_2))
+          qsfp1_source.send(bytearray(test_frame_2.build_axis()))
           # yield delay(random.randrange(128))
           yield qsfp1_rx_clk.posedge
 
@@ -844,7 +840,7 @@ def bench():
 
         yield delay(1000)
        
-        if (TEST_SFP):
+        if (TEST_ACC):
           yield port1(),None
           yield port2(),None
 
@@ -880,15 +876,7 @@ def bench():
               assert rx_frame.data[15:] == start_data_1[15:]
             lengths.append(len(data)-8)
 
-        if (TEST_ACC):
-          # Hash of this UDP header is 0x51ccc178
-          test_frame_1.eth_dest_mac = 0xDAD1D2D3D4D5
-          test_frame_1.eth_src_mac = 0x5A5152535455
-          test_frame_1.eth_type = 0x0800
-          test_frame_1.payload = b"E\x00\x00\x9c\x00\x00@\x00@\x11\\\xaeB\t\x95\xbb\xa1\x8edP\n\xea\x06\xe6\x00\x88?[" + bytes([x%256 for x in range(SIZE_0)])
-          qsfp0_source.send(bytearray(test_frame_1.build_axis()))
-
-          yield delay(20000)
+        yield delay(1000)
           
         raise StopSimulation
 
