@@ -46,6 +46,8 @@ int main(void){
 
   while (1){
     for (i=0;i<16;i++) {
+      pkt_data[i][35]++;
+      pkt_data[i][37]--;
       packet.data = pkt_data[i];
       // packet.len = pkt_len[i];
       pkt_send(&packet);

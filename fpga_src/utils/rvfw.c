@@ -53,6 +53,59 @@ static void usage(char *name)
         name);
 }
 
+// We need to break the data into 16KB segments
+void write_to_core (struct mqnic *dev, char* data, unsigned int addr, size_t len, int core_num) {
+    struct mqnic_ioctl_block_write ctl;
+    int left = len;
+
+    ctl.addr = (core_num<<26) | addr;
+    ctl.data = data;
+
+    while (left>0){
+      if (left<16384)
+        ctl.len = left;
+      else
+        ctl.len = 16384;
+
+      if (ioctl(dev->fd, MQNIC_IOCTL_BLOCK_WRITE, &ctl) != 0){
+          perror("MQNIC_IOCTL_BLOCK_WRITE ioctl failed");
+      }
+
+      left    -=16384;
+      ctl.data+=16384;
+      ctl.addr+=16384;
+    }
+
+    return;
+}
+
+// We need to break the data into 16KB segments
+void read_from_core (struct mqnic *dev, char* data, unsigned int addr, size_t len, int core_num) {
+    struct mqnic_ioctl_block_write ctl;
+    int left = len;
+
+    ctl.addr = (core_num<<26) | addr;
+    ctl.data = data;
+
+
+    while (left>0){
+      if (left<16384)
+        ctl.len = left;
+      else
+        ctl.len = 16384;
+
+      if (ioctl(dev->fd, MQNIC_IOCTL_BLOCK_READ, &ctl) != 0){
+          perror("MQNIC_IOCTL_BLOCK_READ ioctl failed");
+      }
+
+      left    -=16384;
+      ctl.data+=16384;
+      ctl.addr+=16384;
+    }
+
+    return;
+}
+
 int main(int argc, char *argv[])
 {
     char *name;
@@ -133,7 +186,7 @@ int main(int argc, char *argv[])
     int core_count = MAX_CORE_COUNT;
     int test_pcie = 0;
 
-    int segment_size = 256*1024;
+    int segment_size = 512*1024;
 
     if (action_write)
     {
@@ -153,6 +206,7 @@ int main(int argc, char *argv[])
 
         if (ins_len > segment_size)
         {
+            printf("Segment size error, increase segment size\n");
             ins_len = segment_size;
         }
 
@@ -176,7 +230,7 @@ int main(int argc, char *argv[])
             fseek(map_file, 0, SEEK_END);
             map_len = ftell(map_file);
             rewind(map_file);
-            
+
             if (map_len==0) {
                 printf("Empty Data mem map file\n");
                 load_dmem = 0;
@@ -203,17 +257,7 @@ int main(int argc, char *argv[])
         printf("Write core instruction memories...\n");
         for (int k=0; k<core_count; k++)
         {
-            struct mqnic_ioctl_block_write ctl;
-
-            ctl.addr = (k<<26) | (1<<25);
-            ctl.data = i_segment;
-            ctl.len = ins_len;
-
-            if (ioctl(dev->fd, MQNIC_IOCTL_BLOCK_WRITE, &ctl) != 0)
-            {
-                perror("MQNIC_IOCTL_BLOCK_WRITE ioctl failed");
-            }
-            
+            write_to_core (dev, i_segment, (1<<25), ins_len, k);
             printf(".");
             fflush(stdout);
         }
@@ -242,9 +286,10 @@ int main(int argc, char *argv[])
 
                 if (data_len > segment_size)
                 {
+                    printf("Segment size error, increase segment size\n");
                     data_len = segment_size;
                 }
-                
+
                 printf("Reading %lu bytes...\n", data_len);
                 if (fread(d_segment, 1, data_len, write_file) < data_len)
                 {
@@ -255,22 +300,12 @@ int main(int argc, char *argv[])
                     ret = -1;
                     goto err;
                 }
-                
+
                 fclose(write_file);
-            
+
                 printf("Writing to address %s\n", addr);
                 for (int k=0; k<core_count; k++){
-                    struct mqnic_ioctl_block_write ctl;
-
-                    ctl.addr = (k<<26) | (int)strtol(addr, NULL, 0);
-                    ctl.data = d_segment;
-                    ctl.len = data_len;
-
-                    if (ioctl(dev->fd, MQNIC_IOCTL_BLOCK_WRITE, &ctl) != 0)
-                    {
-                        perror("MQNIC_IOCTL_BLOCK_WRITE ioctl failed");
-                    }
-            
+                    write_to_core (dev, d_segment, (int)strtol(addr, NULL, 0), data_len, k);
                     printf(".");
                     fflush(stdout);
                 }
@@ -280,38 +315,23 @@ int main(int argc, char *argv[])
 
         if (test_pcie){
             // Host Write and Readback test
-            struct mqnic_ioctl_block_write ctl;
-            struct mqnic_ioctl_block_read ctl2;
 
-            ctl.addr = (4<<26) | (0x1000100);
-            ctl.data = i_segment;
-            ctl.len = ins_len;
-
-            if (ioctl(dev->fd, MQNIC_IOCTL_BLOCK_WRITE, &ctl) != 0)
-            {
-                perror("MQNIC_IOCTL_BLOCK_WRITE ioctl failed");
-            }
+            write_to_core (dev, i_segment, 0x1000100, ins_len, 4);
+            usleep(1000);
+            read_from_core (dev, r_segment, 0x1000100, ins_len, 4);
             usleep(1000);
 
             printf("Write Buffer:\n");
-            for (int k=0; k<ctl.len;k+=16){
+            for (int k=0; k<ins_len;k+=16){
                 for (int i=0; i<16;i++)
-                    printf("%02x ", (int)*(((char*)ctl.data)+k+i) & 0xff);
+                    printf("%02x ", (int)*(i_segment+k+i) & 0xff);
                 printf("\n");
             }
 
-            ctl2.addr = (4<<26) | (0x1000100);
-            ctl2.data = r_segment;
-            ctl2.len = ins_len;
-            if (ioctl(dev->fd, MQNIC_IOCTL_BLOCK_READ, &ctl2) != 0){
-                perror("MQNIC_IOCTL_BLOCK_READ ioctl failed");
-            }
-            usleep(1000);
-
             printf("Read values:\n");
-            for (int k=0; k<ctl2.len;k+=16){
+            for (int k=0; k<ins_len;k+=16){
                 for (int i=0; i<16;i++)
-                    printf("%02x ", (int)*(((char*)ctl2.data)+k+i) & 0xff);
+                    printf("%02x ", (int)*(r_segment+k+i) & 0xff);
                 printf("\n");
             }
         }
@@ -330,9 +350,9 @@ int main(int argc, char *argv[])
             fflush(stdout);
         }
         printf("\n");
-        
+
         usleep(1000000);
-        
+
         printf("Core stats after taking out of reset\n");
         for (int k=0; k<core_count; k++){
             mqnic_reg_write32(dev->regs, 0x000414, k<<4|8);

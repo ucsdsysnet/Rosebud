@@ -15,6 +15,9 @@
 #define ACC_HASH_DWORD (*((volatile unsigned int *)(IO_EXT_BASE + 0x010C)))
 #define ACC_HASH_READ  (*((volatile unsigned int *)(IO_EXT_BASE + 0x0110)))
 
+#define UDP_table (volatile char *) 0x01080000
+// volatile char * TCP_table =(volatile char *) 0x010C0000;
+
 struct slot_context {
   int index;
   struct Desc desc;
@@ -52,9 +55,14 @@ inline void slot_rx_packet(struct slot_context *ctx)
       ACC_HASH_DWORD = *((unsigned int *)(ctx->header+34));
     }
 
-  // read hash
-  hash = ACC_HASH_READ;
-  write_debug(hash);
+    // read hash
+    hash = ACC_HASH_READ;
+
+    if(*(UDP_table+(hash&0x0003ffff))==1)
+      ctx->desc.len = 0;
+
+    // DEBUG_OUT_L = (unsigned int)(UDP_table+(hash&0x0003ffff));
+    // DEBUG_OUT_H = *(UDP_table+(hash&0x0003ffff));
   }
 
   // swap port
@@ -70,7 +78,7 @@ int main(void)
 {
   // set slot configuration parameters
   slot_count = PMEM_SEG_COUNT;
-  slot_size = PMEM_SEG_SIZE;
+  slot_size = 16384;
   header_slot_base = DMEM_BASE + (DMEM_SIZE >> 2);
   header_slot_size = 128;
 
@@ -86,6 +94,7 @@ int main(void)
   init_slots(slot_count, PKT_OFFSET, slot_size);
 
   write_debug(0);
+
   // init slot context structures
   for (int i = 0; i < slot_count; i++)
   {
