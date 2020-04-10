@@ -47,6 +47,7 @@ localparam LEN_WIDTH = 16;
 reg [PMEM_ADDR_WIDTH-1:0] cmd_addr_reg[ACCEL_COUNT-1:0];
 reg [LEN_WIDTH-1:0]       cmd_len_reg[ACCEL_COUNT-1:0];
 reg [ACCEL_COUNT-1:0]     cmd_valid_reg;
+reg [ACCEL_COUNT-1:0]     cmd_stop_reg;
 wire [ACCEL_COUNT-1:0]    cmd_ready;
 
 wire [ACCEL_COUNT-1:0]    status_match;
@@ -56,6 +57,7 @@ reg [31:0]  hash_data_reg = 0;
 reg [1:0]   hash_data_len_reg = 0;
 reg         hash_data_valid_reg = 0;
 reg         hash_clear_reg = 0;
+reg         hash_rd_stall_reg;
 
 wire [31:0]  hash_out;
 
@@ -67,8 +69,11 @@ assign io_rd_valid = read_data_valid_reg;
 
 always @(posedge clk) begin
   cmd_valid_reg <= cmd_valid_reg & ~cmd_ready;
+  cmd_stop_reg  <= {ACCEL_COUNT{1'b0}};
+
   hash_data_valid_reg <= 1'b0;
-  hash_clear_reg <= 1'b0;
+  hash_clear_reg      <= 1'b0;
+  hash_rd_stall_reg   <= 1'b0;
 
   read_data_valid_reg <= 1'b0;
 
@@ -97,6 +102,7 @@ always @(posedge clk) begin
         4'h0: begin
           if (io_strb[0]) begin
             cmd_valid_reg[io_addr[6:4]] <= cmd_valid_reg[io_addr[6:4]] || io_wr_data[0];
+            cmd_stop_reg [io_addr[6:4]] <= cmd_stop_reg [io_addr[6:4]] || io_wr_data[4];
           end
         end
         4'h4: begin
@@ -114,8 +120,10 @@ always @(posedge clk) begin
     read_data_valid_reg <= 1'b1;
     if (io_addr[8]) begin
       read_data_reg <= hash_out;
+      read_data_valid_reg <= ~ hash_data_valid_reg; // one cycle stall after last wr
+      hash_rd_stall_reg <= hash_data_valid_reg;
     end else if (io_addr[7]) begin
-      read_data_reg <= status_done;
+      read_data_reg <= status_done|status_match;
     end else if (!io_addr[7]) begin
       case ({io_addr[3:2], 2'b00})
         4'h0: begin
@@ -134,10 +142,19 @@ always @(posedge clk) begin
     end
   end
 
+  if (hash_rd_stall_reg) begin
+      read_data_reg <= hash_out;
+      read_data_valid_reg <= 1'b1;
+  end
+
   if (rst) begin
-    cmd_valid_reg <= 1'b0;
+    cmd_valid_reg <= {ACCEL_COUNT{1'b0}};
+    cmd_stop_reg  <= {ACCEL_COUNT{1'b0}};
+
     hash_data_valid_reg <= 1'b0;
-    hash_clear_reg <= 1'b0;
+    hash_clear_reg      <= 1'b0;
+    hash_rd_stall_reg   <= 1'b0;
+
     read_data_valid_reg <= 1'b0;
   end
 end
@@ -163,6 +180,7 @@ for (n = 0; n < ACCEL_COUNT; n = n + 1) begin
     .cmd_addr(cmd_addr_reg[n]),
     .cmd_len(cmd_len_reg[n]),
     .cmd_valid(cmd_valid_reg[n]),
+    .cmd_stop(cmd_stop_reg[n]),
     .cmd_ready(cmd_ready[n]),
 
     .status_match(status_match[n]),

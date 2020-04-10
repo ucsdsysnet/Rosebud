@@ -19,7 +19,7 @@ parameter OFFSET_WIDTH = $clog2(HASH_WIDTH);
 
 reg [HASH_WIDTH*8-1:0] hash_data_reg = 0;
 reg [OFFSET_WIDTH-1:0] offset_reg = 0;
-reg [31:0] hash_reg;
+// reg [31:0] hash_reg;
 
 function [31:0] hash_toep(input [HASH_WIDTH*8-1:0] data, input [5:0] len, input [(HASH_WIDTH+4)*8-1:0] key);
     integer i, j;
@@ -37,7 +37,7 @@ endfunction
 
 wire [31:0] hash = hash_toep(hash_data_reg, HASH_WIDTH, hash_key);
 
-assign hash_out = hash_reg;
+assign hash_out = hash; // _reg;
 
 always @(posedge clk) begin
     if (hash_data_valid) begin
@@ -53,7 +53,7 @@ always @(posedge clk) begin
         end
     end
 
-    hash_reg <= hash;
+    // hash_reg <= hash;
 
     if (rst || hash_clear) begin
         hash_data_reg <= 0;

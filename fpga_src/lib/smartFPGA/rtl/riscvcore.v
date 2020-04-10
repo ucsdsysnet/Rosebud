@@ -69,7 +69,7 @@ module riscvcore #(
 );
 
 // Core to memory signals
-wire [31:0] mem_wr_data, dmem_read_data;
+wire [31:0] dmem_read_data;
 wire [31:0] dmem_addr, imem_addr_n;
 wire [4:0]  dmem_wr_strb;
 wire [1:0]  dmem_byte_count;
@@ -133,6 +133,7 @@ assign exio_en   = dmem_v && external_io;
 wire [5:0] io_addr  = dmem_addr[7:2];
 wire       io_read  = internal_io && dmem_v && (!mem_wen);
 wire       io_write = internal_io && dmem_v && mem_wen;
+reg [31:0] io_read_data;
 
 // selecting input/output data
 assign imem_addr      = imem_addr_n[24:0];
@@ -268,7 +269,6 @@ localparam MAX_SLOT_CNT     = 6'b101111;
 localparam DEBUG_IN_ADDR_L  = 6'b110000;
 localparam DEBUG_IN_ADDR_H  = 6'b110001;
 
-reg [31:0] io_read_data;
 reg [31:0] dram_recv_flag;
 reg [63:0] internal_timer;
 

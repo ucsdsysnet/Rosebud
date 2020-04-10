@@ -1,8 +1,5 @@
 #include "core.h"
 
-// maximum number of slots (number of context objects)
-#define MAX_CTX_COUNT 8
-
 // packet start offset
 // DWORD align Ethernet payload
 // provide space for header modifications
@@ -15,63 +12,67 @@
 #define ACC_HASH_DWORD (*((volatile unsigned int *)(IO_EXT_BASE + 0x010C)))
 #define ACC_HASH_READ  (*((volatile unsigned int *)(IO_EXT_BASE + 0x0110)))
 
+#define IP_table  (volatile char *) 0x01040000
 #define UDP_table (volatile char *) 0x01080000
-// volatile char * TCP_table =(volatile char *) 0x010C0000;
-
-struct slot_context {
-  int index;
-  struct Desc desc;
-  unsigned char *header;
-};
-
-struct slot_context context[MAX_CTX_COUNT];
+#define TCP_table (volatile char *) 0x010C0000
 
 unsigned int slot_count;
 unsigned int slot_size;
 unsigned int header_slot_base;
 unsigned int header_slot_size;
 
-inline void slot_rx_packet(struct slot_context *ctx)
-{
+unsigned char * pkt_header [8];
+
+inline void slot_rx_packet(struct Desc* desc){
   unsigned int hash;
+  char act = 0;
+  unsigned char* header;
 
   // parse header and compute flow hash
 
   // reset hash module
-  ACC_HASH_CTRL = 0;
+  header = pkt_header[(desc->tag)-1];
+  ACC_HASH_CTRL  = 0;
+  desc->port = 2;
 
   // check eth type
-  if (*((unsigned short *)(ctx->header+12)) == 0x0008)
-  {
-    // IPv4 packet
+  if (*((unsigned short *)(header+12)) != 0x0008){
+    act = 0;
+  } else { // IPv4 packet
+
     // IPv4 addresses
-    ACC_HASH_DWORD = *((unsigned int *)(ctx->header+26));
-    ACC_HASH_DWORD = *((unsigned int *)(ctx->header+30));
+    ACC_HASH_DWORD = *((unsigned int *)(header+26));
+    ACC_HASH_DWORD = *((unsigned int *)(header+30));
 
     // check IHL and protocol
-    if (ctx->header[14] == 0x45 && (ctx->header[23] == 0x06 || ctx->header[23] == 0x11))
-    {
-      // TCP or UDP ports
-      ACC_HASH_DWORD = *((unsigned int *)(ctx->header+34));
+    if (header[14] == 0x45){
+      if(header[23]==0x06){
+          // TCP or UDP ports
+          ACC_HASH_DWORD = *((unsigned int *)(header+34));
+          // read hash
+          hash = ACC_HASH_READ;
+          act = *(TCP_table+(hash&0x0003ffff));
+      } else if (header[23]==0x11){
+          ACC_HASH_DWORD = *((unsigned int *)(header+34));
+          hash = ACC_HASH_READ;
+          act = *(UDP_table+(hash&0x0003ffff));
+      } else {
+          hash = ACC_HASH_READ;
+          act = *(IP_table+(hash&0x0003ffff));
+      }
+    } else {
+      act = 0; 
     }
+  }
+    
+  DEBUG_OUT_H = *((unsigned int *)(header+34));
+  DEBUG_OUT_L = hash;
 
-    // read hash
-    hash = ACC_HASH_READ;
-
-    if(*(UDP_table+(hash&0x0003ffff))==1)
-      ctx->desc.len = 0;
-
-    // DEBUG_OUT_L = (unsigned int)(UDP_table+(hash&0x0003ffff));
-    // DEBUG_OUT_H = *(UDP_table+(hash&0x0003ffff));
+  if (act==0){
+    desc->len = 0;
   }
 
-  // swap port
-  if (ctx->desc.port==0)
-    ctx->desc.port = 1;
-  else
-    ctx->desc.port = 0;
-
-  pkt_send(&ctx->desc);
+  pkt_send(desc);
 }
 
 int main(void)
@@ -79,14 +80,11 @@ int main(void)
   // set slot configuration parameters
   slot_count = PMEM_SEG_COUNT;
   slot_size = 16384;
-  header_slot_base = DMEM_BASE + (DMEM_SIZE >> 2);
+  header_slot_base = DMEM_BASE + (DMEM_SIZE >> 1);
   header_slot_size = 128;
 
   if (slot_count > MAX_SLOT_COUNT)
     slot_count = MAX_SLOT_COUNT;
-
-  if (slot_count > MAX_CTX_COUNT)
-    slot_count = MAX_CTX_COUNT;
 
   // Do this at the beginning, so scheduler can fill the slots while
   // initializing other things.
@@ -94,23 +92,16 @@ int main(void)
   init_slots(slot_count, PKT_OFFSET, slot_size);
 
   write_debug(0);
-
-  // init slot context structures
+    
   for (int i = 0; i < slot_count; i++)
-  {
-    context[i].index = i;
-    context[i].desc.tag = i+1;
-    context[i].desc.data = (unsigned char *)(PMEM_BASE + PKT_OFFSET + i*slot_size);
-    context[i].header = (unsigned char *)(header_slot_base + PKT_OFFSET + i*header_slot_size);
-  }
+    pkt_header[i] = (unsigned char *)(header_slot_base + PKT_OFFSET + i*header_slot_size);
 
-  while (1)
-  {
+  while(1) {
+
     // check for new packets
     if (in_pkt_ready())
     {
       struct Desc desc;
-      int index;
 
       // read descriptor
       read_in_pkt(&desc);
@@ -119,14 +110,7 @@ int main(void)
       if (desc.port==2){
         pkt_send(&desc);
       } else {
-        // compute index
-        index = desc.tag-1;
-
-        // copy descriptor into context
-        context[index].desc = desc;
-
-        // handle packet
-        slot_rx_packet(&context[index]);
+        slot_rx_packet(&desc);
       }
     }
   }

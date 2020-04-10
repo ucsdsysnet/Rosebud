@@ -35,7 +35,7 @@ unsigned int active_accel_mask;
 
 inline void slot_rx_packet(struct slot_context *ctx)
 {
-	// start regex parsing
+	// start regex parsing, skip Ethernet header
 	ctx->regex_accel->start = ctx->desc.data+14;
 	ctx->regex_accel->len = ctx->desc.len-14;
 	ctx->regex_accel->ctrl = 1;
@@ -60,6 +60,7 @@ inline void regex_done(struct slot_context *ctx)
 		ctx->desc.len = 0;
 	}
 
+  ctx->regex_accel->ctrl = 1<<4;
 	pkt_send(&ctx->desc);
 }
 

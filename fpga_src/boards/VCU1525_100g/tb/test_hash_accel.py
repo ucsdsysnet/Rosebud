@@ -150,6 +150,7 @@ def bench():
     SIZE_0       = 1500 - 14 - 28
     SIZE_1       = 1500 - 14 - 28
     CHECK_PKT    = True
+    DROP_TEST    = True
     TEST_ACC     = True
     TEST_PCIE    = False
     PRINT_PKTS   = True
@@ -726,13 +727,11 @@ def bench():
     def port1():
         for i in range (0,SEND_COUNT_0):
           qsfp0_source.send(bytearray(test_frame_1.build_axis()))
-          # yield delay(random.randrange(128))
           yield qsfp0_rx_clk.posedge
 
     def port2():
         for i in range (0,SEND_COUNT_1):
           qsfp1_source.send(bytearray(test_frame_2.build_axis()))
-          # yield delay(random.randrange(128))
           yield qsfp1_rx_clk.posedge
 
     @instance
@@ -841,43 +840,46 @@ def bench():
         yield delay(1000)
        
         if (TEST_ACC):
+          print ("send data from LAN")
           yield port1(),None
           yield port2(),None
 
-          lengths = []
-          print ("send data from LAN")
-          for j in range (0,SEND_COUNT_1):
-            yield qsfp0_sink.wait()
-            rx_frame = qsfp0_sink.recv()
-            data = rx_frame.data
-            if (PRINT_PKTS):
-              print ("packet number from port 0:",j)
-              for i in range(0, len(data), 16):
-                 print(" ".join(("{:02x}".format(c) for c in bytearray(data[i:i+16]))))
-            else:
-                print (".")
-            if (CHECK_PKT):
-              assert rx_frame.data[0:14] == start_data_2[0:14]
-              assert rx_frame.data[15:] == start_data_2[15:]
-            lengths.append(len(data)-8)
-
-          for j in range (0,SEND_COUNT_0):
-            yield qsfp1_sink.wait()
-            rx_frame = qsfp1_sink.recv()
-            data = rx_frame.data
-            if (PRINT_PKTS):
-              print ("packet number from port 1:",j)
-              for i in range(0, len(data), 16):
+          if (not DROP_TEST):
+            lengths = []
+            for j in range (0,SEND_COUNT_1):
+              yield qsfp0_sink.wait()
+              rx_frame = qsfp0_sink.recv()
+              data = rx_frame.data
+              if (PRINT_PKTS):
+                print ("packet number from port 0:",j)
+                for i in range(0, len(data), 16):
                   print(" ".join(("{:02x}".format(c) for c in bytearray(data[i:i+16]))))
-            else:
+              else:
                 print (".")
-            if (CHECK_PKT):
-              assert rx_frame.data[0:14] == start_data_1[0:14]
-              assert rx_frame.data[15:] == start_data_1[15:]
-            lengths.append(len(data)-8)
+              if (CHECK_PKT):
+                assert rx_frame.data[0:14] == start_data_2[0:14]
+                assert rx_frame.data[15:] == start_data_2[15:]
+              lengths.append(len(data)-8)
 
-        yield delay(1000)
-          
+            for j in range (0,SEND_COUNT_0):
+              yield qsfp1_sink.wait()
+              rx_frame = qsfp1_sink.recv()
+              data = rx_frame.data
+              if (PRINT_PKTS):
+                print ("packet number from port 1:",j)
+                for i in range(0, len(data), 16):
+                    print(" ".join(("{:02x}".format(c) for c in bytearray(data[i:i+16]))))
+              else:
+                print (".")
+              if (CHECK_PKT):
+                assert rx_frame.data[0:14] == start_data_1[0:14]
+                assert rx_frame.data[15:] == start_data_1[15:]
+              lengths.append(len(data)-8)
+
+            yield delay(1000)
+          else:
+            yield delay(10000)
+
         raise StopSimulation
 
     return instances()

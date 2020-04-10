@@ -1,5 +1,4 @@
 module re(input wire clk, input wire rst_n, input wire [7:0] in, output wire match);
-assign match = (reg_10 | reg_21 | reg_31);
 
 reg reg_0;
 always @(posedge clk or negedge rst_n) begin
@@ -384,4 +383,7 @@ always @(posedge clk or negedge rst_n) begin
             reg_31 <= 'd0;
     end
 end
+
+assign match = (reg_10 | reg_21 | reg_31);
+
 endmodule

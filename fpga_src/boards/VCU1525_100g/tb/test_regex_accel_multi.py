@@ -145,15 +145,15 @@ def bench():
     AXIS_ETH_DATA_WIDTH = 512
     AXIS_ETH_KEEP_WIDTH = AXIS_ETH_DATA_WIDTH/8
 
-    SEND_COUNT_0 = 50
-    SEND_COUNT_1 = 50
+    SEND_COUNT_0 = 3*50
+    SEND_COUNT_1 = 3*50
     SIZE_0       = 500 - 14
     SIZE_1       = 500 - 14
-    CHECK_PKT    = True
-    TEST_SFP     = False
-    TEST_PCIE    = False
+    CHECK_PKT    = False
     TEST_ACC     = True
-    FIRMWARE     = "../../../accel/regex/c/basic_fw_re_multi_ins.bin"
+    TEST_PCIE    = False
+    PRINT_PKTS   = True
+    FIRMWARE     = "../../../../c_code/basic_fw_re_multi_ins.bin"
 
     # Inputs
     sys_clk  = Signal(bool(0))
@@ -716,26 +716,29 @@ def bench():
     def clk_logic():
         sys_clk_to_pcie.next = sys_clk
         sys_rst_to_pcie.next = not sys_rst
-
+        
     def port1():
-        for i in range (0,SEND_COUNT_0):
-          # test_frame_1.payload = bytes([x%256 for x in range(random.randrange(1980))])
-          test_frame_1.payload = bytes([i%256] + [x%256 for x in range(SIZE_0-1)])
-          axis_frame = test_frame_1.build_axis()
-          qsfp0_source.send(bytearray(axis_frame))
-          # yield delay(random.randrange(128))
+        for i in range (0,int(SEND_COUNT_0/3)):
+          test_frame_1.payload = b"page.php?id=12345" + bytes([i%256] + [x%256 for x in range(SIZE_0-1)])
+          qsfp0_source.send(test_frame_1.build_axis())
+          yield qsfp0_rx_clk.posedge
+          test_frame_1.payload = b"page.php?id=%27%3B%20SELECT%20%2A%20FROM%20users%3B%20--" + bytes([i%256] + [x%256 for x in range(SIZE_0-1)])
+          qsfp0_source.send(test_frame_1.build_axis())
+          yield qsfp0_rx_clk.posedge
+          test_frame_1.payload = b"page.php?id=%27%3B%20INSERT%20INTO%20users%20VALUES%20%28%27skroob%27%2C%20%271234%27%29%3B%20--" + bytes([i%256] + [x%256 for x in range(SIZE_0-1)])
+          qsfp0_source.send(test_frame_1.build_axis())
           yield qsfp0_rx_clk.posedge
 
     def port2():
-        for i in range (0,SEND_COUNT_1):
-          # test_frame_2.payload = bytes([x%256 for x in range(10,10+random.randrange(300))])
-          # if (i%20==19):
-          #   test_frame_2.payload = bytes([x%256 for x in range(78-14)])
-          # else:
-          test_frame_2.payload = bytes([i%256] + [x%256 for x in range(SIZE_1-1)])
-          axis_frame_2 = test_frame_2.build_axis()
-          qsfp1_source.send(bytearray(axis_frame_2))
-          # yield delay(random.randrange(128))
+        for i in range (0,int(SEND_COUNT_1/3)):
+          test_frame_2.payload = b"page.php?id=%27%3B%20DELETE%20FROM%20prod_data%3B%20--" + bytes([i%256] + [x%256 for x in range(SIZE_0-1)])
+          qsfp1_source.send(test_frame_2.build_axis())
+          yield qsfp1_rx_clk.posedge
+          test_frame_2.payload = b"page.php?id=%27%3B%20UPDATE%20users%20SET%20password%20%3D%20%271234%27%20WHERE%20username%20%3D%20%27skroob%27%20prod_data%3B%20--" + bytes([i%256] + [x%256 for x in range(SIZE_0-1)])
+          qsfp1_source.send(test_frame_2.build_axis())
+          yield qsfp1_rx_clk.posedge
+          test_frame_2.payload = b"page.php?id=this%20is%20fine" + bytes([i%256] + [x%256 for x in range(SIZE_0-1)])
+          qsfp1_source.send(test_frame_2.build_axis())
           yield qsfp1_rx_clk.posedge
 
     @instance
@@ -803,7 +806,7 @@ def bench():
         yield delay(2000)
         yield rc.mem_write(dev_pf0_bar0+0x000404, struct.pack('<L', 0x1234ABCD))
 
-        yield rc.mem_write(dev_pf0_bar0+0x00040C, struct.pack('<L', 0x0f00))
+        yield rc.mem_write(dev_pf0_bar0+0x00040C, struct.pack('<L', 0x0300))
         yield rc.mem_write(dev_pf0_bar0+0x000410, struct.pack('<L', 0x0000))
 
         if (TEST_PCIE):
@@ -843,56 +846,43 @@ def bench():
 
         yield delay(1000)
        
-        if (TEST_SFP):
+        if (TEST_ACC):
           yield port1(),None
           yield port2(),None
 
           lengths = []
           print ("send data from LAN")
-          for j in range (0,SEND_COUNT_1):
+          for j in range (0,int(SEND_COUNT_1/3)): # we drop half, so expect at least getting 1/3rd
             yield qsfp0_sink.wait()
             rx_frame = qsfp0_sink.recv()
             data = rx_frame.data
-            print ("packet number from port 0:",j)
-            for i in range(0, len(data), 16):
+            if (PRINT_PKTS):
+              print ("packet number from port 0:",j)
+              for i in range(0, len(data), 16):
                 print(" ".join(("{:02x}".format(c) for c in bytearray(data[i:i+16]))))
+            else:
+                print (".")
             if (CHECK_PKT):
               assert rx_frame.data[0:14] == start_data_2[0:14]
               assert rx_frame.data[15:] == start_data_2[15:]
             lengths.append(len(data)-8)
 
-          for j in range (0,SEND_COUNT_0):
+          for j in range (0,int(SEND_COUNT_0/3)):
             yield qsfp1_sink.wait()
             rx_frame = qsfp1_sink.recv()
             data = rx_frame.data
-            print ("packet number from port 1:",j)
-            for i in range(0, len(data), 16):
-                print(" ".join(("{:02x}".format(c) for c in bytearray(data[i:i+16]))))
+            if (PRINT_PKTS):
+              print ("packet number from port 1:",j)
+              for i in range(0, len(data), 16):
+                  print(" ".join(("{:02x}".format(c) for c in bytearray(data[i:i+16]))))
+            else:
+                print (".")
             if (CHECK_PKT):
               assert rx_frame.data[0:14] == start_data_1[0:14]
               assert rx_frame.data[15:] == start_data_1[15:]
             lengths.append(len(data)-8)
 
-        if (TEST_ACC):
-          test_frame_1.payload = b"page.php?id=12345" + bytes([i%256] + [x%256 for x in range(SIZE_0-1)])
-          qsfp0_source.send(test_frame_1.build_axis())
-
-          test_frame_1.payload = b"page.php?id=%27%3B%20SELECT%20%2A%20FROM%20users%3B%20--" + bytes([i%256] + [x%256 for x in range(SIZE_0-1)])
-          qsfp0_source.send(test_frame_1.build_axis())
-
-          test_frame_1.payload = b"page.php?id=%27%3B%20INSERT%20INTO%20users%20VALUES%20%28%27skroob%27%2C%20%271234%27%29%3B%20--" + bytes([i%256] + [x%256 for x in range(SIZE_0-1)])
-          qsfp0_source.send(test_frame_1.build_axis())
-
-          test_frame_1.payload = b"page.php?id=%27%3B%20DELETE%20FROM%20prod_data%3B%20--" + bytes([i%256] + [x%256 for x in range(SIZE_0-1)])
-          qsfp0_source.send(test_frame_1.build_axis())
-
-          test_frame_1.payload = b"page.php?id=%27%3B%20UPDATE%20users%20SET%20password%20%3D%20%271234%27%20WHERE%20username%20%3D%20%27skroob%27%20prod_data%3B%20--" + bytes([i%256] + [x%256 for x in range(SIZE_0-1)])
-          qsfp0_source.send(test_frame_1.build_axis())
-
-          test_frame_1.payload = b"page.php?id=this%20is%20fine" + bytes([i%256] + [x%256 for x in range(SIZE_0-1)])
-          qsfp0_source.send(test_frame_1.build_axis())
-
-          yield delay(20000)
+        yield delay(5000)
           
         raise StopSimulation
 

@@ -12,9 +12,10 @@ module regex_acc #(
     input  wire                                     clk,
     input  wire                                     rst,
 
-    input  wire [PMEM_ADDR_WIDTH-1:0]          cmd_addr,
+    input  wire [PMEM_ADDR_WIDTH-1:0]               cmd_addr,
     input  wire [LEN_WIDTH-1:0]                     cmd_len,
     input  wire                                     cmd_valid,
+    input  wire                                     cmd_stop,
     output wire                                     cmd_ready,
 
     output wire                                     status_match,
@@ -94,24 +95,29 @@ always @* begin
     ctrl_stop_next = 1'b0;
     ctrl_addr_next = addr_reg;
 
+    if (cmd_stop) begin
+        len_next = 0;
+        rd_en_next = 1'b0;
+        ctrl_start_next = 1'b0;
+        cmd_ready_next = 1'b1;
+    end
+    else if (cmd_ready_reg && cmd_valid) begin
+        addr_next = cmd_addr;
+        len_next = cmd_len;
+        rd_en_next = 1'b1;
+        ctrl_start_next = 1'b1;
+        cmd_ready_next = 1'b0;
+    end
     // read data
-    if (len_reg > 1) begin
+    else if (len_reg > 1) begin
         addr_next = addr_reg + 1;
         len_next = len_reg - 1;
         rd_en_next = 1'b1;
     end else begin
         cmd_ready_next = 1'b1;
-
-        if (cmd_ready_reg && cmd_valid) begin
-            addr_next = cmd_addr;
-            len_next = cmd_len;
-            rd_en_next = 1'b1;
-            cmd_ready_next = 1'b0;
-            ctrl_start_next = 1'b1;
-        end
     end
 
-    ctrl_stop_next = rd_en_reg && !rd_en_next;
+    ctrl_stop_next = (rd_en_reg && !rd_en_next) | cmd_stop;
 
     re_data_next = re_data_reg;
     re_reset_next = 1'b0;

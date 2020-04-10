@@ -889,7 +889,7 @@ def bench():
               if (PRINT_PKTS):
                 print ("packet number from port 0:",j)
                 for i in range(0, len(data), 16):
-                    print(" ".join(("{:02x}".format(c) for c in bytearray(data[i:i+16]))))
+                  print(" ".join(("{:02x}".format(c) for c in bytearray(data[i:i+16]))))
               else:
                 print (".")
               if (CHECK_PKT):
