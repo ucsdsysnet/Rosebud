@@ -150,6 +150,7 @@ def bench():
     SIZE_0       = 500 - 14
     SIZE_1       = 500 - 14
     CHECK_PKT    = False
+    DROP_TEST    = True
     TEST_ACC     = True
     TEST_PCIE    = False
     PRINT_PKTS   = True
@@ -718,28 +719,29 @@ def bench():
         sys_rst_to_pcie.next = not sys_rst
         
     def port1():
-        for i in range (0,int(SEND_COUNT_0/3)):
-          test_frame_1.payload = b"page.php?id=12345" + bytes([i%256] + [x%256 for x in range(SIZE_0-1)])
-          qsfp0_source.send(test_frame_1.build_axis())
-          yield qsfp0_rx_clk.posedge
-          test_frame_1.payload = b"page.php?id=%27%3B%20SELECT%20%2A%20FROM%20users%3B%20--" + bytes([i%256] + [x%256 for x in range(SIZE_0-1)])
-          qsfp0_source.send(test_frame_1.build_axis())
-          yield qsfp0_rx_clk.posedge
-          test_frame_1.payload = b"page.php?id=%27%3B%20INSERT%20INTO%20users%20VALUES%20%28%27skroob%27%2C%20%271234%27%29%3B%20--" + bytes([i%256] + [x%256 for x in range(SIZE_0-1)])
+        for i in range (0,int(SEND_COUNT_0)):
+          # test_frame_1.payload = b"page.php?id=12345" + bytes([i%256] + [x%256 for x in range(SIZE_0-1)])
+          # qsfp0_source.send(test_frame_1.build_axis())
+          # yield qsfp0_rx_clk.posedge
+          # test_frame_1.payload = b"page.php?id=%27%3B%20SELECT%20%2A%20FROM%20users%3B%20--" + bytes([i%256] + [x%256 for x in range(SIZE_0-1)])
+          # qsfp0_source.send(test_frame_1.build_axis())
+          # yield qsfp0_rx_clk.posedge
+          test_frame_1.payload = b"page.php?id=%27%3B%20DELETE%20FROM%20prod_data%3B%20--" + bytes([i%256] + [x%256 for x in range(SIZE_0-1)])
+          # test_frame_1.payload = b"page.php?id=%27%3B%20INSERT%20INTO%20users%20VALUES%20%28%27skroob%27%2C%20%271234%27%29%3B%20--" + bytes([i%256] + [x%256 for x in range(SIZE_0-1)])
           qsfp0_source.send(test_frame_1.build_axis())
           yield qsfp0_rx_clk.posedge
 
     def port2():
-        for i in range (0,int(SEND_COUNT_1/3)):
+        for i in range (0,int(SEND_COUNT_1)):
           test_frame_2.payload = b"page.php?id=%27%3B%20DELETE%20FROM%20prod_data%3B%20--" + bytes([i%256] + [x%256 for x in range(SIZE_0-1)])
           qsfp1_source.send(test_frame_2.build_axis())
           yield qsfp1_rx_clk.posedge
-          test_frame_2.payload = b"page.php?id=%27%3B%20UPDATE%20users%20SET%20password%20%3D%20%271234%27%20WHERE%20username%20%3D%20%27skroob%27%20prod_data%3B%20--" + bytes([i%256] + [x%256 for x in range(SIZE_0-1)])
-          qsfp1_source.send(test_frame_2.build_axis())
-          yield qsfp1_rx_clk.posedge
-          test_frame_2.payload = b"page.php?id=this%20is%20fine" + bytes([i%256] + [x%256 for x in range(SIZE_0-1)])
-          qsfp1_source.send(test_frame_2.build_axis())
-          yield qsfp1_rx_clk.posedge
+          # test_frame_2.payload = b"page.php?id=%27%3B%20UPDATE%20users%20SET%20password%20%3D%20%271234%27%20WHERE%20username%20%3D%20%27skroob%27%20prod_data%3B%20--" + bytes([i%256] + [x%256 for x in range(SIZE_0-1)])
+          # qsfp1_source.send(test_frame_2.build_axis())
+          # yield qsfp1_rx_clk.posedge
+          # test_frame_2.payload = b"page.php?id=this%20is%20fine" + bytes([i%256] + [x%256 for x in range(SIZE_0-1)])
+          # qsfp1_source.send(test_frame_2.build_axis())
+          # yield qsfp1_rx_clk.posedge
 
     @instance
     def check():
@@ -806,7 +808,7 @@ def bench():
         yield delay(2000)
         yield rc.mem_write(dev_pf0_bar0+0x000404, struct.pack('<L', 0x1234ABCD))
 
-        yield rc.mem_write(dev_pf0_bar0+0x00040C, struct.pack('<L', 0x0300))
+        yield rc.mem_write(dev_pf0_bar0+0x00040C, struct.pack('<L', 0xffff))
         yield rc.mem_write(dev_pf0_bar0+0x000410, struct.pack('<L', 0x0000))
 
         if (TEST_PCIE):
@@ -847,43 +849,77 @@ def bench():
         yield delay(1000)
        
         if (TEST_ACC):
+          print ("send data from LAN")
           yield port1(),None
           yield port2(),None
 
-          lengths = []
-          print ("send data from LAN")
-          for j in range (0,int(SEND_COUNT_1/3)): # we drop half, so expect at least getting 1/3rd
-            yield qsfp0_sink.wait()
-            rx_frame = qsfp0_sink.recv()
-            data = rx_frame.data
-            if (PRINT_PKTS):
-              print ("packet number from port 0:",j)
-              for i in range(0, len(data), 16):
-                print(" ".join(("{:02x}".format(c) for c in bytearray(data[i:i+16]))))
-            else:
-                print (".")
-            if (CHECK_PKT):
-              assert rx_frame.data[0:14] == start_data_2[0:14]
-              assert rx_frame.data[15:] == start_data_2[15:]
-            lengths.append(len(data)-8)
-
-          for j in range (0,int(SEND_COUNT_0/3)):
-            yield qsfp1_sink.wait()
-            rx_frame = qsfp1_sink.recv()
-            data = rx_frame.data
-            if (PRINT_PKTS):
-              print ("packet number from port 1:",j)
-              for i in range(0, len(data), 16):
+          if (not DROP_TEST):
+            lengths = []
+            for j in range (0,int(SEND_COUNT_1)): # we drop half, so expect at least getting 1/3rd
+              yield qsfp0_sink.wait()
+              rx_frame = qsfp0_sink.recv()
+              data = rx_frame.data
+              if (PRINT_PKTS):
+                print ("packet number from port 0:",j)
+                for i in range(0, len(data), 16):
                   print(" ".join(("{:02x}".format(c) for c in bytearray(data[i:i+16]))))
-            else:
+              else:
                 print (".")
-            if (CHECK_PKT):
-              assert rx_frame.data[0:14] == start_data_1[0:14]
-              assert rx_frame.data[15:] == start_data_1[15:]
-            lengths.append(len(data)-8)
+              if (CHECK_PKT):
+                assert rx_frame.data[0:14] == start_data_2[0:14]
+                assert rx_frame.data[15:] == start_data_2[15:]
+              lengths.append(len(data)-8)
 
-        yield delay(5000)
+            for j in range (0,int(SEND_COUNT_0)):
+              yield qsfp1_sink.wait()
+              rx_frame = qsfp1_sink.recv()
+              data = rx_frame.data
+              if (PRINT_PKTS):
+                print ("packet number from port 1:",j)
+                for i in range(0, len(data), 16):
+                    print(" ".join(("{:02x}".format(c) for c in bytearray(data[i:i+16]))))
+              else:
+                print (".")
+              if (CHECK_PKT):
+                assert rx_frame.data[0:14] == start_data_1[0:14]
+                assert rx_frame.data[15:] == start_data_1[15:]
+              lengths.append(len(data)-8)
+
+            yield delay(1000)
+          else:
+            yield delay(50000)
+        
+        for k in range (0,16):
+          yield rc.mem_write(dev_pf0_bar0+0x000414, struct.pack('<L', k<<4|0))
+          yield delay(100)
+          slots      = yield from rc.mem_read(dev_pf0_bar0+0x000420, 4)
+          bytes_in   = yield from rc.mem_read(dev_pf0_bar0+0x000424, 4)
+          yield rc.mem_write(dev_pf0_bar0+0x000414, struct.pack('<L', k<<4|1))
+          yield delay(100)
+          frames_in  = yield from rc.mem_read(dev_pf0_bar0+0x000424, 4)
+          yield rc.mem_write(dev_pf0_bar0+0x000414, struct.pack('<L', k<<4|2))
+          yield delay(100)
+          bytes_out  = yield from rc.mem_read(dev_pf0_bar0+0x000424, 4)
+          yield rc.mem_write(dev_pf0_bar0+0x000414, struct.pack('<L', k<<4|3))
+          yield delay(100)
+          frames_out = yield from rc.mem_read(dev_pf0_bar0+0x000424, 4)
           
+          print ("Core %d stat read, slots: , bytes_in, byte_out, frames_in, frames_out" % (k))
+          print (B_2_int(slots),B_2_int(bytes_in),B_2_int(bytes_out),B_2_int(frames_in),B_2_int(frames_out))
+        
+        for k in range (0,3):
+          yield rc.mem_write(dev_pf0_bar0+0x000418, struct.pack('<L', k<<8|0))
+          yield delay(100)
+          bytes_in   = yield from rc.mem_read(dev_pf0_bar0+0x000428, 4)
+          bytes_out  = yield from rc.mem_read(dev_pf0_bar0+0x00042C, 4)
+          yield rc.mem_write(dev_pf0_bar0+0x000418, struct.pack('<L', k<<8|1))
+          yield delay(100)
+          frames_in   = yield from rc.mem_read(dev_pf0_bar0+0x000428, 4)
+          frames_out  = yield from rc.mem_read(dev_pf0_bar0+0x00042C, 4)
+          desc       = yield from rc.mem_read(dev_pf0_bar0+0x000430, 4)
+          print ("Interface %d stat read, bytes_in, byte_out, frames_in, frames_out, loaded desc" % (k))
+          print (B_2_int(bytes_in),B_2_int(bytes_out),B_2_int(frames_in),B_2_int(frames_out),desc[::-1].hex())
+
         raise StopSimulation
 
     return instances()

@@ -372,7 +372,7 @@ module axis_dma # (
   reg [STRB_WIDTH-1:0]          rd_final_tkeep;
   reg                           rd_len_is_int;
 
-  wire [1:0] extra_words = (remainder_bytes == 0) ? 2'd0: 
+  wire [1:0] extra_words = ((remainder_bytes == 0)||to_drop) ? 2'd0 :
                            (remainder_bytes[MASK_BITS] + 2'd1); 
   
   // number of 0s in last tkeep. 0 becomes 0 due to dropping the MSB. 
@@ -381,13 +381,6 @@ module axis_dma # (
   // Initialize offset, word_count, final tkeep and strat address. Also when 
   // a data was recieved address and remainig words are updated.
   always @ (posedge clk) begin
-    if (rst) begin
-      rd_offset          <= 0;
-      rd_req_word_count  <= 0;
-      rd_recv_word_count <= 0;
-      rd_final_tkeep     <= {STRB_WIDTH{1'b1}};
-      rd_len_is_int      <= 1'b1;
-    end
     if (rd_state_r==RD_IDLE) begin
       rd_offset          <= 0;
       rd_req_word_count  <= 0;
@@ -410,6 +403,13 @@ module axis_dma # (
       end
       if (mem_rd_data_v && mem_rd_data_ready) 
         rd_recv_word_count <= rd_recv_word_count - 1; 
+    end
+    if (rst) begin
+      rd_offset          <= 0;
+      rd_req_word_count  <= 0;
+      rd_recv_word_count <= 0;
+      rd_final_tkeep     <= {STRB_WIDTH{1'b1}};
+      rd_len_is_int      <= 1'b1;
     end
   end
 
@@ -447,10 +447,6 @@ module axis_dma # (
   reg  [DATA_WIDTH-1:0] read_reg_2;
   reg read_reg_1_v, read_reg_2_v;
   always @ (posedge clk) begin
-    if (rst) begin
-      read_reg_1_v <= 1'b0;
-      read_reg_2_v <= 1'b0;
-    end
     // since mem_rd_data_ready is high when m_axis_tready,
     // is asserted, it means the data can go out and pipe can go forward
     // This covers when mem is ready and axis is ready or not. Also if 
@@ -482,6 +478,10 @@ module axis_dma # (
       read_reg_2_v <= 1'b0;
     end
     // If both of mem and axis are not ready there is no change.
+    if (rst) begin
+      read_reg_1_v <= 1'b0;
+      read_reg_2_v <= 1'b0;
+    end
   end
 
   // If I'm not ready to get data then I deassert my address valid too. 

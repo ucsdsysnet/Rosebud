@@ -955,7 +955,7 @@ def bench():
           desc       = yield from rc.mem_read(dev_pf0_bar0+0x000430, 4)
           print ("Interface %d stat read, bytes_in, byte_out, frames_in, frames_out, loaded desc" % (k))
           print (B_2_int(bytes_in),B_2_int(bytes_out),B_2_int(frames_in),B_2_int(frames_out),desc[::-1].hex())
-        
+
         raise StopSimulation
 
     return instances()
