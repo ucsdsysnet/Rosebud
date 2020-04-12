@@ -348,7 +348,7 @@ module axis_dma # (
   reg [MASK_BITS:0]        remainder_bytes;
 
   
-  always @ (posedge clk)
+  always @ (posedge clk) begin
     if (send_desc_ready && send_desc_valid) begin
       send_base_addr  <= send_desc_addr;
       send_len        <= send_desc_len;
@@ -359,6 +359,10 @@ module axis_dma # (
                          send_desc_len[MASK_BITS-1:0];
       to_drop         <= (send_desc_len==0);
     end
+    if (rst) begin
+      to_drop         <= 1'b0;
+    end
+  end
   
   assign send_desc_ready = (rd_state_r == RD_IDLE);
   assign pkt_sent        = (to_drop&&(rd_state_r==RD_INIT)) || 
@@ -423,7 +427,7 @@ module axis_dma # (
       data_left <= 2'd0;
     else if (rd_state_r != RD_PROC)
       data_left <= 2'd0;
-    else if ((rd_recv_word_count == 1) && mem_rd_data_ready && mem_rd_data_v)
+    else if ((rd_recv_word_count == 1) && mem_rd_data_ready && mem_rd_data_v) begin
       // Both pipeline stages are full
       if (rd_offset == 0)
         data_left <= 2'd2;
@@ -439,7 +443,7 @@ module axis_dma # (
       else 
         data_left <= 2'd2;
     // If data/empty register is sent out reduce remaining
-    else if ((data_left>2'd0) && (!(m_axis_tvalid && !m_axis_tready)))
+    end else if ((data_left>2'd0) && (!(m_axis_tvalid && !m_axis_tready)))
         data_left <= data_left - 2'd1;
 
   // 2 pipe registers with valid. There is no need for individual ready signals.
