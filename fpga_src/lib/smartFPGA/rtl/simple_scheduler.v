@@ -8,6 +8,8 @@ module simple_scheduler # (
   parameter LOOPBACK_PORT   = 2,
   parameter LOOPBACK_COUNT  = 2,
   parameter ENABLE_ILA      = 0,
+  parameter DATA_REG_TYPE   = 0,
+  parameter CTRL_REG_TYPE   = 0,
 
   parameter SLOT_WIDTH      = $clog2(SLOT_COUNT+1),
   parameter CORE_ID_WIDTH   = $clog2(CORE_COUNT),
@@ -84,12 +86,243 @@ module simple_scheduler # (
   input  wire                                trig_out_ack
 );
 
+  // Register inputs and outputs
+  wire [INTERFACE_COUNT*DATA_WIDTH-1:0]   data_m_axis_tdata_n;
+  wire [INTERFACE_COUNT*STRB_WIDTH-1:0]   data_m_axis_tkeep_n;
+  wire [INTERFACE_COUNT*ID_TAG_WIDTH-1:0] data_m_axis_tdest_n;
+  wire [INTERFACE_COUNT*PORT_WIDTH-1:0]   data_m_axis_tuser_n;
+  wire [INTERFACE_COUNT-1:0]              data_m_axis_tvalid_n;
+  wire [INTERFACE_COUNT-1:0]              data_m_axis_tready_n;
+  wire [INTERFACE_COUNT-1:0]              data_m_axis_tlast_n;
+  
+  wire [INTERFACE_COUNT*DATA_WIDTH-1:0]   rx_axis_tdata_r;
+  wire [INTERFACE_COUNT*STRB_WIDTH-1:0]   rx_axis_tkeep_r;
+  wire [INTERFACE_COUNT-1:0]              rx_axis_tvalid_r; 
+  wire [INTERFACE_COUNT-1:0]              rx_axis_tready_r; 
+  wire [INTERFACE_COUNT-1:0]              rx_axis_tlast_r;
+  
+  wire [CTRL_WIDTH-1:0]    ctrl_s_axis_tdata_r;
+  wire                     ctrl_s_axis_tvalid_r;
+  wire                     ctrl_s_axis_tready_r;
+  wire [CORE_ID_WIDTH-1:0] ctrl_s_axis_tuser_r;
+
+  wire [CTRL_WIDTH-1:0]    ctrl_m_axis_tdata_n;
+  wire                     ctrl_m_axis_tvalid_n;
+  wire                     ctrl_m_axis_tready_n;
+  wire [CORE_ID_WIDTH-1:0] ctrl_m_axis_tdest_n;
+
+  (* KEEP = "TRUE" *) reg rst_r;
+  always @ (posedge clk)
+    rst_r          <= rst;
+
+  genvar q;
+  generate
+    for (q=0; q<INTERFACE_COUNT; q=q+1) begin: int_regs
+
+      axis_register # (
+        .DATA_WIDTH(DATA_WIDTH),
+        .KEEP_ENABLE(1),
+        .KEEP_WIDTH(STRB_WIDTH),
+        .LAST_ENABLE(1),
+        .ID_ENABLE(0),
+        .DEST_ENABLE(0),
+        .USER_ENABLE(1),
+        .USER_WIDTH(ID_TAG_WIDTH),
+        .REG_TYPE(DATA_REG_TYPE)
+      ) data_s_reg_inst (
+        .clk(clk),
+        .rst(rst_r),
+        // AXI input
+        .s_axis_tdata (data_s_axis_tdata[q*DATA_WIDTH +: DATA_WIDTH]),
+        .s_axis_tkeep (data_s_axis_tkeep[q*STRB_WIDTH +: STRB_WIDTH]),
+        .s_axis_tvalid(data_s_axis_tvalid[q]),
+        .s_axis_tready(data_s_axis_tready[q]),
+        .s_axis_tlast (data_s_axis_tlast[q]),
+        .s_axis_tid   (8'd0),
+        .s_axis_tdest (8'd0),
+        .s_axis_tuser (data_s_axis_tuser[q*ID_TAG_WIDTH +: ID_TAG_WIDTH]),
+        // AXI output
+        .m_axis_tdata (tx_axis_tdata[q*DATA_WIDTH +: DATA_WIDTH]),
+        .m_axis_tkeep (tx_axis_tkeep[q*STRB_WIDTH +: STRB_WIDTH]),
+        .m_axis_tvalid(tx_axis_tvalid[q]),
+        .m_axis_tready(tx_axis_tready[q]),
+        .m_axis_tlast (tx_axis_tlast[q]),
+        .m_axis_tid   (),
+        .m_axis_tdest (),
+        .m_axis_tuser ()
+      );
+
+      axis_register # (
+        .DATA_WIDTH(DATA_WIDTH),
+        .KEEP_ENABLE(1),
+        .KEEP_WIDTH(STRB_WIDTH),
+        .LAST_ENABLE(1),
+        .ID_ENABLE(0),
+        .DEST_ENABLE(1),
+        .DEST_WIDTH(ID_TAG_WIDTH),
+        .USER_ENABLE(1),
+        .USER_WIDTH(PORT_WIDTH),
+        .REG_TYPE(DATA_REG_TYPE)
+      ) data_m_reg_inst (
+        .clk(clk),
+        .rst(rst_r),
+        // AXI input
+        .s_axis_tdata (data_m_axis_tdata_n[q*DATA_WIDTH +: DATA_WIDTH]),
+        .s_axis_tkeep (data_m_axis_tkeep_n[q*STRB_WIDTH +: STRB_WIDTH]),
+        .s_axis_tvalid(data_m_axis_tvalid_n[q]),
+        .s_axis_tready(data_m_axis_tready_n[q]),
+        .s_axis_tlast (data_m_axis_tlast_n[q]),
+        .s_axis_tid   (8'd0),
+        .s_axis_tdest (data_m_axis_tdest_n[q*ID_TAG_WIDTH +: ID_TAG_WIDTH]),
+        .s_axis_tuser (data_m_axis_tuser_n[q*PORT_WIDTH +: PORT_WIDTH]),
+        // AXI output
+        .m_axis_tdata (data_m_axis_tdata[q*DATA_WIDTH +: DATA_WIDTH]),
+        .m_axis_tkeep (data_m_axis_tkeep[q*STRB_WIDTH +: STRB_WIDTH]),
+        .m_axis_tvalid(data_m_axis_tvalid[q]),
+        .m_axis_tready(data_m_axis_tready[q]),
+        .m_axis_tlast (data_m_axis_tlast[q]),
+        .m_axis_tid   (),
+        .m_axis_tdest (data_m_axis_tdest[q*ID_TAG_WIDTH +: ID_TAG_WIDTH]),
+        .m_axis_tuser (data_m_axis_tuser[q*PORT_WIDTH +: PORT_WIDTH])
+      );
+
+      axis_register # (
+        .DATA_WIDTH(DATA_WIDTH),
+        .KEEP_ENABLE(1),
+        .KEEP_WIDTH(STRB_WIDTH),
+        .LAST_ENABLE(1),
+        .ID_ENABLE(0),
+        .DEST_ENABLE(0),
+        .USER_ENABLE(0),
+        .REG_TYPE(DATA_REG_TYPE)
+      ) rx_reg_inst (
+        .clk(clk),
+        .rst(rst_r),
+        // AXI input
+        .s_axis_tdata (rx_axis_tdata[q*DATA_WIDTH +: DATA_WIDTH]),
+        .s_axis_tkeep (rx_axis_tkeep[q*STRB_WIDTH +: STRB_WIDTH]),
+        .s_axis_tvalid(rx_axis_tvalid[q]),
+        .s_axis_tready(rx_axis_tready[q]),
+        .s_axis_tlast (rx_axis_tlast[q]),
+        .s_axis_tid   (8'd0),
+        .s_axis_tdest (8'd0),
+        .s_axis_tuser (1'b0),
+        // AXI output
+        .m_axis_tdata (rx_axis_tdata_r[q*DATA_WIDTH +: DATA_WIDTH]),
+        .m_axis_tkeep (rx_axis_tkeep_r[q*STRB_WIDTH +: STRB_WIDTH]),
+        .m_axis_tvalid(rx_axis_tvalid_r[q]),
+        .m_axis_tready(rx_axis_tready_r[q]),
+        .m_axis_tlast (rx_axis_tlast_r[q]),
+        .m_axis_tid   (),
+        .m_axis_tdest (),
+        .m_axis_tuser ()
+      );
+
+    end
+  endgenerate
+  
+  axis_register # (
+    .DATA_WIDTH(CTRL_WIDTH),
+    .KEEP_ENABLE(0),
+    .KEEP_WIDTH(1),
+    .LAST_ENABLE(0),
+    .ID_ENABLE(0),
+    .DEST_ENABLE(0),
+    .USER_ENABLE(1),
+    .USER_WIDTH(CORE_ID_WIDTH),
+    .REG_TYPE(CTRL_REG_TYPE)
+  ) ctrl_s_reg_inst (
+    .clk(clk),
+    .rst(rst_r),
+    // AXI input
+    .s_axis_tdata (ctrl_s_axis_tdata),
+    .s_axis_tkeep (1'b1),
+    .s_axis_tvalid(ctrl_s_axis_tvalid),
+    .s_axis_tready(ctrl_s_axis_tready),
+    .s_axis_tlast (1'b1),
+    .s_axis_tid   (8'd0),
+    .s_axis_tdest (8'd0),
+    .s_axis_tuser (ctrl_s_axis_tuser),
+    // AXI output
+    .m_axis_tdata (ctrl_s_axis_tdata_r),
+    .m_axis_tkeep (),
+    .m_axis_tvalid(ctrl_s_axis_tvalid_r),
+    .m_axis_tready(ctrl_s_axis_tready_r),
+    .m_axis_tlast (),
+    .m_axis_tid   (),
+    .m_axis_tdest (),
+    .m_axis_tuser (ctrl_s_axis_tuser_r)
+  );
+
+  axis_register # (
+    .DATA_WIDTH(CTRL_WIDTH),
+    .KEEP_ENABLE(0),
+    .KEEP_WIDTH(1),
+    .LAST_ENABLE(0),
+    .ID_ENABLE(0),
+    .DEST_ENABLE(1),
+    .DEST_WIDTH(CORE_ID_WIDTH),
+    .USER_ENABLE(0),
+    .REG_TYPE(CTRL_REG_TYPE)
+  ) ctrl_m_reg_inst (
+    .clk(clk),
+    .rst(rst_r),
+    // AXI input
+    .s_axis_tdata (ctrl_m_axis_tdata_n),
+    .s_axis_tkeep (1'b1),
+    .s_axis_tvalid(ctrl_m_axis_tvalid_n),
+    .s_axis_tready(ctrl_m_axis_tready_n),
+    .s_axis_tlast (1'b1),
+    .s_axis_tid   (8'd0),
+    .s_axis_tdest (ctrl_m_axis_tdest_n),
+    .s_axis_tuser (1'b0),
+    // AXI output
+    .m_axis_tdata (ctrl_m_axis_tdata),
+    .m_axis_tkeep (),
+    .m_axis_tvalid(ctrl_m_axis_tvalid),
+    .m_axis_tready(ctrl_m_axis_tready),
+    .m_axis_tlast (),
+    .m_axis_tid   (),
+    .m_axis_tdest (ctrl_m_axis_tdest),
+    .m_axis_tuser ()
+  );
+  
+  reg [3:0]                 host_cmd_r;
+  reg [CORE_ID_WIDTH-1:0]   host_cmd_dest_r;
+  reg [31:0]                host_cmd_data_r;
+  reg                       host_cmd_valid_r;
+  reg [CORE_COUNT-1:0]      income_cores_r;
+  reg [CORE_COUNT-1:0]      cores_to_be_reset_r;
+  reg [CORE_ID_WIDTH-1:0]   stat_read_core_r;
+  reg [INTERFACE_WIDTH-1:0] stat_read_interface_r;
+  reg [SLOT_WIDTH-1:0]      slot_count_n;
+  reg [ID_TAG_WIDTH-1:0]    loaded_desc_n;
+ 
+  always @ (posedge clk) begin
+    host_cmd_r            <= host_cmd;
+    host_cmd_dest_r       <= host_cmd_dest;
+    host_cmd_data_r       <= host_cmd_data;
+    host_cmd_valid_r      <= host_cmd_valid;
+    income_cores_r        <= income_cores;
+    cores_to_be_reset_r   <= cores_to_be_reset;
+    stat_read_core_r      <= stat_read_core;
+    stat_read_interface_r <= stat_read_interface;
+    slot_count            <= slot_count_n;
+    loaded_desc           <= loaded_desc_n;
+    if (rst_r) begin
+      host_cmd_valid_r    <= 1'b0;
+      income_cores_r      <= {CORE_COUNT{1'b0}};
+      cores_to_be_reset_r <= {CORE_COUNT{1'b0}};
+    end
+  end
+  assign host_cmd_ready     = 1'b1;
+  
+  // Separate incoming ctrl messages
   parameter MSG_TYPE_WIDTH = 4;
   parameter DESC_WIDTH     = CTRL_WIDTH-MSG_TYPE_WIDTH;
 
-  // Separate incoming ctrl messages
   wire [MSG_TYPE_WIDTH-1:0] msg_type = 
-                ctrl_s_axis_tdata[CTRL_WIDTH-1:CTRL_WIDTH-MSG_TYPE_WIDTH];
+                ctrl_s_axis_tdata_r[CTRL_WIDTH-1:CTRL_WIDTH-MSG_TYPE_WIDTH];
 
   wire [MSG_TYPE_WIDTH-1:0] send_out_msg = {(MSG_TYPE_WIDTH){1'b0}};
   wire [MSG_TYPE_WIDTH-1:0] loopback_msg = {{(MSG_TYPE_WIDTH-1){1'b0}},1'b1};
@@ -111,11 +344,11 @@ module simple_scheduler # (
     .DATA_WIDTH(CORE_ID_WIDTH+DESC_WIDTH)
   ) pkt_done_fifo (
     .clk(clk),
-    .rst(rst),
+    .rst(rst_r),
     .clear(1'b0),
   
-    .din_valid(ctrl_s_axis_tvalid && (msg_type==1)),
-    .din({ctrl_s_axis_tuser,ctrl_s_axis_tdata[DESC_WIDTH-1:0]}),
+    .din_valid(ctrl_s_axis_tvalid_r && (msg_type==1)),
+    .din({ctrl_s_axis_tuser_r,ctrl_s_axis_tdata_r[DESC_WIDTH-1:0]}),
     .din_ready(pkt_done_ready),
    
     .dout_valid(pkt_done_valid),
@@ -126,23 +359,23 @@ module simple_scheduler # (
   genvar m;
   generate 
     for (m=0;m<CORE_COUNT;m=m+1) begin
-      wire [CORE_ID_WIDTH-1:0] dest_core = ctrl_s_axis_tdata[24+:CORE_ID_WIDTH];
+      wire [CORE_ID_WIDTH-1:0] dest_core = ctrl_s_axis_tdata_r[24+:CORE_ID_WIDTH];
       simple_fifo # (
         .ADDR_WIDTH($clog2(SLOT_COUNT)),
         .DATA_WIDTH(CORE_ID_WIDTH+DESC_WIDTH)
       ) pkt_to_core_fifo (
         .clk(clk),
-        .rst(rst),
+        .rst(rst_r),
         .clear(1'b0),
       
-        .din_valid(ctrl_s_axis_tvalid && (msg_type==2) && (dest_core==m)),
-        .din({ctrl_s_axis_tuser, ctrl_s_axis_tdata[DESC_WIDTH-1:0]}), 
+        .din_valid(ctrl_s_axis_tvalid_r && (msg_type==2) && (dest_core==m)),
+        .din({ctrl_s_axis_tuser_r, ctrl_s_axis_tdata_r[DESC_WIDTH-1:0]}), 
         .din_ready(pkt_to_core_ready[m]),
        
         .dout_valid(pkt_to_core_valid[m]),
         .dout(pkt_to_core_req[m*(DESC_WIDTH+CORE_ID_WIDTH) +: 
                                 (DESC_WIDTH+CORE_ID_WIDTH)]),
-        .dout_ready(arb_to_core_ready[m] && rx_desc_slot_v[m] && !cores_to_be_reset[m])
+        .dout_ready(arb_to_core_ready[m] && rx_desc_slot_v[m] && !cores_to_be_reset_r[m])
       );
     end
   endgenerate
@@ -164,11 +397,11 @@ module simple_scheduler # (
   ) pkt_to_core_arbiter
   (
     .clk(clk),
-    .rst(rst),
+    .rst(rst_r),
   
     .s_axis_tdata(pkt_to_core_req), 
     .s_axis_tkeep(),
-    .s_axis_tvalid(pkt_to_core_valid & rx_desc_slot_v & ~cores_to_be_reset),
+    .s_axis_tvalid(pkt_to_core_valid & rx_desc_slot_v & ~cores_to_be_reset_r),
     .s_axis_tready(arb_to_core_ready),
     .s_axis_tlast({CORE_COUNT{1'b1}}),
     .s_axis_tid(),
@@ -185,9 +418,9 @@ module simple_scheduler # (
     .m_axis_tuser(selected_pkt_to_core_dest_slot)
   );
    
-  assign ctrl_s_axis_tready = ((msg_type==0)   ||   (msg_type==3)) ||
-                              (pkt_done_ready    && (msg_type==1)) || 
-                              (pkt_to_core_ready && (msg_type==2)) ;
+  assign ctrl_s_axis_tready_r = ((msg_type==0)   ||   (msg_type==3)) ||
+                                (pkt_done_ready    && (msg_type==1)) || 
+                                (pkt_to_core_ready && (msg_type==2)) ;
   
   // Slot descriptor fifos, addressing msg type 0&3 requests
   wire [CORE_COUNT*SLOT_WIDTH-1:0] rx_desc_count;
@@ -199,7 +432,7 @@ module simple_scheduler # (
   reg  [SLOT_WIDTH-1:0] input_slot;
   
   always @ (posedge clk)
-    input_slot <= ctrl_s_axis_tdata[16 +: SLOT_WIDTH];
+    input_slot <= ctrl_s_axis_tdata_r[16 +: SLOT_WIDTH];
 
   wire rx_desc_pop; 
   wire max_valid;
@@ -215,15 +448,15 @@ module simple_scheduler # (
   generate 
     for (i=0;i<CORE_COUNT;i=i+1) begin
       assign rx_desc_slot_pop[i]    = (rx_desc_pop && (selected_desc==i)) || 
-                                      (pkt_to_core_valid[i] && arb_to_core_ready[i] && (~cores_to_be_reset[i]));
+                                      (pkt_to_core_valid[i] && arb_to_core_ready[i] && (~cores_to_be_reset_r[i]));
       // Register valid for better timing closure
       always @ (posedge clk)
-        if (rst) begin
+        if (rst_r) begin
           enq_slot_v[i]  <= 1'b0;
           init_slot_v[i] <= 1'b0;
         end else begin
-          enq_slot_v[i]  <= ctrl_s_axis_tvalid && (msg_type==0) && (ctrl_s_axis_tuser==i);
-          init_slot_v[i] <= ctrl_s_axis_tvalid && (msg_type==3) && (ctrl_s_axis_tuser==i);
+          enq_slot_v[i]  <= ctrl_s_axis_tvalid_r && (msg_type==0) && (ctrl_s_axis_tuser_r==i);
+          init_slot_v[i] <= ctrl_s_axis_tvalid_r && (msg_type==3) && (ctrl_s_axis_tuser_r==i);
         end
 
       slot_keeper # (
@@ -231,7 +464,7 @@ module simple_scheduler # (
         .SLOT_WIDTH(SLOT_WIDTH)
       ) rx_desc_keeper (
         .clk(clk),
-        .rst(rst),
+        .rst(rst_r),
 
         .init_slots(input_slot),
         .init_valid(init_slot_v[i]), 
@@ -260,7 +493,7 @@ module simple_scheduler # (
     reg loopback_port_select_r;
 
     always @ (posedge clk)
-      if (rst)
+      if (rst_r)
         loopback_port_select_r <= 1'b0;
       else if (selected_pkt_to_core_valid && selected_pkt_to_core_ready)
         loopback_port_select_r <= ~loopback_port_select_r;
@@ -272,7 +505,7 @@ module simple_scheduler # (
     reg [$clog2(LOOPBACK_COUNT)-1:0] loopback_port_select_r;
 
     always @ (posedge clk)
-      if (rst)
+      if (rst_r)
         loopback_port_select_r <= 0;
       else if (selected_pkt_to_core_valid && selected_pkt_to_core_ready)
         if (loopback_port_select_r==(LOOPBACK_COUNT-1))
@@ -303,7 +536,7 @@ module simple_scheduler # (
   reg ctrl_out_select;
 
   always @ (posedge clk) 
-    if (rst) 
+    if (rst_r) 
       last_selected <= 1'b0;
     else if (ctrl_out_valid && ctrl_out_ready)
       last_selected <= ctrl_out_select;
@@ -339,7 +572,7 @@ module simple_scheduler # (
     end else if (ctrl_out_ready_r && !ctrl_out_valid) begin
       ctrl_out_valid_r <= 1'b0;
     end
-    if (rst) begin
+    if (rst_r) begin
       ctrl_out_valid_r <= 1'b0;
       ctrl_out_desc_r  <= {CTRL_WIDTH{1'b0}};
       ctrl_out_dest_r  <= {CORE_ID_WIDTH{1'b0}};
@@ -349,13 +582,12 @@ module simple_scheduler # (
   assign ctrl_out_ready = (!ctrl_out_valid_r) || ctrl_out_ready_r; 
 
   // Arbiter between host cmd and scheduler messages
-  assign ctrl_m_axis_tdata  = host_cmd_valid ? {host_cmd, host_cmd_data} 
+  assign ctrl_m_axis_tdata_n  = host_cmd_valid_r ? {host_cmd_r, host_cmd_data_r} 
                                              : ctrl_out_desc_r;
-  assign ctrl_m_axis_tvalid = host_cmd_valid || ctrl_out_valid_r;
-  assign ctrl_m_axis_tdest  = host_cmd_valid ? host_cmd_dest : ctrl_out_dest_r;
+  assign ctrl_m_axis_tvalid_n = host_cmd_valid_r || ctrl_out_valid_r;
+  assign ctrl_m_axis_tdest_n  = host_cmd_valid_r ? host_cmd_dest_r : ctrl_out_dest_r;
 
-  assign ctrl_out_ready_r   = (!host_cmd_valid) && ctrl_m_axis_tready;
-  assign host_cmd_ready     = 1'b1;
+  assign ctrl_out_ready_r   = (!host_cmd_valid_r) && ctrl_m_axis_tready_n;
 
   // Selecting the core with most available slots
   // Since slots start from 1, SLOT WIDTH is already 1 bit extra
@@ -370,7 +602,7 @@ module simple_scheduler # (
                   rx_desc_count[(l*LVL2_SW_PORTS+k)*SLOT_WIDTH +: SLOT_WIDTH];
         // Priority to inter core messages, and only income_cores are available for selection
         // cores_to_be_reset would remove the core from income_cores
-        reordered_masks [k*CLUSTER_COUNT+l] = income_cores[l*LVL2_SW_PORTS+k] &&
+        reordered_masks [k*CLUSTER_COUNT+l] = income_cores_r[l*LVL2_SW_PORTS+k] &&
                                              !(pkt_to_core_valid[l*LVL2_SW_PORTS+k] &&
                                                arb_to_core_ready[l*LVL2_SW_PORTS+k]);
       end
@@ -405,8 +637,8 @@ module simple_scheduler # (
 
   assign rx_desc_pop                           = selected_port_v && max_valid;
   wire [INTERFACE_COUNT-1:0] port_desc_avail   = {INTERFACE_COUNT{rx_desc_pop}} & selected_port;
-  wire [INTERFACE_COUNT-1:0] port_valid        = rx_axis_tvalid & rx_axis_tready;
-  wire [INTERFACE_COUNT-1:0] sending_last_word = port_valid & rx_axis_tlast;
+  wire [INTERFACE_COUNT-1:0] port_valid        = rx_axis_tvalid_r & rx_axis_tready_r;
+  wire [INTERFACE_COUNT-1:0] sending_last_word = port_valid & rx_axis_tlast_r;
   
   // State machine per port
   reg [1:0] port_state [0:INTERFACE_COUNT-1];
@@ -418,7 +650,7 @@ module simple_scheduler # (
   integer n;
   always @ (posedge clk)
       for (n=0; n<INTERFACE_COUNT; n=n+1) 
-          if (rst) begin
+          if (rst_r) begin
               port_state[n] <= STALL;
           end else begin
               case (port_state[n])
@@ -460,7 +692,7 @@ module simple_scheduler # (
   // arbiter among ports for desc request
   arbiter # (.PORTS(INTERFACE_COUNT),.TYPE("ROUND_ROBIN")) port_selector (
     .clk(clk),
-    .rst(rst),
+    .rst(rst_r),
     
     .request(desc_req),
     .acknowledge({INTERFACE_COUNT{1'b0}}),
@@ -475,35 +707,29 @@ module simple_scheduler # (
                                           rx_desc_slot[selected_desc*SLOT_WIDTH +: SLOT_WIDTH]};
   
   always @ (posedge clk)
-    if (rst)
+    if (rst_r)
       dest_r <= {INTERFACE_COUNT*ID_TAG_WIDTH{1'b0}};
     else if (rx_desc_pop) 
       dest_r[selected_port_enc*ID_TAG_WIDTH +: ID_TAG_WIDTH] <= rx_desc_data;
   
   always @ (posedge clk) begin
-    slot_count  <= rx_desc_count[stat_read_core * SLOT_WIDTH +: SLOT_WIDTH];
-    loaded_desc <= dest_r[stat_read_interface * ID_TAG_WIDTH +: ID_TAG_WIDTH];
+    slot_count_n  <= rx_desc_count[stat_read_core_r * SLOT_WIDTH +: SLOT_WIDTH];
+    loaded_desc_n <= dest_r[stat_read_interface_r * ID_TAG_WIDTH +: ID_TAG_WIDTH];
   end
 
   genvar j;
   generate
     for (j=0; j<INTERFACE_COUNT;j=j+1)
-      assign data_m_axis_tuser[j*PORT_WIDTH +: PORT_WIDTH] = j;
+      assign data_m_axis_tuser_n[j*PORT_WIDTH +: PORT_WIDTH] = j;
   endgenerate
 
-  assign data_m_axis_tdata  = rx_axis_tdata;
-  assign data_m_axis_tkeep  = rx_axis_tkeep;
-  assign data_m_axis_tvalid = rx_axis_tvalid & port_not_stall; 
-  assign data_m_axis_tlast  = rx_axis_tlast;
-  assign data_m_axis_tdest  = dest;
-  assign rx_axis_tready     = data_m_axis_tready & port_not_stall;
+  assign data_m_axis_tdata_n  = rx_axis_tdata_r;
+  assign data_m_axis_tkeep_n  = rx_axis_tkeep_r;
+  assign data_m_axis_tvalid_n = rx_axis_tvalid_r & port_not_stall; 
+  assign data_m_axis_tlast_n  = rx_axis_tlast_r;
+  assign data_m_axis_tdest_n  = dest;
+  assign rx_axis_tready_r     = data_m_axis_tready_n & port_not_stall;
   
-  assign tx_axis_tdata      = data_s_axis_tdata;
-  assign tx_axis_tkeep      = data_s_axis_tkeep;
-  assign tx_axis_tvalid     = data_s_axis_tvalid;  
-  assign tx_axis_tlast      = data_s_axis_tlast;
-  assign data_s_axis_tready = tx_axis_tready;
-
 if (ENABLE_ILA) begin  
   wire trig_out_1, trig_out_2;
   wire ack_1, ack_2;
@@ -534,19 +760,19 @@ if (ENABLE_ILA) begin
     .trig_in_ack(trig_in_ack),
  
     .probe0 ({
-       data_m_axis_tdest[17:0],
-       ctrl_m_axis_tdest,
-       ctrl_s_axis_tuser,
-       ctrl_m_axis_tvalid,
-       ctrl_m_axis_tready,
-       ctrl_s_axis_tvalid,
-       ctrl_s_axis_tready,
-       rst,
+       data_m_axis_tdest_n[17:0],
+       ctrl_m_axis_tdest_n,
+       ctrl_s_axis_tuser_r,
+       ctrl_m_axis_tvalid_n,
+       ctrl_m_axis_tready_n,
+       ctrl_s_axis_tvalid_r,
+       ctrl_s_axis_tready_r,
+       rst_r,
        slot_insert_err,
        msg_type,
-       rx_axis_tvalid[1:0], 
-       rx_axis_tlast[1:0],
-       rx_axis_tvalid[1:0],
+       rx_axis_tvalid_r[1:0], 
+       rx_axis_tlast_r[1:0],
+       rx_axis_tready_r[1:0],
        max_valid_r,
        rx_desc_pop_r,
        desc_req_r,
@@ -558,13 +784,13 @@ if (ENABLE_ILA) begin
      }),
     
     .probe1 ({
-       ctrl_m_axis_tdata[31:0],
-       ctrl_s_axis_tdata[31:0]})
+       ctrl_m_axis_tdata_n[31:0],
+       ctrl_s_axis_tdata_r[31:0]})
   
     // .probe2 (rx_desc_count_r),
 
     // .probe3 ({rx_desc_slot_v, rx_desc_slot_pop,
-    //           cores_to_be_reset, income_cores})
+    //           cores_to_be_reset_r, income_cores_r})
   );
 
 end else begin
