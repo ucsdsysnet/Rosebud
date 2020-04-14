@@ -33,7 +33,6 @@ inline void slot_rx_packet(struct Desc* desc){
   // reset hash module
   header = pkt_header[(desc->tag)-1];
   ACC_HASH_CTRL  = 0;
-  desc->port = 2;
 
   // check eth type
   if (*((unsigned short *)(header+12)) != 0x0008){
@@ -65,12 +64,10 @@ inline void slot_rx_packet(struct Desc* desc){
     }
   }
     
-  DEBUG_OUT_H = *((unsigned int *)(header+34));
-  DEBUG_OUT_L = hash;
-
-  if (act==0){
+  if (act==0)
     desc->len = 0;
-  }
+  else
+    desc->port = 2;
 
   pkt_send(desc);
 }

@@ -1,4 +1,4 @@
-data = (256*1024/4)*[1,0,0,0]
+data = (256*1024/8)*[1,0,0,0,0,0,0,0]
 # print (data)
 with open('table.bin', 'wb') as f:
   f.write(str(bytearray(data)))
