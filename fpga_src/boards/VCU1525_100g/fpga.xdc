@@ -436,7 +436,7 @@ resize_pblock [get_pblocks pblock_34] -add {SLR1}
 
 create_pblock pblock_35
 add_cells_to_pblock [get_pblocks pblock_35] [get_cells -quiet [list core_inst/scheduler]]
-resize_pblock [get_pblocks pblock_35] -add {CLOCKREGION_X2Y7:CLOCKREGION_X3Y8}
+resize_pblock [get_pblocks pblock_35] -add {CLOCKREGION_X1Y7:CLOCKREGION_X2Y8}
 set_property EXCLUDE_PLACEMENT 1 [get_pblocks pblock_35]
 
 create_pblock pblock_36
