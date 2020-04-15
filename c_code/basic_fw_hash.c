@@ -22,8 +22,9 @@ unsigned int header_slot_base;
 unsigned int header_slot_size;
 
 unsigned char * pkt_header [8];
+struct Desc desc;
 
-inline void slot_rx_packet(struct Desc* desc){
+inline void slot_rx_packet() {
   unsigned int hash;
   char act = 0;
   unsigned char* header;
@@ -31,14 +32,12 @@ inline void slot_rx_packet(struct Desc* desc){
   // parse header and compute flow hash
 
   // reset hash module
-  header = pkt_header[(desc->tag)-1];
+  header = pkt_header[(desc.tag)-1];
   ACC_HASH_CTRL  = 0;
 
   // check eth type
-  if (*((unsigned short *)(header+12)) != 0x0008){
-    act = 0;
-  } else { // IPv4 packet
-
+  if (*((unsigned short *)(header+12)) == 0x0008){
+    // IPv4 packet
     // IPv4 addresses
     ACC_HASH_DWORD = *((unsigned int *)(header+26));
     ACC_HASH_DWORD = *((unsigned int *)(header+30));
@@ -59,17 +58,15 @@ inline void slot_rx_packet(struct Desc* desc){
           hash = ACC_HASH_READ;
           act = *(IP_table+(hash&0x0003ffff));
       }
-    } else {
-      act = 0; 
     }
   }
     
   if (act==0)
-    desc->len = 0;
+    desc.len = 0;
   else
-    desc->port = 2;
+    desc.port = 2;
 
-  pkt_send(desc);
+  pkt_send(&desc);
 }
 
 int main(void)
@@ -98,17 +95,10 @@ int main(void)
     // check for new packets
     if (in_pkt_ready())
     {
-      struct Desc desc;
-
       // read descriptor
       read_in_pkt(&desc);
 
-      // send back the packets from host
-      if (desc.port==2){
-        pkt_send(&desc);
-      } else {
-        slot_rx_packet(&desc);
-      }
+      slot_rx_packet();
     }
   }
 
