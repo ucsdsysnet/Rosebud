@@ -44,8 +44,8 @@ srcs = []
 srcs.append("../rtl/fpga_core.v")
 srcs.append("../rtl/riscv_block_PR.v")
 srcs.append("../rtl/pcie_config.v")
+srcs.append("../ip/ila_5x64_stub.v")
 srcs.append("../ip/ila_4x64_stub.v")
-srcs.append("../ip/ila_3x64_stub.v")
 srcs.append("../ip/ila_2x64_stub.v")
 
 srcs.append("../lib/smartFPGA/rtl/simple_fifo.v")

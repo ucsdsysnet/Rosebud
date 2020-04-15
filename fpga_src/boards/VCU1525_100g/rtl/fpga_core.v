@@ -199,7 +199,8 @@ parameter IF_COUNT_WIDTH    = $clog2(INTERFACE_COUNT+V_PORT_COUNT);
 parameter BYTE_COUNT_WIDTH  = 32;
 parameter FRAME_COUNT_WIDTH = 32;
 parameter MAX_PKT_HDR_SIZE  = 128;
-parameter ENABLE_ILA        = 0;
+parameter ENABLE_CORES_ILA  = 1;
+parameter ENABLE_SCHED_ILA  = 1;
 
 // MAC and switching system parameters
 parameter LVL1_DATA_WIDTH  = AXIS_ETH_DATA_WIDTH;
@@ -1082,7 +1083,7 @@ simple_scheduler # (
   .LOOPBACK_COUNT(LB_PORT_COUNT),
   .DATA_REG_TYPE(0),
   .CTRL_REG_TYPE(0),
-  .ENABLE_ILA(ENABLE_ILA)
+  .ENABLE_ILA(ENABLE_SCHED_ILA)
 ) scheduler (
   .clk(sys_clk),
   .rst(sys_rst),
@@ -1934,41 +1935,16 @@ generate
 endgenerate
 
 // ILA
-if (ENABLE_ILA) begin: ILA_inst
+if (ENABLE_CORES_ILA) begin: ILA_inst
   reg [63:0] data_s_slot;
   reg [63:0] data_m_slot;
-  reg [63:0] ctrl_m_msg_type;
-  reg [63:0] ctrl_m_msg_slot;
-  reg [63:0] ctrl_m_msg_port;
-  reg [63:0] ctrl_s_msg_type;
-  reg [63:0] ctrl_s_msg_slot;
-  reg [63:0] ctrl_s_msg_port;
   integer k;
   always @ (posedge sys_clk)
+    // CORE_COUNT=16 and SLOT_WIDTH=4, so data_s_slot and data_m_slot become 64 bits
+    // ctrl msg type and slot are also 4 bits, and considered 4 bits for port to make it 64 bits
     for (k=0; k<CORE_COUNT; k=k+1) begin
       data_s_slot [k*SLOT_WIDTH +: SLOT_WIDTH] <= data_s_axis_tdest[TAG_WIDTH*k +: SLOT_WIDTH];
       data_m_slot [k*SLOT_WIDTH +: SLOT_WIDTH] <= data_m_axis_tuser[ID_TAG_WIDTH*k +: SLOT_WIDTH];
-      ctrl_m_msg_type [k*4+:4] <= ctrl_m_axis_tdata [(k*CTRL_WIDTH)+32 +:4];
-      ctrl_m_msg_slot [k*4+:4] <= ctrl_m_axis_tdata [(k*CTRL_WIDTH)+16 +:4];
-      ctrl_m_msg_port [k*4+:4] <= ctrl_m_axis_tdata [(k*CTRL_WIDTH)+24 +:4];
-      ctrl_s_msg_type [k*4+:4] <= ctrl_s_axis_tdata [(k*CTRL_WIDTH)+32 +:4];
-      ctrl_s_msg_slot [k*4+:4] <= ctrl_s_axis_tdata [(k*CTRL_WIDTH)+16 +:4];
-      ctrl_s_msg_port [k*4+:4] <= ctrl_s_axis_tdata [(k*CTRL_WIDTH)+24 +:4];
-    end
-
-  reg [63:0] data_m_16_31_2nds;
-  reg [63:0] data_m_lsb_third_4;
-  reg [63:0] data_s_16_31_2nds;
-  reg [63:0] data_s_lsb_third_4;
-  integer l;
-
-  always @ (posedge sys_clk)
-    for (l=0; l<4; l=l+1) begin
-      data_m_16_31_2nds [l*16+:16] <= data_m_axis_tdata [(((l*4)+1)*LVL2_DATA_WIDTH)+16 +:16];
-      data_s_16_31_2nds [l*16+:16] <= data_s_axis_tdata [(((l*4)+1)*LVL2_DATA_WIDTH)+16 +:16];
-
-      data_m_lsb_third_4 [l*16+:16] <= data_m_axis_tdata [((8+l)*LVL2_DATA_WIDTH)+16 +:16];
-      data_s_lsb_third_4 [l*16+:16] <= data_s_axis_tdata [((8+l)*LVL2_DATA_WIDTH)+16 +:16];
     end
 
   reg [CORE_COUNT-1:0] data_m_axis_tvalid_r;
@@ -1977,11 +1953,8 @@ if (ENABLE_ILA) begin: ILA_inst
   reg [CORE_COUNT-1:0] data_s_axis_tvalid_r;
   reg [CORE_COUNT-1:0] data_s_axis_tready_r;
   reg [CORE_COUNT-1:0] data_s_axis_tlast_r;
-  reg [CORE_COUNT-1:0] ctrl_s_axis_tvalid_r;
-  reg [CORE_COUNT-1:0] ctrl_s_axis_tready_r;
-  reg [CORE_COUNT-1:0] ctrl_m_axis_tvalid_r;
-  reg [CORE_COUNT-1:0] ctrl_m_axis_tready_r;
-
+ 
+  // PORT_WIDTH=3, so each of size 48 bits
   reg [CORE_COUNT*PORT_WIDTH-1:0] data_m_axis_tdest_r;
   reg [CORE_COUNT*PORT_WIDTH-1:0] data_s_axis_tuser_r;
 
@@ -1994,13 +1967,9 @@ if (ENABLE_ILA) begin: ILA_inst
     data_s_axis_tready_r <= data_s_axis_tready;
     data_s_axis_tuser_r  <= data_s_axis_tuser;
     data_s_axis_tlast_r  <= data_s_axis_tlast;
-    ctrl_s_axis_tvalid_r <= ctrl_s_axis_tvalid;
-    ctrl_s_axis_tready_r <= ctrl_s_axis_tready;
-    ctrl_m_axis_tvalid_r <= ctrl_m_axis_tvalid;
-    ctrl_m_axis_tready_r <= ctrl_m_axis_tready;
   end
 
-  ila_8x64 debugger3 (
+  ila_5x64 core_data_debugger (
     .clk    (sys_clk),
 
     .trig_out(sched_trig_in),
@@ -2010,26 +1979,16 @@ if (ENABLE_ILA) begin: ILA_inst
 
     .probe0({data_s_axis_tvalid_r,
              data_s_axis_tready_r,
-             ctrl_s_axis_tvalid_r,
-             ctrl_s_axis_tready_r}),
+             data_m_axis_tvalid_r,
+             data_m_axis_tready_r}),
 
     .probe1(data_s_slot),
     .probe2({data_s_axis_tuser_r,
              data_s_axis_tlast_r}),
 
-    .probe3(ctrl_s_msg_slot),
-    .probe4({data_m_axis_tvalid_r,
-             data_m_axis_tready_r,
-             ctrl_m_axis_tvalid_r,
-             ctrl_m_axis_tready_r}),
-    .probe5(data_m_slot),
-    .probe6({data_m_axis_tdest_r,
-             data_m_axis_tlast_r}),
-    .probe7(ctrl_m_msg_slot)
-
-    // .probe3(data_s_16_31_2nds),
-    // .probe7(data_m_16_31_2nds)
-
+    .probe3(data_m_slot),
+    .probe4({data_m_axis_tdest_r,
+             data_m_axis_tlast_r})
   );
 
 end else begin: no_ILA
