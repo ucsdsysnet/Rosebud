@@ -141,10 +141,10 @@ def bench():
     AXIS_ETH_DATA_WIDTH = 512
     AXIS_ETH_KEEP_WIDTH = AXIS_ETH_DATA_WIDTH/8
 
-    SEND_COUNT_0 = 200
+    SEND_COUNT_0 = 200 # Make it at least 1000 for FWD latency measurement
     SEND_COUNT_1 = 200
-    SIZE_0       = 128 - 14
-    SIZE_1       = 128 - 14
+    SIZE_0       = 1024 - 14
+    SIZE_1       = 1024 - 14
     CHECK_PKT    = True
     DROP_TEST    = False
     TEST_SFP     = True
@@ -557,7 +557,7 @@ def bench():
     test_frame_1.eth_dest_mac = 0xDAD1D2D3D4D5
     test_frame_1.eth_src_mac = 0x5A5152535455
     test_frame_1.eth_type = 0x8000
-    test_frame_1.payload = bytes([0]+[x%256 for x in range(SIZE_0-1)])
+    test_frame_1.payload = bytes([0]+[0]+[x%256 for x in range(SIZE_0-2)])
     axis_frame = test_frame_1.build_axis()
     start_data_1 = bytearray(axis_frame)
 
@@ -565,7 +565,7 @@ def bench():
     test_frame_2.eth_dest_mac = 0x5A5152535455
     test_frame_2.eth_src_mac = 0xDAD1D2D3D4D5
     test_frame_2.eth_type = 0x8000
-    test_frame_2.payload = bytes([0]+[x%256 for x in range(SIZE_1-1)])
+    test_frame_2.payload = bytes([0]+[0]+[x%256 for x in range(SIZE_1-2)])
     axis_frame_2 = test_frame_2.build_axis()
     start_data_2 = bytearray(axis_frame_2)
  
@@ -720,19 +720,19 @@ def bench():
     def port1():
         for i in range (0,SEND_COUNT_0):
           # test_frame_1.payload = bytes([x%256 for x in range(random.randrange(1980))])
-          test_frame_1.payload = bytes([i%256] + [x%256 for x in range(SIZE_0-1)])
+          test_frame_1.payload = bytes([int(i/256)] + [i%256] + [x%256 for x in range(SIZE_0-2)])
           axis_frame = test_frame_1.build_axis()
           qsfp0_source.send(bytearray(axis_frame))
           # yield delay(random.randrange(128))
           yield qsfp0_rx_clk.posedge
 
-    def port2():
+    def port2(): 
         for i in range (0,SEND_COUNT_1):
           # test_frame_2.payload = bytes([x%256 for x in range(10,10+random.randrange(300))])
           # if (i%20==19):
           #   test_frame_2.payload = bytes([x%256 for x in range(78-14)])
           # else:
-          test_frame_2.payload = bytes([i%256] + [x%256 for x in range(SIZE_1-1)])
+          test_frame_2.payload = bytes([int(i/256)] + [i%256] + [x%256 for x in range(SIZE_1-2)])
           axis_frame_2 = test_frame_2.build_axis()
           qsfp1_source.send(bytearray(axis_frame_2))
           # yield delay(random.randrange(128))
@@ -873,7 +873,7 @@ def bench():
         if (TEST_SFP):
           print ("send data from LAN")
           yield port1(),None
-          yield port2(),None
+          yield port2(),None #Comment for single port test
         
           # yield delay (200)
           # yield rc.mem_write(dev_pf0_bar0+0x00040C, struct.pack('<L', 0x0100))
@@ -894,7 +894,7 @@ def bench():
                 print (".")
               if (CHECK_PKT):
                 assert rx_frame.data[0:14] == start_data_1[0:14]
-                assert rx_frame.data[15:] == start_data_1[15:]
+                assert rx_frame.data[16:] == start_data_1[16:]
               lengths.append(len(data)-8)
 
             for j in range (0,SEND_COUNT_0):
@@ -909,7 +909,7 @@ def bench():
                 print (".")
               if (CHECK_PKT):
                 assert rx_frame.data[0:14] == start_data_2[0:14]
-                assert rx_frame.data[15:] == start_data_2[15:]
+                assert rx_frame.data[16:] == start_data_2[16:]
               lengths.append(len(data)-8)
         
         yield delay(20000)

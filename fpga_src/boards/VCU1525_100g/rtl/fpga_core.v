@@ -199,8 +199,8 @@ parameter IF_COUNT_WIDTH    = $clog2(INTERFACE_COUNT+V_PORT_COUNT);
 parameter BYTE_COUNT_WIDTH  = 32;
 parameter FRAME_COUNT_WIDTH = 32;
 parameter MAX_PKT_HDR_SIZE  = 128;
-parameter ENABLE_CORES_ILA  = 1;
-parameter ENABLE_SCHED_ILA  = 1;
+parameter ENABLE_CORES_ILA  = 0;
+parameter ENABLE_SCHED_ILA  = 0;
 
 // MAC and switching system parameters
 parameter LVL1_DATA_WIDTH  = AXIS_ETH_DATA_WIDTH;
