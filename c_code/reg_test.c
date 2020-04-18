@@ -2,8 +2,9 @@
 
 struct Desc packet;
 unsigned char * pkt_data[16];
-unsigned int pkt_len[16] = {65,128,256,512,1024,2048,4096,9000,9000,2048,4096,1024,1500,256,128,1024};
-// unsigned int pkt_len[16] = {[0 ... 15] = 1500};
+unsigned int pkt_len[16] = {64, 1024, 128, 1500, 256, 1024, 512, 1500, 1024, 1500, 65, 2048, 512, 4096, 1500, 9000};
+// unsigned int pkt_len[16] = {[0 ... 15] = 825};
+
 char hdr1[60] = "    page.php?id=%27%3B%20SELECT%20%2A%20FROM%20users%3B%20--";
 char hdr2[60] = "    page.php?id=%27%3B%20DELETE%20FROM%20prod_data%3B%20--  ";
 char hdr3[60] = "    page.php?id=                                          --";
@@ -32,15 +33,17 @@ int main(void){
   for (i=0;i<16;i++){
     pkt_data[i] = (unsigned char *)(0x01000000+i*16384);
     if ((i&0x1)==0)
-      basic_memcpy(pkt_data[i]+pkt_len[i]-60, hdr1, 60);
+      basic_memcpy(pkt_data[i]+pkt_len[i]-60, hdr2, 60);
+      // basic_memcpy(pkt_data[i], hdr2, 60);
     else
       basic_memcpy(pkt_data[i]+pkt_len[i]-60, hdr2, 60);
+      // basic_memcpy(pkt_data[i], hdr2, 60);
     pkt_data[i][0] = (char) core_id();
     
   }
 
   pkt_num    = 0;
-  packet.len = 9000;
+  // packet.len = 64;
   packet.tag = 0;
   if ((core_id()&0x4)!=0)
     packet.port = 1;

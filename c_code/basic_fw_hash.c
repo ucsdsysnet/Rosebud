@@ -45,18 +45,18 @@ inline void slot_rx_packet() {
     // check IHL and protocol
     if (header[14] == 0x45){
       if(header[23]==0x06){
-          // TCP or UDP ports
-          ACC_HASH_DWORD = *((unsigned int *)(header+34));
-          // read hash
-          hash = ACC_HASH_READ;
-          act = *(TCP_table+(hash&0x0003ffff));
+        // TCP or UDP ports
+        ACC_HASH_DWORD = *((unsigned int *)(header+34));
+        // read hash
+        hash = ACC_HASH_READ;
+        act = *(TCP_table+(hash&0x0003ffff));
       } else if (header[23]==0x11){
-          ACC_HASH_DWORD = *((unsigned int *)(header+34));
-          hash = ACC_HASH_READ;
-          act = *(UDP_table+(hash&0x0003ffff));
+        ACC_HASH_DWORD = *((unsigned int *)(header+34));
+        hash = ACC_HASH_READ;
+        act = *(UDP_table+(hash&0x0003ffff));
       } else {
-          hash = ACC_HASH_READ;
-          act = *(IP_table+(hash&0x0003ffff));
+        hash = ACC_HASH_READ;
+        act = *(IP_table+(hash&0x0003ffff));
       }
     }
   }
