@@ -24,7 +24,7 @@ int main(void){
   summary_pkt.len=1496;
   summary_pkt.port=2;
   summary_pkt.tag=0;
-  summary_pkt.data=((unsigned char*) wr_ptr);
+  summary_pkt.data=(unsigned char*) 0x1083498;
 
   while(1){
     temp = * bc_read;
