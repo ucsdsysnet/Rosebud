@@ -2,6 +2,8 @@ import re;
 
 # extract first level modules
 def extract (read_file,modules,avg,tot,avg_p,tot_p):
+  count = 0
+
   LUT       = 0
   LGCLUT    = 0
   LUTRAM    = 0 
@@ -30,7 +32,8 @@ def extract (read_file,modules,avg,tot,avg_p,tot_p):
       if re.match("^\|"+m,line):
         data = [x for x in re.split("\||\s*|,",line) if x]
         data = [re.split("\(|\)|%",x) for x in data]
-        data = [(int(x[0]),float(x[1])) if len(x)==4 else x[0] for x in data]
+        data = [(float(x[0]),float(x[1])) if len(x)==4 else x[0] for x in data]
+        count += 1
 
         LUT    += data[4][0]
         LGCLUT += data[5][0]
@@ -53,16 +56,14 @@ def extract (read_file,modules,avg,tot,avg_p,tot_p):
         DSP_P    += data[12][1]
 
   if (avg_p):
-    print ("Average utilization percentage. LUT:%.2f\tLogic:%.2f\tLUTRAM:%.2f\tSRL:%.2f\tFF:%.2f\tRAMB36:%.2f RAMB18:%.2f URAM:%.2f DSP:%.2f"
-            %(LUT_P/len(modules), LGCLUT_P/len(modules), LUTRAM_P/len(modules), SRL_P/len(modules), FF_P/len(modules), \
-            RAMB36_P/len(modules), RAMB18_P/len(modules), URAM_P/len(modules), DSP_P/len(modules)))
+    print ("Average utilization percentage. LUT:%.2f%%\tLogic:%.2f%%\tLUTRAM:%.2f%%\tSRL:%.2f%%\tFF:%.2f%%\tRAMB36:%.2f%% RAMB18:%.2f%% URAM:%.2f%% DSP:%.2f%%"
+            %(LUT_P/count, LGCLUT_P/count, LUTRAM_P/count, SRL_P/count, FF_P/count, RAMB36_P/count, RAMB18_P/count, URAM_P/count, DSP_P/count))
   if (avg):
     print ("Average utilization.            LUT:%.2f\tLogic:%.2f\tLUTRAM:%.2f\tSRL:%.2f\tFF:%.2f\tRAMB36:%.2f RAMB18:%.2f URAM:%.2f DSP:%.2f"
-            %(LUT/len(modules), LGCLUT/len(modules), LUTRAM/len(modules), SRL/len(modules), FF/len(modules), \
-            RAMB36/len(modules), RAMB18/len(modules), URAM/len(modules), DSP/len(modules)))
+            %(LUT/count, LGCLUT/count, LUTRAM/count, SRL/count, FF/count, RAMB36/count, RAMB18/count, URAM/count, DSP/count))
 
   if (tot_p):
-    print ("Total utilization percentage.   LUT:%.2f\tLogic:%.2f\tLUTRAM:%.2f\tSRL:%.2f\tFF:%.2f\tRAMB36:%.2f RAMB18:%.2f URAM:%.2f DSP:%.2f"
+    print ("Total utilization percentage.   LUT:%.2f%%\tLogic:%.2f%%\tLUTRAM:%.2f%%\tSRL:%.2f%%\tFF:%.2f%%\tRAMB36:%.2f%% RAMB18:%.2f%% URAM:%.2f%% DSP:%.2f%%"
             %(LUT_P, LGCLUT_P, LUTRAM_P, SRL_P, FF_P, RAMB36_P, RAMB18_P, URAM_P, DSP_P))
   if (tot):
     print ("Total utilization.              LUT:%.2f\tLogic:%.2f\tLUTRAM:%.2f\tSRL:%.2f\tFF:%.2f\tRAMB36:%.2f RAMB18:%.2f URAM:%.2f DSP:%.2f"
@@ -83,6 +84,7 @@ MAC_modules = [
 "   qsfp1_cmac_pad_inst"]
 
 SW_n_stat_modules = [
+"     \(core_inst\)",
 "     core_stat_data_reg",
 "     cores_to_broadcaster",
 "     ctrl_in_sw",
@@ -140,27 +142,55 @@ Gushehs = [
 
 Scheduler_module = ["     scheduler"]
 
+
+mem_modules = ["         memories"]
+riscv_modules = ["         core"]
+hash_modules = ["           hash_acc_inst"]
+acc_manager =   ["           \(accel_wrap_inst\)"]
+regex_modules = [
+"           genblk1\[0\]\.regex_acc_inst ",
+"           genblk1\[1\]\.regex_acc_inst ",
+"           genblk1\[2\]\.regex_acc_inst ",
+"           genblk1\[3\]\.regex_acc_inst ",
+"           genblk1\[4\]\.regex_acc_inst ",
+"           genblk1\[5\]\.regex_acc_inst ",
+"           genblk1\[6\]\.regex_acc_inst ",
+"           genblk1\[7\]\.regex_acc_inst "]
+
+
 f = "fpga_utilization_hierarchy_placed_full.rpt"
 
 print ("Gusheh stats:")
 extract(f,Gushehs, 1,1,1,0)
 print ("Wrapper stats:")
-extract(f,Core_wrappers,1,0,1,0)
+extract(f,Core_wrappers,1,1,0,0)
 print ("Scheduler stats:")
-extract(f,Scheduler_module,0,1,0,1)
+extract(f,Scheduler_module,0,1,0,0)
 print ("MAC stats:")
-extract(f,MAC_modules,0,1,0,1)
+extract(f,MAC_modules,0,1,0,0)
 print ("SW stats:")
-extract(f,SW_n_stat_modules,0,1,0,1)
+extract(f,SW_n_stat_modules,0,1,0,0)
 print ("PCIe stats:")
-extract(f,PCIe_modules,0,1,0,1)
+extract(f,PCIe_modules,0,1,0,0)
 print ("Full FPGA:")
-extract(f,[" fpga"],0,1,0,1)
+extract(f,[" fpga"],0,1,0,0)
+
+print ("\n\nmem_modules")
+extract(f,mem_modules, 1,1,1,0)
+print ("riscv_modules")
+extract(f,riscv_modules, 1,1,1,0)
+print ("regex_modules")
+extract(f,regex_modules, 1,1,1,0)
+print ("hash_modules")
+extract(f,hash_modules, 1,1,1,0)
+print ("accelerator manager")
+extract(f,acc_manager, 1,1,1,0)
+
 
 f = "fpga_utilization_hierarchy_placed_full_no_accel.rpt"
 
 print ("\n\nGusheh raw stats:")
 extract(f,Gushehs, 1,1,1,0)
 print ("Full FPGA:")
-extract(f,[" fpga"],0,1,0,1)
+extract(f,[" fpga"],0,1,0,0)
 
