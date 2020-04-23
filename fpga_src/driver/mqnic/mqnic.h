@@ -113,10 +113,17 @@ struct mqnic_dev {
     struct i2c_client *eeprom_i2c_client;
 };
 
+struct mqnic_frag {
+    dma_addr_t dma_addr;
+    u32 len;
+};
+
 struct mqnic_tx_info {
     struct sk_buff *skb;
     DEFINE_DMA_UNMAP_ADDR(dma_addr);
     DEFINE_DMA_UNMAP_LEN(len);
+    u32 frag_count;
+    struct mqnic_frag frags[MQNIC_MAX_FRAGS-1];
     int ts_requested;
 };
 
@@ -152,6 +159,9 @@ struct mqnic_ring {
 
     u32 mtu;
     u32 page_order;
+
+    u32 desc_block_size;
+    u32 log_desc_block_size;
 
     size_t buf_size;
     u8 *buf;
@@ -265,6 +275,8 @@ struct mqnic_priv {
     u32 port_count;
     u32 port_offset;
     u32 port_stride;
+
+    u32 max_desc_block_size;
 
     u8 __iomem *hw_addr;
     u8 __iomem *csr_hw_addr;
