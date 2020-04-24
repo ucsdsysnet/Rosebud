@@ -187,7 +187,7 @@ print ("accelerator manager")
 extract(f,acc_manager, 1,1,1,0)
 
 
-f = "fpga_utilization_hierarchy_placed_full_no_accel.rpt"
+f = "fpga_utilization_hierarchy_placed_raw.rpt"
 
 print ("\n\nGusheh raw stats:")
 extract(f,Gushehs, 1,1,1,0)
