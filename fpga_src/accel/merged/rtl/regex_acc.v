@@ -77,6 +77,8 @@ re re_inst(
     .rst(re_reset_reg),
     .in(re_data_reg),
     .valid(1'b1),
+    .init_state(32'd0),
+    .init_assert(1'b0),
     .match(re_match)
 );
 

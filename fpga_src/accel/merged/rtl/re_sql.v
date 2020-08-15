@@ -1,10 +1,15 @@
-module re(input wire clk, input wire rst, input wire [7:0] in, input wire valid, output wire match);
+module re(input wire clk, input wire rst,
+          input wire [7:0] in, input wire valid,
+          input wire [31:0] init_state, input wire init_assert,
+          output wire match);
 
 reg [31:0] state_r, state_n;
 
 always @ (posedge clk)
     if (rst)
         state_r <= 32'd0;
+    else if (init_assert)
+        state_r <= init_state;
     else if (valid)
         state_r <= state_n;
 
