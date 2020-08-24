@@ -141,8 +141,8 @@ def bench():
     AXIS_ETH_DATA_WIDTH = 512
     AXIS_ETH_KEEP_WIDTH = AXIS_ETH_DATA_WIDTH/8
 
-    SEND_COUNT_0 = 50 # Make it at least 1000 for FWD latency measurement
-    SEND_COUNT_1 = 1
+    SEND_COUNT_0 = 100 # Make it at least 1000 for FWD latency measurement
+    SEND_COUNT_1 = 100
     SIZE_0       = 1024 - 14
     SIZE_1       = 1024 - 14
     CHECK_PKT    = True

@@ -855,7 +855,7 @@ generate
             .TDMA_INDEX_WIDTH(TDMA_INDEX_WIDTH),
             .INT_WIDTH(8),
             .QUEUE_PTR_WIDTH(16),
-            .QUEUE_LOG_SIZE_WIDTH(4),
+            .LOG_QUEUE_SIZE_WIDTH(4),
             .PTP_TS_ENABLE(0),
             .PTP_TS_WIDTH(96),
             .TX_CHECKSUM_ENABLE(TX_CHECKSUM_ENABLE),
