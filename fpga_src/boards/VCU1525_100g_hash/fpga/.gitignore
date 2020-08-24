@@ -1,0 +1,7 @@
+*.log
+*.jou
+*.tcl
+*.ltx
+fpga*
+defines.v
+
