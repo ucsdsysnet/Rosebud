@@ -86,6 +86,10 @@ module interface #
     parameter RX_DESC_TABLE_SIZE = 16,
     // Receive packet table size (number of in-progress packets)
     parameter RX_PKT_TABLE_SIZE = 8,
+    // Max number of in-flight descriptor requests (transmit)
+    parameter TX_MAX_DESC_REQ = 16,
+    // Max number of in-flight descriptor requests (transmit)
+    parameter RX_MAX_DESC_REQ = 16,
     // Transmit scheduler type
     parameter TX_SCHEDULER = "RR",
     // Scheduler operation table size
@@ -99,7 +103,9 @@ module interface #
     // Queue element pointer width
     parameter QUEUE_PTR_WIDTH = 16,
     // Queue log size field width
-    parameter QUEUE_LOG_SIZE_WIDTH = 4,
+    parameter LOG_QUEUE_SIZE_WIDTH = 4,
+    // Log desc block size field width
+    parameter LOG_BLOCK_SIZE_WIDTH = 2,
     // Enable PTP timestamping
     parameter PTP_TS_ENABLE = 1,
     // PTP timestamp width
@@ -591,6 +597,7 @@ wire                                tx_desc_dequeue_req_ready;
 wire [QUEUE_INDEX_WIDTH-1:0]        tx_desc_dequeue_resp_queue;
 wire [QUEUE_PTR_WIDTH-1:0]          tx_desc_dequeue_resp_ptr;
 wire [DMA_ADDR_WIDTH-1:0]           tx_desc_dequeue_resp_addr;
+wire [LOG_BLOCK_SIZE_WIDTH-1:0]     tx_desc_dequeue_resp_block_size;
 wire [CPL_QUEUE_INDEX_WIDTH-1:0]    tx_desc_dequeue_resp_cpl;
 wire [QUEUE_REQ_TAG_WIDTH-1:0]      tx_desc_dequeue_resp_tag;
 wire [QUEUE_OP_TAG_WIDTH-1:0]       tx_desc_dequeue_resp_op_tag;
@@ -631,6 +638,7 @@ wire                                rx_desc_dequeue_req_ready;
 wire [QUEUE_INDEX_WIDTH-1:0]        rx_desc_dequeue_resp_queue;
 wire [QUEUE_PTR_WIDTH-1:0]          rx_desc_dequeue_resp_ptr;
 wire [DMA_ADDR_WIDTH-1:0]           rx_desc_dequeue_resp_addr;
+wire [LOG_BLOCK_SIZE_WIDTH-1:0]     rx_desc_dequeue_resp_block_size;
 wire [CPL_QUEUE_INDEX_WIDTH-1:0]    rx_desc_dequeue_resp_cpl;
 wire [QUEUE_REQ_TAG_WIDTH-1:0]      rx_desc_dequeue_resp_tag;
 wire [QUEUE_OP_TAG_WIDTH-1:0]       rx_desc_dequeue_resp_op_tag;
@@ -925,7 +933,7 @@ cpl_queue_manager #(
     .QUEUE_INDEX_WIDTH(EVENT_QUEUE_INDEX_WIDTH),
     .EVENT_WIDTH(INT_WIDTH),
     .QUEUE_PTR_WIDTH(QUEUE_PTR_WIDTH),
-    .QUEUE_LOG_SIZE_WIDTH(QUEUE_LOG_SIZE_WIDTH),
+    .LOG_QUEUE_SIZE_WIDTH(LOG_QUEUE_SIZE_WIDTH),
     .CPL_SIZE(EVENT_SIZE),
     .PIPELINE(EVENT_QUEUE_PIPELINE),
     .AXIL_DATA_WIDTH(AXIL_DATA_WIDTH),
@@ -1009,8 +1017,9 @@ queue_manager #(
     .QUEUE_INDEX_WIDTH(TX_QUEUE_INDEX_WIDTH),
     .CPL_INDEX_WIDTH(TX_CPL_QUEUE_INDEX_WIDTH),
     .QUEUE_PTR_WIDTH(QUEUE_PTR_WIDTH),
-    .QUEUE_LOG_SIZE_WIDTH(QUEUE_LOG_SIZE_WIDTH),
+    .LOG_QUEUE_SIZE_WIDTH(LOG_QUEUE_SIZE_WIDTH),
     .DESC_SIZE(DESC_SIZE),
+    .LOG_BLOCK_SIZE_WIDTH(LOG_BLOCK_SIZE_WIDTH),
     .PIPELINE(TX_QUEUE_PIPELINE),
     .AXIL_DATA_WIDTH(AXIL_DATA_WIDTH),
     .AXIL_ADDR_WIDTH(AXIL_TX_QM_ADDR_WIDTH),
@@ -1034,6 +1043,7 @@ tx_queue_manager_inst (
     .m_axis_dequeue_resp_queue(tx_desc_dequeue_resp_queue),
     .m_axis_dequeue_resp_ptr(tx_desc_dequeue_resp_ptr),
     .m_axis_dequeue_resp_addr(tx_desc_dequeue_resp_addr),
+    .m_axis_dequeue_resp_block_size(tx_desc_dequeue_resp_block_size),
     .m_axis_dequeue_resp_cpl(tx_desc_dequeue_resp_cpl),
     .m_axis_dequeue_resp_tag(tx_desc_dequeue_resp_tag),
     .m_axis_dequeue_resp_op_tag(tx_desc_dequeue_resp_op_tag),
@@ -1092,7 +1102,7 @@ cpl_queue_manager #(
     .QUEUE_INDEX_WIDTH(TX_CPL_QUEUE_INDEX_WIDTH),
     .EVENT_WIDTH(EVENT_QUEUE_INDEX_WIDTH),
     .QUEUE_PTR_WIDTH(QUEUE_PTR_WIDTH),
-    .QUEUE_LOG_SIZE_WIDTH(QUEUE_LOG_SIZE_WIDTH),
+    .LOG_QUEUE_SIZE_WIDTH(LOG_QUEUE_SIZE_WIDTH),
     .CPL_SIZE(CPL_SIZE),
     .PIPELINE(TX_CPL_QUEUE_PIPELINE),
     .AXIL_DATA_WIDTH(AXIL_DATA_WIDTH),
@@ -1176,8 +1186,9 @@ queue_manager #(
     .QUEUE_INDEX_WIDTH(RX_QUEUE_INDEX_WIDTH),
     .CPL_INDEX_WIDTH(RX_CPL_QUEUE_INDEX_WIDTH),
     .QUEUE_PTR_WIDTH(QUEUE_PTR_WIDTH),
-    .QUEUE_LOG_SIZE_WIDTH(QUEUE_LOG_SIZE_WIDTH),
+    .LOG_QUEUE_SIZE_WIDTH(LOG_QUEUE_SIZE_WIDTH),
     .DESC_SIZE(DESC_SIZE),
+    .LOG_BLOCK_SIZE_WIDTH(LOG_BLOCK_SIZE_WIDTH),
     .PIPELINE(RX_QUEUE_PIPELINE),
     .AXIL_DATA_WIDTH(AXIL_DATA_WIDTH),
     .AXIL_ADDR_WIDTH(AXIL_RX_QM_ADDR_WIDTH),
@@ -1201,6 +1212,7 @@ rx_queue_manager_inst (
     .m_axis_dequeue_resp_queue(rx_desc_dequeue_resp_queue),
     .m_axis_dequeue_resp_ptr(rx_desc_dequeue_resp_ptr),
     .m_axis_dequeue_resp_addr(rx_desc_dequeue_resp_addr),
+    .m_axis_dequeue_resp_block_size(rx_desc_dequeue_resp_block_size),
     .m_axis_dequeue_resp_cpl(rx_desc_dequeue_resp_cpl),
     .m_axis_dequeue_resp_tag(rx_desc_dequeue_resp_tag),
     .m_axis_dequeue_resp_op_tag(rx_desc_dequeue_resp_op_tag),
@@ -1259,7 +1271,7 @@ cpl_queue_manager #(
     .QUEUE_INDEX_WIDTH(RX_CPL_QUEUE_INDEX_WIDTH),
     .EVENT_WIDTH(EVENT_QUEUE_INDEX_WIDTH),
     .QUEUE_PTR_WIDTH(QUEUE_PTR_WIDTH),
-    .QUEUE_LOG_SIZE_WIDTH(QUEUE_LOG_SIZE_WIDTH),
+    .LOG_QUEUE_SIZE_WIDTH(LOG_QUEUE_SIZE_WIDTH),
     .CPL_SIZE(CPL_SIZE),
     .PIPELINE(RX_CPL_QUEUE_PIPELINE),
     .AXIL_DATA_WIDTH(AXIL_DATA_WIDTH),
@@ -1464,6 +1476,7 @@ desc_fetch #(
     .CPL_QUEUE_INDEX_WIDTH(CPL_QUEUE_INDEX_WIDTH),
     .QUEUE_PTR_WIDTH(QUEUE_PTR_WIDTH),
     .DESC_SIZE(DESC_SIZE),
+    .LOG_BLOCK_SIZE_WIDTH(LOG_BLOCK_SIZE_WIDTH),
     .DESC_TABLE_SIZE(32)
 )
 desc_fetch_inst (
@@ -1515,6 +1528,7 @@ desc_fetch_inst (
     .s_axis_desc_dequeue_resp_queue({rx_desc_dequeue_resp_queue, tx_desc_dequeue_resp_queue}),
     .s_axis_desc_dequeue_resp_ptr({rx_desc_dequeue_resp_ptr, tx_desc_dequeue_resp_ptr}),
     .s_axis_desc_dequeue_resp_addr({rx_desc_dequeue_resp_addr, tx_desc_dequeue_resp_addr}),
+    .s_axis_desc_dequeue_resp_block_size({rx_desc_dequeue_resp_block_size, tx_desc_dequeue_resp_block_size}),
     .s_axis_desc_dequeue_resp_cpl({rx_desc_dequeue_resp_cpl, tx_desc_dequeue_resp_cpl}),
     .s_axis_desc_dequeue_resp_tag({rx_desc_dequeue_resp_tag, tx_desc_dequeue_resp_tag}),
     .s_axis_desc_dequeue_resp_op_tag({rx_desc_dequeue_resp_op_tag, tx_desc_dequeue_resp_op_tag}),
@@ -2023,6 +2037,11 @@ generate
             .TX_PKT_TABLE_SIZE(TX_PKT_TABLE_SIZE),
             .RX_DESC_TABLE_SIZE(RX_DESC_TABLE_SIZE),
             .RX_PKT_TABLE_SIZE(RX_PKT_TABLE_SIZE),
+            .DESC_TABLE_DMA_OP_COUNT_WIDTH(((2**LOG_BLOCK_SIZE_WIDTH)-1)+1),
+            .TX_MAX_DESC_REQ(TX_MAX_DESC_REQ),
+            .TX_DESC_FIFO_SIZE(TX_MAX_DESC_REQ*(2**((2**LOG_BLOCK_SIZE_WIDTH)-1))),
+            .RX_MAX_DESC_REQ(RX_MAX_DESC_REQ),
+            .RX_DESC_FIFO_SIZE(RX_MAX_DESC_REQ*(2**((2**LOG_BLOCK_SIZE_WIDTH)-1))),
             .TX_SCHEDULER(TX_SCHEDULER),
             .TX_SCHEDULER_OP_TABLE_SIZE(TX_SCHEDULER_OP_TABLE_SIZE),
             .TX_SCHEDULER_PIPELINE(TX_SCHEDULER_PIPELINE),
