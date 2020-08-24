@@ -142,10 +142,14 @@ def bench():
     AXIS_ETH_KEEP_WIDTH = AXIS_ETH_DATA_WIDTH/8
 
     PRINT_PKTS   = True
-    FIRMWARE     = "../../../../c_code/pkt_gen_ins.bin"
-    DATA         = ""
-    # FIRMWARE     = "../../../../c_code/reg_test_ins.bin"
-    # DATA         = "../../../../c_code/reg_test_data.bin"
+    # FIRMWARE     = "../../../../c_code/pkt_gen_ins.bin"
+    # DATA         = ""
+    # FIRMWARE     = "../../../../c_code/reg_test2_ins.bin"
+    # DATA         = "../../../../c_code/reg_test2_data.bin"
+    FIRMWARE     = "../../../../c_code/pkt_gen_changing_port_ins.bin"
+    DATA         = "../../../../c_code/pkt_gen_changing_port_data.bin"
+    ACCEPT_PKTS  = True
+    loopback_enable = Signal(bool(1))
 
     # Inputs
     sys_clk  = Signal(bool(0))
@@ -693,6 +697,20 @@ def bench():
         sys_rst_to_pcie.next = not sys_rst
 
     @instance
+    def loopback():
+        while True:
+
+            yield sys_clk.posedge
+
+            if loopback_enable:
+                if not qsfp0_sink.empty():
+                    pkt = qsfp0_sink.recv()
+                    qsfp0_source.send(pkt)
+                if not qsfp1_sink.empty():
+                    pkt = qsfp1_sink.recv()
+                    qsfp1_source.send(pkt)
+
+    @instance
     def check():
         yield delay(100)
         yield sys_clk.posedge
@@ -769,10 +787,14 @@ def bench():
         for i in range (0,16):
             yield rc.mem_write(dev_pf0_bar0+0x000408, struct.pack('<L', ((i<<8)|0xf)))
 
-        yield rc.mem_write(dev_pf0_bar0+0x00040C, struct.pack('<L', 0x0000))
+        if (ACCEPT_PKTS):
+            yield rc.mem_write(dev_pf0_bar0+0x00040C, struct.pack('<L', 0xffff))
+        else:
+            yield rc.mem_write(dev_pf0_bar0+0x00040C, struct.pack('<L', 0x0000))
         yield rc.mem_write(dev_pf0_bar0+0x000410, struct.pack('<L', 0x0000))
         yield delay(200000)
 
+        print("Put cores into reset")
         # put cores into reset
         yield rc.mem_write(dev_pf0_bar0+0x000404, struct.pack('<L', 0x0001))
         yield delay(100)
