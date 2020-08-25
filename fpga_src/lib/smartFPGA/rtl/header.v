@@ -306,6 +306,7 @@ module header_adder_blocking # (
   localparam HDR = 2'b00;
   localparam MID = 2'b01;
   localparam LST = 2'b10;
+  localparam ERR = 2'b11;
   
   reg [1:0] state;
   
@@ -323,6 +324,7 @@ module header_adder_blocking # (
              if (strb_left) state <= LST; else state <= HDR;
            end
       LST: if (m_axis_tready) state <= HDR;
+      ERR: state <= ERR;
     endcase 
   
   // Latch tdest and tuser at first cycle (for last cycle), and always latch tdata and tkeep
@@ -366,6 +368,13 @@ module header_adder_blocking # (
           m_axis_tkeep  = SAME_WIDTH ? rest_tkeep_r : {{(STRB_WIDTH-HDR_STRB){1'b0}},  rest_tkeep_r};
           m_axis_tlast  = 1'b1;
           m_axis_tvalid = 1'b1;
+          s_axis_tready = 1'b0;
+      end
+      ERR: begin
+          m_axis_tdata  = s_axis_tdata;
+          m_axis_tkeep  = s_axis_tkeep;
+          m_axis_tlast  = s_axis_tlast;
+          m_axis_tvalid = 1'b0;
           s_axis_tready = 1'b0;
       end
     endcase
