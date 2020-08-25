@@ -145,7 +145,7 @@ class DBusCachedPlugin(val config : DataCacheConfig,
     decoderService.add(FENCE, Nil)
 
     mmuBus = pipeline.service(classOf[MemoryTranslator]).newTranslationPort(MemoryTranslatorPort.PRIORITY_DATA ,memoryTranslatorPortConfig)
-    redoBranch = pipeline.service(classOf[JumpService]).createJumpInterface(if(pipeline.writeBack != null) pipeline.writeBack else pipeline.execute)
+    redoBranch = pipeline.service(classOf[JumpService]).createJumpInterface(if(pipeline.writeBack != null) pipeline.writeBack else pipeline.memory)
 
     if(catchSomething)
       exceptionBus = pipeline.service(classOf[ExceptionService]).newExceptionPort(if(pipeline.writeBack == null) pipeline.memory else pipeline.writeBack)
@@ -225,7 +225,13 @@ class DBusCachedPlugin(val config : DataCacheConfig,
         arbitration.haltItself := True
       }
 
-      if(relaxedMemoryTranslationRegister) insert(MEMORY_VIRTUAL_ADDRESS) := cache.io.cpu.execute.address
+      if(relaxedMemoryTranslationRegister) {
+        insert(MEMORY_VIRTUAL_ADDRESS) := cache.io.cpu.execute.address
+        memory.input(MEMORY_VIRTUAL_ADDRESS)
+        if(writeBack != null) addPrePopTask( () =>
+          KeepAttribute(memory.input(MEMORY_VIRTUAL_ADDRESS).getDrivingReg)
+        )
+      }
     }
 
     val mmuAndBufferStage = if(writeBack != null) memory else execute

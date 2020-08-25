@@ -1,14 +1,13 @@
 package vexriscv.demo
 
 import spinal.core._
-import vexriscv.ip.{DataCacheConfig, InstructionCacheConfig}
 import vexriscv.plugin._
 import vexriscv.{VexRiscv, VexRiscvConfig, plugin}
 
 /**
  * Created by spinalvm on 15.06.17.
  */
-object GenNoCacheNoMmuMaxPerf extends App{
+object GenSmallAndProductiveCfu extends App{
   def cpu() = new VexRiscv(
     config = VexRiscvConfig(
       plugins = List(
@@ -16,21 +15,17 @@ object GenNoCacheNoMmuMaxPerf extends App{
           resetVector = 0x80000000l,
           cmdForkOnSecondStage = false,
           cmdForkPersistence = false,
-          prediction = DYNAMIC_TARGET,
-          historyRamSizeLog2 = 8,
-          catchAccessFault = true,
+          prediction = NONE,
+          catchAccessFault = false,
           compressedGen = false
         ),
         new DBusSimplePlugin(
-          catchAddressMisaligned = true,
-          catchAccessFault = true,
-          earlyInjection = false
+          catchAddressMisaligned = false,
+          catchAccessFault = false
         ),
-        new StaticMemoryTranslatorPlugin(
-          ioRange      = _(31 downto 28) === 0xF
-        ),
+        new CsrPlugin(CsrPluginConfig.smallest),
         new DecoderSimplePlugin(
-          catchIllegalInstruction = true
+          catchIllegalInstruction = false
         ),
         new RegFilePlugin(
           regFileReadyKind = plugin.SYNC,
@@ -41,7 +36,7 @@ object GenNoCacheNoMmuMaxPerf extends App{
           separatedAddSub = false,
           executeInsertion = true
         ),
-        new FullBarrelShifterPlugin(earlyInjection = true),
+        new LightShifterPlugin,
         new HazardSimplePlugin(
           bypassExecute           = true,
           bypassMemory            = true,
@@ -51,13 +46,27 @@ object GenNoCacheNoMmuMaxPerf extends App{
           pessimisticWriteRegFile = false,
           pessimisticAddressMatch = false
         ),
-        new MulPlugin,
-        new MulDivIterativePlugin(genMul = false, genDiv = true, mulUnrollFactor = 1, divUnrollFactor = 1,dhrystoneOpt = false),
-        new CsrPlugin(CsrPluginConfig.small),
-        new DebugPlugin(ClockDomain.current.clone(reset = Bool().setName("debugReset"))),
         new BranchPlugin(
           earlyBranch = false,
-          catchAddressMisaligned = true
+          catchAddressMisaligned = false
+        ),
+        new CfuPlugin(
+          stageCount = 1,
+          allowZeroLatency = true,
+          encoding = M"000000-------------------0001011",
+          busParameter = CfuBusParameter(
+            CFU_VERSION = 0,
+            CFU_INTERFACE_ID_W = 0,
+            CFU_FUNCTION_ID_W = 2,
+            CFU_REORDER_ID_W = 0,
+            CFU_REQ_RESP_ID_W = 0,
+            CFU_INPUTS = 2,
+            CFU_INPUT_DATA_W = 32,
+            CFU_OUTPUTS = 1,
+            CFU_OUTPUT_DATA_W = 32,
+            CFU_FLOW_REQ_READY_ALWAYS = false,
+            CFU_FLOW_RESP_READY_ALWAYS = false
+          )
         ),
         new YamlPlugin("cpu0.yaml")
       )

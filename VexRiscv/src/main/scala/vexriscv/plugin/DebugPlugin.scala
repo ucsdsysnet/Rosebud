@@ -201,7 +201,6 @@ class DebugPlugin(val debugClockDomain : ClockDomain, hardwareBreakpointCount : 
         execute.arbitration.haltByOther := True
         busReadDataReg := execute.input(PC).asBits
         when(stagesFromExecute.tail.map(_.arbitration.isValid).orR === False){
-          iBusFetcher.flushIt()
           iBusFetcher.haltIt()
           execute.arbitration.flushIt   := True
           execute.arbitration.flushNext := True
@@ -224,7 +223,7 @@ class DebugPlugin(val debugClockDomain : ClockDomain, hardwareBreakpointCount : 
       //Avoid having two C instruction executed in a single step
       if(pipeline(RVC_GEN)){
         val cleanStep = RegNext(stepIt && decode.arbitration.isFiring) init(False)
-        decode.arbitration.removeIt setWhen(cleanStep)
+        execute.arbitration.flushNext setWhen(cleanStep)
       }
 
       io.resetOut := RegNext(resetIt)
@@ -245,6 +244,11 @@ class DebugPlugin(val debugClockDomain : ClockDomain, hardwareBreakpointCount : 
           case _ =>
         }
         if(pipeline.things.contains(DEBUG_BYPASS_CACHE)) pipeline(DEBUG_BYPASS_CACHE) := True
+      }
+
+      val wakeService = serviceElse(classOf[IWake], null)
+      if(wakeService != null) when(haltIt){
+        wakeService.askWake()
       }
     }}
   }

@@ -35,18 +35,21 @@ class IBusCachedPlugin(resetVector : BigInt = 0x80000000l,
                        memoryTranslatorPortConfig : Any = null,
                        injectorStage : Boolean = false,
                        withoutInjectorStage : Boolean = false,
-                       relaxPredictorAddress : Boolean = true)  extends IBusFetcherImpl(
+                       relaxPredictorAddress : Boolean = true,
+                       predictionBuffer : Boolean = true)  extends IBusFetcherImpl(
   resetVector = resetVector,
   keepPcPlus4 = keepPcPlus4,
   decodePcGen = compressedGen,
   compressedGen = compressedGen,
   cmdToRspStageCount = (if(config.twoCycleCache) 2 else 1) + (if(relaxedPcCalculation) 1 else 0),
-  pcRegReusedForSecondStage = true,
+  allowPcRegReusedForSecondStage = true,
   injectorReadyCutGen = false,
   prediction = prediction,
   historyRamSizeLog2 = historyRamSizeLog2,
   injectorStage = (!config.twoCycleCache && !withoutInjectorStage) || injectorStage,
-  relaxPredictorAddress = relaxPredictorAddress){
+  relaxPredictorAddress = relaxPredictorAddress,
+  fetchRedoGen = true,
+  predictionBuffer = predictionBuffer){
   import config._
 
   assert(isPow2(cacheSize))
@@ -58,10 +61,9 @@ class IBusCachedPlugin(resetVector : BigInt = 0x80000000l,
   var iBus  : InstructionCacheMemBus = null
   var mmuBus : MemoryTranslatorBus = null
   var privilegeService : PrivilegeService = null
-  var redoBranch : Flow[UInt] = null
   var decodeExceptionPort : Flow[ExceptionCause] = null
   val tightlyCoupledPorts = ArrayBuffer[TightlyCoupledPort]()
-
+  def tightlyGen = tightlyCoupledPorts.nonEmpty
 
   def newTightlyCoupledPort(p : TightlyCoupledPortParameter) = {
     val port = TightlyCoupledPort(p, null)
@@ -85,9 +87,6 @@ class IBusCachedPlugin(resetVector : BigInt = 0x80000000l,
     decoderService.add(FENCE_I,  List(
         FLUSH_ALL -> True
     ))
-
-
-    redoBranch = pipeline.service(classOf[JumpService]).createJumpInterface(pipeline.decode, priority = 1) //Priority 1 will win against branch predictor
 
     if(catchSomething) {
       val exceptionService = pipeline.service(classOf[ExceptionService])
@@ -125,7 +124,7 @@ class IBusCachedPlugin(resetVector : BigInt = 0x80000000l,
     import pipeline.config._
 
     pipeline plug new FetchArea(pipeline) {
-      val cache = new InstructionCache(IBusCachedPlugin.this.config)
+      val cache = new InstructionCache(IBusCachedPlugin.this.config.copy(bypassGen = tightlyGen))
       iBus = master(new InstructionCacheMemBus(IBusCachedPlugin.this.config)).setName("iBus")
       iBus <> cache.io.mem
       iBus.cmd.address.allowOverride := cache.io.mem.cmd.address
@@ -157,7 +156,7 @@ class IBusCachedPlugin(resetVector : BigInt = 0x80000000l,
         stages(0).halt setWhen (cache.io.cpu.prefetch.haltIt)
 
 
-        cache.io.cpu.fetch.isRemoved := fetcherflushIt
+        cache.io.cpu.fetch.isRemoved := externalFlush
       }
 
 
@@ -165,8 +164,8 @@ class IBusCachedPlugin(resetVector : BigInt = 0x80000000l,
         val tightlyCoupledHits = RegNextWhen(s0.tightlyCoupledHits, stages(1).input.ready)
         val tightlyCoupledHit = RegNextWhen(s0.tightlyCoupledHit, stages(1).input.ready)
 
-        cache.io.cpu.fetch.dataBypassValid := tightlyCoupledHit
-        cache.io.cpu.fetch.dataBypass := (if(tightlyCoupledPorts.isEmpty) B(0) else MuxOH(tightlyCoupledHits, tightlyCoupledPorts.map(e => CombInit(e.bus.data))))
+        if(tightlyGen) cache.io.cpu.fetch.dataBypassValid := tightlyCoupledHit
+        if(tightlyGen) cache.io.cpu.fetch.dataBypass := MuxOH(tightlyCoupledHits, tightlyCoupledPorts.map(e => CombInit(e.bus.data)))
 
         //Connect fetch cache side
         cache.io.cpu.fetch.isValid := stages(1).input.valid && !tightlyCoupledHit
@@ -211,7 +210,7 @@ class IBusCachedPlugin(resetVector : BigInt = 0x80000000l,
         if (catchSomething) {
           decodeExceptionPort.valid := False
           decodeExceptionPort.code.assignDontCare()
-          decodeExceptionPort.badAddr := cacheRsp.pc(31 downto 2) @@ "00"
+          decodeExceptionPort.badAddr := cacheRsp.pc(31 downto 2) @@ U"00"
         }
 
         when(cacheRsp.isValid && cacheRsp.mmuRefilling && !issueDetected) {
@@ -237,19 +236,9 @@ class IBusCachedPlugin(resetVector : BigInt = 0x80000000l,
           decodeExceptionPort.code := 1
         }
 
-        when(!iBusRsp.readyForError){
-          redoFetch := False
-          cache.io.cpu.fill.valid := False
+        when(redoFetch) {
+          iBusRsp.redoFetch := True
         }
-//        when(pipeline.stages.map(_.arbitration.flushIt).orR){
-//          cache.io.cpu.fill.valid := False
-//        }
-
-
-
-        redoBranch.valid := redoFetch
-        redoBranch.payload := (if (decodePcGen) decode.input(PC) else cacheRsp.pc)
-        decode.arbitration.flushNext setWhen(redoBranch.valid)
 
 
         cacheRspArbitration.halt setWhen (issueDetected || iBusRspOutputHalt)

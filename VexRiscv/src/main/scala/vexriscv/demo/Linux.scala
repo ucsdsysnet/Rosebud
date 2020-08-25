@@ -119,7 +119,12 @@ make run IBUS=CACHED DBUS=CACHED  DEBUG_PLUGIN=STD SUPERVISOR=yes CSR=yes COMPRE
 rm -rf cpio
 mkdir cpio
 cd cpio
-cpio -idv < ../rootfs.cpio
+sudo cpio -i < ../rootfs.cpio
+cd ..
+
+rm rootfs.cpio
+cd cpio
+sudo find | sudo cpio -H newc -o > ../rootfs.cpio
 cd ..
 
 make clean run  IBUS=CACHED DBUS=CACHED DEBUG_PLUGIN=STD DHRYSTONE=yes SUPERVISOR=yes MMU=yes CSR=yes COMPRESSED=no MUL=yes DIV=yes LRSC=yes AMO=yes REDO=10 TRACE=no COREMARK=yes LINUX_REGRESSION=yes RUN_HEX=~/pro/riscv/zephyr/samples/synchronization/build/zephyr/zephyr.hex
@@ -267,7 +272,7 @@ object LinuxGen {
         //            wfiGenAsNop    = true,
         //            ucycleAccess   = CsrAccess.NONE
         //          )),
-//        new DebugPlugin(ClockDomain.current.clone(reset = Bool().setName("debugReset"))),
+        new DebugPlugin(ClockDomain.current.clone(reset = Bool().setName("debugReset"))),
         new BranchPlugin(
           earlyBranch = false,
           catchAddressMisaligned = true,
@@ -305,7 +310,7 @@ object LinuxGen {
 //      }
 //    }
 
-    SpinalConfig(mergeAsyncProcess = true, anonymSignalPrefix = "_zz").generateVerilog {
+    SpinalConfig(mergeAsyncProcess = false, anonymSignalPrefix = "_zz").generateVerilog {
 
 
       val toplevel = new VexRiscv(configFull(

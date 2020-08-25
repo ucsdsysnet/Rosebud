@@ -13,7 +13,9 @@ import spinal.lib.com.uart.{Apb3UartCtrl, Uart, UartCtrlGenerics, UartCtrlMemory
 import spinal.lib.graphic.RgbConfig
 import spinal.lib.graphic.vga.{Axi4VgaCtrl, Axi4VgaCtrlGenerics, Vga}
 import spinal.lib.io.TriStateArray
+import spinal.lib.memory.sdram.SdramGeneration.SDR
 import spinal.lib.memory.sdram._
+import spinal.lib.memory.sdram.sdr.{Axi4SharedSdramCtrl, IS42x320D, SdramInterface, SdramTimings}
 import spinal.lib.misc.HexTools
 import spinal.lib.soc.pinsec.{PinsecTimerCtrl, PinsecTimerCtrlExternal}
 import spinal.lib.system.debugger.{JtagAxi4SharedDebugger, JtagBridge, SystemDebugger, SystemDebuggerConfig}
@@ -145,7 +147,8 @@ object BrieyConfig{
             minstretAccess = CsrAccess.NONE,
             ecallGen       = false,
             wfiGenAsWait         = false,
-            ucycleAccess   = CsrAccess.NONE
+            ucycleAccess   = CsrAccess.NONE,
+            uinstretAccess = CsrAccess.NONE
           )
         ),
         new YamlPlugin("cpu0.yaml")
@@ -412,6 +415,7 @@ object BrieyDe0Nano{
   def main(args: Array[String]) {
     object IS42x160G {
       def layout = SdramLayout(
+        generation = SDR,
         bankWidth   = 2,
         columnWidth = 9,
         rowWidth    = 13,

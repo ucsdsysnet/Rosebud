@@ -1,36 +1,44 @@
 package vexriscv.demo
 
 import spinal.core._
-import vexriscv.ip.{DataCacheConfig, InstructionCacheConfig}
 import vexriscv.plugin._
 import vexriscv.{VexRiscv, VexRiscvConfig, plugin}
 
 /**
  * Created by spinalvm on 15.06.17.
  */
-object GenNoCacheNoMmuMaxPerf extends App{
+object GenCustomInterrupt extends App{
   def cpu() = new VexRiscv(
     config = VexRiscvConfig(
       plugins = List(
+        new UserInterruptPlugin(
+          interruptName = "miaou",
+          code = 20
+        ),
+        new UserInterruptPlugin(
+          interruptName = "rawrrr",
+          code = 24
+        ),
+        new CsrPlugin(
+          CsrPluginConfig.smallest.copy(
+            xtvecModeGen = true,
+            mtvecAccess  = CsrAccess.WRITE_ONLY
+          )
+        ),
         new IBusSimplePlugin(
           resetVector = 0x80000000l,
           cmdForkOnSecondStage = false,
           cmdForkPersistence = false,
-          prediction = DYNAMIC_TARGET,
-          historyRamSizeLog2 = 8,
-          catchAccessFault = true,
+          prediction = NONE,
+          catchAccessFault = false,
           compressedGen = false
         ),
         new DBusSimplePlugin(
-          catchAddressMisaligned = true,
-          catchAccessFault = true,
-          earlyInjection = false
-        ),
-        new StaticMemoryTranslatorPlugin(
-          ioRange      = _(31 downto 28) === 0xF
+          catchAddressMisaligned = false,
+          catchAccessFault = false
         ),
         new DecoderSimplePlugin(
-          catchIllegalInstruction = true
+          catchIllegalInstruction = false
         ),
         new RegFilePlugin(
           regFileReadyKind = plugin.SYNC,
@@ -41,7 +49,7 @@ object GenNoCacheNoMmuMaxPerf extends App{
           separatedAddSub = false,
           executeInsertion = true
         ),
-        new FullBarrelShifterPlugin(earlyInjection = true),
+        new LightShifterPlugin,
         new HazardSimplePlugin(
           bypassExecute           = true,
           bypassMemory            = true,
@@ -51,13 +59,9 @@ object GenNoCacheNoMmuMaxPerf extends App{
           pessimisticWriteRegFile = false,
           pessimisticAddressMatch = false
         ),
-        new MulPlugin,
-        new MulDivIterativePlugin(genMul = false, genDiv = true, mulUnrollFactor = 1, divUnrollFactor = 1,dhrystoneOpt = false),
-        new CsrPlugin(CsrPluginConfig.small),
-        new DebugPlugin(ClockDomain.current.clone(reset = Bool().setName("debugReset"))),
         new BranchPlugin(
           earlyBranch = false,
-          catchAddressMisaligned = true
+          catchAddressMisaligned = false
         ),
         new YamlPlugin("cpu0.yaml")
       )
