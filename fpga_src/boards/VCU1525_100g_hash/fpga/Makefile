@@ -95,12 +95,13 @@ XDC_FILES += lib/axis/syn/axis_async_fifo.tcl
 # XDC_FILES += lib/smartFPGA/syn/simple_sync_sig.tcl
 
 # IP
-XCI_FILES = ip/pcie4_uscale_plus_0.xci
-XCI_FILES += ip/cmac_usplus_0.xci
-XCI_FILES += ip/cmac_usplus_1.xci
-# XCI_FILES += ip/ila_5x64.xci
-# XCI_FILES += ip/ila_4x64.xci
-# XCI_FILES += ip/ila_2x64.xci
+IP_TCL_FILES = ip/pcie4_uscale_plus_0.tcl
+IP_TCL_FILES += ip/cmac_usplus_0.tcl
+IP_TCL_FILES += ip/cmac_usplus_1.tcl
+# IP_TCL_FILES += ip/ila_5x64.tcl
+# IP_TCL_FILES += ip/ila_4x64.tcl
+# IP_TCL_FILES += ip/ila_3x64.tcl
+# IP_TCL_FILES += ip/ila_2x64.tcl
 
 include ../common/vivado.mk
 
