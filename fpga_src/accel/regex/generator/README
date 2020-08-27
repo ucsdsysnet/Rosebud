@@ -1,5 +1,5 @@
-install haskel by 
-sudo apt-get install haskell-platform
+install cabal by 
+sudo apt-get install cabal-install libnuma-dev
 
 Add cabal to PATH:
 export PATH="$PATH:/home/user/.cabal/bin" 
@@ -7,13 +7,14 @@ export PATH="$PATH:/home/user/.cabal/bin"
 updat ecabal:
 cabal update
 
-install pipeline package:
-cabal install pipeline
+install dependencies:
+cabal install pipeline attoparsec
 
-go to pipelineDSL and do:
-cabal configure
-cabal build
-sudo cabal install
+install ghc 8.4.4:
+https://www.haskell.org/ghc/download_ghc_8_4_4.html
+
+Dirty but works!:
+copy the binary and lib from /usr/local/bin and usr/local/lib to /usr/bin/ and /usr/lib/
 
 go to re2v and do:
 cabal configure

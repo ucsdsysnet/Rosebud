@@ -36,7 +36,6 @@ import Control.Monad.Fix
 import Data.Ix (range)
 import Control.Monad.Trans.RWS.Lazy hiding (Sum)
 import Data.Maybe (fromMaybe)
-import qualified Data.Semigroup as S
 
 data CmpOp = Equal | NotEqual | LessOrEqual | GreaterOrEqual | Less | Greater
 data MOps = Or | And | Sum | Mul | Concat
@@ -182,12 +181,11 @@ data SigMap a = SigMap { smSignals :: [Comb a]
                        , smRegs :: [(Int, Reg a)]
                        , smLuts :: [(Int, Lut a)]
                        , smRegCs :: [RegC a] }
-instance S.Semigroup (SigMap a) where
+instance Semigroup (SigMap a) where
     (<>) (SigMap s1 s2 s3 s4) (SigMap s1' s2' s3' s4') = SigMap (s1 <> s1') (s2 <> s2') (s3 <> s3') (s4 <> s4')
 
 instance Monoid (SigMap a) where
     mempty = SigMap [] [] [] []
-    mappend = (<>)
 
 type HW a = RWS (SigMap a) (SigMap a) Int
 

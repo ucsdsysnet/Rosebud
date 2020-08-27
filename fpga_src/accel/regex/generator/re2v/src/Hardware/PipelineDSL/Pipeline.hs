@@ -32,7 +32,6 @@ import Hardware.PipelineDSL.HW hiding (Signal)
 import qualified Hardware.PipelineDSL.HW as HW
 import Control.Monad.Trans.Class (lift)
 import Hardware.PipelineDSL.Verilog
-import qualified Data.Semigroup as S
 
 data PStage = PStage { pipeStageId :: Int
                      , pipeStageSignal :: Signal
@@ -91,12 +90,11 @@ downstreamDist stgid sig = r stgidPaths where
 
 data StgMap = StgMap { smStages :: [(Int, PStage)] }
 
-instance S.Semigroup StgMap where
+instance Semigroup StgMap where
     (<>) (StgMap s) (StgMap s') = StgMap (s <> s')
 
 instance Monoid StgMap where
     mempty = StgMap []
-    mappend = (<>)
 
 type PipeM = RWST PipeCtrl StgMap Int (HW ASTHook)
 

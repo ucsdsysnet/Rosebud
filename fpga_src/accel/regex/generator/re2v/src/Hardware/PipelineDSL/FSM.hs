@@ -20,7 +20,6 @@ import Data.Maybe (fromMaybe, catMaybes)
 import Hardware.PipelineDSL.HW hiding (Signal)
 import qualified Hardware.PipelineDSL.HW as HW
 import Hardware.PipelineDSL.Verilog
-import qualified Data.Semigroup as S
 
 data FSMState a = FSMState 
     { fsmStId :: Int
@@ -52,12 +51,11 @@ data FSM a = FSM {
     transitions :: [(FSMContext, Signal a)]
 }
 
-instance S.Semigroup (FSM a) where
+instance Semigroup (FSM a) where
     (<>) (FSM c1 t1) (FSM c2 t2) = FSM (c1 <> c2) (t1 <> t2)
 
 instance Monoid (FSM a) where
     mempty = FSM [] []
-    mappend = (<>)
 
 or' = MultyOp Or
 and' = MultyOp And

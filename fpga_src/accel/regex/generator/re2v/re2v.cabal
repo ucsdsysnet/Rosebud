@@ -19,7 +19,7 @@ executable re2v
   main-is:             Main.hs
   -- other-modules:       
   -- other-extensions:    
-  build-depends:       base >=4.9 && <4.10,
+  build-depends:       base >=4.9,
                        attoparsec,
                        pipeline,
                        bytestring,
