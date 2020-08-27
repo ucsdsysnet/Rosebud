@@ -1,0 +1,20 @@
+install haskel by 
+sudo apt-get install haskell-platform
+
+Add cabal to PATH:
+export PATH="$PATH:/home/user/.cabal/bin" 
+
+updat ecabal:
+cabal update
+
+install pipeline package:
+cabal install pipeline
+
+go to pipelineDSL and do:
+cabal configure
+cabal build
+sudo cabal install
+
+go to re2v and do:
+cabal configure
+cabal build

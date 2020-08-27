@@ -1,0 +1,49 @@
+name:                pipeline
+version:             0.1.0.0
+synopsis:            DSL for describing hardware pipelines.
+-- description:         
+license:             BSD3
+license-file:        LICENSE
+author:              Gleb Gagarin
+maintainer:          gleb61@gmail.com
+-- copyright:           
+category:            Hardware
+build-type:          Simple
+cabal-version:       >=1.10
+
+library
+  exposed-modules:     Hardware.PipelineDSL,
+                       Hardware.PipelineDSL.Verilog,
+                       Hardware.PipelineDSL.HW,
+                       Hardware.PipelineDSL.Pipeline,
+                       Hardware.PipelineDSL.Module,
+                       Hardware.PipelineDSL.FSM
+  -- other-modules:       
+  -- other-extensions:    
+  build-depends:       base >=4.6, transformers
+  hs-source-dirs:      src
+  default-language:    Haskell2010
+
+executable example1
+  default-language:    Haskell2010
+  main-is:             example1.hs
+  hs-source-dirs:      examples,src
+  build-depends:       base >=4.6, transformers
+
+executable fsm1
+  default-language:    Haskell2010
+  main-is:             fsm1.hs
+  hs-source-dirs:      examples,src
+  build-depends:       base >=4.6, transformers
+
+executable module_example
+  default-language:    Haskell2010
+  main-is:             module_example.hs
+  hs-source-dirs:      examples,src
+  build-depends:       base >=4.6, transformers
+
+executable uart_demo
+  default-language:    Haskell2010
+  main-is:             uart_demo.hs
+  hs-source-dirs:      examples,src
+  build-depends:       base >=4.6, transformers
