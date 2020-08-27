@@ -187,6 +187,7 @@ instance S.Semigroup (SigMap a) where
 
 instance Monoid (SigMap a) where
     mempty = SigMap [] [] [] []
+    mappend = (<>)
 
 type HW a = RWS (SigMap a) (SigMap a) Int
 

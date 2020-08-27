@@ -96,6 +96,7 @@ instance S.Semigroup StgMap where
 
 instance Monoid StgMap where
     mempty = StgMap []
+    mappend = (<>)
 
 type PipeM = RWST PipeCtrl StgMap Int (HW ASTHook)
 

@@ -57,6 +57,7 @@ instance S.Semigroup (FSM a) where
 
 instance Monoid (FSM a) where
     mempty = FSM [] []
+    mappend = (<>)
 
 or' = MultyOp Or
 and' = MultyOp And
