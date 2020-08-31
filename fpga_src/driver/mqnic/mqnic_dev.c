@@ -34,37 +34,30 @@ either expressed or implied, of The Regents of the University of California.
 #include "mqnic.h"
 #include "mqnic_ioctl.h"
 
-static int mqnic_open(struct inode *inode, struct file *filp)
+static int mqnic_open(struct inode *inode, struct file *file)
 {
-    struct mqnic_dev *mqnic;
+    // struct miscdevice *miscdev = file->private_data;
+    // struct mqnic_dev *mqnic = container_of(miscdev, struct mqnic_dev, misc_dev);
 
-    mqnic = mqnic_find_by_minor(iminor(inode));
-    if (mqnic == NULL)
-    {
-        pr_err("Failed to locate mqnic for minor = %u.\n", iminor(inode));
-        return -ENODEV;
-    }
-
-    filp->private_data = mqnic;
     return 0;
 }
 
-static int mqnic_release(struct inode *inode, struct file *filp)
+static int mqnic_release(struct inode *inode, struct file *file)
 {
-    //struct mqnic_dev *mqnic = filp->private_data;
+    // struct miscdevice *miscdev = file->private_data;
+    // struct mqnic_dev *mqnic = container_of(miscdev, struct mqnic_dev, misc_dev);
 
     return 0;
 }
 
 static int mqnic_map_registers(struct mqnic_dev *mqnic, struct vm_area_struct *vma)
 {
-    struct device *dev = &mqnic->pdev->dev;
     size_t map_size = vma->vm_end - vma->vm_start;
     int ret;
 
     if (map_size > mqnic->hw_regs_size)
     {
-        dev_err(dev, "mqnic_map_registers: Tried to map registers region with wrong size %lu (expected <=%zu)", vma->vm_end - vma->vm_start, mqnic->hw_regs_size);
+        dev_err(mqnic->dev, "mqnic_map_registers: Tried to map registers region with wrong size %lu (expected <=%zu)", vma->vm_end - vma->vm_start, mqnic->hw_regs_size);
         return -EINVAL;
     }
 
@@ -72,20 +65,20 @@ static int mqnic_map_registers(struct mqnic_dev *mqnic, struct vm_area_struct *v
 
     if (ret)
     {
-        dev_err(dev, "mqnic_map_registers: remap_pfn_range failed for registers region");
+        dev_err(mqnic->dev, "mqnic_map_registers: remap_pfn_range failed for registers region");
     }
     else
     {
-        dev_dbg(dev, "mqnic_map_registers: Mapped registers region at phys: 0x%pap, virt: 0x%p", &mqnic->hw_regs_phys, (void *)vma->vm_start);
+        dev_dbg(mqnic->dev, "mqnic_map_registers: Mapped registers region at phys: 0x%pap, virt: 0x%p", &mqnic->hw_regs_phys, (void *)vma->vm_start);
     }
 
     return ret;
 }
 
-static int mqnic_mmap(struct file *filp, struct vm_area_struct *vma)
+static int mqnic_mmap(struct file *file, struct vm_area_struct *vma)
 {
-    struct mqnic_dev *mqnic = filp->private_data;
-    struct device *dev = &mqnic->pdev->dev;
+    struct miscdevice *miscdev = file->private_data;
+    struct mqnic_dev *mqnic = container_of(miscdev, struct mqnic_dev, misc_dev);
     int ret;
 
     if (vma->vm_pgoff == 0)
@@ -100,14 +93,14 @@ static int mqnic_mmap(struct file *filp, struct vm_area_struct *vma)
     return ret;
 
 fail_invalid_offset:
-    dev_err(dev, "mqnic_mmap: Tried to map an unknown region at page offset %lu", vma->vm_pgoff);
+    dev_err(mqnic->dev, "mqnic_mmap: Tried to map an unknown region at page offset %lu", vma->vm_pgoff);
     return -EINVAL;
 }
 
-static long mqnic_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
+static long mqnic_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 {
-    struct mqnic_dev *mqnic = filp->private_data;
-    struct device *dev = &mqnic->pdev->dev;
+    struct miscdevice *miscdev = file->private_data;
+    struct mqnic_dev *mqnic = container_of(miscdev, struct mqnic_dev, misc_dev);
 
     if (_IOC_TYPE(cmd) != MQNIC_IOCTL_TYPE)
         return -ENOTTY;
@@ -143,21 +136,21 @@ static long mqnic_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
             if (ctl.len > 65536)
                 ctl.len = 65536;
 
-            dev_info(dev, "mqnic_ioctl: block write %ld bytes to address 0x%08x", ctl.len, ctl.addr);
+            dev_info(mqnic->dev, "mqnic_ioctl: block write %ld bytes to address 0x%08x", ctl.len, ctl.addr);
 
             // allocate DMA buffer
-            buf = dma_alloc_coherent(dev, 65536, &dma, GFP_KERNEL);
+            buf = dma_alloc_coherent(mqnic->dev, 65536, &dma, GFP_KERNEL);
 
             if (!buf)
             {
-                dev_err(dev, "Failed to allocate DMA buffer");
+                dev_err(mqnic->dev, "Failed to allocate DMA buffer");
                 return -ENOMEM;
             }
 
             // copy write data from userspace
             if (copy_from_user(buf, ctl.data, ctl.len) != 0)
             {
-                dma_free_coherent(dev, 65536, buf, dma);
+                dma_free_coherent(mqnic->dev, 65536, buf, dma);
                 return -EFAULT;
             }
 
@@ -182,10 +175,10 @@ static long mqnic_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
                 if (new_tag==tag) break;
             }
 
-            dev_info(dev, "mqnic_ioctl: block write tag %d recieved tag %d", tag, new_tag);
+            dev_info(mqnic->dev, "mqnic_ioctl: block write tag %d recieved tag %d", tag, new_tag);
 
             // free DMA buffer
-            dma_free_coherent(dev, 65536, buf, dma);
+            dma_free_coherent(mqnic->dev, 65536, buf, dma);
 
             return 0;
         }
@@ -204,14 +197,14 @@ static long mqnic_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
             if (ctl.len > 65536)
                 ctl.len = 65536;
 
-            dev_info(dev, "mqnic_ioctl: block read %ld bytes from address 0x%08x", ctl.len, ctl.addr);
+            dev_info(mqnic->dev, "mqnic_ioctl: block read %ld bytes from address 0x%08x", ctl.len, ctl.addr);
 
             // allocate DMA buffer
-            buf = dma_alloc_coherent(dev, 65536, &dma, GFP_KERNEL);
+            buf = dma_alloc_coherent(mqnic->dev, 65536, &dma, GFP_KERNEL);
 
             if (!buf)
             {
-                dev_err(dev, "Failed to allocate DMA buffer");
+                dev_err(mqnic->dev, "Failed to allocate DMA buffer");
                 return -ENOMEM;
             }
 
@@ -236,17 +229,17 @@ static long mqnic_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
                 if (new_tag==tag) break;
             }
 	    
-            dev_info(dev, "mqnic_ioctl: block read tag %d recieved tag %d", tag, new_tag);
+            dev_info(mqnic->dev, "mqnic_ioctl: block read tag %d recieved tag %d", tag, new_tag);
 
             // copy read data to userspace
             if (copy_to_user(ctl.data, buf, ctl.len) != 0)
             {
-                dma_free_coherent(dev, 65536, buf, dma);
+                dma_free_coherent(mqnic->dev, 65536, buf, dma);
                 return -EFAULT;
             }
 
             // free DMA buffer
-            dma_free_coherent(dev, 65536, buf, dma);
+            dma_free_coherent(mqnic->dev, 65536, buf, dma);
 
             return 0;
         }

@@ -66,6 +66,7 @@ struct mqnic_i2c_priv
 };
 
 struct mqnic_dev {
+    struct device *dev;
     struct pci_dev *pdev;
 
     size_t hw_regs_size;
@@ -79,7 +80,8 @@ struct mqnic_dev {
 
     char name[16];
 
-    int msi_nvecs;
+    int irq_count;
+    int irq_map[32];
 
     unsigned int id;
     struct list_head dev_list_node;
@@ -292,7 +294,6 @@ struct mqnic_priv {
 };
 
 // mqnic_main.c
-extern struct mqnic_dev *mqnic_find_by_minor(unsigned minor);
 
 // mqnic_dev.c
 extern const struct file_operations mqnic_fops;
@@ -309,6 +310,10 @@ int mqnic_activate_port(struct mqnic_port *port);
 void mqnic_deactivate_port(struct mqnic_port *port);
 u32 mqnic_port_get_rss_mask(struct mqnic_port *port);
 void mqnic_port_set_rss_mask(struct mqnic_port *port, u32 rss_mask);
+u32 mqnic_port_get_tx_mtu(struct mqnic_port *port);
+void mqnic_port_set_tx_mtu(struct mqnic_port *port, u32 mtu);
+u32 mqnic_port_get_rx_mtu(struct mqnic_port *port);
+void mqnic_port_set_rx_mtu(struct mqnic_port *port, u32 mtu);
 
 // mqnic_ptp.c
 void mqnic_register_phc(struct mqnic_dev *mdev);
