@@ -10,9 +10,10 @@ module simple_scheduler # (
   parameter ENABLE_ILA      = 0,
   parameter DATA_REG_TYPE   = 0,
   parameter CTRL_REG_TYPE   = 0,
-  parameter DATA_FIFO_DEPTH = 2048,
-  parameter HASH_SEL_OFFSET = 2,
+  parameter DATA_FIFO_DEPTH = 1024,
+  parameter HASH_SEL_OFFSET = 0,
 
+  parameter HASH_FIFO_DEPTH = DATA_FIFO_DEPTH/64,
   parameter SLOT_WIDTH      = $clog2(SLOT_COUNT+1),
   parameter CORE_ID_WIDTH   = $clog2(CORE_COUNT),
   parameter INTERFACE_WIDTH = $clog2(INTERFACE_COUNT),
@@ -114,7 +115,7 @@ module simple_scheduler # (
   wire [INTERFACE_COUNT*32-1:0]            rx_hash;
   wire [INTERFACE_COUNT*4-1:0]             rx_hash_type;
   wire [INTERFACE_COUNT-1:0]               rx_hash_valid;
-  wire [INTERFACE_COUNT-1:0]               rx_hash_ready; // For FIFO error check
+  // wire [INTERFACE_COUNT-1:0]               rx_hash_ready;
 
   wire [INTERFACE_COUNT*32-1:0]            rx_hash_f;
   wire [INTERFACE_COUNT*4-1:0]             rx_hash_type_f;
@@ -273,12 +274,8 @@ module simple_scheduler # (
         .m_axis_hash_valid(rx_hash_valid[q])
       );
 
-      // integrate hash_type?
-      assign masked_hash[q*CORE_ID_WIDTH +: CORE_ID_WIDTH] =
-                 rx_hash[(q*32)+HASH_SEL_OFFSET +: CORE_ID_WIDTH];
-
       simple_fifo # (
-        .ADDR_WIDTH(3),
+        .ADDR_WIDTH($clog2(HASH_FIFO_DEPTH)),
         .DATA_WIDTH(32+4)
       ) rx_hash_fifo (
         .clk(clk),
@@ -287,12 +284,17 @@ module simple_scheduler # (
 
         .din_valid(rx_hash_valid[q]),
         .din({rx_hash_type[q*4 +: 4], rx_hash[q*32 +: 32]}),
-        .din_ready(rx_hash_ready[q]),
+        .din_ready(), // rx_hash_ready[q]), 
+        // FIFO has more room than 64B packets in the data fifo
 
         .dout_valid(rx_hash_valid_f[q]),
         .dout({rx_hash_type_f[q*4 +: 4], rx_hash_f[q*32 +: 32]}),
         .dout_ready(rx_hash_ready_f[q])
       );
+
+      // integrate hash_type?
+      assign masked_hash[q*CORE_ID_WIDTH +: CORE_ID_WIDTH] =
+                 rx_hash_f[(q*32)+HASH_SEL_OFFSET +: CORE_ID_WIDTH];
 
       /// *** DATA FIFO WHILE WAITING FOR HASH AND DESC ALLOCATION *** ///
 
@@ -336,7 +338,7 @@ module simple_scheduler # (
       /// *** FIFO FOR HASH AND ALLOCATED DESC, WAITING TO BE SENT OUT *** ///
 
       simple_fifo # (
-        .ADDR_WIDTH(3),
+        .ADDR_WIDTH($clog2(HASH_FIFO_DEPTH)),
         .DATA_WIDTH(HASH_N_DESC)
       ) rx_hash_n_desc_fifo (
         .clk(clk),
@@ -375,6 +377,7 @@ module simple_scheduler # (
         .s_axis_tready(rx_axis_tready_f[q]),
 
         .header(hash_out[q*32 +: 32]),
+        .drop(1'b0),
         .header_valid(hash_n_dest_out_v[q]),
         .header_ready(hash_n_dest_out_ready[q]),
 
@@ -825,6 +828,12 @@ module simple_scheduler # (
                                           rx_desc_slot[rx_dest_core*SLOT_WIDTH +: SLOT_WIDTH]};
   assign hash_n_dest_in = {INTERFACE_COUNT{rx_hash_f[selected_port_enc_r*32 +: 32], rx_desc_data}};
 
+  reg  [INTERFACE_WIDTH*CORE_COUNT-1:0] rx_desc_stall;
+  reg  [CORE_COUNT-1:0] rx_desc_stall_v;
+
+  wire [INTERFACE_COUNT-1:0] waiting_int = 
+                             rx_desc_stall[INTERFACE_WIDTH*rx_dest_core +: INTERFACE_WIDTH];
+
   // if a port is selected and desired core has available slot, pop the slot from
   // core's descriptor fifo, hash from the interface hash fifo, and push the hash
   // and full descriptor with core number into interface hash_n_desc fifo
@@ -833,13 +842,27 @@ module simple_scheduler # (
     rx_hash_ready_f  = {INTERFACE_COUNT{1'b0}};
     hash_n_dest_in_v = {INTERFACE_COUNT{1'b0}};
 
-    if (selected_port_v_r & rx_desc_avail[rx_dest_core]) begin
-      rx_desc_pop      = 1'b1;
-      rx_hash_ready_f  = selected_port_r;
-      hash_n_dest_in_v = selected_port_r;
-    end
-    // else do not pop so same request gets to arbiter again next cycle
+    if (selected_port_v_r && rx_desc_avail[rx_dest_core]) 
+      if (!rx_desc_stall_v[rx_dest_core] || (waiting_int == selected_port_enc_r)) begin
+        rx_desc_pop      = 1'b1;
+        rx_hash_ready_f  = selected_port_r;
+        hash_n_dest_in_v = selected_port_r;
+      end 
+      // otherwise do nothing
+
   end
+  
+  always @ (posedge clk)
+    if (rst_r) begin
+      rx_desc_stall_v = {CORE_COUNT{1'b0}};
+    end else if (selected_port_v_r) begin
+      if ((!rx_desc_avail[rx_dest_core]) && (!rx_desc_stall_v[rx_dest_core])) begin
+        rx_desc_stall_v[rx_dest_core] <= 1'b1;
+        rx_desc_stall[INTERFACE_WIDTH*rx_dest_core +: INTERFACE_WIDTH] <= selected_port_enc_r;
+      end else if (rx_desc_avail[rx_dest_core] && rx_desc_stall_v[rx_dest_core] && (waiting_int == selected_port_enc_r)) begin
+        rx_desc_stall_v[rx_dest_core] <= 1'b0;
+      end
+    end
 
   /// *** STATUS FOR HOST READBACK *** ///
 

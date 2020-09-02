@@ -281,6 +281,7 @@ module header_adder_blocking # (
   output reg                   s_axis_tready,
 
   input  wire [HDR_WIDTH-1:0]  header,
+  input  wire                  drop,
   input  wire                  header_valid,
   output wire                  header_ready,
 
@@ -306,7 +307,7 @@ module header_adder_blocking # (
   localparam HDR = 2'b00;
   localparam MID = 2'b01;
   localparam LST = 2'b10;
-  localparam ERR = 2'b11;
+  localparam DRP = 2'b11;
   
   reg [1:0] state;
   
@@ -314,17 +315,22 @@ module header_adder_blocking # (
     if (rst)
       state <= HDR;
     else case (state)
-      HDR: if (s_axis_tvalid && m_axis_tready) begin
-             if (s_axis_tlast) // one word data
-                if (strb_left && (header_valid||ALWAYS_HDR)) state <= LST; else state <= HDR;
-             else 
-                if (header_valid||ALWAYS_HDR) state <= MID; else state <= HDR;
+      HDR: if (s_axis_tvalid && (header_valid||ALWAYS_HDR)) begin
+             if (drop) begin
+               if (s_axis_tlast) state <= HDR; else state <= DRP;
+             end else if (m_axis_tready) begin
+               if (s_axis_tlast) begin // one word data
+                 if (strb_left) state <= LST; else state <= HDR;
+               end else begin
+                 state <= MID;
+               end
+             end //m_axis_tready
            end
       MID: if (s_axis_tvalid && s_axis_tlast && m_axis_tready) begin
              if (strb_left) state <= LST; else state <= HDR;
            end
       LST: if (m_axis_tready) state <= HDR;
-      ERR: state <= ERR;
+      DRP: if (s_axis_tvalid && s_axis_tlast) state <= HDR;
     endcase 
   
   // Latch tdest and tuser at first cycle (for last cycle), and always latch tdata and tkeep
@@ -345,13 +351,13 @@ module header_adder_blocking # (
         if (header_valid||ALWAYS_HDR) begin
           m_axis_tdata  = SAME_WIDTH ? header : {s_axis_tdata[DATA_WIDTH-HDR_WIDTH-1:0], header};  
           m_axis_tkeep  = SAME_WIDTH ? {HDR_STRB{1'b1}} : {s_axis_tkeep[STRB_WIDTH-HDR_STRB-1:0],  {HDR_STRB{1'b1}}};
-          m_axis_tlast  = (!strb_left) && s_axis_tlast;
-          m_axis_tvalid = s_axis_tvalid;
-          s_axis_tready = m_axis_tready;
+          m_axis_tlast  = (!strb_left) && s_axis_tlast && !drop;
+          m_axis_tvalid = s_axis_tvalid && !drop;
+          s_axis_tready = m_axis_tready || drop;
         end else begin
           m_axis_tdata  = s_axis_tdata;
           m_axis_tkeep  = s_axis_tkeep;
-          m_axis_tlast  = s_axis_tlast;
+          m_axis_tlast  = 1'b0;
           m_axis_tvalid = 1'b0;
           s_axis_tready = 1'b0;
         end
@@ -370,19 +376,19 @@ module header_adder_blocking # (
           m_axis_tvalid = 1'b1;
           s_axis_tready = 1'b0;
       end
-      ERR: begin
+      DRP: begin
           m_axis_tdata  = s_axis_tdata;
           m_axis_tkeep  = s_axis_tkeep;
-          m_axis_tlast  = s_axis_tlast;
+          m_axis_tlast  = 1'b0;
           m_axis_tvalid = 1'b0;
-          s_axis_tready = 1'b0;
+          s_axis_tready = 1'b1;
       end
     endcase
 
   assign m_axis_tdest  = (state==HDR) ? s_axis_tdest : s_axis_tdest_r;
   assign m_axis_tuser  = (state==HDR) ? s_axis_tuser : s_axis_tuser_r;
   // Accepting header only on the first word, if any
-  assign header_ready  = (state==HDR) && s_axis_tvalid && m_axis_tready; 
+  assign header_ready  = (state==HDR) && s_axis_tvalid && (m_axis_tready||drop); 
                       
 endmodule
 
