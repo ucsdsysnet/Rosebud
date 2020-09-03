@@ -35,6 +35,7 @@ module simple_scheduler # (
   input  wire [INTERFACE_COUNT-1:0]               rx_axis_tvalid,
   output wire [INTERFACE_COUNT-1:0]               rx_axis_tready,
   input  wire [INTERFACE_COUNT-1:0]               rx_axis_tlast,
+  input  wire [INTERFACE_COUNT-1:0]               rx_axis_almost_full,
 
   output wire [INTERFACE_COUNT*DATA_WIDTH-1:0]    tx_axis_tdata,
   output wire [INTERFACE_COUNT*STRB_WIDTH-1:0]    tx_axis_tkeep,
@@ -472,6 +473,7 @@ module simple_scheduler # (
   reg [INTERFACE_WIDTH-1:0] stat_read_interface_r;
   reg [SLOT_WIDTH-1:0]      slot_count_n;
   reg [ID_TAG_WIDTH-1:0]    loaded_desc_n;
+  reg [INTERFACE_COUNT-1:0] rx_almost_full_r;
 
   always @ (posedge clk) begin
     host_cmd_r            <= host_cmd;
@@ -484,6 +486,7 @@ module simple_scheduler # (
     stat_read_interface_r <= stat_read_interface;
     slot_count            <= slot_count_n;
     loaded_desc           <= loaded_desc_n;
+    rx_almost_full_r      <= rx_axis_almost_full;
     if (rst_r) begin
       host_cmd_valid_r    <= 1'b0;
       income_cores_r      <= {CORE_COUNT{1'b0}};
@@ -844,11 +847,17 @@ module simple_scheduler # (
     rx_hash_ready_f  = {INTERFACE_COUNT{1'b0}};
     hash_n_dest_in_v = {INTERFACE_COUNT{1'b0}};
 
-    if (selected_port_v_r && !msg_desc_pop[rx_dest_core]) begin
-      rx_desc_pop      = rx_desc_avail[rx_dest_core];
-      rx_hash_ready_f  = selected_port_r;
-      hash_n_dest_in_v = selected_port_r;
-    end
+    if (selected_port_v_r && !msg_desc_pop[rx_dest_core]) 
+      if (rx_desc_avail[rx_dest_core]) begin 
+        rx_desc_pop      = 1'b1; 
+        rx_hash_ready_f  = selected_port_r;
+        hash_n_dest_in_v = selected_port_r;
+
+      end else if (rx_almost_full_r[selected_port_enc_r]) begin
+        rx_hash_ready_f  = selected_port_r;
+        hash_n_dest_in_v = selected_port_r;
+      end
+
   end
 
   /// *** STATUS FOR HOST READBACK *** ///
@@ -857,7 +866,8 @@ module simple_scheduler # (
   always @ (posedge clk) begin
     if (rst_r) 
       drop_count <= {INTERFACE_COUNT*ID_TAG_WIDTH{1'b0}};
-    else if (selected_port_v_r && !msg_desc_pop[rx_dest_core] && !rx_desc_avail[rx_dest_core]) 
+    else if (selected_port_v_r && !msg_desc_pop[rx_dest_core] && 
+             !rx_desc_avail[rx_dest_core] && rx_almost_full_r[selected_port_enc_r]) 
       drop_count[selected_port_enc_r*ID_TAG_WIDTH +: ID_TAG_WIDTH] <= 
         drop_count[selected_port_enc_r*ID_TAG_WIDTH +: ID_TAG_WIDTH] + 1;
   end
@@ -865,7 +875,7 @@ module simple_scheduler # (
   always @ (posedge clk) begin
     slot_count_n  <= rx_desc_count[stat_read_core_r * SLOT_WIDTH +: SLOT_WIDTH];
     // No preload of desc in hash based scheduler
-    loaded_desc_n <= drop_count[stat_read_core_r*ID_TAG_WIDTH +: ID_TAG_WIDTH];
+    loaded_desc_n <= drop_count[stat_read_interface_r*ID_TAG_WIDTH +: ID_TAG_WIDTH];
   end
 
 if (ENABLE_ILA) begin
