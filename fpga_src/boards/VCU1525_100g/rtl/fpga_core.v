@@ -216,6 +216,7 @@ parameter STG_F_DRAM_DEPTH = 1024;
 parameter V_MAC_FIFO_SIZE  = 1024;
 parameter CLUSTER_COUNT    = 4;
 parameter BC_MSG_CLUSTERS  = 4;
+parameter RAM_SW_RD_PIPE   = 2;
 
 // PCIe parameters
 parameter PCIE_SLOT_COUNT     = 16;
@@ -311,6 +312,7 @@ wire [INTERFACE_COUNT-1:0] port_rx_axis_tvalid_r;
 wire [INTERFACE_COUNT-1:0] port_rx_axis_tready_r;
 wire [INTERFACE_COUNT-1:0] port_rx_axis_tlast_r;
 wire [INTERFACE_COUNT-1:0] port_rx_axis_overflow_r;
+wire [INTERFACE_COUNT-1:0] port_rx_axis_almost_full_r;
 wire [INTERFACE_COUNT-1:0] port_rx_axis_bad_frame_r;
 
 if (QSFP0_IND >= 0 && QSFP0_IND < INTERFACE_COUNT) begin
@@ -373,6 +375,7 @@ wire [(INTERFACE_COUNT+V_PORT_COUNT)*LVL1_STRB_WIDTH-1:0] rx_axis_tkeep;
 wire [(INTERFACE_COUNT+V_PORT_COUNT)-1:0] rx_axis_tvalid, rx_axis_tready, rx_axis_tlast;
 
 reg  [INTERFACE_COUNT-1:0] rx_drop, rx_drop_r;
+reg  [INTERFACE_COUNT-1:0] rx_almost_full, rx_almost_full_r;
 
 genvar m;
 generate
@@ -454,7 +457,9 @@ generate
             .s_status_good_frame(),
             .m_status_overflow(),
             .m_status_bad_frame(),
-            .m_status_good_frame()
+            .m_status_good_frame(),
+            .m_status_almost_full(),
+            .m_status_almost_empty()
         );
 
         axis_async_fifo #(
@@ -501,7 +506,9 @@ generate
             .s_status_good_frame(),
             .m_status_overflow(port_rx_axis_overflow_r[m]),
             .m_status_bad_frame(port_rx_axis_bad_frame_r[m]),
-            .m_status_good_frame()
+            .m_status_good_frame(),
+            .m_status_almost_full(port_rx_axis_almost_full_r[m]),
+            .m_status_almost_empty()
         );
 
         axis_pipeline_register # (
@@ -539,11 +546,15 @@ generate
 
       always @ (posedge sys_clk)
         if (sys_rst) begin
-          rx_drop   <= {INTERFACE_COUNT{1'b0}};
-          rx_drop_r <= {INTERFACE_COUNT{1'b0}};
+          rx_drop          <= {INTERFACE_COUNT{1'b0}};
+          rx_drop_r        <= {INTERFACE_COUNT{1'b0}};
+          rx_almost_full   <= {INTERFACE_COUNT{1'b0}};
+          rx_almost_full_r <= {INTERFACE_COUNT{1'b0}};
         end else begin
-          rx_drop   <= port_rx_axis_overflow_r | port_rx_axis_bad_frame_r;
-          rx_drop_r <= rx_drop;
+          rx_drop          <= port_rx_axis_overflow_r | port_rx_axis_bad_frame_r;
+          rx_drop_r        <= rx_drop;
+          rx_almost_full   <= port_rx_axis_almost_full_r;
+          rx_almost_full_r <= rx_almost_full;
         end
     end
 endgenerate
@@ -1101,6 +1112,8 @@ simple_scheduler # (
   .rx_axis_tready(rx_axis_tready),
   .rx_axis_tlast(rx_axis_tlast),
 
+  .rx_axis_almost_full({{V_PORT_COUNT{1'b0}},rx_almost_full_r}),
+
   // DATA lines to/from cores
   .data_m_axis_tdata(sched_rx_axis_tdata),
   .data_m_axis_tkeep(sched_rx_axis_tkeep),
@@ -1204,7 +1217,8 @@ axis_switch_2lvl # (
     .STAGE_FIFO_DEPTH(STG_F_DATA_DEPTH),
     .FRAME_FIFO      (0),
     .SEPARATE_CLOCKS (SEPARATE_CLOCKS),
-    .USE_SIMPLE_SW   (0)
+    .USE_SIMPLE_SW   (0),
+    .RAM_SW_RD_PIPE  (RAM_SW_RD_PIPE)
 ) data_in_sw (
     .s_clk(sys_clk),
     .s_rst(sys_rst),
@@ -1270,7 +1284,8 @@ axis_switch_2lvl # (
     .STAGE_FIFO_DEPTH(STG_F_DATA_DEPTH),
     .FRAME_FIFO      (1),
     .SEPARATE_CLOCKS (SEPARATE_CLOCKS),
-    .USE_SIMPLE_SW   (0)
+    .USE_SIMPLE_SW   (0),
+    .RAM_SW_RD_PIPE  (RAM_SW_RD_PIPE)
 ) data_out_sw (
     /*
      * AXI Stream inputs

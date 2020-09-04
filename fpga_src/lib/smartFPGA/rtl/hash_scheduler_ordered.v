@@ -35,6 +35,7 @@ module simple_scheduler # (
   input  wire [INTERFACE_COUNT-1:0]               rx_axis_tvalid,
   output wire [INTERFACE_COUNT-1:0]               rx_axis_tready,
   input  wire [INTERFACE_COUNT-1:0]               rx_axis_tlast,
+  input  wire [INTERFACE_COUNT-1:0]               rx_axis_almost_full,
 
   output wire [INTERFACE_COUNT*DATA_WIDTH-1:0]    tx_axis_tdata,
   output wire [INTERFACE_COUNT*STRB_WIDTH-1:0]    tx_axis_tkeep,

@@ -216,6 +216,7 @@ parameter STG_F_DRAM_DEPTH = 1024;
 parameter V_MAC_FIFO_SIZE  = 1024;
 parameter CLUSTER_COUNT    = 4;
 parameter BC_MSG_CLUSTERS  = 4;
+parameter RAM_SW_RD_PIPE   = 2;
 
 // PCIe parameters
 parameter PCIE_SLOT_COUNT     = 16;
@@ -1216,7 +1217,8 @@ axis_switch_2lvl # (
     .STAGE_FIFO_DEPTH(STG_F_DATA_DEPTH),
     .FRAME_FIFO      (0),
     .SEPARATE_CLOCKS (SEPARATE_CLOCKS),
-    .USE_SIMPLE_SW   (0)
+    .USE_SIMPLE_SW   (0),
+    .RAM_SW_RD_PIPE  (RAM_SW_RD_PIPE)
 ) data_in_sw (
     .s_clk(sys_clk),
     .s_rst(sys_rst),
@@ -1282,7 +1284,8 @@ axis_switch_2lvl # (
     .STAGE_FIFO_DEPTH(STG_F_DATA_DEPTH),
     .FRAME_FIFO      (1),
     .SEPARATE_CLOCKS (SEPARATE_CLOCKS),
-    .USE_SIMPLE_SW   (0)
+    .USE_SIMPLE_SW   (0),
+    .RAM_SW_RD_PIPE  (RAM_SW_RD_PIPE)
 ) data_out_sw (
     /*
      * AXI Stream inputs

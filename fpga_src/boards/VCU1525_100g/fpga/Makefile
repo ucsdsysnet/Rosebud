@@ -37,6 +37,7 @@ SYN_FILES += lib/smartFPGA/rtl/pcie_controller.v
 SYN_FILES += lib/smartFPGA/rtl/pcie_cont_read.v
 SYN_FILES += lib/smartFPGA/rtl/pcie_cont_write.v
 SYN_FILES += lib/smartFPGA/rtl/corundum.v
+SYN_FILES += lib/smartFPGA/rtl/axis_async_fifo.v
 
 # SYN_FILES += accel/merged/rtl/accel_wrap_merged.v
 # SYN_FILES += accel/regex/rtl/re_sql.v
@@ -51,7 +52,7 @@ SYN_FILES += lib/axis/rtl/axis_register.v
 SYN_FILES += lib/axis/rtl/axis_pipeline_register.v
 SYN_FILES += lib/axis/rtl/arbiter.v
 SYN_FILES += lib/axis/rtl/priority_encoder.v
-SYN_FILES += lib/axis/rtl/axis_async_fifo.v
+# SYN_FILES += lib/axis/rtl/axis_async_fifo.v
 SYN_FILES += lib/axis/rtl/axis_async_fifo_adapter.v
 SYN_FILES += lib/axis/rtl/axis_adapter.v
 SYN_FILES += lib/axi/rtl/axil_interconnect.v
@@ -90,7 +91,7 @@ SYN_FILES += lib/corundum/rtl/tdma_scheduler.v
 SYN_FILES += lib/corundum/rtl/event_mux.v
 # XDC files
 XDC_FILES = fpga.xdc
-XDC_FILES += lib/axis/syn/axis_async_fifo.tcl
+XDC_FILES += lib/smartFPGA/syn/axis_async_fifo.tcl
 # XDC_FILES += lib/smartFPGA/syn/simple_sync_sig.tcl
 
 # IP

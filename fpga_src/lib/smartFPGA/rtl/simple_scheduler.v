@@ -28,16 +28,17 @@ module simple_scheduler # (
   // Data line to/from Eth interfaces
   input  wire [INTERFACE_COUNT*DATA_WIDTH-1:0]    rx_axis_tdata,
   input  wire [INTERFACE_COUNT*STRB_WIDTH-1:0]    rx_axis_tkeep,
-  input  wire [INTERFACE_COUNT-1:0]               rx_axis_tvalid, 
-  output wire [INTERFACE_COUNT-1:0]               rx_axis_tready, 
+  input  wire [INTERFACE_COUNT-1:0]               rx_axis_tvalid,
+  output wire [INTERFACE_COUNT-1:0]               rx_axis_tready,
   input  wire [INTERFACE_COUNT-1:0]               rx_axis_tlast,
-  
+  input  wire [INTERFACE_COUNT-1:0]               rx_axis_almost_full,
+
   output wire [INTERFACE_COUNT*DATA_WIDTH-1:0]    tx_axis_tdata,
   output wire [INTERFACE_COUNT*STRB_WIDTH-1:0]    tx_axis_tkeep,
-  output wire [INTERFACE_COUNT-1:0]               tx_axis_tvalid, 
-  input  wire [INTERFACE_COUNT-1:0]               tx_axis_tready, 
+  output wire [INTERFACE_COUNT-1:0]               tx_axis_tvalid,
+  input  wire [INTERFACE_COUNT-1:0]               tx_axis_tready,
   output wire [INTERFACE_COUNT-1:0]               tx_axis_tlast,
-  
+
   // DATA lines to/from cores
   output wire [INTERFACE_COUNT*DATA_WIDTH-1:0]    data_m_axis_tdata,
   output wire [INTERFACE_COUNT*STRB_WIDTH-1:0]    data_m_axis_tkeep,
@@ -46,14 +47,14 @@ module simple_scheduler # (
   output wire [INTERFACE_COUNT-1:0]               data_m_axis_tvalid,
   input  wire [INTERFACE_COUNT-1:0]               data_m_axis_tready,
   output wire [INTERFACE_COUNT-1:0]               data_m_axis_tlast,
-  
+
   input  wire [INTERFACE_COUNT*DATA_WIDTH-1:0]    data_s_axis_tdata,
   input  wire [INTERFACE_COUNT*STRB_WIDTH-1:0]    data_s_axis_tkeep,
   input  wire [INTERFACE_COUNT*ID_TAG_WIDTH-1:0]  data_s_axis_tuser,
-  input  wire [INTERFACE_COUNT-1:0]               data_s_axis_tvalid, 
-  output wire [INTERFACE_COUNT-1:0]               data_s_axis_tready, 
+  input  wire [INTERFACE_COUNT-1:0]               data_s_axis_tvalid,
+  output wire [INTERFACE_COUNT-1:0]               data_s_axis_tready,
   input  wire [INTERFACE_COUNT-1:0]               data_s_axis_tlast,
-      
+
   // Control lines to/from cores
   output wire [CTRL_WIDTH-1:0]               ctrl_m_axis_tdata,
   output wire                                ctrl_m_axis_tvalid,
@@ -72,7 +73,7 @@ module simple_scheduler # (
   input  wire                                host_cmd_valid,
   output wire                                host_cmd_ready,
 
-  input  wire [CORE_COUNT-1:0]               income_cores, 
+  input  wire [CORE_COUNT-1:0]               income_cores,
   input  wire [CORE_COUNT-1:0]               cores_to_be_reset,
 
   input  wire [CORE_ID_WIDTH-1:0]            stat_read_core,
@@ -94,13 +95,13 @@ module simple_scheduler # (
   wire [INTERFACE_COUNT-1:0]              data_m_axis_tvalid_n;
   wire [INTERFACE_COUNT-1:0]              data_m_axis_tready_n;
   wire [INTERFACE_COUNT-1:0]              data_m_axis_tlast_n;
-  
+
   wire [INTERFACE_COUNT*DATA_WIDTH-1:0]   rx_axis_tdata_r;
   wire [INTERFACE_COUNT*STRB_WIDTH-1:0]   rx_axis_tkeep_r;
-  wire [INTERFACE_COUNT-1:0]              rx_axis_tvalid_r; 
-  wire [INTERFACE_COUNT-1:0]              rx_axis_tready_r; 
+  wire [INTERFACE_COUNT-1:0]              rx_axis_tvalid_r;
+  wire [INTERFACE_COUNT-1:0]              rx_axis_tready_r;
   wire [INTERFACE_COUNT-1:0]              rx_axis_tlast_r;
-  
+
   wire [CTRL_WIDTH-1:0]    ctrl_s_axis_tdata_r;
   wire                     ctrl_s_axis_tvalid_r;
   wire                     ctrl_s_axis_tready_r;
@@ -220,7 +221,7 @@ module simple_scheduler # (
 
     end
   endgenerate
-  
+
   axis_register # (
     .DATA_WIDTH(CTRL_WIDTH),
     .KEEP_ENABLE(0),
@@ -286,7 +287,7 @@ module simple_scheduler # (
     .m_axis_tdest (ctrl_m_axis_tdest),
     .m_axis_tuser ()
   );
-  
+
   reg [3:0]                 host_cmd_r;
   reg [CORE_ID_WIDTH-1:0]   host_cmd_dest_r;
   reg [31:0]                host_cmd_data_r;
@@ -297,7 +298,7 @@ module simple_scheduler # (
   reg [INTERFACE_WIDTH-1:0] stat_read_interface_r;
   reg [SLOT_WIDTH-1:0]      slot_count_n;
   reg [ID_TAG_WIDTH-1:0]    loaded_desc_n;
- 
+
   always @ (posedge clk) begin
     host_cmd_r            <= host_cmd;
     host_cmd_dest_r       <= host_cmd_dest;
@@ -316,12 +317,12 @@ module simple_scheduler # (
     end
   end
   assign host_cmd_ready     = 1'b1;
-  
+
   // Separate incoming ctrl messages
   parameter MSG_TYPE_WIDTH = 4;
   parameter DESC_WIDTH     = CTRL_WIDTH-MSG_TYPE_WIDTH;
 
-  wire [MSG_TYPE_WIDTH-1:0] msg_type = 
+  wire [MSG_TYPE_WIDTH-1:0] msg_type =
                 ctrl_s_axis_tdata_r[CTRL_WIDTH-1:CTRL_WIDTH-MSG_TYPE_WIDTH];
 
   wire [MSG_TYPE_WIDTH-1:0] send_out_msg = {(MSG_TYPE_WIDTH){1'b0}};
@@ -331,10 +332,10 @@ module simple_scheduler # (
   wire [CORE_ID_WIDTH-1:0] pkt_done_src;
   wire                     pkt_done_valid;
   wire                     pkt_done_ready;
-                           
+
   wire [CORE_COUNT*(DESC_WIDTH+CORE_ID_WIDTH)-1:0] pkt_to_core_req;
   wire [CORE_COUNT*SLOT_WIDTH-1:0]                 rx_desc_slot;
-  wire [CORE_COUNT-1:0] pkt_to_core_valid, pkt_to_core_ready, 
+  wire [CORE_COUNT-1:0] pkt_to_core_valid, pkt_to_core_ready,
                         arb_to_core_ready, rx_desc_slot_v;
 
   wire loopback_ready;
@@ -346,18 +347,18 @@ module simple_scheduler # (
     .clk(clk),
     .rst(rst_r),
     .clear(1'b0),
-  
+
     .din_valid(ctrl_s_axis_tvalid_r && (msg_type==1)),
     .din({ctrl_s_axis_tuser_r,ctrl_s_axis_tdata_r[DESC_WIDTH-1:0]}),
     .din_ready(pkt_done_ready),
-   
+
     .dout_valid(pkt_done_valid),
     .dout({pkt_done_src,pkt_done_desc}),
     .dout_ready(loopback_ready)
   );
 
   genvar m;
-  generate 
+  generate
     for (m=0;m<CORE_COUNT;m=m+1) begin
       wire [CORE_ID_WIDTH-1:0] dest_core = ctrl_s_axis_tdata_r[24+:CORE_ID_WIDTH];
       simple_fifo # (
@@ -367,19 +368,19 @@ module simple_scheduler # (
         .clk(clk),
         .rst(rst_r),
         .clear(1'b0),
-      
+
         .din_valid(ctrl_s_axis_tvalid_r && (msg_type==2) && (dest_core==m)),
-        .din({ctrl_s_axis_tuser_r, ctrl_s_axis_tdata_r[DESC_WIDTH-1:0]}), 
+        .din({ctrl_s_axis_tuser_r, ctrl_s_axis_tdata_r[DESC_WIDTH-1:0]}),
         .din_ready(pkt_to_core_ready[m]),
-       
+
         .dout_valid(pkt_to_core_valid[m]),
-        .dout(pkt_to_core_req[m*(DESC_WIDTH+CORE_ID_WIDTH) +: 
+        .dout(pkt_to_core_req[m*(DESC_WIDTH+CORE_ID_WIDTH) +:
                                 (DESC_WIDTH+CORE_ID_WIDTH)]),
         .dout_ready(arb_to_core_ready[m] && rx_desc_slot_v[m] && !cores_to_be_reset_r[m])
       );
     end
   endgenerate
- 
+
   wire [CORE_ID_WIDTH-1:0] selected_pkt_to_core_src;
   wire [SLOT_WIDTH-1:0]    selected_pkt_to_core_dest_slot;
   wire [DESC_WIDTH-1:0]    selected_pkt_to_core_desc;
@@ -398,8 +399,8 @@ module simple_scheduler # (
   (
     .clk(clk),
     .rst(rst_r),
-  
-    .s_axis_tdata(pkt_to_core_req), 
+
+    .s_axis_tdata(pkt_to_core_req),
     .s_axis_tkeep(),
     .s_axis_tvalid(pkt_to_core_valid & rx_desc_slot_v & ~cores_to_be_reset_r),
     .s_axis_tready(arb_to_core_ready),
@@ -407,7 +408,7 @@ module simple_scheduler # (
     .s_axis_tid(),
     .s_axis_tdest(),
     .s_axis_tuser(rx_desc_slot),
-    
+
     .m_axis_tdata({selected_pkt_to_core_src, selected_pkt_to_core_desc}),
     .m_axis_tkeep(),
     .m_axis_tvalid(selected_pkt_to_core_valid),
@@ -417,24 +418,24 @@ module simple_scheduler # (
     .m_axis_tdest(),
     .m_axis_tuser(selected_pkt_to_core_dest_slot)
   );
-   
+
   assign ctrl_s_axis_tready_r = ((msg_type==0)   ||   (msg_type==3)) ||
-                                (pkt_done_ready    && (msg_type==1)) || 
+                                (pkt_done_ready    && (msg_type==1)) ||
                                 (pkt_to_core_ready && (msg_type==2)) ;
-  
+
   // Slot descriptor fifos, addressing msg type 0&3 requests
   wire [CORE_COUNT*SLOT_WIDTH-1:0] rx_desc_count;
   wire [CORE_ID_WIDTH-1:0] selected_desc;
   wire [CORE_COUNT-1:0]    rx_desc_slot_pop;
-  
+
   reg  [CORE_COUNT-1:0] enq_slot_v;
   reg  [CORE_COUNT-1:0] init_slot_v;
   reg  [SLOT_WIDTH-1:0] input_slot;
-  
+
   always @ (posedge clk)
     input_slot <= ctrl_s_axis_tdata_r[16 +: SLOT_WIDTH];
 
-  wire rx_desc_pop; 
+  wire rx_desc_pop;
   wire max_valid;
 
   wire [CORE_COUNT-1:0] core_slot_err;
@@ -445,9 +446,9 @@ module simple_scheduler # (
   end
 
   genvar i;
-  generate 
+  generate
     for (i=0;i<CORE_COUNT;i=i+1) begin
-      assign rx_desc_slot_pop[i]    = (rx_desc_pop && (selected_desc==i)) || 
+      assign rx_desc_slot_pop[i]    = (rx_desc_pop && (selected_desc==i)) ||
                                       (pkt_to_core_valid[i] && arb_to_core_ready[i] && (~cores_to_be_reset_r[i]));
       // Register valid for better timing closure
       always @ (posedge clk)
@@ -460,29 +461,29 @@ module simple_scheduler # (
         end
 
       slot_keeper # (
-        .SLOT_COUNT(SLOT_COUNT), 
+        .SLOT_COUNT(SLOT_COUNT),
         .SLOT_WIDTH(SLOT_WIDTH)
       ) rx_desc_keeper (
         .clk(clk),
         .rst(rst_r),
 
         .init_slots(input_slot),
-        .init_valid(init_slot_v[i]), 
- 
-        .slot_in(input_slot), 
-        .slot_in_valid(enq_slot_v[i]), 
-       
+        .init_valid(init_slot_v[i]),
+
+        .slot_in(input_slot),
+        .slot_in_valid(enq_slot_v[i]),
+
         .slot_out(rx_desc_slot[i*SLOT_WIDTH +: SLOT_WIDTH]),
         .slot_out_valid(rx_desc_slot_v[i]),
         .slot_out_pop(rx_desc_slot_pop[i]),
-        
+
         .slot_count(rx_desc_count[i*SLOT_WIDTH +: SLOT_WIDTH]),
         .enq_err(core_slot_err[i])
       );
 
     end
   endgenerate
-  
+
   // Assing looback port
   wire [CORE_ID_WIDTH-1:0] loopback_port;
 
@@ -517,26 +518,26 @@ module simple_scheduler # (
 
   end
 
-  wire [ID_TAG_WIDTH-1:0] dest_id_slot = {selected_pkt_to_core_desc[24 +: CORE_ID_WIDTH], 
+  wire [ID_TAG_WIDTH-1:0] dest_id_slot = {selected_pkt_to_core_desc[24 +: CORE_ID_WIDTH],
                                {(TAG_WIDTH-SLOT_WIDTH){1'b0}}, selected_pkt_to_core_dest_slot};
 
-  wire [DESC_WIDTH-1:0] pkt_to_core_with_port = 
-              {{(8-CORE_ID_WIDTH){1'b0}}, loopback_port, 
+  wire [DESC_WIDTH-1:0] pkt_to_core_with_port =
+              {{(8-CORE_ID_WIDTH){1'b0}}, loopback_port,
               selected_pkt_to_core_desc[23:16], //this is src slot
               {(16-ID_TAG_WIDTH){1'b0}}, dest_id_slot};
 
-  // Arbiter for ctrl messaage output 
-  
+  // Arbiter for ctrl messaage output
+
   // arbiter between pkt done and pkt send to core, addressing msg type 1&2 requests
   wire [CORE_ID_WIDTH-1:0] ctrl_out_dest;
   wire [CTRL_WIDTH-1:0]    ctrl_out_desc;
   wire ctrl_out_valid, ctrl_out_ready;
 
-  reg last_selected; 
+  reg last_selected;
   reg ctrl_out_select;
 
-  always @ (posedge clk) 
-    if (rst_r) 
+  always @ (posedge clk)
+    if (rst_r)
       last_selected <= 1'b0;
     else if (ctrl_out_valid && ctrl_out_ready)
       last_selected <= ctrl_out_select;
@@ -548,16 +549,16 @@ module simple_scheduler # (
       ctrl_out_select = 1'b1;
     else if (pkt_done_valid)
       ctrl_out_select = 1'b0;
-    else 
+    else
       ctrl_out_select = last_selected;
 
   assign ctrl_out_valid = selected_pkt_to_core_valid || pkt_done_valid;
   assign ctrl_out_dest  = ctrl_out_select ? selected_pkt_to_core_src : pkt_done_src;
-  assign ctrl_out_desc  = ctrl_out_select ? {loopback_msg, pkt_to_core_with_port} 
+  assign ctrl_out_desc  = ctrl_out_select ? {loopback_msg, pkt_to_core_with_port}
                                           : {send_out_msg, pkt_done_desc};
   assign selected_pkt_to_core_ready = ctrl_out_select  && ctrl_out_ready;
   assign loopback_ready             = !ctrl_out_select && ctrl_out_ready;
-  
+
   // Latching the output to deal with the next stage valid/ready
   reg [CORE_ID_WIDTH-1:0] ctrl_out_dest_r;
   reg [CTRL_WIDTH-1:0]    ctrl_out_desc_r;
@@ -577,12 +578,12 @@ module simple_scheduler # (
       ctrl_out_desc_r  <= {CTRL_WIDTH{1'b0}};
       ctrl_out_dest_r  <= {CORE_ID_WIDTH{1'b0}};
     end
-  end 
+  end
 
-  assign ctrl_out_ready = (!ctrl_out_valid_r) || ctrl_out_ready_r; 
+  assign ctrl_out_ready = (!ctrl_out_valid_r) || ctrl_out_ready_r;
 
   // Arbiter between host cmd and scheduler messages
-  assign ctrl_m_axis_tdata_n  = host_cmd_valid_r ? {host_cmd_r, host_cmd_data_r} 
+  assign ctrl_m_axis_tdata_n  = host_cmd_valid_r ? {host_cmd_r, host_cmd_data_r}
                                              : ctrl_out_desc_r;
   assign ctrl_m_axis_tvalid_n = host_cmd_valid_r || ctrl_out_valid_r;
   assign ctrl_m_axis_tdest_n  = host_cmd_valid_r ? host_cmd_dest_r : ctrl_out_dest_r;
@@ -598,7 +599,7 @@ module simple_scheduler # (
   always @ (*)
     for (k=0; k<LVL2_SW_PORTS; k=k+1)
       for (l=0; l<CLUSTER_COUNT; l=l+1) begin
-        reordered_rx_desc_count[(k*CLUSTER_COUNT+l)*SLOT_WIDTH +: SLOT_WIDTH] = 
+        reordered_rx_desc_count[(k*CLUSTER_COUNT+l)*SLOT_WIDTH +: SLOT_WIDTH] =
                   rx_desc_count[(l*LVL2_SW_PORTS+k)*SLOT_WIDTH +: SLOT_WIDTH];
         // Priority to inter core messages, and only income_cores are available for selection
         // cores_to_be_reset would remove the core from income_cores
@@ -610,7 +611,7 @@ module simple_scheduler # (
   max_finder_tree # (
     .PORT_COUNT(CORE_COUNT),
     .DATA_WIDTH(SLOT_WIDTH)
-  ) core_selector ( 
+  ) core_selector (
     .values(reordered_rx_desc_count),
     .valids(reordered_masks),
     .max_val(),
@@ -620,12 +621,12 @@ module simple_scheduler # (
 
   if (LVL2_SW_PORTS==1)
     assign selected_desc = reordered_selected_desc;
-  else 
+  else
     assign selected_desc = {reordered_selected_desc[LVL1_BITS-1:0],
                            reordered_selected_desc[CORE_ID_WIDTH-1:LVL1_BITS]};
 
-  
-  // Adding tdest and tuser to input data from eth, dest based on 
+
+  // Adding tdest and tuser to input data from eth, dest based on
   // rx_desc_fifo and stamp the incoming port
   wire [INTERFACE_COUNT-1:0] selected_port;
   wire [INTERFACE_WIDTH-1:0] selected_port_enc;
@@ -639,7 +640,7 @@ module simple_scheduler # (
   wire [INTERFACE_COUNT-1:0] port_desc_avail   = {INTERFACE_COUNT{rx_desc_pop}} & selected_port;
   wire [INTERFACE_COUNT-1:0] port_valid        = rx_axis_tvalid_r & rx_axis_tready_r;
   wire [INTERFACE_COUNT-1:0] sending_last_word = port_valid & rx_axis_tlast_r;
-  
+
   // State machine per port
   reg [1:0] port_state [0:INTERFACE_COUNT-1];
   localparam STALL = 2'b00; // Don't accept until getting a desc
@@ -649,24 +650,24 @@ module simple_scheduler # (
 
   integer n;
   always @ (posedge clk)
-      for (n=0; n<INTERFACE_COUNT; n=n+1) 
+      for (n=0; n<INTERFACE_COUNT; n=n+1)
           if (rst_r) begin
               port_state[n] <= STALL;
           end else begin
               case (port_state[n])
-                  STALL: if (port_desc_avail[n]) 
+                  STALL: if (port_desc_avail[n])
                             port_state[n] <= FIRST;
-                  FIRST: if (sending_last_word[n]) 
-                            port_state[n] <= STALL; 
-                         else if (port_valid[n]) 
-                            port_state[n] <= WAIT;
-                  WAIT:  if (port_desc_avail[n] && sending_last_word[n]) 
-                            port_state[n] <= FIRST;
-                         else if (port_desc_avail[n]) 
-                            port_state[n] <= MID;
-                         else if (sending_last_word[n]) 
+                  FIRST: if (sending_last_word[n])
                             port_state[n] <= STALL;
-                  MID:   if (sending_last_word[n]) 
+                         else if (port_valid[n])
+                            port_state[n] <= WAIT;
+                  WAIT:  if (port_desc_avail[n] && sending_last_word[n])
+                            port_state[n] <= FIRST;
+                         else if (port_desc_avail[n])
+                            port_state[n] <= MID;
+                         else if (sending_last_word[n])
+                            port_state[n] <= STALL;
+                  MID:   if (sending_last_word[n])
                             port_state[n] <= FIRST;
               endcase
               // When a packet starts latch the tdest
@@ -678,9 +679,9 @@ module simple_scheduler # (
   integer p;
   reg [INTERFACE_COUNT-1:0] desc_req;
   reg [INTERFACE_COUNT-1:0] port_not_stall;
-  always @ (*) 
+  always @ (*)
       for (p=0; p<INTERFACE_COUNT; p=p+1) begin
-          // When a packet starts we ask for new desc, or if we are in stall or wait. 
+          // When a packet starts we ask for new desc, or if we are in stall or wait.
           // If request in FIRST is responded during WAIT it would be cancedlled by !selected_port
           desc_req[p] = !(selected_port[p]) && ((port_state[p]==STALL) || (port_state[p]==WAIT) ||
                           ((port_state[p]==FIRST) && port_valid[p]));
@@ -688,30 +689,30 @@ module simple_scheduler # (
           dest[p*ID_TAG_WIDTH +: ID_TAG_WIDTH] = (port_state[p]==FIRST) ?
               dest_r[p*ID_TAG_WIDTH +: ID_TAG_WIDTH] : dest_rr[p*ID_TAG_WIDTH +: ID_TAG_WIDTH];
       end
-  
+
   // arbiter among ports for desc request
   arbiter # (.PORTS(INTERFACE_COUNT),.TYPE("ROUND_ROBIN")) port_selector (
     .clk(clk),
     .rst(rst_r),
-    
+
     .request(desc_req),
     .acknowledge({INTERFACE_COUNT{1'b0}}),
-    
+
     .grant(selected_port),
     .grant_valid(selected_port_v),
     .grant_encoded(selected_port_enc)
     );
 
   // Load the new desc
-  wire [ID_TAG_WIDTH-1:0] rx_desc_data = {selected_desc, {(TAG_WIDTH-SLOT_WIDTH){1'b0}}, 
+  wire [ID_TAG_WIDTH-1:0] rx_desc_data = {selected_desc, {(TAG_WIDTH-SLOT_WIDTH){1'b0}},
                                           rx_desc_slot[selected_desc*SLOT_WIDTH +: SLOT_WIDTH]};
-  
+
   always @ (posedge clk)
     if (rst_r)
       dest_r <= {INTERFACE_COUNT*ID_TAG_WIDTH{1'b0}};
-    else if (rx_desc_pop) 
+    else if (rx_desc_pop)
       dest_r[selected_port_enc*ID_TAG_WIDTH +: ID_TAG_WIDTH] <= rx_desc_data;
-  
+
   always @ (posedge clk) begin
     slot_count_n  <= rx_desc_count[stat_read_core_r * SLOT_WIDTH +: SLOT_WIDTH];
     loaded_desc_n <= dest_r[stat_read_interface_r * ID_TAG_WIDTH +: ID_TAG_WIDTH];
@@ -725,18 +726,18 @@ module simple_scheduler # (
 
   assign data_m_axis_tdata_n  = rx_axis_tdata_r;
   assign data_m_axis_tkeep_n  = rx_axis_tkeep_r;
-  assign data_m_axis_tvalid_n = rx_axis_tvalid_r & port_not_stall; 
+  assign data_m_axis_tvalid_n = rx_axis_tvalid_r & port_not_stall;
   assign data_m_axis_tlast_n  = rx_axis_tlast_r;
   assign data_m_axis_tdest_n  = dest;
   assign rx_axis_tready_r     = data_m_axis_tready_n & port_not_stall;
-  
-if (ENABLE_ILA) begin  
+
+if (ENABLE_ILA) begin
   wire trig_out_1, trig_out_2;
   wire ack_1, ack_2;
   reg [CORE_COUNT*SLOT_WIDTH-1:0] rx_desc_count_r;
   reg [INTERFACE_COUNT-1:0] desc_req_r;
   reg max_valid_r, rx_desc_pop_r;
-  reg [ID_TAG_WIDTH-1:0] rx_desc_data_r; 
+  reg [ID_TAG_WIDTH-1:0] rx_desc_data_r;
   reg [1:0] port0_state_r, port1_state_r, port2_state_r;
   reg [1:0] selected_port_enc_r;
   always @ (posedge clk) begin
@@ -753,12 +754,12 @@ if (ENABLE_ILA) begin
 
   ila_2x64 debugger1 (
     .clk    (clk),
- 
+
     .trig_out(trig_out),
     .trig_out_ack(trig_out_ack),
     .trig_in (trig_in),
     .trig_in_ack(trig_in_ack),
- 
+
     .probe0 ({
        data_m_axis_tdest_n[17:0],
        ctrl_m_axis_tdest_n,
@@ -770,7 +771,7 @@ if (ENABLE_ILA) begin
        rst_r,
        slot_insert_err,
        msg_type,
-       rx_axis_tvalid_r[1:0], 
+       rx_axis_tvalid_r[1:0],
        rx_axis_tlast_r[1:0],
        rx_axis_tready_r[1:0],
        max_valid_r,
@@ -782,11 +783,11 @@ if (ENABLE_ILA) begin
        port0_state_r,
        selected_port_enc_r
      }),
-    
+
     .probe1 ({
        ctrl_m_axis_tdata_n[31:0],
        ctrl_s_axis_tdata_r[31:0]})
-  
+
     // .probe2 (rx_desc_count_r),
 
     // .probe3 ({rx_desc_slot_v, rx_desc_slot_pop,

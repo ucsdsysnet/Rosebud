@@ -91,7 +91,6 @@ module simple_scheduler # (
   input  wire                                trig_out_ack
 );
 
-
   // Register inputs and outputs
   wire [INTERFACE_COUNT*DATA_WIDTH-1:0]    data_m_axis_tdata_n;
   wire [INTERFACE_COUNT*STRB_WIDTH-1:0]    data_m_axis_tkeep_n;
@@ -286,7 +285,7 @@ module simple_scheduler # (
 
         .din_valid(rx_hash_valid[q]),
         .din({rx_hash_type[q*4 +: 4], rx_hash[q*32 +: 32]}),
-        .din_ready(), // rx_hash_ready[q]), 
+        .din_ready(), // rx_hash_ready[q]),
         // FIFO has more room than 64B packets in the data fifo
 
         .dout_valid(rx_hash_valid_f[q]),
@@ -834,12 +833,12 @@ module simple_scheduler # (
 
   // MSB is to drop packet or not, followed by hash value and finally core desc
   // For now no intercore messages, so !rx_desc_avail means desc was not available
-  assign hash_n_dest_in = {INTERFACE_COUNT{!rx_desc_avail[rx_dest_core], 
+  assign hash_n_dest_in = {INTERFACE_COUNT{!rx_desc_avail[rx_dest_core],
                            rx_hash_f[selected_port_enc_r*32 +: 32], rx_desc_data}};
 
-  // if a port is selected and desired core is not being used for intercore messaging, 
+  // if a port is selected and desired core is not being used for intercore messaging,
   // pop the hash from the interface hash fifo, and push the hash
-  // and full descriptor with core number into interface hash_n_desc fifo. 
+  // and full descriptor with core number into interface hash_n_desc fifo.
   // If core doesn't have descriptor available raise the drop bit and don't pop from
   // core's desc fifo
   always @ (*) begin
@@ -847,9 +846,9 @@ module simple_scheduler # (
     rx_hash_ready_f  = {INTERFACE_COUNT{1'b0}};
     hash_n_dest_in_v = {INTERFACE_COUNT{1'b0}};
 
-    if (selected_port_v_r && !msg_desc_pop[rx_dest_core]) 
-      if (rx_desc_avail[rx_dest_core]) begin 
-        rx_desc_pop      = 1'b1; 
+    if (selected_port_v_r && !msg_desc_pop[rx_dest_core])
+      if (rx_desc_avail[rx_dest_core]) begin
+        rx_desc_pop      = 1'b1;
         rx_hash_ready_f  = selected_port_r;
         hash_n_dest_in_v = selected_port_r;
 
@@ -864,11 +863,11 @@ module simple_scheduler # (
   reg [INTERFACE_COUNT*ID_TAG_WIDTH-1:0] drop_count;
 
   always @ (posedge clk) begin
-    if (rst_r) 
+    if (rst_r)
       drop_count <= {INTERFACE_COUNT*ID_TAG_WIDTH{1'b0}};
-    else if (selected_port_v_r && !msg_desc_pop[rx_dest_core] && 
-             !rx_desc_avail[rx_dest_core] && rx_almost_full_r[selected_port_enc_r]) 
-      drop_count[selected_port_enc_r*ID_TAG_WIDTH +: ID_TAG_WIDTH] <= 
+    else if (selected_port_v_r && !msg_desc_pop[rx_dest_core] &&
+             !rx_desc_avail[rx_dest_core] && rx_almost_full_r[selected_port_enc_r])
+      drop_count[selected_port_enc_r*ID_TAG_WIDTH +: ID_TAG_WIDTH] <=
         drop_count[selected_port_enc_r*ID_TAG_WIDTH +: ID_TAG_WIDTH] + 1;
   end
 

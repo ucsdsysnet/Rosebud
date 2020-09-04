@@ -55,8 +55,8 @@ module axis_switch_2lvl # (
     // Requires LAST_ENABLE set
     parameter FRAME_FIFO = 0,
     parameter SEPARATE_CLOCKS = 0,
-    parameter USE_SIMPLE_SW = 1
-
+    parameter USE_SIMPLE_SW = 1,
+    parameter RAM_SW_RD_PIPE = 2
 ) (
     /*
      * AXI Stream inputs
@@ -169,7 +169,8 @@ if (S_COUNT >= M_COUNT) begin: shrink
             .CLUSTER_COUNT   (CLUSTER_COUNT),
             .STAGE_FIFO_DEPTH(STAGE_FIFO_DEPTH),
             .FRAME_FIFO      (FRAME_FIFO),
-            .SEPARATE_CLOCKS (SEPARATE_CLOCKS)
+            .SEPARATE_CLOCKS (SEPARATE_CLOCKS),
+            .RD_PIPE         (RAM_SW_RD_PIPE)
         ) axis_switch_2lvl_shrink_inst (
             .s_clk        (s_clk),
             .s_rst        (s_rst),
@@ -269,7 +270,8 @@ end else begin: grow
             .CLUSTER_COUNT   (CLUSTER_COUNT),
             .STAGE_FIFO_DEPTH(STAGE_FIFO_DEPTH),
             .FRAME_FIFO      (FRAME_FIFO),
-            .SEPARATE_CLOCKS (SEPARATE_CLOCKS)
+            .SEPARATE_CLOCKS (SEPARATE_CLOCKS),
+            .RD_PIPE         (RAM_SW_RD_PIPE)
         ) axis_switch_2lvl_grow_inst (
             .s_clk        (s_clk),
             .s_rst        (s_rst),
@@ -1073,7 +1075,8 @@ module axis_ram_sw_shrink # (
     parameter CLUSTER_COUNT    = 4,
     parameter STAGE_FIFO_DEPTH = 8192,
     parameter FRAME_FIFO       = 0,
-    parameter SEPARATE_CLOCKS  = 0
+    parameter SEPARATE_CLOCKS  = 0,
+    parameter RD_PIPE          = 2
 ) (
     /*
      * AXI Stream inputs
@@ -1198,7 +1201,8 @@ module axis_ram_sw_shrink # (
                 .ID_ENABLE(ID_ENABLE),
                 .ID_WIDTH(ID_WIDTH),
                 .ARB_TYPE(ARB_TYPE),
-                .LSB_PRIORITY(LSB_PRIORITY)
+                .LSB_PRIORITY(LSB_PRIORITY),
+                .RAM_PIPELINE(RD_PIPE)
             ) sw_lvl1 (
                 .clk(s_clk),
                 .rst(s_rst),
@@ -1799,7 +1803,8 @@ module axis_ram_sw_grow # (
     parameter CLUSTER_COUNT    = 4,
     parameter STAGE_FIFO_DEPTH = 8192,
     parameter FRAME_FIFO       = 0,
-    parameter SEPARATE_CLOCKS  = 0
+    parameter SEPARATE_CLOCKS  = 0,
+    parameter RD_PIPE          = 2
 ) (
     /*
      * AXI Stream inputs
@@ -2019,7 +2024,8 @@ module axis_ram_sw_grow # (
                 .ID_ENABLE(ID_ENABLE),
                 .ID_WIDTH(ID_WIDTH),
                 .ARB_TYPE(ARB_TYPE),
-                .LSB_PRIORITY(LSB_PRIORITY)
+                .LSB_PRIORITY(LSB_PRIORITY),
+                .RAM_PIPELINE(RD_PIPE)
             ) sw_lvl2 (
                 .clk(select_m_clk),
                 .rst(select_m_rst),

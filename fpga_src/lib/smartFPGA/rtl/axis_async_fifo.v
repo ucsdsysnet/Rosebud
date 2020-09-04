@@ -179,15 +179,14 @@ reg m_rst_sync1_reg = 1'b1;
 reg m_rst_sync2_reg = 1'b1;
 reg m_rst_sync3_reg = 1'b1;
 
-reg almost_full_reg = 1'b0;
 reg almost_full_sync1_reg = 1'b0;
 reg almost_full_sync2_reg = 1'b0;
 reg almost_full_sync3_reg = 1'b0;
-
-reg almost_empty_reg = 1'b0;
+reg almost_full_sync4_reg = 1'b0;
 reg almost_empty_sync1_reg = 1'b0;
 reg almost_empty_sync2_reg = 1'b0;
 reg almost_empty_sync3_reg = 1'b0;
+reg almost_empty_sync4_reg = 1'b0;
 
 
 reg [WIDTH-1:0] mem[(2**ADDR_WIDTH)-1:0];
@@ -453,35 +452,37 @@ always @(posedge m_clk) begin
     end
 end
 
+
+// almost full/empty status synchronization
+always @(posedge s_clk) 
+    if (s_rst_sync3_reg) begin
+      almost_full_sync1_reg  <= 1'b0;
+      almost_empty_sync1_reg <= 1'b0;
+    end else begin
+      almost_full_sync1_reg  <= qrtr_3_4;
+      almost_empty_sync1_reg <= qrtr_1_2;
+    end
+
 always @(posedge m_clk) begin
     if (m_rst_sync3_reg) begin
-        almost_full_sync1_reg  <= 1'b0;
         almost_full_sync2_reg  <= 1'b0;
         almost_full_sync3_reg  <= 1'b0;
-        almost_empty_sync1_reg <= 1'b0;
+        almost_full_sync4_reg  <= 1'b0;
         almost_empty_sync2_reg <= 1'b0;
         almost_empty_sync3_reg <= 1'b0;
+        almost_empty_sync4_reg <= 1'b0;
     end else begin
-        almost_full_sync1_reg  <= almost_full_reg;
         almost_full_sync2_reg  <= almost_full_sync1_reg;
         almost_full_sync3_reg  <= almost_full_sync2_reg;
-        almost_empty_sync1_reg <= almost_empty_reg;
+        almost_full_sync4_reg  <= almost_full_sync3_reg;
         almost_empty_sync2_reg <= almost_empty_sync1_reg;
         almost_empty_sync3_reg <= almost_empty_sync2_reg;
+        almost_empty_sync4_reg <= almost_empty_sync3_reg;
     end
 end
 
-assign m_status_almost_full  = almost_full_sync3_reg;
-assign m_status_almost_empty = almost_empty_sync3_reg;
-
-always @(posedge s_clk) 
-    if (s_rst_sync3_reg) begin
-      almost_full_reg  <= 1'b0;
-      almost_empty_reg <= 1'b0;
-    end else begin
-      almost_full_reg  <= qrtr_3_4;
-      almost_empty_reg <= qrtr_1_2;
-    end
+assign m_status_almost_full  = almost_full_sync4_reg;
+assign m_status_almost_empty = almost_empty_sync4_reg;
 
 // status synchronization
 always @(posedge s_clk) begin
