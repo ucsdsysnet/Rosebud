@@ -91,7 +91,6 @@ module simple_scheduler # (
   input  wire                                trig_out_ack
 );
 
-
   // Register inputs and outputs
   wire [INTERFACE_COUNT*DATA_WIDTH-1:0]    data_m_axis_tdata_n;
   wire [INTERFACE_COUNT*STRB_WIDTH-1:0]    data_m_axis_tkeep_n;
@@ -155,7 +154,7 @@ module simple_scheduler # (
       /// *** INPUT AND OUTPUT DATA LINE REGISTERS FOR BETTER TIMING *** ///
 
       // A register before TX for better timing
-      axis_register # (
+      axis_pipeline_register # (
         .DATA_WIDTH(DATA_WIDTH),
         .KEEP_ENABLE(1),
         .KEEP_WIDTH(STRB_WIDTH),
@@ -164,7 +163,8 @@ module simple_scheduler # (
         .DEST_ENABLE(0),
         .USER_ENABLE(1),
         .USER_WIDTH(ID_TAG_WIDTH),
-        .REG_TYPE(DATA_REG_TYPE)
+        .REG_TYPE(DATA_REG_TYPE),
+        .LENGTH(2)
       ) data_s_reg_inst (
         .clk(clk),
         .rst(rst_r),
@@ -188,7 +188,7 @@ module simple_scheduler # (
         .m_axis_tuser ()
       );
 
-      axis_register # (
+      axis_pipeline_register # (
         .DATA_WIDTH(DATA_WIDTH),
         .KEEP_ENABLE(1),
         .KEEP_WIDTH(STRB_WIDTH),
@@ -198,7 +198,8 @@ module simple_scheduler # (
         .DEST_WIDTH(ID_TAG_WIDTH),
         .USER_ENABLE(1),
         .USER_WIDTH(PORT_WIDTH),
-        .REG_TYPE(DATA_REG_TYPE)
+        .REG_TYPE(DATA_REG_TYPE),
+        .LENGTH(1)
       ) data_m_reg_inst (
         .clk(clk),
         .rst(rst_r),
@@ -222,7 +223,7 @@ module simple_scheduler # (
         .m_axis_tuser (data_m_axis_tuser[q*PORT_WIDTH +: PORT_WIDTH])
       );
 
-      axis_register # (
+      axis_pipeline_register # (
         .DATA_WIDTH(DATA_WIDTH),
         .KEEP_ENABLE(1),
         .KEEP_WIDTH(STRB_WIDTH),
@@ -230,7 +231,8 @@ module simple_scheduler # (
         .ID_ENABLE(0),
         .DEST_ENABLE(0),
         .USER_ENABLE(0),
-        .REG_TYPE(DATA_REG_TYPE)
+        .REG_TYPE(DATA_REG_TYPE),
+        .LENGTH(1)
       ) rx_reg_inst (
         .clk(clk),
         .rst(rst_r),
@@ -285,7 +287,7 @@ module simple_scheduler # (
 
         .din_valid(rx_hash_valid[q]),
         .din({rx_hash_type[q*4 +: 4], rx_hash[q*32 +: 32]}),
-        .din_ready(), // rx_hash_ready[q]), 
+        .din_ready(), // rx_hash_ready[q]),
         // FIFO has more room than 64B packets in the data fifo
 
         .dout_valid(rx_hash_valid_f[q]),

@@ -388,8 +388,9 @@ wire [(INTERFACE_COUNT+V_PORT_COUNT)*LVL1_DATA_WIDTH-1:0] rx_axis_tdata;
 wire [(INTERFACE_COUNT+V_PORT_COUNT)*LVL1_STRB_WIDTH-1:0] rx_axis_tkeep;
 wire [(INTERFACE_COUNT+V_PORT_COUNT)-1:0] rx_axis_tvalid, rx_axis_tready, rx_axis_tlast;
 
-reg  [INTERFACE_COUNT-1:0] rx_drop, rx_drop_r;
-reg  [INTERFACE_COUNT-1:0] rx_almost_full, rx_almost_full_r;
+(* KEEP = "TRUE" *) reg [INTERFACE_COUNT-1:0] rx_drop, rx_drop_r;
+(* KEEP = "TRUE" *) reg [INTERFACE_COUNT-1:0] rx_almost_full,
+                            rx_almost_full_r, rx_almost_full_rr;
 
 genvar m;
 generate
@@ -638,15 +639,17 @@ generate
 
       always @ (posedge sys_clk)
         if (sys_rst) begin
-          rx_drop          <= {INTERFACE_COUNT{1'b0}};
-          rx_drop_r        <= {INTERFACE_COUNT{1'b0}};
-          rx_almost_full   <= {INTERFACE_COUNT{1'b0}};
-          rx_almost_full_r <= {INTERFACE_COUNT{1'b0}};
+          rx_drop           <= {INTERFACE_COUNT{1'b0}};
+          rx_drop_r         <= {INTERFACE_COUNT{1'b0}};
+          rx_almost_full    <= {INTERFACE_COUNT{1'b0}};
+          rx_almost_full_r  <= {INTERFACE_COUNT{1'b0}};
+          rx_almost_full_rr <= {INTERFACE_COUNT{1'b0}};
         end else begin
-          rx_drop          <= port_rx_axis_overflow_r | port_rx_axis_bad_frame_r;
-          rx_drop_r        <= rx_drop;
-          rx_almost_full   <= port_rx_axis_almost_full_r;
-          rx_almost_full_r <= rx_almost_full;
+          rx_drop           <= port_rx_axis_overflow_r | port_rx_axis_bad_frame_r;
+          rx_drop_r         <= rx_drop;
+          rx_almost_full    <= port_rx_axis_almost_full_r;
+          rx_almost_full_r  <= rx_almost_full;
+          rx_almost_full_rr <= rx_almost_full_r;
         end
     end
 endgenerate
@@ -1204,7 +1207,7 @@ simple_scheduler # (
   .rx_axis_tready(rx_axis_tready),
   .rx_axis_tlast(rx_axis_tlast),
 
-  .rx_axis_almost_full({{V_PORT_COUNT{1'b0}},rx_almost_full_r}),
+  .rx_axis_almost_full({{V_PORT_COUNT{1'b0}},rx_almost_full_rr}),
 
   // DATA lines to/from cores
   .data_m_axis_tdata(sched_rx_axis_tdata),

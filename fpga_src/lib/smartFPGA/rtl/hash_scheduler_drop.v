@@ -155,7 +155,7 @@ module simple_scheduler # (
       /// *** INPUT AND OUTPUT DATA LINE REGISTERS FOR BETTER TIMING *** ///
 
       // A register before TX for better timing
-      axis_register # (
+      axis_pipeline_register # (
         .DATA_WIDTH(DATA_WIDTH),
         .KEEP_ENABLE(1),
         .KEEP_WIDTH(STRB_WIDTH),
@@ -164,7 +164,8 @@ module simple_scheduler # (
         .DEST_ENABLE(0),
         .USER_ENABLE(1),
         .USER_WIDTH(ID_TAG_WIDTH),
-        .REG_TYPE(DATA_REG_TYPE)
+        .REG_TYPE(DATA_REG_TYPE),
+        .LENGTH(2)
       ) data_s_reg_inst (
         .clk(clk),
         .rst(rst_r),
@@ -188,7 +189,7 @@ module simple_scheduler # (
         .m_axis_tuser ()
       );
 
-      axis_register # (
+      axis_pipeline_register # (
         .DATA_WIDTH(DATA_WIDTH),
         .KEEP_ENABLE(1),
         .KEEP_WIDTH(STRB_WIDTH),
@@ -198,7 +199,8 @@ module simple_scheduler # (
         .DEST_WIDTH(ID_TAG_WIDTH),
         .USER_ENABLE(1),
         .USER_WIDTH(PORT_WIDTH),
-        .REG_TYPE(DATA_REG_TYPE)
+        .REG_TYPE(DATA_REG_TYPE),
+        .LENGTH(1)
       ) data_m_reg_inst (
         .clk(clk),
         .rst(rst_r),
@@ -222,7 +224,7 @@ module simple_scheduler # (
         .m_axis_tuser (data_m_axis_tuser[q*PORT_WIDTH +: PORT_WIDTH])
       );
 
-      axis_register # (
+      axis_pipeline_register # (
         .DATA_WIDTH(DATA_WIDTH),
         .KEEP_ENABLE(1),
         .KEEP_WIDTH(STRB_WIDTH),
@@ -230,7 +232,8 @@ module simple_scheduler # (
         .ID_ENABLE(0),
         .DEST_ENABLE(0),
         .USER_ENABLE(0),
-        .REG_TYPE(DATA_REG_TYPE)
+        .REG_TYPE(DATA_REG_TYPE),
+        .LENGTH(1)
       ) rx_reg_inst (
         .clk(clk),
         .rst(rst_r),

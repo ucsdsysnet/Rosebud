@@ -46,22 +46,22 @@ module pcie_controller #
   parameter RQ_SEQ_NUM_WIDTH        = 4,
   parameter PCIE_ADDR_WIDTH         = 64,
   parameter PCIE_RAM_ADDR_WIDTH     = 32,
-  parameter TX_RX_RAM_SIZE          = 2**15, 
+  parameter TX_RX_RAM_SIZE          = 2**15,
   parameter MAC_ASYNC_FIFO_SIZE     = 1024,
   parameter PCIE_DMA_LEN_WIDTH      = 16,
   parameter HOST_DMA_TAG_WIDTH      = 32,
   parameter AXIL_DATA_WIDTH         = 32,
   parameter AXIL_STRB_WIDTH         = (AXIL_DATA_WIDTH/8),
   parameter AXIL_ADDR_WIDTH         = 32,
-  parameter AXIS_DATA_WIDTH         = 128, 
-  parameter AXIS_KEEP_WIDTH         = 16, 
-  parameter AXIS_TAG_WIDTH          = 9, 
+  parameter AXIS_DATA_WIDTH         = 128,
+  parameter AXIS_KEEP_WIDTH         = 16,
+  parameter AXIS_TAG_WIDTH          = 9,
   parameter CORE_SLOT_WIDTH         = 4,
   parameter CORE_DESC_WIDTH         = 128,
   parameter CORE_COUNT              = 16,
-  parameter CORE_WIDTH              = $clog2(CORE_COUNT), 
-  parameter CORE_ADDR_WIDTH         = 16, 
-  parameter CORES_ADDR_WIDTH        = CORE_WIDTH+CORE_ADDR_WIDTH, 
+  parameter CORE_WIDTH              = $clog2(CORE_COUNT),
+  parameter CORE_ADDR_WIDTH         = 16,
+  parameter CORES_ADDR_WIDTH        = CORE_WIDTH+CORE_ADDR_WIDTH,
   parameter CORES_DATA_FIFO_SIZE    = 1024,
   parameter CORES_CTRL_FIFO_SIZE    = 512,
   parameter PCIE_SLOT_COUNT         = 16,
@@ -108,12 +108,12 @@ module pcie_controller #
   input  wire                                  m_axis_cc_tready,
   output wire [AXIS_PCIE_CC_USER_WIDTH-1:0]    m_axis_cc_tuser,
   output wire                                  m_axis_cc_tvalid,
-    
+
   input  wire [RQ_SEQ_NUM_WIDTH-1:0]           s_axis_rq_seq_num_0,
   input  wire                                  s_axis_rq_seq_num_valid_0,
   input  wire [RQ_SEQ_NUM_WIDTH-1:0]           s_axis_rq_seq_num_1,
   input  wire                                  s_axis_rq_seq_num_valid_1,
-    
+
   input  wire [7:0]                            pcie_tx_fc_nph_av,
   input  wire [7:0]                            pcie_tx_fc_ph_av,
   input  wire [11:0]                           pcie_tx_fc_pd_av,
@@ -125,35 +125,35 @@ module pcie_controller #
 
   output wire                                  status_error_cor,
   output wire                                  status_error_uncor,
-  
+
   // Cores data
   input  wire [AXIS_DATA_WIDTH-1:0]            cores_tx_axis_tdata,
   input  wire [AXIS_KEEP_WIDTH-1:0]            cores_tx_axis_tkeep,
   input  wire [AXIS_TAG_WIDTH-1:0]             cores_tx_axis_tuser,
-  input  wire                                  cores_tx_axis_tvalid, 
-  output wire                                  cores_tx_axis_tready, 
+  input  wire                                  cores_tx_axis_tvalid,
+  output wire                                  cores_tx_axis_tready,
   input  wire                                  cores_tx_axis_tlast,
-  
+
   output wire [AXIS_DATA_WIDTH-1:0]            cores_rx_axis_tdata,
   output wire [AXIS_KEEP_WIDTH-1:0]            cores_rx_axis_tkeep,
   output wire [AXIS_TAG_WIDTH-1:0]             cores_rx_axis_tdest,
-  output wire                                  cores_rx_axis_tvalid, 
-  input  wire                                  cores_rx_axis_tready, 
+  output wire                                  cores_rx_axis_tvalid,
+  input  wire                                  cores_rx_axis_tready,
   output wire                                  cores_rx_axis_tlast,
-  
+
   // Cores DRAM requests
   input  wire [CORE_DESC_WIDTH-1:0]            cores_ctrl_s_axis_tdata,
   input  wire                                  cores_ctrl_s_axis_tvalid,
   output wire                                  cores_ctrl_s_axis_tready,
   input  wire                                  cores_ctrl_s_axis_tlast,
   input  wire [CORE_WIDTH-1:0]                 cores_ctrl_s_axis_tuser,
-  
+
   output wire [CORE_DESC_WIDTH-1:0]            cores_ctrl_m_axis_tdata,
   output wire                                  cores_ctrl_m_axis_tvalid,
   input  wire                                  cores_ctrl_m_axis_tready,
   output wire                                  cores_ctrl_m_axis_tlast,
   output wire [CORE_WIDTH-1:0]                 cores_ctrl_m_axis_tdest,
-  
+
   // DMA requests from Host
   input  wire [PCIE_ADDR_WIDTH-1:0]            host_dma_read_desc_pcie_addr,
   input  wire [PCIE_RAM_ADDR_WIDTH-1:0]        host_dma_read_desc_ram_addr,
@@ -172,7 +172,7 @@ module pcie_controller #
   output wire                                  host_dma_write_desc_ready,
   output wire [HOST_DMA_TAG_WIDTH-1:0]         host_dma_write_desc_status_tag,
   output wire                                  host_dma_write_desc_status_valid,
- 
+
   // AXI lite
   output wire [AXIL_ADDR_WIDTH-1:0]            axil_ctrl_awaddr,
   output wire [2:0]                            axil_ctrl_awprot,
@@ -193,7 +193,7 @@ module pcie_controller #
   input  wire [1:0]                            axil_ctrl_rresp,
   input  wire                                  axil_ctrl_rvalid,
   output wire                                  axil_ctrl_rready,
-    
+
   // Virtual MACs
   output wire [PORT_COUNT*AXIS_DATA_WIDTH-1:0] tx_axis_tdata,
   output wire [PORT_COUNT*AXIS_KEEP_WIDTH-1:0] tx_axis_tkeep,
@@ -208,12 +208,12 @@ module pcie_controller #
   output wire [PORT_COUNT-1:0]                 rx_axis_tready,
   input  wire [PORT_COUNT-1:0]                 rx_axis_tlast,
   input  wire [PORT_COUNT-1:0]                 rx_axis_tuser,
-    
+
   output wire [31:0]                           msi_irq
 );
-  
+
 parameter IF_AXIL_ADDR_WIDTH  = (IF_COUNT>0) ? AXIL_ADDR_WIDTH-$clog2(IF_COUNT) : AXIL_ADDR_WIDTH;
-parameter AXIL_CSR_ADDR_WIDTH = (IF_COUNT>0) ? IF_AXIL_ADDR_WIDTH-5-$clog2((PORTS_PER_IF+3)/8) 
+parameter AXIL_CSR_ADDR_WIDTH = (IF_COUNT>0) ? IF_AXIL_ADDR_WIDTH-5-$clog2((PORTS_PER_IF+3)/8)
                                              : AXIL_ADDR_WIDTH;
 
 // PCIe DMA parameters
@@ -221,7 +221,7 @@ parameter PCIE_DMA_TAG_WIDTH    = (PCIE_SLOT_WIDTH>14) ? PCIE_SLOT_WIDTH+2 : 16;
 parameter CORE_DMA_TAG_WIDTH    = (IF_COUNT>0) ? PCIE_DMA_TAG_WIDTH-2 : PCIE_DMA_TAG_WIDTH;
 parameter SEG_COUNT             = AXIS_PCIE_DATA_WIDTH > 64 ? AXIS_PCIE_DATA_WIDTH*2 / 128 : 2;
 parameter SEG_DATA_WIDTH        = AXIS_PCIE_DATA_WIDTH*2/SEG_COUNT;
-parameter SEG_ADDR_WIDTH        = 12; 
+parameter SEG_ADDR_WIDTH        = 12;
 parameter SEG_BE_WIDTH          = SEG_DATA_WIDTH/8;
 parameter RAM_ADDR_WIDTH        = SEG_ADDR_WIDTH+$clog2(SEG_COUNT)+$clog2(SEG_BE_WIDTH);
 parameter IF_RAM_SEL_WIDTH      = (PORTS_PER_IF>1) ? $clog2(PORTS_PER_IF) : 1;
@@ -354,104 +354,184 @@ status_error_uncor_pm_inst (
 );
 
 // -------------------------------------------------------------------//
-// ------------------------- Cross time domain -----------------------//
+// ----------------------- Cores data line FIFOs ---------------------//
 // -------------------------------------------------------------------//
 wire [AXIS_DATA_WIDTH-1:0] cores_tx_tdata;
 wire [AXIS_KEEP_WIDTH-1:0] cores_tx_tkeep;
 wire [AXIS_TAG_WIDTH-1:0]  cores_tx_tuser;
-wire                       cores_tx_tvalid; 
-wire                       cores_tx_tready; 
+wire                       cores_tx_tvalid;
+wire                       cores_tx_tready;
 wire                       cores_tx_tlast;
-
-axis_async_fifo # (
-    .DEPTH(CORES_DATA_FIFO_SIZE),
-    .DATA_WIDTH(AXIS_DATA_WIDTH),
-    .KEEP_ENABLE(1), 
-    .KEEP_WIDTH(AXIS_KEEP_WIDTH),
-    .ID_ENABLE(0),
-    .DEST_ENABLE(0),
-    .USER_ENABLE(1),
-    .USER_WIDTH(AXIS_TAG_WIDTH),
-    .FRAME_FIFO(0)
-) cores_tx_axis_data_async_fifo (
-    .async_rst(pcie_rst),
-
-    .s_clk(sys_clk),
-    .s_axis_tdata (cores_tx_axis_tdata),
-    .s_axis_tkeep (cores_tx_axis_tkeep),
-    .s_axis_tvalid(cores_tx_axis_tvalid),
-    .s_axis_tready(cores_tx_axis_tready),
-    .s_axis_tlast (cores_tx_axis_tlast),
-    .s_axis_tid   (8'd0),
-    .s_axis_tdest (8'd0),
-    .s_axis_tuser (cores_tx_axis_tuser),
-
-    .m_clk(pcie_clk),
-    .m_axis_tdata (cores_tx_tdata), 
-    .m_axis_tkeep (cores_tx_tkeep), 
-    .m_axis_tvalid(cores_tx_tvalid),
-    .m_axis_tready(cores_tx_tready),
-    .m_axis_tlast (cores_tx_tlast), 
-    .m_axis_tid   (),
-    .m_axis_tdest (),
-    .m_axis_tuser (cores_tx_tuser),
-
-    .s_status_overflow(),
-    .s_status_bad_frame(),
-    .s_status_good_frame(),
-    .m_status_overflow(),
-    .m_status_bad_frame(),
-    .m_status_good_frame()
-);
 
 wire [AXIS_DATA_WIDTH-1:0] cores_rx_tdata;
 wire [AXIS_KEEP_WIDTH-1:0] cores_rx_tkeep;
 wire [AXIS_TAG_WIDTH-1:0]  cores_rx_tdest;
-wire                       cores_rx_tvalid; 
-wire                       cores_rx_tready; 
+wire                       cores_rx_tvalid;
+wire                       cores_rx_tready;
 wire                       cores_rx_tlast;
 
-axis_async_fifo # (
-    .DEPTH(CORES_DATA_FIFO_SIZE),
-    .DATA_WIDTH(AXIS_DATA_WIDTH),
-    .KEEP_ENABLE(1), 
-    .KEEP_WIDTH(AXIS_KEEP_WIDTH),
-    .ID_ENABLE(0),
-    .DEST_ENABLE(1),
-    .DEST_WIDTH(AXIS_TAG_WIDTH),
-    .USER_ENABLE(0),
-    .FRAME_FIFO(0)
-) cores_rx_axis_data_async_fifo (
-    .async_rst(sys_rst),
+if(CORE_REQ_PCIE_CLK) begin: cores_data_fifos
 
-    .s_clk(pcie_clk),
-    .s_axis_tdata (cores_rx_tdata), 
-    .s_axis_tkeep (cores_rx_tkeep), 
-    .s_axis_tvalid(cores_rx_tvalid),
-    .s_axis_tready(cores_rx_tready),
-    .s_axis_tlast (cores_rx_tlast), 
-    .s_axis_tid   (8'd0),
-    .s_axis_tdest (cores_rx_tdest),
-    .s_axis_tuser (1'b0),
+    axis_fifo # (
+        .DEPTH(CORES_DATA_FIFO_SIZE),
+        .DATA_WIDTH(AXIS_DATA_WIDTH),
+        .KEEP_ENABLE(1),
+        .KEEP_WIDTH(AXIS_KEEP_WIDTH),
+        .ID_ENABLE(0),
+        .DEST_ENABLE(0),
+        .USER_ENABLE(1),
+        .USER_WIDTH(AXIS_TAG_WIDTH),
+        .FRAME_FIFO(0)
+    ) cores_tx_axis_data_fifo (
+        .clk(pcie_clk),
+        .rst(pcie_rst),
 
-    .m_clk(sys_clk),
-    .m_axis_tdata (cores_rx_axis_tdata),
-    .m_axis_tkeep (cores_rx_axis_tkeep),
-    .m_axis_tvalid(cores_rx_axis_tvalid), 
-    .m_axis_tready(cores_rx_axis_tready),
-    .m_axis_tlast (cores_rx_axis_tlast),
-    .m_axis_tid   (),
-    .m_axis_tdest (cores_rx_axis_tdest),
-    .m_axis_tuser (),
+        .s_axis_tdata (cores_tx_axis_tdata),
+        .s_axis_tkeep (cores_tx_axis_tkeep),
+        .s_axis_tvalid(cores_tx_axis_tvalid),
+        .s_axis_tready(cores_tx_axis_tready),
+        .s_axis_tlast (cores_tx_axis_tlast),
+        .s_axis_tid   (8'd0),
+        .s_axis_tdest (8'd0),
+        .s_axis_tuser (cores_tx_axis_tuser),
 
-    .s_status_overflow(),
-    .s_status_bad_frame(),
-    .s_status_good_frame(),
-    .m_status_overflow(),
-    .m_status_bad_frame(),
-    .m_status_good_frame()
-);
-  
+        .m_axis_tdata (cores_tx_tdata),
+        .m_axis_tkeep (cores_tx_tkeep),
+        .m_axis_tvalid(cores_tx_tvalid),
+        .m_axis_tready(cores_tx_tready),
+        .m_axis_tlast (cores_tx_tlast),
+        .m_axis_tid   (),
+        .m_axis_tdest (),
+        .m_axis_tuser (cores_tx_tuser),
+
+        .status_overflow(),
+        .status_bad_frame(),
+        .status_good_frame()
+    );
+
+    axis_fifo # (
+        .DEPTH(CORES_DATA_FIFO_SIZE),
+        .DATA_WIDTH(AXIS_DATA_WIDTH),
+        .KEEP_ENABLE(1),
+        .KEEP_WIDTH(AXIS_KEEP_WIDTH),
+        .ID_ENABLE(0),
+        .DEST_ENABLE(1),
+        .DEST_WIDTH(AXIS_TAG_WIDTH),
+        .USER_ENABLE(0),
+        .FRAME_FIFO(0)
+    ) cores_rx_axis_data_fifo (
+        .clk(sys_clk),
+        .rst(sys_rst),
+
+        .s_axis_tdata (cores_rx_tdata),
+        .s_axis_tkeep (cores_rx_tkeep),
+        .s_axis_tvalid(cores_rx_tvalid),
+        .s_axis_tready(cores_rx_tready),
+        .s_axis_tlast (cores_rx_tlast),
+        .s_axis_tid   (8'd0),
+        .s_axis_tdest (cores_rx_tdest),
+        .s_axis_tuser (1'b0),
+
+        .m_axis_tdata (cores_rx_axis_tdata),
+        .m_axis_tkeep (cores_rx_axis_tkeep),
+        .m_axis_tvalid(cores_rx_axis_tvalid),
+        .m_axis_tready(cores_rx_axis_tready),
+        .m_axis_tlast (cores_rx_axis_tlast),
+        .m_axis_tid   (),
+        .m_axis_tdest (cores_rx_axis_tdest),
+        .m_axis_tuser (),
+
+        .status_overflow(),
+        .status_bad_frame(),
+        .status_good_frame()
+    );
+
+end else begin: cores_data_async_fifos
+
+    axis_async_fifo # (
+        .DEPTH(CORES_DATA_FIFO_SIZE),
+        .DATA_WIDTH(AXIS_DATA_WIDTH),
+        .KEEP_ENABLE(1),
+        .KEEP_WIDTH(AXIS_KEEP_WIDTH),
+        .ID_ENABLE(0),
+        .DEST_ENABLE(0),
+        .USER_ENABLE(1),
+        .USER_WIDTH(AXIS_TAG_WIDTH),
+        .FRAME_FIFO(0)
+    ) cores_tx_axis_data_async_fifo (
+        .async_rst(pcie_rst),
+
+        .s_clk(sys_clk),
+        .s_axis_tdata (cores_tx_axis_tdata),
+        .s_axis_tkeep (cores_tx_axis_tkeep),
+        .s_axis_tvalid(cores_tx_axis_tvalid),
+        .s_axis_tready(cores_tx_axis_tready),
+        .s_axis_tlast (cores_tx_axis_tlast),
+        .s_axis_tid   (8'd0),
+        .s_axis_tdest (8'd0),
+        .s_axis_tuser (cores_tx_axis_tuser),
+
+        .m_clk(pcie_clk),
+        .m_axis_tdata (cores_tx_tdata),
+        .m_axis_tkeep (cores_tx_tkeep),
+        .m_axis_tvalid(cores_tx_tvalid),
+        .m_axis_tready(cores_tx_tready),
+        .m_axis_tlast (cores_tx_tlast),
+        .m_axis_tid   (),
+        .m_axis_tdest (),
+        .m_axis_tuser (cores_tx_tuser),
+
+        .s_status_overflow(),
+        .s_status_bad_frame(),
+        .s_status_good_frame(),
+        .m_status_overflow(),
+        .m_status_bad_frame(),
+        .m_status_good_frame()
+    );
+
+    axis_async_fifo # (
+        .DEPTH(CORES_DATA_FIFO_SIZE),
+        .DATA_WIDTH(AXIS_DATA_WIDTH),
+        .KEEP_ENABLE(1),
+        .KEEP_WIDTH(AXIS_KEEP_WIDTH),
+        .ID_ENABLE(0),
+        .DEST_ENABLE(1),
+        .DEST_WIDTH(AXIS_TAG_WIDTH),
+        .USER_ENABLE(0),
+        .FRAME_FIFO(0)
+    ) cores_rx_axis_data_async_fifo (
+        .async_rst(sys_rst),
+
+        .s_clk(pcie_clk),
+        .s_axis_tdata (cores_rx_tdata),
+        .s_axis_tkeep (cores_rx_tkeep),
+        .s_axis_tvalid(cores_rx_tvalid),
+        .s_axis_tready(cores_rx_tready),
+        .s_axis_tlast (cores_rx_tlast),
+        .s_axis_tid   (8'd0),
+        .s_axis_tdest (cores_rx_tdest),
+        .s_axis_tuser (1'b0),
+
+        .m_clk(sys_clk),
+        .m_axis_tdata (cores_rx_axis_tdata),
+        .m_axis_tkeep (cores_rx_axis_tkeep),
+        .m_axis_tvalid(cores_rx_axis_tvalid),
+        .m_axis_tready(cores_rx_axis_tready),
+        .m_axis_tlast (cores_rx_axis_tlast),
+        .m_axis_tid   (),
+        .m_axis_tdest (cores_rx_axis_tdest),
+        .m_axis_tuser (),
+
+        .s_status_overflow(),
+        .s_status_bad_frame(),
+        .s_status_good_frame(),
+        .m_status_overflow(),
+        .m_status_bad_frame(),
+        .m_status_good_frame()
+    );
+
+end
+
 localparam CORE_DESC_STRB_WIDTH = CORE_DESC_WIDTH/8;
 
 wire [CORE_DESC_WIDTH-1:0] cores_ctrl_s_axis_tdata_r;
@@ -499,7 +579,7 @@ if(CORE_REQ_PCIE_CLK) begin: cores_ctrl_fifos
         .s_axis_tid   (8'd0),
         .s_axis_tdest (8'd0),
         .s_axis_tuser (cores_ctrl_s_axis_tuser),
-    
+
         .m_axis_tdata (cores_ctrl_s_axis_tdata_r),
         .m_axis_tkeep (),
         .m_axis_tvalid(cores_ctrl_s_axis_tvalid_r),
@@ -513,7 +593,7 @@ if(CORE_REQ_PCIE_CLK) begin: cores_ctrl_fifos
     axis_fifo_adapter # (
         .DEPTH(CORES_CTRL_FIFO_SIZE),
         .S_DATA_WIDTH(CORE_DESC_WIDTH),
-        .S_KEEP_ENABLE(1), 
+        .S_KEEP_ENABLE(1),
         .S_KEEP_WIDTH(CORE_DESC_STRB_WIDTH),
         .M_DATA_WIDTH(128),
         .M_KEEP_ENABLE(1),
@@ -523,7 +603,7 @@ if(CORE_REQ_PCIE_CLK) begin: cores_ctrl_fifos
         .USER_ENABLE(1),
         .USER_WIDTH(CORE_WIDTH),
         .FRAME_FIFO(0)
-    ) cores_ctrl_s_axis_async_fifo (
+    ) cores_ctrl_s_axis_fifo (
         .clk(pcie_clk),
         .rst(pcie_rst),
         .s_axis_tdata (cores_ctrl_s_axis_tdata_r),
@@ -534,7 +614,7 @@ if(CORE_REQ_PCIE_CLK) begin: cores_ctrl_fifos
         .s_axis_tid   (8'd0),
         .s_axis_tdest (8'd0),
         .s_axis_tuser (cores_ctrl_s_axis_tuser_r),
-    
+
         .m_axis_tdata (cores_ctrl_s_tdata),
         .m_axis_tkeep (),
         .m_axis_tvalid(cores_ctrl_s_tvalid),
@@ -543,16 +623,16 @@ if(CORE_REQ_PCIE_CLK) begin: cores_ctrl_fifos
         .m_axis_tid   (),
         .m_axis_tdest (),
         .m_axis_tuser (cores_ctrl_s_tuser),
-    
+
         .status_overflow(),
         .status_bad_frame(),
         .status_good_frame()
     );
-    
+
     axis_fifo_adapter # (
         .DEPTH(CORES_CTRL_FIFO_SIZE),
         .S_DATA_WIDTH(128),
-        .S_KEEP_ENABLE(1), 
+        .S_KEEP_ENABLE(1),
         .S_KEEP_WIDTH(16),
         .M_DATA_WIDTH(CORE_DESC_WIDTH),
         .M_KEEP_ENABLE(1),
@@ -562,7 +642,7 @@ if(CORE_REQ_PCIE_CLK) begin: cores_ctrl_fifos
         .DEST_WIDTH(CORE_WIDTH),
         .USER_ENABLE(0),
         .FRAME_FIFO(0)
-    ) cores_ctrl_m_axis_async_fifo (
+    ) cores_ctrl_m_axis_fifo (
         .clk(pcie_clk),
         .rst(pcie_rst),
         .s_axis_tdata (cores_ctrl_m_tdata),
@@ -573,7 +653,7 @@ if(CORE_REQ_PCIE_CLK) begin: cores_ctrl_fifos
         .s_axis_tid   (8'd0),
         .s_axis_tdest (cores_ctrl_m_tdest),
         .s_axis_tuser (1'b0),
-    
+
         .m_axis_tdata (cores_ctrl_m_axis_tdata_n),
         .m_axis_tkeep (),
         .m_axis_tvalid(cores_ctrl_m_axis_tvalid_n),
@@ -582,12 +662,12 @@ if(CORE_REQ_PCIE_CLK) begin: cores_ctrl_fifos
         .m_axis_tid   (),
         .m_axis_tdest (cores_ctrl_m_axis_tdest_n),
         .m_axis_tuser (),
-    
+
         .status_overflow(),
         .status_bad_frame(),
         .status_good_frame()
     );
-    
+
     axis_pipeline_register # (
         .DATA_WIDTH(CORE_DESC_WIDTH),
         .KEEP_ENABLE(0),
@@ -610,7 +690,7 @@ if(CORE_REQ_PCIE_CLK) begin: cores_ctrl_fifos
         .s_axis_tid   (8'd0),
         .s_axis_tdest (cores_ctrl_m_axis_tdest_n),
         .s_axis_tuser (1'b0),
-    
+
         .m_axis_tdata (cores_ctrl_m_axis_tdata),
         .m_axis_tkeep (),
         .m_axis_tvalid(cores_ctrl_m_axis_tvalid),
@@ -643,7 +723,7 @@ end else begin: cores_ctrl_async_fifos
         .s_axis_tid   (8'd0),
         .s_axis_tdest (8'd0),
         .s_axis_tuser (cores_ctrl_s_axis_tuser),
-    
+
         .m_axis_tdata (cores_ctrl_s_axis_tdata_r),
         .m_axis_tkeep (),
         .m_axis_tvalid(cores_ctrl_s_axis_tvalid_r),
@@ -657,7 +737,7 @@ end else begin: cores_ctrl_async_fifos
     axis_async_fifo_adapter # (
         .DEPTH(CORES_CTRL_FIFO_SIZE),
         .S_DATA_WIDTH(CORE_DESC_WIDTH),
-        .S_KEEP_ENABLE(1), 
+        .S_KEEP_ENABLE(1),
         .S_KEEP_WIDTH(CORE_DESC_STRB_WIDTH),
         .M_DATA_WIDTH(128),
         .M_KEEP_ENABLE(1),
@@ -678,7 +758,7 @@ end else begin: cores_ctrl_async_fifos
         .s_axis_tid   (8'd0),
         .s_axis_tdest (8'd0),
         .s_axis_tuser (cores_ctrl_s_axis_tuser_r),
-    
+
         .m_clk(pcie_clk),
         .m_rst(pcie_rst),
         .m_axis_tdata (cores_ctrl_s_tdata),
@@ -689,7 +769,7 @@ end else begin: cores_ctrl_async_fifos
         .m_axis_tid   (),
         .m_axis_tdest (),
         .m_axis_tuser (cores_ctrl_s_tuser),
-    
+
         .s_status_overflow(),
         .s_status_bad_frame(),
         .s_status_good_frame(),
@@ -697,11 +777,11 @@ end else begin: cores_ctrl_async_fifos
         .m_status_bad_frame(),
         .m_status_good_frame()
     );
-    
+
     axis_async_fifo_adapter # (
         .DEPTH(CORES_CTRL_FIFO_SIZE),
         .S_DATA_WIDTH(128),
-        .S_KEEP_ENABLE(1), 
+        .S_KEEP_ENABLE(1),
         .S_KEEP_WIDTH(16),
         .M_DATA_WIDTH(CORE_DESC_WIDTH),
         .M_KEEP_ENABLE(1),
@@ -722,7 +802,7 @@ end else begin: cores_ctrl_async_fifos
         .s_axis_tid   (8'd0),
         .s_axis_tdest (cores_ctrl_m_tdest),
         .s_axis_tuser (1'b0),
-    
+
         .m_clk(sys_clk),
         .m_rst(sys_rst),
         .m_axis_tdata (cores_ctrl_m_axis_tdata_n),
@@ -733,7 +813,7 @@ end else begin: cores_ctrl_async_fifos
         .m_axis_tid   (),
         .m_axis_tdest (cores_ctrl_m_axis_tdest_n),
         .m_axis_tuser (),
-    
+
         .s_status_overflow(),
         .s_status_bad_frame(),
         .s_status_good_frame(),
@@ -764,7 +844,7 @@ end else begin: cores_ctrl_async_fifos
         .s_axis_tid   (8'd0),
         .s_axis_tdest (cores_ctrl_m_axis_tdest_n),
         .s_axis_tuser (1'b0),
-    
+
         .m_axis_tdata (cores_ctrl_m_axis_tdata),
         .m_axis_tkeep (),
         .m_axis_tvalid(cores_ctrl_m_axis_tvalid),
@@ -873,24 +953,24 @@ pcie_us_axil_master_inst (
 // -------------------------------------------------------------------//
 wire [PCIE_ADDR_WIDTH-1:0]     pcie_dma_read_desc_pcie_addr;
 wire [RAM_SEL_WIDTH-1:0]       pcie_dma_read_desc_ram_sel;
-wire [RAM_ADDR_WIDTH-1:0]      pcie_dma_read_desc_ram_addr;  
-wire [PCIE_DMA_LEN_WIDTH-1:0]  pcie_dma_read_desc_len;   
+wire [RAM_ADDR_WIDTH-1:0]      pcie_dma_read_desc_ram_addr;
+wire [PCIE_DMA_LEN_WIDTH-1:0]  pcie_dma_read_desc_len;
 wire [PCIE_DMA_TAG_WIDTH-1:0]  pcie_dma_read_desc_tag;
 wire                           pcie_dma_read_desc_valid;
 wire                           pcie_dma_read_desc_ready;
 wire [PCIE_DMA_TAG_WIDTH-1:0]  pcie_dma_read_desc_status_tag;
 wire                           pcie_dma_read_desc_status_valid;
-  
+
 wire [PCIE_ADDR_WIDTH-1:0]     pcie_dma_write_desc_pcie_addr;
 wire [RAM_SEL_WIDTH-1:0]       pcie_dma_write_desc_ram_sel;
 wire [RAM_ADDR_WIDTH-1:0]      pcie_dma_write_desc_ram_addr;
 wire [PCIE_DMA_LEN_WIDTH-1:0]  pcie_dma_write_desc_len;
 wire [PCIE_DMA_TAG_WIDTH-1:0]  pcie_dma_write_desc_tag;
 wire                           pcie_dma_write_desc_valid;
-wire                           pcie_dma_write_desc_ready;     
+wire                           pcie_dma_write_desc_ready;
 wire [PCIE_DMA_TAG_WIDTH-1:0]  pcie_dma_write_desc_status_tag;
 wire                           pcie_dma_write_desc_status_valid;
-  
+
 wire [SEG_COUNT*RAM_SEL_WIDTH-1:0]  dma_ram_wr_cmd_sel;
 wire [SEG_COUNT*SEG_BE_WIDTH-1:0]   dma_ram_wr_cmd_be;
 wire [SEG_COUNT*SEG_ADDR_WIDTH-1:0] dma_ram_wr_cmd_addr;
@@ -954,7 +1034,7 @@ dma_if_pcie_us_inst (
     .m_axis_rq_tready(m_axis_rq_tready),
     .m_axis_rq_tlast(m_axis_rq_tlast),
     .m_axis_rq_tuser(m_axis_rq_tuser),
-    
+
     /*
      * Transmit sequence number input
      */
@@ -1042,24 +1122,24 @@ dma_if_pcie_us_inst (
 // Read and Write controllers for RISCV
 wire [PCIE_ADDR_WIDTH-1:0]    cores_dma_read_desc_pcie_addr;
 wire [CORE_RAM_SEL_WIDTH-1:0] cores_dma_read_desc_ram_sel;
-wire [RAM_ADDR_WIDTH-1:0]     cores_dma_read_desc_ram_addr;  
-wire [PCIE_DMA_LEN_WIDTH-1:0] cores_dma_read_desc_len;   
+wire [RAM_ADDR_WIDTH-1:0]     cores_dma_read_desc_ram_addr;
+wire [PCIE_DMA_LEN_WIDTH-1:0] cores_dma_read_desc_len;
 wire [CORE_DMA_TAG_WIDTH-1:0] cores_dma_read_desc_tag;
 wire                          cores_dma_read_desc_valid;
 wire                          cores_dma_read_desc_ready;
 wire [CORE_DMA_TAG_WIDTH-1:0] cores_dma_read_desc_status_tag;
 wire                          cores_dma_read_desc_status_valid;
-  
+
 wire [PCIE_ADDR_WIDTH-1:0]    cores_dma_write_desc_pcie_addr;
 wire [CORE_RAM_SEL_WIDTH-1:0] cores_dma_write_desc_ram_sel;
 wire [RAM_ADDR_WIDTH-1:0]     cores_dma_write_desc_ram_addr;
 wire [PCIE_DMA_LEN_WIDTH-1:0] cores_dma_write_desc_len;
 wire [CORE_DMA_TAG_WIDTH-1:0] cores_dma_write_desc_tag;
 wire                          cores_dma_write_desc_valid;
-wire                          cores_dma_write_desc_ready;     
+wire                          cores_dma_write_desc_ready;
 wire [CORE_DMA_TAG_WIDTH-1:0] cores_dma_write_desc_status_tag;
 wire                          cores_dma_write_desc_status_valid;
-  
+
 wire [SEG_COUNT*CORE_RAM_SEL_WIDTH-1:0] cores_dma_ram_wr_cmd_sel;
 wire [SEG_COUNT*SEG_BE_WIDTH-1:0]       cores_dma_ram_wr_cmd_be;
 wire [SEG_COUNT*SEG_ADDR_WIDTH-1:0]     cores_dma_ram_wr_cmd_addr;
@@ -1095,37 +1175,37 @@ pcie_cont_read # (
     .AXIS_DATA_WIDTH(AXIS_DATA_WIDTH),
     .AXIS_KEEP_WIDTH(AXIS_KEEP_WIDTH),
     .AXIS_TAG_WIDTH(AXIS_TAG_WIDTH)
-) pcie_cont_read_inst( 
+) pcie_cont_read_inst(
   .pcie_clk  (pcie_clk),
   .pcie_rst  (pcie_rst),
   .dma_enable(pcie_dma_enable),
-                                                                            
-  // Read descriptor request from host                                      
+
+  // Read descriptor request from host
   .host_dma_read_desc_pcie_addr   (host_dma_read_desc_pcie_addr),
   .host_dma_read_desc_ram_addr    (host_dma_read_desc_ram_addr),
   .host_dma_read_desc_len         (host_dma_read_desc_len),
   .host_dma_read_desc_tag         (host_dma_read_desc_tag),
   .host_dma_read_desc_valid       (host_dma_read_desc_valid),
   .host_dma_read_desc_ready       (host_dma_read_desc_ready),
-                                 
+
   .host_dma_read_desc_status_tag  (host_dma_read_desc_status_tag),
   .host_dma_read_desc_status_valid(host_dma_read_desc_status_valid),
-                                                                            
-  // Read request coming from cores                                         
+
+  // Read request coming from cores
   .cores_ctrl_s_tdata (cores_ctrl_s_tdata),
   .cores_ctrl_s_tvalid(cores_ctrl_s_tvalid),
   .cores_ctrl_s_tuser (cores_ctrl_s_tuser),
   .cores_ctrl_s_tready(cores_ctrl_s_tready),
-                                                                          
-  // Data to cores                                                          
+
+  // Data to cores
   .cores_rx_tdata (cores_rx_tdata),
   .cores_rx_tkeep (cores_rx_tkeep),
   .cores_rx_tdest (cores_rx_tdest),
-  .cores_rx_tvalid(cores_rx_tvalid), 
+  .cores_rx_tvalid(cores_rx_tvalid),
   .cores_rx_tready(cores_rx_tready),
   .cores_rx_tlast (cores_rx_tlast),
-                                                                          
-  // Read connection to PCIE DMA                                            
+
+  // Read connection to PCIE DMA
   .pcie_dma_read_desc_pcie_addr   (cores_dma_read_desc_pcie_addr),
   .pcie_dma_read_desc_ram_addr    (cores_dma_read_desc_ram_addr),
   .pcie_dma_read_desc_len         (cores_dma_read_desc_len),
@@ -1140,7 +1220,7 @@ pcie_cont_read # (
   .dma_ram_wr_cmd_addr (cores_dma_ram_wr_cmd_addr),
   .dma_ram_wr_cmd_data (cores_dma_ram_wr_cmd_data),
   .dma_ram_wr_cmd_valid(cores_dma_ram_wr_cmd_valid),
-  .dma_ram_wr_cmd_ready(cores_dma_ram_wr_cmd_ready)                    
+  .dma_ram_wr_cmd_ready(cores_dma_ram_wr_cmd_ready)
 );
 
 pcie_cont_write # (
@@ -1164,37 +1244,37 @@ pcie_cont_write # (
     .AXIS_DATA_WIDTH(AXIS_DATA_WIDTH),
     .AXIS_KEEP_WIDTH(AXIS_KEEP_WIDTH),
     .AXIS_TAG_WIDTH(AXIS_TAG_WIDTH)
-) pcie_cont_write_inst ( 
+) pcie_cont_write_inst (
   .pcie_clk  (pcie_clk),
   .pcie_rst  (pcie_rst),
   .dma_enable(pcie_dma_enable),
-                                                                            
-  // Read descriptor request from host                                      
+
+  // Read descriptor request from host
   .host_dma_write_desc_pcie_addr   (host_dma_write_desc_pcie_addr),
   .host_dma_write_desc_ram_addr    (host_dma_write_desc_ram_addr),
   .host_dma_write_desc_len         (host_dma_write_desc_len),
   .host_dma_write_desc_tag         (host_dma_write_desc_tag),
   .host_dma_write_desc_valid       (host_dma_write_desc_valid),
   .host_dma_write_desc_ready       (host_dma_write_desc_ready),
-                                 
+
   .host_dma_write_desc_status_tag  (host_dma_write_desc_status_tag),
   .host_dma_write_desc_status_valid(host_dma_write_desc_status_valid),
-                                                                            
-  // Read request asking from cores                                         
+
+  // Read request asking from cores
   .cores_ctrl_m_tdata (cores_ctrl_m_tdata),
   .cores_ctrl_m_tvalid(cores_ctrl_m_tvalid),
   .cores_ctrl_m_tdest (cores_ctrl_m_tdest),
   .cores_ctrl_m_tready(cores_ctrl_m_tready),
-                                                                            
-  // Data from cores                                                        
+
+  // Data from cores
   .cores_tx_tdata (cores_tx_tdata),
   .cores_tx_tkeep (cores_tx_tkeep),
   .cores_tx_tuser (cores_tx_tuser),
-  .cores_tx_tvalid(cores_tx_tvalid), 
+  .cores_tx_tvalid(cores_tx_tvalid),
   .cores_tx_tready(cores_tx_tready),
   .cores_tx_tlast (cores_tx_tlast),
-                                                                            
-  // Write connection to PCIE DMA                                           
+
+  // Write connection to PCIE DMA
   .pcie_dma_write_desc_pcie_addr   (cores_dma_write_desc_pcie_addr),
   .pcie_dma_write_desc_ram_addr    (cores_dma_write_desc_ram_addr),
   .pcie_dma_write_desc_len         (cores_dma_write_desc_len),
@@ -1210,7 +1290,7 @@ pcie_cont_write # (
   .dma_ram_rd_cmd_ready (cores_dma_ram_rd_cmd_ready),
   .dma_ram_rd_resp_data (cores_dma_ram_rd_resp_data),
   .dma_ram_rd_resp_valid(cores_dma_ram_rd_resp_valid),
-  .dma_ram_rd_resp_ready(cores_dma_ram_rd_resp_ready)               
+  .dma_ram_rd_resp_ready(cores_dma_ram_rd_resp_ready)
 );
 
 assign cores_dma_read_desc_ram_sel  = {CORE_RAM_SEL_WIDTH{1'b0}};
@@ -1229,44 +1309,44 @@ wire [PORT_COUNT-1:0]                 rx_axis_tvalid_n;
 wire [PORT_COUNT-1:0]                 rx_axis_tready_n;
 wire [PORT_COUNT-1:0]                 rx_axis_tlast_n;
 wire [PORT_COUNT-1:0]                 rx_axis_tuser_n;
-     
-genvar i;     
+
+genvar i;
 
 generate
   if (IF_COUNT==0) begin: no_veth
     assign pcie_dma_read_desc_pcie_addr      = cores_dma_read_desc_pcie_addr;
     assign pcie_dma_read_desc_ram_sel        = cores_dma_read_desc_ram_sel;
-    assign pcie_dma_read_desc_ram_addr       = cores_dma_read_desc_ram_addr;  
-    assign pcie_dma_read_desc_len            = cores_dma_read_desc_len;   
+    assign pcie_dma_read_desc_ram_addr       = cores_dma_read_desc_ram_addr;
+    assign pcie_dma_read_desc_len            = cores_dma_read_desc_len;
     assign pcie_dma_read_desc_tag            = cores_dma_read_desc_tag;
     assign pcie_dma_read_desc_valid          = cores_dma_read_desc_valid;
     assign cores_dma_read_desc_ready         = pcie_dma_read_desc_ready;
     assign cores_dma_read_desc_status_tag    = pcie_dma_read_desc_status_tag;
     assign cores_dma_read_desc_status_valid  = pcie_dma_read_desc_status_valid;
-    
+
     assign pcie_dma_write_desc_pcie_addr     = cores_dma_write_desc_pcie_addr;
     assign pcie_dma_write_desc_ram_sel       = cores_dma_write_desc_ram_sel;
     assign pcie_dma_write_desc_ram_addr      = cores_dma_write_desc_ram_addr;
     assign pcie_dma_write_desc_len           = cores_dma_write_desc_len;
     assign pcie_dma_write_desc_tag           = cores_dma_write_desc_tag;
     assign pcie_dma_write_desc_valid         = cores_dma_write_desc_valid;
-    assign cores_dma_write_desc_ready        = pcie_dma_write_desc_ready;     
+    assign cores_dma_write_desc_ready        = pcie_dma_write_desc_ready;
     assign cores_dma_write_desc_status_tag   = pcie_dma_write_desc_status_tag;
     assign cores_dma_write_desc_status_valid = pcie_dma_write_desc_status_valid;
-      
+
     assign cores_dma_ram_wr_cmd_be     = dma_ram_wr_cmd_be;
     assign cores_dma_ram_wr_cmd_addr   = dma_ram_wr_cmd_addr;
     assign cores_dma_ram_wr_cmd_data   = dma_ram_wr_cmd_data;
     assign cores_dma_ram_wr_cmd_valid  = dma_ram_wr_cmd_valid;
     assign dma_ram_wr_cmd_ready        = cores_dma_ram_wr_cmd_ready;
-  
+
     assign cores_dma_ram_rd_cmd_addr   = dma_ram_rd_cmd_addr;
     assign cores_dma_ram_rd_cmd_valid  = dma_ram_rd_cmd_valid;
     assign dma_ram_rd_cmd_ready        = cores_dma_ram_rd_cmd_ready;
     assign dma_ram_rd_resp_data        = cores_dma_ram_rd_resp_data;
     assign dma_ram_rd_resp_valid       = cores_dma_ram_rd_resp_valid;
     assign cores_dma_ram_rd_resp_ready = dma_ram_rd_resp_ready;
-    
+
     assign axil_ctrl_awaddr  = axil_pcie_awaddr;
     assign axil_ctrl_awprot  = axil_pcie_awprot;
     assign axil_ctrl_awvalid = axil_pcie_awvalid;
@@ -1285,8 +1365,8 @@ generate
     assign axil_pcie_rdata   = axil_ctrl_rdata;
     assign axil_pcie_rresp   = axil_ctrl_rresp;
     assign axil_pcie_rvalid  = axil_ctrl_rvalid;
-    assign axil_ctrl_rready  = axil_pcie_rready; 
-    
+    assign axil_ctrl_rready  = axil_pcie_rready;
+
     assign tx_axis_tdata  = {AXIS_DATA_WIDTH{1'b0}};
     assign tx_axis_tkeep  = {AXIS_KEEP_WIDTH{1'b0}};
     assign tx_axis_tvalid = 1'b0;
@@ -1294,9 +1374,9 @@ generate
     assign tx_axis_tuser  = 1'b0;
     assign rx_axis_tready = 1'b0;
     assign msi_irq        = 32'd0;
-  
+
   end else begin: virtual_ports
-     
+
     wire [PCIE_ADDR_WIDTH-1:0]     pcie_ctrl_dma_read_desc_pcie_addr;
     wire [RAM_SEL_WIDTH-3:0]       pcie_ctrl_dma_read_desc_ram_sel;
     wire [RAM_ADDR_WIDTH-1:0]      pcie_ctrl_dma_read_desc_ram_addr;
@@ -1304,10 +1384,10 @@ generate
     wire [PCIE_DMA_TAG_WIDTH-3:0]  pcie_ctrl_dma_read_desc_tag;
     wire                           pcie_ctrl_dma_read_desc_valid;
     wire                           pcie_ctrl_dma_read_desc_ready;
-    
+
     wire [PCIE_DMA_TAG_WIDTH-3:0]  pcie_ctrl_dma_read_desc_status_tag;
     wire                           pcie_ctrl_dma_read_desc_status_valid;
-    
+
     wire [PCIE_ADDR_WIDTH-1:0]     pcie_ctrl_dma_write_desc_pcie_addr;
     wire [RAM_SEL_WIDTH-3:0]       pcie_ctrl_dma_write_desc_ram_sel;
     wire [RAM_ADDR_WIDTH-1:0]      pcie_ctrl_dma_write_desc_ram_addr;
@@ -1315,10 +1395,10 @@ generate
     wire [PCIE_DMA_TAG_WIDTH-3:0]  pcie_ctrl_dma_write_desc_tag;
     wire                           pcie_ctrl_dma_write_desc_valid;
     wire                           pcie_ctrl_dma_write_desc_ready;
-    
+
     wire [PCIE_DMA_TAG_WIDTH-3:0]  pcie_ctrl_dma_write_desc_status_tag;
     wire                           pcie_ctrl_dma_write_desc_status_valid;
-    
+
     wire [PCIE_ADDR_WIDTH-1:0]     pcie_data_dma_read_desc_pcie_addr;
     wire [RAM_SEL_WIDTH-3:0]       pcie_data_dma_read_desc_ram_sel;
     wire [RAM_ADDR_WIDTH-1:0]      pcie_data_dma_read_desc_ram_addr;
@@ -1326,10 +1406,10 @@ generate
     wire [PCIE_DMA_TAG_WIDTH-3:0]  pcie_data_dma_read_desc_tag;
     wire                           pcie_data_dma_read_desc_valid;
     wire                           pcie_data_dma_read_desc_ready;
-    
+
     wire [PCIE_DMA_TAG_WIDTH-3:0]  pcie_data_dma_read_desc_status_tag;
     wire                           pcie_data_dma_read_desc_status_valid;
-    
+
     wire [PCIE_ADDR_WIDTH-1:0]     pcie_data_dma_write_desc_pcie_addr;
     wire [RAM_SEL_WIDTH-3:0]       pcie_data_dma_write_desc_ram_sel;
     wire [RAM_ADDR_WIDTH-1:0]      pcie_data_dma_write_desc_ram_addr;
@@ -1337,10 +1417,10 @@ generate
     wire [PCIE_DMA_TAG_WIDTH-3:0]  pcie_data_dma_write_desc_tag;
     wire                           pcie_data_dma_write_desc_valid;
     wire                           pcie_data_dma_write_desc_ready;
-    
+
     wire [PCIE_DMA_TAG_WIDTH-3:0]  pcie_data_dma_write_desc_status_tag;
     wire                           pcie_data_dma_write_desc_status_valid;
-    
+
     wire [SEG_COUNT*(RAM_SEL_WIDTH-2)-1:0]  ctrl_dma_ram_wr_cmd_sel;
     wire [SEG_COUNT*SEG_BE_WIDTH-1:0]       ctrl_dma_ram_wr_cmd_be;
     wire [SEG_COUNT*SEG_ADDR_WIDTH-1:0]     ctrl_dma_ram_wr_cmd_addr;
@@ -1354,7 +1434,7 @@ generate
     wire [SEG_COUNT*SEG_DATA_WIDTH-1:0]     ctrl_dma_ram_rd_resp_data;
     wire [SEG_COUNT-1:0]                    ctrl_dma_ram_rd_resp_valid;
     wire [SEG_COUNT-1:0]                    ctrl_dma_ram_rd_resp_ready;
-    
+
     wire [SEG_COUNT*(RAM_SEL_WIDTH-2)-1:0]  data_dma_ram_wr_cmd_sel;
     wire [SEG_COUNT*SEG_BE_WIDTH-1:0]       data_dma_ram_wr_cmd_be;
     wire [SEG_COUNT*SEG_ADDR_WIDTH-1:0]     data_dma_ram_wr_cmd_addr;
@@ -1368,21 +1448,21 @@ generate
     wire [SEG_COUNT*SEG_DATA_WIDTH-1:0]     data_dma_ram_rd_resp_data;
     wire [SEG_COUNT-1:0]                    data_dma_ram_rd_resp_valid;
     wire [SEG_COUNT-1:0]                    data_dma_ram_rd_resp_ready;
-    
+
     wire [PORT_COUNT*AXIS_DATA_WIDTH-1:0] if_tx_axis_tdata;
     wire [PORT_COUNT*AXIS_KEEP_WIDTH-1:0] if_tx_axis_tkeep;
     wire [PORT_COUNT-1:0]                 if_tx_axis_tvalid;
     wire [PORT_COUNT-1:0]                 if_tx_axis_tready;
     wire [PORT_COUNT-1:0]                 if_tx_axis_tlast;
     wire [PORT_COUNT-1:0]                 if_tx_axis_tuser;
-  
+
     wire [PORT_COUNT*AXIS_DATA_WIDTH-1:0] if_rx_axis_tdata;
     wire [PORT_COUNT*AXIS_KEEP_WIDTH-1:0] if_rx_axis_tkeep;
     wire [PORT_COUNT-1:0]                 if_rx_axis_tvalid;
     wire [PORT_COUNT-1:0]                 if_rx_axis_tready;
     wire [PORT_COUNT-1:0]                 if_rx_axis_tlast;
     wire [PORT_COUNT-1:0]                 if_rx_axis_tuser;
-     
+
     dma_if_mux #
     (
         .PORTS(3),
@@ -1505,7 +1585,7 @@ generate
         .ram_rd_resp_valid({data_dma_ram_rd_resp_valid, cores_dma_ram_rd_resp_valid, ctrl_dma_ram_rd_resp_valid}),
         .ram_rd_resp_ready({data_dma_ram_rd_resp_ready, cores_dma_ram_rd_resp_ready, ctrl_dma_ram_rd_resp_ready})
     );
-  
+
     corundum # (
         .IF_COUNT(IF_COUNT),
         .PORTS_PER_IF(PORTS_PER_IF),
@@ -1531,7 +1611,7 @@ generate
     ) corundum_inst (
         .pcie_clk(pcie_clk),
         .pcie_rst(pcie_rst),
-    
+
         .pcie_ctrl_dma_read_desc_pcie_addr    (pcie_ctrl_dma_read_desc_pcie_addr),
         .pcie_ctrl_dma_read_desc_ram_sel      (pcie_ctrl_dma_read_desc_ram_sel),
         .pcie_ctrl_dma_read_desc_ram_addr     (pcie_ctrl_dma_read_desc_ram_addr),
@@ -1539,10 +1619,10 @@ generate
         .pcie_ctrl_dma_read_desc_tag          (pcie_ctrl_dma_read_desc_tag),
         .pcie_ctrl_dma_read_desc_valid        (pcie_ctrl_dma_read_desc_valid),
         .pcie_ctrl_dma_read_desc_ready        (pcie_ctrl_dma_read_desc_ready),
-    
+
         .pcie_ctrl_dma_read_desc_status_tag   (pcie_ctrl_dma_read_desc_status_tag),
         .pcie_ctrl_dma_read_desc_status_valid (pcie_ctrl_dma_read_desc_status_valid),
-    
+
         .pcie_ctrl_dma_write_desc_pcie_addr   (pcie_ctrl_dma_write_desc_pcie_addr),
         .pcie_ctrl_dma_write_desc_ram_sel     (pcie_ctrl_dma_write_desc_ram_sel),
         .pcie_ctrl_dma_write_desc_ram_addr    (pcie_ctrl_dma_write_desc_ram_addr),
@@ -1550,10 +1630,10 @@ generate
         .pcie_ctrl_dma_write_desc_tag         (pcie_ctrl_dma_write_desc_tag),
         .pcie_ctrl_dma_write_desc_valid       (pcie_ctrl_dma_write_desc_valid),
         .pcie_ctrl_dma_write_desc_ready       (pcie_ctrl_dma_write_desc_ready),
-    
+
         .pcie_ctrl_dma_write_desc_status_tag  (pcie_ctrl_dma_write_desc_status_tag),
         .pcie_ctrl_dma_write_desc_status_valid(pcie_ctrl_dma_write_desc_status_valid),
-        
+
         .pcie_data_dma_read_desc_pcie_addr    (pcie_data_dma_read_desc_pcie_addr),
         .pcie_data_dma_read_desc_ram_sel      (pcie_data_dma_read_desc_ram_sel),
         .pcie_data_dma_read_desc_ram_addr     (pcie_data_dma_read_desc_ram_addr),
@@ -1561,10 +1641,10 @@ generate
         .pcie_data_dma_read_desc_tag          (pcie_data_dma_read_desc_tag),
         .pcie_data_dma_read_desc_valid        (pcie_data_dma_read_desc_valid),
         .pcie_data_dma_read_desc_ready        (pcie_data_dma_read_desc_ready),
-    
+
         .pcie_data_dma_read_desc_status_tag   (pcie_data_dma_read_desc_status_tag),
         .pcie_data_dma_read_desc_status_valid (pcie_data_dma_read_desc_status_valid),
-    
+
         .pcie_data_dma_write_desc_pcie_addr   (pcie_data_dma_write_desc_pcie_addr),
         .pcie_data_dma_write_desc_ram_sel     (pcie_data_dma_write_desc_ram_sel),
         .pcie_data_dma_write_desc_ram_addr    (pcie_data_dma_write_desc_ram_addr),
@@ -1572,17 +1652,17 @@ generate
         .pcie_data_dma_write_desc_tag         (pcie_data_dma_write_desc_tag),
         .pcie_data_dma_write_desc_valid       (pcie_data_dma_write_desc_valid),
         .pcie_data_dma_write_desc_ready       (pcie_data_dma_write_desc_ready),
-    
+
         .pcie_data_dma_write_desc_status_tag  (pcie_data_dma_write_desc_status_tag),
         .pcie_data_dma_write_desc_status_valid(pcie_data_dma_write_desc_status_valid),
-    
+
         .ctrl_dma_ram_wr_cmd_sel   (ctrl_dma_ram_wr_cmd_sel),
         .ctrl_dma_ram_wr_cmd_be    (ctrl_dma_ram_wr_cmd_be),
         .ctrl_dma_ram_wr_cmd_addr  (ctrl_dma_ram_wr_cmd_addr),
         .ctrl_dma_ram_wr_cmd_data  (ctrl_dma_ram_wr_cmd_data),
         .ctrl_dma_ram_wr_cmd_valid (ctrl_dma_ram_wr_cmd_valid),
         .ctrl_dma_ram_wr_cmd_ready (ctrl_dma_ram_wr_cmd_ready),
-     
+
         .ctrl_dma_ram_rd_cmd_sel   (ctrl_dma_ram_rd_cmd_sel),
         .ctrl_dma_ram_rd_cmd_addr  (ctrl_dma_ram_rd_cmd_addr),
         .ctrl_dma_ram_rd_cmd_valid (ctrl_dma_ram_rd_cmd_valid),
@@ -1590,14 +1670,14 @@ generate
         .ctrl_dma_ram_rd_resp_data (ctrl_dma_ram_rd_resp_data),
         .ctrl_dma_ram_rd_resp_valid(ctrl_dma_ram_rd_resp_valid),
         .ctrl_dma_ram_rd_resp_ready(ctrl_dma_ram_rd_resp_ready),
-        
+
         .data_dma_ram_wr_cmd_sel   (data_dma_ram_wr_cmd_sel),
         .data_dma_ram_wr_cmd_be    (data_dma_ram_wr_cmd_be),
         .data_dma_ram_wr_cmd_addr  (data_dma_ram_wr_cmd_addr),
         .data_dma_ram_wr_cmd_data  (data_dma_ram_wr_cmd_data),
         .data_dma_ram_wr_cmd_valid (data_dma_ram_wr_cmd_valid),
         .data_dma_ram_wr_cmd_ready (data_dma_ram_wr_cmd_ready),
-     
+
         .data_dma_ram_rd_cmd_sel   (data_dma_ram_rd_cmd_sel),
         .data_dma_ram_rd_cmd_addr  (data_dma_ram_rd_cmd_addr),
         .data_dma_ram_rd_cmd_valid (data_dma_ram_rd_cmd_valid),
@@ -1605,21 +1685,21 @@ generate
         .data_dma_ram_rd_resp_data (data_dma_ram_rd_resp_data),
         .data_dma_ram_rd_resp_valid(data_dma_ram_rd_resp_valid),
         .data_dma_ram_rd_resp_ready(data_dma_ram_rd_resp_ready),
-    
+
         .tx_axis_tdata(if_tx_axis_tdata),
         .tx_axis_tkeep(if_tx_axis_tkeep),
         .tx_axis_tvalid(if_tx_axis_tvalid),
         .tx_axis_tready(if_tx_axis_tready),
         .tx_axis_tlast(if_tx_axis_tlast),
         .tx_axis_tuser(if_tx_axis_tuser),
-    
+
         .rx_axis_tdata(if_rx_axis_tdata),
         .rx_axis_tkeep(if_rx_axis_tkeep),
         .rx_axis_tvalid(if_rx_axis_tvalid),
         .rx_axis_tready(if_rx_axis_tready),
         .rx_axis_tlast(if_rx_axis_tlast),
         .rx_axis_tuser(if_rx_axis_tuser),
-    
+
         .axil_pcie_awaddr (axil_pcie_awaddr),
         .axil_pcie_awprot (axil_pcie_awprot),
         .axil_pcie_awvalid(axil_pcie_awvalid),
@@ -1639,7 +1719,7 @@ generate
         .axil_pcie_rresp  (axil_pcie_rresp),
         .axil_pcie_rvalid (axil_pcie_rvalid),
         .axil_pcie_rready (axil_pcie_rready),
-    
+
         .axil_ctrl_awaddr (axil_ctrl_awaddr[AXIL_CSR_ADDR_WIDTH-1:0]),
         .axil_ctrl_awprot (axil_ctrl_awprot),
         .axil_ctrl_awvalid(axil_ctrl_awvalid),
@@ -1659,20 +1739,20 @@ generate
         .axil_ctrl_rresp  (axil_ctrl_rresp),
         .axil_ctrl_rvalid (axil_ctrl_rvalid),
         .axil_ctrl_rready (axil_ctrl_rready),
-    
+
         .msi_irq(msi_irq)
     );
-    
-    assign axil_ctrl_awaddr[AXIL_ADDR_WIDTH-1:AXIL_CSR_ADDR_WIDTH] = 
+
+    assign axil_ctrl_awaddr[AXIL_ADDR_WIDTH-1:AXIL_CSR_ADDR_WIDTH] =
                            {(AXIL_ADDR_WIDTH-AXIL_CSR_ADDR_WIDTH){1'b0}};
-    assign axil_ctrl_araddr[AXIL_ADDR_WIDTH-1:AXIL_CSR_ADDR_WIDTH] = 
+    assign axil_ctrl_araddr[AXIL_ADDR_WIDTH-1:AXIL_CSR_ADDR_WIDTH] =
                            {(AXIL_ADDR_WIDTH-AXIL_CSR_ADDR_WIDTH){1'b0}};
- 
+
     for (i=0;i<PORT_COUNT;i=i+1) begin : mac_async_fifoes
       axis_async_fifo_adapter # (
           .DEPTH(MAC_ASYNC_FIFO_SIZE),
           .S_DATA_WIDTH(AXIS_DATA_WIDTH),
-          .S_KEEP_ENABLE(1), 
+          .S_KEEP_ENABLE(1),
           .S_KEEP_WIDTH(AXIS_KEEP_WIDTH),
           .M_DATA_WIDTH(AXIS_DATA_WIDTH),
           .M_KEEP_ENABLE(1),
@@ -1693,7 +1773,7 @@ generate
           .s_axis_tid   (8'd0),
           .s_axis_tdest (8'd0),
           .s_axis_tuser (if_tx_axis_tuser[i]),
-      
+
           .m_clk(sys_clk),
           .m_rst(sys_rst),
           .m_axis_tdata (tx_axis_tdata_n[i*AXIS_DATA_WIDTH +: AXIS_DATA_WIDTH]),
@@ -1704,7 +1784,7 @@ generate
           .m_axis_tid   (),
           .m_axis_tdest (),
           .m_axis_tuser (tx_axis_tuser_n[i]),
-      
+
           .s_status_overflow(),
           .s_status_bad_frame(),
           .s_status_good_frame(),
@@ -1726,7 +1806,7 @@ generate
       ) tx_pipeline_reg (
           .clk(sys_clk),
           .rst(sys_rst),
-          
+
           .s_axis_tdata (tx_axis_tdata_n[i*AXIS_DATA_WIDTH +: AXIS_DATA_WIDTH]),
           .s_axis_tkeep (tx_axis_tkeep_n[i*AXIS_KEEP_WIDTH +: AXIS_KEEP_WIDTH]),
           .s_axis_tvalid(tx_axis_tvalid_n[i]),
@@ -1745,14 +1825,14 @@ generate
           .m_axis_tdest (),
           .m_axis_tuser (tx_axis_tuser[i])
       );
- 
+
       axis_async_fifo_adapter # (
           .DEPTH(MAC_ASYNC_FIFO_SIZE),
           .S_DATA_WIDTH(AXIS_DATA_WIDTH),
           .S_KEEP_ENABLE(1),
           .S_KEEP_WIDTH(AXIS_KEEP_WIDTH),
           .M_DATA_WIDTH(AXIS_DATA_WIDTH),
-          .M_KEEP_ENABLE(1), 
+          .M_KEEP_ENABLE(1),
           .M_KEEP_WIDTH(AXIS_KEEP_WIDTH),
           .ID_ENABLE(0),
           .DEST_ENABLE(0),
@@ -1770,7 +1850,7 @@ generate
           .s_axis_tid   (8'd0),
           .s_axis_tdest (8'd0),
           .s_axis_tuser (rx_axis_tuser_n[i]),
-      
+
           .m_clk(pcie_clk),
           .m_rst(pcie_rst),
           .m_axis_tdata (if_rx_axis_tdata[i*AXIS_DATA_WIDTH +: AXIS_DATA_WIDTH]),
@@ -1781,7 +1861,7 @@ generate
           .m_axis_tid   (),
           .m_axis_tdest (),
           .m_axis_tuser (if_rx_axis_tuser[i]),
-      
+
           .s_status_overflow(),
           .s_status_bad_frame(),
           .s_status_good_frame(),
@@ -1792,7 +1872,7 @@ generate
 
       axis_pipeline_register # (
           .DATA_WIDTH(AXIS_DATA_WIDTH),
-          .KEEP_ENABLE(1), 
+          .KEEP_ENABLE(1),
           .KEEP_WIDTH(AXIS_KEEP_WIDTH),
           .ID_ENABLE(0),
           .DEST_ENABLE(0),
@@ -1803,7 +1883,7 @@ generate
       ) rx_pipeline_reg (
           .clk(sys_clk),
           .rst(sys_rst),
-          
+
           .s_axis_tdata (rx_axis_tdata[i*AXIS_DATA_WIDTH +: AXIS_DATA_WIDTH]),
           .s_axis_tkeep (rx_axis_tkeep[i*AXIS_KEEP_WIDTH +: AXIS_KEEP_WIDTH]),
           .s_axis_tvalid(rx_axis_tvalid[i]),
@@ -1812,7 +1892,7 @@ generate
           .s_axis_tid   (8'd0),
           .s_axis_tdest (8'd0),
           .s_axis_tuser (rx_axis_tuser[i]),
-          
+
           .m_axis_tdata (rx_axis_tdata_n[i*AXIS_DATA_WIDTH +: AXIS_DATA_WIDTH]),
           .m_axis_tkeep (rx_axis_tkeep_n[i*AXIS_KEEP_WIDTH +: AXIS_KEEP_WIDTH]),
           .m_axis_tvalid(rx_axis_tvalid_n[i]),
@@ -1823,8 +1903,8 @@ generate
           .m_axis_tuser (rx_axis_tuser_n[i])
       );
 
-    end   
+    end
   end
-endgenerate 
+endgenerate
 
 endmodule
