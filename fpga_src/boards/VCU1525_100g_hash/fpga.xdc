@@ -424,7 +424,6 @@ resize_pblock [get_pblocks pblock_32] -add {RAMB36_X9Y152:RAMB36_X9Y155}
 
 create_pblock pblock_33
 add_cells_to_pblock [get_pblocks pblock_33] [get_cells -quiet [list {core_inst/MAC_async_FIFO[0].mac_rx_async_fifo_inst} {core_inst/MAC_async_FIFO[0].mac_tx_async_fifo_inst} {core_inst/MAC_async_FIFO[1].mac_rx_async_fifo_inst} {core_inst/MAC_async_FIFO[1].mac_tx_async_fifo_inst}]]
-# add_cells_to_pblock [get_pblocks pblock_33] [get_cells -quiet [list {core_inst/MAC_async_FIFO[0].mac_rx_fifo_inst} {core_inst/MAC_async_FIFO[0].mac_rx_pipeline/pipe_reg[0].reg_inst} {core_inst/MAC_async_FIFO[0].mac_tx_fifo_inst} {core_inst/MAC_async_FIFO[0].mac_tx_pipeline/pipe_reg[1].reg_inst} {core_inst/MAC_async_FIFO[1].mac_rx_fifo_inst} {core_inst/MAC_async_FIFO[1].mac_rx_pipeline/pipe_reg[0].reg_inst} {core_inst/MAC_async_FIFO[1].mac_tx_fifo_inst} {core_inst/MAC_async_FIFO[1].mac_tx_pipeline/pipe_reg[1].reg_inst}]]
 resize_pblock [get_pblocks pblock_33] -add {SLICE_X0Y600:SLICE_X16Y899}
 resize_pblock [get_pblocks pblock_33] -add {CMACE4_X0Y7:CMACE4_X0Y8}
 resize_pblock [get_pblocks pblock_33] -add {LAGUNA_X0Y480:LAGUNA_X1Y719}
@@ -441,10 +440,5 @@ resize_pblock [get_pblocks pblock_35] -add {CLOCKREGION_X1Y7:CLOCKREGION_X2Y8}
 set_property EXCLUDE_PLACEMENT 1 [get_pblocks pblock_35]
 
 create_pblock pblock_36
-add_cells_to_pblock [get_pblocks pblock_36] [get_cells -quiet [list core_inst/pcie_config_inst core_inst/pcie_controller_inst/dma_if_pcie_us_inst core_inst/pcie_controller_inst/cq_reg core_inst/pcie_controller_inst/pcie_us_axil_master_inst core_inst/pcie_controller_inst/rc_reg core_inst/pcie_controller_inst/virtual_ports.dma_if_mux_inst core_inst/pcie_controller_inst/status_error_uncor_pm_inst core_inst/pcie_controller_inst/status_error_cor_pm_inst]] 
+add_cells_to_pblock [get_pblocks pblock_36] [get_cells -quiet [list pcie_us_cfg_inst pcie_us_msi_inst core_inst/pcie_config_inst core_inst/pcie_controller_inst/dma_if_pcie_us_inst core_inst/pcie_controller_inst/cq_reg core_inst/pcie_controller_inst/pcie_us_axil_master_inst core_inst/pcie_controller_inst/rc_reg core_inst/pcie_controller_inst/virtual_ports.dma_if_mux_inst core_inst/pcie_controller_inst/status_error_uncor_pm_inst core_inst/pcie_controller_inst/status_error_cor_pm_inst core_inst/pcie_controller_inst/cores_ctrl_fifos.cores_ctrl_m_axis_async_fifo core_inst/pcie_controller_inst/cores_ctrl_fifos.cores_ctrl_m_axis_reg core_inst/pcie_controller_inst/cores_ctrl_fifos.cores_ctrl_s_axis_async_fifo core_inst/pcie_controller_inst/cores_ctrl_fifos.cores_ctrl_s_axis_reg]] 
 resize_pblock [get_pblocks pblock_36] -add {CLOCKREGION_X4Y5:CLOCKREGION_X5Y8}
-
-# set_property RAM_STYLE BLOCK [get_cells -quiet [list {core_inst/MAC_async_FIFO[0].mac_rx_fifo_inst/mem_reg*}]]
-# set_property RAM_STYLE BLOCK [get_cells -quiet [list {core_inst/MAC_async_FIFO[1].mac_rx_fifo_inst/mem_reg*}]]
-# set_property RAM_STYLE BLOCK [get_cells -quiet [list {core_inst/MAC_async_FIFO[0].mac_tx_fifo_inst/mem_reg*}]]
-# set_property RAM_STYLE BLOCK [get_cells -quiet [list {core_inst/MAC_async_FIFO[1].mac_tx_fifo_inst/mem_reg*}]]

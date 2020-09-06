@@ -38,7 +38,6 @@ SYN_FILES += lib/smartFPGA/rtl/pcie_cont_read.v
 SYN_FILES += lib/smartFPGA/rtl/pcie_cont_write.v
 SYN_FILES += lib/smartFPGA/rtl/corundum.v
 SYN_FILES += lib/smartFPGA/rtl/axis_fifo.v
-SYN_FILES += lib/smartFPGA/rtl/dma_psdpram.v
 
 # SYN_FILES += accel/merged/rtl/accel_wrap_merged.v
 # SYN_FILES += accel/regex/rtl/re_sql.v
@@ -67,7 +66,7 @@ SYN_FILES += lib/pcie/rtl/dma_if_pcie_us_wr.v
 SYN_FILES += lib/pcie/rtl/dma_if_mux.v
 SYN_FILES += lib/pcie/rtl/dma_if_mux_rd.v
 SYN_FILES += lib/pcie/rtl/dma_if_mux_wr.v
-# SYN_FILES += lib/pcie/rtl/dma_psdpram.v
+SYN_FILES += lib/pcie/rtl/dma_psdpram.v
 SYN_FILES += lib/pcie/rtl/pcie_us_cfg.v
 SYN_FILES += lib/pcie/rtl/pcie_us_msi.v
 SYN_FILES += lib/pcie/rtl/pcie_tag_manager.v
