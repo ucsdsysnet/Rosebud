@@ -238,21 +238,14 @@ wire [M_COUNT-1:0]                port_ram_rd_ack;
 wire [M_COUNT*DATA_WIDTH-1:0]     port_ram_rd_data;
 wire [M_COUNT-1:0]                port_ram_rd_data_valid;
 
-reg [RAM_ADDR_WIDTH-1:0] ram_rd_addr;
-reg [RAM_ADDR_WIDTH-1:0] ram_wr_addr;
-reg [DATA_WIDTH-1:0]     port_ram_wr_data_r;
-
 assign port_ram_rd_data = {M_COUNT{mem_read_data}};
 assign port_ram_rd_data_valid = mem_read_data_valid_reg[RAM_PIPELINE-1];
 
 wire [CL_S_COUNT-1:0] ram_wr_sel;
 wire ram_wr_en;
-reg  ram_wr_en_r;
 
 wire [CL_M_COUNT-1:0] ram_rd_sel;
-reg  [CL_M_COUNT-1:0] ram_rd_sel_r;
 wire ram_rd_en;
-reg  ram_rd_en_r;
 
 generate
 
@@ -283,15 +276,6 @@ end else begin
 end
 
 endgenerate
-
-always @(posedge clk) begin
-    ram_wr_addr <= port_ram_wr_addr[ram_wr_sel*RAM_ADDR_WIDTH +: RAM_ADDR_WIDTH];
-    port_ram_wr_data_r <= port_ram_wr_data[ram_wr_sel*DATA_WIDTH +: DATA_WIDTH];
-    ram_wr_en_r <= ram_wr_en;
-
-    if (rst)
-      ram_wr_en_r <= 1'b0;
-end
 
 generate
 
@@ -327,24 +311,16 @@ integer s;
 
 always @(posedge clk) begin
     mem_read_data_valid_reg[0] <= 0;
-    ram_rd_en_r <= ram_rd_en;
-    ram_rd_addr <= port_ram_rd_addr[ram_rd_sel*RAM_ADDR_WIDTH +: RAM_ADDR_WIDTH];
-    ram_rd_sel_r <= ram_rd_sel;
 
-    for (s = RAM_PIPELINE-1; s > 0; s = s - 1) begin
+    if (ram_rd_en) 
+        mem_read_data_valid_reg[0] <= 1 << ram_rd_sel;
+    
+    for (s = RAM_PIPELINE-1; s > 0; s = s - 1)
         mem_read_data_valid_reg[s] <= mem_read_data_valid_reg[s-1];
-    end
-
-    if (ram_rd_en_r) begin
-        mem_read_data_valid_reg[0] <= 1 << ram_rd_sel_r;
-    end
 
     if (rst) begin
-        ram_rd_en_r  <= 0;
-        ram_rd_sel_r <= 0;
-        for (s = 0; s < RAM_PIPELINE; s = s + 1) begin
+        for (s = 0; s < RAM_PIPELINE; s = s + 1)
             mem_read_data_valid_reg[s] <= 0;
-        end
     end
 end
 
@@ -356,12 +332,12 @@ mem_1r1w_uram_pipelined # (
   .clk(clk),
   .rst(rst),
     
-  .ena(ram_wr_en_r),
-  .addra(ram_wr_addr),
-  .dina(port_ram_wr_data_r),
-
-  .enb(ram_rd_en_r),
-  .addrb(ram_rd_addr),
+  .ena(ram_wr_en),
+  .addra(port_ram_wr_addr[ram_wr_sel*RAM_ADDR_WIDTH +: RAM_ADDR_WIDTH]),
+  .dina(port_ram_wr_data[ram_wr_sel*DATA_WIDTH +: DATA_WIDTH]),
+    
+  .enb(ram_rd_en),
+  .addrb(port_ram_rd_addr[ram_rd_sel*RAM_ADDR_WIDTH +: RAM_ADDR_WIDTH]),
   .doutb(mem_read_data)
 );
 

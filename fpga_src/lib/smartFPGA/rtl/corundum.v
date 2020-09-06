@@ -241,8 +241,8 @@ parameter RX_CHECKSUM_ENABLE = 1;
 parameter ENABLE_PADDING = 1;
 parameter ENABLE_DIC = 1;
 parameter MIN_FRAME_LENGTH = 64;
-parameter MAX_TX_SIZE = 16384; // 2048;
-parameter MAX_RX_SIZE = 16384; // 2048;
+parameter MAX_TX_SIZE = 4*16384; // 2048;
+parameter MAX_RX_SIZE = 4*16384; // 2048;
 
 // PCIe DMA parameters
 parameter TX_RAM_SIZE = TX_PKT_TABLE_SIZE*MAX_TX_SIZE;

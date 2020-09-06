@@ -208,11 +208,13 @@ parameter LVL1_STRB_WIDTH  = AXIS_ETH_KEEP_WIDTH;
 parameter CTRL_WIDTH       = 32+4; //DON'T CHANGE
 parameter LVL1_DRAM_WIDTH  = 64; //DRAM CONTROL
 parameter LVL2_DRAM_WIDTH  = 64; //DON'T CHANGE
+parameter ASYNC_FIFO_DEPTH = 512;
 parameter RX_FIFO_DEPTH    = 4*32768;
 parameter TX_FIFO_DEPTH    = 32768;
-parameter STG_F_DATA_DEPTH = 32768;
+parameter RX_STG_F_DEPTH   = 4*32768;
+parameter TX_STG_F_DEPTH   = 32768;
 parameter STG_F_CTRL_DEPTH = 64; // TKEEP is not enabled, so 64 words
-parameter STG_F_DRAM_DEPTH = 1024;
+parameter STG_F_DRAM_DEPTH = 2048;
 parameter V_MAC_FIFO_SIZE  = 1024;
 parameter CLUSTER_COUNT    = 4;
 parameter BC_MSG_CLUSTERS  = 4;
@@ -299,6 +301,18 @@ wire [INTERFACE_COUNT*AXIS_ETH_KEEP_WIDTH-1:0] port_rx_axis_tkeep;
 wire [INTERFACE_COUNT-1:0] port_rx_axis_tvalid;
 wire [INTERFACE_COUNT-1:0] port_rx_axis_tlast;
 wire [INTERFACE_COUNT-1:0] port_rx_axis_tuser;
+
+wire [INTERFACE_COUNT*AXIS_ETH_DATA_WIDTH-1:0] port_tx_axis_tdata_f;
+wire [INTERFACE_COUNT*AXIS_ETH_KEEP_WIDTH-1:0] port_tx_axis_tkeep_f;
+wire [INTERFACE_COUNT-1:0] port_tx_axis_tvalid_f;
+wire [INTERFACE_COUNT-1:0] port_tx_axis_tready_f;
+wire [INTERFACE_COUNT-1:0] port_tx_axis_tlast_f;
+
+wire [INTERFACE_COUNT*AXIS_ETH_DATA_WIDTH-1:0] port_rx_axis_tdata_f;
+wire [INTERFACE_COUNT*AXIS_ETH_KEEP_WIDTH-1:0] port_rx_axis_tkeep_f;
+wire [INTERFACE_COUNT-1:0] port_rx_axis_tvalid_f;
+wire [INTERFACE_COUNT-1:0] port_rx_axis_tready_f;
+wire [INTERFACE_COUNT-1:0] port_rx_axis_tlast_f;
 
 wire [INTERFACE_COUNT*AXIS_ETH_DATA_WIDTH-1:0] port_tx_axis_tdata_n;
 wire [INTERFACE_COUNT*AXIS_ETH_KEEP_WIDTH-1:0] port_tx_axis_tkeep_n;
@@ -412,8 +426,8 @@ generate
             .m_axis_tdest(),
             .m_axis_tuser()
         );
-
-        axis_async_fifo #(
+        
+        axis_fifo #(
             .DEPTH(TX_FIFO_DEPTH),
             .DATA_WIDTH(AXIS_ETH_DATA_WIDTH),
             .KEEP_ENABLE(AXIS_ETH_KEEP_WIDTH > 1),
@@ -429,15 +443,56 @@ generate
             .DROP_WHEN_FULL(0)
         )
         mac_tx_fifo_inst (
-            // Common reset
-            .async_rst(sys_rst | port_tx_rst[m]),
-            // AXI input
-            .s_clk(sys_clk),
+            .clk(sys_clk),
+            .rst(sys_rst),
+            
             .s_axis_tdata(port_tx_axis_tdata_n[m*LVL1_DATA_WIDTH +: LVL1_DATA_WIDTH]),
             .s_axis_tkeep(port_tx_axis_tkeep_n[m*LVL1_STRB_WIDTH +: LVL1_STRB_WIDTH]),
             .s_axis_tvalid(port_tx_axis_tvalid_n[m]),
             .s_axis_tready(port_tx_axis_tready_n[m]),
             .s_axis_tlast(port_tx_axis_tlast_n[m]),
+            .s_axis_tid(8'd0),
+            .s_axis_tdest(8'd0),
+            .s_axis_tuser(1'b0),
+
+            .m_axis_tdata(port_tx_axis_tdata_f[m*AXIS_ETH_DATA_WIDTH +: AXIS_ETH_DATA_WIDTH]),
+            .m_axis_tkeep(port_tx_axis_tkeep_f[m*AXIS_ETH_KEEP_WIDTH +: AXIS_ETH_KEEP_WIDTH]),
+            .m_axis_tvalid(port_tx_axis_tvalid_f[m]),
+            .m_axis_tready(port_tx_axis_tready_f[m]),
+            .m_axis_tlast(port_tx_axis_tlast_f[m]),
+            .m_axis_tid(),
+            .m_axis_tdest(),
+            .m_axis_tuser(),
+
+            .status_overflow(),
+            .status_bad_frame(),
+            .status_good_frame(),
+            .status_almost_full(),
+            .status_almost_empty()
+        );
+
+        axis_async_fifo #(
+            .DEPTH(ASYNC_FIFO_DEPTH),
+            .DATA_WIDTH(AXIS_ETH_DATA_WIDTH),
+            .KEEP_ENABLE(AXIS_ETH_KEEP_WIDTH > 1),
+            .KEEP_WIDTH(AXIS_ETH_KEEP_WIDTH),
+            .LAST_ENABLE(1),
+            .ID_ENABLE(0),
+            .DEST_ENABLE(0),
+            .USER_ENABLE(0),
+            .FRAME_FIFO(0),
+            .DROP_WHEN_FULL(0)
+        )
+        mac_tx_async_fifo_inst (
+            // Common reset
+            .async_rst(sys_rst | port_tx_rst[m]),
+            // AXI input
+            .s_clk(sys_clk),
+            .s_axis_tdata(port_tx_axis_tdata_f[m*LVL1_DATA_WIDTH +: LVL1_DATA_WIDTH]),
+            .s_axis_tkeep(port_tx_axis_tkeep_f[m*LVL1_STRB_WIDTH +: LVL1_STRB_WIDTH]),
+            .s_axis_tvalid(port_tx_axis_tvalid_f[m]),
+            .s_axis_tready(port_tx_axis_tready_f[m]),
+            .s_axis_tlast(port_tx_axis_tlast_f[m]),
             .s_axis_tid(8'd0),
             .s_axis_tdest(8'd0),
             .s_axis_tuser(1'b0),
@@ -457,12 +512,54 @@ generate
             .s_status_good_frame(),
             .m_status_overflow(),
             .m_status_bad_frame(),
-            .m_status_good_frame(),
-            .m_status_almost_full(),
-            .m_status_almost_empty()
+            .m_status_good_frame()
         );
 
         axis_async_fifo #(
+            .DEPTH(ASYNC_FIFO_DEPTH),
+            .DATA_WIDTH(AXIS_ETH_DATA_WIDTH),
+            .KEEP_ENABLE(AXIS_ETH_KEEP_WIDTH > 1),
+            .KEEP_WIDTH(AXIS_ETH_KEEP_WIDTH),
+            .LAST_ENABLE(1),
+            .ID_ENABLE(0),
+            .DEST_ENABLE(0),
+            .USER_ENABLE(0),
+            .FRAME_FIFO(0),
+            .DROP_WHEN_FULL(0)
+        )
+        mac_rx_async_fifo_inst (
+            // Common reset
+            .async_rst(port_rx_rst[m] | sys_rst),
+            // AXI input
+            .s_clk(port_rx_clk[m]),
+            .s_axis_tdata(port_rx_axis_tdata[m*AXIS_ETH_DATA_WIDTH +: AXIS_ETH_DATA_WIDTH]),
+            .s_axis_tkeep(port_rx_axis_tkeep[m*AXIS_ETH_KEEP_WIDTH +: AXIS_ETH_KEEP_WIDTH]),
+            .s_axis_tvalid(port_rx_axis_tvalid[m]),
+            .s_axis_tready(),
+            .s_axis_tlast(port_rx_axis_tlast[m]),
+            .s_axis_tid(8'd0),
+            .s_axis_tdest(8'd0),
+            .s_axis_tuser(1'b0),
+            // AXI output
+            .m_clk(sys_clk),
+            .m_axis_tdata(port_rx_axis_tdata_f[m*LVL1_DATA_WIDTH +: LVL1_DATA_WIDTH]),
+            .m_axis_tkeep(port_rx_axis_tkeep_f[m*LVL1_STRB_WIDTH +: LVL1_STRB_WIDTH]),
+            .m_axis_tvalid(port_rx_axis_tvalid_f[m]),
+            .m_axis_tready(port_rx_axis_tready_f[m]),
+            .m_axis_tlast(port_rx_axis_tlast_f[m]),
+            .m_axis_tid(),
+            .m_axis_tdest(),
+            .m_axis_tuser(),
+            // Status
+            .s_status_overflow(),
+            .s_status_bad_frame(),
+            .s_status_good_frame(),
+            .m_status_overflow(),
+            .m_status_bad_frame(),
+            .m_status_good_frame()
+        );
+        
+        axis_fifo #(
             .DEPTH(RX_FIFO_DEPTH),
             .DATA_WIDTH(AXIS_ETH_DATA_WIDTH),
             .KEEP_ENABLE(AXIS_ETH_KEEP_WIDTH > 1),
@@ -478,20 +575,18 @@ generate
             .DROP_WHEN_FULL(1)
         )
         mac_rx_fifo_inst (
-            // Common reset
-            .async_rst(port_rx_rst[m] | sys_rst),
-            // AXI input
-            .s_clk(port_rx_clk[m]),
-            .s_axis_tdata(port_rx_axis_tdata[m*AXIS_ETH_DATA_WIDTH +: AXIS_ETH_DATA_WIDTH]),
-            .s_axis_tkeep(port_rx_axis_tkeep[m*AXIS_ETH_KEEP_WIDTH +: AXIS_ETH_KEEP_WIDTH]),
-            .s_axis_tvalid(port_rx_axis_tvalid[m]),
-            .s_axis_tready(),
-            .s_axis_tlast(port_rx_axis_tlast[m]),
+            .clk(sys_clk),
+            .rst(sys_rst),
+
+            .s_axis_tdata(port_rx_axis_tdata_f[m*AXIS_ETH_DATA_WIDTH +: AXIS_ETH_DATA_WIDTH]),
+            .s_axis_tkeep(port_rx_axis_tkeep_f[m*AXIS_ETH_KEEP_WIDTH +: AXIS_ETH_KEEP_WIDTH]),
+            .s_axis_tvalid(port_rx_axis_tvalid_f[m]),
+            .s_axis_tready(port_rx_axis_tready_f[m]),
+            .s_axis_tlast(port_rx_axis_tlast_f[m]),
             .s_axis_tid(8'd0),
             .s_axis_tdest(8'd0),
             .s_axis_tuser(1'b0),
-            // AXI output
-            .m_clk(sys_clk),
+
             .m_axis_tdata(port_rx_axis_tdata_r[m*LVL1_DATA_WIDTH +: LVL1_DATA_WIDTH]),
             .m_axis_tkeep(port_rx_axis_tkeep_r[m*LVL1_STRB_WIDTH +: LVL1_STRB_WIDTH]),
             .m_axis_tvalid(port_rx_axis_tvalid_r[m]),
@@ -500,15 +595,12 @@ generate
             .m_axis_tid(),
             .m_axis_tdest(),
             .m_axis_tuser(),
-            // Status
-            .s_status_overflow(),
-            .s_status_bad_frame(),
-            .s_status_good_frame(),
-            .m_status_overflow(port_rx_axis_overflow_r[m]),
-            .m_status_bad_frame(port_rx_axis_bad_frame_r[m]),
-            .m_status_good_frame(),
-            .m_status_almost_full(port_rx_axis_almost_full_r[m]),
-            .m_status_almost_empty()
+
+            .status_overflow(port_rx_axis_overflow_r[m]),
+            .status_bad_frame(port_rx_axis_bad_frame_r[m]),
+            .status_good_frame(),
+            .status_almost_full(port_rx_axis_almost_full_r[m]),
+            .status_almost_empty()
         );
 
         axis_pipeline_register # (
@@ -1214,7 +1306,7 @@ axis_switch_2lvl # (
     .S_REG_TYPE      (2),
     .M_REG_TYPE      (2),
     .CLUSTER_COUNT   (CLUSTER_COUNT),
-    .STAGE_FIFO_DEPTH(STG_F_DATA_DEPTH),
+    .STAGE_FIFO_DEPTH(RX_STG_F_DEPTH),
     .FRAME_FIFO      (0),
     .SEPARATE_CLOCKS (SEPARATE_CLOCKS),
     .USE_SIMPLE_SW   (0),
@@ -1281,7 +1373,7 @@ axis_switch_2lvl # (
     .S_REG_TYPE      (2),
     .M_REG_TYPE      (2),
     .CLUSTER_COUNT   (CLUSTER_COUNT),
-    .STAGE_FIFO_DEPTH(STG_F_DATA_DEPTH),
+    .STAGE_FIFO_DEPTH(TX_STG_F_DEPTH),
     .FRAME_FIFO      (1),
     .SEPARATE_CLOCKS (SEPARATE_CLOCKS),
     .USE_SIMPLE_SW   (0),
@@ -1475,7 +1567,7 @@ axis_switch_2lvl # (
     .S_REG_TYPE      (2),
     .M_REG_TYPE      (2),
     .CLUSTER_COUNT   (CLUSTER_COUNT),
-    .STAGE_FIFO_DEPTH(STG_F_CTRL_DEPTH),
+    .STAGE_FIFO_DEPTH(STG_F_DRAM_DEPTH),
     .FRAME_FIFO      (0),
     .SEPARATE_CLOCKS (SEPARATE_CLOCKS),
     .USE_SIMPLE_SW   (1)

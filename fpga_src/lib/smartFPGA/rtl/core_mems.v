@@ -99,15 +99,16 @@ end
 
 endmodule
 
-module mem_1r1w_uram # (
+module mem_1r1w_uram_pipelined # (
   parameter BYTES_PER_LINE = 4,
   parameter ADDR_WIDTH     = 11,
-  parameter LINE_SIZE      = 8*BYTES_PER_LINE
+  parameter LINE_SIZE      = 8*BYTES_PER_LINE,
+  parameter RAM_PIPELINE   = 2
 )( 
   input                       clk,
+  input                       rst,
 
   input                       ena,
-  input  [BYTES_PER_LINE-1:0] wea,
   input  [ADDR_WIDTH-1:0]     addra,
   input  [LINE_SIZE-1 :0]     dina,
 
@@ -119,19 +120,33 @@ module mem_1r1w_uram # (
 (* ram_style = "ultra" *)
 reg [LINE_SIZE-1:0] mem [(1<<ADDR_WIDTH)-1:0];
 reg [LINE_SIZE-1:0] mem_out;
+
+reg [LINE_SIZE-1: 0]   dout_regs [RAM_PIPELINE-1:0];
+reg [RAM_PIPELINE-1:0] enb_regs;
+
 integer i;
 
 always @ (posedge clk)
   if (ena)
-    for (i = 0; i < BYTES_PER_LINE; i = i + 1) 
-      if (wea[i] == 1'b1) 
-        mem[addra][i*8 +: 8]  <= dina[i*8 +: 8];
+    mem[addra] <= dina;
 
 always @ (posedge clk)
   if (enb)
-    mem_out <= mem[addrb];
+    dout_regs[0] <= mem[addrb];
 
-assign doutb = mem_out;
+// Pipeline registers
+always @(posedge clk) begin
+  enb_regs[0] <= enb;
+  for (i = 1 ; i < RAM_PIPELINE; i = i + 1) begin
+    enb_regs[i] <= enb_regs[i-1];
+    if (enb_regs[i-1])
+      dout_regs[i] <= dout_regs[i-1];
+  end
+  if (rst)
+    enb_regs <= 0;
+end
+
+assign doutb = dout_regs[RAM_PIPELINE-1];
 
 endmodule
 
