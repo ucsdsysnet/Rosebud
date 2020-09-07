@@ -953,7 +953,7 @@ module axis_simple_arb_2lvl # (
                         .USER_ENABLE(1),
                         .USER_WIDTH(USER_WIDTH),
                         .ID_ENABLE(0),
-                        .PIPELINE_OUTPUT(2),
+                        .PIPELINE_OUTPUT(1),
                         .FRAME_FIFO(0)
                     ) stage_fifo (
                         .clk(clk),
