@@ -106,7 +106,7 @@ module pcie_config # (
   output wire [1:0]                     stat_read_addr,
   input  wire [31:0]                    interface_in_stat_data,
   input  wire [31:0]                    interface_out_stat_data,
-  input  wire [ID_TAG_WIDTH-1:0]        interface_loaded_desc,
+  input  wire [31:0]                    interface_sched_data,
   
   // PCIe DMA enable and interrupts
   output reg                            pcie_dma_enable,
@@ -136,7 +136,7 @@ wire [31:0]                 core_stat_data_r;
 
 wire [31:0]                 interface_in_stat_data_r;
 wire [31:0]                 interface_out_stat_data_r;
-wire [ID_TAG_WIDTH-1:0]     interface_loaded_desc_r;
+wire [31:0]                 interface_sched_data_r;
 
 // State registers for readback
 reg [HOST_DMA_TAG_WIDTH-1:0]  host_dma_read_status_tags;
@@ -335,7 +335,7 @@ always @(posedge pcie_clk) begin
                 16'h0424: axil_ctrl_rdata <= core_stat_data_r;
                 16'h0428: axil_ctrl_rdata <= interface_in_stat_data_r;
                 16'h042C: axil_ctrl_rdata <= interface_out_stat_data_r;
-                16'h0430: axil_ctrl_rdata <= interface_loaded_desc_r;
+                16'h0430: axil_ctrl_rdata <= interface_sched_data_r;
                 16'h0458: axil_ctrl_rdata <= host_dma_read_status_tags;
                 16'h0478: axil_ctrl_rdata <= host_dma_write_status_tags;
                 16'h0480: axil_ctrl_rdata <= corundum_loopback;
@@ -475,14 +475,14 @@ if (SEPARATE_CLOCKS) begin
   
   simple_sync_sig # (
     .RST_VAL(1'b0),
-    .WIDTH(2*32+ID_TAG_WIDTH+CORE_SLOT_WIDTH+32)
+    .WIDTH(3*32+CORE_SLOT_WIDTH+32)
   ) slot_count_syncer (
     .dst_clk(pcie_clk),
     .dst_rst(pcie_rst),
-    .in({interface_in_stat_data, interface_out_stat_data, 
-         interface_loaded_desc, slot_count, core_stat_data}), 
-    .out({interface_in_stat_data_r, interface_out_stat_data_r, 
-          interface_loaded_desc_r, slot_count_r, core_stat_data_r})
+    .in({interface_in_stat_data, interface_out_stat_data,
+         interface_sched_data, slot_count, core_stat_data}),
+    .out({interface_in_stat_data_r, interface_out_stat_data_r,
+          interface_sched_data_r, slot_count_r, core_stat_data_r})
   );
 end else begin
   simple_sync_fifo # (
@@ -514,14 +514,14 @@ end else begin
   
   simple_sync_sig # (
     .RST_VAL(1'b0),
-    .WIDTH(2*32+ID_TAG_WIDTH+CORE_SLOT_WIDTH+32)
+    .WIDTH(3*32+CORE_SLOT_WIDTH+32)
   ) slot_count_syncer (
     .dst_clk(pcie_clk),
     .dst_rst(pcie_rst),
-    .in({interface_in_stat_data, interface_out_stat_data, 
-         interface_loaded_desc, slot_count, core_stat_data}), 
+    .in({interface_in_stat_data, interface_out_stat_data,
+         interface_sched_data, slot_count, core_stat_data}),
     .out({interface_in_stat_data_r, interface_out_stat_data_r, 
-          interface_loaded_desc_r, slot_count_r, core_stat_data_r})
+          interface_sched_data_r, slot_count_r, core_stat_data_r})
   );
 end
 

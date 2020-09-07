@@ -83,7 +83,7 @@ module simple_scheduler # (
   input  wire [CORE_ID_WIDTH-1:0]            stat_read_core,
   output reg  [SLOT_WIDTH-1:0]               slot_count,
   input  wire [INTERFACE_WIDTH-1:0]          stat_read_interface,
-  output reg  [ID_TAG_WIDTH-1:0]             loaded_desc,
+  output reg  [31:0]                         stat_interface_data,
 
   input  wire                                trig_in,
   output wire                                trig_in_ack,
@@ -474,7 +474,7 @@ module simple_scheduler # (
   reg [CORE_ID_WIDTH-1:0]   stat_read_core_r;
   reg [INTERFACE_WIDTH-1:0] stat_read_interface_r;
   reg [SLOT_WIDTH-1:0]      slot_count_n;
-  reg [ID_TAG_WIDTH-1:0]    loaded_desc_n;
+  reg [31:0]                stat_interface_data_n;
   reg [INTERFACE_COUNT-1:0] rx_almost_full_r;
 
   always @ (posedge clk) begin
@@ -487,7 +487,7 @@ module simple_scheduler # (
     stat_read_core_r      <= stat_read_core;
     stat_read_interface_r <= stat_read_interface;
     slot_count            <= slot_count_n;
-    loaded_desc           <= loaded_desc_n;
+    stat_interface_data   <= stat_interface_data_n;
     rx_almost_full_r      <= rx_axis_almost_full;
     if (rst_r) begin
       host_cmd_valid_r    <= 1'b0;
@@ -863,21 +863,20 @@ module simple_scheduler # (
   end
 
   /// *** STATUS FOR HOST READBACK *** ///
-  reg [INTERFACE_COUNT*ID_TAG_WIDTH-1:0] drop_count;
+  reg [INTERFACE_COUNT*32-1:0] drop_count;
 
   always @ (posedge clk) begin
     if (rst_r)
       drop_count <= {INTERFACE_COUNT*ID_TAG_WIDTH{1'b0}};
     else if (selected_port_v_r && !msg_desc_pop[rx_dest_core] &&
              !rx_desc_avail[rx_dest_core] && rx_almost_full_r[selected_port_enc_r])
-      drop_count[selected_port_enc_r*ID_TAG_WIDTH +: ID_TAG_WIDTH] <=
-        drop_count[selected_port_enc_r*ID_TAG_WIDTH +: ID_TAG_WIDTH] + 1;
+      drop_count[selected_port_enc_r*32 +: 32] <=
+        drop_count[selected_port_enc_r*32 +: 32] + 1;
   end
 
   always @ (posedge clk) begin
-    slot_count_n  <= rx_desc_count[stat_read_core_r * SLOT_WIDTH +: SLOT_WIDTH];
-    // No preload of desc in hash based scheduler
-    loaded_desc_n <= drop_count[stat_read_interface_r*ID_TAG_WIDTH +: ID_TAG_WIDTH];
+    slot_count_n          <= rx_desc_count[stat_read_core_r * SLOT_WIDTH +: SLOT_WIDTH];
+    stat_interface_data_n <= drop_count[stat_read_interface_r*32 +: 32];
   end
 
 if (ENABLE_ILA) begin

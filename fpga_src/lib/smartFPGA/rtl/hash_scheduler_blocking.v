@@ -83,7 +83,7 @@ module simple_scheduler # (
   input  wire [CORE_ID_WIDTH-1:0]            stat_read_core,
   output reg  [SLOT_WIDTH-1:0]               slot_count,
   input  wire [INTERFACE_WIDTH-1:0]          stat_read_interface,
-  output reg  [ID_TAG_WIDTH-1:0]             loaded_desc,
+  output reg  [31:0]                         stat_interface_data,
 
   input  wire                                trig_in,
   output wire                                trig_in_ack,
@@ -473,7 +473,7 @@ module simple_scheduler # (
   reg [CORE_ID_WIDTH-1:0]   stat_read_core_r;
   reg [INTERFACE_WIDTH-1:0] stat_read_interface_r;
   reg [SLOT_WIDTH-1:0]      slot_count_n;
-  reg [ID_TAG_WIDTH-1:0]    loaded_desc_n;
+  reg [31:0]                stat_interface_data_n;
 
   always @ (posedge clk) begin
     host_cmd_r            <= host_cmd;
@@ -485,7 +485,7 @@ module simple_scheduler # (
     stat_read_core_r      <= stat_read_core;
     stat_read_interface_r <= stat_read_interface;
     slot_count            <= slot_count_n;
-    loaded_desc           <= loaded_desc_n;
+    stat_interface_data   <= stat_interface_data_n;
     if (rst_r) begin
       host_cmd_valid_r    <= 1'b0;
       income_cores_r      <= {CORE_COUNT{1'b0}};
@@ -850,9 +850,8 @@ module simple_scheduler # (
   /// *** STATUS FOR HOST READBACK *** ///
 
   always @ (posedge clk) begin
-    slot_count_n  <= rx_desc_count[stat_read_core_r * SLOT_WIDTH +: SLOT_WIDTH];
-    // No preload of desc in hash based scheduler
-    loaded_desc_n <= {ID_TAG_WIDTH{1'b0}};
+    slot_count_n          <= rx_desc_count[stat_read_core_r * SLOT_WIDTH +: SLOT_WIDTH];
+    stat_interface_data_n <= 32'd0;
   end
 
 if (ENABLE_ILA) begin
