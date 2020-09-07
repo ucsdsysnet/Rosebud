@@ -56,7 +56,7 @@ module axis_switch_2lvl # (
     parameter FRAME_FIFO = 0,
     parameter SEPARATE_CLOCKS = 0,
     parameter USE_SIMPLE_SW = 1,
-    parameter RAM_SW_RD_PIPE = 2
+    parameter PIPELINE_OUTPUT = 2
 ) (
     /*
      * AXI Stream inputs
@@ -119,6 +119,7 @@ if (S_COUNT >= M_COUNT) begin: shrink
             .LSB_PRIORITY    (LSB_PRIORITY),
             .CLUSTER_COUNT   (CLUSTER_COUNT),
             .STAGE_FIFO_DEPTH(STAGE_FIFO_DEPTH),
+            .PIPELINE_OUTPUT (PIPELINE_OUTPUT),
             .FRAME_FIFO      (FRAME_FIFO),
             .SEPARATE_CLOCKS (SEPARATE_CLOCKS)
         ) axis_switch_2lvl_shrink_inst (
@@ -168,9 +169,9 @@ if (S_COUNT >= M_COUNT) begin: shrink
             .LSB_PRIORITY    (LSB_PRIORITY),
             .CLUSTER_COUNT   (CLUSTER_COUNT),
             .STAGE_FIFO_DEPTH(STAGE_FIFO_DEPTH),
+            .PIPELINE_OUTPUT (PIPELINE_OUTPUT),
             .FRAME_FIFO      (FRAME_FIFO),
-            .SEPARATE_CLOCKS (SEPARATE_CLOCKS),
-            .RD_PIPE         (RAM_SW_RD_PIPE)
+            .SEPARATE_CLOCKS (SEPARATE_CLOCKS)
         ) axis_switch_2lvl_shrink_inst (
             .s_clk        (s_clk),
             .s_rst        (s_rst),
@@ -220,6 +221,7 @@ end else begin: grow
             .LSB_PRIORITY    (LSB_PRIORITY),
             .CLUSTER_COUNT   (CLUSTER_COUNT),
             .STAGE_FIFO_DEPTH(STAGE_FIFO_DEPTH),
+            .PIPELINE_OUTPUT (PIPELINE_OUTPUT),
             .FRAME_FIFO      (FRAME_FIFO),
             .SEPARATE_CLOCKS (SEPARATE_CLOCKS)
         ) axis_switch_2lvl_grow_inst (
@@ -269,9 +271,9 @@ end else begin: grow
             .LSB_PRIORITY    (LSB_PRIORITY),
             .CLUSTER_COUNT   (CLUSTER_COUNT),
             .STAGE_FIFO_DEPTH(STAGE_FIFO_DEPTH),
+            .PIPELINE_OUTPUT (PIPELINE_OUTPUT),
             .FRAME_FIFO      (FRAME_FIFO),
-            .SEPARATE_CLOCKS (SEPARATE_CLOCKS),
-            .RD_PIPE         (RAM_SW_RD_PIPE)
+            .SEPARATE_CLOCKS (SEPARATE_CLOCKS)
         ) axis_switch_2lvl_grow_inst (
             .s_clk        (s_clk),
             .s_rst        (s_rst),
@@ -323,6 +325,7 @@ module axis_simple_sw_shrink # (
     parameter LSB_PRIORITY     = "HIGH",
     parameter CLUSTER_COUNT    = 4,
     parameter STAGE_FIFO_DEPTH = 8192,
+    parameter PIPELINE_OUTPUT  = 2,
     parameter FRAME_FIFO       = 0,
     parameter SEPARATE_CLOCKS  = 0
 ) (
@@ -552,6 +555,7 @@ module axis_simple_sw_shrink # (
                             .USER_WIDTH(USER_WIDTH),
                             .ID_ENABLE(ID_ENABLE),
                             .ID_WIDTH(ID_WIDTH),
+                            .PIPELINE_OUTPUT(PIPELINE_OUTPUT),
                             .FRAME_FIFO(FRAME_FIFO)
                         ) stage_fifo (
 
@@ -599,9 +603,9 @@ module axis_simple_sw_shrink # (
                             .USER_WIDTH(USER_WIDTH),
                             .ID_ENABLE(ID_ENABLE),
                             .ID_WIDTH(ID_WIDTH),
+                            .PIPELINE_OUTPUT(PIPELINE_OUTPUT),
                             .FRAME_FIFO(FRAME_FIFO)
                         ) stage_fifo (
-
                             .clk(s_clk),
                             .rst(s_rst),
 
@@ -940,23 +944,38 @@ module axis_simple_arb_2lvl # (
 
                 if (STAGE_FIFO_ENABLE) begin: fifos
 
-                    simple_fifo # (
-                      .ADDR_WIDTH($clog2(STAGE_FIFO_DEPTH)),
-                      .DATA_WIDTH(DATA_WIDTH+USER_WIDTH)
+                    axis_fifo # (
+                        .DEPTH(STAGE_FIFO_DEPTH),
+                        .DATA_WIDTH(DATA_WIDTH),
+                        .KEEP_ENABLE(0),
+                        .KEEP_WIDTH(1),
+                        .DEST_ENABLE(0),
+                        .USER_ENABLE(1),
+                        .USER_WIDTH(USER_WIDTH),
+                        .ID_ENABLE(0),
+                        .PIPELINE_OUTPUT(2),
+                        .FRAME_FIFO(0)
                     ) stage_fifo (
-                      .clk(clk),
-                      .rst(rst),
-                      .clear(1'b0),
+                        .clk(clk),
+                        .rst(rst),
 
-                      .din_valid(int_axis_tvalid[j]),
-                      .din({int_axis_tdata[j*DATA_WIDTH +: DATA_WIDTH],
-                            int_axis_tuser[j*USER_WIDTH +: USER_WIDTH]}),
-                      .din_ready(int_axis_tready[j]),
+                        .s_axis_tdata(int_axis_tdata[j*DATA_WIDTH +: DATA_WIDTH]),
+                        .s_axis_tkeep(1'b0),
+                        .s_axis_tvalid(int_axis_tvalid[j]),
+                        .s_axis_tready(int_axis_tready[j]),
+                        .s_axis_tlast(1'b1),
+                        .s_axis_tid(8'd0),
+                        .s_axis_tdest(8'd0),
+                        .s_axis_tuser(int_axis_tuser[j*USER_WIDTH +: USER_WIDTH]),
 
-                      .dout_valid(int_axis_tvalid_f[j]),
-                      .dout({int_axis_tdata_f[j*DATA_WIDTH +: DATA_WIDTH],
-                            int_axis_tuser_f[j*USER_WIDTH +: USER_WIDTH]}),
-                      .dout_ready(int_axis_tready_f[j])
+                        .m_axis_tdata(int_axis_tdata_f[j*DATA_WIDTH +: DATA_WIDTH]),
+                        .m_axis_tkeep(),
+                        .m_axis_tvalid(int_axis_tvalid_f[j]),
+                        .m_axis_tready(int_axis_tready_f[j]),
+                        .m_axis_tlast(),
+                        .m_axis_tid(),
+                        .m_axis_tdest(),
+                        .m_axis_tuser(int_axis_tuser_f[j*USER_WIDTH +: USER_WIDTH])
                     );
 
                 end else begin: no_fifo
@@ -1074,9 +1093,9 @@ module axis_ram_sw_shrink # (
     parameter LSB_PRIORITY     = "HIGH",
     parameter CLUSTER_COUNT    = 4,
     parameter STAGE_FIFO_DEPTH = 8192,
+    parameter PIPELINE_OUTPUT  = 2,
     parameter FRAME_FIFO       = 0,
-    parameter SEPARATE_CLOCKS  = 0,
-    parameter RD_PIPE          = 2
+    parameter SEPARATE_CLOCKS  = 0
 ) (
     /*
      * AXI Stream inputs
@@ -1202,7 +1221,7 @@ module axis_ram_sw_shrink # (
                 .ID_WIDTH(ID_WIDTH),
                 .ARB_TYPE(ARB_TYPE),
                 .LSB_PRIORITY(LSB_PRIORITY),
-                .RAM_PIPELINE(RD_PIPE)
+                .RAM_PIPELINE(PIPELINE_OUTPUT)
             ) sw_lvl1 (
                 .clk(s_clk),
                 .rst(s_rst),
@@ -1251,6 +1270,7 @@ module axis_ram_sw_shrink # (
                     .USER_WIDTH(USER_WIDTH),
                     .ID_ENABLE(ID_ENABLE),
                     .ID_WIDTH(ID_WIDTH),
+                    .PIPELINE_OUTPUT(2),
                     .FRAME_FIFO(0)
                 ) async_fifo (
 
@@ -1499,6 +1519,7 @@ module axis_simple_sw_grow # (
     parameter LSB_PRIORITY     = "HIGH",
     parameter CLUSTER_COUNT    = 4,
     parameter STAGE_FIFO_DEPTH = 8192,
+    parameter PIPELINE_OUTPUT  = 2,
     parameter FRAME_FIFO       = 0,
     parameter SEPARATE_CLOCKS  = 0
 ) (
@@ -1644,6 +1665,7 @@ module axis_simple_sw_grow # (
                             .USER_WIDTH(USER_WIDTH),
                             .ID_ENABLE(ID_ENABLE),
                             .ID_WIDTH(ID_WIDTH),
+                            .PIPELINE_OUTPUT(PIPELINE_OUTPUT),
                             .FRAME_FIFO(FRAME_FIFO)
                         ) stage_fifo (
                             .s_clk(s_clk),
@@ -1690,6 +1712,7 @@ module axis_simple_sw_grow # (
                             .USER_WIDTH(USER_WIDTH),
                             .ID_ENABLE(ID_ENABLE),
                             .ID_WIDTH(ID_WIDTH),
+                            .PIPELINE_OUTPUT(PIPELINE_OUTPUT),
                             .FRAME_FIFO(FRAME_FIFO)
                         ) stage_fifo (
                             .clk(s_clk),
@@ -1802,9 +1825,9 @@ module axis_ram_sw_grow # (
     parameter LSB_PRIORITY     = "HIGH",
     parameter CLUSTER_COUNT    = 4,
     parameter STAGE_FIFO_DEPTH = 8192,
+    parameter PIPELINE_OUTPUT  = 2,
     parameter FRAME_FIFO       = 0,
-    parameter SEPARATE_CLOCKS  = 0,
-    parameter RD_PIPE          = 2
+    parameter SEPARATE_CLOCKS  = 0
 ) (
     /*
      * AXI Stream inputs
@@ -1937,6 +1960,7 @@ module axis_ram_sw_grow # (
                     .USER_WIDTH(USER_WIDTH),
                     .ID_ENABLE(ID_ENABLE),
                     .ID_WIDTH(ID_WIDTH),
+                    .PIPELINE_OUTPUT(2),
                     .FRAME_FIFO(0)
                 ) stage_fifo (
                     .s_clk(s_clk),
@@ -2025,7 +2049,7 @@ module axis_ram_sw_grow # (
                 .ID_WIDTH(ID_WIDTH),
                 .ARB_TYPE(ARB_TYPE),
                 .LSB_PRIORITY(LSB_PRIORITY),
-                .RAM_PIPELINE(RD_PIPE)
+                .RAM_PIPELINE(PIPELINE_OUTPUT)
             ) sw_lvl2 (
                 .clk(select_m_clk),
                 .rst(select_m_rst),

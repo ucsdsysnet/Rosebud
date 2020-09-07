@@ -381,6 +381,7 @@ if(CORE_REQ_PCIE_CLK) begin: cores_data_fifos
         .DEST_ENABLE(0),
         .USER_ENABLE(1),
         .USER_WIDTH(AXIS_TAG_WIDTH),
+        .PIPELINE_OUTPUT(2),
         .FRAME_FIFO(0)
     ) cores_tx_axis_data_fifo (
         .clk(pcie_clk),
@@ -418,6 +419,7 @@ if(CORE_REQ_PCIE_CLK) begin: cores_data_fifos
         .DEST_ENABLE(1),
         .DEST_WIDTH(AXIS_TAG_WIDTH),
         .USER_ENABLE(0),
+        .PIPELINE_OUTPUT(2),
         .FRAME_FIFO(0)
     ) cores_rx_axis_data_fifo (
         .clk(sys_clk),
@@ -457,6 +459,7 @@ end else begin: cores_data_async_fifos
         .DEST_ENABLE(0),
         .USER_ENABLE(1),
         .USER_WIDTH(AXIS_TAG_WIDTH),
+        .PIPELINE_OUTPUT(2),
         .FRAME_FIFO(0)
     ) cores_tx_axis_data_async_fifo (
         .async_rst(pcie_rst),
@@ -498,6 +501,7 @@ end else begin: cores_data_async_fifos
         .DEST_ENABLE(1),
         .DEST_WIDTH(AXIS_TAG_WIDTH),
         .USER_ENABLE(0),
+        .PIPELINE_OUTPUT(2),
         .FRAME_FIFO(0)
     ) cores_rx_axis_data_async_fifo (
         .async_rst(sys_rst),
@@ -602,6 +606,7 @@ if(CORE_REQ_PCIE_CLK) begin: cores_ctrl_fifos
         .DEST_ENABLE(0),
         .USER_ENABLE(1),
         .USER_WIDTH(CORE_WIDTH),
+        .PIPELINE_OUTPUT(2),
         .FRAME_FIFO(0)
     ) cores_ctrl_s_axis_fifo (
         .clk(pcie_clk),
@@ -641,6 +646,7 @@ if(CORE_REQ_PCIE_CLK) begin: cores_ctrl_fifos
         .DEST_ENABLE(1),
         .DEST_WIDTH(CORE_WIDTH),
         .USER_ENABLE(0),
+        .PIPELINE_OUTPUT(2),
         .FRAME_FIFO(0)
     ) cores_ctrl_m_axis_fifo (
         .clk(pcie_clk),

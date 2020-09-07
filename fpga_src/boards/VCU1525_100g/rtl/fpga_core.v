@@ -210,6 +210,7 @@ parameter LVL1_DRAM_WIDTH  = 64; //DRAM CONTROL
 parameter LVL2_DRAM_WIDTH  = 64; //DON'T CHANGE
 parameter ASYNC_FIFO_DEPTH = 512;
 parameter RX_FIFO_DEPTH    = 4*32768;
+parameter RX_ALMOST_FULL   = 7*16384;
 parameter TX_FIFO_DEPTH    = 32768;
 parameter RX_STG_F_DEPTH   = 4*32768;
 parameter TX_STG_F_DEPTH   = 32768;
@@ -218,7 +219,7 @@ parameter STG_F_DRAM_DEPTH = 2048;
 parameter V_MAC_FIFO_SIZE  = 1024;
 parameter CLUSTER_COUNT    = 4;
 parameter BC_MSG_CLUSTERS  = 4;
-parameter RAM_SW_RD_PIPE   = 2;
+parameter SW_OUTPUT_PIPE   = 2;
 
 // PCIe parameters
 parameter PCIE_SLOT_COUNT     = 16;
@@ -437,13 +438,13 @@ generate
             .ID_ENABLE(0),
             .DEST_ENABLE(0),
             .USER_ENABLE(0),
+            .PIPELINE_OUTPUT(2),
             .FRAME_FIFO(1),
             .USER_BAD_FRAME_VALUE(1'b1),
             .USER_BAD_FRAME_MASK(1'b1),
             .DROP_BAD_FRAME(1),
             .DROP_WHEN_FULL(0)
-        )
-        mac_tx_fifo_inst (
+        ) mac_tx_fifo_inst (
             .clk(sys_clk),
             .rst(sys_rst),
             
@@ -481,10 +482,10 @@ generate
             .ID_ENABLE(0),
             .DEST_ENABLE(0),
             .USER_ENABLE(0),
+            .PIPELINE_OUTPUT(3),
             .FRAME_FIFO(0),
             .DROP_WHEN_FULL(0)
-        )
-        mac_tx_async_fifo_inst (
+        ) mac_tx_async_fifo_inst (
             // Common reset
             .async_rst(sys_rst | port_tx_rst[m]),
             // AXI input
@@ -525,10 +526,10 @@ generate
             .ID_ENABLE(0),
             .DEST_ENABLE(0),
             .USER_ENABLE(0),
+            .PIPELINE_OUTPUT(3),
             .FRAME_FIFO(0),
             .DROP_WHEN_FULL(0)
-        )
-        mac_rx_async_fifo_inst (
+        ) mac_rx_async_fifo_inst (
             // Common reset
             .async_rst(port_rx_rst[m] | sys_rst),
             // AXI input
@@ -569,13 +570,14 @@ generate
             .ID_ENABLE(0),
             .DEST_ENABLE(0),
             .USER_ENABLE(0),
+            .PIPELINE_OUTPUT(2),
             .FRAME_FIFO(1),
             .USER_BAD_FRAME_VALUE(1'b1),
             .USER_BAD_FRAME_MASK(1'b1),
             .DROP_BAD_FRAME(1),
-            .DROP_WHEN_FULL(1)
-        )
-        mac_rx_fifo_inst (
+            .DROP_WHEN_FULL(1),
+            .ALMOST_FULL_LVL(RX_ALMOST_FULL)
+        ) mac_rx_fifo_inst (
             .clk(sys_clk),
             .rst(sys_rst),
 
@@ -1313,7 +1315,7 @@ axis_switch_2lvl # (
     .FRAME_FIFO      (0),
     .SEPARATE_CLOCKS (SEPARATE_CLOCKS),
     .USE_SIMPLE_SW   (0),
-    .RAM_SW_RD_PIPE  (RAM_SW_RD_PIPE)
+    .PIPELINE_OUTPUT (SW_OUTPUT_PIPE)
 ) data_in_sw (
     .s_clk(sys_clk),
     .s_rst(sys_rst),
@@ -1380,7 +1382,7 @@ axis_switch_2lvl # (
     .FRAME_FIFO      (1),
     .SEPARATE_CLOCKS (SEPARATE_CLOCKS),
     .USE_SIMPLE_SW   (0),
-    .RAM_SW_RD_PIPE  (RAM_SW_RD_PIPE)
+    .PIPELINE_OUTPUT (SW_OUTPUT_PIPE)
 ) data_out_sw (
     /*
      * AXI Stream inputs
@@ -1452,7 +1454,8 @@ axis_switch_2lvl # (
     .STAGE_FIFO_DEPTH(STG_F_CTRL_DEPTH),
     .FRAME_FIFO      (0),
     .SEPARATE_CLOCKS (SEPARATE_CLOCKS),
-    .USE_SIMPLE_SW   (1)
+    .USE_SIMPLE_SW   (1),
+    .PIPELINE_OUTPUT (1)
 ) ctrl_in_sw
 (
     /*
@@ -1524,7 +1527,8 @@ axis_switch_2lvl # (
     .STAGE_FIFO_DEPTH(STG_F_DRAM_DEPTH),
     .FRAME_FIFO      (0),
     .SEPARATE_CLOCKS (SEPARATE_CLOCKS),
-    .USE_SIMPLE_SW   (1)
+    .USE_SIMPLE_SW   (1),
+    .PIPELINE_OUTPUT (SW_OUTPUT_PIPE)
 ) dram_ctrl_in_sw
 (
     /*
@@ -1573,7 +1577,8 @@ axis_switch_2lvl # (
     .STAGE_FIFO_DEPTH(STG_F_DRAM_DEPTH),
     .FRAME_FIFO      (0),
     .SEPARATE_CLOCKS (SEPARATE_CLOCKS),
-    .USE_SIMPLE_SW   (1)
+    .USE_SIMPLE_SW   (1),
+    .PIPELINE_OUTPUT (SW_OUTPUT_PIPE)
 ) dram_ctrl_out_sw
 (
     /*

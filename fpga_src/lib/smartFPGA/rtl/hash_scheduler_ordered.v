@@ -310,6 +310,7 @@ module simple_scheduler # (
           .ID_ENABLE(0),
           .DEST_ENABLE(0),
           .USER_ENABLE(0),
+          .PIPELINE_OUTPUT(1),
           .FRAME_FIFO(0)
       ) rx_fifo_inst (
           .clk(clk),

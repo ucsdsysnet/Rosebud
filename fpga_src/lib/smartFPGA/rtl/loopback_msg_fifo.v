@@ -85,6 +85,7 @@ generate
         .DEST_WIDTH(ID_TAG_WIDTH),
         .USER_ENABLE(0),
         .USER_WIDTH (1),
+        .PIPELINE_OUTPUT(2),
         .FRAME_FIFO(0)
     ) axis_fifo_inst (
         .clk(clk),
