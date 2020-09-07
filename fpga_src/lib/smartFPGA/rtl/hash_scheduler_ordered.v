@@ -164,7 +164,7 @@ module simple_scheduler # (
         .USER_ENABLE(1),
         .USER_WIDTH(ID_TAG_WIDTH),
         .REG_TYPE(DATA_REG_TYPE),
-        .LENGTH(2)
+        .LENGTH(1)
       ) data_s_reg_inst (
         .clk(clk),
         .rst(rst_r),
