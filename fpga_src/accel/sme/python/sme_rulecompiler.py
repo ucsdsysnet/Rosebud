@@ -768,12 +768,16 @@ def main():
         with open(fn, 'r') as f:
             for w in f.read().splitlines():
                 b = w.encode('utf-8')
+                if len(b) == 0:
+                    continue
                 match_list.append((b, w))
 
     for fn in rules_file:
         with open(fn, 'r') as f:
             for w in f.read().splitlines():
                 b = parse_content_string(w)
+                if len(b) == 0:
+                    continue
                 match_list.append((b, w))
 
     match_set = set()
