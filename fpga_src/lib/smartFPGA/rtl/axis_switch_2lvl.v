@@ -944,38 +944,23 @@ module axis_simple_arb_2lvl # (
 
                 if (STAGE_FIFO_ENABLE) begin: fifos
 
-                    axis_fifo # (
-                        .DEPTH(STAGE_FIFO_DEPTH),
-                        .DATA_WIDTH(DATA_WIDTH),
-                        .KEEP_ENABLE(0),
-                        .KEEP_WIDTH(1),
-                        .DEST_ENABLE(0),
-                        .USER_ENABLE(1),
-                        .USER_WIDTH(USER_WIDTH),
-                        .ID_ENABLE(0),
-                        .PIPELINE_OUTPUT(1),
-                        .FRAME_FIFO(0)
+                    simple_fifo # (
+                      .ADDR_WIDTH($clog2(STAGE_FIFO_DEPTH)),
+                      .DATA_WIDTH(DATA_WIDTH+USER_WIDTH)
                     ) stage_fifo (
-                        .clk(clk),
-                        .rst(rst),
+                      .clk(clk),
+                      .rst(rst),
+                      .clear(1'b0),
 
-                        .s_axis_tdata(int_axis_tdata[j*DATA_WIDTH +: DATA_WIDTH]),
-                        .s_axis_tkeep(1'b0),
-                        .s_axis_tvalid(int_axis_tvalid[j]),
-                        .s_axis_tready(int_axis_tready[j]),
-                        .s_axis_tlast(1'b1),
-                        .s_axis_tid(8'd0),
-                        .s_axis_tdest(8'd0),
-                        .s_axis_tuser(int_axis_tuser[j*USER_WIDTH +: USER_WIDTH]),
+                      .din_valid(int_axis_tvalid[j]),
+                      .din({int_axis_tdata[j*DATA_WIDTH +: DATA_WIDTH],
+                            int_axis_tuser[j*USER_WIDTH +: USER_WIDTH]}),
+                      .din_ready(int_axis_tready[j]),
 
-                        .m_axis_tdata(int_axis_tdata_f[j*DATA_WIDTH +: DATA_WIDTH]),
-                        .m_axis_tkeep(),
-                        .m_axis_tvalid(int_axis_tvalid_f[j]),
-                        .m_axis_tready(int_axis_tready_f[j]),
-                        .m_axis_tlast(),
-                        .m_axis_tid(),
-                        .m_axis_tdest(),
-                        .m_axis_tuser(int_axis_tuser_f[j*USER_WIDTH +: USER_WIDTH])
+                      .dout_valid(int_axis_tvalid_f[j]),
+                      .dout({int_axis_tdata_f[j*DATA_WIDTH +: DATA_WIDTH],
+                            int_axis_tuser_f[j*USER_WIDTH +: USER_WIDTH]}),
+                      .dout_ready(int_axis_tready_f[j])
                     );
 
                 end else begin: no_fifo
