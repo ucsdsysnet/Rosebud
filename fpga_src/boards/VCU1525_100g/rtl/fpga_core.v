@@ -482,7 +482,7 @@ generate
             .ID_ENABLE(0),
             .DEST_ENABLE(0),
             .USER_ENABLE(0),
-            .PIPELINE_OUTPUT(3),
+            .PIPELINE_OUTPUT(1),
             .FRAME_FIFO(0),
             .DROP_WHEN_FULL(0)
         ) mac_tx_async_fifo_inst (
@@ -526,7 +526,7 @@ generate
             .ID_ENABLE(0),
             .DEST_ENABLE(0),
             .USER_ENABLE(0),
-            .PIPELINE_OUTPUT(3),
+            .PIPELINE_OUTPUT(1),
             .FRAME_FIFO(0),
             .DROP_WHEN_FULL(0)
         ) mac_rx_async_fifo_inst (
@@ -570,7 +570,7 @@ generate
             .ID_ENABLE(0),
             .DEST_ENABLE(0),
             .USER_ENABLE(0),
-            .PIPELINE_OUTPUT(2),
+            .PIPELINE_OUTPUT(3),
             .FRAME_FIFO(1),
             .USER_BAD_FRAME_VALUE(1'b1),
             .USER_BAD_FRAME_MASK(1'b1),
