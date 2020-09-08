@@ -1,0 +1,14 @@
+alert tcp $HOME_NET 3389 -> any any (flow:from_server; flags:SA; flowbits:isnotset,ms.rdp.synack; flowbits:set,ms.rdp.synack; flowbits:noalert; )
+
+alert tcp $EXTERNAL_NET any -> $HOME_NET $HTTP_PORTS (flow:to_server,established; content:"GET AAAAAAAA HTTP/1.1"; content:!"Referer|3a|"; distance:0; content:!"Accept"; distance:0; content:!"|0d 0a|"; distance:0; threshold:type both,track by_dst,count 500,seconds 60; 
+
+alert tcp $EXTERNAL_NET any -> $HOME_NET $HTTP_PORTS (flow:to_server,established; dsize:<50; content:"|20|HTTP/1.1Host|3a 20|"; threshold:type both,track by_dst,count 500,seconds 60; 
+
+alert tcp $EXTERNAL_NET any -> $HOME_NET any (flow:to_server,established; content:"POST "; depth:5; content:"|0d 0a|SOAPAction|3a|"; nocase; distance:0; pcre:"/^[^\r\n]+#[^\x22\r\n]{2049}/R";)
+alert tcp $EXTERNAL_NET any -> $HOME_NET $HTTP_PORTS (flow:to_server,established; dsize:18; content:"GET / HTTP/1.1|0d 0a 0d 0a|"; depth:18; threshold:type both,track by_dst,count 500,seconds 60;
+alert tcp $EXTERNAL_NET any -> $HOME_NET $HTTP_PORTS (flow:to_server,established; dsize:20; content:"GET / HTTP/1.0|0d 0a 0d 0a 0d 0a|"; depth:20; threshold:type both,track by_dst,count 500,seconds 60; 
+alert tcp $EXTERNAL_NET any -> $HOME_NET $HTTP_PORTS (flow:to_server,established; dsize:20; content:"GET / HTTP/1.1|0d 0a 0d 0a 0d 0a|"; depth:20; threshold:type both,track by_dst,count 500,seconds 60; 
+alert tcp any 445 -> $HOME_NET any (flow:from_server,established; content:"|FE|SMB"; offset:4; depth:4; content:"|03 00|"; distance:8; within:2; byte_test:1,&,1,2,relative; byte_jump:2,8,little,from_beginning; byte_jump:2,4,relative,little; isdataat:1000,relative; content:!"|FE|SMB"; within:1000; 
+alert tcp any any -> $HOME_NET 445 (flow:established,to_server; content:"|FF|SMB|73|"; offset:4; depth:5; byte_test:1,&,0x80,6,relative; byte_test:1,&,0x08,6,relative; byte_test:1,&,0x10,5,relative; byte_test:1,&,0x04,5,relative; byte_test:1,&,0x02,5,relative; byte_test:1,&,0x01,5,relative; content:"|ff 00|"; distance:28; within:2; content:"|84|"; distance:25; within:1; content:"NTLMSSP"; fast_pattern; within:64; 
+alert tcp any any -> $HOME_NET [139,445] (flow:established,to_server; content:"|00 01 ff ff|"; depth:4; threshold:type both,track by_dst,count 30, seconds 300; 
+alert tcp any 445 -> $HOME_NET any (flow:from_server,established; byte_test:  3,>,1000,1; content: "|fe 53 4d 42 40 00|"; offset: 4; depth: 6; content: "|03 00|"; offset: 16; depth:2; 

@@ -1,0 +1,115 @@
+|0D 0A|ST|3A|
+POST 
+|0d 0a|SOAPAction|3a|
+M-SEARCH
+|00 02 2A|
+|00 03 2A|
+|00 02 2a|
+|00 03 2a|
+|00 02 2a|
+|00 02 00|
+|00 03 00|
+|00 02 01|
+|00 03 01|
+M-SEARCH * HTTP/1.1
+ST|3a 20|ssdp|3a|all|0d 0a|
+|01 00 00 01 00 00 00 00 00 01|
+|00 ff 00 01 00 00 29|
+|00 03 2a|
+|20|HTTP/1.1Host|3a 20|
+GET / HTTP/1.1|0d 0a 0d 0a|
+GET AAAAAAAA HTTP/1.1
+GET / HTTP/1.0|0d 0a 0d 0a 0d 0a|
+GET / HTTP/1.1|0d 0a 0d 0a 0d 0a|
+|00 03 10|
+|00 02 10|
+|00 03 00|
+|00 02 00|
+|00 03 01|
+|00 02 01|
+|00 02 10|
+|00 03 10|
+|df 00 00 04 00|
+|05|
+ServerName|3b|
+InstanceName|3b|
+IsClustered|3b|
+Version|3b|
+|05|
+ServerName|3b|
+InstanceName|3b|
+IsClustered|3b|
+Version|3b|
+|7a 00 00 00 00 00 00 00 00 00 00 00|
+|7a 00 00 00 00 00 00 00 00 00 00 00|
+|7a 00 00 00 00 00|
+|81 00 00 01 00 00|
+|0c|root-servers|03|net|00|
+|0c|root-servers|03|net|00|
+|81 00 00 01 00 00|
+|0c|root-servers|03|net|00|
+|0c|root-servers|03|net|00|
+|FE|SMB
+|03 00|
+|FF|SMB|73|
+|ff 00|
+|84|
+NTLMSSP
+|00 01 ff ff|
+|30 84 00 00 00 2d 02 01 01 63 84 00 00 00 24 04 00 0a 01 00|
+objectclass0
+STATS|20|pid
+STATS|20|pid
+|0D 0A|ST|3a|
+schemas|3a|device
+|0D 0A|ST|3a|
+urn|3a|service
+|0D 0A|ST|3a|
+urn|3a|device
+|0D 0A|ST|3a|
+schemas|3a|device
+Bittorrent
+GET
+If-Modified-Since|3a 20 20|
+Keep-Alive|3a 20 20|
+Connection|3a 20 20|
+User-Agent|3a 20 20|
+HTTP/1.0|0d 0a|Accept|3a 20|*/*|0d 0a|Accept-Language|3a 20|
+GET
+If-Modified-Since|3a 20 20|
+Keep-Alive|3a 20 20|
+Connection|3a 20 20|
+User-Agent|3a 20 20|
+HTTP/1.0|0d 0a|Accept|3a 20|*/*|0d 0a|Accept-Language|3a 20|
+User-Agent|3a 20 20|
+POST
+Mozilla/4.0 (compatible|3b 20|Synapse)
+login=
+$pass=
+/?
+=
+Keep|2d|Alive|3a|
+Connection|3a| keep|2d|alive
+Cache|2d|Control|3a|
+Accept|2d|Encoding|3a|
+GET
+/?id=
+&msg=
+POST
+13
+=MSG
+GET
+/?msg=MSG
+Mozilla/5.0 (Windows|3b 20|U|3b 20|Windows NT 5.1|3b 20|ru|3b 20|rv|3a|1.8.1.1) Gecko/20061204 Firefox/2.0.0.1
+Mozilla/5.0 (Windows|3b 20|U|3b 20|Windows NT 5.1|3b 20|ru|3b 20|rv|3a|1.8.1.1) Gecko/20061204 Firefox/2.0.0.1
+Opera/9.02 (Windows NT 5.1|3b 20|U|3b 20|ru)
+Opera/9.02 (Windows NT 5.1|3b 20|U|3b 20|ru)
+/xmlrpc.php
+pingback.ping
+SUBSCRIBE
+CALLBACK|3a 20|
+<http
+><http
+x00_-gawa.sa.pilipinas.2015
+|00 00 00 00 00 01 00|
+|0d 0a|

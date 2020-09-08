@@ -1,0 +1,42 @@
+alert udp $EXTERNAL_NET any -> $HOME_NET 1900 (content:"|0D 0A|ST|3A|"; nocase; pcre:"/^[^\r\n]*uuid\x3a[^\r\n\x3a]{181}/Ri";)
+
+alert udp any any -> $HOME_NET 1900 (content:"M-SEARCH * HTTP/1.1"; content:"ST|3a 20|ssdp|3a|all|0d 0a|"; nocase; distance:0; fast_pattern; threshold: type both,track by_src,count 2,seconds 60; 
+alert udp $EXTERNAL_NET any -> $HOME_NET 5093 (dsize:6; content:"|7a 00 00 00 00 00|"; threshold: type both,track by_dst,count 10,seconds 60; 
+alert udp $EXTERNAL_NET 389 -> $HOME_NET 389 (dsize:52; content:"|30 84 00 00 00 2d 02 01 01 63 84 00 00 00 24 04 00 0a 01 00|"; fast_pattern; threshold:type both, count 100, seconds 60, track by_src; 
+alert udp $EXTERNAL_NET any -> $HOME_NET 389 (content:"objectclass0"; fast_pattern; threshold:type both, count 200, seconds 60, track by_src; 
+
+alert udp $EXTERNAL_NET any -> $HOME_NET 1900 (content:"|0D 0A|ST|3a|"; nocase; pcre:"/^[^\r\n]*schemas\x3adevice\x3a[^\r\n\x3a]{181}/Ri"; content:"schemas|3a|device"; nocase; fast_pattern; 
+alert udp $EXTERNAL_NET any -> $HOME_NET 1900 (content:"|0D 0A|ST|3a|"; nocase; pcre:"/^[^\r\n]*urn\x3aservice\x3a[^\r\n\x3a]{181}/Ri"; content:"urn|3a|service"; nocase; fast_pattern; 
+alert udp $EXTERNAL_NET any -> $HOME_NET 1900 (content:"|0D 0A|ST|3a|"; nocase; pcre:"/^[^\r\n]*urn\x3adevice\x3a[^\r\n\x3a]{181}/Ri"; content:"urn|3a|device"; nocase; fast_pattern; 
+alert udp $EXTERNAL_NET any -> $HOME_NET 1900 (content:"|0D 0A|ST|3a|"; nocase; pcre:"/^[^\r\n]*schemas\x3adevice\x3a[^\r\n\x3a]{1,180}\x3a[^\r\n\x3a]{181}/Ri"; content:"schemas|3a|device"; nocase; fast_pattern; 
+
+alert udp any any -> $HOME_NET 1900 (content:"M-SEARCH"; depth:8; isdataat:1492,relative; content:!"|0d 0a|"; distance:1490; within:2;)
+alert udp any any -> any 123 (content:"|00 02 2A|"; offset:1; depth:3; byte_test:1,!&,128,0; byte_test:1,&,4,0; byte_test:1,&,2,0; byte_test:1,&,1,0; threshold: type both,track by_dst,count 2,seconds 60; 
+alert udp any any -> any 123 (content:"|00 03 2A|"; offset:1; depth:3; byte_test:1,!&,128,0; byte_test:1,&,4,0; byte_test:1,&,2,0; byte_test:1,&,1,0; threshold: type both,track by_dst,count 2,seconds 60; 
+alert udp $HOME_NET 123 -> $EXTERNAL_NET any (content:"|00 02 2a|"; offset:1; depth:3; byte_test:1,&,128,0; byte_test:1,&,64,0; byte_test:1,&,4,0; byte_test:1,&,2,0; byte_test:1,&,1,0; threshold: type both,track by_src,count 2,seconds 60; 
+alert udp $HOME_NET 123 -> $EXTERNAL_NET any (content:"|00 03 2a|"; offset:1; depth:3; byte_test:1,&,128,0; byte_test:1,&,64,0; byte_test:1,&,4,0; byte_test:1,&,2,0; byte_test:1,&,1,0; threshold: type both,track by_src,count 2,seconds 60; 
+alert udp any 123 -> any 0:1023 (content:"|00 02 2a|"; offset:1; depth:3; byte_test:1,&,128,0; byte_test:1,&,64,0; byte_test:1,&,4,0; byte_test:1,&,2,0; byte_test:1,&,1,0; threshold: type both,track by_src,count 1,seconds 120; 
+alert udp any 123 -> any 0:1023 (content:"|00 02 00|"; offset:1; depth:3; byte_test:1,&,128,0; byte_test:1,&,64,0; byte_test:1,&,4,0; byte_test:1,&,2,0; byte_test:1,&,1,0; threshold: type both,track by_src,count 1,seconds 120; 
+alert udp any 123 -> any 0:1023 (content:"|00 03 00|"; offset:1; depth:3; byte_test:1,&,128,0; byte_test:1,&,64,0; byte_test:1,&,4,0; byte_test:1,&,2,0; byte_test:1,&,1,0; threshold: type both,track by_src,count 1,seconds 120; 
+alert udp any 123 -> any 0:1023 (content:"|00 02 01|"; offset:1; depth:3; byte_test:1,&,128,0; byte_test:1,&,64,0; byte_test:1,&,4,0; byte_test:1,&,2,0; byte_test:1,&,1,0; threshold: type both,track by_src,count 1,seconds 120; 
+alert udp any 123 -> any 0:1023 (content:"|00 03 01|"; offset:1; depth:3; byte_test:1,&,128,0; byte_test:1,&,64,0; byte_test:1,&,4,0; byte_test:1,&,2,0; byte_test:1,&,1,0; threshold: type both,track by_src,count 1,seconds 120; 
+alert udp any any -> $HOME_NET 53 (content:"|01 00 00 01 00 00 00 00 00 01|"; depth:10; offset:2; pcre:"/^[^\x00]+?\x00/R"; content:"|00 ff 00 01 00 00 29|"; within:7; fast_pattern; byte_test:2,>,4095,0,relative; threshold: type both, track by_dst, seconds 60, count 5; 
+alert udp any 123 -> any 0:1023 (content:"|00 03 2a|"; offset:1; depth:3; byte_test:1,&,128,0; byte_test:1,&,64,0; byte_test:1,&,4,0; byte_test:1,&,2,0; byte_test:1,&,1,0; threshold: type both,track by_src,count 1,seconds 120; 
+alert udp any 123 -> any 0:1023 (content:"|00 03 10|"; offset:1; depth:3; byte_test:1,&,128,0; byte_test:1,&,64,0; byte_test:1,&,4,0; byte_test:1,&,2,0; byte_test:1,&,1,0; threshold: type both,track by_src,count 1,seconds 120; 
+alert udp any 123 -> any 0:1023 (content:"|00 02 10|"; offset:1; depth:3; byte_test:1,&,128,0; byte_test:1,&,64,0; byte_test:1,&,4,0; byte_test:1,&,2,0; byte_test:1,&,1,0; threshold: type both,track by_src,count 1,seconds 120; 
+alert udp any any -> any 123 (content:"|00 03 00|"; offset:1; depth:3; byte_test:1,!&,128,0; byte_test:1,&,4,0; byte_test:1,&,2,0; byte_test:1,&,1,0; threshold: type both,track by_dst,count 2,seconds 60; 
+alert udp any any -> any 123 (content:"|00 02 00|"; offset:1; depth:3; byte_test:1,!&,128,0; byte_test:1,&,4,0; byte_test:1,&,2,0; byte_test:1,&,1,0; threshold: type both,track by_dst,count 2,seconds 60; 
+alert udp any any -> any 123 (content:"|00 03 01|"; offset:1; depth:3; byte_test:1,!&,128,0; byte_test:1,&,4,0; byte_test:1,&,2,0; byte_test:1,&,1,0; threshold: type both,track by_dst,count 2,seconds 60; 
+alert udp any any -> any 123 (content:"|00 02 01|"; offset:1; depth:3; byte_test:1,!&,128,0; byte_test:1,&,4,0; byte_test:1,&,2,0; byte_test:1,&,1,0; threshold: type both,track by_dst,count 2,seconds 60; 
+alert udp any any -> any 123 (content:"|00 02 10|"; offset:1; depth:3; byte_test:1,!&,128,0; byte_test:1,&,4,0; byte_test:1,&,2,0; byte_test:1,&,1,0; threshold: type both,track by_dst,count 2,seconds 60; 
+alert udp any any -> any 123 (content:"|00 03 10|"; offset:1; depth:3; byte_test:1,!&,128,0; byte_test:1,&,4,0; byte_test:1,&,2,0; byte_test:1,&,1,0; threshold: type both,track by_dst,count 2,seconds 60; 
+alert udp any 123 -> any any (content:"|df 00 00 04 00|"; offset:1; depth:5; byte_test:1,!&,128,0; byte_test:1,!&,64,0; byte_test:1,&,4,0; byte_test:1,&,2,0; byte_test:1,!&,1,0; threshold: type both,track by_src,count 2,seconds 60; 
+alert udp $HOME_NET 1434 -> $EXTERNAL_NET any (content:"|05|"; depth:1; content:"ServerName|3b|"; nocase; content:"InstanceName|3b|"; distance:0; content:"IsClustered|3b|"; distance:0; content:"Version|3b|"; distance:0; threshold:type both,track by_src,count 30,seconds 60; 
+alert udp $EXTERNAL_NET 1434 -> $HOME_NET any (content:"|05|"; depth:1; content:"ServerName|3b|"; nocase; content:"InstanceName|3b|"; distance:0; content:"IsClustered|3b|"; distance:0; content:"Version|3b|"; distance:0; threshold:type both,track by_dst,count 30,seconds 60; 
+alert udp $HOME_NET 5093 -> $EXTERNAL_NET any (dsize:>1390; content:"|7a 00 00 00 00 00 00 00 00 00 00 00|"; depth:12; threshold: type both,track by_src,count 10,seconds 60; 
+alert udp $EXTERNAL_NET 5093 -> $HOME_NET any (dsize:>1390; content:"|7a 00 00 00 00 00 00 00 00 00 00 00|"; depth:12; threshold: type both,track by_src,count 10,seconds 60; 
+alert udp $HOME_NET 53 -> $EXTERNAL_NET 1:1023 (content:"|81 00 00 01 00 00|"; depth:6; offset:2; byte_test:2,>,10,0,relative; byte_test:2,>,10,2,relative; content:"|0c|root-servers|03|net|00|"; distance:0; content:"|0c|root-servers|03|net|00|"; distance:0; threshold: type both, track by_dst, seconds 60, count 5; 
+alert udp $EXTERNAL_NET 53 -> $HOME_NET 1:1023 (content:"|81 00 00 01 00 00|"; depth:6; offset:2; byte_test:2,>,10,0,relative; byte_test:2,>,10,2,relative; content:"|0c|root-servers|03|net|00|"; distance:0; content:"|0c|root-servers|03|net|00|"; distance:0; threshold: type both, track by_dst, seconds 60, count 5; 
+alert udp any 11211 -> $EXTERNAL_NET any (flowbits:isset,ET.memcached.ddos; content:"STATS|20|pid"; depth:9; fast_pattern; threshold: type both, count 100, seconds 60, track by_dst; 
+alert udp $EXTERNAL_NET 11211 -> $HOME_NET any (content:"STATS|20|pid"; depth:9; fast_pattern; threshold: type both, count 100, seconds 60, track by_dst; 
+alert udp $EXTERNAL_NET any -> any 11211 (content:"|00 00 00 00 00 01 00|"; depth:7; fast_pattern; content:"|0d 0a|"; within:20; endswith; threshold: type both, count 100, seconds 60, track by_dst; flowbits:set,ET.memcached.ddos; 
