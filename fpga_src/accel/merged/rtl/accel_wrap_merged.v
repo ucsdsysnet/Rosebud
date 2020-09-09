@@ -40,18 +40,21 @@ module accel_wrap #(
 
 assign error = 1'b0;
 
-localparam ACCEL_COUNT = ACC_MEM_BLOCKS;
+localparam ACCEL_COUNT = 8;
+localparam DEST_WIDTH  = $clog2(ACCEL_COUNT);
 
-localparam LEN_WIDTH = 16;
+localparam LEN_WIDTH = 14;
 
-reg [PMEM_ADDR_WIDTH-1:0] cmd_addr_reg[ACCEL_COUNT-1:0];
-reg [LEN_WIDTH-1:0]       cmd_len_reg[ACCEL_COUNT-1:0];
-reg [ACCEL_COUNT-1:0]     cmd_valid_reg;
+reg [PMEM_ADDR_WIDTH-1:0] cmd_addr_reg;
+reg [LEN_WIDTH-1:0]       cmd_len_reg;
+reg                       cmd_valid_reg;
+reg [DEST_WIDTH-1:0]      cmd_accel_reg;
 reg [ACCEL_COUNT-1:0]     cmd_stop_reg;
-wire [ACCEL_COUNT-1:0]    cmd_ready;
+reg [ACCEL_COUNT-1:0]     cmd_init_reg;
+wire [ACCEL_COUNT-1:0]    accel_busy;
 
-wire [ACCEL_COUNT-1:0]    status_match;
-wire [ACCEL_COUNT-1:0]    status_done;
+reg [ACCEL_COUNT-1:0]    status_match;
+reg [ACCEL_COUNT-1:0]    status_done;
 
 reg [31:0]  hash_data_reg = 0;
 reg [1:0]   hash_data_len_reg = 0;
@@ -68,8 +71,9 @@ assign io_rd_data = read_data_reg;
 assign io_rd_valid = read_data_valid_reg;
 
 always @(posedge clk) begin
-  cmd_valid_reg <= cmd_valid_reg & ~cmd_ready;
+  cmd_valid_reg <= 'b0;
   cmd_stop_reg  <= {ACCEL_COUNT{1'b0}};
+  cmd_init_reg  <= {ACCEL_COUNT{1'b0}};
 
   hash_data_valid_reg <= 1'b0;
   hash_clear_reg      <= 1'b0;
@@ -101,15 +105,17 @@ always @(posedge clk) begin
       case ({io_addr[3:2], 2'b00})
         4'h0: begin
           if (io_strb[0]) begin
-            cmd_valid_reg[io_addr[6:4]] <= cmd_valid_reg[io_addr[6:4]] || io_wr_data[0];
+            cmd_valid_reg <= io_wr_data[0];
+            cmd_accel_reg <= io_addr[6:4];
             cmd_stop_reg [io_addr[6:4]] <= cmd_stop_reg [io_addr[6:4]] || io_wr_data[4];
+            cmd_init_reg [io_addr[6:4]] <= cmd_init_reg [io_addr[6:4]] || io_wr_data[0];
           end
         end
         4'h4: begin
-          cmd_len_reg[io_addr[6:4]] <= io_wr_data;
+          cmd_len_reg <= io_wr_data;
         end
         4'h8: begin
-          cmd_addr_reg[io_addr[6:4]] <= io_wr_data;
+          cmd_addr_reg <= io_wr_data;
         end
       endcase
     end
@@ -127,8 +133,8 @@ always @(posedge clk) begin
     end else if (!io_addr[7]) begin
       case ({io_addr[3:2], 2'b00})
         4'h0: begin
-          read_data_reg[0] <= cmd_valid_reg[io_addr[6:4]];
-          read_data_reg[1] <= cmd_ready[io_addr[6:4]];
+          read_data_reg[0] <= 1'b0; // cmd_valid_reg[io_addr[6:4]];
+          read_data_reg[1] <= accel_busy[io_addr[6:4]];
           read_data_reg[8] <= status_done[io_addr[6:4]];
           read_data_reg[9] <= status_match[io_addr[6:4]];
         end
@@ -148,7 +154,8 @@ always @(posedge clk) begin
   end
 
   if (rst) begin
-    cmd_valid_reg <= {ACCEL_COUNT{1'b0}};
+    cmd_valid_reg <= 1'b0;
+    cmd_init_reg  <= {ACCEL_COUNT{1'b0}};
     cmd_stop_reg  <= {ACCEL_COUNT{1'b0}};
 
     hash_data_valid_reg <= 1'b0;
@@ -159,50 +166,91 @@ always @(posedge clk) begin
   end
 end
 
+// DMA engine for single block of the packet memory
+localparam BLOCK_ADDR_WIDTH =PMEM_ADDR_WIDTH-PMEM_SEL_BITS;
+localparam ATTACHED = ACC_MEM_BLOCKS-1;
+  
+wire [ACCEL_COUNT*8-1:0] accel_tdata;
+wire [ACCEL_COUNT-1:0]   accel_tlast;
+wire [ACCEL_COUNT-1:0]   accel_tvalid;
+wire [ACCEL_COUNT-1:0]   accel_tready;
+
+accel_rd_dma_sp # (
+  .DATA_WIDTH(DATA_WIDTH),
+  .KEEP_WIDTH(DATA_WIDTH/8),
+  .ADDR_WIDTH(BLOCK_ADDR_WIDTH),
+  .ACCEL_COUNT(ACCEL_COUNT),
+  .DEST_WIDTH(DEST_WIDTH),
+  .LEN_WIDTH(LEN_WIDTH)
+) accel_dma_engine (
+  .clk(clk),
+  .rst(rst),
+
+  .desc_accel_id(cmd_accel_reg),
+  .desc_addr(cmd_addr_reg[BLOCK_ADDR_WIDTH-1:0]),
+  .desc_len(cmd_len_reg),
+  .desc_valid(cmd_valid_reg),
+  .accel_busy(accel_busy),
+
+  .mem_b1_rd_addr(acc_addr_b1[ATTACHED*ACC_ADDR_WIDTH +: ACC_ADDR_WIDTH]),
+  .mem_b1_rd_en(acc_en_b1[ATTACHED]),
+  .mem_b1_rd_data(acc_rd_data_b1[ATTACHED*DATA_WIDTH +: DATA_WIDTH]),
+
+  .mem_b2_rd_addr(acc_addr_b2[ATTACHED*ACC_ADDR_WIDTH +: ACC_ADDR_WIDTH]),
+  .mem_b2_rd_en(acc_en_b2[ATTACHED]),
+  .mem_b2_rd_data(acc_rd_data_b2[ATTACHED*DATA_WIDTH +: DATA_WIDTH]),
+
+  .m_axis_tdata(accel_tdata),
+  .m_axis_tlast(accel_tlast),
+  .m_axis_tvalid(accel_tvalid),
+  .m_axis_tready(accel_tready),
+  .m_axis_stop(cmd_stop_reg)
+);
+
+assign acc_wen_b1[ATTACHED*STRB_WIDTH +: STRB_WIDTH] = {STRB_WIDTH{1'b0}};
+assign acc_wen_b2[ATTACHED*STRB_WIDTH +: STRB_WIDTH] = {STRB_WIDTH{1'b0}};
+assign accel_tready = {ACCEL_COUNT{1'b1}};
+
+genvar i;
+
 generate
-
-genvar n;
-
-for (n = 0; n < ACCEL_COUNT; n = n + 1) begin
-
-  regex_acc #(
-    .DATA_WIDTH(DATA_WIDTH),
-    .STRB_WIDTH(STRB_WIDTH),
-    .PMEM_ADDR_WIDTH(PMEM_ADDR_WIDTH),
-    .SLOW_M_B_LINES(SLOW_M_B_LINES),
-    .ACC_ADDR_WIDTH(ACC_ADDR_WIDTH),
-    .PMEM_SEL_BITS(0),
-    .ACC_MEM_BLOCKS(1)
-  ) regex_acc_inst (
-    .clk(clk),
-    .rst(rst),
-
-    .cmd_addr(cmd_addr_reg[n]),
-    .cmd_len(cmd_len_reg[n]),
-    .cmd_valid(cmd_valid_reg[n]),
-    .cmd_stop(cmd_stop_reg[n]),
-    .cmd_ready(cmd_ready[n]),
-
-    .status_match(status_match[n]),
-    .status_done(status_done[n]),
-
-    .acc_en_b1(acc_en_b1[n*1 +: 1]),
-    .acc_wen_b1(acc_wen_b1[n*STRB_WIDTH +: STRB_WIDTH]),
-    .acc_addr_b1(acc_addr_b1[n*ACC_ADDR_WIDTH +: ACC_ADDR_WIDTH]),
-    .acc_wr_data_b1(acc_wr_data_b1[n*DATA_WIDTH +: DATA_WIDTH]),
-    .acc_rd_data_b1(acc_rd_data_b1[n*DATA_WIDTH +: DATA_WIDTH]),
-
-    .acc_en_b2(acc_en_b2[n*1 +: 1]),
-    .acc_wen_b2(acc_wen_b2[n*STRB_WIDTH +: STRB_WIDTH]),
-    .acc_addr_b2(acc_addr_b2[n*ACC_ADDR_WIDTH +: ACC_ADDR_WIDTH]),
-    .acc_wr_data_b2(acc_wr_data_b2[n*DATA_WIDTH +: DATA_WIDTH]),
-    .acc_rd_data_b2(acc_rd_data_b2[n*DATA_WIDTH +: DATA_WIDTH])
-  );
-
-end
-
+  for (i = 0; i < (ACC_MEM_BLOCKS-1); i = i + 1) begin: other_mem_ens
+    assign acc_en_b1[i]  = 1'b0;
+    assign acc_en_b2[i]  = 1'b0;
+    assign acc_wen_b1[i*STRB_WIDTH +: STRB_WIDTH] = {STRB_WIDTH{1'b0}};
+    assign acc_wen_b2[i*STRB_WIDTH +: STRB_WIDTH] = {STRB_WIDTH{1'b0}};
+  end
 endgenerate
 
+// RegEx accelerators
+wire [ACCEL_COUNT-1:0] re_match;
+
+genvar n;
+generate
+  for (n = 0; n < ACCEL_COUNT; n = n + 1) begin: accelerators
+    re re_inst(
+        .clk(clk),
+        .rst(rst),
+        .in(accel_tdata[n*8 +: 8]),
+        .valid(accel_tvalid[n]),
+        .init_state(32'd0),
+        .init_assert(cmd_init_reg[n]),
+        .match(re_match[n])
+    );
+  end
+endgenerate
+
+always @ (posedge clk) begin
+  status_match <= (status_match | re_match) & (~cmd_init_reg);
+  status_done  <= (status_done | (accel_tvalid&accel_tlast) | cmd_stop_reg) & (~cmd_init_reg);
+
+  if (rst) begin
+    status_match <= {ACCEL_COUNT{1'b0}};
+    status_done  <= {ACCEL_COUNT{1'b0}};
+  end
+end
+
+// Toeplitz hash accelerator
 hash_acc #(
   .HASH_WIDTH(36)
 ) hash_acc_inst (

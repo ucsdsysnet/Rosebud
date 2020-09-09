@@ -7,6 +7,7 @@
 // DWORD align Ethernet payload
 // provide space for header modifications
 #define PKT_OFFSET 10
+#define PKTS_START (7*128*1024)
 
 // Regex accelerator control registers
 #define ACC_REGEX_STATUS (*((volatile unsigned int *)(IO_EXT_BASE + 0x0080)))
@@ -67,8 +68,8 @@ inline void regex_done(struct slot_context *ctx)
 int main(void)
 {
 	// set slot configuration parameters
-	slot_count = PMEM_SEG_COUNT;
-	slot_size = PMEM_SEG_SIZE;
+	slot_count = 8;
+	slot_size = 16*1024;
 	header_slot_base = DMEM_BASE + (DMEM_SIZE >> 1);
 	header_slot_size = 128;
 
@@ -81,7 +82,7 @@ int main(void)
 	// Do this at the beginning, so scheduler can fill the slots while
 	// initializing other things.
 	init_hdr_slots(slot_count, header_slot_base, header_slot_size);
-	init_slots(slot_count, PKT_OFFSET, slot_size);
+	init_slots(slot_count, PKTS_START+PKT_OFFSET, slot_size);
 
 	active_accel_mask = 0;
 
@@ -90,7 +91,7 @@ int main(void)
 	{
 		context[i].index = i;
 		context[i].desc.tag = i+1;
-		context[i].desc.data = (unsigned char *)(PMEM_BASE + PKT_OFFSET + i*slot_size);
+		context[i].desc.data = (unsigned char *)(PMEM_BASE + PKTS_START + PKT_OFFSET + i*slot_size);
 		context[i].header = (unsigned char *)(header_slot_base + PKT_OFFSET + i*header_slot_size);
 		context[i].regex_accel = (struct regex_accel_regs *)(IO_EXT_BASE + i*16);
 	}

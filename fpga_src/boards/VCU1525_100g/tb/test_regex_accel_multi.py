@@ -56,18 +56,13 @@ srcs.append("../lib/smartFPGA/rtl/axis_dma.v")
 srcs.append("../lib/smartFPGA/rtl/VexRiscv.v")
 srcs.append("../lib/smartFPGA/rtl/riscvcore.v")
 srcs.append("../lib/smartFPGA/rtl/riscv_block.v")
-# srcs.append("../lib/smartFPGA/rtl/accel_wrap.v")
-# srcs.append("../../../accel/regex/rtl/accel_wrap_regex_multi.v")
-# srcs.append("../../../accel/regex/rtl/regex_acc.v")
-# srcs.append("../../../accel/regex/rtl/re_sql.v")
 srcs.append("../../../accel/merged/rtl/accel_wrap_merged.v")
-srcs.append("../../../accel/merged/rtl/regex_acc.v")
 srcs.append("../../../accel/merged/rtl/re_sql.v")
 srcs.append("../../../accel/hash/rtl/hash_acc.v")
 srcs.append("../lib/smartFPGA/rtl/riscv_axis_wrapper.v")
 srcs.append("../lib/smartFPGA/rtl/mem_sys.v")
 srcs.append("../lib/smartFPGA/rtl/simple_arbiter.v")
-srcs.append("../lib/smartFPGA/rtl/simple_scheduler.v")
+srcs.append("../lib/smartFPGA/rtl/simple_scheduler2.v")
 srcs.append("../lib/smartFPGA/rtl/simple_sync_sig.v")
 srcs.append("../lib/smartFPGA/rtl/simple_axis_switch.v")
 srcs.append("../lib/smartFPGA/rtl/axis_ram_switch.v")
@@ -80,6 +75,8 @@ srcs.append("../lib/smartFPGA/rtl/pcie_controller.v")
 srcs.append("../lib/smartFPGA/rtl/pcie_cont_read.v")
 srcs.append("../lib/smartFPGA/rtl/pcie_cont_write.v")
 srcs.append("../lib/smartFPGA/rtl/corundum.v")
+srcs.append("../lib/smartFPGA/rtl/axis_fifo.v")
+srcs.append("../lib/smartFPGA/rtl/accel_rd_dma_sp.v")
 
 srcs.append("../lib/axis/rtl/arbiter.v")
 srcs.append("../lib/axis/rtl/priority_encoder.v")
@@ -87,7 +84,7 @@ srcs.append("../lib/axis/rtl/axis_adapter.v")
 srcs.append("../lib/axis/rtl/axis_arb_mux.v")
 srcs.append("../lib/axis/rtl/axis_async_fifo.v")
 srcs.append("../lib/axis/rtl/axis_async_fifo_adapter.v")
-srcs.append("../lib/axis/rtl/axis_fifo.v")
+# srcs.append("../lib/axis/rtl/axis_fifo.v")
 srcs.append("../lib/axis/rtl/axis_fifo_adapter.v")
 srcs.append("../lib/axis/rtl/axis_register.v")
 srcs.append("../lib/axis/rtl/axis_pipeline_register.v")
@@ -163,8 +160,6 @@ def bench():
                     b"page.php?id=%27%3B%20DELETE%20FROM%20prod_data%3B%20--",
                     b"page.php?id=%27%3B%20UPDATE%20users%20SET%20password%20%3D%20%271234%27%20WHERE%20username%20%3D%20%27skroob%27%20prod_data%3B%20--",
                     b"page.php?id=this%20is%20fine"]
-
-
 
     # Inputs
     sys_clk  = Signal(bool(0))
