@@ -292,10 +292,10 @@ generate
       if (accel_stop_r[i]) 
         counter <= 0;
       else if (fifo_valid && out_ready && (accel_ptr==last_ptr)) begin
-        if (!req_arb_v && !act_arb_v)
+        if (!(req_arb_v && req_ack[i]) && !(act_arb_v && act_ack[i]))
           counter <= counter - 1;
-      end else if ((req_arb_v && req_ack[i]) ||
-                   (act_arb_v && act_ack[i]))
+        // else, both asserted, no change
+      end else if ((req_arb_v && req_ack[i]) || (act_arb_v && act_ack[i]))
         counter <= counter + 1;
       
       if (rst)
