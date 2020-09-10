@@ -181,7 +181,8 @@ accel_rd_dma_sp # (
   .ADDR_WIDTH(BLOCK_ADDR_WIDTH),
   .ACCEL_COUNT(ACCEL_COUNT),
   .DEST_WIDTH(DEST_WIDTH),
-  .LEN_WIDTH(LEN_WIDTH)
+  .LEN_WIDTH(LEN_WIDTH),
+  .FIFO_LINES(32)
 ) accel_dma_engine (
   .clk(clk),
   .rst(rst),

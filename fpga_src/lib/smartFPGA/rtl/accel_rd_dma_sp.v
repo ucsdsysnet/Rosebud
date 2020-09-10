@@ -270,7 +270,7 @@ generate
     assign accel_fifo_ready[i] = (counter <FIFO_LINES);
 
     simple_fifo # (
-      .ADDR_WIDTH(1),
+      .ADDR_WIDTH($clog2(FIFO_LINES)),
       .DATA_WIDTH(1+MASK_BITS+DATA_WIDTH)
     ) accel_fifo (
       .clk(clk),
