@@ -20,7 +20,7 @@ SYN_FILES += lib/smartFPGA/rtl/core_mems.v
 SYN_FILES += lib/smartFPGA/rtl/slot_keeper.v
 SYN_FILES += lib/smartFPGA/rtl/simple_fifo.v
 SYN_FILES += lib/smartFPGA/rtl/simple_arbiter.v
-SYN_FILES += lib/smartFPGA/rtl/simple_scheduler.v
+SYN_FILES += lib/smartFPGA/rtl/RR_LU_scheduler.v
 SYN_FILES += lib/smartFPGA/rtl/max_finder_tree.v
 SYN_FILES += lib/smartFPGA/rtl/axis_dma.v
 SYN_FILES += lib/smartFPGA/rtl/axis_stat.v
@@ -38,11 +38,6 @@ SYN_FILES += lib/smartFPGA/rtl/pcie_cont_read.v
 SYN_FILES += lib/smartFPGA/rtl/pcie_cont_write.v
 SYN_FILES += lib/smartFPGA/rtl/corundum.v
 SYN_FILES += lib/smartFPGA/rtl/axis_fifo.v
-
-# SYN_FILES += accel/merged/rtl/accel_wrap_merged.v
-# SYN_FILES += accel/regex/rtl/re_sql.v
-# SYN_FILES += accel/regex/rtl/regex_acc.v
-# SYN_FILES += accel/hash/rtl/hash_acc.v
 
 # SYN_FILES += lib/axis/rtl/axis_switch.v
 SYN_FILES += lib/axis/rtl/axis_arb_mux.v
@@ -92,15 +87,11 @@ SYN_FILES += lib/corundum/rtl/event_mux.v
 # XDC files
 XDC_FILES = fpga.xdc
 XDC_FILES += lib/axis/syn/axis_async_fifo.tcl
-# XDC_FILES += lib/smartFPGA/syn/simple_sync_sig.tcl
 
 # IP
 IP_TCL_FILES = ip/pcie4_uscale_plus_0.tcl
 IP_TCL_FILES += ip/cmac_usplus_0.tcl
 IP_TCL_FILES += ip/cmac_usplus_1.tcl
-# IP_TCL_FILES += ip/ila_5x64.tcl
-# IP_TCL_FILES += ip/ila_4x64.tcl
-# IP_TCL_FILES += ip/ila_3x64.tcl
 # IP_TCL_FILES += ip/ila_2x64.tcl
 
 include ../common/vivado.mk
