@@ -27,6 +27,6 @@ wait_on_run impl_w_accel
 open_run impl_w_accel
 report_utilization -force -hierarchical -hierarchical_percentage -file fpga_utilization_hierarchy_placed_full.rpt
 report_utilization -force -pblocks [get_pblocks -regexp {pblock_([2-9]|1[0-6]|1)}] -file fpga_utilization_pblocks.rpt
-write_bitstream -force fpga.runs/impl_w_accel/fpga.bit
+write_bitstream -no_partial_bitfile -force fpga.runs/impl_w_accel/fpga.bit
 
 exit
