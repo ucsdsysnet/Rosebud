@@ -30,7 +30,8 @@ def extract (read_file,modules,avg,tot,avg_p,tot_p):
   for line in open (read_file,'r'):
     for m in modules:
       if re.match("^\|"+m,line):
-        data = [x for x in re.split("\||\s*|,",line) if x]
+        data = [x for x in re.split("\||\s+|,",line) if x]
+        # print (data)
         data = [re.split("\(|\)|%",x) for x in data]
         data = [(float(x[0]),float(x[1])) if len(x)==4 else x[0] for x in data]
         count += 1
@@ -147,16 +148,16 @@ mem_modules = ["         memories"]
 riscv_modules = ["         core"]
 hash_modules = ["           hash_acc_inst"]
 acc_manager =   ["           \(accel_wrap_inst\)"]
+acc_dma =   ["           accel_dma_engine "]
 regex_modules = [
-"           genblk1\[0\]\.regex_acc_inst ",
-"           genblk1\[1\]\.regex_acc_inst ",
-"           genblk1\[2\]\.regex_acc_inst ",
-"           genblk1\[3\]\.regex_acc_inst ",
-"           genblk1\[4\]\.regex_acc_inst ",
-"           genblk1\[5\]\.regex_acc_inst ",
-"           genblk1\[6\]\.regex_acc_inst ",
-"           genblk1\[7\]\.regex_acc_inst "]
-
+"           accelerators\[0\]\.re_inst ",
+"           accelerators\[1\]\.re_inst ",
+"           accelerators\[2\]\.re_inst ",
+"           accelerators\[3\]\.re_inst ",
+"           accelerators\[4\]\.re_inst ",
+"           accelerators\[5\]\.re_inst ",
+"           accelerators\[6\]\.re_inst ",
+"           accelerators\[7\]\.re_inst "]
 
 f = "fpga_utilization_hierarchy_placed_full.rpt"
 
@@ -185,6 +186,8 @@ print ("hash_modules")
 extract(f,hash_modules, 1,1,1,0)
 print ("accelerator manager")
 extract(f,acc_manager, 1,1,1,0)
+print ("accelerator DMA")
+extract(f,acc_dma, 1,1,1,0)
 
 
 f = "fpga_utilization_hierarchy_placed_raw.rpt"
