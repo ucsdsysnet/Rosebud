@@ -733,6 +733,7 @@ def main():
     parser.add_argument('--max_states', type=int, default=None, help="Max states per block")
 
     parser.add_argument('--match_file', type=str, default=[], action='append', help="Match file")
+    parser.add_argument('--match_file_hex', type=str, default=[], action='append', help="Match file (hex)")
     parser.add_argument('--rules_file', type=str, default=[], action='append', help="Rules file")
     parser.add_argument('--test_file', type=str, default=None, help="Test file")
 
@@ -756,6 +757,14 @@ def main():
         with open(fn, 'r') as f:
             for w in f.read().splitlines():
                 b = w.encode('utf-8')
+                if not b:
+                    continue
+                match_list.append((b, w))
+
+    for fn in args.match_file_hex:
+        with open(fn, 'r') as f:
+            for w in f.read().splitlines():
+                b = bytes.fromhex(w)
                 if not b:
                     continue
                 match_list.append((b, w))
@@ -792,7 +801,7 @@ def main():
     stats += f"Max matches: {bssmg.max_matches}\n"
     stats += f"Max states: {bssmg.max_states}\n"
     stats += "Matches\n"
-    stats += f"Input files: {' '.join(args.match_file+args.rules_file)}\n"
+    stats += f"Input files: {' '.join(args.match_file+args.match_file_hex+args.rules_file)}\n"
     stats += f"Match count: {len(bssmg.matches)}\n"
     stats += f"Shortest match (bytes): {min((len(m[1]) for m in bssmg.matches))}\n"
     stats += f"Longest match (bytes): {max((len(m[1]) for m in bssmg.matches))}\n"
