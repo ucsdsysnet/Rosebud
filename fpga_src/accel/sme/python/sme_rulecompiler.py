@@ -750,33 +750,21 @@ def main():
     max_matches = args.max_matches
     max_states = args.max_states
 
-    match_file = args.match_file
-    rules_file = args.rules_file
-    test_file = args.test_file
-
-    module_name = args.module_name
-    output_verilog = args.output_verilog
-
-    states_file = args.states_file
-
-    summary_file = args.summary_file
-    stats_file = args.stats_file
-
     match_list = []
 
-    for fn in match_file:
+    for fn in args.match_file:
         with open(fn, 'r') as f:
             for w in f.read().splitlines():
                 b = w.encode('utf-8')
-                if len(b) == 0:
+                if not b:
                     continue
                 match_list.append((b, w))
 
-    for fn in rules_file:
+    for fn in args.rules_file:
         with open(fn, 'r') as f:
             for w in f.read().splitlines():
                 b = parse_content_string(w)
-                if len(b) == 0:
+                if not b:
                     continue
                 match_list.append((b, w))
 
@@ -804,8 +792,7 @@ def main():
     stats += f"Max matches: {bssmg.max_matches}\n"
     stats += f"Max states: {bssmg.max_states}\n"
     stats += "Matches\n"
-    stats += f"Input match files: {' '.join(match_file)}\n"
-    stats += f"Input rules files: {' '.join(rules_file)}\n"
+    stats += f"Input files: {' '.join(args.match_file+args.rules_file)}\n"
     stats += f"Match count: {len(bssmg.matches)}\n"
     stats += f"Shortest match (bytes): {min((len(m[1]) for m in bssmg.matches))}\n"
     stats += f"Longest match (bytes): {max((len(m[1]) for m in bssmg.matches))}\n"
@@ -821,12 +808,12 @@ def main():
 
     print(stats.strip())
 
-    if stats_file:
-        with open(stats_file, 'w') as f:
+    if args.stats_file:
+        with open(args.stats_file, 'w') as f:
             f.write(stats)
 
-    if summary_file:
-        with open(summary_file, 'w') as f:
+    if args.summary_file:
+        with open(args.summary_file, 'w') as f:
             f.write("index,partition,bit,hex,match\n")
 
             l = {}
@@ -841,17 +828,18 @@ def main():
             for m in bssmg.matches:
                 f.write(f"{m[0]},{l[m[0]][0]},{l[m[0]][1]},{m[1].hex()},\"{m[2]}\"\n")
 
-    if output_verilog is not None:
+    if args.output_verilog is not None:
+        module_name = args.module_name
         if module_name is None:
-            module_name = os.path.splitext(os.path.basename(output_verilog))[0]
+            module_name = os.path.splitext(os.path.basename(args.output_verilog))[0]
 
-        print(f"Write verilog module {module_name} to {output_verilog}")
-        with open(output_verilog, 'w') as f:
+        print(f"Write verilog module {module_name} to {args.output_verilog}")
+        with open(args.output_verilog, 'w') as f:
             f.write(bssmg.to_verilog_module(module_name))
 
-    if states_file is not None:
-        print(f"Write states file to {states_file}")
-        with open(states_file, 'w') as f:
+    if args.states_file is not None:
+        print(f"Write states file to {args.states_file}")
+        with open(args.states_file, 'w') as f:
             f.write(f"partition,split,index,{','.join('next_state_{}'.format(i) for i in range(2**bssmg.split_width))},match\n")
 
             for n in range(len(bssmg.bssm)):
@@ -872,8 +860,8 @@ def main():
                         m = sum((1 << m[0] for m in s.match))
                         f.write(f"{partition},{split},{index},{','.join(next_state)},{m}\n");
 
-    if test_file:
-        with open(test_file, 'rb') as f:
+    if args.test_file:
+        with open(args.test_file, 'rb') as f:
             print("Query bit-split state machines")
             for m in bssmg.query(f.read()):
                 print(m)
