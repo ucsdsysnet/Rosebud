@@ -208,7 +208,7 @@ parameter LVL1_STRB_WIDTH  = AXIS_ETH_KEEP_WIDTH;
 parameter CTRL_WIDTH       = 32+4; //DON'T CHANGE
 parameter LVL1_DRAM_WIDTH  = 64; //DRAM CONTROL
 parameter LVL2_DRAM_WIDTH  = 64; //DON'T CHANGE
-parameter ASYNC_FIFO_DEPTH = 512;
+parameter RX_ASYNC_DEPTH   = 1024;
 parameter RX_FIFO_DEPTH    = 4*32768;
 parameter RX_ALMOST_FULL   = 7*16384;
 parameter TX_FIFO_DEPTH    = 32768;
@@ -302,12 +302,6 @@ wire [INTERFACE_COUNT*AXIS_ETH_KEEP_WIDTH-1:0] port_rx_axis_tkeep;
 wire [INTERFACE_COUNT-1:0] port_rx_axis_tvalid;
 wire [INTERFACE_COUNT-1:0] port_rx_axis_tlast;
 wire [INTERFACE_COUNT-1:0] port_rx_axis_tuser;
-
-wire [INTERFACE_COUNT*AXIS_ETH_DATA_WIDTH-1:0] port_tx_axis_tdata_f;
-wire [INTERFACE_COUNT*AXIS_ETH_KEEP_WIDTH-1:0] port_tx_axis_tkeep_f;
-wire [INTERFACE_COUNT-1:0] port_tx_axis_tvalid_f;
-wire [INTERFACE_COUNT-1:0] port_tx_axis_tready_f;
-wire [INTERFACE_COUNT-1:0] port_tx_axis_tlast_f;
 
 wire [INTERFACE_COUNT*AXIS_ETH_DATA_WIDTH-1:0] port_rx_axis_tdata_f;
 wire [INTERFACE_COUNT*AXIS_ETH_KEEP_WIDTH-1:0] port_rx_axis_tkeep_f;
@@ -405,7 +399,7 @@ generate
             .DEST_ENABLE(0),
             .USER_ENABLE(0),
             .REG_TYPE(2),
-            .LENGTH(1)
+            .LENGTH(2)
         ) mac_tx_pipeline (
             .clk(sys_clk),
             .rst(sys_rst),
@@ -428,8 +422,8 @@ generate
             .m_axis_tdest(),
             .m_axis_tuser()
         );
-        
-        axis_fifo #(
+
+        axis_async_fifo #(
             .DEPTH(TX_FIFO_DEPTH),
             .DATA_WIDTH(AXIS_ETH_DATA_WIDTH),
             .KEEP_ENABLE(AXIS_ETH_KEEP_WIDTH > 1),
@@ -438,63 +432,22 @@ generate
             .ID_ENABLE(0),
             .DEST_ENABLE(0),
             .USER_ENABLE(0),
-            .PIPELINE_OUTPUT(2),
+            .PIPELINE_OUTPUT(1),
             .FRAME_FIFO(1),
             .USER_BAD_FRAME_VALUE(1'b1),
             .USER_BAD_FRAME_MASK(1'b1),
             .DROP_BAD_FRAME(1),
-            .DROP_WHEN_FULL(0)
-        ) mac_tx_fifo_inst (
-            .clk(sys_clk),
-            .rst(sys_rst),
-            
-            .s_axis_tdata(port_tx_axis_tdata_n[m*LVL1_DATA_WIDTH +: LVL1_DATA_WIDTH]),
-            .s_axis_tkeep(port_tx_axis_tkeep_n[m*LVL1_STRB_WIDTH +: LVL1_STRB_WIDTH]),
-            .s_axis_tvalid(port_tx_axis_tvalid_n[m]),
-            .s_axis_tready(port_tx_axis_tready_n[m]),
-            .s_axis_tlast(port_tx_axis_tlast_n[m]),
-            .s_axis_tid(8'd0),
-            .s_axis_tdest(8'd0),
-            .s_axis_tuser(1'b0),
-
-            .m_axis_tdata(port_tx_axis_tdata_f[m*AXIS_ETH_DATA_WIDTH +: AXIS_ETH_DATA_WIDTH]),
-            .m_axis_tkeep(port_tx_axis_tkeep_f[m*AXIS_ETH_KEEP_WIDTH +: AXIS_ETH_KEEP_WIDTH]),
-            .m_axis_tvalid(port_tx_axis_tvalid_f[m]),
-            .m_axis_tready(port_tx_axis_tready_f[m]),
-            .m_axis_tlast(port_tx_axis_tlast_f[m]),
-            .m_axis_tid(),
-            .m_axis_tdest(),
-            .m_axis_tuser(),
-
-            .status_overflow(),
-            .status_bad_frame(),
-            .status_good_frame(),
-            .status_almost_full(),
-            .status_almost_empty()
-        );
-
-        axis_async_fifo #(
-            .DEPTH(ASYNC_FIFO_DEPTH),
-            .DATA_WIDTH(AXIS_ETH_DATA_WIDTH),
-            .KEEP_ENABLE(AXIS_ETH_KEEP_WIDTH > 1),
-            .KEEP_WIDTH(AXIS_ETH_KEEP_WIDTH),
-            .LAST_ENABLE(1),
-            .ID_ENABLE(0),
-            .DEST_ENABLE(0),
-            .USER_ENABLE(0),
-            .PIPELINE_OUTPUT(1),
-            .FRAME_FIFO(0),
             .DROP_WHEN_FULL(0)
         ) mac_tx_async_fifo_inst (
             // Common reset
             .async_rst(sys_rst | port_tx_rst[m]),
             // AXI input
             .s_clk(sys_clk),
-            .s_axis_tdata(port_tx_axis_tdata_f[m*LVL1_DATA_WIDTH +: LVL1_DATA_WIDTH]),
-            .s_axis_tkeep(port_tx_axis_tkeep_f[m*LVL1_STRB_WIDTH +: LVL1_STRB_WIDTH]),
-            .s_axis_tvalid(port_tx_axis_tvalid_f[m]),
-            .s_axis_tready(port_tx_axis_tready_f[m]),
-            .s_axis_tlast(port_tx_axis_tlast_f[m]),
+            .s_axis_tdata(port_tx_axis_tdata_n[m*LVL1_DATA_WIDTH +: LVL1_DATA_WIDTH]),
+            .s_axis_tkeep(port_tx_axis_tkeep_n[m*LVL1_STRB_WIDTH +: LVL1_STRB_WIDTH]),
+            .s_axis_tvalid(port_tx_axis_tvalid_n[m]),
+            .s_axis_tready(port_tx_axis_tready_n[m]),
+            .s_axis_tlast(port_tx_axis_tlast_n[m]),
             .s_axis_tid(8'd0),
             .s_axis_tdest(8'd0),
             .s_axis_tuser(1'b0),
@@ -518,7 +471,7 @@ generate
         );
 
         axis_async_fifo #(
-            .DEPTH(ASYNC_FIFO_DEPTH),
+            .DEPTH(RX_ASYNC_DEPTH),
             .DATA_WIDTH(AXIS_ETH_DATA_WIDTH),
             .KEEP_ENABLE(AXIS_ETH_KEEP_WIDTH > 1),
             .KEEP_WIDTH(AXIS_ETH_KEEP_WIDTH),
@@ -544,8 +497,8 @@ generate
             .s_axis_tuser(1'b0),
             // AXI output
             .m_clk(sys_clk),
-            .m_axis_tdata(port_rx_axis_tdata_f[m*LVL1_DATA_WIDTH +: LVL1_DATA_WIDTH]),
-            .m_axis_tkeep(port_rx_axis_tkeep_f[m*LVL1_STRB_WIDTH +: LVL1_STRB_WIDTH]),
+            .m_axis_tdata(port_rx_axis_tdata_f[m*AXIS_ETH_DATA_WIDTH +: AXIS_ETH_DATA_WIDTH]),
+            .m_axis_tkeep(port_rx_axis_tkeep_f[m*AXIS_ETH_KEEP_WIDTH +: AXIS_ETH_KEEP_WIDTH]),
             .m_axis_tvalid(port_rx_axis_tvalid_f[m]),
             .m_axis_tready(port_rx_axis_tready_f[m]),
             .m_axis_tlast(port_rx_axis_tlast_f[m]),
@@ -639,21 +592,22 @@ generate
             .m_axis_tuser()
         );
 
-      always @ (posedge sys_clk)
-        if (sys_rst) begin
-          rx_drop           <= {INTERFACE_COUNT{1'b0}};
-          rx_drop_r         <= {INTERFACE_COUNT{1'b0}};
-          rx_almost_full    <= {INTERFACE_COUNT{1'b0}};
-          rx_almost_full_r  <= {INTERFACE_COUNT{1'b0}};
-          rx_almost_full_rr <= {INTERFACE_COUNT{1'b0}};
-        end else begin
-          rx_drop           <= port_rx_axis_overflow_r | port_rx_axis_bad_frame_r;
-          rx_drop_r         <= rx_drop;
-          rx_almost_full    <= port_rx_axis_almost_full_r;
-          rx_almost_full_r  <= rx_almost_full;
-          rx_almost_full_rr <= rx_almost_full_r;
-        end
     end
+
+    always @ (posedge sys_clk)
+        if (sys_rst) begin
+            rx_drop           <= {INTERFACE_COUNT{1'b0}};
+            rx_drop_r         <= {INTERFACE_COUNT{1'b0}};
+            rx_almost_full    <= {INTERFACE_COUNT{1'b0}};
+            rx_almost_full_r  <= {INTERFACE_COUNT{1'b0}};
+            rx_almost_full_rr <= {INTERFACE_COUNT{1'b0}};
+        end else begin
+            rx_drop           <= port_rx_axis_overflow_r | port_rx_axis_bad_frame_r;
+            rx_drop_r         <= rx_drop;
+            rx_almost_full    <= port_rx_axis_almost_full_r;
+            rx_almost_full_r  <= rx_almost_full;
+            rx_almost_full_rr <= rx_almost_full_r;
+        end
 endgenerate
 
 // PCIE and DRAM controller
