@@ -12,6 +12,7 @@ unsigned int first_packet;
 #define CONGESTION 1
 #define INTR_BASED  0
 // 40 for <= 128B packets, 20 for <= 2048B, 10 for 4096B, and 5 for 9000B
+// In non-congested mode set to 0
 #define SLOW_DOWN_RATE 20
 
 void __attribute__((interrupt)) int_handler(void) {
@@ -65,8 +66,8 @@ int main(void){
       for (i=0;i<16;i++) {
         if (CONGESTION==0)
           for (k=0;k<100000;k++);
-        pkt_data[i][0] = read_timer_low();
         send_pkt.data = (unsigned char *) pkt_data[i];
+        pkt_data[i][0] = read_timer_low();
         pkt_send(&send_pkt);
       }
     }
