@@ -208,7 +208,7 @@ parameter LVL1_STRB_WIDTH  = AXIS_ETH_KEEP_WIDTH;
 parameter CTRL_WIDTH       = 32+4; //DON'T CHANGE
 parameter LVL1_DRAM_WIDTH  = 64; //DRAM CONTROL
 parameter LVL2_DRAM_WIDTH  = 64; //DON'T CHANGE
-parameter RX_ASYNC_DEPTH   = 1024;
+parameter RX_ASYNC_DEPTH   = 2048;
 parameter RX_FIFO_DEPTH    = 4*32768;
 parameter RX_ALMOST_FULL   = 7*16384;
 parameter TX_FIFO_DEPTH    = 32768;
@@ -479,7 +479,7 @@ generate
             .ID_ENABLE(0),
             .DEST_ENABLE(0),
             .USER_ENABLE(0),
-            .PIPELINE_OUTPUT(1),
+            .PIPELINE_OUTPUT(2),
             .FRAME_FIFO(0),
             .DROP_WHEN_FULL(0)
         ) mac_rx_async_fifo_inst (
