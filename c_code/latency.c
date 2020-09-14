@@ -7,9 +7,11 @@ struct Desc summary_pkt;
 unsigned int * pkt_data[16];
 unsigned int * wr_ptr;
 unsigned int count;
+unsigned int first_packet;
 
 #define CONGESTION 1
 #define INTR_BASED  0
+// 40 for <= 128B packets, 20 for <= 2048B, 10 for 4096B, and 5 for 9000B
 #define SLOW_DOWN_RATE 20
 
 void __attribute__((interrupt)) int_handler(void) {
@@ -48,6 +50,7 @@ int main(void){
   summary_pkt.data=((unsigned char*) wr_ptr);
 
   count = 0;
+  first_packet = 1;
   slow_down = SLOW_DOWN_RATE;
 
   // Setting timer interval to 100ms, and enable it for odd cores
@@ -62,8 +65,8 @@ int main(void){
       for (i=0;i<16;i++) {
         if (CONGESTION==0)
           for (k=0;k<100000;k++);
-        send_pkt.data = (unsigned char *) pkt_data[i];
         pkt_data[i][0] = read_timer_low();
+        send_pkt.data = (unsigned char *) pkt_data[i];
         pkt_send(&send_pkt);
       }
     }
@@ -76,7 +79,7 @@ int main(void){
           // Write send and recv time into memory and update the pointer
           *wr_ptr = recv_time - (*((unsigned int *)recv_pkt.data)); 
           wr_ptr+=1;
-          
+
           if (INTR_BASED==1){
             if (wr_ptr == (unsigned int *) 0x10F0000)
               wr_ptr = (unsigned int *) 0x1080000;
@@ -89,14 +92,22 @@ int main(void){
                   pkt_send(&summary_pkt);
                   slow_down = SLOW_DOWN_RATE;
                 }
-	            } else
-                pkt_send(&summary_pkt);
-                
+              } else {
+                if (CONGESTION==0){
+                  if (first_packet == 0)
+                    pkt_send(&summary_pkt);
+                  first_packet = 0;
+                } else {
+                    pkt_send(&summary_pkt);
+                }
+              }
+
               count = 0; 
               wr_ptr = (unsigned int *) 0x1080000;
             }
           }
         }
+
         // Drop the packet
         recv_pkt.len=0;
         // Since we have interrupts we need atomic version of it.
