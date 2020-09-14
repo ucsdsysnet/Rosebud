@@ -681,6 +681,10 @@ module {name}
         for sm_ind in range(len(self.bssm)):
             sm = self.bssm[sm_ind]
             width = len(sm.matches)
+            s += f"// Partition {sm_ind}\n"
+            s += f"// Matches: {width}\n"
+            s += f"wire [{width-1}:0] p{sm_ind}_match;\n"
+            s += "\n"
             s += sm.to_verilog(f"p{sm_ind}")
             s += "\n"
             s += f"assign match[{offset+width-1}:{offset}] = p{sm_ind}_match;\n"
