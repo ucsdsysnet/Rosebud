@@ -1,4 +1,5 @@
 #include "core.h"
+#include "packet_headers.h"
 
 // maximum number of slots (number of context objects)
 #define MAX_CTX_COUNT 8
@@ -19,43 +20,6 @@ struct sme_accel_regs {
 	volatile unsigned int ctrl;
 	volatile unsigned int len;
 	volatile unsigned int start;
-};
-
-struct eth_header {
-	unsigned char dest_mac[6];
-	unsigned char src_mac[6];
-	unsigned short type;
-};
-
-struct ipv4_header {
-	unsigned char version_ihl;
-	unsigned char dscp_ecn;
-	unsigned short total_length;
-	unsigned short id;
-	unsigned short flags_fragment_offset;
-	unsigned char ttl;
-	unsigned char protocol;
-	unsigned short hdr_sum;
-	unsigned long src_ip;
-	unsigned long dest_ip;
-};
-
-struct tcp_header {
-	unsigned short src_port;
-	unsigned short dest_port;
-	unsigned long seq;
-	unsigned long ack;
-	unsigned short flags;
-	unsigned short window;
-	unsigned short checksum;
-	unsigned short urgent_ptr;
-};
-
-struct udp_header {
-	unsigned short src_port;
-	unsigned short dest_port;
-	unsigned short length;
-	unsigned short checksum;
 };
 
 struct slot_context {
