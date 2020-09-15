@@ -44,7 +44,7 @@ localparam TCP_SME_COUNT = 1;
 localparam UDP_SME_COUNT = 1;
 localparam HTTP_SME_COUNT = 1;
 
-localparam ACCEL_COUNT = TCP_SME_COUNT+UDP_SME_COUNT+HTTP_SME_COUNT;
+localparam ACCEL_COUNT = TCP_SME_COUNT+UDP_SME_COUNT+HTTP_SME_COUNT+1;
 localparam DEST_WIDTH  = $clog2(ACCEL_COUNT);
 
 localparam LEN_WIDTH = 14;
@@ -181,7 +181,8 @@ wire [ACCEL_COUNT-1:0]            accel_tlast;
 wire [ACCEL_COUNT-1:0]            accel_tvalid;
 wire [ACCEL_COUNT-1:0]            accel_tready;
 
-wire [ACCEL_COUNT*8-1:0]          accel_tdata_r;
+// Fixed_loc IP takes 8 bytes at each cycle
+wire [(ACCEL_COUNT-1)*8+64-1:0]   accel_tdata_r;
 wire [ACCEL_COUNT-1:0]            accel_tlast_r;
 wire [ACCEL_COUNT-1:0]            accel_tvalid_r;
 wire [ACCEL_COUNT-1:0]            accel_tready_r;
@@ -243,7 +244,7 @@ genvar n;
 generate
 
   // TCP
-  for (n = 0; n < ACCEL_COUNT; n = n + 1) begin: width_converters
+  for (n = 0; n < ACCEL_COUNT-1; n = n + 1) begin: width_converters_1B
     accel_width_conv # (
       .DATA_IN_WIDTH(DATA_WIDTH),
       .DATA_OUT_WIDTH(8),
@@ -259,6 +260,29 @@ generate
       .s_axis_tready(accel_tready[n]),
 
       .m_axis_tdata (accel_tdata_r[n*8 +: 8]),
+      .m_axis_tlast (accel_tlast_r[n]),
+      .m_axis_tvalid(accel_tvalid_r[n]),
+      .m_axis_tready(accel_tready_r[n])
+    );
+  end
+  
+
+  for (n = ACCEL_COUNT-1; n < ACCEL_COUNT; n = n + 1) begin: width_converters_8B
+    accel_width_conv # (
+      .DATA_IN_WIDTH(DATA_WIDTH),
+      .DATA_OUT_WIDTH(64),
+      .USER_WIDTH(USER_WIDTH)
+    ) accel_width_conv_inst (
+      .clk(clk),
+      .rst(rst),
+
+      .s_axis_tdata (accel_tdata[n*DATA_WIDTH+:DATA_WIDTH]),
+      .s_axis_tuser (accel_tuser[n*USER_WIDTH+:USER_WIDTH]),
+      .s_axis_tlast (accel_tlast[n]),
+      .s_axis_tvalid(accel_tvalid[n]),
+      .s_axis_tready(accel_tready[n]),
+
+      .m_axis_tdata (accel_tdata_r[n*8 +: 64]),
       .m_axis_tlast (accel_tlast_r[n]),
       .m_axis_tvalid(accel_tvalid_r[n]),
       .m_axis_tready(accel_tready_r[n])
@@ -315,6 +339,24 @@ generate
     assign sme_match[n] = |match;
 
   end
+
+  // Fixed location SME
+  for (n = ACCEL_COUNT-1; n < ACCEL_COUNT; n = n + 1) begin: fied_loc_sme
+    wire [27:0] match;
+
+    fixed_loc_sme fixed_loc_sme_inst
+    (
+      .clk(clk),
+      .rst(rst | cmd_init_reg[n]),
+
+      .s_axis_tdata(accel_tdata_r[n*8 +: 64]),
+      .s_axis_tvalid(accel_tvalid_r[n]),
+      .match(match)
+    );
+    
+    assign sme_match[n] = |match;
+  end
+
 endgenerate
 
 always @ (posedge clk) begin
