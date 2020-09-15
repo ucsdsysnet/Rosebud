@@ -311,7 +311,7 @@ module accel_width_conv # (
   input  wire                      m_axis_tready
 );
 
-    localparam SKIP_BITS = $clog2(DATA_OUT_WIDTH);
+    localparam SKIP_BITS = $clog2(DATA_OUT_WIDTH/8);
     localparam PTR_WIDTH = USER_WIDTH-SKIP_BITS;
 
     reg [PTR_WIDTH-1:0] rd_ptr;
@@ -324,12 +324,14 @@ module accel_width_conv # (
     assign s_axis_tready = out_ready && last_chunk;
 
     always @ (posedge clk) begin
-      if (s_axis_tvalid && out_ready) begin
-        // Since data is coming from a FIFO, tvalid drop without
-        // tready assertion means there was a stop signal and
-        // rd_ptr needs to be reset. In normal mode and no
-        // tvalid it keeps the rd_ptr to be zero.
-        if (last_chunk || !s_axis_tvalid)
+      // Since data is coming from a FIFO, tvalid drop without
+      // tready assertion means there was a stop signal and
+      // rd_ptr needs to be reset. In normal mode and no
+      // tvalid it keeps the rd_ptr to be zero.
+      if (!s_axis_tvalid)
+        rd_ptr <= {PTR_WIDTH{1'b0}};
+      else if (out_ready) begin
+        if (last_chunk)
           rd_ptr <= {PTR_WIDTH{1'b0}};
         else
           rd_ptr <= rd_ptr + 1;
