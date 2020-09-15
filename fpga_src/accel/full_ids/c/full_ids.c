@@ -21,10 +21,58 @@ struct sme_accel_regs {
 	volatile unsigned int start;
 };
 
+struct eth_header {
+	unsigned char dest_mac[6];
+	unsigned char src_mac[6];
+	unsigned short type;
+};
+
+struct ipv4_header {
+	unsigned char version_ihl;
+	unsigned char dscp_ecn;
+	unsigned short total_length;
+	unsigned short id;
+	unsigned short flags_fragment_offset;
+	unsigned char ttl;
+	unsigned char protocol;
+	unsigned short hdr_sum;
+	unsigned long src_ip;
+	unsigned long dest_ip;
+};
+
+struct tcp_header {
+	unsigned short src_port;
+	unsigned short dest_port;
+	unsigned long seq;
+	unsigned long ack;
+	unsigned short flags;
+	unsigned short window;
+	unsigned short checksum;
+	unsigned short urgent_ptr;
+};
+
+struct udp_header {
+	unsigned short src_port;
+	unsigned short dest_port;
+	unsigned short length;
+	unsigned short checksum;
+};
+
 struct slot_context {
 	int index;
 	struct Desc desc;
 	unsigned char *header;
+
+	struct eth_header *eth_hdr;
+	union {
+		struct ipv4_header *ipv4_hdr;
+	} l3_header;
+	union {
+		struct tcp_header *tcp_hdr;
+		struct udp_header *udp_hdr;
+	} l4_header;
+
+	unsigned int payload_offset;
 };
 
 struct slot_context context[MAX_CTX_COUNT];
@@ -34,12 +82,12 @@ struct accel_context {
 
 	int index;
 
-	char accel_active;
-	char accel_active_slot;
+	char active;
+	struct slot_context *active_slot;
 
-	char accel_slot_waiting_head;
-	char accel_slot_waiting_tail;
-	char accel_slot_waiting_queue[MAX_CTX_COUNT];
+	char slot_waiting_head;
+	char slot_waiting_tail;
+	struct slot_context *slot_waiting_queue[MAX_CTX_COUNT];
 };
 
 struct accel_context accel_context[MAX_ACCEL_COUNT];
@@ -53,35 +101,127 @@ unsigned int accel_count;
 unsigned int accel_waiting_mask;
 unsigned int accel_active_mask;
 
-inline void slot_rx_packet(struct slot_context *ctx)
+inline void reserve_accel(struct accel_context *ctx, struct slot_context *slt_ctx)
 {
-	// start regex parsing, skip Ethernet header
-	// ctx->sme_accel->start = ctx->desc.data+14;
-	// ctx->sme_accel->len = ctx->desc.len-14;
-	// ctx->sme_accel->ctrl = 1;
+	ctx->slot_waiting_queue[ctx->slot_waiting_head] = slt_ctx;
 
-	// active_accel_mask |= 1 << ctx->index;
+	ctx->slot_waiting_head++;
+	if (ctx->slot_waiting_head >= slot_count)
+		ctx->slot_waiting_head = 0;
 
-	// swap port
-	// if (ctx->desc.port==0)
-	// 	ctx->desc.port = 1;
-	// else
-	// 	ctx->desc.port = 0;
+	accel_waiting_mask |= 1 << ctx->index;
 }
 
-inline void regex_done(struct slot_context *ctx)
+inline struct slot_context *accel_pop_slot(struct accel_context *ctx)
 {
-	// active_accel_mask &= ~(1 << ctx->index);
+	struct slot_context *slot = ctx->slot_waiting_queue[ctx->slot_waiting_tail];
 
-	// // check for match
-	// if (ctx->sme_accel->ctrl & 0x0200)
-	// {
-	// 	// drop packet
-	// 	ctx->desc.len = 0;
-	// }
+	ctx->slot_waiting_tail++;
+	if (ctx->slot_waiting_tail >= slot_count)
+		ctx->slot_waiting_tail = 0;
 
-	// ctx->sme_accel->ctrl = 1<<4;
-	// pkt_send(&ctx->desc);
+	if (ctx->slot_waiting_head == ctx->slot_waiting_tail)
+		accel_waiting_mask &= ~(1 << ctx->index);
+
+	return slot;
+}
+
+inline void take_accel(struct accel_context *ctx, struct slot_context *slt_ctx)
+{
+	accel_active_mask |= 1 << ctx->index;
+	ctx->active_slot = slt_ctx;
+	ctx->active = 1;
+}
+
+inline void release_accel(struct accel_context *ctx)
+{
+	accel_active_mask &= ~(1 << ctx->index);
+	ctx->active = 0;
+}
+
+inline int is_accel_free(struct accel_context *ctx)
+{
+	return !ctx->active && ctx->slot_waiting_head != ctx->slot_waiting_tail;
+}
+
+inline void slot_rx_packet(struct slot_context *ctx)
+{
+	// check eth type
+	if (ctx->eth_hdr->type == 0x0008)
+	{
+		// IPv4 packet
+		ctx->l3_header.ipv4_hdr = (struct ipv4_header*)(ctx->header+sizeof(struct eth_header));
+
+		// check IHL
+		if (ctx->l3_header.ipv4_hdr->version_ihl != 0x45)
+			goto drop;
+
+		ctx->l4_header.tcp_hdr = (struct tcp_header*)(((unsigned char *)ctx->l3_header.ipv4_hdr)+sizeof(struct ipv4_header));
+
+		// check protocol
+		switch (ctx->l3_header.ipv4_hdr->protocol)
+		{
+			case 0x06:
+				// TCP
+				ctx->payload_offset = sizeof(struct eth_header)+sizeof(struct ipv4_header)+sizeof(struct tcp_header);
+				if (ctx->l4_header.tcp_hdr->src_port == 80 || ctx->l4_header.tcp_hdr->dest_port == 80)
+				{
+					// HTTP
+					reserve_accel(&accel_context[2], ctx);
+					return;
+				}
+				else
+				{
+					// other TCP
+					reserve_accel(&accel_context[0], ctx);
+					return;
+				}
+				break;
+			case 0x11:
+				// UDP
+				ctx->payload_offset = sizeof(struct eth_header)+sizeof(struct ipv4_header)+sizeof(struct udp_header);
+				reserve_accel(&accel_context[1], ctx);
+				return;
+		}
+	}
+
+drop:
+	ctx->desc.len = 0;
+	pkt_send(&ctx->desc);
+}
+
+inline void sme_start(struct slot_context *ctx, struct accel_context *acc_ctx)
+{
+	// start SME
+	acc_ctx->sme_accel->start = ctx->desc.data+ctx->payload_offset;
+	acc_ctx->sme_accel->len = ctx->desc.len-ctx->payload_offset;
+	acc_ctx->sme_accel->ctrl = 1;
+
+	// mark accelerator in use
+	take_accel(acc_ctx, ctx);
+}
+
+inline void sme_done(struct slot_context *ctx, struct accel_context *acc_ctx)
+{
+	int match = 0;
+
+	// check for match
+	if (acc_ctx->sme_accel->ctrl & 0x0200)
+	{
+		match = 1;
+	}
+
+	acc_ctx->sme_accel->ctrl = 1<<4;
+
+	if (!match)
+	{
+		// no match; drop packet
+		ctx->desc.len = 0;
+	}
+
+	// send packet to host
+	ctx->desc.port = 2;
+	pkt_send(&ctx->desc);
 }
 
 int main(void)
@@ -108,6 +248,7 @@ int main(void)
 	init_hdr_slots(slot_count, header_slot_base, header_slot_size);
 	init_slots(slot_count, PKTS_START+PKT_OFFSET, slot_size);
 
+	accel_waiting_mask = 0;
 	accel_active_mask = 0;
 
 	// init slot context structures
@@ -117,6 +258,8 @@ int main(void)
 		context[i].desc.tag = i+1;
 		context[i].desc.data = (unsigned char *)(PMEM_BASE + PKTS_START + PKT_OFFSET + i*slot_size);
 		context[i].header = (unsigned char *)(header_slot_base + PKT_OFFSET + i*header_slot_size);
+
+		context[i].eth_hdr = (struct eth_header*)context[i].header;
 	}
 
 	// init accelerator context structures
@@ -124,6 +267,9 @@ int main(void)
 	{
 		accel_context[i].index = i;
 		accel_context[i].sme_accel = (struct sme_accel_regs *)(IO_EXT_BASE + i*16);
+		accel_context[i].active = 0;
+		accel_context[i].slot_waiting_head = 0;
+		accel_context[i].slot_waiting_tail = 0;
 	}
 
 	while (1)
@@ -150,42 +296,38 @@ int main(void)
 		}
 
 		// handle accelerator done
+		temp = ACC_SME_STATUS & accel_active_mask;
+		if (temp)
+		{
+			for (int i = 0; i < accel_count; i++)
+			{
+				if (temp & (1 << i))
+				{
+					// handle packet
+					sme_done(accel_context[i].active_slot, &accel_context[i]);
 
+					// release accelerator
+					release_accel(&accel_context[i]);
+				}
+			}
+		}
 
 		// handle slots waiting on accelerators
+		temp = ~accel_active_mask & accel_waiting_mask;
+		if (temp)
+		{
+			for (int i = 0; i < accel_count; i++)
+			{
+				if (temp & (1 << i))
+				{
+					// pop from waiting list
+					struct slot_context *slot = accel_pop_slot(&accel_context[i]);
 
-
-		// // check accelerators
-		// temp = ACC_SME_STATUS & active_accel_mask;
-		// if (temp)
-		// {
-		// 	for (int i = 0; i < slot_count; i++)
-		// 	{
-		// 		if (temp & (1 << i))
-		// 		{
-		// 			// handle packet
-		// 			regex_done(&context[i]);
-		// 		}
-		// 	}
-		// }
-
-		// // handle accelerator done
-		// if (accel_active && ACC_REGEX_CTRL & 0x0100)
-		// {
-		// 	// done
-		// 	accel_active = 0;
-		// 	regex_done(&context[accel_active_slot]);
-		// }
-
-		// // handle slots waiting for the accelerator
-		// if (!accel_active && accel_slot_waiting_head != accel_slot_waiting_tail)
-		// {
-		// 	regex_start(&context[accel_slot_waiting_queue[accel_slot_waiting_tail]]);
-
-		// 	accel_slot_waiting_tail++;
-		// 	if (accel_slot_waiting_tail >= slot_count)
-		// 		accel_slot_waiting_tail = 0;
-		// }
+					// handle packet
+					sme_start(slot, &accel_context[i]);
+				}
+			}
+		}
 	}
 
 	return 1;
