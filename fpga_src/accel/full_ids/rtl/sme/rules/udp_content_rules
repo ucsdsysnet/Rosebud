@@ -1,0 +1,35 @@
+|0D 0A|ST|3A|
+M-SEARCH
+M-SEARCH * HTTP/1.1
+ST|3a 20|ssdp|3a|all|0d 0a|
+|01 00 00 01 00 00 00 00 00 01|
+|00 ff 00 01 00 00 29|
+|05|
+ServerName|3b|
+InstanceName|3b|
+IsClustered|3b|
+Version|3b|
+|05|
+ServerName|3b|
+InstanceName|3b|
+IsClustered|3b|
+Version|3b|
+|7a 00 00 00 00 00|
+|81 00 00 01 00 00|
+|0c|root-servers|03|net|00|
+|0c|root-servers|03|net|00|
+|81 00 00 01 00 00|
+|0c|root-servers|03|net|00|
+|0c|root-servers|03|net|00|
+|30 84 00 00 00 2d 02 01 01 63 84 00 00 00 24 04 00 0a 01 00|
+objectclass0
+|0D 0A|ST|3a|
+schemas|3a|device
+|0D 0A|ST|3a|
+urn|3a|service
+|0D 0A|ST|3a|
+urn|3a|device
+|0D 0A|ST|3a|
+schemas|3a|device
+|00 00 00 00 00 01 00|
+|0d 0a|

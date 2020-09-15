@@ -1,0 +1,10 @@
+POST 
+|0d 0a|SOAPAction|3a|
+|20|HTTP/1.1Host|3a 20|
+GET AAAAAAAA HTTP/1.1
+|FE|SMB
+|03 00|
+|FF|SMB|73|
+|ff 00|
+|84|
+NTLMSSP

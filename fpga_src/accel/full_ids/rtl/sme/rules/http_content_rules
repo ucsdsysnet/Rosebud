@@ -1,0 +1,43 @@
+Bittorrent
+GET
+If-Modified-Since|3a 20 20|
+Keep-Alive|3a 20 20|
+Connection|3a 20 20|
+User-Agent|3a 20 20|
+HTTP/1.0|0d 0a|Accept|3a 20|*/*|0d 0a|Accept-Language|3a 20|
+GET
+If-Modified-Since|3a 20 20|
+Keep-Alive|3a 20 20|
+Connection|3a 20 20|
+User-Agent|3a 20 20|
+HTTP/1.0|0d 0a|Accept|3a 20|*/*|0d 0a|Accept-Language|3a 20|
+User-Agent|3a 20 20|
+POST
+Mozilla/4.0 (compatible|3b 20|Synapse)
+login=
+$pass=
+GET
+/?id=
+&msg=
+POST
+13
+=MSG
+GET
+/?msg=MSG
+SUBSCRIBE
+CALLBACK|3a 20|
+<http
+><http
+Mozilla/5.0 (Windows|3b 20|U|3b 20|Windows NT 5.1|3b 20|ru|3b 20|rv|3a|1.8.1.1) Gecko/20061204 Firefox/2.0.0.1
+Mozilla/5.0 (Windows|3b 20|U|3b 20|Windows NT 5.1|3b 20|ru|3b 20|rv|3a|1.8.1.1) Gecko/20061204 Firefox/2.0.0.1
+Opera/9.02 (Windows NT 5.1|3b 20|U|3b 20|ru)
+Opera/9.02 (Windows NT 5.1|3b 20|U|3b 20|ru)
+x00_-gawa.sa.pilipinas.2015
+/?
+=
+Keep|2d|Alive|3a|
+Connection|3a| keep|2d|alive
+Cache|2d|Control|3a|
+Accept|2d|Encoding|3a|
+/xmlrpc.php
+pingback.ping
