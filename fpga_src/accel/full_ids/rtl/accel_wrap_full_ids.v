@@ -173,11 +173,18 @@ end
 // DMA engine for single block of the packet memory
 localparam BLOCK_ADDR_WIDTH =PMEM_ADDR_WIDTH-PMEM_SEL_BITS;
 localparam ATTACHED = ACC_MEM_BLOCKS-1;
-  
-wire [ACCEL_COUNT*8-1:0] accel_tdata;
-wire [ACCEL_COUNT-1:0]   accel_tlast;
-wire [ACCEL_COUNT-1:0]   accel_tvalid;
-wire [ACCEL_COUNT-1:0]   accel_tready;
+localparam USER_WIDTH = $clog2(DATA_WIDTH/8);
+
+wire [ACCEL_COUNT*DATA_WIDTH-1:0] accel_tdata;
+wire [ACCEL_COUNT*USER_WIDTH-1:0] accel_tuser;
+wire [ACCEL_COUNT-1:0]            accel_tlast;
+wire [ACCEL_COUNT-1:0]            accel_tvalid;
+wire [ACCEL_COUNT-1:0]            accel_tready;
+
+wire [ACCEL_COUNT*8-1:0]          accel_tdata_r;
+wire [ACCEL_COUNT-1:0]            accel_tlast_r;
+wire [ACCEL_COUNT-1:0]            accel_tvalid_r;
+wire [ACCEL_COUNT-1:0]            accel_tready_r;
 
 accel_rd_dma_sp # (
   .DATA_WIDTH(DATA_WIDTH),
@@ -195,7 +202,9 @@ accel_rd_dma_sp # (
   .desc_addr(cmd_addr_reg[BLOCK_ADDR_WIDTH-1:0]),
   .desc_len(cmd_len_reg),
   .desc_valid(cmd_valid_reg),
+
   .accel_busy(accel_busy),
+  .accel_stop(cmd_stop_reg),
 
   .mem_b1_rd_addr(acc_addr_b1[ATTACHED*ACC_ADDR_WIDTH +: ACC_ADDR_WIDTH]),
   .mem_b1_rd_en(acc_en_b1[ATTACHED]),
@@ -206,15 +215,15 @@ accel_rd_dma_sp # (
   .mem_b2_rd_data(acc_rd_data_b2[ATTACHED*DATA_WIDTH +: DATA_WIDTH]),
 
   .m_axis_tdata(accel_tdata),
+  .m_axis_tuser(accel_tuser),
   .m_axis_tlast(accel_tlast),
   .m_axis_tvalid(accel_tvalid),
-  .m_axis_tready(accel_tready),
-  .m_axis_stop(cmd_stop_reg)
+  .m_axis_tready(accel_tready)
 );
 
 assign acc_wen_b1[ATTACHED*STRB_WIDTH +: STRB_WIDTH] = {STRB_WIDTH{1'b0}};
 assign acc_wen_b2[ATTACHED*STRB_WIDTH +: STRB_WIDTH] = {STRB_WIDTH{1'b0}};
-assign accel_tready = {ACCEL_COUNT{1'b1}};
+assign accel_tready_r = {ACCEL_COUNT{1'b1}};
 
 genvar i;
 
@@ -234,6 +243,28 @@ genvar n;
 generate
 
   // TCP
+  for (n = 0; n < ACCEL_COUNT; n = n + 1) begin: width_converters
+    accel_width_conv # (
+      .DATA_IN_WIDTH(DATA_WIDTH),
+      .DATA_OUT_WIDTH(8),
+      .USER_WIDTH(USER_WIDTH)
+    ) accel_width_conv_inst (
+      .clk(clk),
+      .rst(rst),
+
+      .s_axis_tdata (accel_tdata[n*DATA_WIDTH+:DATA_WIDTH]),
+      .s_axis_tuser (accel_tuser[n*USER_WIDTH+:USER_WIDTH]),
+      .s_axis_tlast (accel_tlast[n]),
+      .s_axis_tvalid(accel_tvalid[n]),
+      .s_axis_tready(accel_tready[n]),
+
+      .m_axis_tdata (accel_tdata_r[n*8 +: 8]),
+      .m_axis_tlast (accel_tlast_r[n]),
+      .m_axis_tvalid(accel_tvalid_r[n]),
+      .m_axis_tready(accel_tready_r[n])
+    );
+  end
+
   for (n = 0; n < TCP_SME_COUNT; n = n + 1) begin: tcp_sme
     wire [9:0] match;
 
@@ -242,8 +273,8 @@ generate
       .clk(clk),
       .rst(rst | cmd_init_reg[n]),
 
-      .s_axis_tdata(accel_tdata[n*8 +: 8]),
-      .s_axis_tvalid(accel_tvalid[n]),
+      .s_axis_tdata(accel_tdata_r[n*8 +: 8]),
+      .s_axis_tvalid(accel_tvalid_r[n]),
       .match(match)
     );
 
@@ -259,8 +290,8 @@ generate
       .clk(clk),
       .rst(rst | cmd_init_reg[n]),
 
-      .s_axis_tdata(accel_tdata[n*8 +: 8]),
-      .s_axis_tvalid(accel_tvalid[n]),
+      .s_axis_tdata(accel_tdata_r[n*8 +: 8]),
+      .s_axis_tvalid(accel_tvalid_r[n]),
       .match(match)
     );
 
@@ -276,8 +307,8 @@ generate
       .clk(clk),
       .rst(rst | cmd_init_reg[n]),
 
-      .s_axis_tdata(accel_tdata[n*8 +: 8]),
-      .s_axis_tvalid(accel_tvalid[n]),
+      .s_axis_tdata(accel_tdata_r[n*8 +: 8]),
+      .s_axis_tvalid(accel_tvalid_r[n]),
       .match(match)
     );
 
@@ -288,7 +319,7 @@ endgenerate
 
 always @ (posedge clk) begin
   status_match <= (status_match | sme_match) & (~cmd_init_reg);
-  status_done  <= (status_done | (accel_tvalid&accel_tlast) | cmd_stop_reg) & (~cmd_init_reg);
+  status_done  <= (status_done | (accel_tvalid_r&accel_tlast_r) | cmd_stop_reg) & (~cmd_init_reg);
 
   if (rst) begin
     status_match <= {ACCEL_COUNT{1'b0}};
@@ -307,9 +338,9 @@ hash_acc #(
   .hash_data_len(hash_data_len_reg),
   .hash_data_valid(hash_data_valid_reg),
   .hash_clear(hash_clear_reg),
-  
+
   .hash_key(320'h6d5a56da255b0ec24167253d43a38fb0d0ca2bcbae7b30b477cb2da38030f20c6a42b73bbeac01fa),
-  
+
   .hash_out(hash_out)
 );
 

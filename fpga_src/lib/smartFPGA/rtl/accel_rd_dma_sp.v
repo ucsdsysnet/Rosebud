@@ -10,37 +10,42 @@ module accel_rd_dma_sp # (
   parameter MEM_ADDR_WIDTH = ADDR_WIDTH-MASK_BITS,
   parameter FIFO_LINES     = 2
 ) (
-  input  wire                      clk,
-  input  wire                      rst,
+  input  wire                              clk,
+  input  wire                              rst,
 
-  // Desc input
-  input  wire [DEST_WIDTH-1:0]     desc_accel_id,
-  input  wire [ADDR_WIDTH-1:0]     desc_addr,
-  input  wire [LEN_WIDTH-1:0]      desc_len,
-  input  wire                      desc_valid,
-  output reg  [ACCEL_COUNT-1:0]    accel_busy,
+  // Descriptor input
+  input  wire [DEST_WIDTH-1:0]             desc_accel_id,
+  input  wire [ADDR_WIDTH-1:0]             desc_addr,
+  input  wire [LEN_WIDTH-1:0]              desc_len,
+  input  wire                              desc_valid,
+
+  // Accelerator stop and status
+  input  wire [ACCEL_COUNT-1:0]            accel_stop,
+  output reg  [ACCEL_COUNT-1:0]            accel_busy,
 
   // Memory read channels per bank,
   // each channel address has one less bit
-  output reg  [MEM_ADDR_WIDTH-2:0] mem_b1_rd_addr,
-  output reg                       mem_b1_rd_en,
-  input  wire [DATA_WIDTH-1:0]     mem_b1_rd_data,
+  output reg  [MEM_ADDR_WIDTH-2:0]         mem_b1_rd_addr,
+  output reg                               mem_b1_rd_en,
+  input  wire [DATA_WIDTH-1:0]             mem_b1_rd_data,
 
-  output reg  [MEM_ADDR_WIDTH-2:0] mem_b2_rd_addr,
-  output reg                       mem_b2_rd_en,
-  input  wire [DATA_WIDTH-1:0]     mem_b2_rd_data,
+  output reg  [MEM_ADDR_WIDTH-2:0]         mem_b2_rd_addr,
+  output reg                               mem_b2_rd_en,
+  input  wire [DATA_WIDTH-1:0]             mem_b2_rd_data,
 
   // Read data output
-  output reg  [ACCEL_COUNT*8-1:0]  m_axis_tdata,
-  output reg  [ACCEL_COUNT-1:0]    m_axis_tlast,
-  output reg  [ACCEL_COUNT-1:0]    m_axis_tvalid,
-  input  wire [ACCEL_COUNT-1:0]    m_axis_tready,
-  input  wire [ACCEL_COUNT-1:0]    m_axis_stop
+  output wire [ACCEL_COUNT*DATA_WIDTH-1:0] m_axis_tdata,
+  output wire [ACCEL_COUNT*MASK_BITS-1:0]  m_axis_tuser,
+  output wire [ACCEL_COUNT-1:0]            m_axis_tlast,
+  output wire [ACCEL_COUNT-1:0]            m_axis_tvalid,
+  input  wire [ACCEL_COUNT-1:0]            m_axis_tready
 );
 
 // *** Parse the descriptor into memory address, offset, number of lines
 // to be read, and last byte pointer in last read. *** //
 localparam LINE_CNT_WIDTH = LEN_WIDTH-MASK_BITS;
+
+reg [ACCEL_COUNT-1:0] accel_stop_r;
 
 reg [MASK_BITS-1:0]      req_rd_offset;
 reg [MASK_BITS-1:0]      req_rd_final_ptr;
@@ -86,6 +91,7 @@ wire [MEM_ADDR_WIDTH-1:0] req_rd_addr_n  = req_rd_addr  + 1;
 wire [LINE_CNT_WIDTH-1:0] req_rd_count_n = req_rd_count - 1;
 wire [MEM_ADDR_WIDTH-1:0] act_rd_addr_n  = act_rd_addr  + 1;
 wire [LINE_CNT_WIDTH-1:0] act_rd_count_n = act_rd_count - 1;
+wire req_rd_last;
 
 always @ (posedge clk)
   // req has priority over act
@@ -132,8 +138,8 @@ reg [MASK_BITS-1:0]  mem_rd_offset, mem_rd_ptr;
 reg [DEST_WIDTH-1:0] mem_rd_dest;
 reg                  mem_rd_last, mem_rd_bank;
 
-wire req_rd_last = (req_rd_count == 1);
-wire act_rd_last = (act_rd_count == 1);
+assign req_rd_last = (req_rd_count == 1);
+wire   act_rd_last = (act_rd_count == 1);
 
 wire [MASK_BITS-1:0] req_rd_ptr = req_rd_last ?
                                   req_rd_final_ptr : {MASK_BITS{1'b1}};
@@ -214,9 +220,8 @@ always @ (posedge clk)
   mem_rd_data_rrr <= mem_rd_bank_rr ? ({mem_b1_rd_data_rr, mem_b2_rd_data_rr} >> (8*mem_rd_offset_rr)) :
                                       ({mem_b2_rd_data_rr, mem_b1_rd_data_rr} >> (8*mem_rd_offset_rr));
 
-reg [ACCEL_COUNT-1:0] accel_stop_r;
 always @ (posedge clk) begin
-  accel_stop_r <= accel_stop_r | m_axis_stop;
+  accel_stop_r <= accel_stop_r | accel_stop;
   if (desc_valid)
     accel_stop_r[desc_accel_id] <= 1'b0;
   if (rst)
@@ -238,24 +243,15 @@ end
 genvar i;
 generate
   for (i=0; i<ACCEL_COUNT; i=i+1) begin: accel_rd_fifos
-    // FIFO outputs
-    wire [MASK_BITS-1:0]  last_ptr;
-    wire [DATA_WIDTH-1:0] accel_data;
-    wire                  last_line, fifo_valid, fifo_ready;
 
-    reg  [MASK_BITS-1:0]  accel_ptr;
-
-    // Works with accel always asserting tready or
-    // accepting tvalid in same cycle
-    wire out_ready = !m_axis_tvalid[i] || m_axis_tready[i];
-
+    // Counter to avoid overflow
     reg [$clog2(FIFO_LINES):0] counter;
 
     always @ (posedge clk) begin
 
       if (accel_stop_r[i])
         counter <= 0;
-      else if (fifo_valid && fifo_ready) begin
+      else if (m_axis_tvalid[i] && m_axis_tready[i]) begin
         if (!(req_rd_v && req_rd_dest_1hot[i]) && !(act_arb_v && act_ack[i]))
           counter <= counter - 1;
         // else, both asserted, no change
@@ -267,7 +263,7 @@ generate
     end
 
     // Gets simplified to single bit for FIFO_LINES power of 2
-    assign accel_fifo_ready[i] = (counter <FIFO_LINES);
+    assign accel_fifo_ready[i] = (counter < FIFO_LINES);
 
     simple_fifo # (
       .ADDR_WIDTH($clog2(FIFO_LINES)),
@@ -281,33 +277,67 @@ generate
       .din({mem_rd_last_rrr, mem_rd_ptr_rrr, mem_rd_data_rrr}),
       .din_ready(),
 
-      .dout_valid(fifo_valid),
-      .dout({last_line, last_ptr, accel_data}),
-      .dout_ready(fifo_ready)
+      .dout_valid(m_axis_tvalid[i]),
+      .dout({m_axis_tlast[i], m_axis_tuser[i*MASK_BITS+:MASK_BITS],
+             m_axis_tdata[i*DATA_WIDTH+:DATA_WIDTH]}),
+      .dout_ready(m_axis_tready[i])
     );
-
-    always @ (posedge clk) begin
-      if (fifo_valid && out_ready) begin
-        if (accel_ptr==last_ptr)
-          accel_ptr <= {MASK_BITS{1'b0}};
-        else
-          accel_ptr <= accel_ptr + 1;
-      end
-
-      if (rst)
-        accel_ptr <= {MASK_BITS{1'b0}};
-    end
-
-    assign fifo_ready = out_ready && (accel_ptr==last_ptr);
-
-    // Register the outputs
-    always @ (posedge clk) begin
-      m_axis_tdata[8*i+:8] <= accel_data[accel_ptr*8+:8];
-      m_axis_tlast[i]      <= last_line && (accel_ptr==last_ptr);
-      m_axis_tvalid[i]     <= fifo_valid;
-    end
 
   end
 endgenerate
+
+endmodule
+
+module accel_width_conv # (
+  parameter DATA_IN_WIDTH  = 128,
+  parameter DATA_OUT_WIDTH = 8,
+  // TUSER is offset of last valid byte
+  parameter USER_WIDTH     = $clog2(DATA_IN_WIDTH/8)
+) (
+  input  wire                      clk,
+  input  wire                      rst,
+
+  // Read data input
+  input  wire [DATA_IN_WIDTH-1:0]  s_axis_tdata,
+  input  wire [USER_WIDTH-1:0]     s_axis_tuser,
+  input  wire                      s_axis_tlast,
+  input  wire                      s_axis_tvalid,
+  output wire                      s_axis_tready,
+
+  // Read data output
+  output reg  [DATA_OUT_WIDTH-1:0] m_axis_tdata,
+  output reg                       m_axis_tlast,
+  output reg                       m_axis_tvalid,
+  input  wire                      m_axis_tready
+);
+
+    reg  [USER_WIDTH-1:0]  rd_ptr;
+
+    // out_ready works with accel always asserting tready or
+    // accepting tvalid in same cycle
+    wire out_ready = !m_axis_tvalid || m_axis_tready;
+    wire last_chunk = (DATA_OUT_WIDTH==8) ? (rd_ptr==s_axis_tuser) :
+                                            (rd_ptr>=s_axis_tuser);
+
+    assign s_axis_tready = out_ready && last_chunk;
+
+    always @ (posedge clk) begin
+      if (s_axis_tvalid && out_ready) begin
+        if (last_chunk)
+          rd_ptr <= {USER_WIDTH{1'b0}};
+        else
+          rd_ptr <= rd_ptr + (DATA_OUT_WIDTH/8);
+      end
+
+      if (rst)
+        rd_ptr <= {USER_WIDTH{1'b0}};
+    end
+
+    // Register the outputs
+    always @ (posedge clk) begin
+      m_axis_tdata   <= s_axis_tdata[rd_ptr*DATA_OUT_WIDTH+:DATA_OUT_WIDTH];
+      m_axis_tlast   <= s_axis_tlast && last_chunk;
+      m_axis_tvalid  <= s_axis_tvalid;
+    end
 
 endmodule
