@@ -311,26 +311,32 @@ module accel_width_conv # (
   input  wire                      m_axis_tready
 );
 
-    reg  [USER_WIDTH-1:0]  rd_ptr;
+    localparam SKIP_BITS = $clog2(DATA_OUT_WIDTH);
+    localparam PTR_WIDTH = USER_WIDTH-SKIP_BITS;
+
+    reg [PTR_WIDTH-1:0] rd_ptr;
 
     // out_ready works with accel always asserting tready or
     // accepting tvalid in same cycle
-    wire out_ready = !m_axis_tvalid || m_axis_tready;
-    wire last_chunk = (DATA_OUT_WIDTH==8) ? (rd_ptr==s_axis_tuser) :
-                                            (rd_ptr>=s_axis_tuser);
+    wire out_ready  = !m_axis_tvalid || m_axis_tready;
+    wire last_chunk = (rd_ptr==s_axis_tuser[USER_WIDTH-1:SKIP_BITS]);
 
     assign s_axis_tready = out_ready && last_chunk;
 
     always @ (posedge clk) begin
       if (s_axis_tvalid && out_ready) begin
-        if (last_chunk)
-          rd_ptr <= {USER_WIDTH{1'b0}};
+        // Since data is coming from a FIFO, tvalid drop without
+        // tready assertion means there was a stop signal and
+        // rd_ptr needs to be reset. In normal mode and no
+        // tvalid it keeps the rd_ptr to be zero.
+        if (last_chunk || !s_axis_tvalid)
+          rd_ptr <= {PTR_WIDTH{1'b0}};
         else
-          rd_ptr <= rd_ptr + (DATA_OUT_WIDTH/8);
+          rd_ptr <= rd_ptr + 1;
       end
 
       if (rst)
-        rd_ptr <= {USER_WIDTH{1'b0}};
+        rd_ptr <= {PTR_WIDTH{1'b0}};
     end
 
     // Register the outputs
