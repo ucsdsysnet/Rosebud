@@ -60,13 +60,9 @@ wire [ACCEL_COUNT-1:0]    accel_busy;
 reg [ACCEL_COUNT-1:0]    status_match;
 reg [ACCEL_COUNT-1:0]    status_done;
 
-reg [31:0]  hash_data_reg = 0;
-reg [1:0]   hash_data_len_reg = 0;
-reg         hash_data_valid_reg = 0;
-reg         hash_clear_reg = 0;
-reg         hash_rd_stall_reg;
-
-wire [31:0]  hash_out;
+reg [31:0]  ip_addr_reg = 0;
+reg         ip_addr_valid_reg = 0;
+reg         ip_check_stall_reg;
 
 reg [IO_DATA_WIDTH-1:0] read_data_reg;
 reg read_data_valid_reg;
@@ -79,32 +75,13 @@ always @(posedge clk) begin
   cmd_stop_reg  <= {ACCEL_COUNT{1'b0}};
   cmd_init_reg  <= {ACCEL_COUNT{1'b0}};
 
-  hash_data_valid_reg <= 1'b0;
-  hash_clear_reg      <= 1'b0;
-  hash_rd_stall_reg   <= 1'b0;
-
+  ip_addr_valid_reg   <= 1'b0;
   read_data_valid_reg <= 1'b0;
 
   if (io_en && io_wen) begin
     if (io_addr[8]) begin
-      hash_data_reg <= io_wr_data;
-      case ({io_addr[7:2], 2'b00})
-        8'h00: begin
-          hash_clear_reg <= 1'b1;
-        end
-        8'h04: begin
-          hash_data_len_reg <= 1;
-          hash_data_valid_reg <= 1'b1;
-        end
-        8'h08: begin
-          hash_data_len_reg <= 2;
-          hash_data_valid_reg <= 1'b1;
-        end
-        8'h0C: begin
-          hash_data_len_reg <= 0;
-          hash_data_valid_reg <= 1'b1;
-        end
-      endcase
+      ip_addr_reg <= io_wr_data;
+      ip_addr_valid_reg <= 1'b1;
     end else if (!io_addr[7]) begin
       case ({io_addr[3:2], 2'b00})
         4'h0: begin
@@ -129,9 +106,9 @@ always @(posedge clk) begin
     read_data_reg <= 0;
     read_data_valid_reg <= 1'b1;
     if (io_addr[8]) begin
-      read_data_reg <= hash_out;
-      read_data_valid_reg <= ~ hash_data_valid_reg; // one cycle stall after last wr
-      hash_rd_stall_reg <= hash_data_valid_reg;
+      read_data_reg       <=  ip_match;
+      read_data_valid_reg <=  ip_done;
+      ip_check_stall_reg  <= !ip_done;
     end else if (io_addr[7]) begin
       read_data_reg <= status_done|status_match;
     end else if (!io_addr[7]) begin
@@ -152,9 +129,10 @@ always @(posedge clk) begin
     end
   end
 
-  if (hash_rd_stall_reg) begin
-      read_data_reg <= hash_out;
+  if (ip_check_stall_reg && ip_done) begin
+      read_data_reg       <= ip_match;
       read_data_valid_reg <= 1'b1;
+      ip_check_stall_reg  <= 1'b0;
   end
 
   if (rst) begin
@@ -162,10 +140,8 @@ always @(posedge clk) begin
     cmd_init_reg  <= {ACCEL_COUNT{1'b0}};
     cmd_stop_reg  <= {ACCEL_COUNT{1'b0}};
 
-    hash_data_valid_reg <= 1'b0;
-    hash_clear_reg      <= 1'b0;
-    hash_rd_stall_reg   <= 1'b0;
-
+    ip_addr_valid_reg   <= 1'b0;
+    ip_check_stall_reg  <= 1'b0;
     read_data_valid_reg <= 1'b0;
   end
 end
@@ -265,7 +241,7 @@ generate
       .m_axis_tready(accel_tready_r[n])
     );
   end
-  
+
 
   for (n = ACCEL_COUNT-1; n < ACCEL_COUNT; n = n + 1) begin: width_converters_8B
     accel_width_conv # (
@@ -353,7 +329,7 @@ generate
       .s_axis_tvalid(accel_tvalid_r[n]),
       .match(match)
     );
-    
+
     assign sme_match[n] = |match;
   end
 
@@ -369,21 +345,15 @@ always @ (posedge clk) begin
   end
 end
 
-// Toeplitz hash accelerator
-hash_acc #(
-  .HASH_WIDTH(36)
-) hash_acc_inst (
+// CND IP check accelerator
+// ip_match and ip_done keep their value until new valid is asserted
+ip_match ip_match_inst (
   .clk(clk),
   .rst(rst),
-
-  .hash_data(hash_data_reg),
-  .hash_data_len(hash_data_len_reg),
-  .hash_data_valid(hash_data_valid_reg),
-  .hash_clear(hash_clear_reg),
-
-  .hash_key(320'h6d5a56da255b0ec24167253d43a38fb0d0ca2bcbae7b30b477cb2da38030f20c6a42b73bbeac01fa),
-
-  .hash_out(hash_out)
+  .addr(ip_addr_reg),
+  .valid(ip_addr_valid_reg),
+  .match(ip_match),
+  .done(ip_done)
 );
 
 endmodule
