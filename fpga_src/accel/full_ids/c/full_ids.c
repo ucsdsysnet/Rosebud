@@ -20,7 +20,7 @@
 #define PKTS_START (7*128*1024)
 
 // SME accelerator control registers
-#define ACC_SME_STATUS (*((volatile unsigned int *)(IO_EXT_BASE + 0x0080)))
+#define ACC_SME_STATUS (*((volatile unsigned int *)(IO_EXT_BASE + 0x0100)))
 
 struct sme_accel_regs {
 	volatile unsigned int ctrl;
