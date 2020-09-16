@@ -567,7 +567,7 @@ generate
             .DEST_ENABLE(0),
             .USER_ENABLE(0),
             .REG_TYPE(2),
-            .LENGTH(1)
+            .LENGTH(2)
         ) mac_rx_pipeline (
             .clk(sys_clk),
             .rst(sys_rst),
