@@ -5,7 +5,13 @@
 #define MAX_CTX_COUNT 8
 
 // maximum number of accelerators (number of accelerator context objects)
-#define MAX_ACCEL_COUNT 8
+#define MAX_ACCEL_COUNT 16
+
+// maximum number of accelerator groups (number of accelerator group objects)
+#define MAX_ACCEL_GROUP_COUNT 8
+
+// maximum number of accelerators per group
+#define MAX_ACCEL_PER_GROUP 4
 
 // packet start offset
 // DWORD align Ethernet payload
@@ -13,7 +19,7 @@
 #define PKT_OFFSET 10
 #define PKTS_START (7*128*1024)
 
-// Regex accelerator control registers
+// SME accelerator control registers
 #define ACC_SME_STATUS (*((volatile unsigned int *)(IO_EXT_BASE + 0x0080)))
 
 struct sme_accel_regs {
@@ -22,6 +28,7 @@ struct sme_accel_regs {
 	volatile unsigned int start;
 };
 
+// Slot contexts
 struct slot_context {
 	int index;
 	struct Desc desc;
@@ -41,20 +48,54 @@ struct slot_context {
 
 struct slot_context context[MAX_CTX_COUNT];
 
+struct accel_context;
+
+// Accelerator groups
+struct accel_group {
+	unsigned int accel_count;
+	unsigned int accel_mask;
+	unsigned int accel_active_mask;
+
+	char slot_waiting_head;
+	char slot_waiting_tail;
+	char waiting;
+	struct slot_context *slot_waiting_queue[MAX_CTX_COUNT];
+
+	struct accel_context *members[MAX_ACCEL_PER_GROUP];
+};
+
+struct accel_group accel_group[MAX_ACCEL_GROUP_COUNT];
+
+// Accelerator contexts
 struct accel_context {
 	struct sme_accel_regs *sme_accel;
 
 	int index;
 
-	char active;
-	struct slot_context *active_slot;
+	struct accel_group *group;
 
-	char slot_waiting_head;
-	char slot_waiting_tail;
-	struct slot_context *slot_waiting_queue[MAX_CTX_COUNT];
+	struct slot_context *active_slot;
 };
 
 struct accel_context accel_context[MAX_ACCEL_COUNT];
+
+#define ACCEL_GROUP_TCP_INDEX 0
+#define ACCEL_GROUP_UDP_INDEX 1
+#define ACCEL_GROUP_HTTP_INDEX 2
+#define ACCEL_GROUP_FIXED_INDEX 3
+
+#define ACCEL_GROUP_TCP accel_group[ACCEL_GROUP_TCP_INDEX]
+#define ACCEL_GROUP_UDP accel_group[ACCEL_GROUP_UDP_INDEX]
+#define ACCEL_GROUP_HTTP accel_group[ACCEL_GROUP_HTTP_INDEX]
+#define ACCEL_GROUP_FIXED accel_group[ACCEL_GROUP_FIXED_INDEX]
+
+inline void add_accel_to_group(struct accel_group *grp, struct accel_context *ctx)
+{
+	ctx->group = grp;
+	grp->members[grp->accel_count] = ctx;
+	grp->accel_mask |= (1 << ctx->index);
+	grp->accel_count++;
+}
 
 unsigned int slot_count;
 unsigned int slot_size;
@@ -62,50 +103,47 @@ unsigned int header_slot_base;
 unsigned int header_slot_size;
 
 unsigned int accel_count;
+unsigned int accel_group_count;
 unsigned int accel_waiting_mask;
 unsigned int accel_active_mask;
 
-inline void reserve_accel(struct accel_context *ctx, struct slot_context *slt_ctx)
+inline void reserve_accel(struct accel_group *grp, struct slot_context *slot)
 {
-	ctx->slot_waiting_queue[ctx->slot_waiting_head] = slt_ctx;
+	grp->slot_waiting_queue[grp->slot_waiting_head] = slot;
 
-	ctx->slot_waiting_head++;
-	if (ctx->slot_waiting_head >= slot_count)
-		ctx->slot_waiting_head = 0;
+	grp->slot_waiting_head++;
+	if (grp->slot_waiting_head >= slot_count)
+		grp->slot_waiting_head = 0;
 
-	accel_waiting_mask |= 1 << ctx->index;
+	grp->waiting = 1;
 }
 
-inline struct slot_context *accel_pop_slot(struct accel_context *ctx)
+inline struct slot_context *accel_pop_slot(struct accel_group *grp)
 {
-	struct slot_context *slot = ctx->slot_waiting_queue[ctx->slot_waiting_tail];
+	struct slot_context *slot = grp->slot_waiting_queue[grp->slot_waiting_tail];
 
-	ctx->slot_waiting_tail++;
-	if (ctx->slot_waiting_tail >= slot_count)
-		ctx->slot_waiting_tail = 0;
+	grp->slot_waiting_tail++;
+	if (grp->slot_waiting_tail >= slot_count)
+		grp->slot_waiting_tail = 0;
 
-	if (ctx->slot_waiting_head == ctx->slot_waiting_tail)
-		accel_waiting_mask &= ~(1 << ctx->index);
+	if (grp->slot_waiting_head == grp->slot_waiting_tail)
+		grp->waiting = 0;
 
 	return slot;
 }
 
-inline void take_accel(struct accel_context *ctx, struct slot_context *slt_ctx)
+inline void take_accel(struct accel_context *ctx, struct slot_context *slot)
 {
 	accel_active_mask |= 1 << ctx->index;
-	ctx->active_slot = slt_ctx;
-	ctx->active = 1;
+	ctx->group->accel_active_mask |= 1 << ctx->index;
+	ctx->active_slot = slot;
 }
 
 inline void release_accel(struct accel_context *ctx)
 {
 	accel_active_mask &= ~(1 << ctx->index);
-	ctx->active = 0;
-}
-
-inline int is_accel_free(struct accel_context *ctx)
-{
-	return !ctx->active && ctx->slot_waiting_head != ctx->slot_waiting_tail;
+	ctx->group->accel_active_mask &= ~(1 << ctx->index);
+	ctx->active_slot = 0;
 }
 
 inline void slot_rx_packet(struct slot_context *ctx)
@@ -131,20 +169,20 @@ inline void slot_rx_packet(struct slot_context *ctx)
 				if (ctx->l4_header.tcp_hdr->src_port == 80 || ctx->l4_header.tcp_hdr->dest_port == 80)
 				{
 					// HTTP
-					reserve_accel(&accel_context[2], ctx);
+					reserve_accel(&ACCEL_GROUP_HTTP, ctx);
 					return;
 				}
 				else
 				{
 					// other TCP
-					reserve_accel(&accel_context[0], ctx);
+					reserve_accel(&ACCEL_GROUP_TCP, ctx);
 					return;
 				}
 				break;
 			case 0x11:
 				// UDP
 				ctx->payload_offset = sizeof(struct eth_header)+sizeof(struct ipv4_header)+sizeof(struct udp_header);
-				reserve_accel(&accel_context[1], ctx);
+				reserve_accel(&ACCEL_GROUP_UDP, ctx);
 				return;
 		}
 	}
@@ -157,7 +195,7 @@ drop:
 inline void sme_start(struct slot_context *ctx, struct accel_context *acc_ctx)
 {
 	// start SME
-	acc_ctx->sme_accel->start = ctx->desc.data+ctx->payload_offset;
+	acc_ctx->sme_accel->start = (unsigned int)(ctx->desc.data)+ctx->payload_offset;
 	acc_ctx->sme_accel->len = ctx->desc.len-ctx->payload_offset;
 	acc_ctx->sme_accel->ctrl = 1;
 
@@ -196,7 +234,8 @@ int main(void)
 	header_slot_base = DMEM_BASE + (DMEM_SIZE >> 1);
 	header_slot_size = 128;
 
-	accel_count = 3;
+	accel_count = 4+4+4+1;
+	accel_group_count = 4;
 
 	if (slot_count > MAX_SLOT_COUNT)
 		slot_count = MAX_SLOT_COUNT;
@@ -206,6 +245,9 @@ int main(void)
 
 	if (accel_count > MAX_ACCEL_COUNT)
 		accel_count = MAX_ACCEL_COUNT;
+
+	if (accel_group_count > MAX_ACCEL_GROUP_COUNT)
+		accel_group_count = MAX_ACCEL_GROUP_COUNT;
 
 	// Do this at the beginning, so scheduler can fill the slots while
 	// initializing other things.
@@ -231,10 +273,32 @@ int main(void)
 	{
 		accel_context[i].index = i;
 		accel_context[i].sme_accel = (struct sme_accel_regs *)(IO_EXT_BASE + i*16);
-		accel_context[i].active = 0;
-		accel_context[i].slot_waiting_head = 0;
-		accel_context[i].slot_waiting_tail = 0;
+		accel_context[i].active_slot = 0;
 	}
+
+	// init accelerator group structures
+	for (int i = 0; i < accel_group_count; i++)
+	{
+		accel_group[i].accel_count = 0;
+		accel_group[i].accel_mask = 0;
+		accel_group[i].accel_active_mask = 0;
+		accel_group[i].slot_waiting_head = 0;
+		accel_group[i].slot_waiting_tail = 0;
+	}
+
+	add_accel_to_group(&ACCEL_GROUP_TCP, &accel_context[0]);
+	add_accel_to_group(&ACCEL_GROUP_TCP, &accel_context[1]);
+	add_accel_to_group(&ACCEL_GROUP_TCP, &accel_context[2]);
+	add_accel_to_group(&ACCEL_GROUP_TCP, &accel_context[3]);
+	add_accel_to_group(&ACCEL_GROUP_UDP, &accel_context[4]);
+	add_accel_to_group(&ACCEL_GROUP_UDP, &accel_context[5]);
+	add_accel_to_group(&ACCEL_GROUP_UDP, &accel_context[6]);
+	add_accel_to_group(&ACCEL_GROUP_UDP, &accel_context[7]);
+	add_accel_to_group(&ACCEL_GROUP_HTTP, &accel_context[8]);
+	add_accel_to_group(&ACCEL_GROUP_HTTP, &accel_context[9]);
+	add_accel_to_group(&ACCEL_GROUP_HTTP, &accel_context[10]);
+	add_accel_to_group(&ACCEL_GROUP_HTTP, &accel_context[11]);
+	add_accel_to_group(&ACCEL_GROUP_FIXED, &accel_context[12]);
 
 	while (1)
 	{
@@ -277,18 +341,24 @@ int main(void)
 		}
 
 		// handle slots waiting on accelerators
-		temp = ~accel_active_mask & accel_waiting_mask;
-		if (temp)
+		for (int i = 0; i < accel_group_count; i++)
 		{
-			for (int i = 0; i < accel_count; i++)
-			{
-				if (temp & (1 << i))
-				{
-					// pop from waiting list
-					struct slot_context *slot = accel_pop_slot(&accel_context[i]);
+			struct accel_group *grp = &accel_group[i];
 
-					// handle packet
-					sme_start(slot, &accel_context[i]);
+			if (grp->waiting && (~grp->accel_active_mask & grp->accel_mask))
+			{
+				for (int j = 0; j < grp->accel_count; j++)
+				{
+					struct accel_context *ctx = grp->members[j];
+
+					if (grp->waiting && !ctx->active_slot)
+					{
+						// pop from waiting list
+						struct slot_context *slot = accel_pop_slot(grp);
+
+						// handle packet
+						sme_start(slot, ctx);
+					}
 				}
 			}
 		}
