@@ -40,9 +40,9 @@ module accel_wrap #(
 
 assign error = 1'b0;
 
-localparam TCP_SME_COUNT = 1;
-localparam UDP_SME_COUNT = 1;
-localparam HTTP_SME_COUNT = 1;
+localparam TCP_SME_COUNT  = 4;
+localparam UDP_SME_COUNT  = 4;
+localparam HTTP_SME_COUNT = 4;
 
 localparam ACCEL_COUNT = TCP_SME_COUNT+UDP_SME_COUNT+HTTP_SME_COUNT+1;
 localparam DEST_WIDTH  = $clog2(ACCEL_COUNT);
@@ -59,6 +59,7 @@ wire [ACCEL_COUNT-1:0]    accel_busy;
 
 reg [ACCEL_COUNT-1:0]    status_match;
 reg [ACCEL_COUNT-1:0]    status_done;
+reg [ACCEL_COUNT*32-1:0] match_1hot;
 
 reg [31:0]  ip_addr_reg = 0;
 reg         ip_addr_valid_reg = 0;
@@ -79,17 +80,17 @@ always @(posedge clk) begin
   read_data_valid_reg <= 1'b0;
 
   if (io_en && io_wen) begin
-    if (io_addr[8]) begin
+    if (io_addr[9]) begin
       ip_addr_reg <= io_wr_data;
       ip_addr_valid_reg <= 1'b1;
-    end else if (!io_addr[7]) begin
+    end else if (!io_addr[8]) begin
       case ({io_addr[3:2], 2'b00})
         4'h0: begin
           if (io_strb[0]) begin
             cmd_valid_reg <= io_wr_data[0];
-            cmd_accel_reg <= io_addr[6:4];
-            cmd_stop_reg [io_addr[6:4]] <= cmd_stop_reg [io_addr[6:4]] || io_wr_data[4];
-            cmd_init_reg [io_addr[6:4]] <= cmd_init_reg [io_addr[6:4]] || io_wr_data[0];
+            cmd_accel_reg <= io_addr[7:4];
+            cmd_stop_reg [io_addr[7:4]] <= cmd_stop_reg [io_addr[7:4]] || io_wr_data[4];
+            cmd_init_reg [io_addr[7:4]] <= cmd_init_reg [io_addr[7:4]] || io_wr_data[0];
           end
         end
         4'h4: begin
@@ -105,25 +106,28 @@ always @(posedge clk) begin
   if (io_en && !io_wen) begin
     read_data_reg <= 0;
     read_data_valid_reg <= 1'b1;
-    if (io_addr[8]) begin
+    if (io_addr[9]) begin
       read_data_reg       <=  ip_match;
       read_data_valid_reg <=  ip_done;
       ip_check_stall_reg  <= !ip_done;
-    end else if (io_addr[7]) begin
+    end else if (io_addr[8]) begin
       read_data_reg <= status_done|status_match;
-    end else if (!io_addr[7]) begin
+    end else if (!io_addr[8]) begin
       case ({io_addr[3:2], 2'b00})
         4'h0: begin
           read_data_reg[0] <= 1'b0; // cmd_valid_reg[io_addr[6:4]];
-          read_data_reg[1] <= accel_busy[io_addr[6:4]];
-          read_data_reg[8] <= status_done[io_addr[6:4]];
-          read_data_reg[9] <= status_match[io_addr[6:4]];
+          read_data_reg[1] <= accel_busy[io_addr[7:4]];
+          read_data_reg[8] <= status_done[io_addr[7:4]];
+          read_data_reg[9] <= status_match[io_addr[7:4]];
         end
         4'h4: begin
-          read_data_reg <= cmd_len_reg[io_addr[6:4]];
+          read_data_reg <= cmd_len_reg[io_addr[7:4]];
         end
         4'h8: begin
-          read_data_reg <= cmd_addr_reg[io_addr[6:4]];
+          read_data_reg <= cmd_addr_reg[io_addr[7:4]];
+        end
+        4'hc: begin
+          read_data_reg <= match_1hot[io_addr[7:4]*32+:32];
         end
       endcase
     end
@@ -242,7 +246,6 @@ generate
     );
   end
 
-
   for (n = ACCEL_COUNT-1; n < ACCEL_COUNT; n = n + 1) begin: width_converters_8B
     accel_width_conv # (
       .DATA_IN_WIDTH(DATA_WIDTH),
@@ -278,6 +281,12 @@ generate
       .match(match)
     );
 
+    always @ (posedge clk)
+      if (cmd_init_reg[n] | rst)
+        match_1hot[n*32+:32] <= 0;
+      else
+        match_1hot[n*32+:32] <= match_1hot[n*32+:32] | match;
+
     assign sme_match[n] = |match;
   end
 
@@ -294,6 +303,12 @@ generate
       .s_axis_tvalid(accel_tvalid_r[n]),
       .match(match)
     );
+
+    always @ (posedge clk)
+      if (cmd_init_reg[n] | rst)
+        match_1hot[n*32+:32] <= 0;
+      else
+        match_1hot[n*32+:32] <= match_1hot[n*32+:32] | match;
 
     assign sme_match[n] = |match;
   end
@@ -312,8 +327,13 @@ generate
       .match(match)
     );
 
-    assign sme_match[n] = |match;
+    always @ (posedge clk)
+      if (cmd_init_reg[n] | rst)
+        match_1hot[n*32+:32] <= 0;
+      else
+        match_1hot[n*32+:32] <= match_1hot[n*32+:32] | match;
 
+    assign sme_match[n] = |match;
   end
 
   // Fixed location SME
@@ -329,6 +349,12 @@ generate
       .s_axis_tvalid(accel_tvalid_r[n]),
       .match(match)
     );
+
+    always @ (posedge clk)
+      if (cmd_init_reg[n] | rst)
+        match_1hot[n*32+:32] <= 0;
+      else
+        match_1hot[n*32+:32] <= match_1hot[n*32+:32] | match;
 
     assign sme_match[n] = |match;
   end
