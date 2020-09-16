@@ -1300,7 +1300,7 @@ module axis_ram_sw_shrink # (
                     .USER_WIDTH(USER_WIDTH),
                     .ID_ENABLE(ID_ENABLE),
                     .ID_WIDTH(ID_WIDTH),
-                    .REG_TYPE(2),
+                    .REG_TYPE(0),
                     .LENGTH(1)
                 ) middle_pipeline_register (
                     .clk(select_m_clk),
@@ -1990,7 +1990,7 @@ module axis_ram_sw_grow # (
                       .USER_WIDTH(USER_WIDTH),
                       .ID_ENABLE(ID_ENABLE),
                       .ID_WIDTH(ID_WIDTH),
-                      .REG_TYPE(2),
+                      .REG_TYPE(0),
                       .LENGTH(1)
                 ) middle_pipeline_register (
                     .clk(select_m_clk),

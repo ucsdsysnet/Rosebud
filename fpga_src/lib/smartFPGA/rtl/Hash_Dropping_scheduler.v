@@ -233,7 +233,7 @@ module simple_scheduler # (
         .DEST_ENABLE(0),
         .USER_ENABLE(0),
         .REG_TYPE(DATA_REG_TYPE),
-        .LENGTH(1)
+        .LENGTH(2)
       ) rx_reg_inst (
         .clk(clk),
         .rst(rst_r),
