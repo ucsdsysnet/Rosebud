@@ -29,6 +29,8 @@
 // SME accelerator control registers
 #define ACC_SME_STATUS (*((volatile unsigned int *)(IO_EXT_BASE + 0x0100)))
 
+#define ACC_IP_MATCH_CTL (*((volatile unsigned int *)(IO_EXT_BASE + 0x0200)))
+
 struct sme_accel_regs {
 	volatile unsigned int ctrl;
 	volatile unsigned int len;
@@ -206,11 +208,24 @@ inline void handle_slot_rx_packet(struct slot_context *ctx)
 		// IPv4 packet
 		ctx->l3_header.ipv4_hdr = (struct ipv4_header*)(ctx->header+sizeof(struct eth_header));
 
+		// start IP check
+		ACC_IP_MATCH_CTL = ctx->l3_header.ipv4_hdr->src_ip;
+
 		// check IHL
 		if (ctx->l3_header.ipv4_hdr->version_ihl != 0x45)
+		{
+			// invalid IHL, drop it
 			goto drop;
+		}
 
 		ctx->l4_header.tcp_hdr = (struct tcp_header*)(((unsigned char *)ctx->l3_header.ipv4_hdr)+sizeof(struct ipv4_header));
+
+		// check IP
+		if (ACC_IP_MATCH_CTL)
+		{
+			// it's a match, drop it
+			goto drop;
+		}
 
 		// check protocol
 		switch (ctx->l3_header.ipv4_hdr->protocol)
