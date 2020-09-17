@@ -35,6 +35,7 @@ struct sme_accel_regs {
 	volatile unsigned int ctrl;
 	volatile unsigned int len;
 	volatile unsigned int start;
+	volatile unsigned int match_1hot;
 };
 
 // Slot contexts
