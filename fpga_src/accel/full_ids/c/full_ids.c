@@ -1,6 +1,13 @@
 #include "core.h"
 #include "packet_headers.h"
 
+#define bswap_16(x) \
+	(((x & 0xff00) >> 8) | ((x & 0x00ff) << 8))
+
+#define bswap_32(x) \
+	(((x & 0xff000000) >> 24) | ((x & 0x00ff0000) >>  8) | \
+	 ((x & 0x0000ff00) <<  8) | ((x & 0x000000ff) << 24))
+
 // maximum number of slots (number of context objects)
 #define MAX_CTX_COUNT 8
 
@@ -194,7 +201,7 @@ inline void call_accel(struct accel_group *grp, struct slot_context *slot)
 inline void handle_slot_rx_packet(struct slot_context *ctx)
 {
 	// check eth type
-	if (ctx->eth_hdr->type == 0x0008)
+	if (ctx->eth_hdr->type == bswap_16(0x0800))
 	{
 		// IPv4 packet
 		ctx->l3_header.ipv4_hdr = (struct ipv4_header*)(ctx->header+sizeof(struct eth_header));
@@ -211,7 +218,7 @@ inline void handle_slot_rx_packet(struct slot_context *ctx)
 			case 0x06:
 				// TCP
 				ctx->payload_offset = sizeof(struct eth_header)+sizeof(struct ipv4_header)+sizeof(struct tcp_header);
-				if (ctx->l4_header.tcp_hdr->src_port == 80 || ctx->l4_header.tcp_hdr->dest_port == 80)
+				if (ctx->l4_header.tcp_hdr->src_port == bswap_16(80) || ctx->l4_header.tcp_hdr->dest_port == bswap_16(80))
 				{
 					// HTTP
 					call_accel(&ACCEL_GROUP_HTTP, ctx);
