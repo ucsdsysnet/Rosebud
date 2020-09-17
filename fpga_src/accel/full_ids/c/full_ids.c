@@ -94,7 +94,7 @@ inline void add_accel_to_group(struct accel_group *grp, struct accel_context *ct
 {
 	ctx->group = grp;
 	grp->members[grp->accel_count] = ctx;
-	grp->accel_mask |= (1 << ctx->index);
+	grp->accel_mask |= ctx->mask;
 	grp->accel_count++;
 }
 
