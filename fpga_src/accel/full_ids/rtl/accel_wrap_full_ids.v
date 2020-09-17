@@ -63,7 +63,7 @@ reg [ACCEL_COUNT*32-1:0] match_1hot;
 
 reg [31:0]  ip_addr_reg = 0;
 reg         ip_addr_valid_reg = 0;
-reg         ip_check_stall_reg;
+reg         read_data_stall_reg;
 
 reg [IO_DATA_WIDTH-1:0] read_data_reg;
 reg read_data_valid_reg;
@@ -109,7 +109,7 @@ always @(posedge clk) begin
     if (io_addr[9]) begin
       read_data_reg       <=  ip_match;
       read_data_valid_reg <=  ip_done;
-      ip_check_stall_reg  <= !ip_done;
+      read_data_stall_reg <= !ip_done;
     end else if (io_addr[8]) begin
       read_data_reg <= status_done|status_match;
     end else if (!io_addr[8]) begin
@@ -128,15 +128,27 @@ always @(posedge clk) begin
         end
         4'hc: begin
           read_data_reg <= match_1hot[io_addr[7:4]*32+:32];
+          read_data_valid_reg <=   (status_done [io_addr[7:4]]
+                                 || status_match[io_addr[7:4]]);
+          read_data_stall_reg <= ! (status_done [io_addr[7:4]]
+                                 || status_match[io_addr[7:4]]);
         end
       endcase
     end
   end
 
-  if (ip_check_stall_reg && ip_done) begin
-      read_data_reg       <= ip_match;
-      read_data_valid_reg <= 1'b1;
-      ip_check_stall_reg  <= 1'b0;
+  // core keeps the address in case of stall
+  if (read_data_stall_reg) begin
+    if (io_addr[9]) begin
+      read_data_valid_reg <=  ip_done;
+      read_data_stall_reg <= !ip_done;
+
+    end else begin // There is only 1 remaining stall case
+      read_data_valid_reg <=   (status_done [io_addr[7:4]]
+                             || status_match[io_addr[7:4]]);
+      read_data_stall_reg <= ! (status_done [io_addr[7:4]]
+                             || status_match[io_addr[7:4]]);
+    end
   end
 
   if (rst) begin
@@ -145,7 +157,7 @@ always @(posedge clk) begin
     cmd_stop_reg  <= {ACCEL_COUNT{1'b0}};
 
     ip_addr_valid_reg   <= 1'b0;
-    ip_check_stall_reg  <= 1'b0;
+    read_data_stall_reg <= 1'b0;
     read_data_valid_reg <= 1'b0;
   end
 end
