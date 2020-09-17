@@ -48,6 +48,7 @@ struct slot_context {
 
 struct slot_context context[MAX_CTX_COUNT];
 
+struct accel_group;
 struct accel_context;
 
 // Accelerator groups
@@ -56,12 +57,15 @@ struct accel_group {
 	unsigned int accel_mask;
 	unsigned int accel_active_mask;
 
+	struct accel_group *list_next;
+
+	struct accel_context *member_list_head;
+	struct accel_context *member_list_tail;
+
 	char slot_waiting_head;
 	char slot_waiting_tail;
 	char waiting;
 	struct slot_context *slot_waiting_queue[MAX_CTX_COUNT];
-
-	struct accel_context *members[MAX_ACCEL_PER_GROUP];
 };
 
 struct accel_group accel_group[MAX_ACCEL_GROUP_COUNT];
@@ -74,6 +78,9 @@ struct accel_context {
 	unsigned int mask;
 
 	struct accel_group *group;
+
+	struct accel_context *list_next;
+	struct accel_context *group_list_next;
 
 	struct slot_context *active_slot;
 };
@@ -92,8 +99,21 @@ struct accel_context accel_context[MAX_ACCEL_COUNT];
 
 inline void add_accel_to_group(struct accel_group *grp, struct accel_context *ctx)
 {
+	// set group
 	ctx->group = grp;
-	grp->members[grp->accel_count] = ctx;
+
+	// append to linked list
+	if (grp->member_list_head)
+	{
+		grp->member_list_head->group_list_next = ctx;
+	}
+	else
+	{
+		grp->member_list_tail = ctx;
+	}
+
+	grp->member_list_head = ctx;
+
 	grp->accel_mask |= ctx->mask;
 	grp->accel_count++;
 }
@@ -229,6 +249,10 @@ inline void sme_done(struct slot_context *ctx, struct accel_context *acc_ctx)
 
 int main(void)
 {
+	struct slot_context *slot;
+	struct accel_context *accel;
+	struct accel_group *grp;
+
 	// set slot configuration parameters
 	slot_count = 8;
 	slot_size = 16*1024;
@@ -270,15 +294,28 @@ int main(void)
 	}
 
 	// init accelerator context structures
+	accel = 0;
 	for (int i = 0; i < accel_count; i++)
 	{
 		accel_context[i].index = i;
 		accel_context[i].mask = 1 << i;
 		accel_context[i].sme_accel = (struct sme_accel_regs *)(IO_EXT_BASE + i*16);
+		accel_context[i].group = 0;
+		accel_context[i].list_next = 0;
+		accel_context[i].group_list_next = 0;
 		accel_context[i].active_slot = 0;
+
+		if (accel)
+		{
+			accel->list_next = &accel_context[i];
+		}
+
+		accel = &accel_context[i];
 	}
 
+
 	// init accelerator group structures
+	grp = 0;
 	for (int i = 0; i < accel_group_count; i++)
 	{
 		accel_group[i].accel_count = 0;
@@ -286,6 +323,12 @@ int main(void)
 		accel_group[i].accel_active_mask = 0;
 		accel_group[i].slot_waiting_head = 0;
 		accel_group[i].slot_waiting_tail = 0;
+
+		if (grp)
+		{
+			grp->list_next = &accel_group[i];
+		}
+		grp = &accel_group[i];
 	}
 
 	add_accel_to_group(&ACCEL_GROUP_TCP, &accel_context[0]);
@@ -305,9 +348,6 @@ int main(void)
 	while (1)
 	{
 		unsigned int temp;
-		struct slot_context *slot;
-		struct accel_context *accel;
-		struct accel_group *grp;
 
 		// check for new packets
 		while (in_pkt_ready())
@@ -331,8 +371,7 @@ int main(void)
 		temp = ACC_SME_STATUS & accel_active_mask;
 		if (temp)
 		{
-			accel = &accel_context[0];
-			for (int i = accel_count; i > 0; i--, accel++)
+			for (accel = &accel_context[0]; accel; accel = accel->list_next)
 			{
 				if (temp & accel->mask)
 				{
@@ -346,15 +385,12 @@ int main(void)
 		}
 
 		// handle slots waiting on accelerators
-		grp = &accel_group[0];
-		for (int i = accel_group_count; i > 0; i--, grp++)
+		for (grp = &accel_group[0]; grp; grp = grp->list_next)
 		{
 			if (grp->waiting && (~grp->accel_active_mask & grp->accel_mask))
 			{
-				for (int j = 0; j < grp->accel_count; j++, accel++)
+				for (accel = grp->member_list_tail; accel; accel = accel->group_list_next)
 				{
-					accel = grp->members[j];
-
 					if (grp->waiting && !accel->active_slot)
 					{
 						// pop from waiting list
