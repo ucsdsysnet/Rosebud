@@ -139,6 +139,9 @@ module axis_dma # (
       wr_tdest      <= s_axis_tdest;
       wr_tuser      <= s_axis_tuser;
     end
+    // Header send stops after reaching the 128 byte address cap for the first time
+    else if (wr_data_en && wr_ready && (&wr_addr[HDR_ADDR_BITS-1:MASK_BITS]))
+      hdr_en_r      <= 1'b0;
  
     // To improve timing do part of logic in the previous cycle
     if (extra_cycle && wr_data_en && wr_ready) 
@@ -149,9 +152,6 @@ module axis_dma # (
     else if (s_axis_tvalid && s_axis_tready)
       wr_strb_left <= |(s_axis_tkeep >> wr_offset);
 
-    // Header send stops after reaching the 128 byte address cap for the first time
-    if (wr_data_en && wr_ready && (&wr_addr[HDR_ADDR_BITS-1:MASK_BITS]))
-      hdr_en_r      <= 1'b0;
     if (rst)
       hdr_en_r      <= 1'b0;
   end
