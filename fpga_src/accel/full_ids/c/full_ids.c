@@ -303,61 +303,65 @@ int main(void)
 	while (1)
 	{
 		unsigned int temp;
+		struct slot_context *slot;
+		struct accel_context *accel;
+		struct accel_group *grp;
 
 		// check for new packets
-		if (in_pkt_ready())
+		while (in_pkt_ready())
 		{
 			struct Desc desc;
-			int index;
 
 			// read descriptor
 			read_in_pkt(&desc);
 
 			// compute index
-			index = desc.tag-1;
+			slot = &context[desc.tag-1];
 
 			// copy descriptor into context
-			context[index].desc = desc;
+			slot->desc = desc;
 
 			// handle packet
-			slot_rx_packet(&context[index]);
+			slot_rx_packet(slot);
 		}
 
 		// handle accelerator done
 		temp = ACC_SME_STATUS & accel_active_mask;
 		if (temp)
 		{
-			for (int i = 0; i < accel_count; i++)
+			accel = &accel_context[0];
+			for (int i = accel_count; i > 0; i--, accel++)
 			{
-				if (temp & (1 << i))
+				if (temp & 1)
 				{
 					// handle packet
-					sme_done(accel_context[i].active_slot, &accel_context[i]);
+					sme_done(accel->active_slot, accel);
 
 					// release accelerator
-					release_accel(&accel_context[i]);
+					release_accel(accel);
 				}
+
+				temp = temp >> 1;
 			}
 		}
 
 		// handle slots waiting on accelerators
-		for (int i = 0; i < accel_group_count; i++)
+		grp = &accel_group[0];
+		for (int i = accel_group_count; i > 0; i--, grp++)
 		{
-			struct accel_group *grp = &accel_group[i];
-
 			if (grp->waiting && (~grp->accel_active_mask & grp->accel_mask))
 			{
-				for (int j = 0; j < grp->accel_count; j++)
+				for (int j = 0; j < grp->accel_count; j++, accel++)
 				{
-					struct accel_context *ctx = grp->members[j];
+					accel = grp->members[j];
 
-					if (grp->waiting && !ctx->active_slot)
+					if (grp->waiting && !accel->active_slot)
 					{
 						// pop from waiting list
-						struct slot_context *slot = accel_pop_slot(grp);
+						slot = accel_pop_slot(grp);
 
 						// handle packet
-						sme_start(slot, ctx);
+						sme_start(slot, accel);
 					}
 				}
 			}
