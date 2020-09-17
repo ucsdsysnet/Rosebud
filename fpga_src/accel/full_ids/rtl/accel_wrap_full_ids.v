@@ -281,7 +281,7 @@ generate
   end
 
   for (n = 0; n < TCP_SME_COUNT; n = n + 1) begin: tcp_sme
-    wire [9:0] match;
+    wire [7:0] match;
 
     tcp_sme tcp_sme_inst
     (
@@ -327,7 +327,7 @@ generate
 
   // HTTP
   for (n = TCP_SME_COUNT+UDP_SME_COUNT; n < TCP_SME_COUNT+UDP_SME_COUNT+HTTP_SME_COUNT; n = n + 1) begin: http_sme
-    wire [30:0] match;
+    wire [31:0] match;
 
     http_sme http_sme_inst
     (
