@@ -167,7 +167,31 @@ inline void release_accel(struct accel_context *ctx)
 	ctx->active_slot = 0;
 }
 
-inline void slot_rx_packet(struct slot_context *ctx)
+inline void handle_slot_rx_packet(struct slot_context *ctx);
+inline void handle_accel_start(struct slot_context *ctx, struct accel_context *acc_ctx);
+inline void handle_accel_done(struct slot_context *ctx, struct accel_context *acc_ctx);
+
+inline void call_accel(struct accel_group *grp, struct slot_context *slot)
+{
+	if (~grp->accel_active_mask & grp->accel_mask)
+	{
+		// group has idle accelerators
+		for (struct accel_context *accel = grp->member_list_tail; accel; accel = accel->group_list_next)
+		{
+			if (!accel->active_slot)
+			{
+				// handle packet
+				handle_accel_start(slot, accel);
+				return;
+			}
+		}
+	}
+
+	// no idle accelerators
+	reserve_accel(grp, slot);
+}
+
+inline void handle_slot_rx_packet(struct slot_context *ctx)
 {
 	// check eth type
 	if (ctx->eth_hdr->type == 0x0008)
@@ -190,20 +214,20 @@ inline void slot_rx_packet(struct slot_context *ctx)
 				if (ctx->l4_header.tcp_hdr->src_port == 80 || ctx->l4_header.tcp_hdr->dest_port == 80)
 				{
 					// HTTP
-					reserve_accel(&ACCEL_GROUP_HTTP, ctx);
+					call_accel(&ACCEL_GROUP_HTTP, ctx);
 					return;
 				}
 				else
 				{
 					// other TCP
-					reserve_accel(&ACCEL_GROUP_TCP, ctx);
+					call_accel(&ACCEL_GROUP_TCP, ctx);
 					return;
 				}
 				break;
 			case 0x11:
 				// UDP
 				ctx->payload_offset = sizeof(struct eth_header)+sizeof(struct ipv4_header)+sizeof(struct udp_header);
-				reserve_accel(&ACCEL_GROUP_UDP, ctx);
+				call_accel(&ACCEL_GROUP_UDP, ctx);
 				return;
 		}
 	}
@@ -213,7 +237,7 @@ drop:
 	pkt_send(&ctx->desc);
 }
 
-inline void sme_start(struct slot_context *ctx, struct accel_context *acc_ctx)
+inline void handle_accel_start(struct slot_context *ctx, struct accel_context *acc_ctx)
 {
 	// start SME
 	acc_ctx->sme_accel->start = (unsigned int)(ctx->desc.data)+ctx->payload_offset;
@@ -224,7 +248,7 @@ inline void sme_start(struct slot_context *ctx, struct accel_context *acc_ctx)
 	take_accel(acc_ctx, ctx);
 }
 
-inline void sme_done(struct slot_context *ctx, struct accel_context *acc_ctx)
+inline void handle_accel_done(struct slot_context *ctx, struct accel_context *acc_ctx)
 {
 	int match = 0;
 
@@ -313,7 +337,6 @@ int main(void)
 		accel = &accel_context[i];
 	}
 
-
 	// init accelerator group structures
 	grp = 0;
 	for (int i = 0; i < accel_group_count; i++)
@@ -364,7 +387,7 @@ int main(void)
 			slot->desc = desc;
 
 			// handle packet
-			slot_rx_packet(slot);
+			handle_slot_rx_packet(slot);
 		}
 
 		// handle accelerator done
@@ -376,28 +399,19 @@ int main(void)
 				if (temp & accel->mask)
 				{
 					// handle packet
-					sme_done(accel->active_slot, accel);
+					handle_accel_done(accel->active_slot, accel);
 
 					// release accelerator
 					release_accel(accel);
-				}
-			}
-		}
 
-		// handle slots waiting on accelerators
-		for (grp = &accel_group[0]; grp; grp = grp->list_next)
-		{
-			if (grp->waiting && (~grp->accel_active_mask & grp->accel_mask))
-			{
-				for (accel = grp->member_list_tail; accel; accel = accel->group_list_next)
-				{
-					if (grp->waiting && !accel->active_slot)
+					// try to restart accelerator
+					if (accel->group->waiting)
 					{
 						// pop from waiting list
-						slot = accel_pop_slot(grp);
+						slot = accel_pop_slot(accel->group);
 
 						// handle packet
-						sme_start(slot, accel);
+						handle_accel_start(slot, accel);
 					}
 				}
 			}
