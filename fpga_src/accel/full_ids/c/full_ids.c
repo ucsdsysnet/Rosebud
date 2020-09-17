@@ -70,7 +70,8 @@ struct accel_group accel_group[MAX_ACCEL_GROUP_COUNT];
 struct accel_context {
 	struct sme_accel_regs *sme_accel;
 
-	int index;
+	unsigned int index;
+	unsigned int mask;
 
 	struct accel_group *group;
 
@@ -134,15 +135,15 @@ inline struct slot_context *accel_pop_slot(struct accel_group *grp)
 
 inline void take_accel(struct accel_context *ctx, struct slot_context *slot)
 {
-	accel_active_mask |= 1 << ctx->index;
-	ctx->group->accel_active_mask |= 1 << ctx->index;
+	accel_active_mask |= ctx->mask;
+	ctx->group->accel_active_mask |= ctx->mask;
 	ctx->active_slot = slot;
 }
 
 inline void release_accel(struct accel_context *ctx)
 {
-	accel_active_mask &= ~(1 << ctx->index);
-	ctx->group->accel_active_mask &= ~(1 << ctx->index);
+	accel_active_mask &= ~ctx->mask;
+	ctx->group->accel_active_mask &= ~ctx->mask;
 	ctx->active_slot = 0;
 }
 
@@ -272,6 +273,7 @@ int main(void)
 	for (int i = 0; i < accel_count; i++)
 	{
 		accel_context[i].index = i;
+		accel_context[i].mask = 1 << i;
 		accel_context[i].sme_accel = (struct sme_accel_regs *)(IO_EXT_BASE + i*16);
 		accel_context[i].active_slot = 0;
 	}
@@ -332,7 +334,7 @@ int main(void)
 			accel = &accel_context[0];
 			for (int i = accel_count; i > 0; i--, accel++)
 			{
-				if (temp & 1)
+				if (temp & accel->mask)
 				{
 					// handle packet
 					sme_done(accel->active_slot, accel);
@@ -340,8 +342,6 @@ int main(void)
 					// release accelerator
 					release_accel(accel);
 				}
-
-				temp = temp >> 1;
 			}
 		}
 
