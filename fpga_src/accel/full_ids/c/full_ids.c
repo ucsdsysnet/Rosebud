@@ -17,9 +17,6 @@
 // maximum number of accelerator groups (number of accelerator group objects)
 #define MAX_ACCEL_GROUP_COUNT 8
 
-// maximum number of accelerators per group
-#define MAX_ACCEL_PER_GROUP 4
-
 // packet start offset
 // DWORD align Ethernet payload
 // provide space for header modifications
