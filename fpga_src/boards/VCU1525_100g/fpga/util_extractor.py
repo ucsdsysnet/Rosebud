@@ -71,10 +71,12 @@ def extract (read_file,modules,avg,tot,avg_p,tot_p):
             %(LUT, LGCLUT, LUTRAM, SRL, FF, RAMB36, RAMB18, URAM, DSP))
 
 MAC_modules = [
+"     MAC_async_FIFO\[0\]\.mac_rx_async_fifo_inst",
 "     MAC_async_FIFO\[0\]\.mac_rx_fifo_inst",
 "     MAC_async_FIFO\[0\]\.mac_rx_pipeline",
 "     MAC_async_FIFO\[0\]\.mac_tx_fifo_inst",
 "     MAC_async_FIFO\[0\]\.mac_tx_pipeline",
+"     MAC_async_FIFO\[1\]\.mac_rx_async_fifo_inst",
 "     MAC_async_FIFO\[1\]\.mac_rx_fifo_inst",
 "     MAC_async_FIFO\[1\]\.mac_rx_pipeline",
 "     MAC_async_FIFO\[1\]\.mac_tx_fifo_inst",
@@ -141,28 +143,71 @@ Gushehs = [
 "     riscv_cores\[14\]\.pr_wrapper",
 "     riscv_cores\[15\]\.pr_wrapper"]
 
+PR_regs = [
+"       \(riscv_cores\[0\]\.pr_wrapper\) ",
+"       \(riscv_cores\[1\]\.pr_wrapper\) ",
+"       \(riscv_cores\[2\]\.pr_wrapper\) ",
+"       \(riscv_cores\[3\]\.pr_wrapper\) ",
+"       \(riscv_cores\[4\]\.pr_wrapper\) ",
+"       \(riscv_cores\[5\]\.pr_wrapper\) ",
+"       \(riscv_cores\[6\]\.pr_wrapper\) ",
+"       \(riscv_cores\[7\]\.pr_wrapper\) ",
+"       \(riscv_cores\[8\]\.pr_wrapper\) ",
+"       \(riscv_cores\[9\]\.pr_wrapper\) ",
+"       \(riscv_cores\[10\]\.pr_wrapper\) ",
+"       \(riscv_cores\[11\]\.pr_wrapper\) ",
+"       \(riscv_cores\[12\]\.pr_wrapper\) ",
+"       \(riscv_cores\[13\]\.pr_wrapper\) ",
+"       \(riscv_cores\[14\]\.pr_wrapper\) ",
+"       \(riscv_cores\[15\]\.pr_wrapper\) "]
+
 Scheduler_module = ["     scheduler"]
 
 
 mem_modules = ["         memories"]
 riscv_modules = ["         core"]
-hash_modules = ["           hash_acc_inst"]
 acc_manager =   ["           \(accel_wrap_inst\)"]
 acc_dma =   ["           accel_dma_engine "]
-regex_modules = [
-"           accelerators\[0\]\.re_inst ",
-"           accelerators\[1\]\.re_inst ",
-"           accelerators\[2\]\.re_inst ",
-"           accelerators\[3\]\.re_inst ",
-"           accelerators\[4\]\.re_inst ",
-"           accelerators\[5\]\.re_inst ",
-"           accelerators\[6\]\.re_inst ",
-"           accelerators\[7\]\.re_inst "]
+fixed_sme = ["           fied_loc_sme\[12\]\.fixed_loc_sme_inst "]
+http_sme = [
+"           http_sme\[10\]\.http_sme_inst ",
+"           http_sme\[11\]\.http_sme_inst ",
+"           http_sme\[8\]\.http_sme_inst ",
+"           http_sme\[9\]\.http_sme_inst "]
+
+tcp_sme = [
+"           tcp_sme\[0\]\.tcp_sme_inst ",
+"           tcp_sme\[1\]\.tcp_sme_inst ",
+"           tcp_sme\[2\]\.tcp_sme_inst ",
+"           tcp_sme\[3\]\.tcp_sme_inst "]
+
+udp_sme = [
+"           udp_sme\[4\]\.udp_sme_inst ",
+"           udp_sme\[5\]\.udp_sme_inst ",
+"           udp_sme\[6\]\.udp_sme_inst ",
+"           udp_sme\[7\]\.udp_sme_inst "]
+width = [
+"           width_converters_1B\[0\]\.accel_width_conv_inst ",
+"           width_converters_1B\[10\]\.accel_width_conv_inst ",
+"           width_converters_1B\[11\]\.accel_width_conv_inst ",
+"           width_converters_1B\[1\]\.accel_width_conv_inst ",
+"           width_converters_1B\[2\]\.accel_width_conv_inst ",
+"           width_converters_1B\[3\]\.accel_width_conv_inst ",
+"           width_converters_1B\[4\]\.accel_width_conv_inst ",
+"           width_converters_1B\[5\]\.accel_width_conv_inst ",
+"           width_converters_1B\[6\]\.accel_width_conv_inst ",
+"           width_converters_1B\[7\]\.accel_width_conv_inst ",
+"           width_converters_1B\[8\]\.accel_width_conv_inst ",
+"           width_converters_1B\[9\]\.accel_width_conv_inst ",
+"           width_converters_8B\[12\]\.accel_width_conv_inst "]
+ip_match = ["           ip_match_inst "]
 
 f = "fpga_utilization_hierarchy_placed_full.rpt"
 
 print ("Gusheh stats:")
 extract(f,Gushehs, 1,1,1,0)
+print ("PR Regs stats:")
+extract(f,PR_regs, 1,1,1,0)
 print ("Wrapper stats:")
 extract(f,Core_wrappers,1,1,0,0)
 print ("Scheduler stats:")
@@ -176,14 +221,23 @@ extract(f,PCIe_modules,0,1,0,0)
 print ("Full FPGA:")
 extract(f,[" fpga"],0,1,0,0)
 
+print ("Gusheh stats:")
 print ("\n\nmem_modules")
 extract(f,mem_modules, 1,1,1,0)
 print ("riscv_modules")
 extract(f,riscv_modules, 1,1,1,0)
-print ("regex_modules")
-extract(f,regex_modules, 1,1,1,0)
-print ("hash_modules")
-extract(f,hash_modules, 1,1,1,0)
+print ("fixed_sme")
+extract(f,fixed_sme, 1,1,1,0)
+print ("tcp_sme")
+extract(f,tcp_sme, 1,1,1,0)
+print ("udp_sme")
+extract(f,udp_sme, 1,1,1,0)
+print ("http_sme")
+extract(f,http_sme, 1,1,1,0)
+print ("ip_match")
+extract(f,ip_match, 1,1,1,0)
+print ("width")
+extract(f,width, 0,1,0,1)
 print ("accelerator manager")
 extract(f,acc_manager, 1,1,1,0)
 print ("accelerator DMA")
