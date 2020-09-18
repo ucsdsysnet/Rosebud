@@ -337,6 +337,26 @@ int main(void)
 		context[i].eth_hdr = (struct eth_header*)context[i].header;
 	}
 
+	PROFILE_A(0x00000003);
+
+	// init accelerator group structures
+	grp = 0;
+	for (int i = 0; i < accel_group_count; i++)
+	{
+		accel_group[i].accel_count = 0;
+		accel_group[i].accel_mask = 0;
+		accel_group[i].accel_active_mask = 0;
+		accel_group[i].slot_waiting_head = 0;
+		accel_group[i].slot_waiting_tail = 0;
+
+		if (grp)
+		{
+			grp->list_next = &accel_group[i];
+		}
+
+		grp = &accel_group[i];
+	}
+
 	// init accelerator context structures
 	accel = 0;
 	for (int i = 0; i < accel_count; i++)
@@ -355,38 +375,30 @@ int main(void)
 		}
 
 		accel = &accel_context[i];
-	}
 
-	// init accelerator group structures
-	grp = 0;
-	for (int i = 0; i < accel_group_count; i++)
-	{
-		accel_group[i].accel_count = 0;
-		accel_group[i].accel_mask = 0;
-		accel_group[i].accel_active_mask = 0;
-		accel_group[i].slot_waiting_head = 0;
-		accel_group[i].slot_waiting_tail = 0;
-
-		if (grp)
+		if (i < 4)
 		{
-			grp->list_next = &accel_group[i];
+			grp = &ACCEL_GROUP_TCP;
 		}
-		grp = &accel_group[i];
-	}
+		else if (i < 8)
+		{
+			grp = &ACCEL_GROUP_UDP;
+		}
+		else if (i < 12)
+		{
+			grp = &ACCEL_GROUP_HTTP;
+		}
+		else if (i < 13)
+		{
+			grp = &ACCEL_GROUP_FIXED;
+		}
+		else
+		{
+			continue;
+		}
 
-	add_accel_to_group(&ACCEL_GROUP_TCP, &accel_context[0]);
-	add_accel_to_group(&ACCEL_GROUP_TCP, &accel_context[1]);
-	add_accel_to_group(&ACCEL_GROUP_TCP, &accel_context[2]);
-	add_accel_to_group(&ACCEL_GROUP_TCP, &accel_context[3]);
-	add_accel_to_group(&ACCEL_GROUP_UDP, &accel_context[4]);
-	add_accel_to_group(&ACCEL_GROUP_UDP, &accel_context[5]);
-	add_accel_to_group(&ACCEL_GROUP_UDP, &accel_context[6]);
-	add_accel_to_group(&ACCEL_GROUP_UDP, &accel_context[7]);
-	add_accel_to_group(&ACCEL_GROUP_HTTP, &accel_context[8]);
-	add_accel_to_group(&ACCEL_GROUP_HTTP, &accel_context[9]);
-	add_accel_to_group(&ACCEL_GROUP_HTTP, &accel_context[10]);
-	add_accel_to_group(&ACCEL_GROUP_HTTP, &accel_context[11]);
-	add_accel_to_group(&ACCEL_GROUP_FIXED, &accel_context[12]);
+		add_accel_to_group(grp, &accel_context[i]);
+	}
 
 	while (1)
 	{
