@@ -73,13 +73,13 @@ module pcie_config # (
   output reg                            i2c_sda_o,
   output reg                            i2c_sda_t,
   
-  output reg                            qsfp0_modsell,
+  output wire                           qsfp0_modsell,
   output reg                            qsfp0_resetl,
   input  wire                           qsfp0_modprsl,
   input  wire                           qsfp0_intl,
   output reg                            qsfp0_lpmode,
 
-  output reg                            qsfp1_modsell,
+  output wire                           qsfp1_modsell,
   output reg                            qsfp1_resetl,
   input  wire                           qsfp1_modprsl,
   input  wire                           qsfp1_intl,
@@ -149,12 +149,10 @@ reg i2c_scl_i_r;
 reg i2c_scl_o_r;
 reg i2c_sda_i_r;
 reg i2c_sda_o_r;
-reg qsfp0_modsell_r;
 reg qsfp0_resetl_r;
 reg qsfp0_modprsl_r;
 reg qsfp0_intl_r;
 reg qsfp0_lpmode_r;
-reg qsfp1_modsell_r;
 reg qsfp1_resetl_r;
 reg qsfp1_modprsl_r;
 reg qsfp1_intl_r;
@@ -166,16 +164,17 @@ reg i2c_scl_t_rr;
 reg i2c_sda_i_rr;
 reg i2c_sda_o_rr;
 reg i2c_sda_t_rr;
-reg qsfp0_modsell_rr;
 reg qsfp0_resetl_rr;
 reg qsfp0_modprsl_rr;
 reg qsfp0_intl_rr;
 reg qsfp0_lpmode_rr;
-reg qsfp1_modsell_rr;
 reg qsfp1_resetl_rr;
 reg qsfp1_modprsl_rr;
 reg qsfp1_intl_rr;
 reg qsfp1_lpmode_rr;
+
+assign qsfp0_modsell = 1'b0;
+assign qsfp1_modsell = 1'b0;
  
 always @(posedge pcie_clk) begin
     if (pcie_rst) begin
@@ -198,8 +197,6 @@ always @(posedge pcie_clk) begin
         stat_read_interface_r      <= {INTERFACE_WIDTH{1'b0}};
         stat_read_addr_r           <= {2'd0};
   
-        qsfp0_modsell_r            <= 1'b1;
-        qsfp1_modsell_r            <= 1'b1;
         qsfp0_lpmode_r             <= 1'b0;
         qsfp1_lpmode_r             <= 1'b0;
         qsfp0_resetl_r             <= 1'b1;
@@ -227,21 +224,24 @@ always @(posedge pcie_clk) begin
 
             case ({axil_ctrl_awaddr[15:2], 2'b00})
                 // GPIO
-                16'h0100: begin
-                    // GPIO out
-                    if (axil_ctrl_wstrb[1]) begin
-                        qsfp0_modsell_r <= axil_ctrl_wdata[9];
-                        qsfp1_modsell_r <= axil_ctrl_wdata[11];
-                    end
+                16'h0110: begin
+                    // GPIO I2C 0
                     if (axil_ctrl_wstrb[0]) begin
-                        qsfp0_resetl_r <= axil_ctrl_wdata[0];
-                        qsfp0_lpmode_r <= axil_ctrl_wdata[2];
-                        qsfp1_resetl_r <= axil_ctrl_wdata[4];
-                        qsfp1_lpmode_r <= axil_ctrl_wdata[6];
+                        i2c_scl_o_r <= axil_ctrl_wdata[1];
                     end
-                    if (axil_ctrl_wstrb[2]) begin
-                        i2c_scl_o_r <= axil_ctrl_wdata[16];
-                        i2c_sda_o_r <= axil_ctrl_wdata[17];
+                    if (axil_ctrl_wstrb[1]) begin
+                        i2c_sda_o_r <= axil_ctrl_wdata[9];
+                    end
+                end
+                16'h0120: begin
+                    // GPIO XCVR 0123
+                    if (axil_ctrl_wstrb[0]) begin
+                        qsfp0_resetl_r <= !axil_ctrl_wdata[4];
+                        qsfp0_lpmode_r <= axil_ctrl_wdata[5];
+                    end
+                    if (axil_ctrl_wstrb[1]) begin
+                        qsfp1_resetl_r <= !axil_ctrl_wdata[12];
+                        qsfp1_lpmode_r <= axil_ctrl_wdata[13];
                     end
                 end
 
@@ -300,31 +300,23 @@ always @(posedge pcie_clk) begin
                 16'h0040: axil_ctrl_rdata <= FPGA_ID;    // fpga_id 
 
                 // GPIO
-                16'h0100: begin
-                    // GPIO out
-                    axil_ctrl_rdata[9]  <= qsfp0_modsell_r;
-                    axil_ctrl_rdata[11] <= qsfp1_modsell_r;
-                    axil_ctrl_rdata[0]  <= qsfp0_resetl_r;
-                    axil_ctrl_rdata[2]  <= qsfp0_lpmode_r;
-                    axil_ctrl_rdata[4]  <= qsfp1_resetl_r;
-                    axil_ctrl_rdata[6]  <= qsfp1_lpmode_r;
-                    axil_ctrl_rdata[16] <= i2c_scl_o_r;
-                    axil_ctrl_rdata[17] <= i2c_sda_o_r;
+                16'h0110: begin
+                    // GPIO I2C 0
+                    axil_ctrl_rdata[0] <= i2c_scl_i_rr;
+                    axil_ctrl_rdata[1] <= i2c_scl_o_r;
+                    axil_ctrl_rdata[8] <= i2c_sda_i_rr;
+                    axil_ctrl_rdata[9] <= i2c_sda_o_r;
                 end
-                16'h0104: begin
-                    // GPIO in
-                    axil_ctrl_rdata[8]  <= qsfp0_modprsl_rr;
-                    axil_ctrl_rdata[9]  <= qsfp0_modsell_rr;
-                    axil_ctrl_rdata[10] <= qsfp1_modprsl_rr;
-                    axil_ctrl_rdata[11] <= qsfp1_modsell_rr;
-                    axil_ctrl_rdata[0]  <= qsfp0_resetl_rr;
-                    axil_ctrl_rdata[1]  <= qsfp0_intl_rr;
-                    axil_ctrl_rdata[2]  <= qsfp0_lpmode_rr;
-                    axil_ctrl_rdata[4]  <= qsfp1_resetl_rr;
-                    axil_ctrl_rdata[5]  <= qsfp1_intl_rr;
-                    axil_ctrl_rdata[6]  <= qsfp1_lpmode_rr;
-                    axil_ctrl_rdata[16] <= i2c_scl_i_rr;
-                    axil_ctrl_rdata[17] <= i2c_sda_i_rr;
+                16'h0120: begin
+                    // GPIO XCVR 0123
+                    axil_ctrl_rdata[0] <= !qsfp0_modprsl_rr;
+                    axil_ctrl_rdata[1] <= !qsfp0_intl_rr;
+                    axil_ctrl_rdata[4] <= !qsfp0_resetl_r;
+                    axil_ctrl_rdata[5] <= qsfp0_lpmode_r;
+                    axil_ctrl_rdata[8] <= !qsfp1_modprsl_rr;
+                    axil_ctrl_rdata[9] <= !qsfp1_intl_rr;
+                    axil_ctrl_rdata[12] <= !qsfp1_resetl_r;
+                    axil_ctrl_rdata[13] <= qsfp1_lpmode_r;
                 end
                 
                 // Cores control and DMA request response
@@ -364,8 +356,6 @@ end
 // One level register before i2c and flash input/outputs for better timing
 always @(posedge pcie_clk)
     if (pcie_rst) begin
-        qsfp0_modsell    <= 1'b1;
-        qsfp1_modsell    <= 1'b1;
         qsfp0_lpmode     <= 1'b0;
         qsfp1_lpmode     <= 1'b0;
         qsfp0_resetl     <= 1'b1;
@@ -374,8 +364,6 @@ always @(posedge pcie_clk)
         i2c_scl_t        <= 1'b1;
         i2c_sda_o        <= 1'b1;
         i2c_sda_t        <= 1'b1;
-        qsfp0_modsell_rr <= 1'b1;
-        qsfp1_modsell_rr <= 1'b1;
         qsfp0_lpmode_rr  <= 1'b0;
         qsfp1_lpmode_rr  <= 1'b0;
         qsfp0_resetl_rr  <= 1'b1;
@@ -398,8 +386,6 @@ always @(posedge pcie_clk)
         qsfp0_intl_r     <= 1'b0;
         qsfp1_intl_r     <= 1'b0;
     end else begin
-        qsfp0_modsell    <= qsfp0_modsell_rr;   
-        qsfp1_modsell    <= qsfp1_modsell_rr;   
         qsfp0_lpmode     <= qsfp0_lpmode_rr;    
         qsfp1_lpmode     <= qsfp1_lpmode_rr;    
         qsfp0_resetl     <= qsfp0_resetl_rr;    
@@ -408,8 +394,6 @@ always @(posedge pcie_clk)
         i2c_scl_t        <= i2c_scl_t_rr;       
         i2c_sda_o        <= i2c_sda_o_rr;       
         i2c_sda_t        <= i2c_sda_o_rr;       
-        qsfp0_modsell_rr <= qsfp0_modsell_r;   
-        qsfp1_modsell_rr <= qsfp1_modsell_r;   
         qsfp0_lpmode_rr  <= qsfp0_lpmode_r;    
         qsfp1_lpmode_rr  <= qsfp1_lpmode_r;    
         qsfp0_resetl_rr  <= qsfp0_resetl_r;    
