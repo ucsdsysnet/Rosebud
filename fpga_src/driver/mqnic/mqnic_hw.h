@@ -48,6 +48,8 @@ either expressed or implied, of The Regents of the University of California.
 #define MQNIC_MAX_RX_RINGS      8192
 #define MQNIC_MAX_RX_CPL_RINGS  8192
 
+#define MQNIC_MAX_I2C_ADAPTERS 4
+
 #define MQNIC_BOARD_ID_NETFPGA_SUME  0x10ee7028
 #define MQNIC_BOARD_ID_AU50          0x10ee9032
 #define MQNIC_BOARD_ID_AU200         0x10ee90c8
@@ -79,6 +81,27 @@ either expressed or implied, of The Regents of the University of California.
 
 #define MQNIC_REG_GPIO_OUT                0x0100
 #define MQNIC_REG_GPIO_IN                 0x0104
+
+#define MQNIC_REG_GPIO_I2C_0              0x0110
+#define MQNIC_REG_GPIO_I2C_1              0x0114
+#define MQNIC_REG_GPIO_I2C_2              0x0118
+#define MQNIC_REG_GPIO_I2C_3              0x011C
+
+#define MQNIC_REG_GPIO_I2C_SCL_IN         0x00000001
+#define MQNIC_REG_GPIO_I2C_SCL_OUT        0x00000002
+#define MQNIC_REG_GPIO_I2C_SDA_IN         0x00000100
+#define MQNIC_REG_GPIO_I2C_SDA_OUT        0x00000200
+
+#define MQNIC_REG_GPIO_XCVR_0123          0x0120
+#define MQNIC_REG_GPIO_XCVR_4567          0x0124
+
+#define MQNIC_REG_GPIO_XCVR_PRSNT_IN           0x01
+#define MQNIC_REG_GPIO_XCVR_TX_FAULT_INT_IN    0x02
+#define MQNIC_REG_GPIO_XCVR_RX_LOS_IN          0x03
+#define MQNIC_REG_GPIO_XCVR_RST_OUT            0x10
+#define MQNIC_REG_GPIO_XCVR_TX_DIS_LPMODE_OUT  0x20
+#define MQNIC_REG_GPIO_XCVR_RS0_OUT            0x40
+#define MQNIC_REG_GPIO_XCVR_RS1_OUT            0x80
 
 #define MQNIC_PHC_REG_FEATURES            0x0000
 #define MQNIC_PHC_REG_PTP_CUR_FNS         0x0010
