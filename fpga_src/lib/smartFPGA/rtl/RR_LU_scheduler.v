@@ -128,7 +128,7 @@ module simple_scheduler # (
         .USER_ENABLE(1),
         .USER_WIDTH(ID_TAG_WIDTH),
         .REG_TYPE(DATA_REG_TYPE),
-        .LENGTH(2)
+        .LENGTH(4)
       ) data_s_reg_inst (
         .clk(clk),
         .rst(rst_r),
@@ -163,7 +163,7 @@ module simple_scheduler # (
         .USER_ENABLE(1),
         .USER_WIDTH(PORT_WIDTH),
         .REG_TYPE(DATA_REG_TYPE),
-        .LENGTH(1)
+        .LENGTH(2)
       ) data_m_reg_inst (
         .clk(clk),
         .rst(rst_r),

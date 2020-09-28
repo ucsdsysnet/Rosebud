@@ -303,20 +303,20 @@ always @(posedge pcie_clk) begin
                 16'h0110: begin
                     // GPIO I2C 0
                     axil_ctrl_rdata[0] <= i2c_scl_i_rr;
-                    axil_ctrl_rdata[1] <= i2c_scl_o_r;
+                    axil_ctrl_rdata[1] <= i2c_scl_o_rr;
                     axil_ctrl_rdata[8] <= i2c_sda_i_rr;
-                    axil_ctrl_rdata[9] <= i2c_sda_o_r;
+                    axil_ctrl_rdata[9] <= i2c_sda_o_rr;
                 end
                 16'h0120: begin
                     // GPIO XCVR 0123
                     axil_ctrl_rdata[0] <= !qsfp0_modprsl_rr;
                     axil_ctrl_rdata[1] <= !qsfp0_intl_rr;
-                    axil_ctrl_rdata[4] <= !qsfp0_resetl_r;
-                    axil_ctrl_rdata[5] <= qsfp0_lpmode_r;
+                    axil_ctrl_rdata[4] <= !qsfp0_resetl_rr;
+                    axil_ctrl_rdata[5] <= qsfp0_lpmode_rr;
                     axil_ctrl_rdata[8] <= !qsfp1_modprsl_rr;
                     axil_ctrl_rdata[9] <= !qsfp1_intl_rr;
-                    axil_ctrl_rdata[12] <= !qsfp1_resetl_r;
-                    axil_ctrl_rdata[13] <= qsfp1_lpmode_r;
+                    axil_ctrl_rdata[12] <= !qsfp1_resetl_rr;
+                    axil_ctrl_rdata[13] <= qsfp1_lpmode_rr;
                 end
                 
                 // Cores control and DMA request response

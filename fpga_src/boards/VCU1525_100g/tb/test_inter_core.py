@@ -1,4 +1,4 @@
-
+#!/usr/bin/env python
 """
 
 Copyright (c) 2018 Alex Forencich
@@ -43,6 +43,7 @@ srcs = []
 
 srcs.append("../rtl/fpga_core.v")
 srcs.append("../rtl/riscv_block_PR.v")
+srcs.append("../rtl/RR_LU_scheduler_PR.v")
 srcs.append("../rtl/pcie_config.v")
 srcs.append("../ip/ila_5x64_stub.v")
 srcs.append("../ip/ila_4x64_stub.v")
@@ -60,7 +61,6 @@ srcs.append("../lib/smartFPGA/rtl/accel_wrap.v")
 srcs.append("../lib/smartFPGA/rtl/riscv_axis_wrapper.v")
 srcs.append("../lib/smartFPGA/rtl/mem_sys.v")
 srcs.append("../lib/smartFPGA/rtl/simple_arbiter.v")
-srcs.append("../lib/smartFPGA/rtl/RR_LU_scheduler.v")
 srcs.append("../lib/smartFPGA/rtl/simple_sync_sig.v")
 srcs.append("../lib/smartFPGA/rtl/simple_axis_switch.v")
 srcs.append("../lib/smartFPGA/rtl/axis_ram_switch.v")
@@ -73,6 +73,7 @@ srcs.append("../lib/smartFPGA/rtl/pcie_controller.v")
 srcs.append("../lib/smartFPGA/rtl/pcie_cont_read.v")
 srcs.append("../lib/smartFPGA/rtl/pcie_cont_write.v")
 srcs.append("../lib/smartFPGA/rtl/corundum.v")
+srcs.append("../lib/smartFPGA/rtl/axis_fifo.v")
 
 srcs.append("../lib/axis/rtl/arbiter.v")
 srcs.append("../lib/axis/rtl/priority_encoder.v")
@@ -80,7 +81,7 @@ srcs.append("../lib/axis/rtl/axis_adapter.v")
 srcs.append("../lib/axis/rtl/axis_arb_mux.v")
 srcs.append("../lib/axis/rtl/axis_async_fifo.v")
 srcs.append("../lib/axis/rtl/axis_async_fifo_adapter.v")
-srcs.append("../lib/axis/rtl/axis_fifo.v")
+# srcs.append("../lib/axis/rtl/axis_fifo.v")
 srcs.append("../lib/axis/rtl/axis_fifo_adapter.v")
 srcs.append("../lib/axis/rtl/axis_register.v")
 srcs.append("../lib/axis/rtl/axis_pipeline_register.v")
@@ -953,7 +954,7 @@ def bench():
           desc       = yield from rc.mem_read(dev_pf0_bar0+0x000430, 4)
           print ("Interface %d stat read, bytes_in, byte_out, frames_in, frames_out, loaded desc" % (k))
           print (B_2_int(bytes_in),B_2_int(bytes_out),B_2_int(frames_in),B_2_int(frames_out),desc[::-1].hex())
-        
+
         raise StopSimulation
 
     return instances()

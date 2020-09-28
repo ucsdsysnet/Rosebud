@@ -1,95 +1,92 @@
-module simple_scheduler # (
-  parameter INTERFACE_COUNT = 2,
-  parameter PORT_COUNT      = 4,
-  parameter CORE_COUNT      = 16,
-  parameter SLOT_COUNT      = 8,
-  parameter DATA_WIDTH      = 64,
-  parameter CTRL_WIDTH      = 32+4,
-  parameter LOOPBACK_PORT   = 2,
-  parameter LOOPBACK_COUNT  = 2,
-  parameter ENABLE_ILA      = 0,
-  parameter DATA_REG_TYPE   = 0,
-  parameter CTRL_REG_TYPE   = 0,
-  parameter DATA_FIFO_DEPTH = 4096,
-  parameter HASH_SEL_OFFSET = 0,
-
-  parameter HASH_FIFO_DEPTH = DATA_FIFO_DEPTH/64,
-  parameter SLOT_WIDTH      = $clog2(SLOT_COUNT+1),
-  parameter CORE_ID_WIDTH   = $clog2(CORE_COUNT),
-  parameter INTERFACE_WIDTH = $clog2(INTERFACE_COUNT),
-  parameter PORT_WIDTH      = $clog2(PORT_COUNT),
-  parameter TAG_WIDTH       = (SLOT_WIDTH>5)? SLOT_WIDTH:5,
-  parameter ID_TAG_WIDTH    = CORE_ID_WIDTH+TAG_WIDTH,
-  parameter STRB_WIDTH      = DATA_WIDTH/8,
-  parameter CLUSTER_COUNT   = CORE_COUNT,
-  parameter LVL2_SW_PORTS   = CORE_COUNT/CLUSTER_COUNT,
-  parameter LVL1_BITS       = $clog2(CLUSTER_COUNT),
-  parameter HASH_N_DESC     = 32+ID_TAG_WIDTH+1
-) (
-  input                                           clk,
-  input                                           rst,
+module scheduler_PR2 (
+  input                   clk,
+  input                   rst,
 
   // Data line to/from Eth interfaces
-  input  wire [INTERFACE_COUNT*DATA_WIDTH-1:0]    rx_axis_tdata,
-  input  wire [INTERFACE_COUNT*STRB_WIDTH-1:0]    rx_axis_tkeep,
-  input  wire [INTERFACE_COUNT-1:0]               rx_axis_tvalid,
-  output wire [INTERFACE_COUNT-1:0]               rx_axis_tready,
-  input  wire [INTERFACE_COUNT-1:0]               rx_axis_tlast,
-  input  wire [INTERFACE_COUNT-1:0]               rx_axis_almost_full,
+  input  wire [3*512-1:0] rx_axis_tdata,
+  input  wire [3*64-1:0]  rx_axis_tkeep,
+  input  wire [3-1:0]     rx_axis_tvalid,
+  output wire [3-1:0]     rx_axis_tready,
+  input  wire [3-1:0]     rx_axis_tlast,
+  input  wire [3-1:0]     rx_axis_almost_full,
 
-  output wire [INTERFACE_COUNT*DATA_WIDTH-1:0]    tx_axis_tdata,
-  output wire [INTERFACE_COUNT*STRB_WIDTH-1:0]    tx_axis_tkeep,
-  output wire [INTERFACE_COUNT-1:0]               tx_axis_tvalid,
-  input  wire [INTERFACE_COUNT-1:0]               tx_axis_tready,
-  output wire [INTERFACE_COUNT-1:0]               tx_axis_tlast,
+  output wire [3*512-1:0] tx_axis_tdata,
+  output wire [3*64-1:0]  tx_axis_tkeep,
+  output wire [3-1:0]     tx_axis_tvalid,
+  input  wire [3-1:0]     tx_axis_tready,
+  output wire [3-1:0]     tx_axis_tlast,
 
   // DATA lines to/from cores
-  output wire [INTERFACE_COUNT*DATA_WIDTH-1:0]    data_m_axis_tdata,
-  output wire [INTERFACE_COUNT*STRB_WIDTH-1:0]    data_m_axis_tkeep,
-  output wire [INTERFACE_COUNT*ID_TAG_WIDTH-1:0]  data_m_axis_tdest,
-  output wire [INTERFACE_COUNT*PORT_WIDTH-1:0]    data_m_axis_tuser,
-  output wire [INTERFACE_COUNT-1:0]               data_m_axis_tvalid,
-  input  wire [INTERFACE_COUNT-1:0]               data_m_axis_tready,
-  output wire [INTERFACE_COUNT-1:0]               data_m_axis_tlast,
+  output wire [3*512-1:0] data_m_axis_tdata,
+  output wire [3*64-1:0]  data_m_axis_tkeep,
+  output wire [3*9-1:0]   data_m_axis_tdest,
+  output wire [3*3-1:0]   data_m_axis_tuser,
+  output wire [3-1:0]     data_m_axis_tvalid,
+  input  wire [3-1:0]     data_m_axis_tready,
+  output wire [3-1:0]     data_m_axis_tlast,
 
-  input  wire [INTERFACE_COUNT*DATA_WIDTH-1:0]    data_s_axis_tdata,
-  input  wire [INTERFACE_COUNT*STRB_WIDTH-1:0]    data_s_axis_tkeep,
-  input  wire [INTERFACE_COUNT*ID_TAG_WIDTH-1:0]  data_s_axis_tuser,
-  input  wire [INTERFACE_COUNT-1:0]               data_s_axis_tvalid,
-  output wire [INTERFACE_COUNT-1:0]               data_s_axis_tready,
-  input  wire [INTERFACE_COUNT-1:0]               data_s_axis_tlast,
+  input  wire [3*512-1:0] data_s_axis_tdata,
+  input  wire [3*64-1:0]  data_s_axis_tkeep,
+  input  wire [3*9-1:0]   data_s_axis_tuser,
+  input  wire [3-1:0]     data_s_axis_tvalid,
+  output wire [3-1:0]     data_s_axis_tready,
+  input  wire [3-1:0]     data_s_axis_tlast,
 
   // Control lines to/from cores
-  output wire [CTRL_WIDTH-1:0]               ctrl_m_axis_tdata,
-  output wire                                ctrl_m_axis_tvalid,
-  input  wire                                ctrl_m_axis_tready,
-  output wire [CORE_ID_WIDTH-1:0]            ctrl_m_axis_tdest,
+  output wire [36-1:0]    ctrl_m_axis_tdata,
+  output wire             ctrl_m_axis_tvalid,
+  input  wire             ctrl_m_axis_tready,
+  output wire [4-1:0]     ctrl_m_axis_tdest,
 
-  input  wire [CTRL_WIDTH-1:0]               ctrl_s_axis_tdata,
-  input  wire                                ctrl_s_axis_tvalid,
-  output wire                                ctrl_s_axis_tready,
-  input  wire [CORE_ID_WIDTH-1:0]            ctrl_s_axis_tuser,
+  input  wire [36-1:0]    ctrl_s_axis_tdata,
+  input  wire             ctrl_s_axis_tvalid,
+  output wire             ctrl_s_axis_tready,
+  input  wire [4-1:0]     ctrl_s_axis_tuser,
 
   // Cores reset
-  input  wire [3:0]                          host_cmd,
-  input  wire [CORE_ID_WIDTH-1:0]            host_cmd_dest,
-  input  wire [31:0]                         host_cmd_data,
-  input  wire                                host_cmd_valid,
-  output wire                                host_cmd_ready,
+  input  wire [3:0]       host_cmd,
+  input  wire [4-1:0]     host_cmd_dest,
+  input  wire [31:0]      host_cmd_data,
+  input  wire             host_cmd_valid,
+  output wire             host_cmd_ready,
 
-  input  wire [CORE_COUNT-1:0]               income_cores,
-  input  wire [CORE_COUNT-1:0]               cores_to_be_reset,
+  input  wire [16-1:0]    income_cores,
+  input  wire [16-1:0]    cores_to_be_reset,
 
-  input  wire [CORE_ID_WIDTH-1:0]            stat_read_core,
-  output reg  [SLOT_WIDTH-1:0]               slot_count,
-  input  wire [INTERFACE_WIDTH-1:0]          stat_read_interface,
-  output reg  [31:0]                         stat_interface_data,
+  input  wire [4-1:0]     stat_read_core,
+  output reg  [4-1:0]     slot_count,
+  input  wire [2-1:0]     stat_read_interface,
+  output reg  [31:0]      stat_interface_data,
 
-  input  wire                                trig_in,
-  output wire                                trig_in_ack,
-  output wire                                trig_out,
-  input  wire                                trig_out_ack
+  input  wire             trig_in,
+  output wire             trig_in_ack,
+  output wire             trig_out,
+  input  wire             trig_out_ack
 );
+
+  parameter INTERFACE_COUNT = 3;
+  parameter PORT_COUNT      = 5;
+  parameter CORE_COUNT      = 16;
+  parameter SLOT_COUNT      = 8;
+  parameter DATA_WIDTH      = 512;
+  parameter CTRL_WIDTH      = 32+4;
+  parameter LOOPBACK_PORT   = 3;
+  parameter LOOPBACK_COUNT  = 1;
+  parameter ENABLE_ILA      = 0;
+  parameter DATA_REG_TYPE   = 2;
+  parameter CTRL_REG_TYPE   = 2;
+  parameter DATA_FIFO_DEPTH = 4096;
+  parameter HASH_SEL_OFFSET = 0;
+
+  parameter SLOT_WIDTH      = $clog2(SLOT_COUNT+1);
+  parameter CORE_ID_WIDTH   = $clog2(CORE_COUNT);
+  parameter INTERFACE_WIDTH = $clog2(INTERFACE_COUNT);
+  parameter PORT_WIDTH      = $clog2(PORT_COUNT);
+  parameter TAG_WIDTH       = (SLOT_WIDTH>5)? SLOT_WIDTH:5;
+  parameter ID_TAG_WIDTH    = CORE_ID_WIDTH+TAG_WIDTH;
+  parameter STRB_WIDTH      = DATA_WIDTH/8;
+  parameter HASH_FIFO_DEPTH = DATA_FIFO_DEPTH/64;
+  parameter HASH_N_DESC     = 32+ID_TAG_WIDTH+1;
 
   // Register inputs and outputs
   wire [INTERFACE_COUNT*DATA_WIDTH-1:0]    data_m_axis_tdata_n;
