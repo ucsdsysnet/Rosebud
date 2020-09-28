@@ -253,22 +253,15 @@ dma_psdpram #(
     .PIPELINE(RAM_PIPELINE)
 )
 dma_psdpram_read_inst (
-    /*
-     * Write port
-     */
-    .clk_wr(pcie_clk),
-    .rst_wr(pcie_rst),
+    .clk(pcie_clk),
+    .rst(pcie_rst),
+
     .wr_cmd_be(dma_ram_wr_cmd_be),
     .wr_cmd_addr(dma_ram_wr_cmd_addr),
     .wr_cmd_data(dma_ram_wr_cmd_data),
     .wr_cmd_valid(dma_ram_wr_cmd_valid),
     .wr_cmd_ready(dma_ram_wr_cmd_ready),
 
-    /*
-     * Read port
-     */
-    .clk_rd(pcie_clk),
-    .rst_rd(pcie_rst),
     .rd_cmd_addr(dma_ram_rd_cmd_addr_int),
     .rd_cmd_valid(dma_ram_rd_cmd_valid_int),
     .rd_cmd_ready(dma_ram_rd_cmd_ready_int),
