@@ -22,9 +22,6 @@ add_files -norecurse {
   ../lib/smartFPGA/rtl/mem_sys.v
   ../lib/smartFPGA/rtl/riscv_block.v
   ../lib/smartFPGA/rtl/accel_rd_dma_sp.v
-  # ../accel/hash/rtl/hash_acc.v
-  # ../accel/merged/rtl/re_sql.v
-  # ../accel/merged/rtl/accel_wrap_merged.v
   ../accel/full_ids/rtl/sme/tcp_sme.v
   ../accel/full_ids/rtl/sme/udp_sme.v
   ../accel/full_ids/rtl/sme/http_sme.v
@@ -33,6 +30,10 @@ add_files -norecurse {
   ../accel/full_ids/rtl/accel_wrap_full_ids.v
   ../rtl/riscv_block_PR_w_accel.v
 } -of_objects [get_reconfig_modules riscv_block_PR_w_accel]
+  
+  # ../accel/hash/rtl/hash_acc.v
+  # ../accel/merged/rtl/re_sql.v
+  # ../accel/merged/rtl/accel_wrap_merged.v
 
 if {[llength [get_reconfig_modules scheduler_PR2]]==0} then {
   create_reconfig_module -name scheduler_PR2 -partition_def [get_partition_defs pr_scheduler]  -top scheduler_PR2}

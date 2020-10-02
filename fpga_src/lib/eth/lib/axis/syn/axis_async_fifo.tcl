@@ -37,29 +37,29 @@ foreach fifo_inst [get_cells -hier -filter {(ORIG_REF_NAME == axis_async_fifo ||
 
     if {[llength $reset_ffs]} {
         set_property ASYNC_REG TRUE $reset_ffs
-        set_false_path -to [get_pins -of_objects $reset_ffs -filter {IS_PRESET || IS_RESET}]
+        set_false_path -to [get_pins -include_replicated_objects -of_objects $reset_ffs -filter {IS_PRESET || IS_RESET}]
     }
 
     if {[llength [get_cells -quiet $fifo_inst/s_rst_sync2_reg_reg]]} {
-        set_false_path -to [get_pins $fifo_inst/s_rst_sync2_reg_reg/D]
-        set_max_delay  -from [get_cells $fifo_inst/s_rst_sync2_reg_reg] -to [get_cells $fifo_inst/s_rst_sync3_reg_reg] $min_clk_period
+        set_false_path -to [get_pins -include_replicated_objects $fifo_inst/s_rst_sync2_reg_reg/D]
+        set_max_delay  -from [get_cells -include_replicated_objects $fifo_inst/s_rst_sync2_reg_reg] -to [get_cells -include_replicated_objects $fifo_inst/s_rst_sync3_reg_reg] $min_clk_period
     }
 
     if {[llength [get_cells -quiet $fifo_inst/m_rst_sync2_reg_reg]]} {
-        set_false_path -to [get_pins $fifo_inst/m_rst_sync2_reg_reg/D]
-        set_max_delay  -from [get_cells $fifo_inst/m_rst_sync2_reg_reg] -to [get_cells $fifo_inst/m_rst_sync3_reg_reg] $min_clk_period
+        set_false_path -to [get_pins -include_replicated_objects $fifo_inst/m_rst_sync2_reg_reg/D]
+        set_max_delay  -from [get_cells -include_replicated_objects $fifo_inst/m_rst_sync2_reg_reg] -to [get_cells -include_replicated_objects $fifo_inst/m_rst_sync3_reg_reg] $min_clk_period
     }
 
     # pointer synchronization
     set_property ASYNC_REG TRUE [get_cells -hier -regexp ".*/(wr|rd)_ptr_gray_sync\[12\]_reg_reg\\\[\\d+\\\]" -filter "PARENT == $fifo_inst"]
 
-    set_max_delay -from [get_cells "$fifo_inst/rd_ptr_reg_reg[*] $fifo_inst/rd_ptr_gray_reg_reg[*]"] -to [get_cells $fifo_inst/rd_ptr_gray_sync1_reg_reg[*]] -datapath_only $read_clk_period
-    set_bus_skew  -from [get_cells "$fifo_inst/rd_ptr_reg_reg[*] $fifo_inst/rd_ptr_gray_reg_reg[*]"] -to [get_cells $fifo_inst/rd_ptr_gray_sync1_reg_reg[*]] $write_clk_period
-    set_max_delay -from [get_cells -quiet "$fifo_inst/wr_ptr_reg_reg[*] $fifo_inst/wr_ptr_gray_reg_reg[*] $fifo_inst/wr_ptr_sync_gray_reg_reg[*]"] -to [get_cells $fifo_inst/wr_ptr_gray_sync1_reg_reg[*]] -datapath_only $write_clk_period
-    set_bus_skew  -from [get_cells -quiet "$fifo_inst/wr_ptr_reg_reg[*] $fifo_inst/wr_ptr_gray_reg_reg[*] $fifo_inst/wr_ptr_sync_gray_reg_reg[*]"] -to [get_cells $fifo_inst/wr_ptr_gray_sync1_reg_reg[*]] $read_clk_period
+    set_max_delay -from [get_cells -include_replicated_objects "$fifo_inst/rd_ptr_reg_reg[*] $fifo_inst/rd_ptr_gray_reg_reg[*]"] -to [get_cells -include_replicated_objects $fifo_inst/rd_ptr_gray_sync1_reg_reg[*]] -datapath_only $read_clk_period
+    set_bus_skew  -from [get_cells -include_replicated_objects "$fifo_inst/rd_ptr_reg_reg[*] $fifo_inst/rd_ptr_gray_reg_reg[*]"] -to [get_cells -include_replicated_objects $fifo_inst/rd_ptr_gray_sync1_reg_reg[*]] $write_clk_period
+    set_max_delay -from [get_cells -quiet -include_replicated_objects "$fifo_inst/wr_ptr_reg_reg[*] $fifo_inst/wr_ptr_gray_reg_reg[*] $fifo_inst/wr_ptr_sync_gray_reg_reg[*]"] -to [get_cells -include_replicated_objects $fifo_inst/wr_ptr_gray_sync1_reg_reg[*]] -datapath_only $write_clk_period
+    set_bus_skew  -from [get_cells -quiet -include_replicated_objects "$fifo_inst/wr_ptr_reg_reg[*] $fifo_inst/wr_ptr_gray_reg_reg[*] $fifo_inst/wr_ptr_sync_gray_reg_reg[*]"] -to [get_cells -include_replicated_objects $fifo_inst/wr_ptr_gray_sync1_reg_reg[*]] $read_clk_period
 
     # output register (needed for distributed RAM sync write/async read)
-    set output_reg_ffs [get_cells -quiet "$fifo_inst/m_axis_pipe_reg_reg[0][*]"]
+    set output_reg_ffs [get_cells -quiet -include_replicated_objects "$fifo_inst/m_axis_pipe_reg_reg[0][*]"]
 
     if {[llength $output_reg_ffs]} {
         set_false_path -from $write_clk -to $output_reg_ffs
@@ -71,8 +71,8 @@ foreach fifo_inst [get_cells -hier -filter {(ORIG_REF_NAME == axis_async_fifo ||
     if {[llength $update_ffs]} {
         set_property ASYNC_REG TRUE $update_ffs
 
-        set_max_delay -from [get_cells $fifo_inst/wr_ptr_update_reg_reg] -to [get_cells $fifo_inst/wr_ptr_update_sync1_reg_reg] -datapath_only $write_clk_period
-        set_max_delay -from [get_cells $fifo_inst/wr_ptr_update_sync3_reg_reg] -to [get_cells $fifo_inst/wr_ptr_update_ack_sync1_reg_reg] -datapath_only $read_clk_period
+        set_max_delay -from [get_cells -include_replicated_objects $fifo_inst/wr_ptr_update_reg_reg] -to [get_cells -include_replicated_objects $fifo_inst/wr_ptr_update_sync1_reg_reg] -datapath_only $write_clk_period
+        set_max_delay -from [get_cells -include_replicated_objects $fifo_inst/wr_ptr_update_sync3_reg_reg] -to [get_cells -include_replicated_objects $fifo_inst/wr_ptr_update_ack_sync1_reg_reg] -datapath_only $read_clk_period
     }
 
     # status synchronization
@@ -82,7 +82,7 @@ foreach fifo_inst [get_cells -hier -filter {(ORIG_REF_NAME == axis_async_fifo ||
         if {[llength $status_sync_regs]} {
             set_property ASYNC_REG TRUE $status_sync_regs
 
-            set_max_delay -from [get_cells $fifo_inst/${i}_sync1_reg_reg] -to [get_cells $fifo_inst/${i}_sync2_reg_reg] -datapath_only $read_clk_period
+            set_max_delay -from [get_cells -include_replicated_objects $fifo_inst/${i}_sync1_reg_reg] -to [get_cells -include_replicated_objects $fifo_inst/${i}_sync2_reg_reg] -datapath_only $read_clk_period
         }
     }
 }
