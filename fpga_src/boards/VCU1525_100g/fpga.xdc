@@ -450,11 +450,11 @@ set_property IS_SOFT FALSE [get_pblocks pblock_33]
 
 create_pblock pblock_34
 add_cells_to_pblock [get_pblocks pblock_34] [get_cells -quiet [list {core_inst/MAC_async_FIFO[0].mac_rx_pipeline/pipe_reg[1].reg_inst} {core_inst/MAC_async_FIFO[0].mac_tx_pipeline/pipe_reg[0].reg_inst} {core_inst/MAC_async_FIFO[1].mac_rx_pipeline/pipe_reg[1].reg_inst} {core_inst/MAC_async_FIFO[1].mac_tx_pipeline/pipe_reg[0].reg_inst} core_inst/core_stat_data_reg core_inst/ctrl_in_sw/grow.axis_switch_2lvl_grow_inst/sw_lvl1 core_inst/data_in_sw/grow.axis_switch_2lvl_grow_inst/sw_lvl1 core_inst/data_out_sw/shrink.axis_switch_2lvl_shrink_inst/last_level_sw.sw_lvl2 core_inst/dram_ctrl_in_sw/grow.axis_switch_2lvl_grow_inst/sw_lvl1 core_inst/dram_ctrl_out_sw/shrink.axis_switch_2lvl_shrink_inst/last_level_arbiter.sw_lvl2 {core_inst/pcie_controller_inst/virtual_ports.mac_fifos.tx_rx_fifos[0].rx_pipeline_reg/pipe_reg[0].reg_inst} {core_inst/pcie_controller_inst/virtual_ports.mac_fifos.tx_rx_fifos[0].tx_pipeline_reg/pipe_reg[1].reg_inst} sync_reset_125mhz_inst]]
-resize_pblock [get_pblocks pblock_34] -add {SLICE_X55Y300:SLICE_X113Y599 SLICE_X0Y510:SLICE_X54Y599 SLICE_X0Y300:SLICE_X54Y389}
+resize_pblock [get_pblocks pblock_34] -add {SLICE_X55Y300:SLICE_X116Y599 SLICE_X0Y510:SLICE_X54Y599 SLICE_X0Y300:SLICE_X54Y389}
 resize_pblock [get_pblocks pblock_34] -add {DSP48E2_X8Y120:DSP48E2_X13Y239 DSP48E2_X0Y204:DSP48E2_X7Y239 DSP48E2_X0Y120:DSP48E2_X7Y155}
 resize_pblock [get_pblocks pblock_34] -add {LAGUNA_X0Y240:LAGUNA_X15Y479}
-resize_pblock [get_pblocks pblock_34] -add {RAMB18_X4Y120:RAMB18_X7Y239 RAMB18_X0Y204:RAMB18_X3Y239 RAMB18_X0Y120:RAMB18_X3Y155}
-resize_pblock [get_pblocks pblock_34] -add {RAMB36_X4Y60:RAMB36_X7Y119 RAMB36_X0Y102:RAMB36_X3Y119 RAMB36_X0Y60:RAMB36_X3Y77}
+resize_pblock [get_pblocks pblock_34] -add {RAMB18_X4Y120:RAMB18_X8Y239 RAMB18_X0Y204:RAMB18_X3Y239 RAMB18_X0Y120:RAMB18_X3Y155}
+resize_pblock [get_pblocks pblock_34] -add {RAMB36_X4Y60:RAMB36_X8Y119 RAMB36_X0Y102:RAMB36_X3Y119 RAMB36_X0Y60:RAMB36_X3Y77}
 resize_pblock [get_pblocks pblock_34] -add {URAM288_X1Y80:URAM288_X2Y159 URAM288_X0Y136:URAM288_X0Y159 URAM288_X0Y80:URAM288_X0Y103}
 
 create_pblock pblock_35
@@ -470,9 +470,10 @@ set_property IS_SOFT FALSE [get_pblocks pblock_35]
 create_pblock pblock_36
 add_cells_to_pblock [get_pblocks pblock_36] [get_cells -quiet [list core_inst/pcie_config_inst core_inst/pcie_controller_inst/cq_reg core_inst/pcie_controller_inst/dma_if_pcie_us_inst core_inst/pcie_controller_inst/pcie_cont_read_inst core_inst/pcie_controller_inst/pcie_cont_write_inst core_inst/pcie_controller_inst/pcie_us_axil_master_inst core_inst/pcie_controller_inst/rc_reg core_inst/pcie_controller_inst/status_error_cor_pm_inst core_inst/pcie_controller_inst/status_error_uncor_pm_inst core_inst/pcie_controller_inst/virtual_ports.dma_if_mux_inst {core_inst/pcie_controller_inst/virtual_ports.mac_fifos.tx_rx_fifos[0].rx_pipeline_reg/pipe_reg[1].reg_inst} {core_inst/pcie_controller_inst/virtual_ports.mac_fifos.tx_rx_fifos[0].tx_pipeline_reg/pipe_reg[0].reg_inst} core_inst/stat_read_core_reg pcie4_uscale_plus_inst pcie_us_cfg_inst pcie_us_msi_inst]]
 add_cells_to_pblock [get_pblocks pblock_36] [get_cells -include_replicated_objects -quiet [list core_inst/pcie_controller_inst/virtual_ports.corundum_inst]]
-resize_pblock [get_pblocks pblock_36] -add {SLICE_X114Y300:SLICE_X168Y599}
+resize_pblock [get_pblocks pblock_36] -add {SLICE_X117Y300:SLICE_X168Y599}
+resize_pblock [get_pblocks pblock_36] -add {DSP48E2_X14Y120:DSP48E2_X18Y239}
 resize_pblock [get_pblocks pblock_36] -add {LAGUNA_X16Y240:LAGUNA_X23Y479}
-resize_pblock [get_pblocks pblock_36] -add {RAMB18_X8Y120:RAMB18_X11Y239}
-resize_pblock [get_pblocks pblock_36] -add {RAMB36_X8Y60:RAMB36_X11Y119}
+resize_pblock [get_pblocks pblock_36] -add {RAMB18_X9Y120:RAMB18_X11Y239}
+resize_pblock [get_pblocks pblock_36] -add {RAMB36_X9Y60:RAMB36_X11Y119}
 resize_pblock [get_pblocks pblock_36] -add {URAM288_X3Y80:URAM288_X3Y159}
 

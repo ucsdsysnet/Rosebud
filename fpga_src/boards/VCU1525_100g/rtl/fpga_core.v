@@ -256,7 +256,7 @@ parameter CORE_MSG_WIDTH  = 32+4+$clog2(BC_REGION_SIZE)-2;
 
 parameter RECV_DESC_DEPTH = SLOT_COUNT;
 parameter SEND_DESC_DEPTH = SLOT_COUNT;
-parameter DRAM_DESC_DEPTH = 16;
+parameter DRAM_DESC_DEPTH = 8;
 parameter MSG_FIFO_DEPTH  = 16;
 parameter SLOT_START_ADDR = 16'h0;
 parameter SLOT_ADDR_STEP  = 22'h004000;
