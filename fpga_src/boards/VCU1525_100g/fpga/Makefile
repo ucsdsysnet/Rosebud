@@ -67,9 +67,9 @@ SYN_FILES += lib/pcie/rtl/pcie_us_msi.v
 SYN_FILES += lib/pcie/rtl/pcie_tag_manager.v
 SYN_FILES += lib/pcie/rtl/pulse_merge.v
 
-SYN_FILES += lib/corundum/rtl/interface.v
+SYN_FILES += lib/corundum/rtl/mqnic_interface.v
 SYN_FILES += lib/corundum/rtl/cmac_pad.v
-SYN_FILES += lib/corundum/rtl/port.v
+SYN_FILES += lib/corundum/rtl/mqnic_port.v
 SYN_FILES += lib/corundum/rtl/cpl_write.v
 SYN_FILES += lib/corundum/rtl/cpl_op_mux.v
 SYN_FILES += lib/corundum/rtl/desc_fetch.v

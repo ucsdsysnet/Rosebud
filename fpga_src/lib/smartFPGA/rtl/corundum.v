@@ -223,9 +223,9 @@ parameter RX_CPL_QUEUE_PIPELINE = RX_QUEUE_PIPELINE;
 
 // TX and RX engine parameters (port)
 parameter TX_DESC_TABLE_SIZE = 32;
-parameter TX_PKT_TABLE_SIZE = 8;
+parameter TX_PKT_TABLE_SIZE  = 8;
 parameter RX_DESC_TABLE_SIZE = 32;
-parameter RX_PKT_TABLE_SIZE = 8;
+parameter RX_PKT_TABLE_SIZE  = 8;
 
 // Scheduler parameters (port)
 parameter TX_SCHEDULER = "RR";
@@ -826,7 +826,7 @@ generate
 
     for (n = 0; n < IF_COUNT; n = n + 1) begin : iface
 
-        interface #(
+        mqnic_interface #(
             .PORTS(PORTS_PER_IF),
             .DMA_ADDR_WIDTH(PCIE_ADDR_WIDTH),
             .DMA_LEN_WIDTH(PCIE_DMA_LEN_WIDTH),

@@ -99,6 +99,7 @@ module axis_dma # (
   reg [DEST_WIDTH_IN-1:0]  wr_tdest;
   reg                      wr_strb_left;
   reg [HDR_MSB_WIDTH-1:0]  hdr_msb_r;
+  wire [ADDR_WIDTH-1:0]    wr_addr;
   // reg [HDR_ADDR_WIDTH-1:0] desc_addr_r;
   reg                      hdr_en_r;
   reg                      wr_data_en;
@@ -230,7 +231,6 @@ module axis_dma # (
   
   // Calculating the write address
   reg  [ADDR_WIDTH-1:0] next_wr_addr;
-  wire [ADDR_WIDTH-1:0] wr_addr;
   always @ (posedge clk)
     if (wr_data_en && wr_ready)
       next_wr_addr <= wr_addr + STRB_WIDTH;
