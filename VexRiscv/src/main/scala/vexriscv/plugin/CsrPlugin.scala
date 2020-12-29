@@ -264,6 +264,31 @@ object CsrPluginConfig{
     uinstretAccess = CsrAccess.NONE
   )
 
+  def secure(mtvecInit : BigInt) = CsrPluginConfig(
+    catchIllegalAccess = true,
+    mvendorid           = 1,
+    marchid             = 2,
+    mimpid              = 3,
+    mhartid             = 0,
+    misaExtensionsInit  = 0x101064, // RV32GCFMU
+    misaAccess          = CsrAccess.READ_WRITE,
+    mtvecAccess         = CsrAccess.READ_WRITE,
+    mtvecInit           = mtvecInit,
+    mepcAccess          = CsrAccess.READ_WRITE,
+    mscratchGen         = true,
+    mcauseAccess        = CsrAccess.READ_WRITE,
+    mbadaddrAccess      = CsrAccess.READ_WRITE,
+    mcycleAccess        = CsrAccess.READ_WRITE,
+    minstretAccess      = CsrAccess.READ_WRITE,
+    ucycleAccess        = CsrAccess.READ_ONLY,
+    uinstretAccess      = CsrAccess.READ_ONLY,
+    wfiGenAsWait        = true,
+    ecallGen            = true,
+    userGen             = true,
+    medelegAccess       = CsrAccess.READ_WRITE,
+    midelegAccess       = CsrAccess.READ_WRITE
+  )
+
 }
 case class CsrWrite(that : Data, bitOffset : Int)
 case class CsrRead(that : Data , bitOffset : Int)
@@ -1010,18 +1035,8 @@ class CsrPlugin(val config: CsrPluginConfig) extends Plugin[VexRiscv] with Excep
         val readData = Bits(32 bits)
         val writeInstruction = arbitration.isValid && input(IS_CSR) && input(CSR_WRITE_OPCODE)
         val readInstruction = arbitration.isValid && input(IS_CSR) && input(CSR_READ_OPCODE)
-        val writeEnable = writeInstruction && ! blockedBySideEffects && !arbitration.isStuckByOthers// &&  readDataRegValid
-        val readEnable  = readInstruction  && ! blockedBySideEffects && !arbitration.isStuckByOthers// && !readDataRegValid
-        //arbitration.isStuckByOthers, in case of the hazardPlugin is in the executeStage
-
-
-//        def readDataReg = memory.input(REGFILE_WRITE_DATA)  //PIPE OPT
-//        val readDataRegValid = Reg(Bool) setWhen(arbitration.isValid) clearWhen(!arbitration.isStuck)
-//        val writeDataEnable = input(INSTRUCTION)(13) ? writeSrc | B"xFFFFFFFF"
-//        val writeData = if(noCsrAlu) writeSrc else input(INSTRUCTION)(13).mux(
-//          False -> writeSrc,
-//          True -> Mux(input(INSTRUCTION)(12), ~writeSrc,  writeSrc)
-//        )
+        val writeEnable = writeInstruction && !arbitration.isStuck
+        val readEnable  = readInstruction  && !arbitration.isStuck
 
         val readToWriteData = CombInit(readData)
         val writeData = if(noCsrAlu) writeSrc else input(INSTRUCTION)(13).mux(
@@ -1136,7 +1151,11 @@ class CsrPlugin(val config: CsrPluginConfig) extends Plugin[VexRiscv] with Excep
             }
           }
 
-          illegalAccess setWhen(privilege < csrAddress(9 downto 8).asUInt)
+          when(privilege < csrAddress(9 downto 8).asUInt){
+            illegalAccess := True
+            readInstruction := False
+            writeInstruction := False
+          }
           illegalAccess clearWhen(!arbitration.isValid || !input(IS_CSR))
         }
       }
