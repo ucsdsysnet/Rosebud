@@ -129,7 +129,7 @@ module scheduler_PR (
         .USER_ENABLE(1),
         .USER_WIDTH(ID_TAG_WIDTH),
         .REG_TYPE(DATA_REG_TYPE),
-        .LENGTH(4)
+        .LENGTH(2)
       ) data_s_reg_inst (
         .clk(clk),
         .rst(rst_r),
@@ -164,7 +164,7 @@ module scheduler_PR (
         .USER_ENABLE(1),
         .USER_WIDTH(PORT_WIDTH),
         .REG_TYPE(DATA_REG_TYPE),
-        .LENGTH(2)
+        .LENGTH(1)
       ) data_m_reg_inst (
         .clk(clk),
         .rst(rst_r),
@@ -197,7 +197,7 @@ module scheduler_PR (
         .DEST_ENABLE(0),
         .USER_ENABLE(0),
         .REG_TYPE(DATA_REG_TYPE),
-        .LENGTH(2)
+        .LENGTH(1)
       ) rx_reg_inst (
         .clk(clk),
         .rst(rst_r),

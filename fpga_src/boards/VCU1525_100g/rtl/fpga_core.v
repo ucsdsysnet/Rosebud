@@ -272,9 +272,38 @@ parameter FPGA_ID   = 32'h4B31093;
 // Separating reset per block and keeping it in sync with rest of the system
 (* KEEP = "TRUE" *) reg [CORE_COUNT-1:0] block_reset;
 (* KEEP = "TRUE" *) reg core_rst_r;
-integer j;
+// (* KEEP = "TRUE" *) reg pcie_rst_r;
+(* KEEP = "TRUE" *) reg [INTERFACE_COUNT-1:0] int_rst;
+(* KEEP = "TRUE" *) reg sys_rst_r;
+(* KEEP = "TRUE" *) reg loopback_rst;
+(* KEEP = "TRUE" *) reg pcie_sys_rst;
+(* KEEP = "TRUE" *) reg scheduler_rst;
+(* KEEP = "TRUE" *) reg data_out_sw_rst;
+(* KEEP = "TRUE" *) reg data_in_sw_rst;
+(* KEEP = "TRUE" *) reg ctrl_out_sw_rst;
+(* KEEP = "TRUE" *) reg ctrl_in_sw_rst;
+(* KEEP = "TRUE" *) reg dram_out_sw_rst;
+(* KEEP = "TRUE" *) reg dram_in_sw_rst;
+
+integer j,q;
 always @ (posedge core_clk) begin
-  core_rst_r  <= core_rst;
+  // pcie_rst_r      <= pcie_rst;
+  core_rst_r      <= core_rst;
+
+  sys_rst_r       <= sys_rst;
+  loopback_rst    <= sys_rst;
+  pcie_sys_rst    <= sys_rst;
+  scheduler_rst   <= sys_rst;
+  data_out_sw_rst <= sys_rst;
+  data_in_sw_rst  <= sys_rst;
+  ctrl_out_sw_rst <= sys_rst;
+  ctrl_in_sw_rst  <= sys_rst;
+  dram_out_sw_rst <= sys_rst;
+  dram_in_sw_rst  <= sys_rst;
+
+  for (q=0; q<INTERFACE_COUNT; q=q+1)
+    int_rst[q] <= sys_rst;
+
   for (j=0; j<CORE_COUNT; j=j+1)
     block_reset[j] <= core_rst;
 end
@@ -402,7 +431,7 @@ generate
             .LENGTH(2)
         ) mac_tx_pipeline (
             .clk(sys_clk),
-            .rst(sys_rst),
+            .rst(int_rst[m]),
 
             .s_axis_tdata(tx_axis_tdata[m*LVL1_DATA_WIDTH +: LVL1_DATA_WIDTH]),
             .s_axis_tkeep(tx_axis_tkeep[m*LVL1_STRB_WIDTH +: LVL1_STRB_WIDTH]),
@@ -432,7 +461,7 @@ generate
             .ID_ENABLE(0),
             .DEST_ENABLE(0),
             .USER_ENABLE(0),
-            .PIPELINE_OUTPUT(1),
+            .PIPELINE_OUTPUT(2),
             .FRAME_FIFO(1),
             .USER_BAD_FRAME_VALUE(1'b1),
             .USER_BAD_FRAME_MASK(1'b1),
@@ -440,7 +469,7 @@ generate
             .DROP_WHEN_FULL(0)
         ) mac_tx_async_fifo_inst (
             // Common reset
-            .async_rst(sys_rst | port_tx_rst[m]),
+            .async_rst(int_rst[m] | port_tx_rst[m]),
             // AXI input
             .s_clk(sys_clk),
             .s_axis_tdata(port_tx_axis_tdata_n[m*LVL1_DATA_WIDTH +: LVL1_DATA_WIDTH]),
@@ -483,7 +512,7 @@ generate
             .FRAME_FIFO(0)
         ) mac_rx_async_fifo_inst (
             // Common reset
-            .async_rst(port_rx_rst[m] | sys_rst),
+            .async_rst(port_rx_rst[m] | int_rst[m]),
             // AXI input
             .s_clk(port_rx_clk[m]),
             .s_axis_tdata(port_rx_axis_tdata[m*AXIS_ETH_DATA_WIDTH +: AXIS_ETH_DATA_WIDTH]),
@@ -522,7 +551,7 @@ generate
             .ID_ENABLE(0),
             .DEST_ENABLE(0),
             .USER_ENABLE(0),
-            .PIPELINE_OUTPUT(3),
+            .PIPELINE_OUTPUT(2),
             .FRAME_FIFO(1),
             .USER_BAD_FRAME_VALUE(1'b1),
             .USER_BAD_FRAME_MASK(1'b1),
@@ -531,7 +560,7 @@ generate
             .ALMOST_FULL_LVL(RX_ALMOST_FULL)
         ) mac_rx_fifo_inst (
             .clk(sys_clk),
-            .rst(sys_rst),
+            .rst(int_rst[m]),
 
             .s_axis_tdata(port_rx_axis_tdata_f[m*AXIS_ETH_DATA_WIDTH +: AXIS_ETH_DATA_WIDTH]),
             .s_axis_tkeep(port_rx_axis_tkeep_f[m*AXIS_ETH_KEEP_WIDTH +: AXIS_ETH_KEEP_WIDTH]),
@@ -570,7 +599,7 @@ generate
             .LENGTH(2)
         ) mac_rx_pipeline (
             .clk(sys_clk),
-            .rst(sys_rst),
+            .rst(int_rst[m]),
 
             .s_axis_tdata(port_rx_axis_tdata_r[m*LVL1_DATA_WIDTH +: LVL1_DATA_WIDTH]),
             .s_axis_tkeep(port_rx_axis_tkeep_r[m*LVL1_STRB_WIDTH +: LVL1_STRB_WIDTH]),
@@ -594,7 +623,7 @@ generate
     end
 
     always @ (posedge sys_clk)
-        if (sys_rst) begin
+        if (sys_rst_r) begin
             rx_drop           <= {INTERFACE_COUNT{1'b0}};
             rx_drop_r         <= {INTERFACE_COUNT{1'b0}};
             rx_almost_full    <= {INTERFACE_COUNT{1'b0}};
@@ -738,7 +767,7 @@ pcie_config # (
   .SEPARATE_CLOCKS(SEPARATE_CLOCKS)
 ) pcie_config_inst (
   .sys_clk(sys_clk),
-  .sys_rst(sys_rst),
+  .sys_rst(pcie_sys_rst),
   .pcie_clk(pcie_clk),
   .pcie_rst(pcie_rst),
 
@@ -838,7 +867,7 @@ if (SEPARATE_CLOCKS) begin
   
   simple_sync_sig # (.RST_VAL(1'b0),.WIDTH(32)) core_stat_data_reg (
     .dst_clk(sys_clk),
-    .dst_rst(sys_rst),
+    .dst_rst(sys_rst_r),
     .in(core_stat_data_muxed),
     .out(core_stat_data_muxed_r)
   );
@@ -883,6 +912,7 @@ end else begin: virtual_eth_connections
   assign tx_axis_tready[INTERFACE_COUNT +: V_PORT_COUNT] = v_tx_axis_tready;
 end
 
+(* keep_hierarchy = "soft" *)
 pcie_controller #
 (
   .AXIS_PCIE_DATA_WIDTH(AXIS_PCIE_DATA_WIDTH),
@@ -916,7 +946,7 @@ pcie_controller #
   .AXIS_PIPE_LENGTH(2)
 ) pcie_controller_inst (
   .sys_clk(sys_clk),
-  .sys_rst(sys_rst),
+  .sys_rst(pcie_sys_rst),
   .pcie_clk(pcie_clk),
   .pcie_rst(pcie_rst),
 
@@ -1084,7 +1114,7 @@ loopback_msg_fifo # (
   .ID_TAG_WIDTH(ID_TAG_WIDTH)
 ) loopback_msg_fifo_inst (
     .clk(sys_clk),
-    .rst(sys_rst),
+    .rst(loopback_rst),
 
     .s_axis_tdata (loopback_tx_axis_tdata),
     .s_axis_tkeep (loopback_tx_axis_tkeep),
@@ -1153,7 +1183,7 @@ wire sched_trig_in, sched_trig_out, sched_trig_in_ack, sched_trig_out_ack;
   ) scheduler_PR_inst (
 `endif
     .clk(sys_clk),
-    .rst(sys_rst),
+    .rst(scheduler_rst),
 
     // Data line to/from Eth interfaces
     .tx_axis_tdata(tx_axis_tdata),
@@ -1277,7 +1307,7 @@ axis_switch_2lvl # (
     .PIPELINE_OUTPUT (SW_OUTPUT_PIPE)
 ) data_in_sw (
     .s_clk(sys_clk),
-    .s_rst(sys_rst),
+    .s_rst(data_in_sw_rst),
     .s_axis_tdata( {dram_rx_axis_tdata, loopback_rx_axis_tdata, sched_rx_axis_tdata}),
     .s_axis_tkeep( {dram_rx_axis_tkeep, loopback_rx_axis_tkeep, sched_rx_axis_tkeep}),
     .s_axis_tvalid({dram_rx_axis_tvalid,loopback_rx_axis_tvalid,sched_rx_axis_tvalid}),
@@ -1308,7 +1338,7 @@ stat_reader # (
   .PORT_CLUSTERS(2)
 ) interface_incoming_stat (
   .clk(sys_clk),
-  .port_rst({INTERFACE_COUNT+V_PORT_COUNT{sys_rst}}),
+  .port_rst({INTERFACE_COUNT+V_PORT_COUNT{sys_rst_r}}),
   .port_clear({INTERFACE_COUNT+V_PORT_COUNT{1'b0}}),
 
   .monitor_axis_tkeep(sched_rx_axis_tkeep),
@@ -1361,7 +1391,7 @@ axis_switch_2lvl # (
      * AXI Stream outputs
      */
     .m_clk(sys_clk),
-    .m_rst(sys_rst),
+    .m_rst(data_out_sw_rst),
     .m_axis_tdata( {dram_tx_axis_tdata, loopback_tx_axis_tdata, sched_tx_axis_tdata}),
     .m_axis_tkeep( {dram_tx_axis_tkeep, loopback_tx_axis_tkeep, sched_tx_axis_tkeep}),
     .m_axis_tvalid({dram_tx_axis_tvalid,loopback_tx_axis_tvalid,sched_tx_axis_tvalid}),
@@ -1382,7 +1412,7 @@ stat_reader # (
   .PORT_CLUSTERS(2)
 ) interface_outgoing_stat (
   .clk(sys_clk),
-  .port_rst({INTERFACE_COUNT+V_PORT_COUNT{sys_rst}}),
+  .port_rst({INTERFACE_COUNT+V_PORT_COUNT{sys_rst_r}}),
   .port_clear({INTERFACE_COUNT+V_PORT_COUNT{1'b0}}),
 
   .monitor_axis_tkeep(sched_tx_axis_tkeep),
@@ -1421,7 +1451,7 @@ axis_switch_2lvl # (
      * AXI Stream inputs
      */
     .s_clk(sys_clk),
-    .s_rst(sys_rst),
+    .s_rst(ctrl_in_sw_rst),
     .s_axis_tdata(sched_ctrl_m_axis_tdata),
     .s_axis_tkeep(1'b0),
     .s_axis_tvalid(sched_ctrl_m_axis_tvalid),
@@ -1494,7 +1524,7 @@ axis_switch_2lvl # (
      * AXI Stream inputs
      */
     .s_clk(sys_clk),
-    .s_rst(sys_rst),
+    .s_rst(dram_in_sw_rst),
     .s_axis_tdata(dram_ctrl_s_axis_tdata),
     .s_axis_tkeep(1'b0),
     .s_axis_tvalid(dram_ctrl_s_axis_tvalid),
@@ -1558,7 +1588,7 @@ axis_switch_2lvl # (
      * AXI Stream output
      */
     .m_clk(sys_clk),
-    .m_rst(sys_rst),
+    .m_rst(dram_out_sw_rst),
     .m_axis_tdata(dram_ctrl_m_axis_tdata),
     .m_axis_tkeep(),
     .m_axis_tvalid(dram_ctrl_m_axis_tvalid),
