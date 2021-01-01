@@ -516,6 +516,7 @@ resize_pblock [get_pblocks pblock_35] -add {URAM288_X0Y104:URAM288_X0Y135}
 set_property HD.PARTPIN_RANGE {SLICE_X50Y390:SLICE_X54Y509} [get_pins core_inst/scheduler_PR_inst/*]
 set_property HD.PARTPIN_RANGE {SLICE_X13Y505:SLICE_X50Y509} [get_pins core_inst/scheduler_PR_inst/tx_axis*]
 set_property HD.PARTPIN_RANGE {SLICE_X13Y505:SLICE_X50Y509} [get_pins core_inst/scheduler_PR_inst/rx_axis*]
+set_property HD.PARTPIN_RANGE {SLICE_X13Y390:SLICE_X50Y394} [get_pins core_inst/scheduler_PR_inst/data_m*]
 set_property SNAPPING_MODE ON [get_pblocks pblock_35]
 set_property CONTAIN_ROUTING true [get_pblocks pblock_35]
 set_property IS_SOFT FALSE [get_pblocks pblock_35]
@@ -541,6 +542,5 @@ resize_pblock [get_pblocks pblock_37] -add {RAMB18_X10Y120:RAMB18_X11Y239}
 resize_pblock [get_pblocks pblock_37] -add {RAMB36_X10Y60:RAMB36_X11Y119}
 set_property IS_SOFT TRUE [get_pblocks pblock_37]
 
-set_false_path -from [get_cells core_inst/sys_rst_r_reg]
-set_false_path -from [get_cells core_inst/core_rst_r_reg]
-set_false_path -from [get_cells core_inst/block_reset_reg[*]]
+# set_false_path -from [get_cells core_inst/sys_rst_r_reg]
+# set_false_path -from [get_cells core_inst/block_reset_reg[*]]

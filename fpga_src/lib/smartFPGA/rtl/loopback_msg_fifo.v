@@ -1,5 +1,5 @@
 module loopback_msg_fifo # (
-    parameter DATA_WIDTH      = 64,   
+    parameter DATA_WIDTH      = 64,
     parameter STRB_WIDTH      = (DATA_WIDTH/8),
     parameter PORT_WIDTH      = 2,
     parameter CORE_WIDTH      = 4,
@@ -17,7 +17,7 @@ module loopback_msg_fifo # (
     input  wire [PORT_COUNT-1:0]               s_axis_tlast,
     input  wire [PORT_COUNT*ID_TAG_WIDTH-1:0]  s_axis_tuser,
     output wire [PORT_COUNT-1:0]               s_axis_tready,
-  
+
     output wire [PORT_COUNT*DATA_WIDTH-1:0]    m_axis_tdata,
     output wire [PORT_COUNT*STRB_WIDTH-1:0]    m_axis_tkeep,
     output wire [PORT_COUNT-1:0]               m_axis_tvalid,
@@ -26,7 +26,14 @@ module loopback_msg_fifo # (
     output wire [PORT_COUNT*PORT_WIDTH-1:0]    m_axis_tuser,
     input  wire [PORT_COUNT-1:0]               m_axis_tready
 );
-  
+
+wire rst_r;
+sync_reset sync_rst_inst (
+  .clk(clk),
+  .rst(rst),
+  .out(rst_r)
+);
+
 genvar i;
 generate
   for (i=0; i<PORT_COUNT; i=i+1) begin
@@ -40,7 +47,7 @@ generate
 
     // no use fo s_axis_tuser
     assign m_axis_tuser[i*PORT_WIDTH +: PORT_WIDTH] = FIRST_PORT + i;
- 
+
     header_remover # (
       .DATA_WIDTH(DATA_WIDTH),
       .HDR_WIDTH(64),
@@ -49,20 +56,20 @@ generate
       .ALWAYS_HDR(1)
     ) dest_remover (
       .clk(clk),
-      .rst(rst),
+      .rst(rst_r),
       .has_header(1'b1),
-        
+
       .s_axis_tdata (s_axis_tdata[i*DATA_WIDTH +: DATA_WIDTH]),
       .s_axis_tkeep (s_axis_tkeep[i*STRB_WIDTH +: STRB_WIDTH]),
-      .s_axis_tdest (1'b0), 
-      .s_axis_tuser (1'b0), 
+      .s_axis_tdest (1'b0),
+      .s_axis_tuser (1'b0),
       .s_axis_tlast (s_axis_tlast[i]),
       .s_axis_tvalid(s_axis_tvalid[i]),
       .s_axis_tready(s_axis_tready[i]),
-     
-      .header(dest_header), 
+
+      .header(dest_header),
       .header_valid(),
-    
+
       .m_axis_tdata (int_axis_tdata),
       .m_axis_tkeep (int_axis_tkeep),
       .m_axis_tdest (),
@@ -89,8 +96,8 @@ generate
         .FRAME_FIFO(0)
     ) axis_fifo_inst (
         .clk(clk),
-        .rst(rst),
-    
+        .rst(rst_r),
+
         .s_axis_tdata (int_axis_tdata),
         .s_axis_tkeep (int_axis_tkeep),
         .s_axis_tvalid(int_axis_tvalid),
@@ -99,7 +106,7 @@ generate
         .s_axis_tid   (8'd0),
         .s_axis_tdest (dest_header[ID_TAG_WIDTH-1:0]),
         .s_axis_tuser (1'b0),
-    
+
         .m_axis_tdata (m_axis_tdata[i*DATA_WIDTH +: DATA_WIDTH]),
         .m_axis_tkeep (m_axis_tkeep[i*STRB_WIDTH +: STRB_WIDTH]),
         .m_axis_tvalid(m_axis_tvalid[i]),
@@ -108,7 +115,7 @@ generate
         .m_axis_tid   (),
         .m_axis_tdest (m_axis_tdest[i*ID_TAG_WIDTH +: ID_TAG_WIDTH]),
         .m_axis_tuser (),
-    
+
         .status_overflow(),
         .status_bad_frame(),
         .status_good_frame()

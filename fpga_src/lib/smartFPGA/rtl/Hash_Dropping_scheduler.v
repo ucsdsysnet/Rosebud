@@ -144,9 +144,12 @@ module simple_scheduler # (
   wire                                     ctrl_m_axis_tready_n;
   wire [CORE_ID_WIDTH-1:0]                 ctrl_m_axis_tdest_n;
 
-  (* KEEP = "TRUE" *) reg rst_r;
-  always @ (posedge clk)
-    rst_r          <= rst;
+  wire rst_r;
+  sync_reset sync_rst_inst (
+    .clk(clk),
+    .rst(rst),
+    .out(rst_r)
+  );
 
   genvar q;
   generate

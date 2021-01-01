@@ -533,5 +533,4 @@ resize_pblock [get_pblocks pblock_36] -add {URAM288_X3Y80:URAM288_X3Y159}
 set_property IS_SOFT TRUE [get_pblocks pblock_36]
 
 set_false_path -from [get_cells core_inst/sys_rst_r_reg]
-set_false_path -from [get_cells core_inst/core_rst_r_reg]
 set_false_path -from [get_cells core_inst/block_reset_reg[*]]

@@ -93,6 +93,20 @@ initial begin
         $finish;
     end
 end
+  
+// reset_sync
+wire s_rst_r, m_rst_r;
+sync_reset sync_s_rst_inst ( 
+  .clk(s_clk),
+  .rst(s_rst),
+  .out(s_rst_r)
+);
+
+sync_reset sync_m_rst_inst ( 
+  .clk(m_clk),
+  .rst(m_rst),
+  .out(m_rst_r)
+);
 
 if (S_COUNT >= M_COUNT) begin: shrink
     if ((S_DATA_WIDTH==M_DATA_WIDTH)||(S_COUNT==CLUSTER_COUNT)||USE_SIMPLE_SW) begin
@@ -124,7 +138,7 @@ if (S_COUNT >= M_COUNT) begin: shrink
             .SEPARATE_CLOCKS (SEPARATE_CLOCKS)
         ) axis_switch_2lvl_shrink_inst (
             .s_clk        (s_clk),
-            .s_rst        (s_rst),
+            .s_rst        (s_rst_r),
             .s_axis_tdata (s_axis_tdata),
             .s_axis_tkeep (s_axis_tkeep),
             .s_axis_tvalid(s_axis_tvalid),
@@ -135,7 +149,7 @@ if (S_COUNT >= M_COUNT) begin: shrink
             .s_axis_tuser (s_axis_tuser),
 
             .m_clk        (m_clk),
-            .m_rst        (m_rst),
+            .m_rst        (m_rst_r),
             .m_axis_tdata (m_axis_tdata),
             .m_axis_tkeep (m_axis_tkeep),
             .m_axis_tvalid(m_axis_tvalid),
@@ -174,7 +188,7 @@ if (S_COUNT >= M_COUNT) begin: shrink
             .SEPARATE_CLOCKS (SEPARATE_CLOCKS)
         ) axis_switch_2lvl_shrink_inst (
             .s_clk        (s_clk),
-            .s_rst        (s_rst),
+            .s_rst        (s_rst_r),
             .s_axis_tdata (s_axis_tdata),
             .s_axis_tkeep (s_axis_tkeep),
             .s_axis_tvalid(s_axis_tvalid),
@@ -185,7 +199,7 @@ if (S_COUNT >= M_COUNT) begin: shrink
             .s_axis_tuser (s_axis_tuser),
 
             .m_clk        (m_clk),
-            .m_rst        (m_rst),
+            .m_rst        (m_rst_r),
             .m_axis_tdata (m_axis_tdata),
             .m_axis_tkeep (m_axis_tkeep),
             .m_axis_tvalid(m_axis_tvalid),
@@ -226,7 +240,7 @@ end else begin: grow
             .SEPARATE_CLOCKS (SEPARATE_CLOCKS)
         ) axis_switch_2lvl_grow_inst (
             .s_clk        (s_clk),
-            .s_rst        (s_rst),
+            .s_rst        (s_rst_r),
             .s_axis_tdata (s_axis_tdata),
             .s_axis_tkeep (s_axis_tkeep),
             .s_axis_tvalid(s_axis_tvalid),
@@ -237,7 +251,7 @@ end else begin: grow
             .s_axis_tuser (s_axis_tuser),
 
             .m_clk        (m_clk),
-            .m_rst        (m_rst),
+            .m_rst        (m_rst_r),
             .m_axis_tdata (m_axis_tdata),
             .m_axis_tkeep (m_axis_tkeep),
             .m_axis_tvalid(m_axis_tvalid),
@@ -276,7 +290,7 @@ end else begin: grow
             .SEPARATE_CLOCKS (SEPARATE_CLOCKS)
         ) axis_switch_2lvl_grow_inst (
             .s_clk        (s_clk),
-            .s_rst        (s_rst),
+            .s_rst        (s_rst_r),
             .s_axis_tdata (s_axis_tdata),
             .s_axis_tkeep (s_axis_tkeep),
             .s_axis_tvalid(s_axis_tvalid),
@@ -287,7 +301,7 @@ end else begin: grow
             .s_axis_tuser (s_axis_tuser),
 
             .m_clk        (m_clk),
-            .m_rst        (m_rst),
+            .m_rst        (m_rst_r),
             .m_axis_tdata (m_axis_tdata),
             .m_axis_tkeep (m_axis_tkeep),
             .m_axis_tvalid(m_axis_tvalid),
@@ -825,6 +839,13 @@ module axis_simple_arb_2lvl # (
     output wire [USER_WIDTH-1:0]         m_axis_tuser
 );
 
+    wire rst_r;
+    sync_reset sync_rst_inst ( 
+      .clk(clk),
+      .rst(rst),
+      .out(rst_r)
+    );
+
     parameter S_PER_CLUSTER     = S_COUNT/CLUSTER_COUNT;
     parameter STAGE_FIFO_ENABLE = (STAGE_FIFO_DEPTH>0);
 
@@ -848,7 +869,7 @@ module axis_simple_arb_2lvl # (
               .LENGTH(1)
         ) input_register (
           .clk(clk),
-          .rst(rst),
+          .rst(rst_r),
 
           .s_axis_tdata(s_axis_tdata[k*DATA_WIDTH +: DATA_WIDTH]),
           .s_axis_tkeep(1'b1),
@@ -914,7 +935,7 @@ module axis_simple_arb_2lvl # (
                 ) arb_lvl1 (
 
                     .clk(clk),
-                    .rst(rst),
+                    .rst(rst_r),
 
                     /*
                      * AXI Stream inputs
@@ -949,7 +970,7 @@ module axis_simple_arb_2lvl # (
                       .DATA_WIDTH(DATA_WIDTH+USER_WIDTH)
                     ) stage_fifo (
                       .clk(clk),
-                      .rst(rst),
+                      .rst(rst_r),
                       .clear(1'b0),
 
                       .din_valid(int_axis_tvalid[j]),
@@ -993,7 +1014,7 @@ module axis_simple_arb_2lvl # (
     ) arb_lvl2
     (
         .clk(clk),
-        .rst(rst),
+        .rst(rst_r),
 
         /*
          * AXI Stream inputs
@@ -1032,7 +1053,7 @@ module axis_simple_arb_2lvl # (
         .LENGTH(1)
     ) output_pipeline_register (
         .clk(clk),
-        .rst(rst),
+        .rst(rst_r),
 
         .s_axis_tdata(m_axis_tdata_n),
         .s_axis_tkeep(1'b1),

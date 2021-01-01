@@ -32,5 +32,15 @@ Added back MTU (-0.033 | -0.523)
     false path without tree and interface locations fails
 
 false path without tree but with larger interface areas meets timing (0,0)
+false path for pcie without register doesn't work (-1K)
+Not separating port locations for scheduler performs bad (WNS=-0.291 | TNS=-682.992)
+Increasing scheduler port location (Width 6) size helps with the warnings, but slightly worsens the timing (WNS=-0.002 | TNS=-0.013)
+Split PCIE + URAM: WNS=-0.004 | TNS=-0.046
+URAM without split does a poor job: WNS=-0.141 | TNS=-58.705
+Axis RAM switch with LUTRAM does a poor job: WNS=-0.190 | TNS=-101.148
+Extra pipe reg for pcie_controller fails placement
+Exclude placement for PRs, fails placement
+Without the false path in XDC: WNS=-0.044 | TNS=-7.365
+After sync_reset fixes: WNS=-0.045 | TNS=-9.661 
 
 

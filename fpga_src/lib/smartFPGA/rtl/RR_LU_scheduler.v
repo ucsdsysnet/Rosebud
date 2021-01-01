@@ -110,9 +110,12 @@ module simple_scheduler # (
   wire                     ctrl_m_axis_tready_n;
   wire [CORE_ID_WIDTH-1:0] ctrl_m_axis_tdest_n;
 
-  (* KEEP = "TRUE" *) reg rst_r;
-  always @ (posedge clk)
-    rst_r          <= rst;
+  wire rst_r;
+  sync_reset sync_rst_inst (
+    .clk(clk),
+    .rst(rst),
+    .out(rst_r)
+  );
 
   genvar q;
   generate
@@ -128,7 +131,7 @@ module simple_scheduler # (
         .USER_ENABLE(1),
         .USER_WIDTH(ID_TAG_WIDTH),
         .REG_TYPE(DATA_REG_TYPE),
-        .LENGTH(4)
+        .LENGTH(2)
       ) data_s_reg_inst (
         .clk(clk),
         .rst(rst_r),
@@ -163,7 +166,7 @@ module simple_scheduler # (
         .USER_ENABLE(1),
         .USER_WIDTH(PORT_WIDTH),
         .REG_TYPE(DATA_REG_TYPE),
-        .LENGTH(2)
+        .LENGTH(1)
       ) data_m_reg_inst (
         .clk(clk),
         .rst(rst_r),
@@ -196,7 +199,7 @@ module simple_scheduler # (
         .DEST_ENABLE(0),
         .USER_ENABLE(0),
         .REG_TYPE(DATA_REG_TYPE),
-        .LENGTH(2)
+        .LENGTH(1)
       ) rx_reg_inst (
         .clk(clk),
         .rst(rst_r),
@@ -767,7 +770,7 @@ if (ENABLE_ILA) begin
 
   reg [15:0] rx_count_0, rx_count_1, tx_count_0, tx_count_1;
   always @ (posedge clk)
-    if (rst) begin
+    if (rst_r) begin
         rx_count_0 <= 16'd0;
         rx_count_1 <= 16'd0;
         tx_count_0 <= 16'd0;

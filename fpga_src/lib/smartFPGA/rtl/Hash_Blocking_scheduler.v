@@ -143,9 +143,12 @@ module simple_scheduler # (
   wire                                     ctrl_m_axis_tready_n;
   wire [CORE_ID_WIDTH-1:0]                 ctrl_m_axis_tdest_n;
 
-  (* KEEP = "TRUE" *) reg rst_r;
-  always @ (posedge clk)
-    rst_r          <= rst;
+  wire rst_r;
+  sync_reset sync_rst_inst (
+    .clk(clk),
+    .rst(rst),
+    .out(rst_r)
+  );
 
   genvar q;
   generate
@@ -835,7 +838,7 @@ module simple_scheduler # (
   reg  [INTERFACE_WIDTH*CORE_COUNT-1:0] rx_desc_stall;
   reg  [CORE_COUNT-1:0] rx_desc_stall_v;
 
-  wire [INTERFACE_COUNT-1:0] waiting_int = 
+  wire [INTERFACE_COUNT-1:0] waiting_int =
                              rx_desc_stall[INTERFACE_WIDTH*rx_dest_core +: INTERFACE_WIDTH];
 
   // if a port is selected and desired core has available slot, pop the slot from
@@ -846,16 +849,16 @@ module simple_scheduler # (
     rx_hash_ready_f  = {INTERFACE_COUNT{1'b0}};
     hash_n_dest_in_v = {INTERFACE_COUNT{1'b0}};
 
-    if (selected_port_v_r && rx_desc_avail[rx_dest_core]) 
+    if (selected_port_v_r && rx_desc_avail[rx_dest_core])
       if (!rx_desc_stall_v[rx_dest_core] || (waiting_int == selected_port_enc_r)) begin
         rx_desc_pop      = 1'b1;
         rx_hash_ready_f  = selected_port_r;
         hash_n_dest_in_v = selected_port_r;
-      end 
+      end
       // otherwise do nothing
 
   end
-  
+
   always @ (posedge clk)
     if (rst_r) begin
       rx_desc_stall_v = {CORE_COUNT{1'b0}};

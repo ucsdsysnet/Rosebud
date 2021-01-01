@@ -93,7 +93,7 @@ module riscv_axis_wrapper # (
     input  wire [MSG_WIDTH-1:0]     core_msg_in,
     input  wire [CORE_ID_WIDTH-1:0] core_msg_in_user,
     input  wire                     core_msg_in_valid,
-    
+
     // ---------- STATUS READBACK CHANNEL ---------- //
     input  wire [3:0]               stat_addr,
     output reg  [31:0]              stat_data,
@@ -165,13 +165,20 @@ module riscv_axis_wrapper # (
     output wire                     core_status_ready
 );
 
+wire rst_r;
+sync_reset sync_rst_inst (
+  .clk(clk),
+  .rst(rst),
+  .out(rst_r)
+);
+
 /////////////////////////////////////////////////////////////////////
 //////////////////// PARSING SCHEDULER COMMANDS /////////////////////
 /////////////////////////////////////////////////////////////////////
 reg  [35:0]           ctrl_s_axis_tdata_r;
 reg                   ctrl_s_axis_tvalid_r;
 reg  [SLOT_WIDTH-1:0] ctrl_in_slot_ptr;
-wire                  ctrl_s_fifo_ready; 
+wire                  ctrl_s_fifo_ready;
 
 always @ (posedge clk) begin
   if (ctrl_s_axis_tvalid && ctrl_s_axis_tready) begin
@@ -181,7 +188,7 @@ always @ (posedge clk) begin
   ctrl_s_axis_tvalid_r <= ((ctrl_s_axis_tvalid && ctrl_s_axis_tready) ||
                            (ctrl_s_axis_tvalid_r && (!ctrl_s_axis_tready)));
 
-  if (rst)
+  if (rst_r)
     ctrl_s_axis_tvalid_r <= 1'b0;
 end
 
@@ -204,12 +211,12 @@ always @ (posedge clk) begin
 
   if (ctrl_s_axis_tvalid_r)
     case(ctrl_cmd) // We always accept commands with 1 in MSB
-      4'h8: begin 
-        host_debug_l   <= ctrl_s_axis_tdata_r[31:0]; 
+      4'h8: begin
+        host_debug_l   <= ctrl_s_axis_tdata_r[31:0];
         host_debug_l_v <= 1'b1;
       end
-      4'h9: begin 
-        host_debug_h   <= ctrl_s_axis_tdata_r[31:0]; 
+      4'h9: begin
+        host_debug_h   <= ctrl_s_axis_tdata_r[31:0];
         host_debug_h_v <= 1'b1;
       end
       4'hC: core_poke_r  <= ctrl_s_axis_tdata_r[0];
@@ -217,7 +224,7 @@ always @ (posedge clk) begin
       4'hF: core_reset_r <= ctrl_s_axis_tdata_r[0];
     endcase
 
-  if (rst) begin
+  if (rst_r) begin
       core_reset_r   <= 1'b1;
       core_poke_r    <= 1'b0;
       core_evict_r   <= 1'b0;
@@ -230,10 +237,10 @@ assign core_reset = core_reset_r;
 assign poke_int   = core_poke_r;
 assign evict_int  = core_evict_r;
 
-// It can become blocking for interrupt messages, but anyways it can 
+// It can become blocking for interrupt messages, but anyways it can
 // become blocking in the switch if there are 2 messages for the FIFO
-// back to back, and this FIFO almost always has room based on number 
-// of slots. 
+// back to back, and this FIFO almost always has room based on number
+// of slots.
 assign ctrl_s_axis_tready = ctrl_s_fifo_ready;
 
 /////////////////////////////////////////////////////////////////////
@@ -281,7 +288,7 @@ always @ (posedge clk) begin
       2'b10: core_debug_l <= core_status_data;
       2'b11: core_debug_h <= core_status_data;
     endcase
-  if (rst)
+  if (rst_r)
     core_stat_reg <= 32'd0;
 end
 
@@ -314,7 +321,7 @@ always @ (posedge clk) begin
     wrapper_status_addr  <= 2'd1;
     wrapper_status_valid <= 1'b1;
   end
-  if (rst)
+  if (rst_r)
     wrapper_status_valid <= 1'b0;
 end
 
@@ -353,7 +360,7 @@ axis_register # (
     .REG_TYPE(DATA_S_REG_TYPE)
 ) data_s_reg_inst (
     .clk(clk),
-    .rst(rst),
+    .rst(rst_r),
     // AXI input
     .s_axis_tdata (data_s_axis_tdata),
     .s_axis_tkeep (data_s_axis_tkeep),
@@ -385,7 +392,7 @@ header_remover # (
   .USER_WIDTH(PORT_WIDTH)
 ) dram_header_remover (
   .clk(clk),
-  .rst(rst),
+  .rst(rst_r),
 
   .has_header   (data_s_axis_tuser_r==dram_port),
 
@@ -461,7 +468,7 @@ always @ (posedge clk)
 
 // Can get 1 cycle more efficient while output DMA is getting initialized
 always @ (posedge clk)
-  if (rst)
+  if (rst_r)
     m_header_v <= 1'b0;
   else if ((dram_wr_valid && dram_wr_ready)||
            (ctrl_in_valid && ctrl_in_desc[64+ID_TAG_WIDTH] && ctrl_in_ready))
@@ -476,7 +483,7 @@ header_adder # (
   .USER_WIDTH(TAG_WIDTH)
 ) dram_loopback_hdr (
   .clk(clk),
-  .rst(rst),
+  .rst(rst_r),
 
   .s_axis_tdata (m_axis_tdata),
   .s_axis_tkeep (m_axis_tkeep),
@@ -513,7 +520,7 @@ axis_register # (
     .REG_TYPE(DATA_M_REG_TYPE)
 ) data_m_reg_inst (
     .clk(clk),
-    .rst(rst),
+    .rst(rst_r),
     // AXI input
     .s_axis_tdata (data_m_axis_tdata_n),
     .s_axis_tkeep (data_m_axis_tkeep_n),
@@ -569,7 +576,7 @@ axis_dma # (
   .HDR_ADDR_WIDTH (24)
 ) axis_dma_inst (
   .clk(clk),
-  .rst(rst),
+  .rst(rst_r),
 
   .s_axis_tdata (s_axis_tdata),
   .s_axis_tkeep (s_axis_tkeep),
@@ -650,7 +657,7 @@ simple_sync_fifo # (
   .DATA_WIDTH(64)
 ) recvd_data_fifo (
   .clk(clk),
-  .rst(rst),
+  .rst(rst_r),
 
   .din_valid(recv_desc_valid && (!recv_from_dram) && (!recv_tag_zero)),
   .din(recv_desc),
@@ -669,7 +676,7 @@ reg       recv_dram_tag_v_r;
 always @ (posedge clk) begin
   recv_dram_tag_r     <= recv_desc_tdest[4:0];
   recv_dram_tag_v_r   <= recv_desc_valid && recv_from_dram && (!recv_tag_zero);
-  if (rst)
+  if (rst_r)
     recv_dram_tag_v_r <= 1'b0;
 end
 
@@ -704,7 +711,7 @@ simple_fifo # (
   .DATA_WIDTH(64)
 ) send_data_fifo (
   .clk(clk),
-  .rst(rst),
+  .rst(rst_r),
   .clear(out_desc_err),
 
   .din_valid(out_desc_valid && core_data_wr),
@@ -727,7 +734,7 @@ simple_fifo # (
   .DATA_WIDTH(64)
 ) send_ctrl_fifo (
   .clk(clk),
-  .rst(rst),
+  .rst(rst_r),
   .clear(out_desc_err),
 
   .din_valid(out_desc_valid && core_ctrl_wr),
@@ -760,7 +767,7 @@ simple_fifo # (
   .DATA_WIDTH(128)
 ) dram_send_fifo (
   .clk(clk),
-  .rst(rst),
+  .rst(rst_r),
   .clear(1'b0),
 
   .din_valid(out_desc_valid && core_dram_wr),
@@ -784,7 +791,7 @@ simple_fifo # (
 ) send_dram_ctrl_fifo (
   .clk(clk),
   // After core reset no need to get the DRAM data anymore
-  .rst(rst || core_reset_r), 
+  .rst(rst_r || core_reset_r),
   .clear(1'b0),
 
   .din_valid(out_desc_valid && core_dram_rd),
@@ -823,7 +830,7 @@ simple_fifo # (
   .DATA_WIDTH(64+ID_TAG_WIDTH+1)
 ) recvd_ctrl_fifo (
   .clk(clk),
-  .rst(rst),
+  .rst(rst_r),
   .clear(1'b0),
 
   .din_valid(ctrl_s_axis_tvalid_r && ctrl_desc_cmd),
@@ -857,7 +864,7 @@ simple_fifo # (
   .DATA_WIDTH(64)
 ) pkt_sent_fifo (
   .clk(clk),
-  .rst(rst),
+  .rst(rst_r),
   .clear(1'b0),
 
   .din_valid(pkt_sent && (!pkt_sent_is_dram)),
@@ -883,7 +890,7 @@ simple_fifo # (
   .DATA_WIDTH(128)
 ) recvd_dram_rd_fifo (
   .clk(clk),
-  .rst(rst),
+  .rst(rst_r),
   .clear(1'b0),
 
   .din_valid(dram_req_valid),
@@ -916,7 +923,7 @@ always @ (posedge clk) begin
   else
       dram_req_valid <= 1'b0;
 
-  if (rst)
+  if (rst_r)
       dram_req_valid <= 1'b0;
 end
 
@@ -930,7 +937,7 @@ wire        dram_m_axis_tlast_n;
 reg [1:0]   send_dram_rd_state;
 
 always @ (posedge clk)
-  if (rst)
+  if (rst_r)
     send_dram_rd_state <= 2'd0;
   else if (core_dram_rd_valid_f)
     case (send_dram_rd_state)
@@ -957,7 +964,7 @@ axis_register # (
     .REG_TYPE(DRAM_M_REG_TYPE)
 ) dram_m_reg_inst (
     .clk(clk),
-    .rst(rst),
+    .rst(rst_r),
     // AXI input
     .s_axis_tdata (dram_m_axis_tdata_n),
     .s_axis_tkeep (8'd0),
@@ -1005,7 +1012,7 @@ assign dram_in_ready       = (!dram_select) && dram_in_valid && dram_wr_ready;
 // Arbiter between packets and DRAM out data, round robin
 reg dram_next_selection_r;
 always @ (posedge clk)
-  if (rst)
+  if (rst_r)
     dram_next_selection_r <= 1'b0;
   else if (dram_wr_valid && dram_wr_ready)
     dram_next_selection_r <= 1'b0;
@@ -1048,7 +1055,7 @@ always @ (posedge clk) begin
   end else if (ctrl_m_axis_tready && !ctrl_out_valid) begin
     ctrl_m_axis_tvalid_r <= 1'b0;
   end
-  if (rst) begin
+  if (rst_r) begin
     ctrl_m_axis_tvalid_r <= 1'b0;
     ctrl_m_axis_tdata_r  <= 36'd0;
   end
@@ -1068,7 +1075,7 @@ always @ (posedge clk) begin
   bc_msg_in       <= core_msg_in;
   bc_msg_in_user  <= core_msg_in_user;
   bc_msg_in_valid <= core_msg_in_valid && (core_msg_in_user!=core_id);
-  if (rst)
+  if (rst_r)
     bc_msg_in_valid <= 1'b0;
 end
 
@@ -1077,7 +1084,7 @@ simple_fifo # (
   .DATA_WIDTH(MSG_WIDTH)
 ) core_msg_out_fifo (
   .clk(clk),
-  .rst(rst),
+  .rst(rst_r),
   .clear(1'b0),
 
   .din_valid(bc_msg_out_valid),
@@ -1105,7 +1112,7 @@ wire done_w_slot = ((out_desc_type == 4'd0) ||
 always @ (posedge clk) begin
   out_desc_slot_r <= out_desc[16+:SLOT_WIDTH];
   done_w_slot_r   <= done_w_slot;
-  if (rst)
+  if (rst_r)
     done_w_slot_r <= 1'b0;
 end
 
@@ -1118,49 +1125,49 @@ reg [SLOT_COUNT:1] invalid_out_slot_err;
 wire [SLOT_WIDTH-1:0] in_desc_slot_n  = in_desc_n[16+:SLOT_WIDTH];
 wire [SLOT_WIDTH-1:0] pkt_sent_slot_f = pkt_sent_desc_f[16+:SLOT_WIDTH];
 
-always @ (posedge clk) begin  
+always @ (posedge clk) begin
   if (in_desc_valid_n && in_desc_ready_n)
     slots_in_prog[in_desc_slot_n]  <= 1'b1;
   if (done_w_slot_r)
     slots_in_prog[out_desc_slot_r] <= 1'b0;
-  
+
   if (pkt_sent_valid_f && pkt_sent_ready_f)
     slots_to_send[pkt_sent_slot_f] <= 1'b0;
   if (done_w_slot_r)
     slots_to_send[out_desc_slot_r] <= 1'b1;
-  
-  if (rst || core_reset) begin
+
+  if (rst_r || core_reset) begin
     slots_in_prog <= {SLOT_COUNT{1'b0}};
     slots_to_send <= {SLOT_COUNT{1'b0}};
-  end 
+  end
 end
 
 /////////////////////////////////////////////////////////////////////
 ///////////////////////// ERROR CATCHING ////////////////////////////
 /////////////////////////////////////////////////////////////////////
-reg in_desc_drop;  
+reg in_desc_drop;
 
 always @ (posedge clk) begin
-  // Drop on the fly packet if slot is already in the wrapper 
+  // Drop on the fly packet if slot is already in the wrapper
   in_desc_drop  <= 1'b0;
-  if (in_desc_valid_n && in_desc_ready_n && 
-                (slots_to_send[in_desc_slot_n] || 
+  if (in_desc_valid_n && in_desc_ready_n &&
+                (slots_to_send[in_desc_slot_n] ||
                  slots_in_prog[in_desc_slot_n])) begin
-    override_in_slot_err [in_desc_slot_n] <= 1'b1; 
+    override_in_slot_err [in_desc_slot_n] <= 1'b1;
     in_desc_drop                          <= 1'b1;
   end
 
   if (done_w_slot_r && (out_desc_slot_r!=0) && !slots_in_prog[out_desc_slot_r]) begin
-    invalid_out_slot_err [out_desc_slot_r] <= 1'b1; 
-    out_desc_err                           <= 1'b1;
-  end 
-
-  if (done_w_slot_r && (out_desc_slot_r!=0) && slots_to_send[out_desc_slot_r]) begin
-    override_out_slot_err[out_desc_slot_r] <= 1'b1; 
+    invalid_out_slot_err [out_desc_slot_r] <= 1'b1;
     out_desc_err                           <= 1'b1;
   end
 
-  if (rst || core_reset) begin
+  if (done_w_slot_r && (out_desc_slot_r!=0) && slots_to_send[out_desc_slot_r]) begin
+    override_out_slot_err[out_desc_slot_r] <= 1'b1;
+    out_desc_err                           <= 1'b1;
+  end
+
+  if (rst_r || core_reset) begin
     override_in_slot_err  <= {SLOT_COUNT{1'b0}};
     override_out_slot_err <= {SLOT_COUNT{1'b0}};
     invalid_out_slot_err  <= {SLOT_COUNT{1'b0}};
@@ -1171,10 +1178,10 @@ end
 
 reg invalid_out_desc;
 always @ (posedge clk)
-  if (rst || core_reset)
+  if (rst_r || core_reset)
     invalid_out_desc <= 1'b0;
   else if ((out_desc_type>4'd5) && out_desc_valid)
-    invalid_out_desc <= 1'b1; 
+    invalid_out_desc <= 1'b1;
 
 // One pipeline register to handle in_desc drop
 reg         in_desc_valid_r;
@@ -1188,7 +1195,7 @@ always @ (posedge clk) begin
     in_desc_valid_r <= 1'b0;
   end
 
-  if (rst) begin 
+  if (rst_r) begin
     in_desc_valid_r <= 1'b0;
   end
 end
@@ -1198,18 +1205,18 @@ assign in_desc_valid   = in_desc_valid_r && !in_desc_drop;
 assign in_desc         = in_desc_r;
 
 // Debug readback words
-wire [31:0] wrapper_errs = {14'd0, out_desc_err, invalid_out_desc, 
+wire [31:0] wrapper_errs = {14'd0, out_desc_err, invalid_out_desc,
 												   {(16-SLOT_COUNT){1'b0}}, override_in_slot_err};
 
-wire [31:0] wrapper_fifo_fulls = 
+wire [31:0] wrapper_fifo_fulls =
         {13'd0, !recv_desc_fifo_ready, !ctrl_s_fifo_ready, !dram_req_ready,
          10'd0, !core_data_wr_ready,   !core_ctrl_wr_ready, !core_dram_wr_ready,
                 !core_dram_rd_ready,   !pkt_sent_ready,     !bc_msg_out_ready};
 
-assign      slots_status    = {{(16-SLOT_COUNT){1'b0}}, slots_to_send, 
-                               {(16-SLOT_COUNT){1'b0}}, slots_in_prog}; 
-wire [31:0] core_slot_err   = {{(16-SLOT_COUNT){1'b0}}, override_out_slot_err, 
-                               {(16-SLOT_COUNT){1'b0}}, invalid_out_slot_err}; 
+assign      slots_status    = {{(16-SLOT_COUNT){1'b0}}, slots_to_send,
+                               {(16-SLOT_COUNT){1'b0}}, slots_in_prog};
+wire [31:0] core_slot_err   = {{(16-SLOT_COUNT){1'b0}}, override_out_slot_err,
+                               {(16-SLOT_COUNT){1'b0}}, invalid_out_slot_err};
 
 /////////////////////////////////////////////////////////////////////
 //////////////////////// STAT COLLECTION ////////////////////////////
@@ -1237,10 +1244,10 @@ always @ (posedge clk) begin
   data_m_axis_tready_mon <= data_m_axis_tready;
   data_m_axis_tlast_mon  <= data_m_axis_tlast;
 
-  if (rst) begin
+  if (rst_r) begin
     data_s_axis_tvalid_mon <= 1'b0;
-    data_m_axis_tvalid_mon <= 1'b0; 
-  end 
+    data_m_axis_tvalid_mon <= 1'b0;
+  end
 end
 
 axis_stat # (
@@ -1250,7 +1257,7 @@ axis_stat # (
   .FRAME_COUNT_WIDTH(32)
 ) incoming_stat_inst (
   .clk(clk),
-  .rst(rst),
+  .rst(rst_r),
   .clear(1'b0),
 
   .monitor_axis_tkeep (data_s_axis_tkeep_mon),
@@ -1272,7 +1279,7 @@ axis_stat # (
   .FRAME_COUNT_WIDTH(32)
 ) outgoing_stat_inst (
   .clk(clk),
-  .rst(rst),
+  .rst(rst_r),
   .clear(1'b0),
 
   .monitor_axis_tkeep (data_m_axis_tkeep_mon),

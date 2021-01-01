@@ -429,12 +429,20 @@ always @ (posedge pcie_clk)
     income_cores_rr <= income_cores_r & (~cores_to_be_reset_r);
 
 if (SEPARATE_CLOCKS) begin
+
+  wire sys_rst_r;
+  sync_reset sync_rst_inst ( 
+    .clk(sys_clk),
+    .rst(sys_rst),
+    .out(sys_rst_r)
+  );
+
   // Time domain crossing
   simple_async_fifo # (
     .DEPTH(4),
     .DATA_WIDTH(CORE_WIDTH+4)
   ) cores_reset_cmd_async_fifo (
-    .async_rst(sys_rst),
+    .async_rst(sys_rst_r),
   
     .din_clk(pcie_clk),
     .din_valid(host_cmd_valid_r),
@@ -452,7 +460,7 @@ if (SEPARATE_CLOCKS) begin
     .WIDTH(CORE_COUNT+CORE_COUNT+INTERFACE_WIDTH+2+CORE_WIDTH+4+32)
   ) scheduler_cmd_syncer (
     .dst_clk(sys_clk),
-    .dst_rst(sys_rst),
+    .dst_rst(sys_rst_r),
     .in({income_cores_rr, cores_to_be_reset_r, stat_read_interface_r, stat_read_addr_r, stat_read_core_r, host_cmd_data_r}),
     .out({income_cores, cores_to_be_reset, stat_read_interface, stat_read_addr, stat_read_core, host_cmd_data})
   );

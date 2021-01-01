@@ -11,7 +11,6 @@ SYN_FILES += rtl/riscv_block_PR.v
 SYN_FILES += rtl/RR_LU_scheduler_PR.v
 SYN_FILES += rtl/pcie_config.v
 SYN_FILES += rtl/debounce_switch.v
-SYN_FILES += rtl/sync_reset.v
 SYN_FILES += rtl/sync_signal.v
 SYN_FILES += lib/smartFPGA/rtl/riscvcore.v
 SYN_FILES += lib/smartFPGA/rtl/riscv_block.v
@@ -41,6 +40,7 @@ SYN_FILES += lib/smartFPGA/rtl/axis_fifo.v
 
 # SYN_FILES += lib/axis/rtl/axis_switch.v
 SYN_FILES += lib/axis/rtl/axis_arb_mux.v
+SYN_FILES += lib/axis/rtl/sync_reset.v
 # SYN_FILES += lib/axis/rtl/axis_fifo.v
 SYN_FILES += lib/axis/rtl/axis_fifo_adapter.v
 SYN_FILES += lib/axis/rtl/axis_register.v
@@ -87,6 +87,8 @@ SYN_FILES += lib/corundum/rtl/event_mux.v
 # XDC files
 XDC_FILES = fpga.xdc
 XDC_FILES += lib/axis/syn/axis_async_fifo.tcl
+XDC_FILES += lib/axis/syn/sync_reset.tcl
+XDC_FILES += lib/smartFPGA/syn/simple_sync_sig.tcl
 
 # IP
 IP_TCL_FILES = ip/pcie4_uscale_plus_0.tcl
