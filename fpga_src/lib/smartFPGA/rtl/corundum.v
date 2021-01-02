@@ -223,9 +223,9 @@ parameter RX_CPL_QUEUE_PIPELINE = RX_QUEUE_PIPELINE;
 
 // TX and RX engine parameters (port)
 parameter TX_DESC_TABLE_SIZE = 32;
-parameter TX_PKT_TABLE_SIZE  = 8;
+parameter TX_PKT_TABLE_SIZE  = 32;
 parameter RX_DESC_TABLE_SIZE = 32;
-parameter RX_PKT_TABLE_SIZE  = 8;
+parameter RX_PKT_TABLE_SIZE  = 32;
 
 // Scheduler parameters (port)
 parameter TX_SCHEDULER = "RR";

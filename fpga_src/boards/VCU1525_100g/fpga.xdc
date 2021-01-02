@@ -516,6 +516,7 @@ resize_pblock [get_pblocks pblock_35] -add {URAM288_X0Y104:URAM288_X0Y135}
 set_property HD.PARTPIN_RANGE {SLICE_X50Y390:SLICE_X54Y509} [get_pins core_inst/scheduler_PR_inst/*]
 set_property HD.PARTPIN_RANGE {SLICE_X13Y505:SLICE_X50Y509} [get_pins core_inst/scheduler_PR_inst/tx_axis*]
 set_property HD.PARTPIN_RANGE {SLICE_X13Y505:SLICE_X50Y509} [get_pins core_inst/scheduler_PR_inst/rx_axis*]
+set_property HD.PARTPIN_RANGE {SLICE_X13Y390:SLICE_X50Y394} [get_pins core_inst/scheduler_PR_inst/data_m*]
 set_property SNAPPING_MODE ON [get_pblocks pblock_35]
 set_property CONTAIN_ROUTING true [get_pblocks pblock_35]
 set_property IS_SOFT FALSE [get_pblocks pblock_35]
@@ -523,14 +524,20 @@ set_property IS_SOFT FALSE [get_pblocks pblock_35]
 create_pblock pblock_36
 add_cells_to_pblock [get_pblocks pblock_36] [get_cells -include_replicated_objects -quiet {core_inst/pcie_controller_inst/virtual_ports.corundum_inst/iface[0].interface_inst/port[0].port_inst/rx_checksum_inst/genblk1[*]}]
 add_cells_to_pblock [get_pblocks pblock_36] [get_cells -include_replicated_objects -quiet {core_inst/pcie_controller_inst/virtual_ports.corundum_inst/iface[0].interface_inst/port[0].port_inst/tx_checksum_inst/genblk1[*]}]
-add_cells_to_pblock [get_pblocks pblock_36] [get_cells {core_inst/pcie_config_inst core_inst/pcie_controller_inst/cq_reg core_inst/pcie_controller_inst/dma_if_pcie_us_inst core_inst/pcie_controller_inst/pcie_cont_read_inst core_inst/pcie_controller_inst/pcie_cont_write_inst core_inst/pcie_controller_inst/pcie_us_axil_master_inst core_inst/pcie_controller_inst/rc_reg core_inst/pcie_controller_inst/status_error_cor_pm_inst core_inst/pcie_controller_inst/status_error_uncor_pm_inst core_inst/pcie_controller_inst/virtual_ports.dma_if_mux_inst core_inst/pcie_controller_inst/virtual_ports.mac_fifos.tx_rx_fifos[0].rx_pipeline_reg/pipe_reg[1].reg_inst core_inst/pcie_controller_inst/virtual_ports.mac_fifos.tx_rx_fifos[0].tx_pipeline_reg/pipe_reg[0].reg_inst core_inst/stat_read_core_reg pcie4_uscale_plus_inst pcie_us_cfg_inst pcie_us_msi_inst}]
-resize_pblock [get_pblocks pblock_36] -add {SLICE_X109Y300:SLICE_X168Y599}
-resize_pblock [get_pblocks pblock_36] -add {DSP48E2_X14Y120:DSP48E2_X18Y239}
-resize_pblock [get_pblocks pblock_36] -add {LAGUNA_X16Y240:LAGUNA_X23Y479}
-resize_pblock [get_pblocks pblock_36] -add {RAMB18_X8Y120:RAMB18_X11Y239}
-resize_pblock [get_pblocks pblock_36] -add {RAMB36_X8Y60:RAMB36_X11Y119}
+add_cells_to_pblock [get_pblocks pblock_36] [get_cells -quiet [list core_inst/pcie_config_inst core_inst/pcie_controller_inst/virtual_ports.corundum_inst core_inst/pcie_controller_inst/pcie_cont_read_inst core_inst/pcie_controller_inst/pcie_cont_write_inst {core_inst/pcie_controller_inst/virtual_ports.mac_fifos.tx_rx_fifos[0].rx_pipeline_reg/pipe_reg[1].reg_inst} {core_inst/pcie_controller_inst/virtual_ports.mac_fifos.tx_rx_fifos[0].tx_pipeline_reg/pipe_reg[0].reg_inst}]]
+resize_pblock [get_pblocks pblock_36] -add {SLICE_X109Y300:SLICE_X139Y599}
+resize_pblock [get_pblocks pblock_36] -add {DSP48E2_X14Y120:DSP48E2_X15Y239}
+resize_pblock [get_pblocks pblock_36] -add {LAGUNA_X16Y240:LAGUNA_X19Y479}
+resize_pblock [get_pblocks pblock_36] -add {RAMB18_X8Y120:RAMB18_X9Y239}
+resize_pblock [get_pblocks pblock_36] -add {RAMB36_X8Y60:RAMB36_X9Y119}
 resize_pblock [get_pblocks pblock_36] -add {URAM288_X3Y80:URAM288_X3Y159}
 set_property IS_SOFT TRUE [get_pblocks pblock_36]
 
-set_false_path -from [get_cells core_inst/sys_rst_r_reg]
-set_false_path -from [get_cells core_inst/block_reset_reg[*]]
+create_pblock pblock_37
+add_cells_to_pblock [get_pblocks pblock_37] [get_cells -quiet [list core_inst/pcie_controller_inst/cq_reg core_inst/pcie_controller_inst/dma_if_pcie_us_inst core_inst/pcie_controller_inst/pcie_us_axil_master_inst core_inst/pcie_controller_inst/rc_reg core_inst/pcie_controller_inst/status_error_cor_pm_inst core_inst/pcie_controller_inst/status_error_uncor_pm_inst core_inst/pcie_controller_inst/virtual_ports.dma_if_mux_inst core_inst/stat_read_core_reg pcie4_uscale_plus_inst pcie_us_cfg_inst pcie_us_msi_inst]]
+resize_pblock [get_pblocks pblock_37] -add {SLICE_X140Y300:SLICE_X168Y599}
+resize_pblock [get_pblocks pblock_37] -add {DSP48E2_X16Y120:DSP48E2_X18Y239}
+resize_pblock [get_pblocks pblock_37] -add {PCIE40E4_X1Y2:PCIE40E4_X1Y2}
+resize_pblock [get_pblocks pblock_37] -add {RAMB18_X10Y120:RAMB18_X11Y239}
+resize_pblock [get_pblocks pblock_37] -add {RAMB36_X10Y60:RAMB36_X11Y119}
+set_property IS_SOFT TRUE [get_pblocks pblock_37]
