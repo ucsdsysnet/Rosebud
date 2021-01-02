@@ -44,6 +44,7 @@ add_files -norecurse {
   ../lib/eth/lib/axis/rtl/axis_register.v
   ../lib/eth/lib/axis/rtl/axis_pipeline_register.v
   ../lib/eth/lib/axis/rtl/priority_encoder.v
+  ../lib/eth/lib/axis/rtl/sync_reset.v
   ../lib/corundum/rtl/rx_hash.v
   ../lib/smartFPGA/rtl/axis_fifo.v
   ../lib/smartFPGA/rtl/simple_arbiter.v

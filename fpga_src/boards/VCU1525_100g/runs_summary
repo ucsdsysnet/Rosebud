@@ -43,4 +43,8 @@ Exclude placement for PRs, fails placement
 Without the false path in XDC: WNS=-0.044 | TNS=-7.365
 After sync_reset fixes: WNS=-0.045 | TNS=-9.661 
 
-
+3 corners with width of 4 Slices does better than 2 or 3 corners with width of 6
+width 6 instead of 4 makes it worse for 3 corners (WNS=-0.133 | TNS=-45.748 vs WNS=-0.002 | TNS=-0.006)
+extra false path makes things worse for 3 corners width 4 (WNS=-0.126 | TNS=-40.875)
+Split PCIe + URAM for corundum meets timing (WNS 0.15) for 3 corners and SLICE width 4 
+    (width 6 does worse: WNS=-0.038 | TNS=-3.680 )
