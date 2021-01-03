@@ -111,9 +111,8 @@ module scheduler_PR (
   wire                     ctrl_m_axis_tready_n;
   wire [CORE_ID_WIDTH-1:0] ctrl_m_axis_tdest_n;
 
-  // (* KEEP = "TRUE" *) 
   wire rst_r;
-  sync_reset sync_rst_inst ( 
+  sync_reset sync_rst_inst (
     .clk(clk),
     .rst(rst),
     .out(rst_r)

@@ -522,8 +522,6 @@ set_property CONTAIN_ROUTING true [get_pblocks pblock_35]
 set_property IS_SOFT FALSE [get_pblocks pblock_35]
 
 create_pblock pblock_36
-add_cells_to_pblock [get_pblocks pblock_36] [get_cells -include_replicated_objects -quiet {core_inst/pcie_controller_inst/virtual_ports.corundum_inst/iface[0].interface_inst/port[0].port_inst/rx_checksum_inst/genblk1[*]}]
-add_cells_to_pblock [get_pblocks pblock_36] [get_cells -include_replicated_objects -quiet {core_inst/pcie_controller_inst/virtual_ports.corundum_inst/iface[0].interface_inst/port[0].port_inst/tx_checksum_inst/genblk1[*]}]
 add_cells_to_pblock [get_pblocks pblock_36] [get_cells -quiet [list core_inst/pcie_config_inst core_inst/pcie_controller_inst/virtual_ports.corundum_inst core_inst/pcie_controller_inst/pcie_cont_read_inst core_inst/pcie_controller_inst/pcie_cont_write_inst {core_inst/pcie_controller_inst/virtual_ports.mac_fifos.tx_rx_fifos[0].rx_pipeline_reg/pipe_reg[1].reg_inst} {core_inst/pcie_controller_inst/virtual_ports.mac_fifos.tx_rx_fifos[0].tx_pipeline_reg/pipe_reg[0].reg_inst}]]
 resize_pblock [get_pblocks pblock_36] -add {SLICE_X109Y300:SLICE_X139Y599}
 resize_pblock [get_pblocks pblock_36] -add {DSP48E2_X14Y120:DSP48E2_X15Y239}
