@@ -92,6 +92,13 @@ reset_run riscv_block_PR_w_accel_synth_1
 launch_runs riscv_block_PR_w_accel_synth_1
 wait_on_run riscv_block_PR_w_accel_synth_1
 
+add_files -fileset utils_1 -norecurse ../lib/axis/syn/sync_reset.tcl
+add_files -fileset utils_1 -norecurse ../lib/smartFPGA/syn/simple_sync_sig.tcl
+set_property STEPS.OPT_DESIGN.TCL.PRE [ get_files ../lib/axis/syn/sync_reset.tcl -of [get_fileset utils_1] ] [get_runs impl_sched]
+set_property STEPS.OPT_DESIGN.TCL.PRE [ get_files ../lib/smartFPGA/syn/simple_sync_sig.tcl -of [get_fileset utils_1] ] [get_runs impl_sched]
+set_property STEPS.ROUTE_DESIGN.TCL.PRE [ get_files ../lib/axis/syn/sync_reset.tcl -of [get_fileset utils_1] ] [get_runs impl_sched]
+set_property STEPS.ROUTE_DESIGN.TCL.PRE [ get_files ../lib/smartFPGA/syn/simple_sync_sig.tcl -of [get_fileset utils_1] ] [get_runs impl_sched]
+
 reset_run impl_sched
 launch_runs impl_sched
 wait_on_run impl_sched

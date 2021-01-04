@@ -48,3 +48,11 @@ width 6 instead of 4 makes it worse for 3 corners (WNS=-0.133 | TNS=-45.748 vs W
 extra false path makes things worse for 3 corners width 4 (WNS=-0.126 | TNS=-40.875)
 Split PCIe + URAM for corundum meets timing (WNS 0.15) for 3 corners and SLICE width 4 
     (width 6 does worse: WNS=-0.038 | TNS=-3.680 )
+
+After other lib updates the WNS became 0.000 (makes no sense) but after removing the checksum rules in tcl it's back to 
+    0.015 and not closing routing for PR.
+Reversing the schedulers didn't help. before the checksum rule fix it make WNS 0.005 but failed TNS -1 for PR.
+Adding Laguna cells to pblock_37 made things worse (before last lib update it helped slightly)
+    with checksum rule tns -13, without -19
+Adding Exclude to pblock_37 still meets timing, with checksum rule 0.011, without 0.009
+    still doesn't meet timing for PR
