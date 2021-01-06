@@ -293,6 +293,10 @@ class TB(object):
         )
 
         # self.dev.log.setLevel(logging.DEBUG)
+        self.dev.rq_sink.log.setLevel(logging.WARNING)
+        self.dev.rc_source.log.setLevel(logging.WARNING)
+        self.dev.cq_source.log.setLevel(logging.WARNING)
+        self.dev.cc_sink.log.setLevel(logging.WARNING)
 
         self.rc.make_port().connect(self.dev)
 
