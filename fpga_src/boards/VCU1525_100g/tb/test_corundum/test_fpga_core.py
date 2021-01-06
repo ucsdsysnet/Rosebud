@@ -79,8 +79,6 @@ CHECK_PKT    = False
 DROP_RATE    = 1  #0.66
 TEST_PCIE    = False
 PRINT_PKTS   = True
-FIRMWARE     = "../../../../../../c_code/basic_fw.bin"
-# FIRMWARE     = "../../../../../accel/full_ids/c/full_ids_ins.bin"
 
 PATTERNS     = [
     b"GET AAAAAAAA HTTP/1.1",
@@ -91,7 +89,7 @@ PATTERNS     = [
 PACKETS = []
 
 
-FIRMWARE = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..', '..', '..', 'c_code', 'basic_fw.bin'))
+FIRMWARE = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..', '..', '..', 'c_code', 'basic_corundum_fw_ins.bin'))
 
 
 class TB(object):
