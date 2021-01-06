@@ -237,7 +237,7 @@ parameter AXIL_ADDR_WIDTH     = BAR0_APERTURE;
 parameter CORE_WIDTH      = $clog2(CORE_COUNT);
 parameter PORT_WIDTH      = $clog2(PORT_COUNT);
 parameter DRAM_PORT       = PORT_COUNT-1;
-parameter SLOT_COUNT      = 8;
+parameter SLOT_COUNT      = 16;
 parameter SLOT_WIDTH      = $clog2(SLOT_COUNT+1);
 parameter TAG_WIDTH       = (SLOT_WIDTH>5)? SLOT_WIDTH:5;
 
