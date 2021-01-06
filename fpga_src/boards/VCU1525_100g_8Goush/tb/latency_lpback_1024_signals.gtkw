@@ -1,0 +1,262 @@
+[*]
+[*] GTKWave Analyzer v3.3.86 (w)1999-2017 BSI
+[*] Fri Apr 17 18:55:30 2020
+[*]
+[dumpfile] "/home/moein/BumpinTheWire/fpga_src/boards/VCU1525_100g/tb/latency_lpback_1024.lxt"
+[dumpfile_mtime] "Fri Apr 17 02:38:21 2020"
+[dumpfile_size] 35303770
+[savefile] "/home/moein/BumpinTheWire/fpga_src/boards/VCU1525_100g/tb/latency_lpback_1024_signals.gtkw"
+[timestart] 46920200
+[size] 1536 801
+[pos] -35 -35
+*-16.000000 47098002 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] test_fpga_core.
+[treeopen] test_fpga_core.UUT.
+[treeopen] test_fpga_core.UUT.data_out_sw.
+[treeopen] test_fpga_core.UUT.MAC_async_FIFO[0].
+[treeopen] test_fpga_core.UUT.riscv_cores[8].
+[treeopen] test_fpga_core.UUT.riscv_cores[8].pr_wrapper.
+[treeopen] test_fpga_core.UUT.riscv_cores[8].pr_wrapper.riscv_block_inst.
+[sst_width] 213
+[signals_width] 190
+[sst_expanded] 1
+[sst_vpaned_height] 222
+@28
+test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.m_clk[0]
+@800022
+test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.m_axis_tdata[511:0]
+@c00022
+#{time_stamp} (480)test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.m_axis_tdata[511:0] (481)test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.m_axis_tdata[511:0] (482)test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.m_axis_tdata[511:0] (483)test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.m_axis_tdata[511:0] (484)test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.m_axis_tdata[511:0] (485)test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.m_axis_tdata[511:0] (486)test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.m_axis_tdata[511:0] (487)test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.m_axis_tdata[511:0] (488)test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.m_axis_tdata[511:0] (489)test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.m_axis_tdata[511:0] (490)test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.m_axis_tdata[511:0] (491)test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.m_axis_tdata[511:0] (492)test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.m_axis_tdata[511:0] (493)test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.m_axis_tdata[511:0] (494)test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.m_axis_tdata[511:0] (495)test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.m_axis_tdata[511:0] (496)test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.m_axis_tdata[511:0] (497)test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.m_axis_tdata[511:0] (498)test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.m_axis_tdata[511:0] (499)test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.m_axis_tdata[511:0] (500)test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.m_axis_tdata[511:0] (501)test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.m_axis_tdata[511:0] (502)test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.m_axis_tdata[511:0] (503)test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.m_axis_tdata[511:0] (504)test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.m_axis_tdata[511:0] (505)test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.m_axis_tdata[511:0] (506)test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.m_axis_tdata[511:0] (507)test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.m_axis_tdata[511:0] (508)test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.m_axis_tdata[511:0] (509)test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.m_axis_tdata[511:0] (510)test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.m_axis_tdata[511:0] (511)test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.m_axis_tdata[511:0]
+@28
+(480)test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.m_axis_tdata[511:0]
+(481)test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.m_axis_tdata[511:0]
+(482)test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.m_axis_tdata[511:0]
+(483)test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.m_axis_tdata[511:0]
+(484)test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.m_axis_tdata[511:0]
+(485)test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.m_axis_tdata[511:0]
+(486)test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.m_axis_tdata[511:0]
+(487)test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.m_axis_tdata[511:0]
+(488)test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.m_axis_tdata[511:0]
+(489)test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.m_axis_tdata[511:0]
+(490)test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.m_axis_tdata[511:0]
+(491)test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.m_axis_tdata[511:0]
+(492)test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.m_axis_tdata[511:0]
+(493)test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.m_axis_tdata[511:0]
+(494)test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.m_axis_tdata[511:0]
+(495)test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.m_axis_tdata[511:0]
+(496)test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.m_axis_tdata[511:0]
+(497)test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.m_axis_tdata[511:0]
+(498)test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.m_axis_tdata[511:0]
+(499)test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.m_axis_tdata[511:0]
+(500)test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.m_axis_tdata[511:0]
+(501)test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.m_axis_tdata[511:0]
+(502)test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.m_axis_tdata[511:0]
+(503)test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.m_axis_tdata[511:0]
+(504)test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.m_axis_tdata[511:0]
+(505)test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.m_axis_tdata[511:0]
+(506)test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.m_axis_tdata[511:0]
+(507)test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.m_axis_tdata[511:0]
+(508)test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.m_axis_tdata[511:0]
+(509)test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.m_axis_tdata[511:0]
+(510)test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.m_axis_tdata[511:0]
+(511)test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.m_axis_tdata[511:0]
+@1401200
+-group_end
+@1001200
+-group_end
+@28
+test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.m_axis_tlast[0]
+test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.m_axis_tready[0]
+test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.m_axis_tvalid[0]
+test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.full_cur[0]
+test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.s_clk[0]
+@800022
+test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.s_axis_tdata[511:0]
+@c00022
+#{time_stamp} (480)test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.s_axis_tdata[511:0] (481)test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.s_axis_tdata[511:0] (482)test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.s_axis_tdata[511:0] (483)test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.s_axis_tdata[511:0] (484)test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.s_axis_tdata[511:0] (485)test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.s_axis_tdata[511:0] (486)test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.s_axis_tdata[511:0] (487)test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.s_axis_tdata[511:0] (488)test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.s_axis_tdata[511:0] (489)test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.s_axis_tdata[511:0] (490)test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.s_axis_tdata[511:0] (491)test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.s_axis_tdata[511:0] (492)test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.s_axis_tdata[511:0] (493)test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.s_axis_tdata[511:0] (494)test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.s_axis_tdata[511:0] (495)test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.s_axis_tdata[511:0] (496)test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.s_axis_tdata[511:0] (497)test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.s_axis_tdata[511:0] (498)test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.s_axis_tdata[511:0] (499)test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.s_axis_tdata[511:0] (500)test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.s_axis_tdata[511:0] (501)test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.s_axis_tdata[511:0] (502)test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.s_axis_tdata[511:0] (503)test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.s_axis_tdata[511:0] (504)test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.s_axis_tdata[511:0] (505)test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.s_axis_tdata[511:0] (506)test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.s_axis_tdata[511:0] (507)test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.s_axis_tdata[511:0] (508)test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.s_axis_tdata[511:0] (509)test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.s_axis_tdata[511:0] (510)test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.s_axis_tdata[511:0] (511)test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.s_axis_tdata[511:0]
+@28
+(480)test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.s_axis_tdata[511:0]
+(481)test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.s_axis_tdata[511:0]
+(482)test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.s_axis_tdata[511:0]
+(483)test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.s_axis_tdata[511:0]
+(484)test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.s_axis_tdata[511:0]
+(485)test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.s_axis_tdata[511:0]
+(486)test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.s_axis_tdata[511:0]
+(487)test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.s_axis_tdata[511:0]
+(488)test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.s_axis_tdata[511:0]
+(489)test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.s_axis_tdata[511:0]
+(490)test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.s_axis_tdata[511:0]
+(491)test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.s_axis_tdata[511:0]
+(492)test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.s_axis_tdata[511:0]
+(493)test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.s_axis_tdata[511:0]
+(494)test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.s_axis_tdata[511:0]
+(495)test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.s_axis_tdata[511:0]
+(496)test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.s_axis_tdata[511:0]
+(497)test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.s_axis_tdata[511:0]
+(498)test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.s_axis_tdata[511:0]
+(499)test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.s_axis_tdata[511:0]
+(500)test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.s_axis_tdata[511:0]
+(501)test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.s_axis_tdata[511:0]
+(502)test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.s_axis_tdata[511:0]
+(503)test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.s_axis_tdata[511:0]
+(504)test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.s_axis_tdata[511:0]
+(505)test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.s_axis_tdata[511:0]
+(506)test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.s_axis_tdata[511:0]
+(507)test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.s_axis_tdata[511:0]
+(508)test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.s_axis_tdata[511:0]
+(509)test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.s_axis_tdata[511:0]
+(510)test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.s_axis_tdata[511:0]
+(511)test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.s_axis_tdata[511:0]
+@1401200
+-group_end
+@1001200
+-group_end
+@28
+test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.s_axis_tlast[0]
+test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.s_axis_tready[0]
+test_fpga_core.UUT.MAC_async_FIFO[0].mac_tx_fifo_inst.s_axis_tvalid[0]
+@800022
+test_fpga_core.UUT.data_out_sw.m_axis_tdata[2559:0]
+@c00022
+#{time_stamp} (2528)test_fpga_core.UUT.data_out_sw.m_axis_tdata[2559:0] (2529)test_fpga_core.UUT.data_out_sw.m_axis_tdata[2559:0] (2530)test_fpga_core.UUT.data_out_sw.m_axis_tdata[2559:0] (2531)test_fpga_core.UUT.data_out_sw.m_axis_tdata[2559:0] (2532)test_fpga_core.UUT.data_out_sw.m_axis_tdata[2559:0] (2533)test_fpga_core.UUT.data_out_sw.m_axis_tdata[2559:0] (2534)test_fpga_core.UUT.data_out_sw.m_axis_tdata[2559:0] (2535)test_fpga_core.UUT.data_out_sw.m_axis_tdata[2559:0] (2536)test_fpga_core.UUT.data_out_sw.m_axis_tdata[2559:0] (2537)test_fpga_core.UUT.data_out_sw.m_axis_tdata[2559:0] (2538)test_fpga_core.UUT.data_out_sw.m_axis_tdata[2559:0] (2539)test_fpga_core.UUT.data_out_sw.m_axis_tdata[2559:0] (2540)test_fpga_core.UUT.data_out_sw.m_axis_tdata[2559:0] (2541)test_fpga_core.UUT.data_out_sw.m_axis_tdata[2559:0] (2542)test_fpga_core.UUT.data_out_sw.m_axis_tdata[2559:0] (2543)test_fpga_core.UUT.data_out_sw.m_axis_tdata[2559:0] (2544)test_fpga_core.UUT.data_out_sw.m_axis_tdata[2559:0] (2545)test_fpga_core.UUT.data_out_sw.m_axis_tdata[2559:0] (2546)test_fpga_core.UUT.data_out_sw.m_axis_tdata[2559:0] (2547)test_fpga_core.UUT.data_out_sw.m_axis_tdata[2559:0] (2548)test_fpga_core.UUT.data_out_sw.m_axis_tdata[2559:0] (2549)test_fpga_core.UUT.data_out_sw.m_axis_tdata[2559:0] (2550)test_fpga_core.UUT.data_out_sw.m_axis_tdata[2559:0] (2551)test_fpga_core.UUT.data_out_sw.m_axis_tdata[2559:0] (2552)test_fpga_core.UUT.data_out_sw.m_axis_tdata[2559:0] (2553)test_fpga_core.UUT.data_out_sw.m_axis_tdata[2559:0] (2554)test_fpga_core.UUT.data_out_sw.m_axis_tdata[2559:0] (2555)test_fpga_core.UUT.data_out_sw.m_axis_tdata[2559:0] (2556)test_fpga_core.UUT.data_out_sw.m_axis_tdata[2559:0] (2557)test_fpga_core.UUT.data_out_sw.m_axis_tdata[2559:0] (2558)test_fpga_core.UUT.data_out_sw.m_axis_tdata[2559:0] (2559)test_fpga_core.UUT.data_out_sw.m_axis_tdata[2559:0]
+@28
+(2528)test_fpga_core.UUT.data_out_sw.m_axis_tdata[2559:0]
+(2529)test_fpga_core.UUT.data_out_sw.m_axis_tdata[2559:0]
+(2530)test_fpga_core.UUT.data_out_sw.m_axis_tdata[2559:0]
+(2531)test_fpga_core.UUT.data_out_sw.m_axis_tdata[2559:0]
+(2532)test_fpga_core.UUT.data_out_sw.m_axis_tdata[2559:0]
+(2533)test_fpga_core.UUT.data_out_sw.m_axis_tdata[2559:0]
+(2534)test_fpga_core.UUT.data_out_sw.m_axis_tdata[2559:0]
+(2535)test_fpga_core.UUT.data_out_sw.m_axis_tdata[2559:0]
+(2536)test_fpga_core.UUT.data_out_sw.m_axis_tdata[2559:0]
+(2537)test_fpga_core.UUT.data_out_sw.m_axis_tdata[2559:0]
+(2538)test_fpga_core.UUT.data_out_sw.m_axis_tdata[2559:0]
+(2539)test_fpga_core.UUT.data_out_sw.m_axis_tdata[2559:0]
+(2540)test_fpga_core.UUT.data_out_sw.m_axis_tdata[2559:0]
+(2541)test_fpga_core.UUT.data_out_sw.m_axis_tdata[2559:0]
+(2542)test_fpga_core.UUT.data_out_sw.m_axis_tdata[2559:0]
+(2543)test_fpga_core.UUT.data_out_sw.m_axis_tdata[2559:0]
+(2544)test_fpga_core.UUT.data_out_sw.m_axis_tdata[2559:0]
+(2545)test_fpga_core.UUT.data_out_sw.m_axis_tdata[2559:0]
+(2546)test_fpga_core.UUT.data_out_sw.m_axis_tdata[2559:0]
+(2547)test_fpga_core.UUT.data_out_sw.m_axis_tdata[2559:0]
+(2548)test_fpga_core.UUT.data_out_sw.m_axis_tdata[2559:0]
+(2549)test_fpga_core.UUT.data_out_sw.m_axis_tdata[2559:0]
+(2550)test_fpga_core.UUT.data_out_sw.m_axis_tdata[2559:0]
+(2551)test_fpga_core.UUT.data_out_sw.m_axis_tdata[2559:0]
+(2552)test_fpga_core.UUT.data_out_sw.m_axis_tdata[2559:0]
+(2553)test_fpga_core.UUT.data_out_sw.m_axis_tdata[2559:0]
+(2554)test_fpga_core.UUT.data_out_sw.m_axis_tdata[2559:0]
+(2555)test_fpga_core.UUT.data_out_sw.m_axis_tdata[2559:0]
+(2556)test_fpga_core.UUT.data_out_sw.m_axis_tdata[2559:0]
+(2557)test_fpga_core.UUT.data_out_sw.m_axis_tdata[2559:0]
+(2558)test_fpga_core.UUT.data_out_sw.m_axis_tdata[2559:0]
+(2559)test_fpga_core.UUT.data_out_sw.m_axis_tdata[2559:0]
+@1401200
+-group_end
+@1001200
+-group_end
+@800022
+test_fpga_core.UUT.data_out_sw.m_axis_tlast[4:0]
+@28
+(4)test_fpga_core.UUT.data_out_sw.m_axis_tlast[4:0]
+@1001200
+-group_end
+@800022
+test_fpga_core.UUT.data_out_sw.m_axis_tready[4:0]
+@28
+(4)test_fpga_core.UUT.data_out_sw.m_axis_tready[4:0]
+@1001200
+-group_end
+@800022
+test_fpga_core.UUT.data_out_sw.m_axis_tuser[44:0]
+@c00022
+#{Core} (36)test_fpga_core.UUT.data_out_sw.m_axis_tuser[44:0] (37)test_fpga_core.UUT.data_out_sw.m_axis_tuser[44:0] (38)test_fpga_core.UUT.data_out_sw.m_axis_tuser[44:0] (39)test_fpga_core.UUT.data_out_sw.m_axis_tuser[44:0]
+@28
+(36)test_fpga_core.UUT.data_out_sw.m_axis_tuser[44:0]
+(37)test_fpga_core.UUT.data_out_sw.m_axis_tuser[44:0]
+(38)test_fpga_core.UUT.data_out_sw.m_axis_tuser[44:0]
+(39)test_fpga_core.UUT.data_out_sw.m_axis_tuser[44:0]
+@1401200
+-group_end
+@c00022
+#{Slot} (40)test_fpga_core.UUT.data_out_sw.m_axis_tuser[44:0] (41)test_fpga_core.UUT.data_out_sw.m_axis_tuser[44:0] (42)test_fpga_core.UUT.data_out_sw.m_axis_tuser[44:0] (43)test_fpga_core.UUT.data_out_sw.m_axis_tuser[44:0] (44)test_fpga_core.UUT.data_out_sw.m_axis_tuser[44:0]
+@28
+(40)test_fpga_core.UUT.data_out_sw.m_axis_tuser[44:0]
+(41)test_fpga_core.UUT.data_out_sw.m_axis_tuser[44:0]
+(42)test_fpga_core.UUT.data_out_sw.m_axis_tuser[44:0]
+(43)test_fpga_core.UUT.data_out_sw.m_axis_tuser[44:0]
+(44)test_fpga_core.UUT.data_out_sw.m_axis_tuser[44:0]
+@1401200
+-group_end
+@1001200
+-group_end
+@800022
+test_fpga_core.UUT.data_out_sw.m_axis_tvalid[4:0]
+@28
+(4)test_fpga_core.UUT.data_out_sw.m_axis_tvalid[4:0]
+@1001200
+-group_end
+@800022
+test_fpga_core.UUT.data_out_sw.s_axis_tdata[2047:0]
+@c00023
+#{Core8_time_stamp} (992)test_fpga_core.UUT.data_out_sw.s_axis_tdata[2047:0] (993)test_fpga_core.UUT.data_out_sw.s_axis_tdata[2047:0] (994)test_fpga_core.UUT.data_out_sw.s_axis_tdata[2047:0] (995)test_fpga_core.UUT.data_out_sw.s_axis_tdata[2047:0] (996)test_fpga_core.UUT.data_out_sw.s_axis_tdata[2047:0] (997)test_fpga_core.UUT.data_out_sw.s_axis_tdata[2047:0] (998)test_fpga_core.UUT.data_out_sw.s_axis_tdata[2047:0] (999)test_fpga_core.UUT.data_out_sw.s_axis_tdata[2047:0] (1000)test_fpga_core.UUT.data_out_sw.s_axis_tdata[2047:0] (1001)test_fpga_core.UUT.data_out_sw.s_axis_tdata[2047:0] (1002)test_fpga_core.UUT.data_out_sw.s_axis_tdata[2047:0] (1003)test_fpga_core.UUT.data_out_sw.s_axis_tdata[2047:0] (1004)test_fpga_core.UUT.data_out_sw.s_axis_tdata[2047:0] (1005)test_fpga_core.UUT.data_out_sw.s_axis_tdata[2047:0] (1006)test_fpga_core.UUT.data_out_sw.s_axis_tdata[2047:0] (1007)test_fpga_core.UUT.data_out_sw.s_axis_tdata[2047:0] (1008)test_fpga_core.UUT.data_out_sw.s_axis_tdata[2047:0] (1009)test_fpga_core.UUT.data_out_sw.s_axis_tdata[2047:0] (1010)test_fpga_core.UUT.data_out_sw.s_axis_tdata[2047:0] (1011)test_fpga_core.UUT.data_out_sw.s_axis_tdata[2047:0] (1012)test_fpga_core.UUT.data_out_sw.s_axis_tdata[2047:0] (1013)test_fpga_core.UUT.data_out_sw.s_axis_tdata[2047:0] (1014)test_fpga_core.UUT.data_out_sw.s_axis_tdata[2047:0] (1015)test_fpga_core.UUT.data_out_sw.s_axis_tdata[2047:0] (1016)test_fpga_core.UUT.data_out_sw.s_axis_tdata[2047:0] (1017)test_fpga_core.UUT.data_out_sw.s_axis_tdata[2047:0] (1018)test_fpga_core.UUT.data_out_sw.s_axis_tdata[2047:0] (1019)test_fpga_core.UUT.data_out_sw.s_axis_tdata[2047:0] (1020)test_fpga_core.UUT.data_out_sw.s_axis_tdata[2047:0] (1021)test_fpga_core.UUT.data_out_sw.s_axis_tdata[2047:0] (1022)test_fpga_core.UUT.data_out_sw.s_axis_tdata[2047:0] (1023)test_fpga_core.UUT.data_out_sw.s_axis_tdata[2047:0]
+@28
+(992)test_fpga_core.UUT.data_out_sw.s_axis_tdata[2047:0]
+(993)test_fpga_core.UUT.data_out_sw.s_axis_tdata[2047:0]
+(994)test_fpga_core.UUT.data_out_sw.s_axis_tdata[2047:0]
+(995)test_fpga_core.UUT.data_out_sw.s_axis_tdata[2047:0]
+(996)test_fpga_core.UUT.data_out_sw.s_axis_tdata[2047:0]
+(997)test_fpga_core.UUT.data_out_sw.s_axis_tdata[2047:0]
+(998)test_fpga_core.UUT.data_out_sw.s_axis_tdata[2047:0]
+(999)test_fpga_core.UUT.data_out_sw.s_axis_tdata[2047:0]
+(1000)test_fpga_core.UUT.data_out_sw.s_axis_tdata[2047:0]
+(1001)test_fpga_core.UUT.data_out_sw.s_axis_tdata[2047:0]
+(1002)test_fpga_core.UUT.data_out_sw.s_axis_tdata[2047:0]
+(1003)test_fpga_core.UUT.data_out_sw.s_axis_tdata[2047:0]
+(1004)test_fpga_core.UUT.data_out_sw.s_axis_tdata[2047:0]
+(1005)test_fpga_core.UUT.data_out_sw.s_axis_tdata[2047:0]
+(1006)test_fpga_core.UUT.data_out_sw.s_axis_tdata[2047:0]
+(1007)test_fpga_core.UUT.data_out_sw.s_axis_tdata[2047:0]
+(1008)test_fpga_core.UUT.data_out_sw.s_axis_tdata[2047:0]
+(1009)test_fpga_core.UUT.data_out_sw.s_axis_tdata[2047:0]
+(1010)test_fpga_core.UUT.data_out_sw.s_axis_tdata[2047:0]
+(1011)test_fpga_core.UUT.data_out_sw.s_axis_tdata[2047:0]
+(1012)test_fpga_core.UUT.data_out_sw.s_axis_tdata[2047:0]
+(1013)test_fpga_core.UUT.data_out_sw.s_axis_tdata[2047:0]
+(1014)test_fpga_core.UUT.data_out_sw.s_axis_tdata[2047:0]
+(1015)test_fpga_core.UUT.data_out_sw.s_axis_tdata[2047:0]
+(1016)test_fpga_core.UUT.data_out_sw.s_axis_tdata[2047:0]
+(1017)test_fpga_core.UUT.data_out_sw.s_axis_tdata[2047:0]
+(1018)test_fpga_core.UUT.data_out_sw.s_axis_tdata[2047:0]
+(1019)test_fpga_core.UUT.data_out_sw.s_axis_tdata[2047:0]
+(1020)test_fpga_core.UUT.data_out_sw.s_axis_tdata[2047:0]
+(1021)test_fpga_core.UUT.data_out_sw.s_axis_tdata[2047:0]
+(1022)test_fpga_core.UUT.data_out_sw.s_axis_tdata[2047:0]
+(1023)test_fpga_core.UUT.data_out_sw.s_axis_tdata[2047:0]
+@1401201
+-group_end
+@1001200
+-group_end
+@800022
+test_fpga_core.UUT.data_out_sw.s_axis_tlast[15:0]
+@28
+(7)test_fpga_core.UUT.data_out_sw.s_axis_tlast[15:0]
+@1001200
+-group_end
+@800022
+test_fpga_core.UUT.data_out_sw.s_axis_tready[15:0]
+@28
+(7)test_fpga_core.UUT.data_out_sw.s_axis_tready[15:0]
+@1001200
+-group_end
+@800022
+test_fpga_core.UUT.data_out_sw.s_axis_tvalid[15:0]
+@28
+(7)test_fpga_core.UUT.data_out_sw.s_axis_tvalid[15:0]
+@1001200
+-group_end
+@22
+test_fpga_core.UUT.riscv_cores[8].pr_wrapper.riscv_block_inst.core.internal_timer[63:0]
+[pattern_trace] 1
+[pattern_trace] 0
