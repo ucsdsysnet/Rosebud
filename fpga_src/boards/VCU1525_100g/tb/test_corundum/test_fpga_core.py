@@ -556,7 +556,7 @@ def test_fpga_core(request):
     )
 
 
-def run_test(parameters=None, sim_build="sim_build", waves=None, force_compile=False):
+def run_test(parameters=None, sim_build="sim_build", waves=None, force_compile=False, extra_env=None):
     dut = "fpga_core"
     module = os.path.splitext(os.path.basename(__file__))[0]
     toplevel = f"test_{dut}"
@@ -661,7 +661,9 @@ def run_test(parameters=None, sim_build="sim_build", waves=None, force_compile=F
     parameters.setdefault('AXIS_ETH_KEEP_WIDTH', parameters['AXIS_ETH_DATA_WIDTH'] // 8)
     parameters.setdefault('TB_LOG', 0)
 
-    extra_env = {f'PARAM_{k}': str(v) for k, v in parameters.items()}
+    if extra_env is None:
+        extra_env = {}
+    extra_env.update({f'PARAM_{k}': str(v) for k, v in parameters.items()})
 
     sim_build = os.path.join(tests_dir, sim_build)
 
@@ -698,6 +700,7 @@ if __name__ == '__main__':
     parser.add_argument('--waves', type=bool)
     parser.add_argument('--sim_build', type=str, default="sim_build")
     parser.add_argument('--force_compile', type=bool, default=True)
+    parser.add_argument('--reduced_log', type=bool)
     parser.add_argument('--clean', action='store_true')
 
     args = vars(parser.parse_args())
@@ -710,5 +713,11 @@ if __name__ == '__main__':
         sim_build = args.pop("sim_build")
         waves = args.pop("waves")
         force_compile = args.pop("force_compile")
+        reduced_log = args.pop("reduced_log")
 
-        run_test(args, sim_build, waves, force_compile)
+        extra_env = {}
+
+        if reduced_log is not None:
+            extra_env['COCOTB_REDUCED_LOG_FMT'] = str(int(reduced_log))
+
+        run_test(args, sim_build, waves, force_compile, extra_env)
