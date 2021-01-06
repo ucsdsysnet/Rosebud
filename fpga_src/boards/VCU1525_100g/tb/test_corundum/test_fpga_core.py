@@ -533,8 +533,8 @@ async def run_test_nic(dut):
 
     tb.loopback_enable = False
 
-    await RisingEdge(dut.clk_250mhz)
-    await RisingEdge(dut.clk_250mhz)
+    await RisingEdge(dut.pcie_clk)
+    await RisingEdge(dut.pcie_clk)
 
 
 # cocotb-test
