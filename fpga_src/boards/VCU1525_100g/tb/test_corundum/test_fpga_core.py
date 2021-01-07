@@ -477,7 +477,8 @@ async def run_test_nic(dut):
 
     count = 64
 
-    pkts = [bytearray([(x+k) % 256 for x in range(60)]) for k in range(count)]
+    pkts = [bytes([(x+k) % 256 for x in range(60)]) for k in range(count)]
+    pkts_set = set(pkts)
 
     tb.loopback_enable = True
 
@@ -488,7 +489,8 @@ async def run_test_nic(dut):
         pkt = await tb.driver.interfaces[0].recv()
 
         tb.log.info("Packet: %s", pkt)
-        assert pkt.data == pkts[k]
+        assert pkt.data in pkts_set
+        pkts_set.remove(pkt.data)
         assert pkt.rx_checksum == ~scapy.utils.checksum(bytes(pkt.data[14:])) & 0xffff
 
     tb.loopback_enable = False
@@ -497,7 +499,8 @@ async def run_test_nic(dut):
 
     count = 64
 
-    pkts = [bytearray([(x+k) % 256 for x in range(1514)]) for k in range(count)]
+    pkts = [bytes([(x+k) % 256 for x in range(1514)]) for k in range(count)]
+    pkts_set = set(pkts)
 
     tb.loopback_enable = True
 
@@ -508,7 +511,8 @@ async def run_test_nic(dut):
         pkt = await tb.driver.interfaces[0].recv()
 
         tb.log.info("Packet: %s", pkt)
-        assert pkt.data == pkts[k]
+        assert pkt.data in pkts_set
+        pkts_set.remove(pkt.data)
         assert pkt.rx_checksum == ~scapy.utils.checksum(bytes(pkt.data[14:])) & 0xffff
 
     tb.loopback_enable = False
@@ -517,7 +521,8 @@ async def run_test_nic(dut):
 
     count = 64
 
-    pkts = [bytearray([(x+k) % 256 for x in range(9014)]) for k in range(count)]
+    pkts = [bytes([(x+k) % 256 for x in range(9014)]) for k in range(count)]
+    pkts_set = set(pkts)
 
     tb.loopback_enable = True
 
@@ -528,7 +533,8 @@ async def run_test_nic(dut):
         pkt = await tb.driver.interfaces[0].recv()
 
         tb.log.info("Packet: %s", pkt)
-        assert pkt.data == pkts[k]
+        assert pkt.data in pkts_set
+        pkts_set.remove(pkt.data)
         assert pkt.rx_checksum == ~scapy.utils.checksum(bytes(pkt.data[14:])) & 0xffff
 
     tb.loopback_enable = False
