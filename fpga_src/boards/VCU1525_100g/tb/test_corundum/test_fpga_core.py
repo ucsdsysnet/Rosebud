@@ -387,38 +387,51 @@ async def run_test_nic(dut):
         ins = bytearray(f.read())
     mem_data[0:len(ins)] = ins
 
-    # enable DMA
+    tb.log.info("Enable DMA")
     await tb.rc.mem_write_dword(dev_pf0_bar0+0x000400, 1)
 
     await tb.rc.mem_write_dword(dev_pf0_bar0+0x000410, 0xffff)
     await tb.rc.mem_write_dword(dev_pf0_bar0+0x000404, 0x0001)
     await Timer(100, 'ns')
 
-    # Load instruction memories
     for i in range(0, 16):
+        tb.log.info("Assert reset on core %d", i)
         await tb.rc.mem_write_dword(dev_pf0_bar0+0x000408, ((i << 8) | 0xf))
-        await Timer(20, 'ns')
-        # write pcie read descriptor
+
+    await Timer(20, 'ns')
+
+    tb.log.info("Load core memories")
+    for i in range(0, 16):
+        tb.log.info("Load firmware on core %d", i)
+
+        tb.log.info("Start DMA transfer to core %d", i)
         await tb.rc.mem_write_dword(dev_pf0_bar0+0x000440, (mem_base+0x0000) & 0xffffffff)
         await tb.rc.mem_write_dword(dev_pf0_bar0+0x000444, (mem_base+0x0000 >> 32) & 0xffffffff)
         await tb.rc.mem_write_dword(dev_pf0_bar0+0x000448, ((i << 26)+(1 << 25)) & 0xffffffff)
         await tb.rc.mem_write_dword(dev_pf0_bar0+0x000450, len(ins))
         await tb.rc.mem_write_dword(dev_pf0_bar0+0x000454, 0xAA)
-        await Timer(1000, 'ns')
+
+        tb.log.info("Wait for transfer to complete...")
+        while await tb.rc.mem_read_dword(dev_pf0_bar0+0x000458) != 0xAA:
+            pass
+        tb.log.info("Done")
 
     await tb.rc.mem_write_dword(dev_pf0_bar0+0x000404, 0x0000)
     await Timer(100, 'ns')
 
     for i in range(0, 16):
-        await tb.rc.mem_write_dword(dev_pf0_bar0+0x000408, ((i<<8)|0xf))
+        tb.log.info("Release reset on core %d", i)
+        await tb.rc.mem_write_dword(dev_pf0_bar0+0x000408, ((i << 8) | 0xf))
 
     await Timer(2000, 'ns')
     await tb.rc.mem_write_dword(dev_pf0_bar0+0x000404, 0x1234ABCD)
 
-    # core enable mask
+    tb.log.info("Set core enable mask")
     await tb.rc.mem_write_dword(dev_pf0_bar0+0x00040C, 0xffff)
 
     await tb.rc.mem_write_dword(dev_pf0_bar0+0x000410, 0x0000)
+
+    tb.log.info("Done loading firmware")
 
     tb.log.info("Init driver")
     await tb.driver.init_dev(tb.dev.functions[0].pcie_id)
