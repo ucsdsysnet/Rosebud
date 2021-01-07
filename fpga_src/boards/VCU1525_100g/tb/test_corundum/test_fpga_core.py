@@ -51,6 +51,7 @@ from cocotbext.pcie.core import RootComplex
 from cocotbext.pcie.xilinx.us import UltraScalePlusPcieDevice
 
 from cocotbext.axi import AxiStreamSource, AxiStreamSink
+from cocotbext.axi.utils import hexdump_str
 
 try:
     import mqnic
@@ -488,7 +489,7 @@ async def run_test_nic(dut):
     for k in range(count):
         pkt = await tb.driver.interfaces[0].recv()
 
-        tb.log.info("Packet: %s", pkt)
+        tb.log.debug("%s", hexdump_str(bytes(pkt), row_size=32))
         assert pkt.data in pkts_set
         pkts_set.remove(pkt.data)
         assert pkt.rx_checksum == ~scapy.utils.checksum(bytes(pkt.data[14:])) & 0xffff
@@ -510,7 +511,7 @@ async def run_test_nic(dut):
     for k in range(count):
         pkt = await tb.driver.interfaces[0].recv()
 
-        tb.log.info("Packet: %s", pkt)
+        tb.log.debug("%s", hexdump_str(bytes(pkt), row_size=32))
         assert pkt.data in pkts_set
         pkts_set.remove(pkt.data)
         assert pkt.rx_checksum == ~scapy.utils.checksum(bytes(pkt.data[14:])) & 0xffff
@@ -532,7 +533,7 @@ async def run_test_nic(dut):
     for k in range(count):
         pkt = await tb.driver.interfaces[0].recv()
 
-        tb.log.info("Packet: %s", pkt)
+        tb.log.debug("%s", hexdump_str(bytes(pkt), row_size=32))
         assert pkt.data in pkts_set
         pkts_set.remove(pkt.data)
         assert pkt.rx_checksum == ~scapy.utils.checksum(bytes(pkt.data[14:])) & 0xffff
