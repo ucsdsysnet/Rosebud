@@ -67,7 +67,7 @@ module scheduler_PR2 (
   parameter INTERFACE_COUNT = 3;
   parameter PORT_COUNT      = 5;
   parameter CORE_COUNT      = 16;
-  parameter SLOT_COUNT      = 16;
+  parameter SLOT_COUNT      = 8;
   parameter DATA_WIDTH      = 512;
   parameter CTRL_WIDTH      = 32+4;
   parameter LOOPBACK_PORT   = 3;

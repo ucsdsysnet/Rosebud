@@ -67,7 +67,7 @@ module scheduler_PR (
   parameter INTERFACE_COUNT = 3;
   parameter PORT_COUNT      = 5;
   parameter CORE_COUNT      = 16;
-  parameter SLOT_COUNT      = 16;
+  parameter SLOT_COUNT      = 8;
   parameter DATA_WIDTH      = 512;
   parameter CTRL_WIDTH      = 32+4;
   parameter LOOPBACK_PORT   = 3;
@@ -601,7 +601,6 @@ module scheduler_PR (
   localparam CLUSTER_CORE_WIDTH = $clog2(CLUSTER_CORES);
 
   wire [CLUSTER_COUNT-1:0] cluster_max_valid;
-  wire [CLUSTER_WIDTH-1:0] selected_cluster;
   wire [CLUSTER_CORE_WIDTH-1:0] selected_cluster_core [0:CLUSTER_COUNT-1];
   wire [CORE_COUNT-1:0] masks = income_cores_r & ~(pkt_to_core_valid & arb_to_core_ready);
 
@@ -624,23 +623,30 @@ module scheduler_PR (
   wire max_valid;
   wire selected_port_v;
 
-  simple_arbiter # (
-      .PORTS(CLUSTER_COUNT),
-      .TYPE("ROUND_ROBIN"),
-      .LSB_PRIORITY("HIGH")
-  ) max_slot_arbiter (
-      .clk(clk),
-      .rst(rst_r),
+  generate
+      if (CLUSTER_COUNT==1)
+          assign selected_rx_core = {selected_cluster_core[0]};
+      else begin
+          wire [CLUSTER_WIDTH-1:0] selected_cluster;
+          simple_arbiter # (
+              .PORTS(CLUSTER_COUNT),
+              .TYPE("ROUND_ROBIN"),
+              .LSB_PRIORITY("HIGH")
+          ) max_slot_arbiter (
+              .clk(clk),
+              .rst(rst_r),
 
-      .request(cluster_max_valid),
-      .taken(selected_port_v), // equal to rx_desc_pop
+              .request(cluster_max_valid),
+              .taken(selected_port_v), // equal to rx_desc_pop
 
-      .grant(),
-      .grant_valid (max_valid),
-      .grant_encoded(selected_cluster)
-  );
+              .grant(),
+              .grant_valid (max_valid),
+              .grant_encoded(selected_cluster)
+          );
 
-  assign selected_rx_core = {selected_cluster, selected_cluster_core[selected_cluster]};
+          assign selected_rx_core = {selected_cluster, selected_cluster_core[selected_cluster]};
+      end
+  endgenerate
 
   // Adding tdest and tuser to input data from eth, dest based on
   // rx_desc_fifo and stamp the incoming port
