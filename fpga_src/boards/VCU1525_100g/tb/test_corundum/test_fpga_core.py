@@ -76,11 +76,6 @@ DROP_RATE    = 1  #0.66
 TEST_PCIE    = False
 PRINT_PKTS   = True
 
-PATTERNS     = [
-    b"GET AAAAAAAA HTTP/1.1",
-    b"GET / HTTP/1.1\r\n\r\n\r\n",
-    b"HTTP/1.0\r\nAccept: */*\r\nAccept-Language: ",
-]
 
 PACKETS = []
 
