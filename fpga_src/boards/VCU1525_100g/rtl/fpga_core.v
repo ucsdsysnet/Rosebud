@@ -213,7 +213,7 @@ parameter RX_FIFO_DEPTH    = 8*32768;
 parameter RX_ALMOST_FULL   = 7*32768;
 parameter TX_FIFO_DEPTH    = 32768;
 parameter RX_STG_F_DEPTH   = 8*32768;
-parameter TX_STG_F_DEPTH   = 32768;
+parameter TX_STG_F_DEPTH   = 2*32768;
 parameter STG_F_CTRL_DEPTH = 64; // TKEEP is not enabled, so 64 words
 parameter STG_F_DRAM_DEPTH = 2048;
 parameter V_MAC_FIFO_SIZE  = 1024;
@@ -237,7 +237,7 @@ parameter AXIL_ADDR_WIDTH     = BAR0_APERTURE;
 parameter CORE_WIDTH      = $clog2(CORE_COUNT);
 parameter PORT_WIDTH      = $clog2(PORT_COUNT);
 parameter DRAM_PORT       = PORT_COUNT-1;
-parameter SLOT_COUNT      = 8;
+parameter SLOT_COUNT      = 16;
 parameter SLOT_WIDTH      = $clog2(SLOT_COUNT+1);
 parameter TAG_WIDTH       = (SLOT_WIDTH>5)? SLOT_WIDTH:5;
 
