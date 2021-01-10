@@ -54,7 +54,7 @@ module scheduler_PR (
   input  wire [16-1:0]    cores_to_be_reset,
 
   input  wire [4-1:0]     stat_read_core,
-  output reg  [4-1:0]     slot_count,
+  output reg  [5-1:0]     slot_count,
   input  wire [2-1:0]     stat_read_interface,
   output reg  [31:0]      stat_interface_data,
 

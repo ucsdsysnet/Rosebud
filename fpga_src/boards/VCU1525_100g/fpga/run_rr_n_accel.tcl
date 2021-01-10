@@ -34,6 +34,14 @@ set_property strategy Performance_ExtraTimingOpt [get_runs impl_accel]
 # update_compile_order -fileset scheduler_PR
 # update_compile_order -fileset sources_1
 
+# add_files -fileset utils_1 -norecurse ../lib/axis/syn/sync_reset.tcl
+# add_files -fileset utils_1 -norecurse ../lib/smartFPGA/syn/simple_sync_sig.tcl
+set_property STEPS.OPT_DESIGN.TCL.PRE [ get_files ../lib/axis/syn/sync_reset.tcl -of [get_fileset utils_1] ] [get_runs impl_accel]
+set_property STEPS.OPT_DESIGN.TCL.PRE [ get_files ../lib/smartFPGA/syn/simple_sync_sig.tcl -of [get_fileset utils_1] ] [get_runs impl_accel]
+set_property STEPS.ROUTE_DESIGN.TCL.PRE [ get_files ../lib/axis/syn/sync_reset.tcl -of [get_fileset utils_1] ] [get_runs impl_accel]
+set_property STEPS.ROUTE_DESIGN.TCL.PRE [ get_files ../lib/smartFPGA/syn/simple_sync_sig.tcl -of [get_fileset utils_1] ] [get_runs impl_accel]
+
+
 reset_run impl_accel
 launch_runs impl_accel
 wait_on_run impl_accel
