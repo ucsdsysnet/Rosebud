@@ -2,8 +2,8 @@ TEST=basic_fw2
 SIZE=9000
 PREFIX=/usr/local
 BINDIR=$(DESTDIR)$(PREFIX)/bin
-INS_BIN_FILE=/home/moein/BumpinTheWire/c_code/$(TEST)_ins.bin
-DATA_MAP_FILE=/home/moein/BumpinTheWire/c_code/$(TEST).map
+INS_BIN_FILE=../../c_code/$(TEST)_ins.bin
+DATA_MAP_FILE=$(INS_BIN_FILE:%_ins.bin=%.map)
 OUT_FILE=$(TEST)_$(SIZE).csv
 DEV=mqnic0
 ENABLE=0xffff
