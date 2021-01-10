@@ -31,6 +31,7 @@ either expressed or implied, of The Regents of the University of California.
 
 */
 
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -266,6 +267,7 @@ int main(int argc, char *argv[])
         if (load_dmem) {
             printf("Write data memory files ...\n");
             char line[256];
+            char path[PATH_MAX+1];
             while (fgets(line, sizeof(line), map_file)) {
                 char * data_bin = strtok(line, " ");
                 char * addr     = strtok(NULL, " \n");
@@ -276,6 +278,28 @@ int main(int argc, char *argv[])
                     free(r_segment);
                     ret = -1;
                     goto err;
+                }
+
+                if (data_bin[0] != '/')
+                {
+                    // relative path
+                    char *ptr;
+                    strncpy(path, data_map, PATH_MAX);
+
+                    ptr = strrchr(path, '/');
+                    if (ptr)
+                    {
+                        ptr++;
+                        *ptr = 0;
+                    }
+                    else
+                    {
+                        path[0] = 0;
+                    }
+
+                    strncat(path, data_bin, PATH_MAX);
+
+                    data_bin = path;
                 }
 
                 printf("Reading binary file \"%s\"...\n", data_bin);
