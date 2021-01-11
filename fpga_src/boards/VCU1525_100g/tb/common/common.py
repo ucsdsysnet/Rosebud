@@ -343,9 +343,11 @@ class TB(object):
                 if not self.qsfp1_sink.empty():
                     await self.qsfp1_source.send(await self.qsfp1_sink.recv())
 
-    async def block_write(self, data, dest):
+    async def block_write(self, data, dest, length=0):
         if len(data) == 0:
             return
+        if (length==0):
+          length=len(data)
 
         self.log.info("Block write %d bytes to 0x%08x", len(data), dest)
 
@@ -354,10 +356,24 @@ class TB(object):
         await self.rc.mem_write_dword(self.dev_pf0_bar0+0x000440, (self.mem_base) & 0xffffffff)
         await self.rc.mem_write_dword(self.dev_pf0_bar0+0x000444, (self.mem_base >> 32) & 0xffffffff)
         await self.rc.mem_write_dword(self.dev_pf0_bar0+0x000448, dest)
-        await self.rc.mem_write_dword(self.dev_pf0_bar0+0x000450, len(data))
+        await self.rc.mem_write_dword(self.dev_pf0_bar0+0x000450, length)
         await self.rc.mem_write_dword(self.dev_pf0_bar0+0x000454, 0xAA)
 
         while await self.rc.mem_read_dword(self.dev_pf0_bar0+0x000458) != 0xAA:
+            pass
+
+    async def block_read(self, offset, src, length):
+        if length == 0:
+            return
+        self.log.info("Block read %d bytes from 0x%08x", length, src)
+
+        await self.rc.mem_write_dword(self.dev_pf0_bar0+0x000460, (self.mem_base+offset) & 0xffffffff)
+        await self.rc.mem_write_dword(self.dev_pf0_bar0+0x000464, (self.mem_base+offset >> 32) & 0xffffffff)
+        await self.rc.mem_write_dword(self.dev_pf0_bar0+0x000468, src)
+        await self.rc.mem_write_dword(self.dev_pf0_bar0+0x000470, length)
+        await self.rc.mem_write_dword(self.dev_pf0_bar0+0x000474, 0x55)
+
+        while await self.rc.mem_read_dword(self.dev_pf0_bar0+0x000478) != 0x55:
             pass
 
     async def load_firmware(self, file):
@@ -416,11 +432,5 @@ class TB(object):
             await self.rc.mem_write_dword(self.dev_pf0_bar0+0x000408, ((i << 8) | 0xf))
 
         await Timer(2000, 'ns')
-        await self.rc.mem_write_dword(self.dev_pf0_bar0+0x000404, 0x1234ABCD)
-
-        self.log.info("Set core enable mask")
-        await self.rc.mem_write_dword(self.dev_pf0_bar0+0x00040C, 0xffff)
-
-        await self.rc.mem_write_dword(self.dev_pf0_bar0+0x000410, 0x0000)
 
         self.log.info("Done loading firmware")

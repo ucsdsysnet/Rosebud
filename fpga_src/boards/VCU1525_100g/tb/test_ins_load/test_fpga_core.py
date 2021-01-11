@@ -60,62 +60,38 @@ except ImportError:
         del sys.path[0]
 
 
-# SEND_COUNT_0 = 6 # 5000
-# SEND_COUNT_1 = 6 # 5000
-# SEND_COUNT_0 = 256
-# SEND_COUNT_1 = 256
-SEND_COUNT_0 = 1024
-SEND_COUNT_1 = 1024
-# SIZE_0       = [64, 128, 256, 512, 1024, 2048, 4096, 9000, 9000, 2048, 4096, 1024, 1500, 256, 128, 1024]
-# SIZE_1       = [64, 128, 256, 512, 1024, 2048, 4096, 9000, 9000, 2048, 4096, 1024, 1500, 256, 128, 1024]
-# SIZE_0       = [64, 128, 256, 512, 1024, 2048, 2048, 1024, 1500, 256, 128, 1024]
-# SIZE_1       = [64, 128, 256, 512, 1024, 2048, 2048, 1024, 1500, 256, 128, 1024]
-SIZE_0       = [64, 128, 256, 512, 1024, 1024, 1500, 256, 128, 1024]
-SIZE_1       = [64, 128, 256, 512, 1024, 1024, 1500, 256, 128, 1024]
-CHECK_PKT    = False
-DROP_RATE    = 1  #0.66
+SEND_COUNT_0 = 200
+SEND_COUNT_1 = 200
+SIZE_0       = 1024 - 14
+SIZE_1       = 1024 - 14
+CHECK_PKT    = True
+DROP_TEST    = False
+TEST_SFP     = True
 TEST_PCIE    = False
+TEST_DEBUG   = False
 PRINT_PKTS   = True
-
-PATTERNS     = [
-    b"GET AAAAAAAA HTTP/1.1",
-    b"GET / HTTP/1.1\r\n\r\n\r\n",
-    b"HTTP/1.0\r\nAccept: */*\r\nAccept-Language: ",
-]
 
 PACKETS = []
 
 eth = Ether(src='5A:51:52:53:54:55', dst='DA:D1:D2:D3:D4:D5')
-ip = IP(src='192.168.1.100', dst='192.168.1.101')
-udp = UDP(sport=1234, dport=5678)
-payload = bytes([0]+[x % 256 for x in range(SIZE_0[0]-1)])
-test_pkt = eth / ip / udp / payload
+# ip = IP(src='192.168.1.100', dst='192.168.1.101')
+# udp = UDP(sport=1234, dport=5678)
+payload = bytes([0]+[0]+[x % 256 for x in range(SIZE_0-2)])
+test_pkt = eth / payload
 PACKETS.append(test_pkt)
 
-# eth = Ether(src='5A:51:52:53:54:55', dst='DA:D1:D2:D3:D4:D5')
+eth = Ether(src='DA:D1:D2:D3:D4:D5', dst='5A:51:52:53:54:55')
 # ip = IP(src='192.168.1.100', dst='192.168.1.101')
 # tcp = TCP(sport=1234, dport=5678)
-# payload = bytes([0]+[x % 256 for x in range(SIZE_0[0]-1)])
-# test_pkt = eth / ip / udp / payload
-# PACKETS.append(test_pkt)
-
-# eth = Ether(src='5A:51:52:53:54:55', dst='DA:D1:D2:D3:D4:D5')
-# ip = IP(src='192.168.1.100', dst='192.168.1.101')
-# tcp = TCP(sport=12345, dport=80)
-# payload = bytes([0]+[x % 256 for x in range(SIZE_0[0]-1)])
-# test_pkt = eth / ip / udp / payload
-# PACKETS.append(test_pkt)
-
-# eth = Ether(src='5A:51:52:53:54:55', dst='DA:D1:D2:D3:D4:D5')
-# ip = IP(src='192.168.1.100', dst='192.168.1.101')
-# tcp = TCP(sport=54321, dport=80)
-# payload = bytes([0]+[x % 256 for x in range(SIZE_0[0]-1)])
-# test_pkt = eth / ip / udp / payload
-# PACKETS.append(test_pkt)
+payload = bytes([0]+[0]+[x % 256 for x in range(SIZE_1-2)])
+test_pkt = eth / payload
+PACKETS.append(test_pkt)
 
 
 FIRMWARE = os.path.abspath(os.path.join(os.path.dirname(__file__),
-    '..', '..', 'accel', 'full_ids', 'c', 'full_ids.o'))
+    '..', '..', '..', '..', '..', 'c_code', 'basic_fw2.o'))
+  # '..', '..', '..', '..', '..', 'c_code', 'dram_test2.o'))
+  # '..', '..', '..', '..', '..', 'c_code', 'drop.o'))
 
 
 @cocotb.test()
@@ -132,58 +108,100 @@ async def run_test_nic(dut):
     await tb.rc.mem_write_dword(tb.dev_pf0_bar0+0x000410, 0x0000)
     await Timer(100, 'ns')
 
-    tb.log.info("Send data from LAN")
-
-    pkt_ind = 0
-    pat_ind = 0
-    for i in range(0, SEND_COUNT_0):
-        frame = PACKETS[pkt_ind].copy()
-        frame[Raw].load = PATTERNS[pat_ind] + bytes([i % 256] + [x % 256 for x in range(max(0, SIZE_0[i % len(SIZE_0)]-1-len(PATTERNS[pat_ind])))])
-        await tb.qsfp0_source.send(frame.build())
-
-        pat_ind = (pat_ind+1) % len(PATTERNS)
-
-    pkt_ind = 0
-    pat_ind = 0
-    for i in range(0, SEND_COUNT_1):
-        frame = PACKETS[pkt_ind].copy()
-        frame[Raw].load = PATTERNS[pat_ind] + bytes([i % 256] + [x % 256 for x in range(max(0, SIZE_1[i % len(SIZE_1)]-1-len(PATTERNS[pat_ind])))])
-        await tb.qsfp1_source.send(frame.build())
-
-        pat_ind = (pat_ind+1) % len(PATTERNS)
-
-    lengths = []
-    for j in range(0, int(SEND_COUNT_1*(1.0-DROP_RATE))):  # we drop half, so expect at least getting 1/3rd
-        rx_frame = await tb.qsfp0_sink.recv()
-        tb.log.info("packet number from port 0:", j)
-        if PRINT_PKTS:
-            tb.log.debug("%s", hexdump_str(bytes(rx_frame), row_size=32))
-        # if (CHECK_PKT):
-        #     assert rx_frame.data[0:14] == start_data_2[0:14]
-        #     assert rx_frame.data[15:] == start_data_2[15:]
-        lengths.append(len(rx_frame.data)-8)
-
-    for j in range(0, int(SEND_COUNT_0*(1.0-DROP_RATE))):
-        rx_frame = await tb.qsfp1_sink.recv()
-        tb.log.info("packet number from port 1:", j)
-        if PRINT_PKTS:
-            tb.log.debug("%s", hexdump_str(bytes(rx_frame), row_size=32))
-        # if (CHECK_PKT):
-        #     assert rx_frame.data[0:14] == start_data_1[0:14]
-        #     assert rx_frame.data[15:] == start_data_1[15:]
-        lengths.append(len(rx_frame.data)-8)
-
-    await tb.qsfp0_source.wait()
-    await tb.qsfp1_source.wait()
-
-    if DROP_RATE == 1:
-        await Timer(4000, 'ns')
-    else:
+    if (TEST_DEBUG):
+        tb.log.info("Debug Test")
+        await tb.rc.mem_write_dword(tb.dev_pf0_bar0+0x000404, 0x1234ABCD)
         await Timer(1000, 'ns')
+
+        for i in range (0,16):
+            await rc.mem_write_dword(tb.dev_pf0_bar0+0x000408, (i<<8) | 0x8)
+            await Timer(200, 'ns')
+            await rc.mem_write_dword(tb.dev_pf0_bar0+0x000408, (i<<8) | 0x9)
+            await Timer(200, 'ns')
+            await rc.mem_write_dword(tb.dev_pf0_bar0+0x000408, (i<<8) | 0xC)
+            await Timer(200, 'ns')
+            await rc.mem_write_dword(tb.dev_pf0_bar0+0x000408, (i<<8) | 0xD)
+            await Timer(200, 'ns')
+
+    if (TEST_PCIE):
+        tb.log.info("PCIe Test")
+
+        ins_seg = b''
+
+        with open(file, "rb") as f:
+            elf = ELFFile(f)
+            ins_seg = elf.get_section_by_name('.text').data()
+
+        # write pcie read descriptor and read status
+        await tb.block_write(ins_seg, (4<<26)+0x1020100, 0x400)
+        val = await tb.rc.mem_read_dword(tb.dev_pf0_bar0+0x000458)
+        tb.log.info("PCIe write flag: 0x%08x", val)
+
+        # write pcie write descriptor and read status
+        await tb.block_read(1000, (4<<26)+0x1020100, 0x400)
+        val = await tb.rc.mem_read_dword(tb.dev_pf0_bar0+0x000478)
+        tb.log.info("PCIe read flag: 0x%08x", val)
+
+        tb.log.info("core to host write data")
+        self.log.debug("%s", hexdump_str(tb.mem_data[0x1000:(0x1000)+1024]))
+
+        tb.log.info("core to host write data")
+        self.log.debug("%s", hexdump_str(tb.mem_data[0xBCBB:(0xBCBB)+128]))
+
+        assert tb.mem_data[0:1024] == tb.mem_data[0x1000:0x1000+1024]
+        await Timer(1000, 'ns')
+
+    if (TEST_SFP):
+        tb.log.info("Send data from LAN")
+        tb.qsfp0_source.log.setLevel("WARNING")
+        tb.qsfp1_source.log.setLevel("WARNING")
+        tb.qsfp0_sink.log.setLevel("WARNING")
+        tb.qsfp1_sink.log.setLevel("WARNING")
+
+        pkt_ind = 0
+        for i in range(0, SEND_COUNT_0):
+            frame = PACKETS[pkt_ind].copy()
+            # frame[Raw].load = bytes([i % 256] + [x % 256 for x in range(max(0, SIZE_0[i % len(SIZE_0)]-1-len(PATTERNS[pat_ind])))])
+            await tb.qsfp0_source.send(frame.build())
+
+        pkt_ind = 1
+        for i in range(0, SEND_COUNT_1):
+            frame = PACKETS[pkt_ind].copy()
+            # frame[Raw].load = bytes([i % 256] + [x % 256 for x in range(max(0, SIZE_1[i % len(SIZE_1)]-1-len(PATTERNS[pat_ind])))])
+            await tb.qsfp1_source.send(frame.build())
+
+        if (not DROP_TEST):
+            lengths = []
+            for j in range(0, SEND_COUNT_1):
+                rx_frame = await tb.qsfp0_sink.recv()
+                tb.log.info("packet number from port 0: %d", j)
+                if PRINT_PKTS:
+                    tb.log.debug("%s", hexdump_str(bytes(rx_frame)))
+                if (CHECK_PKT):
+                    assert Ether(rx_frame.tdata).build() == PACKETS[0].build()
+                    # assert rx_frame.tdata[0:14] == PACKETS[0].payload[0:14]
+                    # assert rx_frame.tdata[15:]  == PACKETS[0].payload[15:]
+                lengths.append(len(rx_frame.tdata)-8)
+
+            for j in range(0, SEND_COUNT_0):
+                rx_frame = await tb.qsfp1_sink.recv()
+                tb.log.info("packet number from port 1: %d", j)
+                if PRINT_PKTS:
+                    tb.log.debug("%s", hexdump_str(bytes(rx_frame)))
+                if (CHECK_PKT):
+                    assert Ether(rx_frame.tdata).build() == PACKETS[1].build()
+                    # assert rx_frame.tdata[0:14] == PACKETS[1].payload[0:14]
+                    # assert rx_frame.tdata[15:]  == PACKETS[1].payload[15:]
+                lengths.append(len(rx_frame.tdata)-8)
+
+            await tb.qsfp0_source.wait()
+            await tb.qsfp1_source.wait()
+
+    await Timer(1000, 'ns')
 
     tb.log.info("Read counters")
 
-    for k in range(0, 16):
+    for k in range(8, 12):
         await tb.rc.mem_write_dword(tb.dev_pf0_bar0+0x000414, k << 4 | 0)
         await Timer(100, 'ns')
         slots      = await tb.rc.mem_read_dword(tb.dev_pf0_bar0+0x000420)
@@ -200,6 +218,17 @@ async def run_test_nic(dut):
 
         tb.log.info("Core %d stat read, slots: , bytes_in, byte_out, frames_in, frames_out" % (k))
         tb.log.info("%d, %d, %d, %d, %d", slots, bytes_in, bytes_out, frames_in, frames_out)
+
+        if (TEST_DEBUG):
+            await tb.rc.mem_write_dword(tb.dev_pf0_bar0+0x000414, k << 4 | 4)
+            await Timer(100, 'ns')
+            debug_l = await tb.rc.mem_read_dword(tb.dev_pf0_bar0+0x000424)
+            await tb.rc.mem_write_dword(tb.dev_pf0_bar0+0x000414, k << 4 | 5)
+            await Timer(100, 'ns')
+            debug_h = await tb.rc.mem_read_dword(tb.dev_pf0_bar0+0x000424)
+            await Timer(100, 'ns')
+            tb.log.info("debug_l, debug_h" % (k))
+            tb.log.info(debug_l[::-1].hex(),debug_h[::-1].hex())
 
     for k in range(0, 3):
         await tb.rc.mem_write_dword(tb.dev_pf0_bar0+0x000418, k << 8 | 0)
@@ -259,14 +288,7 @@ def run_test(parameters=None, sim_build="sim_build", waves=None, force_compile=F
         os.path.join(smartfpga_rtl_dir, "VexRiscv.v"),
         os.path.join(smartfpga_rtl_dir, "riscvcore.v"),
         os.path.join(smartfpga_rtl_dir, "riscv_block.v"),
-
-        os.path.join(accel_rtl_dir, "accel_wrap_full_ids.v"),
-        os.path.join(accel_rtl_dir, "sme", "udp_sme.v"),
-        os.path.join(accel_rtl_dir, "sme", "tcp_sme.v"),
-        os.path.join(accel_rtl_dir, "sme", "http_sme.v"),
-        os.path.join(accel_rtl_dir, "fixed_sme", "fixed_loc_sme_8.v"),
-        os.path.join(accel_rtl_dir, "ip_match", "ip_match.v"),
-
+        os.path.join(smartfpga_rtl_dir, "accel_wrap.v"),
         os.path.join(smartfpga_rtl_dir, "riscv_axis_wrapper.v"),
         os.path.join(smartfpga_rtl_dir, "mem_sys.v"),
         os.path.join(smartfpga_rtl_dir, "simple_arbiter.v"),
@@ -283,7 +305,6 @@ def run_test(parameters=None, sim_build="sim_build", waves=None, force_compile=F
         os.path.join(smartfpga_rtl_dir, "pcie_cont_write.v"),
         os.path.join(smartfpga_rtl_dir, "corundum.v"),
         os.path.join(smartfpga_rtl_dir, "axis_fifo.v"),
-        os.path.join(smartfpga_rtl_dir, "accel_rd_dma_sp.v"),
 
         os.path.join(eth_rtl_dir, "axis_xgmii_rx_64.v"),
         os.path.join(eth_rtl_dir, "axis_xgmii_tx_64.v"),
