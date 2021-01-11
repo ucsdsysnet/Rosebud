@@ -67,8 +67,8 @@ SIZE_1       = 1024 - 14
 CHECK_PKT    = True
 DROP_TEST    = False
 TEST_SFP     = True
-TEST_PCIE    = False
-TEST_DEBUG   = False
+TEST_PCIE    = True
+TEST_DEBUG   = True
 PRINT_PKTS   = True
 
 PACKETS = []
@@ -101,6 +101,31 @@ async def run_test_nic(dut):
 
     await tb.init()
 
+    if (TEST_PCIE):
+        tb.log.info("PCIe Test")
+
+        data = bytes(range(256))
+
+        # write pcie read descriptor and read status
+        tb.log.info("Write data to core")
+        await tb.block_write(data, (4 << 26)+0x1020100, 0x400)
+        val = await tb.rc.mem_read_dword(tb.dev_pf0_bar0+0x000458)
+        tb.log.info("PCIe write flag: 0x%08x", val)
+
+        # write pcie write descriptor and read status
+        tb.log.info("Read data from core")
+        check_data = await tb.block_read((4 << 26)+0x1020100, len(data))
+        val = await tb.rc.mem_read_dword(tb.dev_pf0_bar0+0x000478)
+        tb.log.info("PCIe read flag: 0x%08x", val)
+
+        tb.log.info("Original data")
+        tb.log.debug("%s", hexdump_str(data))
+
+        tb.log.info("Readback data")
+        tb.log.debug("%s", hexdump_str(check_data))
+
+        assert data == check_data
+
     await tb.load_firmware(FIRMWARE)
 
     tb.log.info("Set core enable mask")
@@ -113,43 +138,15 @@ async def run_test_nic(dut):
         await tb.rc.mem_write_dword(tb.dev_pf0_bar0+0x000404, 0x1234ABCD)
         await Timer(1000, 'ns')
 
-        for i in range (0,16):
-            await rc.mem_write_dword(tb.dev_pf0_bar0+0x000408, (i<<8) | 0x8)
+        for i in range(0, 16):
+            await tb.rc.mem_write_dword(tb.dev_pf0_bar0+0x000408, (i << 8) | 0x8)
             await Timer(200, 'ns')
-            await rc.mem_write_dword(tb.dev_pf0_bar0+0x000408, (i<<8) | 0x9)
+            await tb.rc.mem_write_dword(tb.dev_pf0_bar0+0x000408, (i << 8) | 0x9)
             await Timer(200, 'ns')
-            await rc.mem_write_dword(tb.dev_pf0_bar0+0x000408, (i<<8) | 0xC)
+            await tb.rc.mem_write_dword(tb.dev_pf0_bar0+0x000408, (i << 8) | 0xC)
             await Timer(200, 'ns')
-            await rc.mem_write_dword(tb.dev_pf0_bar0+0x000408, (i<<8) | 0xD)
+            await tb.rc.mem_write_dword(tb.dev_pf0_bar0+0x000408, (i << 8) | 0xD)
             await Timer(200, 'ns')
-
-    if (TEST_PCIE):
-        tb.log.info("PCIe Test")
-
-        ins_seg = b''
-
-        with open(file, "rb") as f:
-            elf = ELFFile(f)
-            ins_seg = elf.get_section_by_name('.text').data()
-
-        # write pcie read descriptor and read status
-        await tb.block_write(ins_seg, (4<<26)+0x1020100, 0x400)
-        val = await tb.rc.mem_read_dword(tb.dev_pf0_bar0+0x000458)
-        tb.log.info("PCIe write flag: 0x%08x", val)
-
-        # write pcie write descriptor and read status
-        await tb.block_read(1000, (4<<26)+0x1020100, 0x400)
-        val = await tb.rc.mem_read_dword(tb.dev_pf0_bar0+0x000478)
-        tb.log.info("PCIe read flag: 0x%08x", val)
-
-        tb.log.info("core to host write data")
-        self.log.debug("%s", hexdump_str(tb.mem_data[0x1000:(0x1000)+1024]))
-
-        tb.log.info("core to host write data")
-        self.log.debug("%s", hexdump_str(tb.mem_data[0xBCBB:(0xBCBB)+128]))
-
-        assert tb.mem_data[0:1024] == tb.mem_data[0x1000:0x1000+1024]
-        await Timer(1000, 'ns')
 
     if (TEST_SFP):
         tb.log.info("Send data from LAN")
@@ -228,7 +225,7 @@ async def run_test_nic(dut):
             debug_h = await tb.rc.mem_read_dword(tb.dev_pf0_bar0+0x000424)
             await Timer(100, 'ns')
             tb.log.info("debug_l, debug_h" % (k))
-            tb.log.info(debug_l[::-1].hex(),debug_h[::-1].hex())
+            tb.log.info(debug_l[::-1].hex(), debug_h[::-1].hex())
 
     for k in range(0, 3):
         await tb.rc.mem_write_dword(tb.dev_pf0_bar0+0x000418, k << 8 | 0)
@@ -375,6 +372,8 @@ def run_test(parameters=None, sim_build="sim_build", waves=None, force_compile=F
     if extra_env is None:
         extra_env = {}
     extra_env.update({f'PARAM_{k}': str(v) for k, v in parameters.items()})
+
+    extra_env.setdefault('COCOTB_RESOLVE_X', 'RANDOM')
 
     sim_build = os.path.join(tests_dir, sim_build)
 

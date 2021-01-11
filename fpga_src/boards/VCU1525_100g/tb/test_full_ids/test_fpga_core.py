@@ -355,6 +355,8 @@ def run_test(parameters=None, sim_build="sim_build", waves=None, force_compile=F
         extra_env = {}
     extra_env.update({f'PARAM_{k}': str(v) for k, v in parameters.items()})
 
+    extra_env.setdefault('COCOTB_RESOLVE_X', 'RANDOM')
+
     sim_build = os.path.join(tests_dir, sim_build)
 
     cocotb_test.simulator.run(

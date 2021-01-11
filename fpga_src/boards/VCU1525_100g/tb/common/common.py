@@ -343,11 +343,12 @@ class TB(object):
                 if not self.qsfp1_sink.empty():
                     await self.qsfp1_source.send(await self.qsfp1_sink.recv())
 
-    async def block_write(self, data, dest, length=0):
+    async def block_write(self, data, dest, length=-1):
         if len(data) == 0:
             return
-        if (length==0):
-          length=len(data)
+        if length <= 0:
+            length = len(data)
+        length = min(length, len(data))
 
         self.log.info("Block write %d bytes to 0x%08x", len(data), dest)
 
@@ -362,19 +363,22 @@ class TB(object):
         while await self.rc.mem_read_dword(self.dev_pf0_bar0+0x000458) != 0xAA:
             pass
 
-    async def block_read(self, offset, src, length):
-        if length == 0:
+    async def block_read(self, src, length):
+        if length <= 0:
             return
+
         self.log.info("Block read %d bytes from 0x%08x", length, src)
 
-        await self.rc.mem_write_dword(self.dev_pf0_bar0+0x000460, (self.mem_base+offset) & 0xffffffff)
-        await self.rc.mem_write_dword(self.dev_pf0_bar0+0x000464, (self.mem_base+offset >> 32) & 0xffffffff)
+        await self.rc.mem_write_dword(self.dev_pf0_bar0+0x000460, (self.mem_base) & 0xffffffff)
+        await self.rc.mem_write_dword(self.dev_pf0_bar0+0x000464, (self.mem_base >> 32) & 0xffffffff)
         await self.rc.mem_write_dword(self.dev_pf0_bar0+0x000468, src)
         await self.rc.mem_write_dword(self.dev_pf0_bar0+0x000470, length)
         await self.rc.mem_write_dword(self.dev_pf0_bar0+0x000474, 0x55)
 
         while await self.rc.mem_read_dword(self.dev_pf0_bar0+0x000478) != 0x55:
             pass
+
+        return self.mem_data[0:length]
 
     async def load_firmware(self, file):
         self.log.info("Load firmware")
