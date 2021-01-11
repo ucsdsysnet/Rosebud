@@ -213,19 +213,19 @@ async def run_test_nic(dut):
         await Timer(100, 'ns')
         frames_out = await tb.rc.mem_read_dword(tb.dev_pf0_bar0+0x000424)
 
-        tb.log.info("Core %d stat read, slots: , bytes_in, byte_out, frames_in, frames_out" % (k))
+        tb.log.info("Core %d stat read, slots: , bytes_in, byte_out, frames_in, frames_out", k)
         tb.log.info("%d, %d, %d, %d, %d", slots, bytes_in, bytes_out, frames_in, frames_out)
 
         if (TEST_DEBUG):
             await tb.rc.mem_write_dword(tb.dev_pf0_bar0+0x000414, k << 4 | 4)
             await Timer(100, 'ns')
-            debug_l = await tb.rc.mem_read_dword(tb.dev_pf0_bar0+0x000424)
+            debug_l = await tb.rc.mem_read(tb.dev_pf0_bar0+0x000424, 4)
             await tb.rc.mem_write_dword(tb.dev_pf0_bar0+0x000414, k << 4 | 5)
             await Timer(100, 'ns')
-            debug_h = await tb.rc.mem_read_dword(tb.dev_pf0_bar0+0x000424)
+            debug_h = await tb.rc.mem_read(tb.dev_pf0_bar0+0x000424, 4)
             await Timer(100, 'ns')
-            tb.log.info("debug_l, debug_h" % (k))
-            tb.log.info(debug_l[::-1].hex(), debug_h[::-1].hex())
+            tb.log.info("Core %d debug_l, debug_h", k)
+            tb.log.info("%s, %s", debug_l[::-1].hex(), debug_h[::-1].hex())
 
     for k in range(0, 3):
         await tb.rc.mem_write_dword(tb.dev_pf0_bar0+0x000418, k << 8 | 0)
@@ -237,7 +237,7 @@ async def run_test_nic(dut):
         frames_in   = await tb.rc.mem_read_dword(tb.dev_pf0_bar0+0x000428)
         frames_out  = await tb.rc.mem_read_dword(tb.dev_pf0_bar0+0x00042C)
         desc        = await tb.rc.mem_read(tb.dev_pf0_bar0+0x000430, 4)
-        tb.log.info("Interface %d stat read, bytes_in, byte_out, frames_in, frames_out, loaded desc" % (k))
+        tb.log.info("Interface %d stat read, bytes_in, byte_out, frames_in, frames_out, loaded desc", k)
         tb.log.info("%d, %d, %d, %d, %s", bytes_in, bytes_out, frames_in, frames_out, desc[::-1].hex())
 
     await RisingEdge(dut.pcie_clk)

@@ -198,7 +198,7 @@ async def run_test_nic(dut):
         await Timer(100, 'ns')
         frames_out = await tb.rc.mem_read_dword(tb.dev_pf0_bar0+0x000424)
 
-        tb.log.info("Core %d stat read, slots: , bytes_in, byte_out, frames_in, frames_out" % (k))
+        tb.log.info("Core %d stat read, slots: , bytes_in, byte_out, frames_in, frames_out", k)
         tb.log.info("%d, %d, %d, %d, %d", slots, bytes_in, bytes_out, frames_in, frames_out)
 
     for k in range(0, 3):
@@ -211,7 +211,7 @@ async def run_test_nic(dut):
         frames_in   = await tb.rc.mem_read_dword(tb.dev_pf0_bar0+0x000428)
         frames_out  = await tb.rc.mem_read_dword(tb.dev_pf0_bar0+0x00042C)
         desc        = await tb.rc.mem_read(tb.dev_pf0_bar0+0x000430, 4)
-        tb.log.info("Interface %d stat read, bytes_in, byte_out, frames_in, frames_out, loaded desc" % (k))
+        tb.log.info("Interface %d stat read, bytes_in, byte_out, frames_in, frames_out, loaded desc", k)
         tb.log.info("%d, %d, %d, %d, %s", bytes_in, bytes_out, frames_in, frames_out, desc[::-1].hex())
 
     await RisingEdge(dut.pcie_clk)
