@@ -1,9 +1,13 @@
 
+#define ETH_ALEN 6
+
 struct eth_header {
-    unsigned char dest_mac[6];
-    unsigned char src_mac[6];
+    unsigned char dest_mac[ETH_ALEN];
+    unsigned char src_mac[ETH_ALEN];
     unsigned short type;
 };
+
+#define ETH_HEADER_SIZE sizeof(struct eth_header)
 
 struct ipv4_header {
     unsigned char version_ihl;
@@ -18,6 +22,8 @@ struct ipv4_header {
     unsigned long dest_ip;
 };
 
+#define IPV4_HEADER_SIZE sizeof(struct ipv4_header)
+
 struct tcp_header {
     unsigned short src_port;
     unsigned short dest_port;
@@ -29,10 +35,14 @@ struct tcp_header {
     unsigned short urgent_ptr;
 };
 
+#define TCP_HEADER_SIZE sizeof(struct tcp_header)
+
 struct udp_header {
     unsigned short src_port;
     unsigned short dest_port;
     unsigned short length;
     unsigned short checksum;
 };
+
+#define UDP_HEADER_SIZE sizeof(struct udp_header)
 
