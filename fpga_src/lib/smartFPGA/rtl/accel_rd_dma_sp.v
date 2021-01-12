@@ -143,7 +143,7 @@ wire   act_rd_last = (act_rd_count == 1);
 
 wire [MASK_BITS-1:0] req_rd_ptr = req_rd_last ?
                                   req_rd_final_ptr : {MASK_BITS{1'b1}};
-wire [MASK_BITS-1:0] act_rd_ptr = req_rd_last ?
+wire [MASK_BITS-1:0] act_rd_ptr = act_rd_last ?
                                   act_rd_final_ptr : {MASK_BITS{1'b1}};
 
 wire [MEM_ADDR_WIDTH-1:0] mem_rd_addr   = req_rd_v ? req_rd_addr : act_rd_addr;
