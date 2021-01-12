@@ -72,7 +72,7 @@ SEND_COUNT_1 = 1024
 # SIZE_1       = [64, 128, 256, 512, 1024, 2048, 2048, 1024, 1500, 256, 128, 1024]
 SIZE_0       = [64, 128, 256, 512, 1024, 1024, 1500, 256, 128, 1024]
 SIZE_1       = [64, 128, 256, 512, 1024, 1024, 1500, 256, 128, 1024]
-CHECK_PKT    = False
+CHECK_PKT    = True
 DROP_RATE    = 1  #0.66
 TEST_PCIE    = False
 PRINT_PKTS   = True
@@ -133,6 +133,12 @@ async def run_test_nic(dut):
     await Timer(100, 'ns')
 
     tb.log.info("Send data from LAN")
+    tb.qsfp0_source.log.setLevel("WARNING")
+    tb.qsfp1_source.log.setLevel("WARNING")
+    tb.qsfp0_sink.log.setLevel("WARNING")
+    tb.qsfp1_sink.log.setLevel("WARNING")
+
+    pkts_set = set()
 
     pkt_ind = 0
     pat_ind = 0
@@ -140,6 +146,7 @@ async def run_test_nic(dut):
         frame = PACKETS[pkt_ind].copy()
         frame[Raw].load = PATTERNS[pat_ind] + bytes([i % 256] + [x % 256 for x in range(max(0, SIZE_0[i % len(SIZE_0)]-1-len(PATTERNS[pat_ind])))])
         await tb.qsfp0_source.send(frame.build())
+        pkts_set.add(frame.build())
 
         pat_ind = (pat_ind+1) % len(PATTERNS)
 
@@ -149,6 +156,7 @@ async def run_test_nic(dut):
         frame = PACKETS[pkt_ind].copy()
         frame[Raw].load = PATTERNS[pat_ind] + bytes([i % 256] + [x % 256 for x in range(max(0, SIZE_1[i % len(SIZE_1)]-1-len(PATTERNS[pat_ind])))])
         await tb.qsfp1_source.send(frame.build())
+        pkts_set.add(frame.build())
 
         pat_ind = (pat_ind+1) % len(PATTERNS)
 
@@ -158,9 +166,9 @@ async def run_test_nic(dut):
         tb.log.info("packet number from port 0:", j)
         if PRINT_PKTS:
             tb.log.debug("%s", hexdump_str(bytes(rx_frame), row_size=32))
-        # if (CHECK_PKT):
-        #     assert rx_frame.data[0:14] == start_data_2[0:14]
-        #     assert rx_frame.data[15:] == start_data_2[15:]
+        if (CHECK_PKT):
+            assert Ether(rx_frame.tdata).build() in pkts_set
+            pkts_set.remove(Ether(rx_frame.tdata).build())
         lengths.append(len(rx_frame.data)-8)
 
     for j in range(0, int(SEND_COUNT_0*(1.0-DROP_RATE))):
@@ -168,9 +176,9 @@ async def run_test_nic(dut):
         tb.log.info("packet number from port 1:", j)
         if PRINT_PKTS:
             tb.log.debug("%s", hexdump_str(bytes(rx_frame), row_size=32))
-        # if (CHECK_PKT):
-        #     assert rx_frame.data[0:14] == start_data_1[0:14]
-        #     assert rx_frame.data[15:] == start_data_1[15:]
+        if (CHECK_PKT):
+            assert Ether(rx_frame.tdata).build() in pkts_set
+            pkts_set.remove(Ether(rx_frame.tdata).build())
         lengths.append(len(rx_frame.data)-8)
 
     await tb.qsfp0_source.wait()
