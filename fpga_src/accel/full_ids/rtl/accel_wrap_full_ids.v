@@ -111,7 +111,20 @@ always @(posedge clk) begin
       read_data_valid_reg <=  ip_done;
       read_data_stall_reg <= !ip_done;
     end else if (io_addr[8]) begin
-      read_data_reg <= status_done|status_match;
+      case ({io_addr[3:2], 2'b00})
+        4'h0: begin
+          read_data_reg <= status_done|status_match;
+        end
+        4'h4: begin
+          read_data_reg <= status_done;
+        end
+        4'h8: begin
+          read_data_reg <= status_match;
+        end
+        4'hc: begin
+          read_data_reg <= accel_busy;
+        end
+      endcase
     end else if (!io_addr[8]) begin
       case ({io_addr[3:2], 2'b00})
         4'h0: begin
