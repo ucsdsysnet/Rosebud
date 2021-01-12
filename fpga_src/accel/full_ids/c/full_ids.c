@@ -337,8 +337,6 @@ int main(void)
 		context[i].eth_hdr = (struct eth_header*)context[i].header;
 	}
 
-	PROFILE_A(0x00000003);
-
 	// init accelerator group structures
 	grp = 0;
 	for (int i = 0; i < accel_group_count; i++)
@@ -403,6 +401,8 @@ int main(void)
 	while (1)
 	{
 		unsigned int temp;
+		DEBUG_OUT_L = ACC_SME_STATUS;
+		DEBUG_OUT_H = accel_active_mask;
 
 		// check for new packets
 		while (in_pkt_ready())

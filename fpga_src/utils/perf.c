@@ -126,12 +126,12 @@ int main(int argc, char *argv[])
     int if_count = MAX_IF_COUNT;
 
     char need_comma;
-    
+
     uint64_t core_slots[MAX_CORE_COUNT];
-    bool extra_slot_count = false; 
+    bool extra_slot_count = false;
     bool scheduler_drop = false;
 
-    uint32_t temp;
+    uint32_t temp, temp2;
     uint32_t updates = 0;
 
     uint64_t core_rx_bytes[MAX_CORE_COUNT];
@@ -237,7 +237,7 @@ int main(int argc, char *argv[])
         total_core_tx_bytes[k] = 0;
         total_core_rx_frames[k] = 0;
         total_core_tx_frames[k] = 0;
-        
+
         mqnic_reg_write32(dev->regs, 0x000414, k<<4|0x0);
         core_rx_bytes_raw[k] = mqnic_reg_read32(dev->regs, 0x000424); //dummy read
         core_rx_bytes_raw[k] = mqnic_reg_read32(dev->regs, 0x000424);
@@ -274,7 +274,7 @@ int main(int argc, char *argv[])
         total_if_tx_frames[k] = 0;
         total_if_rx_drops[k] = 0;
         total_if_sched_stat[k] = 0;
-        
+
         mqnic_reg_write32(dev->regs, 0x000418, k<<8|0);
         if_rx_bytes_raw[k] = mqnic_reg_read32(dev->regs, 0x000428); // dummy read
         if_rx_bytes_raw[k] = mqnic_reg_read32(dev->regs, 0x000428);
@@ -369,26 +369,16 @@ int main(int argc, char *argv[])
                 temp = mqnic_reg_read32(dev->regs, 0x000424);
                 core_tx_stalls[k] += temp - core_tx_stalls_raw[k];
                 core_tx_stalls_raw[k] = temp;
-                
+
                 mqnic_reg_write32(dev->regs, 0x000414, k<<4);
                 mqnic_reg_read32(dev->regs, 0x000420); //dummy read
                 core_slots[k] = mqnic_reg_read32(dev->regs, 0x000420);
-                 
+
                 if (extra_slot_count){
                     printf("core %d has %ld slots in scheduler. ", k, core_slots[k]);
                 }
 
-                // read some core status
-                if ((debug_reg>=8) || (debug_reg==4) || (debug_reg==5)){
-                    mqnic_reg_write32(dev->regs, 0x000414, k<<4|debug_reg);
-                    mqnic_reg_read32(dev->regs, 0x000424); //dummy read
-                    temp = mqnic_reg_read32(dev->regs, 0x000424); 
-                    if (temp!=0)
-                      printf("core %d status: %08x ", k, temp);
-                }
             }
-
-      	    // printf("\n");
 
             for (int k=0; k<if_count; k++)
             {
@@ -443,6 +433,28 @@ int main(int argc, char *argv[])
             if (!keep_running)
                 break;
         }
+
+        // read core status
+        if (debug_reg>=8) {
+	    for (int k=0; k<core_count; k++) {
+                mqnic_reg_write32(dev->regs, 0x000414, k<<4|debug_reg);
+                mqnic_reg_read32(dev->regs, 0x000424); //dummy read
+                temp = mqnic_reg_read32(dev->regs, 0x000424);
+                if (temp!=0)
+                  printf("core %d status: %08x \n", k, temp);
+	    }
+	} else if ((debug_reg==4) || (debug_reg==5)){
+	    for (int k=0; k<core_count; k++) {
+                mqnic_reg_write32(dev->regs, 0x000414, k<<4|4);
+                mqnic_reg_read32(dev->regs, 0x000424); //dummy read
+                temp = mqnic_reg_read32(dev->regs, 0x000424);
+                mqnic_reg_write32(dev->regs, 0x000414, k<<4|5);
+                mqnic_reg_read32(dev->regs, 0x000424); //dummy read
+                temp2 = mqnic_reg_read32(dev->regs, 0x000424);
+                if ((temp!=0)||(temp2!=0))
+                  printf("core %d debug_l: %08x, debug_h: %08x\n", k, temp, temp2);
+	    }
+	}
 
         if (!keep_running)
             break;

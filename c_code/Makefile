@@ -1,13 +1,13 @@
 NAME=pkt_gen
 WIDTH=128
 
-CC=riscv32-unknown-elf-gcc
-CC = riscv32-unknown-elf-gcc
-CXX = riscv32-unknown-elf-g++
-OBJCOPY = riscv32-unknown-elf-objcopy
-OBJDUMP = riscv32-unknown-elf-objdump
-SIZE = riscv32-unknown-elf-size
-NM = riscv32-unknown-elf-nm
+CC=riscv64-unknown-elf-gcc
+CC = riscv64-unknown-elf-gcc
+CXX = riscv64-unknown-elf-g++
+OBJCOPY = riscv64-unknown-elf-objcopy
+OBJDUMP = riscv64-unknown-elf-objdump
+SIZE = riscv64-unknown-elf-size
+NM = riscv64-unknown-elf-nm
 
 compile:
 	rm -f ${NAME}.bin ${NAME}.hex ${NAME}.o ${NAME}.asm
