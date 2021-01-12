@@ -1,6 +1,14 @@
 #include "core.h"
 #include "packet_headers.h"
 
+#if 0
+#define PROFILE_A(x) do {DEBUG_OUT_L = (x);} while (0)
+#define PROFILE_B(x) do {DEBUG_OUT_H = (x);} while (0)
+#else
+#define PROFILE_A(x) do {} while (0)
+#define PROFILE_B(x) do {} while (0)
+#endif
+
 #define bswap_16(x) \
 	(((x & 0xff00) >> 8) | ((x & 0x00ff) << 8))
 
@@ -200,9 +208,13 @@ inline void call_accel(struct accel_group *grp, struct slot_context *slot)
 
 inline void handle_slot_rx_packet(struct slot_context *ctx)
 {
+	PROFILE_B(0x00010000);
+
 	// check eth type
+	PROFILE_B(0xF0010000 | ctx->eth_hdr->type);
 	if (ctx->eth_hdr->type == bswap_16(0x0800))
 	{
+		PROFILE_B(0x00010001);
 		// IPv4 packet
 		ctx->l3_header.ipv4_hdr = (struct ipv4_header*)(ctx->header+sizeof(struct eth_header));
 
@@ -213,6 +225,7 @@ inline void handle_slot_rx_packet(struct slot_context *ctx)
 		if (ctx->l3_header.ipv4_hdr->version_ihl != 0x45)
 		{
 			// invalid IHL, drop it
+			PROFILE_B(0x00010009);
 			goto drop;
 		}
 
@@ -222,29 +235,36 @@ inline void handle_slot_rx_packet(struct slot_context *ctx)
 		if (ACC_IP_MATCH_CTL)
 		{
 			// it's a match, drop it
+			PROFILE_B(0x0001000a);
 			goto drop;
 		}
 
+		PROFILE_B(0x00010002);
 		// check protocol
 		switch (ctx->l3_header.ipv4_hdr->protocol)
 		{
 			case 0x06:
+				PROFILE_B(0x00010003);
 				// TCP
+				PROFILE_B(0xF0010000 | ctx->l4_header.tcp_hdr->dest_port);
 				ctx->payload_offset = sizeof(struct eth_header)+sizeof(struct ipv4_header)+sizeof(struct tcp_header);
 				if (ctx->l4_header.tcp_hdr->src_port == bswap_16(80) || ctx->l4_header.tcp_hdr->dest_port == bswap_16(80))
 				{
+					PROFILE_B(0x00010004);
 					// HTTP
 					call_accel(&ACCEL_GROUP_HTTP, ctx);
 					return;
 				}
 				else
 				{
+					PROFILE_B(0x00010005);
 					// other TCP
 					call_accel(&ACCEL_GROUP_TCP, ctx);
 					return;
 				}
 				break;
 			case 0x11:
+				PROFILE_B(0x00010006);
 				// UDP
 				ctx->payload_offset = sizeof(struct eth_header)+sizeof(struct ipv4_header)+sizeof(struct udp_header);
 				call_accel(&ACCEL_GROUP_UDP, ctx);
@@ -252,7 +272,9 @@ inline void handle_slot_rx_packet(struct slot_context *ctx)
 		}
 	}
 
+	PROFILE_B(0x00010007);
 drop:
+	PROFILE_B(0x00010008);
 	ctx->desc.len = 0;
 	pkt_send(&ctx->desc);
 }
@@ -318,10 +340,14 @@ int main(void)
 	if (accel_group_count > MAX_ACCEL_GROUP_COUNT)
 		accel_group_count = MAX_ACCEL_GROUP_COUNT;
 
+	PROFILE_A(0x00000001);
+
 	// Do this at the beginning, so scheduler can fill the slots while
 	// initializing other things.
 	init_hdr_slots(slot_count, header_slot_base, header_slot_size);
 	init_slots(slot_count, PKTS_START+PKT_OFFSET, slot_size);
+
+	PROFILE_A(0x00000002);
 
 	accel_waiting_mask = 0;
 	accel_active_mask = 0;
@@ -336,6 +362,8 @@ int main(void)
 
 		context[i].eth_hdr = (struct eth_header*)context[i].header;
 	}
+
+	PROFILE_A(0x00000003);
 
 	// init accelerator group structures
 	grp = 0;
@@ -354,6 +382,8 @@ int main(void)
 
 		grp = &accel_group[i];
 	}
+
+	PROFILE_A(0x00000004);
 
 	// init accelerator context structures
 	accel = 0;
@@ -398,16 +428,22 @@ int main(void)
 		add_accel_to_group(grp, &accel_context[i]);
 	}
 
+	PROFILE_A(0x00000005);
+
 	while (1)
 	{
 		unsigned int temp;
 		DEBUG_OUT_L = ACC_SME_STATUS;
 		DEBUG_OUT_H = accel_active_mask;
 
+		PROFILE_A(0x00010000);
+
 		// check for new packets
 		while (in_pkt_ready())
 		{
 			struct Desc desc;
+
+			PROFILE_A(0x00010001);
 
 			// read descriptor
 			read_in_pkt(&desc);
@@ -418,32 +454,43 @@ int main(void)
 			// copy descriptor into context
 			slot->desc = desc;
 
+			PROFILE_A(0x00010002);
 			// handle packet
 			handle_slot_rx_packet(slot);
+			PROFILE_A(0x00010003);
 		}
+
+		PROFILE_A(0x00020000);
 
 		// handle accelerator done
 		temp = ACC_SME_STATUS & accel_active_mask;
 		if (temp)
 		{
+			PROFILE_A(0x00020001);
 			for (accel = &accel_context[0]; accel; accel = accel->list_next)
 			{
+				PROFILE_A(0x00020002);
 				if (temp & accel->mask)
 				{
+					PROFILE_A(0x00020003);
 					// handle packet
 					handle_accel_done(accel->active_slot, accel);
+					PROFILE_A(0x00020004);
 
 					// release accelerator
 					release_accel(accel);
+					PROFILE_A(0x00020005);
 
 					// try to restart accelerator
 					if (accel->group->waiting)
 					{
 						// pop from waiting list
 						slot = accel_pop_slot(accel->group);
+						PROFILE_A(0x00020006);
 
 						// handle packet
 						handle_accel_start(slot, accel);
+						PROFILE_A(0x00020007);
 					}
 				}
 			}
