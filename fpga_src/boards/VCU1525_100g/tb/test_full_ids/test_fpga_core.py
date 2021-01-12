@@ -75,6 +75,7 @@ SIZE_1       = [64, 128, 256, 512, 1024, 1024, 1500, 256, 128, 1024]
 CHECK_PKT    = True
 DROP_RATE    = 1  #0.66
 TEST_PCIE    = False
+TEST_DEBUG   = True
 PRINT_PKTS   = True
 
 PATTERNS     = [
@@ -131,6 +132,21 @@ async def run_test_nic(dut):
     await tb.rc.mem_write_dword(tb.dev_pf0_bar0+0x00040C, 0xffff)
     await tb.rc.mem_write_dword(tb.dev_pf0_bar0+0x000410, 0x0000)
     await Timer(100, 'ns')
+
+    if (TEST_DEBUG):
+        tb.log.info("Debug Test")
+        await tb.rc.mem_write_dword(tb.dev_pf0_bar0+0x000404, 0x1234ABCD)
+        await Timer(1000, 'ns')
+
+        for i in range(0, 16):
+            await tb.rc.mem_write_dword(tb.dev_pf0_bar0+0x000408, (i << 8) | 0x8)
+            await Timer(200, 'ns')
+            await tb.rc.mem_write_dword(tb.dev_pf0_bar0+0x000408, (i << 8) | 0x9)
+            await Timer(200, 'ns')
+            await tb.rc.mem_write_dword(tb.dev_pf0_bar0+0x000408, (i << 8) | 0xC)
+            await Timer(200, 'ns')
+            await tb.rc.mem_write_dword(tb.dev_pf0_bar0+0x000408, (i << 8) | 0xD)
+            await Timer(200, 'ns')
 
     tb.log.info("Send data from LAN")
     tb.qsfp0_source.log.setLevel("WARNING")
@@ -208,6 +224,17 @@ async def run_test_nic(dut):
 
         tb.log.info("Core %d stat read, slots: , bytes_in, byte_out, frames_in, frames_out", k)
         tb.log.info("%d, %d, %d, %d, %d", slots, bytes_in, bytes_out, frames_in, frames_out)
+
+        if (TEST_DEBUG):
+            await tb.rc.mem_write_dword(tb.dev_pf0_bar0+0x000414, k << 4 | 4)
+            await Timer(100, 'ns')
+            debug_l = await tb.rc.mem_read(tb.dev_pf0_bar0+0x000424, 4)
+            await tb.rc.mem_write_dword(tb.dev_pf0_bar0+0x000414, k << 4 | 5)
+            await Timer(100, 'ns')
+            debug_h = await tb.rc.mem_read(tb.dev_pf0_bar0+0x000424, 4)
+            await Timer(100, 'ns')
+            tb.log.info("Core %d debug_l, debug_h", k)
+            tb.log.info("%s, %s", debug_l[::-1].hex(), debug_h[::-1].hex())
 
     for k in range(0, 3):
         await tb.rc.mem_write_dword(tb.dev_pf0_bar0+0x000418, k << 8 | 0)
