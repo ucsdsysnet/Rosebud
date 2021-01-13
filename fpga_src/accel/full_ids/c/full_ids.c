@@ -33,6 +33,9 @@
 
 // SME accelerator control registers
 #define ACC_SME_STATUS (*((volatile unsigned int *)(IO_EXT_BASE + 0x0100)))
+#define ACC_SME_STATUS_DONE (*((volatile unsigned int *)(IO_EXT_BASE + 0x0104)))
+#define ACC_SME_STATUS_MATCH (*((volatile unsigned int *)(IO_EXT_BASE + 0x0108)))
+#define ACC_SME_STATUS_BUSY (*((volatile unsigned int *)(IO_EXT_BASE + 0x010C)))
 
 #define ACC_IP_MATCH_CTL (*((volatile unsigned int *)(IO_EXT_BASE + 0x0200)))
 
