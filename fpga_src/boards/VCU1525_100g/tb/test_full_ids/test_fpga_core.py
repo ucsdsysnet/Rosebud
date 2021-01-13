@@ -45,6 +45,7 @@ import cocotb_test.simulator
 import cocotb
 from cocotb.triggers import RisingEdge, FallingEdge, Timer
 
+from cocotbext.axi import AxiStreamMonitor
 from cocotbext.axi.utils import hexdump_str
 
 try:
@@ -77,6 +78,7 @@ DROP_RATE    = 1  #0.66
 TEST_PCIE    = False
 TEST_DEBUG   = True
 PRINT_PKTS   = True
+ACCEL_MON    = True
 
 PATTERNS     = [
     b"GET AAAAAAAA HTTP/1.1",
@@ -126,6 +128,18 @@ async def run_test_nic(dut):
 
     await tb.init()
 
+    if ACCEL_MON:
+        # monitor accelerator DMA channels
+        core_accel_mon = []
+        for core in dut.UUT.riscv_cores:
+            lst = []
+            for inst in core.pr_wrapper.riscv_block_inst.accel_wrap_inst.width_converters_1B:
+                lst.append(AxiStreamMonitor(inst.accel_width_conv_inst, 'm_axis', dut.pcie_clk, dut.pcie_rst, byte_size=8))
+            for inst in core.pr_wrapper.riscv_block_inst.accel_wrap_inst.width_converters_8B:
+                lst.append(AxiStreamMonitor(inst.accel_width_conv_inst, 'm_axis', dut.pcie_clk, dut.pcie_rst, byte_size=8))
+            core_accel_mon.append(lst)
+
+    # load core firmware
     await tb.load_firmware(FIRMWARE)
 
     tb.log.info("Set core enable mask")
@@ -248,6 +262,17 @@ async def run_test_nic(dut):
         desc        = await tb.rc.mem_read(tb.dev_pf0_bar0+0x000430, 4)
         tb.log.info("Interface %d stat read, bytes_in, byte_out, frames_in, frames_out, loaded desc", k)
         tb.log.info("%d, %d, %d, %d, %s", bytes_in, bytes_out, frames_in, frames_out, desc[::-1].hex())
+
+    if (ACCEL_MON):
+        # accelerator data
+        for k in range(len(core_accel_mon)):
+            core = core_accel_mon[k]
+            for x in range(len(core)):
+                accel = core[x]
+                while not accel.empty():
+                    data = accel.recv_nowait()
+
+                    tb.log.info("Core %d accel %d packet length %d", k, x, len(data.tdata))
 
     await RisingEdge(dut.pcie_clk)
     await RisingEdge(dut.pcie_clk)
