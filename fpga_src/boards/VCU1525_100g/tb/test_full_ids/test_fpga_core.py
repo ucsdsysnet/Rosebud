@@ -242,13 +242,13 @@ async def run_test_nic(dut):
         if (TEST_DEBUG):
             await tb.rc.mem_write_dword(tb.dev_pf0_bar0+0x000414, k << 4 | 4)
             await Timer(100, 'ns')
-            debug_l = await tb.rc.mem_read(tb.dev_pf0_bar0+0x000424, 4)
+            debug_l = await tb.rc.mem_read_dword(tb.dev_pf0_bar0+0x000424)
             await tb.rc.mem_write_dword(tb.dev_pf0_bar0+0x000414, k << 4 | 5)
             await Timer(100, 'ns')
-            debug_h = await tb.rc.mem_read(tb.dev_pf0_bar0+0x000424, 4)
+            debug_h = await tb.rc.mem_read_dword(tb.dev_pf0_bar0+0x000424)
             await Timer(100, 'ns')
             tb.log.info("Core %d debug_l, debug_h", k)
-            tb.log.info("%s, %s", debug_l[::-1].hex(), debug_h[::-1].hex())
+            tb.log.info("%08x, %08x", debug_l, debug_h)
 
     for k in range(0, 3):
         await tb.rc.mem_write_dword(tb.dev_pf0_bar0+0x000418, k << 8 | 0)
@@ -259,9 +259,9 @@ async def run_test_nic(dut):
         await Timer(100, 'ns')
         frames_in   = await tb.rc.mem_read_dword(tb.dev_pf0_bar0+0x000428)
         frames_out  = await tb.rc.mem_read_dword(tb.dev_pf0_bar0+0x00042C)
-        desc        = await tb.rc.mem_read(tb.dev_pf0_bar0+0x000430, 4)
+        desc        = await tb.rc.mem_read_dword(tb.dev_pf0_bar0+0x000430)
         tb.log.info("Interface %d stat read, bytes_in, byte_out, frames_in, frames_out, loaded desc", k)
-        tb.log.info("%d, %d, %d, %d, %s", bytes_in, bytes_out, frames_in, frames_out, desc[::-1].hex())
+        tb.log.info("%d, %d, %d, %d, %08x", bytes_in, bytes_out, frames_in, frames_out, desc)
 
     if (ACCEL_MON):
         # accelerator data
