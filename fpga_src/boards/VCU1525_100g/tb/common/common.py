@@ -48,7 +48,7 @@ from cocotb.triggers import RisingEdge, FallingEdge, Timer
 from cocotbext.pcie.core import RootComplex
 from cocotbext.pcie.xilinx.us import UltraScalePlusPcieDevice
 
-from cocotbext.axi import AxiStreamSource, AxiStreamSink
+from cocotbext.axi import AxiStreamSource, AxiStreamSink, AxiStreamMonitor
 from cocotbext.axi.utils import hexdump_str
 
 try:
@@ -302,6 +302,10 @@ class TB(object):
 
         self.loopback_enable = False
         cocotb.fork(self._run_loopback())
+
+        # Internal monitors
+        self.host_if_tx_mon = AxiStreamMonitor(dut.UUT.pcie_controller_inst, "tx_axis", dut.pcie_clk, dut.pcie_rst)
+        self.host_if_rx_mon = AxiStreamMonitor(dut.UUT.pcie_controller_inst, "rx_axis", dut.pcie_clk, dut.pcie_rst)
 
     async def init(self):
 
