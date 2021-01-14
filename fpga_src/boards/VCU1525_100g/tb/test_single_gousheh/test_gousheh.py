@@ -55,17 +55,42 @@ from cocotbext.axi import AxiStreamSource, AxiStreamSink, AxiStreamFrame
 from cocotbext.axi.utils import hexdump_str
 
 FIRMWARE = os.path.abspath(os.path.join(os.path.dirname(__file__),
-    '..', '..', '..', '..', '..', 'c_code', 'basic_fw2.o'))
+    '..', '..', 'accel', 'full_ids', 'c', 'full_ids.o'))
+  # '..', '..', '..', '..', '..', 'c_code', 'basic_fw2.o'))
 
-SIZE_0 = 1024 - 14
+SEND_COUNT_0 = 100
+SIZE_0 = [12, 1500-54, 12]
+WAIT_TIME = 10000
+CHECK_PKT = True
 
 PACKETS = []
 
 eth = Ether(src='5A:51:52:53:54:55', dst='DA:D1:D2:D3:D4:D5')
 ip = IP(src='192.168.1.100', dst='192.168.1.101')
 udp = UDP(sport=1234, dport=5678)
-payload = bytes([0]+[0]+[x % 256 for x in range(SIZE_0-2)])
-test_pkt = eth / payload
+payload = bytes([0]+[x % 256 for x in range(SIZE_0[0]-1)])
+test_pkt = eth / ip / udp / payload
+PACKETS.append(test_pkt)
+
+eth = Ether(src='5A:51:52:53:54:55', dst='DA:D1:D2:D3:D4:D5')
+ip = IP(src='192.168.1.100', dst='192.168.1.101')
+tcp = TCP(sport=1234, dport=5678)
+payload = bytes([0]+[x % 256 for x in range(SIZE_0[0]-1)])
+test_pkt = eth / ip / tcp / payload
+PACKETS.append(test_pkt)
+
+eth = Ether(src='5A:51:52:53:54:55', dst='DA:D1:D2:D3:D4:D5')
+ip = IP(src='192.168.1.100', dst='192.168.1.101')
+tcp = TCP(sport=12345, dport=80)
+payload = bytes([0]+[x % 256 for x in range(SIZE_0[0]-1)])
+test_pkt = eth / ip / tcp / payload
+PACKETS.append(test_pkt)
+
+eth = Ether(src='5A:51:52:53:54:55', dst='DA:D1:D2:D3:D4:D5')
+ip = IP(src='192.168.1.100', dst='192.168.1.101')
+tcp = TCP(sport=54321, dport=80)
+payload = bytes([0]+[x % 256 for x in range(SIZE_0[0]-1)])
+test_pkt = eth / ip / tcp / payload
 PACKETS.append(test_pkt)
 
 class TB(object):
@@ -78,6 +103,8 @@ class TB(object):
         self.slots = []
         self.send_q = deque()
         self.recv_q = deque()
+        self.sent_pkts = 0
+        self.recvd_pkts = 0
 
         sys_clk = cocotb.fork(Clock(dut.clk, 4, units="ns").start())
 
@@ -163,6 +190,7 @@ class TB(object):
                 slot = self.slots.pop()
                 pkt.tdest = slot
                 await self.data_ch_source.send(pkt)
+                self.sent_pkts += 1
                 self.log.debug("Used slot %d for an incoming packet from port %d", slot, pkt.tuser)
             await RisingEdge(self.dut.clk)
 
@@ -170,6 +198,7 @@ class TB(object):
         while (1):
             frame = await self.data_ch_sink.recv()
             self.recv_q.append(frame)
+            self.recvd_pkts += 1
 
     async def scheduler(self):
         cocotb.fork(self.send_manager())
@@ -207,10 +236,27 @@ async def run_test_gousheh(dut):
     await tb.load_firmware(FIRMWARE)
     await Timer(1000, 'ns')
 
-    tb.send_pkt(PACKETS[0].build(),1)
+    pkts_set = []
 
-    await Timer(1000, 'ns')
-    tb.log.debug("received packet: \n%s", hexdump_str(tb.recv_q.pop().tdata))
+    pkt_ind = 1
+    for i in range(0, SEND_COUNT_0):
+        frame = PACKETS[pkt_ind].copy()
+        frame[Raw].load = bytes([i % 256] + [x % 256 for x in range(SIZE_0[i % len(SIZE_0)]-1)])
+        tb.send_pkt(frame.build())
+        pkts_set.append(frame.build())
+
+    while (tb.sent_pkts < SEND_COUNT_0):
+        if (CHECK_PKT):
+            if (tb.recv_q):
+                frame = tb.recv_q.popleft().tdata
+                if (frame in pkts_set):
+                    pkts_set.remove(frame)
+                else:
+                    tb.log.debug("corupted pkt, \n%s", hexdump_str(frame))
+        await RisingEdge(dut.clk)
+
+    await Timer(WAIT_TIME, 'ns')
+    tb.log.debug("%d slots in scheduler, %d packets sent, %d packets received.", len(tb.slots), tb.sent_pkts, tb.recvd_pkts)
 
     await RisingEdge(dut.clk)
 
@@ -246,7 +292,6 @@ def run_test(parameters=None, sim_build="sim_build", waves=None, force_compile=F
         os.path.join(smartfpga_rtl_dir, "VexRiscv.v"),
         os.path.join(smartfpga_rtl_dir, "riscvcore.v"),
         os.path.join(smartfpga_rtl_dir, "riscv_block.v"),
-        os.path.join(smartfpga_rtl_dir, "accel_wrap.v"),
         os.path.join(smartfpga_rtl_dir, "riscv_axis_wrapper.v"),
         os.path.join(smartfpga_rtl_dir, "mem_sys.v"),
         os.path.join(smartfpga_rtl_dir, "simple_arbiter.v"),
@@ -254,7 +299,17 @@ def run_test(parameters=None, sim_build="sim_build", waves=None, force_compile=F
         os.path.join(smartfpga_rtl_dir, "axis_stat.v"),
         os.path.join(smartfpga_rtl_dir, "header.v"),
         os.path.join(smartfpga_rtl_dir, "axis_fifo.v"),
+        os.path.join(smartfpga_rtl_dir, "accel_rd_dma_sp_temp.v"),
 
+        os.path.join(accel_rtl_dir, "accel_wrap_full_ids_temp.v"),
+        os.path.join(accel_rtl_dir, "sme", "udp_sme.v"),
+        os.path.join(accel_rtl_dir, "sme", "tcp_sme.v"),
+        os.path.join(accel_rtl_dir, "sme", "http_sme.v"),
+        os.path.join(accel_rtl_dir, "fixed_sme", "fixed_loc_sme_8.v"),
+        os.path.join(accel_rtl_dir, "ip_match", "ip_match.v"),
+
+        os.path.join(axis_rtl_dir, "arbiter.v"),
+        os.path.join(axis_rtl_dir, "priority_encoder.v"),
         os.path.join(axis_rtl_dir, "sync_reset.v"),
         os.path.join(axis_rtl_dir, "axis_register.v"),
         os.path.join(axis_rtl_dir, "axis_pipeline_register.v"),
