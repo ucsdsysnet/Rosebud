@@ -249,8 +249,8 @@ always @(posedge pcie_clk) begin
                 16'h0400: pcie_dma_enable <= axil_ctrl_wdata[0];
                 16'h0404: host_cmd_data_r <= axil_ctrl_wdata;
                 16'h0408: begin 
-                    host_cmd_r       <= axil_ctrl_wdata[0+:CORE_WIDTH];
-                    host_cmd_dest_r  <= axil_ctrl_wdata[8+:4];
+                    host_cmd_r       <= axil_ctrl_wdata[0+:4];
+                    host_cmd_dest_r  <= axil_ctrl_wdata[8+:CORE_WIDTH];
                     host_cmd_valid_r <= 1'b1;
                 end
                 16'h040C: income_cores_r <= axil_ctrl_wdata[CORE_COUNT-1:0];

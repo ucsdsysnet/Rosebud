@@ -57,9 +57,11 @@ reg [ACCEL_COUNT-1:0]     cmd_stop_reg;
 reg [ACCEL_COUNT-1:0]     cmd_init_reg;
 wire [ACCEL_COUNT-1:0]    accel_busy;
 
-reg [ACCEL_COUNT-1:0]    status_match;
-reg [ACCEL_COUNT-1:0]    status_done;
-reg [ACCEL_COUNT*32-1:0] match_1hot;
+reg  [ACCEL_COUNT-1:0]    status_match;
+reg  [ACCEL_COUNT-1:0]    status_done;
+reg  [ACCEL_COUNT*32-1:0] match_1hot;
+reg  [ACCEL_COUNT-1:0]    done_err;
+wire [ACCEL_COUNT-1:0]    desc_error;
 
 reg [31:0]  ip_addr_reg = 0;
 reg         ip_addr_valid_reg = 0;
@@ -70,6 +72,13 @@ reg read_data_valid_reg;
 
 assign io_rd_data = read_data_reg;
 assign io_rd_valid = read_data_valid_reg;
+
+always @(posedge clk) begin
+  done_err <= done_err | (status_done & accel_busy);
+  if (rst) begin
+    done_err <= {ACCEL_COUNT{1'b0}};
+  end
+end
 
 always @(posedge clk) begin
   cmd_valid_reg <= 'b0;
@@ -111,18 +120,24 @@ always @(posedge clk) begin
       read_data_valid_reg <=  ip_done;
       read_data_stall_reg <= !ip_done;
     end else if (io_addr[8]) begin
-      case ({io_addr[3:2], 2'b00})
-        4'h0: begin
+      case ({io_addr[4:2], 2'b00})
+        5'h00: begin
           read_data_reg <= status_done|status_match;
         end
-        4'h4: begin
+        5'h04: begin
           read_data_reg <= status_done;
         end
-        4'h8: begin
+        5'h08: begin
           read_data_reg <= status_match;
         end
-        4'hc: begin
+        5'h0c: begin
           read_data_reg <= accel_busy;
+        end
+        5'h10: begin
+          read_data_reg <= desc_error;
+        end
+        5'h14: begin
+          read_data_reg <= done_err;
         end
       endcase
     end else if (!io_addr[8]) begin
@@ -208,6 +223,7 @@ accel_rd_dma_sp # (
   .desc_addr(cmd_addr_reg[BLOCK_ADDR_WIDTH-1:0]),
   .desc_len(cmd_len_reg),
   .desc_valid(cmd_valid_reg),
+  .desc_error(desc_error),
 
   .accel_busy(accel_busy),
   .accel_stop(cmd_stop_reg),

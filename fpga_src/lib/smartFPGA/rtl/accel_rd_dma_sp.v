@@ -18,6 +18,7 @@ module accel_rd_dma_sp # (
   input  wire [ADDR_WIDTH-1:0]             desc_addr,
   input  wire [LEN_WIDTH-1:0]              desc_len,
   input  wire                              desc_valid,
+  output reg [ACCEL_COUNT-1:0]             desc_error,
 
   // Accelerator stop and status
   input  wire [ACCEL_COUNT-1:0]            accel_stop,
@@ -105,7 +106,7 @@ always @ (posedge clk)
 always @ (posedge clk) begin
   if (req_rd_v && !req_rd_last)
     act_mem_v <= (act_mem_v | req_rd_dest_1hot) & ~accel_stop_r;
-  else if (act_arb_v && (act_rd_count==1))
+  else if (act_arb_v && (act_rd_count==1) && !req_rd_v)
     act_mem_v <= (act_mem_v & ~act_ack) & ~accel_stop_r;
   else
     act_mem_v <= act_mem_v & ~accel_stop_r;
@@ -238,6 +239,13 @@ always @ (posedge clk) begin
 
   if (rst)
     accel_busy <= {ACCEL_COUNT{1'b0}};
+end
+
+always @ (posedge clk) begin
+  if (desc_valid && (accel_busy[desc_accel_id] == 1'b1))
+    desc_error[desc_accel_id] <= 1'b1;
+  if (rst)
+    desc_error <= {ACCEL_COUNT{1'b0}};
 end
 
 genvar i;
