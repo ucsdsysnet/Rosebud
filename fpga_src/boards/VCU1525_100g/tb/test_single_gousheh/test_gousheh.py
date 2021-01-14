@@ -43,6 +43,7 @@ from scapy.layers.inet import IP, UDP, TCP
 
 from elftools.elf.elffile import ELFFile
 from collections import deque
+from random import randrange
 
 import cocotb_test.simulator
 
@@ -58,9 +59,9 @@ FIRMWARE = os.path.abspath(os.path.join(os.path.dirname(__file__),
     '..', '..', 'accel', 'full_ids', 'c', 'full_ids.o'))
   # '..', '..', '..', '..', '..', 'c_code', 'basic_fw2.o'))
 
-SEND_COUNT_0 = 100
-SIZE_0 = [12, 1500-54, 12]
-WAIT_TIME = 10000
+SEND_COUNT_0 = 1024
+SIZE_0 = [66-54, 1500-54, 66-54, 66-54, 1500-54, 1500-54, 66-54]
+WAIT_TIME = 20000
 CHECK_PKT = True
 
 PACKETS = []
@@ -96,6 +97,10 @@ PACKETS.append(test_pkt)
 class TB(object):
     def __init__(self, dut):
         self.dut = dut
+
+        self.loopback_port = 3
+        self.dram_port     = int(dut.DRAM_PORT.value)
+        self.tag_width     = int(dut.TAG_WIDTH.value)
 
         self.log = SimLog("cocotb.tb")
         self.log.setLevel(logging.DEBUG)
@@ -163,14 +168,14 @@ class TB(object):
         if len(ins_seg) > 0:
             self.log.debug("%s", hexdump_str(ins_seg))
             addr_hdr = (0x0200000000000000).to_bytes(8, 'little')
-            ins_frame = AxiStreamFrame(tdata=addr_hdr+ins_seg,tuser=4,tdest=0)
+            ins_frame = AxiStreamFrame(tdata=addr_hdr+ins_seg,tuser=self.dram_port,tdest=0)
             await self.data_ch_source.send(ins_frame)
 
         self.log.info("Data segment size: %d", len(data_seg))
         if len(data_seg) > 0:
             self.log.debug("%s", hexdump_str(data_seg))
             addr_hdr = (0x0000000000000000).to_bytes(8, 'little')
-            data_frame = AxiStreamFrame(tdata=addr_hdr+data_seg,tuser=4,tdest=0)
+            data_frame = AxiStreamFrame(tdata=addr_hdr+data_seg,tuser=self.dram_port,tdest=0)
             await self.data_ch_source.send(data_frame)
 
         # TODO: add pmem write
@@ -219,7 +224,7 @@ class TB(object):
               await self.ctrl_ch_source.send(frame)
             elif (msg_type==2):
               await ClockCycles(self.dut.clk,4)
-              frame.tdata[0] = (1<<32) | (LOOPBACK_PORT << 24) | (msg_slot << 16) | (msg_dst << TAG_WIDTH)
+              frame.tdata[0] = (1<<32) | (self.loopback_port << 24) | (msg_slot << 16) | (msg_dst << self.tag_width)
               await self.ctrl_ch_source.send(frame)
             elif (msg_type==3):
               self.log.debug("Initialize scheduler with %d slots", msg_slot)
@@ -241,14 +246,14 @@ async def run_test_gousheh(dut):
     pkt_ind = 1
     for i in range(0, SEND_COUNT_0):
         frame = PACKETS[pkt_ind].copy()
-        frame[Raw].load = bytes([i % 256] + [x % 256 for x in range(SIZE_0[i % len(SIZE_0)]-1)])
+        frame[Raw].load = bytes([i % 256] + [x % 256 for x in range(SIZE_0[randrange(len(SIZE_0))]-1)])
         tb.send_pkt(frame.build())
-        pkts_set.append(frame.build())
+        pkts_set.append(bytes(frame.build()))
 
     while (tb.sent_pkts < SEND_COUNT_0):
         if (CHECK_PKT):
             if (tb.recv_q):
-                frame = tb.recv_q.popleft().tdata
+                frame = bytes(tb.recv_q.popleft().tdata)
                 if (frame in pkts_set):
                     pkts_set.remove(frame)
                 else:
@@ -299,9 +304,9 @@ def run_test(parameters=None, sim_build="sim_build", waves=None, force_compile=F
         os.path.join(smartfpga_rtl_dir, "axis_stat.v"),
         os.path.join(smartfpga_rtl_dir, "header.v"),
         os.path.join(smartfpga_rtl_dir, "axis_fifo.v"),
-        os.path.join(smartfpga_rtl_dir, "accel_rd_dma_sp_temp.v"),
+        os.path.join(smartfpga_rtl_dir, "accel_rd_dma_sp.v"),
 
-        os.path.join(accel_rtl_dir, "accel_wrap_full_ids_temp.v"),
+        os.path.join(accel_rtl_dir, "accel_wrap_full_ids.v"),
         os.path.join(accel_rtl_dir, "sme", "udp_sme.v"),
         os.path.join(accel_rtl_dir, "sme", "tcp_sme.v"),
         os.path.join(accel_rtl_dir, "sme", "http_sme.v"),
@@ -320,8 +325,6 @@ def run_test(parameters=None, sim_build="sim_build", waves=None, force_compile=F
     parameters = {k.upper(): v for k, v in parameters.items() if v is not None}
 
     parameters.setdefault('SLOT_COUNT', 16)
-    parameters.setdefault('LOOPBACK_PORT', 3)
-    parameters.setdefault('TAG_WIDTH', 5)
 
     if extra_env is None:
         extra_env = {}
@@ -350,8 +353,6 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
 
     parser.add_argument('--slot_count', type=int, default=16)
-    parser.add_argument('--loopback_port', type=int, default=3)
-    parser.add_argument('--tag_width', type=int, default=5)
 
     parser.add_argument('--waves', type=bool)
     parser.add_argument('--sim_build', type=str, default="sim_build")
