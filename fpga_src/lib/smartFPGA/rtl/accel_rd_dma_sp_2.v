@@ -83,14 +83,14 @@ localparam DESC_MEM_WIDTH = LINE_ADDR_WIDTH+LINE_CNT_WIDTH+MASK_BITS+MASK_BITS;
 reg [ACCEL_COUNT-1:0] act_mem_v;
 
 wire [LINE_ADDR_WIDTH-1:0] act_rd_addr;
-wire [LINE_CNT_WIDTH-1:0] act_rd_count;
-wire [MASK_BITS-1:0]      act_rd_final_ptr;
-wire [MASK_BITS-1:0]      act_rd_offset;
+wire [LINE_CNT_WIDTH-1:0]  act_rd_count;
+wire [MASK_BITS-1:0]       act_rd_final_ptr;
+wire [MASK_BITS-1:0]       act_rd_offset;
 
 // arbiter signals
-wire [DEST_WIDTH-1:0]     act_arb_enc;
-wire                      act_arb_v;
-wire [ACCEL_COUNT-1:0]    act_ack;
+wire [DEST_WIDTH-1:0]      act_arb_enc;
+wire                       act_arb_v;
+wire [ACCEL_COUNT-1:0]     act_ack;
 
 // MSB trim for next address and count
 wire [LINE_ADDR_WIDTH-1:0] req_rd_addr_n  = req_rd_addr  + 1;
@@ -154,7 +154,7 @@ wire [MASK_BITS-1:0] act_rd_ptr = act_rd_last ?
 
 wire [LINE_ADDR_WIDTH-1:0] mem_rd_addr   = req_rd_v ? req_rd_addr : act_rd_addr;
 wire [LINE_ADDR_WIDTH-1:0] mem_rd_addr_n = mem_rd_addr+1;
-  
+
 reg  [MEM_BLOCKS-1:0]     mem_b1_rd_en_n;
 reg  [MEM_ADDR_WIDTH-1:0] mem_b1_rd_addr_n;
 reg  [MEM_BLOCKS-1:0]     mem_b2_rd_en_n;
@@ -162,12 +162,12 @@ reg  [MEM_ADDR_WIDTH-1:0] mem_b2_rd_addr_n;
 
 reg  [SAFE_MEM_SEL_BITS-1:0] mem_b1_sel_rr, mem_b2_sel_rr;
 reg  [SAFE_MEM_SEL_BITS-1:0] mem_b1_sel_r, mem_b2_sel_r;
-wire [SAFE_MEM_SEL_BITS-1:0] mem_b1_sel = mem_rd_addr[0] ? 
-         mem_rd_addr_n[LINE_ADDR_WIDTH-1:MEM_ADDR_WIDTH] :
-         mem_rd_addr  [LINE_ADDR_WIDTH-1:MEM_ADDR_WIDTH] ;
-wire [SAFE_MEM_SEL_BITS-1:0] mem_b2_sel = mem_rd_addr[0] ? 
-         mem_rd_addr  [LINE_ADDR_WIDTH-1:MEM_ADDR_WIDTH] :
-         mem_rd_addr_n[LINE_ADDR_WIDTH-1:MEM_ADDR_WIDTH] ;
+wire [SAFE_MEM_SEL_BITS-1:0] mem_b1_sel = mem_rd_addr[0] ?
+         mem_rd_addr_n[LINE_ADDR_WIDTH-1:MEM_ADDR_WIDTH+1] :
+         mem_rd_addr  [LINE_ADDR_WIDTH-1:MEM_ADDR_WIDTH+1] ;
+wire [SAFE_MEM_SEL_BITS-1:0] mem_b2_sel = mem_rd_addr[0] ?
+         mem_rd_addr  [LINE_ADDR_WIDTH-1:MEM_ADDR_WIDTH+1] :
+         mem_rd_addr_n[LINE_ADDR_WIDTH-1:MEM_ADDR_WIDTH+1] ;
 
 integer j;
 always @ (posedge clk) begin
@@ -177,7 +177,7 @@ always @ (posedge clk) begin
   mem_rd_dest      <= req_rd_v ? req_rd_dest   : act_arb_enc;
 
   mem_rd_bank      <= mem_rd_addr[0];
-  mem_rd_valid     <= (act_arb_v || req_rd_v);
+  mem_rd_valid     <= act_arb_v || req_rd_v;
 
   mem_b1_rd_addr_n <= mem_rd_addr[0] ? mem_rd_addr_n[MEM_ADDR_WIDTH-1:1] :
                                        mem_rd_addr  [MEM_ADDR_WIDTH-1:1] ;
@@ -195,12 +195,12 @@ always @ (posedge clk) begin
     mem_b1_rd_en_n <= (act_arb_v || req_rd_v);
     mem_b2_rd_en_n <= (act_arb_v || req_rd_v);
   end
-  
+
   if (rst) begin
     mem_b1_rd_en_n <= {MEM_BLOCKS{1'b0}};
     mem_b2_rd_en_n <= {MEM_BLOCKS{1'b0}};
   end
-  
+
 end
 
 genvar k;
@@ -266,8 +266,8 @@ end
 reg [DATA_WIDTH-1:0] mem_rd_data_rrr;
 
 always @ (posedge clk)
-  mem_rd_data_rrr <= (mem_rd_bank_rr ? {mem_b1_rd_data_rr, mem_b2_rd_data_rr}: 
-                                       {mem_b2_rd_data_rr, mem_b1_rd_data_rr}) 
+  mem_rd_data_rrr <= (mem_rd_bank_rr ? {mem_b1_rd_data_rr, mem_b2_rd_data_rr}:
+                                       {mem_b2_rd_data_rr, mem_b1_rd_data_rr})
                                        >> (8*mem_rd_offset_rr);
 
 always @ (posedge clk) begin
