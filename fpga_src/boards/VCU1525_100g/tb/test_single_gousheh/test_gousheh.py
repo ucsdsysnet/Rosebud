@@ -42,13 +42,14 @@ from scapy.layers.l2 import Ether
 from scapy.layers.inet import IP, UDP, TCP
 
 from elftools.elf.elffile import ELFFile
+from collections import deque
 
 import cocotb_test.simulator
 
 import cocotb
 from cocotb.log import SimLog
 from cocotb.clock import Clock
-from cocotb.triggers import RisingEdge, FallingEdge, Timer
+from cocotb.triggers import RisingEdge, FallingEdge, Timer, ClockCycles
 
 from cocotbext.axi import AxiStreamSource, AxiStreamSink, AxiStreamFrame
 from cocotbext.axi.utils import hexdump_str
@@ -63,6 +64,10 @@ class TB(object):
         self.log = SimLog("cocotb.tb")
         self.log.setLevel(logging.DEBUG)
 
+        self.slots = []
+        self.send_q = deque()
+        self.recv_q = deque()
+
         sys_clk = cocotb.fork(Clock(dut.clk, 4, units="ns").start())
 
         self.data_ch_source = AxiStreamSource(dut, "data_s_axis",  dut.clk, dut.rst)
@@ -76,6 +81,15 @@ class TB(object):
 
         self.stat_data = self.dut.core_stat_data
 
+        self.data_ch_source.log.setLevel("WARNING")
+        self.data_ch_sink.log.setLevel("WARNING")
+        self.ctrl_ch_source.log.setLevel("WARNING")
+        self.ctrl_ch_sink.log.setLevel("WARNING")
+        self.dram_ch_source.log.setLevel("WARNING")
+        self.dram_ch_sink.log.setLevel("WARNING")
+        self.msg_ch_source.log.setLevel("WARNING")
+        self.msg_ch_sink.log.setLevel("WARNING")
+
     async def init(self):
         self.dut.core_stat_addr.setimmediatevalue(0)
 
@@ -88,6 +102,8 @@ class TB(object):
         await RisingEdge(self.dut.clk)
         self.dut.rst.setimmediatevalue(0)
 
+        cocotb.fork(self.scheduler())
+
     async def load_firmware(self, file):
         self.log.info("Load firmware")
 
@@ -96,6 +112,10 @@ class TB(object):
         ins_seg = b''
         data_seg = b''
 
+        # Put core in reset
+        await self.ctrl_ch_source.send([0xf00000001])
+
+        # Load instruction and data memories
         with open(file, "rb") as f:
             elf = ELFFile(f)
             ins_seg = elf.get_section_by_name('.text').data()
@@ -104,24 +124,83 @@ class TB(object):
         self.log.info("Instruction segment size: %d", len(ins_seg))
         if len(ins_seg) > 0:
             self.log.debug("%s", hexdump_str(ins_seg))
-            ins_frame = AxiStreamFrame(tdata=ins_seg,tuser=4,tdest=0)
+            addr_hdr = (0x0200000000000000).to_bytes(8, 'little')
+            ins_frame = AxiStreamFrame(tdata=addr_hdr+ins_seg,tuser=4,tdest=0)
             await self.data_ch_source.send(ins_frame)
 
         self.log.info("Data segment size: %d", len(data_seg))
         if len(data_seg) > 0:
             self.log.debug("%s", hexdump_str(data_seg))
-            data_frame = AxiStreamFrame(tdata=data_seg,tuser=4,tdest=0)
+            addr_hdr = (0x0000000000000000).to_bytes(8, 'little')
+            data_frame = AxiStreamFrame(tdata=addr_hdr+data_seg,tuser=4,tdest=0)
             await self.data_ch_source.send(data_frame)
 
+        # TODO: add pmem write
+
+        await Timer(100, 'ns')
+        await self.ctrl_ch_source.send([0xf00000000])
+
         self.log.info("Done loading firmware")
+
+    def send_pkt(self, data, port=0):
+        self.send_q.append(AxiStreamFrame(tdata=data, tuser=port, tkeep=None))
+
+    async def send_manager(self):
+        while (1):
+            if (self.send_q and self.slots):
+                pkt = self.send_q.popleft()
+                slot = self.slots.pop()
+                pkt.tdest = slot
+                await self.data_ch_source.send(pkt)
+                self.log.debug("Used slot %d for an incoming packet from port %d", slot, pkt.tuser)
+            await RisingEdge(self.dut.clk)
+
+    async def recv_manager(self):
+        while (1):
+            frame = await self.data_ch_sink.recv()
+            self.recv_q.append(frame)
+
+    async def scheduler(self):
+        cocotb.fork(self.send_manager())
+        cocotb.fork(self.recv_manager())
+        while (1):
+            frame = await self.ctrl_ch_sink.recv()
+            msg_type =  frame.tdata[0]                >> 32
+            msg_len  =  frame.tdata[0] & 0x00000FFFF
+            msg_dst  = (frame.tdata[0] & 0x0FF000000) >> 24
+            msg_slot = (frame.tdata[0] & 0x000FF0000) >> 16
+
+            if (msg_type==0):
+              self.slots.append(msg_slot)
+              self.slots.sort(reverse=True)
+            elif (msg_type==1):
+              await ClockCycles(self.dut.clk,4)
+              frame.tdata[0] = frame.tdata[0] & 0xFFFFFFFF
+              await self.ctrl_ch_source.send(frame)
+            elif (msg_type==2):
+              await ClockCycles(self.dut.clk,4)
+              frame.tdata[0] = (1<<32) | (LOOPBACK_PORT << 24) | (msg_slot << 16) | (msg_dst << TAG_WIDTH)
+              await self.ctrl_ch_source.send(frame)
+            elif (msg_type==3):
+              self.log.debug("Initialize scheduler with %d slots", msg_slot)
+              self.slots = list(range(1, msg_slot+1))
+              self.slots.sort(reverse=True)
+
 
 @cocotb.test()
 async def run_test_gousheh(dut):
     tb = TB(dut)
     await tb.init()
-    await tb.load_firmware(FIRMWARE)
+    await Timer(100, 'ns')
 
-    await RisingEdge(dut.clk)
+    await tb.load_firmware(FIRMWARE)
+    await Timer(1000, 'ns')
+
+    tb.send_pkt([0x00f0f0f00f0f0f0],1)
+
+    await Timer(1000, 'ns')
+    tb.log.debug("received packet: %s", hexdump_str(tb.recv_q.pop().tdata))
+
     await RisingEdge(dut.clk)
 
 
@@ -175,6 +254,8 @@ def run_test(parameters=None, sim_build="sim_build", waves=None, force_compile=F
     parameters = {k.upper(): v for k, v in parameters.items() if v is not None}
 
     parameters.setdefault('SLOT_COUNT', 16)
+    parameters.setdefault('LOOPBACK_PORT', 3)
+    parameters.setdefault('TAG_WIDTH', 5)
 
     if extra_env is None:
         extra_env = {}
@@ -203,6 +284,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
 
     parser.add_argument('--slot_count', type=int, default=16)
+    parser.add_argument('--loopback_port', type=int, default=3)
+    parser.add_argument('--tag_width', type=int, default=5)
 
     parser.add_argument('--waves', type=bool)
     parser.add_argument('--sim_build', type=str, default="sim_build")
