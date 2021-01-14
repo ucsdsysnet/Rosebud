@@ -57,6 +57,17 @@ from cocotbext.axi.utils import hexdump_str
 FIRMWARE = os.path.abspath(os.path.join(os.path.dirname(__file__),
     '..', '..', '..', '..', '..', 'c_code', 'basic_fw2.o'))
 
+SIZE_0 = 1024 - 14
+
+PACKETS = []
+
+eth = Ether(src='5A:51:52:53:54:55', dst='DA:D1:D2:D3:D4:D5')
+ip = IP(src='192.168.1.100', dst='192.168.1.101')
+udp = UDP(sport=1234, dport=5678)
+payload = bytes([0]+[0]+[x % 256 for x in range(SIZE_0-2)])
+test_pkt = eth / payload
+PACKETS.append(test_pkt)
+
 class TB(object):
     def __init__(self, dut):
         self.dut = dut
@@ -196,10 +207,10 @@ async def run_test_gousheh(dut):
     await tb.load_firmware(FIRMWARE)
     await Timer(1000, 'ns')
 
-    tb.send_pkt([0x00f0f0f00f0f0f0],1)
+    tb.send_pkt(PACKETS[0].build(),1)
 
     await Timer(1000, 'ns')
-    tb.log.debug("received packet: %s", hexdump_str(tb.recv_q.pop().tdata))
+    tb.log.debug("received packet: \n%s", hexdump_str(tb.recv_q.pop().tdata))
 
     await RisingEdge(dut.clk)
 
