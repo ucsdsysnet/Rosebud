@@ -179,10 +179,10 @@ always @ (posedge clk) begin
   mem_rd_bank      <= mem_rd_addr[0];
   mem_rd_valid     <= act_arb_v || req_rd_v;
 
-  mem_b1_rd_addr_n <= mem_rd_addr[0] ? mem_rd_addr_n[MEM_ADDR_WIDTH-1:1] :
-                                       mem_rd_addr  [MEM_ADDR_WIDTH-1:1] ;
-  mem_b2_rd_addr_n <= mem_rd_addr[0] ? mem_rd_addr  [MEM_ADDR_WIDTH-1:1] :
-                                       mem_rd_addr_n[MEM_ADDR_WIDTH-1:1] ;
+  mem_b1_rd_addr_n <= mem_rd_addr[0] ? mem_rd_addr_n[MEM_ADDR_WIDTH:1] :
+                                       mem_rd_addr  [MEM_ADDR_WIDTH:1] ;
+  mem_b2_rd_addr_n <= mem_rd_addr[0] ? mem_rd_addr  [MEM_ADDR_WIDTH:1] :
+                                       mem_rd_addr_n[MEM_ADDR_WIDTH:1] ;
 
   if(MEM_SEL_BITS>0) begin
     mem_b1_sel_r     <= mem_b1_sel;
