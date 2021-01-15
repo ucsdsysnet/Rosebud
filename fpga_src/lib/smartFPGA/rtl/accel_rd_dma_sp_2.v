@@ -29,12 +29,12 @@ module accel_rd_dma_sp # (
   output reg  [ACCEL_COUNT-1:0]               accel_busy,
 
   // Memory read channels per bank
-  output reg  [MEM_BLOCKS-1:0]                mem_b1_rd_en,
-  output reg  [MEM_BLOCKS*MEM_ADDR_WIDTH-1:0] mem_b1_rd_addr,
+  output wire [MEM_BLOCKS-1:0]                mem_b1_rd_en,
+  output wire [MEM_BLOCKS*MEM_ADDR_WIDTH-1:0] mem_b1_rd_addr,
   input  wire [MEM_BLOCKS*DATA_WIDTH-1:0]     mem_b1_rd_data,
 
-  output reg  [MEM_BLOCKS-1:0]                mem_b2_rd_en,
-  output reg  [MEM_BLOCKS*MEM_ADDR_WIDTH-1:0] mem_b2_rd_addr,
+  output wire [MEM_BLOCKS-1:0]                mem_b2_rd_en,
+  output wire [MEM_BLOCKS*MEM_ADDR_WIDTH-1:0] mem_b2_rd_addr,
   input  wire [MEM_BLOCKS*DATA_WIDTH-1:0]     mem_b2_rd_data,
 
   // Read data output
