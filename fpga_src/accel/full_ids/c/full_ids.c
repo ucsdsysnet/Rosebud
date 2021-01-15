@@ -324,6 +324,9 @@ int main(void)
 	struct accel_context *accel;
 	struct accel_group *grp;
 
+	DEBUG_OUT_L = 0;
+	DEBUG_OUT_H = 0;
+
 	// set slot configuration parameters
 	slot_count = 8;
 	slot_size = 16*1024;
@@ -438,8 +441,8 @@ int main(void)
 	while (1)
 	{
 		unsigned int temp;
-		DEBUG_OUT_L = ACC_SME_STATUS;
-		DEBUG_OUT_H = accel_active_mask;
+		DEBUG_OUT_H = (ACC_SME_STATUS_BUSY<<16)  | accel_active_mask;
+		DEBUG_OUT_L = (ACC_SME_DESC_ERROR << 16) | ACC_SME_DONE_ERROR;
 
 		PROFILE_A(0x00010000);
 

@@ -436,15 +436,15 @@ int main(int argc, char *argv[])
 
         // read core status
         if (debug_reg>=8) {
-	    for (int k=0; k<core_count; k++) {
+            for (int k=0; k<core_count; k++) {
                 mqnic_reg_write32(dev->regs, 0x000414, k<<4|debug_reg);
                 mqnic_reg_read32(dev->regs, 0x000424); //dummy read
                 temp = mqnic_reg_read32(dev->regs, 0x000424);
                 if (temp!=0)
                   printf("core %d status: %08x \n", k, temp);
-	    }
-	} else if ((debug_reg==4) || (debug_reg==5)){
-	    for (int k=0; k<core_count; k++) {
+            }
+        } else if ((debug_reg==4) || (debug_reg==5)){
+            for (int k=0; k<core_count; k++) {
                 mqnic_reg_write32(dev->regs, 0x000414, k<<4|4);
                 mqnic_reg_read32(dev->regs, 0x000424); //dummy read
                 temp = mqnic_reg_read32(dev->regs, 0x000424);
@@ -452,9 +452,9 @@ int main(int argc, char *argv[])
                 mqnic_reg_read32(dev->regs, 0x000424); //dummy read
                 temp2 = mqnic_reg_read32(dev->regs, 0x000424);
                 if ((temp!=0)||(temp2!=0))
-                  printf("core %d debug_l: %08x, debug_h: %08x\n", k, temp, temp2);
-	    }
-	}
+										printf("core %d debug_h: %08x, debug_l: %08x\n", k, temp2, temp);
+            }
+        }
 
         if (!keep_running)
             break;

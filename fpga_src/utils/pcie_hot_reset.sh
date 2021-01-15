@@ -34,7 +34,7 @@ bc=$(setpci -s $port BRIDGE_CONTROL)
 echo "Bridge control:" $bc
 
 setpci -s $port BRIDGE_CONTROL=$(printf "%04x" $((0x$bc | 0x40)))
-sleep 0.1
+sleep 0.5
 setpci -s $port BRIDGE_CONTROL=$bc
 sleep 0.5
 
