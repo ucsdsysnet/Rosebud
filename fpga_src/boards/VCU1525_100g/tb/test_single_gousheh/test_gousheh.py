@@ -62,6 +62,7 @@ FIRMWARE = os.path.abspath(os.path.join(os.path.dirname(__file__),
 SEND_COUNT_0 = 1024
 SIZE_0 = [66-54, 1500-54, 66-54, 66-54, 1500-54, 1500-54, 66-54]
 WAIT_TIME = 20000
+MAX_PKT_SPACING = 3
 CHECK_PKT = True
 
 PACKETS = []
@@ -194,10 +195,12 @@ class TB(object):
                 pkt = self.send_q.popleft()
                 slot = self.slots.pop()
                 pkt.tdest = slot
+                await ClockCycles(self.dut.clk, randrange(MAX_PKT_SPACING))
                 await self.data_ch_source.send(pkt)
                 self.sent_pkts += 1
                 self.log.debug("Used slot %d for an incoming packet from port %d", slot, pkt.tuser)
-            await RisingEdge(self.dut.clk)
+            else:
+                await RisingEdge(self.dut.clk)
 
     async def recv_manager(self):
         while (1):

@@ -17,7 +17,7 @@
 	 ((x & 0x0000ff00) <<  8) | ((x & 0x000000ff) << 24))
 
 // maximum number of slots (number of context objects)
-#define MAX_CTX_COUNT 8
+#define MAX_CTX_COUNT 16
 
 // maximum number of accelerators (number of accelerator context objects)
 #define MAX_ACCEL_COUNT 16
@@ -29,7 +29,7 @@
 // DWORD align Ethernet payload
 // provide space for header modifications
 #define PKT_OFFSET 10
-#define PKTS_START (7*128*1024)
+#define PKTS_START (6*128*1024)
 
 // SME accelerator control registers
 #define ACC_SME_STATUS (*((volatile unsigned int *)(IO_EXT_BASE + 0x0100)))
@@ -328,7 +328,7 @@ int main(void)
 	DEBUG_OUT_H = 0;
 
 	// set slot configuration parameters
-	slot_count = 8;
+	slot_count = 16;
 	slot_size = 16*1024;
 	header_slot_base = DMEM_BASE + (DMEM_SIZE >> 1);
 	header_slot_size = 128;

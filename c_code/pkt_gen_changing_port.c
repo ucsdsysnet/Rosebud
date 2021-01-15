@@ -37,7 +37,7 @@ int main(void){
   init_slots(8, 0x00000A, 16384);
 
   for (i=0;i<16;i++){
-    pkt_data[i] = (unsigned char *)(0x01000000+i*16384);
+    pkt_data[i] = (unsigned char *)(0x01040000+i*16384);
     basic_memcpy(pkt_data[i], udp_hdr, 42);
     if ((i&0x1)==0)
       basic_memcpy(pkt_data[i]+60, hdr1, 60);
