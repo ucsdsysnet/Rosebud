@@ -35,13 +35,16 @@ either expressed or implied, of The Regents of the University of California.
 
 void write_cmd (struct mqnic *dev, uint32_t addr, uint32_t data){
     mqnic_reg_write32(dev->regs, 0x000404, data);
+    usleep(10);
     mqnic_reg_write32(dev->regs, 0x000408, (1<<31)|addr);
     return;
 }
 
 uint32_t read_cmd (struct mqnic *dev, uint32_t addr){
     mqnic_reg_write32(dev->regs, 0x000408, addr);
+    usleep(10);
     mqnic_reg_read32 (dev->regs, 0x000404); //dummy read
+    usleep(10);
     return mqnic_reg_read32(dev->regs, 0x000404);
 }
 
@@ -56,7 +59,7 @@ uint32_t core_rd_cmd (struct mqnic *dev, uint32_t core, uint32_t reg){
 }
 
 uint32_t interface_rd_cmd (struct mqnic *dev, uint32_t interface, uint32_t direction, uint32_t reg){
-    return read_cmd(dev, SYS_ZONE | SYS_INT | interface<<INT_REG_WIDTH | direction<<INT_DIR_BIT | reg);
+    return read_cmd(dev, SYS_ZONE | SYS_INT | interface<<(INT_REG_WIDTH+1) | direction<<INT_DIR_BIT | reg);
 }
 
 void set_receive_cores (struct mqnic *dev, uint32_t onehot){
