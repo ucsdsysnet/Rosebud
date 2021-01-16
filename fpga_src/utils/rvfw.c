@@ -38,6 +38,7 @@ either expressed or implied, of The Regents of the University of California.
 #include <sys/ioctl.h>
 
 #include "mqnic.h"
+#include "gousheh.h"
 
 #define MAX_CORE_COUNT 16
 #define MAX_IF_COUNT 4
@@ -240,15 +241,13 @@ int main(int argc, char *argv[])
         }
 
         printf("Disabling cores in scheduler...\n");
-        mqnic_reg_write32(dev->regs, 0x000410, 0xffffffff);
-        mqnic_reg_write32(dev->regs, 0x000404, 0x00000001);
-
+        set_disable_cores (dev, 0xffffffff);
         usleep(100000);
 
         printf("Placing cores in reset...\n");
         for (int k=0; k<core_count; k++)
         {
-            mqnic_reg_write32(dev->regs, 0x000408, (k << 8) | 0xf);
+            core_wr_cmd (dev, k, 0xf, 1);
             usleep(1000);
             printf(".");
             fflush(stdout);
@@ -361,13 +360,12 @@ int main(int argc, char *argv[])
         }
 
         printf("Release core resets...\n");
-        mqnic_reg_write32(dev->regs, 0x000404, 0x00000000);
         usleep(100000);
         for (int k=0; k<core_count; k++)
         {
             if (core_enable & (1 << k)){
-                mqnic_reg_write32(dev->regs, 0x000408, (k << 8) | 0xf);
-                mqnic_reg_write32(dev->regs, 0x000408, (k << 8) | 0xf);
+                core_wr_cmd (dev, k, 0xf, 0);
+                core_wr_cmd (dev, k, 0xf, 0);
             }
             usleep(1000);
             printf(".");
@@ -379,24 +377,20 @@ int main(int argc, char *argv[])
 
         printf("Core stats after taking out of reset\n");
         for (int k=0; k<core_count; k++){
-            mqnic_reg_write32(dev->regs, 0x000414, k<<4|8);
-            mqnic_reg_read32(dev->regs, 0x000424); //dummy read
-            printf("core %d status: %08x\n", k, mqnic_reg_read32(dev->regs, 0x000424));
+            printf("core %d status: %08x\n", k, core_rd_cmd (dev, k, 8));
         }
+
+        printf("Core enable mask: 0x%08x\n", core_enable);
+        set_disable_cores (dev, ~core_enable);
+        set_disable_cores (dev, ~core_enable);
+        unsigned int temp = read_disable_cores(dev);
+        printf("core enable readback %08x\n",  ~temp);
 
         printf("Enabling cores in scheduler...\n");
         printf("Core RX enable mask: 0x%08x\n", core_rx_enable);
-        mqnic_reg_write32(dev->regs, 0x00040C, core_rx_enable);
-        mqnic_reg_write32(dev->regs, 0x00040C, core_rx_enable);
-        mqnic_reg_read32(dev->regs, 0x00040C); //dummy read
-        printf("core RX enable readback %08x\n",  mqnic_reg_read32(dev->regs, 0x00040C));
-
-        printf("Core enable mask: 0x%08x\n", core_enable);
-        mqnic_reg_write32(dev->regs, 0x000410, ~core_enable);
-        mqnic_reg_write32(dev->regs, 0x000410, ~core_enable);
-        mqnic_reg_read32(dev->regs, 0x000410); //dummy read
-        unsigned int temp = mqnic_reg_read32(dev->regs, 0x000410);
-        printf("core enable readback %08x\n",  ~temp);
+        set_receive_cores (dev, core_rx_enable);
+        set_receive_cores (dev, core_rx_enable);
+        printf("core RX enable readback %08x\n",  read_receive_cores(dev));
 
         printf("Done!\n");
 

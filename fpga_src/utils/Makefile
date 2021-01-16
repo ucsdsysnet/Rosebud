@@ -24,13 +24,13 @@ BIN=dump perf rvfw
 
 all: $(BIN)
 
-dump: dump.c mqnic.c
+dump: dump.c mqnic.c gousheh.c
 	$(CC) $(CFLAGS) $^ -o $@
 
-perf: perf.c mqnic.c timespec.c
+perf: perf.c mqnic.c timespec.c gousheh.c
 	$(CC) $(CFLAGS) $^ -o $@
 
-rvfw: rvfw.c mqnic.c
+rvfw: rvfw.c mqnic.c gousheh.c
 	$(CC) $(CFLAGS) $^ -o $@
 
 install:
