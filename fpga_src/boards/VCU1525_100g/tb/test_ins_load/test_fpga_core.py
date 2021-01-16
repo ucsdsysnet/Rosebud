@@ -129,23 +129,26 @@ async def run_test_nic(dut):
     await tb.load_firmware(FIRMWARE)
 
     tb.log.info("Set core enable mask")
-    await tb.rc.mem_write_dword(tb.dev_pf0_bar0+0x00040C, 0xffff)
-    await tb.rc.mem_write_dword(tb.dev_pf0_bar0+0x000410, 0x0000)
+    await tb.set_disable_cores (0x0000)
+    await tb.set_receive_cores (0xffff)
     await Timer(100, 'ns')
 
     if (TEST_DEBUG):
         tb.log.info("Debug Test")
-        await tb.rc.mem_write_dword(tb.dev_pf0_bar0+0x000404, 0x1234ABCD)
         await Timer(1000, 'ns')
 
         for i in range(0, 16):
-            await tb.rc.mem_write_dword(tb.dev_pf0_bar0+0x000408, (i << 8) | 0x8)
+            await tb.core_wr_cmd (i, 0x8, 0x1234ABCD)
             await Timer(200, 'ns')
-            await tb.rc.mem_write_dword(tb.dev_pf0_bar0+0x000408, (i << 8) | 0x9)
+            await tb.core_wr_cmd (i, 0x9, 0x1234ABCD)
             await Timer(200, 'ns')
-            await tb.rc.mem_write_dword(tb.dev_pf0_bar0+0x000408, (i << 8) | 0xC)
+            await tb.core_wr_cmd (i, 0xC, 0x1234ABCD)
             await Timer(200, 'ns')
-            await tb.rc.mem_write_dword(tb.dev_pf0_bar0+0x000408, (i << 8) | 0xD)
+            await tb.core_wr_cmd (i, 0xD, 0x1234ABCD)
+            await Timer(200, 'ns')
+            await tb.core_wr_cmd (i, 0xC, 0)
+            await Timer(200, 'ns')
+            await tb.core_wr_cmd (i, 0xD, 0)
             await Timer(200, 'ns')
 
     if (TEST_SFP):
@@ -198,45 +201,39 @@ async def run_test_nic(dut):
 
     tb.log.info("Read counters")
 
-    for k in range(8, 12):
-        await tb.rc.mem_write_dword(tb.dev_pf0_bar0+0x000414, k << 4 | 0)
+    for k in range(0, 16):
+        slots      = await tb.read_core_slots(k)
         await Timer(100, 'ns')
-        slots      = await tb.rc.mem_read_dword(tb.dev_pf0_bar0+0x000420)
-        bytes_in   = await tb.rc.mem_read_dword(tb.dev_pf0_bar0+0x000424)
-        await tb.rc.mem_write_dword(tb.dev_pf0_bar0+0x000414, k << 4 | 1)
+        bytes_in   = await tb.core_rd_cmd (k, 0)
         await Timer(100, 'ns')
-        frames_in  = await tb.rc.mem_read_dword(tb.dev_pf0_bar0+0x000424)
-        await tb.rc.mem_write_dword(tb.dev_pf0_bar0+0x000414, k << 4 | 2)
+        frames_in  = await tb.core_rd_cmd (k, 1)
         await Timer(100, 'ns')
-        bytes_out  = await tb.rc.mem_read_dword(tb.dev_pf0_bar0+0x000424)
-        await tb.rc.mem_write_dword(tb.dev_pf0_bar0+0x000414, k << 4 | 3)
+        bytes_out  = await tb.core_rd_cmd (k, 2)
         await Timer(100, 'ns')
-        frames_out = await tb.rc.mem_read_dword(tb.dev_pf0_bar0+0x000424)
+        frames_out = await tb.core_rd_cmd (k, 3)
+        await Timer(100, 'ns')
 
         tb.log.info("Core %d stat read, slots: , bytes_in, byte_out, frames_in, frames_out", k)
         tb.log.info("%d, %d, %d, %d, %d", slots, bytes_in, bytes_out, frames_in, frames_out)
 
         if (TEST_DEBUG):
-            await tb.rc.mem_write_dword(tb.dev_pf0_bar0+0x000414, k << 4 | 4)
+            debug_l   = await tb.core_rd_cmd (k, 4)
             await Timer(100, 'ns')
-            debug_l = await tb.rc.mem_read_dword(tb.dev_pf0_bar0+0x000424)
-            await tb.rc.mem_write_dword(tb.dev_pf0_bar0+0x000414, k << 4 | 5)
+            debug_h  = await tb.core_rd_cmd (k, 5)
             await Timer(100, 'ns')
-            debug_h = await tb.rc.mem_read_dword(tb.dev_pf0_bar0+0x000424)
-            await Timer(100, 'ns')
-            tb.log.info("Core %d debug_l, debug_h", k)
-            tb.log.info("%08x, %08x", debug_l, debug_h)
+            tb.log.info("Core %d debug_h, debug_l", k)
+            tb.log.info("%08x, %08x", debug_h, debug_l)
 
     for k in range(0, 3):
-        await tb.rc.mem_write_dword(tb.dev_pf0_bar0+0x000418, k << 8 | 0)
+        bytes_in   = await tb.interface_rd_cmd (k, 0, 0)
         await Timer(100, 'ns')
-        bytes_in   = await tb.rc.mem_read_dword(tb.dev_pf0_bar0+0x000428)
-        bytes_out  = await tb.rc.mem_read_dword(tb.dev_pf0_bar0+0x00042C)
-        await tb.rc.mem_write_dword(tb.dev_pf0_bar0+0x000418, k << 8 | 1)
+        bytes_out  = await tb.interface_rd_cmd (k, 1, 0)
         await Timer(100, 'ns')
-        frames_in   = await tb.rc.mem_read_dword(tb.dev_pf0_bar0+0x000428)
-        frames_out  = await tb.rc.mem_read_dword(tb.dev_pf0_bar0+0x00042C)
-        desc        = await tb.rc.mem_read_dword(tb.dev_pf0_bar0+0x000430)
+        frames_in  = await tb.interface_rd_cmd (k, 0, 1)
+        await Timer(100, 'ns')
+        frames_out = await tb.interface_rd_cmd (k, 1, 1)
+        await Timer(100, 'ns')
+        desc       = await tb.read_interface_desc (k)
         tb.log.info("Interface %d stat read, bytes_in, byte_out, frames_in, frames_out, loaded desc", k)
         tb.log.info("%d, %d, %d, %d, %08x", bytes_in, bytes_out, frames_in, frames_out, desc)
 

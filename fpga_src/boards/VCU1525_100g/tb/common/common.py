@@ -61,6 +61,20 @@ except ImportError:
     finally:
         del sys.path[0]
 
+SYS_ZONE       = 0<<30
+SCHED_ZONE     = 1<<30
+
+SYS_CORE       = (0<<29)
+SYS_INT        = (1<<29) # RD_ONLY
+
+SCHED_RECEIVE  = (0<<28)
+SCHED_DISABLE  = (1<<28)
+SCHED_SLOT     = (2<<28) # RD_ONLY
+SCHED_DESC     = (3<<28) # RD_ONLY
+
+CORE_REG_WIDTH = 4
+INT_REG_WIDTH  = 2
+INT_DIR_BIT    = INT_REG_WIDTH+1-1
 
 class TB(object):
     def __init__(self, dut):
@@ -347,6 +361,18 @@ class TB(object):
                 if not self.qsfp1_sink.empty():
                     await self.qsfp1_source.send(await self.qsfp1_sink.recv())
 
+    # CMD operations
+    async def write_cmd (self, addr, data):
+        await self.rc.mem_write_dword(self.dev_pf0_bar0+0x000404, data)
+        await self.rc.mem_write_dword(self.dev_pf0_bar0+0x000408, (1<<31)|addr)
+
+    async def read_cmd (self, addr):
+        await self.rc.mem_write_dword(self.dev_pf0_bar0+0x000408, addr)
+        await self.rc.mem_read_dword(self.dev_pf0_bar0+0x000404) #dummy
+        read_val = await self.rc.mem_read_dword(self.dev_pf0_bar0+0x000404)
+        return read_val
+
+    # DMA operations 
     async def block_write(self, data, dest, length=-1):
         if len(data) == 0:
             return
@@ -383,7 +409,42 @@ class TB(object):
             pass
 
         return self.mem_data[0:length]
+    
+    # RD/WR commands 
+    async def core_wr_cmd (self, core, reg, data):
+        await self.write_cmd(SYS_ZONE | SYS_CORE | core<<CORE_REG_WIDTH | reg, data)
 
+    async def core_rd_cmd (self, core, reg):
+        read_val = await self.read_cmd(SYS_ZONE | SYS_CORE | core<<CORE_REG_WIDTH | reg)
+        return read_val
+
+    async def interface_rd_cmd (self, interface, direction, reg):
+        read_val = await self.read_cmd(SYS_ZONE | SYS_INT | interface<<(INT_REG_WIDTH+1) | direction<<INT_DIR_BIT | reg)
+        return read_val
+
+    async def set_receive_cores (self, onehot):
+        await self.write_cmd(SCHED_ZONE | SCHED_RECEIVE, onehot)
+
+    async def set_disable_cores (self, onehot):
+        await self.write_cmd(SCHED_ZONE | SCHED_DISABLE, onehot)
+
+    async def read_recv_cores (self):
+        read_val = await self.read_cmd(SCHED_ZONE | SCHED_RECEIVE) 
+        return read_val
+
+    async def read_disable_cores (self):
+        read_val = await self.read_cmd(SCHED_ZONE | SCHED_DISABLE) 
+        return read_val
+
+    async def read_core_slots (self, core):
+        read_val = await self.read_cmd(SCHED_ZONE | SCHED_SLOT | core) 
+        return read_val
+
+    async def read_interface_desc (self, interface):
+        read_val = await self.read_cmd(SCHED_ZONE | SCHED_DESC | interface) 
+        return read_val
+
+    # Load Firmware procedure
     async def load_firmware(self, file):
         self.log.info("Load firmware")
 
@@ -407,14 +468,13 @@ class TB(object):
 
         self.log.info("Enable DMA")
         await self.rc.mem_write_dword(self.dev_pf0_bar0+0x000400, 1)
-
-        await self.rc.mem_write_dword(self.dev_pf0_bar0+0x000410, 0xffff)
-        await self.rc.mem_write_dword(self.dev_pf0_bar0+0x000404, 0x0001)
-        await Timer(100, 'ns')
+        
+        # Disable cores
+        await self.set_disable_cores (0xffffffff)
 
         for i in range(0, 16):
             self.log.info("Assert reset on core %d", i)
-            await self.rc.mem_write_dword(self.dev_pf0_bar0+0x000408, ((i << 8) | 0xf))
+            await self.core_wr_cmd (i, 0xf, 1)
 
         await Timer(20, 'ns')
 
@@ -432,12 +492,11 @@ class TB(object):
 
             self.log.info("Done")
 
-        await self.rc.mem_write_dword(self.dev_pf0_bar0+0x000404, 0x0000)
         await Timer(100, 'ns')
 
         for i in range(0, 16):
             self.log.info("Release reset on core %d", i)
-            await self.rc.mem_write_dword(self.dev_pf0_bar0+0x000408, ((i << 8) | 0xf))
+            await self.core_wr_cmd (i, 0xf, 0)
 
         await Timer(2000, 'ns')
 

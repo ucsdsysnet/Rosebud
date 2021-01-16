@@ -98,9 +98,10 @@ set_property STEPS.OPT_DESIGN.TCL.PRE [ get_files ../lib/axis/syn/sync_reset.tcl
 set_property STEPS.OPT_DESIGN.TCL.PRE [ get_files ../lib/smartFPGA/syn/simple_sync_sig.tcl -of [get_fileset utils_1] ] [get_runs impl_sched]
 set_property STEPS.ROUTE_DESIGN.TCL.PRE [ get_files ../lib/axis/syn/sync_reset.tcl -of [get_fileset utils_1] ] [get_runs impl_sched]
 set_property STEPS.ROUTE_DESIGN.TCL.PRE [ get_files ../lib/smartFPGA/syn/simple_sync_sig.tcl -of [get_fileset utils_1] ] [get_runs impl_sched]
+set_property STEPS.PLACE_DESIGN.ARGS.DIRECTIVE SSI_SpreadLogic_high [get_runs sched]
 
 reset_run impl_sched
-launch_runs impl_sched
+launch_runs impl_sched -jobs 12
 wait_on_run impl_sched
 
 open_run impl_sched

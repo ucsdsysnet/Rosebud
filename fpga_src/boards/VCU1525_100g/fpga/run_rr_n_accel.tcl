@@ -40,10 +40,10 @@ set_property STEPS.OPT_DESIGN.TCL.PRE [ get_files ../lib/axis/syn/sync_reset.tcl
 set_property STEPS.OPT_DESIGN.TCL.PRE [ get_files ../lib/smartFPGA/syn/simple_sync_sig.tcl -of [get_fileset utils_1] ] [get_runs impl_accel]
 set_property STEPS.ROUTE_DESIGN.TCL.PRE [ get_files ../lib/axis/syn/sync_reset.tcl -of [get_fileset utils_1] ] [get_runs impl_accel]
 set_property STEPS.ROUTE_DESIGN.TCL.PRE [ get_files ../lib/smartFPGA/syn/simple_sync_sig.tcl -of [get_fileset utils_1] ] [get_runs impl_accel]
-
+set_property STEPS.PLACE_DESIGN.ARGS.DIRECTIVE SSI_SpreadLogic_high [get_runs impl_accel]
 
 reset_run impl_accel
-launch_runs impl_accel
+launch_runs impl_accel -jobs 12
 wait_on_run impl_accel
 
 open_run impl_accel

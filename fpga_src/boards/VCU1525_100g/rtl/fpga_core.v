@@ -222,7 +222,7 @@ parameter BC_MSG_CLUSTERS  = 4;
 parameter SW_OUTPUT_PIPE   = 2;
 
 // PCIe parameters
-parameter PCIE_SLOT_COUNT     = 16;
+parameter PCIE_SLOT_COUNT     = 8;
 parameter PCIE_ADDR_WIDTH     = 64;
 parameter PCIE_RAM_ADDR_WIDTH = 32;
 parameter TX_RX_RAM_SIZE      = 2**15;
@@ -281,19 +281,19 @@ always @ (posedge core_clk) begin
   for (j=0; j<CORE_COUNT; j=j+1)
     block_reset[j] <= core_rst;
 end
-  
+
 wire stat_rst_r, int_rst_r;
-sync_reset sync_sys_rst_inst ( 
+sync_reset sync_sys_rst_inst (
   .clk(sys_clk),
   .rst(sys_rst_r),
   .out(stat_rst_r)
 );
-sync_reset sync_int_rst_inst ( 
+sync_reset sync_int_rst_inst (
   .clk(sys_clk),
   .rst(sys_rst_r),
   .out(int_rst_r)
 );
-  
+
 // Unused outputs
 assign led   = 3'd0;
 
@@ -527,7 +527,7 @@ generate
             .m_status_bad_frame(),
             .m_status_good_frame()
         );
-        
+
         axis_fifo #(
             .DEPTH(RX_FIFO_DEPTH),
             .DATA_WIDTH(AXIS_ETH_DATA_WIDTH),
@@ -656,27 +656,15 @@ wire                       dram_ctrl_s_axis_tready;
 wire                       dram_ctrl_s_axis_tlast;
 wire [CORE_WIDTH-1:0]      dram_ctrl_s_axis_tdest;
 
-// pcie_config connections 
-wire [3:0]                 host_cmd;
-wire [CORE_WIDTH-1:0]      host_cmd_dest;
-wire [31:0]                host_cmd_data;
+// pcie_config connections
+wire [31:0]                host_cmd;
+wire [31:0]                host_cmd_wr_data;
+reg  [31:0]                host_cmd_rd_data;
 wire                       host_cmd_valid;
-wire                       host_cmd_ready;
-wire [CORE_COUNT-1:0]      income_cores;
-wire [CORE_COUNT-1:0]      cores_to_be_reset;
-wire [CORE_WIDTH+4-1:0]    stat_read_core;
-wire [CORE_WIDTH+4-1:0]    stat_read_core_r;
-wire [IF_COUNT_WIDTH-1:0]  stat_read_interface;
-wire [1:0]                 stat_read_addr;
-wire [SLOT_WIDTH-1:0]      slot_count;
-wire [31:0]                interface_sched_data;
+
 wire                       pcie_dma_enable;
 wire [31:0]                vif_irq;
 
-reg  [31:0]                core_stat_data_muxed;
-wire [31:0]                core_stat_data_muxed_r;
-wire [31:0]                interface_in_stat_data; 
-wire [31:0]                interface_out_stat_data;
 
 // AXI lite connections
 wire [AXIL_ADDR_WIDTH-1:0]         axil_ctrl_awaddr;
@@ -818,60 +806,80 @@ pcie_config # (
   .qsfp1_lpmode(qsfp1_lpmode),
 
   // Host commands to cores
-  .host_cmd      (host_cmd),
-  .host_cmd_dest (host_cmd_dest),
-  .host_cmd_data (host_cmd_data),
-  .host_cmd_valid(host_cmd_valid),
-  .host_cmd_ready(host_cmd_ready),
+  .host_cmd        (host_cmd),
+  .host_cmd_wr_data(host_cmd_wr_data),
+  .host_cmd_rd_data(host_cmd_rd_data),
+  .host_cmd_valid  (host_cmd_valid),
 
-  .income_cores     (income_cores),
-  .cores_to_be_reset(cores_to_be_reset),
-
-  .stat_read_core    (stat_read_core),
-  .slot_count        (slot_count),
-  .core_stat_data    (core_stat_data_muxed_r),
-
-  .stat_read_interface     (stat_read_interface),
-  .stat_read_addr          (stat_read_addr),
-  .interface_in_stat_data  (interface_in_stat_data), 
-  .interface_out_stat_data (interface_out_stat_data), 
-  .interface_sched_data    (interface_sched_data),
-  
   .pcie_dma_enable    (pcie_dma_enable),
   .corundum_loopback  (),
   .if_msi_irq         (vif_irq),
   .msi_irq            (msi_irq)
 );
 
-if (SEPARATE_CLOCKS) begin 
-  simple_sync_sig # (.RST_VAL(1'b0),.WIDTH(CORE_WIDTH+4)) stat_read_core_reg (
+// Host command read from stat readers and mux with scheduler read
+reg  [31:0]             core_stat_data_muxed;
+wire [31:0]             core_stat_data_muxed_r;
+wire [CORE_WIDTH+4-1:0] core_select;
+
+if (SEPARATE_CLOCKS) begin
+  simple_sync_sig # (.RST_VAL(1'b0),.WIDTH(CORE_WIDTH+4)) host_cmd_sync_reg (
     .dst_clk(core_clk),
     .dst_rst(core_rst_r),
-    .in(stat_read_core),
-    .out(stat_read_core_r)
+    .in(host_cmd[CORE_WIDTH+4-1:0]),
+    .out(core_select)
   );
-  
-  simple_sync_sig # (.RST_VAL(1'b0),.WIDTH(32)) core_stat_data_reg (
+
+  simple_sync_sig # (.RST_VAL(1'b0),.WIDTH(32)) core_stat_data_sync_reg (
     .dst_clk(sys_clk),
     .dst_rst(stat_rst_r),
     .in(core_stat_data_muxed),
     .out(core_stat_data_muxed_r)
   );
-end else begin
-  simple_sync_sig # (.RST_VAL(1'b0),.WIDTH(CORE_WIDTH+4)) stat_read_core_reg (
+end else begin //syncers as pipe registers
+  simple_sync_sig # (.RST_VAL(1'b0),.WIDTH(CORE_WIDTH+4)) host_cmd_sync_reg (
     .dst_clk(pcie_clk),
     .dst_rst(pcie_rst),
-    .in(stat_read_core),
-    .out(stat_read_core_r)
+    .in(host_cmd[CORE_WIDTH+4-1:0]),
+    .out(core_select)
   );
-  
-  simple_sync_sig # (.RST_VAL(1'b0),.WIDTH(32)) core_stat_data_reg (
+
+  simple_sync_sig # (.RST_VAL(1'b0),.WIDTH(32)) core_stat_data_sync_reg (
     .dst_clk(pcie_clk),
     .dst_rst(pcie_rst),
     .in(core_stat_data_muxed),
     .out(core_stat_data_muxed_r)
   );
+  // (* KEEP = "TRUE" *) reg [31:0]             core_stat_data_muxed_r;
+  // (* KEEP = "TRUE" *) reg [CORE_WIDTH+4-1:0] core_select;
+  // always @ (posedge sys_clk) begin
+  //   core_select            <= host_cmd[CORE_WIDTH+4-1:0];
+  //   core_stat_data_muxed_r <= core_stat_data_muxed;
+  // end
 end
+
+wire [31:0] interface_in_stat_data;
+wire [31:0] interface_out_stat_data;
+wire [31:0] host_rd_sched_data;
+
+wire [1:0]                 interface_reg_sel;
+wire                       interface_dir;
+wire [IF_COUNT_WIDTH-1:0]  interface_sel;
+wire [2:0]                 host_cmd_type;
+
+assign interface_reg_sel = host_cmd[1:0];
+assign interface_sel     = host_cmd[3 +: IF_COUNT_WIDTH];
+assign interface_dir     = host_cmd[2];
+assign host_cmd_type     = host_cmd[31:29];
+
+always @ (posedge sys_clk)
+  casex (host_cmd_type)
+    3'b000: host_cmd_rd_data <= core_stat_data_muxed_r;
+    3'b001: host_cmd_rd_data <= interface_dir ? interface_out_stat_data :
+                                                interface_in_stat_data  ;
+    3'b01?: host_cmd_rd_data <= host_rd_sched_data;
+    3'b1??: host_cmd_rd_data <= 32'hffffffff; // wr command
+  endcase
 
 if (V_PORT_COUNT==0) begin: no_veth
 
@@ -1147,8 +1155,6 @@ wire [CORE_WIDTH-1:0] sched_ctrl_s_axis_tuser;
 
 wire sched_trig_in, sched_trig_out, sched_trig_in_ack, sched_trig_out_ack;
 
-// (* keep_hierarchy = "yes" *)
-
 `ifndef PR_ENABLE
   scheduler # (
     .PORT_COUNT(PORT_COUNT),
@@ -1213,20 +1219,13 @@ wire sched_trig_in, sched_trig_out, sched_trig_in_ack, sched_trig_out_ack;
     .ctrl_s_axis_tready(sched_ctrl_s_axis_tready),
     .ctrl_s_axis_tuser(sched_ctrl_s_axis_tuser),
 
-    // Host commands to cores
-    .host_cmd      (host_cmd),
-    .host_cmd_dest (host_cmd_dest),
-    .host_cmd_data (host_cmd_data),
-    .host_cmd_valid(host_cmd_valid),
-    .host_cmd_ready(host_cmd_ready),
+    // Host wr/rd commands
+    .host_cmd         (host_cmd),
+    .host_cmd_wr_data (host_cmd_wr_data),
+    .host_cmd_rd_data (host_rd_sched_data),
+    .host_cmd_valid   (host_cmd_valid),
 
-    .income_cores       (income_cores),
-    .cores_to_be_reset  (cores_to_be_reset),
-    .stat_read_core     (stat_read_core[4 +: CORE_WIDTH]),
-    .slot_count         (slot_count),
-    .stat_read_interface(stat_read_interface),
-    .stat_interface_data(interface_sched_data),
-
+    // Triggers for ILA if any
     .trig_in     (sched_trig_in),
     .trig_in_ack (sched_trig_in_ack),
     .trig_out    (sched_trig_out),
@@ -1333,8 +1332,8 @@ stat_reader # (
   .monitor_axis_tlast(sched_rx_axis_tlast),
   .monitor_drop_pulse({{V_PORT_COUNT{1'b0}},rx_drop_r}),
 
-  .port_select(stat_read_interface),
-  .stat_addr(stat_read_addr),
+  .port_select(interface_sel),
+  .stat_addr(interface_reg_sel),
   .stat_data(interface_in_stat_data)
 );
 
@@ -1407,8 +1406,8 @@ stat_reader # (
   .monitor_axis_tlast(sched_tx_axis_tlast),
   .monitor_drop_pulse({INTERFACE_COUNT+V_PORT_COUNT{1'b0}}),
 
-  .port_select(stat_read_interface),
-  .stat_addr(stat_read_addr),
+  .port_select(interface_sel),
+  .stat_addr(interface_reg_sel),
   .stat_data(interface_out_stat_data)
 );
 
@@ -1473,12 +1472,12 @@ axis_simple_arb_2lvl # (
 
     .clk(core_clk),
     .rst(core_rst_r),
-    
+
     .s_axis_tdata(ctrl_m_axis_tdata),
     .s_axis_tvalid(ctrl_m_axis_tvalid),
     .s_axis_tready(ctrl_m_axis_tready),
     .s_axis_tuser(ctrl_m_axis_tuser),
-    
+
     .m_axis_tdata(sched_ctrl_s_axis_tdata),
     .m_axis_tvalid(sched_ctrl_s_axis_tvalid),
     .m_axis_tready(sched_ctrl_s_axis_tready),
@@ -1595,7 +1594,7 @@ wire [CORE_COUNT-1:0]                core_msg_out_ready;
 // wire [CORE_COUNT*CORE_WIDTH-1:0]     core_msg_out_user_r;
 // wire [CORE_COUNT-1:0]                core_msg_out_valid_r;
 // wire [CORE_COUNT-1:0]                core_msg_out_ready_r;
-// 
+//
 // genvar n;
 // generate
 //   for (n=0; n<CORE_COUNT; n=n+1) begin: bc_msg_out_regs
@@ -1613,7 +1612,7 @@ wire [CORE_COUNT-1:0]                core_msg_out_ready;
 //     ) bc_msg_out_register (
 //       .clk(core_clk),
 //       .rst(core_rst_r),
-// 
+//
 //       .s_axis_tdata(core_msg_out_data[n*CORE_MSG_WIDTH +: CORE_MSG_WIDTH]),
 //       .s_axis_tkeep(1'b0),
 //       .s_axis_tvalid(core_msg_out_valid[n]),
@@ -1622,7 +1621,7 @@ wire [CORE_COUNT-1:0]                core_msg_out_ready;
 //       .s_axis_tid(8'd0),
 //       .s_axis_tdest(8'd0),
 //       .s_axis_tuser(ctrl_m_axis_tuser[n*CORE_WIDTH +: CORE_WIDTH]),
-// 
+//
 //       .m_axis_tdata(core_msg_out_data_r[n*CORE_MSG_WIDTH +: CORE_MSG_WIDTH]),
 //       .m_axis_tkeep(),
 //       .m_axis_tvalid(core_msg_out_valid_r[n]),
@@ -1707,7 +1706,7 @@ always @ (posedge core_clk) begin
 end
 
 // Selecting core for stat readback
-localparam LAST_SEL_BITS = CORE_WIDTH+4-$clog2(BC_MSG_CLUSTERS); 
+localparam LAST_SEL_BITS = CORE_WIDTH+4-$clog2(BC_MSG_CLUSTERS);
 
 (* KEEP = "TRUE" *) reg  [CORE_COUNT*4-1:0] core_stat_addr;
 wire [CORE_COUNT*32-1:0] core_stat_data;
@@ -1718,7 +1717,7 @@ wire [CORE_COUNT*32-1:0] core_stat_data;
 reg [BC_MSG_CLUSTERS*32-1:0] core_stat_data_rr;
 
 always @ (posedge core_clk) begin
-  core_select_r    <= stat_read_core_r;
+  core_select_r    <= core_select;
   core_select_rr   <= {BC_MSG_CLUSTERS{core_select_r[LAST_SEL_BITS-1:0]}};
   core_stat_data_r <= core_stat_data;
 end
@@ -1728,16 +1727,16 @@ generate
   for (p=0; p<BC_MSG_CLUSTERS; p=p+1) begin : in_cluster_stat_sel
 
     wire [$clog2(CORES_PER_CLUSTER)-1:0] cluster_core_sel =
-      core_select_rr[p*LAST_SEL_BITS+4+:$clog2(CORES_PER_CLUSTER)];  
+      core_select_rr[p*LAST_SEL_BITS+4+:$clog2(CORES_PER_CLUSTER)];
 
-    
-    wire [CORES_PER_CLUSTER*32-1:0]  cluster_stat_data = 
-                        core_stat_data_r[p*CORES_PER_CLUSTER*32 
+
+    wire [CORES_PER_CLUSTER*32-1:0]  cluster_stat_data =
+                        core_stat_data_r[p*CORES_PER_CLUSTER*32
                                         +: CORES_PER_CLUSTER*32];
     always @ (posedge core_clk) begin
-      core_stat_data_rr [p*32 +: 32] <= 
+      core_stat_data_rr [p*32 +: 32] <=
           cluster_stat_data [cluster_core_sel*32 +: 32];
-    
+
     core_stat_addr[p*CORES_PER_CLUSTER*4 +: 4*CORES_PER_CLUSTER] <=
       {CORES_PER_CLUSTER{core_select_rr[p*LAST_SEL_BITS +: 4]}};
     end
@@ -1749,8 +1748,8 @@ if (BC_MSG_CLUSTERS == 1) begin: single_cluster
   always @ (posedge core_clk)
     core_stat_data_muxed <= core_stat_data_rr;
 end else begin: cluster_stat_sel
-  always @ (posedge core_clk) 
-    core_stat_data_muxed <= 
+  always @ (posedge core_clk)
+    core_stat_data_muxed <=
       core_stat_data_rr[core_select_r[CORE_WIDTH+4-1:LAST_SEL_BITS]*32  +: 32];
 end
 
@@ -1887,7 +1886,7 @@ generate
             .core_msg_in(core_msg_in_data_r[CORE_MSG_WIDTH*i +: CORE_MSG_WIDTH]),
             .core_msg_in_user(core_msg_in_user_r[CORE_WIDTH*i +: CORE_WIDTH]),
             .core_msg_in_valid(core_msg_in_valid_r[i]),
-    
+
             // ---------- STATUS READBACK CHANNEL ---------- //
             .stat_addr(core_stat_addr[4*i +: 4]),
             .stat_data(core_stat_data[32*i +: 32]),
@@ -2043,7 +2042,7 @@ if (ENABLE_CORES_ILA) begin: ILA_inst
   reg [CORE_COUNT-1:0] data_s_axis_tvalid_r;
   reg [CORE_COUNT-1:0] data_s_axis_tready_r;
   reg [CORE_COUNT-1:0] data_s_axis_tlast_r;
- 
+
   // PORT_WIDTH=3, so each of size 48 bits
   reg [CORE_COUNT*PORT_WIDTH-1:0] data_m_axis_tdest_r;
   reg [CORE_COUNT*PORT_WIDTH-1:0] data_s_axis_tuser_r;

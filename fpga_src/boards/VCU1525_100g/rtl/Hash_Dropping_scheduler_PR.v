@@ -43,21 +43,13 @@ module scheduler_PR2 (
   output wire             ctrl_s_axis_tready,
   input  wire [4-1:0]     ctrl_s_axis_tuser,
 
-  // Cores reset
-  input  wire [3:0]       host_cmd,
-  input  wire [4-1:0]     host_cmd_dest,
-  input  wire [31:0]      host_cmd_data,
+  // Cores commands
+  input  wire [31:0]      host_cmd,
+  input  wire [31:0]      host_cmd_wr_data,
+  output reg  [31:0]      host_cmd_rd_data,
   input  wire             host_cmd_valid,
-  output wire             host_cmd_ready,
 
-  input  wire [16-1:0]    income_cores,
-  input  wire [16-1:0]    cores_to_be_reset,
-
-  input  wire [4-1:0]     stat_read_core,
-  output reg  [5-1:0]     slot_count,
-  input  wire [2-1:0]     stat_read_interface,
-  output reg  [31:0]      stat_interface_data,
-
+  // ILA chain if used
   input  wire             trig_in,
   output wire             trig_in_ack,
   output wire             trig_out,
@@ -466,37 +458,56 @@ module scheduler_PR2 (
     .m_axis_tuser ()
   );
 
-  reg [3:0]                 host_cmd_r;
-  reg [CORE_ID_WIDTH-1:0]   host_cmd_dest_r;
-  reg [31:0]                host_cmd_data_r;
-  reg                       host_cmd_valid_r;
+  reg [31:0]                host_cmd_r;
+  reg [31:0]                host_cmd_wr_data_r;
+  reg                       host_to_cores_valid_r;
+  reg                       host_to_sched_valid_r;
   reg [CORE_COUNT-1:0]      income_cores_r;
   reg [CORE_COUNT-1:0]      cores_to_be_reset_r;
   reg [CORE_ID_WIDTH-1:0]   stat_read_core_r;
   reg [INTERFACE_WIDTH-1:0] stat_read_interface_r;
-  reg [SLOT_WIDTH-1:0]      slot_count_n;
-  reg [31:0]                stat_interface_data_n;
+  reg [31:0]                host_cmd_rd_data_n;
   reg [INTERFACE_COUNT-1:0] rx_almost_full_r;
+  reg [1:0]                 sched_cmd_addr;
 
+  // host cmd bit 31 high means wr. bit 30 low means command for cores
   always @ (posedge clk) begin
     host_cmd_r            <= host_cmd;
-    host_cmd_dest_r       <= host_cmd_dest;
-    host_cmd_data_r       <= host_cmd_data;
-    host_cmd_valid_r      <= host_cmd_valid;
-    income_cores_r        <= income_cores;
-    cores_to_be_reset_r   <= cores_to_be_reset;
-    stat_read_core_r      <= stat_read_core;
-    stat_read_interface_r <= stat_read_interface;
-    slot_count            <= slot_count_n;
-    stat_interface_data   <= stat_interface_data_n;
+    host_cmd_wr_data_r    <= host_cmd_wr_data;
+    host_to_cores_valid_r <= host_cmd_valid && host_cmd[31] && !host_cmd[30];
+    host_to_sched_valid_r <= host_cmd_valid && host_cmd[31] &&  host_cmd[30];
+    stat_read_core_r      <= host_cmd[CORE_ID_WIDTH-1:0];
+    stat_read_interface_r <= host_cmd[INTERFACE_WIDTH-1:0];
+    sched_cmd_addr        <= host_cmd[29:28];
+    host_cmd_rd_data      <= host_cmd_rd_data_n;
     rx_almost_full_r      <= rx_axis_almost_full;
+
+    if (host_to_sched_valid_r)
+      case (sched_cmd_addr)
+        2'b00: begin
+          // A core to be reset cannot be an incoming core.
+          income_cores_r      <= host_cmd_wr_data_r[CORE_COUNT-1:0] & (~cores_to_be_reset_r);
+        end
+        2'b01: begin
+          income_cores_r      <= income_cores_r & (~cores_to_be_reset_r);
+          cores_to_be_reset_r <= host_cmd_wr_data_r[CORE_COUNT-1:0];
+        end
+        default: begin
+          income_cores_r      <= income_cores_r;
+          cores_to_be_reset_r <= cores_to_be_reset_r;
+        end
+      endcase
+
     if (rst_r) begin
-      host_cmd_valid_r    <= 1'b0;
-      income_cores_r      <= {CORE_COUNT{1'b0}};
-      cores_to_be_reset_r <= {CORE_COUNT{1'b0}};
+      host_to_cores_valid_r <= 1'b0;
+      host_to_sched_valid_r <= 1'b0;
+      income_cores_r        <= {CORE_COUNT{1'b0}};
+      cores_to_be_reset_r   <= {CORE_COUNT{1'b0}};
     end
   end
-  assign host_cmd_ready     = 1'b1;
+
+  wire [3:0]                host_cores_cmd = host_cmd_r [3:0];
+  wire [CORE_ID_WIDTH-1:0]  host_cmd_dest  = host_cmd_r [4 +: CORE_ID_WIDTH];
 
   // Separate incoming ctrl messages
   parameter MSG_TYPE_WIDTH = 4;
@@ -765,12 +776,12 @@ module scheduler_PR2 (
   assign ctrl_out_ready = (!ctrl_out_valid_r) || ctrl_out_ready_r;
 
   // Arbiter between host cmd and scheduler messages
-  assign ctrl_m_axis_tdata_n  = host_cmd_valid_r ? {host_cmd_r, host_cmd_data_r}
-                                             : ctrl_out_desc_r;
-  assign ctrl_m_axis_tvalid_n = host_cmd_valid_r || ctrl_out_valid_r;
-  assign ctrl_m_axis_tdest_n  = host_cmd_valid_r ? host_cmd_dest_r : ctrl_out_dest_r;
+  assign ctrl_m_axis_tdata_n  = host_to_cores_valid_r ? {host_cores_cmd, host_cmd_wr_data_r}
+                                                      : ctrl_out_desc_r;
+  assign ctrl_m_axis_tvalid_n = host_to_cores_valid_r || ctrl_out_valid_r;
+  assign ctrl_m_axis_tdest_n  = host_to_cores_valid_r ? host_cmd_dest : ctrl_out_dest_r;
 
-  assign ctrl_out_ready_r   = (!host_cmd_valid_r) && ctrl_m_axis_tready_n;
+  assign ctrl_out_ready_r   = (!host_to_cores_valid_r) && ctrl_m_axis_tready_n;
 
   /// *** ARBITRATION AND DESC ALLOCATION FOR RX DATA *** ///
 
@@ -875,10 +886,13 @@ module scheduler_PR2 (
         drop_count[selected_port_enc_r*32 +: 32] + 1;
   end
 
-  always @ (posedge clk) begin
-    slot_count_n          <= rx_desc_count[stat_read_core_r * SLOT_WIDTH +: SLOT_WIDTH];
-    stat_interface_data_n <= drop_count[stat_read_interface_r*32 +: 32];
-  end
+  always @ (posedge clk)
+    case (sched_cmd_addr)
+      2'b00: host_cmd_rd_data_n <= income_cores_r;
+      2'b01: host_cmd_rd_data_n <= cores_to_be_reset_r;
+      2'b10: host_cmd_rd_data_n <= rx_desc_count[stat_read_core_r * SLOT_WIDTH +: SLOT_WIDTH];
+      2'b11: host_cmd_rd_data_n <= drop_count[stat_read_interface_r*32 +: 32];
+    endcase
 
 if (ENABLE_ILA) begin
   wire trig_out_1, trig_out_2;

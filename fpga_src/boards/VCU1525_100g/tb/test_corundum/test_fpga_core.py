@@ -94,8 +94,8 @@ async def run_test_nic(dut):
     await tb.load_firmware(FIRMWARE)
 
     tb.log.info("Set core enable mask")
-    await tb.rc.mem_write_dword(tb.dev_pf0_bar0+0x00040C, 0xffff)
-    await tb.rc.mem_write_dword(tb.dev_pf0_bar0+0x000410, 0x0000)
+    await tb.set_disable_cores (0x0000)
+    await tb.set_receive_cores (0xffff)
     await Timer(100, 'ns')
 
     tb.log.info("Init driver")
