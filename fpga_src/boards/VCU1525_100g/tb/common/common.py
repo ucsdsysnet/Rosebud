@@ -61,20 +61,27 @@ except ImportError:
     finally:
         del sys.path[0]
 
-SYS_ZONE       = 0<<30
-SCHED_ZONE     = 1<<30
+SLOT_COUNT          = 16 # Should be <= HW
 
-SYS_CORE       = (0<<29)
-SYS_INT        = (1<<29) # RD_ONLY
+SYS_ZONE            = 0<<30
+SCHED_ZONE          = 1<<30
 
-SCHED_RECEIVE  = (0<<28)
-SCHED_DISABLE  = (1<<28)
-SCHED_SLOT     = (2<<28) # RD_ONLY
-SCHED_DESC     = (3<<28) # RD_ONLY
+SYS_CORE            = (0<<29)
+SYS_INT             = (1<<29) # RD_ONLY
 
-CORE_REG_WIDTH = 4
-INT_REG_WIDTH  = 2
-INT_DIR_BIT    = INT_REG_WIDTH+1-1
+SCHED_CORE_RECV     = (0<<27)
+SCHED_CORE_EN       = (1<<27)
+SCHED_CORE_SLOT     = (2<<27) # RD_ONLY
+SCHED_CORE_FLUSH    = (2<<27) # WR_ONLY
+
+SCHED_INT_DESC      = (4<<27) # RD_ONLY
+SCHED_INT_EN        = (5<<27)
+SCHED_INT_DROP_DESC = (6<<27) # WR_ONLY, RR SCHED
+SCHED_INT_DROP_CNT  = (7<<27) # RD_ONLY, HASH SCHED
+
+CORE_REG_WIDTH      = 4
+INT_REG_WIDTH       = 2
+INT_DIR_BIT         = INT_REG_WIDTH+1-1
 
 class TB(object):
     def __init__(self, dut):
@@ -321,6 +328,10 @@ class TB(object):
         self.host_if_tx_mon = AxiStreamMonitor(dut.UUT.pcie_controller_inst, "tx_axis", dut.pcie_clk, dut.pcie_rst)
         self.host_if_rx_mon = AxiStreamMonitor(dut.UUT.pcie_controller_inst, "rx_axis", dut.pcie_clk, dut.pcie_rst)
 
+        self.core_count     = int(dut.UUT.CORE_COUNT.value)
+        self.int_count      = int(dut.UUT.INTERFACE_COUNT.value)
+        self.tag_width      = int(dut.UUT.TAG_WIDTH.value)
+
     async def init(self):
 
         self.dut.UUT.qsfp0_rx_rst.setimmediatevalue(0)
@@ -372,7 +383,7 @@ class TB(object):
         read_val = await self.rc.mem_read_dword(self.dev_pf0_bar0+0x000404)
         return read_val
 
-    # DMA operations 
+    # DMA operations
     async def block_write(self, data, dest, length=-1):
         if len(data) == 0:
             return
@@ -409,8 +420,8 @@ class TB(object):
             pass
 
         return self.mem_data[0:length]
-    
-    # RD/WR commands 
+
+    # RD/WR commands
     async def core_wr_cmd (self, core, reg, data):
         await self.write_cmd(SYS_ZONE | SYS_CORE | core<<CORE_REG_WIDTH | reg, data)
 
@@ -423,26 +434,97 @@ class TB(object):
         return read_val
 
     async def set_receive_cores (self, onehot):
-        await self.write_cmd(SCHED_ZONE | SCHED_RECEIVE, onehot)
+        await self.write_cmd(SCHED_ZONE | SCHED_CORE_RECV, onehot)
 
-    async def set_disable_cores (self, onehot):
-        await self.write_cmd(SCHED_ZONE | SCHED_DISABLE, onehot)
+    async def set_enable_cores (self, onehot):
+        await self.write_cmd(SCHED_ZONE | SCHED_CORE_EN, onehot)
+
+    async def release_core_slots (self, onehot):
+        await self.write_cmd(SCHED_ZONE | SCHED_CORE_FLUSH, onehot)
+
+    async def set_enable_interfaces (self, onehot):
+        await self.write_cmd(SCHED_ZONE | SCHED_INT_EN, onehot)
+
+    async def release_interfaces_desc (self, onehot):
+        await self.write_cmd(SCHED_ZONE | SCHED_INT_DROP_DESC, onehot)
 
     async def read_recv_cores (self):
-        read_val = await self.read_cmd(SCHED_ZONE | SCHED_RECEIVE) 
+        read_val = await self.read_cmd(SCHED_ZONE | SCHED_CORE_RECV)
         return read_val
 
-    async def read_disable_cores (self):
-        read_val = await self.read_cmd(SCHED_ZONE | SCHED_DISABLE) 
+    async def read_enable_cores (self):
+        read_val = await self.read_cmd(SCHED_ZONE | SCHED_CORE_EN)
+        return read_val
+
+    async def read_enable_interfaces (self):
+        read_val = await self.read_cmd(SCHED_ZONE | SCHED_INT_EN)
         return read_val
 
     async def read_core_slots (self, core):
-        read_val = await self.read_cmd(SCHED_ZONE | SCHED_SLOT | core) 
+        read_val = await self.read_cmd(SCHED_ZONE | SCHED_CORE_SLOT | core)
         return read_val
 
     async def read_interface_desc (self, interface):
-        read_val = await self.read_cmd(SCHED_ZONE | SCHED_DESC | interface) 
+        read_val = await self.read_cmd(SCHED_ZONE | SCHED_INT_DESC | interface)
         return read_val
+
+    async def read_interface_drops (self, interface):
+        read_val = await self.read_cmd(SCHED_ZONE | SCHED_INT_DROP_CNT | interface)
+        return read_val
+
+    async def reset_all_cores (self):
+        await self.set_enable_cores (0)
+
+        for i in range(0, self.core_count):
+            self.log.info("Assert reset on core %d", i)
+            await self.core_wr_cmd (i, 0xf, 1)
+
+    async def reset_single_core (self, core):
+        cur = await self.read_enable_cores()
+        await self.set_enable_cores(cur & ~(1<<core))
+        await Timer(100, 'ns')
+        slots = await self.read_core_slots(core)
+        # All slots are recovered, reset the core and flush the slots
+        if (slots==SLOT_COUNT):
+            self.log.info("Assert reset on core %d", core)
+            await self.core_wr_cmd (core, 0xf, 1)
+            await self.release_core_slots(1<<core)
+        else:
+            await Timer(200, 'ns')
+            # After some wait all slots are recovered
+            if (slots==SLOT_COUNT):
+                self.log.info("Assert reset on core %d", core)
+                await self.core_wr_cmd (core, 0xf, 1)
+                await self.release_core_slots(1<<core)
+            else:
+                # check interfaces for hung slots
+                for i in self.int_count:
+                    descs_released = 0
+                    desc = await self.read_interface_desc (i)
+                    if ((desc>>self.tag_width) == core):
+                        # disable the interface, wait, check if still it's the same
+                        # desc drop it, enable the interface back
+                        cur = await self.read_enable_interfaces()
+                        await self.set_enable_interfaces(cur & ~(1<<i))
+                        await Timer(100, 'ns')
+                        desc = await self.read_interface_desc (i)
+                        if ((desc>>self.tag_width) == core):
+                            await self.release_interfaces_desc (1<<i)
+                            descs_released += 1
+                        await self.set_enable_interfaces(cur)
+                # Read the recovered slots again
+                slots = await self.read_core_slots(core)
+                # If all the slots were hung in scheduler proceed
+                if ((slots+descs_released)==SLOT_COUNT):
+                    self.log.info("Assert reset on core %d", core)
+                    await self.core_wr_cmd (core, 0xf, 1)
+                    await self.release_core_slots(1<<core)
+                # If still missing slots, warn of stuck packet in a core
+                else:
+                    self.log.info("Assert reset on core %d which still has some slots", core)
+                    await self.core_wr_cmd (core, 0xf, 1)
+                    await Timer(200, 'ns') # WAIT for on the fly slots in case
+                    await self.release_core_slots(1<<core)
 
     # Load Firmware procedure
     async def load_firmware(self, file):
@@ -468,18 +550,12 @@ class TB(object):
 
         self.log.info("Enable DMA")
         await self.rc.mem_write_dword(self.dev_pf0_bar0+0x000400, 1)
-        
-        # Disable cores
-        await self.set_disable_cores (0xffffffff)
 
-        for i in range(0, 16):
-            self.log.info("Assert reset on core %d", i)
-            await self.core_wr_cmd (i, 0xf, 1)
-
+        await self.reset_all_cores()
         await Timer(20, 'ns')
 
         self.log.info("Load core memories")
-        for i in range(0, 16):
+        for i in range(0, self.core_count):
             self.log.info("Load firmware on core %d", i)
 
             if len(ins_seg) > 0:
@@ -494,7 +570,7 @@ class TB(object):
 
         await Timer(100, 'ns')
 
-        for i in range(0, 16):
+        for i in range(0, self.core_count):
             self.log.info("Release reset on core %d", i)
             await self.core_wr_cmd (i, 0xf, 0)
 

@@ -78,7 +78,7 @@ DROP_RATE    = 1  #0.66
 TEST_PCIE    = False
 TEST_DEBUG   = True
 PRINT_PKTS   = True
-ACCEL_MON    = True
+ACCEL_MON    = False
 
 PATTERNS     = [
     b"GET AAAAAAAA HTTP/1.1",
@@ -143,8 +143,9 @@ async def run_test_nic(dut):
     await tb.load_firmware(FIRMWARE)
 
     tb.log.info("Set core enable mask")
-    await tb.set_disable_cores (0x0000)
+    await tb.set_enable_cores (0xffff)
     await tb.set_receive_cores (0xffff)
+    await tb.set_enable_interfaces (0xffff)
     await Timer(100, 'ns')
 
     if (TEST_DEBUG):

@@ -152,8 +152,8 @@ wire [MASK_BITS-1:0] req_rd_ptr = req_rd_last ?
 wire [MASK_BITS-1:0] act_rd_ptr = act_rd_last ?
                                   act_rd_final_ptr : {MASK_BITS{1'b1}};
 
-wire [LINE_ADDR_WIDTH-1:0] mem_rd_addr   = req_rd_v ? req_rd_addr : act_rd_addr;
-wire [LINE_ADDR_WIDTH-1:0] mem_rd_addr_n = mem_rd_addr+1;
+wire [LINE_ADDR_WIDTH-1:0] mem_rd_addr   = req_rd_v ? req_rd_addr   : act_rd_addr;
+wire [LINE_ADDR_WIDTH-1:0] mem_rd_addr_n = req_rd_v ? req_rd_addr_n : act_rd_addr_n;
 
 reg  [MEM_BLOCKS-1:0]     mem_b1_rd_en_n;
 reg  [MEM_ADDR_WIDTH-1:0] mem_b1_rd_addr_n;
