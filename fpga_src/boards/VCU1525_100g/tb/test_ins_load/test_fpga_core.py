@@ -60,10 +60,10 @@ except ImportError:
         del sys.path[0]
 
 
-SEND_COUNT_0 = 200
-SEND_COUNT_1 = 200
-SIZE_0       = 1024 - 14
-SIZE_1       = 1024 - 14
+SEND_COUNT_0 = 50
+SEND_COUNT_1 = 50
+SIZE_0       = 512 - 14
+SIZE_1       = 512 - 14
 CHECK_PKT    = True
 DROP_TEST    = False
 TEST_SFP     = True
@@ -200,8 +200,11 @@ async def run_test_nic(dut):
 
     await Timer(1000, 'ns')
 
-    tb.log.info("Read counters")
+    tb.log.info("Reset single cores 4 to 11")
+    for k in range(4,12):
+        await tb.reset_single_core (k)
 
+    tb.log.info("Read counters")
     for k in range(0, 16):
         slots      = await tb.read_core_slots(k)
         await Timer(100, 'ns')

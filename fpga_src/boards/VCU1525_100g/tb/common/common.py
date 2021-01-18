@@ -61,8 +61,6 @@ except ImportError:
     finally:
         del sys.path[0]
 
-SLOT_COUNT          = 16 # Should be <= HW
-
 SYS_ZONE            = 0<<30
 SCHED_ZONE          = 1<<30
 
@@ -72,7 +70,7 @@ SYS_INT             = (1<<29) # RD_ONLY
 SCHED_CORE_RECV     = (0<<27)
 SCHED_CORE_EN       = (1<<27)
 SCHED_CORE_SLOT     = (2<<27) # RD_ONLY
-SCHED_CORE_FLUSH    = (2<<27) # WR_ONLY
+SCHED_CORE_FLUSH    = (3<<27) # WR_ONLY
 
 SCHED_INT_DESC      = (4<<27) # RD_ONLY
 SCHED_INT_EN        = (5<<27)
@@ -331,6 +329,7 @@ class TB(object):
         self.core_count     = int(dut.UUT.CORE_COUNT.value)
         self.int_count      = int(dut.UUT.INTERFACE_COUNT.value)
         self.tag_width      = int(dut.UUT.TAG_WIDTH.value)
+        self.slot_count     = int(dut.UUT.SLOT_COUNT.value)
 
     async def init(self):
 
@@ -485,28 +484,27 @@ class TB(object):
         await Timer(100, 'ns')
         slots = await self.read_core_slots(core)
         # All slots are recovered, reset the core and flush the slots
-        if (slots==SLOT_COUNT):
+        if (slots==self.slot_count):
             self.log.info("Assert reset on core %d", core)
             await self.core_wr_cmd (core, 0xf, 1)
             await self.release_core_slots(1<<core)
         else:
-            await Timer(200, 'ns')
+            await Timer(100, 'ns')
             # After some wait all slots are recovered
-            if (slots==SLOT_COUNT):
+            if (slots==self.slot_count):
                 self.log.info("Assert reset on core %d", core)
                 await self.core_wr_cmd (core, 0xf, 1)
                 await self.release_core_slots(1<<core)
             else:
+                descs_released = 0
                 # check interfaces for hung slots
-                for i in self.int_count:
-                    descs_released = 0
+                for i in range(self.int_count+1):
                     desc = await self.read_interface_desc (i)
                     if ((desc>>self.tag_width) == core):
                         # disable the interface, wait, check if still it's the same
                         # desc drop it, enable the interface back
                         cur = await self.read_enable_interfaces()
                         await self.set_enable_interfaces(cur & ~(1<<i))
-                        await Timer(100, 'ns')
                         desc = await self.read_interface_desc (i)
                         if ((desc>>self.tag_width) == core):
                             await self.release_interfaces_desc (1<<i)
@@ -515,15 +513,16 @@ class TB(object):
                 # Read the recovered slots again
                 slots = await self.read_core_slots(core)
                 # If all the slots were hung in scheduler proceed
-                if ((slots+descs_released)==SLOT_COUNT):
+                if ((slots+descs_released)==self.slot_count):
                     self.log.info("Assert reset on core %d", core)
                     await self.core_wr_cmd (core, 0xf, 1)
                     await self.release_core_slots(1<<core)
                 # If still missing slots, warn of stuck packet in a core
                 else:
-                    self.log.info("Assert reset on core %d which still has some slots", core)
+                    self.log.info("Assert reset on core %d which still has %d slots.",
+                                  core, self.slot_count-(slots+descs_released))
                     await self.core_wr_cmd (core, 0xf, 1)
-                    await Timer(200, 'ns') # WAIT for on the fly slots in case
+                    await Timer(100, 'ns') # WAIT for on the fly slots in case
                     await self.release_core_slots(1<<core)
 
     # Load Firmware procedure
