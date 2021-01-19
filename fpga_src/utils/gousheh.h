@@ -39,20 +39,28 @@ either expressed or implied, of The Regents of the University of California.
 
 #include "mqnic.h"
 
-#define SYS_ZONE       (0<<30)
-#define SCHED_ZONE     (1<<30)
+#define MAX_CORE_COUNT 16
+#define MAX_IF_COUNT   3
 
-#define SYS_CORE       (0<<29)
-#define SYS_INT        (1<<29) // RD_ONLY
+#define SYS_ZONE            (0<<30)
+#define SCHED_ZONE          (1<<30)
 
-#define SCHED_RECEIVE  (0<<28)
-#define SCHED_DISABLE  (1<<28)
-#define SCHED_SLOT     (2<<28) // RD_ONLY
-#define SCHED_DESC     (3<<28) // RD_ONLY
+#define SYS_CORE            (0<<29)
+#define SYS_INT             (1<<29) // RD_ONLY
 
-#define CORE_REG_WIDTH 4
-#define INT_REG_WIDTH  2
-#define INT_DIR_BIT    (INT_REG_WIDTH+1-1)
+#define SCHED_CORE_RECV     (0<<27)
+#define SCHED_CORE_EN       (1<<27)
+#define SCHED_CORE_SLOT     (2<<27) // RD_ONLY
+#define SCHED_CORE_FLUSH    (3<<27) // RD_ONLY
+
+#define SCHED_INT_DESC      (4<<27) // RD_ONLY
+#define SCHED_INT_EN        (5<<27)
+#define SCHED_INT_DROP_DESC (6<<27) // WR_ONLY, RR SCHED
+#define SCHED_INT_DROP_CNT  (7<<27) // RD_ONLY, HASH SCHED
+
+#define CORE_REG_WIDTH      4
+#define INT_REG_WIDTH       2
+#define INT_DIR_BIT         (INT_REG_WIDTH+1-1)
 
 void write_cmd (struct mqnic *dev, uint32_t addr, uint32_t data);
 uint32_t read_cmd (struct mqnic *dev, uint32_t addr);
@@ -60,9 +68,19 @@ uint32_t read_cmd (struct mqnic *dev, uint32_t addr);
 void core_wr_cmd (struct mqnic *dev, uint32_t core, uint32_t reg, uint32_t data);
 uint32_t core_rd_cmd (struct mqnic *dev, uint32_t core, uint32_t reg);
 uint32_t interface_rd_cmd (struct mqnic *dev, uint32_t interface, uint32_t direction, uint32_t reg);
+
 void set_receive_cores (struct mqnic *dev, uint32_t onehot);
-void set_disable_cores (struct mqnic *dev, uint32_t onehot);
+void set_enable_cores (struct mqnic *dev, uint32_t onehot);
+void release_core_slots (struct mqnic *dev, uint32_t onehot);
+void set_enable_interfaces (struct mqnic *dev, uint32_t onehot);
+void release_interface_desc (struct mqnic *dev, uint32_t onehot);
+
 uint32_t read_receive_cores (struct mqnic *dev);
-uint32_t read_disable_cores (struct mqnic *dev);
+uint32_t read_enable_cores (struct mqnic *dev);
+uint32_t read_enable_interfaces (struct mqnic *dev);
 uint32_t read_core_slots (struct mqnic *dev, uint32_t core);
 uint32_t read_interface_desc (struct mqnic *dev, uint32_t interface);
+uint32_t read_interface_drops (struct mqnic *dev, uint32_t interface);
+
+void reset_all_cores (struct mqnic *dev);
+
