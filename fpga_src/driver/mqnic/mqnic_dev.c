@@ -116,7 +116,7 @@ static long mqnic_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
             ctl.board_ver = mqnic->board_ver;
             ctl.regs_size = mqnic->hw_regs_size;
 
-            if (copy_to_user((void *)arg, &ctl, sizeof(ctl)) != 0)
+            if (copy_to_user((void __user *)arg, &ctl, sizeof(ctl)) != 0)
                 return -EFAULT;
 
             return 0;
@@ -130,7 +130,7 @@ static long mqnic_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
             int new_tag = 0;
             unsigned long t;
 
-            if (copy_from_user(&ctl, (void *)arg, sizeof(ctl)) != 0)
+            if (copy_from_user(&ctl, (void __user *)arg, sizeof(ctl)) != 0)
                 return -EFAULT;
 
             if (ctl.len > 65536)
@@ -148,7 +148,7 @@ static long mqnic_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
             }
 
             // copy write data from userspace
-            if (copy_from_user(buf, ctl.data, ctl.len) != 0)
+            if (copy_from_user(buf, (void __user *)ctl.data, ctl.len) != 0)
             {
                 dma_free_coherent(mqnic->dev, 65536, buf, dma);
                 return -EFAULT;
@@ -175,7 +175,8 @@ static long mqnic_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
                 if (new_tag==tag) break;
             }
 
-            dev_info(mqnic->dev, "mqnic_ioctl: block write tag %d recieved tag %d", tag, new_tag);
+            if (tag != new_tag)
+                dev_info(mqnic->dev, "mqnic_ioctl: block write received tag %d (expected %d)", new_tag, tag);
 
             // free DMA buffer
             dma_free_coherent(mqnic->dev, 65536, buf, dma);
@@ -191,7 +192,7 @@ static long mqnic_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
             int new_tag=0;
             unsigned long t;
 
-            if (copy_from_user(&ctl, (void *)arg, sizeof(ctl)) != 0)
+            if (copy_from_user(&ctl, (void __user *)arg, sizeof(ctl)) != 0)
                 return -EFAULT;
 
             if (ctl.len > 65536)
@@ -223,16 +224,17 @@ static long mqnic_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
             iowrite32(tag, mqnic->hw_addr+0x000474);
 
             // wait for transfer to complete
-	    t = jiffies + msecs_to_jiffies(200);
+            t = jiffies + msecs_to_jiffies(200);
             while (time_before(jiffies, t)){
                 new_tag = (ioread32(mqnic->hw_addr+0x000478) & 0xffffffff);
                 if (new_tag==tag) break;
             }
-	    
-            dev_info(mqnic->dev, "mqnic_ioctl: block read tag %d recieved tag %d", tag, new_tag);
+
+            if (tag != new_tag)
+                dev_info(mqnic->dev, "mqnic_ioctl: block read received tag %d (expected %d)", new_tag, tag);
 
             // copy read data to userspace
-            if (copy_to_user(ctl.data, buf, ctl.len) != 0)
+            if (copy_to_user((void __user *)ctl.data, buf, ctl.len) != 0)
             {
                 dma_free_coherent(mqnic->dev, 65536, buf, dma);
                 return -EFAULT;

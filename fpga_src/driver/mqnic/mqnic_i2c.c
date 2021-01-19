@@ -36,7 +36,7 @@ either expressed or implied, of The Regents of the University of California.
 #include <linux/i2c-mux.h>
 #include <linux/version.h>
 
-void mqnic_i2c_set_scl(void *data, int state)
+static void mqnic_i2c_set_scl(void *data, int state)
 {
     struct mqnic_i2c_priv *priv = data;
 
@@ -50,7 +50,7 @@ void mqnic_i2c_set_scl(void *data, int state)
     }
 }
 
-void mqnic_i2c_set_sda(void *data, int state)
+static void mqnic_i2c_set_sda(void *data, int state)
 {
     struct mqnic_i2c_priv *priv = data;
 
@@ -64,14 +64,14 @@ void mqnic_i2c_set_sda(void *data, int state)
     }
 }
 
-int mqnic_i2c_get_scl(void *data)
+static int mqnic_i2c_get_scl(void *data)
 {
     struct mqnic_i2c_priv *priv = data;
 
     return !!(ioread32(priv->scl_in_reg) & priv->scl_in_mask);
 }
 
-int mqnic_i2c_get_sda(void *data)
+static int mqnic_i2c_get_sda(void *data)
 {
     struct mqnic_i2c_priv *priv = data;
 
@@ -96,6 +96,7 @@ static struct i2c_client *create_i2c_client(struct i2c_adapter *adapter, const c
 {
     struct i2c_client *client;
     struct i2c_board_info board_info;
+    int err;
 
     if (!adapter)
         return NULL;
@@ -115,9 +116,15 @@ static struct i2c_client *create_i2c_client(struct i2c_adapter *adapter, const c
         return NULL;
 
     // force driver load (mainly for muxes so we can talk to downstream devices)
-    device_attach(&client->dev);
+    err = device_attach(&client->dev);
+    if (err < 0)
+	    goto err_free_client;
 
     return client;
+
+err_free_client:
+    i2c_unregister_device(client);
+    return NULL;
 }
 
 static struct i2c_adapter *get_i2c_mux_channel(struct i2c_client *mux, u32 chan_id)
