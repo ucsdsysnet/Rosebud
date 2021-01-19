@@ -129,9 +129,9 @@ async def run_test_nic(dut):
     await tb.load_firmware(FIRMWARE)
 
     tb.log.info("Set core enable mask")
-    await tb.set_enable_cores (0xffff)
-    await tb.set_receive_cores (0xffff)
-    await tb.set_enable_interfaces (0xffff)
+    await tb.set_enable_cores(0xffff)
+    await tb.set_receive_cores(0xffff)
+    await tb.set_enable_interfaces(0xffff)
     await Timer(100, 'ns')
 
     if (TEST_DEBUG):
@@ -139,17 +139,17 @@ async def run_test_nic(dut):
         await Timer(1000, 'ns')
 
         for i in range(0, 16):
-            await tb.core_wr_cmd (i, 0x8, 0x1234ABCD)
+            await tb.core_wr_cmd(i, 0x8, 0x1234ABCD)
             await Timer(200, 'ns')
-            await tb.core_wr_cmd (i, 0x9, 0x1234ABCD)
+            await tb.core_wr_cmd(i, 0x9, 0x1234ABCD)
             await Timer(200, 'ns')
-            await tb.core_wr_cmd (i, 0xC, 0x1234ABCD)
+            await tb.core_wr_cmd(i, 0xC, 0x1234ABCD)
             await Timer(200, 'ns')
-            await tb.core_wr_cmd (i, 0xD, 0x1234ABCD)
+            await tb.core_wr_cmd(i, 0xD, 0x1234ABCD)
             await Timer(200, 'ns')
-            await tb.core_wr_cmd (i, 0xC, 0)
+            await tb.core_wr_cmd(i, 0xC, 0)
             await Timer(200, 'ns')
-            await tb.core_wr_cmd (i, 0xD, 0)
+            await tb.core_wr_cmd(i, 0xD, 0)
             await Timer(200, 'ns')
 
     if (TEST_SFP):
@@ -158,6 +158,8 @@ async def run_test_nic(dut):
         tb.qsfp1_source.log.setLevel("WARNING")
         tb.qsfp0_sink.log.setLevel("WARNING")
         tb.qsfp1_sink.log.setLevel("WARNING")
+        tb.host_if_tx_mon.log.setLevel("WARNING")
+        tb.host_if_rx_mon.log.setLevel("WARNING")
 
         pkt_ind = 0
         for i in range(0, SEND_COUNT_0):
@@ -201,43 +203,43 @@ async def run_test_nic(dut):
     await Timer(1000, 'ns')
 
     tb.log.info("Reset single cores 4 to 11")
-    for k in range(4,12):
-        await tb.reset_single_core (k)
+    for k in range(4, 12):
+        await tb.reset_single_core(k)
 
     tb.log.info("Read counters")
     for k in range(0, 16):
         slots      = await tb.read_core_slots(k)
         await Timer(100, 'ns')
-        bytes_in   = await tb.core_rd_cmd (k, 0)
+        bytes_in   = await tb.core_rd_cmd(k, 0)
         await Timer(100, 'ns')
-        frames_in  = await tb.core_rd_cmd (k, 1)
+        frames_in  = await tb.core_rd_cmd(k, 1)
         await Timer(100, 'ns')
-        bytes_out  = await tb.core_rd_cmd (k, 2)
+        bytes_out  = await tb.core_rd_cmd(k, 2)
         await Timer(100, 'ns')
-        frames_out = await tb.core_rd_cmd (k, 3)
+        frames_out = await tb.core_rd_cmd(k, 3)
         await Timer(100, 'ns')
 
         tb.log.info("Core %d stat read, slots: , bytes_in, byte_out, frames_in, frames_out", k)
         tb.log.info("%d, %d, %d, %d, %d", slots, bytes_in, bytes_out, frames_in, frames_out)
 
         if (TEST_DEBUG):
-            debug_l   = await tb.core_rd_cmd (k, 4)
+            debug_l   = await tb.core_rd_cmd(k, 4)
             await Timer(100, 'ns')
-            debug_h  = await tb.core_rd_cmd (k, 5)
+            debug_h  = await tb.core_rd_cmd(k, 5)
             await Timer(100, 'ns')
             tb.log.info("Core %d debug_h, debug_l", k)
             tb.log.info("%08x, %08x", debug_h, debug_l)
 
     for k in range(0, 3):
-        bytes_in   = await tb.interface_rd_cmd (k, 0, 0)
+        bytes_in   = await tb.interface_rd_cmd(k, 0, 0)
         await Timer(100, 'ns')
-        bytes_out  = await tb.interface_rd_cmd (k, 1, 0)
+        bytes_out  = await tb.interface_rd_cmd(k, 1, 0)
         await Timer(100, 'ns')
-        frames_in  = await tb.interface_rd_cmd (k, 0, 1)
+        frames_in  = await tb.interface_rd_cmd(k, 0, 1)
         await Timer(100, 'ns')
-        frames_out = await tb.interface_rd_cmd (k, 1, 1)
+        frames_out = await tb.interface_rd_cmd(k, 1, 1)
         await Timer(100, 'ns')
-        desc       = await tb.read_interface_desc (k)
+        desc       = await tb.read_interface_desc(k)
         tb.log.info("Interface %d stat read, bytes_in, byte_out, frames_in, frames_out, loaded desc", k)
         tb.log.info("%d, %d, %d, %d, %08x", bytes_in, bytes_out, frames_in, frames_out, desc)
 

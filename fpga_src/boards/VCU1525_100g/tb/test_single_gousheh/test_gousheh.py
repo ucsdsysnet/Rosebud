@@ -95,6 +95,7 @@ payload = bytes([0]+[x % 256 for x in range(SIZE_0[0]-1)])
 test_pkt = eth / ip / tcp / payload
 PACKETS.append(test_pkt)
 
+
 class TB(object):
     def __init__(self, dut):
         self.dut = dut
@@ -169,14 +170,14 @@ class TB(object):
         if len(ins_seg) > 0:
             self.log.debug("%s", hexdump_str(ins_seg))
             addr_hdr = (0x0200000000000000).to_bytes(8, 'little')
-            ins_frame = AxiStreamFrame(tdata=addr_hdr+ins_seg,tuser=self.dram_port,tdest=0)
+            ins_frame = AxiStreamFrame(tdata=addr_hdr+ins_seg, tuser=self.dram_port, tdest=0)
             await self.data_ch_source.send(ins_frame)
 
         self.log.info("Data segment size: %d", len(data_seg))
         if len(data_seg) > 0:
             self.log.debug("%s", hexdump_str(data_seg))
             addr_hdr = (0x0000000000000000).to_bytes(8, 'little')
-            data_frame = AxiStreamFrame(tdata=addr_hdr+data_seg,tuser=self.dram_port,tdest=0)
+            data_frame = AxiStreamFrame(tdata=addr_hdr+data_seg, tuser=self.dram_port, tdest=0)
             await self.data_ch_source.send(data_frame)
 
         # TODO: add pmem write
@@ -190,7 +191,7 @@ class TB(object):
         self.send_q.append(AxiStreamFrame(tdata=data, tuser=port, tkeep=None))
 
     async def send_manager(self):
-        while (1):
+        while True:
             if (self.send_q and self.slots):
                 pkt = self.send_q.popleft()
                 slot = self.slots.pop()
@@ -203,7 +204,7 @@ class TB(object):
                 await RisingEdge(self.dut.clk)
 
     async def recv_manager(self):
-        while (1):
+        while True:
             frame = await self.data_ch_sink.recv()
             self.recv_q.append(frame)
             self.recvd_pkts += 1
@@ -211,28 +212,28 @@ class TB(object):
     async def scheduler(self):
         cocotb.fork(self.send_manager())
         cocotb.fork(self.recv_manager())
-        while (1):
+        while True:
             frame = await self.ctrl_ch_sink.recv()
-            msg_type =  frame.tdata[0]                >> 32
-            msg_len  =  frame.tdata[0] & 0x00000FFFF
-            msg_dst  = (frame.tdata[0] & 0x0FF000000) >> 24
-            msg_slot = (frame.tdata[0] & 0x000FF0000) >> 16
+            msg_type = (frame.tdata[0] >> 32) & 0xF
+            msg_len  = (frame.tdata[0] >> 0)  & 0xFFFF
+            msg_dst  = (frame.tdata[0] >> 24) & 0xFF
+            msg_slot = (frame.tdata[0] >> 16) & 0xFF
 
-            if (msg_type==0):
-              self.slots.append(msg_slot)
-              self.slots.sort(reverse=True)
-            elif (msg_type==1):
-              await ClockCycles(self.dut.clk,4)
-              frame.tdata[0] = frame.tdata[0] & 0xFFFFFFFF
-              await self.ctrl_ch_source.send(frame)
-            elif (msg_type==2):
-              await ClockCycles(self.dut.clk,4)
-              frame.tdata[0] = (1<<32) | (self.loopback_port << 24) | (msg_slot << 16) | (msg_dst << self.tag_width)
-              await self.ctrl_ch_source.send(frame)
-            elif (msg_type==3):
-              self.log.debug("Initialize scheduler with %d slots", msg_slot)
-              self.slots = list(range(1, msg_slot+1))
-              self.slots.sort(reverse=True)
+            if (msg_type == 0):
+                self.slots.append(msg_slot)
+                self.slots.sort(reverse=True)
+            elif (msg_type == 1):
+                await ClockCycles(self.dut.clk, 4)
+                frame.tdata[0] = frame.tdata[0] & 0xFFFFFFFF
+                await self.ctrl_ch_source.send(frame)
+            elif (msg_type == 2):
+                await ClockCycles(self.dut.clk, 4)
+                frame.tdata[0] = (1 << 32) | (self.loopback_port << 24) | (msg_slot << 16) | (msg_dst << self.tag_width)
+                await self.ctrl_ch_source.send(frame)
+            elif (msg_type == 3):
+                self.log.debug("Initialize scheduler with %d slots", msg_slot)
+                self.slots = list(range(1, msg_slot+1))
+                self.slots.sort(reverse=True)
 
 
 @cocotb.test()

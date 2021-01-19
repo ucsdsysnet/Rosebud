@@ -62,25 +62,26 @@ except ImportError:
     finally:
         del sys.path[0]
 
-SYS_ZONE            = 0<<30
-SCHED_ZONE          = 1<<30
+SYS_ZONE            = 0 << 30
+SCHED_ZONE          = 1 << 30
 
-SYS_CORE            = (0<<29)
-SYS_INT             = (1<<29) # RD_ONLY
+SYS_CORE            = (0 << 29)
+SYS_INT             = (1 << 29)  # RD_ONLY
 
-SCHED_CORE_RECV     = (0<<27)
-SCHED_CORE_EN       = (1<<27)
-SCHED_CORE_SLOT     = (2<<27) # RD_ONLY
-SCHED_CORE_FLUSH    = (3<<27) # WR_ONLY
+SCHED_CORE_RECV     = (0 << 27)
+SCHED_CORE_EN       = (1 << 27)
+SCHED_CORE_SLOT     = (2 << 27)  # RD_ONLY
+SCHED_CORE_FLUSH    = (3 << 27)  # WR_ONLY
 
-SCHED_INT_DESC      = (4<<27) # RD_ONLY
-SCHED_INT_EN        = (5<<27)
-SCHED_INT_DROP_DESC = (6<<27) # WR_ONLY, RR SCHED
-SCHED_INT_DROP_CNT  = (7<<27) # RD_ONLY, HASH SCHED
+SCHED_INT_DESC      = (4 << 27)  # RD_ONLY
+SCHED_INT_EN        = (5 << 27)
+SCHED_INT_DROP_DESC = (6 << 27)  # WR_ONLY, RR SCHED
+SCHED_INT_DROP_CNT  = (7 << 27)  # RD_ONLY, HASH SCHED
 
 CORE_REG_WIDTH      = 4
 INT_REG_WIDTH       = 2
 INT_DIR_BIT         = INT_REG_WIDTH+1-1
+
 
 class TB(object):
     def __init__(self, dut):
@@ -373,13 +374,13 @@ class TB(object):
                     await self.qsfp1_source.send(await self.qsfp1_sink.recv())
 
     # CMD operations
-    async def write_cmd (self, addr, data):
+    async def write_cmd(self, addr, data):
         await self.rc.mem_write_dword(self.dev_pf0_bar0+0x000404, data)
-        await self.rc.mem_write_dword(self.dev_pf0_bar0+0x000408, (1<<31)|addr)
+        await self.rc.mem_write_dword(self.dev_pf0_bar0+0x000408, (1 << 31) | addr)
 
-    async def read_cmd (self, addr):
+    async def read_cmd(self, addr):
         await self.rc.mem_write_dword(self.dev_pf0_bar0+0x000408, addr)
-        await self.rc.mem_read_dword(self.dev_pf0_bar0+0x000404) #dummy
+        await self.rc.mem_read_dword(self.dev_pf0_bar0+0x000404)  #dummy
         read_val = await self.rc.mem_read_dword(self.dev_pf0_bar0+0x000404)
         return read_val
 
@@ -422,114 +423,106 @@ class TB(object):
         return self.mem_data[0:length]
 
     # RD/WR commands
-    async def core_wr_cmd (self, core, reg, data):
-        await self.write_cmd(SYS_ZONE | SYS_CORE | core<<CORE_REG_WIDTH | reg, data)
+    async def core_wr_cmd(self, core, reg, data):
+        await self.write_cmd(SYS_ZONE | SYS_CORE | core << CORE_REG_WIDTH | reg, data)
 
-    async def core_rd_cmd (self, core, reg):
-        read_val = await self.read_cmd(SYS_ZONE | SYS_CORE | core<<CORE_REG_WIDTH | reg)
-        return read_val
+    async def core_rd_cmd(self, core, reg):
+        return await self.read_cmd(SYS_ZONE | SYS_CORE | core << CORE_REG_WIDTH | reg)
 
-    async def interface_rd_cmd (self, interface, direction, reg):
-        read_val = await self.read_cmd(SYS_ZONE | SYS_INT | interface<<(INT_REG_WIDTH+1) | direction<<INT_DIR_BIT | reg)
-        return read_val
+    async def interface_rd_cmd(self, interface, direction, reg):
+        return await self.read_cmd(SYS_ZONE | SYS_INT | interface << (INT_REG_WIDTH+1) | direction << INT_DIR_BIT | reg)
 
-    async def set_receive_cores (self, onehot):
+    async def set_receive_cores(self, onehot):
         await self.write_cmd(SCHED_ZONE | SCHED_CORE_RECV, onehot)
 
-    async def set_enable_cores (self, onehot):
+    async def set_enable_cores(self, onehot):
         await self.write_cmd(SCHED_ZONE | SCHED_CORE_EN, onehot)
 
-    async def release_core_slots (self, onehot):
+    async def release_core_slots(self, onehot):
         await self.write_cmd(SCHED_ZONE | SCHED_CORE_FLUSH, onehot)
 
-    async def set_enable_interfaces (self, onehot):
+    async def set_enable_interfaces(self, onehot):
         await self.write_cmd(SCHED_ZONE | SCHED_INT_EN, onehot)
 
-    async def release_interfaces_desc (self, onehot):
+    async def release_interfaces_desc(self, onehot):
         await self.write_cmd(SCHED_ZONE | SCHED_INT_DROP_DESC, onehot)
 
-    async def read_recv_cores (self):
-        read_val = await self.read_cmd(SCHED_ZONE | SCHED_CORE_RECV)
-        return read_val
+    async def read_recv_cores(self):
+        return await self.read_cmd(SCHED_ZONE | SCHED_CORE_RECV)
 
-    async def read_enable_cores (self):
-        read_val = await self.read_cmd(SCHED_ZONE | SCHED_CORE_EN)
-        return read_val
+    async def read_enable_cores(self):
+        return await self.read_cmd(SCHED_ZONE | SCHED_CORE_EN)
 
-    async def read_enable_interfaces (self):
-        read_val = await self.read_cmd(SCHED_ZONE | SCHED_INT_EN)
-        return read_val
+    async def read_enable_interfaces(self):
+        return await self.read_cmd(SCHED_ZONE | SCHED_INT_EN)
 
-    async def read_core_slots (self, core):
-        read_val = await self.read_cmd(SCHED_ZONE | SCHED_CORE_SLOT | core)
-        return read_val
+    async def read_core_slots(self, core):
+        return await self.read_cmd(SCHED_ZONE | SCHED_CORE_SLOT | core)
 
-    async def read_interface_desc (self, interface):
-        read_val = await self.read_cmd(SCHED_ZONE | SCHED_INT_DESC | interface)
-        return read_val
+    async def read_interface_desc(self, interface):
+        return await self.read_cmd(SCHED_ZONE | SCHED_INT_DESC | interface)
 
-    async def read_interface_drops (self, interface):
-        read_val = await self.read_cmd(SCHED_ZONE | SCHED_INT_DROP_CNT | interface)
-        return read_val
+    async def read_interface_drops(self, interface):
+        return await self.read_cmd(SCHED_ZONE | SCHED_INT_DROP_CNT | interface)
 
-    async def reset_all_cores (self):
-        await self.set_enable_interfaces (0)
-        await self.set_enable_cores (0)
+    async def reset_all_cores(self):
+        await self.set_enable_interfaces(0)
+        await self.set_enable_cores(0)
         # Wait for on the fly packets
         await Timer(300, 'ns')
-        await self.release_core_slots ((1<<self.core_count)-1);
-        await self.release_interfaces_desc ((1<<self.int_count)-1);
+        await self.release_core_slots((1 << self.core_count)-1)
+        await self.release_interfaces_desc((1 << self.int_count)-1)
 
         for i in range(0, self.core_count):
             self.log.info("Assert reset on core %d", i)
-            await self.core_wr_cmd (i, 0xf, 1)
+            await self.core_wr_cmd(i, 0xf, 1)
 
-    async def reset_single_core (self, core):
+    async def reset_single_core(self, core):
         cur = await self.read_enable_cores()
-        await self.set_enable_cores(cur & ~(1<<core))
+        await self.set_enable_cores(cur & ~(1 << core))
         await Timer(100, 'ns')
         slots = await self.read_core_slots(core)
         # All slots are recovered, reset the core and flush the slots
-        if (slots==self.slot_count):
+        if (slots == self.slot_count):
             self.log.info("Assert reset on core %d", core)
-            await self.core_wr_cmd (core, 0xf, 1)
-            await self.release_core_slots(1<<core)
+            await self.core_wr_cmd(core, 0xf, 1)
+            await self.release_core_slots(1 << core)
         else:
             await Timer(100, 'ns')
             # After some wait all slots are recovered
-            if (slots==self.slot_count):
+            if (slots == self.slot_count):
                 self.log.info("Assert reset on core %d", core)
-                await self.core_wr_cmd (core, 0xf, 1)
-                await self.release_core_slots(1<<core)
+                await self.core_wr_cmd(core, 0xf, 1)
+                await self.release_core_slots(1 << core)
             else:
                 descs_released = 0
                 # check interfaces for hung slots
                 for i in range(self.int_count+1):
-                    desc = await self.read_interface_desc (i)
-                    if ((desc>>self.tag_width) == core):
+                    desc = await self.read_interface_desc(i)
+                    if ((desc >> self.tag_width) == core):
                         # disable the interface, wait, check if still it's the same
                         # desc drop it, enable the interface back
                         cur = await self.read_enable_interfaces()
-                        await self.set_enable_interfaces(cur & ~(1<<i))
-                        desc = await self.read_interface_desc (i)
-                        if ((desc>>self.tag_width) == core):
-                            await self.release_interfaces_desc (1<<i)
+                        await self.set_enable_interfaces(cur & ~(1 << i))
+                        desc = await self.read_interface_desc(i)
+                        if ((desc >> self.tag_width) == core):
+                            await self.release_interfaces_desc(1 << i)
                             descs_released += 1
                         await self.set_enable_interfaces(cur)
                 # Read the recovered slots again
                 slots = await self.read_core_slots(core)
                 # If all the slots were hung in scheduler proceed
-                if ((slots+descs_released)==self.slot_count):
+                if ((slots+descs_released) == self.slot_count):
                     self.log.info("Assert reset on core %d", core)
-                    await self.core_wr_cmd (core, 0xf, 1)
-                    await self.release_core_slots(1<<core)
+                    await self.core_wr_cmd(core, 0xf, 1)
+                    await self.release_core_slots(1 << core)
                 # If still missing slots, warn of stuck packet in a core
                 else:
                     self.log.info("Assert reset on core %d which still has %d slots.",
                                   core, self.slot_count-(slots+descs_released))
-                    await self.core_wr_cmd (core, 0xf, 1)
-                    await Timer(100, 'ns') # WAIT for on the fly slots in case
-                    await self.release_core_slots(1<<core)
+                    await self.core_wr_cmd(core, 0xf, 1)
+                    await Timer(100, 'ns')  # WAIT for on the fly slots in case
+                    await self.release_core_slots(1 << core)
 
     # Load Firmware procedure
     async def load_firmware(self, file):
@@ -581,7 +574,7 @@ class TB(object):
 
         for i in range(0, self.core_count):
             self.log.info("Release reset on core %d", i)
-            await self.core_wr_cmd (i, 0xf, 0)
+            await self.core_wr_cmd(i, 0xf, 0)
 
         await Timer(2000, 'ns')
 
