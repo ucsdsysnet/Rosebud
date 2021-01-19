@@ -37,6 +37,7 @@ import os
 import sys
 
 from elftools.elf.elffile import ELFFile
+from elftools.elf.constants import P_FLAGS
 
 import cocotb_test.simulator
 
@@ -541,8 +542,12 @@ class TB(object):
 
         with open(file, "rb") as f:
             elf = ELFFile(f)
-            ins_seg = elf.get_section_by_name('.text').data()
-            data_seg = elf.get_section_by_name('.data').data()
+            for k in range(elf.num_segments()):
+                seg = elf.get_segment(k)
+                if seg['p_flags'] & P_FLAGS.PF_X:
+                    ins_seg = seg.data()
+                else:
+                    data_seg = seg.data()
 
         self.log.info("Instruction segment size: %d", len(ins_seg))
         if len(ins_seg) > 0:
