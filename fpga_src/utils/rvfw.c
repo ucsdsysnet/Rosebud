@@ -40,9 +40,6 @@ either expressed or implied, of The Regents of the University of California.
 #include "mqnic.h"
 #include "gousheh.h"
 
-#define MAX_CORE_COUNT 16
-#define MAX_IF_COUNT 4
-
 static void usage(char *name)
 {
     fprintf(stderr,
@@ -240,19 +237,7 @@ int main(int argc, char *argv[])
             }
         }
 
-        printf("Disabling cores in scheduler...\n");
-        set_disable_cores (dev, 0xffffffff);
-        usleep(100000);
-
-        printf("Placing cores in reset...\n");
-        for (int k=0; k<core_count; k++)
-        {
-            core_wr_cmd (dev, k, 0xf, 1);
-            usleep(1000);
-            printf(".");
-            fflush(stdout);
-        }
-        printf("\n");
+				reset_all_cores(dev);
 
         printf("Write core instruction memories...\n");
         for (int k=0; k<core_count; k++)
@@ -366,7 +351,7 @@ int main(int argc, char *argv[])
             if (core_enable & (1 << k)){
                 core_wr_cmd (dev, k, 0xf, 0);
                 core_wr_cmd (dev, k, 0xf, 0);
-            }
+						}
             usleep(1000);
             printf(".");
             fflush(stdout);
@@ -380,17 +365,18 @@ int main(int argc, char *argv[])
             printf("core %d status: %08x\n", k, core_rd_cmd (dev, k, 8));
         }
 
-        printf("Core enable mask: 0x%08x\n", core_enable);
-        set_disable_cores (dev, ~core_enable);
-        set_disable_cores (dev, ~core_enable);
-        unsigned int temp = read_disable_cores(dev);
-        printf("core enable readback %08x\n",  ~temp);
-
         printf("Enabling cores in scheduler...\n");
+        printf("Core enable mask: 0x%08x\n", core_enable);
+        set_enable_cores (dev, core_enable);
+        unsigned int temp = read_enable_cores(dev);
+        printf("core enable readback %08x\n",  temp);
+
         printf("Core RX enable mask: 0x%08x\n", core_rx_enable);
         set_receive_cores (dev, core_rx_enable);
-        set_receive_cores (dev, core_rx_enable);
         printf("core RX enable readback %08x\n",  read_receive_cores(dev));
+
+        printf("Enabling interfaces ...\n");
+				set_enable_interfaces (dev, (1<<MAX_IF_COUNT)-1);
 
         printf("Done!\n");
 

@@ -63,27 +63,71 @@ uint32_t interface_rd_cmd (struct mqnic *dev, uint32_t interface, uint32_t direc
 }
 
 void set_receive_cores (struct mqnic *dev, uint32_t onehot){
-    write_cmd(dev, SCHED_ZONE | SCHED_RECEIVE, onehot);
+    write_cmd(dev, SCHED_ZONE | SCHED_CORE_RECV, onehot);
     return;
 }
 
-void set_disable_cores (struct mqnic *dev, uint32_t onehot){
-    write_cmd(dev, SCHED_ZONE | SCHED_DISABLE, onehot);
+void set_enable_cores (struct mqnic *dev, uint32_t onehot){
+    write_cmd(dev, SCHED_ZONE | SCHED_CORE_EN, onehot);
+    return;
+}
+
+void release_core_slots (struct mqnic *dev, uint32_t onehot){
+    write_cmd(dev, SCHED_ZONE | SCHED_CORE_FLUSH, onehot);
+    return;
+}
+
+void set_enable_interfaces (struct mqnic *dev, uint32_t onehot){
+    write_cmd(dev, SCHED_ZONE | SCHED_INT_EN, onehot);
+    return;
+}
+
+void release_interface_desc (struct mqnic *dev, uint32_t onehot){
+    write_cmd(dev, SCHED_ZONE | SCHED_INT_DROP_DESC, onehot);
     return;
 }
 
 uint32_t read_receive_cores (struct mqnic *dev){
-    return read_cmd(dev, SCHED_ZONE | SCHED_RECEIVE);
+    return read_cmd(dev, SCHED_ZONE | SCHED_CORE_RECV);
 }
 
-uint32_t read_disable_cores (struct mqnic *dev){
-    return read_cmd(dev, SCHED_ZONE | SCHED_DISABLE);
+uint32_t read_enable_cores (struct mqnic *dev){
+    return read_cmd(dev, SCHED_ZONE | SCHED_CORE_EN);
+}
+
+uint32_t read_enable_interfaces (struct mqnic *dev){
+    return read_cmd(dev, SCHED_ZONE | SCHED_INT_EN);
 }
 
 uint32_t read_core_slots (struct mqnic *dev, uint32_t core){
-    return read_cmd(dev, SCHED_ZONE | SCHED_SLOT | core);
+    return read_cmd(dev, SCHED_ZONE | SCHED_CORE_SLOT | core);
 }
 
 uint32_t read_interface_desc (struct mqnic *dev, uint32_t interface){
-    return read_cmd(dev, SCHED_ZONE | SCHED_DESC | interface);
+    return read_cmd(dev, SCHED_ZONE | SCHED_INT_DESC | interface);
+}
+
+uint32_t read_interface_drops (struct mqnic *dev, uint32_t interface){
+    return read_cmd(dev, SCHED_ZONE | SCHED_INT_DROP_CNT | interface);
+}
+
+void reset_all_cores (struct mqnic *dev){
+    printf("Disabling cores in scheduler...\n");
+		set_enable_interfaces (dev, 0);
+		set_enable_cores (dev, 0);
+    // Wait for the on the fly packets
+		usleep(100000);
+		release_core_slots (dev, (1<<MAX_CORE_COUNT)-1);
+		release_interface_desc (dev, (1<<MAX_IF_COUNT)-1);
+
+    printf("Placing cores in reset...\n");
+		for (int i=0; i< MAX_CORE_COUNT; i++){
+        core_wr_cmd (dev, i, 0xf, 1);
+        usleep(1000);
+        printf(".");
+        fflush(stdout);
+		}
+    printf("\n");
+
+		return;
 }

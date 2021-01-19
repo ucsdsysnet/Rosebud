@@ -472,7 +472,12 @@ class TB(object):
         return read_val
 
     async def reset_all_cores (self):
+        await self.set_enable_interfaces (0)
         await self.set_enable_cores (0)
+        # Wait for on the fly packets
+        await Timer(300, 'ns')
+        await self.release_core_slots ((1<<self.core_count)-1);
+        await self.release_interfaces_desc ((1<<self.int_count)-1);
 
         for i in range(0, self.core_count):
             self.log.info("Assert reset on core %d", i)
