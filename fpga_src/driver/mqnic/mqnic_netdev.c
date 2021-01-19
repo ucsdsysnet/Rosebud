@@ -567,7 +567,8 @@ int mqnic_init_netdev(struct mqnic_dev *mdev, int port, u8 __iomem *hw_addr)
             goto fail;
         }
 
-        mqnic_port_set_rss_mask(priv->ports[k], 0xffffffff);
+        // mqnic_port_set_rss_mask(priv->ports[k], 0xffffffff);
+        mqnic_port_set_rss_mask(priv->ports[k], 0x0000000f);
     }
 
     // entry points
