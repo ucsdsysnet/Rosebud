@@ -109,21 +109,21 @@ int main(int argc, char *argv[])
     for (int k=0; k<core_count; k++)
     {
         mqnic_reg_write32(dev->regs, 0x000410, k);
-        printf("core %d slots: %u\n",     k, read_core_slots(dev,k));
-        printf("core %d rx bytes: %u\n",  k, core_rd_cmd (dev, k, 0));
-        printf("core %d tx bytes: %u\n",  k, core_rd_cmd (dev, k, 2));
-        printf("core %d rx frames: %u\n", k, core_rd_cmd (dev, k, 1));
-        printf("core %d tx frames: %u\n", k, core_rd_cmd (dev, k, 3));
+        printf("core %d slots: %u\n",     k, read_core_slots(dev, k));
+        printf("core %d rx bytes: %u\n",  k, core_rd_cmd(dev, k, 0));
+        printf("core %d tx bytes: %u\n",  k, core_rd_cmd(dev, k, 2));
+        printf("core %d rx frames: %u\n", k, core_rd_cmd(dev, k, 1));
+        printf("core %d tx frames: %u\n", k, core_rd_cmd(dev, k, 3));
     }
 
     for (int k=0; k<if_count; k++)
     {
         mqnic_reg_write32(dev->regs, 0x000414, k);
-        printf("interface %d rx bytes: %u\n",  k, interface_rd_cmd (dev, k, 0, 0));
-        printf("interface %d tx bytes: %u\n",  k, interface_rd_cmd (dev, k, 1, 0));
-        printf("interface %d rx frames: %u\n", k, interface_rd_cmd (dev, k, 0, 1));
-        printf("interface %d tx frames: %u\n", k, interface_rd_cmd (dev, k, 1, 1));
-        printf("interface %d rx drops: %u\n",  k, interface_rd_cmd (dev, k, 0, 2));
+        printf("interface %d rx bytes: %u\n",  k, interface_rd_cmd(dev, k, 0, 0));
+        printf("interface %d tx bytes: %u\n",  k, interface_rd_cmd(dev, k, 1, 0));
+        printf("interface %d rx frames: %u\n", k, interface_rd_cmd(dev, k, 0, 1));
+        printf("interface %d tx frames: %u\n", k, interface_rd_cmd(dev, k, 1, 1));
+        printf("interface %d rx drops: %u\n",  k, interface_rd_cmd(dev, k, 0, 2));
     }
 
 err:

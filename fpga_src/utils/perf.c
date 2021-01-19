@@ -236,12 +236,12 @@ int main(int argc, char *argv[])
         total_core_rx_frames[k] = 0;
         total_core_tx_frames[k] = 0;
 
-        core_rx_bytes_raw [k] = core_rd_cmd (dev, k, 0);
-        core_tx_bytes_raw [k] = core_rd_cmd (dev, k, 2);
-        core_rx_frames_raw[k] = core_rd_cmd (dev, k, 1);
-        core_tx_frames_raw[k] = core_rd_cmd (dev, k, 3);
-        core_rx_stalls_raw[k] = core_rd_cmd (dev, k, 6);
-        core_tx_stalls_raw[k] = core_rd_cmd (dev, k, 7);
+        core_rx_bytes_raw [k] = core_rd_cmd(dev, k, 0);
+        core_tx_bytes_raw [k] = core_rd_cmd(dev, k, 2);
+        core_rx_frames_raw[k] = core_rd_cmd(dev, k, 1);
+        core_tx_frames_raw[k] = core_rd_cmd(dev, k, 3);
+        core_rx_stalls_raw[k] = core_rd_cmd(dev, k, 6);
+        core_tx_stalls_raw[k] = core_rd_cmd(dev, k, 7);
     }
 
     for (int k=0; k<if_count; k++)
@@ -261,13 +261,13 @@ int main(int argc, char *argv[])
         total_if_rx_drops[k] = 0;
         total_if_sched_stat[k] = 0;
 
-        if_rx_bytes_raw[k]  = interface_rd_cmd (dev, k, 0, 0);
-        if_tx_bytes_raw[k]  = interface_rd_cmd (dev, k, 1, 0);
-        if_rx_frames_raw[k] = interface_rd_cmd (dev, k, 0, 1);
-        if_tx_frames_raw[k] = interface_rd_cmd (dev, k, 1, 1);
-        if_rx_stalls_raw[k] = interface_rd_cmd (dev, k, 0, 3);
-        if_tx_stalls_raw[k] = interface_rd_cmd (dev, k, 1, 3);
-        if_rx_drops_raw[k]  = interface_rd_cmd (dev, k, 0, 2);
+        if_rx_bytes_raw[k]  = interface_rd_cmd(dev, k, 0, 0);
+        if_tx_bytes_raw[k]  = interface_rd_cmd(dev, k, 1, 0);
+        if_rx_frames_raw[k] = interface_rd_cmd(dev, k, 0, 1);
+        if_tx_frames_raw[k] = interface_rd_cmd(dev, k, 1, 1);
+        if_rx_stalls_raw[k] = interface_rd_cmd(dev, k, 0, 3);
+        if_tx_stalls_raw[k] = interface_rd_cmd(dev, k, 1, 3);
+        if_rx_drops_raw[k]  = interface_rd_cmd(dev, k, 0, 2);
         if_sched_stat_raw[k] = read_interface_desc(dev, k);
     }
 
@@ -306,31 +306,31 @@ int main(int argc, char *argv[])
 
             for (int k=0; k<core_count; k++)
             {
-                temp = core_rd_cmd (dev, k, 0);
+                temp = core_rd_cmd(dev, k, 0);
                 core_rx_bytes[k] += temp - core_rx_bytes_raw[k];
                 core_rx_bytes_raw[k] = temp;
 
-                temp = core_rd_cmd (dev, k, 2);
+                temp = core_rd_cmd(dev, k, 2);
                 core_tx_bytes[k] += temp - core_tx_bytes_raw[k];
                 core_tx_bytes_raw[k] = temp;
 
-                temp = core_rd_cmd (dev, k, 1);
+                temp = core_rd_cmd(dev, k, 1);
                 core_rx_frames[k] += temp - core_rx_frames_raw[k];
                 core_rx_frames_raw[k] = temp;
 
-                temp = core_rd_cmd (dev, k, 3);
+                temp = core_rd_cmd(dev, k, 3);
                 core_tx_frames[k] += temp - core_tx_frames_raw[k];
                 core_tx_frames_raw[k] = temp;
 
-                temp = core_rd_cmd (dev, k, 6);
+                temp = core_rd_cmd(dev, k, 6);
                 core_rx_stalls[k] += temp - core_rx_stalls_raw[k];
                 core_rx_stalls_raw[k] = temp;
 
-                temp = core_rd_cmd (dev, k, 7);
+                temp = core_rd_cmd(dev, k, 7);
                 core_tx_stalls[k] += temp - core_tx_stalls_raw[k];
                 core_tx_stalls_raw[k] = temp;
 
-                core_slots[k] = read_core_slots(dev,k);
+                core_slots[k] = read_core_slots(dev, k);
 
                 if (extra_slot_count){
                     printf("core %d has %ld slots in scheduler. ", k, core_slots[k]);
@@ -341,31 +341,31 @@ int main(int argc, char *argv[])
             for (int k=0; k<if_count; k++)
             {
 
-                temp = interface_rd_cmd (dev, k, 0, 0);
+                temp = interface_rd_cmd(dev, k, 0, 0);
                 if_rx_bytes[k] += temp - if_rx_bytes_raw[k];
                 if_rx_bytes_raw[k] = temp;
 
-                temp = interface_rd_cmd (dev, k, 1, 0);
+                temp = interface_rd_cmd(dev, k, 1, 0);
                 if_tx_bytes[k] += temp - if_tx_bytes_raw[k];
                 if_tx_bytes_raw[k] = temp;
 
-                temp = interface_rd_cmd (dev, k, 0, 1);
+                temp = interface_rd_cmd(dev, k, 0, 1);
                 if_rx_frames[k] += temp - if_rx_frames_raw[k];
                 if_rx_frames_raw[k] = temp;
 
-                temp = interface_rd_cmd (dev, k, 1, 1);
+                temp = interface_rd_cmd(dev, k, 1, 1);
                 if_tx_frames[k] += temp - if_tx_frames_raw[k];
                 if_tx_frames_raw[k] = temp;
 
-                temp = interface_rd_cmd (dev, k, 0, 3);
+                temp = interface_rd_cmd(dev, k, 0, 3);
                 if_rx_stalls[k] += temp - if_rx_stalls_raw[k];
                 if_rx_stalls_raw[k] = temp;
 
-                temp = interface_rd_cmd (dev, k, 1, 3);
+                temp = interface_rd_cmd(dev, k, 1, 3);
                 if_tx_stalls[k] += temp - if_tx_stalls_raw[k];
                 if_tx_stalls_raw[k] = temp;
 
-                temp = interface_rd_cmd (dev, k, 0, 2);
+                temp = interface_rd_cmd(dev, k, 0, 2);
                 if_rx_drops[k] += temp - if_rx_drops_raw[k];
                 if_rx_drops_raw[k] = temp;
 
@@ -383,14 +383,14 @@ int main(int argc, char *argv[])
         // read core status
         if (debug_reg>=8) {
             for (int k=0; k<core_count; k++) {
-                temp  = core_rd_cmd (dev, k, debug_reg);
+                temp  = core_rd_cmd(dev, k, debug_reg);
                 if (temp!=0)
                   printf("core %d status: %08x \n", k, temp);
             }
         } else if ((debug_reg==4) || (debug_reg==5)){
             for (int k=0; k<core_count; k++) {
-                temp  = core_rd_cmd (dev, k, 4);
-                temp2 = core_rd_cmd (dev, k, 5);
+                temp  = core_rd_cmd(dev, k, 4);
+                temp2 = core_rd_cmd(dev, k, 5);
                 if ((temp!=0)||(temp2!=0))
                     printf("core %d debug_h: %08x, debug_l: %08x\n", k, temp2, temp);
             }

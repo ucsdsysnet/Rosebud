@@ -62,25 +62,25 @@ either expressed or implied, of The Regents of the University of California.
 #define INT_REG_WIDTH       2
 #define INT_DIR_BIT         (INT_REG_WIDTH+1-1)
 
-void write_cmd (struct mqnic *dev, uint32_t addr, uint32_t data);
-uint32_t read_cmd (struct mqnic *dev, uint32_t addr);
+void write_cmd(struct mqnic *dev, uint32_t addr, uint32_t data);
+uint32_t read_cmd(struct mqnic *dev, uint32_t addr);
 
-void core_wr_cmd (struct mqnic *dev, uint32_t core, uint32_t reg, uint32_t data);
-uint32_t core_rd_cmd (struct mqnic *dev, uint32_t core, uint32_t reg);
-uint32_t interface_rd_cmd (struct mqnic *dev, uint32_t interface, uint32_t direction, uint32_t reg);
+void core_wr_cmd(struct mqnic *dev, uint32_t core, uint32_t reg, uint32_t data);
+uint32_t core_rd_cmd(struct mqnic *dev, uint32_t core, uint32_t reg);
+uint32_t interface_rd_cmd(struct mqnic *dev, uint32_t interface, uint32_t direction, uint32_t reg);
 
-void set_receive_cores (struct mqnic *dev, uint32_t onehot);
-void set_enable_cores (struct mqnic *dev, uint32_t onehot);
-void release_core_slots (struct mqnic *dev, uint32_t onehot);
-void set_enable_interfaces (struct mqnic *dev, uint32_t onehot);
-void release_interface_desc (struct mqnic *dev, uint32_t onehot);
+void set_receive_cores(struct mqnic *dev, uint32_t onehot);
+void set_enable_cores(struct mqnic *dev, uint32_t onehot);
+void release_core_slots(struct mqnic *dev, uint32_t onehot);
+void set_enable_interfaces(struct mqnic *dev, uint32_t onehot);
+void release_interface_desc(struct mqnic *dev, uint32_t onehot);
 
-uint32_t read_receive_cores (struct mqnic *dev);
-uint32_t read_enable_cores (struct mqnic *dev);
-uint32_t read_enable_interfaces (struct mqnic *dev);
-uint32_t read_core_slots (struct mqnic *dev, uint32_t core);
-uint32_t read_interface_desc (struct mqnic *dev, uint32_t interface);
-uint32_t read_interface_drops (struct mqnic *dev, uint32_t interface);
+uint32_t read_receive_cores(struct mqnic *dev);
+uint32_t read_enable_cores(struct mqnic *dev);
+uint32_t read_enable_interfaces(struct mqnic *dev);
+uint32_t read_core_slots(struct mqnic *dev, uint32_t core);
+uint32_t read_interface_desc(struct mqnic *dev, uint32_t interface);
+uint32_t read_interface_drops(struct mqnic *dev, uint32_t interface);
 
-void reset_all_cores (struct mqnic *dev);
+void reset_all_cores(struct mqnic *dev);
 

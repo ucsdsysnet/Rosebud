@@ -33,101 +33,93 @@ either expressed or implied, of The Regents of the University of California.
 
 #include "gousheh.h"
 
-void write_cmd (struct mqnic *dev, uint32_t addr, uint32_t data){
+void write_cmd(struct mqnic *dev, uint32_t addr, uint32_t data){
     mqnic_reg_write32(dev->regs, 0x000404, data);
     usleep(10);
     mqnic_reg_write32(dev->regs, 0x000408, (1<<31)|addr);
     return;
 }
 
-uint32_t read_cmd (struct mqnic *dev, uint32_t addr){
+uint32_t read_cmd(struct mqnic *dev, uint32_t addr){
     mqnic_reg_write32(dev->regs, 0x000408, addr);
     usleep(10);
-    mqnic_reg_read32 (dev->regs, 0x000404); //dummy read
+    mqnic_reg_read32(dev->regs, 0x000404); //dummy read
     usleep(10);
     return mqnic_reg_read32(dev->regs, 0x000404);
 }
 
 
-void core_wr_cmd (struct mqnic *dev, uint32_t core, uint32_t reg, uint32_t data){
+void core_wr_cmd(struct mqnic *dev, uint32_t core, uint32_t reg, uint32_t data){
     write_cmd(dev, SYS_ZONE | SYS_CORE | core<<CORE_REG_WIDTH | reg, data);
-    return;
 }
 
-uint32_t core_rd_cmd (struct mqnic *dev, uint32_t core, uint32_t reg){
+uint32_t core_rd_cmd(struct mqnic *dev, uint32_t core, uint32_t reg){
     return read_cmd(dev, SYS_ZONE | SYS_CORE | core<<CORE_REG_WIDTH | reg);
 }
 
-uint32_t interface_rd_cmd (struct mqnic *dev, uint32_t interface, uint32_t direction, uint32_t reg){
+uint32_t interface_rd_cmd(struct mqnic *dev, uint32_t interface, uint32_t direction, uint32_t reg){
     return read_cmd(dev, SYS_ZONE | SYS_INT | interface<<(INT_REG_WIDTH+1) | direction<<INT_DIR_BIT | reg);
 }
 
-void set_receive_cores (struct mqnic *dev, uint32_t onehot){
+void set_receive_cores(struct mqnic *dev, uint32_t onehot){
     write_cmd(dev, SCHED_ZONE | SCHED_CORE_RECV, onehot);
-    return;
 }
 
-void set_enable_cores (struct mqnic *dev, uint32_t onehot){
+void set_enable_cores(struct mqnic *dev, uint32_t onehot){
     write_cmd(dev, SCHED_ZONE | SCHED_CORE_EN, onehot);
-    return;
 }
 
-void release_core_slots (struct mqnic *dev, uint32_t onehot){
+void release_core_slots(struct mqnic *dev, uint32_t onehot){
     write_cmd(dev, SCHED_ZONE | SCHED_CORE_FLUSH, onehot);
-    return;
 }
 
-void set_enable_interfaces (struct mqnic *dev, uint32_t onehot){
+void set_enable_interfaces(struct mqnic *dev, uint32_t onehot){
     write_cmd(dev, SCHED_ZONE | SCHED_INT_EN, onehot);
-    return;
 }
 
-void release_interface_desc (struct mqnic *dev, uint32_t onehot){
+void release_interface_desc(struct mqnic *dev, uint32_t onehot){
     write_cmd(dev, SCHED_ZONE | SCHED_INT_DROP_DESC, onehot);
-    return;
 }
 
-uint32_t read_receive_cores (struct mqnic *dev){
+uint32_t read_receive_cores(struct mqnic *dev){
     return read_cmd(dev, SCHED_ZONE | SCHED_CORE_RECV);
 }
 
-uint32_t read_enable_cores (struct mqnic *dev){
+uint32_t read_enable_cores(struct mqnic *dev){
     return read_cmd(dev, SCHED_ZONE | SCHED_CORE_EN);
 }
 
-uint32_t read_enable_interfaces (struct mqnic *dev){
+uint32_t read_enable_interfaces(struct mqnic *dev){
     return read_cmd(dev, SCHED_ZONE | SCHED_INT_EN);
 }
 
-uint32_t read_core_slots (struct mqnic *dev, uint32_t core){
+uint32_t read_core_slots(struct mqnic *dev, uint32_t core){
     return read_cmd(dev, SCHED_ZONE | SCHED_CORE_SLOT | core);
 }
 
-uint32_t read_interface_desc (struct mqnic *dev, uint32_t interface){
+uint32_t read_interface_desc(struct mqnic *dev, uint32_t interface){
     return read_cmd(dev, SCHED_ZONE | SCHED_INT_DESC | interface);
 }
 
-uint32_t read_interface_drops (struct mqnic *dev, uint32_t interface){
+uint32_t read_interface_drops(struct mqnic *dev, uint32_t interface){
     return read_cmd(dev, SCHED_ZONE | SCHED_INT_DROP_CNT | interface);
 }
 
-void reset_all_cores (struct mqnic *dev){
+void reset_all_cores(struct mqnic *dev){
     printf("Disabling cores in scheduler...\n");
-		set_enable_interfaces (dev, 0);
-		set_enable_cores (dev, 0);
+    set_enable_interfaces(dev, 0);
+    set_enable_cores(dev, 0);
     // Wait for the on the fly packets
-		usleep(100000);
-		release_core_slots (dev, (1<<MAX_CORE_COUNT)-1);
-		release_interface_desc (dev, (1<<MAX_IF_COUNT)-1);
+    usleep(100000);
+    release_core_slots(dev, (1<<MAX_CORE_COUNT)-1);
+    release_interface_desc(dev, (1<<MAX_IF_COUNT)-1);
 
     printf("Placing cores in reset...\n");
-		for (int i=0; i< MAX_CORE_COUNT; i++){
-        core_wr_cmd (dev, i, 0xf, 1);
+    for (int i=0; i< MAX_CORE_COUNT; i++){
+        core_wr_cmd(dev, i, 0xf, 1);
         usleep(1000);
         printf(".");
         fflush(stdout);
-		}
+    }
     printf("\n");
-
-		return;
 }
