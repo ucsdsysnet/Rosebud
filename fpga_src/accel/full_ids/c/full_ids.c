@@ -150,7 +150,7 @@ unsigned int accel_active_mask;
 
 inline void reserve_accel(struct accel_group *grp, struct slot_context *slot)
 {
-	grp->slot_waiting_queue[grp->slot_waiting_head] = slot;
+	grp->slot_waiting_queue[(int)grp->slot_waiting_head] = slot;
 
 	grp->slot_waiting_head++;
 	if (grp->slot_waiting_head >= slot_count)
@@ -161,7 +161,7 @@ inline void reserve_accel(struct accel_group *grp, struct slot_context *slot)
 
 inline struct slot_context *accel_pop_slot(struct accel_group *grp)
 {
-	struct slot_context *slot = grp->slot_waiting_queue[grp->slot_waiting_tail];
+	struct slot_context *slot = grp->slot_waiting_queue[(int)grp->slot_waiting_tail];
 
 	grp->slot_waiting_tail++;
 	if (grp->slot_waiting_tail >= slot_count)
@@ -213,6 +213,8 @@ inline void call_accel(struct accel_group *grp, struct slot_context *slot)
 
 inline void handle_slot_rx_packet(struct slot_context *ctx)
 {
+	char ch;
+	int payload_offset = ETH_HEADER_SIZE;
 	PROFILE_B(0x00010000);
 
 	// check eth type
@@ -221,20 +223,23 @@ inline void handle_slot_rx_packet(struct slot_context *ctx)
 	{
 		PROFILE_B(0x00010001);
 		// IPv4 packet
-		ctx->l3_header.ipv4_hdr = (struct ipv4_header*)(ctx->header+sizeof(struct eth_header));
+		ctx->l3_header.ipv4_hdr = (struct ipv4_header*)(ctx->header+payload_offset);
 
 		// start IP check
 		ACC_IP_MATCH_CTL = ctx->l3_header.ipv4_hdr->src_ip;
 
-		// check IHL
-		if (ctx->l3_header.ipv4_hdr->version_ihl != 0x45)
+		// check version
+		ch = ctx->l3_header.ipv4_hdr->version_ihl;
+		if ((ch & 0xF0) != 0x40)
 		{
-			// invalid IHL, drop it
+			// invalid version, drop it
 			PROFILE_B(0x00010009);
 			goto drop;
 		}
 
-		ctx->l4_header.tcp_hdr = (struct tcp_header*)(((unsigned char *)ctx->l3_header.ipv4_hdr)+sizeof(struct ipv4_header));
+		// header size from IHL
+		payload_offset += (ch & 0xf) << 2;
+		ctx->l4_header.tcp_hdr = (struct tcp_header*)(ctx->header+payload_offset);
 
 		// check IP
 		if (ACC_IP_MATCH_CTL)
@@ -252,7 +257,17 @@ inline void handle_slot_rx_packet(struct slot_context *ctx)
 				PROFILE_B(0x00010003);
 				// TCP
 				PROFILE_B(0xF0010000 | ctx->l4_header.tcp_hdr->dest_port);
-				ctx->payload_offset = sizeof(struct eth_header)+sizeof(struct ipv4_header)+sizeof(struct tcp_header);
+
+                // header size from flags field
+                ch = ((char *)ctx->l4_header.tcp_hdr)[12];
+                payload_offset += (ch & 0xF0) >> 2;
+
+                if (payload_offset >= ctx->desc.len)
+                    // no payload
+                    goto drop;
+
+                ctx->payload_offset = payload_offset;
+
 				if (ctx->l4_header.tcp_hdr->src_port == bswap_16(80) || ctx->l4_header.tcp_hdr->dest_port == bswap_16(80))
 				{
 					PROFILE_B(0x00010004);
@@ -271,7 +286,14 @@ inline void handle_slot_rx_packet(struct slot_context *ctx)
 			case 0x11:
 				PROFILE_B(0x00010006);
 				// UDP
-				ctx->payload_offset = sizeof(struct eth_header)+sizeof(struct ipv4_header)+sizeof(struct udp_header);
+                payload_offset += UDP_HEADER_SIZE;
+
+                if (payload_offset >= ctx->desc.len)
+                    // no payload
+                    goto drop;
+
+                ctx->payload_offset = payload_offset;
+
 				call_accel(&ACCEL_GROUP_UDP, ctx);
 				return;
 		}
@@ -305,6 +327,7 @@ inline void handle_accel_done(struct slot_context *ctx, struct accel_context *ac
 		match = 1;
 	}
 
+	// reset accelerator
 	acc_ctx->sme_accel->ctrl = 1<<4;
 
 	if (!match)
