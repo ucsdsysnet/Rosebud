@@ -77,7 +77,7 @@ set_property STEPS.ROUTE_DESIGN.TCL.PRE [ get_files ../lib/smartFPGA/syn/simple_
 set_property STEPS.PLACE_DESIGN.ARGS.DIRECTIVE SSI_SpreadLogic_high [get_runs impl_accel]
 
 reset_run impl_accel
-launch_runs impl_accel -jobs 12
+launch_runs impl_accel
 wait_on_run impl_accel
 
 open_run impl_accel

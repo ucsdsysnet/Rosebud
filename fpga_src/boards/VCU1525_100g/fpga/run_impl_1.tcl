@@ -26,6 +26,6 @@ set_property PR_CONFIGURATION config_1 [get_runs impl_1]
 set_property strategy Performance_ExtraTimingOpt [get_runs impl_1]
 set_property STEPS.PLACE_DESIGN.ARGS.DIRECTIVE SSI_SpreadLogic_high [get_runs impl_1]
 reset_run impl_1
-launch_runs impl_1 -jobs 12
+launch_runs impl_1
 wait_on_run impl_1
 exit

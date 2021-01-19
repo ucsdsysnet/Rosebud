@@ -501,10 +501,18 @@ resize_pblock [get_pblocks pblock_35] -add {DSP48E2_X0Y156:DSP48E2_X7Y203}
 resize_pblock [get_pblocks pblock_35] -add {RAMB18_X0Y156:RAMB18_X3Y203}
 resize_pblock [get_pblocks pblock_35] -add {RAMB36_X0Y78:RAMB36_X3Y101}
 resize_pblock [get_pblocks pblock_35] -add {URAM288_X0Y104:URAM288_X0Y135}
-set_property HD.PARTPIN_RANGE {SLICE_X50Y390:SLICE_X54Y509} [get_pins core_inst/scheduler_PR_inst/*]
-set_property HD.PARTPIN_RANGE {SLICE_X13Y505:SLICE_X50Y509} [get_pins core_inst/scheduler_PR_inst/tx_axis*]
-set_property HD.PARTPIN_RANGE {SLICE_X13Y505:SLICE_X50Y509} [get_pins core_inst/scheduler_PR_inst/rx_axis*]
-set_property HD.PARTPIN_RANGE {SLICE_X13Y390:SLICE_X50Y394} [get_pins core_inst/scheduler_PR_inst/data_m*]
+# East side
+set_property HD.PARTPIN_RANGE {SLICE_X50Y411:SLICE_X54Y470} [get_pins core_inst/scheduler_PR_inst/data_m*]
+set_property HD.PARTPIN_RANGE {SLICE_X50Y390:SLICE_X54Y500} [get_pins core_inst/scheduler_PR_inst/rst*]
+# North side (rx_tx partly on east)
+set_property HD.PARTPIN_RANGE {SLICE_X1Y505:SLICE_X10Y509 SLICE_X13Y505:SLICE_X54Y509 SLICE_X50Y471:SLICE_X54Y504} [get_pins core_inst/scheduler_PR_inst/tx_axis*]
+set_property HD.PARTPIN_RANGE {SLICE_X1Y505:SLICE_X10Y509 SLICE_X13Y505:SLICE_X54Y509 SLICE_X50Y471:SLICE_X54Y504} [get_pins core_inst/scheduler_PR_inst/rx_axis*]
+# South side (data_s partly on east)
+set_property HD.PARTPIN_RANGE {SLICE_X50Y390:SLICE_X54Y410 SLICE_X13Y390:SLICE_X49Y394} [get_pins core_inst/scheduler_PR_inst/data_s*]
+set_property HD.PARTPIN_RANGE {SLICE_X1Y390:SLICE_X10Y394} [get_pins core_inst/scheduler_PR_inst/ctrl_m*]
+set_property HD.PARTPIN_RANGE {SLICE_X1Y390:SLICE_X10Y394} [get_pins core_inst/scheduler_PR_inst/ctrl_s*]
+set_property HD.PARTPIN_RANGE {SLICE_X1Y390:SLICE_X10Y394} [get_pins core_inst/scheduler_PR_inst/host_cmd*]
+# set_property HD.PARTPIN_RANGE {SLICE_X1Y390:SLICE_X10Y394 SLICE_X13Y390:SLICE_X29Y394} [get_pins core_inst/scheduler_PR_inst/trig*]
 set_property SNAPPING_MODE ON [get_pblocks pblock_35]
 set_property IS_SOFT FALSE [get_pblocks pblock_35]
 
