@@ -258,15 +258,15 @@ inline void handle_slot_rx_packet(struct slot_context *slot)
 				// TCP
 				PROFILE_B(0xF0010000 | slot->l4_header.tcp_hdr->dest_port);
 
-                // header size from flags field
-                ch = ((char *)slot->l4_header.tcp_hdr)[12];
-                payload_offset += (ch & 0xF0) >> 2;
+				// header size from flags field
+				ch = ((char *)slot->l4_header.tcp_hdr)[12];
+				payload_offset += (ch & 0xF0) >> 2;
 
-                if (payload_offset >= slot->desc.len)
-                    // no payload
-                    goto drop;
+				if (payload_offset >= slot->desc.len)
+					// no payload
+					goto drop;
 
-                slot->payload_offset = payload_offset;
+				slot->payload_offset = payload_offset;
 
 				if (slot->l4_header.tcp_hdr->src_port == bswap_16(80) || slot->l4_header.tcp_hdr->dest_port == bswap_16(80))
 				{
@@ -286,13 +286,13 @@ inline void handle_slot_rx_packet(struct slot_context *slot)
 			case 0x11:
 				PROFILE_B(0x00010006);
 				// UDP
-                payload_offset += UDP_HEADER_SIZE;
+				payload_offset += UDP_HEADER_SIZE;
 
-                if (payload_offset >= slot->desc.len)
-                    // no payload
-                    goto drop;
+				if (payload_offset >= slot->desc.len)
+					// no payload
+					goto drop;
 
-                slot->payload_offset = payload_offset;
+				slot->payload_offset = payload_offset;
 
 				call_accel(&ACCEL_GROUP_UDP, slot);
 				return;
