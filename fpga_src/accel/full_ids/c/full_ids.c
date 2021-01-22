@@ -117,24 +117,24 @@ struct accel_context accel_context[MAX_ACCEL_COUNT];
 #define ACCEL_GROUP_HTTP accel_group[ACCEL_GROUP_HTTP_INDEX]
 #define ACCEL_GROUP_FIXED accel_group[ACCEL_GROUP_FIXED_INDEX]
 
-inline void add_accel_to_group(struct accel_group *grp, struct accel_context *ctx)
+inline void add_accel_to_group(struct accel_group *grp, struct accel_context *accel)
 {
 	// set group
-	ctx->group = grp;
+	accel->group = grp;
 
 	// append to linked list
 	if (grp->member_list_head)
 	{
-		grp->member_list_head->group_list_next = ctx;
+		grp->member_list_head->group_list_next = accel;
 	}
 	else
 	{
-		grp->member_list_tail = ctx;
+		grp->member_list_tail = accel;
 	}
 
-	grp->member_list_head = ctx;
+	grp->member_list_head = accel;
 
-	grp->accel_mask |= ctx->mask;
+	grp->accel_mask |= accel->mask;
 	grp->accel_count++;
 }
 
@@ -173,23 +173,23 @@ inline struct slot_context *accel_pop_slot(struct accel_group *grp)
 	return slot;
 }
 
-inline void take_accel(struct accel_context *ctx, struct slot_context *slot)
+inline void take_accel(struct accel_context *accel, struct slot_context *slot)
 {
-	accel_active_mask |= ctx->mask;
-	ctx->group->accel_active_mask |= ctx->mask;
-	ctx->active_slot = slot;
+	accel_active_mask |= accel->mask;
+	accel->group->accel_active_mask |= accel->mask;
+	accel->active_slot = slot;
 }
 
-inline void release_accel(struct accel_context *ctx)
+inline void release_accel(struct accel_context *accel)
 {
-	accel_active_mask &= ~ctx->mask;
-	ctx->group->accel_active_mask &= ~ctx->mask;
-	ctx->active_slot = 0;
+	accel_active_mask &= ~accel->mask;
+	accel->group->accel_active_mask &= ~accel->mask;
+	accel->active_slot = 0;
 }
 
-inline void handle_slot_rx_packet(struct slot_context *ctx);
-inline void handle_accel_start(struct slot_context *ctx, struct accel_context *acc_ctx);
-inline void handle_accel_done(struct slot_context *ctx, struct accel_context *acc_ctx);
+inline void handle_slot_rx_packet(struct slot_context *slot);
+inline void handle_accel_start(struct slot_context *slot, struct accel_context *accel);
+inline void handle_accel_done(struct slot_context *slot, struct accel_context *accel);
 
 inline void call_accel(struct accel_group *grp, struct slot_context *slot)
 {
@@ -211,25 +211,25 @@ inline void call_accel(struct accel_group *grp, struct slot_context *slot)
 	reserve_accel(grp, slot);
 }
 
-inline void handle_slot_rx_packet(struct slot_context *ctx)
+inline void handle_slot_rx_packet(struct slot_context *slot)
 {
 	char ch;
 	int payload_offset = ETH_HEADER_SIZE;
 	PROFILE_B(0x00010000);
 
 	// check eth type
-	PROFILE_B(0xF0010000 | ctx->eth_hdr->type);
-	if (ctx->eth_hdr->type == bswap_16(0x0800))
+	PROFILE_B(0xF0010000 | slot->eth_hdr->type);
+	if (slot->eth_hdr->type == bswap_16(0x0800))
 	{
 		PROFILE_B(0x00010001);
 		// IPv4 packet
-		ctx->l3_header.ipv4_hdr = (struct ipv4_header*)(ctx->header+payload_offset);
+		slot->l3_header.ipv4_hdr = (struct ipv4_header*)(slot->header+payload_offset);
 
 		// start IP check
-		ACC_IP_MATCH_CTL = ctx->l3_header.ipv4_hdr->src_ip;
+		ACC_IP_MATCH_CTL = slot->l3_header.ipv4_hdr->src_ip;
 
 		// check version
-		ch = ctx->l3_header.ipv4_hdr->version_ihl;
+		ch = slot->l3_header.ipv4_hdr->version_ihl;
 		if ((ch & 0xF0) != 0x40)
 		{
 			// invalid version, drop it
@@ -239,7 +239,7 @@ inline void handle_slot_rx_packet(struct slot_context *ctx)
 
 		// header size from IHL
 		payload_offset += (ch & 0xf) << 2;
-		ctx->l4_header.tcp_hdr = (struct tcp_header*)(ctx->header+payload_offset);
+		slot->l4_header.tcp_hdr = (struct tcp_header*)(slot->header+payload_offset);
 
 		// check IP
 		if (ACC_IP_MATCH_CTL)
@@ -251,35 +251,35 @@ inline void handle_slot_rx_packet(struct slot_context *ctx)
 
 		PROFILE_B(0x00010002);
 		// check protocol
-		switch (ctx->l3_header.ipv4_hdr->protocol)
+		switch (slot->l3_header.ipv4_hdr->protocol)
 		{
 			case 0x06:
 				PROFILE_B(0x00010003);
 				// TCP
-				PROFILE_B(0xF0010000 | ctx->l4_header.tcp_hdr->dest_port);
+				PROFILE_B(0xF0010000 | slot->l4_header.tcp_hdr->dest_port);
 
                 // header size from flags field
-                ch = ((char *)ctx->l4_header.tcp_hdr)[12];
+                ch = ((char *)slot->l4_header.tcp_hdr)[12];
                 payload_offset += (ch & 0xF0) >> 2;
 
-                if (payload_offset >= ctx->desc.len)
+                if (payload_offset >= slot->desc.len)
                     // no payload
                     goto drop;
 
-                ctx->payload_offset = payload_offset;
+                slot->payload_offset = payload_offset;
 
-				if (ctx->l4_header.tcp_hdr->src_port == bswap_16(80) || ctx->l4_header.tcp_hdr->dest_port == bswap_16(80))
+				if (slot->l4_header.tcp_hdr->src_port == bswap_16(80) || slot->l4_header.tcp_hdr->dest_port == bswap_16(80))
 				{
 					PROFILE_B(0x00010004);
 					// HTTP
-					call_accel(&ACCEL_GROUP_HTTP, ctx);
+					call_accel(&ACCEL_GROUP_HTTP, slot);
 					return;
 				}
 				else
 				{
 					PROFILE_B(0x00010005);
 					// other TCP
-					call_accel(&ACCEL_GROUP_TCP, ctx);
+					call_accel(&ACCEL_GROUP_TCP, slot);
 					return;
 				}
 				break;
@@ -288,13 +288,13 @@ inline void handle_slot_rx_packet(struct slot_context *ctx)
 				// UDP
                 payload_offset += UDP_HEADER_SIZE;
 
-                if (payload_offset >= ctx->desc.len)
+                if (payload_offset >= slot->desc.len)
                     // no payload
                     goto drop;
 
-                ctx->payload_offset = payload_offset;
+                slot->payload_offset = payload_offset;
 
-				call_accel(&ACCEL_GROUP_UDP, ctx);
+				call_accel(&ACCEL_GROUP_UDP, slot);
 				return;
 		}
 	}
@@ -302,43 +302,43 @@ inline void handle_slot_rx_packet(struct slot_context *ctx)
 	PROFILE_B(0x00010007);
 drop:
 	PROFILE_B(0x00010008);
-	ctx->desc.len = 0;
-	pkt_send(&ctx->desc);
+	slot->desc.len = 0;
+	pkt_send(&slot->desc);
 }
 
-inline void handle_accel_start(struct slot_context *ctx, struct accel_context *acc_ctx)
+inline void handle_accel_start(struct slot_context *slot, struct accel_context *accel)
 {
 	// start SME
-	acc_ctx->sme_accel->start = (unsigned int)(ctx->desc.data)+ctx->payload_offset;
-	acc_ctx->sme_accel->len = ctx->desc.len-ctx->payload_offset;
-	acc_ctx->sme_accel->ctrl = 1;
+	accel->sme_accel->start = (unsigned int)(slot->desc.data)+slot->payload_offset;
+	accel->sme_accel->len = slot->desc.len-slot->payload_offset;
+	accel->sme_accel->ctrl = 1;
 
 	// mark accelerator in use
-	take_accel(acc_ctx, ctx);
+	take_accel(accel, slot);
 }
 
-inline void handle_accel_done(struct slot_context *ctx, struct accel_context *acc_ctx)
+inline void handle_accel_done(struct slot_context *slot, struct accel_context *accel)
 {
 	int match = 0;
 
 	// check for match
-	if (acc_ctx->sme_accel->ctrl & 0x0200)
+	if (accel->sme_accel->ctrl & 0x0200)
 	{
 		match = 1;
 	}
 
 	// reset accelerator
-	acc_ctx->sme_accel->ctrl = 1<<4;
+	accel->sme_accel->ctrl = 1<<4;
 
 	if (!match)
 	{
 		// no match; drop packet
-		ctx->desc.len = 0;
+		slot->desc.len = 0;
 	}
 
 	// send packet to host
-	ctx->desc.port = 2;
-	pkt_send(&ctx->desc);
+	slot->desc.port = 2;
+	pkt_send(&slot->desc);
 }
 
 int main(void)
