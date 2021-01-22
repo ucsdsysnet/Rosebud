@@ -465,7 +465,14 @@ class TB(object):
     async def read_interface_drops(self, interface):
         return await self.read_cmd(SCHED_ZONE | SCHED_INT_DROP_CNT | interface)
 
-    async def reset_all_cores(self):
+    async def evict_core (self, core):
+        self.log.info("Evicting core %d", core)
+        await self.core_wr_cmd(core, 0xD, 1)
+        while not (await self.core_rd_cmd(core, 8)) & (1<<16):
+            pass
+        return
+
+    async def reset_all_cores(self, evict=True):
         await self.set_enable_interfaces(0)
         await self.set_enable_cores(0)
         # Wait for on the fly packets
@@ -474,25 +481,36 @@ class TB(object):
         await self.release_interfaces_desc((1 << self.int_count)-1)
 
         for i in range(0, self.core_count):
+            if (evict):
+                # Check if there is any active slots in the core
+                if ((await self.core_rd_cmd(i, 9))!=0):
+                    await self.evict_core(i)
             self.log.info("Assert reset on core %d", i)
-            await self.core_wr_cmd(i, 0xf, 1)
+            await self.core_wr_cmd(i, 0xF, 1)
 
-    async def reset_single_core(self, core):
+    async def reset_single_core(self, core, evict=True):
         cur = await self.read_enable_cores()
         await self.set_enable_cores(cur & ~(1 << core))
+
+        # Assert eviction and wait for the core
+        if (evict):
+            # Check if there is any active slots in the core
+            if ((await self.core_rd_cmd(core, 9))!=0):
+                await self.evict_core(core)
+
         await Timer(100, 'ns')
         slots = await self.read_core_slots(core)
         # All slots are recovered, reset the core and flush the slots
         if (slots == self.slot_count):
             self.log.info("Assert reset on core %d", core)
-            await self.core_wr_cmd(core, 0xf, 1)
+            await self.core_wr_cmd(core, 0xF, 1)
             await self.release_core_slots(1 << core)
         else:
             await Timer(100, 'ns')
             # After some wait all slots are recovered
             if (slots == self.slot_count):
                 self.log.info("Assert reset on core %d", core)
-                await self.core_wr_cmd(core, 0xf, 1)
+                await self.core_wr_cmd(core, 0xF, 1)
                 await self.release_core_slots(1 << core)
             else:
                 descs_released = 0
@@ -514,13 +532,13 @@ class TB(object):
                 # If all the slots were hung in scheduler proceed
                 if ((slots+descs_released) == self.slot_count):
                     self.log.info("Assert reset on core %d", core)
-                    await self.core_wr_cmd(core, 0xf, 1)
+                    await self.core_wr_cmd(core, 0xF, 1)
                     await self.release_core_slots(1 << core)
                 # If still missing slots, warn of stuck packet in a core
                 else:
                     self.log.info("Assert reset on core %d which still has %d slots.",
                                   core, self.slot_count-(slots+descs_released))
-                    await self.core_wr_cmd(core, 0xf, 1)
+                    await self.core_wr_cmd(core, 0xF, 1)
                     await Timer(100, 'ns')  # WAIT for on the fly slots in case
                     await self.release_core_slots(1 << core)
 

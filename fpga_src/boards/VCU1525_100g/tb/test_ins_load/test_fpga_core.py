@@ -65,7 +65,7 @@ SEND_COUNT_1 = 50
 SIZE_0       = 512 - 14
 SIZE_1       = 512 - 14
 CHECK_PKT    = True
-DROP_TEST    = False
+DROP_TEST    = True
 TEST_SFP     = True
 TEST_PCIE    = True
 TEST_DEBUG   = True
@@ -145,11 +145,7 @@ async def run_test_nic(dut):
             await Timer(200, 'ns')
             await tb.core_wr_cmd(i, 0xC, 0x1234ABCD)
             await Timer(200, 'ns')
-            await tb.core_wr_cmd(i, 0xD, 0x1234ABCD)
-            await Timer(200, 'ns')
             await tb.core_wr_cmd(i, 0xC, 0)
-            await Timer(200, 'ns')
-            await tb.core_wr_cmd(i, 0xD, 0)
             await Timer(200, 'ns')
 
     if (TEST_SFP):
@@ -200,7 +196,7 @@ async def run_test_nic(dut):
             await tb.qsfp0_source.wait()
             await tb.qsfp1_source.wait()
 
-    await Timer(1000, 'ns')
+    await Timer(5000, 'ns')
 
     tb.log.info("Reset single cores 4 to 11")
     for k in range(4, 12):
