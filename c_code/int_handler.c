@@ -1,4 +1,5 @@
 #include "core.h"
+volatile int k;
 
 void __attribute__((interrupt)) int_handler(void) {
   int cause = read_csr(mcause);
@@ -25,9 +26,8 @@ void __attribute__((interrupt)) int_handler(void) {
           pkt_send(&packet);
         }
 
-        // Dummy writes as few cycles delay not to read last dropped packet
-        DEBUG_OUT_L = 0;
-        DEBUG_OUT_H = 0;
+        // Few cycles delay not to read last dropped packet
+        for (k=0;k<10;k++);
 
         // Find remaining active packets and drop them
         packet.len=0;

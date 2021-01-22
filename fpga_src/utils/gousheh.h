@@ -82,5 +82,6 @@ uint32_t read_core_slots(struct mqnic *dev, uint32_t core);
 uint32_t read_interface_desc(struct mqnic *dev, uint32_t interface);
 uint32_t read_interface_drops(struct mqnic *dev, uint32_t interface);
 
-void reset_all_cores(struct mqnic *dev);
+void evict_core(struct mqnic *dev, uint32_t core);
+void reset_all_cores(struct mqnic *dev, int evict);
 

@@ -237,13 +237,29 @@ int main(int argc, char *argv[])
             }
         }
 
-        reset_all_cores(dev);
+        reset_all_cores(dev, 1);
 
         printf("Write core instruction memories...\n");
         for (int k=0; k<core_count; k++)
         {
+            uint32_t core_rx_bytes_raw  = core_rd_cmd(dev, k, 0);
+            uint32_t core_rx_frames_raw = core_rd_cmd(dev, k, 1);
+            int bytes = 0;
+            int frames = 0;
             write_to_core(dev, i_segment, (1<<25), ins_len, k);
-            printf(".");
+            usleep(100000);
+            // Making sure instruction memory is loaded
+            while (1){
+                core_rd_cmd(dev, k, 0);
+                core_rd_cmd(dev, k, 1);
+                bytes = (core_rd_cmd(dev, k, 0) - core_rx_bytes_raw);
+                frames = (core_rd_cmd(dev, k, 1) - core_rx_frames_raw);
+                if (frames==1){
+                    printf("%d bytes and %d frames transferred to core %d\n", bytes, frames, k);
+                    break;
+                }
+            }
+            // printf(".");
             fflush(stdout);
         }
         printf("\n");
@@ -313,8 +329,13 @@ int main(int argc, char *argv[])
 
                 printf("Writing to address %s\n", addr);
                 for (int k=0; k<core_count; k++){
+                    uint32_t core_rx_bytes_raw  = core_rd_cmd(dev, k, 0);
+                    uint32_t core_rx_frames_raw = core_rd_cmd(dev, k, 1);
                     write_to_core(dev, d_segment, (int)strtol(addr, NULL, 0), data_len, k);
-                    printf(".");
+                    printf("%d bytes and %d frames transferred to core %d\n",
+                           (core_rd_cmd(dev, k, 0) - core_rx_bytes_raw),
+                           (core_rd_cmd(dev, k, 1) - core_rx_frames_raw),k);
+                    // printf(".");
                     fflush(stdout);
                 }
                 printf("\n");

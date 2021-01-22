@@ -106,13 +106,35 @@ uint32_t read_interface_drops(struct mqnic *dev, uint32_t interface){
     return read_cmd(dev, SCHED_ZONE | SCHED_INT_DROP_CNT | interface);
 }
 
-void reset_all_cores(struct mqnic *dev){
+
+void evict_core(struct mqnic *dev, uint32_t core){
+    printf("Evicting core %d.\n", core);
+    core_wr_cmd(dev, core, 0xD, 1);
+    // Wait for ready_to_evict signal
+    while (!(core_rd_cmd(dev, core, 8) & (1<<16)));
+    return;
+}
+
+void reset_all_cores(struct mqnic *dev, int evict){
     printf("Disabling cores in scheduler...\n");
     set_enable_interfaces(dev, 0);
     set_enable_cores(dev, 0);
     set_receive_cores(dev,0);
+
+    for (int i=0; i< MAX_IF_COUNT; i++)
+        printf("interface %d has reserved a desc from core %d in the schecduler\n",
+                i, read_interface_desc (dev, i) >> 5);
+    for (int i=0; i< MAX_CORE_COUNT; i++)
+        printf("Core %d has %d slots in the scheduer.\n",
+                i, read_core_slots (dev, i));
+
+    if (evict==1)
+        for (int i=0; i< MAX_CORE_COUNT; i++)
+            if (core_rd_cmd(dev, i, 9) !=0)
+                evict_core(dev,i);
+
     // Wait for the on the fly packets
-    usleep(1000000);
+    usleep(10000);
 
     for (int i=0; i< MAX_IF_COUNT; i++)
         printf("interface %d has reserved a desc from core %d in the schecduler\n",
