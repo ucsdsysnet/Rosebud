@@ -64,7 +64,16 @@ struct slot_context {
 	} l4_header;
 
 	unsigned int payload_offset;
+
+	unsigned int state;
+	unsigned int fixed_match;
 };
+
+#define STATE_DROP 0
+#define STATE_SEND 1
+#define STATE_MATCH_TCP 2
+#define STATE_MATCH_UDP 3
+#define STATE_MATCH_HTTP 4
 
 struct slot_context context[MAX_CTX_COUNT];
 
@@ -272,6 +281,9 @@ inline void handle_slot_rx_packet(struct slot_context *slot)
 				{
 					PROFILE_B(0x00010004);
 					// HTTP
+
+					slot->state = STATE_MATCH_HTTP;
+
 					call_accel(&ACCEL_GROUP_HTTP, slot);
 					return;
 				}
@@ -279,6 +291,9 @@ inline void handle_slot_rx_packet(struct slot_context *slot)
 				{
 					PROFILE_B(0x00010005);
 					// other TCP
+
+					slot->state = STATE_MATCH_TCP;
+
 					call_accel(&ACCEL_GROUP_TCP, slot);
 					return;
 				}
@@ -293,6 +308,8 @@ inline void handle_slot_rx_packet(struct slot_context *slot)
 					goto drop;
 
 				slot->payload_offset = payload_offset;
+
+				slot->state = STATE_MATCH_UDP;
 
 				call_accel(&ACCEL_GROUP_UDP, slot);
 				return;
@@ -319,22 +336,236 @@ inline void handle_accel_start(struct slot_context *slot, struct accel_context *
 
 inline void handle_accel_done(struct slot_context *slot, struct accel_context *accel)
 {
-	int match = 0;
+	unsigned int match = accel->sme_accel->match_1hot;
+	unsigned int mask;
 
-	// check for match
-	if (accel->sme_accel->ctrl & 0x0200)
+	if (slot->state == STATE_SEND)
 	{
-		match = 1;
+		// unconditional send
+		goto send;
 	}
 
-	// reset accelerator
-	accel->sme_accel->ctrl = 1<<4;
+	if (slot->state == STATE_DROP)
+	{
+		// unconditional drop
+		goto drop;
+	}
 
 	if (!match)
 	{
 		// no match; drop packet
-		slot->desc.len = 0;
+		goto drop;
 	}
+
+	switch (slot->state)
+	{
+		case STATE_MATCH_TCP:
+			// TCP rules
+
+			// source port match
+			if (slot->l4_header.tcp_hdr->src_port == bswap_16(445))
+			{
+				// ET DOS SMB Tree_Connect Stack Overflow Attempt (CVE-2017-0016)
+				mask = (1 << 0) | (1 << 5);
+				if ((match & mask) == mask)
+					goto send;
+			}
+			
+			// dest port match
+			if (slot->l4_header.tcp_hdr->dest_port == bswap_16(445))
+			{
+				// ET DOS Microsoft Windows LSASS Remote Memory Corruption (CVE-2017-0004)
+				mask = (1 << 7) | (1 << 6) | (1 << 4) | (1 << 2);
+				if ((match & mask) == mask)
+					goto send;
+			}
+
+			// any port
+			// ET DOS CVE-2013-0230 Miniupnpd SoapAction MethodName Buffer Overflow
+			mask = (1 << 3) | (1 << 1);
+			if ((match & mask) == mask)
+				goto send;
+
+			goto drop;
+		case STATE_MATCH_HTTP:
+			// HTTP rules
+
+			mask = (1 << 12);
+			if ((match & mask) == mask)
+				goto send;
+
+			mask = (1 << 17) | (1 << 20) | (1 << 22) | (1 << 15) | (1 << 28) | (1 << 19);
+			if ((match & mask) == mask)
+				goto send;
+
+			mask = (1 << 28);
+			if ((match & mask) == mask)
+				goto send;
+
+			mask = (1 << 26) | (1 << 23) | (1 << 29) | (1 << 1);
+			if ((match & mask) == mask)
+				goto send;
+
+			mask = (1 << 17) | (1 << 4) | (1 << 2);
+			if ((match & mask) == mask)
+				goto send;
+
+			mask = (1 << 26) | (1 << 7) | (1 << 9);
+			if ((match & mask) == mask)
+				goto send;
+
+			mask = (1 << 17) | (1 << 5);
+			if ((match & mask) == mask)
+				goto send;
+
+			mask = (1 << 27) | (1 << 13) | (1 << 8) | (1 << 10);
+			if ((match & mask) == mask)
+				goto send;
+
+			mask = (1 << 24);
+			if ((match & mask) == mask)
+				goto send;
+
+			mask = (1 << 25);
+			if ((match & mask) == mask)
+				goto send;
+
+			mask = (1 << 31);
+			if ((match & mask) == mask)
+				goto send;
+
+			mask = (1 << 3) | (1 << 21) | (1 << 16) | (1 << 14) | (1 << 11);
+			if ((match & mask) == mask)
+				goto send;
+
+			mask = (1 << 6) | (1 << 30);
+			if ((match & mask) == mask)
+				goto send;
+
+			// ET DOS Terse HTTP GET Likely GoodBye 5.2 DDoS tool
+			mask = (1 << 0);
+			if ((match & mask) == mask)
+				goto send;
+
+			// ET DOS HTTP GET AAAAAAAA Likely FireFlood
+			mask = (1 << 18);
+			if ((match & mask) == mask)
+				goto send;
+
+			goto drop;
+		case STATE_MATCH_UDP:
+			// UDP rules
+
+			// source port match
+			if (slot->l4_header.udp_hdr->src_port == bswap_16(53))
+			{
+				if (slot->l4_header.udp_hdr->dest_port & bswap_16(0x03ff) == 0)
+				{
+					// ET DOS DNS Amplification Attack Possible Outbound Windows Non-Recursive Root Hint Reserved Port
+					// ET DOS DNS Amplification Attack Possible Inbound Windows Non-Recursive Root Hint Reserved Port
+					mask = (1 << 20) | (1 << 4);
+					if ((match & mask) == mask)
+						goto send;
+				}
+			}
+			else if (slot->l4_header.udp_hdr->src_port == bswap_16(389))
+			{
+				if (slot->l4_header.udp_hdr->dest_port == bswap_16(389))
+				{
+					// ET DOS CLDAP Amplification Reflection (PoC based)
+					mask =  (1 << 7);
+					if ((match & mask) == mask)
+						goto send;
+				}
+			}
+			else if (slot->l4_header.udp_hdr->src_port == bswap_16(1434))
+			{
+				// ET DOS MC-SQLR Response Outbound Possible DDoS Participation
+				// ET DOS MC-SQLR Response Inbound Possible DDoS Target
+				mask = (1 << 3) | (1 << 13) | (1 << 8) | (1 << 9) | (1 << 14);
+				if ((match & mask) == mask)
+					goto send;
+			}
+
+			// dest port match
+			if (slot->l4_header.udp_hdr->dest_port == bswap_16(53))
+			{
+				// ET DOS DNS Amplification Attack Inbound
+				mask = (1 << 2) | (1 << 1);
+				if ((match & mask) == mask)
+					goto send;
+			}
+			else if (slot->l4_header.udp_hdr->dest_port == bswap_16(389))
+			{
+				// ET DOS Potential CLDAP Amplification Reflection
+				mask = (1 << 15);
+				if ((match & mask) == mask)
+					goto send;
+			}
+			else if (slot->l4_header.udp_hdr->dest_port == bswap_16(1900))
+			{
+				// ET DOS LibuPnP CVE-2012-5963 ST UDN Buffer Overflow
+				mask = (1 << 6);
+				if ((match & mask) == mask)
+					goto send;
+
+				// ET DOS Miniupnpd M-SEARCH Buffer Overflow CVE-2013-0229
+				mask = (1 << 10);
+				if ((match & mask) == mask)
+					goto send;
+
+				// ET DOS Possible SSDP Amplification Scan in Progress
+				mask = (1 << 11) | (1 << 12);
+				if ((match & mask) == mask)
+					goto send;
+
+				// ET DOS LibuPnP CVE-2012-5958 ST DeviceType Buffer Overflow
+				mask = (1 << 6) | (1 << 16);
+				if ((match & mask) == mask)
+					goto send;
+
+				// ET DOS LibuPnP CVE-2012-5964 ST URN ServiceType Buffer Overflow
+				mask = (1 << 6) | (1 << 18);
+				if ((match & mask) == mask)
+					goto send;
+
+				// ET DOS LibuPnP CVE-2012-5965 ST URN DeviceType Buffer Overflow
+				mask = (1 << 6) | (1 << 17);
+				if ((match & mask) == mask)
+					goto send;
+
+				// ET DOS LibuPnP CVE-2012-5961 ST UDN Buffer Overflow
+				mask = (1 << 6) | (1 << 16);
+				if ((match & mask) == mask)
+					goto send;
+			}
+			else if (slot->l4_header.udp_hdr->dest_port == bswap_16(5093))
+			{
+				// ET DOS Possible Sentinal LM Amplification attack (Request) Inbound
+				mask =  (1 << 19);
+				if ((match & mask) == mask)
+					goto send;
+			}
+			else if (slot->l4_header.udp_hdr->dest_port == bswap_16(11211))
+			{
+				// ET DOS Possible Memcached DDoS Amplification Query (set)
+				mask =  (1 << 0) | (1 << 5);
+				if ((match & mask) == mask)
+					goto send;
+			}
+
+			goto drop;
+	}
+
+	goto send;
+
+drop:
+	// drop packet
+	slot->desc.len = 0;
+
+send:
+	// reset accelerator
+	accel->sme_accel->ctrl = 1<<4;
 
 	// send packet to host
 	slot->desc.port = 2;
