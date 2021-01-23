@@ -83,5 +83,6 @@ uint32_t read_interface_desc(struct mqnic *dev, uint32_t interface);
 uint32_t read_interface_drops(struct mqnic *dev, uint32_t interface);
 
 void evict_core(struct mqnic *dev, uint32_t core);
+void print_scheduler_status(struct mqnic *dev);
 void reset_all_cores(struct mqnic *dev, int evict);
 

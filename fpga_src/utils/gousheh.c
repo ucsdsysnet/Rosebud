@@ -115,18 +115,24 @@ void evict_core(struct mqnic *dev, uint32_t core){
     return;
 }
 
-void reset_all_cores(struct mqnic *dev, int evict){
-    printf("Disabling cores in scheduler...\n");
-    set_enable_interfaces(dev, 0);
-    set_enable_cores(dev, 0);
-    set_receive_cores(dev,0);
+void print_scheduler_status(struct mqnic *dev){
+    printf("recv_cores %d, enable_cores %d, enable interfaces %d",
+            read_receive_cores(dev), read_enable_cores(dev), read_enable_interfaces(dev));
 
     for (int i=0; i< MAX_IF_COUNT; i++)
         printf("interface %d has reserved a desc from core %d in the schecduler\n",
                 i, read_interface_desc (dev, i) >> 5);
+
     for (int i=0; i< MAX_CORE_COUNT; i++)
         printf("Core %d has %d slots in the scheduer.\n",
                 i, read_core_slots (dev, i));
+    return;
+}
+
+void reset_all_cores(struct mqnic *dev, int evict){
+    printf("Disabling cores in scheduler...\n");
+    set_enable_cores(dev, 0);
+    set_receive_cores(dev,0);
 
     if (evict==1)
         for (int i=0; i< MAX_CORE_COUNT; i++)
@@ -136,27 +142,11 @@ void reset_all_cores(struct mqnic *dev, int evict){
     // Wait for the on the fly packets
     usleep(10000);
 
-    for (int i=0; i< MAX_IF_COUNT; i++)
-        printf("interface %d has reserved a desc from core %d in the schecduler\n",
-                i, read_interface_desc (dev, i) >> 5);
-    for (int i=0; i< MAX_CORE_COUNT; i++)
-        printf("Core %d has %d slots in the scheduer.\n",
-                i, read_core_slots (dev, i));
-
     printf("Flushing scheduler...\n");
-    printf("recv_cores %d, enable_cores %d, enable interfaces %d",
-            read_receive_cores(dev), read_enable_cores(dev), read_enable_interfaces(dev));
 
-    release_core_slots(dev, (1<<MAX_CORE_COUNT)-1);
     release_interface_desc(dev, (1<<MAX_IF_COUNT)-1);
+    release_core_slots(dev, (1<<MAX_CORE_COUNT)-1);
     usleep(100);
-
-    for (int i=0; i< MAX_IF_COUNT; i++)
-        printf("interface %d has reserved a desc from core %d in the schecduler\n",
-                i, read_interface_desc (dev, i) >> 5);
-    for (int i=0; i< MAX_CORE_COUNT; i++)
-        printf("Core %d has %d slots in the scheduer.\n",
-                i, read_core_slots (dev, i));
 
     printf("Placing cores in reset...\n");
     for (int i=0; i< MAX_CORE_COUNT; i++){

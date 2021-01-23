@@ -247,19 +247,19 @@ int main(int argc, char *argv[])
             int bytes = 0;
             int frames = 0;
             write_to_core(dev, i_segment, (1<<25), ins_len, k);
-            usleep(100000);
+
+            usleep(10000);
             // Making sure instruction memory is loaded
             while (1){
-                core_rd_cmd(dev, k, 0);
-                core_rd_cmd(dev, k, 1);
                 bytes = (core_rd_cmd(dev, k, 0) - core_rx_bytes_raw);
                 frames = (core_rd_cmd(dev, k, 1) - core_rx_frames_raw);
-                if (frames==1){
-                    printf("%d bytes and %d frames transferred to core %d\n", bytes, frames, k);
+                if (frames>=1){
+                    if (bytes!=(ins_len+(8*frames)))
+                        printf("ERROR: %d bytes were sent to core %d as instructions instead of %d bytes.\n", bytes, k, (int)(ins_len+(8*frames)));
                     break;
                 }
             }
-            // printf(".");
+            printf(".");
             fflush(stdout);
         }
         printf("\n");
@@ -331,11 +331,21 @@ int main(int argc, char *argv[])
                 for (int k=0; k<core_count; k++){
                     uint32_t core_rx_bytes_raw  = core_rd_cmd(dev, k, 0);
                     uint32_t core_rx_frames_raw = core_rd_cmd(dev, k, 1);
+                    int bytes = 0;
+                    int frames = 0;
                     write_to_core(dev, d_segment, (int)strtol(addr, NULL, 0), data_len, k);
-                    printf("%d bytes and %d frames transferred to core %d\n",
-                           (core_rd_cmd(dev, k, 0) - core_rx_bytes_raw),
-                           (core_rd_cmd(dev, k, 1) - core_rx_frames_raw),k);
-                    // printf(".");
+
+                    usleep(10000);
+                    while (1){
+                        bytes = (core_rd_cmd(dev, k, 0) - core_rx_bytes_raw);
+                        frames = (core_rd_cmd(dev, k, 1) - core_rx_frames_raw);
+                        if (frames>=1){
+                            if (bytes!=(data_len+(8*frames)))
+                                printf("ERROR: %d bytes were sent to core %d for data memory instead of %d bytes.\n", bytes, k, (int)(data_len+(8*frames)));
+                            break;
+                        }
+                    }
+                    printf(".");
                     fflush(stdout);
                 }
                 printf("\n");
