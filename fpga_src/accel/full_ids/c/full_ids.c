@@ -377,6 +377,7 @@ int main(void)
 	// initializing other things.
 	init_hdr_slots(slot_count, header_slot_base, header_slot_size);
 	init_slots(slot_count, PKTS_START+PKT_OFFSET, slot_size);
+	set_masks(0xD0); //enable evict
 
 	PROFILE_A(0x00000002);
 
