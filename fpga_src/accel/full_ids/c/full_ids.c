@@ -495,7 +495,7 @@ int main(void)
 		PROFILE_A(0x00020000);
 
 		// handle accelerator done
-		temp = ACC_SME_STATUS & accel_active_mask;
+		temp = ACC_SME_STATUS_DONE & accel_active_mask;
 		if (temp)
 		{
 			PROFILE_A(0x00020001);
