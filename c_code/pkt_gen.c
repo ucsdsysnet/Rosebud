@@ -13,6 +13,7 @@ int main(void){
   // initializing other things.
   init_hdr_slots(8, 0x804000, 128);
   init_slots(8, 0x00000A, 16384);
+  set_masks(0xD0); //enable evict
 
   for (i=0;i<16;i++){
     pkt_data[i] = (unsigned int *)(0x01000000+i*16384);
