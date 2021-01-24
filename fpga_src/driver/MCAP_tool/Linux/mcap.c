@@ -36,6 +36,8 @@
 *
 ******************************************************************************/
 
+#include <getopt.h>
+
 #include "mcap_lib.h"
 
 static const char options[] = "x:pC:rmfdvHhDa::";
