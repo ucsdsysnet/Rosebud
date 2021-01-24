@@ -1,7 +1,7 @@
 # Makefile for Xilinx MCAP Interface Library
 # (c) 2014-2015 Xilinx Inc.
 
-PCIUTILS_PATH =
+PCIUTILS_PATH = ../pcieutils/pciutils-3.6.2/
 
 PCILIB_PATH=$(PCIUTILS_PATH)/lib/
 
@@ -29,7 +29,7 @@ $(OBJ):
 	gcc $(LDFLAGS) $(CFLAGS) -c mcap_lib.c $< -o $@ $(LDLIBS)
 
 mcap: mcap.o
-	gcc $(CFLAGS) mcap.c $(MCAPLIB) $(PCILIB) -lz -o mcap
+	gcc $(CFLAGS) mcap.c $(MCAPLIB) $(PCILIB) -ludev -lz -o mcap
 
 clean:
 	rm -f *.o *.a mcap
