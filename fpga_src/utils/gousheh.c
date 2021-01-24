@@ -116,7 +116,7 @@ void evict_core(struct mqnic *dev, uint32_t core){
 }
 
 void print_scheduler_status(struct mqnic *dev){
-    printf("recv_cores %d, enable_cores %d, enable interfaces %d",
+    printf("recv_cores %d, enable_cores %d, enable interfaces %d\n",
             read_receive_cores(dev), read_enable_cores(dev), read_enable_interfaces(dev));
 
     for (int i=0; i< MAX_IF_COUNT; i++)
@@ -168,7 +168,7 @@ void reset_single_core(struct mqnic *dev, int core, uint32_t num_slots, int evic
         // Check if there is any active slots in the core
         if (core_rd_cmd(dev, core, 9) !=0)
             evict_core(dev,core);
-    usleep(100);
+    usleep(10000);
 
     uint32_t slots = read_core_slots(dev,core);
 
@@ -176,7 +176,7 @@ void reset_single_core(struct mqnic *dev, int core, uint32_t num_slots, int evic
     if (slots == num_slots){
         goto reset_ready;
     } else {
-        usleep(100);
+        usleep(10000);
         // After some wait all slots are recovered
         if (slots == num_slots){
             goto reset_ready;
@@ -187,6 +187,7 @@ void reset_single_core(struct mqnic *dev, int core, uint32_t num_slots, int evic
             for (int i=0; i< MAX_IF_COUNT; i++){
                 uint32_t desc = read_interface_desc(dev,i);
                 if (((desc >> SLOT_TAG_WIDTH)&(MAX_CORE_COUNT-1)) == core){
+                    printf("Dropping scheduler desc on interface %d for core %d.\n",i,core);
                     // disable the interface, wait, check if still it's the same
                     // desc drop it, enable the interface back
                     cur = read_enable_interfaces(dev);
@@ -211,7 +212,7 @@ void reset_single_core(struct mqnic *dev, int core, uint32_t num_slots, int evic
                 printf("WARNING: Placing core %d in reset which still has %d slots.\n", core, num_slots-(slots+descs_released));
                 core_wr_cmd(dev, core, 0xF, 1);
                 release_core_slots(dev, 1<<core);
-                usleep(100);
+                usleep(1000);
                 return;
             }
         }
@@ -221,7 +222,7 @@ reset_ready:
     printf("Placing core %d in reset.\n", core);
     core_wr_cmd(dev, core, 0xF, 1);
     release_core_slots(dev, 1<<core);
-    usleep(100);
+    usleep(1000);
     return;
 }
 
