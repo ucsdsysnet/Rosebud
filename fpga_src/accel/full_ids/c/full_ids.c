@@ -844,8 +844,6 @@ int main(void)
 	while (1)
 	{
 		unsigned int temp;
-		DEBUG_OUT_H = (ACC_SME_STATUS_BUSY<<16)  | accel_active_mask;
-		DEBUG_OUT_L = (ACC_SME_DESC_ERROR << 16) | ACC_SME_DONE_ERROR;
 
 		PROFILE_A(0x00010000);
 
