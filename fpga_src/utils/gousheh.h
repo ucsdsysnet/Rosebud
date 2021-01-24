@@ -41,6 +41,7 @@ either expressed or implied, of The Regents of the University of California.
 
 #define MAX_CORE_COUNT 16
 #define MAX_IF_COUNT   3
+#define SLOT_TAG_WIDTH 5
 
 #define SYS_ZONE            (0<<30)
 #define SCHED_ZONE          (1<<30)
@@ -85,4 +86,5 @@ uint32_t read_interface_drops(struct mqnic *dev, uint32_t interface);
 void evict_core(struct mqnic *dev, uint32_t core);
 void print_scheduler_status(struct mqnic *dev);
 void reset_all_cores(struct mqnic *dev, int evict);
+void reset_single_core(struct mqnic *dev, int core, uint32_t num_slots, int evict);
 

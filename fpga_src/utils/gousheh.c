@@ -150,10 +150,78 @@ void reset_all_cores(struct mqnic *dev, int evict){
 
     printf("Placing cores in reset...\n");
     for (int i=0; i< MAX_CORE_COUNT; i++){
-        core_wr_cmd(dev, i, 0xf, 1);
+        core_wr_cmd(dev, i, 0xF, 1);
         usleep(1000);
         printf(".");
         fflush(stdout);
     }
     printf("\n");
 }
+
+void reset_single_core(struct mqnic *dev, int core, uint32_t num_slots, int evict){
+    uint32_t cur = read_enable_cores(dev);
+    set_enable_cores(dev, cur & ~(1 << core));
+    cur = read_receive_cores(dev);
+    set_receive_cores(dev, cur & ~(1 << core));
+
+    if (evict==1)
+        // Check if there is any active slots in the core
+        if (core_rd_cmd(dev, core, 9) !=0)
+            evict_core(dev,core);
+    usleep(100);
+
+    uint32_t slots = read_core_slots(dev,core);
+
+    // All slots are recovered, reset the core and flush the slots
+    if (slots == num_slots){
+        goto reset_ready;
+    } else {
+        usleep(100);
+        // After some wait all slots are recovered
+        if (slots == num_slots){
+            goto reset_ready;
+        } else {
+
+            // check interfaces for hung slots
+            int descs_released = 0;
+            for (int i=0; i< MAX_IF_COUNT; i++){
+                uint32_t desc = read_interface_desc(dev,i);
+                if (((desc >> SLOT_TAG_WIDTH)&(MAX_CORE_COUNT-1)) == core){
+                    // disable the interface, wait, check if still it's the same
+                    // desc drop it, enable the interface back
+                    cur = read_enable_interfaces(dev);
+                    set_enable_interfaces(dev, cur & ~(1 << i));
+                    desc = read_interface_desc(dev,i);
+                    if (((desc >> SLOT_TAG_WIDTH)&(MAX_CORE_COUNT-1)) == core){
+                        release_interface_desc(dev, 1<<i);
+                        descs_released += 1;
+                    }
+                    set_enable_interfaces(dev, cur);
+                }
+            }
+
+            // Read the recovered slots again just in case
+            slots = read_core_slots(dev,core);
+
+            // If all the slots were hung in scheduler proceed
+            if ((slots+descs_released) == num_slots){
+                goto reset_ready;
+            } else {
+                // If still missing slots, warn of stuck packet in a core
+                printf("WARNING: Placing core %d in reset which still has %d slots.\n", core, num_slots-(slots+descs_released));
+                core_wr_cmd(dev, core, 0xF, 1);
+                release_core_slots(dev, 1<<core);
+                usleep(100);
+                return;
+            }
+        }
+    }
+
+reset_ready:
+    printf("Placing core %d in reset.\n", core);
+    core_wr_cmd(dev, core, 0xF, 1);
+    release_core_slots(dev, 1<<core);
+    usleep(100);
+    return;
+}
+
