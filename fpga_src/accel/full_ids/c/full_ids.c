@@ -126,6 +126,8 @@ struct accel_context accel_context[MAX_ACCEL_COUNT];
 #define ACCEL_GROUP_HTTP accel_group[ACCEL_GROUP_HTTP_INDEX]
 #define ACCEL_GROUP_FIXED accel_group[ACCEL_GROUP_FIXED_INDEX]
 
+struct accel_context *fixed_accel;
+
 inline void add_accel_to_group(struct accel_group *grp, struct accel_context *accel)
 {
 	// set group
@@ -223,7 +225,12 @@ inline void call_accel(struct accel_group *grp, struct slot_context *slot)
 inline void handle_slot_rx_packet(struct slot_context *slot)
 {
 	char ch;
-	int payload_offset = ETH_HEADER_SIZE;
+	unsigned int payload_offset = ETH_HEADER_SIZE;
+	unsigned int payload_length;
+
+	unsigned int match;
+	unsigned int mask;
+
 	PROFILE_B(0x00010000);
 
 	// check eth type
@@ -275,16 +282,40 @@ inline void handle_slot_rx_packet(struct slot_context *slot)
 					// no payload
 					goto drop;
 
+				payload_length = slot->desc.len - payload_offset;
 				slot->payload_offset = payload_offset;
+
+				// start fixed SME
+				fixed_accel->sme_accel->start = (unsigned int)(slot->desc.data)+payload_offset;
+				fixed_accel->sme_accel->len = payload_length > 24 ? 24 : payload_length;
+				fixed_accel->sme_accel->ctrl = 1;
 
 				if (slot->l4_header.tcp_hdr->src_port == bswap_16(80) || slot->l4_header.tcp_hdr->dest_port == bswap_16(80))
 				{
 					PROFILE_B(0x00010004);
 					// HTTP
 
+					// start SME
+					call_accel(&ACCEL_GROUP_HTTP, slot);
+
 					slot->state = STATE_MATCH_HTTP;
 
-					call_accel(&ACCEL_GROUP_HTTP, slot);
+					// read match result from fixed SME
+					match = fixed_accel->sme_accel->match_1hot;
+					slot->fixed_match = match;
+
+					// handle fixed SME rules
+
+					// ET DOS Terse HTTP GET Likely LOIC
+					// ET DOS Terse HTTP GET Likely AnonMafiaIC DDoS tool
+					// ET DOS Terse HTTP GET Likely AnonGhost DDoS tool
+					mask = (1 << 10) | (1 << 11) | (1 << 12);
+					if (match & mask)
+					{
+						slot->state = STATE_SEND;
+						return;
+					}
+
 					return;
 				}
 				else
@@ -292,12 +323,39 @@ inline void handle_slot_rx_packet(struct slot_context *slot)
 					PROFILE_B(0x00010005);
 					// other TCP
 
+					call_accel(&ACCEL_GROUP_TCP, slot);
+
 					slot->state = STATE_MATCH_TCP;
 
-					call_accel(&ACCEL_GROUP_TCP, slot);
+					// read match result from fixed SME
+					match = fixed_accel->sme_accel->match_1hot;
+					slot->fixed_match = match;
+
+					// handle fixed SME rules
+
+					// ET DOS SMBLoris NBSS Length Mem Exhaustion Attempt (PoC Based)
+					if (match & (1 << 24))
+					{
+						if (slot->l4_header.tcp_hdr->dest_port == bswap_16(139) ||
+							slot->l4_header.tcp_hdr->dest_port == bswap_16(445))
+						{
+							slot->state = STATE_SEND;
+							return;
+						}
+					}
+
+					// ET DOS Excessive Large Tree Connect Response
+					if (match & (1 << 27))
+					{
+						if (slot->l4_header.tcp_hdr->src_port == bswap_16(445))
+						{
+							slot->state = STATE_SEND;
+							return;
+						}
+					}
+
 					return;
 				}
-				break;
 			case 0x11:
 				PROFILE_B(0x00010006);
 				// UDP
@@ -307,11 +365,98 @@ inline void handle_slot_rx_packet(struct slot_context *slot)
 					// no payload
 					goto drop;
 
+				payload_length = slot->desc.len - payload_offset;
 				slot->payload_offset = payload_offset;
+
+				// start fixed SME
+				fixed_accel->sme_accel->start = (unsigned int)(slot->desc.data)+payload_offset;
+				fixed_accel->sme_accel->len = payload_length > 24 ? 24 : payload_length;
+				fixed_accel->sme_accel->ctrl = 1;
+
+				// start SME
+				call_accel(&ACCEL_GROUP_UDP, slot);
 
 				slot->state = STATE_MATCH_UDP;
 
-				call_accel(&ACCEL_GROUP_UDP, slot);
+				// read match result from fixed SME
+				match = fixed_accel->sme_accel->match_1hot;
+				slot->fixed_match = match;
+
+				// handle fixed SME rules
+
+				// source port match
+				if (slot->l4_header.udp_hdr->src_port == bswap_16(123))
+				{
+					if (slot->l4_header.udp_hdr->dest_port & bswap_16(0x03ff) == 0)
+					{
+						// ET DOS Likely NTP DDoS In Progress MON_LIST Response to Non-Ephemeral Port IMPL 0x02
+						// ET DOS Likely NTP DDoS In Progress PEER_LIST Response to Non-Ephemeral Port IMPL 0x02
+						// ET DOS Likely NTP DDoS In Progress PEER_LIST Response to Non-Ephemeral Port IMPL 0x03
+						// ET DOS Likely NTP DDoS In Progress PEER_LIST_SUM Response to Non-Ephemeral Port IMPL 0x02
+						// ET DOS Likely NTP DDoS In Progress PEER_LIST_SUM Response to Non-Ephemeral Port IMPL 0x03
+						// ET DOS Likely NTP DDoS In Progress MON_LIST Response to Non-Ephemeral Port IMPL 0x03
+						// ET DOS Likely NTP DDoS In Progress GET_RESTRICT Response to Non-Ephemeral Port IMPL 0x03
+						// ET DOS Likely NTP DDoS In Progress GET_RESTRICT Response to Non-Ephemeral Port IMPL 0x02
+						mask = (1 << 4) | (1 << 5) | (1 << 6) | (1 << 7) | (1 << 8) | (1 << 9) | (1 << 13) | (1 << 14);
+						if (match & mask)
+						{
+							slot->state = STATE_SEND;
+							return;
+						}
+					}
+					
+					// ET DOS Possible NTP DDoS Multiple MON_LIST Seq 0 Response Spanning Multiple Packets IMPL 0x02
+					// ET DOS Possible NTP DDoS Multiple MON_LIST Seq 0 Response Spanning Multiple Packets IMPL 0x03
+					// ET DOS Likely NTP DDoS In Progress Multiple UNSETTRAP Mode 6 Responses
+					mask = (1 << 2) | (1 << 3) | (1 << 21);
+					if (match & mask)
+					{
+						slot->state = STATE_SEND;
+						return;
+					}
+				}
+				else if (slot->l4_header.udp_hdr->src_port == bswap_16(5093))
+				{
+					// ET DOS Possible Sentinal LM  Application attack in progress Outbound (Response)
+					// ET DOS Possible Sentinal LM Amplification attack (Response) Inbound
+					mask = (1 << 22) | (1 << 23);
+					if (match & mask)
+					{
+						slot->state = STATE_SEND;
+						return;
+					}
+				}
+				else if (slot->l4_header.udp_hdr->src_port == bswap_16(11211))
+				{
+					// ET DOS Possible Memcached DDoS Amplification Response Outbound
+					// ET DOS Possible Memcached DDoS Amplification Inbound
+					mask = (1 << 25) | (1 << 26);
+					if (match & mask)
+					{
+						slot->state = STATE_SEND;
+						return;
+					}
+				}
+
+				// dest port match
+				if (slot->l4_header.udp_hdr->dest_port == bswap_16(123))
+				{
+					// ET DOS Possible NTP DDoS Inbound Frequent Un-Authed MON_LIST Requests IMPL 0x02
+					// ET DOS Possible NTP DDoS Inbound Frequent Un-Authed MON_LIST Requests IMPL 0x03
+					// ET DOS Possible NTP DDoS Inbound Frequent Un-Authed PEER_LIST Requests IMPL 0x03
+					// ET DOS Possible NTP DDoS Inbound Frequent Un-Authed PEER_LIST Requests IMPL 0x02
+					// ET DOS Possible NTP DDoS Inbound Frequent Un-Authed PEER_LIST_SUM Requests IMPL 0x03
+					// ET DOS Possible NTP DDoS Inbound Frequent Un-Authed PEER_LIST_SUM Requests IMPL 0x02
+					// ET DOS Possible NTP DDoS Inbound Frequent Un-Authed GET_RESTRICT Requests IMPL 0x02
+					// ET DOS Possible NTP DDoS Inbound Frequent Un-Authed GET_RESTRICT Requests IMPL 0x03
+					mask = (1 << 0) | (1 << 1) | (1 << 15) | (1 << 16) | (1 << 17) | (1 << 18) | (1 << 19) | (1 << 20);
+					if (match & mask)
+					{
+						slot->state = STATE_SEND;
+						return;
+					}
+				}
+
 				return;
 		}
 	}
@@ -356,6 +501,8 @@ inline void handle_accel_done(struct slot_context *slot, struct accel_context *a
 		// no match; drop packet
 		goto drop;
 	}
+
+	// handle SME rules
 
 	switch (slot->state)
 	{
@@ -682,6 +829,7 @@ int main(void)
 		else if (i < 13)
 		{
 			grp = &ACCEL_GROUP_FIXED;
+			fixed_accel = accel;
 		}
 		else
 		{
