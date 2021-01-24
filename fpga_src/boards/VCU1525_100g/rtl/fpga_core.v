@@ -398,9 +398,9 @@ wire [(INTERFACE_COUNT+V_PORT_COUNT)*LVL1_DATA_WIDTH-1:0] rx_axis_tdata;
 wire [(INTERFACE_COUNT+V_PORT_COUNT)*LVL1_STRB_WIDTH-1:0] rx_axis_tkeep;
 wire [(INTERFACE_COUNT+V_PORT_COUNT)-1:0] rx_axis_tvalid, rx_axis_tready, rx_axis_tlast;
 
-(* KEEP = "TRUE" *) reg [INTERFACE_COUNT-1:0] rx_drop, rx_drop_r;
-(* KEEP = "TRUE" *) reg [INTERFACE_COUNT-1:0] rx_almost_full,
-                            rx_almost_full_r, rx_almost_full_rr;
+(* KEEP = "TRUE" *) reg  [INTERFACE_COUNT-1:0] rx_drop, rx_drop_r;
+(* KEEP = "TRUE" *) reg  [INTERFACE_COUNT-1:0] rx_almost_full;
+                    wire [INTERFACE_COUNT-1:0] rx_almost_full_r;
 
 genvar m;
 generate
@@ -613,15 +613,20 @@ generate
             rx_drop           <= {INTERFACE_COUNT{1'b0}};
             rx_drop_r         <= {INTERFACE_COUNT{1'b0}};
             rx_almost_full    <= {INTERFACE_COUNT{1'b0}};
-            rx_almost_full_r  <= {INTERFACE_COUNT{1'b0}};
-            rx_almost_full_rr <= {INTERFACE_COUNT{1'b0}};
         end else begin
             rx_drop           <= port_rx_axis_overflow_r | port_rx_axis_bad_frame_r;
             rx_drop_r         <= rx_drop;
             rx_almost_full    <= port_rx_axis_almost_full_r;
-            rx_almost_full_r  <= rx_almost_full;
-            rx_almost_full_rr <= rx_almost_full_r;
         end
+
+    // Sync reg to help with the timing
+    simple_sync_sig # (.RST_VAL(1'b0),.WIDTH(INTERFACE_COUNT)) almost_full_sync_reg (
+      .dst_clk(sys_clk),
+      .dst_rst(sys_rst),
+      .in(rx_almost_full),
+      .out(rx_almost_full_r)
+    );
+
 endgenerate
 
 // PCIE and DRAM controller
@@ -1190,7 +1195,7 @@ wire sched_trig_in, sched_trig_out, sched_trig_in_ack, sched_trig_out_ack;
     .rx_axis_tready(rx_axis_tready),
     .rx_axis_tlast(rx_axis_tlast),
 
-    .rx_axis_almost_full({{V_PORT_COUNT{1'b0}},rx_almost_full_rr}),
+    .rx_axis_almost_full({{V_PORT_COUNT{1'b0}},rx_almost_full_r}),
 
     // DATA lines to/from cores
     .data_m_axis_tdata(sched_rx_axis_tdata),
