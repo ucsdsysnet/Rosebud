@@ -24,13 +24,16 @@ BIN=dump perf rvfw
 
 all: $(BIN)
 
+mcap/libmcap.a:
+	$(MAKE) -C mcap libmcap.a
+
 dump: dump.c mqnic.c gousheh.c
 	$(CC) $(CFLAGS) $^ -o $@
 
 perf: perf.c mqnic.c timespec.c gousheh.c
 	$(CC) $(CFLAGS) $^ -o $@
 
-rvfw: rvfw.c mqnic.c gousheh.c
+rvfw: rvfw.c mqnic.c gousheh.c mcap/libmcap.a
 	$(CC) $(CFLAGS) $^ -o $@
 
 install:
@@ -38,6 +41,7 @@ install:
 	install -m 0755 $(BIN) $(BINDIR)
 
 clean:
+	$(MAKE) -C mcap clean
 	rm -f $(BIN)
 
 do:
