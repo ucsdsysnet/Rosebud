@@ -56,8 +56,8 @@ from cocotbext.axi import AxiStreamSource, AxiStreamSink, AxiStreamFrame
 from cocotbext.axi.utils import hexdump_str
 
 FIRMWARE = os.path.abspath(os.path.join(os.path.dirname(__file__),
-    '..', '..', 'accel', 'full_ids', 'c', 'full_ids.o'))
-  # '..', '..', '..', '..', '..', 'c_code', 'basic_fw2.o'))
+    '..', '..', 'accel', 'full_ids', 'c', 'full_ids.elf'))
+  # '..', '..', '..', '..', '..', 'c_code', 'basic_fw2.elf'))
 
 SEND_COUNT_0 = 1024
 SIZE_0 = [66-54, 1500-54, 66-54, 66-54, 1500-54, 1500-54, 66-54]

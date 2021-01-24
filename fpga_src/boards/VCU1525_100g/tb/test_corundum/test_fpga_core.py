@@ -81,7 +81,7 @@ PACKETS = []
 
 
 FIRMWARE = os.path.abspath(os.path.join(os.path.dirname(__file__),
-    '..', '..', '..', '..', '..', 'c_code', 'basic_corundum_fw.o'))
+    '..', '..', '..', '..', '..', 'c_code', 'basic_corundum_fw.elf'))
 
 
 @cocotb.test()

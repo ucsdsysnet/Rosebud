@@ -118,7 +118,7 @@ PACKETS.append(test_pkt)
 
 
 FIRMWARE = os.path.abspath(os.path.join(os.path.dirname(__file__),
-    '..', '..', 'accel', 'full_ids', 'c', 'full_ids.o'))
+    '..', '..', 'accel', 'full_ids', 'c', 'full_ids.elf'))
 
 
 @cocotb.test()

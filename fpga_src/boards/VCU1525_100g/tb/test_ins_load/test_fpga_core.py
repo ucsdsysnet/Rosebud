@@ -89,9 +89,9 @@ PACKETS.append(test_pkt)
 
 
 FIRMWARE = os.path.abspath(os.path.join(os.path.dirname(__file__),
-    '..', '..', '..', '..', '..', 'c_code', 'basic_fw2.o'))
-  # '..', '..', '..', '..', '..', 'c_code', 'dram_test2.o'))
-  # '..', '..', '..', '..', '..', 'c_code', 'drop.o'))
+    '..', '..', '..', '..', '..', 'c_code', 'basic_fw2.elf'))
+  # '..', '..', '..', '..', '..', 'c_code', 'dram_test2.elf'))
+  # '..', '..', '..', '..', '..', 'c_code', 'drop.elf'))
 
 
 @cocotb.test()
