@@ -1,7 +1,7 @@
 # Makefile for Xilinx MCAP Interface Library
 # (c) 2014-2015 Xilinx Inc.
 
-PCIUTILS_PATH = ../pcieutils/pciutils-3.6.2/
+PCIUTILS_PATH = ../pcieutils/pciutils-3.7.0/
 
 PCILIB_PATH=$(PCIUTILS_PATH)/lib/
 
