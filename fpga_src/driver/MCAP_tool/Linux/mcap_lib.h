@@ -46,6 +46,9 @@
 #include "lspci.h"
 #include "byteswap.h"
 
+/* Library Specific Definitions */
+#define MCAP_VENDOR_ID	0x1234
+
 /* Register Definitions */
 #define MCAP_EXT_CAP_HEADER	0x00
 #define MCAP_VEND_SPEC_HEADER	0x04

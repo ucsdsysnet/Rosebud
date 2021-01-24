@@ -38,9 +38,6 @@
 
 #include "mcap_lib.h"
 
-/* Library Specific Definitions */
-#define MCAP_VENDOR_ID	0x1234
-
 #define MCAP_LOOP_COUNT	1000000
 
 #define MCAP_SYNC_DWORD	0xFFFFFFFF
