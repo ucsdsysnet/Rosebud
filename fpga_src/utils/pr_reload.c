@@ -36,9 +36,11 @@ either expressed or implied, of The Regents of the University of California.
 #include <stdlib.h>
 #include <string.h>
 #include <sys/ioctl.h>
+#include <getopt.h>
 
 #include "mqnic.h"
 #include "gousheh.h"
+#include "mcap_lib.h"
 
 static void usage(char *name)
 {
@@ -48,8 +50,52 @@ static void usage(char *name)
         " -i file    instruction memory binary\n"
         " -m file    memory map for data memory binary(ies)\n"
         " -e mask    core enable\n"
-        " -r mask    core rx enable\n",
+        " -r mask    core rx enable\n"
+        " -p path    partial bitstream directory\n",
         name);
+}
+
+char * get_pcie_path(char *device){
+		// determine sysfs path of PCIe device
+    // first, try to find via miscdevice
+    char *ptr;
+		char path[PATH_MAX+32];
+		char device_path[PATH_MAX];
+		char *bus_dev_func = malloc (sizeof (char) * 16);
+
+		ptr = strrchr(device, '/');
+    ptr = ptr ? ptr+1 : device;
+
+    snprintf(path, sizeof(path), "/sys/class/misc/%s/device", ptr);
+
+    if (!realpath(path, device_path))
+    {
+        // that failed, perhaps it was a PCIe resource
+        strcpy(path, device);
+        ptr = strrchr(path, '/');
+        if (ptr)
+            *ptr = 0;
+
+        if (!realpath(path, device_path))
+        {
+						fprintf(stderr, "failed to determine device path\n");
+						return NULL;
+        }
+    }
+
+    // PCIe device will have a config space, so check for that
+    snprintf(path, sizeof(path), "%s/config", device_path);
+
+    if (access(path, F_OK) == -1)
+    {
+				fprintf(stderr, "failed to determine device path\n");
+				return NULL;
+    }
+        
+		strncpy (device_path, path, strrchr(path, '/')-path-1);
+		ptr = strchr(strrchr(device_path, '/'),':');
+		strcpy(bus_dev_func, ptr+1);
+		return(bus_dev_func);
 }
 
 int main(int argc, char *argv[])
@@ -60,11 +106,13 @@ int main(int argc, char *argv[])
 
     char *device = NULL;
     struct mqnic *dev;
+		struct mcap_dev *mdev;
 
     char *instr_bin = NULL;
     char *data_map = NULL;
     FILE *write_file = NULL;
     FILE *map_file = NULL;
+    char *PR_bitfiles = NULL;
 
     char action_write = 0;
     char load_dmem    = 0;
@@ -75,7 +123,7 @@ int main(int argc, char *argv[])
     name = strrchr(argv[0], '/');
     name = name ? 1+name : argv[0];
 
-    while ((opt = getopt(argc, argv, "d:i:m:e:r:h?")) != EOF)
+    while ((opt = getopt(argc, argv, "d:i:m:p:e:r:h?")) != EOF)
     {
         switch (opt)
         {
@@ -90,6 +138,9 @@ int main(int argc, char *argv[])
             action_write = 1;
             load_dmem    = 1;
             data_map = optarg;
+            break;
+        case 'p':
+            PR_bitfiles = optarg;
             break;
         case 'e':
             core_enable = strtoul(optarg, NULL, 0);
@@ -121,6 +172,8 @@ int main(int argc, char *argv[])
         fprintf(stderr, "Failed to open device\n");
         return -1;
     }
+		
+		mdev = MCapLibInit_w_bus((int) strtol("1001", NULL, 16), get_pcie_path(device));
 
     core_rx_enable &= core_enable;
 
@@ -184,11 +237,18 @@ int main(int argc, char *argv[])
             }
         }
 
-        reset_all_cores(dev, 1);
-
-        printf("Write core instruction memories...\n");
         for (int k=0; k<core_count; k++)
         {
+            printf("Putting core %d into reset.\n", k);
+						reset_single_core(dev, k, 16, 1);
+			
+						char bitfile[100];
+						snprintf(bitfile, sizeof(bitfile), "%s/fpga_pblock_%d_partial.bit", PR_bitfiles, k+1);
+						MCapConfigureFPGA(mdev, bitfile, EMCAP_CONFIG_FILE);
+            usleep(10000);
+
+            core_rd_cmd(dev, k, 0);
+            core_rd_cmd(dev, k, 1);
             uint32_t core_rx_bytes_raw  = core_rd_cmd(dev, k, 0);
             uint32_t core_rx_frames_raw = core_rd_cmd(dev, k, 1);
             int bytes = 0;
@@ -198,6 +258,8 @@ int main(int argc, char *argv[])
             usleep(10000);
             // Making sure instruction memory is loaded
             while (1){
+								core_rd_cmd(dev, k, 0);
+								core_rd_cmd(dev, k, 1);
                 bytes = (core_rd_cmd(dev, k, 0) - core_rx_bytes_raw);
                 frames = (core_rd_cmd(dev, k, 1) - core_rx_frames_raw);
                 if (frames>=1){
@@ -206,157 +268,26 @@ int main(int argc, char *argv[])
                     break;
                 }
             }
-            printf(".");
-            fflush(stdout);
-        }
-        printf("\n");
 
-        if (load_dmem) {
-            printf("Write data memory files ...\n");
-            char line[256];
-            char path[PATH_MAX+1];
-            while (fgets(line, sizeof(line), map_file)) {
-                char * data_bin = strtok(line, " ");
-                char * addr     = strtok(NULL, " \n");
-                if (strtok(NULL, " \n")!=NULL){
-                    fprintf(stderr, "Error in data map file\n");
-                    free(i_segment);
-                    free(d_segment);
-                    free(r_segment);
-                    ret = -1;
-                    goto err;
-                }
+            printf("Core %d instruction load complete.\n", k);
+            usleep(3000000);
 
-                if (data_bin[0] != '/')
-                {
-                    // relative path
-                    char *ptr;
-                    strncpy(path, data_map, PATH_MAX);
-
-                    ptr = strrchr(path, '/');
-                    if (ptr)
-                    {
-                        ptr++;
-                        *ptr = 0;
-                    }
-                    else
-                    {
-                        path[0] = 0;
-                    }
-
-                    strncat(path, data_bin, PATH_MAX);
-
-                    data_bin = path;
-                }
-
-                printf("Reading binary file \"%s\"...\n", data_bin);
-                write_file = fopen(data_bin, "rb");
-                fseek(write_file, 0, SEEK_END);
-                data_len = ftell(write_file);
-                rewind(write_file);
-
-                if (data_len > segment_size)
-                {
-                    printf("Segment size error, increase segment size\n");
-                    data_len = segment_size;
-                }
-
-                printf("Reading %lu bytes...\n", data_len);
-                if (fread(d_segment, 1, data_len, write_file) < data_len)
-                {
-                    fprintf(stderr, "Error reading file\n");
-                    free(i_segment);
-                    free(d_segment);
-                    free(r_segment);
-                    ret = -1;
-                    goto err;
-                }
-
-                fclose(write_file);
-
-                printf("Writing to address %s\n", addr);
-                for (int k=0; k<core_count; k++){
-                    uint32_t core_rx_bytes_raw  = core_rd_cmd(dev, k, 0);
-                    uint32_t core_rx_frames_raw = core_rd_cmd(dev, k, 1);
-                    int bytes = 0;
-                    int frames = 0;
-                    write_to_core(dev, d_segment, (int)strtol(addr, NULL, 0), data_len, k);
-
-                    usleep(10000);
-                    while (1){
-                        bytes = (core_rd_cmd(dev, k, 0) - core_rx_bytes_raw);
-                        frames = (core_rd_cmd(dev, k, 1) - core_rx_frames_raw);
-                        if (frames>=1){
-                            if (bytes!=(data_len+(8*frames)))
-                                printf("ERROR: %d bytes were sent to core %d for data memory instead of %d bytes.\n", bytes, k, (int)(data_len+(8*frames)));
-                            break;
-                        }
-                    }
-                    printf(".");
-                    fflush(stdout);
-                }
-                printf("\n");
-            }
-        }
-
-        if (test_pcie){
-            // Host Write and Readback test
-
-            write_to_core(dev, i_segment, 0x1000100, ins_len, 4);
-            usleep(1000);
-            read_from_core(dev, r_segment, 0x1000100, ins_len, 4);
-            usleep(1000);
-
-            printf("Write Buffer:\n");
-            for (int k=0; k<ins_len;k+=16){
-                for (int i=0; i<16;i++)
-                    printf("%02x ", (int)*(i_segment+k+i) & 0xff);
-                printf("\n");
-            }
-
-            printf("Read values:\n");
-            for (int k=0; k<ins_len;k+=16){
-                for (int i=0; i<16;i++)
-                    printf("%02x ", (int)*(r_segment+k+i) & 0xff);
-                printf("\n");
-            }
-        }
-
-        printf("Release core resets...\n");
-        usleep(100000);
-        for (int k=0; k<core_count; k++)
-        {
             if (core_enable & (1 << k)){
                 core_wr_cmd(dev, k, 0xf, 0);
                 core_wr_cmd(dev, k, 0xf, 0);
             }
-            usleep(1000);
-            printf(".");
-            fflush(stdout);
+
+            usleep(100000);
+    
+            uint32_t cur = read_enable_cores(dev);
+            set_enable_cores(dev, cur | (1 << k));
+            cur = read_receive_cores(dev);
+            set_receive_cores(dev, cur | (1 << k));
+            
+						usleep(10000);
+
+            printf("Core %d reloaded.\n", k);
         }
-        printf("\n");
-
-        usleep(1000000);
-
-        printf("Core stats after taking out of reset\n");
-        for (int k=0; k<core_count; k++){
-            printf("core %d status: %08x\n", k, core_rd_cmd(dev, k, 8));
-        }
-
-        printf("Enabling cores in scheduler...\n");
-        printf("Core enable mask: 0x%08x\n", core_enable);
-        set_enable_cores(dev, core_enable);
-        unsigned int temp = read_enable_cores(dev);
-        printf("core enable readback %08x\n",  temp);
-
-        printf("Core RX enable mask: 0x%08x\n", core_rx_enable);
-        set_receive_cores(dev, core_rx_enable);
-        printf("core RX enable readback %08x\n",  read_receive_cores(dev));
-
-        printf("Enabling interfaces ...\n");
-        set_enable_interfaces(dev, (1<<MAX_IF_COUNT)-1);
-
-        printf("Done!\n");
 
         free(i_segment);
         free(d_segment);

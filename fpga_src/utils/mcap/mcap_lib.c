@@ -412,6 +412,65 @@ free_resources:
 	return NULL;
 }
 
+struct mcap_dev *MCapLibInit_w_bus(int device_id, const char* device_bus)
+{
+	struct pci_dev *dev;
+	struct mcap_dev *mdev;
+
+	/* Allocate MCAP device */
+	mdev = malloc(sizeof(struct mcap_dev));
+	if (!mdev)
+		return NULL;
+
+	/* Get the pci_access structure */
+	mdev->pacc = pci_alloc();
+
+	mdev->is_multiplebit = 0;
+
+	/* Initialize the PCI library */
+	pci_init(mdev->pacc);
+
+	/* Get the list of devices */
+	pci_scan_bus(mdev->pacc);
+
+	for (dev = mdev->pacc->devices; dev; dev = dev->next) {
+		/* Fill in header info we need */
+		pci_fill_info(dev, PCI_FILL_IDENT | PCI_FILL_BASES |
+			      PCI_FILL_CLASS);
+
+		if (dev->vendor_id == MCAP_VENDOR_ID &&
+			dev->device_id == device_id) {
+			char str[20];
+			snprintf(str, sizeof(str), "%02x:%02x.%01x", dev->bus, dev->dev, dev->func);
+
+			if (strcmp(str, device_bus)==0){
+			  pr_info("Xilinx MCAP device found\n");
+			  mdev->pdev = dev;
+			}
+		} else {
+			continue;
+		}
+	}
+
+	if (!mdev->pdev) {
+		pr_err("Xilinx MCAP device not found .. Exiting ...\n");
+		goto free_resources;
+	}
+
+	/* Get the MCAP Register base */
+	if (MCapDoBusWalk(mdev)) {
+		pr_err("Unable to get the Register Base\n");
+		goto free_resources;
+	}
+
+	return mdev;
+
+free_resources:
+	MCapLibFree(mdev);
+
+	return NULL;
+}
+
 int MCapReset(struct mcap_dev *mdev)
 {
 	u32 set, restore;

@@ -33,6 +33,60 @@ either expressed or implied, of The Regents of the University of California.
 
 #include "gousheh.h"
 
+// We need to break the data into 16KB segments
+void write_to_core(struct mqnic *dev, char* data, unsigned int addr, size_t len, int core_num) {
+    struct mqnic_ioctl_block_write ctl;
+    int left = len;
+
+    ctl.addr = (core_num<<26) | addr;
+    ctl.data = data;
+
+    while (left>0){
+      if (left<16384)
+        ctl.len = left;
+      else
+        ctl.len = 16384;
+
+      if (ioctl(dev->fd, MQNIC_IOCTL_BLOCK_WRITE, &ctl) != 0){
+          perror("MQNIC_IOCTL_BLOCK_WRITE ioctl failed");
+      }
+
+      left    -=16384;
+      ctl.data+=16384;
+      ctl.addr+=16384;
+    }
+
+    return;
+}
+
+// We need to break the data into 16KB segments
+void read_from_core(struct mqnic *dev, char* data, unsigned int addr, size_t len, int core_num) {
+    struct mqnic_ioctl_block_write ctl;
+    int left = len;
+
+    ctl.addr = (core_num<<26) | addr;
+    ctl.data = data;
+
+
+    while (left>0){
+      if (left<16384)
+        ctl.len = left;
+      else
+        ctl.len = 16384;
+
+      if (ioctl(dev->fd, MQNIC_IOCTL_BLOCK_READ, &ctl) != 0){
+          perror("MQNIC_IOCTL_BLOCK_READ ioctl failed");
+      }
+
+      left    -=16384;
+      ctl.data+=16384;
+      ctl.addr+=16384;
+    }
+
+    return;
+}
+
+
 void write_cmd(struct mqnic *dev, uint32_t addr, uint32_t data){
     mqnic_reg_write32(dev->regs, 0x000404, data);
     mqnic_reg_write32(dev->regs, 0x000404, data);
@@ -158,7 +212,7 @@ void reset_all_cores(struct mqnic *dev, int evict){
     printf("\n");
 }
 
-void reset_single_core(struct mqnic *dev, int core, uint32_t num_slots, int evict){
+void reset_single_core(struct mqnic *dev, uint32_t core, uint32_t num_slots, int evict){
     uint32_t cur = read_enable_cores(dev);
     set_enable_cores(dev, cur & ~(1 << core));
     cur = read_receive_cores(dev);

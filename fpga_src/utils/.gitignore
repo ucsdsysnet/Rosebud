@@ -2,5 +2,9 @@
 dump
 rvfw
 perf
+pr_reload
 *.txt
 *.pcap
+mcap/libmcap.a
+mcap/mcap_lib.o
+bitstreams

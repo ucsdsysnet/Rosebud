@@ -9,22 +9,25 @@ DEV=mqnic0
 ENABLE=0xffff
 RECV=0xffff
 DEBUG=8
+PR_FILES=bitstreams
 ifneq ("$(wildcard $(DATA_MAP_FILE))","")
 	DMAP_FLAG = -m $(DATA_MAP_FILE)
 else
-	DMAP_FLAG= 
+	DMAP_FLAG=
 endif
 
 DMAP=0
 
 CC=gcc
-CFLAGS=-O3 -Wall -I../driver/mqnic
+CFLAGS=-O3 -Wall -I../driver/mqnic -I./mcap
 
-BIN=dump perf rvfw
+MCAPLIB = mcap/libmcap.a
+
+BIN=dump perf rvfw pr_reload
 
 all: $(BIN)
 
-mcap/libmcap.a:
+$(MCAPLIB):
 	$(MAKE) -C mcap libmcap.a
 
 dump: dump.c mqnic.c gousheh.c
@@ -33,8 +36,11 @@ dump: dump.c mqnic.c gousheh.c
 perf: perf.c mqnic.c timespec.c gousheh.c
 	$(CC) $(CFLAGS) $^ -o $@
 
-rvfw: rvfw.c mqnic.c gousheh.c mcap/libmcap.a
+rvfw: rvfw.c mqnic.c gousheh.c
 	$(CC) $(CFLAGS) $^ -o $@
+
+pr_reload: pr_reload.c mqnic.c gousheh.c $(MCAPLIB)
+	$(CC) $(CFLAGS) $^ $(MCAPLIB) -ludev -lpci -lz -o $@
 
 install:
 	install -d $(BINDIR)
@@ -49,6 +55,11 @@ do:
 	sudo ./rvfw -d /dev/$(DEV) -i $(INS_BIN_FILE) $(DMAP_FLAG) -e $(ENABLE) -r $(RECV)
 	sudo ./perf -d /dev/$(DEV) -o $(OUT_FILE) -g $(DEBUG)
 
-reset: 
-	sudo sh -c "lspci -d 1234:1001 | cut -d ' ' -f 1 | xargs -L 1 ./pcie_hot_reset.sh"
+status:
+	sudo ./perf -d /dev/$(DEV) -o $(OUT_FILE) -g $(DEBUG)
 
+pr_test:
+	sudo ./pr_reload -d /dev/$(DEV) -i $(INS_BIN_FILE) $(DMAP_FLAG) -e $(ENABLE) -r $(RECV) -p $(PR_FILES)
+
+reset:
+	sudo sh -c "lspci -d 1234:1001 | cut -d ' ' -f 1 | xargs -L 1 ./pcie_hot_reset.sh"

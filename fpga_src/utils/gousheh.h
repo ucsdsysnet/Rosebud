@@ -63,6 +63,8 @@ either expressed or implied, of The Regents of the University of California.
 #define INT_REG_WIDTH       2
 #define INT_DIR_BIT         (INT_REG_WIDTH+1-1)
 
+void write_to_core(struct mqnic *dev, char* data, unsigned int addr, size_t len, int core_num);
+void read_from_core(struct mqnic *dev, char* data, unsigned int addr, size_t len, int core_num);
 void write_cmd(struct mqnic *dev, uint32_t addr, uint32_t data);
 uint32_t read_cmd(struct mqnic *dev, uint32_t addr);
 
@@ -86,5 +88,5 @@ uint32_t read_interface_drops(struct mqnic *dev, uint32_t interface);
 void evict_core(struct mqnic *dev, uint32_t core);
 void print_scheduler_status(struct mqnic *dev);
 void reset_all_cores(struct mqnic *dev, int evict);
-void reset_single_core(struct mqnic *dev, int core, uint32_t num_slots, int evict);
+void reset_single_core(struct mqnic *dev, uint32_t core, uint32_t num_slots, int evict);
 

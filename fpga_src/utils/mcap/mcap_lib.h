@@ -154,6 +154,7 @@ struct mcap_dev {
 
 /* Function Prototypes */
 struct mcap_dev *MCapLibInit(int device_id);
+struct mcap_dev *MCapLibInit_w_bus(int device_id, const char* device_bus);
 void MCapLibFree(struct mcap_dev *mdev);
 void MCapDumpRegs(struct mcap_dev *mdev);
 void MCapDumpReadRegs(struct mcap_dev *mdev);
