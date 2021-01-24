@@ -321,7 +321,7 @@ module scheduler_PR (
           income_cores  <= host_cmd_wr_data_r[CORE_COUNT-1:0] & enabled_cores;
         end
         3'b001: begin
-          income_cores  <= income_cores & enabled_cores;
+          income_cores  <= income_cores & host_cmd_wr_data_r[CORE_COUNT-1:0];
           enabled_cores <= host_cmd_wr_data_r[CORE_COUNT-1:0];
         end
         3'b011: begin
@@ -793,7 +793,7 @@ module scheduler_PR (
       3'b000:  host_cmd_rd_data_n <= income_cores;
       3'b001:  host_cmd_rd_data_n <= enabled_cores;
       3'b010:  host_cmd_rd_data_n <= rx_desc_count[stat_read_core_r * SLOT_WIDTH +: SLOT_WIDTH];
-      3'b100:  host_cmd_rd_data_n <= {{(32-ID_TAG_WIDTH){1'b0}},
+      3'b100:  host_cmd_rd_data_n <= {14'd0, port_state[stat_read_interface_r], {(16-ID_TAG_WIDTH){1'b0}},
                                      dest_r[stat_read_interface_r * ID_TAG_WIDTH +: ID_TAG_WIDTH]};
       3'b101:  host_cmd_rd_data_n <= {{(32-INTERFACE_COUNT){1'b0}}, enabled_ints};
       default: host_cmd_rd_data_n <= 32'hFEFEFEFE;

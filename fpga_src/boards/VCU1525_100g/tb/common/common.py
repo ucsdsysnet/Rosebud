@@ -473,12 +473,11 @@ class TB(object):
         return
 
     async def reset_all_cores(self, evict=True):
-        await self.set_enable_interfaces(0)
         await self.set_enable_cores(0)
         # Wait for on the fly packets
         await Timer(300, 'ns')
-        await self.release_core_slots((1 << self.core_count)-1)
         await self.release_interfaces_desc((1 << self.int_count)-1)
+        await self.release_core_slots((1 << self.core_count)-1)
 
         for i in range(0, self.core_count):
             if (evict):
@@ -517,13 +516,13 @@ class TB(object):
                 # check interfaces for hung slots
                 for i in range(self.int_count+1):
                     desc = await self.read_interface_desc(i)
-                    if ((desc >> self.tag_width) == core):
+                    if (((desc >> self.tag_width)&(self.core_count-1)) == core):
                         # disable the interface, wait, check if still it's the same
                         # desc drop it, enable the interface back
                         cur = await self.read_enable_interfaces()
                         await self.set_enable_interfaces(cur & ~(1 << i))
                         desc = await self.read_interface_desc(i)
-                        if ((desc >> self.tag_width) == core):
+                        if (((desc >> self.tag_width)&(self.core_count-1)) == core):
                             await self.release_interfaces_desc(1 << i)
                             descs_released += 1
                         await self.set_enable_interfaces(cur)
@@ -578,9 +577,14 @@ class TB(object):
         for i in range(0, self.core_count):
             self.log.info("Load firmware on core %d", i)
 
+            frames_in = await self.core_rd_cmd(i, 1)
             if len(ins_seg) > 0:
                 self.log.info("Load instruction memory")
                 await self.block_write(ins_seg, (i << 26)+(1 << 25))
+
+            # Wait for the core to receive the instruction block
+            while (await self.core_rd_cmd(i, 1))==frames_in:
+                pass
 
             if len(data_seg) > 0:
                 self.log.info("Load data memory")

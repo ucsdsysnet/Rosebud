@@ -200,7 +200,7 @@ always @ (posedge clk) begin
 
     if (rst) begin
       timer_step_r     <= 32'h00000001;
-      mask_r           <= 8'hC0;
+      mask_r           <= 8'hF8;
       ready_to_evict_r <= 1'b0; 
     end
 end

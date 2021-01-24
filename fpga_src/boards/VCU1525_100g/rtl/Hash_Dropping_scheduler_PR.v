@@ -491,7 +491,7 @@ module scheduler_PR2 (
           income_cores  <= host_cmd_wr_data_r[CORE_COUNT-1:0] & enabled_cores;
         end
         3'b001: begin
-          income_cores  <= income_cores & enabled_cores;
+          income_cores  <= income_cores & host_cmd_wr_data_r[CORE_COUNT-1:0];
           enabled_cores <= host_cmd_wr_data_r[CORE_COUNT-1:0];
         end
         3'b011: begin
