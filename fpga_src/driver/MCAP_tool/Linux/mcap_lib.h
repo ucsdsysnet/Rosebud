@@ -41,10 +41,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <sys/types.h>
-
-#include "pci.h"
-#include "lspci.h"
-#include "byteswap.h"
+#include <pci/pci.h>
 
 /* Library Specific Definitions */
 #define MCAP_VENDOR_ID	0x1234
