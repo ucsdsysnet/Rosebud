@@ -444,8 +444,8 @@ struct mcap_dev *MCapLibInit_w_bus(int device_id, const char* device_bus)
 			snprintf(str, sizeof(str), "%02x:%02x.%01x", dev->bus, dev->dev, dev->func);
 
 			if (strcmp(str, device_bus)==0){
-			  pr_info("Xilinx MCAP device found\n");
-			  mdev->pdev = dev;
+				pr_info("Xilinx MCAP device found\n");
+				mdev->pdev = dev;
 			}
 		} else {
 			continue;

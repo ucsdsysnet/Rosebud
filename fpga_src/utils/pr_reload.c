@@ -59,11 +59,11 @@ char * get_pcie_path(char *device){
 		// determine sysfs path of PCIe device
     // first, try to find via miscdevice
     char *ptr;
-		char path[PATH_MAX+32];
-		char device_path[PATH_MAX];
-		char *bus_dev_func = malloc (sizeof (char) * 16);
+    char path[PATH_MAX+32];
+    char device_path[PATH_MAX];
+    char *bus_dev_func = malloc (sizeof (char) * 16);
 
-		ptr = strrchr(device, '/');
+    ptr = strrchr(device, '/');
     ptr = ptr ? ptr+1 : device;
 
     snprintf(path, sizeof(path), "/sys/class/misc/%s/device", ptr);
@@ -78,8 +78,8 @@ char * get_pcie_path(char *device){
 
         if (!realpath(path, device_path))
         {
-						fprintf(stderr, "failed to determine device path\n");
-						return NULL;
+            fprintf(stderr, "failed to determine device path\n");
+            return NULL;
         }
     }
 
@@ -88,14 +88,14 @@ char * get_pcie_path(char *device){
 
     if (access(path, F_OK) == -1)
     {
-				fprintf(stderr, "failed to determine device path\n");
-				return NULL;
+        fprintf(stderr, "failed to determine device path\n");
+        return NULL;
     }
-        
-		strncpy (device_path, path, strrchr(path, '/')-path-1);
-		ptr = strchr(strrchr(device_path, '/'),':');
-		strcpy(bus_dev_func, ptr+1);
-		return(bus_dev_func);
+
+    strncpy (device_path, path, strrchr(path, '/')-path-1);
+    ptr = strchr(strrchr(device_path, '/'),':');
+    strcpy(bus_dev_func, ptr+1);
+    return(bus_dev_func);
 }
 
 int main(int argc, char *argv[])
@@ -172,8 +172,8 @@ int main(int argc, char *argv[])
         fprintf(stderr, "Failed to open device\n");
         return -1;
     }
-		
-		mdev = MCapLibInit_w_bus((int) strtol("1001", NULL, 16), get_pcie_path(device));
+
+    mdev = MCapLibInit_w_bus((int) strtol("1001", NULL, 16), get_pcie_path(device));
 
     core_rx_enable &= core_enable;
 
@@ -240,11 +240,11 @@ int main(int argc, char *argv[])
         for (int k=0; k<core_count; k++)
         {
             printf("Putting core %d into reset.\n", k);
-						reset_single_core(dev, k, 16, 1);
-			
-						char bitfile[100];
-						snprintf(bitfile, sizeof(bitfile), "%s/fpga_pblock_%d_partial.bit", PR_bitfiles, k+1);
-						MCapConfigureFPGA(mdev, bitfile, EMCAP_CONFIG_FILE);
+            reset_single_core(dev, k, 16, 1);
+
+            char bitfile[100];
+            snprintf(bitfile, sizeof(bitfile), "%s/fpga_pblock_%d_partial.bit", PR_bitfiles, k+1);
+            MCapConfigureFPGA(mdev, bitfile, EMCAP_CONFIG_FILE);
             usleep(10000);
 
             core_rd_cmd(dev, k, 0);
@@ -258,8 +258,8 @@ int main(int argc, char *argv[])
             usleep(10000);
             // Making sure instruction memory is loaded
             while (1){
-								core_rd_cmd(dev, k, 0);
-								core_rd_cmd(dev, k, 1);
+                core_rd_cmd(dev, k, 0);
+                core_rd_cmd(dev, k, 1);
                 bytes = (core_rd_cmd(dev, k, 0) - core_rx_bytes_raw);
                 frames = (core_rd_cmd(dev, k, 1) - core_rx_frames_raw);
                 if (frames>=1){
@@ -283,8 +283,8 @@ int main(int argc, char *argv[])
             set_enable_cores(dev, cur | (1 << k));
             cur = read_receive_cores(dev);
             set_receive_cores(dev, cur | (1 << k));
-            
-						usleep(10000);
+
+            usleep(10000);
 
             printf("Core %d reloaded.\n", k);
         }
