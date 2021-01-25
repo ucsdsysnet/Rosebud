@@ -63,7 +63,7 @@ class AhoCorasickState(object):
 
     def __len__(self):
         return len(self.children)
-        
+
     def items(self):
         return self.children.items()
 
@@ -299,7 +299,7 @@ class BitSplitStateMachine(object):
         split_word = self.split_string(word)
 
         for k in range(self.split_count):
-           self.acsm[k].add_word(split_word[k], match)
+            self.acsm[k].add_word(split_word[k], match)
 
     def finalize(self):
         """
@@ -364,7 +364,7 @@ class BitSplitStateMachine(object):
             for m in match:
                 yield (i-len(m[1])+1, *m)
 
-    def to_verilog(self, prefix=None):
+    def to_verilog(self, prefix=None, tlast=False, state_out=False, state_in=False):
         """
         Generate verilog string matching engine core
         """
@@ -380,6 +380,8 @@ class BitSplitStateMachine(object):
 
         sw = self.split_width
         mc = len(self.matches)
+
+        state_offset = 0
 
         s = ''
 
@@ -405,34 +407,47 @@ class BitSplitStateMachine(object):
                 s += f"            if (s_axis_tvalid) begin\n"
                 s += f"                case (s_axis_tdata[{(sm_ind+1)*sw-1}:{sm_ind*sw}])\n"
 
-
                 for val in range(2**sw):
                     next_state = 0
 
                     if val in state.next_index:
                         next_state = state.next_index[val]
 
-
                     s += f"                    {sw}'b{val:>0{sw}b}: {prefix}fsm_{sm_ind}_state_reg <= {clsc}'d{next_state};\n"
 
                 s += f"                endcase\n"
                 s += f"            end\n"
                 s += f"        end\n"
-            
+
             s += f"    endcase\n"
             s += f"\n"
+            if tlast:
+                s += f"    if (s_axis_tvalid && s_axis_tlast) begin\n"
+                s += f"        {prefix}fsm_{sm_ind}_state_reg <= {clsc}'d0;\n"
+                s += f"    end\n"
+                s += f"\n"
+            if state_in:
+                s += f"    if ({prefix}state_load) begin\n"
+                s += f"        {prefix}fsm_{sm_ind}_state_reg <= {prefix}state_in[{state_offset+clsc-1}:{state_offset}];\n"
+                s += f"    end\n"
+                s += f"\n"
             s += f"    if (rst) begin\n"
             s += f"        {prefix}fsm_{sm_ind}_state_reg <= {clsc}'d0;\n"
             s += f"        {prefix}fsm_{sm_ind}_match_reg <= {mc}'d0;\n"
             s += f"    end\n"
             s += f"end\n"
             s += f"\n"
+            if state_out:
+                s += f"assign {prefix}state_out[{state_offset+clsc-1}:{state_offset}] = {prefix}fsm_{sm_ind}_state_reg;\n"
+                s += f"\n"
+
+            state_offset += clsc
 
         s += f"assign {prefix}match = "+' & '.join([f'{prefix}fsm_{sm_ind}_match_reg' for sm_ind in range(self.split_count)])+";\n"
 
         return s
 
-    def to_verilog_module(self, name=None):
+    def to_verilog_module(self, name=None, tlast=False, state_out=False, state_in=False):
         """
         Generate verilog string matching engine module
         """
@@ -443,6 +458,9 @@ class BitSplitStateMachine(object):
 
         if not name:
             name = "sme"
+
+        sw = sum([(len(acsm.states)-1).bit_length() for acsm in self.acsm])
+        mc = len(self.matches)
 
         s = f"""/*
 
@@ -494,15 +512,35 @@ module {name}
      */
     input  wire [7:0]  s_axis_tdata,
     input  wire        s_axis_tvalid,
+"""
 
+        if tlast:
+            s += "    input  wire        s_axis_tlast,\n"
+
+        if state_out or state_in:
+            s += """
+    /*
+     * SME state
+     */
+"""
+        if state_out:
+            s += f"    output wire [{sw-1}:0] state_out,\n"
+        if state_in:
+            s += f"    input  wire [{sw-1}:0] state_in,\n"
+            s += f"    input  wire        state_load,\n"
+
+        s += f"""
+    /*
+     * Match output
+     */
     output wire [{mc-1}:0] match
 );
 
 """
 
-        s += self.to_verilog()
+        s += self.to_verilog(tlast=tlast, state_out=state_out, state_in=state_in)
 
-        s +="""
+        s += """
 
 endmodule
 
@@ -605,7 +643,7 @@ class BitSplitStateMachineGroup(object):
             for m in match:
                 yield (i-len(m[1])+1, *m)
 
-    def to_verilog_module(self, name=None):
+    def to_verilog_module(self, name=None, tlast=False, state_out=False, state_in=False):
         """
         Generate verilog string matching engine module
         """
@@ -617,7 +655,7 @@ class BitSplitStateMachineGroup(object):
         if not name:
             name = "sme"
 
-        sw = self.split_width
+        sw = sum([sum([(len(acsm.states)-1).bit_length() for acsm in bssm.acsm]) for bssm in self.bssm])
         mc = len(self.matches)
 
         s = f"""/*
@@ -670,29 +708,59 @@ module {name}
      */
     input  wire [7:0]  s_axis_tdata,
     input  wire        s_axis_tvalid,
+"""
 
+        if tlast:
+            s += "    input  wire        s_axis_tlast,\n"
+
+        if state_out or state_in:
+            s += """
+    /*
+     * SME state
+     */
+"""
+        if state_out:
+            s += f"    output wire [{sw-1}:0] state_out,\n"
+        if state_in:
+            s += f"    input  wire [{sw-1}:0] state_in,\n"
+            s += f"    input  wire        state_load,\n"
+
+        s += f"""
+    /*
+     * Match output
+     */
     output wire [{mc-1}:0] match
 );
 
 """
 
-        offset = 0
+        match_offset = 0
+        state_offset = 0
 
         for sm_ind in range(len(self.bssm)):
             sm = self.bssm[sm_ind]
-            width = len(sm.matches)
+            match_width = len(sm.matches)
+            state_width = sum([(len(acsm.states)-1).bit_length() for acsm in sm.acsm])
             s += f"// Partition {sm_ind}\n"
-            s += f"// Matches: {width}\n"
-            s += f"wire [{width-1}:0] p{sm_ind}_match;\n"
+            s += f"// Matches: {match_width}\n"
+            s += f"wire [{match_width-1}:0] p{sm_ind}_match;\n"
+            if state_out:
+                s += f"wire [{state_width-1}:0] p{sm_ind}_state_out;\n"
+            if state_in:
+                s += f"wire [{state_width-1}:0] p{sm_ind}_state_in = state_in[{state_offset+state_width-1}:{state_offset}];\n"
+                s += f"wire p{sm_ind}_state_load = state_load;\n"
             s += "\n"
-            s += sm.to_verilog(f"p{sm_ind}")
+            s += sm.to_verilog(prefix=f"p{sm_ind}", tlast=tlast, state_out=state_out, state_in=state_in)
             s += "\n"
-            s += f"assign match[{offset+width-1}:{offset}] = p{sm_ind}_match;\n"
+            s += f"assign match[{match_offset+match_width-1}:{match_offset}] = p{sm_ind}_match;\n"
+            if state_out:
+                s += f"assign state_out[{state_offset+state_width-1}:{state_offset}] = p{sm_ind}_state_out;\n"
             s += "\n"
 
-            offset += width
+            match_offset += match_width
+            state_offset += state_width
 
-        s +="""
+        s += """
 endmodule
 
 """
@@ -742,6 +810,9 @@ def main():
     parser.add_argument('--test_file', type=str, default=None, help="Test file")
 
     parser.add_argument('--module_name', type=str, default=None, help="Verilog module name")
+    parser.add_argument('--enable_tlast', type=int, default=False, nargs='?', const=True, help="Enable tlast input")
+    parser.add_argument('--enable_state_in', type=int, default=False, nargs='?', const=True, help="Enable state input")
+    parser.add_argument('--enable_state_out', type=int, default=False, nargs='?', const=True, help="Enable state output")
     parser.add_argument('--output_verilog', type=str, default=None, help="Verilog output file name")
 
     parser.add_argument('--states_file', type=str, default=None, help="States output file name")
@@ -799,25 +870,28 @@ def main():
     bssmg.finalize()
 
     stats = "Statistics\n"
-    stats += "Configuration\n"
     stats += f"Split width: {bssmg.split_width}\n"
     stats += f"Split count: {bssmg.split_count}\n"
     stats += f"Max matches: {bssmg.max_matches}\n"
     stats += f"Max states: {bssmg.max_states}\n"
-    stats += "Matches\n"
     stats += f"Input files: {' '.join(args.match_file+args.match_file_hex+args.rules_file)}\n"
     stats += f"Match count: {len(bssmg.matches)}\n"
     stats += f"Shortest match (bytes): {min((len(m[1]) for m in bssmg.matches))}\n"
     stats += f"Longest match (bytes): {max((len(m[1]) for m in bssmg.matches))}\n"
     stats += f"Total match (bytes): {sum((len(m[1]) for m in bssmg.matches))}\n"
-    stats += "State Machines\n"
     stats += f"Partition count: {len(bssmg.bssm)}\n"
     stats += f"Total state count: {sum((len(acsm.states) for sm in bssmg.bssm for acsm in sm.acsm))}\n"
+    stats += f"Total state width (bits): {sum(((len(acsm.states)-1).bit_length() for sm in bssmg.bssm for acsm in sm.acsm))}\n"
     for n in range(len(bssmg.bssm)):
         stats += f"Partition {n} match count: {len(bssmg.bssm[n].matches)}\n"
+        stats += f"Partition {n} shortest match (bytes): {min((len(m[1]) for m in bssmg.bssm[n].matches))}\n"
+        stats += f"Partition {n} longest match (bytes): {max((len(m[1]) for m in bssmg.bssm[n].matches))}\n"
+        stats += f"Partition {n} total match (bytes): {sum((len(m[1]) for m in bssmg.bssm[n].matches))}\n"
         stats += f"Partition {n} total state count: {sum((len(acsm.states) for acsm in bssmg.bssm[n].acsm))}\n"
+        stats += f"Partition {n} total state width (bits): {sum(((len(acsm.states)-1).bit_length() for acsm in bssmg.bssm[n].acsm))}\n"
         for k in range(bssmg.split_count):
             stats += f"Partition {n} split {k} state count: {len(bssmg.bssm[n].acsm[k].states)}\n"
+            stats += f"Partition {n} split {k} state width (bits): {(len(bssmg.bssm[n].acsm[k].states)-1).bit_length()}\n"
 
     print(stats.strip())
 
@@ -848,7 +922,8 @@ def main():
 
         print(f"Write verilog module {module_name} to {args.output_verilog}")
         with open(args.output_verilog, 'w') as f:
-            f.write(bssmg.to_verilog_module(module_name))
+            f.write(bssmg.to_verilog_module(module_name, tlast=args.enable_tlast,
+                state_in=args.enable_state_in, state_out=args.enable_state_out))
 
     if args.states_file is not None:
         print(f"Write states file to {args.states_file}")
@@ -871,7 +946,7 @@ def main():
                                 next_state.append("0")
 
                         m = sum((1 << m[0] for m in s.match))
-                        f.write(f"{partition},{split},{index},{','.join(next_state)},{m}\n");
+                        f.write(f"{partition},{split},{index},{','.join(next_state)},{m}\n")
 
     if args.test_file:
         with open(args.test_file, 'rb') as f:
@@ -879,6 +954,6 @@ def main():
             for m in bssmg.query(f.read()):
                 print(m)
 
+
 if __name__ == "__main__":
     main()
-
