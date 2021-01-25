@@ -387,7 +387,7 @@ inline void handle_slot_rx_packet(struct slot_context *slot)
 				// source port match
 				if (slot->l4_header.udp_hdr->src_port == bswap_16(123))
 				{
-					if (slot->l4_header.udp_hdr->dest_port & bswap_16(0x03ff) == 0)
+					if ((slot->l4_header.udp_hdr->dest_port & bswap_16(0xfc00)) == 0)
 					{
 						// ET DOS Likely NTP DDoS In Progress MON_LIST Response to Non-Ephemeral Port IMPL 0x02
 						// ET DOS Likely NTP DDoS In Progress PEER_LIST Response to Non-Ephemeral Port IMPL 0x02
@@ -606,7 +606,7 @@ inline void handle_accel_done(struct slot_context *slot, struct accel_context *a
 			// source port match
 			if (slot->l4_header.udp_hdr->src_port == bswap_16(53))
 			{
-				if (slot->l4_header.udp_hdr->dest_port & bswap_16(0x03ff) == 0)
+				if ((slot->l4_header.udp_hdr->dest_port & bswap_16(0xfc00)) == 0)
 				{
 					// ET DOS DNS Amplification Attack Possible Outbound Windows Non-Recursive Root Hint Reserved Port
 					// ET DOS DNS Amplification Attack Possible Inbound Windows Non-Recursive Root Hint Reserved Port
