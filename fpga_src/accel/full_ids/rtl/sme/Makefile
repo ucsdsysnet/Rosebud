@@ -1,5 +1,5 @@
 MAX_STATE=256
-STATE_LOAD=0
+STATE_LOAD=1
 
 all: udp_sme.v tcp_sme.v http_sme.v
 

@@ -320,6 +320,11 @@ generate
 
       .s_axis_tdata(accel_tdata_r[n*8 +: 8]),
       .s_axis_tvalid(accel_tvalid_r[n]),
+
+      .state_out(),
+      .state_in(0),
+      .state_load(1'b0),
+
       .match(match)
     );
 
@@ -343,6 +348,11 @@ generate
 
       .s_axis_tdata(accel_tdata_r[n*8 +: 8]),
       .s_axis_tvalid(accel_tvalid_r[n]),
+
+      .state_out(),
+      .state_in(0),
+      .state_load(1'b0),
+
       .match(match)
     );
 
@@ -366,6 +376,11 @@ generate
 
       .s_axis_tdata(accel_tdata_r[n*8 +: 8]),
       .s_axis_tvalid(accel_tvalid_r[n]),
+
+      .state_out(),
+      .state_in(0),
+      .state_load(1'b0),
+
       .match(match)
     );
 
