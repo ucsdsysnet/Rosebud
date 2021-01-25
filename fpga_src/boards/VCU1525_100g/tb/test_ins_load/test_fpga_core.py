@@ -35,7 +35,6 @@ either expressed or implied, of The Regents of the University of California.
 import os
 import sys
 
-import scapy.utils
 from scapy.packet import Raw
 from scapy.layers.l2 import Ether
 from scapy.layers.inet import IP, UDP, TCP
@@ -43,7 +42,7 @@ from scapy.layers.inet import IP, UDP, TCP
 import cocotb_test.simulator
 
 import cocotb
-from cocotb.triggers import RisingEdge, FallingEdge, Timer
+from cocotb.triggers import RisingEdge, Timer
 
 from cocotbext.axi.utils import hexdump_str
 
