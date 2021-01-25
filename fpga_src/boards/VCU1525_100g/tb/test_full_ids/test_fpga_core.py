@@ -35,9 +35,11 @@ either expressed or implied, of The Regents of the University of California.
 import os
 import sys
 
+import scapy.config
 from scapy.packet import Raw
 from scapy.layers.l2 import Ether
 from scapy.layers.inet import IP, UDP, TCP
+from scapy.utils import PcapReader
 
 import cocotb_test.simulator
 
@@ -59,6 +61,9 @@ except ImportError:
     finally:
         del sys.path[0]
 
+# print actual port numbers
+scapy.config.conf.noenum.add(TCP.sport, TCP.dport, UDP.sport, UDP.dport)
+
 
 # SEND_COUNT_0 = 6 # 5000
 # SEND_COUNT_1 = 6 # 5000
@@ -72,6 +77,14 @@ SEND_COUNT_1 = 1024
 # SIZE_1       = [64, 128, 256, 512, 1024, 2048, 2048, 1024, 1500, 256, 128, 1024]
 SIZE_0       = [64, 128, 256, 512, 1024, 1024, 1500, 256, 128, 1024]
 SIZE_1       = [64, 128, 256, 512, 1024, 1024, 1500, 256, 128, 1024]
+# SIZE_0       = [10, 10, 10, 1460, 1460, 1460]
+# SIZE_1       = [10, 10, 10, 1460, 1460, 1460]
+# SIZE_0       = [1460]
+# SIZE_1       = [1460]
+# SIZE_0       = [1455]
+# SIZE_1       = [1455]
+SIZE_0       = [12, 1460, 1460]
+SIZE_1       = [12, 1460, 1460]
 CHECK_PKT    = True
 DROP_RATE    = 1  #0.66
 TEST_PCIE    = False
@@ -114,6 +127,44 @@ tcp = TCP(sport=54321, dport=80)
 payload = bytes([0]+[x % 256 for x in range(SIZE_0[0]-1)])
 test_pkt = eth / ip / tcp / payload
 PACKETS.append(test_pkt)
+
+
+PCAP         = None
+# PCAP         = os.path.abspath(os.path.join(os.path.dirname(__file__),
+#     '../../accel/full_ids/python/ids_test.pcap'))
+
+
+PACKETS_0 = []
+PACKETS_1 = []
+
+if PCAP:
+
+    with PcapReader(open(PCAP, 'rb')) as pcap:
+        for pkt in pcap:
+            PACKETS_0.append(pkt)
+            PACKETS_1.append(pkt)
+
+else:
+
+    pkt_ind = 0
+    pat_ind = 0
+    for i in range(0, SEND_COUNT_0):
+        frame = PACKETS[pkt_ind].copy()
+        frame[Raw].load = PATTERNS[pat_ind] + bytes([i % 256] + [x % 256 for x in range(max(0, SIZE_0[i % len(SIZE_0)]-1-len(PATTERNS[pat_ind])))])
+        PACKETS_0.append(frame)
+
+        pkt_ind = (pkt_ind+1) % len(PACKETS)
+        pat_ind = (pat_ind+1) % len(PATTERNS)
+
+    pkt_ind = 0
+    pat_ind = 0
+    for i in range(0, SEND_COUNT_1):
+        frame = PACKETS[pkt_ind].copy()
+        frame[Raw].load = PATTERNS[pat_ind] + bytes([i % 256] + [x % 256 for x in range(max(0, SIZE_1[i % len(SIZE_1)]-1-len(PATTERNS[pat_ind])))])
+        PACKETS_1.append(frame)
+
+        pkt_ind = (pkt_ind+1) % len(PACKETS)
+        pat_ind = (pat_ind+1) % len(PATTERNS)
 
 
 FIRMWARE = os.path.abspath(os.path.join(os.path.dirname(__file__),
@@ -173,47 +224,39 @@ async def run_test_nic(dut):
     tb.host_if_tx_mon.log.setLevel("WARNING")
     tb.host_if_rx_mon.log.setLevel("WARNING")
 
-    pkts_set = set()
+    pkts_set_0 = set()
 
-    pkt_ind = 0
-    pat_ind = 0
-    for i in range(0, SEND_COUNT_0):
-        frame = PACKETS[pkt_ind].copy()
-        frame[Raw].load = PATTERNS[pat_ind] + bytes([i % 256] + [x % 256 for x in range(max(0, SIZE_0[i % len(SIZE_0)]-1-len(PATTERNS[pat_ind])))])
-        await tb.qsfp0_source.send(frame.build())
-        pkts_set.add(frame.build())
+    for pkt in PACKETS_0:
+        frame = pkt.build()
+        await tb.qsfp0_source.send(frame)
+        pkts_set_0.add(frame)
 
-        pat_ind = (pat_ind+1) % len(PATTERNS)
+    pkts_set_1 = set()
 
-    pkt_ind = 0
-    pat_ind = 0
-    for i in range(0, SEND_COUNT_1):
-        frame = PACKETS[pkt_ind].copy()
-        frame[Raw].load = PATTERNS[pat_ind] + bytes([i % 256] + [x % 256 for x in range(max(0, SIZE_1[i % len(SIZE_1)]-1-len(PATTERNS[pat_ind])))])
-        await tb.qsfp1_source.send(frame.build())
-        pkts_set.add(frame.build())
-
-        pat_ind = (pat_ind+1) % len(PATTERNS)
+    for pkt in PACKETS_1:
+        frame = pkt.build()
+        await tb.qsfp1_source.send(frame)
+        pkts_set_1.add(frame)
 
     lengths = []
-    for j in range(0, int(SEND_COUNT_1*(1.0-DROP_RATE))):  # we drop half, so expect at least getting 1/3rd
+    for j in range(0, int(len(PACKETS_1)*(1.0-DROP_RATE))):  # we drop half, so expect at least getting 1/3rd
         rx_frame = await tb.qsfp0_sink.recv()
         tb.log.info("packet number from port 0:", j)
         if PRINT_PKTS:
             tb.log.debug("%s", hexdump_str(bytes(rx_frame), row_size=32))
         if (CHECK_PKT):
-            assert Ether(rx_frame.tdata).build() in pkts_set
-            pkts_set.remove(Ether(rx_frame.tdata).build())
+            assert Ether(rx_frame.tdata).build() in pkts_set_0
+            pkts_set_0.remove(Ether(rx_frame.tdata).build())
         lengths.append(len(rx_frame.data)-8)
 
-    for j in range(0, int(SEND_COUNT_0*(1.0-DROP_RATE))):
+    for j in range(0, int(len(PACKETS_0)*(1.0-DROP_RATE))):
         rx_frame = await tb.qsfp1_sink.recv()
         tb.log.info("packet number from port 1:", j)
         if PRINT_PKTS:
             tb.log.debug("%s", hexdump_str(bytes(rx_frame), row_size=32))
         if (CHECK_PKT):
-            assert Ether(rx_frame.tdata).build() in pkts_set
-            pkts_set.remove(Ether(rx_frame.tdata).build())
+            assert Ether(rx_frame.tdata).build() in pkts_set_1
+            pkts_set_1.remove(Ether(rx_frame.tdata).build())
         lengths.append(len(rx_frame.data)-8)
 
     await tb.qsfp0_source.wait()
