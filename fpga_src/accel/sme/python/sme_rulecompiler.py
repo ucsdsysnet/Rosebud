@@ -447,7 +447,7 @@ class BitSplitStateMachine(object):
 
         return s
 
-    def to_verilog_module(self, name=None, tlast=False, state_out=False, state_in=False):
+    def to_verilog_module(self, name=None, comment=None, tlast=False, state_out=False, state_in=False):
         """
         Generate verilog string matching engine module
         """
@@ -537,6 +537,10 @@ module {name}
 );
 
 """
+
+        if comment:
+            s += ''.join(f'// {line}\n' for line in comment.strip().split('\n'))
+            s += '\n'
 
         s += self.to_verilog(tlast=tlast, state_out=state_out, state_in=state_in)
 
@@ -643,7 +647,7 @@ class BitSplitStateMachineGroup(object):
             for m in match:
                 yield (i-len(m[1])+1, *m)
 
-    def to_verilog_module(self, name=None, tlast=False, state_out=False, state_in=False):
+    def to_verilog_module(self, name=None, comment=None, tlast=False, state_out=False, state_in=False):
         """
         Generate verilog string matching engine module
         """
@@ -733,6 +737,10 @@ module {name}
 );
 
 """
+
+        if comment:
+            s += ''.join(f'// {line}\n' for line in comment.strip().split('\n'))
+            s += '\n'
 
         match_offset = 0
         state_offset = 0
@@ -869,7 +877,8 @@ def main():
 
     bssmg.finalize()
 
-    stats = "Statistics\n"
+    # statistics
+    stats = "SME statistics\n"
     stats += f"Split width: {bssmg.split_width}\n"
     stats += f"Split count: {bssmg.split_count}\n"
     stats += f"Max matches: {bssmg.max_matches}\n"
@@ -899,30 +908,34 @@ def main():
         with open(args.stats_file, 'w') as f:
             f.write(stats)
 
+    # summary
+    summary = "index,partition,bit,hex,match\n"
+
+    l = {}
+    for n in range(len(bssmg.bssm)):
+        for m in bssmg.bssm[n].matches:
+            bit = m[0]
+            index = m[2][0]
+
+            l[index] = (n, bit)
+
+    for m in bssmg.matches:
+        summary += f"{m[0]},{l[m[0]][0]},{l[m[0]][1]},{m[1].hex()},\"{m[2]}\"\n"
+
     if args.summary_file:
         with open(args.summary_file, 'w') as f:
-            f.write("index,partition,bit,hex,match\n")
-
-            l = {}
-
-            for n in range(len(bssmg.bssm)):
-                for m in bssmg.bssm[n].matches:
-                    bit = m[0]
-                    index = m[2][0]
-
-                    l[index] = (n, bit)
-
-            for m in bssmg.matches:
-                f.write(f"{m[0]},{l[m[0]][0]},{l[m[0]][1]},{m[1].hex()},\"{m[2]}\"\n")
+            f.write(summary)
 
     if args.output_verilog is not None:
         module_name = args.module_name
         if module_name is None:
             module_name = os.path.splitext(os.path.basename(args.output_verilog))[0]
 
+        comment = f"{stats}\nSummary\n{summary}"
+
         print(f"Write verilog module {module_name} to {args.output_verilog}")
         with open(args.output_verilog, 'w') as f:
-            f.write(bssmg.to_verilog_module(module_name, tlast=args.enable_tlast,
+            f.write(bssmg.to_verilog_module(name=module_name, comment=comment, tlast=args.enable_tlast,
                 state_in=args.enable_state_in, state_out=args.enable_state_out))
 
     if args.states_file is not None:
