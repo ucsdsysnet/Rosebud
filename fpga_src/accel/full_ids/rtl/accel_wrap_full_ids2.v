@@ -143,9 +143,15 @@ always @(posedge clk) begin
           read_data_reg <= accel_busy;
         end
         6'h10: begin
-          read_data_reg <= desc_error;
+          read_data_reg <= cmd_state_reg[63:32];
         end
         6'h14: begin
+          read_data_reg <= cmd_state_reg[31:0];
+        end
+        6'h18: begin
+          read_data_reg <= desc_error;
+        end
+        6'h1c: begin
           read_data_reg <= done_err;
         end
         // can go to 6'h3c
