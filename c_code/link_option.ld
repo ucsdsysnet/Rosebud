@@ -27,6 +27,8 @@ SECTIONS
     _start_data = .;
     KEEP(*(.vectors))
     *(.data .data*)
+    *(.rodata .rodata*)
+    *(.srodata .srodata*)
     . = ALIGN(4);
     _end_data = .;
   } > DMEM
@@ -35,6 +37,7 @@ SECTIONS
   {
     _start_bss = .;
     *(.bss*)
+    *(.sbss*)
     *(COMMON)
     . = ALIGN(4);
     _end_bss = .;
