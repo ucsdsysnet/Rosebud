@@ -209,11 +209,7 @@ async def run_test_nic(dut):
             await Timer(200, 'ns')
             await tb.core_wr_cmd(i, 0xC, 0x1234ABCD)
             await Timer(200, 'ns')
-            await tb.core_wr_cmd(i, 0xD, 0x1234ABCD)
-            await Timer(200, 'ns')
             await tb.core_wr_cmd(i, 0xC, 0)
-            await Timer(200, 'ns')
-            await tb.core_wr_cmd(i, 0xD, 0)
             await Timer(200, 'ns')
 
     tb.log.info("Send data from LAN")
@@ -263,7 +259,7 @@ async def run_test_nic(dut):
     await tb.qsfp1_source.wait()
 
     if DROP_RATE == 1:
-        await Timer(4000, 'ns')
+        await Timer(20000, 'ns')
     else:
         await Timer(1000, 'ns')
 
