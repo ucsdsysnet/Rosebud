@@ -128,7 +128,7 @@ struct accel_context accel_context[MAX_ACCEL_COUNT];
 
 struct accel_context *fixed_accel;
 
-inline void add_accel_to_group(struct accel_group *grp, struct accel_context *accel)
+static inline void add_accel_to_group(struct accel_group *grp, struct accel_context *accel)
 {
 	// set group
 	accel->group = grp;
@@ -159,7 +159,7 @@ unsigned int accel_group_count;
 unsigned int accel_waiting_mask;
 unsigned int accel_active_mask;
 
-inline void reserve_accel(struct accel_group *grp, struct slot_context *slot)
+static inline void reserve_accel(struct accel_group *grp, struct slot_context *slot)
 {
 	grp->slot_waiting_queue[(int)grp->slot_waiting_head] = slot;
 
@@ -170,7 +170,7 @@ inline void reserve_accel(struct accel_group *grp, struct slot_context *slot)
 	grp->waiting = 1;
 }
 
-inline struct slot_context *accel_pop_slot(struct accel_group *grp)
+static inline struct slot_context *accel_pop_slot(struct accel_group *grp)
 {
 	struct slot_context *slot = grp->slot_waiting_queue[(int)grp->slot_waiting_tail];
 
@@ -184,25 +184,25 @@ inline struct slot_context *accel_pop_slot(struct accel_group *grp)
 	return slot;
 }
 
-inline void take_accel(struct accel_context *accel, struct slot_context *slot)
+static inline void take_accel(struct accel_context *accel, struct slot_context *slot)
 {
 	accel_active_mask |= accel->mask;
 	accel->group->accel_active_mask |= accel->mask;
 	accel->active_slot = slot;
 }
 
-inline void release_accel(struct accel_context *accel)
+static inline void release_accel(struct accel_context *accel)
 {
 	accel_active_mask &= ~accel->mask;
 	accel->group->accel_active_mask &= ~accel->mask;
 	accel->active_slot = 0;
 }
 
-inline void handle_slot_rx_packet(struct slot_context *slot);
-inline void handle_accel_start(struct slot_context *slot, struct accel_context *accel);
-inline void handle_accel_done(struct slot_context *slot, struct accel_context *accel);
+static inline void handle_slot_rx_packet(struct slot_context *slot);
+static inline void handle_accel_start(struct slot_context *slot, struct accel_context *accel);
+static inline void handle_accel_done(struct slot_context *slot, struct accel_context *accel);
 
-inline void call_accel(struct accel_group *grp, struct slot_context *slot)
+static inline void call_accel(struct accel_group *grp, struct slot_context *slot)
 {
 	if (~grp->accel_active_mask & grp->accel_mask)
 	{
@@ -222,7 +222,7 @@ inline void call_accel(struct accel_group *grp, struct slot_context *slot)
 	reserve_accel(grp, slot);
 }
 
-inline void handle_slot_rx_packet(struct slot_context *slot)
+static inline void handle_slot_rx_packet(struct slot_context *slot)
 {
 	char ch;
 	unsigned int payload_offset = ETH_HEADER_SIZE;
@@ -468,7 +468,7 @@ drop:
 	pkt_send(&slot->desc);
 }
 
-inline void handle_accel_start(struct slot_context *slot, struct accel_context *accel)
+static inline void handle_accel_start(struct slot_context *slot, struct accel_context *accel)
 {
 	// start SME
 	accel->sme_accel->start = (unsigned int)(slot->desc.data)+slot->payload_offset;
@@ -479,7 +479,7 @@ inline void handle_accel_start(struct slot_context *slot, struct accel_context *
 	take_accel(accel, slot);
 }
 
-inline void handle_accel_done(struct slot_context *slot, struct accel_context *accel)
+static inline void handle_accel_done(struct slot_context *slot, struct accel_context *accel)
 {
 	unsigned int match = accel->sme_accel->match_1hot;
 	unsigned int mask;
