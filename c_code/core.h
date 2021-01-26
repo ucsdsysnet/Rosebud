@@ -34,6 +34,9 @@
 #define MAX_SLOT_COUNT    (*((unsigned int *)               (IO_INT_BASE + 0x00BC)))
 #define DEBUG_IN_L        (*((unsigned int *)               (IO_INT_BASE + 0x00C0)))
 #define DEBUG_IN_H        (*((unsigned int *)               (IO_INT_BASE + 0x00C4)))
+#define RD_BC_MASK        (*((unsigned int *)               (IO_INT_BASE + 0x00C8)))
+#define RD_BC_EQUAL       (*((unsigned int *)               (IO_INT_BASE + 0x00CC)))
+#define RECV_BC_ADDR      (*((unsigned int *)               (IO_INT_BASE + 0x00D0)))
 
 #define SEND_DESC         (*((volatile struct   Desc*)      (IO_INT_BASE + 0x0008)))
 #define DRAM_ADDR         (*((volatile unsigned long long *)(IO_INT_BASE + 0x0010)))
@@ -46,10 +49,13 @@
 #define DRAM_FLAG_RST     (*((volatile unsigned char *)     (IO_INT_BASE + 0x0030)))
 #define UPDATE_SLOT       (*((volatile unsigned char *)     (IO_INT_BASE + 0x0034)))
 #define MASK_WRITE        (*((volatile unsigned char *)     (IO_INT_BASE + 0x0038)))
-#define INTERRUPT_ACK     (*((volatile unsigned char *)     (IO_INT_BASE + 0x003C)))
+#define INTERRUPT_ACK     (*((volatile unsigned int  *)     (IO_INT_BASE + 0x003C)))
 #define DEBUG_OUT         (*((volatile unsigned long long *)(IO_INT_BASE + 0x0040)))
 #define DEBUG_OUT_L       (*((volatile unsigned int *)      (IO_INT_BASE + 0x0040)))
 #define DEBUG_OUT_H       (*((volatile unsigned int *)      (IO_INT_BASE + 0x0044)))
+#define BC_MASK_WR        (*((volatile unsigned int *)      (IO_INT_BASE + 0x0048)))
+#define BC_EQUAL_WR       (*((volatile unsigned int *)      (IO_INT_BASE + 0x004C)))
+#define BC_INT_EN         (*((volatile unsigned int *)      (IO_INT_BASE + 0x0050)))
 
 #define STATUS_RD                                           (IO_INT_BASE + 0x008C)
 #define IN_PKT_READY      (*((volatile unsigned char *)     (IO_INT_BASE + 0x008C))==1)
@@ -58,12 +64,12 @@
 #define CORE_MSG_READY    (*((volatile unsigned char *)     (IO_INT_BASE + 0x008F))==1)
 
 // MASK BITS:    DATA_MEM_ERR | IMEM_ERR | EXT_IO_ERR | EVICT_INT | POKE_INT | TIMER_INT | RECV_DRAM_DATA_INT | PACKET_INT
-// FLAGS BITS:   8 BITS RESERVED 
+// FLAGS BITS:   8 BITS RESERVED
 //               - | - | EXT_IO_ERR | EVICT_INT | POKE_INT | TIMER | DRAM_DATA_ARRIVED | PACKET_ARRIVED
 //               MASK READ BACK
-//               - | - | - | - | INT_IO_ACCESS_ERR | PMEM_ACCESS_ERR | DMEM_ACCESS_ERR | IMEM_ACCESS_ERR 
+//               - | - | - | - | INT_IO_ACCESS_ERR | PMEM_ACCESS_ERR | DMEM_ACCESS_ERR | IMEM_ACCESS_ERR
 // INT ACK BITS: INT_IO_ACCESS_ERR | PMEM_ACCESS_ERR | DMEM_ACCESS_ERR | IMEM_ACCESS_ERR | EXT_IO_ERR | EVICT_INT | POKE_INT | TIMER
- 
+
 struct Desc {
 	unsigned short len;
 	unsigned char  tag;
@@ -84,6 +90,9 @@ inline unsigned char error_flags () {return ERROR_FLAGS;}
 inline unsigned char read_masks () {return MASK_READ;}
 inline unsigned int read_timer_low () {return TIMER_32_L;}
 inline unsigned int read_timer_high () {return TIMER_32_H;}
+inline unsigned int read_bc_mask () {return RD_BC_MASK;}
+inline unsigned int read_bc_equal () {return RD_BC_EQUAL;}
+inline unsigned int recv_bc_msg_addr () {return RECV_BC_ADDR;}
 
 inline void read_in_pkt (struct Desc* input_desc){
 	*input_desc = RECV_DESC;
@@ -126,18 +135,28 @@ inline void init_hdr_slots (const unsigned int slot_count,
 	return;
 }
 
+inline void set_bc_filter (const unsigned int bc_mask,
+                           const unsigned int bc_equal){
+  BC_MASK_WR  = bc_mask;
+  BC_EQUAL_WR = bc_equal;
+  BC_INT_EN   = 1;
+	MASK_WRITE  = MASK_READ | 8;
+  return;
+}
+
+
 // inline void init_desc_slots (const unsigned int slot_count,
 // 	                          const unsigned int start_desc_addr,
 // 	                          const unsigned int desc_addr_step) {
-// 
+//
 // 	// TODO: Add checks for range and hdr_addr_step
-// 
+//
 // 	for (int i=1; i<=slot_count; i++){
 // 		SLOT_ADDR = (3<<30) + (i<<24) + (start_desc_addr&0x00ffffff) + ((i-1)*desc_addr_step);
 // 		asm volatile("" ::: "memory");
 // 		UPDATE_SLOT = 1;
 // 	}
-// 
+//
 // 	return;
 // }
 
@@ -156,7 +175,7 @@ inline void write_debug (const unsigned long long val){
 	return;
 }
 
-inline void interrupt_ack (const unsigned char interrupt_ack){
+inline void interrupt_ack (const unsigned int interrupt_ack){
 	INTERRUPT_ACK = interrupt_ack;
 	return;
 }
