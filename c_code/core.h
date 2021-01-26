@@ -79,79 +79,78 @@ struct Desc {
 
 // Reads
 
-inline _Bool in_pkt_ready () {return IN_PKT_READY;}
-inline _Bool update_slot_ready () {return UPDATE_SLOT_READY;}
-inline _Bool core_msg_ready () {return CORE_MSG_READY;}
-inline unsigned int core_id () {return CORE_ID;}
-inline unsigned int dram_flags () {return DRAM_FLAGS;}
-inline unsigned int active_slots () {return ACTIVE_SLOTS;}
-inline unsigned char interrupt_flags () {return INTERRUPT_FLAGS;}
-inline unsigned char error_flags () {return ERROR_FLAGS;}
-inline unsigned char read_masks () {return MASK_READ;}
-inline unsigned int read_timer_low () {return TIMER_32_L;}
-inline unsigned int read_timer_high () {return TIMER_32_H;}
-inline unsigned int read_bc_mask () {return RD_BC_MASK;}
-inline unsigned int read_bc_equal () {return RD_BC_EQUAL;}
-inline unsigned int recv_bc_msg_addr () {return RECV_BC_ADDR;}
+static inline _Bool in_pkt_ready() { return IN_PKT_READY; }
+static inline _Bool update_slot_ready() { return UPDATE_SLOT_READY; }
+static inline _Bool core_msg_ready() { return CORE_MSG_READY; }
+static inline unsigned int core_id() { return CORE_ID; }
+static inline unsigned int dram_flags() { return DRAM_FLAGS; }
+static inline unsigned int active_slots() { return ACTIVE_SLOTS; }
+static inline unsigned char interrupt_flags() { return INTERRUPT_FLAGS; }
+static inline unsigned char error_flags() { return ERROR_FLAGS; }
+static inline unsigned char read_masks() { return MASK_READ; }
+static inline unsigned int read_timer_low() { return TIMER_32_L; }
+static inline unsigned int read_timer_high() { return TIMER_32_H; }
+static inline unsigned int read_bc_mask() { return RD_BC_MASK; }
+static inline unsigned int read_bc_equal() { return RD_BC_EQUAL; }
+static inline unsigned int recv_bc_msg_addr() { return RECV_BC_ADDR; }
 
-inline void read_in_pkt (struct Desc* input_desc){
+static inline void read_in_pkt (struct Desc* input_desc) {
 	*input_desc = RECV_DESC;
 	asm volatile("" ::: "memory");
 	RECV_DESC_RELEASE = 1;
-	return;
 }
 
 // Writes
 
-inline void init_slots (const unsigned int slot_count,
-	                    const unsigned int start_addr,
-	                    const unsigned int addr_step) {
+static inline void init_slots(const unsigned int slot_count,
+                              const unsigned int start_addr,
+                              const unsigned int addr_step) {
 
-	for (int i=1; i<=slot_count; i++){
-		SLOT_ADDR = (i<<24) + (start_addr&0x00ffffff) + ((i-1)*addr_step);
+	unsigned int addr = start_addr & 0x00ffffff;
+	for (int i=1; i<=slot_count; i++) {
+		SLOT_ADDR = (i<<24) + addr;
 		asm volatile("" ::: "memory");
 		UPDATE_SLOT = 1;
+		addr += addr_step;
 	}
 
 	SEND_DESC.len  = (unsigned short) addr_step;
 	SEND_DESC.tag  = (unsigned char)  slot_count;
 	asm volatile("" ::: "memory");
 	SEND_DESC_TYPE = 3;
-	return;
 }
 
-inline void init_hdr_slots (const unsigned int slot_count,
-	                        const unsigned int start_hdr_addr,
-	                        const unsigned int hdr_addr_step) {
+static inline void init_hdr_slots(const unsigned int slot_count,
+                                  const unsigned int start_hdr_addr,
+                                  const unsigned int hdr_addr_step) {
 
 	// TODO: Add checks for range and hdr_addr_step
 
-	for (int i=1; i<=slot_count; i++){
-		SLOT_ADDR = (1<<31) + (i<<24) + (start_hdr_addr&0x00ffffff) + ((i-1)*hdr_addr_step);
+	unsigned int addr = start_hdr_addr & 0x00ffffff;
+	for (int i=1; i<=slot_count; i++) {
+		SLOT_ADDR = (1<<31) + (i<<24) + addr;
 		asm volatile("" ::: "memory");
 		UPDATE_SLOT = 1;
+		addr += hdr_addr_step;
 	}
-
-	return;
 }
 
-inline void set_bc_filter (const unsigned int bc_mask,
-                           const unsigned int bc_equal){
-  BC_MASK_WR  = bc_mask;
-  BC_EQUAL_WR = bc_equal;
-  BC_INT_EN   = 1;
+static inline void set_bc_filter(const unsigned int bc_mask,
+                                 const unsigned int bc_equal) {
+	BC_MASK_WR  = bc_mask;
+	BC_EQUAL_WR = bc_equal;
+	BC_INT_EN   = 1;
 	MASK_WRITE  = MASK_READ | 8;
-  return;
 }
 
 
-// inline void init_desc_slots (const unsigned int slot_count,
+// static inline void init_desc_slots (const unsigned int slot_count,
 // 	                          const unsigned int start_desc_addr,
 // 	                          const unsigned int desc_addr_step) {
 //
 // 	// TODO: Add checks for range and hdr_addr_step
 //
-// 	for (int i=1; i<=slot_count; i++){
+// 	for (int i=1; i<=slot_count; i++) {
 // 		SLOT_ADDR = (3<<30) + (i<<24) + (start_desc_addr&0x00ffffff) + ((i-1)*desc_addr_step);
 // 		asm volatile("" ::: "memory");
 // 		UPDATE_SLOT = 1;
@@ -160,83 +159,71 @@ inline void set_bc_filter (const unsigned int bc_mask,
 // 	return;
 // }
 
-inline void write_timer_interval (const unsigned int val){
-	TIMER_INTERVAL=val;
-	return;
+static inline void write_timer_interval(const unsigned int val) {
+	TIMER_INTERVAL = val;
 }
 
-inline void write_dram_flags (const unsigned int val){
-	DRAM_FLAG_WR=val;
-	return;
+static inline void write_dram_flags(const unsigned int val) {
+	DRAM_FLAG_WR = val;
 }
 
-inline void write_debug (const unsigned long long val){
-	DEBUG_OUT=val;
-	return;
+static inline void write_debug(const unsigned long long val) {
+	DEBUG_OUT = val;
 }
 
-inline void interrupt_ack (const unsigned int interrupt_ack){
+static inline void interrupt_ack(const unsigned int interrupt_ack) {
 	INTERRUPT_ACK = interrupt_ack;
-	return;
 }
 
-inline void dram_flag_reset (const unsigned char num){
+static inline void dram_flag_reset(const unsigned char num) {
 	DRAM_FLAG_RST = num;
-	return;
 }
 
-inline void set_masks (const unsigned char masks){
+static inline void set_masks(const unsigned char masks) {
 	MASK_WRITE = masks;
-	return;
 }
 
-inline void pkt_done_msg (const struct Desc* output_desc){
+static inline void pkt_done_msg(const struct Desc* output_desc) {
 	SEND_DESC      = *output_desc;
 	asm volatile("" ::: "memory");
 	SEND_DESC_TYPE = 1;
-	return;
 }
 
-inline void pkt_send (const struct Desc* output_desc){
+static inline void pkt_send(const struct Desc* output_desc) {
 	SEND_DESC = *output_desc;
 	asm volatile("" ::: "memory");
 	SEND_DESC_TYPE = 0;
-	return;
 }
 
-inline void atomic_pkt_send (const struct Desc* output_desc){
-  unsigned char m = MASK_READ;
-  MASK_WRITE = 0;
-  SEND_DESC = *output_desc;
-  asm volatile("" ::: "memory");
-  SEND_DESC_TYPE = 0;
-  MASK_WRITE = m;
-  return;
+static inline void atomic_pkt_send(const struct Desc* output_desc) {
+	unsigned char m = MASK_READ;
+	MASK_WRITE = 0;
+	SEND_DESC = *output_desc;
+	asm volatile("" ::: "memory");
+	SEND_DESC_TYPE = 0;
+	MASK_WRITE = m;
 }
 
 // port would get overwritten by hardware
-inline void dram_write (const unsigned long long * dram_addr, const struct Desc* output_desc){
+static inline void dram_write(const unsigned long long * dram_addr, const struct Desc* output_desc) {
 	DRAM_ADDR      = * dram_addr;
 	SEND_DESC      = *output_desc;
 	asm volatile("" ::: "memory");
 	SEND_DESC_TYPE = 4;
-	return;
 }
 
 // There is no port for DRAM request.
-inline void dram_read_req (const unsigned long long * dram_addr, const struct Desc* output_desc){
+static inline void dram_read_req(const unsigned long long * dram_addr, const struct Desc* output_desc) {
 	DRAM_ADDR      = * dram_addr;
 	SEND_DESC      = *output_desc;
 	asm volatile("" ::: "memory");
 	SEND_DESC_TYPE = 5;
-	return;
 }
 
-inline void send_to_core (const struct Desc* output_desc){
+static inline void send_to_core(const struct Desc* output_desc) {
 	SEND_DESC      = *output_desc;
 	asm volatile("" ::: "memory");
 	SEND_DESC_TYPE = 2;
-	return;
 }
 
 #endif /* CORE_H */
