@@ -3,7 +3,6 @@ open_project fpga.xpr
 update_compile_order -fileset sources_1
 set_property needs_refresh false [get_runs synth_1]
 set_property needs_refresh false [get_runs impl_1]
-# set_property needs_refresh false [get_runs impl_2]
 
 if {[llength [get_reconfig_modules riscv_block_PR_w_accel]]==0} then {
   create_reconfig_module -name riscv_block_PR_w_accel -partition_def [get_partition_defs pr_riscv ] -top riscv_block_PR_w_accel}
@@ -31,13 +30,9 @@ add_files -norecurse {
   ../rtl/riscv_block_PR_w_accel.v
 } -of_objects [get_reconfig_modules riscv_block_PR_w_accel]
   
-  # ../accel/hash/rtl/hash_acc.v
-  # ../accel/merged/rtl/re_sql.v
-  # ../accel/merged/rtl/accel_wrap_merged.v
-
-if {[llength [get_pr_configurations rr_n_accel]]!=0} then {
-  delete_pr_configurations rr_n_accel}
-create_pr_configuration -name rr_n_accel -partitions [list \
+if {[llength [get_pr_configurations accel_config]]!=0} then {
+  delete_pr_configurations accel_config}
+create_pr_configuration -name accel_config -partitions [list \
   core_inst/riscv_cores[0].pr_wrapper:riscv_block_PR_w_accel \
   core_inst/riscv_cores[1].pr_wrapper:riscv_block_PR_w_accel \
   core_inst/riscv_cores[2].pr_wrapper:riscv_block_PR_w_accel \
@@ -56,12 +51,11 @@ create_pr_configuration -name rr_n_accel -partitions [list \
   core_inst/riscv_cores[15].pr_wrapper:riscv_block_PR_w_accel \
   core_inst/scheduler_PR_inst:scheduler_PR]
 
-if {[llength [get_runs "impl_accel"]]!=0} then {delete_run impl_accel}
-create_run impl_accel -parent_run impl_1 -flow {Vivado Implementation 2020} -pr_config rr_n_accel
-set_property strategy Performance_ExtraTimingOpt [get_runs impl_accel]
+if {[llength [get_runs "impl_w_accel"]]!=0} then {delete_run impl_w_accel}
+create_run impl_w_accel -parent_run impl_1 -flow {Vivado Implementation 2020} -pr_config accel_config
+set_property strategy Performance_ExtraTimingOpt [get_runs impl_w_accel]
 
 update_compile_order -fileset riscv_block_PR_w_accel
-update_compile_order -fileset scheduler_PR
 update_compile_order -fileset sources_1
 
 reset_run riscv_block_PR_w_accel_synth_1
@@ -70,19 +64,20 @@ wait_on_run riscv_block_PR_w_accel_synth_1
 
 add_files -fileset utils_1 -norecurse ../lib/axis/syn/sync_reset.tcl
 add_files -fileset utils_1 -norecurse ../lib/smartFPGA/syn/simple_sync_sig.tcl
-set_property STEPS.OPT_DESIGN.TCL.PRE [ get_files ../lib/axis/syn/sync_reset.tcl -of [get_fileset utils_1] ] [get_runs impl_accel]
-set_property STEPS.OPT_DESIGN.TCL.PRE [ get_files ../lib/smartFPGA/syn/simple_sync_sig.tcl -of [get_fileset utils_1] ] [get_runs impl_accel]
-set_property STEPS.ROUTE_DESIGN.TCL.PRE [ get_files ../lib/axis/syn/sync_reset.tcl -of [get_fileset utils_1] ] [get_runs impl_accel]
-set_property STEPS.ROUTE_DESIGN.TCL.PRE [ get_files ../lib/smartFPGA/syn/simple_sync_sig.tcl -of [get_fileset utils_1] ] [get_runs impl_accel]
-set_property STEPS.PLACE_DESIGN.ARGS.DIRECTIVE SSI_SpreadLogic_high [get_runs impl_accel]
+set_property STEPS.OPT_DESIGN.TCL.PRE [ get_files ../lib/axis/syn/sync_reset.tcl -of [get_fileset utils_1] ] [get_runs impl_w_accel]
+set_property STEPS.OPT_DESIGN.TCL.PRE [ get_files ../lib/smartFPGA/syn/simple_sync_sig.tcl -of [get_fileset utils_1] ] [get_runs impl_w_accel]
+set_property STEPS.ROUTE_DESIGN.TCL.PRE [ get_files ../lib/axis/syn/sync_reset.tcl -of [get_fileset utils_1] ] [get_runs impl_w_accel]
+set_property STEPS.ROUTE_DESIGN.TCL.PRE [ get_files ../lib/smartFPGA/syn/simple_sync_sig.tcl -of [get_fileset utils_1] ] [get_runs impl_w_accel]
+# set_property STEPS.PLACE_DESIGN.ARGS.DIRECTIVE SSI_SpreadLogic_high [get_runs impl_w_accel]
+set_property AUTO_INCREMENTAL_CHECKPOINT 1 [get_runs impl_w_accel]
 
-reset_run impl_accel
-launch_runs impl_accel
-wait_on_run impl_accel
+reset_run impl_w_accel
+launch_runs impl_w_accel
+wait_on_run impl_w_accel
 
-open_run impl_accel
-report_utilization -force -hierarchical -hierarchical_percentage -file fpga_utilization_hierarchy_placed_accel.rpt
-report_utilization -force -pblocks [get_pblocks -regexp {pblock_([2-9]|1[0-6]|1)}] -file fpga_utilization_accel_pblocks.rpt
-write_bitstream -no_partial_bitfile -force fpga.runs/impl_accel/fpga.bit
+open_run impl_w_accel
+# report_utilization -force -hierarchical -hierarchical_percentage -file fpga_utilization_hierarchy_placed_sched.rpt
+# report_utilization -force -pblocks [get_pblocks -regexp {pblock_([2-9]|1[0-6]|1)}] -file fpga_utilization_sched_pblocks.rpt
+write_bitstream -no_partial_bitfile -force fpga.runs/impl_w_accel/fpga.bit
 
 exit

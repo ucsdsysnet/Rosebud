@@ -1,4 +1,4 @@
-module scheduler_PR2 (
+module scheduler_PR (
   input                   clk,
   input                   rst,
 
