@@ -1,5 +1,6 @@
 #include "core.h"
 #include "packet_headers.h"
+#include "pcg_basic.h"
 
 #define ARRAY_SIZE(arr) \
     (sizeof(arr) / sizeof((arr)[0]))
@@ -20,9 +21,15 @@
 
 char *pkt_data[16];
 // unsigned int pkt_len[16] = {128, 1024, 128, 1500, 256, 1024, 512, 1500, 1024, 1500, 256, 2048, 512, 4096, 1500, 9000};
-unsigned int pkt_len[16] = {[0 ... 15] = 1500};
+// unsigned int pkt_len[16] = {128, 1024, 128, 1500, 256, 1024, 512, 1500, 1024, 1500, 256, 1500, 512, 1500, 1500, 1500};
+// unsigned int pkt_len[16] = {60, 60, 60, 100, 128, 200, 256, 512, 1024, 1024, 1024, 1500, 1500, 1500, 1500, 1500};
+// unsigned int pkt_len[16] = {60, 256, 1024, 1514, 1514, 1514, 1514, 1514, 1514, 1514, 1514, 1514, 1514, 1514, 1514, 1514};
+// unsigned int pkt_len[16] = {[0 ... 15] = 60};
+// unsigned int pkt_len[16] = {[0 ... 15] = 1500};
+unsigned int pkt_len[16] = {[0 ... 15] = 1514};
 // unsigned int pkt_len[16] = {[0 ... 15] = 9000};
-// unsigned int pkt_len[16] = {[0 ... 15] = 1100};
+// unsigned int pkt_len[16] = {[0 ... 15] = 1300};
+char *rand_array;
 
 struct __attribute__((__packed__)) udp_packet_header {
   struct eth_header eth;
@@ -174,6 +181,7 @@ void init_packets()
   int data_index = 0;
   struct segment hdr_seg;
   struct segment data_seg;
+  pcg32_random_t rng;
 
   for (i=0; i<ARRAY_SIZE(pkt_data); i++){
     hdr_seg = pkt_headers[hdr_index];
@@ -195,12 +203,21 @@ void init_packets()
     if (data_index >= ARRAY_SIZE(pkt_payloads))
       data_index = 0;
   }
+
+  // precompute random array for packet sizes
+  rand_array = ptr;
+
+  pcg32_srandom_r(&rng, 12345u, core_id());
+
+  for (i = 0; i < 10240; i++)
+  {
+    rand_array[i] = pcg32_boundedrand_r(&rng, ARRAY_SIZE(pkt_len));
+  }
 }
 
 int main(void){
   int i;
-  unsigned int pkt_num;
-  volatile int k;
+  int pkt_num, len_num;
   int fw_port;
 
   // set slot configuration parameters
@@ -227,10 +244,12 @@ int main(void){
   }
 
   while (1){
-    for (i=0; i<ARRAY_SIZE(pkt_data); i++) {
-      pkt_data[i][35]++; // change source port
-      packet.data = pkt_data[i];
-      packet.len  = pkt_len[i];
+    for (i=0; i<10240; i += 2) {
+      pkt_num = rand_array[i];
+      len_num = rand_array[i+1];
+      pkt_data[pkt_num][35]++; // change source port
+      packet.data = pkt_data[pkt_num];
+      packet.len  = pkt_len[len_num];
       pkt_send(&packet);
 
       // forward packet
