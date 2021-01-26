@@ -222,7 +222,7 @@ parameter BC_MSG_CLUSTERS  = 4;
 parameter SW_OUTPUT_PIPE   = 2;
 
 // PCIe parameters
-parameter PCIE_SLOT_COUNT     = 8;
+parameter PCIE_SLOT_COUNT     = 16;
 parameter PCIE_ADDR_WIDTH     = 64;
 parameter PCIE_RAM_ADDR_WIDTH = 32;
 parameter TX_RX_RAM_SIZE      = 2**15;
@@ -823,8 +823,14 @@ pcie_config # (
 );
 
 // Host command read from stat readers and mux with scheduler read
-reg  [31:0]             core_stat_data_muxed;
-wire [31:0]             core_stat_data_muxed_r;
+reg  [31:0] core_stat_data_muxed;
+wire [31:0] core_stat_data_muxed_r;
+wire [31:0] interface_in_stat_data;
+wire [31:0] interface_out_stat_data;
+wire [31:0] interface_in_stat_data_r;
+wire [31:0] interface_out_stat_data_r;
+wire [31:0] host_rd_sched_data;
+wire [31:0] host_rd_sched_data_r;
 wire [CORE_WIDTH+4-1:0] core_select;
 
 if (SEPARATE_CLOCKS) begin
@@ -835,13 +841,15 @@ if (SEPARATE_CLOCKS) begin
     .out(core_select)
   );
 
-  simple_sync_sig # (.RST_VAL(1'b0),.WIDTH(32)) core_stat_data_sync_reg (
+  simple_sync_sig # (.RST_VAL(1'b0),.WIDTH(4*32)) host_cmd_rd_data_sync_reg (
     .dst_clk(sys_clk),
     .dst_rst(stat_rst_r),
-    .in(core_stat_data_muxed),
-    .out(core_stat_data_muxed_r)
+    .in ({core_stat_data_muxed,     host_rd_sched_data,
+          interface_in_stat_data,   interface_out_stat_data}),
+    .out({core_stat_data_muxed_r,   host_rd_sched_data_r,
+          interface_in_stat_data_r, interface_out_stat_data_r})
   );
-end else begin //syncers as pipe registers
+end else begin //syncers as pipe registers to help with the timing
   simple_sync_sig # (.RST_VAL(1'b0),.WIDTH(CORE_WIDTH+4)) host_cmd_sync_reg (
     .dst_clk(pcie_clk),
     .dst_rst(pcie_rst),
@@ -849,23 +857,15 @@ end else begin //syncers as pipe registers
     .out(core_select)
   );
 
-  simple_sync_sig # (.RST_VAL(1'b0),.WIDTH(32)) core_stat_data_sync_reg (
+  simple_sync_sig # (.RST_VAL(1'b0),.WIDTH(4*32)) host_cmd_rd_data_sync_reg (
     .dst_clk(pcie_clk),
     .dst_rst(pcie_rst),
-    .in(core_stat_data_muxed),
-    .out(core_stat_data_muxed_r)
+    .in ({core_stat_data_muxed,     host_rd_sched_data,
+          interface_in_stat_data,   interface_out_stat_data}),
+    .out({core_stat_data_muxed_r,   host_rd_sched_data_r,
+          interface_in_stat_data_r, interface_out_stat_data_r})
   );
-  // (* KEEP = "TRUE" *) reg [31:0]             core_stat_data_muxed_r;
-  // (* KEEP = "TRUE" *) reg [CORE_WIDTH+4-1:0] core_select;
-  // always @ (posedge sys_clk) begin
-  //   core_select            <= host_cmd[CORE_WIDTH+4-1:0];
-  //   core_stat_data_muxed_r <= core_stat_data_muxed;
-  // end
 end
-
-wire [31:0] interface_in_stat_data;
-wire [31:0] interface_out_stat_data;
-wire [31:0] host_rd_sched_data;
 
 wire [1:0]                 interface_reg_sel;
 wire                       interface_dir;
@@ -880,9 +880,9 @@ assign host_cmd_type     = host_cmd[31:29];
 always @ (posedge sys_clk)
   casex (host_cmd_type)
     3'b000: host_cmd_rd_data <= core_stat_data_muxed_r;
-    3'b001: host_cmd_rd_data <= interface_dir ? interface_out_stat_data :
-                                                interface_in_stat_data  ;
-    3'b01?: host_cmd_rd_data <= host_rd_sched_data;
+    3'b001: host_cmd_rd_data <= interface_dir ? interface_out_stat_data_r :
+                                                interface_in_stat_data_r  ;
+    3'b01?: host_cmd_rd_data <= host_rd_sched_data_r;
     3'b1??: host_cmd_rd_data <= 32'hffffffff; // wr command
   endcase
 
