@@ -4,7 +4,7 @@ volatile int k;
 void __attribute__((interrupt)) int_handler(void) {
   int cause = read_csr(mcause);
   if(cause < 0){ //interrupt
-    char int_flag = interrupt_flags() & read_masks();
+    char int_flag = interrupt_flags();
 
     if(cause & IRQ_M_TIMER){
       interrupt_ack(0x01);
@@ -12,7 +12,7 @@ void __attribute__((interrupt)) int_handler(void) {
 
     if (cause & IRQ_M_EXT) {
       // *** Evict interrupt *** //
-      if (int_flag & 0x10){
+      if (int_flag & 0x40){
         interrupt_ack(0x04);
 
         // INFO: wrapper thinks slots in in_desc FIFO are in progress,
@@ -53,18 +53,36 @@ void __attribute__((interrupt)) int_handler(void) {
       }
 
       // *** Poke interrupt  *** //
-      if (int_flag & 0x08){
+      if (int_flag & 0x10){
         interrupt_ack(0x02);
       }
 
       // *** External io error interrupt *** //
-      if (int_flag & 0x10){
+      if (int_flag & 0x20){
         interrupt_ack(0x08);
       }
 
       // *** Incoming packet interrupt *** //
       if (int_flag & 0x01) {
         interrupt_ack(0x01);
+      }
+
+      // *** Incoming filtered broadcast msg *** //
+      if (int_flag & 0x08) {
+        interrupt_ack(0x100);
+        while (1){
+          int_flag = interrupt_flags();
+          if (int_flag & 0x08){
+            interrupt_ack(0x100);
+          } else {
+            break;
+          }
+        }
+        if (error_flags() & 0x10) { // bc_int_msg overflow
+          // Reset the FIFO
+          BC_INT_EN = 0;
+          BC_INT_EN = 1;
+        }
       }
 
       // *** Dram interrupt *** //
