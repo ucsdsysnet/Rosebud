@@ -160,14 +160,14 @@ int main(int argc, char *argv[])
     uint64_t if_rx_stalls[MAX_IF_COUNT];
     uint64_t if_tx_stalls[MAX_IF_COUNT];
     uint64_t if_rx_drops[MAX_IF_COUNT];
-    uint64_t if_sched_stat[MAX_IF_COUNT];
+    uint64_t if_sched_drop[MAX_IF_COUNT];
 
     uint64_t total_if_rx_bytes[MAX_IF_COUNT];
     uint64_t total_if_tx_bytes[MAX_IF_COUNT];
     uint64_t total_if_rx_frames[MAX_IF_COUNT];
     uint64_t total_if_tx_frames[MAX_IF_COUNT];
     uint64_t total_if_rx_drops[MAX_IF_COUNT];
-    uint64_t total_if_sched_stat[MAX_IF_COUNT];
+    uint64_t total_if_sched_drop[MAX_IF_COUNT];
 
     uint32_t if_rx_bytes_raw[MAX_IF_COUNT];
     uint32_t if_tx_bytes_raw[MAX_IF_COUNT];
@@ -176,7 +176,7 @@ int main(int argc, char *argv[])
     uint32_t if_rx_stalls_raw[MAX_IF_COUNT];
     uint32_t if_tx_stalls_raw[MAX_IF_COUNT];
     uint32_t if_rx_drops_raw[MAX_IF_COUNT];
-    uint32_t if_sched_stat_raw[MAX_IF_COUNT];
+    uint32_t if_sched_drop_raw[MAX_IF_COUNT];
 
     uint64_t total_rx_bytes;
     uint64_t total_tx_bytes;
@@ -253,13 +253,13 @@ int main(int argc, char *argv[])
         if_rx_stalls[k] = 0;
         if_tx_stalls[k] = 0;
         if_rx_drops[k] = 0;
-        if_sched_stat[k] = 0;
+        if_sched_drop[k] = 0;
         total_if_rx_bytes[k] = 0;
         total_if_tx_bytes[k] = 0;
         total_if_rx_frames[k] = 0;
         total_if_tx_frames[k] = 0;
         total_if_rx_drops[k] = 0;
-        total_if_sched_stat[k] = 0;
+        total_if_sched_drop[k] = 0;
 
         if_rx_bytes_raw[k]  = interface_rd_cmd(dev, k, 0, 0);
         if_tx_bytes_raw[k]  = interface_rd_cmd(dev, k, 1, 0);
@@ -268,7 +268,11 @@ int main(int argc, char *argv[])
         if_rx_stalls_raw[k] = interface_rd_cmd(dev, k, 0, 3);
         if_tx_stalls_raw[k] = interface_rd_cmd(dev, k, 1, 3);
         if_rx_drops_raw[k]  = interface_rd_cmd(dev, k, 0, 2);
-        if_sched_stat_raw[k] = read_interface_desc(dev, k);
+        if_sched_drop_raw[k] = read_interface_drops(dev, k);
+
+        // When scheduler doesn't drop reports
+        if (if_sched_drop_raw[k]==0xFEFEFEFE) if_sched_drop_raw[k]=0;
+
     }
 
     while (keep_running)
@@ -292,7 +296,7 @@ int main(int argc, char *argv[])
             if_rx_stalls[k] = 0;
             if_tx_stalls[k] = 0;
             if_rx_drops[k] = 0;
-            if_sched_stat[k] = 0;
+            if_sched_drop[k] = 0;
         }
 
         for (int n=0; n < 10; n++)
@@ -369,10 +373,12 @@ int main(int argc, char *argv[])
                 if_rx_drops[k] += temp - if_rx_drops_raw[k];
                 if_rx_drops_raw[k] = temp;
 
-                temp = read_interface_desc(dev, k);
+                temp = read_interface_drops(dev, k);
+                // When scheduler doesn't drop reports
+                if (temp==0xFEFEFEFE) temp=0;
                 if (scheduler_drop)
-                  if_sched_stat[k] += temp - if_sched_stat_raw[k];
-                if_sched_stat_raw[k] = temp;
+                  if_sched_drop[k] += temp - if_sched_drop_raw[k];
+                if_sched_drop_raw[k] = temp;
 
             }
 
@@ -436,20 +442,20 @@ int main(int argc, char *argv[])
 
         for (int k=0; k<if_count; k++)
         {
-            printf("if   %2d  %12ld  %12ld  %12ld  %12ld  %12ld   %12ld   %12ld   %12ld\n", k, if_rx_bytes[k], if_tx_bytes[k], if_rx_frames[k], if_tx_frames[k], if_rx_drops[k], if_rx_stalls[k], if_tx_stalls[k], if_sched_stat[k]);
+            printf("if   %2d  %12ld  %12ld  %12ld  %12ld  %12ld   %12ld   %12ld   %12ld\n", k, if_rx_bytes[k], if_tx_bytes[k], if_rx_frames[k], if_tx_frames[k], if_rx_drops[k], if_rx_stalls[k], if_tx_stalls[k], if_sched_drop[k]);
             total_if_rx_bytes[k] += if_rx_bytes[k];
             total_if_tx_bytes[k] += if_tx_bytes[k];
             total_if_rx_frames[k] += if_rx_frames[k];
             total_if_tx_frames[k] += if_tx_frames[k];
             total_if_rx_drops[k] += if_rx_drops[k];
-            total_if_sched_stat[k] += if_sched_stat[k];
+            total_if_sched_drop[k] += if_sched_drop[k];
             total_rx_bytes += if_rx_bytes[k];
             total_tx_bytes += if_tx_bytes[k];
             total_rx_frames += if_rx_frames[k];
             total_tx_frames += if_tx_frames[k];
             total_rx_stalls += if_rx_stalls[k];
             total_tx_stalls += if_tx_stalls[k];
-            total_rx_drops += (if_rx_drops[k]+if_sched_stat[k]);
+            total_rx_drops += (if_rx_drops[k]+if_sched_drop[k]);
         }
 
         updates++;
@@ -472,7 +478,7 @@ int main(int argc, char *argv[])
             {
                 if (need_comma)
                     fprintf(output_file, ",");
-                fprintf(output_file, "%ld,%ld,%ld,%ld,%ld,%ld", if_rx_bytes[k], if_tx_bytes[k], if_rx_frames[k], if_tx_frames[k], if_rx_drops[k], if_sched_stat[k]);
+                fprintf(output_file, "%ld,%ld,%ld,%ld,%ld,%ld", if_rx_bytes[k], if_tx_bytes[k], if_rx_frames[k], if_tx_frames[k], if_rx_drops[k], if_sched_drop[k]);
                 need_comma = 1;
             }
 
@@ -511,12 +517,12 @@ int main(int argc, char *argv[])
 
     for (int k=0; k<if_count; k++)
     {
-        printf("if   %2d  %12ld  %12ld  %12ld  %12ld  %12ld  %12ld\n", k, total_if_rx_bytes[k], total_if_tx_bytes[k], total_if_rx_frames[k], total_if_tx_frames[k], total_if_rx_drops[k], total_if_sched_stat[k]);
+        printf("if   %2d  %12ld  %12ld  %12ld  %12ld  %12ld  %12ld\n", k, total_if_rx_bytes[k], total_if_tx_bytes[k], total_if_rx_frames[k], total_if_tx_frames[k], total_if_rx_drops[k], total_if_sched_drop[k]);
         total_rx_bytes += total_if_rx_bytes[k];
         total_tx_bytes += total_if_tx_bytes[k];
         total_rx_frames += total_if_rx_frames[k];
         total_tx_frames += total_if_tx_frames[k];
-        total_rx_drops += (total_if_rx_drops[k]+total_if_sched_stat[k]);
+        total_rx_drops += (total_if_rx_drops[k]+total_if_sched_drop[k]);
     }
 
     printf("total    %12ld  %12ld  %12ld  %12ld  %12ld\n", total_rx_bytes, total_tx_bytes, total_rx_frames, total_tx_frames, total_rx_drops);
@@ -551,12 +557,12 @@ int main(int argc, char *argv[])
 
     for (int k=0; k<if_count; k++)
     {
-        printf("if   %2d  %12ld  %12ld  %12ld  %12ld %12ld %12ld\n", k, total_if_rx_bytes[k]/updates, total_if_tx_bytes[k]/updates, total_if_rx_frames[k]/updates, total_if_tx_frames[k]/updates, total_if_rx_drops[k]/updates, total_if_sched_stat[k]/updates);
+        printf("if   %2d  %12ld  %12ld  %12ld  %12ld %12ld %12ld\n", k, total_if_rx_bytes[k]/updates, total_if_tx_bytes[k]/updates, total_if_rx_frames[k]/updates, total_if_tx_frames[k]/updates, total_if_rx_drops[k]/updates, total_if_sched_drop[k]/updates);
         total_rx_bytes += total_if_rx_bytes[k];
         total_tx_bytes += total_if_tx_bytes[k];
         total_rx_frames += total_if_rx_frames[k];
         total_tx_frames += total_if_tx_frames[k];
-        total_rx_drops += total_if_rx_drops[k]+total_if_sched_stat[k];
+        total_rx_drops += total_if_rx_drops[k]+total_if_sched_drop[k];
     }
 
     printf("total    %12ld  %12ld  %12ld  %12ld %12ld\n", total_rx_bytes/updates, total_tx_bytes/updates, total_rx_frames/updates, total_tx_frames/updates, total_rx_drops/updates);
