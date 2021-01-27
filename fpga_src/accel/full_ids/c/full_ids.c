@@ -242,9 +242,7 @@ static inline void handle_slot_rx_packet(struct slot_context *slot)
 {
 	char ch;
 	unsigned int payload_offset = ETH_HEADER_SIZE + DATA_OFFSET;
-	unsigned int packet_length = slot->desc.len - DATA_OFFSET;
-	// unsigned int payload_offset = ETH_HEADER_SIZE + 0;
-	// unsigned int packet_length = slot->desc.len - 0;
+	unsigned int packet_length = slot->desc.len;
 	unsigned int payload_length;
 
 	unsigned int match;
@@ -723,20 +721,29 @@ static inline void handle_accel_done(struct slot_context *slot, struct accel_con
 			goto drop;
 	}
 
-	goto send;
-
-drop:
-	// drop packet
-	slot->desc.len = 0;
-
 send:
 	// reset accelerator
 	accel->sme_accel->ctrl = 1<<4;
 
 	// send packet to host
 	slot->desc.port = 2;
-	if (DATA_OFFSET)
+
+	if (DATA_OFFSET) {
+		// apply offset
 		slot->desc.data = slot->packet + DATA_OFFSET;
+		slot->desc.len = slot->desc.len - DATA_OFFSET;
+	}
+
+	pkt_send(&slot->desc);
+	return;
+
+drop:
+	// reset accelerator
+	accel->sme_accel->ctrl = 1<<4;
+
+	// drop packet
+	slot->desc.len = 0;
+
 	pkt_send(&slot->desc);
 }
 
