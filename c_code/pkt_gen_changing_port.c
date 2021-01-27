@@ -12,12 +12,20 @@
   (((x & 0xff000000) >> 24) | ((x & 0x00ff0000) >>  8) | \
    ((x & 0x0000ff00) <<  8) | ((x & 0x000000ff) << 24))
 
+#define HASH_SCHED
+
 // packet start offset
 // DWORD align Ethernet payload
 // provide space for header modifications
 #define PKT_OFFSET 10
 // #define PKTS_START (6*128*1024)
 #define PKTS_START 0
+
+#ifdef HASH_SCHED
+  #define DATA_OFFSET 4
+#else
+  #define DATA_OFFSET 0
+#endif
 
 char *pkt_data[16];
 // unsigned int pkt_len[16] = {128, 1024, 128, 1500, 256, 1024, 512, 1500, 1024, 1500, 256, 2048, 512, 4096, 1500, 9000};
@@ -262,6 +270,8 @@ int main(void){
           // packet from network, send to host
           recv_pkt.port = 2;
         }
+        if (DATA_OFFSET)
+          recv_pkt.data += DATA_OFFSET;
         pkt_send(&recv_pkt);
       }
     } 
