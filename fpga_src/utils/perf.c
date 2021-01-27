@@ -127,7 +127,6 @@ int main(int argc, char *argv[])
 
     uint64_t core_slots[MAX_CORE_COUNT];
     bool extra_slot_count = false;
-    bool scheduler_drop = false;
 
     uint32_t temp, temp2;
     uint32_t updates = 0;
@@ -376,8 +375,7 @@ int main(int argc, char *argv[])
                 temp = read_interface_drops(dev, k);
                 // When scheduler doesn't drop reports
                 if (temp==0xFEFEFEFE) temp=0;
-                if (scheduler_drop)
-                  if_sched_drop[k] += temp - if_sched_drop_raw[k];
+                if_sched_drop[k] += temp - if_sched_drop_raw[k];
                 if_sched_drop_raw[k] = temp;
 
             }
