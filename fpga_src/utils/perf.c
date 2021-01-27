@@ -396,10 +396,6 @@ int main(int argc, char *argv[])
             }
         }
 
-        for (int i=0; i< MAX_IF_COUNT; i++)
-            printf("interface %d has reserved a desc from core %d in the schecduler\n",
-                i, read_interface_desc (dev, i) >> 5);
-
         if (!keep_running)
             break;
 
