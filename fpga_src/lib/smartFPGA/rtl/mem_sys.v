@@ -67,6 +67,9 @@ module mem_sys # (
   input  wire [ACC_MEM_BLOCKS*DATA_WIDTH-1:0]     acc_wr_data_b2,
   output wire [ACC_MEM_BLOCKS*DATA_WIDTH-1:0]     acc_rd_data_b2,
 
+  output reg  [DMEM_ADDR_WIDTH-1:0]               bc_msg_addr,
+  output reg                                      bc_msg_valid,
+
   output wire [7:0]                               mem_fifo_fulls
 );
 
@@ -138,6 +141,14 @@ module mem_sys # (
     bc_msg_in_addr_rr  <= {{(DMEM_ADDR_WIDTH-MSG_ADDR_WIDTH-2){1'b0}},
                           bc_msg_in_addr_r,2'b00} + BC_START_ADDR;
     bc_msg_in_valid_rr <= bc_msg_in_valid_r;
+
+    bc_msg_addr        <= bc_msg_in_addr_rr;
+    bc_msg_valid       <= bc_msg_in_valid_rr;
+
+    if (rst) begin
+      bc_msg_in_valid_rr <= 1'b0;
+      bc_msg_valid       <= 1'b0;
+    end
   end
 
   if (STRB_WIDTH==4) begin: msg_no_width_conv
@@ -411,13 +422,13 @@ module mem_sys # (
     dma_pmem_wr_b1_gnt = 1'b0;
     dma_pmem_rd_b1_gnt = 1'b0;
 
-    if (core_dmem_addr[LINE_ADDR_BITS] || !core_pmem_en) 
+    if (core_dmem_addr[LINE_ADDR_BITS] || !core_pmem_en)
       if (!dma_pmem_cmd_wr_addr[LINE_ADDR_BITS] && dma_pmem_wr_en_r)
         dma_pmem_wr_b1_gnt = 1'b1;
-      else if (!dma_pmem_cmd_rd_addr[LINE_ADDR_BITS] && dma_pmem_rd_en_r) 
+      else if (!dma_pmem_cmd_rd_addr[LINE_ADDR_BITS] && dma_pmem_rd_en_r)
         dma_pmem_rd_b1_gnt = 1'b1;
   end
- 
+
   // Register level for inputs to PMEM, 1st cycle latency of PMEM
   always @ (posedge clk) begin
     pmem_en_b1      <= 1'b0;
@@ -439,7 +450,7 @@ module mem_sys # (
       pmem_en_b1      <= 1'b1;
       pmem_addr_b1    <= dma_pmem_cmd_rd_addr;
     end
-    
+
     if (rst)
       pmem_en_b1 <= 1'b0;
   end
@@ -448,7 +459,7 @@ module mem_sys # (
     dma_pmem_wr_b2_gnt = 1'b0;
     dma_pmem_rd_b2_gnt = 1'b0;
 
-    if (!core_dmem_addr[LINE_ADDR_BITS] || !core_pmem_en) 
+    if (!core_dmem_addr[LINE_ADDR_BITS] || !core_pmem_en)
       if (dma_pmem_cmd_wr_addr[LINE_ADDR_BITS] && dma_pmem_wr_en_r)
         dma_pmem_wr_b2_gnt = 1'b1;
       else if (dma_pmem_cmd_rd_addr[LINE_ADDR_BITS] && dma_pmem_rd_en_r)
@@ -475,7 +486,7 @@ module mem_sys # (
       pmem_en_b2      <= 1'b1;
       pmem_addr_b2    <= dma_pmem_cmd_rd_addr;
     end
-    
+
     if (rst)
       pmem_en_b2 <= 1'b0;
   end

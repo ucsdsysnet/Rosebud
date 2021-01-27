@@ -76,6 +76,7 @@ module riscv_block # (
 
 // Internal paramaters
 parameter PMEM_ADDR_WIDTH = $clog2(PMEM_SIZE);
+parameter DMEM_ADDR_WIDTH = $clog2(DMEM_SIZE);
 parameter ACC_ADDR_WIDTH  = $clog2(SLOW_M_B_LINES);
 parameter PMEM_SEL_BITS   = PMEM_ADDR_WIDTH-$clog2(STRB_WIDTH)
                             -1-$clog2(SLOW_M_B_LINES);
@@ -122,8 +123,8 @@ assign wrapper_status_ready = 1'b1;
 
 assign core_status_valid = 1'b1;
 assign core_status_addr = slot_wr_valid   ? 2'd1 :
-                          debug_out_l_valid ? 2'd2 : 
-                          debug_out_h_valid ? 2'd3 : 
+                          debug_out_l_valid ? 2'd2 :
+                          debug_out_h_valid ? 2'd3 :
                           2'd0;
 assign core_status_data = slot_wr_valid   ? slot_wr_data :
                           debug_out_l_valid ? debug_out[31:0] :
@@ -153,6 +154,9 @@ wire        core_imem_ren;
 wire [24:0] core_imem_addr;
 wire [31:0] core_imem_rd_data;
 wire        core_imem_rd_valid;
+
+wire [DMEM_ADDR_WIDTH-1:0] bc_msg_addr;
+wire                       bc_msg_valid;
 
 wire ext_io_err, ext_io_err_ack;
 
@@ -202,6 +206,8 @@ riscvcore #(
   .max_slot_count(max_slot_count),
   .debug_in(debug_in),
   .core_msg_ready(bc_msg_out_ready),
+  .bc_msg_in_addr(bc_msg_addr),
+  .bc_msg_in_valid(bc_msg_valid),
 
   .slot_wr_data(slot_wr_data),
   .slot_wr_valid(slot_wr_valid),
@@ -345,6 +351,9 @@ mem_sys # (
   .acc_addr_b2(acc_addr_b2),
   .acc_wr_data_b2(acc_wr_data_b2),
   .acc_rd_data_b2(acc_rd_data_b2),
+
+  .bc_msg_addr(bc_msg_addr),
+  .bc_msg_valid(bc_msg_valid),
 
   .mem_fifo_fulls(mem_fifo_fulls)
 );
