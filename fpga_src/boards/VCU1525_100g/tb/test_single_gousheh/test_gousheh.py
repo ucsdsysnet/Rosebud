@@ -32,6 +32,7 @@ either expressed or implied, of The Regents of the University of California.
 
 """
 
+import ipaddress
 import logging
 import os
 
@@ -68,6 +69,7 @@ WAIT_TIME = 20000
 MAX_PKT_SPACING = 3
 CHECK_PKT = True
 PRINT_RX_PKT = False
+FLOW_HASH = False
 
 PACKETS = []
 
@@ -105,7 +107,6 @@ PCAP         = None
 
 
 PACKETS_0 = []
-PACKETS_1 = []
 
 if PCAP:
 
@@ -122,6 +123,45 @@ else:
         PACKETS_0.append(frame)
 
         pkt_ind = (pkt_ind+1) % len(PACKETS)
+
+
+def hash_toep(data, key):
+    k = len(key)*8-32
+    key = int.from_bytes(key, 'big')
+
+    h = 0
+
+    for b in data:
+        for i in range(8):
+            if b & 0x80 >> i:
+                h ^= (key >> k) & 0xffffffff
+            k -= 1
+
+    return h
+
+
+def tuple_pack(src_ip, dest_ip, src_port=None, dest_port=None):
+    src_ip = ipaddress.ip_address(src_ip)
+    dest_ip = ipaddress.ip_address(dest_ip)
+    data = b''
+    if src_ip.version == 6 or dest_ip.version == 6:
+        data += src_ip.packed
+        data += dest_ip.packed
+    else:
+        data += src_ip.packed
+        data += dest_ip.packed
+    if src_port is not None and dest_port is not None:
+        data += src_port.to_bytes(2, 'big') + dest_port.to_bytes(2, 'big')
+    return data
+
+
+hash_key = [
+    0x6d, 0x5a, 0x56, 0xda, 0x25, 0x5b, 0x0e, 0xc2,
+    0x41, 0x67, 0x25, 0x3d, 0x43, 0xa3, 0x8f, 0xb0,
+    0xd0, 0xca, 0x2b, 0xcb, 0xae, 0x7b, 0x30, 0xb4,
+    0x77, 0xcb, 0x2d, 0xa3, 0x80, 0x30, 0xf2, 0x0c,
+    0x6a, 0x42, 0xb7, 0x3b, 0xbe, 0xac, 0x01, 0xfa
+]
 
 
 class TB(object):
@@ -220,6 +260,19 @@ class TB(object):
         self.log.info("Done loading firmware")
 
     def send_pkt(self, data, port=0):
+        if FLOW_HASH:
+            # prepend flow hash
+            pkt = Ether(data)
+            if pkt.haslayer(TCP):
+                h = hash_toep(tuple_pack(pkt[IP].src, pkt[IP].dst, pkt[TCP].sport, pkt[TCP].dport), hash_key)
+            elif pkt.haslayer(UDP):
+                h = hash_toep(tuple_pack(pkt[IP].src, pkt[IP].dst, pkt[UDP].sport, pkt[UDP].dport), hash_key)
+            elif pkt.haslayer(IP):
+                h = hash_toep(tuple_pack(pkt[IP].src, pkt[IP].dst), hash_key)
+            else:
+                h = 0
+            data = h.to_bytes(4, 'little')+data
+
         self.send_q.append(AxiStreamFrame(tdata=data, tuser=port, tkeep=None))
 
     async def send_manager(self):
