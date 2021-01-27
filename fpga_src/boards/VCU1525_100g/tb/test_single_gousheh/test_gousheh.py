@@ -197,16 +197,20 @@ class TB(object):
         self.log.info("Instruction segment size: %d", len(ins_seg))
         if len(ins_seg) > 0:
             self.log.debug("%s", hexdump_str(ins_seg))
+            self.log.info("Write instruction memory")
             addr_hdr = (0x0200000000000000).to_bytes(8, 'little')
             ins_frame = AxiStreamFrame(tdata=addr_hdr+ins_seg, tuser=self.dram_port, tdest=0)
             await self.data_ch_source.send(ins_frame)
+            await self.data_ch_source.wait()
 
         self.log.info("Data segment size: %d", len(data_seg))
         if len(data_seg) > 0:
             self.log.debug("%s", hexdump_str(data_seg))
+            self.log.info("Write data memory")
             addr_hdr = (0x0000000000000000).to_bytes(8, 'little')
             data_frame = AxiStreamFrame(tdata=addr_hdr+data_seg, tuser=self.dram_port, tdest=0)
             await self.data_ch_source.send(data_frame)
+            await self.data_ch_source.wait()
 
         # TODO: add pmem write
 
