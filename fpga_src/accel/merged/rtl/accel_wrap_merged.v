@@ -56,6 +56,9 @@ wire [ACCEL_COUNT-1:0]    accel_busy;
 reg [ACCEL_COUNT-1:0]    status_match;
 reg [ACCEL_COUNT-1:0]    status_done;
 
+reg  [ACCEL_COUNT-1:0]    done_err;
+wire [ACCEL_COUNT-1:0]    desc_error;
+
 reg [31:0]  hash_data_reg = 0;
 reg [1:0]   hash_data_len_reg = 0;
 reg         hash_data_valid_reg = 0;
@@ -69,6 +72,13 @@ reg read_data_valid_reg;
 
 assign io_rd_data = read_data_reg;
 assign io_rd_valid = read_data_valid_reg;
+
+always @(posedge clk) begin
+  done_err <= done_err | (status_done & accel_busy);
+  if (rst) begin
+    done_err <= {ACCEL_COUNT{1'b0}};
+  end
+end
 
 always @(posedge clk) begin
   cmd_valid_reg <= 'b0;
@@ -168,7 +178,8 @@ end
 
 // DMA engine for single block of the packet memory
 localparam BLOCK_ADDR_WIDTH =PMEM_ADDR_WIDTH-PMEM_SEL_BITS;
-localparam ATTACHED = ACC_MEM_BLOCKS-1;
+localparam ATTACHED_CNT = 2;
+localparam ATTACHED = ACC_MEM_BLOCKS-ATTACHED_CNT;
 localparam USER_WIDTH = $clog2(DATA_WIDTH/8);
 
 wire [ACCEL_COUNT*DATA_WIDTH-1:0] accel_tdata;
@@ -185,7 +196,7 @@ wire [ACCEL_COUNT-1:0]            accel_tready_r;
 accel_rd_dma_sp # (
   .DATA_WIDTH(DATA_WIDTH),
   .KEEP_WIDTH(DATA_WIDTH/8),
-  .ADDR_WIDTH(BLOCK_ADDR_WIDTH),
+  .ADDR_WIDTH(BLOCK_ADDR_WIDTH+1),
   .ACCEL_COUNT(ACCEL_COUNT),
   .DEST_WIDTH(DEST_WIDTH),
   .LEN_WIDTH(LEN_WIDTH),
@@ -195,20 +206,21 @@ accel_rd_dma_sp # (
   .rst(rst),
 
   .desc_accel_id(cmd_accel_reg),
-  .desc_addr(cmd_addr_reg[BLOCK_ADDR_WIDTH-1:0]),
+  .desc_addr(cmd_addr_reg[BLOCK_ADDR_WIDTH+1-1:0]),
   .desc_len(cmd_len_reg),
   .desc_valid(cmd_valid_reg),
+  .desc_error(desc_error),
 
   .accel_busy(accel_busy),
   .accel_stop(cmd_stop_reg),
 
-  .mem_b1_rd_addr(acc_addr_b1[ATTACHED*ACC_ADDR_WIDTH +: ACC_ADDR_WIDTH]),
-  .mem_b1_rd_en(acc_en_b1[ATTACHED]),
-  .mem_b1_rd_data(acc_rd_data_b1[ATTACHED*DATA_WIDTH +: DATA_WIDTH]),
+  .mem_b1_rd_addr(acc_addr_b1[ATTACHED*ACC_ADDR_WIDTH +: ATTACHED_CNT*ACC_ADDR_WIDTH]),
+  .mem_b1_rd_en(acc_en_b1[ATTACHED+:ATTACHED_CNT]),
+  .mem_b1_rd_data(acc_rd_data_b1[ATTACHED*DATA_WIDTH +: ATTACHED_CNT*DATA_WIDTH]),
 
-  .mem_b2_rd_addr(acc_addr_b2[ATTACHED*ACC_ADDR_WIDTH +: ACC_ADDR_WIDTH]),
-  .mem_b2_rd_en(acc_en_b2[ATTACHED]),
-  .mem_b2_rd_data(acc_rd_data_b2[ATTACHED*DATA_WIDTH +: DATA_WIDTH]),
+  .mem_b2_rd_addr(acc_addr_b2[ATTACHED*ACC_ADDR_WIDTH +: ATTACHED_CNT*ACC_ADDR_WIDTH]),
+  .mem_b2_rd_en(acc_en_b2[ATTACHED+:ATTACHED_CNT]),
+  .mem_b2_rd_data(acc_rd_data_b2[ATTACHED*DATA_WIDTH +: ATTACHED_CNT*DATA_WIDTH]),
 
   .m_axis_tdata(accel_tdata),
   .m_axis_tuser(accel_tuser),
@@ -217,14 +229,14 @@ accel_rd_dma_sp # (
   .m_axis_tready(accel_tready)
 );
 
-assign acc_wen_b1[ATTACHED*STRB_WIDTH +: STRB_WIDTH] = {STRB_WIDTH{1'b0}};
-assign acc_wen_b2[ATTACHED*STRB_WIDTH +: STRB_WIDTH] = {STRB_WIDTH{1'b0}};
+assign acc_wen_b1[ATTACHED*STRB_WIDTH +: ATTACHED_CNT*STRB_WIDTH] = {ATTACHED_CNT*STRB_WIDTH{1'b0}};
+assign acc_wen_b2[ATTACHED*STRB_WIDTH +: ATTACHED_CNT*STRB_WIDTH] = {ATTACHED_CNT*STRB_WIDTH{1'b0}};
 assign accel_tready_r = {ACCEL_COUNT{1'b1}};
 
 genvar i;
 
 generate
-  for (i = 0; i < (ACC_MEM_BLOCKS-1); i = i + 1) begin: other_mem_ens
+  for (i = 0; i < (ACC_MEM_BLOCKS-ATTACHED_CNT); i = i + 1) begin: other_mem_ens
     assign acc_en_b1[i]  = 1'b0;
     assign acc_en_b2[i]  = 1'b0;
     assign acc_wen_b1[i*STRB_WIDTH +: STRB_WIDTH] = {STRB_WIDTH{1'b0}};
