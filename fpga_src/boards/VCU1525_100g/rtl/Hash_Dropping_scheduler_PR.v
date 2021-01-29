@@ -47,13 +47,7 @@ module scheduler_PR (
   input  wire [31:0]      host_cmd,
   input  wire [31:0]      host_cmd_wr_data,
   output reg  [31:0]      host_cmd_rd_data,
-  input  wire             host_cmd_valid,
-
-  // ILA chain if used
-  input  wire             trig_in,
-  output wire             trig_in_ack,
-  output wire             trig_out,
-  input  wire             trig_out_ack
+  input  wire             host_cmd_valid
 );
 
   parameter INTERFACE_COUNT = 3;
@@ -64,7 +58,6 @@ module scheduler_PR (
   parameter CTRL_WIDTH      = 32+4;
   parameter LOOPBACK_PORT   = 3;
   parameter LOOPBACK_COUNT  = 1;
-  parameter ENABLE_ILA      = 0;
   parameter DATA_REG_TYPE   = 2;
   parameter CTRL_REG_TYPE   = 2;
   parameter DATA_FIFO_DEPTH = 4096;
@@ -908,65 +901,5 @@ module scheduler_PR (
       3'b111:  host_cmd_rd_data_n <= drop_count[stat_read_interface_r*32 +: 32];
       default: host_cmd_rd_data_n <= 32'hFEFEFEFE;
     endcase
-
-if (ENABLE_ILA) begin
-  wire trig_out_1, trig_out_2;
-  wire ack_1, ack_2;
-  reg [CORE_COUNT*SLOT_WIDTH-1:0] rx_desc_count_r;
-  reg [INTERFACE_COUNT-1:0] desc_req_r;
-  reg rx_desc_pop_r;
-  reg [ID_TAG_WIDTH-1:0] rx_desc_data_r;
-
-  always @ (posedge clk) begin
-    rx_desc_count_r     <= rx_desc_count;
-    desc_req_r          <= desc_req;
-    rx_desc_pop_r       <= rx_desc_pop;
-    rx_desc_data_r      <= rx_desc_data;
-  end
-
-  ila_2x64 debugger1 (
-    .clk    (clk),
-
-    .trig_out(trig_out),
-    .trig_out_ack(trig_out_ack),
-    .trig_in (trig_in),
-    .trig_in_ack(trig_in_ack),
-
-    .probe0 ({
-       data_m_axis_tdest_n[17:0],
-       ctrl_m_axis_tdest_n,
-       ctrl_s_axis_tuser_r,
-       ctrl_m_axis_tvalid_n,
-       ctrl_m_axis_tready_n,
-       ctrl_s_axis_tvalid_r,
-       ctrl_s_axis_tready_r,
-       rst_r,
-       slot_insert_err,
-       msg_type,
-       rx_axis_tvalid_r[1:0],
-       rx_axis_tlast_r[1:0],
-       rx_axis_tready_r[1:0],
-       1'b0,
-       rx_desc_pop_r,
-       desc_req_r,
-       rx_desc_data_r,
-       6'd0,
-       selected_port_enc_r
-     }),
-
-    .probe1 ({
-       ctrl_m_axis_tdata_n[31:0],
-       ctrl_s_axis_tdata_r[31:0]})
-
-    // .probe2 (rx_desc_count_r),
-
-    // .probe3 ({rx_desc_slot_v, rx_desc_slot_pop,
-    //           enabled_cores, income_cores})
-  );
-
-end else begin
-  assign trig_in_ack = 1'b0;
-  assign trig_out    = 1'b0;
-end
 
 endmodule

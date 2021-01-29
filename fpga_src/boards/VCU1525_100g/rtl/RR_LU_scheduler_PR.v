@@ -1,4 +1,4 @@
-module scheduler_PR2 (
+module scheduler_PR (
   input                   clk,
   input                   rst,
 
@@ -47,13 +47,7 @@ module scheduler_PR2 (
   input  wire [31:0]      host_cmd,
   input  wire [31:0]      host_cmd_wr_data,
   output reg  [31:0]      host_cmd_rd_data,
-  input  wire             host_cmd_valid,
-
-  // ILA chain if used
-  input  wire             trig_in,
-  output wire             trig_in_ack,
-  output wire             trig_out,
-  input  wire             trig_out_ack
+  input  wire             host_cmd_valid
 );
 
   parameter INTERFACE_COUNT = 3;
@@ -64,7 +58,6 @@ module scheduler_PR2 (
   parameter CTRL_WIDTH      = 32+4;
   parameter LOOPBACK_PORT   = 3;
   parameter LOOPBACK_COUNT  = 1;
-  parameter ENABLE_ILA      = 0;
   parameter DATA_REG_TYPE   = 2;
   parameter CTRL_REG_TYPE   = 2;
   parameter CLUSTER_COUNT   = 4;
@@ -793,8 +786,12 @@ module scheduler_PR2 (
       3'b000:  host_cmd_rd_data_n <= income_cores;
       3'b001:  host_cmd_rd_data_n <= enabled_cores;
       3'b010:  host_cmd_rd_data_n <= rx_desc_count[stat_read_core_r * SLOT_WIDTH +: SLOT_WIDTH];
-      3'b100:  host_cmd_rd_data_n <= {14'd0, port_state[stat_read_interface_r], {(16-ID_TAG_WIDTH){1'b0}},
-                                     dest_r[stat_read_interface_r * ID_TAG_WIDTH +: ID_TAG_WIDTH]};
+      3'b100:  host_cmd_rd_data_n <= {7'd0, rx_almost_full_r[stat_read_interface_r],
+                                      6'd0, port_state[stat_read_interface_r], 
+                                     {(8-CORE_ID_WIDTH){1'b0}}, 
+                                     dest_r[(stat_read_interface_r * ID_TAG_WIDTH) + TAG_WIDTH +: CORE_ID_WIDTH]
+                                     {(8-TAG_WIDTH){1'b0}}, 
+                                     dest_r[stat_read_interface_r * ID_TAG_WIDTH +: TAG_WIDTH]};
       3'b101:  host_cmd_rd_data_n <= {{(32-INTERFACE_COUNT){1'b0}}, enabled_ints};
       default: host_cmd_rd_data_n <= 32'hFEFEFEFE;
     endcase
@@ -811,96 +808,5 @@ module scheduler_PR2 (
   assign data_m_axis_tlast_n  = rx_axis_tlast_r;
   assign data_m_axis_tdest_n  = dest;
   assign rx_axis_tready_r     = data_m_axis_tready_n & port_not_stall;
-
-if (ENABLE_ILA) begin
-  wire trig_out_1, trig_out_2;
-  wire ack_1, ack_2;
-  reg [CORE_COUNT*SLOT_WIDTH-1:0] rx_desc_count_r;
-  reg [INTERFACE_COUNT-1:0] desc_req_r;
-  reg max_valid_r, rx_desc_pop_r;
-  reg [ID_TAG_WIDTH-1:0] rx_desc_data_r;
-
-  always @ (posedge clk) begin
-    rx_desc_count_r <= rx_desc_count;
-    desc_req_r      <= desc_req;
-    max_valid_r     <= max_valid;
-    rx_desc_pop_r   <= rx_desc_pop;
-    rx_desc_data_r  <= rx_desc_data;
-  end
-
-  reg [15:0] rx_count_0, rx_count_1, tx_count_0, tx_count_1;
-  always @ (posedge clk)
-    if (rst_r) begin
-        rx_count_0 <= 16'd0;
-        rx_count_1 <= 16'd0;
-        tx_count_0 <= 16'd0;
-        tx_count_1 <= 16'd0;
-    end else begin
-      if (rx_axis_tlast_r[0] && rx_axis_tvalid_r[0])
-        rx_count_0 <= 16'd0;
-      else if (rx_axis_tvalid_r[0])
-        rx_count_0 <= rx_count_0 + 16'd1;
-
-      if (rx_axis_tlast_r[1] && rx_axis_tvalid_r[1])
-        rx_count_1 <= 16'd0;
-      else if (rx_axis_tvalid_r[1])
-        rx_count_1 <= rx_count_1 + 16'd1;
-
-      if (tx_axis_tlast[0] && tx_axis_tvalid[0])
-        tx_count_0 <= 16'd0;
-      else if (tx_axis_tvalid[0])
-        tx_count_0 <= tx_count_0 + 16'd1;
-
-      if (tx_axis_tlast[1] && tx_axis_tvalid[1])
-        tx_count_1 <= 16'd0;
-      else if (tx_axis_tvalid[1])
-        tx_count_1 <= tx_count_1 + 16'd1;
-    end
-
-  ila_4x64 debugger1 (
-    .clk    (clk),
-
-    .trig_out(trig_out),
-    .trig_out_ack(trig_out_ack),
-    .trig_in (trig_in),
-    .trig_in_ack(trig_in_ack),
-
-    .probe0 ({
-       sending_last_word,
-       data_m_axis_tdest_n,
-       rst_r,
-       data_m_axis_tuser_n,
-       ctrl_m_axis_tdest_n,
-       ctrl_s_axis_tuser_r,
-       ctrl_m_axis_tvalid_n,
-       ctrl_m_axis_tready_n,
-       ctrl_s_axis_tvalid_r,
-       ctrl_s_axis_tready_r,
-       slot_insert_err,
-       msg_type,
-       rx_axis_tvalid_r,
-       max_valid_r,
-       rx_desc_pop_r,
-       desc_req_r,
-       // rx_axis_tready_r,
-       // rx_axis_tkeep_r,
-       rx_axis_tlast_r,
-       rx_desc_data_r
-     }),
-
-    .probe1 ({
-       ctrl_m_axis_tdata_n[31:0],
-       ctrl_s_axis_tdata_r[31:0]}),
-
-    .probe2 (rx_desc_count_r),
-
-    .probe3 ({rx_desc_slot_v, rx_desc_slot_pop,
-              enabled_cores, income_cores})
-  );
-
-end else begin
-  assign trig_in_ack = 1'b0;
-  assign trig_out    = 1'b0;
-end
 
 endmodule
