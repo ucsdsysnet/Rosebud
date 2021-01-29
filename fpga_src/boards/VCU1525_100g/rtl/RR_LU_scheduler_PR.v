@@ -789,7 +789,7 @@ module scheduler_PR (
       3'b100:  host_cmd_rd_data_n <= {7'd0, rx_almost_full_r[stat_read_interface_r],
                                       6'd0, port_state[stat_read_interface_r], 
                                      {(8-CORE_ID_WIDTH){1'b0}}, 
-                                     dest_r[(stat_read_interface_r * ID_TAG_WIDTH) + TAG_WIDTH +: CORE_ID_WIDTH]
+                                     dest_r[(stat_read_interface_r * ID_TAG_WIDTH) + TAG_WIDTH +: CORE_ID_WIDTH],
                                      {(8-TAG_WIDTH){1'b0}}, 
                                      dest_r[stat_read_interface_r * ID_TAG_WIDTH +: TAG_WIDTH]};
       3'b101:  host_cmd_rd_data_n <= {{(32-INTERFACE_COUNT){1'b0}}, enabled_ints};

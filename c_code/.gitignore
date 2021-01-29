@@ -3,3 +3,7 @@
 *.o
 *.asm
 *.elf
+.dep
+*.lss
+*.lst
+*.sym

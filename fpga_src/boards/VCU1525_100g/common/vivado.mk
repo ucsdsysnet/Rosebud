@@ -82,9 +82,8 @@ distclean: clean
 	touch defines.v
 	for x in $(DEFS); do echo '`define' $$x >> defines.v; done
 	echo "create_project -force -part $(FPGA_PART) $*" > create_project.tcl
-	echo "add_files -fileset sources_1 defines.v" >> create_project.tcl
-	for x in $(SYN_FILES_REL); do echo "add_files -fileset sources_1 $$x" >> create_project.tcl; done
-	for x in $(XDC_FILES_REL); do echo "add_files -fileset constrs_1 $$x" >> create_project.tcl; done
+	echo "add_files -fileset sources_1 {defines.v $(SYN_FILES_REL)}" >> create_project.tcl
+	echo "add_files -fileset constrs_1 {$(XDC_FILES_REL)}" >> create_project.tcl
 	for x in $(XCI_FILES_REL); do echo "import_ip $$x" >> create_project.tcl; done
 	for x in $(IP_TCL_FILES_REL); do echo "source $$x" >> create_project.tcl; done
 	echo "exit" >> create_project.tcl

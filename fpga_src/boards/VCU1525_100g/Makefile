@@ -26,9 +26,3 @@ program:
 
 parse_log:
 	grep "WARNING" fpga/run.log | grep -v "replication" | grep -v "parameter declaration" | grep -v "Unused" | grep -v "given" > parsed_log.txt 
-
-add_accel:
-	cd fpga && vivado -nojournal -nolog -mode batch -source run_add_accel.tcl 2>&1 | tee add_accel.log
-
-swap_sched:
-	cd fpga && vivado -nojournal -nolog -mode batch -source run_swap_sched.tcl 2>&1 | tee swap_sched.log
