@@ -183,9 +183,9 @@ async def run_test_nic(dut):
         core_accel_mon = []
         for core in dut.UUT.riscv_cores:
             lst = []
-            for inst in core.pr_wrapper.riscv_block_inst.accel_wrap_inst.width_converters_1B:
+            for inst in core.pr_wrapper.Gousheh_inst.accel_wrap_inst.width_converters_1B:
                 lst.append(AxiStreamMonitor(inst.accel_width_conv_inst, 'm_axis', dut.pcie_clk, dut.pcie_rst, byte_size=8))
-            for inst in core.pr_wrapper.riscv_block_inst.accel_wrap_inst.width_converters_8B:
+            for inst in core.pr_wrapper.Gousheh_inst.accel_wrap_inst.width_converters_8B:
                 lst.append(AxiStreamMonitor(inst.accel_width_conv_inst, 'm_axis', dut.pcie_clk, dut.pcie_rst, byte_size=8))
             core_accel_mon.append(lst)
 
@@ -345,7 +345,7 @@ def run_test(parameters=None, sim_build="sim_build", waves=None, force_compile=F
     verilog_sources = [
         os.path.join(tests_dir, "..", "common", f"{toplevel}.v"),
         os.path.join(rtl_dir, f"{dut}.v"),
-        os.path.join(rtl_dir, "riscv_block_PR.v"),
+        os.path.join(rtl_dir, "Gousheh_PR.v"),
         os.path.join(rtl_dir, "RR_LU_scheduler_PR.v"),
         os.path.join(rtl_dir, "pcie_config.v"),
 
@@ -356,7 +356,7 @@ def run_test(parameters=None, sim_build="sim_build", waves=None, force_compile=F
         os.path.join(smartfpga_rtl_dir, "axis_dma.v"),
         os.path.join(smartfpga_rtl_dir, "VexRiscv.v"),
         os.path.join(smartfpga_rtl_dir, "riscvcore.v"),
-        os.path.join(smartfpga_rtl_dir, "riscv_block.v"),
+        os.path.join(smartfpga_rtl_dir, "Gousheh.v"),
 
         os.path.join(accel_rtl_dir, "accel_wrap_full_ids.v"),
         os.path.join(accel_rtl_dir, "sme", "udp_sme.v"),
@@ -365,7 +365,7 @@ def run_test(parameters=None, sim_build="sim_build", waves=None, force_compile=F
         os.path.join(accel_rtl_dir, "fixed_sme", "fixed_loc_sme_8.v"),
         os.path.join(accel_rtl_dir, "ip_match", "ip_match.v"),
 
-        os.path.join(smartfpga_rtl_dir, "riscv_axis_wrapper.v"),
+        os.path.join(smartfpga_rtl_dir, "Gousheh_wrapper.v"),
         os.path.join(smartfpga_rtl_dir, "mem_sys.v"),
         os.path.join(smartfpga_rtl_dir, "simple_arbiter.v"),
         os.path.join(smartfpga_rtl_dir, "simple_sync_sig.v"),

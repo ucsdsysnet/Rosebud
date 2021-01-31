@@ -91,7 +91,7 @@ ALL_ASFLAGS = -march=$(ARCH) -mabi=$(ABI) -I. -x assembler-with-cpp $(ASFLAGS) $
 
 
 # default make target
-all: build size
+all: clean build size
 
 build: elf bin lss sym
 

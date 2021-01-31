@@ -379,15 +379,15 @@ def run_test(parameters=None, sim_build="sim_build", waves=None, force_compile=F
 
     verilog_sources = [
         os.path.join(tests_dir, "test_gousheh.v"),
-        os.path.join(rtl_dir, "riscv_block_PR_w_accel.v"),
+        os.path.join(rtl_dir, "Gousheh_PR_w_accel.v"),
 
         os.path.join(smartfpga_rtl_dir, "simple_fifo.v"),
         os.path.join(smartfpga_rtl_dir, "core_mems.v"),
         os.path.join(smartfpga_rtl_dir, "axis_dma.v"),
         os.path.join(smartfpga_rtl_dir, "VexRiscv.v"),
         os.path.join(smartfpga_rtl_dir, "riscvcore.v"),
-        os.path.join(smartfpga_rtl_dir, "riscv_block.v"),
-        os.path.join(smartfpga_rtl_dir, "riscv_axis_wrapper.v"),
+        os.path.join(smartfpga_rtl_dir, "Gousheh.v"),
+        os.path.join(smartfpga_rtl_dir, "Gousheh_wrapper.v"),
         os.path.join(smartfpga_rtl_dir, "mem_sys.v"),
         os.path.join(smartfpga_rtl_dir, "simple_arbiter.v"),
         os.path.join(smartfpga_rtl_dir, "simple_sync_sig.v"),

@@ -8,7 +8,6 @@ module riscvcore #(
 )(
     input                        clk,
     input                        rst,
-    input                        init_rst,
 
     // Data memory interface
     output                       dmem_en,
@@ -44,6 +43,15 @@ module riscvcore #(
     input  [7:0]                 core_id,
     input  [7:0]                 max_slot_count,
     input  [63:0]                debug_in,
+    input  [63:0]                timer,
+
+    // Wrapper FIFO occupancy
+    input  [7:0]                 send_data_items,
+    input  [7:0]                 dram_send_items,
+    input  [7:0]                 dram_req_items,
+    input  [7:0]                 core_msg_items,
+
+    // Broadcast message
     input                        core_msg_ready,
     input  [DMEM_ADDR_WIDTH-1:0] bc_msg_in_addr,
     input                        bc_msg_in_valid,
@@ -67,6 +75,12 @@ module riscvcore #(
     output                       evict_int_ack,
     input                        poke_int,
     output                       poke_int_ack,
+    input                        dupl_slot_int,
+    output                       dupl_slot_int_ack,
+    input                        inv_slot_int,
+    output                       inv_slot_int_ack,
+    input                        inv_desc_int,
+    output                       inv_desc_int_ack,
     input  [4:0]                 recv_dram_tag,
     input                        recv_dram_tag_valid
 );
@@ -78,15 +92,12 @@ wire [4:0]  dmem_wr_strb;
 wire [1:0]  dmem_byte_count;
 wire        dmem_v;
 
-reg [7:0]  int_mask;
+reg [15:0] int_mask;
 reg        imem_access_err, dmem_access_err;
 reg        io_access_err, pmem_access_err;
-reg        bc_int_err;
 reg        timer_interrupt;
 reg        io_ren_r;
-wire       dram_recv_any;
-wire       bc_interrupt;
-wire       io_we_ready;
+reg core_interrupt;
 
 VexRiscv core (
       .clk(clk),
@@ -96,7 +107,7 @@ VexRiscv core (
       .iBus_cmd_ready(1'b1),
       .iBus_cmd_payload_pc(imem_addr_n),
       .iBus_rsp_valid(imem_rd_valid),
-      .iBus_rsp_payload_error(imem_access_err && int_mask[6]),
+      .iBus_rsp_payload_error(imem_access_err),
       .iBus_rsp_payload_inst(imem_rd_data),
 
       .dBus_cmd_valid(dmem_v),
@@ -106,17 +117,12 @@ VexRiscv core (
       .dBus_cmd_payload_data(mem_wr_data),
       .dBus_cmd_payload_size(dmem_byte_count),
       .dBus_rsp_ready(mem_rd_valid || io_ren_r),
-      .dBus_rsp_error((dmem_access_err  || io_access_err ||
-                       pmem_access_err) && int_mask[7]),
+      .dBus_rsp_error(dmem_access_err  || io_access_err ||
+                      pmem_access_err),
       .dBus_rsp_data(dmem_read_data),
 
-      .timerInterrupt(timer_interrupt   && int_mask[2]),
-      .externalInterrupt((ext_io_err    && int_mask[5]) ||
-                         (poke_int      && int_mask[4]) ||
-                         (bc_interrupt  && int_mask[3]) ||
-                         (dram_recv_any && int_mask[1]) ||
-                         (in_desc_valid && int_mask[0]) ||
-                         evict_int),
+      .timerInterrupt(timer_interrupt     && int_mask[0]),
+      .externalInterrupt(core_interrupt),
       .softwareInterrupt(1'b0)
 );
 
@@ -169,9 +175,10 @@ localparam MASK_WR          = 6'b001110;
 localparam INTERRUPT_ACK    = 6'b001111;
 localparam DEBUG_REG_ADDR_L = 6'b010000;
 localparam DEBUG_REG_ADDR_H = 6'b010001;
-localparam BC_MASK_REG      = 6'b010010;
-localparam BC_EQUAL_REG     = 6'b010011;
-localparam BC_INT_EN        = 6'b010100;
+localparam BC_MSG_MASK_REG  = 6'b010010;
+localparam BC_MSG_EQUAL_REG = 6'b010011;
+localparam BC_MSG_FIFO_EN   = 6'b010100;
+localparam BC_MSG_RD_STRB   = 6'b010101;
 
 reg [63:0] dram_wr_addr_r;
 reg [31:0] timer_step_r;
@@ -181,7 +188,7 @@ reg [63:0] out_desc_data_r;
 reg [3:0]  out_desc_type_r;
 reg [31:0] slot_info_data_r;
 reg        ready_to_evict_r;
-reg        bc_int_en;
+reg        bc_msg_fifo_en;
 
 reg [DMEM_ADDR_WIDTH-1:0] bc_mask_reg, bc_equal_reg;
 
@@ -202,25 +209,25 @@ always @ (posedge clk) begin
                     default: begin end
                 endcase
 
-        if (io_addr==BC_MASK_REG)
+        if (io_addr==BC_MSG_MASK_REG)
             bc_mask_reg <= mem_wr_data[DMEM_ADDR_WIDTH-1:0];
-        if (io_addr==BC_EQUAL_REG)
+        if (io_addr==BC_MSG_EQUAL_REG)
             bc_equal_reg <= mem_wr_data[DMEM_ADDR_WIDTH-1:0];
-        if (io_addr==BC_INT_EN)
-            bc_int_en <= mem_wr_data[0];
+        if (io_addr==BC_MSG_FIFO_EN)
+            bc_msg_fifo_en <= mem_wr_data[0];
         if (io_addr==SEND_DESC_TYPE) // it's both type and strb
             out_desc_type_r <= mem_wr_data[3:0];
         if (io_addr==MASK_WR)
-            int_mask         <= mem_wr_data[7:0];
+            int_mask         <= mem_wr_data[15:0];
         if (io_addr==READY_TO_EVICT)
             ready_to_evict_r <= mem_wr_data[0];
-
     end
 
     if (rst) begin
       timer_step_r     <= 32'h00000001;
-      int_mask         <= 8'hF0;
+      int_mask         <= 16'hFFF0;
       ready_to_evict_r <= 1'b0;
+      bc_msg_fifo_en   <= 1'b0;
     end
 end
 
@@ -264,6 +271,44 @@ assign io_wr_ready        = !send_out_desc || out_desc_ready;
 assign in_desc_taken      = io_write && (io_addr==RD_DESC_STRB) && mem_wr_data[0];
 
 assign ready_to_evict     = ready_to_evict_r;
+wire   bc_msg_taken       = io_write && (io_addr==BC_MSG_RD_STRB) && mem_wr_data[0];
+
+///////////////////////////////////////////////////////////////////////////
+//////////////////////// INTERRUPT HANDLING ///////////////////////////////
+///////////////////////////////////////////////////////////////////////////
+reg        bc_int_fifo_err;
+wire       dram_recv_any;
+wire       bc_msg_int;
+
+// These interrupts are kept high until acked or addressed
+// so easy to add a pipe register, if there is a ack this
+// signal is masked so drop of interrupt is accurate.
+// If program is still in the interrupt read of int flags
+// is not based on this signal.
+always @ (posedge clk)
+  if (rst)
+    core_interrupt <= 1'b0;
+  else
+    core_interrupt <= !interrupt_ack && (
+                      (in_desc_valid   && int_mask[1]) ||
+                      (dram_recv_any   && int_mask[2]) ||
+                      (bc_msg_int      && int_mask[3]) ||
+                      (poke_int        && int_mask[4]) ||
+                      (evict_int       && int_mask[5]) ||
+                      (bc_int_fifo_err && int_mask[8]) ||
+                      (ext_io_err      && int_mask[9]) ||
+                      (dupl_slot_int   && int_mask[10])||
+                      (inv_slot_int    && int_mask[11])||
+                      (inv_desc_int    && int_mask[12]));
+
+assign timer_int_ack     = interrupt_ack && mem_wr_data[0];
+// in_desc and dram and bc_msg are handled with release signals
+assign poke_int_ack      = interrupt_ack && mem_wr_data[4];
+assign evict_int_ack     = interrupt_ack && mem_wr_data[5];
+assign ext_io_err_ack    = interrupt_ack && mem_wr_data[9];
+assign dupl_slot_int_ack = interrupt_ack && mem_wr_data[10];
+assign inv_slot_int_ack  = interrupt_ack && mem_wr_data[11];
+assign inv_desc_int_ack  = interrupt_ack && mem_wr_data[12];
 
 ///////////////////////////////////////////////////////////////////////////
 ////////////////////////////// IO READS ///////////////////////////////////
@@ -277,7 +322,7 @@ localparam RD_ID_ADDR       = 6'b100100;
 localparam RD_TIMER_L_ADDR  = 6'b100101;
 localparam RD_TIMER_H_ADDR  = 6'b100110;
 localparam RD_INT_F_ADDR    = 6'b100111;
-localparam RD_ACT_SLOT_ADDR = 6'b101000;
+localparam RD_MASK          = 6'b101000;
 localparam RD_IMEM_SIZE     = 6'b101001;
 localparam RD_DMEM_SIZE     = 6'b101010;
 localparam RD_PMEM_SIZE     = 6'b101011;
@@ -290,9 +335,10 @@ localparam DEBUG_IN_ADDR_H  = 6'b110001;
 localparam RD_BC_MASK       = 6'b110010;
 localparam RD_BC_EQUAL      = 6'b110011;
 localparam RD_BC_ADDR       = 6'b110100;
+localparam RD_FIFO_OCC      = 6'b110101;
+localparam RD_ACT_SLOT_ADDR = 6'b110110;
 
 reg [31:0] dram_recv_flag;
-reg [63:0] internal_timer;
 
 wire [DMEM_ADDR_WIDTH-1:0] bc_msg_in_addr_f;
 
@@ -303,9 +349,13 @@ always @ (posedge clk)
         io_ren_r <= io_read;
 
 // User interrupts are masked, but error ones are not
-wire [7:0] int_flags = {1'd0, evict_int, ext_io_err, poke_int, bc_interrupt,
-                        timer_interrupt, dram_recv_any, in_desc_valid}
-                        & {2'b01, int_mask[5:0]};
+wire [31:0] int_flags = {12'd0, io_access_err, pmem_access_err,
+                         dmem_access_err, imem_access_err,
+                         3'd0, inv_desc_int, inv_slot_int,
+                         dupl_slot_int, ext_io_err, bc_int_fifo_err,
+                         2'd0, evict_int, poke_int, bc_msg_int,
+                         dram_recv_any, in_desc_valid, timer_interrupt};
+                         // & {16'hFFFF, int_mask};
 always @ (posedge clk)
     if (io_read)
         case (io_addr)
@@ -315,14 +365,10 @@ always @ (posedge clk)
             RD_STAT_ADDR:     io_read_data <= {7'd0,core_msg_ready, 7'd0,slot_wr_ready,
                                                7'd0,out_desc_ready, 7'd0,in_desc_valid};
             RD_ID_ADDR:       io_read_data <= {24'd0, core_id};
-            RD_TIMER_L_ADDR:  io_read_data <= internal_timer[31:0];
-            RD_TIMER_H_ADDR:  io_read_data <= internal_timer[63:32];
-            RD_INT_F_ADDR:    io_read_data <= {8'd0, int_flags,
-                                               int_mask,
-                                               3'd0, bc_int_err,
-                                               io_access_err, pmem_access_err,
-                                               dmem_access_err, imem_access_err};
-            RD_ACT_SLOT_ADDR: io_read_data <= active_slots;
+            RD_TIMER_L_ADDR:  io_read_data <= timer[31:0];
+            RD_TIMER_H_ADDR:  io_read_data <= timer[63:32];
+            RD_INT_F_ADDR:    io_read_data <= int_flags;
+            RD_MASK:          io_read_data <= {16'd0, int_mask};
             RD_IMEM_SIZE:     io_read_data <= IMEM_SIZE;
             RD_DMEM_SIZE:     io_read_data <= DMEM_SIZE;
             RD_PMEM_SIZE:     io_read_data <= PMEM_SIZE;
@@ -332,25 +378,23 @@ always @ (posedge clk)
             MAX_SLOT_CNT:     io_read_data <= max_slot_count;
             DEBUG_IN_ADDR_L:  io_read_data <= debug_in[31:0];
             DEBUG_IN_ADDR_H:  io_read_data <= debug_in[63:32];
+
             RD_BC_MASK:       io_read_data <= {{(32-DMEM_ADDR_WIDTH){1'b0}},
                                               bc_mask_reg};
             RD_BC_EQUAL:      io_read_data <= {{(32-DMEM_ADDR_WIDTH){1'b0}},
                                               bc_equal_reg};
             RD_BC_ADDR:       io_read_data <= {{(32-DMEM_ADDR_WIDTH){1'b0}},
                                               bc_msg_in_addr_f};
+            RD_FIFO_OCC:      io_read_data <= {core_msg_items,  dram_req_items,
+                                              dram_send_items, send_data_items};
+            RD_ACT_SLOT_ADDR: io_read_data <= active_slots;
+
             default: begin end
-            // default is to keep the value
         endcase
 
 ///////////////////////////////////////////////////////////////////////////
 //////////////////////// INTERNAL 32-BIT TIMER ////////////////////////////
 ///////////////////////////////////////////////////////////////////////////
-always @ (posedge clk)
-  if (init_rst)
-    internal_timer <= 64'd0;
-  else
-    internal_timer <= internal_timer + 64'd1;
-
 reg [31:0] interrupt_time;
 wire timer_int_ack;
 
@@ -409,13 +453,12 @@ assign dram_recv_any = | dram_recv_flag;
 
 reg [DMEM_ADDR_WIDTH-1:0] bc_msg_in_addr_r;
 reg                       bc_msg_in_valid_r;
-wire                      bc_int_ack;
 wire                      bc_int_ready;
 
 // Select which address bits to match, and the match value
 always @ (posedge clk) begin
   bc_msg_in_addr_r  <= bc_msg_in_addr;
-  bc_msg_in_valid_r <= bc_msg_in_valid && bc_int_en &&
+  bc_msg_in_valid_r <= bc_msg_in_valid && bc_msg_fifo_en &&
                      ((bc_msg_in_addr & bc_mask_reg) == bc_equal_reg);
   if (rst)
     bc_msg_in_valid_r <= 1'b0;
@@ -427,15 +470,15 @@ simple_fifo # (
 ) bc_interrupt_fifo (
   .clk(clk),
   .rst(rst),
-  .clear(!bc_int_en),
+  .clear(!bc_msg_fifo_en),
 
   .din_valid(bc_msg_in_valid_r),
   .din(bc_msg_in_addr_r),
   .din_ready(bc_int_ready), // For now assume we have space
 
-  .dout_valid(bc_interrupt),
+  .dout_valid(bc_msg_int),
   .dout(bc_msg_in_addr_f),
-  .dout_ready(bc_int_ack),
+  .dout_ready(bc_msg_taken),
 
   .full()
 );
@@ -469,28 +512,25 @@ always @ (posedge clk)
         dmem_access_err <= 1'b0;
         pmem_access_err <= 1'b0;
         io_access_err   <= 1'b0;
-        bc_int_err      <= 1'b0;
+        bc_int_fifo_err <= 1'b0;
 		end else begin
-        imem_access_err <= !(interrupt_ack && mem_wr_data[4]) && (imem_access_err ||
+        // These errors are registered, not asserted from outside and wait for ack
+        imem_access_err <= !(interrupt_ack && mem_wr_data[16]) && (imem_access_err ||
                            (imem_ren_r && (imem_addr_r >= IMEM_SIZE)));
 
-        dmem_access_err <= !(interrupt_ack && mem_wr_data[5]) && (dmem_access_err ||
+        dmem_access_err <= !(interrupt_ack && mem_wr_data[17]) && (dmem_access_err ||
                              (dmem_en_r && (dmem_addr_r[22:0] >= DMEM_SIZE)));
 
-        pmem_access_err <= !(interrupt_ack && mem_wr_data[6]) && (pmem_access_err ||
+        pmem_access_err <= !(interrupt_ack && mem_wr_data[18]) && (pmem_access_err ||
                              (pmem_en_r && (dmem_addr_r[23:0] >= PMEM_SIZE)));
 
-        io_access_err   <= !(interrupt_ack && mem_wr_data[7]) && (io_access_err ||
+        io_access_err   <= !(interrupt_ack && mem_wr_data[19]) && (io_access_err ||
                              (intio_en_r && (dmem_addr_r[21:0] >= 22'h000100)));
-        bc_int_err      <= bc_int_en && (bc_int_err || (bc_msg_in_valid_r && !bc_int_ready));
+
+        bc_int_fifo_err <= !(interrupt_ack && mem_wr_data[8]) && (bc_int_fifo_err ||
+                             (bc_msg_fifo_en && bc_msg_in_valid_r && !bc_int_ready));
     end
 
-assign timer_int_ack  = interrupt_ack && mem_wr_data[0];
-assign poke_int_ack   = interrupt_ack && mem_wr_data[1];
-assign evict_int_ack  = interrupt_ack && mem_wr_data[2];
-assign ext_io_err_ack = interrupt_ack && mem_wr_data[3];
-assign bc_int_ack     = interrupt_ack && mem_wr_data[8];
-
-assign core_errors    = {3'd0, ext_io_err, io_access_err, pmem_access_err, dmem_access_err, imem_access_err};
+assign core_errors       = {3'd0, ext_io_err, io_access_err, pmem_access_err, dmem_access_err, imem_access_err};
 
 endmodule

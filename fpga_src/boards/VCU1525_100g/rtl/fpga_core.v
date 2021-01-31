@@ -1753,10 +1753,6 @@ generate
     for (i=0; i<CORE_COUNT; i=i+1) begin: riscv_cores
         wire [CORE_WIDTH-1:0]      core_id = i;
         wire                       core_reset;
-        wire                       evict_int;
-        wire                       evict_int_ack;
-        wire                       poke_int;
-        wire                       poke_int_ack;
 
         wire                       dma_cmd_wr_en;
         wire [25:0]                dma_cmd_wr_addr;
@@ -1782,9 +1778,6 @@ generate
         wire                       out_desc_valid;
         wire                       out_desc_ready;
 
-        wire [4:0]                 recv_dram_tag;
-        wire                       recv_dram_tag_valid;
-
         wire [CORE_MSG_WIDTH-1:0]  bc_msg_out;
         wire                       bc_msg_out_valid;
         wire                       bc_msg_out_ready;
@@ -1793,17 +1786,13 @@ generate
         wire                       bc_msg_in_valid;
 
         wire [31:0]                wrapper_status_data;
-        wire [1:0]                 wrapper_status_addr;
-        wire                       wrapper_status_valid;
-        wire                       wrapper_status_ready;
+        wire [2:0]                 wrapper_status_addr;
 
         wire [31:0]                core_status_data;
         wire [1:0]                 core_status_addr;
-        wire                       core_status_valid;
-        wire                       core_status_ready;
 
         // (* keep_hierarchy = "soft" *)
-        riscv_axis_wrapper #(
+        Gousheh_wrapper #(
             .DATA_WIDTH(LVL2_DATA_WIDTH),
             .SLOT_COUNT(SLOT_COUNT),
             .RECV_DESC_DEPTH(RECV_DESC_DEPTH),
@@ -1890,10 +1879,6 @@ generate
             // --------------------------------------------- //
 
             .core_reset(core_reset),
-            .evict_int(evict_int),
-            .evict_int_ack(evict_int_ack),
-            .poke_int(poke_int),
-            .poke_int_ack(poke_int_ack),
 
             .dma_cmd_wr_en(dma_cmd_wr_en),
             .dma_cmd_wr_addr(dma_cmd_wr_addr),
@@ -1919,9 +1904,6 @@ generate
             .out_desc_valid(out_desc_valid),
             .out_desc_ready(out_desc_ready),
 
-            .recv_dram_tag(recv_dram_tag),
-            .recv_dram_tag_valid(recv_dram_tag_valid),
-
             .bc_msg_out(bc_msg_out),
             .bc_msg_out_valid(bc_msg_out_valid),
             .bc_msg_out_ready(bc_msg_out_ready),
@@ -1931,16 +1913,12 @@ generate
 
             .wrapper_status_data(wrapper_status_data),
             .wrapper_status_addr(wrapper_status_addr),
-            .wrapper_status_valid(wrapper_status_valid),
-            .wrapper_status_ready(wrapper_status_ready),
             .core_status_data(core_status_data),
-            .core_status_addr(core_status_addr),
-            .core_status_valid(core_status_valid),
-            .core_status_ready(core_status_ready)
+            .core_status_addr(core_status_addr)
         );
 
     `ifndef PR_ENABLE
-        riscv_block # (
+        Gousheh # (
             .DATA_WIDTH(LVL2_DATA_WIDTH),
             .STRB_WIDTH(LVL2_STRB_WIDTH),
             .IMEM_SIZE(IMEM_SIZE),
@@ -1952,19 +1930,14 @@ generate
             .BC_START_ADDR(BC_START_ADDR),
             .MSG_WIDTH(CORE_MSG_WIDTH),
             .CORE_ID_WIDTH(CORE_WIDTH)
-        ) riscv_block_inst (
+        ) Gousheh_inst (
     `else
-        riscv_block_PR # (
+        Gousheh_PR # (
         ) pr_wrapper (
     `endif
             .clk(core_clk),
             .rst(block_reset[i]),
-            .core_rst(core_reset),
-
-            .evict_int(evict_int),
-            .evict_int_ack(evict_int_ack),
-            .poke_int(poke_int),
-            .poke_int_ack(poke_int_ack),
+            .core_reset(core_reset),
 
             .dma_cmd_wr_en(dma_cmd_wr_en),
             .dma_cmd_wr_addr(dma_cmd_wr_addr),
@@ -1990,9 +1963,6 @@ generate
             .out_desc_valid(out_desc_valid),
             .out_desc_ready(out_desc_ready),
 
-            .recv_dram_tag(recv_dram_tag),
-            .recv_dram_tag_valid(recv_dram_tag_valid),
-
             .bc_msg_out(bc_msg_out),
             .bc_msg_out_valid(bc_msg_out_valid),
             .bc_msg_out_ready(bc_msg_out_ready),
@@ -2001,12 +1971,8 @@ generate
 
             .wrapper_status_data(wrapper_status_data),
             .wrapper_status_addr(wrapper_status_addr),
-            .wrapper_status_valid(wrapper_status_valid),
-            .wrapper_status_ready(wrapper_status_ready),
             .core_status_data(core_status_data),
-            .core_status_addr(core_status_addr),
-            .core_status_valid(core_status_valid),
-            .core_status_ready(core_status_ready)
+            .core_status_addr(core_status_addr)
         );
 
         assign dram_m_axis_tuser[CORE_WIDTH*i +: CORE_WIDTH]               = i;

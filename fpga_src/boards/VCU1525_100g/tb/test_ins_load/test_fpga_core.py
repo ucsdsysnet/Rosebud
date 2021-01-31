@@ -90,6 +90,7 @@ PACKETS.append(test_pkt)
 
 FIRMWARE = os.path.abspath(os.path.join(os.path.dirname(__file__),
     '..', '..', '..', '..', '..', 'c_code', 'basic_fw2.elf'))
+  # '..', '..', '..', '..', '..', 'c_code', 'basic_fw_n_bc.elf'))
   # '..', '..', '..', '..', '..', 'c_code', 'dram_test2.elf'))
   # '..', '..', '..', '..', '..', 'c_code', 'drop.elf'))
 
@@ -276,7 +277,7 @@ def run_test(parameters=None, sim_build="sim_build", waves=None, force_compile=F
     verilog_sources = [
         os.path.join(tests_dir, "..", "common", f"{toplevel}.v"),
         os.path.join(rtl_dir, f"{dut}.v"),
-        os.path.join(rtl_dir, "riscv_block_PR.v"),
+        os.path.join(rtl_dir, "Gousheh_PR.v"),
         os.path.join(rtl_dir, "RR_LU_scheduler_PR.v"),
         os.path.join(rtl_dir, "pcie_config.v"),
 
@@ -287,9 +288,9 @@ def run_test(parameters=None, sim_build="sim_build", waves=None, force_compile=F
         os.path.join(smartfpga_rtl_dir, "axis_dma.v"),
         os.path.join(smartfpga_rtl_dir, "VexRiscv.v"),
         os.path.join(smartfpga_rtl_dir, "riscvcore.v"),
-        os.path.join(smartfpga_rtl_dir, "riscv_block.v"),
+        os.path.join(smartfpga_rtl_dir, "Gousheh.v"),
         os.path.join(smartfpga_rtl_dir, "accel_wrap.v"),
-        os.path.join(smartfpga_rtl_dir, "riscv_axis_wrapper.v"),
+        os.path.join(smartfpga_rtl_dir, "Gousheh_wrapper.v"),
         os.path.join(smartfpga_rtl_dir, "mem_sys.v"),
         os.path.join(smartfpga_rtl_dir, "simple_arbiter.v"),
         os.path.join(smartfpga_rtl_dir, "simple_sync_sig.v"),

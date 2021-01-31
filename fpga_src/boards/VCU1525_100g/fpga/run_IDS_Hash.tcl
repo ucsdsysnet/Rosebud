@@ -4,9 +4,9 @@ update_compile_order -fileset sources_1
 set_property needs_refresh false [get_runs synth_1]
 set_property needs_refresh false [get_runs impl_1]
 
-if {[llength [get_reconfig_modules riscv_block_IDS]]!=0} then {
-  delete_reconfig_modules riscv_block_IDS}
-create_reconfig_module -name riscv_block_IDS -partition_def [get_partition_defs pr_riscv] -top riscv_block_PR
+if {[llength [get_reconfig_modules Gousheh_IDS]]!=0} then {
+  delete_reconfig_modules Gousheh_IDS}
+create_reconfig_module -name Gousheh_IDS -partition_def [get_partition_defs pr_riscv] -top Gousheh_PR
 
 add_files -norecurse {
   ../lib/eth/lib/axis/rtl/arbiter.v 
@@ -20,7 +20,7 @@ add_files -norecurse {
   ../lib/smartFPGA/rtl/riscvcore.v
   ../lib/smartFPGA/rtl/simple_fifo.v
   ../lib/smartFPGA/rtl/mem_sys.v
-  ../lib/smartFPGA/rtl/riscv_block.v
+  ../lib/smartFPGA/rtl/Gousheh.v
   ../lib/smartFPGA/rtl/accel_rd_dma_sp.v
   ../accel/full_ids/rtl/sme/tcp_sme.v
   ../accel/full_ids/rtl/sme/udp_sme.v
@@ -28,8 +28,8 @@ add_files -norecurse {
   ../accel/full_ids/rtl/fixed_sme/fixed_loc_sme_8.v
   ../accel/full_ids/rtl/ip_match/ip_match.v
   ../accel/full_ids/rtl/accel_wrap_full_ids.v
-  ../rtl/riscv_block_PR_w_accel.v
-} -of_objects [get_reconfig_modules riscv_block_IDS]
+  ../rtl/Gousheh_PR_w_accel.v
+} -of_objects [get_reconfig_modules Gousheh_IDS]
   
 if {[llength [get_reconfig_modules scheduler_Hash]]!=0} then {
   delete_reconfig_modules scheduler_Hash}
@@ -54,22 +54,22 @@ add_files -norecurse {
 if {[llength [get_pr_configurations IDS_Hash_config]]!=0} then {
   delete_pr_configurations IDS_Hash_config}
 create_pr_configuration -name IDS_Hash_config -partitions [list \
-  core_inst/riscv_cores[0].pr_wrapper:riscv_block_IDS \
-  core_inst/riscv_cores[1].pr_wrapper:riscv_block_IDS \
-  core_inst/riscv_cores[2].pr_wrapper:riscv_block_IDS \
-  core_inst/riscv_cores[3].pr_wrapper:riscv_block_IDS \
-  core_inst/riscv_cores[4].pr_wrapper:riscv_block_IDS \
-  core_inst/riscv_cores[5].pr_wrapper:riscv_block_IDS \
-  core_inst/riscv_cores[6].pr_wrapper:riscv_block_IDS \
-  core_inst/riscv_cores[7].pr_wrapper:riscv_block_IDS \
-  core_inst/riscv_cores[8].pr_wrapper:riscv_block_IDS \
-  core_inst/riscv_cores[9].pr_wrapper:riscv_block_IDS \
-  core_inst/riscv_cores[10].pr_wrapper:riscv_block_IDS \
-  core_inst/riscv_cores[11].pr_wrapper:riscv_block_IDS \
-  core_inst/riscv_cores[12].pr_wrapper:riscv_block_IDS \
-  core_inst/riscv_cores[13].pr_wrapper:riscv_block_IDS \
-  core_inst/riscv_cores[14].pr_wrapper:riscv_block_IDS \
-  core_inst/riscv_cores[15].pr_wrapper:riscv_block_IDS \
+  core_inst/riscv_cores[0].pr_wrapper:Gousheh_IDS \
+  core_inst/riscv_cores[1].pr_wrapper:Gousheh_IDS \
+  core_inst/riscv_cores[2].pr_wrapper:Gousheh_IDS \
+  core_inst/riscv_cores[3].pr_wrapper:Gousheh_IDS \
+  core_inst/riscv_cores[4].pr_wrapper:Gousheh_IDS \
+  core_inst/riscv_cores[5].pr_wrapper:Gousheh_IDS \
+  core_inst/riscv_cores[6].pr_wrapper:Gousheh_IDS \
+  core_inst/riscv_cores[7].pr_wrapper:Gousheh_IDS \
+  core_inst/riscv_cores[8].pr_wrapper:Gousheh_IDS \
+  core_inst/riscv_cores[9].pr_wrapper:Gousheh_IDS \
+  core_inst/riscv_cores[10].pr_wrapper:Gousheh_IDS \
+  core_inst/riscv_cores[11].pr_wrapper:Gousheh_IDS \
+  core_inst/riscv_cores[12].pr_wrapper:Gousheh_IDS \
+  core_inst/riscv_cores[13].pr_wrapper:Gousheh_IDS \
+  core_inst/riscv_cores[14].pr_wrapper:Gousheh_IDS \
+  core_inst/riscv_cores[15].pr_wrapper:Gousheh_IDS \
   core_inst/scheduler_PR_inst:scheduler_Hash]
 
 if {[llength [get_runs "impl_IDS_Hash"]]!=0} then {delete_run impl_IDS_Hash}
@@ -79,9 +79,9 @@ set_property strategy Performance_ExtraTimingOpt [get_runs impl_IDS_Hash]
 update_compile_order -fileset scheduler_Hash
 update_compile_order -fileset sources_1
 
-reset_run riscv_block_IDS_synth_1
-launch_runs riscv_block_IDS_synth_1
-wait_on_run riscv_block_IDS_synth_1
+reset_run Gousheh_IDS_synth_1
+launch_runs Gousheh_IDS_synth_1
+wait_on_run Gousheh_IDS_synth_1
 
 reset_run scheduler_Hash_synth_1
 launch_runs scheduler_Hash_synth_1

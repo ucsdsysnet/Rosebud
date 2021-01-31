@@ -27,22 +27,22 @@ add_files -norecurse {
 if {[llength [get_pr_configurations IDS_Hash_config]]!=0} then {
   delete_pr_configurations IDS_Hash_config}
 create_pr_configuration -name IDS_Hash_config -partitions [list \
-  core_inst/riscv_cores[0].pr_wrapper:riscv_block_IDS \
-  core_inst/riscv_cores[1].pr_wrapper:riscv_block_IDS \
-  core_inst/riscv_cores[2].pr_wrapper:riscv_block_IDS \
-  core_inst/riscv_cores[3].pr_wrapper:riscv_block_IDS \
-  core_inst/riscv_cores[4].pr_wrapper:riscv_block_IDS \
-  core_inst/riscv_cores[5].pr_wrapper:riscv_block_IDS \
-  core_inst/riscv_cores[6].pr_wrapper:riscv_block_IDS \
-  core_inst/riscv_cores[7].pr_wrapper:riscv_block_IDS \
-  core_inst/riscv_cores[8].pr_wrapper:riscv_block_IDS \
-  core_inst/riscv_cores[9].pr_wrapper:riscv_block_IDS \
-  core_inst/riscv_cores[10].pr_wrapper:riscv_block_IDS \
-  core_inst/riscv_cores[11].pr_wrapper:riscv_block_IDS \
-  core_inst/riscv_cores[12].pr_wrapper:riscv_block_IDS \
-  core_inst/riscv_cores[13].pr_wrapper:riscv_block_IDS \
-  core_inst/riscv_cores[14].pr_wrapper:riscv_block_IDS \
-  core_inst/riscv_cores[15].pr_wrapper:riscv_block_IDS \
+  core_inst/riscv_cores[0].pr_wrapper:Gousheh_IDS \
+  core_inst/riscv_cores[1].pr_wrapper:Gousheh_IDS \
+  core_inst/riscv_cores[2].pr_wrapper:Gousheh_IDS \
+  core_inst/riscv_cores[3].pr_wrapper:Gousheh_IDS \
+  core_inst/riscv_cores[4].pr_wrapper:Gousheh_IDS \
+  core_inst/riscv_cores[5].pr_wrapper:Gousheh_IDS \
+  core_inst/riscv_cores[6].pr_wrapper:Gousheh_IDS \
+  core_inst/riscv_cores[7].pr_wrapper:Gousheh_IDS \
+  core_inst/riscv_cores[8].pr_wrapper:Gousheh_IDS \
+  core_inst/riscv_cores[9].pr_wrapper:Gousheh_IDS \
+  core_inst/riscv_cores[10].pr_wrapper:Gousheh_IDS \
+  core_inst/riscv_cores[11].pr_wrapper:Gousheh_IDS \
+  core_inst/riscv_cores[12].pr_wrapper:Gousheh_IDS \
+  core_inst/riscv_cores[13].pr_wrapper:Gousheh_IDS \
+  core_inst/riscv_cores[14].pr_wrapper:Gousheh_IDS \
+  core_inst/riscv_cores[15].pr_wrapper:Gousheh_IDS \
   core_inst/scheduler_PR_inst:scheduler_Hash]
 
 if {[llength [get_runs "impl_IDS_Hash"]]!=0} then {delete_run impl_IDS_Hash}

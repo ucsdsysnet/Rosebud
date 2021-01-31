@@ -21,10 +21,9 @@
 #define TIMER_32_L        (*((volatile unsigned int *)      (IO_INT_BASE + 0x0094)))
 #define TIMER_32_H        (*((volatile unsigned int *)      (IO_INT_BASE + 0x0098)))
 #define FLAGS_REG         (*((volatile unsigned int *)      (IO_INT_BASE + 0x009C)))
-#define ERROR_FLAGS       (*((volatile unsigned char *)     (IO_INT_BASE + 0x009C)))
-#define MASK_READ         (*((volatile unsigned char *)     (IO_INT_BASE + 0x009D)))
-#define INTERRUPT_FLAGS   (*((volatile unsigned char *)     (IO_INT_BASE + 0x009E)))
-#define ACTIVE_SLOTS      (*((volatile unsigned int *)      (IO_INT_BASE + 0x00A0)))
+#define INTERRUPT_FLAGS   (*((volatile unsigned short *)    (IO_INT_BASE + 0x009C)))
+#define ERROR_FLAGS       (*((volatile unsigned char *)     (IO_INT_BASE + 0x009E)))
+#define MASK_READ         (*((volatile unsigned short *)    (IO_INT_BASE + 0x00A0)))
 #define IMEM_SIZE         (*((unsigned int *)               (IO_INT_BASE + 0x00A4)))
 #define DMEM_SIZE         (*((unsigned int *)               (IO_INT_BASE + 0x00A8)))
 #define PMEM_SIZE         (*((unsigned int *)               (IO_INT_BASE + 0x00AC)))
@@ -37,6 +36,11 @@
 #define RD_BC_MASK        (*((unsigned int *)               (IO_INT_BASE + 0x00C8)))
 #define RD_BC_EQUAL       (*((unsigned int *)               (IO_INT_BASE + 0x00CC)))
 #define RECV_BC_ADDR      (*((unsigned int *)               (IO_INT_BASE + 0x00D0)))
+#define SEND_FIFO_OCC     (*((volatile unsigned char *)     (IO_INT_BASE + 0x00D4)))
+#define DRAM_WR_FIFO_OCC  (*((volatile unsigned char *)     (IO_INT_BASE + 0x00D5)))
+#define DRAM_RD_FIFO_OCC  (*((volatile unsigned char *)     (IO_INT_BASE + 0x00D6)))
+#define BC_MSG_FIFO_OCC   (*((volatile unsigned char *)     (IO_INT_BASE + 0x00D7)))
+#define ACTIVE_SLOTS      (*((volatile unsigned int *)      (IO_INT_BASE + 0x00D8)))
 
 #define SEND_DESC         (*((volatile struct   Desc*)      (IO_INT_BASE + 0x0008)))
 #define DRAM_ADDR         (*((volatile unsigned long long *)(IO_INT_BASE + 0x0010)))
@@ -53,9 +57,10 @@
 #define DEBUG_OUT         (*((volatile unsigned long long *)(IO_INT_BASE + 0x0040)))
 #define DEBUG_OUT_L       (*((volatile unsigned int *)      (IO_INT_BASE + 0x0040)))
 #define DEBUG_OUT_H       (*((volatile unsigned int *)      (IO_INT_BASE + 0x0044)))
-#define BC_MASK_WR        (*((volatile unsigned int *)      (IO_INT_BASE + 0x0048)))
-#define BC_EQUAL_WR       (*((volatile unsigned int *)      (IO_INT_BASE + 0x004C)))
-#define BC_INT_EN         (*((volatile unsigned int *)      (IO_INT_BASE + 0x0050)))
+#define BC_MSG_MASK_WR    (*((volatile unsigned int *)      (IO_INT_BASE + 0x0048)))
+#define BC_MSG_EQUAL_WR   (*((volatile unsigned int *)      (IO_INT_BASE + 0x004C)))
+#define BC_MSG_FIFO_EN    (*((volatile unsigned char *)     (IO_INT_BASE + 0x0050)))
+#define BC_MSG_RELEASE    (*((volatile unsigned char *)     (IO_INT_BASE + 0x0054)))
 
 #define STATUS_RD                                           (IO_INT_BASE + 0x008C)
 #define IN_PKT_READY      (*((volatile unsigned char *)     (IO_INT_BASE + 0x008C))==1)
@@ -63,12 +68,16 @@
 #define UPDATE_SLOT_READY (*((volatile unsigned char *)     (IO_INT_BASE + 0x008E))==1)
 #define CORE_MSG_READY    (*((volatile unsigned char *)     (IO_INT_BASE + 0x008F))==1)
 
-// MASK BITS:    DATA_MEM_ERR | IMEM_ERR | EXT_IO_ERR | EVICT_INT | POKE_INT | TIMER_INT | RECV_DRAM_DATA_INT | PACKET_INT
-// FLAGS BITS:   8 BITS RESERVED
-//               - | - | EXT_IO_ERR | EVICT_INT | POKE_INT | TIMER | DRAM_DATA_ARRIVED | PACKET_ARRIVED
-//               MASK READ BACK
-//               - | - | - | - | INT_IO_ACCESS_ERR | PMEM_ACCESS_ERR | DMEM_ACCESS_ERR | IMEM_ACCESS_ERR
-// INT ACK BITS: INT_IO_ACCESS_ERR | PMEM_ACCESS_ERR | DMEM_ACCESS_ERR | IMEM_ACCESS_ERR | EXT_IO_ERR | EVICT_INT | POKE_INT | TIMER
+
+// FLAGS (32 BITS):
+// RESERVED:  8 BITS
+// ACCESS_ERR: | - | - | -         |     -        |  INT_IO_ERR  |   PMEM_ERR    |  DMEM_ERR  | IMEM_ERR    |
+// SYS_ERR:    | - | - |     -     | INV_DESC_ERR | INV_SLOT_ERR | DUPL_SLOT_ERR | EXT_IO_ERR | BC_FIFO_ERR |
+// INTERRUPT:  | - | - | EVICT_INT |   POKE_INT   |  BC_MSG_INT  | DRAM_DATA_INT | PACKET_INT |  TIMER_INT  |
+
+// SYS_ERR AND INTERRUPT CAN BE MASKED WITH 16 BITS MASK_WRITE, ACCESS_ERRS ARE unmaskable
+// INTERRUPTS AND ALL ERRORS ARE ACKED THROUGH INTERRUPT_ACK WITH THE SAME LOCATION
+// WITH EXCEPTION OF PACKET_INT/DRAM_DATA_INT/BC_MSG_INT WHICH DONT HAVE ACK
 
 struct Desc {
 	unsigned short len;
@@ -85,14 +94,18 @@ static inline _Bool core_msg_ready() { return CORE_MSG_READY; }
 static inline unsigned int core_id() { return CORE_ID; }
 static inline unsigned int dram_flags() { return DRAM_FLAGS; }
 static inline unsigned int active_slots() { return ACTIVE_SLOTS; }
-static inline unsigned char interrupt_flags() { return INTERRUPT_FLAGS; }
+static inline unsigned short interrupt_flags() { return INTERRUPT_FLAGS; }
 static inline unsigned char error_flags() { return ERROR_FLAGS; }
-static inline unsigned char read_masks() { return MASK_READ; }
+static inline unsigned short read_masks() { return MASK_READ; }
 static inline unsigned int read_timer_low() { return TIMER_32_L; }
 static inline unsigned int read_timer_high() { return TIMER_32_H; }
 static inline unsigned int read_bc_mask() { return RD_BC_MASK; }
 static inline unsigned int read_bc_equal() { return RD_BC_EQUAL; }
 static inline unsigned int recv_bc_msg_addr() { return RECV_BC_ADDR; }
+static inline unsigned char send_fifo_occ() { return SEND_FIFO_OCC; }
+static inline unsigned char dram_wr_fifo_occ() { return DRAM_WR_FIFO_OCC; }
+static inline unsigned char dram_rd_fifo_occ() { return DRAM_RD_FIFO_OCC; }
+static inline unsigned char core_msg_fifo_occ() { return BC_MSG_FIFO_OCC; }
 
 static inline void read_in_pkt (struct Desc* input_desc) {
 	*input_desc = RECV_DESC;
@@ -137,10 +150,10 @@ static inline void init_hdr_slots(const unsigned int slot_count,
 
 static inline void set_bc_filter(const unsigned int bc_mask,
                                  const unsigned int bc_equal) {
-	BC_MASK_WR  = bc_mask;
-	BC_EQUAL_WR = bc_equal;
-	BC_INT_EN   = 1;
-	MASK_WRITE  = MASK_READ | 8;
+	BC_MSG_MASK_WR  = bc_mask;
+	BC_MSG_EQUAL_WR = bc_equal;
+	BC_MSG_FIFO_EN  = 1;
+	MASK_WRITE      = MASK_READ | 8;
 }
 
 
@@ -175,11 +188,15 @@ static inline void interrupt_ack(const unsigned int interrupt_ack) {
 	INTERRUPT_ACK = interrupt_ack;
 }
 
+static inline void error_ack(const unsigned int error_ack) {
+	INTERRUPT_ACK = (error_ack << 16);
+}
+
 static inline void dram_flag_reset(const unsigned char num) {
 	DRAM_FLAG_RST = num;
 }
 
-static inline void set_masks(const unsigned char masks) {
+static inline void set_masks(const unsigned short masks) {
 	MASK_WRITE = masks;
 }
 
@@ -196,7 +213,7 @@ static inline void pkt_send(const struct Desc* output_desc) {
 }
 
 static inline void atomic_pkt_send(const struct Desc* output_desc) {
-	unsigned char m = MASK_READ;
+	unsigned short m = MASK_READ;
 	MASK_WRITE = 0;
 	SEND_DESC = *output_desc;
 	asm volatile("" ::: "memory");

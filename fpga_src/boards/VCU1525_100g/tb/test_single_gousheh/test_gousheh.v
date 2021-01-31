@@ -171,7 +171,7 @@ wire [1:0]                core_status_addr;
 wire                      core_status_valid;
 wire                      core_status_ready;
 
-riscv_axis_wrapper #(
+Gousheh_wrapper #(
     .DATA_WIDTH(DATA_WIDTH),
     .SLOT_COUNT(SLOT_COUNT),
     .RECV_DESC_DEPTH(RECV_DESC_DEPTH),
@@ -308,7 +308,7 @@ riscv_axis_wrapper #(
 );
 
 `ifndef PR_ENABLE
-riscv_block # (
+Gousheh # (
     .DATA_WIDTH(DATA_WIDTH),
     .STRB_WIDTH(STRB_WIDTH),
     .IMEM_SIZE(IMEM_SIZE),
@@ -320,9 +320,9 @@ riscv_block # (
     .BC_START_ADDR(BC_START_ADDR),
     .MSG_WIDTH(CORE_MSG_WIDTH),
     .CORE_ID_WIDTH(CORE_WIDTH)
-) riscv_block_inst (
+) Gousheh_inst (
 `else
-riscv_block_PR_w_accel pr_wrapper (
+Gousheh_PR_w_accel pr_wrapper (
 `endif
     .clk(clk),
     .rst(rst),

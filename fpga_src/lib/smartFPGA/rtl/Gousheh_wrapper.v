@@ -6,7 +6,7 @@
 /*
  * AXIS wrapper for RISCV cores with internal memory
  */
-module riscv_axis_wrapper # (
+module Gousheh_wrapper # (
     parameter DATA_WIDTH       = 64,
     parameter PORT_WIDTH       = 3,
     parameter CORE_ID_WIDTH    = 4,
@@ -104,11 +104,6 @@ module riscv_axis_wrapper # (
 
     output wire                     core_reset,
 
-    output wire                     evict_int,
-    input  wire                     evict_int_ack,
-    output wire                     poke_int,
-    input  wire                     poke_int_ack,
-
     // DMA interface
     output wire                     dma_cmd_wr_en,
     output wire [25:0]              dma_cmd_wr_addr,
@@ -138,10 +133,6 @@ module riscv_axis_wrapper # (
     input  wire                     out_desc_valid,
     output wire                     out_desc_ready,
 
-    // Received DRAM info to core
-    output wire [4:0]               recv_dram_tag,
-    output wire                     recv_dram_tag_valid,
-
     // Messages from the core
     input  wire [MSG_WIDTH-1:0]     bc_msg_out,
     input  wire                     bc_msg_out_valid,
@@ -154,15 +145,11 @@ module riscv_axis_wrapper # (
 
     // Status channel to core
     output reg  [31:0]              wrapper_status_data,
-    output reg  [1:0]               wrapper_status_addr,
-    output reg                      wrapper_status_valid,
-    input  wire                     wrapper_status_ready,
+    output reg  [2:0]               wrapper_status_addr,
 
     // Status channel from core
     input  wire [31:0]              core_status_data,
-    input  wire [1:0]               core_status_addr,
-    input  wire                     core_status_valid,
-    output wire                     core_status_ready
+    input  wire [1:0]               core_status_addr
 );
 
 wire rst_r;
@@ -194,20 +181,37 @@ end
 
 wire [3:0]  ctrl_cmd = ctrl_s_axis_tdata_r[35:32];
 
+// Globally synced timer
+reg [63:0] timer;
+always @ (posedge clk)
+  if (rst_r)
+    timer <= 64'd0;
+  else
+    timer <= timer + 64'd1;
+
+// Interrupts
 reg core_reset_r;
 reg core_poke_r;
 reg core_evict_r;
+reg dupl_slot_int_r;
+reg inv_slot_int_r;
+reg inv_desc_int_r;
+reg recv_dram_tag_v_r;
+
+// Debug signlas
 reg [31:0] host_debug_l,   host_debug_h;
 reg        host_debug_l_v, host_debug_h_v;
 
-always @ (posedge clk) begin
-  if (poke_int_ack)
-      core_poke_r  <= 1'b0;
-  if (evict_int_ack)
-      core_evict_r <= 1'b0;
+wire int_valid = core_poke_r     || core_evict_r   ||  //these 2 can be removed and reset based on SM
+                 dupl_slot_int_r || inv_slot_int_r ||
+                 inv_desc_int_r  || recv_dram_tag_v_r;
 
-  host_debug_l_v <= host_debug_l_v && !wrapper_status_ready;
-  host_debug_h_v <= host_debug_h_v && !wrapper_status_ready;
+always @ (posedge clk) begin
+  core_poke_r  <= 1'b0;
+  core_evict_r <= 1'b0;
+
+  host_debug_l_v <= host_debug_l_v && int_valid;
+  host_debug_h_v <= host_debug_h_v && (int_valid || host_debug_l_v);
 
   if (ctrl_s_axis_tvalid_r)
     case(ctrl_cmd) // We always accept commands with 1 in MSB
@@ -234,8 +238,6 @@ always @ (posedge clk) begin
 end
 
 assign core_reset = core_reset_r;
-assign poke_int   = core_poke_r;
-assign evict_int  = core_evict_r;
 
 // It can become blocking for interrupt messages, but anyways it can
 // become blocking in the switch if there are 2 messages for the FIFO
@@ -275,54 +277,101 @@ wire [24:0]           slot_wr_addr = {~core_status_data[31], core_status_data[23
 reg [31:0] core_stat_reg, core_debug_l, core_debug_h;
 
 always @ (posedge clk) begin
-  if (core_status_valid)
-    case (core_status_addr)
-      2'b00: core_stat_reg <= core_status_data;
-      2'b01:
-        if (slot_for_hdr)
-          slot_hdr_addr_msb_lut[slot_wr_ptr] <= slot_wr_addr[24:HDR_ADDR_BITS];
-        //else if (slot_for_desc)
-        //  slot_desc_addr_lut[slot_wr_ptr]    <= slot_wr_addr[23:0];
-        else
-          slot_addr_lut        [slot_wr_ptr] <= slot_wr_addr;
-      2'b10: core_debug_l <= core_status_data;
-      2'b11: core_debug_h <= core_status_data;
-    endcase
+  case (core_status_addr)
+    2'b00: core_stat_reg <= core_status_data;
+    2'b01:
+      if (slot_for_hdr)
+        slot_hdr_addr_msb_lut[slot_wr_ptr] <= slot_wr_addr[24:HDR_ADDR_BITS];
+      //else if (slot_for_desc)
+      //  slot_desc_addr_lut[slot_wr_ptr]    <= slot_wr_addr[23:0];
+      else
+        slot_addr_lut        [slot_wr_ptr] <= slot_wr_addr;
+    2'b10: core_debug_l <= core_status_data;
+    2'b11: core_debug_h <= core_status_data;
+  endcase
+
   if (rst_r)
     core_stat_reg <= 32'd0;
 end
 
-assign core_status_ready = 1'b1;
-
 /////////////////////////////////////////////////////////////////////
 ///////////////////// GENERATE WRAPPER STATUS ///////////////////////
 /////////////////////////////////////////////////////////////////////
-
 wire [31:0] slots_status;
 wire [7:0]  max_slot_count = SLOT_COUNT;
 wire [15:0] bc_region_size = BC_REGION_SIZE;
 
+reg [4:0] recv_dram_tag_r;
+
+reg [1:0] wrapper_status_state;
+localparam INFO     = 2'b00;
+localparam TIMER_L  = 2'b01;
+localparam TIMER_H  = 2'b10;
+localparam DEFAULT  = 2'b11;
+
+wire [31:0] ints_status = {10'd0, recv_dram_tag_v_r, dupl_slot_int_r,
+                           inv_slot_int_r, inv_desc_int_r, core_poke_r,
+                           core_evict_r, 11'd0, recv_dram_tag_r};
+
+localparam SD_ITEM_WIDTH   = $clog2(SEND_DESC_DEPTH)+1;
+localparam DRAM_ITEM_WIDTH = $clog2(DRAM_DESC_DEPTH)+1;
+localparam MSG_ITEM_WIDTH  = $clog2(MSG_FIFO_DEPTH)+1;
+
+wire [SD_ITEM_WIDTH-1:0]   send_data_items;
+wire [DRAM_ITEM_WIDTH-1:0] dram_send_items;
+wire [DRAM_ITEM_WIDTH-1:0] dram_req_items;
+wire [MSG_ITEM_WIDTH-1:0]  core_msg_items;
+
+wire [31:0] fifo_occupancy = {{(8-MSG_ITEM_WIDTH){1'b0}},  core_msg_items,
+                              {(8-DRAM_ITEM_WIDTH){1'b0}}, dram_req_items,
+                              {(8-DRAM_ITEM_WIDTH){1'b0}}, dram_send_items,
+                              {(8-SD_ITEM_WIDTH){1'b0}},   send_data_items};
+
+// data for next state is loaded to be registered
+// There are 3 initial steps after reset and then
+// stays in default state, sending 4 type of statuses
+// with different priorities
 always @ (posedge clk) begin
-  if (core_reset) begin
+  case (wrapper_status_state)
+    INFO: begin
+      wrapper_status_state <= TIMER_L;
+      wrapper_status_addr  <= 3'b001;
+      wrapper_status_data  <= timer[31:0];
+    end
+    TIMER_L: begin
+      wrapper_status_state <= TIMER_H;
+      wrapper_status_addr  <= 3'b010;
+      wrapper_status_data  <= timer[63:32];
+    end
+    TIMER_H: begin
+      wrapper_status_state <= DEFAULT;
+      wrapper_status_addr  <= 3'b011;
+      wrapper_status_data  <= ints_status;
+    end
+    DEFAULT: begin
+      wrapper_status_state <= DEFAULT;
+      if (int_valid) begin
+        wrapper_status_data  <= ints_status;
+        wrapper_status_addr  <= 3'b011;
+      end else if (host_debug_l_v) begin
+        wrapper_status_data  <= host_debug_l;
+        wrapper_status_addr  <= 3'b100;
+      end else if (host_debug_h_v) begin
+        wrapper_status_data  <= host_debug_h;
+        wrapper_status_addr  <= 3'b101;
+      end else begin
+        wrapper_status_data  <= ints_status;
+        wrapper_status_addr  <= 3'b110;
+      end
+    end
+  endcase
+
+  if (rst || core_reset) begin
+    wrapper_status_state <= INFO;
+    wrapper_status_addr  <= 3'b000;
     wrapper_status_data  <= {{(8-CORE_ID_WIDTH){1'b0}}, core_id,
                              max_slot_count, bc_region_size};
-    wrapper_status_addr  <= 2'd0;
-    wrapper_status_valid <= 1'b1;
-  end else if (host_debug_l_v) begin
-    wrapper_status_data  <= host_debug_l;
-    wrapper_status_addr  <= 2'd2;
-    wrapper_status_valid <= 1'b1;
-  end else if (host_debug_h_v) begin
-    wrapper_status_data  <= host_debug_h;
-    wrapper_status_addr  <= 2'd3;
-    wrapper_status_valid <= 1'b1;
-  end else begin
-    wrapper_status_data  <= slots_status;
-    wrapper_status_addr  <= 2'd1;
-    wrapper_status_valid <= 1'b1;
   end
-  if (rst_r)
-    wrapper_status_valid <= 1'b0;
 end
 
 /////////////////////////////////////////////////////////////////////
@@ -668,10 +717,7 @@ simple_sync_fifo # (
   .dout_ready(in_desc_ready_n)
 );
 
-wire       recv_dram_tag_fifo_ready;
-
-reg [4:0] recv_dram_tag_r;
-reg       recv_dram_tag_v_r;
+wire       recv_dram_tag_fifo_ready = 1'b1;
 
 always @ (posedge clk) begin
   recv_dram_tag_r     <= recv_desc_tdest[4:0];
@@ -679,10 +725,6 @@ always @ (posedge clk) begin
   if (rst_r)
     recv_dram_tag_v_r <= 1'b0;
 end
-
-assign recv_dram_tag_valid      = recv_dram_tag_v_r;
-assign recv_dram_tag            = recv_dram_tag_r;
-assign recv_dram_tag_fifo_ready = 1'b1;
 
 assign recv_desc_ready = (recv_desc_fifo_ready && (!recv_from_dram))  ||
                          (recv_from_dram && recv_dram_tag_fifo_ready) ||
@@ -712,7 +754,7 @@ simple_fifo # (
 ) send_data_fifo (
   .clk(clk),
   .rst(rst_r),
-  .clear(out_desc_err),
+  .clear(core_reset),
 
   .din_valid(out_desc_valid && core_data_wr),
   .din(out_desc),
@@ -720,7 +762,9 @@ simple_fifo # (
 
   .dout_valid(core_data_wr_valid_f),
   .dout(core_data_wr_desc_f),
-  .dout_ready(core_data_wr_ready_f)
+  .dout_ready(core_data_wr_ready_f),
+
+  .item_count(send_data_items)
 );
 
 // A desc FIFO for msgs to scheduler
@@ -735,7 +779,7 @@ simple_fifo # (
 ) send_ctrl_fifo (
   .clk(clk),
   .rst(rst_r),
-  .clear(out_desc_err),
+  .clear(core_reset),
 
   .din_valid(out_desc_valid && core_ctrl_wr),
   .din(out_desc),
@@ -768,7 +812,7 @@ simple_fifo # (
 ) dram_send_fifo (
   .clk(clk),
   .rst(rst_r),
-  .clear(1'b0),
+  .clear(core_reset),
 
   .din_valid(out_desc_valid && core_dram_wr),
   .din({out_desc_dram_addr, out_desc[63:24+PORT_WIDTH],
@@ -777,7 +821,9 @@ simple_fifo # (
 
   .dout_valid(core_dram_wr_valid_f),
   .dout(core_dram_wr_desc_f),
-  .dout_ready(core_dram_wr_ready_f)
+  .dout_ready(core_dram_wr_ready_f),
+
+  .item_count(dram_send_items)
 );
 
 // A desc FIFO for dram read msgs
@@ -791,8 +837,8 @@ simple_fifo # (
 ) send_dram_ctrl_fifo (
   .clk(clk),
   // After core reset no need to get the DRAM data anymore
-  .rst(rst_r || core_reset_r),
-  .clear(1'b0),
+  .rst(rst_r),
+  .clear(core_reset_r),
 
   .din_valid(out_desc_valid && core_dram_rd),
   .din({out_desc_dram_addr, out_desc}),
@@ -800,13 +846,16 @@ simple_fifo # (
 
   .dout_valid(core_dram_rd_valid_f),
   .dout(core_dram_rd_desc_f),
-  .dout_ready(core_dram_rd_ready_f)
+  .dout_ready(core_dram_rd_ready_f),
+
+  .item_count(dram_req_items)
 );
 
 assign out_desc_ready = (core_data_wr_ready && core_data_wr) ||
-                         (core_ctrl_wr_ready && core_ctrl_wr) ||
-                         (core_dram_wr_ready && core_dram_wr) ||
-                         (core_dram_rd_ready && core_dram_rd);
+                        (core_ctrl_wr_ready && core_ctrl_wr) ||
+                        (core_dram_wr_ready && core_dram_wr) ||
+                        (core_dram_rd_ready && core_dram_rd) ||
+                        (out_desc_type > 4'd5); //Ignore msg
 
 /////////////////////////////////////////////////////////////////////
 ////////////////// INCOMING CTRL DESCRIPTOR FIFO ////////////////////
@@ -831,7 +880,7 @@ simple_fifo # (
 ) recvd_ctrl_fifo (
   .clk(clk),
   .rst(rst_r),
-  .clear(1'b0),
+  .clear(1'b0), // core reset itself comes on this channel
 
   .din_valid(ctrl_s_axis_tvalid_r && ctrl_desc_cmd),
   .din(parsed_ctrl_desc),
@@ -850,7 +899,7 @@ wire pkt_sent_ready; // should always be ready
 (* KEEP = "TRUE" *) reg [63:0] latched_send_desc;
 
 always @ (posedge clk)
-    if (send_desc_valid && send_desc_ready && pkt_sent_ready)
+    if (send_desc_valid && send_desc_ready)
         latched_send_desc <= send_desc;
 
 wire pkt_sent_is_dram = (latched_send_desc[PORT_WIDTH+23:24]==dram_port);
@@ -865,7 +914,7 @@ simple_fifo # (
 ) pkt_sent_fifo (
   .clk(clk),
   .rst(rst_r),
-  .clear(1'b0),
+  .clear(core_reset_r), // can be 1'b0
 
   .din_valid(pkt_sent && (!pkt_sent_is_dram)),
   .din(latched_send_desc),
@@ -1028,10 +1077,10 @@ always @ (*)
   else
     dram_out_select = dram_next_selection_r;
 
-assign dram_wr_ready   = dram_wr_valid && dram_out_select && send_desc_ready && pkt_sent_ready;
+assign dram_wr_ready   = dram_wr_valid && dram_out_select && send_desc_ready;
 assign send_pkt_ready  = send_pkt_valid && !dram_out_select && send_desc_ready && pkt_sent_ready;
 assign send_desc       = dram_out_select ? dram_wr_desc[63:0] : send_pkt_desc;
-assign send_desc_valid = (dram_wr_valid || send_pkt_valid) && pkt_sent_ready;
+assign send_desc_valid = dram_wr_valid || (send_pkt_valid && pkt_sent_ready);
 
 // CTRL out arbiter between packet sent and core message to scheduler
 // Priority to releasing a desc
@@ -1085,7 +1134,7 @@ simple_fifo # (
 ) core_msg_out_fifo (
   .clk(clk),
   .rst(rst_r),
-  .clear(1'b0),
+  .clear(core_reset_r),
 
   .din_valid(bc_msg_out_valid),
   .din(bc_msg_out),
@@ -1093,7 +1142,9 @@ simple_fifo # (
 
   .dout_valid(core_msg_out_valid),
   .dout(core_msg_out),
-  .dout_ready(core_msg_out_ready)
+  .dout_ready(core_msg_out_ready),
+
+  .item_count(core_msg_items)
 );
 
 ///////////////////////////////////////////////////////////////////////////
@@ -1136,7 +1187,7 @@ always @ (posedge clk) begin
   if (done_w_slot_r)
     slots_to_send[out_desc_slot_r] <= 1'b1;
 
-  if (rst_r || core_reset) begin
+  if (rst_r || core_reset_r) begin
     slots_in_prog <= {SLOT_COUNT{1'b0}};
     slots_to_send <= {SLOT_COUNT{1'b0}};
   end
@@ -1149,17 +1200,23 @@ reg in_desc_drop;
 
 always @ (posedge clk) begin
   // Drop on the fly packet if slot is already in the wrapper
-  in_desc_drop  <= 1'b0;
+  in_desc_drop    <= 1'b0;
+  // Single cycle interrupts to the core
+  dupl_slot_int_r <= 1'b0;
+  inv_slot_int_r  <= 1'b0;
+
   if (in_desc_valid_n && in_desc_ready_n &&
                 (slots_to_send[in_desc_slot_n] ||
                  slots_in_prog[in_desc_slot_n])) begin
     override_in_slot_err [in_desc_slot_n] <= 1'b1;
     in_desc_drop                          <= 1'b1;
+    dupl_slot_int_r                       <= 1'b1;
   end
 
   if (done_w_slot_r && (out_desc_slot_r!=0) && !slots_in_prog[out_desc_slot_r]) begin
     invalid_out_slot_err [out_desc_slot_r] <= 1'b1;
     out_desc_err                           <= 1'b1;
+    inv_slot_int_r                         <= 1'b1;
   end
 
   if (done_w_slot_r && (out_desc_slot_r!=0) && slots_to_send[out_desc_slot_r]) begin
@@ -1167,21 +1224,27 @@ always @ (posedge clk) begin
     out_desc_err                           <= 1'b1;
   end
 
-  if (rst_r || core_reset) begin
+  if (rst_r || core_reset_r) begin
     override_in_slot_err  <= {SLOT_COUNT{1'b0}};
     override_out_slot_err <= {SLOT_COUNT{1'b0}};
     invalid_out_slot_err  <= {SLOT_COUNT{1'b0}};
     in_desc_drop          <= 1'b0;
     out_desc_err          <= 1'b0;
+    dupl_slot_int_r       <= 1'b0;
+    inv_slot_int_r        <= 1'b0;
   end
 end
 
 reg invalid_out_desc;
-always @ (posedge clk)
-  if (rst_r || core_reset)
+always @ (posedge clk) begin
+  inv_desc_int_r <= 1'b0;
+  if (rst_r || core_reset_r)
     invalid_out_desc <= 1'b0;
-  else if ((out_desc_type>4'd5) && out_desc_valid)
+  else if ((out_desc_type>4'd5) && out_desc_valid) begin
     invalid_out_desc <= 1'b1;
+    inv_desc_int_r <= 1'b1; // single cycle signal
+  end
+end
 
 // One pipeline register to handle in_desc drop
 reg         in_desc_valid_r;
