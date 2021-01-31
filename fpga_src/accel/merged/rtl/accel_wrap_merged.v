@@ -200,6 +200,7 @@ accel_rd_dma_sp # (
   .ACCEL_COUNT(ACCEL_COUNT),
   .DEST_WIDTH(DEST_WIDTH),
   .LEN_WIDTH(LEN_WIDTH),
+  .MEM_LINES(SLOW_M_B_LINES),
   .FIFO_LINES(32)
 ) accel_dma_engine (
   .clk(clk),
