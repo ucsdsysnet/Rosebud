@@ -61,7 +61,7 @@ scapy.config.conf.noenum.add(TCP.sport, TCP.dport, UDP.sport, UDP.dport)
 
 FIRMWARE = os.path.abspath(os.path.join(os.path.dirname(__file__),
     '..', '..', 'accel', 'full_ids', 'c', 'full_ids.elf'))
-  # '..', '..', '..', '..', '..', 'c_code', 'basic_fw2.elf'))
+  # '..', '..', '..', '..', '..', 'c_code', 'basic_fw.elf'))
 
 SEND_COUNT_0 = 1024
 SIZE_0 = [66-54, 1500-54, 66-54, 66-54, 1500-54, 1500-54, 66-54]

@@ -1,3 +1,0 @@
-empty_dmem.bin 0x00800000
-empty_pmem.bin 0x01000000
-reg_test2_data.bin 0x00800000

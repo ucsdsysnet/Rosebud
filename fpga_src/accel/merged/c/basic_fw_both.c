@@ -152,7 +152,7 @@ int main(void)
       read_in_pkt(&desc);
 
       // compute index
-			index = desc.tag-1;
+      index = desc.tag-1;
 
       // copy descriptor into context
       context[index].desc = desc;

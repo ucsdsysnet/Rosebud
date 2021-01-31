@@ -1,26 +1,24 @@
 #include "core.h"
+
 struct Desc packet;
 
 int main(void){
 
-	// Do this at the beginnig, so scheduler can fill the slots while 
-	// initializing other things.
-	init_hdr_slots(4, 0x5C00, 128);
-	init_slots(8, 0x000A, 2048);
-	
-	while (1){
-		if (in_pkt_ready()){
-	 		
-			read_in_pkt(&packet);
+  // Do this at the beginnig, so scheduler can fill the slots while
+  // initializing other things.
+  init_hdr_slots(16, 0x804000, 128);
+  init_slots(16, 0x000000, 16384);
+  set_masks(0xD0); //enable evict
 
-			if (packet.port==0)
-				packet.port = 1;
-			else
-				packet.port = 0;
-			
-			pkt_done_msg(&packet);
-  	}
+  while (1){
+    if (in_pkt_ready()){
+      SEND_DESC = RECV_DESC;
+      asm volatile("" ::: "memory");
+      RECV_DESC_RELEASE = 1;
+      asm volatile("" ::: "memory");
+      SEND_DESC_TYPE = 0;
+    }
   }
-  
+
   return 1;
 }
