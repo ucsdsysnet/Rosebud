@@ -68,6 +68,7 @@ DROP_TEST    = True
 TEST_SFP     = True
 TEST_PCIE    = True
 TEST_DEBUG   = True
+TEST_RELOAD  = True
 PRINT_PKTS   = True
 
 PACKETS = []
@@ -196,6 +197,10 @@ async def run_test_nic(dut):
             await tb.qsfp1_source.wait()
 
     await Timer(5000, 'ns')
+
+    if (TEST_RELOAD):
+        tb.log.info("Firmware reload")
+        await tb.load_firmware(FIRMWARE)
 
     tb.log.info("Reset single cores 4 to 11")
     for k in range(4, 12):
