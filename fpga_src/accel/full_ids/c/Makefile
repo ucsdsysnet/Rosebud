@@ -6,8 +6,8 @@ ABI = ilp32
 
 # Toolchain options
 # CROSS_COMPILE = riscv32-unknown-elf-
-# CROSS_COMPILE = riscv64-unknown-elf-
-CROSS_COMPILE = riscv64-elf-
+CROSS_COMPILE = riscv64-unknown-elf-
+# CROSS_COMPILE = riscv64-elf-
 
 # Preprocessor defines
 DEFINES = 
