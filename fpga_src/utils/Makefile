@@ -18,29 +18,39 @@ endif
 
 DMAP=0
 
-CC=gcc
-CFLAGS=-O3 -Wall -I../driver/mqnic -I./mcap
+PREFIX = /usr/local
+BINDIR = $(DESTDIR)$(PREFIX)/bin
+
+CC = gcc
+CFLAGS = -O3 -Wall -I../driver/mqnic -I./mcap
 
 MCAPLIB = mcap/libmcap.a
 
 BIN=dump perf rvfw pr_reload
+
+GENDEPFLAGS = -MD -MP -MF .$(@F).d
+
+ALL_CFLAGS = $(CFLAGS) $(GENDEPFLAGS)
 
 all: $(BIN)
 
 $(MCAPLIB):
 	$(MAKE) -C mcap libmcap.a
 
-dump: dump.c mqnic.c gousheh.c
-	$(CC) $(CFLAGS) $^ -o $@
+%.o: %.c
+	$(CC) $(ALL_CFLAGS) -c -o $@ $<
 
-perf: perf.c mqnic.c timespec.c gousheh.c
-	$(CC) $(CFLAGS) $^ -o $@
+dump: dump.o mqnic.o gousheh.o
+	$(CC) $(ALL_CFLAGS) $^ -o $@
 
-rvfw: rvfw.c mqnic.c gousheh.c
-	$(CC) $(CFLAGS) $^ -o $@
+perf: perf.o mqnic.o timespec.o gousheh.o
+	$(CC) $(ALL_CFLAGS) $^ -o $@
 
-pr_reload: pr_reload.c mqnic.c gousheh.c $(MCAPLIB)
-	$(CC) $(CFLAGS) $^ $(MCAPLIB) -ludev -lpci -lz -o $@
+rvfw: rvfw.o mqnic.o gousheh.o
+	$(CC) $(ALL_CFLAGS) $^ -o $@
+
+pr_reload: pr_reload.o mqnic.o gousheh.o $(MCAPLIB)
+	$(CC) $(ALL_CFLAGS) $^ $(MCAPLIB) -ludev -lpci -lz -o $@
 
 install:
 	install -d $(BINDIR)
@@ -49,6 +59,12 @@ install:
 clean:
 	$(MAKE) -C mcap clean
 	rm -f $(BIN)
+	rm -f *.o
+	rm -f .*.d
+
+-include $(wildcard .*.d)
+
+.PHONY: all install clean
 
 do:
 	make -C ../../c_code/ NAME=$(TEST)
