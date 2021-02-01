@@ -72,13 +72,13 @@ module Gousheh_wrapper # (
 
     // ------------ DRAM RD REQ CHANNEL ------------- //
     // Incoming DRAM request
-    input  wire [63:0]              dram_s_axis_tdata,
+    input  wire [31:0]              dram_s_axis_tdata,
     input  wire                     dram_s_axis_tvalid,
     output wire                     dram_s_axis_tready,
     input  wire                     dram_s_axis_tlast,
 
     // Outgoing DRAM request
-    output wire [63:0]              dram_m_axis_tdata,
+    output wire [31:0]              dram_m_axis_tdata,
     output wire                     dram_m_axis_tvalid,
     input  wire                     dram_m_axis_tready,
     output wire                     dram_m_axis_tlast,
@@ -180,14 +180,6 @@ always @ (posedge clk) begin
 end
 
 wire [3:0]  ctrl_cmd = ctrl_s_axis_tdata_r[35:32];
-
-// Globally synced timer
-reg [63:0] timer;
-always @ (posedge clk)
-  if (rst_r)
-    timer <= 64'd0;
-  else
-    timer <= timer + 64'd1;
 
 // Interrupts
 reg core_reset_r;
@@ -326,12 +318,22 @@ wire [31:0] fifo_occupancy = {{(8-MSG_ITEM_WIDTH){1'b0}},  core_msg_items,
                               {(8-DRAM_ITEM_WIDTH){1'b0}}, dram_req_items,
                               {(8-DRAM_ITEM_WIDTH){1'b0}}, dram_send_items,
                               {(8-SD_ITEM_WIDTH){1'b0}},   send_data_items};
+// Globally synced timer
+reg [63:0] timer;
+reg [31:0] timer_h_r; // To avoid overflow corruption
+always @ (posedge clk)
+  if (rst_r)
+    timer <= 64'd0;
+  else
+    timer <= timer + 64'd1;
 
 // data for next state is loaded to be registered
 // There are 3 initial steps after reset and then
 // stays in default state, sending 4 type of statuses
 // with different priorities
 always @ (posedge clk) begin
+  timer_h_r <= timer[63:32];
+
   case (wrapper_status_state)
     INFO: begin
       wrapper_status_state <= TIMER_L;
@@ -341,7 +343,7 @@ always @ (posedge clk) begin
     TIMER_L: begin
       wrapper_status_state <= TIMER_H;
       wrapper_status_addr  <= 3'b010;
-      wrapper_status_data  <= timer[63:32];
+      wrapper_status_data  <= timer_h_r;
     end
     TIMER_H: begin
       wrapper_status_state <= DEFAULT;
@@ -928,7 +930,7 @@ simple_fifo # (
 /////////////////////////////////////////////////////////////////////
 reg        dram_req_valid;
 wire       dram_req_ready;
-reg [63:0] dram_req_high, dram_req_low;
+reg [31:0] dram_req_3, dram_req_2, dram_req_1, dram_req_0;
 
 // A desc FIFO for send dram based on dram read message
 wire dram_in_valid, dram_in_ready;
@@ -943,7 +945,7 @@ simple_fifo # (
   .clear(1'b0),
 
   .din_valid(dram_req_valid),
-  .din({dram_req_high, dram_req_low}),
+  .din({dram_req_3, dram_req_2, dram_req_1, dram_req_0}),
   .din_ready(dram_req_ready),
 
   .dout_valid(dram_in_valid),
@@ -956,55 +958,105 @@ simple_fifo # (
 /////////////////////////////////////////////////////////////////////
 
 // For DRAM descriptor the first word is descriptor followed by DRAM address
+reg [2:0] dram_req_state;  // 0 to 3 for each 32-bit word, 4 for error
 
 // Incoming dram desc
 always @ (posedge clk) begin
-  if (dram_s_axis_tvalid && dram_req_ready)
-    if (dram_s_axis_tlast) begin
-      dram_req_high  <= dram_s_axis_tdata;
-      dram_req_valid <= 1'b1;
-    end else begin
-      // Overriding dram port and setting the tag to 0
-      dram_req_low   <= {dram_s_axis_tdata[63:24+PORT_WIDTH],
-                         dram_port, 8'd0, dram_s_axis_tdata[15:0]};
-      dram_req_valid <= 1'b0;
-    end
-  else
-      dram_req_valid <= 1'b0;
+  dram_req_valid <= 1'b0;
 
-  if (rst_r)
-      dram_req_valid <= 1'b0;
+  if (dram_s_axis_tvalid && dram_req_ready)
+    if (dram_s_axis_tlast)
+      case (dram_req_state)
+        3'd0: begin
+          dram_req_state <= 3'd4;
+        end
+        3'd1: begin
+          dram_req_state <= 3'd4;
+        end
+        3'd2: begin
+          dram_req_state <= 3'd4;
+        end
+        3'd3: begin
+          dram_req_3     <= dram_s_axis_tdata;
+          dram_req_valid <= 1'b1;
+          dram_req_state <= 3'd0;
+        end
+        3'd4: begin
+          dram_req_state <= 3'd0; // Ignored the bad req
+        end
+        default: begin end
+      endcase
+    else
+      case (dram_req_state)
+        3'd0: begin
+          // Overriding dram port and setting the tag to 0
+          dram_req_0     <= {{(8-PORT_WIDTH){1'b0}}, dram_port,
+                             8'd0, dram_s_axis_tdata[15:0]};
+          dram_req_state <= 3'd1;
+        end
+        3'd1: begin
+          dram_req_1     <= dram_s_axis_tdata;
+          dram_req_state <= 3'd2;
+        end
+        3'd2: begin
+          dram_req_2     <= dram_s_axis_tdata;
+          dram_req_state <= 3'd3;
+        end
+        3'd3: begin
+          dram_req_state <= 3'd4;
+        end
+        3'd4: begin
+          dram_req_state <= 3'd4; // Stay in error state until tlast
+        end
+        default: begin end
+      endcase
+
+  if (rst_r) begin
+    dram_req_valid <= 1'b0;
+    dram_req_state <= 3'd0;
+  end
 end
 
 assign dram_s_axis_tready = dram_req_ready;
 
 // Outgoing dram desc
-wire [63:0] dram_m_axis_tdata_n;
+reg  [31:0] dram_m_axis_tdata_n;
 wire        dram_m_axis_tvalid_n;
 wire        dram_m_axis_tready_n;
 wire        dram_m_axis_tlast_n;
-reg [1:0]   send_dram_rd_state;
+reg  [2:0]  send_dram_rd_state; // 0 is idle, 1-2-3-4 each part
 
-always @ (posedge clk)
-  if (rst_r)
-    send_dram_rd_state <= 2'd0;
-  else if (core_dram_rd_valid_f)
+always @ (posedge clk) begin
+  if (core_dram_rd_valid_f)
     case (send_dram_rd_state)
-      2'd0: send_dram_rd_state <= 2'd1;
-      2'd1: if (dram_m_axis_tready_n) send_dram_rd_state <= 2'd2;
-      2'd2: if (dram_m_axis_tready_n) send_dram_rd_state <= 2'd0;
-      2'd3: send_dram_rd_state <= 2'd3; // Error
+      3'd0: send_dram_rd_state <= 3'd1;
+      3'd1: if (dram_m_axis_tready_n) send_dram_rd_state <= 3'd2;
+      3'd2: if (dram_m_axis_tready_n) send_dram_rd_state <= 3'd3;
+      3'd3: if (dram_m_axis_tready_n) send_dram_rd_state <= 3'd4;
+      3'd4: if (dram_m_axis_tready_n) send_dram_rd_state <= 3'd0;
+      default: send_dram_rd_state <= 3'd0; // Should not happen
     endcase
 
-assign dram_m_axis_tvalid_n = (send_dram_rd_state != 2'd0);
-assign dram_m_axis_tdata_n  = (send_dram_rd_state == 2'd2) ? core_dram_rd_desc_f[127:64]
-                                                           : core_dram_rd_desc_f[63:0];
-assign dram_m_axis_tlast_n  = (send_dram_rd_state == 2'd2);
-assign core_dram_rd_ready_f = (send_dram_rd_state == 2'd2) && dram_m_axis_tready_n;
+  if (rst_r)
+    send_dram_rd_state <= 3'd0;
+end
+
+always @ (*)
+  case (send_dram_rd_state)
+    3'd1:    dram_m_axis_tdata_n = core_dram_rd_desc_f[31:0];
+    3'd2:    dram_m_axis_tdata_n = core_dram_rd_desc_f[63:32];
+    3'd3:    dram_m_axis_tdata_n = core_dram_rd_desc_f[95:64];
+    3'd4:    dram_m_axis_tdata_n = core_dram_rd_desc_f[127:96];
+    default: dram_m_axis_tdata_n = core_dram_rd_desc_f[31:0];
+  endcase
+
+assign dram_m_axis_tvalid_n = (send_dram_rd_state != 3'd0);
+assign dram_m_axis_tlast_n  = (send_dram_rd_state == 3'd4);
+assign core_dram_rd_ready_f = (send_dram_rd_state == 3'd4) && dram_m_axis_tready_n;
 
 // register output dram data
 axis_register # (
-    .DATA_WIDTH(64),
+    .DATA_WIDTH(32),
     .KEEP_ENABLE(0),
     .LAST_ENABLE(1),
     .ID_ENABLE(0),
@@ -1016,7 +1068,7 @@ axis_register # (
     .rst(rst_r),
     // AXI input
     .s_axis_tdata (dram_m_axis_tdata_n),
-    .s_axis_tkeep (8'd0),
+    .s_axis_tkeep (4'd0),
     .s_axis_tvalid(dram_m_axis_tvalid_n),
     .s_axis_tready(dram_m_axis_tready_n),
     .s_axis_tlast (dram_m_axis_tlast_n),
@@ -1056,7 +1108,7 @@ assign dram_wr_valid = core_dram_wr_valid_f || dram_in_valid;
 assign dram_wr_desc  = dram_select ? core_dram_wr_desc_f : dram_in_desc;
 
 assign core_dram_wr_ready_f =   dram_select  && core_dram_wr_valid_f && dram_wr_ready;
-assign dram_in_ready       = (!dram_select) && dram_in_valid && dram_wr_ready;
+assign dram_in_ready        = (!dram_select) && dram_in_valid && dram_wr_ready;
 
 // Arbiter between packets and DRAM out data, round robin
 reg dram_next_selection_r;
