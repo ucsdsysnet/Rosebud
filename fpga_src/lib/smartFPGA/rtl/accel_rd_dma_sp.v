@@ -348,6 +348,7 @@ endmodule
 module accel_width_conv # (
   parameter DATA_IN_WIDTH  = 128,
   parameter DATA_OUT_WIDTH = 8,
+  parameter STRB_OUT_WIDTH = DATA_OUT_WIDTH/8,
   // TUSER is offset of last valid byte
   parameter USER_WIDTH     = $clog2(DATA_IN_WIDTH/8)
 ) (
@@ -363,6 +364,7 @@ module accel_width_conv # (
 
   // Read data output
   output reg  [DATA_OUT_WIDTH-1:0] m_axis_tdata,
+  output reg  [STRB_OUT_WIDTH-1:0] m_axis_tkeep,
   output reg                       m_axis_tlast,
   output reg                       m_axis_tvalid,
   input  wire                      m_axis_tready
@@ -371,13 +373,19 @@ module accel_width_conv # (
     localparam SKIP_BITS = $clog2(DATA_OUT_WIDTH/8);
     localparam PTR_WIDTH = USER_WIDTH-SKIP_BITS;
 
-    reg [PTR_WIDTH-1:0] rd_ptr;
+    reg  [PTR_WIDTH-1:0]      rd_ptr;
+    wire [STRB_OUT_WIDTH-1:0] strobe;
+
+    // Detecting last chunk and setting strobe
+    wire last_chunk = (rd_ptr==s_axis_tuser[USER_WIDTH-1:SKIP_BITS]);
+    if (SKIP_BITS==0)
+      assign strobe = 1'b1;
+    else
+      assign strobe = ~({{STRB_OUT_WIDTH-1{1'b1}},1'b0} << s_axis_tuser[SKIP_BITS-1:0]);
 
     // out_ready works with accel always asserting tready or
     // accepting tvalid in same cycle
     wire out_ready  = !m_axis_tvalid || m_axis_tready;
-    wire last_chunk = (rd_ptr==s_axis_tuser[USER_WIDTH-1:SKIP_BITS]);
-
     assign s_axis_tready = out_ready && last_chunk;
 
     always @ (posedge clk) begin
@@ -401,6 +409,8 @@ module accel_width_conv # (
     // Register the outputs
     always @ (posedge clk) begin
       m_axis_tdata   <= s_axis_tdata[rd_ptr*DATA_OUT_WIDTH+:DATA_OUT_WIDTH];
+      m_axis_tkeep   <= (s_axis_tlast && last_chunk) ?
+                         strobe : {STRB_OUT_WIDTH{1'b1}};
       m_axis_tlast   <= s_axis_tlast && last_chunk;
       m_axis_tvalid  <= s_axis_tvalid;
     end

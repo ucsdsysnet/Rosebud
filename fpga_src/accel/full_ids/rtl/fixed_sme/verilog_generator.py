@@ -20,7 +20,7 @@ def content_len(content):
     else:
       if (byte_mode==0):
         count += 1
-      else: 
+      else:
         if (c==' '):
           count += 1
   return count
@@ -37,20 +37,20 @@ def content_conv(content, nocase, offset):
       if (byte_mode==0):
         byte_mode = 1
       else:
-        res.append(("(s_axis_tdata[8*"+str(loc%line_size)+"+:8] == 8'h"+temp+")",loc))
+        res.append(("((s_axis_tdata[8*"+str(loc%line_size)+"+:8] == 8'h"+temp+") && s_axis_tkeep["+str(loc%line_size)+"])",loc))
         loc += 1
         temp = ""
         byte_mode = 0
     else:
       if (byte_mode==0):
         if (nocase==True):
-          res.append(("((s_axis_tdata[8*"+str(loc%line_size)+"+:8] == 8'd"+str(ord(c.lower()))+")||(s_axis_tdata[8*"+str(loc%line_size)+"+:8] == 8'd"+str(ord(c.upper()))+"))",loc))
+          res.append(("(((s_axis_tdata[8*"+str(loc%line_size)+"+:8] == 8'd"+str(ord(c.lower()))+")||(s_axis_tdata[8*"+str(loc%line_size)+"+:8] == 8'd"+str(ord(c.upper()))+")) && s_axis_tkeep["+str(loc%line_size)+"])",loc))
         else:
-          res.append(("(s_axis_tdata[8*"+str(loc%line_size)+"+:8] == 8'd"+str(ord(c))+")",loc))
+          res.append(("((s_axis_tdata[8*"+str(loc%line_size)+"+:8] == 8'd"+str(ord(c))+") && s_axis_tkeep["+str(loc%line_size)+"])",loc))
         loc += 1
-      else: 
+      else:
         if (c==' '):
-          res.append(("(s_axis_tdata[8*"+str(loc%line_size)+"+:8] == 8'h"+temp+")",loc))
+          res.append(("((s_axis_tdata[8*"+str(loc%line_size)+"+:8] == 8'h"+temp+") && s_axis_tkeep["+str(loc%line_size)+"])",loc))
           loc += 1
           temp = ""
         else:
@@ -72,16 +72,16 @@ def byte_conv(rule, offset):
     loc = int(off)+offset
   else:
     loc = int(off)
- 
+
   if op in bit_ops:
     if op[0]=="!":
-      res = res + "((s_axis_tdata[8*"+str(loc%line_size)+"+:8*"+num+"] "+op[1]+" "+val+") == 0)"
+      res = res + "(((s_axis_tdata[8*"+str(loc%line_size)+"+:8*"+num+"] "+op[1]+" "+val+") == 0) && s_axis_tkeep["+str(loc%line_size)+"])"
     else:
-      res = res + "((s_axis_tdata[8*"+str(loc%line_size)+"+:8*"+num+"] "+op[0]+" "+val+") != 0)"
+      res = res + "(((s_axis_tdata[8*"+str(loc%line_size)+"+:8*"+num+"] "+op[0]+" "+val+") != 0) && s_axis_tkeep["+str(loc%line_size)+"])"
   elif op=="=":
-    res = res + "(s_axis_tdata[8*"+str(loc%line_size)+"+:8*"+num+"] == "+val+")"
+    res = res + "((s_axis_tdata[8*"+str(loc%line_size)+"+:8*"+num+"] == "+val+") && s_axis_tkeep["+str(loc%line_size)+"])"
   else:
-    res = res + "(s_axis_tdata[8*"+str(loc%line_size)+"+:8*"+num+"] "+op+" "+val+")"
+    res = res + "((s_axis_tdata[8*"+str(loc%line_size)+"+:8*"+num+"] "+op+" "+val+") && s_axis_tkeep["+str(loc%line_size)+"])"
 
   start_line = int(loc/line_size)
   if ((loc+int(num))%line_size==0):
@@ -89,7 +89,7 @@ def byte_conv(rule, offset):
   else:
     end_line = int((loc+int(num))/line_size)
 
-  if start_line != end_line: 
+  if start_line != end_line:
     print ("ERROR: byte check on line boundary. ", rule, offset)
 
   return [(res,loc)]
@@ -108,7 +108,7 @@ for line in open(in_rules,'r'):
     for opt in options:
       if opt['name'] not in ['msg','metadata', 'flow', 'sid', 'rev', 'reference', 'classtype', 'pcre', 'threshold', 'fast_pattern', 'dsize', 'flow', 'flowbits']:
         cleaned_options.append(opt)
-    
+
     ### group each content with its modifiers ###
     grouped = []
     for opt in cleaned_options:
@@ -124,7 +124,7 @@ for line in open(in_rules,'r'):
     statement = []
     cur_byte = 0
     for phrase in grouped:
-  
+
       for (x,y) in phrase:
         if x=='content':
           is_cont = True
@@ -141,7 +141,7 @@ for line in open(in_rules,'r'):
           cur_byte += int(y)
         # elif x=='within': nothing to do, already checked to have the same len
         # elif x=='depth': nothing to do, already checked to have the same len
-      
+
       if (is_cont):
         statement += content_conv(value, nocase, cur_byte)
         cur_byte += content_len(value)
@@ -155,7 +155,7 @@ for line in open(in_rules,'r'):
     ### group statements based on read line size ###
     verilog_phrase = []
     temp = "("
-    line = 0 
+    line = 0
     last_temp = 0
     for (s,loc) in statement:
       if (int(loc/line_size) == line):
@@ -166,13 +166,13 @@ for line in open(in_rules,'r'):
         verilog_phrase.append(temp[:-4]+")")
         temp = "(" + s + " && "
         last_temp = 1
-    
+
     if (last_temp == 0):
       verilog_phrase.append(temp[:-4]+")")
 
     ver_statements.append(verilog_phrase)
 
-    rule_count += 1 
+    rule_count += 1
 
 
 ### Generate verilog output ###
@@ -187,7 +187,7 @@ for i in range(len(ver_statements)):
 
 ver_file = open(out_verilog,'w')
 
-ver_file.write ("module fixed_loc_sme (input clk, input rst, input ["+str(line_size)+"*8-1:0] s_axis_tdata, input s_axis_tvalid, output reg ["+str(rule_count)+"-1:0] match);\n\n")
+ver_file.write ("module fixed_loc_sme (input clk, input rst, input ["+str(line_size)+"*8-1:0] s_axis_tdata, input ["+str(line_size)+"-1:0] s_axis_tkeep, input s_axis_tvalid, output reg ["+str(rule_count)+"-1:0] match);\n\n")
 for t in tmp_signals:
   ver_file.write ("reg "+t+";\n")
 ver_file.write ("\n")
@@ -203,7 +203,7 @@ for i in range(len(ver_statements)):
   s = ver_statements[i]
   if len(s)==1:
     ver_file.write ("    match["+str(i)+"] <= "+s[0]+";\n")
-  else: 
+  else:
     ver_file.write ("    tmp_"+str(i)+"_0 <= "+s[0]+";\n")
     for j in range(1, len(s)-1):
       ver_file.write ("    tmp_"+str(i)+"_"+str(j)+" <= tmp_"+str(i)+"_"+str(j-1)+" && "+s[j]+";\n")

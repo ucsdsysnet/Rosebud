@@ -227,6 +227,7 @@ wire [ACCEL_COUNT-1:0]            accel_tready;
 
 // Fixed_loc IP takes 8 bytes at each cycle
 wire [(ACCEL_COUNT-1)*8+64-1:0]   accel_tdata_r;
+wire [(ACCEL_COUNT-1)*1+8-1:0]    accel_tkeep_r;
 wire [ACCEL_COUNT-1:0]            accel_tlast_r;
 wire [ACCEL_COUNT-1:0]            accel_tvalid_r;
 wire [ACCEL_COUNT-1:0]            accel_tready_r;
@@ -306,6 +307,7 @@ generate
       .s_axis_tready(accel_tready[n]),
 
       .m_axis_tdata (accel_tdata_r[n*8 +: 8]),
+      .m_axis_tkeep (accel_tkeep_r[n]),
       .m_axis_tlast (accel_tlast_r[n]),
       .m_axis_tvalid(accel_tvalid_r[n]),
       .m_axis_tready(accel_tready_r[n])
@@ -328,6 +330,7 @@ generate
       .s_axis_tready(accel_tready[n]),
 
       .m_axis_tdata (accel_tdata_r[n*8 +: 64]),
+      .m_axis_tkeep (accel_tkeep_r[n +: 8]),
       .m_axis_tlast (accel_tlast_r[n]),
       .m_axis_tvalid(accel_tvalid_r[n]),
       .m_axis_tready(accel_tready_r[n])
@@ -429,6 +432,7 @@ generate
       .rst(rst | cmd_init_reg[n]),
 
       .s_axis_tdata(accel_tdata_r[n*8 +: 64]),
+      .s_axis_tkeep(accel_tkeep_r[n +: 8]),
       .s_axis_tvalid(accel_tvalid_r[n]),
       .match(match)
     );
