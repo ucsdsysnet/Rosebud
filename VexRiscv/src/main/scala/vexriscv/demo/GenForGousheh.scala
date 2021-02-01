@@ -6,29 +6,36 @@ import spinal.core._
 
 /**
  * Created by spinalvm on 15.06.17.
+ * Modified by Moein on 2019-21.
  */
-object GenSmallAndProductive extends App{
+object GenForGousheh extends App{
   def cpu() = new VexRiscv(
     config = VexRiscvConfig(
       plugins = List(
+        // new BSWAP32,
+        // new BSWAP16,
+        // new FIRST1,
+        // new TAIL_ZERO,
         new IBusSimplePlugin(
-          resetVector = 0x80000000l,
+          resetVector = 0x00000000l,
           cmdForkOnSecondStage = false,
           cmdForkPersistence = false,
-          prediction = NONE,
+          prediction = NONE, // STATIC, // DYNAMIC_TARGET, // NONE,
           catchAccessFault = false,
-          compressedGen = false
+          compressedGen = false,
+          busLatencyMin = 1
         ),
         new DBusSimplePlugin(
-          catchAddressMisaligned = false,
-          catchAccessFault = false
+          catchAddressMisaligned = true,
+          catchAccessFault = true,
+          earlyInjection = true
         ),
-        new CsrPlugin(CsrPluginConfig.smallest),
+        new CsrPlugin(CsrPluginConfig.smallest(0x00000004l)),
         new DecoderSimplePlugin(
-          catchIllegalInstruction = false
+          catchIllegalInstruction = true
         ),
         new RegFilePlugin(
-          regFileReadyKind = plugin.SYNC,
+          regFileReadyKind = plugin.ASYNC,
           zeroBoot = false
         ),
         new IntAluPlugin,
@@ -36,7 +43,9 @@ object GenSmallAndProductive extends App{
           separatedAddSub = false,
           executeInsertion = true
         ),
-        new LightShifterPlugin,
+        new FullBarrelShifterPlugin(
+          earlyInjection = true
+        ),
         new HazardSimplePlugin(
           bypassExecute           = true,
           bypassMemory            = true,
@@ -47,8 +56,8 @@ object GenSmallAndProductive extends App{
           pessimisticAddressMatch = false
         ),
         new BranchPlugin(
-          earlyBranch = false,
-          catchAddressMisaligned = false
+          earlyBranch = true,
+          catchAddressMisaligned = true
         ),
         new YamlPlugin("cpu0.yaml")
       )
