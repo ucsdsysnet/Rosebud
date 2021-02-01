@@ -703,12 +703,13 @@ wire        in_desc_valid_n;
 wire [63:0] in_desc_n;
 wire        in_desc_ready_n;
 
-simple_sync_fifo # (
-  .DEPTH(RECV_DESC_DEPTH),
+simple_fifo # (
+  .ADDR_WIDTH($clog2(RECV_DESC_DEPTH)),
   .DATA_WIDTH(64)
 ) recvd_data_fifo (
   .clk(clk),
   .rst(rst_r),
+  .clear(1'b0),
 
   .din_valid(recv_desc_valid && (!recv_from_dram) && (!recv_tag_zero)),
   .din(recv_desc),
