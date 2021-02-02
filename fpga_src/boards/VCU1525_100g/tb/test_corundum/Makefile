@@ -1,5 +1,5 @@
 all:
-	make -C ../../../../../c_code/ NAME=basic_fw
+	make -C ../../../../../c_code/ NAME=basic_corundum_fw
 	COCOTB_ANSI_OUTPUT=1 ./test_fpga_core.py --waves=1 --reduced_log=1
 
 clean:
