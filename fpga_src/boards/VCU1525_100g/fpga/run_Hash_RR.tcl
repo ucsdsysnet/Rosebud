@@ -67,6 +67,7 @@ set_property STEPS.OPT_DESIGN.TCL.PRE [ get_files ../lib/axis/syn/sync_reset.tcl
 set_property STEPS.OPT_DESIGN.TCL.PRE [ get_files ../lib/smartFPGA/syn/simple_sync_sig.tcl -of [get_fileset Hash_RR_utils] ] [get_runs impl_Hash_RR]
 set_property STEPS.ROUTE_DESIGN.TCL.PRE [ get_files ../lib/axis/syn/sync_reset.tcl -of [get_fileset Hash_RR_utils] ] [get_runs impl_Hash_RR]
 set_property STEPS.ROUTE_DESIGN.TCL.PRE [ get_files ../lib/smartFPGA/syn/simple_sync_sig.tcl -of [get_fileset Hash_RR_utils] ] [get_runs impl_Hash_RR]
+set_property STEPS.PLACE_DESIGN.ARGS.DIRECTIVE Explore [get_runs impl_Hash_RR]
 
 set_property AUTO_INCREMENTAL_CHECKPOINT 1 [get_runs impl_Hash_RR]
 
