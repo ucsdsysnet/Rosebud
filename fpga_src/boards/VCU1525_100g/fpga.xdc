@@ -540,6 +540,8 @@ set_property HD.PARTPIN_RANGE {SLICE_X13Y535:SLICE_X50Y539} [get_pins core_inst/
 set_property HD.PARTPIN_RANGE {SLICE_X13Y535:SLICE_X50Y539} [get_pins core_inst/scheduler_PR_inst/rx_axis*]
 set_property HD.PARTPIN_RANGE {SLICE_X13Y360:SLICE_X50Y364} [get_pins core_inst/scheduler_PR_inst/data_m*]
 set_property SNAPPING_MODE ON [get_pblocks pblock_35]
+set_property EXCLUDE_PLACEMENT 1 [get_pblocks pblock_35]
+set_property CONTAIN_ROUTING 1 [get_pblocks pblock_35]
 set_property IS_SOFT FALSE [get_pblocks pblock_35]
 
 # Corundum and Gousheh PCIe controller
