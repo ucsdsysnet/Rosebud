@@ -157,7 +157,7 @@ wire mmcm_locked;
 wire mmcm_clkfb;
 
 // MMCM instance
-// 161.13 MHz in, 125 and 250 MHz out 
+// 161.13 MHz in, 125 and 250 MHz out
 // PFD range: 10 MHz to 500 MHz
 // VCO range: 800 MHz to 1600 MHz
 // M = 64, D = 11 sets Fvco = 937.5 MHz (in range)
@@ -313,6 +313,13 @@ reg [9:0] reset_timer_reg = 0;
 
 assign mmcm_rst = sys_reset_reg;
 
+wire pcie_user_reset_r;
+sync_reset sync_pcie_rst_inst (
+  .clk(cfgmclk_int),
+  .rst(pcie_user_reset),
+  .out(pcie_user_reset_r)
+);
+
 always @(posedge cfgmclk_int) begin
     if (&reset_timer_reg) begin
         if (qsfp_refclk_reset_reg) begin
@@ -326,7 +333,7 @@ always @(posedge cfgmclk_int) begin
         reset_timer_reg <= reset_timer_reg + 1;
     end
 
-    if (pcie_user_reset) begin
+    if (pcie_user_reset_r) begin
         qsfp_refclk_reset_reg <= 1'b1;
         sys_reset_reg <= 1'b1;
         reset_timer_reg <= 0;
@@ -599,15 +606,15 @@ pcie4_uscale_plus_inst (
 // (* KEEP = "TRUE" *) reg                        pcie_rq_seq_num_vld0_r;
 // (* KEEP = "TRUE" *) reg [RQ_SEQ_NUM_WIDTH-1:0] pcie_rq_seq_num1_r;
 // (* KEEP = "TRUE" *) reg                        pcie_rq_seq_num_vld1_r;
-// 
+//
 // always @ (posedge pcie_user_clk) begin
 //     pcie_rq_seq_num0_r     <= pcie_rq_seq_num0;
 //     pcie_rq_seq_num_vld0_r <= pcie_rq_seq_num_vld0;
 //     pcie_rq_seq_num1_r     <= pcie_rq_seq_num1;
 //     pcie_rq_seq_num_vld1_r <= pcie_rq_seq_num_vld1;
 //     if (pcie_user_reset) begin
-//         pcie_rq_seq_num_vld0_r <= 1'b0; 
-//         pcie_rq_seq_num_vld1_r <= 1'b0; 
+//         pcie_rq_seq_num_vld0_r <= 1'b0;
+//         pcie_rq_seq_num_vld1_r <= 1'b0;
 //     end
 // end
 

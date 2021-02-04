@@ -209,6 +209,7 @@ set_property PULLUP true [get_ports pcie_reset_n]
 
 # 100 MHz MGT reference clock
 create_clock -period 10.000 -name pcie_mgt_refclk_1 [get_ports pcie_refclk_p]
+create_clock -period 20.000 -name cfg_mgt_refclk_1  [get_pins startupe3_inst/CFGMCLK]
 
 # Gousheh PBlocks, PR
 create_pblock Gousheh_1
@@ -544,29 +545,29 @@ set_property EXCLUDE_PLACEMENT 1 [get_pblocks User_Scheduler]
 set_property CONTAIN_ROUTING 1 [get_pblocks User_Scheduler]
 set_property IS_SOFT FALSE [get_pblocks User_Scheduler]
 
-# Corundum and Gousheh PCIe controller
-create_pblock Corundum
-add_cells_to_pblock [get_pblocks Corundum] [get_cells -quiet [list core_inst/pcie_config_inst core_inst/host_cmd_rd_data_sync_reg core_inst/pcie_controller_inst/pcie_cont_read_inst core_inst/pcie_controller_inst/pcie_cont_write_inst core_inst/pcie_controller_inst/virtual_ports.corundum_inst {core_inst/pcie_controller_inst/virtual_ports.mac_fifos.tx_rx_fifos[0].rx_pipeline_reg/pipe_reg[1].reg_inst} {core_inst/pcie_controller_inst/virtual_ports.mac_fifos.tx_rx_fifos[0].tx_pipeline_reg/pipe_reg[0].reg_inst}]]
-resize_pblock [get_pblocks Corundum] -add {SLICE_X109Y300:SLICE_X139Y599}
-resize_pblock [get_pblocks Corundum] -add {DSP48E2_X14Y120:DSP48E2_X15Y239}
-resize_pblock [get_pblocks Corundum] -add {IOB_X1Y260:IOB_X1Y519}
-resize_pblock [get_pblocks Corundum] -add {LAGUNA_X16Y300:LAGUNA_X19Y419}
-resize_pblock [get_pblocks Corundum] -add {RAMB18_X8Y120:RAMB18_X9Y239}
-resize_pblock [get_pblocks Corundum] -add {RAMB36_X8Y60:RAMB36_X9Y119}
-resize_pblock [get_pblocks Corundum] -add {URAM288_X3Y80:URAM288_X3Y159}
-set_property IS_SOFT TRUE [get_pblocks Corundum]
+# Corundum_pblock and Gousheh PCIe controller
+create_pblock Corundum_pblock
+add_cells_to_pblock [get_pblocks Corundum_pblock] [get_cells -quiet [list core_inst/pcie_config_inst core_inst/host_cmd_rd_data_sync_reg core_inst/pcie_controller_inst/pcie_cont_read_inst core_inst/pcie_controller_inst/pcie_cont_write_inst core_inst/pcie_controller_inst/virtual_ports.corundum_inst {core_inst/pcie_controller_inst/virtual_ports.mac_fifos.tx_rx_fifos[0].rx_pipeline_reg/pipe_reg[1].reg_inst} {core_inst/pcie_controller_inst/virtual_ports.mac_fifos.tx_rx_fifos[0].tx_pipeline_reg/pipe_reg[0].reg_inst}]]
+resize_pblock [get_pblocks Corundum_pblock] -add {SLICE_X109Y300:SLICE_X139Y599}
+resize_pblock [get_pblocks Corundum_pblock] -add {DSP48E2_X14Y120:DSP48E2_X15Y239}
+resize_pblock [get_pblocks Corundum_pblock] -add {IOB_X1Y260:IOB_X1Y519}
+resize_pblock [get_pblocks Corundum_pblock] -add {LAGUNA_X16Y300:LAGUNA_X19Y419}
+resize_pblock [get_pblocks Corundum_pblock] -add {RAMB18_X8Y120:RAMB18_X9Y239}
+resize_pblock [get_pblocks Corundum_pblock] -add {RAMB36_X8Y60:RAMB36_X9Y119}
+resize_pblock [get_pblocks Corundum_pblock] -add {URAM288_X3Y80:URAM288_X3Y159}
+set_property IS_SOFT TRUE [get_pblocks Corundum_pblock]
 
 # PCIe IP and PCIe DMA modules
-create_pblock PCIe
-add_cells_to_pblock [get_pblocks PCIe] [get_cells -quiet [list core_inst/pcie_controller_inst/cq_reg core_inst/pcie_controller_inst/dma_if_pcie_us_inst core_inst/pcie_controller_inst/pcie_us_axil_master_inst core_inst/pcie_controller_inst/rc_reg core_inst/pcie_controller_inst/status_error_cor_pm_inst core_inst/pcie_controller_inst/status_error_uncor_pm_inst core_inst/pcie_controller_inst/virtual_ports.dma_if_mux_inst pcie4_uscale_plus_inst pcie_us_cfg_inst pcie_us_msi_inst]]
-resize_pblock [get_pblocks PCIe] -add {SLICE_X140Y300:SLICE_X168Y599}
-resize_pblock [get_pblocks PCIe] -add {DSP48E2_X16Y120:DSP48E2_X18Y239}
-resize_pblock [get_pblocks PCIe] -add {ILKNE4_X1Y4:ILKNE4_X1Y5}
-resize_pblock [get_pblocks PCIe] -add {LAGUNA_X20Y300:LAGUNA_X23Y419}
-resize_pblock [get_pblocks PCIe] -add {PCIE40E4_X1Y2:PCIE40E4_X1Y2}
-resize_pblock [get_pblocks PCIe] -add {RAMB18_X10Y120:RAMB18_X11Y239}
-resize_pblock [get_pblocks PCIe] -add {RAMB36_X10Y60:RAMB36_X11Y119}
-resize_pblock [get_pblocks PCIe] -add {SYSMONE4_X0Y1:SYSMONE4_X0Y1}
-set_property EXCLUDE_PLACEMENT 1 [get_pblocks PCIe]
-set_property IS_SOFT FALSE [get_pblocks PCIe]
+create_pblock PCIe_pblock
+add_cells_to_pblock [get_pblocks PCIe_pblock] [get_cells -quiet [list core_inst/pcie_controller_inst/cq_reg core_inst/pcie_controller_inst/dma_if_pcie_us_inst core_inst/pcie_controller_inst/pcie_us_axil_master_inst core_inst/pcie_controller_inst/rc_reg core_inst/pcie_controller_inst/status_error_cor_pm_inst core_inst/pcie_controller_inst/status_error_uncor_pm_inst core_inst/pcie_controller_inst/virtual_ports.dma_if_mux_inst pcie4_uscale_plus_inst pcie_us_cfg_inst pcie_us_msi_inst]]
+resize_pblock [get_pblocks PCIe_pblock] -add {SLICE_X140Y300:SLICE_X168Y599}
+resize_pblock [get_pblocks PCIe_pblock] -add {DSP48E2_X16Y120:DSP48E2_X18Y239}
+resize_pblock [get_pblocks PCIe_pblock] -add {ILKNE4_X1Y4:ILKNE4_X1Y5}
+resize_pblock [get_pblocks PCIe_pblock] -add {LAGUNA_X20Y300:LAGUNA_X23Y419}
+resize_pblock [get_pblocks PCIe_pblock] -add {PCIE40E4_X1Y2:PCIE40E4_X1Y2}
+resize_pblock [get_pblocks PCIe_pblock] -add {RAMB18_X10Y120:RAMB18_X11Y239}
+resize_pblock [get_pblocks PCIe_pblock] -add {RAMB36_X10Y60:RAMB36_X11Y119}
+resize_pblock [get_pblocks PCIe_pblock] -add {SYSMONE4_X0Y1:SYSMONE4_X0Y1}
+set_property EXCLUDE_PLACEMENT 1 [get_pblocks PCIe_pblock]
+set_property IS_SOFT FALSE [get_pblocks PCIe_pblock]
 
