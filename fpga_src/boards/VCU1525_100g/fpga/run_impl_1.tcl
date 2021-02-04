@@ -24,6 +24,8 @@ if {[llength [get_pr_configurations config_1]]==0} then {
 
 set_property PR_CONFIGURATION config_1 [get_runs impl_1]
 set_property strategy Performance_ExtraTimingOpt [get_runs impl_1]
+set_property STEPS.POST_ROUTE_PHYS_OPT_DESIGN.IS_ENABLED true [get_runs impl_1]
+set_property STEPS.POST_ROUTE_PHYS_OPT_DESIGN.ARGS.DIRECTIVE Explore [get_runs impl_1]
 
 reset_run impl_1
 launch_runs impl_1
