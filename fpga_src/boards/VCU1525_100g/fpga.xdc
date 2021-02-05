@@ -208,8 +208,8 @@ set_property IOSTANDARD LVCMOS12 [get_ports pcie_reset_n]
 set_property PULLUP true [get_ports pcie_reset_n]
 
 # 100 MHz MGT reference clock
-create_clock -period 10.000 -name pcie_mgt_refclk_1 [get_ports pcie_refclk_p]
-create_clock -period 20.000 -name cfg_mgt_refclk_1  [get_pins startupe3_inst/CFGMCLK]
+create_clock -period 10.000 -name pcie_mgt_refclk_1 -waveform {0.000 5.000} [get_ports pcie_refclk_p]
+create_clock -period 20.000 -name cfg_mgt_refclk_1 -waveform {0.000 10.000} [get_pins startupe3_inst/CFGMCLK]
 
 # Gousheh PBlocks, PR
 create_pblock Gousheh_1

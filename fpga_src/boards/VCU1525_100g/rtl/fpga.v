@@ -311,14 +311,22 @@ reg sys_reset_reg = 1'b1;
 
 reg [9:0] reset_timer_reg = 0;
 
-assign mmcm_rst = sys_reset_reg;
+wire sys_reset_reg_synced;
+wire pcie_user_reset_synced;
 
-wire pcie_user_reset_r;
 sync_reset sync_pcie_rst_inst (
   .clk(cfgmclk_int),
   .rst(pcie_user_reset),
-  .out(pcie_user_reset_r)
+  .out(pcie_user_reset_synced)
 );
+
+sync_reset sync_sys_rst_inst (
+  .clk(clk_161mhz_ref_int),
+  .rst(sys_reset_reg),
+  .out(sys_reset_reg_synced)
+);
+
+assign mmcm_rst = sys_reset_reg_synced;
 
 always @(posedge cfgmclk_int) begin
     if (&reset_timer_reg) begin
@@ -333,7 +341,7 @@ always @(posedge cfgmclk_int) begin
         reset_timer_reg <= reset_timer_reg + 1;
     end
 
-    if (pcie_user_reset_r) begin
+    if (pcie_user_reset_synced) begin
         qsfp_refclk_reset_reg <= 1'b1;
         sys_reset_reg <= 1'b1;
         reset_timer_reg <= 0;
