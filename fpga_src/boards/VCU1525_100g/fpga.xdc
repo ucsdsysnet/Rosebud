@@ -211,6 +211,25 @@ set_property PULLUP true [get_ports pcie_reset_n]
 create_clock -period 10.000 -name pcie_mgt_refclk_1 -waveform {0.000 5.000} [get_ports pcie_refclk_p]
 create_clock -period 20.000 -name cfg_mgt_refclk_1 -waveform {0.000 10.000} [get_pins startupe3_inst/CFGMCLK]
 
+# Input and Output delays
+set_input_delay 0 [get_ports [list qsfp0_intl qsfp0_modprsl]]
+set_input_delay 0 [get_ports [list qsfp1_intl qsfp1_modprsl]]
+set_input_delay 0 [get_ports [list pcie_reset_n]]
+set_input_delay 0 [get_ports [list i2c_sda i2c_scl]]
+
+set_false_path -from [get_ports [list qsfp0_intl qsfp0_modprsl]]
+set_false_path -from [get_ports [list qsfp1_intl qsfp1_modprsl]]
+set_false_path -from [get_ports [list pcie_reset_n]]
+set_false_path -from [get_ports [list i2c_sda i2c_scl]]
+
+set_output_delay 0 [get_ports [list qsfp0_lpmode qsfp0_resetl qsfp0_refclk_reset]]
+set_output_delay 0 [get_ports [list qsfp1_lpmode qsfp1_resetl qsfp1_refclk_reset]]
+set_output_delay 0 [get_ports [list i2c_sda i2c_scl]]
+
+set_false_path -to [get_ports [list qsfp0_lpmode qsfp0_resetl qsfp0_refclk_reset]]
+set_false_path -to [get_ports [list qsfp1_lpmode qsfp1_resetl qsfp1_refclk_reset]]
+set_false_path -to [get_ports [list i2c_sda i2c_scl]]
+
 # Gousheh PBlocks, PR
 create_pblock Gousheh_1
 add_cells_to_pblock [get_pblocks Gousheh_1] [get_cells -quiet [list {core_inst/riscv_cores[0].pr_wrapper}]]
