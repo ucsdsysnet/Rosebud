@@ -208,8 +208,8 @@ set_property IOSTANDARD LVCMOS12 [get_ports pcie_reset_n]
 set_property PULLUP true [get_ports pcie_reset_n]
 
 # 100 MHz MGT reference clock
-create_clock -period 10.000 -name pcie_mgt_refclk_1 -waveform {0.000 5.000} [get_ports pcie_refclk_p]
-create_clock -period 20.000 -name cfg_mgt_refclk_1 -waveform {0.000 10.000} [get_pins startupe3_inst/CFGMCLK]
+create_clock -period 10.000 -name pcie_mgt_refclk_1 [get_ports pcie_refclk_p]
+create_clock -period 20.000 -name cfg_mgt_refclk_1 [get_pins startupe3_inst/CFGMCLK]
 
 # Input and Output delays
 set_input_delay 0 [get_ports [list qsfp0_intl qsfp0_modprsl]]
@@ -550,6 +550,8 @@ add_cells_to_pblock [get_pblocks User_Scheduler] [get_cells -quiet [list core_in
 resize_pblock [get_pblocks User_Scheduler] -add {SLICE_X0Y360:SLICE_X54Y539}
 resize_pblock [get_pblocks User_Scheduler] -add {CMACE4_X0Y4:CMACE4_X0Y4}
 resize_pblock [get_pblocks User_Scheduler] -add {DSP48E2_X0Y144:DSP48E2_X7Y215}
+resize_pblock [get_pblocks User_Scheduler] -add {GTYE4_CHANNEL_X0Y24:GTYE4_CHANNEL_X0Y35}
+resize_pblock [get_pblocks User_Scheduler] -add {GTYE4_COMMON_X0Y6:GTYE4_COMMON_X0Y8}
 resize_pblock [get_pblocks User_Scheduler] -add {ILKNE4_X0Y3:ILKNE4_X0Y3}
 resize_pblock [get_pblocks User_Scheduler] -add {PCIE40E4_X0Y3:PCIE40E4_X0Y3}
 resize_pblock [get_pblocks User_Scheduler] -add {RAMB18_X0Y144:RAMB18_X3Y215}
