@@ -61,6 +61,7 @@
 #define BC_MSG_EQUAL_WR   (*((volatile unsigned int *)      (IO_INT_BASE + 0x004C)))
 #define BC_MSG_FIFO_EN    (*((volatile unsigned char *)     (IO_INT_BASE + 0x0050)))
 #define BC_MSG_RELEASE    (*((volatile unsigned char *)     (IO_INT_BASE + 0x0054)))
+#define DESC_OVERRIDE     (*((volatile struct   Desc*)      (IO_INT_BASE + 0x0058)))
 
 #define STATUS_RD                                           (IO_INT_BASE + 0x008C)
 #define IN_PKT_READY      (*((volatile unsigned char *)     (IO_INT_BASE + 0x008C))==1)

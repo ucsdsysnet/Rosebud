@@ -179,6 +179,8 @@ localparam BC_MSG_MASK_REG  = 6'b010010;
 localparam BC_MSG_EQUAL_REG = 6'b010011;
 localparam BC_MSG_FIFO_EN   = 6'b010100;
 localparam BC_MSG_RD_STRB   = 6'b010101;
+localparam REWR_DESC_ADDR_L = 6'b010110;
+localparam REWR_DESC_ADDR_H = 6'b010111;
 
 reg [63:0] dram_wr_addr_r;
 reg [31:0] timer_step_r;
@@ -192,35 +194,46 @@ reg        bc_msg_fifo_en;
 
 reg [DMEM_ADDR_WIDTH-1:0] bc_mask_reg, bc_equal_reg;
 
-integer i;
+integer i,j;
 always @ (posedge clk) begin
     if (io_write) begin
-        for (i = 0; i < 4; i = i + 1)
-            if (dmem_wr_strb[i] == 1'b1)
+        // Byte writable values that will be paused if not ready
+        if ((!out_desc_v_r)||out_desc_ready) begin
+            for (i = 0; i < 4; i = i + 1)
+                if (dmem_wr_strb[i] == 1'b1)
+                    case (io_addr)
+                        SEND_DESC_ADDR_L: out_desc_data_r[i*8 +: 8]    <= mem_wr_data[i*8 +: 8];
+                        SEND_DESC_ADDR_H: out_desc_data_r[32+i*8 +: 8] <= mem_wr_data[i*8 +: 8];
+                        WR_DRAM_ADDR_L:   dram_wr_addr_r[i*8 +: 8]     <= mem_wr_data[i*8 +: 8];
+                        WR_DRAM_ADDR_H:   dram_wr_addr_r[32+i*8 +: 8]  <= mem_wr_data[i*8 +: 8];
+                        default: begin end
+                    endcase
+        end
+
+        // Byte writable values without a pause
+        for (j = 0; j < 4; j = j + 1)
+            if (dmem_wr_strb[j] == 1'b1)
                 case (io_addr)
-                    SEND_DESC_ADDR_L: out_desc_data_r[i*8 +: 8]    <= mem_wr_data[i*8 +: 8];
-                    SEND_DESC_ADDR_H: out_desc_data_r[32+i*8 +: 8] <= mem_wr_data[i*8 +: 8];
-                    WR_DRAM_ADDR_L:   dram_wr_addr_r[i*8 +: 8]     <= mem_wr_data[i*8 +: 8];
-                    WR_DRAM_ADDR_H:   dram_wr_addr_r[32+i*8 +: 8]  <= mem_wr_data[i*8 +: 8];
-                    SLOT_LUT_ADDR:    slot_info_data_r[i*8 +: 8]   <= mem_wr_data[i*8 +: 8];
-                    TIMER_STP_ADDR:   timer_step_r[i*8 +: 8]       <= mem_wr_data[i*8 +: 8];
-                    DEBUG_REG_ADDR_L: debug_register[i*8 +: 8]     <= mem_wr_data[i*8 +: 8];
-                    DEBUG_REG_ADDR_H: debug_register[32+i*8 +: 8]  <= mem_wr_data[i*8 +: 8];
+                    REWR_DESC_ADDR_L: out_desc_data_r[j*8 +: 8]    <= mem_wr_data[j*8 +: 8];
+                    REWR_DESC_ADDR_H: out_desc_data_r[32+j*8 +: 8] <= mem_wr_data[j*8 +: 8];
+                    SLOT_LUT_ADDR:    slot_info_data_r[j*8 +: 8]   <= mem_wr_data[j*8 +: 8];
+                    TIMER_STP_ADDR:   timer_step_r[j*8 +: 8]       <= mem_wr_data[j*8 +: 8];
+                    DEBUG_REG_ADDR_L: debug_register[j*8 +: 8]     <= mem_wr_data[j*8 +: 8];
+                    DEBUG_REG_ADDR_H: debug_register[32+j*8 +: 8]  <= mem_wr_data[j*8 +: 8];
                     default: begin end
                 endcase
 
-        if (io_addr==BC_MSG_MASK_REG)
-            bc_mask_reg <= mem_wr_data[DMEM_ADDR_WIDTH-1:0];
-        if (io_addr==BC_MSG_EQUAL_REG)
-            bc_equal_reg <= mem_wr_data[DMEM_ADDR_WIDTH-1:0];
-        if (io_addr==BC_MSG_FIFO_EN)
-            bc_msg_fifo_en <= mem_wr_data[0];
-        if (io_addr==SEND_DESC_TYPE) // it's both type and strb
-            out_desc_type_r <= mem_wr_data[3:0];
-        if (io_addr==MASK_WR)
-            int_mask         <= mem_wr_data[15:0];
-        if (io_addr==READY_TO_EVICT)
-            ready_to_evict_r <= mem_wr_data[0];
+        // Non-byte writable values
+        case (io_addr)
+            BC_MSG_MASK_REG:  bc_mask_reg <= mem_wr_data[DMEM_ADDR_WIDTH-1:0];
+            BC_MSG_EQUAL_REG: bc_equal_reg <= mem_wr_data[DMEM_ADDR_WIDTH-1:0];
+            BC_MSG_FIFO_EN:   bc_msg_fifo_en <= mem_wr_data[0];
+            // it's both type and strb
+            SEND_DESC_TYPE:   out_desc_type_r <= mem_wr_data[3:0];
+            MASK_WR:          int_mask         <= mem_wr_data[15:0];
+            READY_TO_EVICT:   ready_to_evict_r <= mem_wr_data[0];
+            default: begin end
+        endcase
     end
 
     if (rst) begin
@@ -232,13 +245,17 @@ always @ (posedge clk) begin
 end
 
 // Remaining addresses
-wire timer_step_wen = io_write && (io_addr==TIMER_STP_ADDR);
-wire dram_flags_wen = io_write && (io_addr==DRAM_FLAG_ADDR);
-wire send_out_desc  = io_write && (io_addr==SEND_DESC_TYPE);
-wire dram_flag_rst  = io_write && (io_addr==DRAM_FLAG_RST);
-wire interrupt_ack  = io_write && (io_addr==INTERRUPT_ACK);
-wire debug_reg_wr_l = io_write && (io_addr==DEBUG_REG_ADDR_L);
-wire debug_reg_wr_h = io_write && (io_addr==DEBUG_REG_ADDR_H);
+wire timer_step_wen = io_write &&  (io_addr==TIMER_STP_ADDR);
+wire dram_flags_wen = io_write &&  (io_addr==DRAM_FLAG_ADDR);
+wire send_out_desc  = io_write &&  (io_addr==SEND_DESC_TYPE);
+wire dram_flag_rst  = io_write &&  (io_addr==DRAM_FLAG_RST);
+wire interrupt_ack  = io_write &&  (io_addr==INTERRUPT_ACK);
+wire debug_reg_wr_l = io_write &&  (io_addr==DEBUG_REG_ADDR_L);
+wire debug_reg_wr_h = io_write &&  (io_addr==DEBUG_REG_ADDR_H);
+wire update_desc    = io_write && ((io_addr==SEND_DESC_ADDR_L) ||
+                                   (io_addr==SEND_DESC_ADDR_H) ||
+                                   (io_addr==WR_DRAM_ADDR_L)   ||
+                                   (io_addr==WR_DRAM_ADDR_H));
 
 reg out_desc_v_r, debug_reg_wr_l_r, debug_reg_wr_h_r;
 
@@ -267,7 +284,8 @@ assign debug_out_h_valid  = debug_reg_wr_h_r;
 assign out_desc           = {out_desc_type_r, out_desc_data_r[59:0]};
 assign out_desc_valid     = out_desc_v_r;
 assign out_desc_dram_addr = dram_wr_addr_r;
-assign io_wr_ready        = !send_out_desc || out_desc_ready;
+assign io_wr_ready        = !(send_out_desc || update_desc) || //Non blocking writes
+                             (update_desc && !out_desc_v_r) || out_desc_ready;
 assign in_desc_taken      = io_write && (io_addr==RD_DESC_STRB) && mem_wr_data[0];
 
 assign ready_to_evict     = ready_to_evict_r;
