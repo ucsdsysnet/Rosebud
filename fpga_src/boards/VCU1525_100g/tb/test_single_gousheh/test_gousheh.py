@@ -387,6 +387,7 @@ def run_test(parameters=None, sim_build="sim_build", waves=None, force_compile=F
         os.path.join(smartfpga_rtl_dir, "VexRiscv.v"),
         os.path.join(smartfpga_rtl_dir, "riscvcore.v"),
         os.path.join(smartfpga_rtl_dir, "Gousheh.v"),
+        os.path.join(smartfpga_rtl_dir, "Gousheh_controller.v"),
         os.path.join(smartfpga_rtl_dir, "Gousheh_wrapper.v"),
         os.path.join(smartfpga_rtl_dir, "mem_sys.v"),
         os.path.join(smartfpga_rtl_dir, "simple_arbiter.v"),
