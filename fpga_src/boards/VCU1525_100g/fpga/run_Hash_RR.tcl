@@ -21,6 +21,7 @@ add_files -norecurse {
   ../lib/smartFPGA/rtl/simple_fifo.v
   ../lib/smartFPGA/rtl/mem_sys.v
   ../lib/smartFPGA/rtl/Gousheh.v
+  ../lib/smartFPGA/rtl/Gousheh_controller.v
   ../lib/smartFPGA/rtl/accel_rd_dma_sp.v
   ../accel/merged/rtl/hash_acc.v
   ../accel/merged/rtl/re_sql.v
@@ -52,6 +53,10 @@ create_pr_configuration -name Hash_RR_config -partitions [list \
 if {[llength [get_runs "impl_Hash_RR"]]!=0} then {delete_run impl_Hash_RR}
 create_run impl_Hash_RR -parent_run impl_1 -flow {Vivado Implementation 2020} -pr_config Hash_RR_config
 set_property strategy Performance_ExtraTimingOpt [get_runs impl_Hash_RR]
+set_property STEPS.POST_ROUTE_PHYS_OPT_DESIGN.IS_ENABLED true [get_runs impl_Hash_RR]
+set_property STEPS.POST_ROUTE_PHYS_OPT_DESIGN.ARGS.DIRECTIVE Explore [get_runs impl_Hash_RR]
+set_property STEPS.PLACE_DESIGN.ARGS.DIRECTIVE Explore [get_runs impl_Hash_RR]
+set_property AUTO_INCREMENTAL_CHECKPOINT 1 [get_runs impl_Hash_RR]
 
 update_compile_order -fileset Gousheh_Hash
 update_compile_order -fileset sources_1
@@ -67,11 +72,6 @@ set_property STEPS.OPT_DESIGN.TCL.PRE [ get_files ../lib/axis/syn/sync_reset.tcl
 set_property STEPS.OPT_DESIGN.TCL.PRE [ get_files ../lib/smartFPGA/syn/simple_sync_sig.tcl -of [get_fileset Hash_RR_utils] ] [get_runs impl_Hash_RR]
 set_property STEPS.ROUTE_DESIGN.TCL.PRE [ get_files ../lib/axis/syn/sync_reset.tcl -of [get_fileset Hash_RR_utils] ] [get_runs impl_Hash_RR]
 set_property STEPS.ROUTE_DESIGN.TCL.PRE [ get_files ../lib/smartFPGA/syn/simple_sync_sig.tcl -of [get_fileset Hash_RR_utils] ] [get_runs impl_Hash_RR]
-set_property STEPS.POST_ROUTE_PHYS_OPT_DESIGN.IS_ENABLED true [get_runs impl_Hash_RR]
-set_property STEPS.POST_ROUTE_PHYS_OPT_DESIGN.ARGS.DIRECTIVE Explore [get_runs impl_Hash_RR]
-set_property STEPS.PLACE_DESIGN.ARGS.DIRECTIVE Explore [get_runs impl_Hash_RR]
-
-set_property AUTO_INCREMENTAL_CHECKPOINT 1 [get_runs impl_Hash_RR]
 
 reset_run impl_Hash_RR
 launch_runs impl_Hash_RR

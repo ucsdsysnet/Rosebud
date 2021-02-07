@@ -29,7 +29,10 @@ IDS_RR_1:
 	cd fpga && vivado -nojournal -nolog -mode batch -source run_IDS_RR.tcl 2>&1 | tee IDS_RR.tcl
 
 IDS_Hash_2:
-	cd fpga && vivado -nojournal -nolog -mode batch -source run_IDS_Hash_inc.tcl 2>&1 | tee IDS_RR.tcl
+	cd fpga && vivado -nojournal -nolog -mode batch -source run_IDS_Hash_inc.tcl 2>&1 | tee IDS_Hash.tcl
+
+IDS_Hash_direct:
+	cd fpga && vivado -nojournal -nolog -mode batch -source run_IDS_Hash.tcl 2>&1 | tee IDS_Hash.tcl
 
 parse_log:
 	grep "WARNING" fpga/run.log | grep -v "license" | grep -v "replication" | grep -v "parameter declaration" | grep -v "Unused" | grep -v "given" > parsed_log.txt 

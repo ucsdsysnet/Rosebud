@@ -21,6 +21,7 @@ add_files -norecurse {
   ../lib/smartFPGA/rtl/simple_fifo.v
   ../lib/smartFPGA/rtl/mem_sys.v
   ../lib/smartFPGA/rtl/Gousheh.v
+  ../lib/smartFPGA/rtl/Gousheh_controller.v
   ../lib/smartFPGA/rtl/accel_rd_dma_sp.v
   ../accel/full_ids/rtl/sme/tcp_sme.v
   ../accel/full_ids/rtl/sme/udp_sme.v
@@ -57,6 +58,8 @@ create_run impl_IDS_RR -parent_run impl_1 -flow {Vivado Implementation 2020} -pr
 set_property strategy Performance_ExtraTimingOpt [get_runs impl_IDS_RR]
 set_property STEPS.POST_ROUTE_PHYS_OPT_DESIGN.IS_ENABLED true [get_runs impl_IDS_RR]
 set_property STEPS.POST_ROUTE_PHYS_OPT_DESIGN.ARGS.DIRECTIVE Explore [get_runs impl_IDS_RR]
+set_property STEPS.PLACE_DESIGN.ARGS.DIRECTIVE Explore [get_runs impl_IDS_RR]
+set_property AUTO_INCREMENTAL_CHECKPOINT 1 [get_runs impl_IDS_RR]
 
 update_compile_order -fileset Gousheh_IDS
 update_compile_order -fileset sources_1
@@ -72,9 +75,6 @@ set_property STEPS.OPT_DESIGN.TCL.PRE [ get_files ../lib/axis/syn/sync_reset.tcl
 set_property STEPS.OPT_DESIGN.TCL.PRE [ get_files ../lib/smartFPGA/syn/simple_sync_sig.tcl -of [get_fileset IDS_RR_utils] ] [get_runs impl_IDS_RR]
 set_property STEPS.ROUTE_DESIGN.TCL.PRE [ get_files ../lib/axis/syn/sync_reset.tcl -of [get_fileset IDS_RR_utils] ] [get_runs impl_IDS_RR]
 set_property STEPS.ROUTE_DESIGN.TCL.PRE [ get_files ../lib/smartFPGA/syn/simple_sync_sig.tcl -of [get_fileset IDS_RR_utils] ] [get_runs impl_IDS_RR]
-set_property STEPS.PLACE_DESIGN.ARGS.DIRECTIVE Explore [get_runs impl_IDS_RR]
-
-set_property AUTO_INCREMENTAL_CHECKPOINT 1 [get_runs impl_IDS_RR]
 
 reset_run impl_IDS_RR
 launch_runs impl_IDS_RR
