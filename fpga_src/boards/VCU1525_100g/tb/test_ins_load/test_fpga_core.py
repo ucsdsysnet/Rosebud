@@ -64,11 +64,11 @@ SEND_COUNT_1 = 50
 SIZE_0       = 512 - 14
 SIZE_1       = 512 - 14
 CHECK_PKT    = True
-DROP_TEST    = True
+DROP_TEST    = False
 TEST_SFP     = True
 TEST_PCIE    = True
 TEST_DEBUG   = True
-TEST_RELOAD  = True
+TEST_RELOAD  = False
 PRINT_PKTS   = True
 
 PACKETS = []

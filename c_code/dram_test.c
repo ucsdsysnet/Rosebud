@@ -38,11 +38,11 @@ int main(void){
 	while (1){
 		if (in_pkt_ready()){
 			read_in_pkt(&packet);
-			if (packet.port==0){
-				packet.port = 1;
-			} else {
-				packet.port = 0;
-			}
+			// if (packet.port==0){
+			// 	packet.port = 1;
+			// } else {
+			// 	packet.port = 0;
+			// }
 			pkt_send(&packet);
 			// pkt_done_msg(&packet);
   	}

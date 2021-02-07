@@ -516,13 +516,13 @@ class TB(object):
                 # check interfaces for hung slots
                 for i in range(self.int_count+1):
                     desc = await self.read_interface_desc(i)
-                    if (((desc >> self.tag_width)&(self.core_count-1)) == core):
+                    if (((desc >> 8) & 0xFF) == core) and (((desc>>16) & 0xFF) == 1):
                         # disable the interface, wait, check if still it's the same
                         # desc drop it, enable the interface back
                         cur = await self.read_enable_interfaces()
                         await self.set_enable_interfaces(cur & ~(1 << i))
                         desc = await self.read_interface_desc(i)
-                        if (((desc >> self.tag_width)&(self.core_count-1)) == core):
+                        if (((desc >> 8) & 0xFF) == core) and (((desc>>16) & 0xFF) == 1):
                             await self.release_interfaces_desc(1 << i)
                             descs_released += 1
                         await self.set_enable_interfaces(cur)
@@ -535,8 +535,8 @@ class TB(object):
                     await self.release_core_slots(1 << core)
                 # If still missing slots, warn of stuck packet in a core
                 else:
-                    self.log.info("Assert reset on core %d which still has %d slots.",
-                                  core, self.slot_count-(slots+descs_released))
+                    self.log.info("Assert reset on core %d which still has %d slot(s). (scheduler slots: %d, int slots:%d)",
+                                  core, self.slot_count-(slots+descs_released), slots, descs_released)
                     await self.core_wr_cmd(core, 0xF, 1)
                     await Timer(100, 'ns')  # WAIT for on the fly slots in case
                     await self.release_core_slots(1 << core)

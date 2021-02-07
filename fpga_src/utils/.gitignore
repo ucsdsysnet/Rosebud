@@ -5,6 +5,8 @@ perf
 pr_reload
 *.txt
 *.pcap
+*.o
+*.d
 mcap/libmcap.a
 mcap/mcap_lib.o
 bitstreams

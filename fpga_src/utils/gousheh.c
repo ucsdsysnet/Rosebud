@@ -242,14 +242,14 @@ void reset_single_core(struct mqnic *dev, uint32_t core, uint32_t num_slots, int
             if (desc!=0xFEFEFEFE){ // There is desc read back
                 for (int i=0; i< MAX_IF_COUNT; i++){
                     desc = read_interface_desc(dev,i);
-                    if (((desc >> SLOT_TAG_WIDTH)&(MAX_CORE_COUNT-1)) == core){
+                    if ((((desc>>8) & 0xFF) == core) && (((desc>>16) & 0xFF) == 1)){
                         printf("Dropping scheduler desc on interface %d for core %d.\n",i,core);
                         // disable the interface, wait, check if still it's the same
                         // desc drop it, enable the interface back
                         cur = read_enable_interfaces(dev);
                         set_enable_interfaces(dev, cur & ~(1 << i));
                         desc = read_interface_desc(dev,i);
-                        if (((desc >> SLOT_TAG_WIDTH)&(MAX_CORE_COUNT-1)) == core){
+                        if ((((desc>>8) & 0xFF) == core) && (((desc>>16) & 0xFF) == 1)){
                             release_interface_desc(dev, 1<<i);
                             descs_released += 1;
                         }
