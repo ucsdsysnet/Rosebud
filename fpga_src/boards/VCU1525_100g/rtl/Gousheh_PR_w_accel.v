@@ -28,7 +28,7 @@ module Gousheh_PR (
   output wire         in_desc_taken,
 
   output wire [63:0]  out_desc,
-  output wire [63:0]  out_desc_dram_addr,
+  output wire         out_desc_2nd,
   output wire         out_desc_valid,
   input  wire         out_desc_ready,
 
@@ -168,23 +168,23 @@ simple_pipe_reg # (
 );
 
 wire [63:0] out_desc_n;
-wire [63:0] out_desc_dram_addr_n;
+wire        out_desc_2nd_n;
 wire        out_desc_valid_n;
 wire        out_desc_ready_n;
 
 simple_pipe_reg # (
-  .DATA_WIDTH(128),
+  .DATA_WIDTH(65),
   .REG_TYPE(REG_TYPE),
   .REG_LENGTH(REG_LENGTH)
 ) out_desc_reg (
   .clk(clk),
   .rst(rst_r || core_reset_r),
 
-  .s_data({out_desc_dram_addr_n,out_desc_n}),
+  .s_data({out_desc_2nd_n,out_desc_n}),
   .s_valid(out_desc_valid_n),
   .s_ready(out_desc_ready_n),
 
-  .m_data({out_desc_dram_addr,out_desc}),
+  .m_data({out_desc_2nd,out_desc}),
   .m_valid(out_desc_valid),
   .m_ready(out_desc_ready)
 );
@@ -282,7 +282,7 @@ Gousheh # (
     .in_desc_valid(in_desc_valid_r),
     .in_desc_taken(in_desc_taken_r),
     .out_desc(out_desc_n),
-    .out_desc_dram_addr(out_desc_dram_addr_n),
+    .out_desc_2nd(out_desc_2nd_n),
     .out_desc_valid(out_desc_valid_n),
     .out_desc_ready(out_desc_ready_n),
 

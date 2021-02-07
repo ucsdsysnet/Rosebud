@@ -1774,7 +1774,7 @@ generate
         wire                       in_desc_valid;
         wire                       in_desc_taken;
         wire [63:0]                out_desc;
-        wire [63:0]                out_desc_dram_addr;
+        wire                       out_desc_2nd;
         wire                       out_desc_valid;
         wire                       out_desc_ready;
 
@@ -1900,7 +1900,7 @@ generate
             .in_desc_valid(in_desc_valid),
             .in_desc_taken(in_desc_taken),
             .out_desc(out_desc),
-            .out_desc_dram_addr(out_desc_dram_addr),
+            .out_desc_2nd(out_desc_2nd),
             .out_desc_valid(out_desc_valid),
             .out_desc_ready(out_desc_ready),
 
@@ -1959,7 +1959,7 @@ generate
             .in_desc_valid(in_desc_valid),
             .in_desc_taken(in_desc_taken),
             .out_desc(out_desc),
-            .out_desc_dram_addr(out_desc_dram_addr),
+            .out_desc_2nd(out_desc_2nd),
             .out_desc_valid(out_desc_valid),
             .out_desc_ready(out_desc_ready),
 

@@ -129,7 +129,7 @@ module Gousheh_wrapper # (
     input  wire                     in_desc_taken,
 
     input  wire [63:0]              out_desc,
-    input  wire [63:0]              out_desc_dram_addr,
+    input  wire                     out_desc_2nd,
     input  wire                     out_desc_valid,
     output wire                     out_desc_ready,
 
@@ -737,14 +737,38 @@ assign recv_desc_ready = (recv_desc_fifo_ready && (!recv_from_dram))  ||
 /////////////////////////////////////////////////////////////////////
 wire [3:0] out_desc_type = out_desc[63:60];
 
-wire core_data_wr =  (out_desc_type == 4'd0);
-wire core_ctrl_wr = ((out_desc_type == 4'd1) ||
-                     (out_desc_type == 4'd2) ||
-                     (out_desc_type == 4'd3));
-wire core_dram_wr =  (out_desc_type == 4'd4);
-wire core_dram_rd =  (out_desc_type == 4'd5);
+// out_desc type is valid when out_desc_2nd is not asserted
+wire core_data_wr =  (out_desc_type == 4'd0)  && (!out_desc_2nd);
+wire core_ctrl_wr = ((out_desc_type == 4'd1)  ||
+                     (out_desc_type == 4'd2)  ||
+                     (out_desc_type == 4'd3)) && (!out_desc_2nd);
+wire core_dram_wr =  (out_desc_type == 4'd4)  && (!out_desc_2nd);
+wire core_dram_rd =  (out_desc_type == 4'd5)  && (!out_desc_2nd);
 
-reg out_desc_err; // Disables output data/ctrl desc fifos until core reset
+reg out_desc_err;
+
+reg [63:0] out_desc_r;
+reg core_dram_wr_r;
+reg core_dram_rd_r;
+
+// Handlign 2 cycle DRAM descs
+always @ (posedge clk) begin
+  if (out_desc_valid && out_desc_ready) begin
+    if (core_dram_wr) // Override to DRAM port
+      out_desc_r <= {out_desc[63:24+PORT_WIDTH],
+                     dram_port, out_desc[23:0]};
+    else
+      out_desc_r <= out_desc;
+
+    // Second cycle of dram desc core_dram_wr/rd are 0
+    core_dram_wr_r <= core_dram_wr;
+    core_dram_rd_r <= core_dram_rd;
+  end
+  if (rst) begin
+    core_dram_wr_r <= 1'b0;
+    core_dram_rd_r <= 1'b0;
+  end
+end
 
 // A desc FIFO for send data from core
 wire core_data_wr_ready;
@@ -817,9 +841,8 @@ simple_fifo # (
   .rst(rst_r),
   .clear(core_reset),
 
-  .din_valid(out_desc_valid && core_dram_wr),
-  .din({out_desc_dram_addr, out_desc[63:24+PORT_WIDTH],
-        dram_port, out_desc[23:0]}),
+  .din_valid(out_desc_valid && core_dram_wr_r),
+  .din({out_desc, out_desc_r}),
   .din_ready(core_dram_wr_ready),
 
   .dout_valid(core_dram_wr_valid_f),
@@ -843,8 +866,8 @@ simple_fifo # (
   .rst(rst_r),
   .clear(core_reset_r),
 
-  .din_valid(out_desc_valid && core_dram_rd),
-  .din({out_desc_dram_addr, out_desc}),
+  .din_valid(out_desc_valid && core_dram_rd_r),
+  .din({out_desc, out_desc_r}),
   .din_ready(core_dram_rd_ready),
 
   .dout_valid(core_dram_rd_valid_f),
@@ -854,11 +877,14 @@ simple_fifo # (
   .item_count(dram_req_items)
 );
 
+// For 2 cycle DRAM messages, we check the FIFO in the first cycle,
+// so no need to check when receiving second part.
 assign out_desc_ready = (core_data_wr_ready && core_data_wr) ||
                         (core_ctrl_wr_ready && core_ctrl_wr) ||
                         (core_dram_wr_ready && core_dram_wr) ||
                         (core_dram_rd_ready && core_dram_rd) ||
-                        (out_desc_type > 4'd5); //Ignore msg
+                        (out_desc_2nd) ||
+                        (out_desc_type > 4'd5); // Ignore msg
 
 /////////////////////////////////////////////////////////////////////
 ////////////////// INCOMING CTRL DESCRIPTOR FIFO ////////////////////
@@ -1207,6 +1233,7 @@ simple_fifo # (
 wire done_w_slot = ((out_desc_type == 4'd0) ||
                     (out_desc_type == 4'd1) ||
                     (out_desc_type == 4'd2)) &&
+                    (!out_desc_2nd) &&
                     out_desc_valid && out_desc_ready;
 
 // A set of registers for better timing
@@ -1293,7 +1320,8 @@ always @ (posedge clk) begin
   inv_desc_int_r <= 1'b0;
   if (rst_r || core_reset_r)
     invalid_out_desc <= 1'b0;
-  else if ((out_desc_type>4'd5) && out_desc_valid) begin
+  else if ((out_desc_type>4'd5) && out_desc_valid
+            && (!out_desc_2nd)) begin
     invalid_out_desc <= 1'b1;
     inv_desc_int_r <= 1'b1; // single cycle signal
   end

@@ -41,7 +41,7 @@ module Gousheh # (
   output wire                     in_desc_taken,
 
   output wire [63:0]              out_desc,
-  output wire [63:0]              out_desc_dram_addr,
+  output wire                     out_desc_2nd,
   output wire                     out_desc_valid,
   input  wire                     out_desc_ready,
 
@@ -79,8 +79,8 @@ localparam SLOT_WIDTH = $clog2(MAX_SLOT_COUNT+1);
 reg [MAX_SLOT_COUNT:1] slots_in_prog;
 
 wire [SLOT_WIDTH-1:0] in_desc_slot  = in_desc [16+:SLOT_WIDTH];
-wire [SLOT_WIDTH-1:0] out_desc_slot = out_desc[16+:SLOT_WIDTH];
-wire [3:0]            out_desc_type = out_desc[63:60];
+wire [SLOT_WIDTH-1:0] out_desc_slot = out_desc_n[16+:SLOT_WIDTH];
+wire [3:0]            out_desc_type = out_desc_n[63:60];
 
 wire done_w_slot = ((out_desc_type == 4'd0) ||
                     (out_desc_type == 4'd1) ||
@@ -200,6 +200,40 @@ assign core_status_data = slot_wr_valid     ? slot_wr_data :
                           {14'd0, core_reset, ready_to_evict,
                           mem_fifo_fulls, core_errors};
 assign slot_wr_ready    = 1'b1;
+
+///////////////////////////////////////////////////////////////////////////
+////////////////////////// OUT DESC MERGER ////////////////////////////////
+///////////////////////////////////////////////////////////////////////////
+wire [63:0] out_desc_n;
+wire [63:0] out_desc_dram_addr;
+wire        out_desc_ready_n;
+reg         out_desc_state;
+
+localparam DESC=1'b0;
+localparam DRAM=1'b1;
+
+wire dram_desc = (out_desc_type == 4'd4) || (out_desc_type == 4'd5);
+
+always @ (posedge clk) begin
+  if (out_desc_valid && out_desc_ready)
+    case (out_desc_state)
+      DESC: if (dram_desc)
+              out_desc_state <= DRAM;
+            else
+              out_desc_state <= DESC;
+      DRAM:   out_desc_state <= DESC;
+    endcase
+
+  if (rst)
+    out_desc_state <= DESC;
+end
+
+assign out_desc_2nd     = (out_desc_state==DRAM);
+assign out_desc         = (out_desc_state==DRAM) ?
+                           out_desc_dram_addr : out_desc_n;
+assign out_desc_ready_n = (out_desc_state==DESC) && dram_desc ?
+                          1'b0: out_desc_ready ;
+
 ///////////////////////////////////////////////////////////////////////////
 //////////////////////////// RISCV CORE ///////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////
@@ -263,10 +297,10 @@ riscvcore #(
   .in_desc_valid(in_desc_valid),
   .in_desc_taken(in_desc_taken),
 
-  .out_desc(out_desc),
+  .out_desc(out_desc_n),
   .out_desc_dram_addr(out_desc_dram_addr),
   .out_desc_valid(out_desc_valid),
-  .out_desc_ready(out_desc_ready),
+  .out_desc_ready(out_desc_ready_n),
 
   .active_slots(slots_in_prog),
   .bc_region_size(bc_region_size),
