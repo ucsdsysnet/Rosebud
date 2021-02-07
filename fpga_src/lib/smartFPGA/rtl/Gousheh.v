@@ -62,177 +62,13 @@ module Gousheh # (
 );
 
 // Internal paramaters
-parameter PMEM_ADDR_WIDTH = $clog2(PMEM_SIZE);
-parameter DMEM_ADDR_WIDTH = $clog2(DMEM_SIZE);
-parameter ACC_ADDR_WIDTH  = $clog2(SLOW_M_B_LINES);
-parameter PMEM_SEL_BITS   = PMEM_ADDR_WIDTH-$clog2(STRB_WIDTH)
-                            -1-$clog2(SLOW_M_B_LINES);
-parameter ACC_MEM_BLOCKS  = 2**PMEM_SEL_BITS;
-
-
-///////////////////////////////////////////////////////////////////////////
-///////////////////////// TRACKING ACTIVE SLOTS ///////////////////////////
-///////////////////////////////////////////////////////////////////////////
-
-localparam MAX_SLOT_COUNT = 32; //FIXED
-localparam SLOT_WIDTH = $clog2(MAX_SLOT_COUNT+1);
-reg [MAX_SLOT_COUNT:1] slots_in_prog;
-
-wire [SLOT_WIDTH-1:0] in_desc_slot  = in_desc [16+:SLOT_WIDTH];
-wire [SLOT_WIDTH-1:0] out_desc_slot = out_desc_n[16+:SLOT_WIDTH];
-wire [3:0]            out_desc_type = out_desc_n[63:60];
-
-wire done_w_slot = ((out_desc_type == 4'd0) ||
-                    (out_desc_type == 4'd1) ||
-                    (out_desc_type == 4'd2)) &&
-                    out_desc_valid && out_desc_ready;
-
-always @ (posedge clk) begin
-  if (in_desc_valid && in_desc_taken)
-    slots_in_prog[in_desc_slot]  <= 1'b1;
-  if (done_w_slot)
-    slots_in_prog[out_desc_slot] <= 1'b0;
-
-  if (rst || core_reset)
-    slots_in_prog <= {MAX_SLOT_COUNT{1'b0}};
-end
-
-///////////////////////////////////////////////////////////////////////////
-////////////////////// STATUS CHANNEL FROM WRAPPER ////////////////////////
-///////////////////////////////////////////////////////////////////////////
-reg [63:0]  debug_in;
-reg [15:0]  bc_region_size;
-reg [7:0]   core_id;
-reg [7:0]   max_slot_count;
-reg [63:0]  timer;
-reg [4:0]   recv_dram_tag;
-reg         recv_dram_tag_v;
-reg [7:0]   send_data_items;
-reg [7:0]   dram_send_items;
-reg [7:0]   dram_req_items;
-reg [7:0]   core_msg_items;
-
-reg         evict_int;
-reg         poke_int;
-reg         dupl_slot_int;
-reg         inv_slot_int;
-reg         inv_desc_int;
-wire        dupl_slot_int_ack;
-wire        inv_slot_int_ack;
-wire        inv_desc_int_ack;
-wire        poke_int_ack;
-wire        evict_int_ack;
-
-always @ (posedge clk) begin
-  timer           <= timer + 64'd1;
-  recv_dram_tag_v <= 1'b0; //Single cycle signal
-
-  case (wrapper_status_addr)
-    3'b000: begin
-              bc_region_size <= wrapper_status_data[15:0];
-              max_slot_count <= wrapper_status_data[23:16];
-              core_id        <= wrapper_status_data[31:24];
-    end
-
-    3'b001: timer <= {timer[63:32], wrapper_status_data};
-    3'b010: timer <= {wrapper_status_data, timer[31:0]};
-
-    3'b011: begin
-              recv_dram_tag_v <= wrapper_status_data[21];
-              dupl_slot_int   <= wrapper_status_data[20];
-              inv_slot_int    <= wrapper_status_data[19];
-              inv_desc_int    <= wrapper_status_data[18];
-              poke_int        <= wrapper_status_data[17];
-              evict_int       <= wrapper_status_data[16];
-              recv_dram_tag   <= wrapper_status_data[4:0];
-     end
-    3'b100: debug_in[31:0]  <= wrapper_status_data;
-    3'b101: debug_in[63:32] <= wrapper_status_data;
-    3'b110: begin
-              core_msg_items  <= wrapper_status_data[31:24];
-              dram_req_items  <= wrapper_status_data[23:16];
-              dram_send_items <= wrapper_status_data[15:8];
-              send_data_items <= wrapper_status_data[7:0];
-    end
-    default: begin end
-  endcase
-
-  if (dupl_slot_int_ack)
-    dupl_slot_int <= 1'b0;
-  if (inv_slot_int_ack)
-    inv_slot_int <= 1'b0;
-  if (inv_desc_int_ack)
-    inv_desc_int <= 1'b0;
-  if (poke_int_ack)
-    poke_int <= 1'b0;
-  if (evict_int_ack)
-    evict_int <= 1'b0;
-
-  if (rst || core_reset) begin
-    recv_dram_tag_v <= 1'b0;
-    dupl_slot_int   <= 1'b0;
-    inv_slot_int    <= 1'b0;
-    inv_desc_int    <= 1'b0;
-    poke_int        <= 1'b0;
-    evict_int       <= 1'b0;
-  end
-end
-
-///////////////////////////////////////////////////////////////////////////
-/////////////////////// STATUS CHANNEL TO WRAPPER /////////////////////////
-///////////////////////////////////////////////////////////////////////////
-wire [31:0] slot_wr_data;
-wire        slot_wr_valid;
-wire [63:0] debug_out;
-wire        debug_out_l_valid;
-wire        debug_out_h_valid;
-wire [7:0]  core_errors;
-wire        ready_to_evict;
-wire [7:0]  mem_fifo_fulls;
-
-assign core_status_addr = slot_wr_valid     ? 2'd1 :
-                          debug_out_l_valid ? 2'd2 :
-                          debug_out_h_valid ? 2'd3 :
-                          2'd0;
-assign core_status_data = slot_wr_valid     ? slot_wr_data :
-                          debug_out_l_valid ? debug_out[31:0] :
-                          debug_out_h_valid ? debug_out[63:32] :
-                          {14'd0, core_reset, ready_to_evict,
-                          mem_fifo_fulls, core_errors};
-assign slot_wr_ready    = 1'b1;
-
-///////////////////////////////////////////////////////////////////////////
-////////////////////////// OUT DESC MERGER ////////////////////////////////
-///////////////////////////////////////////////////////////////////////////
-wire [63:0] out_desc_n;
-wire [63:0] out_desc_dram_addr;
-wire        out_desc_ready_n;
-reg         out_desc_state;
-
-localparam DESC=1'b0;
-localparam DRAM=1'b1;
-
-wire dram_desc = (out_desc_type == 4'd4) || (out_desc_type == 4'd5);
-
-always @ (posedge clk) begin
-  if (out_desc_valid && out_desc_ready)
-    case (out_desc_state)
-      DESC: if (dram_desc)
-              out_desc_state <= DRAM;
-            else
-              out_desc_state <= DESC;
-      DRAM:   out_desc_state <= DESC;
-    endcase
-
-  if (rst)
-    out_desc_state <= DESC;
-end
-
-assign out_desc_2nd     = (out_desc_state==DRAM);
-assign out_desc         = (out_desc_state==DRAM) ?
-                           out_desc_dram_addr : out_desc_n;
-assign out_desc_ready_n = (out_desc_state==DESC) && dram_desc ?
-                          1'b0: out_desc_ready ;
+localparam PMEM_ADDR_WIDTH = $clog2(PMEM_SIZE);
+localparam DMEM_ADDR_WIDTH = $clog2(DMEM_SIZE);
+localparam ACC_ADDR_WIDTH  = $clog2(SLOW_M_B_LINES);
+localparam PMEM_SEL_BITS   = PMEM_ADDR_WIDTH-$clog2(STRB_WIDTH)
+                             -1-$clog2(SLOW_M_B_LINES);
+localparam ACC_MEM_BLOCKS  = 2**PMEM_SEL_BITS;
+localparam MAX_SLOTS       = 16; // For controller to keep track of
 
 ///////////////////////////////////////////////////////////////////////////
 //////////////////////////// RISCV CORE ///////////////////////////////////
@@ -247,6 +83,7 @@ wire [24:0] core_mem_addr;
 wire [31:0] core_mem_wr_data;
 wire [31:0] core_mem_rd_data;
 wire        core_mem_rd_valid;
+wire        core_mem_bc_block;
 
 wire [31:0] core_dmem_rd_data;
 wire        core_dmem_rd_valid;
@@ -258,14 +95,62 @@ wire [24:0] core_imem_addr;
 wire [31:0] core_imem_rd_data;
 wire        core_imem_rd_valid;
 
+wire [15:0] bc_region_size;
+wire [7:0]  core_id;
+wire [7:0]  max_slot_count;
+
+wire [7:0]  send_data_items;
+wire [7:0]  dram_send_items;
+wire [7:0]  dram_req_items;
+wire [7:0]  core_msg_items;
+
+wire [63:0] debug_in;
+wire [63:0] timer;
+
+wire [4:0]  recv_dram_tag;
+wire        recv_dram_tag_v;
+
+wire        evict_int;
+wire        evict_int_ack;
+wire        poke_int;
+wire        poke_int_ack;
+wire        dupl_slot_int;
+wire        dupl_slot_int_ack;
+wire        inv_slot_int;
+wire        inv_slot_int_ack;
+wire        inv_desc_int;
+wire        inv_desc_int_ack;
+
+wire [31:0] slot_wr_data;
+wire        slot_wr_valid;
+wire        slot_wr_ready;
+
+wire [63:0] debug_out;
+wire        debug_out_l_valid;
+wire        debug_out_h_valid;
+
+wire [7:0]  core_errors;
+wire        ready_to_evict;
+wire [7:0]  mem_fifo_fulls;
+
+wire [63:0] core_desc_hdr;
+wire [63:0] core_desc_dram_addr;
+wire        core_desc_ready;
+wire        core_desc_valid;
+
+wire [MAX_SLOTS:1] slots_in_prog;
+
 wire [DMEM_ADDR_WIDTH-1:0] bc_msg_addr;
 wire                       bc_msg_valid;
 
 wire ext_io_err, ext_io_err_ack;
 
+// Select read data from memory or external IO
 assign core_mem_rd_data  = core_exio_rd_valid ?  core_exio_rd_data : core_dmem_rd_data;
 assign core_mem_rd_valid = core_exio_rd_valid || core_dmem_rd_valid;
-assign core_mem_ready    = !bc_msg_out_valid  || bc_msg_out_ready;
+
+// Block write if broadcast message requires blocking
+assign core_mem_ready = !core_mem_bc_block;
 
 riscvcore #(
   .IMEM_SIZE(IMEM_SIZE),
@@ -297,12 +182,12 @@ riscvcore #(
   .in_desc_valid(in_desc_valid),
   .in_desc_taken(in_desc_taken),
 
-  .out_desc(out_desc_n),
-  .out_desc_dram_addr(out_desc_dram_addr),
-  .out_desc_valid(out_desc_valid),
-  .out_desc_ready(out_desc_ready_n),
+  .out_desc(core_desc_hdr),
+  .out_desc_dram_addr(core_desc_dram_addr),
+  .out_desc_valid(core_desc_valid),
+  .out_desc_ready(core_desc_ready),
 
-  .active_slots(slots_in_prog),
+  .active_slots({{(32-MAX_SLOTS){1'b0}},slots_in_prog}),
   .bc_region_size(bc_region_size),
   .core_id(core_id),
   .max_slot_count(max_slot_count),
@@ -345,12 +230,91 @@ riscvcore #(
   .recv_dram_tag(recv_dram_tag)
 );
 
-// Broadcast messaging
-assign bc_msg_out[31:0]           = core_mem_wr_data;
-assign bc_msg_out[35:32]          = core_mem_strb;
-assign bc_msg_out[MSG_WIDTH-1:36] = core_mem_addr[MSG_ADDR_WIDTH+2-1:2];
-assign bc_msg_out_valid           = core_dmem_en && core_mem_wen &&
-                    (&core_mem_addr[$clog2(DMEM_SIZE)-1:$clog2(BC_REGION_SIZE)]);
+///////////////////////////////////////////////////////////////////////////
+/////////////////////// GOUSHEH CONTROLLER ////////////////////////////////
+///////////////////////////////////////////////////////////////////////////
+wire [DMEM_ADDR_WIDTH-1:0] bc_dmem_start_addr = DMEM_SIZE-BC_REGION_SIZE;
+
+Gousheh_controller # (
+  .DMEM_ADDR_WIDTH(DMEM_ADDR_WIDTH),
+  .MSG_ADDR_WIDTH(MSG_ADDR_WIDTH),
+  .MSG_WIDTH(MSG_WIDTH),
+  .SLOT_COUNT(MAX_SLOTS)
+) Gousheh_controller_inst (
+  .clk       (clk),
+  .rst       (rst),
+  .core_reset(core_reset),
+
+  // -------------- BROADCAST MSG CONTROL --------------- //
+  .core_dmem_en_mon    (core_dmem_en),
+  .core_mem_wen_mon    (core_mem_wen),
+  .core_mem_strb_mon   (core_mem_strb),
+  .core_mem_addr_mon   (core_mem_addr),
+  .core_mem_wr_data_mon(core_mem_wr_data),
+
+  .bc_start_addr       (bc_dmem_start_addr),
+  .bc_msg_out          (bc_msg_out),
+  .bc_msg_out_valid    (bc_msg_out_valid),
+  .bc_msg_out_ready    (bc_msg_out_ready),
+  .core_mem_bc_block   (core_mem_bc_block),
+
+  // --------------- DESCRIPTORS CONTROL ---------------- //
+  .in_desc_mon        (in_desc),
+  .in_desc_valid_mon  (in_desc_valid),
+  .in_desc_taken_mon  (in_desc_taken),
+
+  .core_desc_hdr      (core_desc_hdr),
+  .core_desc_dram_addr(core_desc_dram_addr),
+  .core_desc_valid    (core_desc_valid),
+  .core_desc_ready    (core_desc_ready),
+  .out_desc           (out_desc),
+  .out_desc_2nd       (out_desc_2nd),
+  .out_desc_valid     (out_desc_valid),
+  .out_desc_ready     (out_desc_ready),
+
+  // --------- WRAPPER STATUS CHANNEL CONTROL ----------- //
+  .wrapper_status_data(wrapper_status_data),
+  .wrapper_status_addr(wrapper_status_addr),
+
+  // Information from Wrapper
+  .bc_region_size (bc_region_size),
+  .core_id        (core_id),
+  .max_slot_count (max_slot_count),
+  .send_data_items(send_data_items),
+  .dram_send_items(dram_send_items),
+  .dram_req_items (dram_req_items),
+  .core_msg_items (core_msg_items),
+  .slots_in_prog  (slots_in_prog),
+  .debug_in       (debug_in),
+  .timer          (timer),
+  .recv_dram_tag  (recv_dram_tag),
+  .recv_dram_tag_v(recv_dram_tag_v),
+
+  // Interrupts and their acks
+  .evict_int        (evict_int),
+  .evict_int_ack    (evict_int_ack),
+  .poke_int         (poke_int),
+  .poke_int_ack     (poke_int_ack),
+  .dupl_slot_int    (dupl_slot_int),
+  .dupl_slot_int_ack(dupl_slot_int_ack),
+  .inv_slot_int     (inv_slot_int),
+  .inv_slot_int_ack (inv_slot_int_ack),
+  .inv_desc_int     (inv_desc_int),
+  .inv_desc_int_ack (inv_desc_int_ack),
+
+  // --------- Gousheh STATUS CHANNEL CONTROL ----------- //
+  .core_status_data (core_status_data),
+  .core_status_addr (core_status_addr),
+  .slot_wr_data     (slot_wr_data),
+  .slot_wr_valid    (slot_wr_valid),
+  .slot_wr_ready    (slot_wr_ready),
+  .debug_out        (debug_out),
+  .debug_out_l_valid(debug_out_l_valid),
+  .debug_out_h_valid(debug_out_h_valid),
+  .core_errors      (core_errors),
+  .ready_to_evict   (ready_to_evict),
+  .mem_fifo_fulls   (mem_fifo_fulls)
+);
 
 ///////////////////////////////////////////////////////////////////////////
 ////////////////////////// ACCELERATORS ///////////////////////////////////
