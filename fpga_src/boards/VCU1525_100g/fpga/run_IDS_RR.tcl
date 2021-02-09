@@ -58,7 +58,7 @@ create_run impl_IDS_RR -parent_run impl_1 -flow {Vivado Implementation 2020} -pr
 set_property strategy Performance_ExtraTimingOpt [get_runs impl_IDS_RR]
 set_property STEPS.POST_ROUTE_PHYS_OPT_DESIGN.IS_ENABLED true [get_runs impl_IDS_RR]
 set_property STEPS.POST_ROUTE_PHYS_OPT_DESIGN.ARGS.DIRECTIVE Explore [get_runs impl_IDS_RR]
-set_property STEPS.PLACE_DESIGN.ARGS.DIRECTIVE Explore [get_runs impl_IDS_RR]
+# set_property STEPS.PLACE_DESIGN.ARGS.DIRECTIVE Explore [get_runs impl_IDS_RR]
 set_property AUTO_INCREMENTAL_CHECKPOINT 1 [get_runs impl_IDS_RR]
 
 update_compile_order -fileset Gousheh_IDS
