@@ -46,7 +46,7 @@ import cocotb_test.simulator
 import cocotb
 from cocotb.triggers import RisingEdge, Timer
 
-from cocotbext.axi import AxiStreamMonitor
+from cocotbext.axi import AxiStreamBus, AxiStreamMonitor
 from cocotbext.axi.utils import hexdump_str
 
 try:
@@ -184,9 +184,9 @@ async def run_test_nic(dut):
         for core in dut.UUT.riscv_cores:
             lst = []
             for inst in core.pr_wrapper.Gousheh_inst.accel_wrap_inst.width_converters_1B:
-                lst.append(AxiStreamMonitor(inst.accel_width_conv_inst, 'm_axis', dut.pcie_clk, dut.pcie_rst, byte_size=8))
+                lst.append(AxiStreamMonitor(AxiStreamBus.from_prefix(inst.accel_width_conv_inst, 'm_axis'), dut.pcie_clk, dut.pcie_rst, byte_size=8))
             for inst in core.pr_wrapper.Gousheh_inst.accel_wrap_inst.width_converters_8B:
-                lst.append(AxiStreamMonitor(inst.accel_width_conv_inst, 'm_axis', dut.pcie_clk, dut.pcie_rst, byte_size=8))
+                lst.append(AxiStreamMonitor(AxiStreamBus.from_prefix(inst.accel_width_conv_inst, 'm_axis'), dut.pcie_clk, dut.pcie_rst, byte_size=8))
             core_accel_mon.append(lst)
 
     # load core firmware

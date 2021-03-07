@@ -53,7 +53,7 @@ from cocotb.log import SimLog
 from cocotb.clock import Clock
 from cocotb.triggers import RisingEdge, Timer, ClockCycles
 
-from cocotbext.axi import AxiStreamSource, AxiStreamSink, AxiStreamFrame
+from cocotbext.axi import AxiStreamBus, AxiStreamSource, AxiStreamSink, AxiStreamFrame
 from cocotbext.axi.utils import hexdump_str
 
 # print actual port numbers
@@ -183,14 +183,14 @@ class TB(object):
 
         sys_clk = cocotb.fork(Clock(dut.clk, 4, units="ns").start())
 
-        self.data_ch_source = AxiStreamSource(dut, "data_s_axis",  dut.clk, dut.rst)
-        self.data_ch_sink   = AxiStreamSink  (dut, "data_m_axis",  dut.clk, dut.rst)
-        self.ctrl_ch_source = AxiStreamSource(dut, "ctrl_s_axis",  dut.clk, dut.rst)
-        self.ctrl_ch_sink   = AxiStreamSink  (dut, "ctrl_m_axis",  dut.clk, dut.rst)
-        self.dram_ch_source = AxiStreamSource(dut, "dram_s_axis",  dut.clk, dut.rst)
-        self.dram_ch_sink   = AxiStreamSink  (dut, "dram_m_axis",  dut.clk, dut.rst)
-        self.msg_ch_source  = AxiStreamSource(dut, "core_msg_in",  dut.clk, dut.rst)
-        self.msg_ch_sink    = AxiStreamSink  (dut, "core_msg_out", dut.clk, dut.rst)
+        self.data_ch_source = AxiStreamSource(AxiStreamBus.from_prefix(dut, "data_s_axis"),  dut.clk, dut.rst)
+        self.data_ch_sink   = AxiStreamSink  (AxiStreamBus.from_prefix(dut, "data_m_axis"),  dut.clk, dut.rst)
+        self.ctrl_ch_source = AxiStreamSource(AxiStreamBus.from_prefix(dut, "ctrl_s_axis"),  dut.clk, dut.rst)
+        self.ctrl_ch_sink   = AxiStreamSink  (AxiStreamBus.from_prefix(dut, "ctrl_m_axis"),  dut.clk, dut.rst)
+        self.dram_ch_source = AxiStreamSource(AxiStreamBus.from_prefix(dut, "dram_s_axis"),  dut.clk, dut.rst)
+        self.dram_ch_sink   = AxiStreamSink  (AxiStreamBus.from_prefix(dut, "dram_m_axis"),  dut.clk, dut.rst)
+        self.msg_ch_source  = AxiStreamSource(AxiStreamBus.from_prefix(dut, "core_msg_in"),  dut.clk, dut.rst)
+        self.msg_ch_sink    = AxiStreamSink  (AxiStreamBus.from_prefix(dut, "core_msg_out"), dut.clk, dut.rst)
 
         self.stat_data = self.dut.core_stat_data
 
