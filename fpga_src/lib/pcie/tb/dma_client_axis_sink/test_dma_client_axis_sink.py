@@ -35,25 +35,25 @@ from cocotb.clock import Clock
 from cocotb.triggers import RisingEdge
 from cocotb.regression import TestFactory
 
-from cocotbext.axi import AxiStreamFrame, AxiStreamSource
+from cocotbext.axi import AxiStreamBus, AxiStreamFrame, AxiStreamSource
 from cocotbext.axi.stream import define_stream
 
 try:
-    from dma_psdp_ram import PsdpRamWrite
+    from dma_psdp_ram import PsdpRamWrite, PsdpRamWriteBus
 except ImportError:
     # attempt import from current directory
     sys.path.insert(0, os.path.join(os.path.dirname(__file__)))
     try:
-        from dma_psdp_ram import PsdpRamWrite
+        from dma_psdp_ram import PsdpRamWrite, PsdpRamWriteBus
     finally:
         del sys.path[0]
 
-DescTransaction, DescSource, DescSink, DescMonitor = define_stream("Desc",
+DescBus, DescTransaction, DescSource, DescSink, DescMonitor = define_stream("Desc",
     signals=["ram_addr", "len", "tag", "valid", "ready"],
     optional_signals=["id", "dest", "user"]
 )
 
-DescStatusTransaction, DescStatusSource, DescStatusSink, DescStatusMonitor = define_stream("DescStatus",
+DescStatusBus, DescStatusTransaction, DescStatusSource, DescStatusSink, DescStatusMonitor = define_stream("DescStatus",
     signals=["tag", "valid"],
     optional_signals=["len", "id", "dest", "user"]
 )
@@ -69,12 +69,12 @@ class TB(object):
         cocotb.fork(Clock(dut.clk, 4, units="ns").start())
 
         # write interface
-        self.write_desc_source = DescSource(dut, "s_axis_write_desc", dut.clk, dut.rst)
-        self.write_desc_status_sink = DescStatusSink(dut, "m_axis_write_desc_status", dut.clk, dut.rst)
-        self.write_data_source = AxiStreamSource(dut, "s_axis_write_data", dut.clk, dut.rst)
+        self.write_desc_source = DescSource(DescBus.from_prefix(dut, "s_axis_write_desc"), dut.clk, dut.rst)
+        self.write_desc_status_sink = DescStatusSink(DescStatusBus.from_prefix(dut, "m_axis_write_desc_status"), dut.clk, dut.rst)
+        self.write_data_source = AxiStreamSource(AxiStreamBus.from_prefix(dut, "s_axis_write_data"), dut.clk, dut.rst)
 
         # DMA RAM
-        self.dma_ram = PsdpRamWrite(dut, "ram", dut.clk, dut.rst, size=2**16)
+        self.dma_ram = PsdpRamWrite(PsdpRamWriteBus.from_prefix(dut, "ram"), dut.clk, dut.rst, size=2**16)
 
         dut.enable.setimmediatevalue(0)
         dut.abort.setimmediatevalue(0)
@@ -144,9 +144,6 @@ async def run_test_write(dut, data_in=None, idle_inserter=None, backpressure_ins
                 assert int(status.tag) == cur_tag
                 assert int(status.id) == cur_tag
 
-                for k in range(10):
-                    await RisingEdge(dut.clk)
-
                 tb.log.debug("%s", tb.dma_ram.hexdump_str((ram_addr & ~0xf)-16, (((ram_addr & 0xf)+length-1) & ~0xf)+48))
 
                 if len(test_data) <= len(test_data2):
@@ -179,7 +176,7 @@ rtl_dir = os.path.abspath(os.path.join(tests_dir, '..', '..', 'rtl'))
 
 
 @pytest.mark.parametrize(("ram_data_width", "axis_data_width"), [
-    (128, 64),
+    (128, 64), (128, 128),
     (256, 64), (256, 128),
 ])
 def test_dma_client_axis_sink(request, ram_data_width, axis_data_width):

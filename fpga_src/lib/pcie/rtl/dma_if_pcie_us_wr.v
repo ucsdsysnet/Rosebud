@@ -335,6 +335,8 @@ reg [CYCLE_COUNT_WIDTH-1:0] read_cmd_cycle_count_reg = {CYCLE_COUNT_WIDTH{1'b0}}
 reg read_cmd_last_cycle_reg = 1'b0, read_cmd_last_cycle_next;
 reg read_cmd_valid_reg = 1'b0, read_cmd_valid_next;
 
+reg [127:0] tlp_header_data;
+reg [AXIS_PCIE_RQ_USER_WIDTH-1:0] tlp_tuser;
 reg [127:0] tlp_header_data_reg = 128'd0, tlp_header_data_next;
 reg tlp_header_valid_reg = 1'b0, tlp_header_valid_next;
 reg [AXIS_PCIE_DATA_WIDTH-1:0] tlp_payload_data_reg = {AXIS_PCIE_DATA_WIDTH{1'b0}}, tlp_payload_data_next;
@@ -464,8 +466,8 @@ always @* begin
     read_cmd_valid_next = read_cmd_valid_reg && !read_cmd_ready;
 
     op_table_start_pcie_addr = pcie_addr_reg;
-    op_table_start_len = 0;
-    op_table_start_dword_len = 0;
+    op_table_start_len = tlp_count_reg;
+    op_table_start_dword_len = (tlp_count_reg + pcie_addr_reg[1:0] + 3) >> 2;
     op_table_start_cycle_count = 0;
     if (AXIS_PCIE_DATA_WIDTH >= 256) begin
         op_table_start_offset = 16+pcie_addr_reg[1:0]-ram_addr_reg[RAM_OFFSET_WIDTH-1:0];
@@ -473,7 +475,7 @@ always @* begin
         op_table_start_offset = pcie_addr_reg[1:0]-ram_addr_reg[RAM_OFFSET_WIDTH-1:0];
     end
     op_table_start_tag = tag_reg;
-    op_table_start_last = 0;
+    op_table_start_last = op_count_reg == tlp_count_reg;
     op_table_start_en = 1'b0;
 
     // TLP segmentation
@@ -488,6 +490,7 @@ always @* begin
             op_count_next = s_axis_write_desc_len;
             tag_next = s_axis_write_desc_tag;
 
+            // TLP size computation
             if (op_count_next <= {max_payload_size_dw_reg, 2'b00}-pcie_addr_next[1:0]) begin
                 // packet smaller than max payload size
                 if (((pcie_addr_next & 12'hfff) + (op_count_next & 12'hfff)) >> 12 != 0 || op_count_next >> 12 != 0) begin
@@ -521,33 +524,34 @@ always @* begin
                 read_cmd_pcie_addr_next = pcie_addr_reg;
                 read_cmd_ram_sel_next = ram_sel_reg;
                 read_cmd_ram_addr_next = ram_addr_reg;
-                read_cmd_len_next = tlp_count_next;
+                read_cmd_len_next = tlp_count_reg;
                 if (AXIS_PCIE_DATA_WIDTH >= 256) begin
-                    read_cmd_cycle_count_next = (tlp_count_next + 16+pcie_addr_reg[1:0] - 1) >> $clog2(AXIS_PCIE_DATA_WIDTH/8);
+                    read_cmd_cycle_count_next = (tlp_count_reg + 16+pcie_addr_reg[1:0] - 1) >> $clog2(AXIS_PCIE_DATA_WIDTH/8);
                     end else begin
-                    read_cmd_cycle_count_next = (tlp_count_next + pcie_addr_reg[1:0] - 1) >> $clog2(AXIS_PCIE_DATA_WIDTH/8);
+                    read_cmd_cycle_count_next = (tlp_count_reg + pcie_addr_reg[1:0] - 1) >> $clog2(AXIS_PCIE_DATA_WIDTH/8);
                 end
                 op_table_start_cycle_count = read_cmd_cycle_count_next;
                 read_cmd_last_cycle_next = read_cmd_cycle_count_next == 0;
                 read_cmd_valid_next = 1'b1;
 
-                pcie_addr_next = pcie_addr_reg + tlp_count_next;
-                ram_addr_next = ram_addr_reg + tlp_count_next;
-                op_count_next = op_count_reg - tlp_count_next;
+                pcie_addr_next = pcie_addr_reg + tlp_count_reg;
+                ram_addr_next = ram_addr_reg + tlp_count_reg;
+                op_count_next = op_count_reg - tlp_count_reg;
 
                 op_table_start_pcie_addr = pcie_addr_reg;
-                op_table_start_len = tlp_count_next;
-                op_table_start_dword_len = (tlp_count_next + pcie_addr_reg[1:0] + 3) >> 2;
+                op_table_start_len = tlp_count_reg;
+                op_table_start_dword_len = (tlp_count_reg + pcie_addr_reg[1:0] + 3) >> 2;
                 if (AXIS_PCIE_DATA_WIDTH >= 256) begin
                     op_table_start_offset = 16+pcie_addr_reg[1:0]-ram_addr_reg[RAM_OFFSET_WIDTH-1:0];
                 end else begin
                     op_table_start_offset = pcie_addr_reg[1:0]-ram_addr_reg[RAM_OFFSET_WIDTH-1:0];
                 end
-                op_table_start_last = op_count_reg == tlp_count_next;
+                op_table_start_last = op_count_reg == tlp_count_reg;
 
                 op_table_start_tag = tag_reg;
                 op_table_start_en = 1'b1;
 
+                // TLP size computation
                 if (op_count_next <= {max_payload_size_dw_reg, 2'b00}-pcie_addr_next[1:0]) begin
                     // packet smaller than max payload size
                     if (((pcie_addr_next & 12'hfff) + (op_count_next & 12'hfff)) >> 12 != 0 || op_count_next >> 12 != 0) begin
@@ -659,15 +663,13 @@ always @* begin
                 read_last_cycle_next = read_cycle_count_next == 0;
 
                 for (i = 0; i < SEG_COUNT; i = i + 1) begin
-                    if (read_ram_mask_0_reg[i]) begin
+                    if (read_ram_mask_reg[i]) begin
                         ram_rd_cmd_sel_next[i*RAM_SEL_WIDTH +: RAM_SEL_WIDTH] = read_ram_sel_reg;
                         ram_rd_cmd_addr_next[i*SEG_ADDR_WIDTH +: SEG_ADDR_WIDTH] = read_ram_addr_reg[RAM_ADDR_WIDTH-1:RAM_ADDR_WIDTH-SEG_ADDR_WIDTH];
                         ram_rd_cmd_valid_next[i] = 1'b1;
                     end
                     if (read_ram_mask_1_reg[i]) begin
-                        ram_rd_cmd_sel_next[i*RAM_SEL_WIDTH +: RAM_SEL_WIDTH] = read_ram_sel_reg;
                         ram_rd_cmd_addr_next[i*SEG_ADDR_WIDTH +: SEG_ADDR_WIDTH] = read_ram_addr_reg[RAM_ADDR_WIDTH-1:RAM_ADDR_WIDTH-SEG_ADDR_WIDTH]+1;
-                        ram_rd_cmd_valid_next[i] = 1'b1;
                     end
                 end
 
@@ -695,7 +697,8 @@ always @* begin
 
                 if (!read_last_cycle_reg) begin
                     read_state_next = READ_STATE_READ;
-                end else if (read_cmd_valid_reg) begin
+                end else begin
+                    // skip idle state
 
                     read_pcie_addr_next = read_cmd_pcie_addr_reg;
                     read_ram_sel_next = read_cmd_ram_sel_reg;
@@ -725,11 +728,12 @@ always @* begin
                         read_ram_mask_next = read_ram_mask_0_next | read_ram_mask_1_next;
                     end
 
-                    read_cmd_ready = 1'b1;
-
-                    read_state_next = READ_STATE_READ;
-                end else begin
-                    read_state_next = READ_STATE_IDLE;
+                    if (read_cmd_valid_reg) begin
+                        read_cmd_ready = 1'b1;
+                        read_state_next = READ_STATE_READ;
+                    end else begin
+                        read_state_next = READ_STATE_IDLE;
+                    end
                 end
             end else begin
                 read_state_next = READ_STATE_READ;
@@ -778,46 +782,62 @@ always @* begin
 
     s_axis_rq_tready_next = 1'b0;
 
+    // TLP header and sideband data
+    tlp_header_data[1:0] = 2'b0; // address type
+    tlp_header_data[63:2] = tlp_addr_reg[PCIE_ADDR_WIDTH-1:2]; // address
+    tlp_header_data[74:64] = dword_count_reg; // DWORD count
+    tlp_header_data[78:75] = REQ_MEM_WRITE; // request type - memory write
+    tlp_header_data[79] = 1'b0; // poisoned request
+    tlp_header_data[95:80] = requester_id;
+    tlp_header_data[103:96] = 8'd0; // tag
+    tlp_header_data[119:104] = 16'd0; // completer ID
+    tlp_header_data[120] = requester_id_enable; // requester ID enable
+    tlp_header_data[123:121] = 3'b000; // traffic class
+    tlp_header_data[126:124] = 3'b000; // attr
+    tlp_header_data[127] = 1'b0; // force ECRC
+
+    if (AXIS_PCIE_DATA_WIDTH == 512) begin
+        tlp_tuser[3:0] = tlp_first_be_reg; // first BE 0
+        tlp_tuser[7:4] = 4'd0; // first BE 1
+        tlp_tuser[11:8] = tlp_last_be_reg; // last BE 0
+        tlp_tuser[15:12] = 4'd0; // last BE 1
+        tlp_tuser[19:16] = 3'd0; // addr_offset
+        tlp_tuser[21:20] = 2'b01; // is_sop
+        tlp_tuser[23:22] = 2'd0; // is_sop0_ptr
+        tlp_tuser[25:24] = 2'd0; // is_sop1_ptr
+        tlp_tuser[27:26] = 2'b01; // is_eop
+        tlp_tuser[31:28]  = 4'd3; // is_eop0_ptr
+        tlp_tuser[35:32] = 4'd0; // is_eop1_ptr
+        tlp_tuser[36] = 1'b0; // discontinue
+        tlp_tuser[38:37] = 2'b00; // tph_present
+        tlp_tuser[42:39] = 4'b0000; // tph_type
+        tlp_tuser[44:43] = 2'b00; // tph_indirect_tag_en
+        tlp_tuser[60:45] = 16'd0; // tph_st_tag
+        tlp_tuser[66:61] = tlp_seq_num_reg; // seq_num0
+        tlp_tuser[72:67] = 6'd0; // seq_num1
+        tlp_tuser[136:73] = 64'd0; // parity
+    end else begin
+        tlp_tuser[3:0] = tlp_first_be_reg; // first BE
+        tlp_tuser[7:4] = tlp_last_be_reg; // last BE
+        tlp_tuser[10:8] = 3'd0; // addr_offset
+        tlp_tuser[11] = 1'b0; // discontinue
+        tlp_tuser[12] = 1'b0; // tph_present
+        tlp_tuser[14:13] = 2'b00; // tph_type
+        tlp_tuser[15] = 1'b0; // tph_indirect_tag_en
+        tlp_tuser[23:16] = 8'd0; // tph_st_tag
+        tlp_tuser[27:24] = tlp_seq_num_reg; // seq_num
+        tlp_tuser[59:28] = 32'd0; // parity
+        if (AXIS_PCIE_RQ_USER_WIDTH == 62) begin
+            tlp_tuser[61:60] = tlp_seq_num_reg >> 4; // seq_num
+        end
+    end
+
     // TLP output
     m_axis_rq_tdata_int = tlp_payload_data_reg;
     m_axis_rq_tkeep_int = tlp_payload_keep_reg;
     m_axis_rq_tvalid_int = 1'b0;
     m_axis_rq_tlast_int = tlp_payload_last_reg;
-    if (AXIS_PCIE_DATA_WIDTH == 512) begin
-        m_axis_rq_tuser_int[3:0] = tlp_first_be_reg; // first BE 0
-        m_axis_rq_tuser_int[7:4] = 4'd0; // first BE 1
-        m_axis_rq_tuser_int[11:8] = tlp_last_be_reg; // last BE 0
-        m_axis_rq_tuser_int[15:12] = 4'd0; // last BE 1
-        m_axis_rq_tuser_int[19:16] = 3'd0; // addr_offset
-        m_axis_rq_tuser_int[21:20] = 2'b01; // is_sop
-        m_axis_rq_tuser_int[23:22] = 2'd0; // is_sop0_ptr
-        m_axis_rq_tuser_int[25:24] = 2'd0; // is_sop1_ptr
-        m_axis_rq_tuser_int[27:26] = 2'b01; // is_eop
-        m_axis_rq_tuser_int[31:28]  = 4'd3; // is_eop0_ptr
-        m_axis_rq_tuser_int[35:32] = 4'd0; // is_eop1_ptr
-        m_axis_rq_tuser_int[36] = 1'b0; // discontinue
-        m_axis_rq_tuser_int[38:37] = 2'b00; // tph_present
-        m_axis_rq_tuser_int[42:39] = 4'b0000; // tph_type
-        m_axis_rq_tuser_int[44:43] = 2'b00; // tph_indirect_tag_en
-        m_axis_rq_tuser_int[60:45] = 16'd0; // tph_st_tag
-        m_axis_rq_tuser_int[66:61] = tlp_seq_num_reg; // seq_num0
-        m_axis_rq_tuser_int[72:67] = 6'd0; // seq_num1
-        m_axis_rq_tuser_int[136:73] = 64'd0; // parity
-    end else begin
-        m_axis_rq_tuser_int[3:0] = tlp_first_be_reg; // first BE
-        m_axis_rq_tuser_int[7:4] = tlp_last_be_reg; // last BE
-        m_axis_rq_tuser_int[10:8] = 3'd0; // addr_offset
-        m_axis_rq_tuser_int[11] = 1'b0; // discontinue
-        m_axis_rq_tuser_int[12] = 1'b0; // tph_present
-        m_axis_rq_tuser_int[14:13] = 2'b00; // tph_type
-        m_axis_rq_tuser_int[15] = 1'b0; // tph_indirect_tag_en
-        m_axis_rq_tuser_int[23:16] = 8'd0; // tph_st_tag
-        m_axis_rq_tuser_int[27:24] = tlp_seq_num_reg; // seq_num
-        m_axis_rq_tuser_int[59:28] = 32'd0; // parity
-        if (AXIS_PCIE_RQ_USER_WIDTH == 62) begin
-            m_axis_rq_tuser_int[61:60] = tlp_seq_num_reg >> 4; // seq_num
-        end
-    end
+    m_axis_rq_tuser_int = tlp_tuser;
 
     // combine header and payload, merge in read request TLPs
     case (tlp_output_state_reg)
@@ -856,6 +876,7 @@ always @* begin
                 m_axis_rq_tkeep_int = 2'b11;
                 m_axis_rq_tvalid_int = tlp_header_valid_reg;
                 m_axis_rq_tlast_int = 1'b0;
+                m_axis_rq_tuser_int = tlp_tuser;
 
                 s_axis_rq_tready_next = 1'b0;
                 tlp_output_state_next = TLP_OUTPUT_STATE_HEADER;
@@ -865,6 +886,7 @@ always @* begin
                 m_axis_rq_tkeep_int = 4'b1111;
                 m_axis_rq_tvalid_int = tlp_header_valid_reg;
                 m_axis_rq_tlast_int = 1'b0;
+                m_axis_rq_tuser_int = tlp_tuser;
                 tlp_header_valid_next = 1'b0;
 
                 s_axis_rq_tready_next = 1'b0;
@@ -876,6 +898,7 @@ always @* begin
                 m_axis_rq_tkeep_int = {tlp_payload_keep_reg, 4'b1111};
                 m_axis_rq_tvalid_int = tlp_header_valid_reg;
                 m_axis_rq_tlast_int = tlp_payload_last_reg;
+                m_axis_rq_tuser_int = tlp_tuser;
                 tlp_header_valid_next = 1'b0;
                 tlp_payload_valid_next = 1'b0;
 
@@ -897,6 +920,7 @@ always @* begin
                 m_axis_rq_tkeep_int = 2'b11;
                 m_axis_rq_tvalid_int = tlp_header_valid_reg;
                 m_axis_rq_tlast_int = 1'b0;
+                m_axis_rq_tuser_int = tlp_tuser;
                 tlp_header_valid_next = 1'b0;
 
                 if (tlp_header_valid_reg) begin
@@ -912,6 +936,7 @@ always @* begin
             m_axis_rq_tkeep_int = tlp_payload_keep_reg;
             m_axis_rq_tvalid_int = tlp_payload_valid_reg;
             m_axis_rq_tlast_int = tlp_payload_last_reg;
+            m_axis_rq_tuser_int = tlp_tuser;
             tlp_payload_valid_next = 1'b0;
 
             if (tlp_payload_valid_reg && tlp_payload_last_reg) begin
@@ -973,18 +998,7 @@ always @* begin
         TLP_STATE_HEADER: begin
             // header state, send TLP header
             if (!tlp_header_valid_next) begin
-                tlp_header_data_next[1:0] = 2'b0; // address type
-                tlp_header_data_next[63:2] = tlp_addr_reg[PCIE_ADDR_WIDTH-1:2]; // address
-                tlp_header_data_next[74:64] = dword_count_reg; // DWORD count
-                tlp_header_data_next[78:75] = REQ_MEM_WRITE; // request type - memory write
-                tlp_header_data_next[79] = 1'b0; // poisoned request
-                tlp_header_data_next[95:80] = requester_id;
-                tlp_header_data_next[103:96] = 8'd0; // tag
-                tlp_header_data_next[119:104] = 16'd0; // completer ID
-                tlp_header_data_next[120] = requester_id_enable; // requester ID enable
-                tlp_header_data_next[123:121] = 3'b000; // traffic class
-                tlp_header_data_next[126:124] = 3'b000; // attr
-                tlp_header_data_next[127] = 1'b0; // force ECRC
+                tlp_header_data_next = tlp_header_data;
 
                 tlp_first_be_next = dword_count_reg == 1 ? first_be & last_be : first_be;
                 tlp_last_be_next = dword_count_reg == 1 ? 4'b0000 : last_be;

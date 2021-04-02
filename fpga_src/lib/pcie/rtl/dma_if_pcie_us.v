@@ -59,10 +59,6 @@ module dma_if_pcie_us #
     parameter PCIE_ADDR_WIDTH = 64,
     // PCIe tag count
     parameter PCIE_TAG_COUNT = AXIS_PCIE_RQ_USER_WIDTH == 60 ? 64 : 256,
-    // PCIe tag field width
-    parameter PCIE_TAG_WIDTH = $clog2(PCIE_TAG_COUNT),
-    // Support PCIe extended tags
-    parameter PCIE_EXT_TAG_ENABLE = (PCIE_TAG_COUNT>32),
     // Length field width
     parameter LEN_WIDTH = 16,
     // Tag field width
@@ -162,6 +158,7 @@ module dma_if_pcie_us #
     output wire [SEG_COUNT*SEG_DATA_WIDTH-1:0]  ram_wr_cmd_data,
     output wire [SEG_COUNT-1:0]                 ram_wr_cmd_valid,
     input  wire [SEG_COUNT-1:0]                 ram_wr_cmd_ready,
+    input  wire [SEG_COUNT-1:0]                 ram_wr_done,
     output wire [SEG_COUNT*RAM_SEL_WIDTH-1:0]   ram_rd_cmd_sel,
     output wire [SEG_COUNT*SEG_ADDR_WIDTH-1:0]  ram_rd_cmd_addr,
     output wire [SEG_COUNT-1:0]                 ram_rd_cmd_valid,
@@ -215,8 +212,6 @@ dma_if_pcie_us_rd #(
     .RAM_ADDR_WIDTH(RAM_ADDR_WIDTH),
     .PCIE_ADDR_WIDTH(PCIE_ADDR_WIDTH),
     .PCIE_TAG_COUNT(PCIE_TAG_COUNT),
-    .PCIE_TAG_WIDTH(PCIE_TAG_WIDTH),
-    .PCIE_EXT_TAG_ENABLE(PCIE_EXT_TAG_ENABLE),
     .LEN_WIDTH(LEN_WIDTH),
     .TAG_WIDTH(TAG_WIDTH),
     .OP_TABLE_SIZE(READ_OP_TABLE_SIZE),
@@ -286,6 +281,7 @@ dma_if_pcie_us_rd_inst (
     .ram_wr_cmd_data(ram_wr_cmd_data),
     .ram_wr_cmd_valid(ram_wr_cmd_valid),
     .ram_wr_cmd_ready(ram_wr_cmd_ready),
+    .ram_wr_done(ram_wr_done),
 
     /*
      * Configuration
