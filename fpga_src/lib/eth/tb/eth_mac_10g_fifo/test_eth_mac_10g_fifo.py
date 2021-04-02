@@ -36,7 +36,7 @@ from cocotb.triggers import RisingEdge
 from cocotb.regression import TestFactory
 
 from cocotbext.eth import XgmiiFrame, XgmiiSource, XgmiiSink
-from cocotbext.axi import AxiStreamSource, AxiStreamSink
+from cocotbext.axi import AxiStreamBus, AxiStreamSource, AxiStreamSink
 
 
 class TB:
@@ -58,11 +58,12 @@ class TB:
         self.xgmii_source = XgmiiSource(dut.xgmii_rxd, dut.xgmii_rxc, dut.rx_clk, dut.rx_rst)
         self.xgmii_sink = XgmiiSink(dut.xgmii_txd, dut.xgmii_txc, dut.tx_clk, dut.tx_rst)
 
-        self.axis_source = AxiStreamSource(dut, "tx_axis", dut.logic_clk, dut.logic_rst)
-        self.axis_sink = AxiStreamSink(dut, "rx_axis", dut.logic_clk, dut.logic_rst)
+        self.axis_source = AxiStreamSource(AxiStreamBus.from_prefix(dut, "tx_axis"), dut.logic_clk, dut.logic_rst)
+        self.axis_sink = AxiStreamSink(AxiStreamBus.from_prefix(dut, "rx_axis"), dut.logic_clk, dut.logic_rst)
 
         dut.ptp_sample_clk.setimmediatevalue(0)
         dut.ptp_ts_96.setimmediatevalue(0)
+        dut.ptp_ts_step.setimmediatevalue(0)
 
     async def reset(self):
         self.dut.logic_rst.setimmediatevalue(0)
@@ -163,7 +164,7 @@ async def run_test_tx_alignment(dut, payload_data=None, ifg=12):
             assert rx_frame.check_fcs()
             assert rx_frame.ctrl is None
 
-            start_lane.append(rx_frame.rx_start_lane)
+            start_lane.append(rx_frame.start_lane)
 
         tb.log.info("length: %d", length)
         tb.log.info("start_lane: %s", start_lane)
@@ -281,8 +282,6 @@ def test_eth_mac_10g_fifo(request, data_width, enable_dic):
     parameters['RX_FRAME_FIFO'] = 1
     parameters['RX_DROP_BAD_FRAME'] = parameters['RX_FRAME_FIFO']
     parameters['RX_DROP_WHEN_FULL'] = parameters['RX_FRAME_FIFO']
-    parameters['LOGIC_PTP_PERIOD_NS'] = 0x6 if parameters['AXIS_DATA_WIDTH'] == 64 else 0x3
-    parameters['LOGIC_PTP_PERIOD_FNS'] = 0x6666 if parameters['AXIS_DATA_WIDTH'] == 64 else 0x3333
     parameters['PTP_PERIOD_NS'] = 0x6 if parameters['DATA_WIDTH'] == 64 else 0x3
     parameters['PTP_PERIOD_FNS'] = 0x6666 if parameters['DATA_WIDTH'] == 64 else 0x3333
     parameters['PTP_USE_SAMPLE_CLOCK'] = 0
