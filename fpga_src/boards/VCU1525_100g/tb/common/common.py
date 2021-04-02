@@ -46,11 +46,10 @@ from cocotb.log import SimLog
 from cocotb.clock import Clock
 from cocotb.triggers import RisingEdge, FallingEdge, Timer
 
+from cocotbext.axi import AxiStreamBus, AxiStreamSource, AxiStreamSink, AxiStreamMonitor
+from cocotbext.axi.utils import hexdump_str
 from cocotbext.pcie.core import RootComplex
 from cocotbext.pcie.xilinx.us import UltraScalePlusPcieDevice
-
-from cocotbext.axi import AxiStreamSource, AxiStreamSink, AxiStreamMonitor
-from cocotbext.axi.utils import hexdump_str
 
 try:
     import mqnic
@@ -129,8 +128,7 @@ class TB(object):
             # phy_rdy_out
 
             # Requester reQuest Interface
-            rq_entity=dut.UUT,
-            rq_name="m_axis_rq",
+            rq_bus=AxiStreamBus.from_prefix(dut.UUT, "m_axis_rq"),
             pcie_rq_seq_num0=dut.UUT.s_axis_rq_seq_num_0,
             pcie_rq_seq_num_vld0=dut.UUT.s_axis_rq_seq_num_valid_0,
             pcie_rq_seq_num1=dut.UUT.s_axis_rq_seq_num_1,
@@ -142,18 +140,15 @@ class TB(object):
             # pcie_rq_tag_vld1
 
             # Requester Completion Interface
-            rc_entity=dut.UUT,
-            rc_name="s_axis_rc",
+            rc_bus=AxiStreamBus.from_prefix(dut.UUT, "s_axis_rc"),
 
             # Completer reQuest Interface
-            cq_entity=dut.UUT,
-            cq_name="s_axis_cq",
+            cq_bus=AxiStreamBus.from_prefix(dut.UUT, "s_axis_cq"),
             # pcie_cq_np_req
             # pcie_cq_np_req_count
 
             # Completer Completion Interface
-            cc_entity=dut.UUT,
-            cc_name="m_axis_cc",
+            cc_bus=AxiStreamBus.from_prefix(dut.UUT, "m_axis_cc"),
 
             # Transmit Flow Control Interface
             # pcie_tfc_nph_av=dut.pcie_tfc_nph_av,
@@ -301,14 +296,14 @@ class TB(object):
 
         # Ethernet
         cocotb.fork(Clock(dut.UUT.qsfp0_rx_clk, 4, units="ns").start())
-        self.qsfp0_source = AxiStreamSource(dut.UUT, "qsfp0_rx_axis", dut.UUT.qsfp0_rx_clk, dut.UUT.qsfp0_rx_rst)
+        self.qsfp0_source = AxiStreamSource(AxiStreamBus.from_prefix(dut.UUT, "qsfp0_rx_axis"), dut.UUT.qsfp0_rx_clk, dut.UUT.qsfp0_rx_rst)
         cocotb.fork(Clock(dut.UUT.qsfp0_tx_clk, 4, units="ns").start())
-        self.qsfp0_sink = AxiStreamSink(dut.UUT, "qsfp0_tx_axis", dut.UUT.qsfp0_tx_clk, dut.UUT.qsfp0_tx_rst)
+        self.qsfp0_sink = AxiStreamSink(AxiStreamBus.from_prefix(dut.UUT, "qsfp0_tx_axis"), dut.UUT.qsfp0_tx_clk, dut.UUT.qsfp0_tx_rst)
 
         cocotb.fork(Clock(dut.UUT.qsfp1_rx_clk, 4, units="ns").start())
-        self.qsfp1_source = AxiStreamSource(dut.UUT, "qsfp1_rx_axis", dut.UUT.qsfp1_rx_clk, dut.UUT.qsfp1_rx_rst)
+        self.qsfp1_source = AxiStreamSource(AxiStreamBus.from_prefix(dut.UUT, "qsfp1_rx_axis"), dut.UUT.qsfp1_rx_clk, dut.UUT.qsfp1_rx_rst)
         cocotb.fork(Clock(dut.UUT.qsfp1_tx_clk, 4, units="ns").start())
-        self.qsfp1_sink = AxiStreamSink(dut.UUT, "qsfp1_tx_axis", dut.UUT.qsfp1_tx_clk, dut.UUT.qsfp1_tx_rst)
+        self.qsfp1_sink = AxiStreamSink(AxiStreamBus.from_prefix(dut.UUT, "qsfp1_tx_axis"), dut.UUT.qsfp1_tx_clk, dut.UUT.qsfp1_tx_rst)
 
         dut.UUT.sw.setimmediatevalue(0)
 
@@ -325,8 +320,8 @@ class TB(object):
         cocotb.fork(self._run_loopback())
 
         # Internal monitors
-        self.host_if_tx_mon = AxiStreamMonitor(dut.UUT.pcie_controller_inst, "tx_axis", dut.pcie_clk, dut.pcie_rst)
-        self.host_if_rx_mon = AxiStreamMonitor(dut.UUT.pcie_controller_inst, "rx_axis", dut.pcie_clk, dut.pcie_rst)
+        self.host_if_tx_mon = AxiStreamMonitor(AxiStreamBus.from_prefix(dut.UUT.pcie_controller_inst, "tx_axis"), dut.pcie_clk, dut.pcie_rst)
+        self.host_if_rx_mon = AxiStreamMonitor(AxiStreamBus.from_prefix(dut.UUT.pcie_controller_inst, "rx_axis"), dut.pcie_clk, dut.pcie_rst)
 
         self.core_count     = int(dut.UUT.CORE_COUNT.value)
         self.int_count      = int(dut.UUT.INTERFACE_COUNT.value)
