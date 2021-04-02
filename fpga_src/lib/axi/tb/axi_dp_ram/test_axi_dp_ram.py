@@ -35,7 +35,7 @@ from cocotb.clock import Clock
 from cocotb.triggers import RisingEdge, Timer
 from cocotb.regression import TestFactory
 
-from cocotbext.axi import AxiMaster
+from cocotbext.axi import AxiBus, AxiMaster
 
 
 class TB(object):
@@ -50,8 +50,8 @@ class TB(object):
 
         self.axi_master = []
 
-        self.axi_master.append(AxiMaster(dut, "s_axi_a", dut.a_clk, dut.a_rst))
-        self.axi_master.append(AxiMaster(dut, "s_axi_b", dut.b_clk, dut.b_rst))
+        self.axi_master.append(AxiMaster(AxiBus.from_prefix(dut, "s_axi_a"), dut.a_clk, dut.a_rst))
+        self.axi_master.append(AxiMaster(AxiBus.from_prefix(dut, "s_axi_b"), dut.b_clk, dut.b_rst))
 
     def set_idle_generator(self, generator=None):
         if generator:
@@ -152,25 +152,26 @@ async def run_test_arb(dut, data_in=None, idle_inserter=None, backpressure_inser
 
     tb = TB(dut)
 
-    byte_width = tb.axi_master[0].write_if.byte_width
-
     await tb.cycle_reset()
 
     tb.set_idle_generator(idle_inserter)
     tb.set_backpressure_generator(backpressure_inserter)
 
-    for k in range(10):
-        tb.axi_master[0].init_write(k*256, b'\x11\x22\x33\x44')
-        tb.axi_master[0].init_read(k*256, 4)
-        tb.axi_master[1].init_write(k*256, b'\x11\x22\x33\x44')
-        tb.axi_master[1].init_read(k*256, 4)
+    async def worker(master, offset):
+        wr_op = master.init_write(offset, b'\x11\x22\x33\x44')
+        rd_op = master.init_read(offset, 4)
 
-    await tb.axi_master[0].wait()
-    await tb.axi_master[1].wait()
+        await wr_op.wait()
+        await rd_op.wait()
+
+    workers = []
 
     for k in range(10):
-        tb.axi_master[0].get_read_data()
-        tb.axi_master[1].get_read_data()
+        workers.append(cocotb.fork(worker(tb.axi_master[0], k*256)))
+        workers.append(cocotb.fork(worker(tb.axi_master[1], k*256)))
+
+    while workers:
+        await workers.pop(0).join()
 
     await RisingEdge(dut.a_clk)
     await RisingEdge(dut.a_clk)
@@ -218,7 +219,7 @@ def cycle_pause():
 
 if cocotb.SIM_NAME:
 
-    data_width = int(os.getenv("PARAM_DATA_WIDTH"))
+    data_width = len(cocotb.top.s_axi_a_wdata)
     byte_width = data_width // 8
     max_burst_size = (byte_width-1).bit_length()
 
