@@ -411,7 +411,6 @@ def run_test(parameters=None, sim_build="sim_build", waves=None, force_compile=F
         os.path.join(pcie_rtl_dir, "dma_if_mux_rd.v"),
         os.path.join(pcie_rtl_dir, "dma_if_mux_wr.v"),
         os.path.join(pcie_rtl_dir, "dma_psdpram.v"),
-        os.path.join(pcie_rtl_dir, "pcie_tag_manager.v"),
         os.path.join(pcie_rtl_dir, "pcie_us_cfg.v"),
         os.path.join(pcie_rtl_dir, "pcie_us_msi.v"),
         os.path.join(pcie_rtl_dir, "pulse_merge.v"),
