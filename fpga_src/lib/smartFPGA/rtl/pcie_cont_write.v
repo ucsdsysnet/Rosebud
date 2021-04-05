@@ -262,6 +262,7 @@ wire [SEG_COUNT*SEG_ADDR_WIDTH-1:0]  dma_ram_wr_cmd_addr_int;
 wire [SEG_COUNT*SEG_DATA_WIDTH-1:0]  dma_ram_wr_cmd_data_int;
 wire [SEG_COUNT-1:0]                 dma_ram_wr_cmd_valid_int;
 wire [SEG_COUNT-1:0]                 dma_ram_wr_cmd_ready_int;
+wire [SEG_COUNT-1:0]                 dma_ram_wr_done_int;
 
 dma_psdpram #(
     .SIZE(RAM_SIZE),
@@ -280,6 +281,7 @@ dma_psdpram_rx_inst (
     .wr_cmd_data(dma_ram_wr_cmd_data_int),
     .wr_cmd_valid(dma_ram_wr_cmd_valid_int),
     .wr_cmd_ready(dma_ram_wr_cmd_ready_int),
+    .wr_done(dma_ram_wr_done_int),
 
     .rd_cmd_addr(dma_ram_rd_cmd_addr),
     .rd_cmd_valid(dma_ram_rd_cmd_valid),
@@ -349,6 +351,7 @@ dma_client_axis_sink_inst (
     .ram_wr_cmd_data(dma_ram_wr_cmd_data_int),
     .ram_wr_cmd_valid(dma_ram_wr_cmd_valid_int),
     .ram_wr_cmd_ready(dma_ram_wr_cmd_ready_int),
+    .ram_wr_done(dma_ram_wr_done_int),
 
     /*
      * Configuration

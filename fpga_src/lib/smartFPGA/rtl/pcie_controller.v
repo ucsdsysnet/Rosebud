@@ -991,6 +991,7 @@ wire [SEG_COUNT*SEG_ADDR_WIDTH-1:0] dma_ram_wr_cmd_addr;
 wire [SEG_COUNT*SEG_DATA_WIDTH-1:0] dma_ram_wr_cmd_data;
 wire [SEG_COUNT-1:0]                dma_ram_wr_cmd_valid;
 wire [SEG_COUNT-1:0]                dma_ram_wr_cmd_ready;
+wire [SEG_COUNT-1:0]                dma_ram_wr_done;
 wire [SEG_COUNT*RAM_SEL_WIDTH-1:0]  dma_ram_rd_cmd_sel;
 wire [SEG_COUNT*SEG_ADDR_WIDTH-1:0] dma_ram_rd_cmd_addr;
 wire [SEG_COUNT-1:0]                dma_ram_rd_cmd_valid;
@@ -1015,7 +1016,6 @@ dma_if_pcie_us #
     .RAM_ADDR_WIDTH(RAM_ADDR_WIDTH),
     .PCIE_ADDR_WIDTH(PCIE_ADDR_WIDTH),
     .PCIE_TAG_COUNT(64),
-    .PCIE_EXT_TAG_ENABLE(1),
     .LEN_WIDTH(PCIE_DMA_LEN_WIDTH),
     .TAG_WIDTH(PCIE_DMA_TAG_WIDTH),
     .READ_OP_TABLE_SIZE(64),
@@ -1107,6 +1107,7 @@ dma_if_pcie_us_inst (
     .ram_wr_cmd_data(dma_ram_wr_cmd_data),
     .ram_wr_cmd_valid(dma_ram_wr_cmd_valid),
     .ram_wr_cmd_ready(dma_ram_wr_cmd_ready),
+    .ram_wr_done(dma_ram_wr_done),
     .ram_rd_cmd_sel(dma_ram_rd_cmd_sel),
     .ram_rd_cmd_addr(dma_ram_rd_cmd_addr),
     .ram_rd_cmd_valid(dma_ram_rd_cmd_valid),
@@ -1160,6 +1161,7 @@ wire [SEG_COUNT*SEG_ADDR_WIDTH-1:0]     cores_dma_ram_wr_cmd_addr;
 wire [SEG_COUNT*SEG_DATA_WIDTH-1:0]     cores_dma_ram_wr_cmd_data;
 wire [SEG_COUNT-1:0]                    cores_dma_ram_wr_cmd_valid;
 wire [SEG_COUNT-1:0]                    cores_dma_ram_wr_cmd_ready;
+wire [SEG_COUNT-1:0]                    cores_dma_ram_wr_done;
 wire [SEG_COUNT*CORE_RAM_SEL_WIDTH-1:0] cores_dma_ram_rd_cmd_sel;
 wire [SEG_COUNT*SEG_ADDR_WIDTH-1:0]     cores_dma_ram_rd_cmd_addr;
 wire [SEG_COUNT-1:0]                    cores_dma_ram_rd_cmd_valid;
@@ -1234,7 +1236,8 @@ pcie_cont_read # (
   .dma_ram_wr_cmd_addr (cores_dma_ram_wr_cmd_addr),
   .dma_ram_wr_cmd_data (cores_dma_ram_wr_cmd_data),
   .dma_ram_wr_cmd_valid(cores_dma_ram_wr_cmd_valid),
-  .dma_ram_wr_cmd_ready(cores_dma_ram_wr_cmd_ready)
+  .dma_ram_wr_cmd_ready(cores_dma_ram_wr_cmd_ready),
+  .dma_ram_wr_done     (cores_dma_ram_wr_done)
 );
 
 pcie_cont_write # (
@@ -1353,6 +1356,7 @@ generate
     assign cores_dma_ram_wr_cmd_data   = dma_ram_wr_cmd_data;
     assign cores_dma_ram_wr_cmd_valid  = dma_ram_wr_cmd_valid;
     assign dma_ram_wr_cmd_ready        = cores_dma_ram_wr_cmd_ready;
+    assign dma_ram_wr_done             = cores_dma_ram_wr_done;
 
     assign cores_dma_ram_rd_cmd_addr   = dma_ram_rd_cmd_addr;
     assign cores_dma_ram_rd_cmd_valid  = dma_ram_rd_cmd_valid;
@@ -1441,6 +1445,7 @@ generate
     wire [SEG_COUNT*SEG_DATA_WIDTH-1:0]     ctrl_dma_ram_wr_cmd_data;
     wire [SEG_COUNT-1:0]                    ctrl_dma_ram_wr_cmd_valid;
     wire [SEG_COUNT-1:0]                    ctrl_dma_ram_wr_cmd_ready;
+    wire [SEG_COUNT-1:0]                    ctrl_dma_ram_wr_done;
     wire [SEG_COUNT*(RAM_SEL_WIDTH-2)-1:0]  ctrl_dma_ram_rd_cmd_sel;
     wire [SEG_COUNT*SEG_ADDR_WIDTH-1:0]     ctrl_dma_ram_rd_cmd_addr;
     wire [SEG_COUNT-1:0]                    ctrl_dma_ram_rd_cmd_valid;
@@ -1455,6 +1460,7 @@ generate
     wire [SEG_COUNT*SEG_DATA_WIDTH-1:0]     data_dma_ram_wr_cmd_data;
     wire [SEG_COUNT-1:0]                    data_dma_ram_wr_cmd_valid;
     wire [SEG_COUNT-1:0]                    data_dma_ram_wr_cmd_ready;
+    wire [SEG_COUNT-1:0]                    data_dma_ram_wr_done;
     wire [SEG_COUNT*(RAM_SEL_WIDTH-2)-1:0]  data_dma_ram_rd_cmd_sel;
     wire [SEG_COUNT*SEG_ADDR_WIDTH-1:0]     data_dma_ram_rd_cmd_addr;
     wire [SEG_COUNT-1:0]                    data_dma_ram_rd_cmd_valid;
@@ -1574,6 +1580,7 @@ generate
         .if_ram_wr_cmd_data(dma_ram_wr_cmd_data),
         .if_ram_wr_cmd_valid(dma_ram_wr_cmd_valid),
         .if_ram_wr_cmd_ready(dma_ram_wr_cmd_ready),
+        .if_ram_wr_done(dma_ram_wr_done),
         .if_ram_rd_cmd_sel(dma_ram_rd_cmd_sel),
         .if_ram_rd_cmd_addr(dma_ram_rd_cmd_addr),
         .if_ram_rd_cmd_valid(dma_ram_rd_cmd_valid),
@@ -1591,6 +1598,7 @@ generate
         .ram_wr_cmd_data  ({data_dma_ram_wr_cmd_data,   cores_dma_ram_wr_cmd_data,   ctrl_dma_ram_wr_cmd_data}),
         .ram_wr_cmd_valid ({data_dma_ram_wr_cmd_valid,  cores_dma_ram_wr_cmd_valid,  ctrl_dma_ram_wr_cmd_valid}),
         .ram_wr_cmd_ready ({data_dma_ram_wr_cmd_ready,  cores_dma_ram_wr_cmd_ready,  ctrl_dma_ram_wr_cmd_ready}),
+        .ram_wr_done      ({data_dma_ram_wr_done,       cores_dma_ram_wr_done,       ctrl_dma_ram_wr_done}),
         .ram_rd_cmd_sel   ({data_dma_ram_rd_cmd_sel,    cores_dma_ram_rd_cmd_sel,    ctrl_dma_ram_rd_cmd_sel}),
         .ram_rd_cmd_addr  ({data_dma_ram_rd_cmd_addr,   cores_dma_ram_rd_cmd_addr,   ctrl_dma_ram_rd_cmd_addr}),
         .ram_rd_cmd_valid ({data_dma_ram_rd_cmd_valid,  cores_dma_ram_rd_cmd_valid,  ctrl_dma_ram_rd_cmd_valid}),
@@ -1676,6 +1684,7 @@ generate
         .ctrl_dma_ram_wr_cmd_data  (ctrl_dma_ram_wr_cmd_data),
         .ctrl_dma_ram_wr_cmd_valid (ctrl_dma_ram_wr_cmd_valid),
         .ctrl_dma_ram_wr_cmd_ready (ctrl_dma_ram_wr_cmd_ready),
+        .ctrl_dma_ram_wr_done      (ctrl_dma_ram_wr_done),
 
         .ctrl_dma_ram_rd_cmd_sel   (ctrl_dma_ram_rd_cmd_sel),
         .ctrl_dma_ram_rd_cmd_addr  (ctrl_dma_ram_rd_cmd_addr),
@@ -1691,6 +1700,7 @@ generate
         .data_dma_ram_wr_cmd_data  (data_dma_ram_wr_cmd_data),
         .data_dma_ram_wr_cmd_valid (data_dma_ram_wr_cmd_valid),
         .data_dma_ram_wr_cmd_ready (data_dma_ram_wr_cmd_ready),
+        .data_dma_ram_wr_done      (data_dma_ram_wr_done),
 
         .data_dma_ram_rd_cmd_sel   (data_dma_ram_rd_cmd_sel),
         .data_dma_ram_rd_cmd_addr  (data_dma_ram_rd_cmd_addr),

@@ -75,7 +75,7 @@ module corundum #
     output wire [PCIE_DMA_TAG_WIDTH-1:0]                    pcie_ctrl_dma_read_desc_tag,
     output wire                                             pcie_ctrl_dma_read_desc_valid,
     input  wire                                             pcie_ctrl_dma_read_desc_ready,
-    
+
     input  wire [PCIE_DMA_TAG_WIDTH-1:0]                    pcie_ctrl_dma_read_desc_status_tag,
     input  wire                                             pcie_ctrl_dma_read_desc_status_valid,
 
@@ -86,10 +86,10 @@ module corundum #
     output wire [PCIE_DMA_TAG_WIDTH-1:0]                    pcie_ctrl_dma_write_desc_tag,
     output wire                                             pcie_ctrl_dma_write_desc_valid,
     input  wire                                             pcie_ctrl_dma_write_desc_ready,
-    
+
     input  wire [PCIE_DMA_TAG_WIDTH-1:0]                    pcie_ctrl_dma_write_desc_status_tag,
     input  wire                                             pcie_ctrl_dma_write_desc_status_valid,
-    
+
     // DMA descriptors (data)
     output wire [PCIE_ADDR_WIDTH-1:0]                       pcie_data_dma_read_desc_pcie_addr,
     output wire [RAM_SEL_WIDTH-2:0]                         pcie_data_dma_read_desc_ram_sel,
@@ -98,7 +98,7 @@ module corundum #
     output wire [PCIE_DMA_TAG_WIDTH-1:0]                    pcie_data_dma_read_desc_tag,
     output wire                                             pcie_data_dma_read_desc_valid,
     input  wire                                             pcie_data_dma_read_desc_ready,
-    
+
     input  wire [PCIE_DMA_TAG_WIDTH-1:0]                    pcie_data_dma_read_desc_status_tag,
     input  wire                                             pcie_data_dma_read_desc_status_valid,
 
@@ -109,10 +109,10 @@ module corundum #
     output wire [PCIE_DMA_TAG_WIDTH-1:0]                    pcie_data_dma_write_desc_tag,
     output wire                                             pcie_data_dma_write_desc_valid,
     input  wire                                             pcie_data_dma_write_desc_ready,
-    
+
     input  wire [PCIE_DMA_TAG_WIDTH-1:0]                    pcie_data_dma_write_desc_status_tag,
     input  wire                                             pcie_data_dma_write_desc_status_valid,
-    
+
     // Memory ports (ctrl)
     input  wire [SEG_COUNT*(RAM_SEL_WIDTH-1)-1:0]           ctrl_dma_ram_wr_cmd_sel,
     input  wire [SEG_COUNT*SEG_BE_WIDTH-1:0]                ctrl_dma_ram_wr_cmd_be,
@@ -120,7 +120,8 @@ module corundum #
     input  wire [SEG_COUNT*SEG_DATA_WIDTH-1:0]              ctrl_dma_ram_wr_cmd_data,
     input  wire [SEG_COUNT-1:0]                             ctrl_dma_ram_wr_cmd_valid,
     output wire [SEG_COUNT-1:0]                             ctrl_dma_ram_wr_cmd_ready,
-    
+    output wire [SEG_COUNT-1:0]                             ctrl_dma_ram_wr_done,
+
     input  wire [SEG_COUNT*(RAM_SEL_WIDTH-1)-1:0]           ctrl_dma_ram_rd_cmd_sel,
     input  wire [SEG_COUNT*SEG_ADDR_WIDTH-1:0]              ctrl_dma_ram_rd_cmd_addr,
     input  wire [SEG_COUNT-1:0]                             ctrl_dma_ram_rd_cmd_valid,
@@ -128,7 +129,7 @@ module corundum #
     output wire [SEG_COUNT*SEG_DATA_WIDTH-1:0]              ctrl_dma_ram_rd_resp_data,
     output wire [SEG_COUNT-1:0]                             ctrl_dma_ram_rd_resp_valid,
     input  wire [SEG_COUNT-1:0]                             ctrl_dma_ram_rd_resp_ready,
-    
+
     // Memory ports (data)
     input  wire [SEG_COUNT*(RAM_SEL_WIDTH-1)-1:0]           data_dma_ram_wr_cmd_sel,
     input  wire [SEG_COUNT*SEG_BE_WIDTH-1:0]                data_dma_ram_wr_cmd_be,
@@ -136,7 +137,8 @@ module corundum #
     input  wire [SEG_COUNT*SEG_DATA_WIDTH-1:0]              data_dma_ram_wr_cmd_data,
     input  wire [SEG_COUNT-1:0]                             data_dma_ram_wr_cmd_valid,
     output wire [SEG_COUNT-1:0]                             data_dma_ram_wr_cmd_ready,
-    
+    output wire [SEG_COUNT-1:0]                             data_dma_ram_wr_done,
+
     input  wire [SEG_COUNT*(RAM_SEL_WIDTH-1)-1:0]           data_dma_ram_rd_cmd_sel,
     input  wire [SEG_COUNT*SEG_ADDR_WIDTH-1:0]              data_dma_ram_rd_cmd_addr,
     input  wire [SEG_COUNT-1:0]                             data_dma_ram_rd_cmd_valid,
@@ -453,6 +455,7 @@ wire [IF_COUNT*SEG_COUNT*SEG_ADDR_WIDTH-1:0]   if_ctrl_dma_ram_wr_cmd_addr;
 wire [IF_COUNT*SEG_COUNT*SEG_DATA_WIDTH-1:0]   if_ctrl_dma_ram_wr_cmd_data;
 wire [IF_COUNT*SEG_COUNT-1:0]                  if_ctrl_dma_ram_wr_cmd_valid;
 wire [IF_COUNT*SEG_COUNT-1:0]                  if_ctrl_dma_ram_wr_cmd_ready;
+wire [IF_COUNT*SEG_COUNT-1:0]                  if_ctrl_dma_ram_wr_done;
 wire [IF_COUNT*SEG_COUNT*IF_RAM_SEL_WIDTH-1:0] if_ctrl_dma_ram_rd_cmd_sel;
 wire [IF_COUNT*SEG_COUNT*SEG_ADDR_WIDTH-1:0]   if_ctrl_dma_ram_rd_cmd_addr;
 wire [IF_COUNT*SEG_COUNT-1:0]                  if_ctrl_dma_ram_rd_cmd_valid;
@@ -467,6 +470,7 @@ wire [IF_COUNT*SEG_COUNT*SEG_ADDR_WIDTH-1:0]   if_data_dma_ram_wr_cmd_addr;
 wire [IF_COUNT*SEG_COUNT*SEG_DATA_WIDTH-1:0]   if_data_dma_ram_wr_cmd_data;
 wire [IF_COUNT*SEG_COUNT-1:0]                  if_data_dma_ram_wr_cmd_valid;
 wire [IF_COUNT*SEG_COUNT-1:0]                  if_data_dma_ram_wr_cmd_ready;
+wire [IF_COUNT*SEG_COUNT-1:0]                  if_data_dma_ram_wr_done;
 wire [IF_COUNT*SEG_COUNT*IF_RAM_SEL_WIDTH-1:0] if_data_dma_ram_rd_cmd_sel;
 wire [IF_COUNT*SEG_COUNT*SEG_ADDR_WIDTH-1:0]   if_data_dma_ram_rd_cmd_addr;
 wire [IF_COUNT*SEG_COUNT-1:0]                  if_data_dma_ram_rd_cmd_valid;
@@ -575,6 +579,7 @@ if (IF_COUNT > 1) begin
         .if_ram_wr_cmd_data(ctrl_dma_ram_wr_cmd_data),
         .if_ram_wr_cmd_valid(ctrl_dma_ram_wr_cmd_valid),
         .if_ram_wr_cmd_ready(ctrl_dma_ram_wr_cmd_ready),
+        .if_ram_wr_done(ctrl_dma_ram_wr_done),
         .if_ram_rd_cmd_sel(ctrl_dma_ram_rd_cmd_sel),
         .if_ram_rd_cmd_addr(ctrl_dma_ram_rd_cmd_addr),
         .if_ram_rd_cmd_valid(ctrl_dma_ram_rd_cmd_valid),
@@ -592,6 +597,7 @@ if (IF_COUNT > 1) begin
         .ram_wr_cmd_data(if_ctrl_dma_ram_wr_cmd_data),
         .ram_wr_cmd_valid(if_ctrl_dma_ram_wr_cmd_valid),
         .ram_wr_cmd_ready(if_ctrl_dma_ram_wr_cmd_ready),
+        .ram_wr_done(if_ctrl_dma_ram_wr_done),
         .ram_rd_cmd_sel(if_ctrl_dma_ram_rd_cmd_sel),
         .ram_rd_cmd_addr(if_ctrl_dma_ram_rd_cmd_addr),
         .ram_rd_cmd_valid(if_ctrl_dma_ram_rd_cmd_valid),
@@ -699,6 +705,7 @@ if (IF_COUNT > 1) begin
         .if_ram_wr_cmd_data(data_dma_ram_wr_cmd_data),
         .if_ram_wr_cmd_valid(data_dma_ram_wr_cmd_valid),
         .if_ram_wr_cmd_ready(data_dma_ram_wr_cmd_ready),
+        .if_ram_wr_done(data_dma_ram_wr_done),
         .if_ram_rd_cmd_sel(data_dma_ram_rd_cmd_sel),
         .if_ram_rd_cmd_addr(data_dma_ram_rd_cmd_addr),
         .if_ram_rd_cmd_valid(data_dma_ram_rd_cmd_valid),
@@ -716,6 +723,7 @@ if (IF_COUNT > 1) begin
         .ram_wr_cmd_data(if_data_dma_ram_wr_cmd_data),
         .ram_wr_cmd_valid(if_data_dma_ram_wr_cmd_valid),
         .ram_wr_cmd_ready(if_data_dma_ram_wr_cmd_ready),
+        .ram_wr_done(if_data_dma_ram_wr_done),
         .ram_rd_cmd_sel(if_data_dma_ram_rd_cmd_sel),
         .ram_rd_cmd_addr(if_data_dma_ram_rd_cmd_addr),
         .ram_rd_cmd_valid(if_data_dma_ram_rd_cmd_valid),
@@ -755,6 +763,7 @@ end else begin
     assign if_ctrl_dma_ram_wr_cmd_data = ctrl_dma_ram_wr_cmd_data;
     assign if_ctrl_dma_ram_wr_cmd_valid = ctrl_dma_ram_wr_cmd_valid;
     assign ctrl_dma_ram_wr_cmd_ready = if_ctrl_dma_ram_wr_cmd_ready;
+    assign ctrl_dma_ram_wr_done = if_ctrl_dma_ram_wr_done;
     assign if_ctrl_dma_ram_rd_cmd_sel = ctrl_dma_ram_rd_cmd_sel;
     assign if_ctrl_dma_ram_rd_cmd_addr = ctrl_dma_ram_rd_cmd_addr;
     assign if_ctrl_dma_ram_rd_cmd_valid = ctrl_dma_ram_rd_cmd_valid;
@@ -791,6 +800,7 @@ end else begin
     assign if_data_dma_ram_wr_cmd_data = data_dma_ram_wr_cmd_data;
     assign if_data_dma_ram_wr_cmd_valid = data_dma_ram_wr_cmd_valid;
     assign data_dma_ram_wr_cmd_ready = if_data_dma_ram_wr_cmd_ready;
+    assign data_dma_ram_wr_done = if_data_dma_ram_wr_done;
     assign if_data_dma_ram_rd_cmd_sel = data_dma_ram_rd_cmd_sel;
     assign if_data_dma_ram_rd_cmd_addr = data_dma_ram_rd_cmd_addr;
     assign if_data_dma_ram_rd_cmd_valid = data_dma_ram_rd_cmd_valid;
@@ -805,22 +815,22 @@ wire [IF_COUNT*32-1:0] if_msi_irq;
 
 generate
     genvar m, n;
-    
+
     case (IF_COUNT)
         1: assign msi_irq = if_msi_irq[0*32+:32];
         2: assign msi_irq = if_msi_irq[0*32+:32] | if_msi_irq[1*32+:32];
         3: assign msi_irq = if_msi_irq[0*32+:32] | if_msi_irq[1*32+:32] | if_msi_irq[2*32+:32];
-        4: assign msi_irq = if_msi_irq[0*32+:32] | if_msi_irq[1*32+:32] | if_msi_irq[2*32+:32] | 
+        4: assign msi_irq = if_msi_irq[0*32+:32] | if_msi_irq[1*32+:32] | if_msi_irq[2*32+:32] |
                             if_msi_irq[3*32+:32];
-        5: assign msi_irq = if_msi_irq[0*32+:32] | if_msi_irq[1*32+:32] | if_msi_irq[2*32+:32] | 
+        5: assign msi_irq = if_msi_irq[0*32+:32] | if_msi_irq[1*32+:32] | if_msi_irq[2*32+:32] |
                             if_msi_irq[3*32+:32] | if_msi_irq[4*32+:32];
-        6: assign msi_irq = if_msi_irq[0*32+:32] | if_msi_irq[1*32+:32] | if_msi_irq[2*32+:32] | 
+        6: assign msi_irq = if_msi_irq[0*32+:32] | if_msi_irq[1*32+:32] | if_msi_irq[2*32+:32] |
                             if_msi_irq[3*32+:32] | if_msi_irq[4*32+:32] | if_msi_irq[5*32+:32];
-        7: assign msi_irq = if_msi_irq[0*32+:32] | if_msi_irq[1*32+:32] | if_msi_irq[2*32+:32] | 
-                            if_msi_irq[3*32+:32] | if_msi_irq[4*32+:32] | if_msi_irq[5*32+:32] | 
+        7: assign msi_irq = if_msi_irq[0*32+:32] | if_msi_irq[1*32+:32] | if_msi_irq[2*32+:32] |
+                            if_msi_irq[3*32+:32] | if_msi_irq[4*32+:32] | if_msi_irq[5*32+:32] |
                             if_msi_irq[6*32+:32];
-        8: assign msi_irq = if_msi_irq[0*32+:32] | if_msi_irq[1*32+:32] | if_msi_irq[2*32+:32] | 
-                            if_msi_irq[3*32+:32] | if_msi_irq[4*32+:32] | if_msi_irq[5*32+:32] | 
+        8: assign msi_irq = if_msi_irq[0*32+:32] | if_msi_irq[1*32+:32] | if_msi_irq[2*32+:32] |
+                            if_msi_irq[3*32+:32] | if_msi_irq[4*32+:32] | if_msi_irq[5*32+:32] |
                             if_msi_irq[6*32+:32] | if_msi_irq[7*32+:32];
     endcase
 
@@ -1006,6 +1016,7 @@ generate
             .ctrl_dma_ram_wr_cmd_data(if_ctrl_dma_ram_wr_cmd_data[SEG_COUNT*SEG_DATA_WIDTH*n +: SEG_COUNT*SEG_DATA_WIDTH]),
             .ctrl_dma_ram_wr_cmd_valid(if_ctrl_dma_ram_wr_cmd_valid[SEG_COUNT*n +: SEG_COUNT]),
             .ctrl_dma_ram_wr_cmd_ready(if_ctrl_dma_ram_wr_cmd_ready[SEG_COUNT*n +: SEG_COUNT]),
+            .ctrl_dma_ram_wr_done(if_ctrl_dma_ram_wr_done[SEG_COUNT*n +: SEG_COUNT]),
             .ctrl_dma_ram_rd_cmd_sel(if_ctrl_dma_ram_rd_cmd_sel[SEG_COUNT*IF_RAM_SEL_WIDTH*n +: SEG_COUNT*IF_RAM_SEL_WIDTH]),
             .ctrl_dma_ram_rd_cmd_addr(if_ctrl_dma_ram_rd_cmd_addr[SEG_COUNT*SEG_ADDR_WIDTH*n +: SEG_COUNT*SEG_ADDR_WIDTH]),
             .ctrl_dma_ram_rd_cmd_valid(if_ctrl_dma_ram_rd_cmd_valid[SEG_COUNT*n +: SEG_COUNT]),
@@ -1023,6 +1034,7 @@ generate
             .data_dma_ram_wr_cmd_data(if_data_dma_ram_wr_cmd_data[SEG_COUNT*SEG_DATA_WIDTH*n +: SEG_COUNT*SEG_DATA_WIDTH]),
             .data_dma_ram_wr_cmd_valid(if_data_dma_ram_wr_cmd_valid[SEG_COUNT*n +: SEG_COUNT]),
             .data_dma_ram_wr_cmd_ready(if_data_dma_ram_wr_cmd_ready[SEG_COUNT*n +: SEG_COUNT]),
+            .data_dma_ram_wr_done(if_data_dma_ram_wr_done[SEG_COUNT*n +: SEG_COUNT]),
             .data_dma_ram_rd_cmd_sel(if_data_dma_ram_rd_cmd_sel[SEG_COUNT*IF_RAM_SEL_WIDTH*n +: SEG_COUNT*IF_RAM_SEL_WIDTH]),
             .data_dma_ram_rd_cmd_addr(if_data_dma_ram_rd_cmd_addr[SEG_COUNT*SEG_ADDR_WIDTH*n +: SEG_COUNT*SEG_ADDR_WIDTH]),
             .data_dma_ram_rd_cmd_valid(if_data_dma_ram_rd_cmd_valid[SEG_COUNT*n +: SEG_COUNT]),
@@ -1044,9 +1056,9 @@ generate
             /*
              * Transmit timestamp input
              */
-            .s_axis_tx_ptp_ts_96(96'd0), 
-            .s_axis_tx_ptp_ts_valid(1'b0), 
-            .s_axis_tx_ptp_ts_ready(), 
+            .s_axis_tx_ptp_ts_96(96'd0),
+            .s_axis_tx_ptp_ts_valid(1'b0),
+            .s_axis_tx_ptp_ts_ready(),
 
             /*
              * Receive data input
@@ -1061,9 +1073,9 @@ generate
             /*
              * Receive timestamp input
              */
-            .s_axis_rx_ptp_ts_96(96'd0), 
-            .s_axis_rx_ptp_ts_valid(1'b0), 
-            .s_axis_rx_ptp_ts_ready(), 
+            .s_axis_rx_ptp_ts_96(96'd0),
+            .s_axis_rx_ptp_ts_valid(1'b0),
+            .s_axis_rx_ptp_ts_ready(),
 
             /*
              * PTP clock
