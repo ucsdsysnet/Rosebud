@@ -65,7 +65,6 @@ SYN_FILES += lib/pcie/rtl/dma_if_mux_wr.v
 SYN_FILES += lib/pcie/rtl/dma_psdpram.v
 SYN_FILES += lib/pcie/rtl/pcie_us_cfg.v
 SYN_FILES += lib/pcie/rtl/pcie_us_msi.v
-SYN_FILES += lib/pcie/rtl/pcie_tag_manager.v
 SYN_FILES += lib/pcie/rtl/pulse_merge.v
 
 SYN_FILES += lib/corundum/rtl/mqnic_interface.v
