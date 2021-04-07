@@ -59,13 +59,13 @@ module mem_sys # (
   input  wire [ACC_MEM_BLOCKS*STRB_WIDTH-1:0]     acc_wen_b1,
   input  wire [ACC_MEM_BLOCKS*ACC_ADDR_WIDTH-1:0] acc_addr_b1,
   input  wire [ACC_MEM_BLOCKS*DATA_WIDTH-1:0]     acc_wr_data_b1,
-  output wire [ACC_MEM_BLOCKS*DATA_WIDTH-1:0]     acc_rd_data_b1,
+  output reg  [ACC_MEM_BLOCKS*DATA_WIDTH-1:0]     acc_rd_data_b1,
 
   input  wire [ACC_MEM_BLOCKS-1:0]                acc_en_b2,
   input  wire [ACC_MEM_BLOCKS*STRB_WIDTH-1:0]     acc_wen_b2,
   input  wire [ACC_MEM_BLOCKS*ACC_ADDR_WIDTH-1:0] acc_addr_b2,
   input  wire [ACC_MEM_BLOCKS*DATA_WIDTH-1:0]     acc_wr_data_b2,
-  output wire [ACC_MEM_BLOCKS*DATA_WIDTH-1:0]     acc_rd_data_b2,
+  output reg  [ACC_MEM_BLOCKS*DATA_WIDTH-1:0]     acc_rd_data_b2,
 
   output reg  [DMEM_ADDR_WIDTH-1:0]               bc_msg_addr,
   output reg                                      bc_msg_valid,
@@ -579,6 +579,9 @@ module mem_sys # (
   reg  [ACC_MEM_BLOCKS*DATA_WIDTH-1:0] pmem_rd_data_b1_r;
   reg  [ACC_MEM_BLOCKS*DATA_WIDTH-1:0] pmem_rd_data_b2_r;
 
+  wire [ACC_MEM_BLOCKS*DATA_WIDTH-1:0] acc_rd_data_b1_n;
+  wire [ACC_MEM_BLOCKS*DATA_WIDTH-1:0] acc_rd_data_b2_n;
+
   if (PMEM_SEL_BITS>0) begin
     assign pmem_rd_sel_b1 = pmem_addr_b1[PMEM_ADDR_WIDTH-1:
                                          PMEM_ADDR_WIDTH-PMEM_SEL_BITS];
@@ -609,7 +612,7 @@ module mem_sys # (
         .wenb(acc_wen_b1[i*STRB_WIDTH +: STRB_WIDTH]),
         .addrb(acc_addr_b1[i*ACC_ADDR_WIDTH +: ACC_ADDR_WIDTH]),
         .dinb(acc_wr_data_b1[i*DATA_WIDTH +: DATA_WIDTH]),
-        .doutb(acc_rd_data_b1[i*DATA_WIDTH +: DATA_WIDTH])
+        .doutb(acc_rd_data_b1_n[i*DATA_WIDTH +: DATA_WIDTH])
       );
 
       mem_2rw_uram #(
@@ -628,7 +631,7 @@ module mem_sys # (
         .wenb(acc_wen_b2[i*STRB_WIDTH +: STRB_WIDTH]),
         .addrb(acc_addr_b2[i*ACC_ADDR_WIDTH +: ACC_ADDR_WIDTH]),
         .dinb(acc_wr_data_b2[i*DATA_WIDTH +: DATA_WIDTH]),
-        .doutb(acc_rd_data_b2[i*DATA_WIDTH +: DATA_WIDTH])
+        .doutb(acc_rd_data_b2_n[i*DATA_WIDTH +: DATA_WIDTH])
       );
 
   end
@@ -638,6 +641,9 @@ module mem_sys # (
   always @ (posedge clk) begin
     pmem_rd_data_b1_r <= pmem_rd_data_b1;
     pmem_rd_data_b2_r <= pmem_rd_data_b2;
+
+    acc_rd_data_b1    <= acc_rd_data_b1_n;
+    acc_rd_data_b2    <= acc_rd_data_b2_n;
   end
 
   ////////////////////////////////////////////////////////////////////

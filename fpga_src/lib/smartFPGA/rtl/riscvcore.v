@@ -193,6 +193,7 @@ reg        ready_to_evict_r;
 reg        bc_msg_fifo_en;
 
 reg [DMEM_ADDR_WIDTH-1:0] bc_mask_reg, bc_equal_reg;
+reg out_desc_v_r;
 
 integer i,j;
 always @ (posedge clk) begin
@@ -257,7 +258,7 @@ wire update_desc    = io_write && ((io_addr==SEND_DESC_ADDR_L) ||
                                    (io_addr==WR_DRAM_ADDR_L)   ||
                                    (io_addr==WR_DRAM_ADDR_H));
 
-reg out_desc_v_r, debug_reg_wr_l_r, debug_reg_wr_h_r;
+reg debug_reg_wr_l_r, debug_reg_wr_h_r;
 
 always @ (posedge clk) begin
     if (rst) begin
@@ -297,6 +298,7 @@ wire   bc_msg_taken       = io_write && (io_addr==BC_MSG_RD_STRB) && mem_wr_data
 reg        bc_int_fifo_err;
 wire       dram_recv_any;
 wire       bc_msg_int;
+wire timer_int_ack;
 
 // These interrupts are kept high until acked or addressed
 // so easy to add a pipe register, if there is a ack this
@@ -414,7 +416,6 @@ always @ (posedge clk)
 //////////////////////// INTERNAL 32-BIT TIMER ////////////////////////////
 ///////////////////////////////////////////////////////////////////////////
 reg [31:0] interrupt_time;
-wire timer_int_ack;
 
 always @ (posedge clk)
   if (rst || timer_step_wen) begin

@@ -161,6 +161,7 @@ reg  [MEM_BLOCKS-1:0]     mem_b2_rd_en_n;
 reg  [MEM_ADDR_WIDTH-1:0] mem_b2_rd_addr_n;
 
 reg  [SAFE_MEM_SEL_BITS-1:0] mem_b1_sel_rr, mem_b2_sel_rr;
+reg  [SAFE_MEM_SEL_BITS-1:0] mem_b1_sel_rrr, mem_b2_sel_rrr;
 reg  [SAFE_MEM_SEL_BITS-1:0] mem_b1_sel_r, mem_b2_sel_r;
 wire [SAFE_MEM_SEL_BITS-1:0] mem_b1_sel = mem_rd_addr[0] ?
          mem_rd_addr_n[LINE_ADDR_WIDTH-1:MEM_ADDR_WIDTH+1] :
@@ -218,15 +219,27 @@ endgenerate
 reg [DATA_WIDTH-1:0]   mem_b1_rd_data_rr, mem_b2_rd_data_rr;
 reg                    mem_rd_valid_r, mem_rd_valid_rr, mem_rd_valid_rrr;
 
+always @ (*) begin // read data is already registered in mem_sys module.
+  if(MEM_SEL_BITS>0) begin
+    mem_b1_rd_data_rr = mem_b1_rd_data[mem_b1_sel_rrr*DATA_WIDTH +: DATA_WIDTH];
+    mem_b2_rd_data_rr = mem_b2_rd_data[mem_b2_sel_rrr*DATA_WIDTH +: DATA_WIDTH];
+  end else begin
+    mem_b1_rd_data_rr = mem_b1_rd_data;
+    mem_b2_rd_data_rr = mem_b2_rd_data;
+  end
+end
+
 always @ (posedge clk) begin
   if(MEM_SEL_BITS>0) begin
-    mem_b1_rd_data_rr <= mem_b1_rd_data[mem_b1_sel_rr*DATA_WIDTH +: DATA_WIDTH];
-    mem_b2_rd_data_rr <= mem_b2_rd_data[mem_b2_sel_rr*DATA_WIDTH +: DATA_WIDTH];
     mem_b1_sel_rr  <= mem_b1_sel_r;
     mem_b2_sel_rr  <= mem_b2_sel_r;
+    mem_b1_sel_rrr <= mem_b1_sel_rr;
+    mem_b2_sel_rrr <= mem_b2_sel_rr;
   end else begin
-    mem_b1_rd_data_rr <= mem_b1_rd_data;
-    mem_b2_rd_data_rr <= mem_b2_rd_data;
+    mem_b1_sel_rr  <= 1'b0;
+    mem_b2_sel_rr  <= 1'b0;
+    mem_b1_sel_rrr <= 1'b0;
+    mem_b2_sel_rrr <= 1'b0;
   end
 
   mem_rd_valid_r   <= mem_rd_valid;
