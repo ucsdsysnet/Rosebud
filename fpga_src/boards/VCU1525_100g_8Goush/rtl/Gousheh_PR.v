@@ -1,12 +1,7 @@
-module riscv_block_PR_w_accel (
+module Gousheh_PR (
   input  wire         clk,
   input               rst,
-  input  wire         core_rst,
-
-  input  wire         evict_int,
-  output reg          evict_int_ack,
-  input  wire         poke_int,
-  output reg          poke_int_ack,
+  input  wire         core_reset,
 
   // DMA interface
   input  wire         dma_cmd_wr_en,
@@ -33,13 +28,9 @@ module riscv_block_PR_w_accel (
   output wire         in_desc_taken,
 
   output wire [63:0]  out_desc,
-  output wire [63:0]  out_desc_dram_addr,
+  output wire         out_desc_2nd,
   output wire         out_desc_valid,
   input  wire         out_desc_ready,
-
-  // Received DRAM and active slots info to core
-  input  wire [4:0]   recv_dram_tag,
-  input  wire         recv_dram_tag_valid,
 
   // Broadcast messages
   input  wire [46:0]  bc_msg_in,
@@ -50,21 +41,17 @@ module riscv_block_PR_w_accel (
 
   // Status channel to core
   input  wire [31:0]  wrapper_status_data,
-  input  wire [1:0]   wrapper_status_addr,
-  input  wire         wrapper_status_valid,
-  output wire         wrapper_status_ready,
+  input  wire [2:0]   wrapper_status_addr,
 
   // Status channel from core
-  output wire [31:0]  core_status_data,
-  output wire [1:0]   core_status_addr,
-  output wire         core_status_valid,
-  input  wire         core_status_ready
+  output reg  [31:0]  core_status_data,
+  output reg  [1:0]   core_status_addr
 );
 
 // Parameters that should match the wrapper and are used in ports
 parameter DATA_WIDTH     = 128;
 parameter STRB_WIDTH     = (DATA_WIDTH/8);
-parameter IMEM_SIZE      = 65536/2;
+parameter IMEM_SIZE      = 65536;
 parameter PMEM_SIZE      = 1048576;
 parameter DMEM_SIZE      = 32768;
 parameter SLOW_M_B_LINES = 4096;
@@ -81,18 +68,11 @@ parameter REG_LENGTH     = 1;
 /////////////////// Register input and outputs ////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 (* KEEP = "TRUE" *) reg rst_r;
-(* KEEP = "TRUE" *) reg core_rst_r;
-
-reg  poke_int_r, evict_int_r;
-wire poke_int_ack_n, evict_int_ack_n;
+(* KEEP = "TRUE" *) reg core_reset_r;
 
 always @ (posedge clk) begin
-  rst_r          <= rst;
-  core_rst_r     <= core_rst;
-  poke_int_r     <= poke_int;
-  evict_int_r    <= evict_int;
-  poke_int_ack   <= poke_int_ack_n;
-  evict_int_ack  <= evict_int_ack_n;
+  rst_r        <= rst;
+  core_reset_r <= core_reset;
 end
 
 wire                  dma_cmd_wr_en_r;
@@ -176,7 +156,7 @@ simple_pipe_reg # (
   .REG_LENGTH(REG_LENGTH)
 ) in_desc_reg (
   .clk(clk),
-  .rst(rst_r || core_rst_r),
+  .rst(rst_r || core_reset_r),
 
   .s_data(in_desc),
   .s_valid(in_desc_valid),
@@ -188,45 +168,25 @@ simple_pipe_reg # (
 );
 
 wire [63:0] out_desc_n;
-wire [63:0] out_desc_dram_addr_n;
+wire        out_desc_2nd_n;
 wire        out_desc_valid_n;
 wire        out_desc_ready_n;
 
 simple_pipe_reg # (
-  .DATA_WIDTH(128),
+  .DATA_WIDTH(65),
   .REG_TYPE(REG_TYPE),
   .REG_LENGTH(REG_LENGTH)
 ) out_desc_reg (
   .clk(clk),
-  .rst(rst_r || core_rst_r),
+  .rst(rst_r || core_reset_r),
 
-  .s_data({out_desc_dram_addr_n,out_desc_n}),
+  .s_data({out_desc_2nd_n,out_desc_n}),
   .s_valid(out_desc_valid_n),
   .s_ready(out_desc_ready_n),
 
-  .m_data({out_desc_dram_addr,out_desc}),
+  .m_data({out_desc_2nd,out_desc}),
   .m_valid(out_desc_valid),
   .m_ready(out_desc_ready)
-);
-
-wire [4:0] recv_dram_tag_r;
-wire       recv_dram_tag_valid_r;
-
-simple_pipe_reg # (
-  .DATA_WIDTH(5),
-  .REG_TYPE(REG_TYPE),
-  .REG_LENGTH(REG_LENGTH)
-) dram_tag_reg (
-  .clk(clk),
-  .rst(rst_r || core_rst_r),
-
-  .s_data(recv_dram_tag),
-  .s_valid(recv_dram_tag_valid),
-  .s_ready(),
-
-  .m_data(recv_dram_tag_r),
-  .m_valid(recv_dram_tag_valid_r),
-  .m_ready(1'b1)
 );
 
 wire [MSG_WIDTH-1:0]  bc_msg_in_r;
@@ -238,7 +198,7 @@ simple_pipe_reg # (
   .REG_LENGTH(REG_LENGTH)
 ) bc_msg_in_reg (
   .clk(clk),
-  .rst(rst_r || core_rst_r),
+  .rst(rst_r || core_reset_r),
 
   .s_data(bc_msg_in),
   .s_valid(bc_msg_in_valid),
@@ -259,7 +219,7 @@ simple_pipe_reg # (
   .REG_LENGTH(REG_LENGTH)
 ) bc_msg_out_reg (
   .clk(clk),
-  .rst(rst_r || core_rst_r),
+  .rst(rst_r),
 
   .s_data(bc_msg_out_n),
   .s_valid(bc_msg_out_valid_n),
@@ -270,54 +230,22 @@ simple_pipe_reg # (
   .m_ready(bc_msg_out_ready)
 );
 
-wire [31:0]  wrapper_status_data_r;
-wire [1:0]   wrapper_status_addr_r;
-wire         wrapper_status_valid_r;
-wire         wrapper_status_ready_r;
-
-simple_pipe_reg # (
-  .DATA_WIDTH(32+2),
-  .REG_TYPE(REG_TYPE),
-  .REG_LENGTH(REG_LENGTH)
-) wrapper_status_reg (
-  .clk(clk),
-  .rst(rst_r),
-
-  .s_data ({wrapper_status_addr, wrapper_status_data}),
-  .s_valid(wrapper_status_valid),
-  .s_ready(wrapper_status_ready),
-
-  .m_data ({wrapper_status_addr_r, wrapper_status_data_r}),
-  .m_valid(wrapper_status_valid_r),
-  .m_ready(wrapper_status_ready_r)
-);
-
+reg  [31:0] wrapper_status_data_r;
+reg  [2:0]  wrapper_status_addr_r;
 wire [31:0]  core_status_data_n;
 wire [1:0]   core_status_addr_n;
-wire         core_status_valid_n;
-wire         core_status_ready_n;
 
-simple_pipe_reg # (
-  .DATA_WIDTH(32+2),
-  .REG_TYPE(REG_TYPE),
-  .REG_LENGTH(REG_LENGTH)
-) core_status_reg (
-  .clk(clk),
-  .rst(rst_r),
-
-  .s_data ({core_status_addr_n, core_status_data_n}),
-  .s_valid(core_status_valid_n),
-  .s_ready(core_status_ready_n),
-
-  .m_data ({core_status_addr, core_status_data}),
-  .m_valid(core_status_valid),
-  .m_ready(core_status_ready)
-);
+always @ (posedge clk) begin
+  wrapper_status_data_r <= wrapper_status_data;
+  wrapper_status_addr_r <= wrapper_status_addr;
+  core_status_data      <= core_status_data_n;
+  core_status_addr      <= core_status_addr_n;
+end
 
 ///////////////////////////////////////////////////////////////////////////////
 ////////////////////////////// RISCV BLOCK  ///////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
-riscv_block # (
+Gousheh # (
     .DATA_WIDTH(DATA_WIDTH),
     .STRB_WIDTH(STRB_WIDTH),
     .IMEM_SIZE(IMEM_SIZE),
@@ -329,15 +257,10 @@ riscv_block # (
     .BC_START_ADDR(BC_START_ADDR),
     .MSG_WIDTH(MSG_WIDTH),
     .CORE_ID_WIDTH(CORE_ID_WIDTH)
-) riscv_block_inst (
+) Gousheh_inst (
     .clk(clk),
     .rst(rst_r),
-    .core_rst(core_rst_r),
-
-    .evict_int(evict_int_r),
-    .evict_int_ack(evict_int_ack_n),
-    .poke_int(poke_int_r),
-    .poke_int_ack(poke_int_ack_n),
+    .core_reset(core_reset_r),
 
     .dma_cmd_wr_en(dma_cmd_wr_en_r),
     .dma_cmd_wr_addr(dma_cmd_wr_addr_r),
@@ -359,12 +282,9 @@ riscv_block # (
     .in_desc_valid(in_desc_valid_r),
     .in_desc_taken(in_desc_taken_r),
     .out_desc(out_desc_n),
-    .out_desc_dram_addr(out_desc_dram_addr_n),
+    .out_desc_2nd(out_desc_2nd_n),
     .out_desc_valid(out_desc_valid_n),
     .out_desc_ready(out_desc_ready_n),
-
-    .recv_dram_tag(recv_dram_tag_r),
-    .recv_dram_tag_valid(recv_dram_tag_valid_r),
 
     .bc_msg_out(bc_msg_out_n),
     .bc_msg_out_valid(bc_msg_out_valid_n),
@@ -374,12 +294,8 @@ riscv_block # (
 
     .wrapper_status_data(wrapper_status_data_r),
     .wrapper_status_addr(wrapper_status_addr_r),
-    .wrapper_status_valid(wrapper_status_valid_r),
-    .wrapper_status_ready(wrapper_status_ready_r),
     .core_status_data(core_status_data_n),
-    .core_status_addr(core_status_addr_n),
-    .core_status_valid(core_status_valid_n),
-    .core_status_ready(core_status_ready_n)
+    .core_status_addr(core_status_addr_n)
 );
 
 endmodule

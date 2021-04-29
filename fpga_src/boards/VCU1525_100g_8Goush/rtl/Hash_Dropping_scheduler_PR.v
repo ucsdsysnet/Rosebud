@@ -1,4 +1,4 @@
-module scheduler_PR2 (
+module scheduler_PR (
   input                   clk,
   input                   rst,
 
@@ -43,25 +43,11 @@ module scheduler_PR2 (
   output wire             ctrl_s_axis_tready,
   input  wire [3-1:0]     ctrl_s_axis_tuser,
 
-  // Cores reset
-  input  wire [3:0]       host_cmd,
-  input  wire [3-1:0]     host_cmd_dest,
-  input  wire [31:0]      host_cmd_data,
-  input  wire             host_cmd_valid,
-  output wire             host_cmd_ready,
-
-  input  wire [8-1:0]    income_cores,
-  input  wire [8-1:0]    cores_to_be_reset,
-
-  input  wire [3-1:0]     stat_read_core,
-  output reg  [5-1:0]     slot_count,
-  input  wire [2-1:0]     stat_read_interface,
-  output reg  [31:0]      stat_interface_data,
-
-  input  wire             trig_in,
-  output wire             trig_in_ack,
-  output wire             trig_out,
-  input  wire             trig_out_ack
+  // Cores commands
+  input  wire [31:0]      host_cmd,
+  input  wire [31:0]      host_cmd_wr_data,
+  output reg  [31:0]      host_cmd_rd_data,
+  input  wire             host_cmd_valid
 );
 
   parameter INTERFACE_COUNT = 3;
@@ -72,7 +58,6 @@ module scheduler_PR2 (
   parameter CTRL_WIDTH      = 32+4;
   parameter LOOPBACK_PORT   = 3;
   parameter LOOPBACK_COUNT  = 1;
-  parameter ENABLE_ILA      = 0;
   parameter DATA_REG_TYPE   = 2;
   parameter CTRL_REG_TYPE   = 2;
   parameter DATA_FIFO_DEPTH = 4096;
@@ -250,7 +235,7 @@ module scheduler_PR2 (
         .m_axis_tdata (rx_axis_tdata_r[q*DATA_WIDTH +: DATA_WIDTH]),
         .m_axis_tkeep (rx_axis_tkeep_r[q*STRB_WIDTH +: STRB_WIDTH]),
         .m_axis_tvalid(rx_axis_tvalid_r[q]),
-        .m_axis_tready(rx_axis_tready_r[q]),
+        .m_axis_tready(rx_axis_tready_r[q] && enabled_ints[q]),
         .m_axis_tlast (rx_axis_tlast_r[q]),
         .m_axis_tid   (),
         .m_axis_tdest (),
@@ -268,7 +253,7 @@ module scheduler_PR2 (
 
         .s_axis_tdata (rx_axis_tdata_r[q*DATA_WIDTH +: DATA_WIDTH]),
         .s_axis_tkeep (rx_axis_tkeep_r[q*STRB_WIDTH +: STRB_WIDTH]),
-        .s_axis_tvalid(rx_axis_tvalid_r[q] && rx_axis_tready_r[q]),
+        .s_axis_tvalid(rx_axis_tvalid_r[q] && rx_axis_tready_r[q] && enabled_ints[q]),
         .s_axis_tlast (rx_axis_tlast_r[q]),
 
         .hash_key(320'h6d5a56da255b0ec24167253d43a38fb0d0ca2bcbae7b30b477cb2da38030f20c6a42b73bbeac01fa),
@@ -319,7 +304,7 @@ module scheduler_PR2 (
 
           .s_axis_tdata (rx_axis_tdata_r[q*DATA_WIDTH +: DATA_WIDTH]),
           .s_axis_tkeep (rx_axis_tkeep_r[q*STRB_WIDTH +: STRB_WIDTH]),
-          .s_axis_tvalid(rx_axis_tvalid_r[q]),
+          .s_axis_tvalid(rx_axis_tvalid_r[q] && enabled_ints[q]),
           .s_axis_tready(rx_axis_tready_r[q]),
           .s_axis_tlast (rx_axis_tlast_r[q]),
           .s_axis_tid   (8'd0),
@@ -466,37 +451,69 @@ module scheduler_PR2 (
     .m_axis_tuser ()
   );
 
-  reg [3:0]                 host_cmd_r;
-  reg [CORE_ID_WIDTH-1:0]   host_cmd_dest_r;
-  reg [31:0]                host_cmd_data_r;
-  reg                       host_cmd_valid_r;
-  reg [CORE_COUNT-1:0]      income_cores_r;
-  reg [CORE_COUNT-1:0]      cores_to_be_reset_r;
+  reg [31:0]                host_cmd_r;
+  reg [31:0]                host_cmd_wr_data_r;
+  reg                       host_to_cores_valid_r;
+  reg                       host_to_sched_valid_r;
+  reg [CORE_COUNT-1:0]      income_cores;
+  reg [CORE_COUNT-1:0]      enabled_cores;
+  reg [CORE_COUNT-1:0]      slots_flush;
   reg [CORE_ID_WIDTH-1:0]   stat_read_core_r;
   reg [INTERFACE_WIDTH-1:0] stat_read_interface_r;
-  reg [SLOT_WIDTH-1:0]      slot_count_n;
-  reg [31:0]                stat_interface_data_n;
+  reg [31:0]                host_cmd_rd_data_n;
   reg [INTERFACE_COUNT-1:0] rx_almost_full_r;
+  reg [INTERFACE_COUNT-1:0] enabled_ints;
+  reg [2:0]                 sched_cmd_addr;
 
+  // host cmd bit 31 high means wr. bit 30 low means command for cores
   always @ (posedge clk) begin
     host_cmd_r            <= host_cmd;
-    host_cmd_dest_r       <= host_cmd_dest;
-    host_cmd_data_r       <= host_cmd_data;
-    host_cmd_valid_r      <= host_cmd_valid;
-    income_cores_r        <= income_cores;
-    cores_to_be_reset_r   <= cores_to_be_reset;
-    stat_read_core_r      <= stat_read_core;
-    stat_read_interface_r <= stat_read_interface;
-    slot_count            <= slot_count_n;
-    stat_interface_data   <= stat_interface_data_n;
+    host_cmd_wr_data_r    <= host_cmd_wr_data;
+    host_to_cores_valid_r <= host_cmd_valid && host_cmd[31] && !host_cmd[30];
+    host_to_sched_valid_r <= host_cmd_valid && host_cmd[31] &&  host_cmd[30];
+    stat_read_core_r      <= host_cmd[CORE_ID_WIDTH-1:0];
+    stat_read_interface_r <= host_cmd[INTERFACE_WIDTH-1:0];
+    sched_cmd_addr        <= host_cmd[29:27];
+    host_cmd_rd_data      <= host_cmd_rd_data_n;
     rx_almost_full_r      <= rx_axis_almost_full;
+
+    if (host_to_sched_valid_r)
+      case (sched_cmd_addr)
+        3'b000: begin
+          // A core to be reset cannot be an incoming core.
+          income_cores  <= host_cmd_wr_data_r[CORE_COUNT-1:0] & enabled_cores;
+        end
+        3'b001: begin
+          income_cores  <= income_cores & host_cmd_wr_data_r[CORE_COUNT-1:0];
+          enabled_cores <= host_cmd_wr_data_r[CORE_COUNT-1:0];
+        end
+        3'b011: begin
+          slots_flush   <= host_cmd_wr_data_r[CORE_COUNT-1:0];
+        end
+        3'b101: begin
+          enabled_ints  <= host_cmd_wr_data_r[INTERFACE_COUNT-1:0];
+        end
+
+        default: begin //for one-cycle signals
+          slots_flush  <= {CORE_COUNT{1'b0}};
+        end
+      endcase
+    else begin // for one-cycle signals
+          slots_flush  <= {CORE_COUNT{1'b0}};
+    end
+
     if (rst_r) begin
-      host_cmd_valid_r    <= 1'b0;
-      income_cores_r      <= {CORE_COUNT{1'b0}};
-      cores_to_be_reset_r <= {CORE_COUNT{1'b0}};
+      host_to_cores_valid_r <= 1'b0;
+      host_to_sched_valid_r <= 1'b0;
+      income_cores          <= {CORE_COUNT{1'b0}};
+      enabled_cores         <= {CORE_COUNT{1'b0}};
+      enabled_ints          <= {INTERFACE_COUNT{1'b0}};
+      slots_flush           <= {CORE_COUNT{1'b0}};
     end
   end
-  assign host_cmd_ready     = 1'b1;
+
+  wire [3:0]                host_cores_cmd = host_cmd_r [3:0];
+  wire [CORE_ID_WIDTH-1:0]  host_cmd_dest  = host_cmd_r [4 +: CORE_ID_WIDTH];
 
   // Separate incoming ctrl messages
   parameter MSG_TYPE_WIDTH = 4;
@@ -556,7 +573,7 @@ module scheduler_PR2 (
         .dout_valid(pkt_to_core_valid[m]),
         .dout(pkt_to_core_req[m*(DESC_WIDTH+CORE_ID_WIDTH) +:
                                 (DESC_WIDTH+CORE_ID_WIDTH)]),
-        .dout_ready(arb_to_core_ready[m] && rx_desc_slot_v[m] && !cores_to_be_reset_r[m])
+        .dout_ready(arb_to_core_ready[m] && rx_desc_slot_v[m] && enabled_cores[m])
       );
     end
   endgenerate
@@ -582,7 +599,7 @@ module scheduler_PR2 (
 
     .s_axis_tdata(pkt_to_core_req),
     .s_axis_tkeep(),
-    .s_axis_tvalid(pkt_to_core_valid & rx_desc_slot_v & ~cores_to_be_reset_r),
+    .s_axis_tvalid(pkt_to_core_valid & rx_desc_slot_v & enabled_cores),
     .s_axis_tready(arb_to_core_ready),
     .s_axis_tlast({CORE_COUNT{1'b1}}),
     .s_axis_tid(),
@@ -630,7 +647,7 @@ module scheduler_PR2 (
   generate
     for (i=0;i<CORE_COUNT;i=i+1) begin
       assign rx_desc_slot_pop[i]    = (rx_desc_pop && (rx_dest_core==i)) ||
-                                      (pkt_to_core_valid[i] && arb_to_core_ready[i] && (~cores_to_be_reset_r[i]));
+                                      (pkt_to_core_valid[i] && arb_to_core_ready[i] && enabled_cores[i]);
 
       // Register valid for better timing closure
       always @ (posedge clk)
@@ -647,7 +664,7 @@ module scheduler_PR2 (
         .SLOT_WIDTH(SLOT_WIDTH)
       ) rx_desc_keeper (
         .clk(clk),
-        .rst(rst_r),
+        .rst(rst_r|slots_flush[i]),
 
         .init_slots(input_slot),
         .init_valid(init_slot_v[i]),
@@ -765,12 +782,12 @@ module scheduler_PR2 (
   assign ctrl_out_ready = (!ctrl_out_valid_r) || ctrl_out_ready_r;
 
   // Arbiter between host cmd and scheduler messages
-  assign ctrl_m_axis_tdata_n  = host_cmd_valid_r ? {host_cmd_r, host_cmd_data_r}
-                                             : ctrl_out_desc_r;
-  assign ctrl_m_axis_tvalid_n = host_cmd_valid_r || ctrl_out_valid_r;
-  assign ctrl_m_axis_tdest_n  = host_cmd_valid_r ? host_cmd_dest_r : ctrl_out_dest_r;
+  assign ctrl_m_axis_tdata_n  = host_to_cores_valid_r ? {host_cores_cmd, host_cmd_wr_data_r}
+                                                      : ctrl_out_desc_r;
+  assign ctrl_m_axis_tvalid_n = host_to_cores_valid_r || ctrl_out_valid_r;
+  assign ctrl_m_axis_tdest_n  = host_to_cores_valid_r ? host_cmd_dest : ctrl_out_dest_r;
 
-  assign ctrl_out_ready_r   = (!host_cmd_valid_r) && ctrl_m_axis_tready_n;
+  assign ctrl_out_ready_r   = (!host_to_cores_valid_r) && ctrl_m_axis_tready_n;
 
   /// *** ARBITRATION AND DESC ALLOCATION FOR RX DATA *** ///
 
@@ -829,7 +846,7 @@ module scheduler_PR2 (
 
   // Checking for slot availability, collision with intercore desc request and
   // if core is allowed to receive packets from interfaces
-  assign rx_desc_avail = rx_desc_slot_v & income_cores_r;
+  assign rx_desc_avail = rx_desc_slot_v & income_cores;
   assign msg_desc_pop  = pkt_to_core_valid & arb_to_core_ready;
 
   wire [ID_TAG_WIDTH-1:0] rx_desc_data = {rx_dest_core, {(TAG_WIDTH-SLOT_WIDTH){1'b0}},
@@ -875,68 +892,14 @@ module scheduler_PR2 (
         drop_count[selected_port_enc_r*32 +: 32] + 1;
   end
 
-  always @ (posedge clk) begin
-    slot_count_n          <= rx_desc_count[stat_read_core_r * SLOT_WIDTH +: SLOT_WIDTH];
-    stat_interface_data_n <= drop_count[stat_read_interface_r*32 +: 32];
-  end
-
-if (ENABLE_ILA) begin
-  wire trig_out_1, trig_out_2;
-  wire ack_1, ack_2;
-  reg [CORE_COUNT*SLOT_WIDTH-1:0] rx_desc_count_r;
-  reg [INTERFACE_COUNT-1:0] desc_req_r;
-  reg rx_desc_pop_r;
-  reg [ID_TAG_WIDTH-1:0] rx_desc_data_r;
-  always @ (posedge clk) begin
-    rx_desc_count_r     <= rx_desc_count;
-    desc_req_r          <= desc_req;
-    rx_desc_pop_r       <= rx_desc_pop;
-    rx_desc_data_r      <= rx_desc_data;
-  end
-
-  ila_2x64 debugger1 (
-    .clk    (clk),
-
-    .trig_out(trig_out),
-    .trig_out_ack(trig_out_ack),
-    .trig_in (trig_in),
-    .trig_in_ack(trig_in_ack),
-
-    .probe0 ({
-       data_m_axis_tdest_n[17:0],
-       ctrl_m_axis_tdest_n,
-       ctrl_s_axis_tuser_r,
-       ctrl_m_axis_tvalid_n,
-       ctrl_m_axis_tready_n,
-       ctrl_s_axis_tvalid_r,
-       ctrl_s_axis_tready_r,
-       rst_r,
-       slot_insert_err,
-       msg_type,
-       rx_axis_tvalid_r[1:0],
-       rx_axis_tlast_r[1:0],
-       rx_axis_tready_r[1:0],
-       1'b0,
-       rx_desc_pop_r,
-       desc_req_r,
-       rx_desc_data_r,
-       6'd0,
-       selected_port_enc_r
-     }),
-
-    .probe1 ({
-       ctrl_m_axis_tdata_n[31:0],
-       ctrl_s_axis_tdata_r[31:0]})
-
-    // .probe2 (rx_desc_count_r),
-
-    // .probe3 ({rx_desc_slot_v, rx_desc_slot_pop,
-    //           cores_to_be_reset_r, income_cores_r})
-  );
-
-end else begin
-  assign trig_in_ack = 1'b0;
-  assign trig_out    = 1'b0;
-end
+  always @ (posedge clk)
+    case (sched_cmd_addr)
+      3'b000:  host_cmd_rd_data_n <= income_cores;
+      3'b001:  host_cmd_rd_data_n <= enabled_cores;
+      3'b010:  host_cmd_rd_data_n <= rx_desc_count[stat_read_core_r * SLOT_WIDTH +: SLOT_WIDTH];
+      3'b101:  host_cmd_rd_data_n <= {{(32-INTERFACE_COUNT){1'b0}}, enabled_ints};
+      3'b111:  host_cmd_rd_data_n <= drop_count[stat_read_interface_r*32 +: 32];
+      default: host_cmd_rd_data_n <= 32'hFEFEFEFE;
+    endcase
 
 endmodule
