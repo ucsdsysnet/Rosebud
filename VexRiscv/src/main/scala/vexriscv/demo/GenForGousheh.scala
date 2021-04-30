@@ -55,6 +55,7 @@ object GenForGousheh extends App{
           pessimisticWriteRegFile = false,
           pessimisticAddressMatch = false
         ),
+        // new DebugPlugin(ClockDomain.current.clone(reset = Bool().setName("debugReset"))),
         new BranchPlugin(
           earlyBranch = true,
           catchAddressMisaligned = true

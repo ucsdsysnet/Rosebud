@@ -36,3 +36,5 @@ IDS_Hash_direct:
 
 parse_log:
 	grep "WARNING" fpga/run.log | grep -v "license" | grep -v "replication" | grep -v "parameter declaration" | grep -v "Unused" | grep -v "given" > parsed_log.txt 
+parse_log2:
+	grep "WARNING" fpga/run.log | grep -v "license" | grep -v "replication" | grep -v "parameter declaration" | grep -v "Unused" | grep -v "given" | grep -v "simple_fifo" | grep -v "status_almost" | grep -v "driven by" | grep -v "unconnected or" > parsed_log.txt
