@@ -1,0 +1,1 @@
+../../../sme/python/sme_rulecompiler.py
