@@ -599,28 +599,52 @@ class BitSplitStateMachineGroup(object):
 
         # partition across multiple bit-split state machines
         offset = 0
-        count = len(self.matches)
+        low = 0
+        mid = 0
+        high = len(self.matches)
 
-        while count > 0:
-            if self.max_matches and count > self.max_matches:
-                count = self.max_matches
+        while high > 0:
+            if self.max_matches:
+                high = min(high, self.max_matches)
+
+            if self.max_states:
+                mid = (high + low) // 2
+            else:
+                mid = high
 
             bssm = BitSplitStateMachine(self.bit_width, self.split_width)
-            for m in self.matches[offset:offset+count]:
+            for m in self.matches[offset:offset+mid]:
                 bssm.add_word(m[1], m)
             bssm.finalize()
 
-            if self.max_states and max((len(sm.states) for sm in bssm.acsm)) > self.max_states:
-                count -= 1
-                if count < 1:
-                    raise Exception("Partitioning failed")
-                continue
+            if self.max_states:
+                max_state_count = max((len(sm.states) for sm in bssm.acsm))
+                if max_state_count > self.max_states:
+                    high = mid - 1
+
+                    if high <= 0:
+                        raise Exception("Partitioning failed")
+
+                    if low <= high:
+                        continue
+
+                    low = high - 1
+                    continue
+                elif max_state_count < self.max_states:
+                    low = mid + 1
+
+                    if low <= high:
+                        continue
+
+                assert max_state_count <= self.max_states
 
             self.bssm.append(bssm)
 
-            offset += count
+            offset += mid
 
-            count = len(self.matches) - offset
+            low = 0
+            mid = 0
+            high = len(self.matches) - offset
 
         self._finalized = True
 
