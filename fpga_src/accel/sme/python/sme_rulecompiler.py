@@ -599,28 +599,52 @@ class BitSplitStateMachineGroup(object):
 
         # partition across multiple bit-split state machines
         offset = 0
-        count = len(self.matches)
+        low = 0
+        mid = 0
+        high = len(self.matches)
 
-        while count > 0:
-            if self.max_matches and count > self.max_matches:
-                count = self.max_matches
+        while high > 0:
+            if self.max_matches:
+                high = min(high, self.max_matches)
+
+            if self.max_states:
+                mid = (high + low) // 2
+            else:
+                mid = high
 
             bssm = BitSplitStateMachine(self.bit_width, self.split_width)
-            for m in self.matches[offset:offset+count]:
+            for m in self.matches[offset:offset+mid]:
                 bssm.add_word(m[1], m)
             bssm.finalize()
 
-            if self.max_states and max((len(sm.states) for sm in bssm.acsm)) > self.max_states:
-                count -= 1
-                if count < 1:
-                    raise Exception("Partitioning failed")
-                continue
+            if self.max_states:
+                max_state_count = max((len(sm.states) for sm in bssm.acsm))
+                if max_state_count > self.max_states:
+                    high = mid - 1
+
+                    if high <= 0:
+                        raise Exception("Partitioning failed")
+
+                    if low <= high:
+                        continue
+
+                    low = high - 1
+                    continue
+                elif max_state_count < self.max_states:
+                    low = mid + 1
+
+                    if low <= high:
+                        continue
+
+                assert max_state_count <= self.max_states
 
             self.bssm.append(bssm)
 
-            offset += count
+            offset += mid
 
-            count = len(self.matches) - offset
+            low = 0
+            mid = 0
+            high = len(self.matches) - offset
 
         self._finalized = True
 
@@ -811,6 +835,7 @@ def main():
     parser.add_argument('--split_width', type=int, default=2, help="Bit split width")
     parser.add_argument('--max_matches', type=int, default=None, help="Max matches per block")
     parser.add_argument('--max_states', type=int, default=None, help="Max states per block")
+    parser.add_argument('--max_length', type=int, default=None, help="Max rule length")
 
     parser.add_argument('--match_file', type=str, default=[], action='append', help="Match file")
     parser.add_argument('--match_file_hex', type=str, default=[], action='append', help="Match file (hex)")
@@ -833,6 +858,7 @@ def main():
     split_width = args.split_width
     max_matches = args.max_matches
     max_states = args.max_states
+    max_length = args.max_length
 
     match_list = []
 
@@ -842,6 +868,8 @@ def main():
                 b = w.encode('utf-8')
                 if not b:
                     continue
+                if max_length:
+                    b = b[:max_length]
                 match_list.append((b, w))
 
     for fn in args.match_file_hex:
@@ -850,6 +878,8 @@ def main():
                 b = bytes.fromhex(w)
                 if not b:
                     continue
+                if max_length:
+                    b = b[:max_length]
                 match_list.append((b, w))
 
     for fn in args.rules_file:
@@ -858,6 +888,8 @@ def main():
                 b = parse_content_string(w)
                 if not b:
                     continue
+                if max_length:
+                    b = b[:max_length]
                 match_list.append((b, w))
 
     match_set = set()
@@ -883,6 +915,7 @@ def main():
     stats += f"Split count: {bssmg.split_count}\n"
     stats += f"Max matches: {bssmg.max_matches}\n"
     stats += f"Max states: {bssmg.max_states}\n"
+    stats += f"Max length: {max_length}\n"
     stats += f"Input files: {' '.join(args.match_file+args.match_file_hex+args.rules_file)}\n"
     stats += f"Match count: {len(bssmg.matches)}\n"
     stats += f"Shortest match (bytes): {min((len(m[1]) for m in bssmg.matches))}\n"
