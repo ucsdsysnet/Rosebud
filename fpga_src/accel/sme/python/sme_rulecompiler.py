@@ -811,6 +811,7 @@ def main():
     parser.add_argument('--split_width', type=int, default=2, help="Bit split width")
     parser.add_argument('--max_matches', type=int, default=None, help="Max matches per block")
     parser.add_argument('--max_states', type=int, default=None, help="Max states per block")
+    parser.add_argument('--max_length', type=int, default=None, help="Max rule length")
 
     parser.add_argument('--match_file', type=str, default=[], action='append', help="Match file")
     parser.add_argument('--match_file_hex', type=str, default=[], action='append', help="Match file (hex)")
@@ -833,6 +834,7 @@ def main():
     split_width = args.split_width
     max_matches = args.max_matches
     max_states = args.max_states
+    max_length = args.max_length
 
     match_list = []
 
@@ -842,6 +844,8 @@ def main():
                 b = w.encode('utf-8')
                 if not b:
                     continue
+                if max_length:
+                    b = b[:max_length]
                 match_list.append((b, w))
 
     for fn in args.match_file_hex:
@@ -850,6 +854,8 @@ def main():
                 b = bytes.fromhex(w)
                 if not b:
                     continue
+                if max_length:
+                    b = b[:max_length]
                 match_list.append((b, w))
 
     for fn in args.rules_file:
@@ -858,6 +864,8 @@ def main():
                 b = parse_content_string(w)
                 if not b:
                     continue
+                if max_length:
+                    b = b[:max_length]
                 match_list.append((b, w))
 
     match_set = set()
@@ -883,6 +891,7 @@ def main():
     stats += f"Split count: {bssmg.split_count}\n"
     stats += f"Max matches: {bssmg.max_matches}\n"
     stats += f"Max states: {bssmg.max_states}\n"
+    stats += f"Max length: {max_length}\n"
     stats += f"Input files: {' '.join(args.match_file+args.match_file_hex+args.rules_file)}\n"
     stats += f"Match count: {len(bssmg.matches)}\n"
     stats += f"Shortest match (bytes): {min((len(m[1]) for m in bssmg.matches))}\n"
