@@ -1,6 +1,6 @@
 MAX_STATE=256
 MAX_LENGTH=8
-STATE_LOAD=1
+STATE_LOAD=0
 
 all: fast_pattern_sme.v
 
