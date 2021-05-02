@@ -1311,19 +1311,18 @@ module axis_ram_sw_shrink # (
                 );
             end else begin: no_fifo
 
-                axis_pipeline_register # (
+                axis_slr_crossing_register # (
                     .DATA_WIDTH(M_DATA_WIDTH),
                     .KEEP_WIDTH(M_KEEP_WIDTH),
                     .KEEP_ENABLE(M_KEEP_ENABLE),
+                    .LAST_ENABLE(1),
                     .DEST_ENABLE(S_DEST_ENABLE),
                     .DEST_WIDTH(S_DEST_WIDTH),
                     .USER_ENABLE(USER_ENABLE),
                     .USER_WIDTH(USER_WIDTH),
                     .ID_ENABLE(ID_ENABLE),
-                    .ID_WIDTH(ID_WIDTH),
-                    .REG_TYPE(2), // MOEIN
-                    .LENGTH(1)
-                ) middle_pipeline_register (
+                    .ID_WIDTH(ID_WIDTH)
+                ) slr_crossing_register (
                     .clk(select_m_clk),
                     .rst(select_m_rst),
 
@@ -1459,7 +1458,7 @@ module axis_ram_sw_shrink # (
             .ID_WIDTH(ID_WIDTH),
             .ARB_TYPE(ARB_TYPE),
             .LSB_PRIORITY(LSB_PRIORITY),
-            .S_REG_TYPE(2),
+            .S_REG_TYPE(0),
             .M_REG_TYPE(M_REG_TYPE)
         ) sw_lvl2
         (
@@ -1905,7 +1904,7 @@ module axis_ram_sw_grow # (
         .ARB_TYPE(ARB_TYPE),
         .LSB_PRIORITY(LSB_PRIORITY),
         .S_REG_TYPE(S_REG_TYPE),
-        .M_REG_TYPE(M_REG_TYPE)
+        .M_REG_TYPE(0)
     ) sw_lvl1
     (
         .clk(s_clk),
@@ -2001,19 +2000,18 @@ module axis_ram_sw_grow # (
 
             end else begin: no_fifo
 
-                axis_pipeline_register # (
+                axis_slr_crossing_register # (
                     .DATA_WIDTH(S_DATA_WIDTH),
                     .KEEP_ENABLE(S_KEEP_ENABLE),
                     .KEEP_WIDTH(S_KEEP_WIDTH),
+                    .LAST_ENABLE(1),
                     .DEST_ENABLE(1),
                     .DEST_WIDTH(INT_DEST_WIDTH),
                     .USER_ENABLE(USER_ENABLE),
                     .USER_WIDTH(USER_WIDTH),
                     .ID_ENABLE(ID_ENABLE),
-                    .ID_WIDTH(ID_WIDTH),
-                    .REG_TYPE(2), //MOEIN
-                    .LENGTH(1)
-                ) middle_pipeline_register (
+                    .ID_WIDTH(ID_WIDTH)
+                ) slr_crossing_register (
                     .clk(select_m_clk),
                     .rst(select_m_rst),
 
