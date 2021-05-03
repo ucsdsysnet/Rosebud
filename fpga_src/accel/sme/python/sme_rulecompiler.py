@@ -860,15 +860,16 @@ def truncate_content(content, limit):
 
 def fast_pattern_extractor (line):
   if (len(line.strip()) == 0):
-    return ""
+    return "", ""
   else:
     fast_pattern = ""
-    pattern_len = 0
+    pattern_len  = 0
     unknown_flag = False
-    fast_flag = False
+    fast_flag    = False
 
-    rule = parse(line)
+    rule    = parse(line)
     options = rule['options']
+    header  = rule['header']
 
     for opt in options:
       if opt['name'] == 'content':
@@ -913,7 +914,7 @@ def fast_pattern_extractor (line):
     if unknown_flag:
       print ("WARNING: used", fast_pattern, "for", line,'\n')
 
-    return fast_pattern
+    return fast_pattern, header
 
 
 def main():
@@ -936,6 +937,7 @@ def main():
 
     parser.add_argument('--states_file', type=str, default=None, help="States output file name")
 
+    parser.add_argument('--headers_file', type=str, default=None, help="Headers file")
     parser.add_argument('--summary_file', type=str, default=None, help="Summary file")
     parser.add_argument('--stats_file', type=str, default=None, help="Statistics file")
 
@@ -971,7 +973,7 @@ def main():
     for fn in args.rules_file:
         with open(fn, 'r') as f:
             for w in f.read().splitlines():
-                pattern = fast_pattern_extractor(w)
+                pattern, header = fast_pattern_extractor(w)
                 b = parse_content_string(pattern)
                 if not b:
                     if w:
@@ -980,17 +982,25 @@ def main():
                 if max_length:
                     b = b[:max_length]
                     pattern=truncate_content(pattern,max_length)
-                match_list.append((b, pattern))
+                match_list.append((b, pattern, header))
 
     match_set = set()
+    match_list_dict = {}
     match_list_filtered = []
+    match_to_headers = []
 
     for m in match_list:
         if m[0] not in match_set:
             match_set.add(m[0])
-            match_list_filtered.append(m)
+            match_list_dict[m[0]] = (m[1],[m[2]])
+        else:
+            x, y = match_list_dict[m[0]]
+            if not m[2] in y:
+                match_list_dict[m[0]] = (x,y+[m[2]])
 
-    match_list_filtered.sort()
+    for m in sorted (match_list_dict):
+      match_to_headers.append((m,sorted(match_list_dict[m][1])))
+      match_list_filtered.append((m,match_list_dict[m][0]))
 
     print("Partition matches across bit-split state machines")
     bssmg = BitSplitStateMachineGroup(8, split_width, max_matches, max_states)
@@ -1089,6 +1099,21 @@ def main():
             print("Query bit-split state machines")
             for m in bssmg.query(f.read()):
                 print(m)
+
+    # headers mapping
+    headers = "index, pattern(hex)".ljust(2*max_length+7)+": rules\n"
+    indent = "".ljust(2*max_length+7)
+    ind = 0
+
+    for x,y in match_to_headers:
+        headers += f"{(str(ind)+',').ljust(6)} {x.hex().ljust(2*max_length)}: {y[0]}\n"
+        for i in range(1,len(y)):
+            headers += f"{indent}  {y[i]}\n"
+        ind += 1
+
+    if args.headers_file:
+        with open(args.headers_file, 'w') as f:
+            f.write(headers)
 
 
 if __name__ == "__main__":

@@ -13,6 +13,7 @@ clean:
 		--output_verilog $@ \
 		--states_file $(basename $@)_states.txt \
 		--summary_file $(basename $@)_summary.txt \
+		--headers_file $(basename $@)_headers.txt \
 		--stats_file $(basename $@)_stats.txt \
 		--split_width 2 \
 		--max_states ${MAX_STATE} \
