@@ -276,6 +276,7 @@ def run_test(parameters=None, sim_build="sim_build", waves=None, force_compile=F
 
     verilog_sources = [
         os.path.join(tests_dir, "..", "common", f"{toplevel}.v"),
+        os.path.join(tests_dir, "..", "common", "FDCE.v"),
         os.path.join(rtl_dir, f"{dut}.v"),
         os.path.join(rtl_dir, "Gousheh_PR.v"),
         os.path.join(rtl_dir, "RR_LU_scheduler_PR.v"),
@@ -299,6 +300,7 @@ def run_test(parameters=None, sim_build="sim_build", waves=None, force_compile=F
         os.path.join(smartfpga_rtl_dir, "axis_ram_switch.v"),
         os.path.join(smartfpga_rtl_dir, "axis_stat.v"),
         os.path.join(smartfpga_rtl_dir, "stat_reader.v"),
+        os.path.join(smartfpga_rtl_dir, "axis_slr_crossing_register.v"),
         os.path.join(smartfpga_rtl_dir, "axis_switch_2lvl.v"),
         os.path.join(smartfpga_rtl_dir, "loopback_msg_fifo.v"),
         os.path.join(smartfpga_rtl_dir, "header.v"),
