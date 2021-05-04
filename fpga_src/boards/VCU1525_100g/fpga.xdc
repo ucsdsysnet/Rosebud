@@ -522,20 +522,32 @@ set_property IS_SOFT TRUE [get_pblocks Wrapper_16]
 # CMAC PBlock
 create_pblock MAC_n_FIFOs
 add_cells_to_pblock [get_pblocks MAC_n_FIFOs] [get_cells -quiet [list {core_inst/MAC_async_FIFO[0].mac_rx_async_fifo_inst} {core_inst/MAC_async_FIFO[0].mac_tx_async_fifo_inst} {core_inst/MAC_async_FIFO[1].mac_rx_async_fifo_inst} {core_inst/MAC_async_FIFO[1].mac_tx_async_fifo_inst}]]
-resize_pblock [get_pblocks MAC_n_FIFOs] -add {SLICE_X0Y600:SLICE_X16Y899}
+resize_pblock [get_pblocks MAC_n_FIFOs] -add {SLICE_X0Y615:SLICE_X16Y899}
 resize_pblock [get_pblocks MAC_n_FIFOs] -add {CMACE4_X0Y6:CMACE4_X0Y8}
-resize_pblock [get_pblocks MAC_n_FIFOs] -add {DSP48E2_X0Y240:DSP48E2_X1Y359}
+resize_pblock [get_pblocks MAC_n_FIFOs] -add {DSP48E2_X0Y246:DSP48E2_X1Y359}
 resize_pblock [get_pblocks MAC_n_FIFOs] -add {ILKNE4_X0Y6:ILKNE4_X0Y6}
-resize_pblock [get_pblocks MAC_n_FIFOs] -add {LAGUNA_X0Y480:LAGUNA_X1Y719}
 resize_pblock [get_pblocks MAC_n_FIFOs] -add {PCIE40E4_X0Y5:PCIE40E4_X0Y5}
-resize_pblock [get_pblocks MAC_n_FIFOs] -add {RAMB18_X0Y240:RAMB18_X1Y359}
-resize_pblock [get_pblocks MAC_n_FIFOs] -add {RAMB36_X0Y120:RAMB36_X1Y179}
+resize_pblock [get_pblocks MAC_n_FIFOs] -add {RAMB18_X0Y246:RAMB18_X1Y359}
+resize_pblock [get_pblocks MAC_n_FIFOs] -add {RAMB36_X0Y123:RAMB36_X1Y179}
 set_property EXCLUDE_PLACEMENT 1 [get_pblocks MAC_n_FIFOs]
 set_property IS_SOFT FALSE [get_pblocks MAC_n_FIFOs]
 
 # Center PBlock for first level switches, loopback module, and stat readers
 create_pblock Switch_n_MSGs
-add_cells_to_pblock [get_pblocks Switch_n_MSGs] [get_cells -quiet [list {core_inst/MAC_async_FIFO[0].mac_rx_pipeline/pipe_reg[1].reg_inst} {core_inst/MAC_async_FIFO[0].mac_tx_pipeline/pipe_reg[0].reg_inst} {core_inst/MAC_async_FIFO[1].mac_rx_pipeline/pipe_reg[1].reg_inst} {core_inst/MAC_async_FIFO[1].mac_tx_pipeline/pipe_reg[0].reg_inst} core_inst/ctrl_in_sw/grow.axis_switch_2lvl_grow_inst/sw_lvl1 core_inst/data_in_sw/grow.axis_switch_2lvl_grow_inst/sw_lvl1 core_inst/data_out_sw/shrink.axis_switch_2lvl_shrink_inst/last_level_sw.sw_lvl2 core_inst/dram_ctrl_in_sw/grow.axis_switch_2lvl_grow_inst/sw_lvl1 core_inst/dram_ctrl_out_sw/shrink.axis_switch_2lvl_shrink_inst/last_level_arbiter.sw_lvl2 core_inst/interface_incoming_stat core_inst/interface_outgoing_stat core_inst/loopback_msg_fifo_inst {core_inst/pcie_controller_inst/virtual_ports.mac_fifos.tx_rx_fifos[0].rx_pipeline_reg/pipe_reg[0].reg_inst} {core_inst/pcie_controller_inst/virtual_ports.mac_fifos.tx_rx_fifos[0].tx_pipeline_reg/pipe_reg[1].reg_inst} sync_reset_125mhz_inst]]
+add_cells_to_pblock [get_pblocks Switch_n_MSGs] [get_cells -quiet [list \
+    core_inst/data_in_sw/grow.axis_switch_2lvl_grow_inst/sw_lvl1 \
+    {core_inst/data_in_sw/grow.axis_switch_2lvl_grow_inst/output_registers[*].output_register/slr_source_0} \
+    core_inst/data_out_sw/shrink.axis_switch_2lvl_shrink_inst/last_level_sw.sw_lvl2 \
+    {core_inst/data_out_sw/shrink.axis_switch_2lvl_shrink_inst/input_registers[*].input_register/slr_dest_0} \
+    core_inst/ctrl_in_sw/grow.axis_switch_2lvl_grow_inst/sw_lvl1 \
+    core_inst/dram_ctrl_in_sw/grow.axis_switch_2lvl_grow_inst/sw_lvl1 \
+    core_inst/dram_ctrl_out_sw/shrink.axis_switch_2lvl_shrink_inst/last_level_arbiter.sw_lvl2 \
+    {core_inst/MAC_async_FIFO[*].mac_rx_pipeline/slr_dest_0} \
+    {core_inst/MAC_async_FIFO[*].mac_tx_pipeline/slr_source_0} \
+    core_inst/interface_incoming_stat \
+    core_inst/interface_outgoing_stat \
+    core_inst/loopback_msg_fifo_inst \
+    sync_reset_125mhz_inst]]
 resize_pblock [get_pblocks Switch_n_MSGs] -add {SLICE_X0Y570:SLICE_X168Y599 SLICE_X0Y540:SLICE_X108Y569 SLICE_X55Y360:SLICE_X108Y539 SLICE_X0Y300:SLICE_X108Y359}
 resize_pblock [get_pblocks Switch_n_MSGs] -add {DSP48E2_X14Y228:DSP48E2_X18Y239 DSP48E2_X8Y120:DSP48E2_X13Y239 DSP48E2_X0Y216:DSP48E2_X7Y239 DSP48E2_X0Y120:DSP48E2_X7Y143}
 resize_pblock [get_pblocks Switch_n_MSGs] -add {LAGUNA_X16Y420:LAGUNA_X23Y479 LAGUNA_X0Y240:LAGUNA_X15Y479}
@@ -543,6 +555,51 @@ resize_pblock [get_pblocks Switch_n_MSGs] -add {RAMB18_X8Y228:RAMB18_X11Y239 RAM
 resize_pblock [get_pblocks Switch_n_MSGs] -add {RAMB36_X8Y114:RAMB36_X11Y119 RAMB36_X4Y60:RAMB36_X7Y119 RAMB36_X0Y108:RAMB36_X3Y119 RAMB36_X0Y60:RAMB36_X3Y71}
 resize_pblock [get_pblocks Switch_n_MSGs] -add {URAM288_X3Y152:URAM288_X3Y159 URAM288_X1Y80:URAM288_X2Y159 URAM288_X0Y144:URAM288_X0Y159 URAM288_X0Y80:URAM288_X0Y95}
 set_property IS_SOFT TRUE [get_pblocks Switch_n_MSGs]
+
+# Rest of SLR crossing registers location
+create_pblock SLR2_edge
+add_cells_to_pblock [get_pblocks SLR2_edge] [get_cells -quiet [list \
+    {core_inst/data_in_sw/grow.axis_switch_2lvl_grow_inst/output_registers[8].output_register/slr_dest_0/laguna_s_payload_d_reg[*]} \
+    {core_inst/data_in_sw/grow.axis_switch_2lvl_grow_inst/output_registers[9].output_register/slr_dest_0/laguna_s_payload_d_reg[*]} \
+    {core_inst/data_in_sw/grow.axis_switch_2lvl_grow_inst/output_registers[10].output_register/slr_dest_0/laguna_s_payload_d_reg[*]} \
+    {core_inst/data_in_sw/grow.axis_switch_2lvl_grow_inst/output_registers[11].output_register/slr_dest_0/laguna_s_payload_d_reg[*]} \
+    {core_inst/data_in_sw/grow.axis_switch_2lvl_grow_inst/output_registers[12].output_register/slr_dest_0/laguna_s_payload_d_reg[*]} \
+    {core_inst/data_in_sw/grow.axis_switch_2lvl_grow_inst/output_registers[13].output_register/slr_dest_0/laguna_s_payload_d_reg[*]} \
+    {core_inst/data_in_sw/grow.axis_switch_2lvl_grow_inst/output_registers[14].output_register/slr_dest_0/laguna_s_payload_d_reg[*]} \
+    {core_inst/data_in_sw/grow.axis_switch_2lvl_grow_inst/output_registers[15].output_register/slr_dest_0/laguna_s_payload_d_reg[*]} \
+    {core_inst/data_out_sw/shrink.axis_switch_2lvl_shrink_inst/input_registers[8].input_register/slr_source_0/laguna_m_payload_i_reg[*]} \
+    {core_inst/data_out_sw/shrink.axis_switch_2lvl_shrink_inst/input_registers[9].input_register/slr_source_0/laguna_m_payload_i_reg[*]} \
+    {core_inst/data_out_sw/shrink.axis_switch_2lvl_shrink_inst/input_registers[10].input_register/slr_source_0/laguna_m_payload_i_reg[*]} \
+    {core_inst/data_out_sw/shrink.axis_switch_2lvl_shrink_inst/input_registers[11].input_register/slr_source_0/laguna_m_payload_i_reg[*]} \
+    {core_inst/data_out_sw/shrink.axis_switch_2lvl_shrink_inst/input_registers[12].input_register/slr_source_0/laguna_m_payload_i_reg[*]} \
+    {core_inst/data_out_sw/shrink.axis_switch_2lvl_shrink_inst/input_registers[13].input_register/slr_source_0/laguna_m_payload_i_reg[*]} \
+    {core_inst/data_out_sw/shrink.axis_switch_2lvl_shrink_inst/input_registers[14].input_register/slr_source_0/laguna_m_payload_i_reg[*]} \
+    {core_inst/data_out_sw/shrink.axis_switch_2lvl_shrink_inst/input_registers[15].input_register/slr_source_0/laguna_m_payload_i_reg[*]} \
+    {core_inst/MAC_async_FIFO[*].mac_rx_pipeline/slr_source_0/laguna_m_payload_i_reg[*]} \
+    {core_inst/MAC_async_FIFO[*].mac_tx_pipeline/slr_dest_0/laguna_s_payload_d_reg[*]}]]
+resize_pblock SLR2_edge -add LAGUNA_X0Y480:LAGUNA_X23Y599
+set_property EXCLUDE_PLACEMENT 1 [get_pblocks SLR2_edge]
+
+create_pblock SLR0_edge
+add_cells_to_pblock [get_pblocks SLR0_edge] [get_cells -quiet [list \
+    {core_inst/data_in_sw/grow.axis_switch_2lvl_grow_inst/output_registers[0].output_register/slr_dest_0/laguna_s_payload_d_reg[*]} \
+    {core_inst/data_in_sw/grow.axis_switch_2lvl_grow_inst/output_registers[1].output_register/slr_dest_0/laguna_s_payload_d_reg[*]} \
+    {core_inst/data_in_sw/grow.axis_switch_2lvl_grow_inst/output_registers[2].output_register/slr_dest_0/laguna_s_payload_d_reg[*]} \
+    {core_inst/data_in_sw/grow.axis_switch_2lvl_grow_inst/output_registers[3].output_register/slr_dest_0/laguna_s_payload_d_reg[*]} \
+    {core_inst/data_in_sw/grow.axis_switch_2lvl_grow_inst/output_registers[4].output_register/slr_dest_0/laguna_s_payload_d_reg[*]} \
+    {core_inst/data_in_sw/grow.axis_switch_2lvl_grow_inst/output_registers[5].output_register/slr_dest_0/laguna_s_payload_d_reg[*]} \
+    {core_inst/data_in_sw/grow.axis_switch_2lvl_grow_inst/output_registers[6].output_register/slr_dest_0/laguna_s_payload_d_reg[*]} \
+    {core_inst/data_in_sw/grow.axis_switch_2lvl_grow_inst/output_registers[7].output_register/slr_dest_0/laguna_s_payload_d_reg[*]} \
+    {core_inst/data_out_sw/shrink.axis_switch_2lvl_shrink_inst/input_registers[0].input_register/slr_source_0/laguna_m_payload_i_reg[*]} \
+    {core_inst/data_out_sw/shrink.axis_switch_2lvl_shrink_inst/input_registers[1].input_register/slr_source_0/laguna_m_payload_i_reg[*]} \
+    {core_inst/data_out_sw/shrink.axis_switch_2lvl_shrink_inst/input_registers[2].input_register/slr_source_0/laguna_m_payload_i_reg[*]} \
+    {core_inst/data_out_sw/shrink.axis_switch_2lvl_shrink_inst/input_registers[3].input_register/slr_source_0/laguna_m_payload_i_reg[*]} \
+    {core_inst/data_out_sw/shrink.axis_switch_2lvl_shrink_inst/input_registers[4].input_register/slr_source_0/laguna_m_payload_i_reg[*]} \
+    {core_inst/data_out_sw/shrink.axis_switch_2lvl_shrink_inst/input_registers[5].input_register/slr_source_0/laguna_m_payload_i_reg[*]} \
+    {core_inst/data_out_sw/shrink.axis_switch_2lvl_shrink_inst/input_registers[6].input_register/slr_source_0/laguna_m_payload_i_reg[*]} \
+    {core_inst/data_out_sw/shrink.axis_switch_2lvl_shrink_inst/input_registers[7].input_register/slr_source_0/laguna_m_payload_i_reg[*]}]]
+resize_pblock SLR0_edge -add LAGUNA_X0Y120:LAGUNA_X23Y239
+set_property EXCLUDE_PLACEMENT 1 [get_pblocks SLR0_edge]
 
 # Scheduler PBlock, PR
 create_pblock User_Scheduler

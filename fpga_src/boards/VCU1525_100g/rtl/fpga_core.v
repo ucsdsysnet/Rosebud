@@ -403,16 +403,14 @@ wire [(INTERFACE_COUNT+V_PORT_COUNT)-1:0] rx_axis_tvalid, rx_axis_tready, rx_axi
 genvar m;
 generate
     for (m=0;m<INTERFACE_COUNT;m=m+1) begin: MAC_async_FIFO
-        axis_pipeline_register # (
+        axis_slr_crossing_register # (
             .DATA_WIDTH(LVL1_DATA_WIDTH),
             .KEEP_ENABLE(LVL1_STRB_WIDTH > 1),
             .KEEP_WIDTH(LVL1_STRB_WIDTH),
             .LAST_ENABLE(1),
             .ID_ENABLE(0),
             .DEST_ENABLE(0),
-            .USER_ENABLE(0),
-            .REG_TYPE(2),
-            .LENGTH(2)
+            .USER_ENABLE(0)
         ) mac_tx_pipeline (
             .clk(sys_clk),
             .rst(int_rst_r),
@@ -571,16 +569,14 @@ generate
             .status_almost_empty()
         );
 
-        axis_pipeline_register # (
+        axis_slr_crossing_register # (
             .DATA_WIDTH(LVL1_DATA_WIDTH),
             .KEEP_ENABLE(LVL1_STRB_WIDTH > 1),
             .KEEP_WIDTH(LVL1_STRB_WIDTH),
             .LAST_ENABLE(1),
             .ID_ENABLE(0),
             .DEST_ENABLE(0),
-            .USER_ENABLE(0),
-            .REG_TYPE(2),
-            .LENGTH(2)
+            .USER_ENABLE(0)
         ) mac_rx_pipeline (
             .clk(sys_clk),
             .rst(int_rst_r),
@@ -940,7 +936,7 @@ pcie_controller #
   .PORTS_PER_IF(PORTS_PER_V_IF),
   .RAM_PIPELINE(RAM_PIPELINE),
   .CORE_REQ_PCIE_CLK(1),
-  .AXIS_PIPE_LENGTH(2)
+  .AXIS_PIPE_LENGTH(1)
 ) pcie_controller_inst (
   .sys_clk(sys_clk),
   .sys_rst(sys_rst_r),
