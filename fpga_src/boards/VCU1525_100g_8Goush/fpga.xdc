@@ -412,12 +412,12 @@ add_cells_to_pblock [get_pblocks Switch_n_MSGs] [get_cells -quiet [list \
     core_inst/interface_outgoing_stat \
     core_inst/loopback_msg_fifo_inst \
     sync_reset_125mhz_inst]]
-resize_pblock [get_pblocks Switch_n_MSGs] -add {SLICE_X0Y570:SLICE_X168Y599 SLICE_X0Y540:SLICE_X108Y569 SLICE_X55Y360:SLICE_X108Y539 SLICE_X0Y300:SLICE_X108Y359}
-resize_pblock [get_pblocks Switch_n_MSGs] -add {DSP48E2_X14Y228:DSP48E2_X18Y239 DSP48E2_X8Y120:DSP48E2_X13Y239 DSP48E2_X0Y216:DSP48E2_X7Y239 DSP48E2_X0Y120:DSP48E2_X7Y143}
+resize_pblock [get_pblocks Switch_n_MSGs] -add {SLICE_X0Y570:SLICE_X168Y599 SLICE_X0Y540:SLICE_X108Y569 SLICE_X80Y360:SLICE_X108Y539 SLICE_X0Y300:SLICE_X108Y359}
+resize_pblock [get_pblocks Switch_n_MSGs] -add {DSP48E2_X14Y228:DSP48E2_X18Y239 DSP48E2_X9Y120:DSP48E2_X13Y239 DSP48E2_X0Y216:DSP48E2_X8Y239 DSP48E2_X0Y120:DSP48E2_X8Y143}
 resize_pblock [get_pblocks Switch_n_MSGs] -add {LAGUNA_X16Y420:LAGUNA_X23Y479 LAGUNA_X0Y240:LAGUNA_X15Y479}
-resize_pblock [get_pblocks Switch_n_MSGs] -add {RAMB18_X8Y228:RAMB18_X11Y239 RAMB18_X4Y120:RAMB18_X7Y239 RAMB18_X0Y216:RAMB18_X3Y239 RAMB18_X0Y120:RAMB18_X3Y143}
-resize_pblock [get_pblocks Switch_n_MSGs] -add {RAMB36_X8Y114:RAMB36_X11Y119 RAMB36_X4Y60:RAMB36_X7Y119 RAMB36_X0Y108:RAMB36_X3Y119 RAMB36_X0Y60:RAMB36_X3Y71}
-resize_pblock [get_pblocks Switch_n_MSGs] -add {URAM288_X3Y152:URAM288_X3Y159 URAM288_X1Y80:URAM288_X2Y159 URAM288_X0Y144:URAM288_X0Y159 URAM288_X0Y80:URAM288_X0Y95}
+resize_pblock [get_pblocks Switch_n_MSGs] -add {RAMB18_X8Y228:RAMB18_X11Y239 RAMB18_X5Y120:RAMB18_X7Y239 RAMB18_X0Y216:RAMB18_X4Y239 RAMB18_X0Y120:RAMB18_X4Y143}
+resize_pblock [get_pblocks Switch_n_MSGs] -add {RAMB36_X8Y114:RAMB36_X11Y119 RAMB36_X5Y60:RAMB36_X7Y119 RAMB36_X0Y108:RAMB36_X4Y119 RAMB36_X0Y60:RAMB36_X4Y71}
+resize_pblock [get_pblocks Switch_n_MSGs] -add {URAM288_X3Y152:URAM288_X3Y159 URAM288_X2Y80:URAM288_X2Y159 URAM288_X0Y144:URAM288_X1Y159 URAM288_X0Y80:URAM288_X1Y95}
 set_property IS_SOFT TRUE [get_pblocks Switch_n_MSGs]
 
 # Rest of SLR crossing registers location
@@ -433,8 +433,9 @@ add_cells_to_pblock [get_pblocks SLR2_edge] [get_cells -quiet [list \
     {core_inst/data_out_sw/shrink.axis_switch_2lvl_shrink_inst/input_registers[7].input_register/slr_source_0/laguna_m_payload_i_reg[*]} \
     {core_inst/MAC_async_FIFO[*].mac_rx_pipeline/slr_source_0/laguna_m_payload_i_reg[*]} \
     {core_inst/MAC_async_FIFO[*].mac_tx_pipeline/slr_dest_0/laguna_s_payload_d_reg[*]}]]
-resize_pblock SLR2_edge -add LAGUNA_X0Y480:LAGUNA_X23Y599
+resize_pblock [get_pblocks SLR2_edge] -add {LAGUNA_X0Y480:LAGUNA_X23Y599}
 set_property EXCLUDE_PLACEMENT 1 [get_pblocks SLR2_edge]
+set_property IS_SOFT FALSE [get_pblocks SLR2_edge]
 
 create_pblock SLR0_edge
 add_cells_to_pblock [get_pblocks SLR0_edge] [get_cells -quiet [list \
@@ -446,32 +447,34 @@ add_cells_to_pblock [get_pblocks SLR0_edge] [get_cells -quiet [list \
     {core_inst/data_out_sw/shrink.axis_switch_2lvl_shrink_inst/input_registers[1].input_register/slr_source_0/laguna_m_payload_i_reg[*]} \
     {core_inst/data_out_sw/shrink.axis_switch_2lvl_shrink_inst/input_registers[2].input_register/slr_source_0/laguna_m_payload_i_reg[*]} \
     {core_inst/data_out_sw/shrink.axis_switch_2lvl_shrink_inst/input_registers[3].input_register/slr_source_0/laguna_m_payload_i_reg[*]}]]
-resize_pblock SLR0_edge -add LAGUNA_X0Y120:LAGUNA_X23Y239
+resize_pblock [get_pblocks SLR0_edge] -add {LAGUNA_X0Y120:LAGUNA_X23Y239}
 set_property EXCLUDE_PLACEMENT 1 [get_pblocks SLR0_edge]
+set_property IS_SOFT FALSE [get_pblocks SLR0_edge]
 
 # Scheduler PBlock, PR
 create_pblock User_Scheduler
 add_cells_to_pblock [get_pblocks User_Scheduler] [get_cells -quiet [list core_inst/scheduler_PR_inst]]
-resize_pblock [get_pblocks User_Scheduler] -add {SLICE_X0Y360:SLICE_X54Y539}
+resize_pblock [get_pblocks User_Scheduler] -add {SLICE_X0Y360:SLICE_X79Y539}
 resize_pblock [get_pblocks User_Scheduler] -add {CMACE4_X0Y4:CMACE4_X0Y4}
-resize_pblock [get_pblocks User_Scheduler] -add {DSP48E2_X0Y144:DSP48E2_X7Y215}
+resize_pblock [get_pblocks User_Scheduler] -add {DSP48E2_X0Y144:DSP48E2_X8Y215}
 resize_pblock [get_pblocks User_Scheduler] -add {GTYE4_CHANNEL_X0Y24:GTYE4_CHANNEL_X0Y35}
 resize_pblock [get_pblocks User_Scheduler] -add {GTYE4_COMMON_X0Y6:GTYE4_COMMON_X0Y8}
 resize_pblock [get_pblocks User_Scheduler] -add {ILKNE4_X0Y3:ILKNE4_X0Y3}
+resize_pblock [get_pblocks User_Scheduler] -add {IOB_X0Y312:IOB_X0Y467}
 resize_pblock [get_pblocks User_Scheduler] -add {PCIE40E4_X0Y3:PCIE40E4_X0Y3}
-resize_pblock [get_pblocks User_Scheduler] -add {RAMB18_X0Y144:RAMB18_X3Y215}
-resize_pblock [get_pblocks User_Scheduler] -add {RAMB36_X0Y72:RAMB36_X3Y107}
-resize_pblock [get_pblocks User_Scheduler] -add {URAM288_X0Y96:URAM288_X0Y143}
-set_property HD.PARTPIN_RANGE {SLICE_X50Y360:SLICE_X54Y539} [get_pins [list core_inst/scheduler_PR_inst/data_s* core_inst/scheduler_PR_inst/ctrl* core_inst/scheduler_PR_inst/host_cmd* core_inst/scheduler_PR_inst/rst]]
-set_property HD.PARTPIN_RANGE {SLICE_X0Y535:SLICE_X50Y539} [get_pins core_inst/scheduler_PR_inst/tx_axis*]
-set_property HD.PARTPIN_RANGE {SLICE_X0Y535:SLICE_X50Y539} [get_pins core_inst/scheduler_PR_inst/rx_axis*]
-set_property HD.PARTPIN_RANGE {SLICE_X0Y360:SLICE_X50Y364} [get_pins core_inst/scheduler_PR_inst/data_m*]
+resize_pblock [get_pblocks User_Scheduler] -add {RAMB18_X0Y144:RAMB18_X4Y215}
+resize_pblock [get_pblocks User_Scheduler] -add {RAMB36_X0Y72:RAMB36_X4Y107}
+resize_pblock [get_pblocks User_Scheduler] -add {URAM288_X0Y96:URAM288_X1Y143}
+set_property HD.PARTPIN_RANGE {SLICE_X75Y360:SLICE_X79Y539} [get_pins [list core_inst/scheduler_PR_inst/data_s* core_inst/scheduler_PR_inst/ctrl* core_inst/scheduler_PR_inst/host_cmd* core_inst/scheduler_PR_inst/rst]]
+set_property HD.PARTPIN_RANGE {SLICE_X0Y535:SLICE_X75Y539} [get_pins core_inst/scheduler_PR_inst/tx_axis*]
+set_property HD.PARTPIN_RANGE {SLICE_X0Y535:SLICE_X75Y539} [get_pins core_inst/scheduler_PR_inst/rx_axis*]
+set_property HD.PARTPIN_RANGE {SLICE_X0Y360:SLICE_X75Y364} [get_pins core_inst/scheduler_PR_inst/data_m*]
 set_property SNAPPING_MODE ON [get_pblocks User_Scheduler]
 set_property IS_SOFT FALSE [get_pblocks User_Scheduler]
 
 # Corundum_pblock and Gousheh PCIe controller
 create_pblock Corundum_pblock
-add_cells_to_pblock [get_pblocks Corundum_pblock] [get_cells -quiet [list core_inst/host_cmd_rd_data_sync_reg core_inst/pcie_config_inst core_inst/pcie_controller_inst/pcie_cont_read_inst core_inst/pcie_controller_inst/pcie_cont_write_inst core_inst/pcie_controller_inst/virtual_ports.corundum_inst {core_inst/pcie_controller_inst/virtual_ports.mac_fifos.tx_rx_fifos[0].rx_pipeline_reg/pipe_reg[1].reg_inst} {core_inst/pcie_controller_inst/virtual_ports.mac_fifos.tx_rx_fifos[0].tx_pipeline_reg/pipe_reg[0].reg_inst}]]
+add_cells_to_pblock [get_pblocks Corundum_pblock] [get_cells -quiet [list core_inst/host_cmd_rd_data_sync_reg core_inst/pcie_config_inst core_inst/pcie_controller_inst/pcie_cont_read_inst core_inst/pcie_controller_inst/pcie_cont_write_inst core_inst/pcie_controller_inst/virtual_ports.corundum_inst]]
 resize_pblock [get_pblocks Corundum_pblock] -add {SLICE_X109Y300:SLICE_X139Y569}
 resize_pblock [get_pblocks Corundum_pblock] -add {DSP48E2_X14Y120:DSP48E2_X15Y227}
 resize_pblock [get_pblocks Corundum_pblock] -add {IOB_X1Y260:IOB_X1Y493}
