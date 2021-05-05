@@ -40,35 +40,30 @@ module accel_wrap #(
 
 assign error = 1'b0;
 
-localparam ACCEL_COUNT = 4+1;
+localparam TCP_SME_COUNT  = 4;
+localparam UDP_SME_COUNT  = 4;
+localparam HTTP_SME_COUNT = 4;
+
+localparam ACCEL_COUNT = TCP_SME_COUNT+UDP_SME_COUNT+HTTP_SME_COUNT+1;
 localparam DEST_WIDTH  = $clog2(ACCEL_COUNT);
 
 localparam LEN_WIDTH = 14;
 
-reg  [PMEM_ADDR_WIDTH-1:0] cmd_addr_reg;
-reg  [LEN_WIDTH-1:0]       cmd_len_reg;
-reg                        cmd_valid_reg;
-reg  [DEST_WIDTH-1:0]      cmd_accel_reg;
-reg  [ACCEL_COUNT-1:0]     cmd_stop_reg;
-reg  [ACCEL_COUNT-1:0]     cmd_init_reg;
-reg  [ACCEL_COUNT-1:0]     release_index;
-reg  [63:0]                cmd_state_reg;
-wire [ACCEL_COUNT-1:0]     accel_busy;
-reg  [ACCEL_COUNT-1:0]     sw_active_mask;
-reg  [DEST_WIDTH-1:0]      next_done_accel;
+reg [PMEM_ADDR_WIDTH-1:0] cmd_addr_reg;
+reg [LEN_WIDTH-1:0]       cmd_len_reg;
+reg                       cmd_valid_reg;
+reg [DEST_WIDTH-1:0]      cmd_accel_reg;
+reg [ACCEL_COUNT-1:0]     cmd_stop_reg;
+reg [ACCEL_COUNT-1:0]     cmd_init_reg;
+reg [63:0]                cmd_state_reg;
+wire [ACCEL_COUNT-1:0]    accel_busy;
 
-reg  [ACCEL_COUNT-1:0]     status_match;
-reg  [ACCEL_COUNT-1:0]     status_done;
-reg  [ACCEL_COUNT-1:0]     status_error;
-wire [ACCEL_COUNT-1:0]     masked_done;
-reg  [ACCEL_COUNT*8-1:0]   match_1hot;
-reg  [ACCEL_COUNT*8-1:0]   error_1hot;
-wire [ACCEL_COUNT*32-1:0]  match_indexes;
-wire [ACCEL_COUNT-1:0]     match_valid;
-wire [ACCEL_COUNT-1:0]     match_error;
-reg  [ACCEL_COUNT-1:0]     done_err;
-wire [ACCEL_COUNT-1:0]     desc_error;
-wire [ACCEL_COUNT*64-1:0]  accel_state;
+reg  [ACCEL_COUNT-1:0]    status_match;
+reg  [ACCEL_COUNT-1:0]    status_done;
+reg  [ACCEL_COUNT*32-1:0] match_1hot;
+reg  [ACCEL_COUNT-1:0]    done_err;
+wire [ACCEL_COUNT-1:0]    desc_error;
+wire [ACCEL_COUNT*64-1:0] accel_state;
 
 reg [31:0]  ip_addr_reg = 0;
 reg         ip_addr_valid_reg = 0;
@@ -91,31 +86,16 @@ always @(posedge clk) begin
   cmd_valid_reg <= 'b0;
   cmd_stop_reg  <= {ACCEL_COUNT{1'b0}};
   cmd_init_reg  <= {ACCEL_COUNT{1'b0}};
-  release_index <= {ACCEL_COUNT{1'b0}};
 
   ip_addr_valid_reg   <= 1'b0;
   read_data_valid_reg <= 1'b0;
 
-  // Memory mapped I/O writes
   if (io_en && io_wen) begin
-    // <1xxx xxxx xxxx> for CDN accel
     if (io_addr[11]) begin
       ip_addr_reg <= io_wr_data;
       ip_addr_valid_reg <= 1'b1;
-
-    // <01xx xxxx xxxx> for SME aggregated SME accels
-    end else if (io_addr[10]) begin
-      case ({io_addr[5:2], 2'b00})
-        6'h18: begin
-          sw_active_mask <= io_wr_data[ACCEL_COUNT-1:0];
-        end
-      endcase
-
-    // <00xx xxxx xxxx> for individual SME accels
     end else if (!io_addr[10]) begin
-      // 4 MSB for selecting SME IP, next 4 for selecting command (and two LSB=0)
       case ({io_addr[5:2], 2'b00})
-        // set destination SMR IP, and set bit in cmd_stop and cmd_init for that IP
         6'h00: begin
           if (io_strb[0]) begin
             cmd_valid_reg <= io_wr_data[0];
@@ -124,47 +104,30 @@ always @(posedge clk) begin
             cmd_init_reg [io_addr[9:6]] <= cmd_init_reg [io_addr[9:6]] || io_wr_data[0];
           end
         end
-        // Update DMA len
         6'h04: begin
           cmd_len_reg <= io_wr_data;
         end
-        // update DMA start addr
         6'h08: begin
           cmd_addr_reg <= io_wr_data;
         end
-        // update SME input (preamble bytes)
         6'h10: begin
           cmd_state_reg[31:0] <= io_wr_data;
-        end
+        end         
         6'h14: begin
           cmd_state_reg[63:32] <= io_wr_data;
-        end
-
-        // 6'h18 to 6'h24 are used for other reads,
-        // avoiding conflict for read back
-
-        // Move on to the next index
-        6'h28: begin
-          release_index[io_addr[9:6]] <= io_wr_data[0];
         end
         // can go to 6'h3c
       endcase
     end
   end
 
-  // Memory mapped I/O reads
-  // There are 2 cases of read stall, for CND or
-  // individual accel status readback
   if (io_en && !io_wen) begin
     read_data_reg <= 0;
     read_data_valid_reg <= 1'b1;
-    // <1xxx xxxx xxxx> for CDN accel
     if (io_addr[11]) begin
       read_data_reg       <=  ip_match;
       read_data_valid_reg <=  ip_done;
       read_data_stall_reg <= !ip_done;
-
-    // <01xx xxxx xxxx> for SME aggregated SME acceles (stat registers)
     end else if (io_addr[10]) begin
       case ({io_addr[5:2], 2'b00})
         6'h00: begin
@@ -180,80 +143,45 @@ always @(posedge clk) begin
           read_data_reg <= accel_busy;
         end
         6'h10: begin
-          read_data_reg <= desc_error;
+          read_data_reg <= cmd_state_reg[63:32];
         end
         6'h14: begin
-          read_data_reg <= done_err;
+          read_data_reg <= cmd_state_reg[31:0];
         end
         6'h18: begin
-          read_data_reg <= sw_active_mask;
+          read_data_reg <= desc_error;
         end
         6'h1c: begin
-          read_data_reg <= masked_done;
-        end
-        6'h20: begin
-          read_data_reg <= next_done_accel;
-        end
-        6'h24: begin
-          read_data_reg <= status_error;
+          read_data_reg <= done_err;
         end
         // can go to 6'h3c
       endcase
-
-    // <00xx xxxx xxxx> for individual SME accels
-    // (registers readback, individual accelerator stat)
     end else if (!io_addr[10]) begin
       case ({io_addr[5:2], 2'b00})
         6'h00: begin
-          read_data_reg[0]  <= 1'b0; // cmd_valid_reg[io_addr[6:4]];
-          read_data_reg[1]  <= accel_busy[io_addr[9:6]];
-          read_data_reg[8]  <= status_done[io_addr[9:6]];
-          read_data_reg[9]  <= status_match[io_addr[9:6]];
-          read_data_reg[10] <= status_error[io_addr[9:6]];
-          read_data_reg[16] <= match_valid[io_addr[9:6]];
-          read_data_reg[17] <= match_error[io_addr[9:6]];
+          read_data_reg[0] <= 1'b0; // cmd_valid_reg[io_addr[6:4]];
+          read_data_reg[1] <= accel_busy[io_addr[9:6]];
+          read_data_reg[8] <= status_done[io_addr[9:6]];
+          read_data_reg[9] <= status_match[io_addr[9:6]];
         end
-
-        // DMA len and address readback
         6'h04: begin
           read_data_reg <= cmd_len_reg[io_addr[9:6]];
         end
         6'h08: begin
           read_data_reg <= cmd_addr_reg[io_addr[9:6]];
         end
-
-        // onehot representation for match/error/done
         6'h0c: begin
-          read_data_reg <= {8'd0, error_1hot[io_addr[9:6]*8+:8],
-                            8'd0, match_1hot[io_addr[9:6]*8+:8]};
+          read_data_reg <= match_1hot[io_addr[9:6]*32+:32];
           read_data_valid_reg <=   (status_done [io_addr[9:6]]
                                  || status_match[io_addr[9:6]]);
           read_data_stall_reg <= ! (status_done [io_addr[9:6]]
                                  || status_match[io_addr[9:6]]);
         end
-
-        // cmd_state_reg readback
         6'h10: begin
-          read_data_reg <= cmd_state_reg[63:32];
-        end
-        6'h14: begin
-          read_data_reg <= cmd_state_reg[31:0];
-        end
-
-        // Accel output state
-        6'h18: begin
           read_data_reg <= accel_state[(io_addr[9:6]*64)+:32];
         end
-        6'h1C: begin
+        6'h14: begin
           read_data_reg <= accel_state[(io_addr[9:6]*64+32)+:32];
-        end
-
-        // Accel match index
-        6'h20: begin
-          read_data_reg <= match_indexes[(io_addr[9:6]*64)+:32];
-        end
-        6'h24: begin
-          read_data_reg <= match_indexes[(io_addr[9:6]*64+32)+:32];
         end
         // can go to 6'h3c
       endcase
@@ -282,7 +210,6 @@ always @(posedge clk) begin
     ip_addr_valid_reg   <= 1'b0;
     read_data_stall_reg <= 1'b0;
     read_data_valid_reg <= 1'b0;
-    sw_active_mask      <= 32'd0;
   end
 end
 
@@ -359,12 +286,11 @@ endgenerate
 
 // SME accelerators
 wire [ACCEL_COUNT-1:0] sme_match;
-wire [ACCEL_COUNT-1:0] sme_error;
 
 genvar n;
 generate
 
-  // Fast Pattern SME
+  // TCP
   for (n = 0; n < ACCEL_COUNT-1; n = n + 1) begin: width_converters_1B
     accel_width_conv # (
       .DATA_IN_WIDTH(DATA_WIDTH),
@@ -411,44 +337,89 @@ generate
     );
   end
 
-  for (n = 0; n < ACCEL_COUNT-1; n = n + 1) begin: fast_pattern_sme
-    wire [12:0] match_index;
-    wire [7:0]  match_valid_stat;
-    wire [7:0]  match_error_stat;
+  for (n = 0; n < TCP_SME_COUNT; n = n + 1) begin: tcp_sme
+    wire [7:0] match;
 
-    fast_pattern_sme_wrapper fast_pattern_sme_inst (
+    tcp_sme tcp_sme_inst
+    (
       .clk(clk),
       .rst(rst),
 
       .s_axis_tdata(accel_tdata_r[n*8 +: 8]),
       .s_axis_tvalid(accel_tvalid_r[n]),
 
-      .preamble_state(cmd_state_reg[63:0]),
-      .reload(cmd_init_reg[n]),
-      .last_bytes_state(accel_state[n*64+:64]),
-
-      .match_index(match_index),
-      .next_index(release_index[n]),
-      .match_valid(match_valid[n]),
-      .match_error(match_error[n]),
-
-      .match_valid_stat(match_valid_stat),
-      .match_error_stat(match_error_stat)
+      .state_out(accel_state[n*64+:21]),
+      .state_in(cmd_state_reg[20:0]),
+      .state_load(cmd_init_reg[n]),
+      
+      .match(match)
     );
 
     always @ (posedge clk)
-      if (cmd_init_reg[n] | rst) begin
-        match_1hot[n*8+:8] <= 0;
-        error_1hot[n*8+:8] <= 0;
-      end else begin
-        match_1hot[n*8+:8] <= match_1hot[n*8+:8] | match_valid_stat;
-        error_1hot[n*8+:8] <= error_1hot[n*8+:8] | match_error_stat;
-      end
+      if (cmd_init_reg[n] | rst)
+        match_1hot[n*32+:32] <= 0;
+      else
+        match_1hot[n*32+:32] <= match_1hot[n*32+:32] | match;
 
-    assign match_indexes[n*32+:32] = {19'd0, match_index};
-    assign sme_match    [n]        = |match_valid_stat;
-    assign sme_error    [n]        = |match_error_stat;
+    assign sme_match[n] = |match;
+    assign accel_state[(n*64)+63:(n*64)+21] = 0;
+  end
 
+  // UDP
+  for (n = TCP_SME_COUNT; n < TCP_SME_COUNT+UDP_SME_COUNT; n = n + 1) begin: udp_sme
+    wire [20:0] match;
+
+    udp_sme udp_sme_inst
+    (
+      .clk(clk),
+      .rst(rst),
+
+      .s_axis_tdata(accel_tdata_r[n*8 +: 8]),
+      .s_axis_tvalid(accel_tvalid_r[n]),
+      
+      .state_out(accel_state[n*64+:31]),
+      .state_in(cmd_state_reg[30:0]),
+      .state_load(cmd_init_reg[n]),
+      
+      .match(match)
+    );
+
+    always @ (posedge clk)
+      if (cmd_init_reg[n] | rst)
+        match_1hot[n*32+:32] <= 0;
+      else
+        match_1hot[n*32+:32] <= match_1hot[n*32+:32] | match;
+
+    assign sme_match[n] = |match;
+    assign accel_state[(n*64)+63:(n*64)+31] = 0;
+  end
+
+  // HTTP
+  for (n = TCP_SME_COUNT+UDP_SME_COUNT; n < TCP_SME_COUNT+UDP_SME_COUNT+HTTP_SME_COUNT; n = n + 1) begin: http_sme
+    wire [31:0] match;
+
+    http_sme http_sme_inst
+    (
+      .clk(clk),
+      .rst(rst),
+
+      .s_axis_tdata(accel_tdata_r[n*8 +: 8]),
+      .s_axis_tvalid(accel_tvalid_r[n]),
+      
+      .state_out(accel_state[n*64+:64]),
+      .state_in(cmd_state_reg[63:0]),
+      .state_load(cmd_init_reg[n]),
+      
+      .match(match)
+    );
+
+    always @ (posedge clk)
+      if (cmd_init_reg[n] | rst)
+        match_1hot[n*32+:32] <= 0;
+      else
+        match_1hot[n*32+:32] <= match_1hot[n*32+:32] | match;
+
+    assign sme_match[n] = |match;
   end
 
   // Fixed location SME
@@ -467,29 +438,22 @@ generate
     );
 
     always @ (posedge clk)
-      if (cmd_init_reg[n] | rst) begin
-        match_1hot[n*8+:8] <= 0;
-        error_1hot[n*8+:8] <= 0;
-      end else begin
-        match_1hot[n*8+:8] <= match_1hot[n*8+:8] | (|match);
-      end
+      if (cmd_init_reg[n] | rst)
+        match_1hot[n*32+:32] <= 0;
+      else
+        match_1hot[n*32+:32] <= match_1hot[n*32+:32] | match;
 
-    assign match_indexes[n*32+:32] = {4'd0, match};
     assign sme_match[n] = |match;
-    assign sme_error[n] = 1'b0;
   end
 
 endgenerate
 
 always @ (posedge clk) begin
   status_match <= (status_match | sme_match) & (~cmd_init_reg);
-  status_error <= (status_error | sme_error) & (~cmd_init_reg);
-  status_done  <= (status_done  | (accel_tvalid_r&accel_tlast_r) | cmd_stop_reg)
-                  & (~cmd_init_reg);
+  status_done  <= (status_done | (accel_tvalid_r&accel_tlast_r) | cmd_stop_reg) & (~cmd_init_reg);
 
   if (rst) begin
     status_match <= {ACCEL_COUNT{1'b0}};
-    status_error <= {ACCEL_COUNT{1'b0}};
     status_done  <= {ACCEL_COUNT{1'b0}};
   end
 end
@@ -506,16 +470,5 @@ ip_match ip_match_inst (
   .match(ip_match),
   .done(ip_done)
 );
-
-// Priority encoder for status done masked with software active mask
-assign masked_done = status_done & sw_active_mask;
-
-integer k;
-always @ (*) begin
-  next_done_accel = {DEST_WIDTH{1'b0}};
-  for (k=ACCEL_COUNT-1;k>=0;k=k-1)
-    if (masked_done[k])
-      next_done_accel = k;
-end
 
 endmodule
