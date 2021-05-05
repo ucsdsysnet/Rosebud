@@ -280,7 +280,7 @@ class BitSplitStateMachine(object):
         if isinstance(word, str):
             word = word.encode('utf-8')
 
-        return [[(ch >> (self.split_width*k)) & (2**self.split_width-1) for ch in word] for k in range(self.split_count)]        
+        return [[(ch >> (self.split_width*k)) & (2**self.split_width-1) for ch in word] for k in range(self.split_count)]
 
     def add_word(self, word, value=None):
         """
@@ -1115,6 +1115,17 @@ def main():
         with open(args.headers_file, 'w') as f:
             f.write(headers)
 
+    # Distribution of headers/pattern
+    headers_per_match = {}
+
+    for m in sorted (match_list_dict):
+      hdr_len = len(match_list_dict[m][1])
+      if hdr_len not in headers_per_match:
+        headers_per_match[hdr_len] = 1
+      else:
+        headers_per_match[hdr_len] += 1
+
+    print ("Distribution of #of headers per pattern to be checked:\n", headers_per_match)
 
 if __name__ == "__main__":
     main()

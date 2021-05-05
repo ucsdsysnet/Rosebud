@@ -46,7 +46,7 @@ module fast_pattern_sme_wrapper (
   ///////////////////////////////////////////////
   ////////// Check for fast patterns ////////////
   ///////////////////////////////////////////////
-  wire [4605:0] sme_output;
+  wire [4627:0] sme_output;
   fast_pattern_sme SME (
     .clk(clk),
     .rst(rst | reload),
@@ -62,7 +62,7 @@ module fast_pattern_sme_wrapper (
   wire [7:0]      match_errors;
 
   spaced_2lvl_penc # (
-    .INPUT_WIDTH(4606),
+    .INPUT_WIDTH(4627),
     .PENC1_SIZE (32),
     .PENC2_SIZE (32),
     .BIN_COUNT  (8)
