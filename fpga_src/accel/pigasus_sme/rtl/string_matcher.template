@@ -1,0 +1,256 @@
+`include "struct_s.sv"
+module string_matcher (
+    clk,
+    rst,
+    in_data,
+    in_valid,
+    in_sop,
+    in_eop,
+    in_empty,
+    in_ready,
+    in_meta_data,
+    in_meta_valid,
+    in_meta_ready,
+    out_data,
+    out_valid,
+    out_almost_full,
+    out_last,
+    out_meta_data,
+    out_meta_valid,
+    out_meta_ready,
+        // status register bus
+    clk_status,
+    status_addr,
+    status_read,
+    status_write,
+    status_writedata,
+    status_readdata,
+    status_readdata_valid
+);
+
+input clk;
+input rst;
+input [255:0] in_data;
+input in_valid;
+input in_sop;
+input in_eop;
+input [4:0] in_empty;
+output logic in_ready;
+input metadata_t in_meta_data;
+input in_meta_valid;
+output logic in_meta_ready;
+output metadata_t out_meta_data;
+output logic out_meta_valid;
+input logic out_meta_ready;
+output logic [127:0] out_data;
+output logic out_valid;
+output logic out_last;
+input out_almost_full;
+// status register bus
+input   logic          clk_status;
+input   logic   [29:0] status_addr;
+input   logic          status_read;
+input   logic          status_write;
+input   logic   [31:0] status_writedata;
+output  logic   [31:0] status_readdata;
+output  logic          status_readdata_valid;
+
+logic [255:0] in_data_r1;
+logic [255:0] in_data_r2;
+logic         in_valid_r1;
+logic         in_valid_r2;
+logic         in_sop_r1;
+logic         in_sop_r2;
+logic         in_eop_r1;
+logic         in_eop_r2;
+logic [4:0]   in_empty_r1;
+logic [4:0]   in_empty_r2;
+
+metadata_t  internal_meta_data;
+logic       internal_meta_valid;
+logic       internal_meta_ready;
+
+{% for i in range(0,context['bucket_size'])%}
+{% for j in range(0,context['byte_size'])%}
+logic [RID_WIDTH-1:0] hash_out_{{i}}_{{j}};
+logic hash_out_valid_filter_{{i}}_{{j}};
+rule_s_t din_{{i}}_{{j}};
+rule_s_t din_{{i}}_{{j}}_r1;
+rule_s_t din_{{i}}_{{j}}_r2;
+logic din_valid_{{i}}_{{j}};
+logic din_valid_{{i}}_{{j}}_r1;
+logic din_valid_{{i}}_{{j}}_r2;
+logic [2:0] din_valid_{{i}}_{{j}}_r;
+logic din_ready_{{i}}_{{j}};
+logic din_almost_full_{{i}}_{{j}};
+{% endfor %}
+{% endfor %}
+
+logic out_new_pkt;
+
+logic [255:0] in_convt;
+logic gap;
+
+//status 
+logic [7:0] status_addr_r;
+logic [STAT_AWIDTH-1:0]  status_addr_sel_r;
+logic status_write_r;
+logic status_read_r;
+logic [31:0] status_writedata_r;
+logic [31:0] status_readdata_sm;
+logic status_readdata_valid_sm;
+logic [31:0] status_readdata_back;
+logic status_readdata_valid_back;
+logic [31:0] test_valid_cnt = 0;
+logic [31:0] test_empty;
+{% for i in range(0,context['bucket_size'])%}
+logic [31:0] test_din_{{i}};
+logic [31:0] test_din_r2_{{i}};
+{% endfor %}
+
+{% for j in range(0,context['byte_size'])%}
+assign in_convt[7+{{j}}*8:0+{{j}}*8] = in_data[255-{{j}}*8:255-7-{{j}}*8];
+{% endfor %}
+
+always @ (posedge clk) begin
+    //in_ready <= {% for i in range(0,context['bucket_size'])%} {% for j in range(0,context['byte_size'])%} !din_almost_full_{{i}}_{{j}} & {% endfor %} {% endfor %} !gap;
+    in_ready <= {% for i in range(0,context['bucket_size'])%} {% for j in range(0,context['byte_size'])%} !din_almost_full_{{i}}_{{j}} & {% endfor %} {% endfor %} 1;
+    //in_ready <= !in_eop; //create a gap
+    
+    in_data_r1 <= in_convt;
+    in_data_r2 <= in_data_r1;
+
+    //only valid when the input is dequeued. 
+    in_valid_r1 <= in_valid;
+    in_valid_r2 <= in_valid_r1;
+    in_sop_r1 <= in_sop;
+    in_sop_r2 <= in_sop_r1;
+    in_eop_r1 <= in_eop;
+    in_eop_r2 <= in_eop_r1;
+    in_empty_r1 <= in_empty;
+    in_empty_r2 <= in_empty_r1;
+end
+
+assign gap = (in_eop & in_valid & in_ready);
+
+always@(posedge clk)begin
+    if(rst)begin
+        out_meta_valid <= 0;
+    end else begin
+        if(out_new_pkt)begin
+            out_meta_valid <= 1;
+        end else begin
+            out_meta_valid <= 0;
+        end
+    end
+    if(out_new_pkt)begin
+        out_meta_data <= internal_meta_data;
+        out_meta_data.pkt_flags <= PKT_DONE;
+    end
+end
+
+assign internal_meta_ready = out_new_pkt;
+//assign in_meta_ready = in_ready;
+
+always@(posedge clk)begin
+{% for i in range(0,context['bucket_size'])%}
+{% for j in range(0,context['byte_size'])%}
+    din_valid_{{i}}_{{j}} <= out_new_pkt | hash_out_valid_filter_{{i}}_{{j}};
+    din_valid_{{i}}_{{j}}_r1 <= din_valid_{{i}}_{{j}};
+    din_valid_{{i}}_{{j}}_r2 <= din_valid_{{i}}_{{j}}_r1;
+
+    din_{{i}}_{{j}}.data <= hash_out_valid_filter_{{i}}_{{j}} ? hash_out_{{i}}_{{j}} : 0;
+    din_{{i}}_{{j}}.last <= out_new_pkt;
+    {% if i == 0 %}
+    din_{{i}}_{{j}}.bucket <= 0;
+    {% elif i==1 %}
+    din_{{i}}_{{j}}.bucket <= 1;
+    {% elif i==2 %}
+    din_{{i}}_{{j}}.bucket <= 2;
+    {% elif i==3 %}
+    din_{{i}}_{{j}}.bucket <= 3;
+    {% elif i==4 %}
+    din_{{i}}_{{j}}.bucket <= 4;
+    {% elif i==5 %}
+    din_{{i}}_{{j}}.bucket <= 5;
+    {% elif i==6 %}
+    din_{{i}}_{{j}}.bucket <= 6;
+    {% elif i==7 %}
+    din_{{i}}_{{j}}.bucket <= 7;
+    {% endif %}
+
+
+    din_{{i}}_{{j}}_r1 <= din_{{i}}_{{j}};
+    din_{{i}}_{{j}}_r2 <= din_{{i}}_{{j}}_r1;
+{% endfor %}
+{% endfor %}
+end
+
+//Instantiation
+simple_fifo # (
+  .ADDR_WIDTH(9),
+  .DATA_WIDTH(META_WIDTH)
+) meta_fifo (
+  .clk   (clk),
+  .rst   (rst),
+  .clear (1'b0),
+
+  .din_valid(in_meta_valid),
+  .din(in_meta_data),
+  .din_ready(in_meta_ready),
+
+  .dout_valid(internal_meta_valid),
+  .dout(internal_meta_data),
+  .dout_ready(internal_meta_ready),
+
+  .item_count(),
+  .full(),
+  .empty()
+);
+
+frontend front(
+    .clk(clk),
+    .rst(rst),
+{% for i in range(0,context['bucket_size'])%}
+{% for j in range(0,context['byte_size'])%}
+    .hash_out_{{i}}_{{j}}(hash_out_{{i}}_{{j}}),
+    .hash_out_valid_filter_{{i}}_{{j}}(hash_out_valid_filter_{{i}}_{{j}}),
+{% endfor %}
+{% endfor %}
+    .in_data(in_data_r2),
+    .in_valid(in_valid_r2),
+    .in_sop(in_sop_r2),
+    .in_eop(in_eop_r2),
+    .in_empty(in_empty_r2),
+    .out_new_pkt(out_new_pkt)
+);
+
+//RuleID reduction logic
+backend back(
+    .clk(clk),
+    .rst(rst),
+{% for i in range(0,context['bucket_size']) %}
+{% for j in range(0,context['byte_size']) %}
+    .din_{{i}}_{{j}}(din_{{i}}_{{j}}_r2),
+    .din_valid_{{i}}_{{j}}(din_valid_{{i}}_{{j}}_r2),
+    .din_almost_full_{{i}}_{{j}}(din_almost_full_{{i}}_{{j}}),
+{% endfor %}
+{% endfor %}
+    .ruleID(out_data),
+    .ruleID_valid(out_valid),
+    .ruleID_last(out_last),
+    .ruleID_almost_full(out_almost_full),
+    .clk_status         (clk_status),
+    .status_addr        (status_addr),
+    .status_read        (status_read),
+    .status_write       (status_write),
+    .status_writedata   (status_writedata),
+    .status_readdata    (status_readdata_back),
+    .status_readdata_valid (status_readdata_valid_back)
+);
+
+assign status_readdata_valid = 1'b0;
+
+endmodule //top
+
+
