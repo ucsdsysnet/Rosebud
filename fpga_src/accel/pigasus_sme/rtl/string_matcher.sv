@@ -4,9 +4,9 @@ module string_matcher (
     rst,
     in_data,
     in_valid,
-    in_sop,
-    in_eop,
-    in_empty,
+    init,
+    in_last,
+    in_strb,
     in_ready,
     out_data,
     out_valid,
@@ -18,9 +18,9 @@ input clk;
 input rst;
 input [255:0] in_data;
 input in_valid;
-input in_sop;
-input in_eop;
-input [4:0] in_empty;
+input init;
+input in_last;
+input [7:0] in_strb;
 output logic in_ready;
 output logic [127:0] out_data;
 output logic out_valid;
@@ -31,12 +31,12 @@ logic [255:0] in_data_r1;
 logic [255:0] in_data_r2;
 logic         in_valid_r1;
 logic         in_valid_r2;
-logic         in_sop_r1;
-logic         in_sop_r2;
-logic         in_eop_r1;
-logic         in_eop_r2;
-logic [4:0]   in_empty_r1;
-logic [4:0]   in_empty_r2;
+logic         init_r1;
+logic         init_r2;
+logic         in_last_r1;
+logic         in_last_r2;
+logic [4:0]   in_strb_r1;
+logic [4:0]   in_strb_r2;
 
 logic [RID_WIDTH-1:0] hash_out_0_0;
 logic hash_out_valid_filter_0_0;
@@ -746,7 +746,6 @@ logic din_almost_full_7_7;
 logic out_new_pkt;
 
 logic [255:0] in_convt;
-logic gap;
 
 assign in_convt[7+0*8:0+0*8] = in_data[255-0*8:255-7-0*8];
 assign in_convt[7+1*8:0+1*8] = in_data[255-1*8:255-7-1*8];
@@ -758,9 +757,7 @@ assign in_convt[7+6*8:0+6*8] = in_data[255-6*8:255-7-6*8];
 assign in_convt[7+7*8:0+7*8] = in_data[255-7*8:255-7-7*8];
 
 always @ (posedge clk) begin
-    //in_ready <=   !din_almost_full_0_0 &  !din_almost_full_0_1 &  !din_almost_full_0_2 &  !din_almost_full_0_3 &  !din_almost_full_0_4 &  !din_almost_full_0_5 &  !din_almost_full_0_6 &  !din_almost_full_0_7 &    !din_almost_full_1_0 &  !din_almost_full_1_1 &  !din_almost_full_1_2 &  !din_almost_full_1_3 &  !din_almost_full_1_4 &  !din_almost_full_1_5 &  !din_almost_full_1_6 &  !din_almost_full_1_7 &    !din_almost_full_2_0 &  !din_almost_full_2_1 &  !din_almost_full_2_2 &  !din_almost_full_2_3 &  !din_almost_full_2_4 &  !din_almost_full_2_5 &  !din_almost_full_2_6 &  !din_almost_full_2_7 &    !din_almost_full_3_0 &  !din_almost_full_3_1 &  !din_almost_full_3_2 &  !din_almost_full_3_3 &  !din_almost_full_3_4 &  !din_almost_full_3_5 &  !din_almost_full_3_6 &  !din_almost_full_3_7 &    !din_almost_full_4_0 &  !din_almost_full_4_1 &  !din_almost_full_4_2 &  !din_almost_full_4_3 &  !din_almost_full_4_4 &  !din_almost_full_4_5 &  !din_almost_full_4_6 &  !din_almost_full_4_7 &    !din_almost_full_5_0 &  !din_almost_full_5_1 &  !din_almost_full_5_2 &  !din_almost_full_5_3 &  !din_almost_full_5_4 &  !din_almost_full_5_5 &  !din_almost_full_5_6 &  !din_almost_full_5_7 &    !din_almost_full_6_0 &  !din_almost_full_6_1 &  !din_almost_full_6_2 &  !din_almost_full_6_3 &  !din_almost_full_6_4 &  !din_almost_full_6_5 &  !din_almost_full_6_6 &  !din_almost_full_6_7 &    !din_almost_full_7_0 &  !din_almost_full_7_1 &  !din_almost_full_7_2 &  !din_almost_full_7_3 &  !din_almost_full_7_4 &  !din_almost_full_7_5 &  !din_almost_full_7_6 &  !din_almost_full_7_7 &   !gap;
     in_ready <=   !din_almost_full_0_0 &  !din_almost_full_0_1 &  !din_almost_full_0_2 &  !din_almost_full_0_3 &  !din_almost_full_0_4 &  !din_almost_full_0_5 &  !din_almost_full_0_6 &  !din_almost_full_0_7 &    !din_almost_full_1_0 &  !din_almost_full_1_1 &  !din_almost_full_1_2 &  !din_almost_full_1_3 &  !din_almost_full_1_4 &  !din_almost_full_1_5 &  !din_almost_full_1_6 &  !din_almost_full_1_7 &    !din_almost_full_2_0 &  !din_almost_full_2_1 &  !din_almost_full_2_2 &  !din_almost_full_2_3 &  !din_almost_full_2_4 &  !din_almost_full_2_5 &  !din_almost_full_2_6 &  !din_almost_full_2_7 &    !din_almost_full_3_0 &  !din_almost_full_3_1 &  !din_almost_full_3_2 &  !din_almost_full_3_3 &  !din_almost_full_3_4 &  !din_almost_full_3_5 &  !din_almost_full_3_6 &  !din_almost_full_3_7 &    !din_almost_full_4_0 &  !din_almost_full_4_1 &  !din_almost_full_4_2 &  !din_almost_full_4_3 &  !din_almost_full_4_4 &  !din_almost_full_4_5 &  !din_almost_full_4_6 &  !din_almost_full_4_7 &    !din_almost_full_5_0 &  !din_almost_full_5_1 &  !din_almost_full_5_2 &  !din_almost_full_5_3 &  !din_almost_full_5_4 &  !din_almost_full_5_5 &  !din_almost_full_5_6 &  !din_almost_full_5_7 &    !din_almost_full_6_0 &  !din_almost_full_6_1 &  !din_almost_full_6_2 &  !din_almost_full_6_3 &  !din_almost_full_6_4 &  !din_almost_full_6_5 &  !din_almost_full_6_6 &  !din_almost_full_6_7 &    !din_almost_full_7_0 &  !din_almost_full_7_1 &  !din_almost_full_7_2 &  !din_almost_full_7_3 &  !din_almost_full_7_4 &  !din_almost_full_7_5 &  !din_almost_full_7_6 &  !din_almost_full_7_7 &   1;
-    //in_ready <= !in_eop; //create a gap
     
     in_data_r1 <= in_convt;
     in_data_r2 <= in_data_r1;
@@ -768,15 +765,13 @@ always @ (posedge clk) begin
     //only valid when the input is dequeued. 
     in_valid_r1 <= in_valid;
     in_valid_r2 <= in_valid_r1;
-    in_sop_r1 <= in_sop;
-    in_sop_r2 <= in_sop_r1;
-    in_eop_r1 <= in_eop;
-    in_eop_r2 <= in_eop_r1;
-    in_empty_r1 <= in_empty;
-    in_empty_r2 <= in_empty_r1;
+    init_r1 <= init;
+    init_r2 <= init_r1;
+    in_last_r1 <= in_last;
+    in_last_r2 <= in_last_r1;
+    in_strb_r1 <= in_strb;
+    in_strb_r2 <= in_strb_r1;
 end
-
-assign gap = (in_eop & in_valid & in_ready);
 
 always@(posedge clk)begin
     din_valid_0_0 <= out_new_pkt | hash_out_valid_filter_0_0;
@@ -1619,9 +1614,9 @@ frontend front(
     .hash_out_valid_filter_7_7(hash_out_valid_filter_7_7),
     .in_data(in_data_r2),
     .in_valid(in_valid_r2),
-    .in_sop(in_sop_r2),
-    .in_eop(in_eop_r2),
-    .in_empty(in_empty_r2),
+    .init(init_r2),
+    .in_last(in_last_r2),
+    .in_strb(in_strb_r2),
     .out_new_pkt(out_new_pkt)
 );
 

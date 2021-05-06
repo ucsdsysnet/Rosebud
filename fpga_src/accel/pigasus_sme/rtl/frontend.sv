@@ -130,9 +130,9 @@ module frontend (clk,rst,
     hash_out_valid_filter_7_7,
     in_data,
     in_valid,
-    in_sop,
-    in_eop,
-    in_empty,
+    init,
+    in_last,
+    in_strb,
     out_new_pkt
 );
 
@@ -140,9 +140,9 @@ input clk;
 input rst;
 input [255:0] in_data;
 input in_valid;
-input in_sop;
-input in_eop;
-input [4:0] in_empty;
+input init;
+input in_last;
+input [7:0] in_strb;
 output wire [RID_WIDTH-1:0] hash_out_0_0;
 output wire hash_out_valid_filter_0_0;
 output wire [RID_WIDTH-1:0] hash_out_0_1;
@@ -449,7 +449,7 @@ assign hash_out_valid_filter_7_5 = hash_out_valid_7_5 & !filter_out_r13[47];
 assign hash_out_valid_filter_7_6 = hash_out_valid_7_6 & !filter_out_r13[55];
 assign hash_out_valid_filter_7_7 = hash_out_valid_7_7 & !filter_out_r13[63];
 
-assign new_pkt = in_eop & in_valid;
+assign new_pkt = in_last & in_valid;
 
 //Make sure all the flits of the pkts have been checked before moving it. 
 always @ (posedge clk) begin
@@ -545,9 +545,9 @@ first_filter filter_inst(
     .rst(rst),
 	  .in_data    (in_data),
     .in_valid   (in_valid),
-    .in_sop     (in_sop),
-    .in_eop     (in_eop),
-    .in_empty   (in_empty),
+    .init       (init),
+    .in_last    (in_last),
+    .in_strb    (in_strb),
     .out_data   (filter_out),
     .out_valid  (filter_out_valid)
 );

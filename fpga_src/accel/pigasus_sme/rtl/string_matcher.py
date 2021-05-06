@@ -10,7 +10,7 @@ from math import ceil
 
 context = {}
 byte_size = 8
-half_byte_size = 8
+half_byte_size = 4
 bucket_size = 8
 byte_pos = []
 bucket = []

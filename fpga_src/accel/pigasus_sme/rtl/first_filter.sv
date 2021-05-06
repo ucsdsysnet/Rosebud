@@ -1,5 +1,5 @@
 module first_filter(clk,rst,
-	in_data,in_valid,in_sop,in_eop,in_empty,
+	in_data,in_valid,init,in_last,in_strb,
     out_data,out_valid
 );
 
@@ -7,9 +7,9 @@ input clk;
 input rst;
 input [255:0] in_data;
 input in_valid;
-input in_sop;
-input in_eop;
-input [4:0] in_empty;
+input init;
+input in_last;
+input [7:0] in_strb; //MOEIN
 output wire [255:0] out_data;
 output reg out_valid;
 
@@ -55,8 +55,8 @@ reg new_pkt_reg;
 reg state_valid;
 reg last;
 reg last_r;
-reg [255:0] mask;
-reg [8:0] shift;
+reg [63:0] mask; //MOEIN
+reg [7:0] n_strb;
 
 assign addr0 = in_reg[0*8+12:0*8];
 assign addr1 = in_reg[1*8+12:1*8];
@@ -112,23 +112,21 @@ assign state_high1 = temp_high1 | temp_high[127:64];
 assign state_high2 = temp_high2 | temp_high1[127:64];
 
 //assign out_data = {state_high[63:0],state_low[63:0]};
-assign out_data = {state_high2[63:0],state_high1[63:0],state_high[63:0],state_low[63:0]} | mask;
+assign out_data = {state_high2[63:0],state_high1[63:0],state_high[63:0],state_low[63:0]} | {{192{1'b1}}, mask};
 
 assign next_state = state_high2[127:64];
 
 
 always @ (posedge clk) begin
-    //if(rst)begin
-    //    last <= 0;
-    //    shift <= 0;
-    //end else begin
-    shift <= (32-in_empty)*8;
-    last <= in_valid & in_eop;
+    n_strb <= ~in_strb;
+    last <= in_valid & in_last;
 
     //end
 
     if(last)begin
-        mask <= {256{1'b1}} << shift;
+        mask <= {{8{n_strb[7]}},{8{n_strb[6]}},{8{n_strb[5]}},{8{n_strb[4]}},
+                 {8{n_strb[3]}},{8{n_strb[2]}},{8{n_strb[1]}},{8{n_strb[0]}}};
+        
     end else begin
         mask <= 0;
     end
@@ -151,7 +149,7 @@ always @ (posedge clk) begin
     out_valid <= in_valid_reg;
 
     //state update
-    if(in_valid & in_sop)begin
+    if(init)begin
         state <= 64'h0003070f1f3f7fff;
         //The boudary bytes should not generate matches
         //by themselves
@@ -215,58 +213,6 @@ match_table_3 (
 	.q_b       (q7),    
 	.address_a (addr6),
 	.address_b (addr7),
-	.clk       (clk)   
-);
-rom_2port_noreg #(
-	.DWIDTH(64),
-	.AWIDTH(13),
-	.MEM_SIZE(8192),
-	.INIT_FILE("./src/memory_init/match_table.mif")
-)
-match_table_4 (
-	.q_a       (q8),    
-	.q_b       (q9),    
-	.address_a (addr8),
-	.address_b (addr9),
-	.clk       (clk)   
-);
-rom_2port_noreg #(
-	.DWIDTH(64),
-	.AWIDTH(13),
-	.MEM_SIZE(8192),
-	.INIT_FILE("./src/memory_init/match_table.mif")
-)
-match_table_5 (
-	.q_a       (q10),    
-	.q_b       (q11),    
-	.address_a (addr10),
-	.address_b (addr11),
-	.clk       (clk)   
-);
-rom_2port_noreg #(
-	.DWIDTH(64),
-	.AWIDTH(13),
-	.MEM_SIZE(8192),
-	.INIT_FILE("./src/memory_init/match_table.mif")
-)
-match_table_6 (
-	.q_a       (q12),    
-	.q_b       (q13),    
-	.address_a (addr12),
-	.address_b (addr13),
-	.clk       (clk)   
-);
-rom_2port_noreg #(
-	.DWIDTH(64),
-	.AWIDTH(13),
-	.MEM_SIZE(8192),
-	.INIT_FILE("./src/memory_init/match_table.mif")
-)
-match_table_7 (
-	.q_a       (q14),    
-	.q_b       (q15),    
-	.address_a (addr14),
-	.address_b (addr15),
 	.clk       (clk)   
 );
 

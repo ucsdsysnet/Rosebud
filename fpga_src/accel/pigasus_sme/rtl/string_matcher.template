@@ -4,9 +4,9 @@ module string_matcher (
     rst,
     in_data,
     in_valid,
-    in_sop,
-    in_eop,
-    in_empty,
+    init,
+    in_last,
+    in_strb,
     in_ready,
     out_data,
     out_valid,
@@ -18,9 +18,9 @@ input clk;
 input rst;
 input [255:0] in_data;
 input in_valid;
-input in_sop;
-input in_eop;
-input [4:0] in_empty;
+input init;
+input in_last;
+input [7:0] in_strb;
 output logic in_ready;
 output logic [127:0] out_data;
 output logic out_valid;
@@ -31,12 +31,12 @@ logic [255:0] in_data_r1;
 logic [255:0] in_data_r2;
 logic         in_valid_r1;
 logic         in_valid_r2;
-logic         in_sop_r1;
-logic         in_sop_r2;
-logic         in_eop_r1;
-logic         in_eop_r2;
-logic [4:0]   in_empty_r1;
-logic [4:0]   in_empty_r2;
+logic         init_r1;
+logic         init_r2;
+logic         in_last_r1;
+logic         in_last_r2;
+logic [4:0]   in_strb_r1;
+logic [4:0]   in_strb_r2;
 
 {% for i in range(0,context['bucket_size'])%}
 {% for j in range(0,context['byte_size'])%}
@@ -57,16 +57,13 @@ logic din_almost_full_{{i}}_{{j}};
 logic out_new_pkt;
 
 logic [255:0] in_convt;
-logic gap;
 
 {% for j in range(0,context['byte_size'])%}
 assign in_convt[7+{{j}}*8:0+{{j}}*8] = in_data[255-{{j}}*8:255-7-{{j}}*8];
 {% endfor %}
 
 always @ (posedge clk) begin
-    //in_ready <= {% for i in range(0,context['bucket_size'])%} {% for j in range(0,context['byte_size'])%} !din_almost_full_{{i}}_{{j}} & {% endfor %} {% endfor %} !gap;
     in_ready <= {% for i in range(0,context['bucket_size'])%} {% for j in range(0,context['byte_size'])%} !din_almost_full_{{i}}_{{j}} & {% endfor %} {% endfor %} 1;
-    //in_ready <= !in_eop; //create a gap
     
     in_data_r1 <= in_convt;
     in_data_r2 <= in_data_r1;
@@ -74,15 +71,13 @@ always @ (posedge clk) begin
     //only valid when the input is dequeued. 
     in_valid_r1 <= in_valid;
     in_valid_r2 <= in_valid_r1;
-    in_sop_r1 <= in_sop;
-    in_sop_r2 <= in_sop_r1;
-    in_eop_r1 <= in_eop;
-    in_eop_r2 <= in_eop_r1;
-    in_empty_r1 <= in_empty;
-    in_empty_r2 <= in_empty_r1;
+    init_r1 <= init;
+    init_r2 <= init_r1;
+    in_last_r1 <= in_last;
+    in_last_r2 <= in_last_r1;
+    in_strb_r1 <= in_strb;
+    in_strb_r2 <= in_strb_r1;
 end
-
-assign gap = (in_eop & in_valid & in_ready);
 
 always@(posedge clk)begin
 {% for i in range(0,context['bucket_size'])%}
@@ -130,9 +125,9 @@ frontend front(
 {% endfor %}
     .in_data(in_data_r2),
     .in_valid(in_valid_r2),
-    .in_sop(in_sop_r2),
-    .in_eop(in_eop_r2),
-    .in_empty(in_empty_r2),
+    .init(init_r2),
+    .in_last(in_last_r2),
+    .in_strb(in_strb_r2),
     .out_new_pkt(out_new_pkt)
 );
 
