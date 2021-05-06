@@ -34,7 +34,7 @@ module rom_2port_noreg #(
 	parameter INIT_FILE = ""
 ) (
 
-  input  wire              clock,
+  input  wire              clk,
   input  wire [AWIDTH-1:0] address_a,
   input  wire [AWIDTH-1:0] address_b,
   

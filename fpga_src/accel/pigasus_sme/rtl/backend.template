@@ -7,14 +7,7 @@ module backend(clk,rst,
     din_almost_full_{{i}}_{{j}},
 {% endfor %}
 {% endfor %}
-    ruleID,ruleID_valid,ruleID_last,ruleID_almost_full,
-    clk_status,
-    status_addr,
-    status_read,
-    status_write,
-    status_writedata,
-    status_readdata,
-    status_readdata_valid
+    ruleID,ruleID_valid,ruleID_last,ruleID_almost_full
 );
 
 input clk;
@@ -30,14 +23,6 @@ output logic [127:0] ruleID;
 output logic ruleID_valid;
 output logic ruleID_last;
 input ruleID_almost_full;
-// status register bus
-input   logic          clk_status;
-input   logic   [29:0] status_addr;
-input   logic          status_read;
-input   logic          status_write;
-input   logic   [31:0] status_writedata;
-output  logic   [31:0] status_readdata;
-output  logic          status_readdata_valid;
 
 localparam L1_FIFO_DEPTH = 64;
 localparam FIFO_DEPTH = 32;
@@ -50,13 +35,8 @@ localparam L4_TH = (FIFO_DEPTH-3);
 //L1 FIFO
 {% for i in range(0,context['bucket_size']) %}
 {% for j in range(0,context['byte_size']) %}
-logic          din_csr_address_{{i}}_{{j}};
-logic          din_csr_read_{{i}}_{{j}};
-logic          din_csr_write_{{i}}_{{j}};
-logic [31:0]   din_csr_readdata_{{i}}_{{j}};
 logic [31:0]   din_csr_readdata_{{i}}_{{j}}_r1;
 logic [31:0]   din_csr_readdata_{{i}}_{{j}}_r2;
-logic [31:0]   din_csr_writedata_{{i}}_{{j}};
 
 rule_s_t    l1_data_{{i}}_{{j}};
 logic       l1_ready_{{i}}_{{j}};
@@ -673,11 +653,8 @@ hashtable_inst_{{i}}(
     .q_b       (),    
     .address_a (ht_addr_{{i}}),
     .address_b (),
-    .clock     (clk)   
+    .clk       (clk)   
 );
 {% endfor %}
 
-assign status_readdata_valid = 1'b0;
-
 endmodule
-

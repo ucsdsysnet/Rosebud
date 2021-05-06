@@ -8,24 +8,10 @@ module string_matcher (
     in_eop,
     in_empty,
     in_ready,
-    in_meta_data,
-    in_meta_valid,
-    in_meta_ready,
     out_data,
     out_valid,
     out_almost_full,
-    out_last,
-    out_meta_data,
-    out_meta_valid,
-    out_meta_ready,
-        // status register bus
-    clk_status,
-    status_addr,
-    status_read,
-    status_write,
-    status_writedata,
-    status_readdata,
-    status_readdata_valid
+    out_last
 );
 
 input clk;
@@ -36,24 +22,10 @@ input in_sop;
 input in_eop;
 input [4:0] in_empty;
 output logic in_ready;
-input metadata_t in_meta_data;
-input in_meta_valid;
-output logic in_meta_ready;
-output metadata_t out_meta_data;
-output logic out_meta_valid;
-input logic out_meta_ready;
 output logic [127:0] out_data;
 output logic out_valid;
 output logic out_last;
 input out_almost_full;
-// status register bus
-input   logic          clk_status;
-input   logic   [29:0] status_addr;
-input   logic          status_read;
-input   logic          status_write;
-input   logic   [31:0] status_writedata;
-output  logic   [31:0] status_readdata;
-output  logic          status_readdata_valid;
 
 logic [255:0] in_data_r1;
 logic [255:0] in_data_r2;
@@ -65,10 +37,6 @@ logic         in_eop_r1;
 logic         in_eop_r2;
 logic [4:0]   in_empty_r1;
 logic [4:0]   in_empty_r2;
-
-metadata_t  internal_meta_data;
-logic       internal_meta_valid;
-logic       internal_meta_ready;
 
 logic [RID_WIDTH-1:0] hash_out_0_0;
 logic hash_out_valid_filter_0_0;
@@ -780,35 +748,6 @@ logic out_new_pkt;
 logic [255:0] in_convt;
 logic gap;
 
-//status 
-logic [7:0] status_addr_r;
-logic [STAT_AWIDTH-1:0]  status_addr_sel_r;
-logic status_write_r;
-logic status_read_r;
-logic [31:0] status_writedata_r;
-logic [31:0] status_readdata_sm;
-logic status_readdata_valid_sm;
-logic [31:0] status_readdata_back;
-logic status_readdata_valid_back;
-logic [31:0] test_valid_cnt = 0;
-logic [31:0] test_empty;
-logic [31:0] test_din_0;
-logic [31:0] test_din_r2_0;
-logic [31:0] test_din_1;
-logic [31:0] test_din_r2_1;
-logic [31:0] test_din_2;
-logic [31:0] test_din_r2_2;
-logic [31:0] test_din_3;
-logic [31:0] test_din_r2_3;
-logic [31:0] test_din_4;
-logic [31:0] test_din_r2_4;
-logic [31:0] test_din_5;
-logic [31:0] test_din_r2_5;
-logic [31:0] test_din_6;
-logic [31:0] test_din_r2_6;
-logic [31:0] test_din_7;
-logic [31:0] test_din_r2_7;
-
 assign in_convt[7+0*8:0+0*8] = in_data[255-0*8:255-7-0*8];
 assign in_convt[7+1*8:0+1*8] = in_data[255-1*8:255-7-1*8];
 assign in_convt[7+2*8:0+2*8] = in_data[255-2*8:255-7-2*8];
@@ -838,25 +777,6 @@ always @ (posedge clk) begin
 end
 
 assign gap = (in_eop & in_valid & in_ready);
-
-always@(posedge clk)begin
-    if(rst)begin
-        out_meta_valid <= 0;
-    end else begin
-        if(out_new_pkt)begin
-            out_meta_valid <= 1;
-        end else begin
-            out_meta_valid <= 0;
-        end
-    end
-    if(out_new_pkt)begin
-        out_meta_data <= internal_meta_data;
-        out_meta_data.pkt_flags <= PKT_DONE;
-    end
-end
-
-assign internal_meta_ready = out_new_pkt;
-//assign in_meta_ready = in_ready;
 
 always@(posedge clk)begin
     din_valid_0_0 <= out_new_pkt | hash_out_valid_filter_0_0;
@@ -1566,27 +1486,6 @@ always@(posedge clk)begin
 end
 
 //Instantiation
-simple_fifo # (
-  .ADDR_WIDTH(9),
-  .DATA_WIDTH(META_WIDTH)
-) meta_fifo (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
-
-  .din_valid(in_meta_valid),
-  .din(in_meta_data),
-  .din_ready(in_meta_ready),
-
-  .dout_valid(internal_meta_valid),
-  .dout(internal_meta_data),
-  .dout_ready(internal_meta_ready),
-
-  .item_count(),
-  .full(),
-  .empty()
-);
-
 frontend front(
     .clk(clk),
     .rst(rst),
@@ -1925,17 +1824,7 @@ backend back(
     .ruleID(out_data),
     .ruleID_valid(out_valid),
     .ruleID_last(out_last),
-    .ruleID_almost_full(out_almost_full),
-    .clk_status         (clk_status),
-    .status_addr        (status_addr),
-    .status_read        (status_read),
-    .status_write       (status_write),
-    .status_writedata   (status_writedata),
-    .status_readdata    (status_readdata_back),
-    .status_readdata_valid (status_readdata_valid_back)
+    .ruleID_almost_full(out_almost_full)
 );
 
-assign status_readdata_valid = 1'b0;
-
 endmodule //top
-
