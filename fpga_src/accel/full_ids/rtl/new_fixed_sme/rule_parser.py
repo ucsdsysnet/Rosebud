@@ -35,8 +35,8 @@ for line in open(in_rules,'r'):
     options = rule['options']
 
     cont_len = 0
+    acc_len = 0
     cont_count = 0
-    pcre_count = 0
     fixed = 0
     starting = 0
     cont_resolved = 1
@@ -51,6 +51,7 @@ for line in open(in_rules,'r'):
         cont_count += 1
         if cont_resolved==1:
           cont_len = content_len(value)
+          acc_len += cont_len
           cont_resolved = 0
         else:
           # two content after each other without depth or distance
@@ -86,14 +87,27 @@ for line in open(in_rules,'r'):
               else:
                 fixed = 1
                 cont_resolved = 1
-            elif keyword == 'distance' or keyword == 'offset':
-                if (val > fixed_len_limit):
-                  long_rules += 1
-                  fixed = 0
-                  break
-                else:
-                  # unless resolved with within
-                  continue
+            elif keyword == 'offset':
+              if (val > fixed_len_limit):
+                long_rules += 1
+                fixed = 0
+                break
+              else:
+                # unless resolved with within
+                continue
+            elif keyword == 'distance':
+              acc_len += val
+              if (val > fixed_len_limit):
+                long_rules += 1
+                fixed = 0
+                break
+              else:
+                # unless resolved with within
+                continue
+
+    # if (acc_len > fixed_len_limit):
+    #   long_rules += 1
+    #   fixed = 0
 
     if (fixed==1 and starting==1 and cont_resolved==1) or (cont_count==0): #Just byte check
       fixed_f.write(line)
