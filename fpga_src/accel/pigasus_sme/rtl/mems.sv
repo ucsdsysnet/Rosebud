@@ -76,3 +76,26 @@ module singledsp (
       resulta <= sum;
 
 endmodule
+
+module dsp (
+  input         clk0,
+  input         clk1,
+  input         clk2,
+  
+  input         ena,
+  input  [17:0] ax,
+  input  [17:0] ay,
+  input  [17:0] bx,
+  input  [17:0] by,
+  output [36:0] resulta
+);
+
+  wire [35:0] ax2 = ax*bx;
+  wire [35:0] ay2 = ay*by;
+  wire [36:0] sum = ax2+ay2;
+
+  always @ (posedge clk0)
+    if (ena)
+      resulta <= sum;
+
+endmodule
