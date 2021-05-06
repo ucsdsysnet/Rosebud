@@ -5,6 +5,7 @@ write_errors = False
 line_size = 8
 max_len = 24
 
+# in_rules = "rules/test"
 in_rules = "rules/fixed_loc_rules"
 out_verilog = "fixed_loc_sme_"+str(line_size)+".v"
 problematic = "rules/problematic.rules"
@@ -106,25 +107,26 @@ def byte_conv(rule, offset):
   else:
     loc = int(off)
 
-  # Assuming all dec for this ruleset
-  if ("string" in rule_split):
-    val = "'"+val+"'"
+  # # Not sure the impact!
+  # if ("string" in rule_split):
+  #   val = "'"+val+"'"
+  
+  if '0x' in val:
+    val = int(val,16)
+  elif val.isnumeric():
+    val = int(val)
+  else:
+    print ("ERROR: unknown value", rule, val)
+    return[("",0,0)]
 
   if ("little" in rule_split) and (int(num)!=1):
     endian = "little"
-    if 'x' in val:
-      old_val = int(val,16)
-    elif  val.isnumeric():
-      old_val = int(val)
-    else:
-      print ("ERROR: unknown value", rule)
-      return[("",0,0)]
 
     if int(num)==4:
-      val = str(((old_val << 24) & 0xFF000000) | ((old_val << 8) & 0x00FF0000) |
-                ((old_val >> 8)  & 0x0000FF00) | ((old_val >> 24) & 0x000000FF));
+      val = str(((val << 24) & 0xFF000000) | ((val << 8 ) & 0x00FF0000) |
+                ((val >> 8 ) & 0x0000FF00) | ((val >> 24) & 0x000000FF));
     elif int(num)==2:
-      val = str(((old_val << 8) & 0xFF00) | ((old_val >> 8)  & 0x00FF));
+      val = str(((val << 8) & 0xFF00) | ((val >> 8)  & 0x00FF));
     else:
       print ("ERROR: little endian not yet supported for more than 4 bytes", rule)
       return[("",0,0)]
@@ -132,20 +134,27 @@ def byte_conv(rule, offset):
   for x in rule_split:
     if "bitmask" in x.split(' '):
       mask_raw = x.split(' ')[-1]
-      mask = " & "+mask_raw
+      if '0x' in mask_raw:
+        mask_raw = int(mask_raw,16)
+      elif mas_raw.isnumeric():
+        mask_raw = int(mask_raw)
+      else:
+        print ("ERROR: unknown mask value", rule, mask_raw)
+        return[("",0,0)]
+      mask = " & "+str(mask_raw)
 
   if ("dce" in rule_split):
     print ("WARNING: assuming big endian for dce", rule)
 
   if op in bit_ops:
     if op[0]=="!":
-      res = res + "((((s_axis_tdata[8*"+str(loc%line_size)+"+:8*"+num+"]"+mask+") "+op[1]+" "+val+") == 0) && s_axis_tkeep["+str(loc%line_size)+"])"
+      res = res + "((((s_axis_tdata[8*"+str(loc%line_size)+"+:8*"+num+"]"+mask+") "+op[1]+" "+str(val)+") == 0) && s_axis_tkeep["+str(loc%line_size)+"])"
     else:
-      res = res + "((((s_axis_tdata[8*"+str(loc%line_size)+"+:8*"+num+"]"+mask+") "+op[0]+" "+val+") != 0) && s_axis_tkeep["+str(loc%line_size)+"])"
+      res = res + "((((s_axis_tdata[8*"+str(loc%line_size)+"+:8*"+num+"]"+mask+") "+op[0]+" "+str(val)+") != 0) && s_axis_tkeep["+str(loc%line_size)+"])"
   elif op=="=":
-    res = res + "(((s_axis_tdata[8*"+str(loc%line_size)+"+:8*"+num+"] =="+mask+") "+val+") && s_axis_tkeep["+str(loc%line_size)+"])"
+    res = res + "(((s_axis_tdata[8*"+str(loc%line_size)+"+:8*"+num+"]"+mask+") == "+str(val)+") && s_axis_tkeep["+str(loc%line_size)+"])"
   else:
-    res = res + "(((s_axis_tdata[8*"+str(loc%line_size)+"+:8*"+num+"]"+mask+") "+op+" "+val+") && s_axis_tkeep["+str(loc%line_size)+"])"
+    res = res + "(((s_axis_tdata[8*"+str(loc%line_size)+"+:8*"+num+"]"+mask+") "+op+" "+str(val)+") && s_axis_tkeep["+str(loc%line_size)+"])"
 
   start_line = int(loc/line_size)
   if ((loc+int(num))%line_size==0):
@@ -253,6 +262,9 @@ for line in open(in_rules,'r'):
 
     if (last_temp == 0):
       verilog_phrase.append(temp[:-4]+")")
+
+    # if no entries in a line
+    verilog_phrase = ["1'b1" if ph==')' else ph for ph in verilog_phrase]
 
     ver_statements.append(verilog_phrase)
 

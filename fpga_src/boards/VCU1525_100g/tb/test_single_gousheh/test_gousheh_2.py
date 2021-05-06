@@ -398,10 +398,11 @@ def run_test(parameters=None, sim_build="sim_build", waves=None, force_compile=F
         os.path.join(smartfpga_rtl_dir, "accel_rd_dma_sp.v"),
         os.path.join(smartfpga_rtl_dir, "spaced_2lvl_penc.v"),
 
-        os.path.join(accel_rtl_dir, "accel_wrap_full_ids.v"),
+        os.path.join(accel_rtl_dir, "accel_wrap_full_ids_4sme.v"),
         os.path.join(accel_rtl_dir, "SME_wrapper.v"),
+        os.path.join(accel_rtl_dir, "FSME_wrapper.v"),
         os.path.join(accel_rtl_dir, "new_sme", "fast_pattern_sme.v"),
-        os.path.join(accel_rtl_dir, "fixed_sme", "fixed_loc_sme_8.v"),
+        os.path.join(accel_rtl_dir, "new_fixed_sme", "fixed_loc_sme_8.v"),
         os.path.join(accel_rtl_dir, "ip_match", "ip_match.v"),
 
         os.path.join(axis_rtl_dir, "arbiter.v"),
