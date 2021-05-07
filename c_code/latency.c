@@ -9,11 +9,33 @@ unsigned int * wr_ptr;
 unsigned int count;
 unsigned int first_packet;
 
-#define CONGESTION 1
-#define INTR_BASED  0
+#ifndef SIZE
+    #define SIZE 1024
+#endif
+
+#ifndef CONGESTION
+    #define CONGESTION 1
+#endif
+
+#ifndef INTR_BASED
+    #define INTR_BASED  0
+#endif
+
 // 40 for <= 128B packets, 20 for <= 2048B, 10 for 4096B, and 5 for 9000B
 // In non-congested mode set to 0
-#define SLOW_DOWN_RATE 20
+#ifndef SLOW_DOWN_RATE
+    #if !CONGESTED
+        #define SLOW_DOWN_RATE 0
+    #elif SIZE <= 128
+        #define SLOW_DOWN_RATE 40
+    #elif SIZE <= 2048
+        #define SLOW_DOWN_RATE 20
+    #elif SIZE <= 4096
+        #define SLOW_DOWN_RATE 10
+    #else
+        #define SLOW_DOWN_RATE 5
+    #endif
+#endif
 
 void __attribute__((interrupt)) int_handler(void) {
   pkt_send(&summary_pkt);
@@ -38,7 +60,7 @@ int main(void){
     pkt_data[i] = (unsigned int *)(0x01000000+(i*16384));
   }
 
-  send_pkt.len = 1024;
+  send_pkt.len = SIZE;
   send_pkt.tag = 0;
   // Half of the cores send, so one port is enough
   send_pkt.port = 0;
