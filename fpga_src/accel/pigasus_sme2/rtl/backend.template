@@ -1,0 +1,661 @@
+`include "struct_s.sv"
+module backend(clk,rst,
+{% for i in range(0,context['bucket_size']) %}
+{% for j in range(0,32) %}
+    din_{{i}}_{{j}},
+    din_valid_{{i}}_{{j}},
+    din_almost_full_{{i}}_{{j}},
+{% endfor %}
+{% endfor %}
+    ruleID,ruleID_valid,ruleID_last,ruleID_almost_full
+);
+
+input clk;
+input rst;
+{% for i in range(0,context['bucket_size']) %}
+{% for j in range(0,32) %}
+input rule_s_t din_{{i}}_{{j}};
+input din_valid_{{i}}_{{j}};
+output logic din_almost_full_{{i}}_{{j}};
+{% endfor %}
+{% endfor %}
+output logic [127:0] ruleID;
+output logic ruleID_valid;
+output logic ruleID_last;
+input ruleID_almost_full;
+
+localparam L1_FIFO_DEPTH = 64;
+localparam FIFO_DEPTH = 32;
+localparam FIFO_AWIDTH = ($clog2(FIFO_DEPTH));
+localparam L1_TH = (L1_FIFO_DEPTH-24);
+localparam L2_TH = (FIFO_DEPTH-3);
+localparam L3_TH = (FIFO_DEPTH-3);
+localparam L4_TH = (FIFO_DEPTH-3);
+
+//L1 FIFO
+{% for i in range(0,context['bucket_size']) %}
+{% for j in range(0,32) %}
+logic [31:0]   din_csr_readdata_{{i}}_{{j}};
+logic [31:0]   din_csr_readdata_{{i}}_{{j}}_r1;
+logic [31:0]   din_csr_readdata_{{i}}_{{j}}_r2;
+
+rule_s_t    l1_data_{{i}}_{{j}};
+logic       l1_ready_{{i}}_{{j}};
+logic       l1_valid_{{i}}_{{j}};
+logic       l1_newdata_{{i}}_{{j}};
+logic [RID_WIDTH-1:0] l1_cache_{{i}}_{{j}};
+{% endfor %}
+{% endfor %}
+
+//L2 FIFO & L1 ARB
+{% for i in range(0,context['bucket_size']) %}
+{% for j in range(0,16) %}
+rule_s_t    l2_in_data_{{i}}_{{j}};
+rule_s_t    l2_out_data_{{i}}_{{j}};
+logic       l2_in_valid_{{i}}_{{j}};
+logic       l2_in_ready_{{i}}_{{j}};
+logic       l2_out_valid_{{i}}_{{j}};
+logic       l2_out_ready_{{i}}_{{j}};
+logic       l2_almost_full_{{i}}_{{j}};
+logic [31:0] l2_csr_readdata_{{i}}_{{j}};
+logic       l2_newdata_{{i}}_{{j}};
+logic [RID_WIDTH-1:0] l2_cache_{{i}}_{{j}};
+logic [1:0] l1_req_{{i}}_{{j}};
+logic [1:0] l1_grant_{{i}}_{{j}};
+logic       l1_all_last_{{i}}_{{j}};
+logic       l1_same_{{i}}_{{j}};
+//logic [1:0] l1_all_last_{{i}}_{{j}}_r;
+{% endfor %}
+{% endfor %}
+
+//L2 ARB and L3 FIFO
+{% for i in range(0,context['bucket_size']) %}
+{% for j in range(0,4) %}
+rule_s_t l3_in_data_{{i}}_{{j}};
+rule_s_t l3_out_data_{{i}}_{{j}};
+logic l3_in_valid_{{i}}_{{j}};
+logic l3_in_ready_{{i}}_{{j}};
+logic l3_out_valid_{{i}}_{{j}};
+logic l3_out_ready_{{i}}_{{j}};
+logic l3_almost_full_{{i}}_{{j}};
+logic [31:0] l3_csr_readdata_{{i}}_{{j}};
+logic       l3_newdata_{{i}}_{{j}};
+logic [RID_WIDTH-1:0] l3_cache_{{i}}_{{j}};
+logic [3:0] l2_req_{{i}}_{{j}};
+logic [3:0] l2_grant_{{i}}_{{j}};
+logic       l2_all_last_{{i}}_{{j}};
+logic       l2_same_{{i}}_{{j}};
+//logic [1:0] l2_all_last_{{i}}_{{j}}_r;
+{% endfor %}
+{% endfor %}
+
+//L3 ARB and OUT FIFO
+{% for i in range(0,context['bucket_size']) %}
+rule_s_t l4_in_data_{{i}};
+rule_s_t l4_out_data_{{i}};
+logic l4_in_valid_{{i}};
+logic l4_in_ready_{{i}};
+logic l4_out_valid_{{i}};
+logic l4_out_ready_{{i}};
+logic l4_almost_full_{{i}};
+logic [31:0] l4_csr_readdata_{{i}};
+logic [RID_WIDTH-1:0] l4_cache_{{i}};
+logic [3:0] l3_req_{{i}};
+logic [3:0] l3_grant_{{i}};
+logic       l3_all_last_{{i}};
+logic       l3_same_{{i}};
+{% endfor %}
+
+logic all_last;
+logic all_last_r1;
+logic all_last_r2;
+logic all_last_r3;
+
+{% for i in range(0,context['bucket_size'])%}
+logic [RID_WIDTH-1:0] ht_addr_{{i}};//need to change
+logic [RID_WIDTH-1:0] ht_q_{{i}};
+logic ht_rd_{{i}};
+logic ht_rd_{{i}}_r1;
+logic ht_rd_{{i}}_r2;
+logic ht_rd_{{i}}_valid;
+logic [RID_WIDTH-1:0] ht_data_{{i}};
+logic [2:0] bucket_{{i}};
+logic [2:0] bucket_{{i}}_r1;
+logic [2:0] bucket_{{i}}_r2;
+{% endfor %}
+
+//L1 
+always @(posedge clk)begin
+{% for i in range(0,context['bucket_size']) %}
+{% for j in range(0,32) %}
+    din_csr_readdata_{{i}}_{{j}}_r1 <= din_csr_readdata_{{i}}_{{j}};
+    din_csr_readdata_{{i}}_{{j}}_r2 <= din_csr_readdata_{{i}}_{{j}}_r1;
+{% endfor %}
+{% endfor %}
+end
+
+//L1 FIFO output
+{% for i in range(0,context['bucket_size']) %}
+{% for j in range(0,16) %}
+assign l1_all_last_{{i}}_{{j}} = (l1_data_{{i}}_{{2*j}}.last & l1_valid_{{i}}_{{2*j}}) & (l1_data_{{i}}_{{2*j+1}}.last & l1_valid_{{i}}_{{2*j+1}}) & !l2_almost_full_{{i}}_{{j}};
+assign l1_same_{{i}}_{{j}} = l1_newdata_{{i}}_{{2*j}} & l1_newdata_{{i}}_{{2*j+1}} & (l1_data_{{i}}_{{2*j}}.data==l1_data_{{i}}_{{2*j+1}}.data) & !l2_almost_full_{{i}}_{{j}};
+{% for k in range(0,2) %}
+assign l1_newdata_{{i}}_{{2*j+k}} = l1_valid_{{i}}_{{2*j+k}} & (l1_data_{{i}}_{{2*j+k}}.data != l1_cache_{{i}}_{{2*j+k}}) & !l1_data_{{i}}_{{2*j+k}}.last;
+
+{% endfor %}
+//generate request, combinationally logic
+always @(*)begin
+{% for k in range(0,2) %}
+    l1_req_{{i}}_{{j}}[{{k}}] = l1_newdata_{{i}}_{{2*j+k}} & !l2_almost_full_{{i}}_{{j}};
+    l1_ready_{{i}}_{{2*j+k}} = l1_grant_{{i}}_{{j}}[{{k}}];       
+{% endfor %}
+    //sync case
+    if(l1_all_last_{{i}}_{{j}}) begin
+        l1_req_{{i}}_{{j}} = 0;
+{% for k in range(0,2) %}
+        l1_ready_{{i}}_{{2*j+k}} = 1;
+{% endfor %}
+    //if the values are same, reduce the duplicated one. 
+    end else if (l1_same_{{i}}_{{j}})begin
+        l1_req_{{i}}_{{j}}[0] = 1;
+        l1_req_{{i}}_{{j}}[0] = 0;
+        l1_ready_{{i}}_{{2*j+1}} = 1;
+    end else begin
+{% for k in range(0,2) %}
+        if(l1_valid_{{i}}_{{2*j+k}} & (l1_data_{{i}}_{{2*j+k}}.data == l1_cache_{{i}}_{{2*j+k}}) & !l1_data_{{i}}_{{2*j+k}}.last)begin
+            l1_ready_{{i}}_{{2*j+k}} = 1;
+        end
+{% endfor %}
+    end
+end
+
+always @(posedge clk)begin
+    if(rst)begin
+{% for k in range(0,2) %}
+        l1_cache_{{i}}_{{2*j+k}} <= 0;
+{% endfor %}
+    end else begin
+        if(l1_all_last_{{i}}_{{j}})begin
+    {% for k in range(0,2) %}
+            l1_cache_{{i}}_{{2*j+k}} <= 0;
+    {% endfor %}
+        end else begin
+    {% for k in range(0,2) %}
+            if(l1_valid_{{i}}_{{2*j+k}} & l1_ready_{{i}}_{{2*j+k}})begin
+                l1_cache_{{i}}_{{2*j+k}} <= l1_data_{{i}}_{{2*j+k}}.data;
+            end
+    {% endfor %}
+        end
+    end
+end
+//dequeue FIFO and write to next FIFO
+always @(posedge clk)begin
+    if(rst)begin
+        l2_in_valid_{{i}}_{{j}} <= 0;
+    end else begin
+        //sync case
+        if(l1_all_last_{{i}}_{{j}}) begin
+            l2_in_valid_{{i}}_{{j}} <= 1;
+        //normal case
+        end else begin
+            l2_in_valid_{{i}}_{{j}} <= |l1_grant_{{i}}_{{j}};
+        end
+    end
+    //sync case
+    if(l1_all_last_{{i}}_{{j}}) begin
+        l2_in_data_{{i}}_{{j}}.last <= 1;
+        l2_in_data_{{i}}_{{j}}.data <= 0;
+    //normal case
+    end else begin
+        case(l1_grant_{{i}}_{{j}})
+            2'b01: l2_in_data_{{i}}_{{j}} <= l1_data_{{i}}_{{2*j}};
+            2'b10: l2_in_data_{{i}}_{{j}} <= l1_data_{{i}}_{{2*j+1}};
+            default: l2_in_data_{{i}}_{{j}} <= 0;
+        endcase
+    end   
+end
+
+{% endfor %}
+{% endfor %}
+
+
+//L2
+//L1 FIFO output
+{% for i in range(0,context['bucket_size']) %}
+{% for j in range(0,4) %}
+assign l2_all_last_{{i}}_{{j}} = {% for k in range(0,4) %} (l2_out_data_{{i}}_{{4*j+k}}.last & l2_out_valid_{{i}}_{{4*j+k}}) & {% endfor %} !l3_almost_full_{{i}}_{{j}};
+assign l2_same_{{i}}_{{j}} = {% for k in range(0,4) %} (l2_newdata_{{i}}_{{4*j+k}}) & {% endfor %} 
+                             (l2_out_data_{{i}}_{{4*j+0}}.data==l2_out_data_{{i}}_{{4*j+1}}.data) & (l2_out_data_{{i}}_{{4*j+0}}.data==l2_out_data_{{i}}_{{4*j+2}}.data) 
+                             & (l2_out_data_{{i}}_{{4*j+0}}.data==l2_out_data_{{i}}_{{4*j+3}}.data)
+                             & !l3_almost_full_{{i}}_{{j}};
+{% for k in range(0,4) %}
+assign l2_newdata_{{i}}_{{4*j+k}} = l2_out_valid_{{i}}_{{4*j+k}} & (l2_out_data_{{i}}_{{4*j+k}}.data != l2_cache_{{i}}_{{4*j+k}}) & !l2_out_data_{{i}}_{{4*j+k}}.last;
+{% endfor %}
+
+//generate request, combinationally logic
+always @(*)begin
+{% for k in range(0,4) %}
+    l2_req_{{i}}_{{j}}[{{k}}] = l2_newdata_{{i}}_{{4*j+k}} & !l3_almost_full_{{i}}_{{j}};
+    l2_out_ready_{{i}}_{{4*j+k}} = l2_grant_{{i}}_{{j}}[{{k}}];       
+{% endfor %}
+    //sync case
+    if(l2_all_last_{{i}}_{{j}}) begin
+        l2_req_{{i}}_{{j}} = 0;
+{% for k in range(0,4) %}
+        l2_out_ready_{{i}}_{{4*j+k}} = 1;
+{% endfor %}
+    end else if(l2_same_{{i}}_{{j}})begin
+        l2_req_{{i}}_{{j}}[0] = 1;
+        l2_req_{{i}}_{{j}}[3:1] = 0;
+{% for k in range(1,4) %}
+        l2_out_ready_{{i}}_{{4*j+k}} = 1;
+{% endfor %}
+    end else begin
+{% for k in range(0,4) %}
+        if(l2_out_valid_{{i}}_{{4*j+k}} & (l2_out_data_{{i}}_{{4*j+k}}.data == l2_cache_{{i}}_{{4*j+k}}) 
+          & !l2_out_data_{{i}}_{{4*j+k}}.last)begin
+            l2_out_ready_{{i}}_{{4*j+k}} = 1;
+        end
+{% endfor %}
+    end
+end
+
+always @(posedge clk)begin
+    if(rst)begin
+{% for k in range(0,4) %}
+        l2_cache_{{i}}_{{4*j+k}} <= 0;
+{% endfor %}
+    end else begin
+        if(l2_all_last_{{i}}_{{j}})begin
+    {% for k in range(0,4) %}
+            l2_cache_{{i}}_{{4*j+k}} <= 0;
+    {% endfor %}
+        end else begin
+    {% for k in range(0,4) %}
+            if(l2_out_valid_{{i}}_{{4*j+k}} & l2_out_ready_{{i}}_{{4*j+k}})begin
+                l2_cache_{{i}}_{{4*j+k}} <= l2_out_data_{{i}}_{{4*j+k}}.data;
+            end
+    {% endfor %}
+        end
+    end
+end
+
+//dequeue FIFO and write to next FIFO
+always @(posedge clk)begin
+    if(rst)begin
+        l3_in_valid_{{i}}_{{j}} <= 0;
+    end else begin
+        //sync case
+        if(l2_all_last_{{i}}_{{j}}) begin
+            l3_in_valid_{{i}}_{{j}} <= 1;
+        //normal case
+        end else begin
+            l3_in_valid_{{i}}_{{j}} <= |l2_grant_{{i}}_{{j}};
+        end
+    end
+    //sync case
+    if(l2_all_last_{{i}}_{{j}}) begin
+        l3_in_data_{{i}}_{{j}}.last <= 1;
+        l3_in_data_{{i}}_{{j}}.data <= 0;
+    //normal case
+    end else begin
+        case(l2_grant_{{i}}_{{j}})
+            4'b0001: l3_in_data_{{i}}_{{j}} <= l2_out_data_{{i}}_{{4*j}};
+            4'b0010: l3_in_data_{{i}}_{{j}} <= l2_out_data_{{i}}_{{4*j+1}};
+            4'b0100: l3_in_data_{{i}}_{{j}} <= l2_out_data_{{i}}_{{4*j+2}};
+            4'b1000: l3_in_data_{{i}}_{{j}} <= l2_out_data_{{i}}_{{4*j+3}};
+            default: l3_in_data_{{i}}_{{j}} <= 0;
+        endcase
+    end   
+end
+{% endfor %}
+{% endfor %}
+
+//L3
+//L2 FIFO output
+{% for i in range(0,context['bucket_size']) %}
+assign l3_all_last_{{i}} = {% for k in range(0,4) %} (l3_out_data_{{i}}_{{k}}.last & l3_out_valid_{{i}}_{{k}}) & {% endfor %} !l4_almost_full_{{i}};
+assign l3_same_{{i}} = {% for k in range(0,4) %} l3_out_valid_{{i}}_{{k}} & {% endfor %} !l4_almost_full_{{i}} &
+                       (l3_out_data_{{i}}_0==l3_out_data_{{i}}_1) & (l3_out_data_{{i}}_0==l3_out_data_{{i}}_2) & (l3_out_data_{{i}}_0==l3_out_data_{{i}}_3);
+{% for k in range(0,4) %}
+assign l3_newdata_{{i}}_{{k}} = l3_out_valid_{{i}}_{{k}} & (l3_out_data_{{i}}_{{k}}.data != l3_cache_{{i}}_{{k}}) & !l3_out_data_{{i}}_{{k}}.last;
+{% endfor %}
+//generate request, combinationally logic
+always @(*)begin
+{% for k in range(0,4) %}
+    l3_req_{{i}}[{{k}}] = l3_newdata_{{i}}_{{k}} & !l4_almost_full_{{i}};
+    l3_out_ready_{{i}}_{{k}} = l3_grant_{{i}}[{{k}}];       
+{% endfor %}
+    //sync case
+    if(l3_all_last_{{i}}) begin
+        l3_req_{{i}} = 0;
+{% for k in range(0,4) %}
+        l3_out_ready_{{i}}_{{k}} = 1;
+{% endfor %}
+    end else if (l3_same_{{i}})begin
+        l3_req_{{i}}[0] = 1;
+        l3_req_{{i}}[3:1] = 0;
+{% for k in range(1,4) %}
+        l3_out_ready_{{i}}_{{k}} = 1;
+{% endfor %}
+    end else begin
+{% for k in range(0,4) %}
+        if(l3_out_valid_{{i}}_{{k}} & (l3_out_data_{{i}}_{{k}}.data == l3_cache_{{i}}_{{k}}) 
+          & !l3_out_data_{{i}}_{{k}}.last)begin
+            l3_out_ready_{{i}}_{{k}} = 1;
+        end
+{% endfor %}
+
+    end
+end
+
+always @(posedge clk)begin
+    if(rst)begin
+{% for k in range(0,4) %}
+        l3_cache_{{i}}_{{k}} <= 0;
+{% endfor %}
+    end else begin
+        if(l3_all_last_{{i}})begin
+    {% for k in range(0,4) %}
+            l3_cache_{{i}}_{{k}} <= 0;
+    {% endfor %}
+        end else begin
+    {% for k in range(0,4) %}
+            if(l3_out_valid_{{i}}_{{k}} & l3_out_ready_{{i}}_{{k}})begin
+                l3_cache_{{i}}_{{k}} <= l3_out_data_{{i}}_{{k}}.data;
+            end
+    {% endfor %}
+        end
+    end
+end
+
+//dequeue FIFO and write to next FIFO
+always @(posedge clk)begin
+    if(rst)begin
+        l4_in_valid_{{i}} <= 0;
+    end else begin
+        //sync case
+        if(l3_all_last_{{i}}) begin
+            l4_in_valid_{{i}} <= 1;
+        //normal case
+        end else begin
+            l4_in_valid_{{i}} <= |l3_grant_{{i}};
+        end
+    end
+    //sync case
+    if(l3_all_last_{{i}}) begin
+        l4_in_data_{{i}}.last <= 1;
+        l4_in_data_{{i}}.data <= 0;
+    //normal case
+    end else begin
+        case(l3_grant_{{i}})
+            4'b0001: l4_in_data_{{i}} <= l3_out_data_{{i}}_0;
+            4'b0010: l4_in_data_{{i}} <= l3_out_data_{{i}}_1;
+            4'b0100: l4_in_data_{{i}} <= l3_out_data_{{i}}_2;
+            4'b1000: l4_in_data_{{i}} <= l3_out_data_{{i}}_3;
+            default: l4_in_data_{{i}} <= 0;
+        endcase
+    end   
+end
+
+{% endfor %}
+
+//BACK, after arbiter
+assign all_last = {% for i in range(0,8)%} l4_out_data_{{i}}.last & l4_out_valid_{{i}} & {% endfor %} !ruleID_almost_full;
+
+always @(posedge clk)begin
+    {% for i in range(0,8) %}
+    if(all_last_r3)begin
+        ruleID[{{i*16+15}}:{{i*16}}] <= 0;
+    end else begin
+        if(ht_rd_{{i}}_valid)begin
+            ruleID[{{i*16+15}}:{{i*16}}] <= ht_data_{{i}};
+        end else begin
+            ruleID[{{i*16+15}}:{{i*16}}] <= 0;
+        end
+    end
+    {% endfor %}
+end
+
+always @(posedge clk)begin
+    if(rst)begin
+        ruleID_last <= 0;
+        ruleID_valid <= 0;
+    end else begin
+        //sync case
+        if(all_last_r3) begin
+            ruleID_last <= 1;
+            ruleID_valid <= 1;
+ 
+        //normal case
+        end else begin
+            ruleID_last <= 0;
+            //any dequeue 
+            ruleID_valid <= {% for i in range(0,8) %} (ht_rd_{{i}}_valid) | {% endfor %} 0;
+        end
+    end
+end
+
+always @(*)begin
+{% for i in range(0,context['bucket_size'])%}
+    l4_out_ready_{{i}} = l4_out_valid_{{i}} & !l4_out_data_{{i}}.last & !ruleID_almost_full;
+{% endfor %}
+    //sync case
+    if(all_last) begin
+{% for i in range(0,context['bucket_size'])%}
+        l4_out_ready_{{i}} = !ruleID_almost_full; 
+{% endfor %}
+    end
+end
+
+//For every rule, fetch the RULE ID from table. 
+{% for i in range(0,context['bucket_size'])%}
+assign ht_addr_{{i}} = l4_out_data_{{i}}.data;
+assign ht_rd_{{i}} = l4_out_valid_{{i}} & !l4_out_data_{{i}}.last & !ruleID_almost_full & (l4_out_data_{{i}}.data!=l4_cache_{{i}});
+{% endfor %}
+
+always @(posedge clk)begin
+    if (rst)begin
+
+{% for i in range(0,context['bucket_size'])%}
+        l4_cache_{{i}} <= 0;
+{% endfor %}
+    end
+
+    all_last_r1 <= all_last;
+    all_last_r2 <= all_last_r1;
+    all_last_r3 <= all_last_r2;
+
+{% for i in range(0,context['bucket_size'])%}
+    if(all_last)begin
+        l4_cache_{{i}} <= 0;
+    end else begin
+        if(l4_out_valid_{{i}} & l4_out_ready_{{i}})begin
+            l4_cache_{{i}} <= l4_out_data_{{i}}.data;
+        end
+    end
+        
+    //two cycle delay and one more cycle for selecting right bucket
+    ht_rd_{{i}}_r1 <= ht_rd_{{i}};
+    ht_rd_{{i}}_r2 <= ht_rd_{{i}}_r1;
+    ht_rd_{{i}}_valid <= ht_rd_{{i}}_r2;
+    ht_data_{{i}} <= ht_q_{{i}};
+{% endfor %}
+end
+//L1 FIFO
+{% for i in range(0,context['bucket_size']) %}
+{% for j in range(0,32) %}
+
+simple_fifo # (
+  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
+  .DATA_WIDTH(RULE_S_WIDTH)
+) l1_dc_fifo_mlab_{{i}}_{{j}} (
+  .clk   (clk),
+  .rst   (rst),
+  .clear (1'b0),
+
+  .din_valid(din_valid_{{i}}_{{j}}),
+  .din(din_{{i}}_{{j}}),
+  .din_ready(),
+
+  .dout_valid(l1_valid_{{i}}_{{j}}),
+  .dout(l1_data_{{i}}_{{j}}),
+  .dout_ready(l1_ready_{{i}}_{{j}}),
+
+  .item_count(din_csr_readdata_{{i}}_{{j}}),
+  .full(),
+  .empty()
+);
+
+always @ (posedge clk)
+  if (din_csr_readdata_{{i}}_{{j}}_r2 > L1_TH)
+    din_almost_full_{{i}}_{{j}} <= 1'b1;
+  else
+    din_almost_full_{{i}}_{{j}} <= 1'b0;
+
+{% endfor %}
+{% endfor %}
+
+//L2 FIFO and L1 ARB
+{% for i in range(0,context['bucket_size']) %}
+{% for j in range(0,16) %}
+rr_arbiter #(
+    .DWIDTH(2)
+)
+l1_arb_{{i}}_{{j}}(
+    .clk    (clk),
+    .rst    (rst),
+    .req    (l1_req_{{i}}_{{j}}),
+    .grant  (l1_grant_{{i}}_{{j}})
+);
+
+simple_fifo # (
+  .ADDR_WIDTH($clog2(FIFO_DEPTH)),
+  .DATA_WIDTH(RULE_S_WIDTH)
+) l2_fifo_{{i}}_{{j}} (
+  .clk   (clk),
+  .rst   (rst),
+  .clear (1'b0),
+
+  .din_valid(l2_in_valid_{{i}}_{{j}}),
+  .din(l2_in_data_{{i}}_{{j}}),
+  .din_ready(l2_in_ready_{{i}}_{{j}}),
+
+  .dout_valid(l2_out_valid_{{i}}_{{j}}),
+  .dout(l2_out_data_{{i}}_{{j}}),
+  .dout_ready(l2_out_ready_{{i}}_{{j}}),
+
+  .item_count(l2_csr_readdata_{{i}}_{{j}}),
+  .full(),
+  .empty()
+);
+
+always @ (posedge clk)
+  if (l2_csr_readdata_{{i}}_{{j}} > L2_TH)
+    l2_almost_full_{{i}}_{{j}} <= 1'b1;
+  else
+    l2_almost_full_{{i}}_{{j}} <= 1'b0;
+
+{% endfor %}
+{% endfor %}
+
+{% for i in range(0,context['bucket_size']) %}
+{% for j in range(0,4) %}
+rr_arbiter_4 #(
+    .DWIDTH(4)
+)
+l2_arb_{{i}}_{{j}}(
+    .clk    (clk),
+    .rst    (rst),
+    .req    (l2_req_{{i}}_{{j}}),
+    .grant  (l2_grant_{{i}}_{{j}})
+);
+
+simple_fifo # (
+  .ADDR_WIDTH($clog2(FIFO_DEPTH)),
+  .DATA_WIDTH(RULE_S_WIDTH)
+) l3_fifo_{{i}}_{{j}} (
+  .clk   (clk),
+  .rst   (rst),
+  .clear (1'b0),
+
+  .din_valid(l3_in_valid_{{i}}_{{j}}),
+  .din(l3_in_data_{{i}}_{{j}}),
+  .din_ready(l3_in_ready_{{i}}_{{j}}),
+
+  .dout_valid(l3_out_valid_{{i}}_{{j}}),
+  .dout(l3_out_data_{{i}}_{{j}}),
+  .dout_ready(l3_out_ready_{{i}}_{{j}}),
+
+  .item_count(l3_csr_readdata_{{i}}_{{j}}),
+  .full(),
+  .empty()
+);
+
+always @ (posedge clk)
+  if (l3_csr_readdata_{{i}}_{{j}} > L3_TH)
+    l3_almost_full_{{i}}_{{j}} <= 1'b1;
+  else
+    l3_almost_full_{{i}}_{{j}} <= 1'b0;
+
+{% endfor %}
+{% endfor %}
+
+{% for i in range(0,context['bucket_size']) %}
+rr_arbiter_4 #(
+    .DWIDTH(4)
+)
+l3_arb_{{i}}(
+    .clk    (clk),
+    .rst    (rst),
+    .req    (l3_req_{{i}}),
+    .grant  (l3_grant_{{i}})
+);
+
+simple_fifo # (
+  .ADDR_WIDTH($clog2(FIFO_DEPTH)),
+  .DATA_WIDTH(RULE_S_WIDTH)
+) l4_fifo_{{i}} (
+  .clk   (clk),
+  .rst   (rst),
+  .clear (1'b0),
+
+  .din_valid(l4_in_valid_{{i}}),
+  .din(l4_in_data_{{i}}),
+  .din_ready(l4_in_ready_{{i}}),
+
+  .dout_valid(l4_out_valid_{{i}}),
+  .dout(l4_out_data_{{i}}),
+  .dout_ready(l4_out_ready_{{i}}),
+
+  .item_count(l4_csr_readdata_{{i}}),
+  .full(),
+  .empty()
+);
+
+always @ (posedge clk)
+  if (l4_csr_readdata_{{i}} > L3_TH)
+    l4_almost_full_{{i}} <= 1'b1;
+  else
+    l4_almost_full_{{i}} <= 1'b0;
+
+{% endfor %}
+
+
+{% for i in range(0,context['bucket_size'])%}
+rom_2port #(
+    .DWIDTH(RID_WIDTH),
+    .AWIDTH({{context['nbits'][i]}}),
+    .MEM_SIZE({{context['mem_size'][i]}}),
+    .INIT_FILE("./memory_init/hashtable{{i}}.mif")
+)
+hashtable_inst_{{i}}(
+    .q_a       (ht_q_{{i}}),    
+    .q_b       (),    
+    .address_a (ht_addr_{{i}}),
+    .address_b (),
+    .clk       (clk)   
+);
+{% endfor %}
+
+endmodule

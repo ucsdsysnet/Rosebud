@@ -3,8 +3,8 @@ module pigasus_sme_wrapper (
   input  wire            rst,
 
   // AXI Stream input
-  input  wire [8*8-1:0]  s_axis_tdata,
-  input  wire [8-1:0]    s_axis_tkeep,
+  input  wire [16*8-1:0] s_axis_tdata,
+  input  wire [16-1:0]   s_axis_tkeep,
   input  wire            s_axis_tvalid,
   input  wire            s_axis_tlast,
   output wire            s_axis_tready,
@@ -28,19 +28,19 @@ module pigasus_sme_wrapper (
   ///////////////////////////////////////////////
   //////////   Selecting input data   ///////////
   ///////////////////////////////////////////////
-  wire [63:0]   muxed_data;
-  wire [7:0]    muxed_strb;
+  wire [127:0]  muxed_data;
+  wire [15:0]   muxed_strb;
   wire          muxed_last;
   wire          muxed_valid;
   wire          sme_ready;
   reg           preamble_valid;
 
-  assign muxed_data    = preamble_valid ? {8'hff,preamble_state[63:8]}
+  assign muxed_data    = preamble_valid ? {{9{8'hff}},preamble_state[63:8]}
                                         : s_axis_tdata;
-  assign muxed_strb    = preamble_valid ? 8'hff : s_axis_tkeep;
-  assign muxed_valid   = preamble_valid ? 1'b1  : s_axis_tvalid;
-  assign muxed_last    = preamble_valid ? 1'b0  : s_axis_tlast;
-  assign s_axis_tready = preamble_valid ? 1'b0  : sme_ready;
+  assign muxed_strb    = preamble_valid ? 16'hffff : s_axis_tkeep;
+  assign muxed_valid   = preamble_valid ? 1'b1     : s_axis_tvalid;
+  assign muxed_last    = preamble_valid ? 1'b0     : s_axis_tlast;
+  assign s_axis_tready = preamble_valid ? 1'b0     : sme_ready;
 
   // One cycle preamble when engine is initialized
   always @ (posedge clk)
@@ -68,7 +68,7 @@ module pigasus_sme_wrapper (
     .clk(clk),
     .rst(rst),
 
-    .in_data({{192{1'b0}}, muxed_data}),
+    .in_data({{128{1'b0}}, muxed_data}),
     .in_strb(muxed_strb),
     .in_valid(muxed_valid),
     .in_last(muxed_last),
@@ -152,33 +152,40 @@ module pigasus_sme_wrapper (
   ///////////////////////////////////////////////
   ////////// Keeping last bytes logic ///////////
   ///////////////////////////////////////////////
-  reg [63:0] last_chunk1;
-  reg [63:0] last_chunk2;
+  reg [63:0] last_chunk_1;
+  reg [63:0] last_chunk_2;
   reg [2:0]  last_chunk_shift;
   reg        last_chunk_valid;
   
-  reg [3:0] one_count;
+  reg [4:0] one_count;
   integer l;
   always @ (*) begin
-    one_count = 8;
-    for (l=7; l>=0; l=l-1)
+    one_count = 16;
+    for (l=15; l>=0; l=l-1)
       if (!s_axis_tkeep[l])
         one_count = one_count-1;
   end
 
   always @ (posedge clk) begin
     if (s_axis_tvalid && s_axis_tready) begin
-      last_chunk2      <= last_chunk1;
-      last_chunk1      <= s_axis_tdata;
-      last_chunk_shift <= one_count;
-      if (s_axis_tlast)
+      if (s_axis_tlast) begin
+        if (s_axis_tkeep[8]) begin
+          last_chunk_1 <= s_axis_tdata[63:0];
+          last_chunk_2 <= s_axis_tdata[127:64];
+        end else begin
+          last_chunk_1 <= s_axis_tdata[63:0];
+        end
+        last_chunk_shift <= one_count[2:0];
         last_chunk_valid <= 1'b1;
+      end else begin
+        last_chunk_2 <= s_axis_tdata[127:64];
+      end
     end
     if (reload | rst)
       last_chunk_valid <= 1'b0;
   end
   
-  wire [63:0] full_chunk = {last_chunk1, last_chunk2} >> last_chunk_shift; 
+  wire [127:0] full_chunk = {last_chunk_1, last_chunk_2} >> last_chunk_shift; 
 
   assign last_bytes_state = {full_chunk[55:0], 7'd0, last_chunk_valid};
 
