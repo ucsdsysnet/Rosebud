@@ -35,8 +35,8 @@ logic         init_r1;
 logic         init_r2;
 logic         in_last_r1;
 logic         in_last_r2;
-logic [4:0]   in_strb_r1;
-logic [4:0]   in_strb_r2;
+logic [7:0]   in_strb_r1;
+logic [7:0]   in_strb_r2;
 
 {% for i in range(0,context['bucket_size'])%}
 {% for j in range(0,context['byte_size'])%}
@@ -48,10 +48,18 @@ rule_s_t din_{{i}}_{{j}}_r2;
 logic din_valid_{{i}}_{{j}};
 logic din_valid_{{i}}_{{j}}_r1;
 logic din_valid_{{i}}_{{j}}_r2;
-logic [2:0] din_valid_{{i}}_{{j}}_r;
-logic din_ready_{{i}}_{{j}};
 logic din_almost_full_{{i}}_{{j}};
 {% endfor %}
+
+{% for j in range(context['byte_size'],32)%}
+rule_s_t din_{{i}}_{{j}}_r2;
+logic din_valid_{{i}}_{{j}}_r2 = 1'b0;
+logic din_almost_full_{{i}}_{{j}};
+assign din_{{i}}_{{j}}_r2.data   = 0;
+assign din_{{i}}_{{j}}_r2.last   = 1'b0;
+assign din_{{i}}_{{j}}_r2.bucket = {{i}};
+{% endfor %}
+
 {% endfor %}
 
 logic out_new_pkt;
@@ -136,7 +144,7 @@ backend back(
     .clk(clk),
     .rst(rst),
 {% for i in range(0,context['bucket_size']) %}
-{% for j in range(0,context['byte_size']) %}
+{% for j in range(0,32) %}
     .din_{{i}}_{{j}}(din_{{i}}_{{j}}_r2),
     .din_valid_{{i}}_{{j}}(din_valid_{{i}}_{{j}}_r2),
     .din_almost_full_{{i}}_{{j}}(din_almost_full_{{i}}_{{j}}),

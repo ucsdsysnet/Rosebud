@@ -31,19 +31,21 @@ VERILOG_SOURCES += $(SMARTFPGA)/header.v
 VERILOG_SOURCES += $(SMARTFPGA)/axis_fifo.v
 VERILOG_SOURCES += $(SMARTFPGA)/accel_rd_dma_sp.v
 VERILOG_SOURCES += $(SMARTFPGA)/spaced_2lvl_penc.v
-VERILOG_SOURCES += $(SMARTFPGA)/accel_wrap.v
 
 VERILOG_SOURCES += $(ACC_DIR)/backend.sv
 VERILOG_SOURCES += $(ACC_DIR)/first_filter.sv
 VERILOG_SOURCES += $(ACC_DIR)/frontend.sv
 VERILOG_SOURCES += $(ACC_DIR)/hashtable.sv
 VERILOG_SOURCES += $(ACC_DIR)/hashtable_top.sv
-VERILOG_SOURCES += $(ACC_DIR)/mems.sv
+VERILOG_SOURCES += $(ACC_DIR)/ips.sv
 VERILOG_SOURCES += $(ACC_DIR)/mul_hash.sv
 VERILOG_SOURCES += $(ACC_DIR)/rr_arbiter.sv
 VERILOG_SOURCES += $(ACC_DIR)/rr_arbiter_4.sv
 VERILOG_SOURCES += $(ACC_DIR)/string_matcher.sv
 VERILOG_SOURCES += $(ACC_DIR)/struct_s.sv
+VERILOG_SOURCES += $(ACC_DIR)/SME_wrapper.v
+VERILOG_SOURCES += $(ACC_DIR)/accel_wrap_pigasus.v
+VERILOG_SOURCES += $(ACC_DIR)/ip_match.v
 
 VERILOG_SOURCES += $(AXIS_DIR)/arbiter.v
 VERILOG_SOURCES += $(AXIS_DIR)/priority_encoder.v

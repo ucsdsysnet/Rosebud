@@ -48,7 +48,7 @@ module pigasus_sme_wrapper (
       preamble_valid <= 1'b0;
     else if (reload)
       preamble_valid <= preamble_state[0];
-    else if (pre_amble_valid && sme_ready)
+    else if (preamble_valid && sme_ready)
       preamble_valid <= 1'b0;
 
   ///////////////////////////////////////////////
@@ -161,7 +161,7 @@ module pigasus_sme_wrapper (
   integer l;
   always @ (*) begin
     one_count = 8;
-    for (i=7; i>=0; i=i-1)
+    for (l=7; l>=0; l=l-1)
       if (!s_axis_tkeep[l])
         one_count = one_count-1;
   end
@@ -173,7 +173,7 @@ module pigasus_sme_wrapper (
       last_chunk_shift <= one_count;
       last_chunk_valid <= 1'b1;
     end
-    if (init | rst)
+    if (reload | rst)
       last_chunk_valid <= 1'b0;
   end
   

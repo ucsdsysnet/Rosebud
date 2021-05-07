@@ -1,7 +1,7 @@
 `include "struct_s.sv"
 module backend(clk,rst,
 {% for i in range(0,context['bucket_size']) %}
-{% for j in range(0,context['byte_size']) %}
+{% for j in range(0,32) %}
     din_{{i}}_{{j}},
     din_valid_{{i}}_{{j}},
     din_almost_full_{{i}}_{{j}},
@@ -13,7 +13,7 @@ module backend(clk,rst,
 input clk;
 input rst;
 {% for i in range(0,context['bucket_size']) %}
-{% for j in range(0,context['byte_size']) %}
+{% for j in range(0,32) %}
 input rule_s_t din_{{i}}_{{j}};
 input din_valid_{{i}}_{{j}};
 output logic din_almost_full_{{i}}_{{j}};
@@ -34,7 +34,8 @@ localparam L4_TH = (FIFO_DEPTH-3);
 
 //L1 FIFO
 {% for i in range(0,context['bucket_size']) %}
-{% for j in range(0,context['byte_size']) %}
+{% for j in range(0,32) %}
+logic [31:0]   din_csr_readdata_{{i}}_{{j}};
 logic [31:0]   din_csr_readdata_{{i}}_{{j}}_r1;
 logic [31:0]   din_csr_readdata_{{i}}_{{j}}_r2;
 
@@ -126,7 +127,7 @@ logic [2:0] bucket_{{i}}_r2;
 //L1 
 always @(posedge clk)begin
 {% for i in range(0,context['bucket_size']) %}
-{% for j in range(0,context['byte_size']) %}
+{% for j in range(0,32) %}
     din_csr_readdata_{{i}}_{{j}}_r1 <= din_csr_readdata_{{i}}_{{j}};
     din_csr_readdata_{{i}}_{{j}}_r2 <= din_csr_readdata_{{i}}_{{j}}_r1;
 {% endfor %}
@@ -483,7 +484,7 @@ always @(posedge clk)begin
 end
 //L1 FIFO
 {% for i in range(0,context['bucket_size']) %}
-{% for j in range(0,context['byte_size']) %}
+{% for j in range(0,32) %}
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
@@ -646,7 +647,7 @@ rom_2port #(
     .DWIDTH(RID_WIDTH),
     .AWIDTH({{context['nbits'][i]}}),
     .MEM_SIZE({{context['mem_size'][i]}}),
-    .INIT_FILE("./src/memory_init/hashtable{{i}}.mif")
+    .INIT_FILE("./memory_init/hashtable{{i}}.mif")
 )
 hashtable_inst_{{i}}(
     .q_a       (ht_q_{{i}}),    

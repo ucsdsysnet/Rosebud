@@ -75,30 +75,30 @@ assign temp_st4 = q4 << 4*8;
 assign temp_st5 = q5 << 5*8;
 assign temp_st6 = q6 << 6*8;
 assign temp_st7 = q7 << 7*8;
-assign temp_st8 = q8 << 0*8;
-assign temp_st9 = q9 << 1*8;
-assign temp_st10 = q10 << 2*8;
-assign temp_st11 = q11 << 3*8;
-assign temp_st12 = q12 << 4*8;
-assign temp_st13 = q13 << 5*8;
-assign temp_st14 = q14 << 6*8;
-assign temp_st15 = q15 << 7*8;
-assign temp_st16 = q16 << 0*8;
-assign temp_st17 = q17 << 1*8;
-assign temp_st18 = q18 << 2*8;
-assign temp_st19 = q19 << 3*8;
-assign temp_st20 = q20 << 4*8;
-assign temp_st21 = q21 << 5*8;
-assign temp_st22 = q22 << 6*8;
-assign temp_st23 = q23 << 7*8;
-assign temp_st24 = q24 << 0*8;
-assign temp_st25 = q25 << 1*8;
-assign temp_st26 = q26 << 2*8;
-assign temp_st27 = q27 << 3*8;
-assign temp_st28 = q28 << 4*8;
-assign temp_st29 = q29 << 5*8;
-assign temp_st30 = q30 << 6*8;
-assign temp_st31 = q31 << 7*8;
+assign temp_st8 = 0; // q8 << 0*8;
+assign temp_st9 = 0; // q9 << 1*8;
+assign temp_st10 = 0; // q10 << 2*8;
+assign temp_st11 = 0; // q11 << 3*8;
+assign temp_st12 = 0; // q12 << 4*8;
+assign temp_st13 = 0; // q13 << 5*8;
+assign temp_st14 = 0; // q14 << 6*8;
+assign temp_st15 = 0; // q15 << 7*8;
+assign temp_st16 = 0; // q16 << 0*8;
+assign temp_st17 = 0; // q17 << 1*8;
+assign temp_st18 = 0; // q18 << 2*8;
+assign temp_st19 = 0; // q19 << 3*8;
+assign temp_st20 = 0; // q20 << 4*8;
+assign temp_st21 = 0; // q21 << 5*8;
+assign temp_st22 = 0; // q22 << 6*8;
+assign temp_st23 = 0; // q23 << 7*8;
+assign temp_st24 = 0; // q24 << 0*8;
+assign temp_st25 = 0; // q25 << 1*8;
+assign temp_st26 = 0; // q26 << 2*8;
+assign temp_st27 = 0; // q27 << 3*8;
+assign temp_st28 = 0; // q28 << 4*8;
+assign temp_st29 = 0; // q29 << 5*8;
+assign temp_st30 = 0; // q30 << 6*8;
+assign temp_st31 = 0; // q31 << 7*8;
 
 
 
@@ -114,7 +114,7 @@ assign state_high2 = temp_high2 | temp_high1[127:64];
 //assign out_data = {state_high[63:0],state_low[63:0]};
 assign out_data = {state_high2[63:0],state_high1[63:0],state_high[63:0],state_low[63:0]} | {{192{1'b1}}, mask};
 
-assign next_state = state_high2[127:64];
+assign next_state = temp_low[127:64]; //state_high2[127:64];
 
 
 always @ (posedge clk) begin
@@ -167,7 +167,7 @@ rom_2port_noreg #(
 	.DWIDTH(64),
 	.AWIDTH(13),
 	.MEM_SIZE(8192),
-	.INIT_FILE("./src/memory_init/match_table.mif")
+	.INIT_FILE("./memory_init/match_table.mif")
 )
 match_table_0 (
 	.q_a       (q0),    
@@ -180,7 +180,7 @@ rom_2port_noreg #(
 	.DWIDTH(64),
 	.AWIDTH(13),
 	.MEM_SIZE(8192),
-	.INIT_FILE("./src/memory_init/match_table.mif")
+	.INIT_FILE("./memory_init/match_table.mif")
 )
 match_table_1 (
 	.q_a       (q2),    
@@ -193,7 +193,7 @@ rom_2port_noreg #(
 	.DWIDTH(64),
 	.AWIDTH(13),
 	.MEM_SIZE(8192),
-	.INIT_FILE("./src/memory_init/match_table.mif")
+	.INIT_FILE("./memory_init/match_table.mif")
 )
 match_table_2 (
 	.q_a       (q4),    
@@ -206,7 +206,7 @@ rom_2port_noreg #(
 	.DWIDTH(64),
 	.AWIDTH(13),
 	.MEM_SIZE(8192),
-	.INIT_FILE("./src/memory_init/match_table.mif")
+	.INIT_FILE("./memory_init/match_table.mif")
 )
 match_table_3 (
 	.q_a       (q6),    

@@ -50,13 +50,13 @@ assign addr{{i}} = last ? {5'b0,in_reg[({{i}}+1)*8-1:{{i}}*8]} : {in_data[4:0],i
 assign temp_st{{i}} = q{{i}} << {{i}}*8;
 {% endfor %}
 {% for i in range(0,8)%}
-assign temp_st{{i+8}} = q{{i+8}} << {{i}}*8;
+assign temp_st{{i+8}} = 0; // q{{i+8}} << {{i}}*8;
 {% endfor %}
 {% for i in range(0,8)%}
-assign temp_st{{i+16}} = q{{i+16}} << {{i}}*8;
+assign temp_st{{i+16}} = 0; // q{{i+16}} << {{i}}*8;
 {% endfor %}
 {% for i in range(0,8)%}
-assign temp_st{{i+24}} = q{{i+24}} << {{i}}*8;
+assign temp_st{{i+24}} = 0; // q{{i+24}} << {{i}}*8;
 {% endfor %}
 
 
@@ -73,7 +73,7 @@ assign state_high2 = temp_high2 | temp_high1[127:64];
 //assign out_data = {state_high[63:0],state_low[63:0]};
 assign out_data = {state_high2[63:0],state_high1[63:0],state_high[63:0],state_low[63:0]} | {{"{{"}}192{1'b1{{"}}"}}, mask};
 
-assign next_state = state_high2[127:64];
+assign next_state = temp_low[127:64]; //state_high2[127:64];
 
 
 always @ (posedge clk) begin
@@ -127,7 +127,7 @@ rom_2port_noreg #(
 	.DWIDTH(64),
 	.AWIDTH(13),
 	.MEM_SIZE(8192),
-	.INIT_FILE("./src/memory_init/match_table.mif")
+	.INIT_FILE("./memory_init/match_table.mif")
 )
 match_table_{{i}} (
 	.q_a       (q{{2*i}}),    

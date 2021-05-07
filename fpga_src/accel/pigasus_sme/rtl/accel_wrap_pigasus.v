@@ -372,18 +372,18 @@ pigasus_sme_wrapper fast_pattern_sme_inst (
   .s_axis_tready(accel_tready_r),
 
   .preamble_state(cmd_state_reg[63:0]),
-  .reload(cmd_init_reg[n]),
+  .reload(cmd_init_reg),
 
   .match_index(match_index),
-  .next_index(release_index[n]),
-  .match_valid(match_valid[n]),
+  .next_index(release_index),
+  .match_valid(match_valid),
 
-  .last_bytes_state(accel_state[n*64+:64]),
+  .last_bytes_state(accel_state),
   .match_valid_stat(match_valid_stat)
 );
 
 always @ (posedge clk)
-  if (cmd_init_reg[n] | rst) begin
+  if (cmd_init_reg | rst) begin
     match_1hot <= 0;
   end else begin
     match_1hot <= match_1hot | match_valid_stat;

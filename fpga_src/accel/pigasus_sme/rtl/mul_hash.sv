@@ -31,7 +31,7 @@ reg  [63:0] sum3_0;
 reg  [63:0] sum_1;
 reg  [63:0] sum_sign;
 
-wire [2:0] ena;
+wire ena;
 
 reg [63:0] a_reg0;
 reg [63:0] b_reg0;
@@ -78,7 +78,7 @@ assign b1 = b_reg2[35:18];
 assign b2 = b_reg2[53:36];
 assign b3 = b_reg2[63:54];
 
-assign ena = {1'b0,1'b0,ce};
+assign ena = ce;
  
 always @ (posedge clk) begin
     if (ce) begin
@@ -141,9 +141,7 @@ end
 		.ax      (b1),      //   input,  width = 18,      ax.ax
 		.bx      (b0),      //   input,  width = 18,      bx.bx
 		.resulta (ab18), //  output,  width = 37, resulta.resulta
-		.clk0    (clk),    //   input,   width = 1,    clk0.clk
-		.clk1    (clk),    //   input,   width = 1,    clk1.clk
-		.clk2    (clk),    //   input,   width = 1,    clk2.clk
+		.clk     (clk),    //   input,   width = 1,    clk .clk
 		.ena     (ena)      //   input,   width = 3,     ena.ena
 	);
 
@@ -153,9 +151,7 @@ end
 		.ax      (b2),      //   input,  width = 18,      ax.ax
 		.bx      (b0),      //   input,  width = 18,      bx.bx
 		.resulta (ab36), //  output,  width = 37, resulta.resulta
-		.clk0    (clk),    //   input,   width = 1,    clk0.clk
-		.clk1    (clk),    //   input,   width = 1,    clk1.clk
-		.clk2    (clk),    //   input,   width = 1,    clk2.clk
+		.clk     (clk),    //   input,   width = 1,    clk .clk
 		.ena     (ena)      //   input,   width = 3,     ena.ena
 	);
 
@@ -165,9 +161,7 @@ end
 		.ax      (b3),      //   input,  width = 18,      ax.ax
 		.bx      (b2),      //   input,  width = 18,      bx.bx
 		.resulta (ab54), //  output,  width = 37, resulta.resulta
-		.clk0    (clk),    //   input,   width = 1,    clk0.clk
-		.clk1    (clk),    //   input,   width = 1,    clk1.clk
-		.clk2    (clk),    //   input,   width = 1,    clk2.clk
+		.clk     (clk),    //   input,   width = 1,    clk .clk
 		.ena     (ena)      //   input,   width = 3,     ena.ena
 	);
 
@@ -177,27 +171,21 @@ end
 		.ax      (b1),      //   input,  width = 18,      ax.ax
 		.bx      (b0),      //   input,  width = 18,      bx.bx
 		.resulta (ab54_1), //  output,  width = 37, resulta.resulta
-		.clk0    (clk),    //   input,   width = 1,    clk0.clk
-		.clk1    (clk),    //   input,   width = 1,    clk1.clk
-		.clk2    (clk),    //   input,   width = 1,    clk2.clk
+		.clk     (clk),    //   input,   width = 1,    clk .clk
 		.ena     (ena)      //   input,   width = 3,     ena.ena
 	);
 	singledsp u_0 (
 		.ay      (a0),      //   input,  width = 18,      ay.ay
 		.ax      (b0),      //   input,  width = 18,      ax.ax
 		.resulta (ab0), //  output,  width = 37, resulta.resulta
-		.clk0    (clk),    //   input,   width = 1,    clk0.clk
-		.clk1    (clk),    //   input,   width = 1,    clk1.clk
-		.clk2    (clk),    //   input,   width = 1,    clk2.clk
+		.clk     (clk),    //   input,   width = 1,    clk .clk
 		.ena     (ena)      //   input,   width = 3,     ena.ena
 	);
 	singledsp u_36_1 (
 		.ay      (a1),      //   input,  width = 18,      ay.ay
 		.ax      (b1),      //   input,  width = 18,      ax.ax
 		.resulta (ab36_1), //  output,  width = 37, resulta.resulta
-		.clk0    (clk),    //   input,   width = 1,    clk0.clk
-		.clk1    (clk),    //   input,   width = 1,    clk1.clk
-		.clk2    (clk),    //   input,   width = 1,    clk2.clk
+		.clk     (clk),    //   input,   width = 1,    clk .clk
 		.ena     (ena)      //   input,   width = 3,     ena.ena
 	);
 
