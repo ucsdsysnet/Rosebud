@@ -320,7 +320,6 @@ accel_rd_dma_sp # (
 
 assign acc_wen_b1[ATTACHED*STRB_WIDTH +: ATTACHED_CNT*STRB_WIDTH] = {ATTACHED_CNT*STRB_WIDTH{1'b0}};
 assign acc_wen_b2[ATTACHED*STRB_WIDTH +: ATTACHED_CNT*STRB_WIDTH] = {ATTACHED_CNT*STRB_WIDTH{1'b0}};
-assign accel_tready_r = {ACCEL_COUNT{1'b1}};
 
 genvar i;
 
