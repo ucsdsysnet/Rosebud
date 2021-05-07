@@ -76,6 +76,9 @@ set_property STEPS.OPT_DESIGN.TCL.PRE [ get_files ../lib/smartFPGA/syn/simple_sy
 set_property STEPS.ROUTE_DESIGN.TCL.PRE [ get_files ../lib/axis/syn/sync_reset.tcl -of [get_fileset PIG_HASH_utils] ] [get_runs impl_PIG_HASH]
 set_property STEPS.ROUTE_DESIGN.TCL.PRE [ get_files ../lib/smartFPGA/syn/simple_sync_sig.tcl -of [get_fileset PIG_HASH_utils] ] [get_runs impl_PIG_HASH]
 
+set_property IS_ENABLED false [get_report_config -of_object [get_runs impl_PIG_HASH] impl_PIG_HASH_route_report_drc_0]
+set_property IS_ENABLED false [get_report_config -of_object [get_runs impl_PIG_HASH] impl_PIG_HASH_route_report_power_0]
+
 reset_run impl_PIG_HASH
 launch_runs impl_PIG_HASH -jobs 12
 wait_on_run impl_PIG_HASH
