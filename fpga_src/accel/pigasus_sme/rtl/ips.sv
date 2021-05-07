@@ -13,7 +13,7 @@ module rom_2port #(
   output reg  [DWIDTH-1:0] q_b
 );
 
-  reg [DWIDTH-1:0] mem [(1<<AWIDTH)-1:0];
+  reg [DWIDTH-1:0] mem [0:(1<<AWIDTH)-1];
   
   always @ (posedge clk) begin
     q_a <= mem[address_a];
@@ -22,7 +22,7 @@ module rom_2port #(
 
   initial begin
     if (INIT_FILE!="")
-      $readmemb(INIT_FILE, mem);
+      $readmemh(INIT_FILE, mem);
   end
 
 endmodule
@@ -42,7 +42,7 @@ module rom_2port_noreg #(
   output reg  [DWIDTH-1:0] q_b
 );
 
-  reg [DWIDTH-1:0] mem [(1<<AWIDTH)-1:0];
+  reg [DWIDTH-1:0] mem [0:(1<<AWIDTH)-1];
   
   always @ (*) begin
     q_a = mem[address_a];
@@ -51,7 +51,7 @@ module rom_2port_noreg #(
 
   initial begin
     if (INIT_FILE!="")
-      $readmemb(INIT_FILE, mem);
+      $readmemh(INIT_FILE, mem);
   end
 
 endmodule

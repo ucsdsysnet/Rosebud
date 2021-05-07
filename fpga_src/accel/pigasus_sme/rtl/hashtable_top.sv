@@ -489,7 +489,7 @@ hashtable #(
 	.NBITS(15),
 	.DWIDTH(RID_WIDTH),
 	.MEM_SIZE(4096),
-	.INIT_FILE("./src/memory_init/bitmap0.mif")
+	.INIT_FILE("./memory_init/bitmap0.mif")
 )
 hashtable_0_0 (
 	.clk (clk),
@@ -508,7 +508,7 @@ hashtable #(
 	.NBITS(15),
 	.DWIDTH(RID_WIDTH),
 	.MEM_SIZE(4096),
-	.INIT_FILE("./src/memory_init/bitmap0.mif")
+	.INIT_FILE("./memory_init/bitmap0.mif")
 )
 hashtable_0_1 (
 	.clk (clk),
@@ -527,7 +527,7 @@ hashtable #(
 	.NBITS(15),
 	.DWIDTH(RID_WIDTH),
 	.MEM_SIZE(4096),
-	.INIT_FILE("./src/memory_init/bitmap0.mif")
+	.INIT_FILE("./memory_init/bitmap0.mif")
 )
 hashtable_0_2 (
 	.clk (clk),
@@ -546,7 +546,7 @@ hashtable #(
 	.NBITS(15),
 	.DWIDTH(RID_WIDTH),
 	.MEM_SIZE(4096),
-	.INIT_FILE("./src/memory_init/bitmap0.mif")
+	.INIT_FILE("./memory_init/bitmap0.mif")
 )
 hashtable_0_3 (
 	.clk (clk),
@@ -565,7 +565,7 @@ hashtable #(
 	.NBITS(15),
 	.DWIDTH(RID_WIDTH),
 	.MEM_SIZE(4096),
-	.INIT_FILE("./src/memory_init/bitmap1.mif")
+	.INIT_FILE("./memory_init/bitmap1.mif")
 )
 hashtable_1_0 (
 	.clk (clk),
@@ -584,7 +584,7 @@ hashtable #(
 	.NBITS(15),
 	.DWIDTH(RID_WIDTH),
 	.MEM_SIZE(4096),
-	.INIT_FILE("./src/memory_init/bitmap1.mif")
+	.INIT_FILE("./memory_init/bitmap1.mif")
 )
 hashtable_1_1 (
 	.clk (clk),
@@ -603,7 +603,7 @@ hashtable #(
 	.NBITS(15),
 	.DWIDTH(RID_WIDTH),
 	.MEM_SIZE(4096),
-	.INIT_FILE("./src/memory_init/bitmap1.mif")
+	.INIT_FILE("./memory_init/bitmap1.mif")
 )
 hashtable_1_2 (
 	.clk (clk),
@@ -622,7 +622,7 @@ hashtable #(
 	.NBITS(15),
 	.DWIDTH(RID_WIDTH),
 	.MEM_SIZE(4096),
-	.INIT_FILE("./src/memory_init/bitmap1.mif")
+	.INIT_FILE("./memory_init/bitmap1.mif")
 )
 hashtable_1_3 (
 	.clk (clk),
@@ -641,7 +641,7 @@ hashtable #(
 	.NBITS(12),
 	.DWIDTH(RID_WIDTH),
 	.MEM_SIZE(512),
-	.INIT_FILE("./src/memory_init/bitmap2.mif")
+	.INIT_FILE("./memory_init/bitmap2.mif")
 )
 hashtable_2_0 (
 	.clk (clk),
@@ -660,7 +660,7 @@ hashtable #(
 	.NBITS(12),
 	.DWIDTH(RID_WIDTH),
 	.MEM_SIZE(512),
-	.INIT_FILE("./src/memory_init/bitmap2.mif")
+	.INIT_FILE("./memory_init/bitmap2.mif")
 )
 hashtable_2_1 (
 	.clk (clk),
@@ -679,7 +679,7 @@ hashtable #(
 	.NBITS(12),
 	.DWIDTH(RID_WIDTH),
 	.MEM_SIZE(512),
-	.INIT_FILE("./src/memory_init/bitmap2.mif")
+	.INIT_FILE("./memory_init/bitmap2.mif")
 )
 hashtable_2_2 (
 	.clk (clk),
@@ -698,7 +698,7 @@ hashtable #(
 	.NBITS(12),
 	.DWIDTH(RID_WIDTH),
 	.MEM_SIZE(512),
-	.INIT_FILE("./src/memory_init/bitmap2.mif")
+	.INIT_FILE("./memory_init/bitmap2.mif")
 )
 hashtable_2_3 (
 	.clk (clk),
@@ -717,7 +717,7 @@ hashtable #(
 	.NBITS(12),
 	.DWIDTH(RID_WIDTH),
 	.MEM_SIZE(512),
-	.INIT_FILE("./src/memory_init/bitmap3.mif")
+	.INIT_FILE("./memory_init/bitmap3.mif")
 )
 hashtable_3_0 (
 	.clk (clk),
@@ -736,7 +736,7 @@ hashtable #(
 	.NBITS(12),
 	.DWIDTH(RID_WIDTH),
 	.MEM_SIZE(512),
-	.INIT_FILE("./src/memory_init/bitmap3.mif")
+	.INIT_FILE("./memory_init/bitmap3.mif")
 )
 hashtable_3_1 (
 	.clk (clk),
@@ -755,7 +755,7 @@ hashtable #(
 	.NBITS(12),
 	.DWIDTH(RID_WIDTH),
 	.MEM_SIZE(512),
-	.INIT_FILE("./src/memory_init/bitmap3.mif")
+	.INIT_FILE("./memory_init/bitmap3.mif")
 )
 hashtable_3_2 (
 	.clk (clk),
@@ -774,7 +774,7 @@ hashtable #(
 	.NBITS(12),
 	.DWIDTH(RID_WIDTH),
 	.MEM_SIZE(512),
-	.INIT_FILE("./src/memory_init/bitmap3.mif")
+	.INIT_FILE("./memory_init/bitmap3.mif")
 )
 hashtable_3_3 (
 	.clk (clk),
@@ -793,7 +793,7 @@ hashtable #(
 	.NBITS(11),
 	.DWIDTH(RID_WIDTH),
 	.MEM_SIZE(256),
-	.INIT_FILE("./src/memory_init/bitmap4.mif")
+	.INIT_FILE("./memory_init/bitmap4.mif")
 )
 hashtable_4_0 (
 	.clk (clk),
@@ -812,7 +812,7 @@ hashtable #(
 	.NBITS(11),
 	.DWIDTH(RID_WIDTH),
 	.MEM_SIZE(256),
-	.INIT_FILE("./src/memory_init/bitmap4.mif")
+	.INIT_FILE("./memory_init/bitmap4.mif")
 )
 hashtable_4_1 (
 	.clk (clk),
@@ -831,7 +831,7 @@ hashtable #(
 	.NBITS(11),
 	.DWIDTH(RID_WIDTH),
 	.MEM_SIZE(256),
-	.INIT_FILE("./src/memory_init/bitmap4.mif")
+	.INIT_FILE("./memory_init/bitmap4.mif")
 )
 hashtable_4_2 (
 	.clk (clk),
@@ -850,7 +850,7 @@ hashtable #(
 	.NBITS(11),
 	.DWIDTH(RID_WIDTH),
 	.MEM_SIZE(256),
-	.INIT_FILE("./src/memory_init/bitmap4.mif")
+	.INIT_FILE("./memory_init/bitmap4.mif")
 )
 hashtable_4_3 (
 	.clk (clk),
@@ -869,7 +869,7 @@ hashtable #(
 	.NBITS(12),
 	.DWIDTH(RID_WIDTH),
 	.MEM_SIZE(512),
-	.INIT_FILE("./src/memory_init/bitmap5.mif")
+	.INIT_FILE("./memory_init/bitmap5.mif")
 )
 hashtable_5_0 (
 	.clk (clk),
@@ -888,7 +888,7 @@ hashtable #(
 	.NBITS(12),
 	.DWIDTH(RID_WIDTH),
 	.MEM_SIZE(512),
-	.INIT_FILE("./src/memory_init/bitmap5.mif")
+	.INIT_FILE("./memory_init/bitmap5.mif")
 )
 hashtable_5_1 (
 	.clk (clk),
@@ -907,7 +907,7 @@ hashtable #(
 	.NBITS(12),
 	.DWIDTH(RID_WIDTH),
 	.MEM_SIZE(512),
-	.INIT_FILE("./src/memory_init/bitmap5.mif")
+	.INIT_FILE("./memory_init/bitmap5.mif")
 )
 hashtable_5_2 (
 	.clk (clk),
@@ -926,7 +926,7 @@ hashtable #(
 	.NBITS(12),
 	.DWIDTH(RID_WIDTH),
 	.MEM_SIZE(512),
-	.INIT_FILE("./src/memory_init/bitmap5.mif")
+	.INIT_FILE("./memory_init/bitmap5.mif")
 )
 hashtable_5_3 (
 	.clk (clk),
@@ -945,7 +945,7 @@ hashtable #(
 	.NBITS(10),
 	.DWIDTH(RID_WIDTH),
 	.MEM_SIZE(128),
-	.INIT_FILE("./src/memory_init/bitmap6.mif")
+	.INIT_FILE("./memory_init/bitmap6.mif")
 )
 hashtable_6_0 (
 	.clk (clk),
@@ -964,7 +964,7 @@ hashtable #(
 	.NBITS(10),
 	.DWIDTH(RID_WIDTH),
 	.MEM_SIZE(128),
-	.INIT_FILE("./src/memory_init/bitmap6.mif")
+	.INIT_FILE("./memory_init/bitmap6.mif")
 )
 hashtable_6_1 (
 	.clk (clk),
@@ -983,7 +983,7 @@ hashtable #(
 	.NBITS(10),
 	.DWIDTH(RID_WIDTH),
 	.MEM_SIZE(128),
-	.INIT_FILE("./src/memory_init/bitmap6.mif")
+	.INIT_FILE("./memory_init/bitmap6.mif")
 )
 hashtable_6_2 (
 	.clk (clk),
@@ -1002,7 +1002,7 @@ hashtable #(
 	.NBITS(10),
 	.DWIDTH(RID_WIDTH),
 	.MEM_SIZE(128),
-	.INIT_FILE("./src/memory_init/bitmap6.mif")
+	.INIT_FILE("./memory_init/bitmap6.mif")
 )
 hashtable_6_3 (
 	.clk (clk),
@@ -1021,7 +1021,7 @@ hashtable #(
 	.NBITS(8),
 	.DWIDTH(RID_WIDTH),
 	.MEM_SIZE(32),
-	.INIT_FILE("./src/memory_init/bitmap7.mif")
+	.INIT_FILE("./memory_init/bitmap7.mif")
 )
 hashtable_7_0 (
 	.clk (clk),
@@ -1040,7 +1040,7 @@ hashtable #(
 	.NBITS(8),
 	.DWIDTH(RID_WIDTH),
 	.MEM_SIZE(32),
-	.INIT_FILE("./src/memory_init/bitmap7.mif")
+	.INIT_FILE("./memory_init/bitmap7.mif")
 )
 hashtable_7_1 (
 	.clk (clk),
@@ -1059,7 +1059,7 @@ hashtable #(
 	.NBITS(8),
 	.DWIDTH(RID_WIDTH),
 	.MEM_SIZE(32),
-	.INIT_FILE("./src/memory_init/bitmap7.mif")
+	.INIT_FILE("./memory_init/bitmap7.mif")
 )
 hashtable_7_2 (
 	.clk (clk),
@@ -1078,7 +1078,7 @@ hashtable #(
 	.NBITS(8),
 	.DWIDTH(RID_WIDTH),
 	.MEM_SIZE(32),
-	.INIT_FILE("./src/memory_init/bitmap7.mif")
+	.INIT_FILE("./memory_init/bitmap7.mif")
 )
 hashtable_7_3 (
 	.clk (clk),
