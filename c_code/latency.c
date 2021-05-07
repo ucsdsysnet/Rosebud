@@ -24,7 +24,7 @@ unsigned int first_packet;
 // 40 for <= 128B packets, 20 for <= 2048B, 10 for 4096B, and 5 for 9000B
 // In non-congested mode set to 0
 #ifndef SLOW_DOWN_RATE
-    #if !CONGESTED
+    #if CONGESTION == 0
         #define SLOW_DOWN_RATE 0
     #elif SIZE <= 128
         #define SLOW_DOWN_RATE 40
