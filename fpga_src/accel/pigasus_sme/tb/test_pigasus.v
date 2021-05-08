@@ -1,27 +1,40 @@
-module test_pigasus (
-  input  wire            clk,
-  input  wire            rst,
-  input  wire            init,
+module test_pigasus # (
+  parameter BYTE_COUNT = 8
+) (
+  input  wire                    clk,
+  input  wire                    rst,
+  input  wire                    init,
 
   // AXI Stream input
-  input  wire [512-1:0]  s_axis_tdata,
-  input  wire [8-1:0]    s_axis_tkeep,
-  input  wire            s_axis_tvalid,
-  input  wire            s_axis_tlast,
-  output wire            s_axis_tready,
+  input  wire [BYTE_COUNT*8-1:0] s_axis_tdata,
+  input  wire [BYTE_COUNT-1:0]   s_axis_tkeep,
+  input  wire                    s_axis_tvalid,
+  input  wire                    s_axis_tlast,
+  output wire                    s_axis_tready,
 
-  output wire [15:0]    sme_output [8],
-  output wire           sme_output_v
+  output wire [15:0]             sme_output [8],
+  output wire                    sme_output_v
 );
 
 wire [127:0] pigasus_output;
+  
+reg [$clog2(BYTE_COUNT)-1:0] s_axis_tempty;
+integer l;
+always @ (*) begin
+  s_axis_tempty = 0;
+  for (l=BYTE_COUNT-1; l>=0; l=l-1)
+    if (!s_axis_tkeep[l])
+      s_axis_tempty = s_axis_tempty+1;
+end
+
+localparam EMPTY_PAD = 5-$clog2(BYTE_COUNT);
 
 string_matcher pigasus (
   .clk(clk),
   .rst(rst),
 
-  .in_data({s_axis_tdata}), // , {192{1'b0}}}),
-  .in_strb(s_axis_tkeep),
+  .in_data({s_axis_tdata, {((32-BYTE_COUNT)*8){1'b0}}}),
+  .in_empty({{EMPTY_PAD{1'b1}}, s_axis_tempty}),
   .in_valid(s_axis_tvalid),
   .in_last(s_axis_tlast),
   .in_ready(s_axis_tready),

@@ -132,7 +132,7 @@ module frontend (clk,rst,
     in_valid,
     init,
     in_last,
-    in_strb,
+    in_empty,
     out_new_pkt
 );
 
@@ -142,7 +142,7 @@ input [255:0] in_data;
 input in_valid;
 input init;
 input in_last;
-input [7:0] in_strb;
+input [4:0] in_empty;
 output wire [RID_WIDTH-1:0] hash_out_0_0;
 output wire hash_out_valid_filter_0_0;
 output wire [RID_WIDTH-1:0] hash_out_0_1;
@@ -547,7 +547,7 @@ first_filter filter_inst(
     .in_valid   (in_valid),
     .init       (init),
     .in_last    (in_last),
-    .in_strb    (in_strb),
+    .in_empty   (in_empty),
     .out_data   (filter_out),
     .out_valid  (filter_out_valid)
 );

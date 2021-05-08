@@ -101,5 +101,5 @@ async def run_test_pigasus(dut):
         await data_ch_source.send(frame)
         await data_ch_source.wait()
 
-    await Timer(100)
+    await Timer(2000)
     await RisingEdge(dut.clk)

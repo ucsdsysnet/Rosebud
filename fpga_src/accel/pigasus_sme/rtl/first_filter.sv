@@ -1,5 +1,5 @@
 module first_filter(clk,rst,
-	in_data,in_valid,init,in_last,in_strb,
+	in_data,in_valid,init,in_last,in_empty,
     out_data,out_valid
 );
 
@@ -9,7 +9,7 @@ input [255:0] in_data;
 input in_valid;
 input init;
 input in_last;
-input [7:0] in_strb; //MOEIN
+input [4:0] in_empty;
 output wire [255:0] out_data;
 output reg out_valid;
 
@@ -55,8 +55,8 @@ reg new_pkt_reg;
 reg state_valid;
 reg last;
 reg last_r;
-reg [63:0] mask; //MOEIN
-reg [7:0] n_strb;
+reg [255:0] mask;
+reg [8:0] shift;
 
 assign addr0 = in_reg[0*8+12:0*8];
 assign addr1 = in_reg[1*8+12:1*8];
@@ -75,30 +75,30 @@ assign temp_st4 = q4 << 4*8;
 assign temp_st5 = q5 << 5*8;
 assign temp_st6 = q6 << 6*8;
 assign temp_st7 = q7 << 7*8;
-assign temp_st8 = 0; // q8 << 0*8;
-assign temp_st9 = 0; // q9 << 1*8;
-assign temp_st10 = 0; // q10 << 2*8;
-assign temp_st11 = 0; // q11 << 3*8;
-assign temp_st12 = 0; // q12 << 4*8;
-assign temp_st13 = 0; // q13 << 5*8;
-assign temp_st14 = 0; // q14 << 6*8;
-assign temp_st15 = 0; // q15 << 7*8;
-assign temp_st16 = 0; // q16 << 0*8;
-assign temp_st17 = 0; // q17 << 1*8;
-assign temp_st18 = 0; // q18 << 2*8;
-assign temp_st19 = 0; // q19 << 3*8;
-assign temp_st20 = 0; // q20 << 4*8;
-assign temp_st21 = 0; // q21 << 5*8;
-assign temp_st22 = 0; // q22 << 6*8;
-assign temp_st23 = 0; // q23 << 7*8;
-assign temp_st24 = 0; // q24 << 0*8;
-assign temp_st25 = 0; // q25 << 1*8;
-assign temp_st26 = 0; // q26 << 2*8;
-assign temp_st27 = 0; // q27 << 3*8;
-assign temp_st28 = 0; // q28 << 4*8;
-assign temp_st29 = 0; // q29 << 5*8;
-assign temp_st30 = 0; // q30 << 6*8;
-assign temp_st31 = 0; // q31 << 7*8;
+assign temp_st8 = q8 << 0*8;
+assign temp_st9 = q9 << 1*8;
+assign temp_st10 = q10 << 2*8;
+assign temp_st11 = q11 << 3*8;
+assign temp_st12 = q12 << 4*8;
+assign temp_st13 = q13 << 5*8;
+assign temp_st14 = q14 << 6*8;
+assign temp_st15 = q15 << 7*8;
+assign temp_st16 = q16 << 0*8;
+assign temp_st17 = q17 << 1*8;
+assign temp_st18 = q18 << 2*8;
+assign temp_st19 = q19 << 3*8;
+assign temp_st20 = q20 << 4*8;
+assign temp_st21 = q21 << 5*8;
+assign temp_st22 = q22 << 6*8;
+assign temp_st23 = q23 << 7*8;
+assign temp_st24 = q24 << 0*8;
+assign temp_st25 = q25 << 1*8;
+assign temp_st26 = q26 << 2*8;
+assign temp_st27 = q27 << 3*8;
+assign temp_st28 = q28 << 4*8;
+assign temp_st29 = q29 << 5*8;
+assign temp_st30 = q30 << 6*8;
+assign temp_st31 = q31 << 7*8;
 
 
 
@@ -112,21 +112,24 @@ assign state_high1 = temp_high1 | temp_high[127:64];
 assign state_high2 = temp_high2 | temp_high1[127:64];
 
 //assign out_data = {state_high[63:0],state_low[63:0]};
-assign out_data = {state_high2[63:0],state_high1[63:0],state_high[63:0],state_low[63:0]} | {{192{1'b1}}, mask};
+assign out_data = {state_high2[63:0],state_high1[63:0],state_high[63:0],state_low[63:0]} | mask;
 
-assign next_state = temp_low[127:64]; //state_high2[127:64];
+assign next_state = state_high2[127:64];
+// assign next_state = temp_low[127:64]; //state_high2[127:64];
 
 
 always @ (posedge clk) begin
-    n_strb <= ~in_strb;
+    //if(rst)begin
+    //    last <= 0;
+    //    shift <= 0;
+    //end else begin
+    shift <= (32-in_empty)*8;
     last <= in_valid & in_last;
 
     //end
 
     if(last)begin
-        mask <= {{8{n_strb[7]}},{8{n_strb[6]}},{8{n_strb[5]}},{8{n_strb[4]}},
-                 {8{n_strb[3]}},{8{n_strb[2]}},{8{n_strb[1]}},{8{n_strb[0]}}};
-        
+        mask <= {256{1'b1}} << shift;
     end else begin
         mask <= 0;
     end
