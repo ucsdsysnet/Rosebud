@@ -8,7 +8,7 @@ int main(void){
   // initializing other things.
   init_hdr_slots(16, 0x804000, 128);
   init_slots(16, 0x000000, 16384);
-  set_masks(0xD0); //enable evict
+  set_masks(0x00);
 
   while (1){
     if (in_pkt_ready()){
