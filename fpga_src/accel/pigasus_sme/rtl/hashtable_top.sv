@@ -495,7 +495,7 @@ assign din_valid_7_7 = din_valid;
 
 always @ (posedge clk) begin
     //din_reg <= din[127:64];
-    din_reg <= din[255:192];
+    din_reg <= din[63:0];
     din_valid_reg <= din_valid;
 end
 

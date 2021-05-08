@@ -68,7 +68,7 @@ module pigasus_sme_wrapper (
     .clk(clk),
     .rst(rst),
 
-    .in_data({{192{1'b0}}, muxed_data}),
+    .in_data({mux_data, {192{1'b0}}}),
     .in_strb(muxed_strb),
     .in_valid(muxed_valid),
     .in_last(muxed_last),
