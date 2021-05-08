@@ -100,7 +100,7 @@ always @(posedge clk) begin
       ip_addr_valid_reg <= 1'b1;
 
     // <01xx xxxx xxxx> for SME aggregated SME accels
-    
+
     // <00xx xxxx xxxx> for individual SME accels
     end else if (!io_addr[10]) begin
       // 4 MSB for selecting SME IP, next 4 for selecting command (and two LSB=0)
@@ -365,7 +365,7 @@ pigasus_sme_wrapper fast_pattern_sme_inst (
   .rst(rst),
 
   .s_axis_tdata(accel_tdata_r),
-  .s_axis_tkeep(accel_tkeep_r), 
+  .s_axis_tkeep(accel_tkeep_r),
   .s_axis_tvalid(accel_tvalid_r),
   .s_axis_tlast(accel_tlast_r),
   .s_axis_tready(accel_tready_r),
@@ -414,5 +414,20 @@ ip_match ip_match_inst (
   .match(ip_match),
   .done(ip_done)
 );
+
+// module port_checker (
+//   input  wire clk,
+//   input  wire rst,
+//
+//   input  wire [15:0] src_port,
+//   input  wire [15:0] dst_port,
+//   input  wire        tcp,
+//   input  wire [12:0] in_rule_data,
+//   input  wire        start,
+//
+//   output reg  [12:0] out_rule_data,
+//   output reg         out_rule_match,
+//   output reg         out_rule_valid
+// );
 
 endmodule

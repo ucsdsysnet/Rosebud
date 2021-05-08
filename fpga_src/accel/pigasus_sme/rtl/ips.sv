@@ -56,6 +56,31 @@ module rom_2port_noreg #(
 
 endmodule
 
+
+module rom_1port_mlab #(
+	parameter DWIDTH    = 8,
+	parameter AWIDTH    = 8,
+	parameter MEM_SIZE  = (2**AWIDTH),
+	parameter INIT_FILE = ""
+) (
+  input  wire              clk,
+  input  wire [AWIDTH-1:0] address,
+  output reg  [DWIDTH-1:0] q
+);
+
+  reg [DWIDTH-1:0] mem [0:(1<<AWIDTH)-1];
+  
+  always @ (posedge clk)
+    q <= mem[address];
+
+  initial begin
+    if (INIT_FILE!="")
+      $readmemh(INIT_FILE, mem);
+  end
+
+endmodule
+
+
 module singledsp (
   input  wire        clk,
   input  wire        ena,
