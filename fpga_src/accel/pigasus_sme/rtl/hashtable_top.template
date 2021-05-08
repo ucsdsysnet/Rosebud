@@ -18,24 +18,27 @@ output wire dout_valid_{{i}}_{{j}};
 {% endfor %}
 {% endfor %}
 
+{% for j in range(0,context['byte_size'])%}
+wire [63:0] din_{{j}};
+wire [63:0] addr_{{j}};
+{% endfor %}
+
 {% for i in range(0,context['bucket_size'])%}
 {% for j in range(0,context['byte_size'])%}
-wire [63:0] din_{{i}}_{{j}};
+reg  [{{context['nbits'][i]}}-1:0] addr_{{i}}_{{j}};
 wire din_valid_{{i}}_{{j}};
+wire addr_valid_{{i}}_{{j}};
 {% endfor %}
 {% endfor %}
 
 reg [63:0] din_reg;
 reg din_valid_reg;
 
-{% for i in range(0,context['bucket_size'])%}
 {% for j in range(0,7)%}
-assign din_{{i}}_{{j}} = {din[{{(j+1)*8-1}}:0],din_reg[63:{{(j+1)*8}}]};
+assign din_{{j}} = {din[{{(j+1)*8-1}}:0],din_reg[63:{{(j+1)*8}}]};
 {% endfor %}
-
 {% for j in range(7,context['byte_size'])%}
-assign din_{{i}}_{{j}} = din[{{(j+1)*8-1}}:{{((j+1)*8-64)}}];
-{% endfor %}
+assign din_{{j}} = din[{{(j+1)*8-1}}:{{((j+1)*8-64)}}];
 {% endfor %}
 
 //Valid signals
@@ -90,12 +93,31 @@ assign din_valid_7_{{j}} = din_valid & din_valid_reg;
 assign din_valid_7_{{j}} = din_valid;
 {% endfor %}
 
-
 always @ (posedge clk) begin
     //din_reg <= din[127:64];
     din_reg <= din[255:192];
     din_valid_reg <= din_valid;
 end
+
+{% for j in range(0,context['byte_size'])%}
+mul_hash mul_hash_{{j}} (.clk(clk),.a(din_{{j}}),.p(addr_{{j}}));
+{% endfor %}
+
+always @ (posedge clk) begin
+{% for i in range(0,context['bucket_size'])%}
+{% for j in range(0,context['byte_size'])%}
+    addr_{{i}}_{{j}} <= addr_{{i}}[63:64-{{context['nbits'][i]}}];
+{% endfor %}
+
+{% endfor %}
+end
+
+{% for i in range(0,context['bucket_size'])%}
+{% for j in range(0,context['byte_size'])%}
+hyper_pipe #(.NUM_PIPES(11)) addr_valid_{{i}}_{{j}}_pipe (
+    .clk(clk),.din(din_valid_{{i}}_{{j}}),.dout(addr_valid_{{i}}_{{j}}));
+{% endfor %}
+{% endfor %}
 
 {% for i in range(0,context['bucket_size'])%}
 {% for j in range(0,context['half_byte_size'])%}
@@ -109,10 +131,10 @@ hashtable #(
 )
 hashtable_{{i}}_{{j}} (
 	.clk (clk),
-	.din0 (din_{{i}}_{{2*j}}),
-	.din0_valid (din_valid_{{i}}_{{2*j}}),
-	.din1 (din_{{i}}_{{2*j+1}}),
-	.din1_valid (din_valid_{{i}}_{{2*j+1}}),
+	.addr0 (addr_{{i}}_{{2*j}}),
+	.addr0_valid (addr_valid_{{i}}_{{2*j}}),
+	.addr1 (addr_{{i}}_{{2*j+1}}),
+	.addr1_valid (addr_valid_{{i}}_{{2*j+1}}),
 	.dout0 (dout_{{i}}_{{2*j}}),
 	.dout0_valid (dout_valid_{{i}}_{{2*j}}),
 	.dout1 (dout_{{i}}_{{2*j+1}}),

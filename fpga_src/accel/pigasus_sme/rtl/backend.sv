@@ -34888,7 +34888,7 @@ rom_2port #(
 hashtable_inst_0(
     .q_a       (ht_q_0),    
     .q_b       (),    
-    .address_a (ht_addr_0),
+    .address_a (ht_addr_0[15-1:0]),
     .address_b (),
     .clk       (clk)   
 );
@@ -34901,7 +34901,7 @@ rom_2port #(
 hashtable_inst_1(
     .q_a       (ht_q_1),    
     .q_b       (),    
-    .address_a (ht_addr_1),
+    .address_a (ht_addr_1[15-1:0]),
     .address_b (),
     .clk       (clk)   
 );
@@ -34914,7 +34914,7 @@ rom_2port #(
 hashtable_inst_2(
     .q_a       (ht_q_2),    
     .q_b       (),    
-    .address_a (ht_addr_2),
+    .address_a (ht_addr_2[12-1:0]),
     .address_b (),
     .clk       (clk)   
 );
@@ -34927,7 +34927,7 @@ rom_2port #(
 hashtable_inst_3(
     .q_a       (ht_q_3),    
     .q_b       (),    
-    .address_a (ht_addr_3),
+    .address_a (ht_addr_3[12-1:0]),
     .address_b (),
     .clk       (clk)   
 );
@@ -34940,7 +34940,7 @@ rom_2port #(
 hashtable_inst_4(
     .q_a       (ht_q_4),    
     .q_b       (),    
-    .address_a (ht_addr_4),
+    .address_a (ht_addr_4[11-1:0]),
     .address_b (),
     .clk       (clk)   
 );
@@ -34953,7 +34953,7 @@ rom_2port #(
 hashtable_inst_5(
     .q_a       (ht_q_5),    
     .q_b       (),    
-    .address_a (ht_addr_5),
+    .address_a (ht_addr_5[12-1:0]),
     .address_b (),
     .clk       (clk)   
 );
@@ -34966,7 +34966,7 @@ rom_2port #(
 hashtable_inst_6(
     .q_a       (ht_q_6),    
     .q_b       (),    
-    .address_a (ht_addr_6),
+    .address_a (ht_addr_6[10-1:0]),
     .address_b (),
     .clk       (clk)   
 );
@@ -34979,7 +34979,7 @@ rom_2port #(
 hashtable_inst_7(
     .q_a       (ht_q_7),    
     .q_b       (),    
-    .address_a (ht_addr_7),
+    .address_a (ht_addr_7[8-1:0]),
     .address_b (),
     .clk       (clk)   
 );

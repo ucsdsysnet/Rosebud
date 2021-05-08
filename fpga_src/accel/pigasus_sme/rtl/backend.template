@@ -652,7 +652,7 @@ rom_2port #(
 hashtable_inst_{{i}}(
     .q_a       (ht_q_{{i}}),    
     .q_b       (),    
-    .address_a (ht_addr_{{i}}),
+    .address_a (ht_addr_{{i}}[{{context['nbits'][i]}}-1:0]),
     .address_b (),
     .clk       (clk)   
 );
