@@ -137,7 +137,7 @@ match_table_{{i}} (
 	.q_b       (q{{2*i+1}}),    
 	.address_a (addr{{2*i}}),
 	.address_b (addr{{2*i+1}}),
-	.clk       (clk)   
+	.clock     (clk)   
 );
 {% endfor %}
 

@@ -677,7 +677,7 @@ hashtable_inst_{{i}}(
     .q_b       (),    
     .address_a (ht_addr_{{i}}),
     .address_b (),
-    .clk       (back_clk)   
+    .clock     (back_clk)   
 );
 {% endfor %}
 

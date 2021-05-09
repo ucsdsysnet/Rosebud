@@ -141,8 +141,10 @@ end
 		.ax      (b1),      //   input,  width = 18,      ax.ax
 		.bx      (b0),      //   input,  width = 18,      bx.bx
 		.resulta (ab18), //  output,  width = 37, resulta.resulta
-		.clk     (clk),    //   input,   width = 1,    clk0.clk
-		.ena     (1'b1)      //   input,   width = 3,     ena.ena
+		.clk0    (clk),    //   input,   width = 1,    clk0.clk
+		.clk1    (clk),    //   input,   width = 1,    clk1.clk
+		.clk2    (clk),    //   input,   width = 1,    clk2.clk
+		.ena     (ena)      //   input,   width = 3,     ena.ena
 	);
 
 	dsp u_36 (
@@ -151,8 +153,10 @@ end
 		.ax      (b2),      //   input,  width = 18,      ax.ax
 		.bx      (b0),      //   input,  width = 18,      bx.bx
 		.resulta (ab36), //  output,  width = 37, resulta.resulta
-		.clk     (clk),    //   input,   width = 1,    clk0.clk
-		.ena     (1'b1)      //   input,   width = 3,     ena.ena
+		.clk0    (clk),    //   input,   width = 1,    clk0.clk
+		.clk1    (clk),    //   input,   width = 1,    clk1.clk
+		.clk2    (clk),    //   input,   width = 1,    clk2.clk
+		.ena     (ena)      //   input,   width = 3,     ena.ena
 	);
 
 	dsp u_54 (
@@ -161,8 +165,10 @@ end
 		.ax      (b3),      //   input,  width = 18,      ax.ax
 		.bx      (b2),      //   input,  width = 18,      bx.bx
 		.resulta (ab54), //  output,  width = 37, resulta.resulta
-		.clk     (clk),    //   input,   width = 1,    clk0.clk
-		.ena     (1'b1)      //   input,   width = 3,     ena.ena
+		.clk0    (clk),    //   input,   width = 1,    clk0.clk
+		.clk1    (clk),    //   input,   width = 1,    clk1.clk
+		.clk2    (clk),    //   input,   width = 1,    clk2.clk
+		.ena     (ena)      //   input,   width = 3,     ena.ena
 	);
 
 	dsp u_54_1 (
@@ -171,22 +177,28 @@ end
 		.ax      (b1),      //   input,  width = 18,      ax.ax
 		.bx      (b0),      //   input,  width = 18,      bx.bx
 		.resulta (ab54_1), //  output,  width = 37, resulta.resulta
-		.clk     (clk),    //   input,   width = 1,    clk0.clk
-		.ena     (1'b1)      //   input,   width = 3,     ena.ena
+		.clk0    (clk),    //   input,   width = 1,    clk0.clk
+		.clk1    (clk),    //   input,   width = 1,    clk1.clk
+		.clk2    (clk),    //   input,   width = 1,    clk2.clk
+		.ena     (ena)      //   input,   width = 3,     ena.ena
 	);
 	singledsp u_0 (
 		.ay      (a0),      //   input,  width = 18,      ay.ay
 		.ax      (b0),      //   input,  width = 18,      ax.ax
 		.resulta (ab0), //  output,  width = 37, resulta.resulta
-		.clk     (clk),    //   input,   width = 1,    clk0.clk
-		.ena     (1'b1)      //   input,   width = 3,     ena.ena
+		.clk0    (clk),    //   input,   width = 1,    clk0.clk
+		.clk1    (clk),    //   input,   width = 1,    clk1.clk
+		.clk2    (clk),    //   input,   width = 1,    clk2.clk
+		.ena     (ena)      //   input,   width = 3,     ena.ena
 	);
 	singledsp u_36_1 (
 		.ay      (a1),      //   input,  width = 18,      ay.ay
 		.ax      (b1),      //   input,  width = 18,      ax.ax
 		.resulta (ab36_1), //  output,  width = 37, resulta.resulta
-		.clk     (clk),    //   input,   width = 1,    clk0.clk
-		.ena     (1'b1)      //   input,   width = 3,     ena.ena
+		.clk0    (clk),    //   input,   width = 1,    clk0.clk
+		.clk1    (clk),    //   input,   width = 1,    clk1.clk
+		.clk2    (clk),    //   input,   width = 1,    clk2.clk
+		.ena     (ena)      //   input,   width = 3,     ena.ena
 	);
 
 endmodule

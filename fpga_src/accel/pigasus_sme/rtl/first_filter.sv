@@ -273,7 +273,7 @@ match_table_0 (
 	.q_b       (q1),    
 	.address_a (addr0),
 	.address_b (addr1),
-	.clk       (clk)   
+	.clock     (clk)   
 );
 rom_2port_noreg #(
 	.DWIDTH(64),
@@ -286,7 +286,7 @@ match_table_1 (
 	.q_b       (q3),    
 	.address_a (addr2),
 	.address_b (addr3),
-	.clk       (clk)   
+	.clock     (clk)   
 );
 rom_2port_noreg #(
 	.DWIDTH(64),
@@ -299,7 +299,7 @@ match_table_2 (
 	.q_b       (q5),    
 	.address_a (addr4),
 	.address_b (addr5),
-	.clk       (clk)   
+	.clock     (clk)   
 );
 rom_2port_noreg #(
 	.DWIDTH(64),
@@ -312,7 +312,7 @@ match_table_3 (
 	.q_b       (q7),    
 	.address_a (addr6),
 	.address_b (addr7),
-	.clk       (clk)   
+	.clock     (clk)   
 );
 rom_2port_noreg #(
 	.DWIDTH(64),
@@ -325,7 +325,7 @@ match_table_4 (
 	.q_b       (q9),    
 	.address_a (addr8),
 	.address_b (addr9),
-	.clk       (clk)   
+	.clock     (clk)   
 );
 rom_2port_noreg #(
 	.DWIDTH(64),
@@ -338,7 +338,7 @@ match_table_5 (
 	.q_b       (q11),    
 	.address_a (addr10),
 	.address_b (addr11),
-	.clk       (clk)   
+	.clock     (clk)   
 );
 rom_2port_noreg #(
 	.DWIDTH(64),
@@ -351,7 +351,7 @@ match_table_6 (
 	.q_b       (q13),    
 	.address_a (addr12),
 	.address_b (addr13),
-	.clk       (clk)   
+	.clock     (clk)   
 );
 rom_2port_noreg #(
 	.DWIDTH(64),
@@ -364,7 +364,7 @@ match_table_7 (
 	.q_b       (q15),    
 	.address_a (addr14),
 	.address_b (addr15),
-	.clk       (clk)   
+	.clock     (clk)   
 );
 rom_2port_noreg #(
 	.DWIDTH(64),
@@ -377,7 +377,7 @@ match_table_8 (
 	.q_b       (q17),    
 	.address_a (addr16),
 	.address_b (addr17),
-	.clk       (clk)   
+	.clock     (clk)   
 );
 rom_2port_noreg #(
 	.DWIDTH(64),
@@ -390,7 +390,7 @@ match_table_9 (
 	.q_b       (q19),    
 	.address_a (addr18),
 	.address_b (addr19),
-	.clk       (clk)   
+	.clock     (clk)   
 );
 rom_2port_noreg #(
 	.DWIDTH(64),
@@ -403,7 +403,7 @@ match_table_10 (
 	.q_b       (q21),    
 	.address_a (addr20),
 	.address_b (addr21),
-	.clk       (clk)   
+	.clock     (clk)   
 );
 rom_2port_noreg #(
 	.DWIDTH(64),
@@ -416,7 +416,7 @@ match_table_11 (
 	.q_b       (q23),    
 	.address_a (addr22),
 	.address_b (addr23),
-	.clk       (clk)   
+	.clock     (clk)   
 );
 rom_2port_noreg #(
 	.DWIDTH(64),
@@ -429,7 +429,7 @@ match_table_12 (
 	.q_b       (q25),    
 	.address_a (addr24),
 	.address_b (addr25),
-	.clk       (clk)   
+	.clock     (clk)   
 );
 rom_2port_noreg #(
 	.DWIDTH(64),
@@ -442,7 +442,7 @@ match_table_13 (
 	.q_b       (q27),    
 	.address_a (addr26),
 	.address_b (addr27),
-	.clk       (clk)   
+	.clock     (clk)   
 );
 rom_2port_noreg #(
 	.DWIDTH(64),
@@ -455,7 +455,7 @@ match_table_14 (
 	.q_b       (q29),    
 	.address_a (addr28),
 	.address_b (addr29),
-	.clk       (clk)   
+	.clock     (clk)   
 );
 rom_2port_noreg #(
 	.DWIDTH(64),
@@ -468,7 +468,7 @@ match_table_15 (
 	.q_b       (q31),    
 	.address_a (addr30),
 	.address_b (addr31),
-	.clk       (clk)   
+	.clock     (clk)   
 );
 
 endmodule

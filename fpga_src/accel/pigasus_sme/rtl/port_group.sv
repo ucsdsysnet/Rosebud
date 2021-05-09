@@ -433,7 +433,7 @@ rule2pg_table_0_1 (
     .q_b       (rule_pg_data_1),
     .address_a (rule_pg_addr_0),
     .address_b (rule_pg_addr_1),
-    .clk       (clk)
+    .clock     (clk)
 );
 
 rom_2port #(
@@ -447,7 +447,7 @@ rule2pg_table_2_3 (
     .q_b       (rule_pg_data_3),
     .address_a (rule_pg_addr_2),
     .address_b (rule_pg_addr_3),
-    .clk       (clk)
+    .clock     (clk)
 );
 
 rom_2port #(
@@ -461,7 +461,7 @@ rule2pg_table_4_5 (
     .q_b       (rule_pg_data_5),
     .address_a (rule_pg_addr_4),
     .address_b (rule_pg_addr_5),
-    .clk       (clk)
+    .clock     (clk)
 );
 
 rom_2port #(
@@ -475,7 +475,7 @@ rule2pg_table_6_7 (
     .q_b       (rule_pg_data_7),
     .address_a (rule_pg_addr_6),
     .address_b (rule_pg_addr_7),
-    .clk       (clk)
+    .clock     (clk)
 );
 
 /*

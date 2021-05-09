@@ -285,7 +285,7 @@ pg_entry_table_0_1 (
     .q_b       (pg_entry_data_1),
     .address_a (pg_entry_addr_0),
     .address_b (pg_entry_addr_1),
-    .clk       (clk)
+    .clock     (clk)
 );
 rom_2port #(
     .DWIDTH(PG_ENTRY_WIDTH),
@@ -298,7 +298,7 @@ pg_entry_table_2_3 (
     .q_b       (pg_entry_data_3),
     .address_a (pg_entry_addr_2),
     .address_b (pg_entry_addr_3),
-    .clk       (clk)
+    .clock     (clk)
 );
 
 rom_2port #(
@@ -312,7 +312,7 @@ single_table_0_1 (
     .q_b       (single_data_1),
     .address_a (single_addr_0),
     .address_b (single_addr_1),
-    .clk       (clk)
+    .clock     (clk)
 );
 rom_2port #(
     .DWIDTH(16),
@@ -325,7 +325,7 @@ single_table_2_3 (
     .q_b       (single_data_3),
     .address_a (single_addr_2),
     .address_b (single_addr_3),
-    .clk       (clk)
+    .clock     (clk)
 );
 
 rom_1port_mlab #(
@@ -336,7 +336,7 @@ rom_1port_mlab #(
 )
 range_table_0 (
     .address   (range_addr_0),
-    .clk       (clk),
+    .clock     (clk),
     .q         (range_data_0)
 );
 
@@ -348,7 +348,7 @@ rom_1port_mlab #(
 )
 range_table_1 (
     .address   (range_addr_1),
-    .clk       (clk),
+    .clock     (clk),
     .q         (range_data_1)
 );
 
@@ -360,7 +360,7 @@ rom_1port_mlab #(
 )
 range_table_2 (
     .address   (range_addr_2),
-    .clk       (clk),
+    .clock     (clk),
     .q         (range_data_2)
 );
 
@@ -373,7 +373,7 @@ rom_1port_mlab #(
 )
 range_table_3 (
     .address   (range_addr_3),
-    .clk       (clk),
+    .clock     (clk),
     .q         (range_data_3)
 );
 
@@ -385,7 +385,7 @@ rom_1port_mlab #(
 )
 list_table_0 (
     .address   (list_addr_0),
-    .clk       (clk),
+    .clock     (clk),
     .q         (list_data_0)
 );
 
@@ -397,7 +397,7 @@ rom_1port_mlab #(
 )
 list_table_1 (
     .address   (list_addr_1),
-    .clk       (clk),
+    .clock     (clk),
     .q         (list_data_1)
 );
 
@@ -409,7 +409,7 @@ rom_1port_mlab #(
 )
 list_table_2 (
     .address   (list_addr_2),
-    .clk       (clk),
+    .clock     (clk),
     .q         (list_data_2)
 );
 
@@ -421,7 +421,7 @@ rom_1port_mlab #(
 )
 list_table_3 (
     .address   (list_addr_3),
-    .clk       (clk),
+    .clock     (clk),
     .q         (list_data_3)
 );
 
@@ -436,7 +436,7 @@ http_src_table_0_1 (
     .q_b       (http_src_data_1),
     .address_a (http_src_addr_0),
     .address_b (http_src_addr_1),
-    .clk       (clk)
+    .clock     (clk)
 );
 rom_2port #(
     .DWIDTH  (PG_HTTP_DWIDTH),
@@ -449,7 +449,7 @@ http_src_table_2_3 (
     .q_b       (http_src_data_3),
     .address_a (http_src_addr_2),
     .address_b (http_src_addr_3),
-    .clk       (clk)
+    .clock     (clk)
 );
 
 rom_2port #(
@@ -463,7 +463,7 @@ http_dst_table_0_1 (
     .q_b       (http_dst_data_1),
     .address_a (http_dst_addr_0),
     .address_b (http_dst_addr_1),
-    .clk       (clk)
+    .clock     (clk)
 );
 rom_2port #(
     .DWIDTH  (PG_HTTP_DWIDTH),
@@ -476,7 +476,7 @@ http_dst_table_2_3 (
     .q_b       (http_dst_data_3),
     .address_a (http_dst_addr_2),
     .address_b (http_dst_addr_3),
-    .clk       (clk)
+    .clock     (clk)
 );
 
 endmodule

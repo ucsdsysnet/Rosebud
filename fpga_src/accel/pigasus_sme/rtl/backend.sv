@@ -35588,7 +35588,7 @@ hashtable_inst_0(
     .q_b       (),    
     .address_a (ht_addr_0),
     .address_b (),
-    .clk       (back_clk)   
+    .clock     (back_clk)   
 );
 rom_2port #(
     .DWIDTH(RID_WIDTH),
@@ -35601,7 +35601,7 @@ hashtable_inst_1(
     .q_b       (),    
     .address_a (ht_addr_1),
     .address_b (),
-    .clk       (back_clk)   
+    .clock     (back_clk)   
 );
 rom_2port #(
     .DWIDTH(RID_WIDTH),
@@ -35614,7 +35614,7 @@ hashtable_inst_2(
     .q_b       (),    
     .address_a (ht_addr_2),
     .address_b (),
-    .clk       (back_clk)   
+    .clock     (back_clk)   
 );
 rom_2port #(
     .DWIDTH(RID_WIDTH),
@@ -35627,7 +35627,7 @@ hashtable_inst_3(
     .q_b       (),    
     .address_a (ht_addr_3),
     .address_b (),
-    .clk       (back_clk)   
+    .clock     (back_clk)   
 );
 rom_2port #(
     .DWIDTH(RID_WIDTH),
@@ -35640,7 +35640,7 @@ hashtable_inst_4(
     .q_b       (),    
     .address_a (ht_addr_4),
     .address_b (),
-    .clk       (back_clk)   
+    .clock     (back_clk)   
 );
 rom_2port #(
     .DWIDTH(RID_WIDTH),
@@ -35653,7 +35653,7 @@ hashtable_inst_5(
     .q_b       (),    
     .address_a (ht_addr_5),
     .address_b (),
-    .clk       (back_clk)   
+    .clock     (back_clk)   
 );
 rom_2port #(
     .DWIDTH(RID_WIDTH),
@@ -35666,7 +35666,7 @@ hashtable_inst_6(
     .q_b       (),    
     .address_a (ht_addr_6),
     .address_b (),
-    .clk       (back_clk)   
+    .clock     (back_clk)   
 );
 rom_2port #(
     .DWIDTH(RID_WIDTH),
@@ -35679,7 +35679,7 @@ hashtable_inst_7(
     .q_b       (),    
     .address_a (ht_addr_7),
     .address_b (),
-    .clk       (back_clk)   
+    .clock     (back_clk)   
 );
 
 assign status_readdata_valid = 1'b0;
