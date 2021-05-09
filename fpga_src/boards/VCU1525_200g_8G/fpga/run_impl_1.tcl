@@ -12,7 +12,7 @@ if {[llength [get_pr_configurations config_1]]==0} then {
   core_inst/riscv_cores[5].pr_wrapper:Gousheh_base \
   core_inst/riscv_cores[6].pr_wrapper:Gousheh_base \
   core_inst/riscv_cores[7].pr_wrapper:Gousheh_base \
-  core_inst/scheduler_PR_inst:scheduler_RR]}
+  core_inst/scheduler_PR_inst:scheduler_Hash]}
 
 set_property PR_CONFIGURATION config_1 [get_runs impl_1]
 set_property strategy Performance_ExtraTimingOpt [get_runs impl_1]
