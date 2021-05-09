@@ -117,7 +117,8 @@ endmodule
 
 module simple_fifo # (
   parameter ADDR_WIDTH = 5,
-  parameter DATA_WIDTH = 32
+  parameter DATA_WIDTH = 32,
+  parameter INIT_ZERO  = 0
 )(
   input clk,
   input rst,
@@ -187,6 +188,13 @@ assign din_ready  = ~full_r & ~rst & ~clear;
 assign dout_valid = ~empty_r;
 
 assign item_count = item_count_r;
+
+integer i;
+initial begin
+  if (INIT_ZERO)
+    for (i=0; i<2**ADDR_WIDTH; i=i+1)
+      mem[i] <= {DATA_WIDTH{1'b0}};
+end
 
 endmodule
 

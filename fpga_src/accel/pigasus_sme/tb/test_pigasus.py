@@ -66,7 +66,7 @@ PACKETS_0 = []
 
 with PcapReader(open(PCAP, 'rb')) as pcap:
     for pkt in pcap:
-        PACKETS_0.append(pkt)
+        PACKETS_0.append(pkt[Raw].load)
 
 @cocotb.test()
 async def run_test_pigasus(dut):
@@ -77,7 +77,6 @@ async def run_test_pigasus(dut):
     data_ch_source.log.setLevel("WARNING")
 
     dut.rst <= 0
-    dut.init <= 0
     await RisingEdge(dut.clk)
     await RisingEdge(dut.clk)
     dut.rst <= 1
@@ -89,16 +88,9 @@ async def run_test_pigasus(dut):
     await RisingEdge(dut.clk)
     await RisingEdge(dut.clk)
 
-    dut.init <= 1
-    await RisingEdge(dut.clk)
-    dut.init <= 0
-
     for pkt in PACKETS_0:
-        frame = pkt.build()
-        dut.init <= 1
         await RisingEdge(dut.clk)
-        dut.init <= 0
-        await data_ch_source.send(frame)
+        await data_ch_source.send(pkt)
         await data_ch_source.wait()
 
     await Timer(2000)

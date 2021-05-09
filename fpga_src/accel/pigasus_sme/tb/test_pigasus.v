@@ -1,9 +1,8 @@
 module test_pigasus # (
-  parameter BYTE_COUNT = 8
+  parameter BYTE_COUNT = 32
 ) (
   input  wire                    clk,
   input  wire                    rst,
-  input  wire                    init,
 
   // AXI Stream input
   input  wire [BYTE_COUNT*8-1:0] s_axis_tdata,
@@ -16,8 +15,6 @@ module test_pigasus # (
   output wire                    sme_output_v
 );
 
-wire [127:0] pigasus_output;
-  
 reg [$clog2(BYTE_COUNT)-1:0] s_axis_tempty;
 integer l;
 always @ (*) begin
@@ -28,31 +25,145 @@ always @ (*) begin
 end
 
 localparam EMPTY_PAD = 5-$clog2(BYTE_COUNT);
+wire [4:0] empty = {{EMPTY_PAD{1'b1}}, s_axis_tempty};
+
+reg valid_r;
+always @ (posedge clk)
+  if(rst)
+    valid_r <= 1'b0;
+  else
+    valid_r <= s_axis_tvalid;
+
+wire sop = s_axis_tvalid & !valid_r;
+
+wire          shifted_sop;
+wire          shifted_eop;
+wire          shifted_valid;
+wire [255:0]  shifted_data;
+wire [4:0]    shifted_empty;
+wire          shifted_ready;
+reg  [55:0]   last_7_bytes;
+
+data_shift shifter (
+    .clk(clk),
+    .rst(rst),
+    .in_pkt_sop(sop),
+    .in_pkt_eop(s_axis_tlast),
+    .in_pkt_valid(s_axis_tvalid),
+    .in_pkt_data({s_axis_tdata, {((32-BYTE_COUNT)*8){1'b0}}}),
+    .in_pkt_empty(empty),
+    .in_pkt_ready(s_axis_tready),
+
+    .last_7_bytes({56{1'b1}}), //last_7_bytes),
+    .last_7_bytes_valid(1'b0),
+    .last_7_bytes_ready(),
+
+    .out_pkt_sop  (shifted_sop),
+    .out_pkt_eop  (shifted_eop),
+    .out_pkt_valid(shifted_valid),
+    .out_pkt_data (shifted_data),
+    .out_pkt_empty(shifted_empty),
+    .out_pkt_ready(shifted_ready)
+);
+
+wire [127:0] pigasus_data;
+wire         pigasus_valid;
+wire         pigasus_last;
 
 string_matcher pigasus (
   .clk(clk),
   .rst(rst),
 
-  .in_data({s_axis_tdata, {((32-BYTE_COUNT)*8){1'b0}}}),
-  .in_empty({{EMPTY_PAD{1'b1}}, s_axis_tempty}),
-  .in_valid(s_axis_tvalid),
-  .in_last(s_axis_tlast),
-  .in_ready(s_axis_tready),
+  .in_data (shifted_data),
+  .in_empty(shifted_empty),
+  .in_valid(shifted_valid),
+  .in_sop  (shifted_sop),
+  .in_eop  (shifted_eop),
+  .in_ready(shifted_ready),
 
-  .out_data(pigasus_output),
-  .out_valid(sme_output_v),
+  .out_data(pigasus_data),
+  .out_valid(pigasus_valid),
+  .out_last(pigasus_last),
 
-  .init(init),
-  .out_almost_full(1'b0),
-  .out_last()
+  .out_almost_full(1'b0)
 );
+
+wire [127:0] pigasus_output;
+
+  port_group pg_inst (
+    .clk(clk),
+    .rst(rst),
+    .in_match_sop(),
+    .in_match_eop(pigasus_last),
+    .in_match_data(pigasus_data),
+    .in_match_empty(),
+    .in_match_valid(pigasus_valid),
+    .in_match_ready(),
+
+    .in_meta_valid(1'b1),
+    .in_meta_data(0),
+    .in_meta_ready(),
+
+    .out_match_sop(),
+    .out_match_eop(),
+    .out_match_data(pigasus_output),
+    .out_match_empty(),
+    .out_match_valid(sme_output_v),
+    .out_match_ready(1'b1),
+
+    .out_match_almost_full(1'b0),
+    .out_meta_valid(),
+    .out_meta_data(),
+    .out_meta_ready(1'b1),
+    .no_pg_rule_cnt(),
+    .pg_rule_cnt()
+  );
+
+  ///////////////////////////////////////////////
+  ////////// Keeping last bytes logic ///////////
+  ///////////////////////////////////////////////
+  reg [BYTE_COUNT*8-1:0]       last_word;
+  reg [63:0]                   one_to_last_word;
+  reg [$clog2(BYTE_COUNT)-1:0] last_word_shift;
+  reg                          last_word_valid;
+
+  always @ (posedge clk) begin
+    last_word_valid <= 1'b0; //1 hot
+    if (s_axis_tvalid && s_axis_tready) begin
+      if (!s_axis_tlast) begin
+        one_to_last_word <= s_axis_tdata[BYTE_COUNT*8-1:BYTE_COUNT*8-64];
+      end else begin
+        last_word <= s_axis_tdata;
+        last_word_shift <= s_axis_tempty;
+        last_word_valid <= 1'b1;
+      end
+    end
+
+    if (sop | rst) begin
+      one_to_last_word <= {64{1'b1}}; //not correct
+      last_word_valid <= 1'b0;
+    end
+  end
+
+  wire [(BYTE_COUNT+8)*8-1:0] shifted_word = {last_word,one_to_last_word} << last_word_shift;
+
+  always @ (posedge clk) begin
+    if (last_word_valid)
+      last_7_bytes <= shifted_word[(BYTE_COUNT+8)*8-1:(BYTE_COUNT+1)*8];
+    if (rst)
+      last_7_bytes <= {56{1'b1}};
+  end
+
+  ///////////////////////////////////////////////
+  ////////////// Generating Waveform ////////////
+  ///////////////////////////////////////////////
 
   genvar i;
   generate
     for (i=0; i<8; i=i+1)
       assign sme_output[i] = pigasus_output[i*16 +: 16];
   endgenerate
-  
+
   integer j;
   initial begin
     $dumpfile ("sim_build/sim_results.fst");
@@ -62,6 +173,4 @@ string_matcher pigasus (
     #1;
   end
 
-
 endmodule
-

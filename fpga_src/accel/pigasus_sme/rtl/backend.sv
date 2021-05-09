@@ -768,7 +768,14 @@ module backend(clk,rst,
     din_7_31,
     din_valid_7_31,
     din_almost_full_7_31,
-    ruleID,ruleID_valid,ruleID_last,ruleID_almost_full
+    ruleID,ruleID_valid,ruleID_last,ruleID_almost_full,
+    clk_status,
+    status_addr,
+    status_read,
+    status_write,
+    status_writedata,
+    status_readdata,
+    status_readdata_valid
 );
 
 input clk;
@@ -1545,6 +1552,14 @@ output logic [127:0] ruleID;
 output logic ruleID_valid;
 output logic ruleID_last;
 input ruleID_almost_full;
+// status register bus
+input   logic          clk_status;
+input   logic   [29:0] status_addr;
+input   logic          status_read;
+input   logic          status_write;
+input   logic   [31:0] status_writedata;
+output  logic   [31:0] status_readdata;
+output  logic          status_readdata_valid;
 
 localparam L1_FIFO_DEPTH = 64;
 localparam FIFO_DEPTH = 32;
@@ -1555,2304 +1570,3328 @@ localparam L3_TH = (FIFO_DEPTH-3);
 localparam L4_TH = (FIFO_DEPTH-3);
 
 //L1 FIFO
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_0_0;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_0_0_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_0_0_r2;
+logic          din_csr_address_0_0;
+logic          din_csr_read_0_0;
+logic          din_csr_write_0_0;
+logic [31:0]   din_csr_readdata_0_0;
+logic [31:0]   din_csr_readdata_0_0_r1;
+logic [31:0]   din_csr_readdata_0_0_r2;
+logic [31:0]   din_csr_writedata_0_0;
 
 rule_s_t    l1_data_0_0;
 logic       l1_ready_0_0;
 logic       l1_valid_0_0;
 logic       l1_newdata_0_0;
 logic [RID_WIDTH-1:0] l1_cache_0_0;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_0_1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_0_1_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_0_1_r2;
+logic          din_csr_address_0_1;
+logic          din_csr_read_0_1;
+logic          din_csr_write_0_1;
+logic [31:0]   din_csr_readdata_0_1;
+logic [31:0]   din_csr_readdata_0_1_r1;
+logic [31:0]   din_csr_readdata_0_1_r2;
+logic [31:0]   din_csr_writedata_0_1;
 
 rule_s_t    l1_data_0_1;
 logic       l1_ready_0_1;
 logic       l1_valid_0_1;
 logic       l1_newdata_0_1;
 logic [RID_WIDTH-1:0] l1_cache_0_1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_0_2;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_0_2_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_0_2_r2;
+logic          din_csr_address_0_2;
+logic          din_csr_read_0_2;
+logic          din_csr_write_0_2;
+logic [31:0]   din_csr_readdata_0_2;
+logic [31:0]   din_csr_readdata_0_2_r1;
+logic [31:0]   din_csr_readdata_0_2_r2;
+logic [31:0]   din_csr_writedata_0_2;
 
 rule_s_t    l1_data_0_2;
 logic       l1_ready_0_2;
 logic       l1_valid_0_2;
 logic       l1_newdata_0_2;
 logic [RID_WIDTH-1:0] l1_cache_0_2;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_0_3;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_0_3_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_0_3_r2;
+logic          din_csr_address_0_3;
+logic          din_csr_read_0_3;
+logic          din_csr_write_0_3;
+logic [31:0]   din_csr_readdata_0_3;
+logic [31:0]   din_csr_readdata_0_3_r1;
+logic [31:0]   din_csr_readdata_0_3_r2;
+logic [31:0]   din_csr_writedata_0_3;
 
 rule_s_t    l1_data_0_3;
 logic       l1_ready_0_3;
 logic       l1_valid_0_3;
 logic       l1_newdata_0_3;
 logic [RID_WIDTH-1:0] l1_cache_0_3;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_0_4;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_0_4_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_0_4_r2;
+logic          din_csr_address_0_4;
+logic          din_csr_read_0_4;
+logic          din_csr_write_0_4;
+logic [31:0]   din_csr_readdata_0_4;
+logic [31:0]   din_csr_readdata_0_4_r1;
+logic [31:0]   din_csr_readdata_0_4_r2;
+logic [31:0]   din_csr_writedata_0_4;
 
 rule_s_t    l1_data_0_4;
 logic       l1_ready_0_4;
 logic       l1_valid_0_4;
 logic       l1_newdata_0_4;
 logic [RID_WIDTH-1:0] l1_cache_0_4;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_0_5;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_0_5_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_0_5_r2;
+logic          din_csr_address_0_5;
+logic          din_csr_read_0_5;
+logic          din_csr_write_0_5;
+logic [31:0]   din_csr_readdata_0_5;
+logic [31:0]   din_csr_readdata_0_5_r1;
+logic [31:0]   din_csr_readdata_0_5_r2;
+logic [31:0]   din_csr_writedata_0_5;
 
 rule_s_t    l1_data_0_5;
 logic       l1_ready_0_5;
 logic       l1_valid_0_5;
 logic       l1_newdata_0_5;
 logic [RID_WIDTH-1:0] l1_cache_0_5;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_0_6;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_0_6_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_0_6_r2;
+logic          din_csr_address_0_6;
+logic          din_csr_read_0_6;
+logic          din_csr_write_0_6;
+logic [31:0]   din_csr_readdata_0_6;
+logic [31:0]   din_csr_readdata_0_6_r1;
+logic [31:0]   din_csr_readdata_0_6_r2;
+logic [31:0]   din_csr_writedata_0_6;
 
 rule_s_t    l1_data_0_6;
 logic       l1_ready_0_6;
 logic       l1_valid_0_6;
 logic       l1_newdata_0_6;
 logic [RID_WIDTH-1:0] l1_cache_0_6;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_0_7;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_0_7_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_0_7_r2;
+logic          din_csr_address_0_7;
+logic          din_csr_read_0_7;
+logic          din_csr_write_0_7;
+logic [31:0]   din_csr_readdata_0_7;
+logic [31:0]   din_csr_readdata_0_7_r1;
+logic [31:0]   din_csr_readdata_0_7_r2;
+logic [31:0]   din_csr_writedata_0_7;
 
 rule_s_t    l1_data_0_7;
 logic       l1_ready_0_7;
 logic       l1_valid_0_7;
 logic       l1_newdata_0_7;
 logic [RID_WIDTH-1:0] l1_cache_0_7;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_0_8;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_0_8_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_0_8_r2;
+logic          din_csr_address_0_8;
+logic          din_csr_read_0_8;
+logic          din_csr_write_0_8;
+logic [31:0]   din_csr_readdata_0_8;
+logic [31:0]   din_csr_readdata_0_8_r1;
+logic [31:0]   din_csr_readdata_0_8_r2;
+logic [31:0]   din_csr_writedata_0_8;
 
 rule_s_t    l1_data_0_8;
 logic       l1_ready_0_8;
 logic       l1_valid_0_8;
 logic       l1_newdata_0_8;
 logic [RID_WIDTH-1:0] l1_cache_0_8;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_0_9;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_0_9_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_0_9_r2;
+logic          din_csr_address_0_9;
+logic          din_csr_read_0_9;
+logic          din_csr_write_0_9;
+logic [31:0]   din_csr_readdata_0_9;
+logic [31:0]   din_csr_readdata_0_9_r1;
+logic [31:0]   din_csr_readdata_0_9_r2;
+logic [31:0]   din_csr_writedata_0_9;
 
 rule_s_t    l1_data_0_9;
 logic       l1_ready_0_9;
 logic       l1_valid_0_9;
 logic       l1_newdata_0_9;
 logic [RID_WIDTH-1:0] l1_cache_0_9;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_0_10;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_0_10_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_0_10_r2;
+logic          din_csr_address_0_10;
+logic          din_csr_read_0_10;
+logic          din_csr_write_0_10;
+logic [31:0]   din_csr_readdata_0_10;
+logic [31:0]   din_csr_readdata_0_10_r1;
+logic [31:0]   din_csr_readdata_0_10_r2;
+logic [31:0]   din_csr_writedata_0_10;
 
 rule_s_t    l1_data_0_10;
 logic       l1_ready_0_10;
 logic       l1_valid_0_10;
 logic       l1_newdata_0_10;
 logic [RID_WIDTH-1:0] l1_cache_0_10;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_0_11;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_0_11_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_0_11_r2;
+logic          din_csr_address_0_11;
+logic          din_csr_read_0_11;
+logic          din_csr_write_0_11;
+logic [31:0]   din_csr_readdata_0_11;
+logic [31:0]   din_csr_readdata_0_11_r1;
+logic [31:0]   din_csr_readdata_0_11_r2;
+logic [31:0]   din_csr_writedata_0_11;
 
 rule_s_t    l1_data_0_11;
 logic       l1_ready_0_11;
 logic       l1_valid_0_11;
 logic       l1_newdata_0_11;
 logic [RID_WIDTH-1:0] l1_cache_0_11;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_0_12;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_0_12_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_0_12_r2;
+logic          din_csr_address_0_12;
+logic          din_csr_read_0_12;
+logic          din_csr_write_0_12;
+logic [31:0]   din_csr_readdata_0_12;
+logic [31:0]   din_csr_readdata_0_12_r1;
+logic [31:0]   din_csr_readdata_0_12_r2;
+logic [31:0]   din_csr_writedata_0_12;
 
 rule_s_t    l1_data_0_12;
 logic       l1_ready_0_12;
 logic       l1_valid_0_12;
 logic       l1_newdata_0_12;
 logic [RID_WIDTH-1:0] l1_cache_0_12;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_0_13;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_0_13_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_0_13_r2;
+logic          din_csr_address_0_13;
+logic          din_csr_read_0_13;
+logic          din_csr_write_0_13;
+logic [31:0]   din_csr_readdata_0_13;
+logic [31:0]   din_csr_readdata_0_13_r1;
+logic [31:0]   din_csr_readdata_0_13_r2;
+logic [31:0]   din_csr_writedata_0_13;
 
 rule_s_t    l1_data_0_13;
 logic       l1_ready_0_13;
 logic       l1_valid_0_13;
 logic       l1_newdata_0_13;
 logic [RID_WIDTH-1:0] l1_cache_0_13;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_0_14;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_0_14_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_0_14_r2;
+logic          din_csr_address_0_14;
+logic          din_csr_read_0_14;
+logic          din_csr_write_0_14;
+logic [31:0]   din_csr_readdata_0_14;
+logic [31:0]   din_csr_readdata_0_14_r1;
+logic [31:0]   din_csr_readdata_0_14_r2;
+logic [31:0]   din_csr_writedata_0_14;
 
 rule_s_t    l1_data_0_14;
 logic       l1_ready_0_14;
 logic       l1_valid_0_14;
 logic       l1_newdata_0_14;
 logic [RID_WIDTH-1:0] l1_cache_0_14;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_0_15;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_0_15_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_0_15_r2;
+logic          din_csr_address_0_15;
+logic          din_csr_read_0_15;
+logic          din_csr_write_0_15;
+logic [31:0]   din_csr_readdata_0_15;
+logic [31:0]   din_csr_readdata_0_15_r1;
+logic [31:0]   din_csr_readdata_0_15_r2;
+logic [31:0]   din_csr_writedata_0_15;
 
 rule_s_t    l1_data_0_15;
 logic       l1_ready_0_15;
 logic       l1_valid_0_15;
 logic       l1_newdata_0_15;
 logic [RID_WIDTH-1:0] l1_cache_0_15;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_0_16;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_0_16_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_0_16_r2;
+logic          din_csr_address_0_16;
+logic          din_csr_read_0_16;
+logic          din_csr_write_0_16;
+logic [31:0]   din_csr_readdata_0_16;
+logic [31:0]   din_csr_readdata_0_16_r1;
+logic [31:0]   din_csr_readdata_0_16_r2;
+logic [31:0]   din_csr_writedata_0_16;
 
 rule_s_t    l1_data_0_16;
 logic       l1_ready_0_16;
 logic       l1_valid_0_16;
 logic       l1_newdata_0_16;
 logic [RID_WIDTH-1:0] l1_cache_0_16;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_0_17;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_0_17_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_0_17_r2;
+logic          din_csr_address_0_17;
+logic          din_csr_read_0_17;
+logic          din_csr_write_0_17;
+logic [31:0]   din_csr_readdata_0_17;
+logic [31:0]   din_csr_readdata_0_17_r1;
+logic [31:0]   din_csr_readdata_0_17_r2;
+logic [31:0]   din_csr_writedata_0_17;
 
 rule_s_t    l1_data_0_17;
 logic       l1_ready_0_17;
 logic       l1_valid_0_17;
 logic       l1_newdata_0_17;
 logic [RID_WIDTH-1:0] l1_cache_0_17;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_0_18;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_0_18_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_0_18_r2;
+logic          din_csr_address_0_18;
+logic          din_csr_read_0_18;
+logic          din_csr_write_0_18;
+logic [31:0]   din_csr_readdata_0_18;
+logic [31:0]   din_csr_readdata_0_18_r1;
+logic [31:0]   din_csr_readdata_0_18_r2;
+logic [31:0]   din_csr_writedata_0_18;
 
 rule_s_t    l1_data_0_18;
 logic       l1_ready_0_18;
 logic       l1_valid_0_18;
 logic       l1_newdata_0_18;
 logic [RID_WIDTH-1:0] l1_cache_0_18;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_0_19;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_0_19_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_0_19_r2;
+logic          din_csr_address_0_19;
+logic          din_csr_read_0_19;
+logic          din_csr_write_0_19;
+logic [31:0]   din_csr_readdata_0_19;
+logic [31:0]   din_csr_readdata_0_19_r1;
+logic [31:0]   din_csr_readdata_0_19_r2;
+logic [31:0]   din_csr_writedata_0_19;
 
 rule_s_t    l1_data_0_19;
 logic       l1_ready_0_19;
 logic       l1_valid_0_19;
 logic       l1_newdata_0_19;
 logic [RID_WIDTH-1:0] l1_cache_0_19;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_0_20;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_0_20_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_0_20_r2;
+logic          din_csr_address_0_20;
+logic          din_csr_read_0_20;
+logic          din_csr_write_0_20;
+logic [31:0]   din_csr_readdata_0_20;
+logic [31:0]   din_csr_readdata_0_20_r1;
+logic [31:0]   din_csr_readdata_0_20_r2;
+logic [31:0]   din_csr_writedata_0_20;
 
 rule_s_t    l1_data_0_20;
 logic       l1_ready_0_20;
 logic       l1_valid_0_20;
 logic       l1_newdata_0_20;
 logic [RID_WIDTH-1:0] l1_cache_0_20;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_0_21;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_0_21_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_0_21_r2;
+logic          din_csr_address_0_21;
+logic          din_csr_read_0_21;
+logic          din_csr_write_0_21;
+logic [31:0]   din_csr_readdata_0_21;
+logic [31:0]   din_csr_readdata_0_21_r1;
+logic [31:0]   din_csr_readdata_0_21_r2;
+logic [31:0]   din_csr_writedata_0_21;
 
 rule_s_t    l1_data_0_21;
 logic       l1_ready_0_21;
 logic       l1_valid_0_21;
 logic       l1_newdata_0_21;
 logic [RID_WIDTH-1:0] l1_cache_0_21;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_0_22;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_0_22_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_0_22_r2;
+logic          din_csr_address_0_22;
+logic          din_csr_read_0_22;
+logic          din_csr_write_0_22;
+logic [31:0]   din_csr_readdata_0_22;
+logic [31:0]   din_csr_readdata_0_22_r1;
+logic [31:0]   din_csr_readdata_0_22_r2;
+logic [31:0]   din_csr_writedata_0_22;
 
 rule_s_t    l1_data_0_22;
 logic       l1_ready_0_22;
 logic       l1_valid_0_22;
 logic       l1_newdata_0_22;
 logic [RID_WIDTH-1:0] l1_cache_0_22;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_0_23;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_0_23_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_0_23_r2;
+logic          din_csr_address_0_23;
+logic          din_csr_read_0_23;
+logic          din_csr_write_0_23;
+logic [31:0]   din_csr_readdata_0_23;
+logic [31:0]   din_csr_readdata_0_23_r1;
+logic [31:0]   din_csr_readdata_0_23_r2;
+logic [31:0]   din_csr_writedata_0_23;
 
 rule_s_t    l1_data_0_23;
 logic       l1_ready_0_23;
 logic       l1_valid_0_23;
 logic       l1_newdata_0_23;
 logic [RID_WIDTH-1:0] l1_cache_0_23;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_0_24;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_0_24_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_0_24_r2;
+logic          din_csr_address_0_24;
+logic          din_csr_read_0_24;
+logic          din_csr_write_0_24;
+logic [31:0]   din_csr_readdata_0_24;
+logic [31:0]   din_csr_readdata_0_24_r1;
+logic [31:0]   din_csr_readdata_0_24_r2;
+logic [31:0]   din_csr_writedata_0_24;
 
 rule_s_t    l1_data_0_24;
 logic       l1_ready_0_24;
 logic       l1_valid_0_24;
 logic       l1_newdata_0_24;
 logic [RID_WIDTH-1:0] l1_cache_0_24;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_0_25;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_0_25_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_0_25_r2;
+logic          din_csr_address_0_25;
+logic          din_csr_read_0_25;
+logic          din_csr_write_0_25;
+logic [31:0]   din_csr_readdata_0_25;
+logic [31:0]   din_csr_readdata_0_25_r1;
+logic [31:0]   din_csr_readdata_0_25_r2;
+logic [31:0]   din_csr_writedata_0_25;
 
 rule_s_t    l1_data_0_25;
 logic       l1_ready_0_25;
 logic       l1_valid_0_25;
 logic       l1_newdata_0_25;
 logic [RID_WIDTH-1:0] l1_cache_0_25;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_0_26;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_0_26_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_0_26_r2;
+logic          din_csr_address_0_26;
+logic          din_csr_read_0_26;
+logic          din_csr_write_0_26;
+logic [31:0]   din_csr_readdata_0_26;
+logic [31:0]   din_csr_readdata_0_26_r1;
+logic [31:0]   din_csr_readdata_0_26_r2;
+logic [31:0]   din_csr_writedata_0_26;
 
 rule_s_t    l1_data_0_26;
 logic       l1_ready_0_26;
 logic       l1_valid_0_26;
 logic       l1_newdata_0_26;
 logic [RID_WIDTH-1:0] l1_cache_0_26;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_0_27;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_0_27_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_0_27_r2;
+logic          din_csr_address_0_27;
+logic          din_csr_read_0_27;
+logic          din_csr_write_0_27;
+logic [31:0]   din_csr_readdata_0_27;
+logic [31:0]   din_csr_readdata_0_27_r1;
+logic [31:0]   din_csr_readdata_0_27_r2;
+logic [31:0]   din_csr_writedata_0_27;
 
 rule_s_t    l1_data_0_27;
 logic       l1_ready_0_27;
 logic       l1_valid_0_27;
 logic       l1_newdata_0_27;
 logic [RID_WIDTH-1:0] l1_cache_0_27;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_0_28;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_0_28_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_0_28_r2;
+logic          din_csr_address_0_28;
+logic          din_csr_read_0_28;
+logic          din_csr_write_0_28;
+logic [31:0]   din_csr_readdata_0_28;
+logic [31:0]   din_csr_readdata_0_28_r1;
+logic [31:0]   din_csr_readdata_0_28_r2;
+logic [31:0]   din_csr_writedata_0_28;
 
 rule_s_t    l1_data_0_28;
 logic       l1_ready_0_28;
 logic       l1_valid_0_28;
 logic       l1_newdata_0_28;
 logic [RID_WIDTH-1:0] l1_cache_0_28;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_0_29;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_0_29_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_0_29_r2;
+logic          din_csr_address_0_29;
+logic          din_csr_read_0_29;
+logic          din_csr_write_0_29;
+logic [31:0]   din_csr_readdata_0_29;
+logic [31:0]   din_csr_readdata_0_29_r1;
+logic [31:0]   din_csr_readdata_0_29_r2;
+logic [31:0]   din_csr_writedata_0_29;
 
 rule_s_t    l1_data_0_29;
 logic       l1_ready_0_29;
 logic       l1_valid_0_29;
 logic       l1_newdata_0_29;
 logic [RID_WIDTH-1:0] l1_cache_0_29;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_0_30;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_0_30_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_0_30_r2;
+logic          din_csr_address_0_30;
+logic          din_csr_read_0_30;
+logic          din_csr_write_0_30;
+logic [31:0]   din_csr_readdata_0_30;
+logic [31:0]   din_csr_readdata_0_30_r1;
+logic [31:0]   din_csr_readdata_0_30_r2;
+logic [31:0]   din_csr_writedata_0_30;
 
 rule_s_t    l1_data_0_30;
 logic       l1_ready_0_30;
 logic       l1_valid_0_30;
 logic       l1_newdata_0_30;
 logic [RID_WIDTH-1:0] l1_cache_0_30;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_0_31;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_0_31_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_0_31_r2;
+logic          din_csr_address_0_31;
+logic          din_csr_read_0_31;
+logic          din_csr_write_0_31;
+logic [31:0]   din_csr_readdata_0_31;
+logic [31:0]   din_csr_readdata_0_31_r1;
+logic [31:0]   din_csr_readdata_0_31_r2;
+logic [31:0]   din_csr_writedata_0_31;
 
 rule_s_t    l1_data_0_31;
 logic       l1_ready_0_31;
 logic       l1_valid_0_31;
 logic       l1_newdata_0_31;
 logic [RID_WIDTH-1:0] l1_cache_0_31;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_1_0;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_1_0_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_1_0_r2;
+logic          din_csr_address_1_0;
+logic          din_csr_read_1_0;
+logic          din_csr_write_1_0;
+logic [31:0]   din_csr_readdata_1_0;
+logic [31:0]   din_csr_readdata_1_0_r1;
+logic [31:0]   din_csr_readdata_1_0_r2;
+logic [31:0]   din_csr_writedata_1_0;
 
 rule_s_t    l1_data_1_0;
 logic       l1_ready_1_0;
 logic       l1_valid_1_0;
 logic       l1_newdata_1_0;
 logic [RID_WIDTH-1:0] l1_cache_1_0;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_1_1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_1_1_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_1_1_r2;
+logic          din_csr_address_1_1;
+logic          din_csr_read_1_1;
+logic          din_csr_write_1_1;
+logic [31:0]   din_csr_readdata_1_1;
+logic [31:0]   din_csr_readdata_1_1_r1;
+logic [31:0]   din_csr_readdata_1_1_r2;
+logic [31:0]   din_csr_writedata_1_1;
 
 rule_s_t    l1_data_1_1;
 logic       l1_ready_1_1;
 logic       l1_valid_1_1;
 logic       l1_newdata_1_1;
 logic [RID_WIDTH-1:0] l1_cache_1_1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_1_2;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_1_2_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_1_2_r2;
+logic          din_csr_address_1_2;
+logic          din_csr_read_1_2;
+logic          din_csr_write_1_2;
+logic [31:0]   din_csr_readdata_1_2;
+logic [31:0]   din_csr_readdata_1_2_r1;
+logic [31:0]   din_csr_readdata_1_2_r2;
+logic [31:0]   din_csr_writedata_1_2;
 
 rule_s_t    l1_data_1_2;
 logic       l1_ready_1_2;
 logic       l1_valid_1_2;
 logic       l1_newdata_1_2;
 logic [RID_WIDTH-1:0] l1_cache_1_2;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_1_3;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_1_3_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_1_3_r2;
+logic          din_csr_address_1_3;
+logic          din_csr_read_1_3;
+logic          din_csr_write_1_3;
+logic [31:0]   din_csr_readdata_1_3;
+logic [31:0]   din_csr_readdata_1_3_r1;
+logic [31:0]   din_csr_readdata_1_3_r2;
+logic [31:0]   din_csr_writedata_1_3;
 
 rule_s_t    l1_data_1_3;
 logic       l1_ready_1_3;
 logic       l1_valid_1_3;
 logic       l1_newdata_1_3;
 logic [RID_WIDTH-1:0] l1_cache_1_3;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_1_4;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_1_4_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_1_4_r2;
+logic          din_csr_address_1_4;
+logic          din_csr_read_1_4;
+logic          din_csr_write_1_4;
+logic [31:0]   din_csr_readdata_1_4;
+logic [31:0]   din_csr_readdata_1_4_r1;
+logic [31:0]   din_csr_readdata_1_4_r2;
+logic [31:0]   din_csr_writedata_1_4;
 
 rule_s_t    l1_data_1_4;
 logic       l1_ready_1_4;
 logic       l1_valid_1_4;
 logic       l1_newdata_1_4;
 logic [RID_WIDTH-1:0] l1_cache_1_4;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_1_5;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_1_5_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_1_5_r2;
+logic          din_csr_address_1_5;
+logic          din_csr_read_1_5;
+logic          din_csr_write_1_5;
+logic [31:0]   din_csr_readdata_1_5;
+logic [31:0]   din_csr_readdata_1_5_r1;
+logic [31:0]   din_csr_readdata_1_5_r2;
+logic [31:0]   din_csr_writedata_1_5;
 
 rule_s_t    l1_data_1_5;
 logic       l1_ready_1_5;
 logic       l1_valid_1_5;
 logic       l1_newdata_1_5;
 logic [RID_WIDTH-1:0] l1_cache_1_5;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_1_6;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_1_6_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_1_6_r2;
+logic          din_csr_address_1_6;
+logic          din_csr_read_1_6;
+logic          din_csr_write_1_6;
+logic [31:0]   din_csr_readdata_1_6;
+logic [31:0]   din_csr_readdata_1_6_r1;
+logic [31:0]   din_csr_readdata_1_6_r2;
+logic [31:0]   din_csr_writedata_1_6;
 
 rule_s_t    l1_data_1_6;
 logic       l1_ready_1_6;
 logic       l1_valid_1_6;
 logic       l1_newdata_1_6;
 logic [RID_WIDTH-1:0] l1_cache_1_6;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_1_7;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_1_7_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_1_7_r2;
+logic          din_csr_address_1_7;
+logic          din_csr_read_1_7;
+logic          din_csr_write_1_7;
+logic [31:0]   din_csr_readdata_1_7;
+logic [31:0]   din_csr_readdata_1_7_r1;
+logic [31:0]   din_csr_readdata_1_7_r2;
+logic [31:0]   din_csr_writedata_1_7;
 
 rule_s_t    l1_data_1_7;
 logic       l1_ready_1_7;
 logic       l1_valid_1_7;
 logic       l1_newdata_1_7;
 logic [RID_WIDTH-1:0] l1_cache_1_7;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_1_8;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_1_8_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_1_8_r2;
+logic          din_csr_address_1_8;
+logic          din_csr_read_1_8;
+logic          din_csr_write_1_8;
+logic [31:0]   din_csr_readdata_1_8;
+logic [31:0]   din_csr_readdata_1_8_r1;
+logic [31:0]   din_csr_readdata_1_8_r2;
+logic [31:0]   din_csr_writedata_1_8;
 
 rule_s_t    l1_data_1_8;
 logic       l1_ready_1_8;
 logic       l1_valid_1_8;
 logic       l1_newdata_1_8;
 logic [RID_WIDTH-1:0] l1_cache_1_8;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_1_9;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_1_9_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_1_9_r2;
+logic          din_csr_address_1_9;
+logic          din_csr_read_1_9;
+logic          din_csr_write_1_9;
+logic [31:0]   din_csr_readdata_1_9;
+logic [31:0]   din_csr_readdata_1_9_r1;
+logic [31:0]   din_csr_readdata_1_9_r2;
+logic [31:0]   din_csr_writedata_1_9;
 
 rule_s_t    l1_data_1_9;
 logic       l1_ready_1_9;
 logic       l1_valid_1_9;
 logic       l1_newdata_1_9;
 logic [RID_WIDTH-1:0] l1_cache_1_9;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_1_10;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_1_10_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_1_10_r2;
+logic          din_csr_address_1_10;
+logic          din_csr_read_1_10;
+logic          din_csr_write_1_10;
+logic [31:0]   din_csr_readdata_1_10;
+logic [31:0]   din_csr_readdata_1_10_r1;
+logic [31:0]   din_csr_readdata_1_10_r2;
+logic [31:0]   din_csr_writedata_1_10;
 
 rule_s_t    l1_data_1_10;
 logic       l1_ready_1_10;
 logic       l1_valid_1_10;
 logic       l1_newdata_1_10;
 logic [RID_WIDTH-1:0] l1_cache_1_10;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_1_11;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_1_11_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_1_11_r2;
+logic          din_csr_address_1_11;
+logic          din_csr_read_1_11;
+logic          din_csr_write_1_11;
+logic [31:0]   din_csr_readdata_1_11;
+logic [31:0]   din_csr_readdata_1_11_r1;
+logic [31:0]   din_csr_readdata_1_11_r2;
+logic [31:0]   din_csr_writedata_1_11;
 
 rule_s_t    l1_data_1_11;
 logic       l1_ready_1_11;
 logic       l1_valid_1_11;
 logic       l1_newdata_1_11;
 logic [RID_WIDTH-1:0] l1_cache_1_11;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_1_12;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_1_12_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_1_12_r2;
+logic          din_csr_address_1_12;
+logic          din_csr_read_1_12;
+logic          din_csr_write_1_12;
+logic [31:0]   din_csr_readdata_1_12;
+logic [31:0]   din_csr_readdata_1_12_r1;
+logic [31:0]   din_csr_readdata_1_12_r2;
+logic [31:0]   din_csr_writedata_1_12;
 
 rule_s_t    l1_data_1_12;
 logic       l1_ready_1_12;
 logic       l1_valid_1_12;
 logic       l1_newdata_1_12;
 logic [RID_WIDTH-1:0] l1_cache_1_12;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_1_13;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_1_13_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_1_13_r2;
+logic          din_csr_address_1_13;
+logic          din_csr_read_1_13;
+logic          din_csr_write_1_13;
+logic [31:0]   din_csr_readdata_1_13;
+logic [31:0]   din_csr_readdata_1_13_r1;
+logic [31:0]   din_csr_readdata_1_13_r2;
+logic [31:0]   din_csr_writedata_1_13;
 
 rule_s_t    l1_data_1_13;
 logic       l1_ready_1_13;
 logic       l1_valid_1_13;
 logic       l1_newdata_1_13;
 logic [RID_WIDTH-1:0] l1_cache_1_13;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_1_14;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_1_14_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_1_14_r2;
+logic          din_csr_address_1_14;
+logic          din_csr_read_1_14;
+logic          din_csr_write_1_14;
+logic [31:0]   din_csr_readdata_1_14;
+logic [31:0]   din_csr_readdata_1_14_r1;
+logic [31:0]   din_csr_readdata_1_14_r2;
+logic [31:0]   din_csr_writedata_1_14;
 
 rule_s_t    l1_data_1_14;
 logic       l1_ready_1_14;
 logic       l1_valid_1_14;
 logic       l1_newdata_1_14;
 logic [RID_WIDTH-1:0] l1_cache_1_14;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_1_15;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_1_15_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_1_15_r2;
+logic          din_csr_address_1_15;
+logic          din_csr_read_1_15;
+logic          din_csr_write_1_15;
+logic [31:0]   din_csr_readdata_1_15;
+logic [31:0]   din_csr_readdata_1_15_r1;
+logic [31:0]   din_csr_readdata_1_15_r2;
+logic [31:0]   din_csr_writedata_1_15;
 
 rule_s_t    l1_data_1_15;
 logic       l1_ready_1_15;
 logic       l1_valid_1_15;
 logic       l1_newdata_1_15;
 logic [RID_WIDTH-1:0] l1_cache_1_15;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_1_16;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_1_16_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_1_16_r2;
+logic          din_csr_address_1_16;
+logic          din_csr_read_1_16;
+logic          din_csr_write_1_16;
+logic [31:0]   din_csr_readdata_1_16;
+logic [31:0]   din_csr_readdata_1_16_r1;
+logic [31:0]   din_csr_readdata_1_16_r2;
+logic [31:0]   din_csr_writedata_1_16;
 
 rule_s_t    l1_data_1_16;
 logic       l1_ready_1_16;
 logic       l1_valid_1_16;
 logic       l1_newdata_1_16;
 logic [RID_WIDTH-1:0] l1_cache_1_16;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_1_17;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_1_17_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_1_17_r2;
+logic          din_csr_address_1_17;
+logic          din_csr_read_1_17;
+logic          din_csr_write_1_17;
+logic [31:0]   din_csr_readdata_1_17;
+logic [31:0]   din_csr_readdata_1_17_r1;
+logic [31:0]   din_csr_readdata_1_17_r2;
+logic [31:0]   din_csr_writedata_1_17;
 
 rule_s_t    l1_data_1_17;
 logic       l1_ready_1_17;
 logic       l1_valid_1_17;
 logic       l1_newdata_1_17;
 logic [RID_WIDTH-1:0] l1_cache_1_17;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_1_18;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_1_18_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_1_18_r2;
+logic          din_csr_address_1_18;
+logic          din_csr_read_1_18;
+logic          din_csr_write_1_18;
+logic [31:0]   din_csr_readdata_1_18;
+logic [31:0]   din_csr_readdata_1_18_r1;
+logic [31:0]   din_csr_readdata_1_18_r2;
+logic [31:0]   din_csr_writedata_1_18;
 
 rule_s_t    l1_data_1_18;
 logic       l1_ready_1_18;
 logic       l1_valid_1_18;
 logic       l1_newdata_1_18;
 logic [RID_WIDTH-1:0] l1_cache_1_18;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_1_19;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_1_19_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_1_19_r2;
+logic          din_csr_address_1_19;
+logic          din_csr_read_1_19;
+logic          din_csr_write_1_19;
+logic [31:0]   din_csr_readdata_1_19;
+logic [31:0]   din_csr_readdata_1_19_r1;
+logic [31:0]   din_csr_readdata_1_19_r2;
+logic [31:0]   din_csr_writedata_1_19;
 
 rule_s_t    l1_data_1_19;
 logic       l1_ready_1_19;
 logic       l1_valid_1_19;
 logic       l1_newdata_1_19;
 logic [RID_WIDTH-1:0] l1_cache_1_19;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_1_20;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_1_20_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_1_20_r2;
+logic          din_csr_address_1_20;
+logic          din_csr_read_1_20;
+logic          din_csr_write_1_20;
+logic [31:0]   din_csr_readdata_1_20;
+logic [31:0]   din_csr_readdata_1_20_r1;
+logic [31:0]   din_csr_readdata_1_20_r2;
+logic [31:0]   din_csr_writedata_1_20;
 
 rule_s_t    l1_data_1_20;
 logic       l1_ready_1_20;
 logic       l1_valid_1_20;
 logic       l1_newdata_1_20;
 logic [RID_WIDTH-1:0] l1_cache_1_20;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_1_21;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_1_21_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_1_21_r2;
+logic          din_csr_address_1_21;
+logic          din_csr_read_1_21;
+logic          din_csr_write_1_21;
+logic [31:0]   din_csr_readdata_1_21;
+logic [31:0]   din_csr_readdata_1_21_r1;
+logic [31:0]   din_csr_readdata_1_21_r2;
+logic [31:0]   din_csr_writedata_1_21;
 
 rule_s_t    l1_data_1_21;
 logic       l1_ready_1_21;
 logic       l1_valid_1_21;
 logic       l1_newdata_1_21;
 logic [RID_WIDTH-1:0] l1_cache_1_21;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_1_22;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_1_22_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_1_22_r2;
+logic          din_csr_address_1_22;
+logic          din_csr_read_1_22;
+logic          din_csr_write_1_22;
+logic [31:0]   din_csr_readdata_1_22;
+logic [31:0]   din_csr_readdata_1_22_r1;
+logic [31:0]   din_csr_readdata_1_22_r2;
+logic [31:0]   din_csr_writedata_1_22;
 
 rule_s_t    l1_data_1_22;
 logic       l1_ready_1_22;
 logic       l1_valid_1_22;
 logic       l1_newdata_1_22;
 logic [RID_WIDTH-1:0] l1_cache_1_22;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_1_23;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_1_23_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_1_23_r2;
+logic          din_csr_address_1_23;
+logic          din_csr_read_1_23;
+logic          din_csr_write_1_23;
+logic [31:0]   din_csr_readdata_1_23;
+logic [31:0]   din_csr_readdata_1_23_r1;
+logic [31:0]   din_csr_readdata_1_23_r2;
+logic [31:0]   din_csr_writedata_1_23;
 
 rule_s_t    l1_data_1_23;
 logic       l1_ready_1_23;
 logic       l1_valid_1_23;
 logic       l1_newdata_1_23;
 logic [RID_WIDTH-1:0] l1_cache_1_23;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_1_24;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_1_24_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_1_24_r2;
+logic          din_csr_address_1_24;
+logic          din_csr_read_1_24;
+logic          din_csr_write_1_24;
+logic [31:0]   din_csr_readdata_1_24;
+logic [31:0]   din_csr_readdata_1_24_r1;
+logic [31:0]   din_csr_readdata_1_24_r2;
+logic [31:0]   din_csr_writedata_1_24;
 
 rule_s_t    l1_data_1_24;
 logic       l1_ready_1_24;
 logic       l1_valid_1_24;
 logic       l1_newdata_1_24;
 logic [RID_WIDTH-1:0] l1_cache_1_24;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_1_25;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_1_25_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_1_25_r2;
+logic          din_csr_address_1_25;
+logic          din_csr_read_1_25;
+logic          din_csr_write_1_25;
+logic [31:0]   din_csr_readdata_1_25;
+logic [31:0]   din_csr_readdata_1_25_r1;
+logic [31:0]   din_csr_readdata_1_25_r2;
+logic [31:0]   din_csr_writedata_1_25;
 
 rule_s_t    l1_data_1_25;
 logic       l1_ready_1_25;
 logic       l1_valid_1_25;
 logic       l1_newdata_1_25;
 logic [RID_WIDTH-1:0] l1_cache_1_25;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_1_26;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_1_26_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_1_26_r2;
+logic          din_csr_address_1_26;
+logic          din_csr_read_1_26;
+logic          din_csr_write_1_26;
+logic [31:0]   din_csr_readdata_1_26;
+logic [31:0]   din_csr_readdata_1_26_r1;
+logic [31:0]   din_csr_readdata_1_26_r2;
+logic [31:0]   din_csr_writedata_1_26;
 
 rule_s_t    l1_data_1_26;
 logic       l1_ready_1_26;
 logic       l1_valid_1_26;
 logic       l1_newdata_1_26;
 logic [RID_WIDTH-1:0] l1_cache_1_26;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_1_27;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_1_27_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_1_27_r2;
+logic          din_csr_address_1_27;
+logic          din_csr_read_1_27;
+logic          din_csr_write_1_27;
+logic [31:0]   din_csr_readdata_1_27;
+logic [31:0]   din_csr_readdata_1_27_r1;
+logic [31:0]   din_csr_readdata_1_27_r2;
+logic [31:0]   din_csr_writedata_1_27;
 
 rule_s_t    l1_data_1_27;
 logic       l1_ready_1_27;
 logic       l1_valid_1_27;
 logic       l1_newdata_1_27;
 logic [RID_WIDTH-1:0] l1_cache_1_27;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_1_28;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_1_28_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_1_28_r2;
+logic          din_csr_address_1_28;
+logic          din_csr_read_1_28;
+logic          din_csr_write_1_28;
+logic [31:0]   din_csr_readdata_1_28;
+logic [31:0]   din_csr_readdata_1_28_r1;
+logic [31:0]   din_csr_readdata_1_28_r2;
+logic [31:0]   din_csr_writedata_1_28;
 
 rule_s_t    l1_data_1_28;
 logic       l1_ready_1_28;
 logic       l1_valid_1_28;
 logic       l1_newdata_1_28;
 logic [RID_WIDTH-1:0] l1_cache_1_28;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_1_29;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_1_29_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_1_29_r2;
+logic          din_csr_address_1_29;
+logic          din_csr_read_1_29;
+logic          din_csr_write_1_29;
+logic [31:0]   din_csr_readdata_1_29;
+logic [31:0]   din_csr_readdata_1_29_r1;
+logic [31:0]   din_csr_readdata_1_29_r2;
+logic [31:0]   din_csr_writedata_1_29;
 
 rule_s_t    l1_data_1_29;
 logic       l1_ready_1_29;
 logic       l1_valid_1_29;
 logic       l1_newdata_1_29;
 logic [RID_WIDTH-1:0] l1_cache_1_29;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_1_30;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_1_30_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_1_30_r2;
+logic          din_csr_address_1_30;
+logic          din_csr_read_1_30;
+logic          din_csr_write_1_30;
+logic [31:0]   din_csr_readdata_1_30;
+logic [31:0]   din_csr_readdata_1_30_r1;
+logic [31:0]   din_csr_readdata_1_30_r2;
+logic [31:0]   din_csr_writedata_1_30;
 
 rule_s_t    l1_data_1_30;
 logic       l1_ready_1_30;
 logic       l1_valid_1_30;
 logic       l1_newdata_1_30;
 logic [RID_WIDTH-1:0] l1_cache_1_30;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_1_31;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_1_31_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_1_31_r2;
+logic          din_csr_address_1_31;
+logic          din_csr_read_1_31;
+logic          din_csr_write_1_31;
+logic [31:0]   din_csr_readdata_1_31;
+logic [31:0]   din_csr_readdata_1_31_r1;
+logic [31:0]   din_csr_readdata_1_31_r2;
+logic [31:0]   din_csr_writedata_1_31;
 
 rule_s_t    l1_data_1_31;
 logic       l1_ready_1_31;
 logic       l1_valid_1_31;
 logic       l1_newdata_1_31;
 logic [RID_WIDTH-1:0] l1_cache_1_31;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_2_0;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_2_0_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_2_0_r2;
+logic          din_csr_address_2_0;
+logic          din_csr_read_2_0;
+logic          din_csr_write_2_0;
+logic [31:0]   din_csr_readdata_2_0;
+logic [31:0]   din_csr_readdata_2_0_r1;
+logic [31:0]   din_csr_readdata_2_0_r2;
+logic [31:0]   din_csr_writedata_2_0;
 
 rule_s_t    l1_data_2_0;
 logic       l1_ready_2_0;
 logic       l1_valid_2_0;
 logic       l1_newdata_2_0;
 logic [RID_WIDTH-1:0] l1_cache_2_0;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_2_1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_2_1_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_2_1_r2;
+logic          din_csr_address_2_1;
+logic          din_csr_read_2_1;
+logic          din_csr_write_2_1;
+logic [31:0]   din_csr_readdata_2_1;
+logic [31:0]   din_csr_readdata_2_1_r1;
+logic [31:0]   din_csr_readdata_2_1_r2;
+logic [31:0]   din_csr_writedata_2_1;
 
 rule_s_t    l1_data_2_1;
 logic       l1_ready_2_1;
 logic       l1_valid_2_1;
 logic       l1_newdata_2_1;
 logic [RID_WIDTH-1:0] l1_cache_2_1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_2_2;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_2_2_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_2_2_r2;
+logic          din_csr_address_2_2;
+logic          din_csr_read_2_2;
+logic          din_csr_write_2_2;
+logic [31:0]   din_csr_readdata_2_2;
+logic [31:0]   din_csr_readdata_2_2_r1;
+logic [31:0]   din_csr_readdata_2_2_r2;
+logic [31:0]   din_csr_writedata_2_2;
 
 rule_s_t    l1_data_2_2;
 logic       l1_ready_2_2;
 logic       l1_valid_2_2;
 logic       l1_newdata_2_2;
 logic [RID_WIDTH-1:0] l1_cache_2_2;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_2_3;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_2_3_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_2_3_r2;
+logic          din_csr_address_2_3;
+logic          din_csr_read_2_3;
+logic          din_csr_write_2_3;
+logic [31:0]   din_csr_readdata_2_3;
+logic [31:0]   din_csr_readdata_2_3_r1;
+logic [31:0]   din_csr_readdata_2_3_r2;
+logic [31:0]   din_csr_writedata_2_3;
 
 rule_s_t    l1_data_2_3;
 logic       l1_ready_2_3;
 logic       l1_valid_2_3;
 logic       l1_newdata_2_3;
 logic [RID_WIDTH-1:0] l1_cache_2_3;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_2_4;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_2_4_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_2_4_r2;
+logic          din_csr_address_2_4;
+logic          din_csr_read_2_4;
+logic          din_csr_write_2_4;
+logic [31:0]   din_csr_readdata_2_4;
+logic [31:0]   din_csr_readdata_2_4_r1;
+logic [31:0]   din_csr_readdata_2_4_r2;
+logic [31:0]   din_csr_writedata_2_4;
 
 rule_s_t    l1_data_2_4;
 logic       l1_ready_2_4;
 logic       l1_valid_2_4;
 logic       l1_newdata_2_4;
 logic [RID_WIDTH-1:0] l1_cache_2_4;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_2_5;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_2_5_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_2_5_r2;
+logic          din_csr_address_2_5;
+logic          din_csr_read_2_5;
+logic          din_csr_write_2_5;
+logic [31:0]   din_csr_readdata_2_5;
+logic [31:0]   din_csr_readdata_2_5_r1;
+logic [31:0]   din_csr_readdata_2_5_r2;
+logic [31:0]   din_csr_writedata_2_5;
 
 rule_s_t    l1_data_2_5;
 logic       l1_ready_2_5;
 logic       l1_valid_2_5;
 logic       l1_newdata_2_5;
 logic [RID_WIDTH-1:0] l1_cache_2_5;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_2_6;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_2_6_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_2_6_r2;
+logic          din_csr_address_2_6;
+logic          din_csr_read_2_6;
+logic          din_csr_write_2_6;
+logic [31:0]   din_csr_readdata_2_6;
+logic [31:0]   din_csr_readdata_2_6_r1;
+logic [31:0]   din_csr_readdata_2_6_r2;
+logic [31:0]   din_csr_writedata_2_6;
 
 rule_s_t    l1_data_2_6;
 logic       l1_ready_2_6;
 logic       l1_valid_2_6;
 logic       l1_newdata_2_6;
 logic [RID_WIDTH-1:0] l1_cache_2_6;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_2_7;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_2_7_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_2_7_r2;
+logic          din_csr_address_2_7;
+logic          din_csr_read_2_7;
+logic          din_csr_write_2_7;
+logic [31:0]   din_csr_readdata_2_7;
+logic [31:0]   din_csr_readdata_2_7_r1;
+logic [31:0]   din_csr_readdata_2_7_r2;
+logic [31:0]   din_csr_writedata_2_7;
 
 rule_s_t    l1_data_2_7;
 logic       l1_ready_2_7;
 logic       l1_valid_2_7;
 logic       l1_newdata_2_7;
 logic [RID_WIDTH-1:0] l1_cache_2_7;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_2_8;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_2_8_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_2_8_r2;
+logic          din_csr_address_2_8;
+logic          din_csr_read_2_8;
+logic          din_csr_write_2_8;
+logic [31:0]   din_csr_readdata_2_8;
+logic [31:0]   din_csr_readdata_2_8_r1;
+logic [31:0]   din_csr_readdata_2_8_r2;
+logic [31:0]   din_csr_writedata_2_8;
 
 rule_s_t    l1_data_2_8;
 logic       l1_ready_2_8;
 logic       l1_valid_2_8;
 logic       l1_newdata_2_8;
 logic [RID_WIDTH-1:0] l1_cache_2_8;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_2_9;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_2_9_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_2_9_r2;
+logic          din_csr_address_2_9;
+logic          din_csr_read_2_9;
+logic          din_csr_write_2_9;
+logic [31:0]   din_csr_readdata_2_9;
+logic [31:0]   din_csr_readdata_2_9_r1;
+logic [31:0]   din_csr_readdata_2_9_r2;
+logic [31:0]   din_csr_writedata_2_9;
 
 rule_s_t    l1_data_2_9;
 logic       l1_ready_2_9;
 logic       l1_valid_2_9;
 logic       l1_newdata_2_9;
 logic [RID_WIDTH-1:0] l1_cache_2_9;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_2_10;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_2_10_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_2_10_r2;
+logic          din_csr_address_2_10;
+logic          din_csr_read_2_10;
+logic          din_csr_write_2_10;
+logic [31:0]   din_csr_readdata_2_10;
+logic [31:0]   din_csr_readdata_2_10_r1;
+logic [31:0]   din_csr_readdata_2_10_r2;
+logic [31:0]   din_csr_writedata_2_10;
 
 rule_s_t    l1_data_2_10;
 logic       l1_ready_2_10;
 logic       l1_valid_2_10;
 logic       l1_newdata_2_10;
 logic [RID_WIDTH-1:0] l1_cache_2_10;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_2_11;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_2_11_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_2_11_r2;
+logic          din_csr_address_2_11;
+logic          din_csr_read_2_11;
+logic          din_csr_write_2_11;
+logic [31:0]   din_csr_readdata_2_11;
+logic [31:0]   din_csr_readdata_2_11_r1;
+logic [31:0]   din_csr_readdata_2_11_r2;
+logic [31:0]   din_csr_writedata_2_11;
 
 rule_s_t    l1_data_2_11;
 logic       l1_ready_2_11;
 logic       l1_valid_2_11;
 logic       l1_newdata_2_11;
 logic [RID_WIDTH-1:0] l1_cache_2_11;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_2_12;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_2_12_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_2_12_r2;
+logic          din_csr_address_2_12;
+logic          din_csr_read_2_12;
+logic          din_csr_write_2_12;
+logic [31:0]   din_csr_readdata_2_12;
+logic [31:0]   din_csr_readdata_2_12_r1;
+logic [31:0]   din_csr_readdata_2_12_r2;
+logic [31:0]   din_csr_writedata_2_12;
 
 rule_s_t    l1_data_2_12;
 logic       l1_ready_2_12;
 logic       l1_valid_2_12;
 logic       l1_newdata_2_12;
 logic [RID_WIDTH-1:0] l1_cache_2_12;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_2_13;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_2_13_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_2_13_r2;
+logic          din_csr_address_2_13;
+logic          din_csr_read_2_13;
+logic          din_csr_write_2_13;
+logic [31:0]   din_csr_readdata_2_13;
+logic [31:0]   din_csr_readdata_2_13_r1;
+logic [31:0]   din_csr_readdata_2_13_r2;
+logic [31:0]   din_csr_writedata_2_13;
 
 rule_s_t    l1_data_2_13;
 logic       l1_ready_2_13;
 logic       l1_valid_2_13;
 logic       l1_newdata_2_13;
 logic [RID_WIDTH-1:0] l1_cache_2_13;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_2_14;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_2_14_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_2_14_r2;
+logic          din_csr_address_2_14;
+logic          din_csr_read_2_14;
+logic          din_csr_write_2_14;
+logic [31:0]   din_csr_readdata_2_14;
+logic [31:0]   din_csr_readdata_2_14_r1;
+logic [31:0]   din_csr_readdata_2_14_r2;
+logic [31:0]   din_csr_writedata_2_14;
 
 rule_s_t    l1_data_2_14;
 logic       l1_ready_2_14;
 logic       l1_valid_2_14;
 logic       l1_newdata_2_14;
 logic [RID_WIDTH-1:0] l1_cache_2_14;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_2_15;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_2_15_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_2_15_r2;
+logic          din_csr_address_2_15;
+logic          din_csr_read_2_15;
+logic          din_csr_write_2_15;
+logic [31:0]   din_csr_readdata_2_15;
+logic [31:0]   din_csr_readdata_2_15_r1;
+logic [31:0]   din_csr_readdata_2_15_r2;
+logic [31:0]   din_csr_writedata_2_15;
 
 rule_s_t    l1_data_2_15;
 logic       l1_ready_2_15;
 logic       l1_valid_2_15;
 logic       l1_newdata_2_15;
 logic [RID_WIDTH-1:0] l1_cache_2_15;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_2_16;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_2_16_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_2_16_r2;
+logic          din_csr_address_2_16;
+logic          din_csr_read_2_16;
+logic          din_csr_write_2_16;
+logic [31:0]   din_csr_readdata_2_16;
+logic [31:0]   din_csr_readdata_2_16_r1;
+logic [31:0]   din_csr_readdata_2_16_r2;
+logic [31:0]   din_csr_writedata_2_16;
 
 rule_s_t    l1_data_2_16;
 logic       l1_ready_2_16;
 logic       l1_valid_2_16;
 logic       l1_newdata_2_16;
 logic [RID_WIDTH-1:0] l1_cache_2_16;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_2_17;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_2_17_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_2_17_r2;
+logic          din_csr_address_2_17;
+logic          din_csr_read_2_17;
+logic          din_csr_write_2_17;
+logic [31:0]   din_csr_readdata_2_17;
+logic [31:0]   din_csr_readdata_2_17_r1;
+logic [31:0]   din_csr_readdata_2_17_r2;
+logic [31:0]   din_csr_writedata_2_17;
 
 rule_s_t    l1_data_2_17;
 logic       l1_ready_2_17;
 logic       l1_valid_2_17;
 logic       l1_newdata_2_17;
 logic [RID_WIDTH-1:0] l1_cache_2_17;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_2_18;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_2_18_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_2_18_r2;
+logic          din_csr_address_2_18;
+logic          din_csr_read_2_18;
+logic          din_csr_write_2_18;
+logic [31:0]   din_csr_readdata_2_18;
+logic [31:0]   din_csr_readdata_2_18_r1;
+logic [31:0]   din_csr_readdata_2_18_r2;
+logic [31:0]   din_csr_writedata_2_18;
 
 rule_s_t    l1_data_2_18;
 logic       l1_ready_2_18;
 logic       l1_valid_2_18;
 logic       l1_newdata_2_18;
 logic [RID_WIDTH-1:0] l1_cache_2_18;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_2_19;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_2_19_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_2_19_r2;
+logic          din_csr_address_2_19;
+logic          din_csr_read_2_19;
+logic          din_csr_write_2_19;
+logic [31:0]   din_csr_readdata_2_19;
+logic [31:0]   din_csr_readdata_2_19_r1;
+logic [31:0]   din_csr_readdata_2_19_r2;
+logic [31:0]   din_csr_writedata_2_19;
 
 rule_s_t    l1_data_2_19;
 logic       l1_ready_2_19;
 logic       l1_valid_2_19;
 logic       l1_newdata_2_19;
 logic [RID_WIDTH-1:0] l1_cache_2_19;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_2_20;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_2_20_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_2_20_r2;
+logic          din_csr_address_2_20;
+logic          din_csr_read_2_20;
+logic          din_csr_write_2_20;
+logic [31:0]   din_csr_readdata_2_20;
+logic [31:0]   din_csr_readdata_2_20_r1;
+logic [31:0]   din_csr_readdata_2_20_r2;
+logic [31:0]   din_csr_writedata_2_20;
 
 rule_s_t    l1_data_2_20;
 logic       l1_ready_2_20;
 logic       l1_valid_2_20;
 logic       l1_newdata_2_20;
 logic [RID_WIDTH-1:0] l1_cache_2_20;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_2_21;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_2_21_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_2_21_r2;
+logic          din_csr_address_2_21;
+logic          din_csr_read_2_21;
+logic          din_csr_write_2_21;
+logic [31:0]   din_csr_readdata_2_21;
+logic [31:0]   din_csr_readdata_2_21_r1;
+logic [31:0]   din_csr_readdata_2_21_r2;
+logic [31:0]   din_csr_writedata_2_21;
 
 rule_s_t    l1_data_2_21;
 logic       l1_ready_2_21;
 logic       l1_valid_2_21;
 logic       l1_newdata_2_21;
 logic [RID_WIDTH-1:0] l1_cache_2_21;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_2_22;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_2_22_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_2_22_r2;
+logic          din_csr_address_2_22;
+logic          din_csr_read_2_22;
+logic          din_csr_write_2_22;
+logic [31:0]   din_csr_readdata_2_22;
+logic [31:0]   din_csr_readdata_2_22_r1;
+logic [31:0]   din_csr_readdata_2_22_r2;
+logic [31:0]   din_csr_writedata_2_22;
 
 rule_s_t    l1_data_2_22;
 logic       l1_ready_2_22;
 logic       l1_valid_2_22;
 logic       l1_newdata_2_22;
 logic [RID_WIDTH-1:0] l1_cache_2_22;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_2_23;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_2_23_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_2_23_r2;
+logic          din_csr_address_2_23;
+logic          din_csr_read_2_23;
+logic          din_csr_write_2_23;
+logic [31:0]   din_csr_readdata_2_23;
+logic [31:0]   din_csr_readdata_2_23_r1;
+logic [31:0]   din_csr_readdata_2_23_r2;
+logic [31:0]   din_csr_writedata_2_23;
 
 rule_s_t    l1_data_2_23;
 logic       l1_ready_2_23;
 logic       l1_valid_2_23;
 logic       l1_newdata_2_23;
 logic [RID_WIDTH-1:0] l1_cache_2_23;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_2_24;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_2_24_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_2_24_r2;
+logic          din_csr_address_2_24;
+logic          din_csr_read_2_24;
+logic          din_csr_write_2_24;
+logic [31:0]   din_csr_readdata_2_24;
+logic [31:0]   din_csr_readdata_2_24_r1;
+logic [31:0]   din_csr_readdata_2_24_r2;
+logic [31:0]   din_csr_writedata_2_24;
 
 rule_s_t    l1_data_2_24;
 logic       l1_ready_2_24;
 logic       l1_valid_2_24;
 logic       l1_newdata_2_24;
 logic [RID_WIDTH-1:0] l1_cache_2_24;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_2_25;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_2_25_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_2_25_r2;
+logic          din_csr_address_2_25;
+logic          din_csr_read_2_25;
+logic          din_csr_write_2_25;
+logic [31:0]   din_csr_readdata_2_25;
+logic [31:0]   din_csr_readdata_2_25_r1;
+logic [31:0]   din_csr_readdata_2_25_r2;
+logic [31:0]   din_csr_writedata_2_25;
 
 rule_s_t    l1_data_2_25;
 logic       l1_ready_2_25;
 logic       l1_valid_2_25;
 logic       l1_newdata_2_25;
 logic [RID_WIDTH-1:0] l1_cache_2_25;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_2_26;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_2_26_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_2_26_r2;
+logic          din_csr_address_2_26;
+logic          din_csr_read_2_26;
+logic          din_csr_write_2_26;
+logic [31:0]   din_csr_readdata_2_26;
+logic [31:0]   din_csr_readdata_2_26_r1;
+logic [31:0]   din_csr_readdata_2_26_r2;
+logic [31:0]   din_csr_writedata_2_26;
 
 rule_s_t    l1_data_2_26;
 logic       l1_ready_2_26;
 logic       l1_valid_2_26;
 logic       l1_newdata_2_26;
 logic [RID_WIDTH-1:0] l1_cache_2_26;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_2_27;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_2_27_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_2_27_r2;
+logic          din_csr_address_2_27;
+logic          din_csr_read_2_27;
+logic          din_csr_write_2_27;
+logic [31:0]   din_csr_readdata_2_27;
+logic [31:0]   din_csr_readdata_2_27_r1;
+logic [31:0]   din_csr_readdata_2_27_r2;
+logic [31:0]   din_csr_writedata_2_27;
 
 rule_s_t    l1_data_2_27;
 logic       l1_ready_2_27;
 logic       l1_valid_2_27;
 logic       l1_newdata_2_27;
 logic [RID_WIDTH-1:0] l1_cache_2_27;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_2_28;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_2_28_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_2_28_r2;
+logic          din_csr_address_2_28;
+logic          din_csr_read_2_28;
+logic          din_csr_write_2_28;
+logic [31:0]   din_csr_readdata_2_28;
+logic [31:0]   din_csr_readdata_2_28_r1;
+logic [31:0]   din_csr_readdata_2_28_r2;
+logic [31:0]   din_csr_writedata_2_28;
 
 rule_s_t    l1_data_2_28;
 logic       l1_ready_2_28;
 logic       l1_valid_2_28;
 logic       l1_newdata_2_28;
 logic [RID_WIDTH-1:0] l1_cache_2_28;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_2_29;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_2_29_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_2_29_r2;
+logic          din_csr_address_2_29;
+logic          din_csr_read_2_29;
+logic          din_csr_write_2_29;
+logic [31:0]   din_csr_readdata_2_29;
+logic [31:0]   din_csr_readdata_2_29_r1;
+logic [31:0]   din_csr_readdata_2_29_r2;
+logic [31:0]   din_csr_writedata_2_29;
 
 rule_s_t    l1_data_2_29;
 logic       l1_ready_2_29;
 logic       l1_valid_2_29;
 logic       l1_newdata_2_29;
 logic [RID_WIDTH-1:0] l1_cache_2_29;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_2_30;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_2_30_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_2_30_r2;
+logic          din_csr_address_2_30;
+logic          din_csr_read_2_30;
+logic          din_csr_write_2_30;
+logic [31:0]   din_csr_readdata_2_30;
+logic [31:0]   din_csr_readdata_2_30_r1;
+logic [31:0]   din_csr_readdata_2_30_r2;
+logic [31:0]   din_csr_writedata_2_30;
 
 rule_s_t    l1_data_2_30;
 logic       l1_ready_2_30;
 logic       l1_valid_2_30;
 logic       l1_newdata_2_30;
 logic [RID_WIDTH-1:0] l1_cache_2_30;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_2_31;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_2_31_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_2_31_r2;
+logic          din_csr_address_2_31;
+logic          din_csr_read_2_31;
+logic          din_csr_write_2_31;
+logic [31:0]   din_csr_readdata_2_31;
+logic [31:0]   din_csr_readdata_2_31_r1;
+logic [31:0]   din_csr_readdata_2_31_r2;
+logic [31:0]   din_csr_writedata_2_31;
 
 rule_s_t    l1_data_2_31;
 logic       l1_ready_2_31;
 logic       l1_valid_2_31;
 logic       l1_newdata_2_31;
 logic [RID_WIDTH-1:0] l1_cache_2_31;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_3_0;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_3_0_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_3_0_r2;
+logic          din_csr_address_3_0;
+logic          din_csr_read_3_0;
+logic          din_csr_write_3_0;
+logic [31:0]   din_csr_readdata_3_0;
+logic [31:0]   din_csr_readdata_3_0_r1;
+logic [31:0]   din_csr_readdata_3_0_r2;
+logic [31:0]   din_csr_writedata_3_0;
 
 rule_s_t    l1_data_3_0;
 logic       l1_ready_3_0;
 logic       l1_valid_3_0;
 logic       l1_newdata_3_0;
 logic [RID_WIDTH-1:0] l1_cache_3_0;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_3_1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_3_1_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_3_1_r2;
+logic          din_csr_address_3_1;
+logic          din_csr_read_3_1;
+logic          din_csr_write_3_1;
+logic [31:0]   din_csr_readdata_3_1;
+logic [31:0]   din_csr_readdata_3_1_r1;
+logic [31:0]   din_csr_readdata_3_1_r2;
+logic [31:0]   din_csr_writedata_3_1;
 
 rule_s_t    l1_data_3_1;
 logic       l1_ready_3_1;
 logic       l1_valid_3_1;
 logic       l1_newdata_3_1;
 logic [RID_WIDTH-1:0] l1_cache_3_1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_3_2;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_3_2_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_3_2_r2;
+logic          din_csr_address_3_2;
+logic          din_csr_read_3_2;
+logic          din_csr_write_3_2;
+logic [31:0]   din_csr_readdata_3_2;
+logic [31:0]   din_csr_readdata_3_2_r1;
+logic [31:0]   din_csr_readdata_3_2_r2;
+logic [31:0]   din_csr_writedata_3_2;
 
 rule_s_t    l1_data_3_2;
 logic       l1_ready_3_2;
 logic       l1_valid_3_2;
 logic       l1_newdata_3_2;
 logic [RID_WIDTH-1:0] l1_cache_3_2;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_3_3;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_3_3_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_3_3_r2;
+logic          din_csr_address_3_3;
+logic          din_csr_read_3_3;
+logic          din_csr_write_3_3;
+logic [31:0]   din_csr_readdata_3_3;
+logic [31:0]   din_csr_readdata_3_3_r1;
+logic [31:0]   din_csr_readdata_3_3_r2;
+logic [31:0]   din_csr_writedata_3_3;
 
 rule_s_t    l1_data_3_3;
 logic       l1_ready_3_3;
 logic       l1_valid_3_3;
 logic       l1_newdata_3_3;
 logic [RID_WIDTH-1:0] l1_cache_3_3;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_3_4;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_3_4_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_3_4_r2;
+logic          din_csr_address_3_4;
+logic          din_csr_read_3_4;
+logic          din_csr_write_3_4;
+logic [31:0]   din_csr_readdata_3_4;
+logic [31:0]   din_csr_readdata_3_4_r1;
+logic [31:0]   din_csr_readdata_3_4_r2;
+logic [31:0]   din_csr_writedata_3_4;
 
 rule_s_t    l1_data_3_4;
 logic       l1_ready_3_4;
 logic       l1_valid_3_4;
 logic       l1_newdata_3_4;
 logic [RID_WIDTH-1:0] l1_cache_3_4;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_3_5;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_3_5_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_3_5_r2;
+logic          din_csr_address_3_5;
+logic          din_csr_read_3_5;
+logic          din_csr_write_3_5;
+logic [31:0]   din_csr_readdata_3_5;
+logic [31:0]   din_csr_readdata_3_5_r1;
+logic [31:0]   din_csr_readdata_3_5_r2;
+logic [31:0]   din_csr_writedata_3_5;
 
 rule_s_t    l1_data_3_5;
 logic       l1_ready_3_5;
 logic       l1_valid_3_5;
 logic       l1_newdata_3_5;
 logic [RID_WIDTH-1:0] l1_cache_3_5;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_3_6;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_3_6_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_3_6_r2;
+logic          din_csr_address_3_6;
+logic          din_csr_read_3_6;
+logic          din_csr_write_3_6;
+logic [31:0]   din_csr_readdata_3_6;
+logic [31:0]   din_csr_readdata_3_6_r1;
+logic [31:0]   din_csr_readdata_3_6_r2;
+logic [31:0]   din_csr_writedata_3_6;
 
 rule_s_t    l1_data_3_6;
 logic       l1_ready_3_6;
 logic       l1_valid_3_6;
 logic       l1_newdata_3_6;
 logic [RID_WIDTH-1:0] l1_cache_3_6;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_3_7;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_3_7_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_3_7_r2;
+logic          din_csr_address_3_7;
+logic          din_csr_read_3_7;
+logic          din_csr_write_3_7;
+logic [31:0]   din_csr_readdata_3_7;
+logic [31:0]   din_csr_readdata_3_7_r1;
+logic [31:0]   din_csr_readdata_3_7_r2;
+logic [31:0]   din_csr_writedata_3_7;
 
 rule_s_t    l1_data_3_7;
 logic       l1_ready_3_7;
 logic       l1_valid_3_7;
 logic       l1_newdata_3_7;
 logic [RID_WIDTH-1:0] l1_cache_3_7;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_3_8;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_3_8_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_3_8_r2;
+logic          din_csr_address_3_8;
+logic          din_csr_read_3_8;
+logic          din_csr_write_3_8;
+logic [31:0]   din_csr_readdata_3_8;
+logic [31:0]   din_csr_readdata_3_8_r1;
+logic [31:0]   din_csr_readdata_3_8_r2;
+logic [31:0]   din_csr_writedata_3_8;
 
 rule_s_t    l1_data_3_8;
 logic       l1_ready_3_8;
 logic       l1_valid_3_8;
 logic       l1_newdata_3_8;
 logic [RID_WIDTH-1:0] l1_cache_3_8;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_3_9;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_3_9_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_3_9_r2;
+logic          din_csr_address_3_9;
+logic          din_csr_read_3_9;
+logic          din_csr_write_3_9;
+logic [31:0]   din_csr_readdata_3_9;
+logic [31:0]   din_csr_readdata_3_9_r1;
+logic [31:0]   din_csr_readdata_3_9_r2;
+logic [31:0]   din_csr_writedata_3_9;
 
 rule_s_t    l1_data_3_9;
 logic       l1_ready_3_9;
 logic       l1_valid_3_9;
 logic       l1_newdata_3_9;
 logic [RID_WIDTH-1:0] l1_cache_3_9;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_3_10;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_3_10_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_3_10_r2;
+logic          din_csr_address_3_10;
+logic          din_csr_read_3_10;
+logic          din_csr_write_3_10;
+logic [31:0]   din_csr_readdata_3_10;
+logic [31:0]   din_csr_readdata_3_10_r1;
+logic [31:0]   din_csr_readdata_3_10_r2;
+logic [31:0]   din_csr_writedata_3_10;
 
 rule_s_t    l1_data_3_10;
 logic       l1_ready_3_10;
 logic       l1_valid_3_10;
 logic       l1_newdata_3_10;
 logic [RID_WIDTH-1:0] l1_cache_3_10;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_3_11;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_3_11_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_3_11_r2;
+logic          din_csr_address_3_11;
+logic          din_csr_read_3_11;
+logic          din_csr_write_3_11;
+logic [31:0]   din_csr_readdata_3_11;
+logic [31:0]   din_csr_readdata_3_11_r1;
+logic [31:0]   din_csr_readdata_3_11_r2;
+logic [31:0]   din_csr_writedata_3_11;
 
 rule_s_t    l1_data_3_11;
 logic       l1_ready_3_11;
 logic       l1_valid_3_11;
 logic       l1_newdata_3_11;
 logic [RID_WIDTH-1:0] l1_cache_3_11;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_3_12;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_3_12_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_3_12_r2;
+logic          din_csr_address_3_12;
+logic          din_csr_read_3_12;
+logic          din_csr_write_3_12;
+logic [31:0]   din_csr_readdata_3_12;
+logic [31:0]   din_csr_readdata_3_12_r1;
+logic [31:0]   din_csr_readdata_3_12_r2;
+logic [31:0]   din_csr_writedata_3_12;
 
 rule_s_t    l1_data_3_12;
 logic       l1_ready_3_12;
 logic       l1_valid_3_12;
 logic       l1_newdata_3_12;
 logic [RID_WIDTH-1:0] l1_cache_3_12;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_3_13;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_3_13_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_3_13_r2;
+logic          din_csr_address_3_13;
+logic          din_csr_read_3_13;
+logic          din_csr_write_3_13;
+logic [31:0]   din_csr_readdata_3_13;
+logic [31:0]   din_csr_readdata_3_13_r1;
+logic [31:0]   din_csr_readdata_3_13_r2;
+logic [31:0]   din_csr_writedata_3_13;
 
 rule_s_t    l1_data_3_13;
 logic       l1_ready_3_13;
 logic       l1_valid_3_13;
 logic       l1_newdata_3_13;
 logic [RID_WIDTH-1:0] l1_cache_3_13;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_3_14;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_3_14_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_3_14_r2;
+logic          din_csr_address_3_14;
+logic          din_csr_read_3_14;
+logic          din_csr_write_3_14;
+logic [31:0]   din_csr_readdata_3_14;
+logic [31:0]   din_csr_readdata_3_14_r1;
+logic [31:0]   din_csr_readdata_3_14_r2;
+logic [31:0]   din_csr_writedata_3_14;
 
 rule_s_t    l1_data_3_14;
 logic       l1_ready_3_14;
 logic       l1_valid_3_14;
 logic       l1_newdata_3_14;
 logic [RID_WIDTH-1:0] l1_cache_3_14;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_3_15;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_3_15_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_3_15_r2;
+logic          din_csr_address_3_15;
+logic          din_csr_read_3_15;
+logic          din_csr_write_3_15;
+logic [31:0]   din_csr_readdata_3_15;
+logic [31:0]   din_csr_readdata_3_15_r1;
+logic [31:0]   din_csr_readdata_3_15_r2;
+logic [31:0]   din_csr_writedata_3_15;
 
 rule_s_t    l1_data_3_15;
 logic       l1_ready_3_15;
 logic       l1_valid_3_15;
 logic       l1_newdata_3_15;
 logic [RID_WIDTH-1:0] l1_cache_3_15;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_3_16;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_3_16_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_3_16_r2;
+logic          din_csr_address_3_16;
+logic          din_csr_read_3_16;
+logic          din_csr_write_3_16;
+logic [31:0]   din_csr_readdata_3_16;
+logic [31:0]   din_csr_readdata_3_16_r1;
+logic [31:0]   din_csr_readdata_3_16_r2;
+logic [31:0]   din_csr_writedata_3_16;
 
 rule_s_t    l1_data_3_16;
 logic       l1_ready_3_16;
 logic       l1_valid_3_16;
 logic       l1_newdata_3_16;
 logic [RID_WIDTH-1:0] l1_cache_3_16;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_3_17;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_3_17_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_3_17_r2;
+logic          din_csr_address_3_17;
+logic          din_csr_read_3_17;
+logic          din_csr_write_3_17;
+logic [31:0]   din_csr_readdata_3_17;
+logic [31:0]   din_csr_readdata_3_17_r1;
+logic [31:0]   din_csr_readdata_3_17_r2;
+logic [31:0]   din_csr_writedata_3_17;
 
 rule_s_t    l1_data_3_17;
 logic       l1_ready_3_17;
 logic       l1_valid_3_17;
 logic       l1_newdata_3_17;
 logic [RID_WIDTH-1:0] l1_cache_3_17;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_3_18;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_3_18_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_3_18_r2;
+logic          din_csr_address_3_18;
+logic          din_csr_read_3_18;
+logic          din_csr_write_3_18;
+logic [31:0]   din_csr_readdata_3_18;
+logic [31:0]   din_csr_readdata_3_18_r1;
+logic [31:0]   din_csr_readdata_3_18_r2;
+logic [31:0]   din_csr_writedata_3_18;
 
 rule_s_t    l1_data_3_18;
 logic       l1_ready_3_18;
 logic       l1_valid_3_18;
 logic       l1_newdata_3_18;
 logic [RID_WIDTH-1:0] l1_cache_3_18;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_3_19;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_3_19_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_3_19_r2;
+logic          din_csr_address_3_19;
+logic          din_csr_read_3_19;
+logic          din_csr_write_3_19;
+logic [31:0]   din_csr_readdata_3_19;
+logic [31:0]   din_csr_readdata_3_19_r1;
+logic [31:0]   din_csr_readdata_3_19_r2;
+logic [31:0]   din_csr_writedata_3_19;
 
 rule_s_t    l1_data_3_19;
 logic       l1_ready_3_19;
 logic       l1_valid_3_19;
 logic       l1_newdata_3_19;
 logic [RID_WIDTH-1:0] l1_cache_3_19;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_3_20;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_3_20_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_3_20_r2;
+logic          din_csr_address_3_20;
+logic          din_csr_read_3_20;
+logic          din_csr_write_3_20;
+logic [31:0]   din_csr_readdata_3_20;
+logic [31:0]   din_csr_readdata_3_20_r1;
+logic [31:0]   din_csr_readdata_3_20_r2;
+logic [31:0]   din_csr_writedata_3_20;
 
 rule_s_t    l1_data_3_20;
 logic       l1_ready_3_20;
 logic       l1_valid_3_20;
 logic       l1_newdata_3_20;
 logic [RID_WIDTH-1:0] l1_cache_3_20;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_3_21;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_3_21_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_3_21_r2;
+logic          din_csr_address_3_21;
+logic          din_csr_read_3_21;
+logic          din_csr_write_3_21;
+logic [31:0]   din_csr_readdata_3_21;
+logic [31:0]   din_csr_readdata_3_21_r1;
+logic [31:0]   din_csr_readdata_3_21_r2;
+logic [31:0]   din_csr_writedata_3_21;
 
 rule_s_t    l1_data_3_21;
 logic       l1_ready_3_21;
 logic       l1_valid_3_21;
 logic       l1_newdata_3_21;
 logic [RID_WIDTH-1:0] l1_cache_3_21;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_3_22;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_3_22_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_3_22_r2;
+logic          din_csr_address_3_22;
+logic          din_csr_read_3_22;
+logic          din_csr_write_3_22;
+logic [31:0]   din_csr_readdata_3_22;
+logic [31:0]   din_csr_readdata_3_22_r1;
+logic [31:0]   din_csr_readdata_3_22_r2;
+logic [31:0]   din_csr_writedata_3_22;
 
 rule_s_t    l1_data_3_22;
 logic       l1_ready_3_22;
 logic       l1_valid_3_22;
 logic       l1_newdata_3_22;
 logic [RID_WIDTH-1:0] l1_cache_3_22;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_3_23;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_3_23_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_3_23_r2;
+logic          din_csr_address_3_23;
+logic          din_csr_read_3_23;
+logic          din_csr_write_3_23;
+logic [31:0]   din_csr_readdata_3_23;
+logic [31:0]   din_csr_readdata_3_23_r1;
+logic [31:0]   din_csr_readdata_3_23_r2;
+logic [31:0]   din_csr_writedata_3_23;
 
 rule_s_t    l1_data_3_23;
 logic       l1_ready_3_23;
 logic       l1_valid_3_23;
 logic       l1_newdata_3_23;
 logic [RID_WIDTH-1:0] l1_cache_3_23;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_3_24;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_3_24_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_3_24_r2;
+logic          din_csr_address_3_24;
+logic          din_csr_read_3_24;
+logic          din_csr_write_3_24;
+logic [31:0]   din_csr_readdata_3_24;
+logic [31:0]   din_csr_readdata_3_24_r1;
+logic [31:0]   din_csr_readdata_3_24_r2;
+logic [31:0]   din_csr_writedata_3_24;
 
 rule_s_t    l1_data_3_24;
 logic       l1_ready_3_24;
 logic       l1_valid_3_24;
 logic       l1_newdata_3_24;
 logic [RID_WIDTH-1:0] l1_cache_3_24;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_3_25;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_3_25_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_3_25_r2;
+logic          din_csr_address_3_25;
+logic          din_csr_read_3_25;
+logic          din_csr_write_3_25;
+logic [31:0]   din_csr_readdata_3_25;
+logic [31:0]   din_csr_readdata_3_25_r1;
+logic [31:0]   din_csr_readdata_3_25_r2;
+logic [31:0]   din_csr_writedata_3_25;
 
 rule_s_t    l1_data_3_25;
 logic       l1_ready_3_25;
 logic       l1_valid_3_25;
 logic       l1_newdata_3_25;
 logic [RID_WIDTH-1:0] l1_cache_3_25;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_3_26;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_3_26_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_3_26_r2;
+logic          din_csr_address_3_26;
+logic          din_csr_read_3_26;
+logic          din_csr_write_3_26;
+logic [31:0]   din_csr_readdata_3_26;
+logic [31:0]   din_csr_readdata_3_26_r1;
+logic [31:0]   din_csr_readdata_3_26_r2;
+logic [31:0]   din_csr_writedata_3_26;
 
 rule_s_t    l1_data_3_26;
 logic       l1_ready_3_26;
 logic       l1_valid_3_26;
 logic       l1_newdata_3_26;
 logic [RID_WIDTH-1:0] l1_cache_3_26;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_3_27;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_3_27_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_3_27_r2;
+logic          din_csr_address_3_27;
+logic          din_csr_read_3_27;
+logic          din_csr_write_3_27;
+logic [31:0]   din_csr_readdata_3_27;
+logic [31:0]   din_csr_readdata_3_27_r1;
+logic [31:0]   din_csr_readdata_3_27_r2;
+logic [31:0]   din_csr_writedata_3_27;
 
 rule_s_t    l1_data_3_27;
 logic       l1_ready_3_27;
 logic       l1_valid_3_27;
 logic       l1_newdata_3_27;
 logic [RID_WIDTH-1:0] l1_cache_3_27;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_3_28;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_3_28_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_3_28_r2;
+logic          din_csr_address_3_28;
+logic          din_csr_read_3_28;
+logic          din_csr_write_3_28;
+logic [31:0]   din_csr_readdata_3_28;
+logic [31:0]   din_csr_readdata_3_28_r1;
+logic [31:0]   din_csr_readdata_3_28_r2;
+logic [31:0]   din_csr_writedata_3_28;
 
 rule_s_t    l1_data_3_28;
 logic       l1_ready_3_28;
 logic       l1_valid_3_28;
 logic       l1_newdata_3_28;
 logic [RID_WIDTH-1:0] l1_cache_3_28;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_3_29;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_3_29_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_3_29_r2;
+logic          din_csr_address_3_29;
+logic          din_csr_read_3_29;
+logic          din_csr_write_3_29;
+logic [31:0]   din_csr_readdata_3_29;
+logic [31:0]   din_csr_readdata_3_29_r1;
+logic [31:0]   din_csr_readdata_3_29_r2;
+logic [31:0]   din_csr_writedata_3_29;
 
 rule_s_t    l1_data_3_29;
 logic       l1_ready_3_29;
 logic       l1_valid_3_29;
 logic       l1_newdata_3_29;
 logic [RID_WIDTH-1:0] l1_cache_3_29;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_3_30;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_3_30_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_3_30_r2;
+logic          din_csr_address_3_30;
+logic          din_csr_read_3_30;
+logic          din_csr_write_3_30;
+logic [31:0]   din_csr_readdata_3_30;
+logic [31:0]   din_csr_readdata_3_30_r1;
+logic [31:0]   din_csr_readdata_3_30_r2;
+logic [31:0]   din_csr_writedata_3_30;
 
 rule_s_t    l1_data_3_30;
 logic       l1_ready_3_30;
 logic       l1_valid_3_30;
 logic       l1_newdata_3_30;
 logic [RID_WIDTH-1:0] l1_cache_3_30;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_3_31;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_3_31_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_3_31_r2;
+logic          din_csr_address_3_31;
+logic          din_csr_read_3_31;
+logic          din_csr_write_3_31;
+logic [31:0]   din_csr_readdata_3_31;
+logic [31:0]   din_csr_readdata_3_31_r1;
+logic [31:0]   din_csr_readdata_3_31_r2;
+logic [31:0]   din_csr_writedata_3_31;
 
 rule_s_t    l1_data_3_31;
 logic       l1_ready_3_31;
 logic       l1_valid_3_31;
 logic       l1_newdata_3_31;
 logic [RID_WIDTH-1:0] l1_cache_3_31;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_4_0;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_4_0_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_4_0_r2;
+logic          din_csr_address_4_0;
+logic          din_csr_read_4_0;
+logic          din_csr_write_4_0;
+logic [31:0]   din_csr_readdata_4_0;
+logic [31:0]   din_csr_readdata_4_0_r1;
+logic [31:0]   din_csr_readdata_4_0_r2;
+logic [31:0]   din_csr_writedata_4_0;
 
 rule_s_t    l1_data_4_0;
 logic       l1_ready_4_0;
 logic       l1_valid_4_0;
 logic       l1_newdata_4_0;
 logic [RID_WIDTH-1:0] l1_cache_4_0;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_4_1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_4_1_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_4_1_r2;
+logic          din_csr_address_4_1;
+logic          din_csr_read_4_1;
+logic          din_csr_write_4_1;
+logic [31:0]   din_csr_readdata_4_1;
+logic [31:0]   din_csr_readdata_4_1_r1;
+logic [31:0]   din_csr_readdata_4_1_r2;
+logic [31:0]   din_csr_writedata_4_1;
 
 rule_s_t    l1_data_4_1;
 logic       l1_ready_4_1;
 logic       l1_valid_4_1;
 logic       l1_newdata_4_1;
 logic [RID_WIDTH-1:0] l1_cache_4_1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_4_2;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_4_2_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_4_2_r2;
+logic          din_csr_address_4_2;
+logic          din_csr_read_4_2;
+logic          din_csr_write_4_2;
+logic [31:0]   din_csr_readdata_4_2;
+logic [31:0]   din_csr_readdata_4_2_r1;
+logic [31:0]   din_csr_readdata_4_2_r2;
+logic [31:0]   din_csr_writedata_4_2;
 
 rule_s_t    l1_data_4_2;
 logic       l1_ready_4_2;
 logic       l1_valid_4_2;
 logic       l1_newdata_4_2;
 logic [RID_WIDTH-1:0] l1_cache_4_2;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_4_3;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_4_3_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_4_3_r2;
+logic          din_csr_address_4_3;
+logic          din_csr_read_4_3;
+logic          din_csr_write_4_3;
+logic [31:0]   din_csr_readdata_4_3;
+logic [31:0]   din_csr_readdata_4_3_r1;
+logic [31:0]   din_csr_readdata_4_3_r2;
+logic [31:0]   din_csr_writedata_4_3;
 
 rule_s_t    l1_data_4_3;
 logic       l1_ready_4_3;
 logic       l1_valid_4_3;
 logic       l1_newdata_4_3;
 logic [RID_WIDTH-1:0] l1_cache_4_3;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_4_4;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_4_4_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_4_4_r2;
+logic          din_csr_address_4_4;
+logic          din_csr_read_4_4;
+logic          din_csr_write_4_4;
+logic [31:0]   din_csr_readdata_4_4;
+logic [31:0]   din_csr_readdata_4_4_r1;
+logic [31:0]   din_csr_readdata_4_4_r2;
+logic [31:0]   din_csr_writedata_4_4;
 
 rule_s_t    l1_data_4_4;
 logic       l1_ready_4_4;
 logic       l1_valid_4_4;
 logic       l1_newdata_4_4;
 logic [RID_WIDTH-1:0] l1_cache_4_4;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_4_5;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_4_5_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_4_5_r2;
+logic          din_csr_address_4_5;
+logic          din_csr_read_4_5;
+logic          din_csr_write_4_5;
+logic [31:0]   din_csr_readdata_4_5;
+logic [31:0]   din_csr_readdata_4_5_r1;
+logic [31:0]   din_csr_readdata_4_5_r2;
+logic [31:0]   din_csr_writedata_4_5;
 
 rule_s_t    l1_data_4_5;
 logic       l1_ready_4_5;
 logic       l1_valid_4_5;
 logic       l1_newdata_4_5;
 logic [RID_WIDTH-1:0] l1_cache_4_5;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_4_6;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_4_6_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_4_6_r2;
+logic          din_csr_address_4_6;
+logic          din_csr_read_4_6;
+logic          din_csr_write_4_6;
+logic [31:0]   din_csr_readdata_4_6;
+logic [31:0]   din_csr_readdata_4_6_r1;
+logic [31:0]   din_csr_readdata_4_6_r2;
+logic [31:0]   din_csr_writedata_4_6;
 
 rule_s_t    l1_data_4_6;
 logic       l1_ready_4_6;
 logic       l1_valid_4_6;
 logic       l1_newdata_4_6;
 logic [RID_WIDTH-1:0] l1_cache_4_6;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_4_7;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_4_7_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_4_7_r2;
+logic          din_csr_address_4_7;
+logic          din_csr_read_4_7;
+logic          din_csr_write_4_7;
+logic [31:0]   din_csr_readdata_4_7;
+logic [31:0]   din_csr_readdata_4_7_r1;
+logic [31:0]   din_csr_readdata_4_7_r2;
+logic [31:0]   din_csr_writedata_4_7;
 
 rule_s_t    l1_data_4_7;
 logic       l1_ready_4_7;
 logic       l1_valid_4_7;
 logic       l1_newdata_4_7;
 logic [RID_WIDTH-1:0] l1_cache_4_7;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_4_8;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_4_8_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_4_8_r2;
+logic          din_csr_address_4_8;
+logic          din_csr_read_4_8;
+logic          din_csr_write_4_8;
+logic [31:0]   din_csr_readdata_4_8;
+logic [31:0]   din_csr_readdata_4_8_r1;
+logic [31:0]   din_csr_readdata_4_8_r2;
+logic [31:0]   din_csr_writedata_4_8;
 
 rule_s_t    l1_data_4_8;
 logic       l1_ready_4_8;
 logic       l1_valid_4_8;
 logic       l1_newdata_4_8;
 logic [RID_WIDTH-1:0] l1_cache_4_8;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_4_9;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_4_9_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_4_9_r2;
+logic          din_csr_address_4_9;
+logic          din_csr_read_4_9;
+logic          din_csr_write_4_9;
+logic [31:0]   din_csr_readdata_4_9;
+logic [31:0]   din_csr_readdata_4_9_r1;
+logic [31:0]   din_csr_readdata_4_9_r2;
+logic [31:0]   din_csr_writedata_4_9;
 
 rule_s_t    l1_data_4_9;
 logic       l1_ready_4_9;
 logic       l1_valid_4_9;
 logic       l1_newdata_4_9;
 logic [RID_WIDTH-1:0] l1_cache_4_9;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_4_10;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_4_10_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_4_10_r2;
+logic          din_csr_address_4_10;
+logic          din_csr_read_4_10;
+logic          din_csr_write_4_10;
+logic [31:0]   din_csr_readdata_4_10;
+logic [31:0]   din_csr_readdata_4_10_r1;
+logic [31:0]   din_csr_readdata_4_10_r2;
+logic [31:0]   din_csr_writedata_4_10;
 
 rule_s_t    l1_data_4_10;
 logic       l1_ready_4_10;
 logic       l1_valid_4_10;
 logic       l1_newdata_4_10;
 logic [RID_WIDTH-1:0] l1_cache_4_10;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_4_11;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_4_11_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_4_11_r2;
+logic          din_csr_address_4_11;
+logic          din_csr_read_4_11;
+logic          din_csr_write_4_11;
+logic [31:0]   din_csr_readdata_4_11;
+logic [31:0]   din_csr_readdata_4_11_r1;
+logic [31:0]   din_csr_readdata_4_11_r2;
+logic [31:0]   din_csr_writedata_4_11;
 
 rule_s_t    l1_data_4_11;
 logic       l1_ready_4_11;
 logic       l1_valid_4_11;
 logic       l1_newdata_4_11;
 logic [RID_WIDTH-1:0] l1_cache_4_11;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_4_12;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_4_12_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_4_12_r2;
+logic          din_csr_address_4_12;
+logic          din_csr_read_4_12;
+logic          din_csr_write_4_12;
+logic [31:0]   din_csr_readdata_4_12;
+logic [31:0]   din_csr_readdata_4_12_r1;
+logic [31:0]   din_csr_readdata_4_12_r2;
+logic [31:0]   din_csr_writedata_4_12;
 
 rule_s_t    l1_data_4_12;
 logic       l1_ready_4_12;
 logic       l1_valid_4_12;
 logic       l1_newdata_4_12;
 logic [RID_WIDTH-1:0] l1_cache_4_12;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_4_13;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_4_13_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_4_13_r2;
+logic          din_csr_address_4_13;
+logic          din_csr_read_4_13;
+logic          din_csr_write_4_13;
+logic [31:0]   din_csr_readdata_4_13;
+logic [31:0]   din_csr_readdata_4_13_r1;
+logic [31:0]   din_csr_readdata_4_13_r2;
+logic [31:0]   din_csr_writedata_4_13;
 
 rule_s_t    l1_data_4_13;
 logic       l1_ready_4_13;
 logic       l1_valid_4_13;
 logic       l1_newdata_4_13;
 logic [RID_WIDTH-1:0] l1_cache_4_13;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_4_14;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_4_14_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_4_14_r2;
+logic          din_csr_address_4_14;
+logic          din_csr_read_4_14;
+logic          din_csr_write_4_14;
+logic [31:0]   din_csr_readdata_4_14;
+logic [31:0]   din_csr_readdata_4_14_r1;
+logic [31:0]   din_csr_readdata_4_14_r2;
+logic [31:0]   din_csr_writedata_4_14;
 
 rule_s_t    l1_data_4_14;
 logic       l1_ready_4_14;
 logic       l1_valid_4_14;
 logic       l1_newdata_4_14;
 logic [RID_WIDTH-1:0] l1_cache_4_14;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_4_15;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_4_15_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_4_15_r2;
+logic          din_csr_address_4_15;
+logic          din_csr_read_4_15;
+logic          din_csr_write_4_15;
+logic [31:0]   din_csr_readdata_4_15;
+logic [31:0]   din_csr_readdata_4_15_r1;
+logic [31:0]   din_csr_readdata_4_15_r2;
+logic [31:0]   din_csr_writedata_4_15;
 
 rule_s_t    l1_data_4_15;
 logic       l1_ready_4_15;
 logic       l1_valid_4_15;
 logic       l1_newdata_4_15;
 logic [RID_WIDTH-1:0] l1_cache_4_15;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_4_16;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_4_16_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_4_16_r2;
+logic          din_csr_address_4_16;
+logic          din_csr_read_4_16;
+logic          din_csr_write_4_16;
+logic [31:0]   din_csr_readdata_4_16;
+logic [31:0]   din_csr_readdata_4_16_r1;
+logic [31:0]   din_csr_readdata_4_16_r2;
+logic [31:0]   din_csr_writedata_4_16;
 
 rule_s_t    l1_data_4_16;
 logic       l1_ready_4_16;
 logic       l1_valid_4_16;
 logic       l1_newdata_4_16;
 logic [RID_WIDTH-1:0] l1_cache_4_16;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_4_17;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_4_17_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_4_17_r2;
+logic          din_csr_address_4_17;
+logic          din_csr_read_4_17;
+logic          din_csr_write_4_17;
+logic [31:0]   din_csr_readdata_4_17;
+logic [31:0]   din_csr_readdata_4_17_r1;
+logic [31:0]   din_csr_readdata_4_17_r2;
+logic [31:0]   din_csr_writedata_4_17;
 
 rule_s_t    l1_data_4_17;
 logic       l1_ready_4_17;
 logic       l1_valid_4_17;
 logic       l1_newdata_4_17;
 logic [RID_WIDTH-1:0] l1_cache_4_17;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_4_18;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_4_18_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_4_18_r2;
+logic          din_csr_address_4_18;
+logic          din_csr_read_4_18;
+logic          din_csr_write_4_18;
+logic [31:0]   din_csr_readdata_4_18;
+logic [31:0]   din_csr_readdata_4_18_r1;
+logic [31:0]   din_csr_readdata_4_18_r2;
+logic [31:0]   din_csr_writedata_4_18;
 
 rule_s_t    l1_data_4_18;
 logic       l1_ready_4_18;
 logic       l1_valid_4_18;
 logic       l1_newdata_4_18;
 logic [RID_WIDTH-1:0] l1_cache_4_18;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_4_19;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_4_19_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_4_19_r2;
+logic          din_csr_address_4_19;
+logic          din_csr_read_4_19;
+logic          din_csr_write_4_19;
+logic [31:0]   din_csr_readdata_4_19;
+logic [31:0]   din_csr_readdata_4_19_r1;
+logic [31:0]   din_csr_readdata_4_19_r2;
+logic [31:0]   din_csr_writedata_4_19;
 
 rule_s_t    l1_data_4_19;
 logic       l1_ready_4_19;
 logic       l1_valid_4_19;
 logic       l1_newdata_4_19;
 logic [RID_WIDTH-1:0] l1_cache_4_19;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_4_20;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_4_20_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_4_20_r2;
+logic          din_csr_address_4_20;
+logic          din_csr_read_4_20;
+logic          din_csr_write_4_20;
+logic [31:0]   din_csr_readdata_4_20;
+logic [31:0]   din_csr_readdata_4_20_r1;
+logic [31:0]   din_csr_readdata_4_20_r2;
+logic [31:0]   din_csr_writedata_4_20;
 
 rule_s_t    l1_data_4_20;
 logic       l1_ready_4_20;
 logic       l1_valid_4_20;
 logic       l1_newdata_4_20;
 logic [RID_WIDTH-1:0] l1_cache_4_20;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_4_21;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_4_21_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_4_21_r2;
+logic          din_csr_address_4_21;
+logic          din_csr_read_4_21;
+logic          din_csr_write_4_21;
+logic [31:0]   din_csr_readdata_4_21;
+logic [31:0]   din_csr_readdata_4_21_r1;
+logic [31:0]   din_csr_readdata_4_21_r2;
+logic [31:0]   din_csr_writedata_4_21;
 
 rule_s_t    l1_data_4_21;
 logic       l1_ready_4_21;
 logic       l1_valid_4_21;
 logic       l1_newdata_4_21;
 logic [RID_WIDTH-1:0] l1_cache_4_21;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_4_22;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_4_22_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_4_22_r2;
+logic          din_csr_address_4_22;
+logic          din_csr_read_4_22;
+logic          din_csr_write_4_22;
+logic [31:0]   din_csr_readdata_4_22;
+logic [31:0]   din_csr_readdata_4_22_r1;
+logic [31:0]   din_csr_readdata_4_22_r2;
+logic [31:0]   din_csr_writedata_4_22;
 
 rule_s_t    l1_data_4_22;
 logic       l1_ready_4_22;
 logic       l1_valid_4_22;
 logic       l1_newdata_4_22;
 logic [RID_WIDTH-1:0] l1_cache_4_22;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_4_23;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_4_23_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_4_23_r2;
+logic          din_csr_address_4_23;
+logic          din_csr_read_4_23;
+logic          din_csr_write_4_23;
+logic [31:0]   din_csr_readdata_4_23;
+logic [31:0]   din_csr_readdata_4_23_r1;
+logic [31:0]   din_csr_readdata_4_23_r2;
+logic [31:0]   din_csr_writedata_4_23;
 
 rule_s_t    l1_data_4_23;
 logic       l1_ready_4_23;
 logic       l1_valid_4_23;
 logic       l1_newdata_4_23;
 logic [RID_WIDTH-1:0] l1_cache_4_23;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_4_24;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_4_24_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_4_24_r2;
+logic          din_csr_address_4_24;
+logic          din_csr_read_4_24;
+logic          din_csr_write_4_24;
+logic [31:0]   din_csr_readdata_4_24;
+logic [31:0]   din_csr_readdata_4_24_r1;
+logic [31:0]   din_csr_readdata_4_24_r2;
+logic [31:0]   din_csr_writedata_4_24;
 
 rule_s_t    l1_data_4_24;
 logic       l1_ready_4_24;
 logic       l1_valid_4_24;
 logic       l1_newdata_4_24;
 logic [RID_WIDTH-1:0] l1_cache_4_24;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_4_25;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_4_25_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_4_25_r2;
+logic          din_csr_address_4_25;
+logic          din_csr_read_4_25;
+logic          din_csr_write_4_25;
+logic [31:0]   din_csr_readdata_4_25;
+logic [31:0]   din_csr_readdata_4_25_r1;
+logic [31:0]   din_csr_readdata_4_25_r2;
+logic [31:0]   din_csr_writedata_4_25;
 
 rule_s_t    l1_data_4_25;
 logic       l1_ready_4_25;
 logic       l1_valid_4_25;
 logic       l1_newdata_4_25;
 logic [RID_WIDTH-1:0] l1_cache_4_25;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_4_26;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_4_26_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_4_26_r2;
+logic          din_csr_address_4_26;
+logic          din_csr_read_4_26;
+logic          din_csr_write_4_26;
+logic [31:0]   din_csr_readdata_4_26;
+logic [31:0]   din_csr_readdata_4_26_r1;
+logic [31:0]   din_csr_readdata_4_26_r2;
+logic [31:0]   din_csr_writedata_4_26;
 
 rule_s_t    l1_data_4_26;
 logic       l1_ready_4_26;
 logic       l1_valid_4_26;
 logic       l1_newdata_4_26;
 logic [RID_WIDTH-1:0] l1_cache_4_26;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_4_27;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_4_27_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_4_27_r2;
+logic          din_csr_address_4_27;
+logic          din_csr_read_4_27;
+logic          din_csr_write_4_27;
+logic [31:0]   din_csr_readdata_4_27;
+logic [31:0]   din_csr_readdata_4_27_r1;
+logic [31:0]   din_csr_readdata_4_27_r2;
+logic [31:0]   din_csr_writedata_4_27;
 
 rule_s_t    l1_data_4_27;
 logic       l1_ready_4_27;
 logic       l1_valid_4_27;
 logic       l1_newdata_4_27;
 logic [RID_WIDTH-1:0] l1_cache_4_27;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_4_28;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_4_28_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_4_28_r2;
+logic          din_csr_address_4_28;
+logic          din_csr_read_4_28;
+logic          din_csr_write_4_28;
+logic [31:0]   din_csr_readdata_4_28;
+logic [31:0]   din_csr_readdata_4_28_r1;
+logic [31:0]   din_csr_readdata_4_28_r2;
+logic [31:0]   din_csr_writedata_4_28;
 
 rule_s_t    l1_data_4_28;
 logic       l1_ready_4_28;
 logic       l1_valid_4_28;
 logic       l1_newdata_4_28;
 logic [RID_WIDTH-1:0] l1_cache_4_28;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_4_29;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_4_29_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_4_29_r2;
+logic          din_csr_address_4_29;
+logic          din_csr_read_4_29;
+logic          din_csr_write_4_29;
+logic [31:0]   din_csr_readdata_4_29;
+logic [31:0]   din_csr_readdata_4_29_r1;
+logic [31:0]   din_csr_readdata_4_29_r2;
+logic [31:0]   din_csr_writedata_4_29;
 
 rule_s_t    l1_data_4_29;
 logic       l1_ready_4_29;
 logic       l1_valid_4_29;
 logic       l1_newdata_4_29;
 logic [RID_WIDTH-1:0] l1_cache_4_29;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_4_30;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_4_30_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_4_30_r2;
+logic          din_csr_address_4_30;
+logic          din_csr_read_4_30;
+logic          din_csr_write_4_30;
+logic [31:0]   din_csr_readdata_4_30;
+logic [31:0]   din_csr_readdata_4_30_r1;
+logic [31:0]   din_csr_readdata_4_30_r2;
+logic [31:0]   din_csr_writedata_4_30;
 
 rule_s_t    l1_data_4_30;
 logic       l1_ready_4_30;
 logic       l1_valid_4_30;
 logic       l1_newdata_4_30;
 logic [RID_WIDTH-1:0] l1_cache_4_30;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_4_31;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_4_31_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_4_31_r2;
+logic          din_csr_address_4_31;
+logic          din_csr_read_4_31;
+logic          din_csr_write_4_31;
+logic [31:0]   din_csr_readdata_4_31;
+logic [31:0]   din_csr_readdata_4_31_r1;
+logic [31:0]   din_csr_readdata_4_31_r2;
+logic [31:0]   din_csr_writedata_4_31;
 
 rule_s_t    l1_data_4_31;
 logic       l1_ready_4_31;
 logic       l1_valid_4_31;
 logic       l1_newdata_4_31;
 logic [RID_WIDTH-1:0] l1_cache_4_31;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_5_0;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_5_0_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_5_0_r2;
+logic          din_csr_address_5_0;
+logic          din_csr_read_5_0;
+logic          din_csr_write_5_0;
+logic [31:0]   din_csr_readdata_5_0;
+logic [31:0]   din_csr_readdata_5_0_r1;
+logic [31:0]   din_csr_readdata_5_0_r2;
+logic [31:0]   din_csr_writedata_5_0;
 
 rule_s_t    l1_data_5_0;
 logic       l1_ready_5_0;
 logic       l1_valid_5_0;
 logic       l1_newdata_5_0;
 logic [RID_WIDTH-1:0] l1_cache_5_0;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_5_1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_5_1_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_5_1_r2;
+logic          din_csr_address_5_1;
+logic          din_csr_read_5_1;
+logic          din_csr_write_5_1;
+logic [31:0]   din_csr_readdata_5_1;
+logic [31:0]   din_csr_readdata_5_1_r1;
+logic [31:0]   din_csr_readdata_5_1_r2;
+logic [31:0]   din_csr_writedata_5_1;
 
 rule_s_t    l1_data_5_1;
 logic       l1_ready_5_1;
 logic       l1_valid_5_1;
 logic       l1_newdata_5_1;
 logic [RID_WIDTH-1:0] l1_cache_5_1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_5_2;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_5_2_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_5_2_r2;
+logic          din_csr_address_5_2;
+logic          din_csr_read_5_2;
+logic          din_csr_write_5_2;
+logic [31:0]   din_csr_readdata_5_2;
+logic [31:0]   din_csr_readdata_5_2_r1;
+logic [31:0]   din_csr_readdata_5_2_r2;
+logic [31:0]   din_csr_writedata_5_2;
 
 rule_s_t    l1_data_5_2;
 logic       l1_ready_5_2;
 logic       l1_valid_5_2;
 logic       l1_newdata_5_2;
 logic [RID_WIDTH-1:0] l1_cache_5_2;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_5_3;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_5_3_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_5_3_r2;
+logic          din_csr_address_5_3;
+logic          din_csr_read_5_3;
+logic          din_csr_write_5_3;
+logic [31:0]   din_csr_readdata_5_3;
+logic [31:0]   din_csr_readdata_5_3_r1;
+logic [31:0]   din_csr_readdata_5_3_r2;
+logic [31:0]   din_csr_writedata_5_3;
 
 rule_s_t    l1_data_5_3;
 logic       l1_ready_5_3;
 logic       l1_valid_5_3;
 logic       l1_newdata_5_3;
 logic [RID_WIDTH-1:0] l1_cache_5_3;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_5_4;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_5_4_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_5_4_r2;
+logic          din_csr_address_5_4;
+logic          din_csr_read_5_4;
+logic          din_csr_write_5_4;
+logic [31:0]   din_csr_readdata_5_4;
+logic [31:0]   din_csr_readdata_5_4_r1;
+logic [31:0]   din_csr_readdata_5_4_r2;
+logic [31:0]   din_csr_writedata_5_4;
 
 rule_s_t    l1_data_5_4;
 logic       l1_ready_5_4;
 logic       l1_valid_5_4;
 logic       l1_newdata_5_4;
 logic [RID_WIDTH-1:0] l1_cache_5_4;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_5_5;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_5_5_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_5_5_r2;
+logic          din_csr_address_5_5;
+logic          din_csr_read_5_5;
+logic          din_csr_write_5_5;
+logic [31:0]   din_csr_readdata_5_5;
+logic [31:0]   din_csr_readdata_5_5_r1;
+logic [31:0]   din_csr_readdata_5_5_r2;
+logic [31:0]   din_csr_writedata_5_5;
 
 rule_s_t    l1_data_5_5;
 logic       l1_ready_5_5;
 logic       l1_valid_5_5;
 logic       l1_newdata_5_5;
 logic [RID_WIDTH-1:0] l1_cache_5_5;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_5_6;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_5_6_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_5_6_r2;
+logic          din_csr_address_5_6;
+logic          din_csr_read_5_6;
+logic          din_csr_write_5_6;
+logic [31:0]   din_csr_readdata_5_6;
+logic [31:0]   din_csr_readdata_5_6_r1;
+logic [31:0]   din_csr_readdata_5_6_r2;
+logic [31:0]   din_csr_writedata_5_6;
 
 rule_s_t    l1_data_5_6;
 logic       l1_ready_5_6;
 logic       l1_valid_5_6;
 logic       l1_newdata_5_6;
 logic [RID_WIDTH-1:0] l1_cache_5_6;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_5_7;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_5_7_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_5_7_r2;
+logic          din_csr_address_5_7;
+logic          din_csr_read_5_7;
+logic          din_csr_write_5_7;
+logic [31:0]   din_csr_readdata_5_7;
+logic [31:0]   din_csr_readdata_5_7_r1;
+logic [31:0]   din_csr_readdata_5_7_r2;
+logic [31:0]   din_csr_writedata_5_7;
 
 rule_s_t    l1_data_5_7;
 logic       l1_ready_5_7;
 logic       l1_valid_5_7;
 logic       l1_newdata_5_7;
 logic [RID_WIDTH-1:0] l1_cache_5_7;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_5_8;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_5_8_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_5_8_r2;
+logic          din_csr_address_5_8;
+logic          din_csr_read_5_8;
+logic          din_csr_write_5_8;
+logic [31:0]   din_csr_readdata_5_8;
+logic [31:0]   din_csr_readdata_5_8_r1;
+logic [31:0]   din_csr_readdata_5_8_r2;
+logic [31:0]   din_csr_writedata_5_8;
 
 rule_s_t    l1_data_5_8;
 logic       l1_ready_5_8;
 logic       l1_valid_5_8;
 logic       l1_newdata_5_8;
 logic [RID_WIDTH-1:0] l1_cache_5_8;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_5_9;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_5_9_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_5_9_r2;
+logic          din_csr_address_5_9;
+logic          din_csr_read_5_9;
+logic          din_csr_write_5_9;
+logic [31:0]   din_csr_readdata_5_9;
+logic [31:0]   din_csr_readdata_5_9_r1;
+logic [31:0]   din_csr_readdata_5_9_r2;
+logic [31:0]   din_csr_writedata_5_9;
 
 rule_s_t    l1_data_5_9;
 logic       l1_ready_5_9;
 logic       l1_valid_5_9;
 logic       l1_newdata_5_9;
 logic [RID_WIDTH-1:0] l1_cache_5_9;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_5_10;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_5_10_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_5_10_r2;
+logic          din_csr_address_5_10;
+logic          din_csr_read_5_10;
+logic          din_csr_write_5_10;
+logic [31:0]   din_csr_readdata_5_10;
+logic [31:0]   din_csr_readdata_5_10_r1;
+logic [31:0]   din_csr_readdata_5_10_r2;
+logic [31:0]   din_csr_writedata_5_10;
 
 rule_s_t    l1_data_5_10;
 logic       l1_ready_5_10;
 logic       l1_valid_5_10;
 logic       l1_newdata_5_10;
 logic [RID_WIDTH-1:0] l1_cache_5_10;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_5_11;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_5_11_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_5_11_r2;
+logic          din_csr_address_5_11;
+logic          din_csr_read_5_11;
+logic          din_csr_write_5_11;
+logic [31:0]   din_csr_readdata_5_11;
+logic [31:0]   din_csr_readdata_5_11_r1;
+logic [31:0]   din_csr_readdata_5_11_r2;
+logic [31:0]   din_csr_writedata_5_11;
 
 rule_s_t    l1_data_5_11;
 logic       l1_ready_5_11;
 logic       l1_valid_5_11;
 logic       l1_newdata_5_11;
 logic [RID_WIDTH-1:0] l1_cache_5_11;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_5_12;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_5_12_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_5_12_r2;
+logic          din_csr_address_5_12;
+logic          din_csr_read_5_12;
+logic          din_csr_write_5_12;
+logic [31:0]   din_csr_readdata_5_12;
+logic [31:0]   din_csr_readdata_5_12_r1;
+logic [31:0]   din_csr_readdata_5_12_r2;
+logic [31:0]   din_csr_writedata_5_12;
 
 rule_s_t    l1_data_5_12;
 logic       l1_ready_5_12;
 logic       l1_valid_5_12;
 logic       l1_newdata_5_12;
 logic [RID_WIDTH-1:0] l1_cache_5_12;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_5_13;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_5_13_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_5_13_r2;
+logic          din_csr_address_5_13;
+logic          din_csr_read_5_13;
+logic          din_csr_write_5_13;
+logic [31:0]   din_csr_readdata_5_13;
+logic [31:0]   din_csr_readdata_5_13_r1;
+logic [31:0]   din_csr_readdata_5_13_r2;
+logic [31:0]   din_csr_writedata_5_13;
 
 rule_s_t    l1_data_5_13;
 logic       l1_ready_5_13;
 logic       l1_valid_5_13;
 logic       l1_newdata_5_13;
 logic [RID_WIDTH-1:0] l1_cache_5_13;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_5_14;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_5_14_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_5_14_r2;
+logic          din_csr_address_5_14;
+logic          din_csr_read_5_14;
+logic          din_csr_write_5_14;
+logic [31:0]   din_csr_readdata_5_14;
+logic [31:0]   din_csr_readdata_5_14_r1;
+logic [31:0]   din_csr_readdata_5_14_r2;
+logic [31:0]   din_csr_writedata_5_14;
 
 rule_s_t    l1_data_5_14;
 logic       l1_ready_5_14;
 logic       l1_valid_5_14;
 logic       l1_newdata_5_14;
 logic [RID_WIDTH-1:0] l1_cache_5_14;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_5_15;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_5_15_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_5_15_r2;
+logic          din_csr_address_5_15;
+logic          din_csr_read_5_15;
+logic          din_csr_write_5_15;
+logic [31:0]   din_csr_readdata_5_15;
+logic [31:0]   din_csr_readdata_5_15_r1;
+logic [31:0]   din_csr_readdata_5_15_r2;
+logic [31:0]   din_csr_writedata_5_15;
 
 rule_s_t    l1_data_5_15;
 logic       l1_ready_5_15;
 logic       l1_valid_5_15;
 logic       l1_newdata_5_15;
 logic [RID_WIDTH-1:0] l1_cache_5_15;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_5_16;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_5_16_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_5_16_r2;
+logic          din_csr_address_5_16;
+logic          din_csr_read_5_16;
+logic          din_csr_write_5_16;
+logic [31:0]   din_csr_readdata_5_16;
+logic [31:0]   din_csr_readdata_5_16_r1;
+logic [31:0]   din_csr_readdata_5_16_r2;
+logic [31:0]   din_csr_writedata_5_16;
 
 rule_s_t    l1_data_5_16;
 logic       l1_ready_5_16;
 logic       l1_valid_5_16;
 logic       l1_newdata_5_16;
 logic [RID_WIDTH-1:0] l1_cache_5_16;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_5_17;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_5_17_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_5_17_r2;
+logic          din_csr_address_5_17;
+logic          din_csr_read_5_17;
+logic          din_csr_write_5_17;
+logic [31:0]   din_csr_readdata_5_17;
+logic [31:0]   din_csr_readdata_5_17_r1;
+logic [31:0]   din_csr_readdata_5_17_r2;
+logic [31:0]   din_csr_writedata_5_17;
 
 rule_s_t    l1_data_5_17;
 logic       l1_ready_5_17;
 logic       l1_valid_5_17;
 logic       l1_newdata_5_17;
 logic [RID_WIDTH-1:0] l1_cache_5_17;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_5_18;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_5_18_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_5_18_r2;
+logic          din_csr_address_5_18;
+logic          din_csr_read_5_18;
+logic          din_csr_write_5_18;
+logic [31:0]   din_csr_readdata_5_18;
+logic [31:0]   din_csr_readdata_5_18_r1;
+logic [31:0]   din_csr_readdata_5_18_r2;
+logic [31:0]   din_csr_writedata_5_18;
 
 rule_s_t    l1_data_5_18;
 logic       l1_ready_5_18;
 logic       l1_valid_5_18;
 logic       l1_newdata_5_18;
 logic [RID_WIDTH-1:0] l1_cache_5_18;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_5_19;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_5_19_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_5_19_r2;
+logic          din_csr_address_5_19;
+logic          din_csr_read_5_19;
+logic          din_csr_write_5_19;
+logic [31:0]   din_csr_readdata_5_19;
+logic [31:0]   din_csr_readdata_5_19_r1;
+logic [31:0]   din_csr_readdata_5_19_r2;
+logic [31:0]   din_csr_writedata_5_19;
 
 rule_s_t    l1_data_5_19;
 logic       l1_ready_5_19;
 logic       l1_valid_5_19;
 logic       l1_newdata_5_19;
 logic [RID_WIDTH-1:0] l1_cache_5_19;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_5_20;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_5_20_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_5_20_r2;
+logic          din_csr_address_5_20;
+logic          din_csr_read_5_20;
+logic          din_csr_write_5_20;
+logic [31:0]   din_csr_readdata_5_20;
+logic [31:0]   din_csr_readdata_5_20_r1;
+logic [31:0]   din_csr_readdata_5_20_r2;
+logic [31:0]   din_csr_writedata_5_20;
 
 rule_s_t    l1_data_5_20;
 logic       l1_ready_5_20;
 logic       l1_valid_5_20;
 logic       l1_newdata_5_20;
 logic [RID_WIDTH-1:0] l1_cache_5_20;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_5_21;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_5_21_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_5_21_r2;
+logic          din_csr_address_5_21;
+logic          din_csr_read_5_21;
+logic          din_csr_write_5_21;
+logic [31:0]   din_csr_readdata_5_21;
+logic [31:0]   din_csr_readdata_5_21_r1;
+logic [31:0]   din_csr_readdata_5_21_r2;
+logic [31:0]   din_csr_writedata_5_21;
 
 rule_s_t    l1_data_5_21;
 logic       l1_ready_5_21;
 logic       l1_valid_5_21;
 logic       l1_newdata_5_21;
 logic [RID_WIDTH-1:0] l1_cache_5_21;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_5_22;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_5_22_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_5_22_r2;
+logic          din_csr_address_5_22;
+logic          din_csr_read_5_22;
+logic          din_csr_write_5_22;
+logic [31:0]   din_csr_readdata_5_22;
+logic [31:0]   din_csr_readdata_5_22_r1;
+logic [31:0]   din_csr_readdata_5_22_r2;
+logic [31:0]   din_csr_writedata_5_22;
 
 rule_s_t    l1_data_5_22;
 logic       l1_ready_5_22;
 logic       l1_valid_5_22;
 logic       l1_newdata_5_22;
 logic [RID_WIDTH-1:0] l1_cache_5_22;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_5_23;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_5_23_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_5_23_r2;
+logic          din_csr_address_5_23;
+logic          din_csr_read_5_23;
+logic          din_csr_write_5_23;
+logic [31:0]   din_csr_readdata_5_23;
+logic [31:0]   din_csr_readdata_5_23_r1;
+logic [31:0]   din_csr_readdata_5_23_r2;
+logic [31:0]   din_csr_writedata_5_23;
 
 rule_s_t    l1_data_5_23;
 logic       l1_ready_5_23;
 logic       l1_valid_5_23;
 logic       l1_newdata_5_23;
 logic [RID_WIDTH-1:0] l1_cache_5_23;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_5_24;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_5_24_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_5_24_r2;
+logic          din_csr_address_5_24;
+logic          din_csr_read_5_24;
+logic          din_csr_write_5_24;
+logic [31:0]   din_csr_readdata_5_24;
+logic [31:0]   din_csr_readdata_5_24_r1;
+logic [31:0]   din_csr_readdata_5_24_r2;
+logic [31:0]   din_csr_writedata_5_24;
 
 rule_s_t    l1_data_5_24;
 logic       l1_ready_5_24;
 logic       l1_valid_5_24;
 logic       l1_newdata_5_24;
 logic [RID_WIDTH-1:0] l1_cache_5_24;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_5_25;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_5_25_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_5_25_r2;
+logic          din_csr_address_5_25;
+logic          din_csr_read_5_25;
+logic          din_csr_write_5_25;
+logic [31:0]   din_csr_readdata_5_25;
+logic [31:0]   din_csr_readdata_5_25_r1;
+logic [31:0]   din_csr_readdata_5_25_r2;
+logic [31:0]   din_csr_writedata_5_25;
 
 rule_s_t    l1_data_5_25;
 logic       l1_ready_5_25;
 logic       l1_valid_5_25;
 logic       l1_newdata_5_25;
 logic [RID_WIDTH-1:0] l1_cache_5_25;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_5_26;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_5_26_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_5_26_r2;
+logic          din_csr_address_5_26;
+logic          din_csr_read_5_26;
+logic          din_csr_write_5_26;
+logic [31:0]   din_csr_readdata_5_26;
+logic [31:0]   din_csr_readdata_5_26_r1;
+logic [31:0]   din_csr_readdata_5_26_r2;
+logic [31:0]   din_csr_writedata_5_26;
 
 rule_s_t    l1_data_5_26;
 logic       l1_ready_5_26;
 logic       l1_valid_5_26;
 logic       l1_newdata_5_26;
 logic [RID_WIDTH-1:0] l1_cache_5_26;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_5_27;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_5_27_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_5_27_r2;
+logic          din_csr_address_5_27;
+logic          din_csr_read_5_27;
+logic          din_csr_write_5_27;
+logic [31:0]   din_csr_readdata_5_27;
+logic [31:0]   din_csr_readdata_5_27_r1;
+logic [31:0]   din_csr_readdata_5_27_r2;
+logic [31:0]   din_csr_writedata_5_27;
 
 rule_s_t    l1_data_5_27;
 logic       l1_ready_5_27;
 logic       l1_valid_5_27;
 logic       l1_newdata_5_27;
 logic [RID_WIDTH-1:0] l1_cache_5_27;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_5_28;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_5_28_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_5_28_r2;
+logic          din_csr_address_5_28;
+logic          din_csr_read_5_28;
+logic          din_csr_write_5_28;
+logic [31:0]   din_csr_readdata_5_28;
+logic [31:0]   din_csr_readdata_5_28_r1;
+logic [31:0]   din_csr_readdata_5_28_r2;
+logic [31:0]   din_csr_writedata_5_28;
 
 rule_s_t    l1_data_5_28;
 logic       l1_ready_5_28;
 logic       l1_valid_5_28;
 logic       l1_newdata_5_28;
 logic [RID_WIDTH-1:0] l1_cache_5_28;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_5_29;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_5_29_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_5_29_r2;
+logic          din_csr_address_5_29;
+logic          din_csr_read_5_29;
+logic          din_csr_write_5_29;
+logic [31:0]   din_csr_readdata_5_29;
+logic [31:0]   din_csr_readdata_5_29_r1;
+logic [31:0]   din_csr_readdata_5_29_r2;
+logic [31:0]   din_csr_writedata_5_29;
 
 rule_s_t    l1_data_5_29;
 logic       l1_ready_5_29;
 logic       l1_valid_5_29;
 logic       l1_newdata_5_29;
 logic [RID_WIDTH-1:0] l1_cache_5_29;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_5_30;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_5_30_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_5_30_r2;
+logic          din_csr_address_5_30;
+logic          din_csr_read_5_30;
+logic          din_csr_write_5_30;
+logic [31:0]   din_csr_readdata_5_30;
+logic [31:0]   din_csr_readdata_5_30_r1;
+logic [31:0]   din_csr_readdata_5_30_r2;
+logic [31:0]   din_csr_writedata_5_30;
 
 rule_s_t    l1_data_5_30;
 logic       l1_ready_5_30;
 logic       l1_valid_5_30;
 logic       l1_newdata_5_30;
 logic [RID_WIDTH-1:0] l1_cache_5_30;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_5_31;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_5_31_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_5_31_r2;
+logic          din_csr_address_5_31;
+logic          din_csr_read_5_31;
+logic          din_csr_write_5_31;
+logic [31:0]   din_csr_readdata_5_31;
+logic [31:0]   din_csr_readdata_5_31_r1;
+logic [31:0]   din_csr_readdata_5_31_r2;
+logic [31:0]   din_csr_writedata_5_31;
 
 rule_s_t    l1_data_5_31;
 logic       l1_ready_5_31;
 logic       l1_valid_5_31;
 logic       l1_newdata_5_31;
 logic [RID_WIDTH-1:0] l1_cache_5_31;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_6_0;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_6_0_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_6_0_r2;
+logic          din_csr_address_6_0;
+logic          din_csr_read_6_0;
+logic          din_csr_write_6_0;
+logic [31:0]   din_csr_readdata_6_0;
+logic [31:0]   din_csr_readdata_6_0_r1;
+logic [31:0]   din_csr_readdata_6_0_r2;
+logic [31:0]   din_csr_writedata_6_0;
 
 rule_s_t    l1_data_6_0;
 logic       l1_ready_6_0;
 logic       l1_valid_6_0;
 logic       l1_newdata_6_0;
 logic [RID_WIDTH-1:0] l1_cache_6_0;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_6_1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_6_1_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_6_1_r2;
+logic          din_csr_address_6_1;
+logic          din_csr_read_6_1;
+logic          din_csr_write_6_1;
+logic [31:0]   din_csr_readdata_6_1;
+logic [31:0]   din_csr_readdata_6_1_r1;
+logic [31:0]   din_csr_readdata_6_1_r2;
+logic [31:0]   din_csr_writedata_6_1;
 
 rule_s_t    l1_data_6_1;
 logic       l1_ready_6_1;
 logic       l1_valid_6_1;
 logic       l1_newdata_6_1;
 logic [RID_WIDTH-1:0] l1_cache_6_1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_6_2;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_6_2_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_6_2_r2;
+logic          din_csr_address_6_2;
+logic          din_csr_read_6_2;
+logic          din_csr_write_6_2;
+logic [31:0]   din_csr_readdata_6_2;
+logic [31:0]   din_csr_readdata_6_2_r1;
+logic [31:0]   din_csr_readdata_6_2_r2;
+logic [31:0]   din_csr_writedata_6_2;
 
 rule_s_t    l1_data_6_2;
 logic       l1_ready_6_2;
 logic       l1_valid_6_2;
 logic       l1_newdata_6_2;
 logic [RID_WIDTH-1:0] l1_cache_6_2;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_6_3;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_6_3_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_6_3_r2;
+logic          din_csr_address_6_3;
+logic          din_csr_read_6_3;
+logic          din_csr_write_6_3;
+logic [31:0]   din_csr_readdata_6_3;
+logic [31:0]   din_csr_readdata_6_3_r1;
+logic [31:0]   din_csr_readdata_6_3_r2;
+logic [31:0]   din_csr_writedata_6_3;
 
 rule_s_t    l1_data_6_3;
 logic       l1_ready_6_3;
 logic       l1_valid_6_3;
 logic       l1_newdata_6_3;
 logic [RID_WIDTH-1:0] l1_cache_6_3;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_6_4;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_6_4_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_6_4_r2;
+logic          din_csr_address_6_4;
+logic          din_csr_read_6_4;
+logic          din_csr_write_6_4;
+logic [31:0]   din_csr_readdata_6_4;
+logic [31:0]   din_csr_readdata_6_4_r1;
+logic [31:0]   din_csr_readdata_6_4_r2;
+logic [31:0]   din_csr_writedata_6_4;
 
 rule_s_t    l1_data_6_4;
 logic       l1_ready_6_4;
 logic       l1_valid_6_4;
 logic       l1_newdata_6_4;
 logic [RID_WIDTH-1:0] l1_cache_6_4;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_6_5;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_6_5_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_6_5_r2;
+logic          din_csr_address_6_5;
+logic          din_csr_read_6_5;
+logic          din_csr_write_6_5;
+logic [31:0]   din_csr_readdata_6_5;
+logic [31:0]   din_csr_readdata_6_5_r1;
+logic [31:0]   din_csr_readdata_6_5_r2;
+logic [31:0]   din_csr_writedata_6_5;
 
 rule_s_t    l1_data_6_5;
 logic       l1_ready_6_5;
 logic       l1_valid_6_5;
 logic       l1_newdata_6_5;
 logic [RID_WIDTH-1:0] l1_cache_6_5;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_6_6;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_6_6_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_6_6_r2;
+logic          din_csr_address_6_6;
+logic          din_csr_read_6_6;
+logic          din_csr_write_6_6;
+logic [31:0]   din_csr_readdata_6_6;
+logic [31:0]   din_csr_readdata_6_6_r1;
+logic [31:0]   din_csr_readdata_6_6_r2;
+logic [31:0]   din_csr_writedata_6_6;
 
 rule_s_t    l1_data_6_6;
 logic       l1_ready_6_6;
 logic       l1_valid_6_6;
 logic       l1_newdata_6_6;
 logic [RID_WIDTH-1:0] l1_cache_6_6;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_6_7;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_6_7_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_6_7_r2;
+logic          din_csr_address_6_7;
+logic          din_csr_read_6_7;
+logic          din_csr_write_6_7;
+logic [31:0]   din_csr_readdata_6_7;
+logic [31:0]   din_csr_readdata_6_7_r1;
+logic [31:0]   din_csr_readdata_6_7_r2;
+logic [31:0]   din_csr_writedata_6_7;
 
 rule_s_t    l1_data_6_7;
 logic       l1_ready_6_7;
 logic       l1_valid_6_7;
 logic       l1_newdata_6_7;
 logic [RID_WIDTH-1:0] l1_cache_6_7;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_6_8;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_6_8_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_6_8_r2;
+logic          din_csr_address_6_8;
+logic          din_csr_read_6_8;
+logic          din_csr_write_6_8;
+logic [31:0]   din_csr_readdata_6_8;
+logic [31:0]   din_csr_readdata_6_8_r1;
+logic [31:0]   din_csr_readdata_6_8_r2;
+logic [31:0]   din_csr_writedata_6_8;
 
 rule_s_t    l1_data_6_8;
 logic       l1_ready_6_8;
 logic       l1_valid_6_8;
 logic       l1_newdata_6_8;
 logic [RID_WIDTH-1:0] l1_cache_6_8;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_6_9;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_6_9_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_6_9_r2;
+logic          din_csr_address_6_9;
+logic          din_csr_read_6_9;
+logic          din_csr_write_6_9;
+logic [31:0]   din_csr_readdata_6_9;
+logic [31:0]   din_csr_readdata_6_9_r1;
+logic [31:0]   din_csr_readdata_6_9_r2;
+logic [31:0]   din_csr_writedata_6_9;
 
 rule_s_t    l1_data_6_9;
 logic       l1_ready_6_9;
 logic       l1_valid_6_9;
 logic       l1_newdata_6_9;
 logic [RID_WIDTH-1:0] l1_cache_6_9;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_6_10;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_6_10_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_6_10_r2;
+logic          din_csr_address_6_10;
+logic          din_csr_read_6_10;
+logic          din_csr_write_6_10;
+logic [31:0]   din_csr_readdata_6_10;
+logic [31:0]   din_csr_readdata_6_10_r1;
+logic [31:0]   din_csr_readdata_6_10_r2;
+logic [31:0]   din_csr_writedata_6_10;
 
 rule_s_t    l1_data_6_10;
 logic       l1_ready_6_10;
 logic       l1_valid_6_10;
 logic       l1_newdata_6_10;
 logic [RID_WIDTH-1:0] l1_cache_6_10;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_6_11;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_6_11_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_6_11_r2;
+logic          din_csr_address_6_11;
+logic          din_csr_read_6_11;
+logic          din_csr_write_6_11;
+logic [31:0]   din_csr_readdata_6_11;
+logic [31:0]   din_csr_readdata_6_11_r1;
+logic [31:0]   din_csr_readdata_6_11_r2;
+logic [31:0]   din_csr_writedata_6_11;
 
 rule_s_t    l1_data_6_11;
 logic       l1_ready_6_11;
 logic       l1_valid_6_11;
 logic       l1_newdata_6_11;
 logic [RID_WIDTH-1:0] l1_cache_6_11;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_6_12;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_6_12_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_6_12_r2;
+logic          din_csr_address_6_12;
+logic          din_csr_read_6_12;
+logic          din_csr_write_6_12;
+logic [31:0]   din_csr_readdata_6_12;
+logic [31:0]   din_csr_readdata_6_12_r1;
+logic [31:0]   din_csr_readdata_6_12_r2;
+logic [31:0]   din_csr_writedata_6_12;
 
 rule_s_t    l1_data_6_12;
 logic       l1_ready_6_12;
 logic       l1_valid_6_12;
 logic       l1_newdata_6_12;
 logic [RID_WIDTH-1:0] l1_cache_6_12;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_6_13;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_6_13_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_6_13_r2;
+logic          din_csr_address_6_13;
+logic          din_csr_read_6_13;
+logic          din_csr_write_6_13;
+logic [31:0]   din_csr_readdata_6_13;
+logic [31:0]   din_csr_readdata_6_13_r1;
+logic [31:0]   din_csr_readdata_6_13_r2;
+logic [31:0]   din_csr_writedata_6_13;
 
 rule_s_t    l1_data_6_13;
 logic       l1_ready_6_13;
 logic       l1_valid_6_13;
 logic       l1_newdata_6_13;
 logic [RID_WIDTH-1:0] l1_cache_6_13;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_6_14;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_6_14_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_6_14_r2;
+logic          din_csr_address_6_14;
+logic          din_csr_read_6_14;
+logic          din_csr_write_6_14;
+logic [31:0]   din_csr_readdata_6_14;
+logic [31:0]   din_csr_readdata_6_14_r1;
+logic [31:0]   din_csr_readdata_6_14_r2;
+logic [31:0]   din_csr_writedata_6_14;
 
 rule_s_t    l1_data_6_14;
 logic       l1_ready_6_14;
 logic       l1_valid_6_14;
 logic       l1_newdata_6_14;
 logic [RID_WIDTH-1:0] l1_cache_6_14;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_6_15;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_6_15_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_6_15_r2;
+logic          din_csr_address_6_15;
+logic          din_csr_read_6_15;
+logic          din_csr_write_6_15;
+logic [31:0]   din_csr_readdata_6_15;
+logic [31:0]   din_csr_readdata_6_15_r1;
+logic [31:0]   din_csr_readdata_6_15_r2;
+logic [31:0]   din_csr_writedata_6_15;
 
 rule_s_t    l1_data_6_15;
 logic       l1_ready_6_15;
 logic       l1_valid_6_15;
 logic       l1_newdata_6_15;
 logic [RID_WIDTH-1:0] l1_cache_6_15;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_6_16;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_6_16_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_6_16_r2;
+logic          din_csr_address_6_16;
+logic          din_csr_read_6_16;
+logic          din_csr_write_6_16;
+logic [31:0]   din_csr_readdata_6_16;
+logic [31:0]   din_csr_readdata_6_16_r1;
+logic [31:0]   din_csr_readdata_6_16_r2;
+logic [31:0]   din_csr_writedata_6_16;
 
 rule_s_t    l1_data_6_16;
 logic       l1_ready_6_16;
 logic       l1_valid_6_16;
 logic       l1_newdata_6_16;
 logic [RID_WIDTH-1:0] l1_cache_6_16;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_6_17;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_6_17_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_6_17_r2;
+logic          din_csr_address_6_17;
+logic          din_csr_read_6_17;
+logic          din_csr_write_6_17;
+logic [31:0]   din_csr_readdata_6_17;
+logic [31:0]   din_csr_readdata_6_17_r1;
+logic [31:0]   din_csr_readdata_6_17_r2;
+logic [31:0]   din_csr_writedata_6_17;
 
 rule_s_t    l1_data_6_17;
 logic       l1_ready_6_17;
 logic       l1_valid_6_17;
 logic       l1_newdata_6_17;
 logic [RID_WIDTH-1:0] l1_cache_6_17;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_6_18;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_6_18_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_6_18_r2;
+logic          din_csr_address_6_18;
+logic          din_csr_read_6_18;
+logic          din_csr_write_6_18;
+logic [31:0]   din_csr_readdata_6_18;
+logic [31:0]   din_csr_readdata_6_18_r1;
+logic [31:0]   din_csr_readdata_6_18_r2;
+logic [31:0]   din_csr_writedata_6_18;
 
 rule_s_t    l1_data_6_18;
 logic       l1_ready_6_18;
 logic       l1_valid_6_18;
 logic       l1_newdata_6_18;
 logic [RID_WIDTH-1:0] l1_cache_6_18;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_6_19;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_6_19_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_6_19_r2;
+logic          din_csr_address_6_19;
+logic          din_csr_read_6_19;
+logic          din_csr_write_6_19;
+logic [31:0]   din_csr_readdata_6_19;
+logic [31:0]   din_csr_readdata_6_19_r1;
+logic [31:0]   din_csr_readdata_6_19_r2;
+logic [31:0]   din_csr_writedata_6_19;
 
 rule_s_t    l1_data_6_19;
 logic       l1_ready_6_19;
 logic       l1_valid_6_19;
 logic       l1_newdata_6_19;
 logic [RID_WIDTH-1:0] l1_cache_6_19;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_6_20;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_6_20_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_6_20_r2;
+logic          din_csr_address_6_20;
+logic          din_csr_read_6_20;
+logic          din_csr_write_6_20;
+logic [31:0]   din_csr_readdata_6_20;
+logic [31:0]   din_csr_readdata_6_20_r1;
+logic [31:0]   din_csr_readdata_6_20_r2;
+logic [31:0]   din_csr_writedata_6_20;
 
 rule_s_t    l1_data_6_20;
 logic       l1_ready_6_20;
 logic       l1_valid_6_20;
 logic       l1_newdata_6_20;
 logic [RID_WIDTH-1:0] l1_cache_6_20;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_6_21;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_6_21_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_6_21_r2;
+logic          din_csr_address_6_21;
+logic          din_csr_read_6_21;
+logic          din_csr_write_6_21;
+logic [31:0]   din_csr_readdata_6_21;
+logic [31:0]   din_csr_readdata_6_21_r1;
+logic [31:0]   din_csr_readdata_6_21_r2;
+logic [31:0]   din_csr_writedata_6_21;
 
 rule_s_t    l1_data_6_21;
 logic       l1_ready_6_21;
 logic       l1_valid_6_21;
 logic       l1_newdata_6_21;
 logic [RID_WIDTH-1:0] l1_cache_6_21;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_6_22;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_6_22_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_6_22_r2;
+logic          din_csr_address_6_22;
+logic          din_csr_read_6_22;
+logic          din_csr_write_6_22;
+logic [31:0]   din_csr_readdata_6_22;
+logic [31:0]   din_csr_readdata_6_22_r1;
+logic [31:0]   din_csr_readdata_6_22_r2;
+logic [31:0]   din_csr_writedata_6_22;
 
 rule_s_t    l1_data_6_22;
 logic       l1_ready_6_22;
 logic       l1_valid_6_22;
 logic       l1_newdata_6_22;
 logic [RID_WIDTH-1:0] l1_cache_6_22;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_6_23;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_6_23_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_6_23_r2;
+logic          din_csr_address_6_23;
+logic          din_csr_read_6_23;
+logic          din_csr_write_6_23;
+logic [31:0]   din_csr_readdata_6_23;
+logic [31:0]   din_csr_readdata_6_23_r1;
+logic [31:0]   din_csr_readdata_6_23_r2;
+logic [31:0]   din_csr_writedata_6_23;
 
 rule_s_t    l1_data_6_23;
 logic       l1_ready_6_23;
 logic       l1_valid_6_23;
 logic       l1_newdata_6_23;
 logic [RID_WIDTH-1:0] l1_cache_6_23;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_6_24;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_6_24_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_6_24_r2;
+logic          din_csr_address_6_24;
+logic          din_csr_read_6_24;
+logic          din_csr_write_6_24;
+logic [31:0]   din_csr_readdata_6_24;
+logic [31:0]   din_csr_readdata_6_24_r1;
+logic [31:0]   din_csr_readdata_6_24_r2;
+logic [31:0]   din_csr_writedata_6_24;
 
 rule_s_t    l1_data_6_24;
 logic       l1_ready_6_24;
 logic       l1_valid_6_24;
 logic       l1_newdata_6_24;
 logic [RID_WIDTH-1:0] l1_cache_6_24;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_6_25;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_6_25_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_6_25_r2;
+logic          din_csr_address_6_25;
+logic          din_csr_read_6_25;
+logic          din_csr_write_6_25;
+logic [31:0]   din_csr_readdata_6_25;
+logic [31:0]   din_csr_readdata_6_25_r1;
+logic [31:0]   din_csr_readdata_6_25_r2;
+logic [31:0]   din_csr_writedata_6_25;
 
 rule_s_t    l1_data_6_25;
 logic       l1_ready_6_25;
 logic       l1_valid_6_25;
 logic       l1_newdata_6_25;
 logic [RID_WIDTH-1:0] l1_cache_6_25;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_6_26;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_6_26_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_6_26_r2;
+logic          din_csr_address_6_26;
+logic          din_csr_read_6_26;
+logic          din_csr_write_6_26;
+logic [31:0]   din_csr_readdata_6_26;
+logic [31:0]   din_csr_readdata_6_26_r1;
+logic [31:0]   din_csr_readdata_6_26_r2;
+logic [31:0]   din_csr_writedata_6_26;
 
 rule_s_t    l1_data_6_26;
 logic       l1_ready_6_26;
 logic       l1_valid_6_26;
 logic       l1_newdata_6_26;
 logic [RID_WIDTH-1:0] l1_cache_6_26;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_6_27;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_6_27_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_6_27_r2;
+logic          din_csr_address_6_27;
+logic          din_csr_read_6_27;
+logic          din_csr_write_6_27;
+logic [31:0]   din_csr_readdata_6_27;
+logic [31:0]   din_csr_readdata_6_27_r1;
+logic [31:0]   din_csr_readdata_6_27_r2;
+logic [31:0]   din_csr_writedata_6_27;
 
 rule_s_t    l1_data_6_27;
 logic       l1_ready_6_27;
 logic       l1_valid_6_27;
 logic       l1_newdata_6_27;
 logic [RID_WIDTH-1:0] l1_cache_6_27;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_6_28;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_6_28_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_6_28_r2;
+logic          din_csr_address_6_28;
+logic          din_csr_read_6_28;
+logic          din_csr_write_6_28;
+logic [31:0]   din_csr_readdata_6_28;
+logic [31:0]   din_csr_readdata_6_28_r1;
+logic [31:0]   din_csr_readdata_6_28_r2;
+logic [31:0]   din_csr_writedata_6_28;
 
 rule_s_t    l1_data_6_28;
 logic       l1_ready_6_28;
 logic       l1_valid_6_28;
 logic       l1_newdata_6_28;
 logic [RID_WIDTH-1:0] l1_cache_6_28;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_6_29;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_6_29_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_6_29_r2;
+logic          din_csr_address_6_29;
+logic          din_csr_read_6_29;
+logic          din_csr_write_6_29;
+logic [31:0]   din_csr_readdata_6_29;
+logic [31:0]   din_csr_readdata_6_29_r1;
+logic [31:0]   din_csr_readdata_6_29_r2;
+logic [31:0]   din_csr_writedata_6_29;
 
 rule_s_t    l1_data_6_29;
 logic       l1_ready_6_29;
 logic       l1_valid_6_29;
 logic       l1_newdata_6_29;
 logic [RID_WIDTH-1:0] l1_cache_6_29;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_6_30;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_6_30_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_6_30_r2;
+logic          din_csr_address_6_30;
+logic          din_csr_read_6_30;
+logic          din_csr_write_6_30;
+logic [31:0]   din_csr_readdata_6_30;
+logic [31:0]   din_csr_readdata_6_30_r1;
+logic [31:0]   din_csr_readdata_6_30_r2;
+logic [31:0]   din_csr_writedata_6_30;
 
 rule_s_t    l1_data_6_30;
 logic       l1_ready_6_30;
 logic       l1_valid_6_30;
 logic       l1_newdata_6_30;
 logic [RID_WIDTH-1:0] l1_cache_6_30;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_6_31;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_6_31_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_6_31_r2;
+logic          din_csr_address_6_31;
+logic          din_csr_read_6_31;
+logic          din_csr_write_6_31;
+logic [31:0]   din_csr_readdata_6_31;
+logic [31:0]   din_csr_readdata_6_31_r1;
+logic [31:0]   din_csr_readdata_6_31_r2;
+logic [31:0]   din_csr_writedata_6_31;
 
 rule_s_t    l1_data_6_31;
 logic       l1_ready_6_31;
 logic       l1_valid_6_31;
 logic       l1_newdata_6_31;
 logic [RID_WIDTH-1:0] l1_cache_6_31;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_7_0;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_7_0_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_7_0_r2;
+logic          din_csr_address_7_0;
+logic          din_csr_read_7_0;
+logic          din_csr_write_7_0;
+logic [31:0]   din_csr_readdata_7_0;
+logic [31:0]   din_csr_readdata_7_0_r1;
+logic [31:0]   din_csr_readdata_7_0_r2;
+logic [31:0]   din_csr_writedata_7_0;
 
 rule_s_t    l1_data_7_0;
 logic       l1_ready_7_0;
 logic       l1_valid_7_0;
 logic       l1_newdata_7_0;
 logic [RID_WIDTH-1:0] l1_cache_7_0;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_7_1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_7_1_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_7_1_r2;
+logic          din_csr_address_7_1;
+logic          din_csr_read_7_1;
+logic          din_csr_write_7_1;
+logic [31:0]   din_csr_readdata_7_1;
+logic [31:0]   din_csr_readdata_7_1_r1;
+logic [31:0]   din_csr_readdata_7_1_r2;
+logic [31:0]   din_csr_writedata_7_1;
 
 rule_s_t    l1_data_7_1;
 logic       l1_ready_7_1;
 logic       l1_valid_7_1;
 logic       l1_newdata_7_1;
 logic [RID_WIDTH-1:0] l1_cache_7_1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_7_2;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_7_2_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_7_2_r2;
+logic          din_csr_address_7_2;
+logic          din_csr_read_7_2;
+logic          din_csr_write_7_2;
+logic [31:0]   din_csr_readdata_7_2;
+logic [31:0]   din_csr_readdata_7_2_r1;
+logic [31:0]   din_csr_readdata_7_2_r2;
+logic [31:0]   din_csr_writedata_7_2;
 
 rule_s_t    l1_data_7_2;
 logic       l1_ready_7_2;
 logic       l1_valid_7_2;
 logic       l1_newdata_7_2;
 logic [RID_WIDTH-1:0] l1_cache_7_2;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_7_3;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_7_3_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_7_3_r2;
+logic          din_csr_address_7_3;
+logic          din_csr_read_7_3;
+logic          din_csr_write_7_3;
+logic [31:0]   din_csr_readdata_7_3;
+logic [31:0]   din_csr_readdata_7_3_r1;
+logic [31:0]   din_csr_readdata_7_3_r2;
+logic [31:0]   din_csr_writedata_7_3;
 
 rule_s_t    l1_data_7_3;
 logic       l1_ready_7_3;
 logic       l1_valid_7_3;
 logic       l1_newdata_7_3;
 logic [RID_WIDTH-1:0] l1_cache_7_3;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_7_4;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_7_4_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_7_4_r2;
+logic          din_csr_address_7_4;
+logic          din_csr_read_7_4;
+logic          din_csr_write_7_4;
+logic [31:0]   din_csr_readdata_7_4;
+logic [31:0]   din_csr_readdata_7_4_r1;
+logic [31:0]   din_csr_readdata_7_4_r2;
+logic [31:0]   din_csr_writedata_7_4;
 
 rule_s_t    l1_data_7_4;
 logic       l1_ready_7_4;
 logic       l1_valid_7_4;
 logic       l1_newdata_7_4;
 logic [RID_WIDTH-1:0] l1_cache_7_4;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_7_5;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_7_5_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_7_5_r2;
+logic          din_csr_address_7_5;
+logic          din_csr_read_7_5;
+logic          din_csr_write_7_5;
+logic [31:0]   din_csr_readdata_7_5;
+logic [31:0]   din_csr_readdata_7_5_r1;
+logic [31:0]   din_csr_readdata_7_5_r2;
+logic [31:0]   din_csr_writedata_7_5;
 
 rule_s_t    l1_data_7_5;
 logic       l1_ready_7_5;
 logic       l1_valid_7_5;
 logic       l1_newdata_7_5;
 logic [RID_WIDTH-1:0] l1_cache_7_5;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_7_6;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_7_6_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_7_6_r2;
+logic          din_csr_address_7_6;
+logic          din_csr_read_7_6;
+logic          din_csr_write_7_6;
+logic [31:0]   din_csr_readdata_7_6;
+logic [31:0]   din_csr_readdata_7_6_r1;
+logic [31:0]   din_csr_readdata_7_6_r2;
+logic [31:0]   din_csr_writedata_7_6;
 
 rule_s_t    l1_data_7_6;
 logic       l1_ready_7_6;
 logic       l1_valid_7_6;
 logic       l1_newdata_7_6;
 logic [RID_WIDTH-1:0] l1_cache_7_6;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_7_7;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_7_7_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_7_7_r2;
+logic          din_csr_address_7_7;
+logic          din_csr_read_7_7;
+logic          din_csr_write_7_7;
+logic [31:0]   din_csr_readdata_7_7;
+logic [31:0]   din_csr_readdata_7_7_r1;
+logic [31:0]   din_csr_readdata_7_7_r2;
+logic [31:0]   din_csr_writedata_7_7;
 
 rule_s_t    l1_data_7_7;
 logic       l1_ready_7_7;
 logic       l1_valid_7_7;
 logic       l1_newdata_7_7;
 logic [RID_WIDTH-1:0] l1_cache_7_7;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_7_8;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_7_8_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_7_8_r2;
+logic          din_csr_address_7_8;
+logic          din_csr_read_7_8;
+logic          din_csr_write_7_8;
+logic [31:0]   din_csr_readdata_7_8;
+logic [31:0]   din_csr_readdata_7_8_r1;
+logic [31:0]   din_csr_readdata_7_8_r2;
+logic [31:0]   din_csr_writedata_7_8;
 
 rule_s_t    l1_data_7_8;
 logic       l1_ready_7_8;
 logic       l1_valid_7_8;
 logic       l1_newdata_7_8;
 logic [RID_WIDTH-1:0] l1_cache_7_8;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_7_9;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_7_9_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_7_9_r2;
+logic          din_csr_address_7_9;
+logic          din_csr_read_7_9;
+logic          din_csr_write_7_9;
+logic [31:0]   din_csr_readdata_7_9;
+logic [31:0]   din_csr_readdata_7_9_r1;
+logic [31:0]   din_csr_readdata_7_9_r2;
+logic [31:0]   din_csr_writedata_7_9;
 
 rule_s_t    l1_data_7_9;
 logic       l1_ready_7_9;
 logic       l1_valid_7_9;
 logic       l1_newdata_7_9;
 logic [RID_WIDTH-1:0] l1_cache_7_9;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_7_10;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_7_10_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_7_10_r2;
+logic          din_csr_address_7_10;
+logic          din_csr_read_7_10;
+logic          din_csr_write_7_10;
+logic [31:0]   din_csr_readdata_7_10;
+logic [31:0]   din_csr_readdata_7_10_r1;
+logic [31:0]   din_csr_readdata_7_10_r2;
+logic [31:0]   din_csr_writedata_7_10;
 
 rule_s_t    l1_data_7_10;
 logic       l1_ready_7_10;
 logic       l1_valid_7_10;
 logic       l1_newdata_7_10;
 logic [RID_WIDTH-1:0] l1_cache_7_10;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_7_11;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_7_11_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_7_11_r2;
+logic          din_csr_address_7_11;
+logic          din_csr_read_7_11;
+logic          din_csr_write_7_11;
+logic [31:0]   din_csr_readdata_7_11;
+logic [31:0]   din_csr_readdata_7_11_r1;
+logic [31:0]   din_csr_readdata_7_11_r2;
+logic [31:0]   din_csr_writedata_7_11;
 
 rule_s_t    l1_data_7_11;
 logic       l1_ready_7_11;
 logic       l1_valid_7_11;
 logic       l1_newdata_7_11;
 logic [RID_WIDTH-1:0] l1_cache_7_11;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_7_12;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_7_12_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_7_12_r2;
+logic          din_csr_address_7_12;
+logic          din_csr_read_7_12;
+logic          din_csr_write_7_12;
+logic [31:0]   din_csr_readdata_7_12;
+logic [31:0]   din_csr_readdata_7_12_r1;
+logic [31:0]   din_csr_readdata_7_12_r2;
+logic [31:0]   din_csr_writedata_7_12;
 
 rule_s_t    l1_data_7_12;
 logic       l1_ready_7_12;
 logic       l1_valid_7_12;
 logic       l1_newdata_7_12;
 logic [RID_WIDTH-1:0] l1_cache_7_12;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_7_13;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_7_13_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_7_13_r2;
+logic          din_csr_address_7_13;
+logic          din_csr_read_7_13;
+logic          din_csr_write_7_13;
+logic [31:0]   din_csr_readdata_7_13;
+logic [31:0]   din_csr_readdata_7_13_r1;
+logic [31:0]   din_csr_readdata_7_13_r2;
+logic [31:0]   din_csr_writedata_7_13;
 
 rule_s_t    l1_data_7_13;
 logic       l1_ready_7_13;
 logic       l1_valid_7_13;
 logic       l1_newdata_7_13;
 logic [RID_WIDTH-1:0] l1_cache_7_13;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_7_14;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_7_14_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_7_14_r2;
+logic          din_csr_address_7_14;
+logic          din_csr_read_7_14;
+logic          din_csr_write_7_14;
+logic [31:0]   din_csr_readdata_7_14;
+logic [31:0]   din_csr_readdata_7_14_r1;
+logic [31:0]   din_csr_readdata_7_14_r2;
+logic [31:0]   din_csr_writedata_7_14;
 
 rule_s_t    l1_data_7_14;
 logic       l1_ready_7_14;
 logic       l1_valid_7_14;
 logic       l1_newdata_7_14;
 logic [RID_WIDTH-1:0] l1_cache_7_14;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_7_15;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_7_15_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_7_15_r2;
+logic          din_csr_address_7_15;
+logic          din_csr_read_7_15;
+logic          din_csr_write_7_15;
+logic [31:0]   din_csr_readdata_7_15;
+logic [31:0]   din_csr_readdata_7_15_r1;
+logic [31:0]   din_csr_readdata_7_15_r2;
+logic [31:0]   din_csr_writedata_7_15;
 
 rule_s_t    l1_data_7_15;
 logic       l1_ready_7_15;
 logic       l1_valid_7_15;
 logic       l1_newdata_7_15;
 logic [RID_WIDTH-1:0] l1_cache_7_15;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_7_16;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_7_16_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_7_16_r2;
+logic          din_csr_address_7_16;
+logic          din_csr_read_7_16;
+logic          din_csr_write_7_16;
+logic [31:0]   din_csr_readdata_7_16;
+logic [31:0]   din_csr_readdata_7_16_r1;
+logic [31:0]   din_csr_readdata_7_16_r2;
+logic [31:0]   din_csr_writedata_7_16;
 
 rule_s_t    l1_data_7_16;
 logic       l1_ready_7_16;
 logic       l1_valid_7_16;
 logic       l1_newdata_7_16;
 logic [RID_WIDTH-1:0] l1_cache_7_16;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_7_17;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_7_17_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_7_17_r2;
+logic          din_csr_address_7_17;
+logic          din_csr_read_7_17;
+logic          din_csr_write_7_17;
+logic [31:0]   din_csr_readdata_7_17;
+logic [31:0]   din_csr_readdata_7_17_r1;
+logic [31:0]   din_csr_readdata_7_17_r2;
+logic [31:0]   din_csr_writedata_7_17;
 
 rule_s_t    l1_data_7_17;
 logic       l1_ready_7_17;
 logic       l1_valid_7_17;
 logic       l1_newdata_7_17;
 logic [RID_WIDTH-1:0] l1_cache_7_17;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_7_18;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_7_18_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_7_18_r2;
+logic          din_csr_address_7_18;
+logic          din_csr_read_7_18;
+logic          din_csr_write_7_18;
+logic [31:0]   din_csr_readdata_7_18;
+logic [31:0]   din_csr_readdata_7_18_r1;
+logic [31:0]   din_csr_readdata_7_18_r2;
+logic [31:0]   din_csr_writedata_7_18;
 
 rule_s_t    l1_data_7_18;
 logic       l1_ready_7_18;
 logic       l1_valid_7_18;
 logic       l1_newdata_7_18;
 logic [RID_WIDTH-1:0] l1_cache_7_18;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_7_19;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_7_19_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_7_19_r2;
+logic          din_csr_address_7_19;
+logic          din_csr_read_7_19;
+logic          din_csr_write_7_19;
+logic [31:0]   din_csr_readdata_7_19;
+logic [31:0]   din_csr_readdata_7_19_r1;
+logic [31:0]   din_csr_readdata_7_19_r2;
+logic [31:0]   din_csr_writedata_7_19;
 
 rule_s_t    l1_data_7_19;
 logic       l1_ready_7_19;
 logic       l1_valid_7_19;
 logic       l1_newdata_7_19;
 logic [RID_WIDTH-1:0] l1_cache_7_19;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_7_20;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_7_20_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_7_20_r2;
+logic          din_csr_address_7_20;
+logic          din_csr_read_7_20;
+logic          din_csr_write_7_20;
+logic [31:0]   din_csr_readdata_7_20;
+logic [31:0]   din_csr_readdata_7_20_r1;
+logic [31:0]   din_csr_readdata_7_20_r2;
+logic [31:0]   din_csr_writedata_7_20;
 
 rule_s_t    l1_data_7_20;
 logic       l1_ready_7_20;
 logic       l1_valid_7_20;
 logic       l1_newdata_7_20;
 logic [RID_WIDTH-1:0] l1_cache_7_20;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_7_21;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_7_21_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_7_21_r2;
+logic          din_csr_address_7_21;
+logic          din_csr_read_7_21;
+logic          din_csr_write_7_21;
+logic [31:0]   din_csr_readdata_7_21;
+logic [31:0]   din_csr_readdata_7_21_r1;
+logic [31:0]   din_csr_readdata_7_21_r2;
+logic [31:0]   din_csr_writedata_7_21;
 
 rule_s_t    l1_data_7_21;
 logic       l1_ready_7_21;
 logic       l1_valid_7_21;
 logic       l1_newdata_7_21;
 logic [RID_WIDTH-1:0] l1_cache_7_21;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_7_22;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_7_22_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_7_22_r2;
+logic          din_csr_address_7_22;
+logic          din_csr_read_7_22;
+logic          din_csr_write_7_22;
+logic [31:0]   din_csr_readdata_7_22;
+logic [31:0]   din_csr_readdata_7_22_r1;
+logic [31:0]   din_csr_readdata_7_22_r2;
+logic [31:0]   din_csr_writedata_7_22;
 
 rule_s_t    l1_data_7_22;
 logic       l1_ready_7_22;
 logic       l1_valid_7_22;
 logic       l1_newdata_7_22;
 logic [RID_WIDTH-1:0] l1_cache_7_22;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_7_23;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_7_23_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_7_23_r2;
+logic          din_csr_address_7_23;
+logic          din_csr_read_7_23;
+logic          din_csr_write_7_23;
+logic [31:0]   din_csr_readdata_7_23;
+logic [31:0]   din_csr_readdata_7_23_r1;
+logic [31:0]   din_csr_readdata_7_23_r2;
+logic [31:0]   din_csr_writedata_7_23;
 
 rule_s_t    l1_data_7_23;
 logic       l1_ready_7_23;
 logic       l1_valid_7_23;
 logic       l1_newdata_7_23;
 logic [RID_WIDTH-1:0] l1_cache_7_23;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_7_24;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_7_24_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_7_24_r2;
+logic          din_csr_address_7_24;
+logic          din_csr_read_7_24;
+logic          din_csr_write_7_24;
+logic [31:0]   din_csr_readdata_7_24;
+logic [31:0]   din_csr_readdata_7_24_r1;
+logic [31:0]   din_csr_readdata_7_24_r2;
+logic [31:0]   din_csr_writedata_7_24;
 
 rule_s_t    l1_data_7_24;
 logic       l1_ready_7_24;
 logic       l1_valid_7_24;
 logic       l1_newdata_7_24;
 logic [RID_WIDTH-1:0] l1_cache_7_24;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_7_25;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_7_25_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_7_25_r2;
+logic          din_csr_address_7_25;
+logic          din_csr_read_7_25;
+logic          din_csr_write_7_25;
+logic [31:0]   din_csr_readdata_7_25;
+logic [31:0]   din_csr_readdata_7_25_r1;
+logic [31:0]   din_csr_readdata_7_25_r2;
+logic [31:0]   din_csr_writedata_7_25;
 
 rule_s_t    l1_data_7_25;
 logic       l1_ready_7_25;
 logic       l1_valid_7_25;
 logic       l1_newdata_7_25;
 logic [RID_WIDTH-1:0] l1_cache_7_25;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_7_26;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_7_26_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_7_26_r2;
+logic          din_csr_address_7_26;
+logic          din_csr_read_7_26;
+logic          din_csr_write_7_26;
+logic [31:0]   din_csr_readdata_7_26;
+logic [31:0]   din_csr_readdata_7_26_r1;
+logic [31:0]   din_csr_readdata_7_26_r2;
+logic [31:0]   din_csr_writedata_7_26;
 
 rule_s_t    l1_data_7_26;
 logic       l1_ready_7_26;
 logic       l1_valid_7_26;
 logic       l1_newdata_7_26;
 logic [RID_WIDTH-1:0] l1_cache_7_26;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_7_27;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_7_27_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_7_27_r2;
+logic          din_csr_address_7_27;
+logic          din_csr_read_7_27;
+logic          din_csr_write_7_27;
+logic [31:0]   din_csr_readdata_7_27;
+logic [31:0]   din_csr_readdata_7_27_r1;
+logic [31:0]   din_csr_readdata_7_27_r2;
+logic [31:0]   din_csr_writedata_7_27;
 
 rule_s_t    l1_data_7_27;
 logic       l1_ready_7_27;
 logic       l1_valid_7_27;
 logic       l1_newdata_7_27;
 logic [RID_WIDTH-1:0] l1_cache_7_27;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_7_28;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_7_28_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_7_28_r2;
+logic          din_csr_address_7_28;
+logic          din_csr_read_7_28;
+logic          din_csr_write_7_28;
+logic [31:0]   din_csr_readdata_7_28;
+logic [31:0]   din_csr_readdata_7_28_r1;
+logic [31:0]   din_csr_readdata_7_28_r2;
+logic [31:0]   din_csr_writedata_7_28;
 
 rule_s_t    l1_data_7_28;
 logic       l1_ready_7_28;
 logic       l1_valid_7_28;
 logic       l1_newdata_7_28;
 logic [RID_WIDTH-1:0] l1_cache_7_28;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_7_29;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_7_29_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_7_29_r2;
+logic          din_csr_address_7_29;
+logic          din_csr_read_7_29;
+logic          din_csr_write_7_29;
+logic [31:0]   din_csr_readdata_7_29;
+logic [31:0]   din_csr_readdata_7_29_r1;
+logic [31:0]   din_csr_readdata_7_29_r2;
+logic [31:0]   din_csr_writedata_7_29;
 
 rule_s_t    l1_data_7_29;
 logic       l1_ready_7_29;
 logic       l1_valid_7_29;
 logic       l1_newdata_7_29;
 logic [RID_WIDTH-1:0] l1_cache_7_29;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_7_30;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_7_30_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_7_30_r2;
+logic          din_csr_address_7_30;
+logic          din_csr_read_7_30;
+logic          din_csr_write_7_30;
+logic [31:0]   din_csr_readdata_7_30;
+logic [31:0]   din_csr_readdata_7_30_r1;
+logic [31:0]   din_csr_readdata_7_30_r2;
+logic [31:0]   din_csr_writedata_7_30;
 
 rule_s_t    l1_data_7_30;
 logic       l1_ready_7_30;
 logic       l1_valid_7_30;
 logic       l1_newdata_7_30;
 logic [RID_WIDTH-1:0] l1_cache_7_30;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_7_31;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_7_31_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_7_31_r2;
+logic          din_csr_address_7_31;
+logic          din_csr_read_7_31;
+logic          din_csr_write_7_31;
+logic [31:0]   din_csr_readdata_7_31;
+logic [31:0]   din_csr_readdata_7_31_r1;
+logic [31:0]   din_csr_readdata_7_31_r2;
+logic [31:0]   din_csr_writedata_7_31;
 
 rule_s_t    l1_data_7_31;
 logic       l1_ready_7_31;
@@ -3868,7 +4907,7 @@ logic       l2_in_ready_0_0;
 logic       l2_out_valid_0_0;
 logic       l2_out_ready_0_0;
 logic       l2_almost_full_0_0;
-logic [$clog2(FIFO_DEPTH):0] l2_csr_readdata_0_0;
+logic [31:0] l2_csr_readdata_0_0;
 logic       l2_newdata_0_0;
 logic [RID_WIDTH-1:0] l2_cache_0_0;
 logic [1:0] l1_req_0_0;
@@ -3883,7 +4922,7 @@ logic       l2_in_ready_0_1;
 logic       l2_out_valid_0_1;
 logic       l2_out_ready_0_1;
 logic       l2_almost_full_0_1;
-logic [$clog2(FIFO_DEPTH):0] l2_csr_readdata_0_1;
+logic [31:0] l2_csr_readdata_0_1;
 logic       l2_newdata_0_1;
 logic [RID_WIDTH-1:0] l2_cache_0_1;
 logic [1:0] l1_req_0_1;
@@ -3898,7 +4937,7 @@ logic       l2_in_ready_0_2;
 logic       l2_out_valid_0_2;
 logic       l2_out_ready_0_2;
 logic       l2_almost_full_0_2;
-logic [$clog2(FIFO_DEPTH):0] l2_csr_readdata_0_2;
+logic [31:0] l2_csr_readdata_0_2;
 logic       l2_newdata_0_2;
 logic [RID_WIDTH-1:0] l2_cache_0_2;
 logic [1:0] l1_req_0_2;
@@ -3913,7 +4952,7 @@ logic       l2_in_ready_0_3;
 logic       l2_out_valid_0_3;
 logic       l2_out_ready_0_3;
 logic       l2_almost_full_0_3;
-logic [$clog2(FIFO_DEPTH):0] l2_csr_readdata_0_3;
+logic [31:0] l2_csr_readdata_0_3;
 logic       l2_newdata_0_3;
 logic [RID_WIDTH-1:0] l2_cache_0_3;
 logic [1:0] l1_req_0_3;
@@ -3928,7 +4967,7 @@ logic       l2_in_ready_0_4;
 logic       l2_out_valid_0_4;
 logic       l2_out_ready_0_4;
 logic       l2_almost_full_0_4;
-logic [$clog2(FIFO_DEPTH):0] l2_csr_readdata_0_4;
+logic [31:0] l2_csr_readdata_0_4;
 logic       l2_newdata_0_4;
 logic [RID_WIDTH-1:0] l2_cache_0_4;
 logic [1:0] l1_req_0_4;
@@ -3943,7 +4982,7 @@ logic       l2_in_ready_0_5;
 logic       l2_out_valid_0_5;
 logic       l2_out_ready_0_5;
 logic       l2_almost_full_0_5;
-logic [$clog2(FIFO_DEPTH):0] l2_csr_readdata_0_5;
+logic [31:0] l2_csr_readdata_0_5;
 logic       l2_newdata_0_5;
 logic [RID_WIDTH-1:0] l2_cache_0_5;
 logic [1:0] l1_req_0_5;
@@ -3958,7 +4997,7 @@ logic       l2_in_ready_0_6;
 logic       l2_out_valid_0_6;
 logic       l2_out_ready_0_6;
 logic       l2_almost_full_0_6;
-logic [$clog2(FIFO_DEPTH):0] l2_csr_readdata_0_6;
+logic [31:0] l2_csr_readdata_0_6;
 logic       l2_newdata_0_6;
 logic [RID_WIDTH-1:0] l2_cache_0_6;
 logic [1:0] l1_req_0_6;
@@ -3973,7 +5012,7 @@ logic       l2_in_ready_0_7;
 logic       l2_out_valid_0_7;
 logic       l2_out_ready_0_7;
 logic       l2_almost_full_0_7;
-logic [$clog2(FIFO_DEPTH):0] l2_csr_readdata_0_7;
+logic [31:0] l2_csr_readdata_0_7;
 logic       l2_newdata_0_7;
 logic [RID_WIDTH-1:0] l2_cache_0_7;
 logic [1:0] l1_req_0_7;
@@ -3988,7 +5027,7 @@ logic       l2_in_ready_0_8;
 logic       l2_out_valid_0_8;
 logic       l2_out_ready_0_8;
 logic       l2_almost_full_0_8;
-logic [$clog2(FIFO_DEPTH):0] l2_csr_readdata_0_8;
+logic [31:0] l2_csr_readdata_0_8;
 logic       l2_newdata_0_8;
 logic [RID_WIDTH-1:0] l2_cache_0_8;
 logic [1:0] l1_req_0_8;
@@ -4003,7 +5042,7 @@ logic       l2_in_ready_0_9;
 logic       l2_out_valid_0_9;
 logic       l2_out_ready_0_9;
 logic       l2_almost_full_0_9;
-logic [$clog2(FIFO_DEPTH):0] l2_csr_readdata_0_9;
+logic [31:0] l2_csr_readdata_0_9;
 logic       l2_newdata_0_9;
 logic [RID_WIDTH-1:0] l2_cache_0_9;
 logic [1:0] l1_req_0_9;
@@ -4018,7 +5057,7 @@ logic       l2_in_ready_0_10;
 logic       l2_out_valid_0_10;
 logic       l2_out_ready_0_10;
 logic       l2_almost_full_0_10;
-logic [$clog2(FIFO_DEPTH):0] l2_csr_readdata_0_10;
+logic [31:0] l2_csr_readdata_0_10;
 logic       l2_newdata_0_10;
 logic [RID_WIDTH-1:0] l2_cache_0_10;
 logic [1:0] l1_req_0_10;
@@ -4033,7 +5072,7 @@ logic       l2_in_ready_0_11;
 logic       l2_out_valid_0_11;
 logic       l2_out_ready_0_11;
 logic       l2_almost_full_0_11;
-logic [$clog2(FIFO_DEPTH):0] l2_csr_readdata_0_11;
+logic [31:0] l2_csr_readdata_0_11;
 logic       l2_newdata_0_11;
 logic [RID_WIDTH-1:0] l2_cache_0_11;
 logic [1:0] l1_req_0_11;
@@ -4048,7 +5087,7 @@ logic       l2_in_ready_0_12;
 logic       l2_out_valid_0_12;
 logic       l2_out_ready_0_12;
 logic       l2_almost_full_0_12;
-logic [$clog2(FIFO_DEPTH):0] l2_csr_readdata_0_12;
+logic [31:0] l2_csr_readdata_0_12;
 logic       l2_newdata_0_12;
 logic [RID_WIDTH-1:0] l2_cache_0_12;
 logic [1:0] l1_req_0_12;
@@ -4063,7 +5102,7 @@ logic       l2_in_ready_0_13;
 logic       l2_out_valid_0_13;
 logic       l2_out_ready_0_13;
 logic       l2_almost_full_0_13;
-logic [$clog2(FIFO_DEPTH):0] l2_csr_readdata_0_13;
+logic [31:0] l2_csr_readdata_0_13;
 logic       l2_newdata_0_13;
 logic [RID_WIDTH-1:0] l2_cache_0_13;
 logic [1:0] l1_req_0_13;
@@ -4078,7 +5117,7 @@ logic       l2_in_ready_0_14;
 logic       l2_out_valid_0_14;
 logic       l2_out_ready_0_14;
 logic       l2_almost_full_0_14;
-logic [$clog2(FIFO_DEPTH):0] l2_csr_readdata_0_14;
+logic [31:0] l2_csr_readdata_0_14;
 logic       l2_newdata_0_14;
 logic [RID_WIDTH-1:0] l2_cache_0_14;
 logic [1:0] l1_req_0_14;
@@ -4093,7 +5132,7 @@ logic       l2_in_ready_0_15;
 logic       l2_out_valid_0_15;
 logic       l2_out_ready_0_15;
 logic       l2_almost_full_0_15;
-logic [$clog2(FIFO_DEPTH):0] l2_csr_readdata_0_15;
+logic [31:0] l2_csr_readdata_0_15;
 logic       l2_newdata_0_15;
 logic [RID_WIDTH-1:0] l2_cache_0_15;
 logic [1:0] l1_req_0_15;
@@ -4108,7 +5147,7 @@ logic       l2_in_ready_1_0;
 logic       l2_out_valid_1_0;
 logic       l2_out_ready_1_0;
 logic       l2_almost_full_1_0;
-logic [$clog2(FIFO_DEPTH):0] l2_csr_readdata_1_0;
+logic [31:0] l2_csr_readdata_1_0;
 logic       l2_newdata_1_0;
 logic [RID_WIDTH-1:0] l2_cache_1_0;
 logic [1:0] l1_req_1_0;
@@ -4123,7 +5162,7 @@ logic       l2_in_ready_1_1;
 logic       l2_out_valid_1_1;
 logic       l2_out_ready_1_1;
 logic       l2_almost_full_1_1;
-logic [$clog2(FIFO_DEPTH):0] l2_csr_readdata_1_1;
+logic [31:0] l2_csr_readdata_1_1;
 logic       l2_newdata_1_1;
 logic [RID_WIDTH-1:0] l2_cache_1_1;
 logic [1:0] l1_req_1_1;
@@ -4138,7 +5177,7 @@ logic       l2_in_ready_1_2;
 logic       l2_out_valid_1_2;
 logic       l2_out_ready_1_2;
 logic       l2_almost_full_1_2;
-logic [$clog2(FIFO_DEPTH):0] l2_csr_readdata_1_2;
+logic [31:0] l2_csr_readdata_1_2;
 logic       l2_newdata_1_2;
 logic [RID_WIDTH-1:0] l2_cache_1_2;
 logic [1:0] l1_req_1_2;
@@ -4153,7 +5192,7 @@ logic       l2_in_ready_1_3;
 logic       l2_out_valid_1_3;
 logic       l2_out_ready_1_3;
 logic       l2_almost_full_1_3;
-logic [$clog2(FIFO_DEPTH):0] l2_csr_readdata_1_3;
+logic [31:0] l2_csr_readdata_1_3;
 logic       l2_newdata_1_3;
 logic [RID_WIDTH-1:0] l2_cache_1_3;
 logic [1:0] l1_req_1_3;
@@ -4168,7 +5207,7 @@ logic       l2_in_ready_1_4;
 logic       l2_out_valid_1_4;
 logic       l2_out_ready_1_4;
 logic       l2_almost_full_1_4;
-logic [$clog2(FIFO_DEPTH):0] l2_csr_readdata_1_4;
+logic [31:0] l2_csr_readdata_1_4;
 logic       l2_newdata_1_4;
 logic [RID_WIDTH-1:0] l2_cache_1_4;
 logic [1:0] l1_req_1_4;
@@ -4183,7 +5222,7 @@ logic       l2_in_ready_1_5;
 logic       l2_out_valid_1_5;
 logic       l2_out_ready_1_5;
 logic       l2_almost_full_1_5;
-logic [$clog2(FIFO_DEPTH):0] l2_csr_readdata_1_5;
+logic [31:0] l2_csr_readdata_1_5;
 logic       l2_newdata_1_5;
 logic [RID_WIDTH-1:0] l2_cache_1_5;
 logic [1:0] l1_req_1_5;
@@ -4198,7 +5237,7 @@ logic       l2_in_ready_1_6;
 logic       l2_out_valid_1_6;
 logic       l2_out_ready_1_6;
 logic       l2_almost_full_1_6;
-logic [$clog2(FIFO_DEPTH):0] l2_csr_readdata_1_6;
+logic [31:0] l2_csr_readdata_1_6;
 logic       l2_newdata_1_6;
 logic [RID_WIDTH-1:0] l2_cache_1_6;
 logic [1:0] l1_req_1_6;
@@ -4213,7 +5252,7 @@ logic       l2_in_ready_1_7;
 logic       l2_out_valid_1_7;
 logic       l2_out_ready_1_7;
 logic       l2_almost_full_1_7;
-logic [$clog2(FIFO_DEPTH):0] l2_csr_readdata_1_7;
+logic [31:0] l2_csr_readdata_1_7;
 logic       l2_newdata_1_7;
 logic [RID_WIDTH-1:0] l2_cache_1_7;
 logic [1:0] l1_req_1_7;
@@ -4228,7 +5267,7 @@ logic       l2_in_ready_1_8;
 logic       l2_out_valid_1_8;
 logic       l2_out_ready_1_8;
 logic       l2_almost_full_1_8;
-logic [$clog2(FIFO_DEPTH):0] l2_csr_readdata_1_8;
+logic [31:0] l2_csr_readdata_1_8;
 logic       l2_newdata_1_8;
 logic [RID_WIDTH-1:0] l2_cache_1_8;
 logic [1:0] l1_req_1_8;
@@ -4243,7 +5282,7 @@ logic       l2_in_ready_1_9;
 logic       l2_out_valid_1_9;
 logic       l2_out_ready_1_9;
 logic       l2_almost_full_1_9;
-logic [$clog2(FIFO_DEPTH):0] l2_csr_readdata_1_9;
+logic [31:0] l2_csr_readdata_1_9;
 logic       l2_newdata_1_9;
 logic [RID_WIDTH-1:0] l2_cache_1_9;
 logic [1:0] l1_req_1_9;
@@ -4258,7 +5297,7 @@ logic       l2_in_ready_1_10;
 logic       l2_out_valid_1_10;
 logic       l2_out_ready_1_10;
 logic       l2_almost_full_1_10;
-logic [$clog2(FIFO_DEPTH):0] l2_csr_readdata_1_10;
+logic [31:0] l2_csr_readdata_1_10;
 logic       l2_newdata_1_10;
 logic [RID_WIDTH-1:0] l2_cache_1_10;
 logic [1:0] l1_req_1_10;
@@ -4273,7 +5312,7 @@ logic       l2_in_ready_1_11;
 logic       l2_out_valid_1_11;
 logic       l2_out_ready_1_11;
 logic       l2_almost_full_1_11;
-logic [$clog2(FIFO_DEPTH):0] l2_csr_readdata_1_11;
+logic [31:0] l2_csr_readdata_1_11;
 logic       l2_newdata_1_11;
 logic [RID_WIDTH-1:0] l2_cache_1_11;
 logic [1:0] l1_req_1_11;
@@ -4288,7 +5327,7 @@ logic       l2_in_ready_1_12;
 logic       l2_out_valid_1_12;
 logic       l2_out_ready_1_12;
 logic       l2_almost_full_1_12;
-logic [$clog2(FIFO_DEPTH):0] l2_csr_readdata_1_12;
+logic [31:0] l2_csr_readdata_1_12;
 logic       l2_newdata_1_12;
 logic [RID_WIDTH-1:0] l2_cache_1_12;
 logic [1:0] l1_req_1_12;
@@ -4303,7 +5342,7 @@ logic       l2_in_ready_1_13;
 logic       l2_out_valid_1_13;
 logic       l2_out_ready_1_13;
 logic       l2_almost_full_1_13;
-logic [$clog2(FIFO_DEPTH):0] l2_csr_readdata_1_13;
+logic [31:0] l2_csr_readdata_1_13;
 logic       l2_newdata_1_13;
 logic [RID_WIDTH-1:0] l2_cache_1_13;
 logic [1:0] l1_req_1_13;
@@ -4318,7 +5357,7 @@ logic       l2_in_ready_1_14;
 logic       l2_out_valid_1_14;
 logic       l2_out_ready_1_14;
 logic       l2_almost_full_1_14;
-logic [$clog2(FIFO_DEPTH):0] l2_csr_readdata_1_14;
+logic [31:0] l2_csr_readdata_1_14;
 logic       l2_newdata_1_14;
 logic [RID_WIDTH-1:0] l2_cache_1_14;
 logic [1:0] l1_req_1_14;
@@ -4333,7 +5372,7 @@ logic       l2_in_ready_1_15;
 logic       l2_out_valid_1_15;
 logic       l2_out_ready_1_15;
 logic       l2_almost_full_1_15;
-logic [$clog2(FIFO_DEPTH):0] l2_csr_readdata_1_15;
+logic [31:0] l2_csr_readdata_1_15;
 logic       l2_newdata_1_15;
 logic [RID_WIDTH-1:0] l2_cache_1_15;
 logic [1:0] l1_req_1_15;
@@ -4348,7 +5387,7 @@ logic       l2_in_ready_2_0;
 logic       l2_out_valid_2_0;
 logic       l2_out_ready_2_0;
 logic       l2_almost_full_2_0;
-logic [$clog2(FIFO_DEPTH):0] l2_csr_readdata_2_0;
+logic [31:0] l2_csr_readdata_2_0;
 logic       l2_newdata_2_0;
 logic [RID_WIDTH-1:0] l2_cache_2_0;
 logic [1:0] l1_req_2_0;
@@ -4363,7 +5402,7 @@ logic       l2_in_ready_2_1;
 logic       l2_out_valid_2_1;
 logic       l2_out_ready_2_1;
 logic       l2_almost_full_2_1;
-logic [$clog2(FIFO_DEPTH):0] l2_csr_readdata_2_1;
+logic [31:0] l2_csr_readdata_2_1;
 logic       l2_newdata_2_1;
 logic [RID_WIDTH-1:0] l2_cache_2_1;
 logic [1:0] l1_req_2_1;
@@ -4378,7 +5417,7 @@ logic       l2_in_ready_2_2;
 logic       l2_out_valid_2_2;
 logic       l2_out_ready_2_2;
 logic       l2_almost_full_2_2;
-logic [$clog2(FIFO_DEPTH):0] l2_csr_readdata_2_2;
+logic [31:0] l2_csr_readdata_2_2;
 logic       l2_newdata_2_2;
 logic [RID_WIDTH-1:0] l2_cache_2_2;
 logic [1:0] l1_req_2_2;
@@ -4393,7 +5432,7 @@ logic       l2_in_ready_2_3;
 logic       l2_out_valid_2_3;
 logic       l2_out_ready_2_3;
 logic       l2_almost_full_2_3;
-logic [$clog2(FIFO_DEPTH):0] l2_csr_readdata_2_3;
+logic [31:0] l2_csr_readdata_2_3;
 logic       l2_newdata_2_3;
 logic [RID_WIDTH-1:0] l2_cache_2_3;
 logic [1:0] l1_req_2_3;
@@ -4408,7 +5447,7 @@ logic       l2_in_ready_2_4;
 logic       l2_out_valid_2_4;
 logic       l2_out_ready_2_4;
 logic       l2_almost_full_2_4;
-logic [$clog2(FIFO_DEPTH):0] l2_csr_readdata_2_4;
+logic [31:0] l2_csr_readdata_2_4;
 logic       l2_newdata_2_4;
 logic [RID_WIDTH-1:0] l2_cache_2_4;
 logic [1:0] l1_req_2_4;
@@ -4423,7 +5462,7 @@ logic       l2_in_ready_2_5;
 logic       l2_out_valid_2_5;
 logic       l2_out_ready_2_5;
 logic       l2_almost_full_2_5;
-logic [$clog2(FIFO_DEPTH):0] l2_csr_readdata_2_5;
+logic [31:0] l2_csr_readdata_2_5;
 logic       l2_newdata_2_5;
 logic [RID_WIDTH-1:0] l2_cache_2_5;
 logic [1:0] l1_req_2_5;
@@ -4438,7 +5477,7 @@ logic       l2_in_ready_2_6;
 logic       l2_out_valid_2_6;
 logic       l2_out_ready_2_6;
 logic       l2_almost_full_2_6;
-logic [$clog2(FIFO_DEPTH):0] l2_csr_readdata_2_6;
+logic [31:0] l2_csr_readdata_2_6;
 logic       l2_newdata_2_6;
 logic [RID_WIDTH-1:0] l2_cache_2_6;
 logic [1:0] l1_req_2_6;
@@ -4453,7 +5492,7 @@ logic       l2_in_ready_2_7;
 logic       l2_out_valid_2_7;
 logic       l2_out_ready_2_7;
 logic       l2_almost_full_2_7;
-logic [$clog2(FIFO_DEPTH):0] l2_csr_readdata_2_7;
+logic [31:0] l2_csr_readdata_2_7;
 logic       l2_newdata_2_7;
 logic [RID_WIDTH-1:0] l2_cache_2_7;
 logic [1:0] l1_req_2_7;
@@ -4468,7 +5507,7 @@ logic       l2_in_ready_2_8;
 logic       l2_out_valid_2_8;
 logic       l2_out_ready_2_8;
 logic       l2_almost_full_2_8;
-logic [$clog2(FIFO_DEPTH):0] l2_csr_readdata_2_8;
+logic [31:0] l2_csr_readdata_2_8;
 logic       l2_newdata_2_8;
 logic [RID_WIDTH-1:0] l2_cache_2_8;
 logic [1:0] l1_req_2_8;
@@ -4483,7 +5522,7 @@ logic       l2_in_ready_2_9;
 logic       l2_out_valid_2_9;
 logic       l2_out_ready_2_9;
 logic       l2_almost_full_2_9;
-logic [$clog2(FIFO_DEPTH):0] l2_csr_readdata_2_9;
+logic [31:0] l2_csr_readdata_2_9;
 logic       l2_newdata_2_9;
 logic [RID_WIDTH-1:0] l2_cache_2_9;
 logic [1:0] l1_req_2_9;
@@ -4498,7 +5537,7 @@ logic       l2_in_ready_2_10;
 logic       l2_out_valid_2_10;
 logic       l2_out_ready_2_10;
 logic       l2_almost_full_2_10;
-logic [$clog2(FIFO_DEPTH):0] l2_csr_readdata_2_10;
+logic [31:0] l2_csr_readdata_2_10;
 logic       l2_newdata_2_10;
 logic [RID_WIDTH-1:0] l2_cache_2_10;
 logic [1:0] l1_req_2_10;
@@ -4513,7 +5552,7 @@ logic       l2_in_ready_2_11;
 logic       l2_out_valid_2_11;
 logic       l2_out_ready_2_11;
 logic       l2_almost_full_2_11;
-logic [$clog2(FIFO_DEPTH):0] l2_csr_readdata_2_11;
+logic [31:0] l2_csr_readdata_2_11;
 logic       l2_newdata_2_11;
 logic [RID_WIDTH-1:0] l2_cache_2_11;
 logic [1:0] l1_req_2_11;
@@ -4528,7 +5567,7 @@ logic       l2_in_ready_2_12;
 logic       l2_out_valid_2_12;
 logic       l2_out_ready_2_12;
 logic       l2_almost_full_2_12;
-logic [$clog2(FIFO_DEPTH):0] l2_csr_readdata_2_12;
+logic [31:0] l2_csr_readdata_2_12;
 logic       l2_newdata_2_12;
 logic [RID_WIDTH-1:0] l2_cache_2_12;
 logic [1:0] l1_req_2_12;
@@ -4543,7 +5582,7 @@ logic       l2_in_ready_2_13;
 logic       l2_out_valid_2_13;
 logic       l2_out_ready_2_13;
 logic       l2_almost_full_2_13;
-logic [$clog2(FIFO_DEPTH):0] l2_csr_readdata_2_13;
+logic [31:0] l2_csr_readdata_2_13;
 logic       l2_newdata_2_13;
 logic [RID_WIDTH-1:0] l2_cache_2_13;
 logic [1:0] l1_req_2_13;
@@ -4558,7 +5597,7 @@ logic       l2_in_ready_2_14;
 logic       l2_out_valid_2_14;
 logic       l2_out_ready_2_14;
 logic       l2_almost_full_2_14;
-logic [$clog2(FIFO_DEPTH):0] l2_csr_readdata_2_14;
+logic [31:0] l2_csr_readdata_2_14;
 logic       l2_newdata_2_14;
 logic [RID_WIDTH-1:0] l2_cache_2_14;
 logic [1:0] l1_req_2_14;
@@ -4573,7 +5612,7 @@ logic       l2_in_ready_2_15;
 logic       l2_out_valid_2_15;
 logic       l2_out_ready_2_15;
 logic       l2_almost_full_2_15;
-logic [$clog2(FIFO_DEPTH):0] l2_csr_readdata_2_15;
+logic [31:0] l2_csr_readdata_2_15;
 logic       l2_newdata_2_15;
 logic [RID_WIDTH-1:0] l2_cache_2_15;
 logic [1:0] l1_req_2_15;
@@ -4588,7 +5627,7 @@ logic       l2_in_ready_3_0;
 logic       l2_out_valid_3_0;
 logic       l2_out_ready_3_0;
 logic       l2_almost_full_3_0;
-logic [$clog2(FIFO_DEPTH):0] l2_csr_readdata_3_0;
+logic [31:0] l2_csr_readdata_3_0;
 logic       l2_newdata_3_0;
 logic [RID_WIDTH-1:0] l2_cache_3_0;
 logic [1:0] l1_req_3_0;
@@ -4603,7 +5642,7 @@ logic       l2_in_ready_3_1;
 logic       l2_out_valid_3_1;
 logic       l2_out_ready_3_1;
 logic       l2_almost_full_3_1;
-logic [$clog2(FIFO_DEPTH):0] l2_csr_readdata_3_1;
+logic [31:0] l2_csr_readdata_3_1;
 logic       l2_newdata_3_1;
 logic [RID_WIDTH-1:0] l2_cache_3_1;
 logic [1:0] l1_req_3_1;
@@ -4618,7 +5657,7 @@ logic       l2_in_ready_3_2;
 logic       l2_out_valid_3_2;
 logic       l2_out_ready_3_2;
 logic       l2_almost_full_3_2;
-logic [$clog2(FIFO_DEPTH):0] l2_csr_readdata_3_2;
+logic [31:0] l2_csr_readdata_3_2;
 logic       l2_newdata_3_2;
 logic [RID_WIDTH-1:0] l2_cache_3_2;
 logic [1:0] l1_req_3_2;
@@ -4633,7 +5672,7 @@ logic       l2_in_ready_3_3;
 logic       l2_out_valid_3_3;
 logic       l2_out_ready_3_3;
 logic       l2_almost_full_3_3;
-logic [$clog2(FIFO_DEPTH):0] l2_csr_readdata_3_3;
+logic [31:0] l2_csr_readdata_3_3;
 logic       l2_newdata_3_3;
 logic [RID_WIDTH-1:0] l2_cache_3_3;
 logic [1:0] l1_req_3_3;
@@ -4648,7 +5687,7 @@ logic       l2_in_ready_3_4;
 logic       l2_out_valid_3_4;
 logic       l2_out_ready_3_4;
 logic       l2_almost_full_3_4;
-logic [$clog2(FIFO_DEPTH):0] l2_csr_readdata_3_4;
+logic [31:0] l2_csr_readdata_3_4;
 logic       l2_newdata_3_4;
 logic [RID_WIDTH-1:0] l2_cache_3_4;
 logic [1:0] l1_req_3_4;
@@ -4663,7 +5702,7 @@ logic       l2_in_ready_3_5;
 logic       l2_out_valid_3_5;
 logic       l2_out_ready_3_5;
 logic       l2_almost_full_3_5;
-logic [$clog2(FIFO_DEPTH):0] l2_csr_readdata_3_5;
+logic [31:0] l2_csr_readdata_3_5;
 logic       l2_newdata_3_5;
 logic [RID_WIDTH-1:0] l2_cache_3_5;
 logic [1:0] l1_req_3_5;
@@ -4678,7 +5717,7 @@ logic       l2_in_ready_3_6;
 logic       l2_out_valid_3_6;
 logic       l2_out_ready_3_6;
 logic       l2_almost_full_3_6;
-logic [$clog2(FIFO_DEPTH):0] l2_csr_readdata_3_6;
+logic [31:0] l2_csr_readdata_3_6;
 logic       l2_newdata_3_6;
 logic [RID_WIDTH-1:0] l2_cache_3_6;
 logic [1:0] l1_req_3_6;
@@ -4693,7 +5732,7 @@ logic       l2_in_ready_3_7;
 logic       l2_out_valid_3_7;
 logic       l2_out_ready_3_7;
 logic       l2_almost_full_3_7;
-logic [$clog2(FIFO_DEPTH):0] l2_csr_readdata_3_7;
+logic [31:0] l2_csr_readdata_3_7;
 logic       l2_newdata_3_7;
 logic [RID_WIDTH-1:0] l2_cache_3_7;
 logic [1:0] l1_req_3_7;
@@ -4708,7 +5747,7 @@ logic       l2_in_ready_3_8;
 logic       l2_out_valid_3_8;
 logic       l2_out_ready_3_8;
 logic       l2_almost_full_3_8;
-logic [$clog2(FIFO_DEPTH):0] l2_csr_readdata_3_8;
+logic [31:0] l2_csr_readdata_3_8;
 logic       l2_newdata_3_8;
 logic [RID_WIDTH-1:0] l2_cache_3_8;
 logic [1:0] l1_req_3_8;
@@ -4723,7 +5762,7 @@ logic       l2_in_ready_3_9;
 logic       l2_out_valid_3_9;
 logic       l2_out_ready_3_9;
 logic       l2_almost_full_3_9;
-logic [$clog2(FIFO_DEPTH):0] l2_csr_readdata_3_9;
+logic [31:0] l2_csr_readdata_3_9;
 logic       l2_newdata_3_9;
 logic [RID_WIDTH-1:0] l2_cache_3_9;
 logic [1:0] l1_req_3_9;
@@ -4738,7 +5777,7 @@ logic       l2_in_ready_3_10;
 logic       l2_out_valid_3_10;
 logic       l2_out_ready_3_10;
 logic       l2_almost_full_3_10;
-logic [$clog2(FIFO_DEPTH):0] l2_csr_readdata_3_10;
+logic [31:0] l2_csr_readdata_3_10;
 logic       l2_newdata_3_10;
 logic [RID_WIDTH-1:0] l2_cache_3_10;
 logic [1:0] l1_req_3_10;
@@ -4753,7 +5792,7 @@ logic       l2_in_ready_3_11;
 logic       l2_out_valid_3_11;
 logic       l2_out_ready_3_11;
 logic       l2_almost_full_3_11;
-logic [$clog2(FIFO_DEPTH):0] l2_csr_readdata_3_11;
+logic [31:0] l2_csr_readdata_3_11;
 logic       l2_newdata_3_11;
 logic [RID_WIDTH-1:0] l2_cache_3_11;
 logic [1:0] l1_req_3_11;
@@ -4768,7 +5807,7 @@ logic       l2_in_ready_3_12;
 logic       l2_out_valid_3_12;
 logic       l2_out_ready_3_12;
 logic       l2_almost_full_3_12;
-logic [$clog2(FIFO_DEPTH):0] l2_csr_readdata_3_12;
+logic [31:0] l2_csr_readdata_3_12;
 logic       l2_newdata_3_12;
 logic [RID_WIDTH-1:0] l2_cache_3_12;
 logic [1:0] l1_req_3_12;
@@ -4783,7 +5822,7 @@ logic       l2_in_ready_3_13;
 logic       l2_out_valid_3_13;
 logic       l2_out_ready_3_13;
 logic       l2_almost_full_3_13;
-logic [$clog2(FIFO_DEPTH):0] l2_csr_readdata_3_13;
+logic [31:0] l2_csr_readdata_3_13;
 logic       l2_newdata_3_13;
 logic [RID_WIDTH-1:0] l2_cache_3_13;
 logic [1:0] l1_req_3_13;
@@ -4798,7 +5837,7 @@ logic       l2_in_ready_3_14;
 logic       l2_out_valid_3_14;
 logic       l2_out_ready_3_14;
 logic       l2_almost_full_3_14;
-logic [$clog2(FIFO_DEPTH):0] l2_csr_readdata_3_14;
+logic [31:0] l2_csr_readdata_3_14;
 logic       l2_newdata_3_14;
 logic [RID_WIDTH-1:0] l2_cache_3_14;
 logic [1:0] l1_req_3_14;
@@ -4813,7 +5852,7 @@ logic       l2_in_ready_3_15;
 logic       l2_out_valid_3_15;
 logic       l2_out_ready_3_15;
 logic       l2_almost_full_3_15;
-logic [$clog2(FIFO_DEPTH):0] l2_csr_readdata_3_15;
+logic [31:0] l2_csr_readdata_3_15;
 logic       l2_newdata_3_15;
 logic [RID_WIDTH-1:0] l2_cache_3_15;
 logic [1:0] l1_req_3_15;
@@ -4828,7 +5867,7 @@ logic       l2_in_ready_4_0;
 logic       l2_out_valid_4_0;
 logic       l2_out_ready_4_0;
 logic       l2_almost_full_4_0;
-logic [$clog2(FIFO_DEPTH):0] l2_csr_readdata_4_0;
+logic [31:0] l2_csr_readdata_4_0;
 logic       l2_newdata_4_0;
 logic [RID_WIDTH-1:0] l2_cache_4_0;
 logic [1:0] l1_req_4_0;
@@ -4843,7 +5882,7 @@ logic       l2_in_ready_4_1;
 logic       l2_out_valid_4_1;
 logic       l2_out_ready_4_1;
 logic       l2_almost_full_4_1;
-logic [$clog2(FIFO_DEPTH):0] l2_csr_readdata_4_1;
+logic [31:0] l2_csr_readdata_4_1;
 logic       l2_newdata_4_1;
 logic [RID_WIDTH-1:0] l2_cache_4_1;
 logic [1:0] l1_req_4_1;
@@ -4858,7 +5897,7 @@ logic       l2_in_ready_4_2;
 logic       l2_out_valid_4_2;
 logic       l2_out_ready_4_2;
 logic       l2_almost_full_4_2;
-logic [$clog2(FIFO_DEPTH):0] l2_csr_readdata_4_2;
+logic [31:0] l2_csr_readdata_4_2;
 logic       l2_newdata_4_2;
 logic [RID_WIDTH-1:0] l2_cache_4_2;
 logic [1:0] l1_req_4_2;
@@ -4873,7 +5912,7 @@ logic       l2_in_ready_4_3;
 logic       l2_out_valid_4_3;
 logic       l2_out_ready_4_3;
 logic       l2_almost_full_4_3;
-logic [$clog2(FIFO_DEPTH):0] l2_csr_readdata_4_3;
+logic [31:0] l2_csr_readdata_4_3;
 logic       l2_newdata_4_3;
 logic [RID_WIDTH-1:0] l2_cache_4_3;
 logic [1:0] l1_req_4_3;
@@ -4888,7 +5927,7 @@ logic       l2_in_ready_4_4;
 logic       l2_out_valid_4_4;
 logic       l2_out_ready_4_4;
 logic       l2_almost_full_4_4;
-logic [$clog2(FIFO_DEPTH):0] l2_csr_readdata_4_4;
+logic [31:0] l2_csr_readdata_4_4;
 logic       l2_newdata_4_4;
 logic [RID_WIDTH-1:0] l2_cache_4_4;
 logic [1:0] l1_req_4_4;
@@ -4903,7 +5942,7 @@ logic       l2_in_ready_4_5;
 logic       l2_out_valid_4_5;
 logic       l2_out_ready_4_5;
 logic       l2_almost_full_4_5;
-logic [$clog2(FIFO_DEPTH):0] l2_csr_readdata_4_5;
+logic [31:0] l2_csr_readdata_4_5;
 logic       l2_newdata_4_5;
 logic [RID_WIDTH-1:0] l2_cache_4_5;
 logic [1:0] l1_req_4_5;
@@ -4918,7 +5957,7 @@ logic       l2_in_ready_4_6;
 logic       l2_out_valid_4_6;
 logic       l2_out_ready_4_6;
 logic       l2_almost_full_4_6;
-logic [$clog2(FIFO_DEPTH):0] l2_csr_readdata_4_6;
+logic [31:0] l2_csr_readdata_4_6;
 logic       l2_newdata_4_6;
 logic [RID_WIDTH-1:0] l2_cache_4_6;
 logic [1:0] l1_req_4_6;
@@ -4933,7 +5972,7 @@ logic       l2_in_ready_4_7;
 logic       l2_out_valid_4_7;
 logic       l2_out_ready_4_7;
 logic       l2_almost_full_4_7;
-logic [$clog2(FIFO_DEPTH):0] l2_csr_readdata_4_7;
+logic [31:0] l2_csr_readdata_4_7;
 logic       l2_newdata_4_7;
 logic [RID_WIDTH-1:0] l2_cache_4_7;
 logic [1:0] l1_req_4_7;
@@ -4948,7 +5987,7 @@ logic       l2_in_ready_4_8;
 logic       l2_out_valid_4_8;
 logic       l2_out_ready_4_8;
 logic       l2_almost_full_4_8;
-logic [$clog2(FIFO_DEPTH):0] l2_csr_readdata_4_8;
+logic [31:0] l2_csr_readdata_4_8;
 logic       l2_newdata_4_8;
 logic [RID_WIDTH-1:0] l2_cache_4_8;
 logic [1:0] l1_req_4_8;
@@ -4963,7 +6002,7 @@ logic       l2_in_ready_4_9;
 logic       l2_out_valid_4_9;
 logic       l2_out_ready_4_9;
 logic       l2_almost_full_4_9;
-logic [$clog2(FIFO_DEPTH):0] l2_csr_readdata_4_9;
+logic [31:0] l2_csr_readdata_4_9;
 logic       l2_newdata_4_9;
 logic [RID_WIDTH-1:0] l2_cache_4_9;
 logic [1:0] l1_req_4_9;
@@ -4978,7 +6017,7 @@ logic       l2_in_ready_4_10;
 logic       l2_out_valid_4_10;
 logic       l2_out_ready_4_10;
 logic       l2_almost_full_4_10;
-logic [$clog2(FIFO_DEPTH):0] l2_csr_readdata_4_10;
+logic [31:0] l2_csr_readdata_4_10;
 logic       l2_newdata_4_10;
 logic [RID_WIDTH-1:0] l2_cache_4_10;
 logic [1:0] l1_req_4_10;
@@ -4993,7 +6032,7 @@ logic       l2_in_ready_4_11;
 logic       l2_out_valid_4_11;
 logic       l2_out_ready_4_11;
 logic       l2_almost_full_4_11;
-logic [$clog2(FIFO_DEPTH):0] l2_csr_readdata_4_11;
+logic [31:0] l2_csr_readdata_4_11;
 logic       l2_newdata_4_11;
 logic [RID_WIDTH-1:0] l2_cache_4_11;
 logic [1:0] l1_req_4_11;
@@ -5008,7 +6047,7 @@ logic       l2_in_ready_4_12;
 logic       l2_out_valid_4_12;
 logic       l2_out_ready_4_12;
 logic       l2_almost_full_4_12;
-logic [$clog2(FIFO_DEPTH):0] l2_csr_readdata_4_12;
+logic [31:0] l2_csr_readdata_4_12;
 logic       l2_newdata_4_12;
 logic [RID_WIDTH-1:0] l2_cache_4_12;
 logic [1:0] l1_req_4_12;
@@ -5023,7 +6062,7 @@ logic       l2_in_ready_4_13;
 logic       l2_out_valid_4_13;
 logic       l2_out_ready_4_13;
 logic       l2_almost_full_4_13;
-logic [$clog2(FIFO_DEPTH):0] l2_csr_readdata_4_13;
+logic [31:0] l2_csr_readdata_4_13;
 logic       l2_newdata_4_13;
 logic [RID_WIDTH-1:0] l2_cache_4_13;
 logic [1:0] l1_req_4_13;
@@ -5038,7 +6077,7 @@ logic       l2_in_ready_4_14;
 logic       l2_out_valid_4_14;
 logic       l2_out_ready_4_14;
 logic       l2_almost_full_4_14;
-logic [$clog2(FIFO_DEPTH):0] l2_csr_readdata_4_14;
+logic [31:0] l2_csr_readdata_4_14;
 logic       l2_newdata_4_14;
 logic [RID_WIDTH-1:0] l2_cache_4_14;
 logic [1:0] l1_req_4_14;
@@ -5053,7 +6092,7 @@ logic       l2_in_ready_4_15;
 logic       l2_out_valid_4_15;
 logic       l2_out_ready_4_15;
 logic       l2_almost_full_4_15;
-logic [$clog2(FIFO_DEPTH):0] l2_csr_readdata_4_15;
+logic [31:0] l2_csr_readdata_4_15;
 logic       l2_newdata_4_15;
 logic [RID_WIDTH-1:0] l2_cache_4_15;
 logic [1:0] l1_req_4_15;
@@ -5068,7 +6107,7 @@ logic       l2_in_ready_5_0;
 logic       l2_out_valid_5_0;
 logic       l2_out_ready_5_0;
 logic       l2_almost_full_5_0;
-logic [$clog2(FIFO_DEPTH):0] l2_csr_readdata_5_0;
+logic [31:0] l2_csr_readdata_5_0;
 logic       l2_newdata_5_0;
 logic [RID_WIDTH-1:0] l2_cache_5_0;
 logic [1:0] l1_req_5_0;
@@ -5083,7 +6122,7 @@ logic       l2_in_ready_5_1;
 logic       l2_out_valid_5_1;
 logic       l2_out_ready_5_1;
 logic       l2_almost_full_5_1;
-logic [$clog2(FIFO_DEPTH):0] l2_csr_readdata_5_1;
+logic [31:0] l2_csr_readdata_5_1;
 logic       l2_newdata_5_1;
 logic [RID_WIDTH-1:0] l2_cache_5_1;
 logic [1:0] l1_req_5_1;
@@ -5098,7 +6137,7 @@ logic       l2_in_ready_5_2;
 logic       l2_out_valid_5_2;
 logic       l2_out_ready_5_2;
 logic       l2_almost_full_5_2;
-logic [$clog2(FIFO_DEPTH):0] l2_csr_readdata_5_2;
+logic [31:0] l2_csr_readdata_5_2;
 logic       l2_newdata_5_2;
 logic [RID_WIDTH-1:0] l2_cache_5_2;
 logic [1:0] l1_req_5_2;
@@ -5113,7 +6152,7 @@ logic       l2_in_ready_5_3;
 logic       l2_out_valid_5_3;
 logic       l2_out_ready_5_3;
 logic       l2_almost_full_5_3;
-logic [$clog2(FIFO_DEPTH):0] l2_csr_readdata_5_3;
+logic [31:0] l2_csr_readdata_5_3;
 logic       l2_newdata_5_3;
 logic [RID_WIDTH-1:0] l2_cache_5_3;
 logic [1:0] l1_req_5_3;
@@ -5128,7 +6167,7 @@ logic       l2_in_ready_5_4;
 logic       l2_out_valid_5_4;
 logic       l2_out_ready_5_4;
 logic       l2_almost_full_5_4;
-logic [$clog2(FIFO_DEPTH):0] l2_csr_readdata_5_4;
+logic [31:0] l2_csr_readdata_5_4;
 logic       l2_newdata_5_4;
 logic [RID_WIDTH-1:0] l2_cache_5_4;
 logic [1:0] l1_req_5_4;
@@ -5143,7 +6182,7 @@ logic       l2_in_ready_5_5;
 logic       l2_out_valid_5_5;
 logic       l2_out_ready_5_5;
 logic       l2_almost_full_5_5;
-logic [$clog2(FIFO_DEPTH):0] l2_csr_readdata_5_5;
+logic [31:0] l2_csr_readdata_5_5;
 logic       l2_newdata_5_5;
 logic [RID_WIDTH-1:0] l2_cache_5_5;
 logic [1:0] l1_req_5_5;
@@ -5158,7 +6197,7 @@ logic       l2_in_ready_5_6;
 logic       l2_out_valid_5_6;
 logic       l2_out_ready_5_6;
 logic       l2_almost_full_5_6;
-logic [$clog2(FIFO_DEPTH):0] l2_csr_readdata_5_6;
+logic [31:0] l2_csr_readdata_5_6;
 logic       l2_newdata_5_6;
 logic [RID_WIDTH-1:0] l2_cache_5_6;
 logic [1:0] l1_req_5_6;
@@ -5173,7 +6212,7 @@ logic       l2_in_ready_5_7;
 logic       l2_out_valid_5_7;
 logic       l2_out_ready_5_7;
 logic       l2_almost_full_5_7;
-logic [$clog2(FIFO_DEPTH):0] l2_csr_readdata_5_7;
+logic [31:0] l2_csr_readdata_5_7;
 logic       l2_newdata_5_7;
 logic [RID_WIDTH-1:0] l2_cache_5_7;
 logic [1:0] l1_req_5_7;
@@ -5188,7 +6227,7 @@ logic       l2_in_ready_5_8;
 logic       l2_out_valid_5_8;
 logic       l2_out_ready_5_8;
 logic       l2_almost_full_5_8;
-logic [$clog2(FIFO_DEPTH):0] l2_csr_readdata_5_8;
+logic [31:0] l2_csr_readdata_5_8;
 logic       l2_newdata_5_8;
 logic [RID_WIDTH-1:0] l2_cache_5_8;
 logic [1:0] l1_req_5_8;
@@ -5203,7 +6242,7 @@ logic       l2_in_ready_5_9;
 logic       l2_out_valid_5_9;
 logic       l2_out_ready_5_9;
 logic       l2_almost_full_5_9;
-logic [$clog2(FIFO_DEPTH):0] l2_csr_readdata_5_9;
+logic [31:0] l2_csr_readdata_5_9;
 logic       l2_newdata_5_9;
 logic [RID_WIDTH-1:0] l2_cache_5_9;
 logic [1:0] l1_req_5_9;
@@ -5218,7 +6257,7 @@ logic       l2_in_ready_5_10;
 logic       l2_out_valid_5_10;
 logic       l2_out_ready_5_10;
 logic       l2_almost_full_5_10;
-logic [$clog2(FIFO_DEPTH):0] l2_csr_readdata_5_10;
+logic [31:0] l2_csr_readdata_5_10;
 logic       l2_newdata_5_10;
 logic [RID_WIDTH-1:0] l2_cache_5_10;
 logic [1:0] l1_req_5_10;
@@ -5233,7 +6272,7 @@ logic       l2_in_ready_5_11;
 logic       l2_out_valid_5_11;
 logic       l2_out_ready_5_11;
 logic       l2_almost_full_5_11;
-logic [$clog2(FIFO_DEPTH):0] l2_csr_readdata_5_11;
+logic [31:0] l2_csr_readdata_5_11;
 logic       l2_newdata_5_11;
 logic [RID_WIDTH-1:0] l2_cache_5_11;
 logic [1:0] l1_req_5_11;
@@ -5248,7 +6287,7 @@ logic       l2_in_ready_5_12;
 logic       l2_out_valid_5_12;
 logic       l2_out_ready_5_12;
 logic       l2_almost_full_5_12;
-logic [$clog2(FIFO_DEPTH):0] l2_csr_readdata_5_12;
+logic [31:0] l2_csr_readdata_5_12;
 logic       l2_newdata_5_12;
 logic [RID_WIDTH-1:0] l2_cache_5_12;
 logic [1:0] l1_req_5_12;
@@ -5263,7 +6302,7 @@ logic       l2_in_ready_5_13;
 logic       l2_out_valid_5_13;
 logic       l2_out_ready_5_13;
 logic       l2_almost_full_5_13;
-logic [$clog2(FIFO_DEPTH):0] l2_csr_readdata_5_13;
+logic [31:0] l2_csr_readdata_5_13;
 logic       l2_newdata_5_13;
 logic [RID_WIDTH-1:0] l2_cache_5_13;
 logic [1:0] l1_req_5_13;
@@ -5278,7 +6317,7 @@ logic       l2_in_ready_5_14;
 logic       l2_out_valid_5_14;
 logic       l2_out_ready_5_14;
 logic       l2_almost_full_5_14;
-logic [$clog2(FIFO_DEPTH):0] l2_csr_readdata_5_14;
+logic [31:0] l2_csr_readdata_5_14;
 logic       l2_newdata_5_14;
 logic [RID_WIDTH-1:0] l2_cache_5_14;
 logic [1:0] l1_req_5_14;
@@ -5293,7 +6332,7 @@ logic       l2_in_ready_5_15;
 logic       l2_out_valid_5_15;
 logic       l2_out_ready_5_15;
 logic       l2_almost_full_5_15;
-logic [$clog2(FIFO_DEPTH):0] l2_csr_readdata_5_15;
+logic [31:0] l2_csr_readdata_5_15;
 logic       l2_newdata_5_15;
 logic [RID_WIDTH-1:0] l2_cache_5_15;
 logic [1:0] l1_req_5_15;
@@ -5308,7 +6347,7 @@ logic       l2_in_ready_6_0;
 logic       l2_out_valid_6_0;
 logic       l2_out_ready_6_0;
 logic       l2_almost_full_6_0;
-logic [$clog2(FIFO_DEPTH):0] l2_csr_readdata_6_0;
+logic [31:0] l2_csr_readdata_6_0;
 logic       l2_newdata_6_0;
 logic [RID_WIDTH-1:0] l2_cache_6_0;
 logic [1:0] l1_req_6_0;
@@ -5323,7 +6362,7 @@ logic       l2_in_ready_6_1;
 logic       l2_out_valid_6_1;
 logic       l2_out_ready_6_1;
 logic       l2_almost_full_6_1;
-logic [$clog2(FIFO_DEPTH):0] l2_csr_readdata_6_1;
+logic [31:0] l2_csr_readdata_6_1;
 logic       l2_newdata_6_1;
 logic [RID_WIDTH-1:0] l2_cache_6_1;
 logic [1:0] l1_req_6_1;
@@ -5338,7 +6377,7 @@ logic       l2_in_ready_6_2;
 logic       l2_out_valid_6_2;
 logic       l2_out_ready_6_2;
 logic       l2_almost_full_6_2;
-logic [$clog2(FIFO_DEPTH):0] l2_csr_readdata_6_2;
+logic [31:0] l2_csr_readdata_6_2;
 logic       l2_newdata_6_2;
 logic [RID_WIDTH-1:0] l2_cache_6_2;
 logic [1:0] l1_req_6_2;
@@ -5353,7 +6392,7 @@ logic       l2_in_ready_6_3;
 logic       l2_out_valid_6_3;
 logic       l2_out_ready_6_3;
 logic       l2_almost_full_6_3;
-logic [$clog2(FIFO_DEPTH):0] l2_csr_readdata_6_3;
+logic [31:0] l2_csr_readdata_6_3;
 logic       l2_newdata_6_3;
 logic [RID_WIDTH-1:0] l2_cache_6_3;
 logic [1:0] l1_req_6_3;
@@ -5368,7 +6407,7 @@ logic       l2_in_ready_6_4;
 logic       l2_out_valid_6_4;
 logic       l2_out_ready_6_4;
 logic       l2_almost_full_6_4;
-logic [$clog2(FIFO_DEPTH):0] l2_csr_readdata_6_4;
+logic [31:0] l2_csr_readdata_6_4;
 logic       l2_newdata_6_4;
 logic [RID_WIDTH-1:0] l2_cache_6_4;
 logic [1:0] l1_req_6_4;
@@ -5383,7 +6422,7 @@ logic       l2_in_ready_6_5;
 logic       l2_out_valid_6_5;
 logic       l2_out_ready_6_5;
 logic       l2_almost_full_6_5;
-logic [$clog2(FIFO_DEPTH):0] l2_csr_readdata_6_5;
+logic [31:0] l2_csr_readdata_6_5;
 logic       l2_newdata_6_5;
 logic [RID_WIDTH-1:0] l2_cache_6_5;
 logic [1:0] l1_req_6_5;
@@ -5398,7 +6437,7 @@ logic       l2_in_ready_6_6;
 logic       l2_out_valid_6_6;
 logic       l2_out_ready_6_6;
 logic       l2_almost_full_6_6;
-logic [$clog2(FIFO_DEPTH):0] l2_csr_readdata_6_6;
+logic [31:0] l2_csr_readdata_6_6;
 logic       l2_newdata_6_6;
 logic [RID_WIDTH-1:0] l2_cache_6_6;
 logic [1:0] l1_req_6_6;
@@ -5413,7 +6452,7 @@ logic       l2_in_ready_6_7;
 logic       l2_out_valid_6_7;
 logic       l2_out_ready_6_7;
 logic       l2_almost_full_6_7;
-logic [$clog2(FIFO_DEPTH):0] l2_csr_readdata_6_7;
+logic [31:0] l2_csr_readdata_6_7;
 logic       l2_newdata_6_7;
 logic [RID_WIDTH-1:0] l2_cache_6_7;
 logic [1:0] l1_req_6_7;
@@ -5428,7 +6467,7 @@ logic       l2_in_ready_6_8;
 logic       l2_out_valid_6_8;
 logic       l2_out_ready_6_8;
 logic       l2_almost_full_6_8;
-logic [$clog2(FIFO_DEPTH):0] l2_csr_readdata_6_8;
+logic [31:0] l2_csr_readdata_6_8;
 logic       l2_newdata_6_8;
 logic [RID_WIDTH-1:0] l2_cache_6_8;
 logic [1:0] l1_req_6_8;
@@ -5443,7 +6482,7 @@ logic       l2_in_ready_6_9;
 logic       l2_out_valid_6_9;
 logic       l2_out_ready_6_9;
 logic       l2_almost_full_6_9;
-logic [$clog2(FIFO_DEPTH):0] l2_csr_readdata_6_9;
+logic [31:0] l2_csr_readdata_6_9;
 logic       l2_newdata_6_9;
 logic [RID_WIDTH-1:0] l2_cache_6_9;
 logic [1:0] l1_req_6_9;
@@ -5458,7 +6497,7 @@ logic       l2_in_ready_6_10;
 logic       l2_out_valid_6_10;
 logic       l2_out_ready_6_10;
 logic       l2_almost_full_6_10;
-logic [$clog2(FIFO_DEPTH):0] l2_csr_readdata_6_10;
+logic [31:0] l2_csr_readdata_6_10;
 logic       l2_newdata_6_10;
 logic [RID_WIDTH-1:0] l2_cache_6_10;
 logic [1:0] l1_req_6_10;
@@ -5473,7 +6512,7 @@ logic       l2_in_ready_6_11;
 logic       l2_out_valid_6_11;
 logic       l2_out_ready_6_11;
 logic       l2_almost_full_6_11;
-logic [$clog2(FIFO_DEPTH):0] l2_csr_readdata_6_11;
+logic [31:0] l2_csr_readdata_6_11;
 logic       l2_newdata_6_11;
 logic [RID_WIDTH-1:0] l2_cache_6_11;
 logic [1:0] l1_req_6_11;
@@ -5488,7 +6527,7 @@ logic       l2_in_ready_6_12;
 logic       l2_out_valid_6_12;
 logic       l2_out_ready_6_12;
 logic       l2_almost_full_6_12;
-logic [$clog2(FIFO_DEPTH):0] l2_csr_readdata_6_12;
+logic [31:0] l2_csr_readdata_6_12;
 logic       l2_newdata_6_12;
 logic [RID_WIDTH-1:0] l2_cache_6_12;
 logic [1:0] l1_req_6_12;
@@ -5503,7 +6542,7 @@ logic       l2_in_ready_6_13;
 logic       l2_out_valid_6_13;
 logic       l2_out_ready_6_13;
 logic       l2_almost_full_6_13;
-logic [$clog2(FIFO_DEPTH):0] l2_csr_readdata_6_13;
+logic [31:0] l2_csr_readdata_6_13;
 logic       l2_newdata_6_13;
 logic [RID_WIDTH-1:0] l2_cache_6_13;
 logic [1:0] l1_req_6_13;
@@ -5518,7 +6557,7 @@ logic       l2_in_ready_6_14;
 logic       l2_out_valid_6_14;
 logic       l2_out_ready_6_14;
 logic       l2_almost_full_6_14;
-logic [$clog2(FIFO_DEPTH):0] l2_csr_readdata_6_14;
+logic [31:0] l2_csr_readdata_6_14;
 logic       l2_newdata_6_14;
 logic [RID_WIDTH-1:0] l2_cache_6_14;
 logic [1:0] l1_req_6_14;
@@ -5533,7 +6572,7 @@ logic       l2_in_ready_6_15;
 logic       l2_out_valid_6_15;
 logic       l2_out_ready_6_15;
 logic       l2_almost_full_6_15;
-logic [$clog2(FIFO_DEPTH):0] l2_csr_readdata_6_15;
+logic [31:0] l2_csr_readdata_6_15;
 logic       l2_newdata_6_15;
 logic [RID_WIDTH-1:0] l2_cache_6_15;
 logic [1:0] l1_req_6_15;
@@ -5548,7 +6587,7 @@ logic       l2_in_ready_7_0;
 logic       l2_out_valid_7_0;
 logic       l2_out_ready_7_0;
 logic       l2_almost_full_7_0;
-logic [$clog2(FIFO_DEPTH):0] l2_csr_readdata_7_0;
+logic [31:0] l2_csr_readdata_7_0;
 logic       l2_newdata_7_0;
 logic [RID_WIDTH-1:0] l2_cache_7_0;
 logic [1:0] l1_req_7_0;
@@ -5563,7 +6602,7 @@ logic       l2_in_ready_7_1;
 logic       l2_out_valid_7_1;
 logic       l2_out_ready_7_1;
 logic       l2_almost_full_7_1;
-logic [$clog2(FIFO_DEPTH):0] l2_csr_readdata_7_1;
+logic [31:0] l2_csr_readdata_7_1;
 logic       l2_newdata_7_1;
 logic [RID_WIDTH-1:0] l2_cache_7_1;
 logic [1:0] l1_req_7_1;
@@ -5578,7 +6617,7 @@ logic       l2_in_ready_7_2;
 logic       l2_out_valid_7_2;
 logic       l2_out_ready_7_2;
 logic       l2_almost_full_7_2;
-logic [$clog2(FIFO_DEPTH):0] l2_csr_readdata_7_2;
+logic [31:0] l2_csr_readdata_7_2;
 logic       l2_newdata_7_2;
 logic [RID_WIDTH-1:0] l2_cache_7_2;
 logic [1:0] l1_req_7_2;
@@ -5593,7 +6632,7 @@ logic       l2_in_ready_7_3;
 logic       l2_out_valid_7_3;
 logic       l2_out_ready_7_3;
 logic       l2_almost_full_7_3;
-logic [$clog2(FIFO_DEPTH):0] l2_csr_readdata_7_3;
+logic [31:0] l2_csr_readdata_7_3;
 logic       l2_newdata_7_3;
 logic [RID_WIDTH-1:0] l2_cache_7_3;
 logic [1:0] l1_req_7_3;
@@ -5608,7 +6647,7 @@ logic       l2_in_ready_7_4;
 logic       l2_out_valid_7_4;
 logic       l2_out_ready_7_4;
 logic       l2_almost_full_7_4;
-logic [$clog2(FIFO_DEPTH):0] l2_csr_readdata_7_4;
+logic [31:0] l2_csr_readdata_7_4;
 logic       l2_newdata_7_4;
 logic [RID_WIDTH-1:0] l2_cache_7_4;
 logic [1:0] l1_req_7_4;
@@ -5623,7 +6662,7 @@ logic       l2_in_ready_7_5;
 logic       l2_out_valid_7_5;
 logic       l2_out_ready_7_5;
 logic       l2_almost_full_7_5;
-logic [$clog2(FIFO_DEPTH):0] l2_csr_readdata_7_5;
+logic [31:0] l2_csr_readdata_7_5;
 logic       l2_newdata_7_5;
 logic [RID_WIDTH-1:0] l2_cache_7_5;
 logic [1:0] l1_req_7_5;
@@ -5638,7 +6677,7 @@ logic       l2_in_ready_7_6;
 logic       l2_out_valid_7_6;
 logic       l2_out_ready_7_6;
 logic       l2_almost_full_7_6;
-logic [$clog2(FIFO_DEPTH):0] l2_csr_readdata_7_6;
+logic [31:0] l2_csr_readdata_7_6;
 logic       l2_newdata_7_6;
 logic [RID_WIDTH-1:0] l2_cache_7_6;
 logic [1:0] l1_req_7_6;
@@ -5653,7 +6692,7 @@ logic       l2_in_ready_7_7;
 logic       l2_out_valid_7_7;
 logic       l2_out_ready_7_7;
 logic       l2_almost_full_7_7;
-logic [$clog2(FIFO_DEPTH):0] l2_csr_readdata_7_7;
+logic [31:0] l2_csr_readdata_7_7;
 logic       l2_newdata_7_7;
 logic [RID_WIDTH-1:0] l2_cache_7_7;
 logic [1:0] l1_req_7_7;
@@ -5668,7 +6707,7 @@ logic       l2_in_ready_7_8;
 logic       l2_out_valid_7_8;
 logic       l2_out_ready_7_8;
 logic       l2_almost_full_7_8;
-logic [$clog2(FIFO_DEPTH):0] l2_csr_readdata_7_8;
+logic [31:0] l2_csr_readdata_7_8;
 logic       l2_newdata_7_8;
 logic [RID_WIDTH-1:0] l2_cache_7_8;
 logic [1:0] l1_req_7_8;
@@ -5683,7 +6722,7 @@ logic       l2_in_ready_7_9;
 logic       l2_out_valid_7_9;
 logic       l2_out_ready_7_9;
 logic       l2_almost_full_7_9;
-logic [$clog2(FIFO_DEPTH):0] l2_csr_readdata_7_9;
+logic [31:0] l2_csr_readdata_7_9;
 logic       l2_newdata_7_9;
 logic [RID_WIDTH-1:0] l2_cache_7_9;
 logic [1:0] l1_req_7_9;
@@ -5698,7 +6737,7 @@ logic       l2_in_ready_7_10;
 logic       l2_out_valid_7_10;
 logic       l2_out_ready_7_10;
 logic       l2_almost_full_7_10;
-logic [$clog2(FIFO_DEPTH):0] l2_csr_readdata_7_10;
+logic [31:0] l2_csr_readdata_7_10;
 logic       l2_newdata_7_10;
 logic [RID_WIDTH-1:0] l2_cache_7_10;
 logic [1:0] l1_req_7_10;
@@ -5713,7 +6752,7 @@ logic       l2_in_ready_7_11;
 logic       l2_out_valid_7_11;
 logic       l2_out_ready_7_11;
 logic       l2_almost_full_7_11;
-logic [$clog2(FIFO_DEPTH):0] l2_csr_readdata_7_11;
+logic [31:0] l2_csr_readdata_7_11;
 logic       l2_newdata_7_11;
 logic [RID_WIDTH-1:0] l2_cache_7_11;
 logic [1:0] l1_req_7_11;
@@ -5728,7 +6767,7 @@ logic       l2_in_ready_7_12;
 logic       l2_out_valid_7_12;
 logic       l2_out_ready_7_12;
 logic       l2_almost_full_7_12;
-logic [$clog2(FIFO_DEPTH):0] l2_csr_readdata_7_12;
+logic [31:0] l2_csr_readdata_7_12;
 logic       l2_newdata_7_12;
 logic [RID_WIDTH-1:0] l2_cache_7_12;
 logic [1:0] l1_req_7_12;
@@ -5743,7 +6782,7 @@ logic       l2_in_ready_7_13;
 logic       l2_out_valid_7_13;
 logic       l2_out_ready_7_13;
 logic       l2_almost_full_7_13;
-logic [$clog2(FIFO_DEPTH):0] l2_csr_readdata_7_13;
+logic [31:0] l2_csr_readdata_7_13;
 logic       l2_newdata_7_13;
 logic [RID_WIDTH-1:0] l2_cache_7_13;
 logic [1:0] l1_req_7_13;
@@ -5758,7 +6797,7 @@ logic       l2_in_ready_7_14;
 logic       l2_out_valid_7_14;
 logic       l2_out_ready_7_14;
 logic       l2_almost_full_7_14;
-logic [$clog2(FIFO_DEPTH):0] l2_csr_readdata_7_14;
+logic [31:0] l2_csr_readdata_7_14;
 logic       l2_newdata_7_14;
 logic [RID_WIDTH-1:0] l2_cache_7_14;
 logic [1:0] l1_req_7_14;
@@ -5773,7 +6812,7 @@ logic       l2_in_ready_7_15;
 logic       l2_out_valid_7_15;
 logic       l2_out_ready_7_15;
 logic       l2_almost_full_7_15;
-logic [$clog2(FIFO_DEPTH):0] l2_csr_readdata_7_15;
+logic [31:0] l2_csr_readdata_7_15;
 logic       l2_newdata_7_15;
 logic [RID_WIDTH-1:0] l2_cache_7_15;
 logic [1:0] l1_req_7_15;
@@ -5790,7 +6829,7 @@ logic l3_in_ready_0_0;
 logic l3_out_valid_0_0;
 logic l3_out_ready_0_0;
 logic l3_almost_full_0_0;
-logic [$clog2(FIFO_DEPTH):0] l3_csr_readdata_0_0;
+logic [31:0] l3_csr_readdata_0_0;
 logic       l3_newdata_0_0;
 logic [RID_WIDTH-1:0] l3_cache_0_0;
 logic [3:0] l2_req_0_0;
@@ -5805,7 +6844,7 @@ logic l3_in_ready_0_1;
 logic l3_out_valid_0_1;
 logic l3_out_ready_0_1;
 logic l3_almost_full_0_1;
-logic [$clog2(FIFO_DEPTH):0] l3_csr_readdata_0_1;
+logic [31:0] l3_csr_readdata_0_1;
 logic       l3_newdata_0_1;
 logic [RID_WIDTH-1:0] l3_cache_0_1;
 logic [3:0] l2_req_0_1;
@@ -5820,7 +6859,7 @@ logic l3_in_ready_0_2;
 logic l3_out_valid_0_2;
 logic l3_out_ready_0_2;
 logic l3_almost_full_0_2;
-logic [$clog2(FIFO_DEPTH):0] l3_csr_readdata_0_2;
+logic [31:0] l3_csr_readdata_0_2;
 logic       l3_newdata_0_2;
 logic [RID_WIDTH-1:0] l3_cache_0_2;
 logic [3:0] l2_req_0_2;
@@ -5835,7 +6874,7 @@ logic l3_in_ready_0_3;
 logic l3_out_valid_0_3;
 logic l3_out_ready_0_3;
 logic l3_almost_full_0_3;
-logic [$clog2(FIFO_DEPTH):0] l3_csr_readdata_0_3;
+logic [31:0] l3_csr_readdata_0_3;
 logic       l3_newdata_0_3;
 logic [RID_WIDTH-1:0] l3_cache_0_3;
 logic [3:0] l2_req_0_3;
@@ -5850,7 +6889,7 @@ logic l3_in_ready_1_0;
 logic l3_out_valid_1_0;
 logic l3_out_ready_1_0;
 logic l3_almost_full_1_0;
-logic [$clog2(FIFO_DEPTH):0] l3_csr_readdata_1_0;
+logic [31:0] l3_csr_readdata_1_0;
 logic       l3_newdata_1_0;
 logic [RID_WIDTH-1:0] l3_cache_1_0;
 logic [3:0] l2_req_1_0;
@@ -5865,7 +6904,7 @@ logic l3_in_ready_1_1;
 logic l3_out_valid_1_1;
 logic l3_out_ready_1_1;
 logic l3_almost_full_1_1;
-logic [$clog2(FIFO_DEPTH):0] l3_csr_readdata_1_1;
+logic [31:0] l3_csr_readdata_1_1;
 logic       l3_newdata_1_1;
 logic [RID_WIDTH-1:0] l3_cache_1_1;
 logic [3:0] l2_req_1_1;
@@ -5880,7 +6919,7 @@ logic l3_in_ready_1_2;
 logic l3_out_valid_1_2;
 logic l3_out_ready_1_2;
 logic l3_almost_full_1_2;
-logic [$clog2(FIFO_DEPTH):0] l3_csr_readdata_1_2;
+logic [31:0] l3_csr_readdata_1_2;
 logic       l3_newdata_1_2;
 logic [RID_WIDTH-1:0] l3_cache_1_2;
 logic [3:0] l2_req_1_2;
@@ -5895,7 +6934,7 @@ logic l3_in_ready_1_3;
 logic l3_out_valid_1_3;
 logic l3_out_ready_1_3;
 logic l3_almost_full_1_3;
-logic [$clog2(FIFO_DEPTH):0] l3_csr_readdata_1_3;
+logic [31:0] l3_csr_readdata_1_3;
 logic       l3_newdata_1_3;
 logic [RID_WIDTH-1:0] l3_cache_1_3;
 logic [3:0] l2_req_1_3;
@@ -5910,7 +6949,7 @@ logic l3_in_ready_2_0;
 logic l3_out_valid_2_0;
 logic l3_out_ready_2_0;
 logic l3_almost_full_2_0;
-logic [$clog2(FIFO_DEPTH):0] l3_csr_readdata_2_0;
+logic [31:0] l3_csr_readdata_2_0;
 logic       l3_newdata_2_0;
 logic [RID_WIDTH-1:0] l3_cache_2_0;
 logic [3:0] l2_req_2_0;
@@ -5925,7 +6964,7 @@ logic l3_in_ready_2_1;
 logic l3_out_valid_2_1;
 logic l3_out_ready_2_1;
 logic l3_almost_full_2_1;
-logic [$clog2(FIFO_DEPTH):0] l3_csr_readdata_2_1;
+logic [31:0] l3_csr_readdata_2_1;
 logic       l3_newdata_2_1;
 logic [RID_WIDTH-1:0] l3_cache_2_1;
 logic [3:0] l2_req_2_1;
@@ -5940,7 +6979,7 @@ logic l3_in_ready_2_2;
 logic l3_out_valid_2_2;
 logic l3_out_ready_2_2;
 logic l3_almost_full_2_2;
-logic [$clog2(FIFO_DEPTH):0] l3_csr_readdata_2_2;
+logic [31:0] l3_csr_readdata_2_2;
 logic       l3_newdata_2_2;
 logic [RID_WIDTH-1:0] l3_cache_2_2;
 logic [3:0] l2_req_2_2;
@@ -5955,7 +6994,7 @@ logic l3_in_ready_2_3;
 logic l3_out_valid_2_3;
 logic l3_out_ready_2_3;
 logic l3_almost_full_2_3;
-logic [$clog2(FIFO_DEPTH):0] l3_csr_readdata_2_3;
+logic [31:0] l3_csr_readdata_2_3;
 logic       l3_newdata_2_3;
 logic [RID_WIDTH-1:0] l3_cache_2_3;
 logic [3:0] l2_req_2_3;
@@ -5970,7 +7009,7 @@ logic l3_in_ready_3_0;
 logic l3_out_valid_3_0;
 logic l3_out_ready_3_0;
 logic l3_almost_full_3_0;
-logic [$clog2(FIFO_DEPTH):0] l3_csr_readdata_3_0;
+logic [31:0] l3_csr_readdata_3_0;
 logic       l3_newdata_3_0;
 logic [RID_WIDTH-1:0] l3_cache_3_0;
 logic [3:0] l2_req_3_0;
@@ -5985,7 +7024,7 @@ logic l3_in_ready_3_1;
 logic l3_out_valid_3_1;
 logic l3_out_ready_3_1;
 logic l3_almost_full_3_1;
-logic [$clog2(FIFO_DEPTH):0] l3_csr_readdata_3_1;
+logic [31:0] l3_csr_readdata_3_1;
 logic       l3_newdata_3_1;
 logic [RID_WIDTH-1:0] l3_cache_3_1;
 logic [3:0] l2_req_3_1;
@@ -6000,7 +7039,7 @@ logic l3_in_ready_3_2;
 logic l3_out_valid_3_2;
 logic l3_out_ready_3_2;
 logic l3_almost_full_3_2;
-logic [$clog2(FIFO_DEPTH):0] l3_csr_readdata_3_2;
+logic [31:0] l3_csr_readdata_3_2;
 logic       l3_newdata_3_2;
 logic [RID_WIDTH-1:0] l3_cache_3_2;
 logic [3:0] l2_req_3_2;
@@ -6015,7 +7054,7 @@ logic l3_in_ready_3_3;
 logic l3_out_valid_3_3;
 logic l3_out_ready_3_3;
 logic l3_almost_full_3_3;
-logic [$clog2(FIFO_DEPTH):0] l3_csr_readdata_3_3;
+logic [31:0] l3_csr_readdata_3_3;
 logic       l3_newdata_3_3;
 logic [RID_WIDTH-1:0] l3_cache_3_3;
 logic [3:0] l2_req_3_3;
@@ -6030,7 +7069,7 @@ logic l3_in_ready_4_0;
 logic l3_out_valid_4_0;
 logic l3_out_ready_4_0;
 logic l3_almost_full_4_0;
-logic [$clog2(FIFO_DEPTH):0] l3_csr_readdata_4_0;
+logic [31:0] l3_csr_readdata_4_0;
 logic       l3_newdata_4_0;
 logic [RID_WIDTH-1:0] l3_cache_4_0;
 logic [3:0] l2_req_4_0;
@@ -6045,7 +7084,7 @@ logic l3_in_ready_4_1;
 logic l3_out_valid_4_1;
 logic l3_out_ready_4_1;
 logic l3_almost_full_4_1;
-logic [$clog2(FIFO_DEPTH):0] l3_csr_readdata_4_1;
+logic [31:0] l3_csr_readdata_4_1;
 logic       l3_newdata_4_1;
 logic [RID_WIDTH-1:0] l3_cache_4_1;
 logic [3:0] l2_req_4_1;
@@ -6060,7 +7099,7 @@ logic l3_in_ready_4_2;
 logic l3_out_valid_4_2;
 logic l3_out_ready_4_2;
 logic l3_almost_full_4_2;
-logic [$clog2(FIFO_DEPTH):0] l3_csr_readdata_4_2;
+logic [31:0] l3_csr_readdata_4_2;
 logic       l3_newdata_4_2;
 logic [RID_WIDTH-1:0] l3_cache_4_2;
 logic [3:0] l2_req_4_2;
@@ -6075,7 +7114,7 @@ logic l3_in_ready_4_3;
 logic l3_out_valid_4_3;
 logic l3_out_ready_4_3;
 logic l3_almost_full_4_3;
-logic [$clog2(FIFO_DEPTH):0] l3_csr_readdata_4_3;
+logic [31:0] l3_csr_readdata_4_3;
 logic       l3_newdata_4_3;
 logic [RID_WIDTH-1:0] l3_cache_4_3;
 logic [3:0] l2_req_4_3;
@@ -6090,7 +7129,7 @@ logic l3_in_ready_5_0;
 logic l3_out_valid_5_0;
 logic l3_out_ready_5_0;
 logic l3_almost_full_5_0;
-logic [$clog2(FIFO_DEPTH):0] l3_csr_readdata_5_0;
+logic [31:0] l3_csr_readdata_5_0;
 logic       l3_newdata_5_0;
 logic [RID_WIDTH-1:0] l3_cache_5_0;
 logic [3:0] l2_req_5_0;
@@ -6105,7 +7144,7 @@ logic l3_in_ready_5_1;
 logic l3_out_valid_5_1;
 logic l3_out_ready_5_1;
 logic l3_almost_full_5_1;
-logic [$clog2(FIFO_DEPTH):0] l3_csr_readdata_5_1;
+logic [31:0] l3_csr_readdata_5_1;
 logic       l3_newdata_5_1;
 logic [RID_WIDTH-1:0] l3_cache_5_1;
 logic [3:0] l2_req_5_1;
@@ -6120,7 +7159,7 @@ logic l3_in_ready_5_2;
 logic l3_out_valid_5_2;
 logic l3_out_ready_5_2;
 logic l3_almost_full_5_2;
-logic [$clog2(FIFO_DEPTH):0] l3_csr_readdata_5_2;
+logic [31:0] l3_csr_readdata_5_2;
 logic       l3_newdata_5_2;
 logic [RID_WIDTH-1:0] l3_cache_5_2;
 logic [3:0] l2_req_5_2;
@@ -6135,7 +7174,7 @@ logic l3_in_ready_5_3;
 logic l3_out_valid_5_3;
 logic l3_out_ready_5_3;
 logic l3_almost_full_5_3;
-logic [$clog2(FIFO_DEPTH):0] l3_csr_readdata_5_3;
+logic [31:0] l3_csr_readdata_5_3;
 logic       l3_newdata_5_3;
 logic [RID_WIDTH-1:0] l3_cache_5_3;
 logic [3:0] l2_req_5_3;
@@ -6150,7 +7189,7 @@ logic l3_in_ready_6_0;
 logic l3_out_valid_6_0;
 logic l3_out_ready_6_0;
 logic l3_almost_full_6_0;
-logic [$clog2(FIFO_DEPTH):0] l3_csr_readdata_6_0;
+logic [31:0] l3_csr_readdata_6_0;
 logic       l3_newdata_6_0;
 logic [RID_WIDTH-1:0] l3_cache_6_0;
 logic [3:0] l2_req_6_0;
@@ -6165,7 +7204,7 @@ logic l3_in_ready_6_1;
 logic l3_out_valid_6_1;
 logic l3_out_ready_6_1;
 logic l3_almost_full_6_1;
-logic [$clog2(FIFO_DEPTH):0] l3_csr_readdata_6_1;
+logic [31:0] l3_csr_readdata_6_1;
 logic       l3_newdata_6_1;
 logic [RID_WIDTH-1:0] l3_cache_6_1;
 logic [3:0] l2_req_6_1;
@@ -6180,7 +7219,7 @@ logic l3_in_ready_6_2;
 logic l3_out_valid_6_2;
 logic l3_out_ready_6_2;
 logic l3_almost_full_6_2;
-logic [$clog2(FIFO_DEPTH):0] l3_csr_readdata_6_2;
+logic [31:0] l3_csr_readdata_6_2;
 logic       l3_newdata_6_2;
 logic [RID_WIDTH-1:0] l3_cache_6_2;
 logic [3:0] l2_req_6_2;
@@ -6195,7 +7234,7 @@ logic l3_in_ready_6_3;
 logic l3_out_valid_6_3;
 logic l3_out_ready_6_3;
 logic l3_almost_full_6_3;
-logic [$clog2(FIFO_DEPTH):0] l3_csr_readdata_6_3;
+logic [31:0] l3_csr_readdata_6_3;
 logic       l3_newdata_6_3;
 logic [RID_WIDTH-1:0] l3_cache_6_3;
 logic [3:0] l2_req_6_3;
@@ -6210,7 +7249,7 @@ logic l3_in_ready_7_0;
 logic l3_out_valid_7_0;
 logic l3_out_ready_7_0;
 logic l3_almost_full_7_0;
-logic [$clog2(FIFO_DEPTH):0] l3_csr_readdata_7_0;
+logic [31:0] l3_csr_readdata_7_0;
 logic       l3_newdata_7_0;
 logic [RID_WIDTH-1:0] l3_cache_7_0;
 logic [3:0] l2_req_7_0;
@@ -6225,7 +7264,7 @@ logic l3_in_ready_7_1;
 logic l3_out_valid_7_1;
 logic l3_out_ready_7_1;
 logic l3_almost_full_7_1;
-logic [$clog2(FIFO_DEPTH):0] l3_csr_readdata_7_1;
+logic [31:0] l3_csr_readdata_7_1;
 logic       l3_newdata_7_1;
 logic [RID_WIDTH-1:0] l3_cache_7_1;
 logic [3:0] l2_req_7_1;
@@ -6240,7 +7279,7 @@ logic l3_in_ready_7_2;
 logic l3_out_valid_7_2;
 logic l3_out_ready_7_2;
 logic l3_almost_full_7_2;
-logic [$clog2(FIFO_DEPTH):0] l3_csr_readdata_7_2;
+logic [31:0] l3_csr_readdata_7_2;
 logic       l3_newdata_7_2;
 logic [RID_WIDTH-1:0] l3_cache_7_2;
 logic [3:0] l2_req_7_2;
@@ -6255,7 +7294,7 @@ logic l3_in_ready_7_3;
 logic l3_out_valid_7_3;
 logic l3_out_ready_7_3;
 logic l3_almost_full_7_3;
-logic [$clog2(FIFO_DEPTH):0] l3_csr_readdata_7_3;
+logic [31:0] l3_csr_readdata_7_3;
 logic       l3_newdata_7_3;
 logic [RID_WIDTH-1:0] l3_cache_7_3;
 logic [3:0] l2_req_7_3;
@@ -6272,7 +7311,7 @@ logic l4_in_ready_0;
 logic l4_out_valid_0;
 logic l4_out_ready_0;
 logic l4_almost_full_0;
-logic [$clog2(FIFO_DEPTH):0] l4_csr_readdata_0;
+logic [31:0] l4_csr_readdata_0;
 logic [RID_WIDTH-1:0] l4_cache_0;
 logic [3:0] l3_req_0;
 logic [3:0] l3_grant_0;
@@ -6285,7 +7324,7 @@ logic l4_in_ready_1;
 logic l4_out_valid_1;
 logic l4_out_ready_1;
 logic l4_almost_full_1;
-logic [$clog2(FIFO_DEPTH):0] l4_csr_readdata_1;
+logic [31:0] l4_csr_readdata_1;
 logic [RID_WIDTH-1:0] l4_cache_1;
 logic [3:0] l3_req_1;
 logic [3:0] l3_grant_1;
@@ -6298,7 +7337,7 @@ logic l4_in_ready_2;
 logic l4_out_valid_2;
 logic l4_out_ready_2;
 logic l4_almost_full_2;
-logic [$clog2(FIFO_DEPTH):0] l4_csr_readdata_2;
+logic [31:0] l4_csr_readdata_2;
 logic [RID_WIDTH-1:0] l4_cache_2;
 logic [3:0] l3_req_2;
 logic [3:0] l3_grant_2;
@@ -6311,7 +7350,7 @@ logic l4_in_ready_3;
 logic l4_out_valid_3;
 logic l4_out_ready_3;
 logic l4_almost_full_3;
-logic [$clog2(FIFO_DEPTH):0] l4_csr_readdata_3;
+logic [31:0] l4_csr_readdata_3;
 logic [RID_WIDTH-1:0] l4_cache_3;
 logic [3:0] l3_req_3;
 logic [3:0] l3_grant_3;
@@ -6324,7 +7363,7 @@ logic l4_in_ready_4;
 logic l4_out_valid_4;
 logic l4_out_ready_4;
 logic l4_almost_full_4;
-logic [$clog2(FIFO_DEPTH):0] l4_csr_readdata_4;
+logic [31:0] l4_csr_readdata_4;
 logic [RID_WIDTH-1:0] l4_cache_4;
 logic [3:0] l3_req_4;
 logic [3:0] l3_grant_4;
@@ -6337,7 +7376,7 @@ logic l4_in_ready_5;
 logic l4_out_valid_5;
 logic l4_out_ready_5;
 logic l4_almost_full_5;
-logic [$clog2(FIFO_DEPTH):0] l4_csr_readdata_5;
+logic [31:0] l4_csr_readdata_5;
 logic [RID_WIDTH-1:0] l4_cache_5;
 logic [3:0] l3_req_5;
 logic [3:0] l3_grant_5;
@@ -6350,7 +7389,7 @@ logic l4_in_ready_6;
 logic l4_out_valid_6;
 logic l4_out_ready_6;
 logic l4_almost_full_6;
-logic [$clog2(FIFO_DEPTH):0] l4_csr_readdata_6;
+logic [31:0] l4_csr_readdata_6;
 logic [RID_WIDTH-1:0] l4_cache_6;
 logic [3:0] l3_req_6;
 logic [3:0] l3_grant_6;
@@ -6363,7 +7402,7 @@ logic l4_in_ready_7;
 logic l4_out_valid_7;
 logic l4_out_ready_7;
 logic l4_almost_full_7;
-logic [$clog2(FIFO_DEPTH):0] l4_csr_readdata_7;
+logic [31:0] l4_csr_readdata_7;
 logic [RID_WIDTH-1:0] l4_cache_7;
 logic [3:0] l3_req_7;
 logic [3:0] l3_grant_7;
@@ -21492,7 +22531,8 @@ end
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_0_0 (
   .clk   (clk),
   .rst   (rst),
@@ -21520,7 +22560,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_0_1 (
   .clk   (clk),
   .rst   (rst),
@@ -21548,7 +22589,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_0_2 (
   .clk   (clk),
   .rst   (rst),
@@ -21576,7 +22618,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_0_3 (
   .clk   (clk),
   .rst   (rst),
@@ -21604,7 +22647,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_0_4 (
   .clk   (clk),
   .rst   (rst),
@@ -21632,7 +22676,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_0_5 (
   .clk   (clk),
   .rst   (rst),
@@ -21660,7 +22705,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_0_6 (
   .clk   (clk),
   .rst   (rst),
@@ -21688,7 +22734,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_0_7 (
   .clk   (clk),
   .rst   (rst),
@@ -21716,7 +22763,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_0_8 (
   .clk   (clk),
   .rst   (rst),
@@ -21744,7 +22792,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_0_9 (
   .clk   (clk),
   .rst   (rst),
@@ -21772,7 +22821,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_0_10 (
   .clk   (clk),
   .rst   (rst),
@@ -21800,7 +22850,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_0_11 (
   .clk   (clk),
   .rst   (rst),
@@ -21828,7 +22879,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_0_12 (
   .clk   (clk),
   .rst   (rst),
@@ -21856,7 +22908,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_0_13 (
   .clk   (clk),
   .rst   (rst),
@@ -21884,7 +22937,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_0_14 (
   .clk   (clk),
   .rst   (rst),
@@ -21912,7 +22966,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_0_15 (
   .clk   (clk),
   .rst   (rst),
@@ -21940,7 +22995,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_0_16 (
   .clk   (clk),
   .rst   (rst),
@@ -21968,7 +23024,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_0_17 (
   .clk   (clk),
   .rst   (rst),
@@ -21996,7 +23053,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_0_18 (
   .clk   (clk),
   .rst   (rst),
@@ -22024,7 +23082,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_0_19 (
   .clk   (clk),
   .rst   (rst),
@@ -22052,7 +23111,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_0_20 (
   .clk   (clk),
   .rst   (rst),
@@ -22080,7 +23140,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_0_21 (
   .clk   (clk),
   .rst   (rst),
@@ -22108,7 +23169,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_0_22 (
   .clk   (clk),
   .rst   (rst),
@@ -22136,7 +23198,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_0_23 (
   .clk   (clk),
   .rst   (rst),
@@ -22164,7 +23227,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_0_24 (
   .clk   (clk),
   .rst   (rst),
@@ -22192,7 +23256,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_0_25 (
   .clk   (clk),
   .rst   (rst),
@@ -22220,7 +23285,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_0_26 (
   .clk   (clk),
   .rst   (rst),
@@ -22248,7 +23314,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_0_27 (
   .clk   (clk),
   .rst   (rst),
@@ -22276,7 +23343,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_0_28 (
   .clk   (clk),
   .rst   (rst),
@@ -22304,7 +23372,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_0_29 (
   .clk   (clk),
   .rst   (rst),
@@ -22332,7 +23401,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_0_30 (
   .clk   (clk),
   .rst   (rst),
@@ -22360,7 +23430,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_0_31 (
   .clk   (clk),
   .rst   (rst),
@@ -22388,7 +23459,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_1_0 (
   .clk   (clk),
   .rst   (rst),
@@ -22416,7 +23488,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_1_1 (
   .clk   (clk),
   .rst   (rst),
@@ -22444,7 +23517,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_1_2 (
   .clk   (clk),
   .rst   (rst),
@@ -22472,7 +23546,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_1_3 (
   .clk   (clk),
   .rst   (rst),
@@ -22500,7 +23575,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_1_4 (
   .clk   (clk),
   .rst   (rst),
@@ -22528,7 +23604,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_1_5 (
   .clk   (clk),
   .rst   (rst),
@@ -22556,7 +23633,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_1_6 (
   .clk   (clk),
   .rst   (rst),
@@ -22584,7 +23662,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_1_7 (
   .clk   (clk),
   .rst   (rst),
@@ -22612,7 +23691,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_1_8 (
   .clk   (clk),
   .rst   (rst),
@@ -22640,7 +23720,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_1_9 (
   .clk   (clk),
   .rst   (rst),
@@ -22668,7 +23749,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_1_10 (
   .clk   (clk),
   .rst   (rst),
@@ -22696,7 +23778,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_1_11 (
   .clk   (clk),
   .rst   (rst),
@@ -22724,7 +23807,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_1_12 (
   .clk   (clk),
   .rst   (rst),
@@ -22752,7 +23836,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_1_13 (
   .clk   (clk),
   .rst   (rst),
@@ -22780,7 +23865,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_1_14 (
   .clk   (clk),
   .rst   (rst),
@@ -22808,7 +23894,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_1_15 (
   .clk   (clk),
   .rst   (rst),
@@ -22836,7 +23923,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_1_16 (
   .clk   (clk),
   .rst   (rst),
@@ -22864,7 +23952,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_1_17 (
   .clk   (clk),
   .rst   (rst),
@@ -22892,7 +23981,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_1_18 (
   .clk   (clk),
   .rst   (rst),
@@ -22920,7 +24010,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_1_19 (
   .clk   (clk),
   .rst   (rst),
@@ -22948,7 +24039,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_1_20 (
   .clk   (clk),
   .rst   (rst),
@@ -22976,7 +24068,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_1_21 (
   .clk   (clk),
   .rst   (rst),
@@ -23004,7 +24097,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_1_22 (
   .clk   (clk),
   .rst   (rst),
@@ -23032,7 +24126,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_1_23 (
   .clk   (clk),
   .rst   (rst),
@@ -23060,7 +24155,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_1_24 (
   .clk   (clk),
   .rst   (rst),
@@ -23088,7 +24184,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_1_25 (
   .clk   (clk),
   .rst   (rst),
@@ -23116,7 +24213,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_1_26 (
   .clk   (clk),
   .rst   (rst),
@@ -23144,7 +24242,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_1_27 (
   .clk   (clk),
   .rst   (rst),
@@ -23172,7 +24271,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_1_28 (
   .clk   (clk),
   .rst   (rst),
@@ -23200,7 +24300,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_1_29 (
   .clk   (clk),
   .rst   (rst),
@@ -23228,7 +24329,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_1_30 (
   .clk   (clk),
   .rst   (rst),
@@ -23256,7 +24358,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_1_31 (
   .clk   (clk),
   .rst   (rst),
@@ -23284,7 +24387,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_2_0 (
   .clk   (clk),
   .rst   (rst),
@@ -23312,7 +24416,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_2_1 (
   .clk   (clk),
   .rst   (rst),
@@ -23340,7 +24445,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_2_2 (
   .clk   (clk),
   .rst   (rst),
@@ -23368,7 +24474,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_2_3 (
   .clk   (clk),
   .rst   (rst),
@@ -23396,7 +24503,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_2_4 (
   .clk   (clk),
   .rst   (rst),
@@ -23424,7 +24532,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_2_5 (
   .clk   (clk),
   .rst   (rst),
@@ -23452,7 +24561,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_2_6 (
   .clk   (clk),
   .rst   (rst),
@@ -23480,7 +24590,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_2_7 (
   .clk   (clk),
   .rst   (rst),
@@ -23508,7 +24619,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_2_8 (
   .clk   (clk),
   .rst   (rst),
@@ -23536,7 +24648,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_2_9 (
   .clk   (clk),
   .rst   (rst),
@@ -23564,7 +24677,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_2_10 (
   .clk   (clk),
   .rst   (rst),
@@ -23592,7 +24706,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_2_11 (
   .clk   (clk),
   .rst   (rst),
@@ -23620,7 +24735,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_2_12 (
   .clk   (clk),
   .rst   (rst),
@@ -23648,7 +24764,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_2_13 (
   .clk   (clk),
   .rst   (rst),
@@ -23676,7 +24793,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_2_14 (
   .clk   (clk),
   .rst   (rst),
@@ -23704,7 +24822,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_2_15 (
   .clk   (clk),
   .rst   (rst),
@@ -23732,7 +24851,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_2_16 (
   .clk   (clk),
   .rst   (rst),
@@ -23760,7 +24880,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_2_17 (
   .clk   (clk),
   .rst   (rst),
@@ -23788,7 +24909,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_2_18 (
   .clk   (clk),
   .rst   (rst),
@@ -23816,7 +24938,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_2_19 (
   .clk   (clk),
   .rst   (rst),
@@ -23844,7 +24967,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_2_20 (
   .clk   (clk),
   .rst   (rst),
@@ -23872,7 +24996,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_2_21 (
   .clk   (clk),
   .rst   (rst),
@@ -23900,7 +25025,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_2_22 (
   .clk   (clk),
   .rst   (rst),
@@ -23928,7 +25054,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_2_23 (
   .clk   (clk),
   .rst   (rst),
@@ -23956,7 +25083,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_2_24 (
   .clk   (clk),
   .rst   (rst),
@@ -23984,7 +25112,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_2_25 (
   .clk   (clk),
   .rst   (rst),
@@ -24012,7 +25141,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_2_26 (
   .clk   (clk),
   .rst   (rst),
@@ -24040,7 +25170,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_2_27 (
   .clk   (clk),
   .rst   (rst),
@@ -24068,7 +25199,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_2_28 (
   .clk   (clk),
   .rst   (rst),
@@ -24096,7 +25228,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_2_29 (
   .clk   (clk),
   .rst   (rst),
@@ -24124,7 +25257,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_2_30 (
   .clk   (clk),
   .rst   (rst),
@@ -24152,7 +25286,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_2_31 (
   .clk   (clk),
   .rst   (rst),
@@ -24180,7 +25315,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_3_0 (
   .clk   (clk),
   .rst   (rst),
@@ -24208,7 +25344,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_3_1 (
   .clk   (clk),
   .rst   (rst),
@@ -24236,7 +25373,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_3_2 (
   .clk   (clk),
   .rst   (rst),
@@ -24264,7 +25402,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_3_3 (
   .clk   (clk),
   .rst   (rst),
@@ -24292,7 +25431,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_3_4 (
   .clk   (clk),
   .rst   (rst),
@@ -24320,7 +25460,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_3_5 (
   .clk   (clk),
   .rst   (rst),
@@ -24348,7 +25489,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_3_6 (
   .clk   (clk),
   .rst   (rst),
@@ -24376,7 +25518,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_3_7 (
   .clk   (clk),
   .rst   (rst),
@@ -24404,7 +25547,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_3_8 (
   .clk   (clk),
   .rst   (rst),
@@ -24432,7 +25576,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_3_9 (
   .clk   (clk),
   .rst   (rst),
@@ -24460,7 +25605,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_3_10 (
   .clk   (clk),
   .rst   (rst),
@@ -24488,7 +25634,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_3_11 (
   .clk   (clk),
   .rst   (rst),
@@ -24516,7 +25663,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_3_12 (
   .clk   (clk),
   .rst   (rst),
@@ -24544,7 +25692,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_3_13 (
   .clk   (clk),
   .rst   (rst),
@@ -24572,7 +25721,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_3_14 (
   .clk   (clk),
   .rst   (rst),
@@ -24600,7 +25750,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_3_15 (
   .clk   (clk),
   .rst   (rst),
@@ -24628,7 +25779,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_3_16 (
   .clk   (clk),
   .rst   (rst),
@@ -24656,7 +25808,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_3_17 (
   .clk   (clk),
   .rst   (rst),
@@ -24684,7 +25837,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_3_18 (
   .clk   (clk),
   .rst   (rst),
@@ -24712,7 +25866,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_3_19 (
   .clk   (clk),
   .rst   (rst),
@@ -24740,7 +25895,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_3_20 (
   .clk   (clk),
   .rst   (rst),
@@ -24768,7 +25924,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_3_21 (
   .clk   (clk),
   .rst   (rst),
@@ -24796,7 +25953,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_3_22 (
   .clk   (clk),
   .rst   (rst),
@@ -24824,7 +25982,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_3_23 (
   .clk   (clk),
   .rst   (rst),
@@ -24852,7 +26011,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_3_24 (
   .clk   (clk),
   .rst   (rst),
@@ -24880,7 +26040,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_3_25 (
   .clk   (clk),
   .rst   (rst),
@@ -24908,7 +26069,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_3_26 (
   .clk   (clk),
   .rst   (rst),
@@ -24936,7 +26098,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_3_27 (
   .clk   (clk),
   .rst   (rst),
@@ -24964,7 +26127,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_3_28 (
   .clk   (clk),
   .rst   (rst),
@@ -24992,7 +26156,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_3_29 (
   .clk   (clk),
   .rst   (rst),
@@ -25020,7 +26185,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_3_30 (
   .clk   (clk),
   .rst   (rst),
@@ -25048,7 +26214,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_3_31 (
   .clk   (clk),
   .rst   (rst),
@@ -25076,7 +26243,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_4_0 (
   .clk   (clk),
   .rst   (rst),
@@ -25104,7 +26272,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_4_1 (
   .clk   (clk),
   .rst   (rst),
@@ -25132,7 +26301,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_4_2 (
   .clk   (clk),
   .rst   (rst),
@@ -25160,7 +26330,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_4_3 (
   .clk   (clk),
   .rst   (rst),
@@ -25188,7 +26359,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_4_4 (
   .clk   (clk),
   .rst   (rst),
@@ -25216,7 +26388,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_4_5 (
   .clk   (clk),
   .rst   (rst),
@@ -25244,7 +26417,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_4_6 (
   .clk   (clk),
   .rst   (rst),
@@ -25272,7 +26446,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_4_7 (
   .clk   (clk),
   .rst   (rst),
@@ -25300,7 +26475,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_4_8 (
   .clk   (clk),
   .rst   (rst),
@@ -25328,7 +26504,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_4_9 (
   .clk   (clk),
   .rst   (rst),
@@ -25356,7 +26533,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_4_10 (
   .clk   (clk),
   .rst   (rst),
@@ -25384,7 +26562,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_4_11 (
   .clk   (clk),
   .rst   (rst),
@@ -25412,7 +26591,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_4_12 (
   .clk   (clk),
   .rst   (rst),
@@ -25440,7 +26620,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_4_13 (
   .clk   (clk),
   .rst   (rst),
@@ -25468,7 +26649,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_4_14 (
   .clk   (clk),
   .rst   (rst),
@@ -25496,7 +26678,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_4_15 (
   .clk   (clk),
   .rst   (rst),
@@ -25524,7 +26707,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_4_16 (
   .clk   (clk),
   .rst   (rst),
@@ -25552,7 +26736,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_4_17 (
   .clk   (clk),
   .rst   (rst),
@@ -25580,7 +26765,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_4_18 (
   .clk   (clk),
   .rst   (rst),
@@ -25608,7 +26794,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_4_19 (
   .clk   (clk),
   .rst   (rst),
@@ -25636,7 +26823,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_4_20 (
   .clk   (clk),
   .rst   (rst),
@@ -25664,7 +26852,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_4_21 (
   .clk   (clk),
   .rst   (rst),
@@ -25692,7 +26881,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_4_22 (
   .clk   (clk),
   .rst   (rst),
@@ -25720,7 +26910,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_4_23 (
   .clk   (clk),
   .rst   (rst),
@@ -25748,7 +26939,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_4_24 (
   .clk   (clk),
   .rst   (rst),
@@ -25776,7 +26968,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_4_25 (
   .clk   (clk),
   .rst   (rst),
@@ -25804,7 +26997,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_4_26 (
   .clk   (clk),
   .rst   (rst),
@@ -25832,7 +27026,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_4_27 (
   .clk   (clk),
   .rst   (rst),
@@ -25860,7 +27055,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_4_28 (
   .clk   (clk),
   .rst   (rst),
@@ -25888,7 +27084,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_4_29 (
   .clk   (clk),
   .rst   (rst),
@@ -25916,7 +27113,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_4_30 (
   .clk   (clk),
   .rst   (rst),
@@ -25944,7 +27142,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_4_31 (
   .clk   (clk),
   .rst   (rst),
@@ -25972,7 +27171,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_5_0 (
   .clk   (clk),
   .rst   (rst),
@@ -26000,7 +27200,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_5_1 (
   .clk   (clk),
   .rst   (rst),
@@ -26028,7 +27229,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_5_2 (
   .clk   (clk),
   .rst   (rst),
@@ -26056,7 +27258,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_5_3 (
   .clk   (clk),
   .rst   (rst),
@@ -26084,7 +27287,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_5_4 (
   .clk   (clk),
   .rst   (rst),
@@ -26112,7 +27316,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_5_5 (
   .clk   (clk),
   .rst   (rst),
@@ -26140,7 +27345,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_5_6 (
   .clk   (clk),
   .rst   (rst),
@@ -26168,7 +27374,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_5_7 (
   .clk   (clk),
   .rst   (rst),
@@ -26196,7 +27403,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_5_8 (
   .clk   (clk),
   .rst   (rst),
@@ -26224,7 +27432,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_5_9 (
   .clk   (clk),
   .rst   (rst),
@@ -26252,7 +27461,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_5_10 (
   .clk   (clk),
   .rst   (rst),
@@ -26280,7 +27490,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_5_11 (
   .clk   (clk),
   .rst   (rst),
@@ -26308,7 +27519,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_5_12 (
   .clk   (clk),
   .rst   (rst),
@@ -26336,7 +27548,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_5_13 (
   .clk   (clk),
   .rst   (rst),
@@ -26364,7 +27577,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_5_14 (
   .clk   (clk),
   .rst   (rst),
@@ -26392,7 +27606,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_5_15 (
   .clk   (clk),
   .rst   (rst),
@@ -26420,7 +27635,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_5_16 (
   .clk   (clk),
   .rst   (rst),
@@ -26448,7 +27664,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_5_17 (
   .clk   (clk),
   .rst   (rst),
@@ -26476,7 +27693,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_5_18 (
   .clk   (clk),
   .rst   (rst),
@@ -26504,7 +27722,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_5_19 (
   .clk   (clk),
   .rst   (rst),
@@ -26532,7 +27751,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_5_20 (
   .clk   (clk),
   .rst   (rst),
@@ -26560,7 +27780,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_5_21 (
   .clk   (clk),
   .rst   (rst),
@@ -26588,7 +27809,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_5_22 (
   .clk   (clk),
   .rst   (rst),
@@ -26616,7 +27838,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_5_23 (
   .clk   (clk),
   .rst   (rst),
@@ -26644,7 +27867,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_5_24 (
   .clk   (clk),
   .rst   (rst),
@@ -26672,7 +27896,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_5_25 (
   .clk   (clk),
   .rst   (rst),
@@ -26700,7 +27925,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_5_26 (
   .clk   (clk),
   .rst   (rst),
@@ -26728,7 +27954,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_5_27 (
   .clk   (clk),
   .rst   (rst),
@@ -26756,7 +27983,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_5_28 (
   .clk   (clk),
   .rst   (rst),
@@ -26784,7 +28012,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_5_29 (
   .clk   (clk),
   .rst   (rst),
@@ -26812,7 +28041,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_5_30 (
   .clk   (clk),
   .rst   (rst),
@@ -26840,7 +28070,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_5_31 (
   .clk   (clk),
   .rst   (rst),
@@ -26868,7 +28099,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_6_0 (
   .clk   (clk),
   .rst   (rst),
@@ -26896,7 +28128,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_6_1 (
   .clk   (clk),
   .rst   (rst),
@@ -26924,7 +28157,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_6_2 (
   .clk   (clk),
   .rst   (rst),
@@ -26952,7 +28186,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_6_3 (
   .clk   (clk),
   .rst   (rst),
@@ -26980,7 +28215,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_6_4 (
   .clk   (clk),
   .rst   (rst),
@@ -27008,7 +28244,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_6_5 (
   .clk   (clk),
   .rst   (rst),
@@ -27036,7 +28273,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_6_6 (
   .clk   (clk),
   .rst   (rst),
@@ -27064,7 +28302,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_6_7 (
   .clk   (clk),
   .rst   (rst),
@@ -27092,7 +28331,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_6_8 (
   .clk   (clk),
   .rst   (rst),
@@ -27120,7 +28360,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_6_9 (
   .clk   (clk),
   .rst   (rst),
@@ -27148,7 +28389,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_6_10 (
   .clk   (clk),
   .rst   (rst),
@@ -27176,7 +28418,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_6_11 (
   .clk   (clk),
   .rst   (rst),
@@ -27204,7 +28447,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_6_12 (
   .clk   (clk),
   .rst   (rst),
@@ -27232,7 +28476,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_6_13 (
   .clk   (clk),
   .rst   (rst),
@@ -27260,7 +28505,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_6_14 (
   .clk   (clk),
   .rst   (rst),
@@ -27288,7 +28534,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_6_15 (
   .clk   (clk),
   .rst   (rst),
@@ -27316,7 +28563,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_6_16 (
   .clk   (clk),
   .rst   (rst),
@@ -27344,7 +28592,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_6_17 (
   .clk   (clk),
   .rst   (rst),
@@ -27372,7 +28621,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_6_18 (
   .clk   (clk),
   .rst   (rst),
@@ -27400,7 +28650,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_6_19 (
   .clk   (clk),
   .rst   (rst),
@@ -27428,7 +28679,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_6_20 (
   .clk   (clk),
   .rst   (rst),
@@ -27456,7 +28708,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_6_21 (
   .clk   (clk),
   .rst   (rst),
@@ -27484,7 +28737,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_6_22 (
   .clk   (clk),
   .rst   (rst),
@@ -27512,7 +28766,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_6_23 (
   .clk   (clk),
   .rst   (rst),
@@ -27540,7 +28795,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_6_24 (
   .clk   (clk),
   .rst   (rst),
@@ -27568,7 +28824,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_6_25 (
   .clk   (clk),
   .rst   (rst),
@@ -27596,7 +28853,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_6_26 (
   .clk   (clk),
   .rst   (rst),
@@ -27624,7 +28882,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_6_27 (
   .clk   (clk),
   .rst   (rst),
@@ -27652,7 +28911,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_6_28 (
   .clk   (clk),
   .rst   (rst),
@@ -27680,7 +28940,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_6_29 (
   .clk   (clk),
   .rst   (rst),
@@ -27708,7 +28969,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_6_30 (
   .clk   (clk),
   .rst   (rst),
@@ -27736,7 +28998,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_6_31 (
   .clk   (clk),
   .rst   (rst),
@@ -27764,7 +29027,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_7_0 (
   .clk   (clk),
   .rst   (rst),
@@ -27792,7 +29056,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_7_1 (
   .clk   (clk),
   .rst   (rst),
@@ -27820,7 +29085,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_7_2 (
   .clk   (clk),
   .rst   (rst),
@@ -27848,7 +29114,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_7_3 (
   .clk   (clk),
   .rst   (rst),
@@ -27876,7 +29143,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_7_4 (
   .clk   (clk),
   .rst   (rst),
@@ -27904,7 +29172,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_7_5 (
   .clk   (clk),
   .rst   (rst),
@@ -27932,7 +29201,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_7_6 (
   .clk   (clk),
   .rst   (rst),
@@ -27960,7 +29230,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_7_7 (
   .clk   (clk),
   .rst   (rst),
@@ -27988,7 +29259,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_7_8 (
   .clk   (clk),
   .rst   (rst),
@@ -28016,7 +29288,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_7_9 (
   .clk   (clk),
   .rst   (rst),
@@ -28044,7 +29317,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_7_10 (
   .clk   (clk),
   .rst   (rst),
@@ -28072,7 +29346,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_7_11 (
   .clk   (clk),
   .rst   (rst),
@@ -28100,7 +29375,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_7_12 (
   .clk   (clk),
   .rst   (rst),
@@ -28128,7 +29404,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_7_13 (
   .clk   (clk),
   .rst   (rst),
@@ -28156,7 +29433,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_7_14 (
   .clk   (clk),
   .rst   (rst),
@@ -28184,7 +29462,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_7_15 (
   .clk   (clk),
   .rst   (rst),
@@ -28212,7 +29491,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_7_16 (
   .clk   (clk),
   .rst   (rst),
@@ -28240,7 +29520,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_7_17 (
   .clk   (clk),
   .rst   (rst),
@@ -28268,7 +29549,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_7_18 (
   .clk   (clk),
   .rst   (rst),
@@ -28296,7 +29578,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_7_19 (
   .clk   (clk),
   .rst   (rst),
@@ -28324,7 +29607,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_7_20 (
   .clk   (clk),
   .rst   (rst),
@@ -28352,7 +29636,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_7_21 (
   .clk   (clk),
   .rst   (rst),
@@ -28380,7 +29665,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_7_22 (
   .clk   (clk),
   .rst   (rst),
@@ -28408,7 +29694,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_7_23 (
   .clk   (clk),
   .rst   (rst),
@@ -28436,7 +29723,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_7_24 (
   .clk   (clk),
   .rst   (rst),
@@ -28464,7 +29752,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_7_25 (
   .clk   (clk),
   .rst   (rst),
@@ -28492,7 +29781,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_7_26 (
   .clk   (clk),
   .rst   (rst),
@@ -28520,7 +29810,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_7_27 (
   .clk   (clk),
   .rst   (rst),
@@ -28548,7 +29839,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_7_28 (
   .clk   (clk),
   .rst   (rst),
@@ -28576,7 +29868,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_7_29 (
   .clk   (clk),
   .rst   (rst),
@@ -28604,7 +29897,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_7_30 (
   .clk   (clk),
   .rst   (rst),
@@ -28632,7 +29926,8 @@ always @ (posedge clk)
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_7_31 (
   .clk   (clk),
   .rst   (rst),
@@ -28671,7 +29966,8 @@ l1_arb_0_0(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l2_fifo_0_0 (
   .clk   (clk),
   .rst   (rst),
@@ -28708,7 +30004,8 @@ l1_arb_0_1(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l2_fifo_0_1 (
   .clk   (clk),
   .rst   (rst),
@@ -28745,7 +30042,8 @@ l1_arb_0_2(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l2_fifo_0_2 (
   .clk   (clk),
   .rst   (rst),
@@ -28782,7 +30080,8 @@ l1_arb_0_3(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l2_fifo_0_3 (
   .clk   (clk),
   .rst   (rst),
@@ -28819,7 +30118,8 @@ l1_arb_0_4(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l2_fifo_0_4 (
   .clk   (clk),
   .rst   (rst),
@@ -28856,7 +30156,8 @@ l1_arb_0_5(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l2_fifo_0_5 (
   .clk   (clk),
   .rst   (rst),
@@ -28893,7 +30194,8 @@ l1_arb_0_6(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l2_fifo_0_6 (
   .clk   (clk),
   .rst   (rst),
@@ -28930,7 +30232,8 @@ l1_arb_0_7(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l2_fifo_0_7 (
   .clk   (clk),
   .rst   (rst),
@@ -28967,7 +30270,8 @@ l1_arb_0_8(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l2_fifo_0_8 (
   .clk   (clk),
   .rst   (rst),
@@ -29004,7 +30308,8 @@ l1_arb_0_9(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l2_fifo_0_9 (
   .clk   (clk),
   .rst   (rst),
@@ -29041,7 +30346,8 @@ l1_arb_0_10(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l2_fifo_0_10 (
   .clk   (clk),
   .rst   (rst),
@@ -29078,7 +30384,8 @@ l1_arb_0_11(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l2_fifo_0_11 (
   .clk   (clk),
   .rst   (rst),
@@ -29115,7 +30422,8 @@ l1_arb_0_12(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l2_fifo_0_12 (
   .clk   (clk),
   .rst   (rst),
@@ -29152,7 +30460,8 @@ l1_arb_0_13(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l2_fifo_0_13 (
   .clk   (clk),
   .rst   (rst),
@@ -29189,7 +30498,8 @@ l1_arb_0_14(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l2_fifo_0_14 (
   .clk   (clk),
   .rst   (rst),
@@ -29226,7 +30536,8 @@ l1_arb_0_15(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l2_fifo_0_15 (
   .clk   (clk),
   .rst   (rst),
@@ -29263,7 +30574,8 @@ l1_arb_1_0(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l2_fifo_1_0 (
   .clk   (clk),
   .rst   (rst),
@@ -29300,7 +30612,8 @@ l1_arb_1_1(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l2_fifo_1_1 (
   .clk   (clk),
   .rst   (rst),
@@ -29337,7 +30650,8 @@ l1_arb_1_2(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l2_fifo_1_2 (
   .clk   (clk),
   .rst   (rst),
@@ -29374,7 +30688,8 @@ l1_arb_1_3(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l2_fifo_1_3 (
   .clk   (clk),
   .rst   (rst),
@@ -29411,7 +30726,8 @@ l1_arb_1_4(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l2_fifo_1_4 (
   .clk   (clk),
   .rst   (rst),
@@ -29448,7 +30764,8 @@ l1_arb_1_5(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l2_fifo_1_5 (
   .clk   (clk),
   .rst   (rst),
@@ -29485,7 +30802,8 @@ l1_arb_1_6(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l2_fifo_1_6 (
   .clk   (clk),
   .rst   (rst),
@@ -29522,7 +30840,8 @@ l1_arb_1_7(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l2_fifo_1_7 (
   .clk   (clk),
   .rst   (rst),
@@ -29559,7 +30878,8 @@ l1_arb_1_8(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l2_fifo_1_8 (
   .clk   (clk),
   .rst   (rst),
@@ -29596,7 +30916,8 @@ l1_arb_1_9(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l2_fifo_1_9 (
   .clk   (clk),
   .rst   (rst),
@@ -29633,7 +30954,8 @@ l1_arb_1_10(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l2_fifo_1_10 (
   .clk   (clk),
   .rst   (rst),
@@ -29670,7 +30992,8 @@ l1_arb_1_11(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l2_fifo_1_11 (
   .clk   (clk),
   .rst   (rst),
@@ -29707,7 +31030,8 @@ l1_arb_1_12(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l2_fifo_1_12 (
   .clk   (clk),
   .rst   (rst),
@@ -29744,7 +31068,8 @@ l1_arb_1_13(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l2_fifo_1_13 (
   .clk   (clk),
   .rst   (rst),
@@ -29781,7 +31106,8 @@ l1_arb_1_14(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l2_fifo_1_14 (
   .clk   (clk),
   .rst   (rst),
@@ -29818,7 +31144,8 @@ l1_arb_1_15(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l2_fifo_1_15 (
   .clk   (clk),
   .rst   (rst),
@@ -29855,7 +31182,8 @@ l1_arb_2_0(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l2_fifo_2_0 (
   .clk   (clk),
   .rst   (rst),
@@ -29892,7 +31220,8 @@ l1_arb_2_1(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l2_fifo_2_1 (
   .clk   (clk),
   .rst   (rst),
@@ -29929,7 +31258,8 @@ l1_arb_2_2(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l2_fifo_2_2 (
   .clk   (clk),
   .rst   (rst),
@@ -29966,7 +31296,8 @@ l1_arb_2_3(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l2_fifo_2_3 (
   .clk   (clk),
   .rst   (rst),
@@ -30003,7 +31334,8 @@ l1_arb_2_4(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l2_fifo_2_4 (
   .clk   (clk),
   .rst   (rst),
@@ -30040,7 +31372,8 @@ l1_arb_2_5(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l2_fifo_2_5 (
   .clk   (clk),
   .rst   (rst),
@@ -30077,7 +31410,8 @@ l1_arb_2_6(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l2_fifo_2_6 (
   .clk   (clk),
   .rst   (rst),
@@ -30114,7 +31448,8 @@ l1_arb_2_7(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l2_fifo_2_7 (
   .clk   (clk),
   .rst   (rst),
@@ -30151,7 +31486,8 @@ l1_arb_2_8(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l2_fifo_2_8 (
   .clk   (clk),
   .rst   (rst),
@@ -30188,7 +31524,8 @@ l1_arb_2_9(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l2_fifo_2_9 (
   .clk   (clk),
   .rst   (rst),
@@ -30225,7 +31562,8 @@ l1_arb_2_10(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l2_fifo_2_10 (
   .clk   (clk),
   .rst   (rst),
@@ -30262,7 +31600,8 @@ l1_arb_2_11(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l2_fifo_2_11 (
   .clk   (clk),
   .rst   (rst),
@@ -30299,7 +31638,8 @@ l1_arb_2_12(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l2_fifo_2_12 (
   .clk   (clk),
   .rst   (rst),
@@ -30336,7 +31676,8 @@ l1_arb_2_13(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l2_fifo_2_13 (
   .clk   (clk),
   .rst   (rst),
@@ -30373,7 +31714,8 @@ l1_arb_2_14(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l2_fifo_2_14 (
   .clk   (clk),
   .rst   (rst),
@@ -30410,7 +31752,8 @@ l1_arb_2_15(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l2_fifo_2_15 (
   .clk   (clk),
   .rst   (rst),
@@ -30447,7 +31790,8 @@ l1_arb_3_0(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l2_fifo_3_0 (
   .clk   (clk),
   .rst   (rst),
@@ -30484,7 +31828,8 @@ l1_arb_3_1(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l2_fifo_3_1 (
   .clk   (clk),
   .rst   (rst),
@@ -30521,7 +31866,8 @@ l1_arb_3_2(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l2_fifo_3_2 (
   .clk   (clk),
   .rst   (rst),
@@ -30558,7 +31904,8 @@ l1_arb_3_3(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l2_fifo_3_3 (
   .clk   (clk),
   .rst   (rst),
@@ -30595,7 +31942,8 @@ l1_arb_3_4(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l2_fifo_3_4 (
   .clk   (clk),
   .rst   (rst),
@@ -30632,7 +31980,8 @@ l1_arb_3_5(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l2_fifo_3_5 (
   .clk   (clk),
   .rst   (rst),
@@ -30669,7 +32018,8 @@ l1_arb_3_6(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l2_fifo_3_6 (
   .clk   (clk),
   .rst   (rst),
@@ -30706,7 +32056,8 @@ l1_arb_3_7(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l2_fifo_3_7 (
   .clk   (clk),
   .rst   (rst),
@@ -30743,7 +32094,8 @@ l1_arb_3_8(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l2_fifo_3_8 (
   .clk   (clk),
   .rst   (rst),
@@ -30780,7 +32132,8 @@ l1_arb_3_9(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l2_fifo_3_9 (
   .clk   (clk),
   .rst   (rst),
@@ -30817,7 +32170,8 @@ l1_arb_3_10(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l2_fifo_3_10 (
   .clk   (clk),
   .rst   (rst),
@@ -30854,7 +32208,8 @@ l1_arb_3_11(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l2_fifo_3_11 (
   .clk   (clk),
   .rst   (rst),
@@ -30891,7 +32246,8 @@ l1_arb_3_12(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l2_fifo_3_12 (
   .clk   (clk),
   .rst   (rst),
@@ -30928,7 +32284,8 @@ l1_arb_3_13(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l2_fifo_3_13 (
   .clk   (clk),
   .rst   (rst),
@@ -30965,7 +32322,8 @@ l1_arb_3_14(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l2_fifo_3_14 (
   .clk   (clk),
   .rst   (rst),
@@ -31002,7 +32360,8 @@ l1_arb_3_15(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l2_fifo_3_15 (
   .clk   (clk),
   .rst   (rst),
@@ -31039,7 +32398,8 @@ l1_arb_4_0(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l2_fifo_4_0 (
   .clk   (clk),
   .rst   (rst),
@@ -31076,7 +32436,8 @@ l1_arb_4_1(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l2_fifo_4_1 (
   .clk   (clk),
   .rst   (rst),
@@ -31113,7 +32474,8 @@ l1_arb_4_2(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l2_fifo_4_2 (
   .clk   (clk),
   .rst   (rst),
@@ -31150,7 +32512,8 @@ l1_arb_4_3(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l2_fifo_4_3 (
   .clk   (clk),
   .rst   (rst),
@@ -31187,7 +32550,8 @@ l1_arb_4_4(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l2_fifo_4_4 (
   .clk   (clk),
   .rst   (rst),
@@ -31224,7 +32588,8 @@ l1_arb_4_5(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l2_fifo_4_5 (
   .clk   (clk),
   .rst   (rst),
@@ -31261,7 +32626,8 @@ l1_arb_4_6(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l2_fifo_4_6 (
   .clk   (clk),
   .rst   (rst),
@@ -31298,7 +32664,8 @@ l1_arb_4_7(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l2_fifo_4_7 (
   .clk   (clk),
   .rst   (rst),
@@ -31335,7 +32702,8 @@ l1_arb_4_8(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l2_fifo_4_8 (
   .clk   (clk),
   .rst   (rst),
@@ -31372,7 +32740,8 @@ l1_arb_4_9(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l2_fifo_4_9 (
   .clk   (clk),
   .rst   (rst),
@@ -31409,7 +32778,8 @@ l1_arb_4_10(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l2_fifo_4_10 (
   .clk   (clk),
   .rst   (rst),
@@ -31446,7 +32816,8 @@ l1_arb_4_11(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l2_fifo_4_11 (
   .clk   (clk),
   .rst   (rst),
@@ -31483,7 +32854,8 @@ l1_arb_4_12(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l2_fifo_4_12 (
   .clk   (clk),
   .rst   (rst),
@@ -31520,7 +32892,8 @@ l1_arb_4_13(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l2_fifo_4_13 (
   .clk   (clk),
   .rst   (rst),
@@ -31557,7 +32930,8 @@ l1_arb_4_14(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l2_fifo_4_14 (
   .clk   (clk),
   .rst   (rst),
@@ -31594,7 +32968,8 @@ l1_arb_4_15(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l2_fifo_4_15 (
   .clk   (clk),
   .rst   (rst),
@@ -31631,7 +33006,8 @@ l1_arb_5_0(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l2_fifo_5_0 (
   .clk   (clk),
   .rst   (rst),
@@ -31668,7 +33044,8 @@ l1_arb_5_1(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l2_fifo_5_1 (
   .clk   (clk),
   .rst   (rst),
@@ -31705,7 +33082,8 @@ l1_arb_5_2(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l2_fifo_5_2 (
   .clk   (clk),
   .rst   (rst),
@@ -31742,7 +33120,8 @@ l1_arb_5_3(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l2_fifo_5_3 (
   .clk   (clk),
   .rst   (rst),
@@ -31779,7 +33158,8 @@ l1_arb_5_4(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l2_fifo_5_4 (
   .clk   (clk),
   .rst   (rst),
@@ -31816,7 +33196,8 @@ l1_arb_5_5(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l2_fifo_5_5 (
   .clk   (clk),
   .rst   (rst),
@@ -31853,7 +33234,8 @@ l1_arb_5_6(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l2_fifo_5_6 (
   .clk   (clk),
   .rst   (rst),
@@ -31890,7 +33272,8 @@ l1_arb_5_7(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l2_fifo_5_7 (
   .clk   (clk),
   .rst   (rst),
@@ -31927,7 +33310,8 @@ l1_arb_5_8(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l2_fifo_5_8 (
   .clk   (clk),
   .rst   (rst),
@@ -31964,7 +33348,8 @@ l1_arb_5_9(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l2_fifo_5_9 (
   .clk   (clk),
   .rst   (rst),
@@ -32001,7 +33386,8 @@ l1_arb_5_10(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l2_fifo_5_10 (
   .clk   (clk),
   .rst   (rst),
@@ -32038,7 +33424,8 @@ l1_arb_5_11(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l2_fifo_5_11 (
   .clk   (clk),
   .rst   (rst),
@@ -32075,7 +33462,8 @@ l1_arb_5_12(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l2_fifo_5_12 (
   .clk   (clk),
   .rst   (rst),
@@ -32112,7 +33500,8 @@ l1_arb_5_13(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l2_fifo_5_13 (
   .clk   (clk),
   .rst   (rst),
@@ -32149,7 +33538,8 @@ l1_arb_5_14(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l2_fifo_5_14 (
   .clk   (clk),
   .rst   (rst),
@@ -32186,7 +33576,8 @@ l1_arb_5_15(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l2_fifo_5_15 (
   .clk   (clk),
   .rst   (rst),
@@ -32223,7 +33614,8 @@ l1_arb_6_0(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l2_fifo_6_0 (
   .clk   (clk),
   .rst   (rst),
@@ -32260,7 +33652,8 @@ l1_arb_6_1(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l2_fifo_6_1 (
   .clk   (clk),
   .rst   (rst),
@@ -32297,7 +33690,8 @@ l1_arb_6_2(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l2_fifo_6_2 (
   .clk   (clk),
   .rst   (rst),
@@ -32334,7 +33728,8 @@ l1_arb_6_3(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l2_fifo_6_3 (
   .clk   (clk),
   .rst   (rst),
@@ -32371,7 +33766,8 @@ l1_arb_6_4(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l2_fifo_6_4 (
   .clk   (clk),
   .rst   (rst),
@@ -32408,7 +33804,8 @@ l1_arb_6_5(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l2_fifo_6_5 (
   .clk   (clk),
   .rst   (rst),
@@ -32445,7 +33842,8 @@ l1_arb_6_6(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l2_fifo_6_6 (
   .clk   (clk),
   .rst   (rst),
@@ -32482,7 +33880,8 @@ l1_arb_6_7(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l2_fifo_6_7 (
   .clk   (clk),
   .rst   (rst),
@@ -32519,7 +33918,8 @@ l1_arb_6_8(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l2_fifo_6_8 (
   .clk   (clk),
   .rst   (rst),
@@ -32556,7 +33956,8 @@ l1_arb_6_9(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l2_fifo_6_9 (
   .clk   (clk),
   .rst   (rst),
@@ -32593,7 +33994,8 @@ l1_arb_6_10(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l2_fifo_6_10 (
   .clk   (clk),
   .rst   (rst),
@@ -32630,7 +34032,8 @@ l1_arb_6_11(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l2_fifo_6_11 (
   .clk   (clk),
   .rst   (rst),
@@ -32667,7 +34070,8 @@ l1_arb_6_12(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l2_fifo_6_12 (
   .clk   (clk),
   .rst   (rst),
@@ -32704,7 +34108,8 @@ l1_arb_6_13(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l2_fifo_6_13 (
   .clk   (clk),
   .rst   (rst),
@@ -32741,7 +34146,8 @@ l1_arb_6_14(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l2_fifo_6_14 (
   .clk   (clk),
   .rst   (rst),
@@ -32778,7 +34184,8 @@ l1_arb_6_15(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l2_fifo_6_15 (
   .clk   (clk),
   .rst   (rst),
@@ -32815,7 +34222,8 @@ l1_arb_7_0(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l2_fifo_7_0 (
   .clk   (clk),
   .rst   (rst),
@@ -32852,7 +34260,8 @@ l1_arb_7_1(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l2_fifo_7_1 (
   .clk   (clk),
   .rst   (rst),
@@ -32889,7 +34298,8 @@ l1_arb_7_2(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l2_fifo_7_2 (
   .clk   (clk),
   .rst   (rst),
@@ -32926,7 +34336,8 @@ l1_arb_7_3(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l2_fifo_7_3 (
   .clk   (clk),
   .rst   (rst),
@@ -32963,7 +34374,8 @@ l1_arb_7_4(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l2_fifo_7_4 (
   .clk   (clk),
   .rst   (rst),
@@ -33000,7 +34412,8 @@ l1_arb_7_5(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l2_fifo_7_5 (
   .clk   (clk),
   .rst   (rst),
@@ -33037,7 +34450,8 @@ l1_arb_7_6(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l2_fifo_7_6 (
   .clk   (clk),
   .rst   (rst),
@@ -33074,7 +34488,8 @@ l1_arb_7_7(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l2_fifo_7_7 (
   .clk   (clk),
   .rst   (rst),
@@ -33111,7 +34526,8 @@ l1_arb_7_8(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l2_fifo_7_8 (
   .clk   (clk),
   .rst   (rst),
@@ -33148,7 +34564,8 @@ l1_arb_7_9(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l2_fifo_7_9 (
   .clk   (clk),
   .rst   (rst),
@@ -33185,7 +34602,8 @@ l1_arb_7_10(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l2_fifo_7_10 (
   .clk   (clk),
   .rst   (rst),
@@ -33222,7 +34640,8 @@ l1_arb_7_11(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l2_fifo_7_11 (
   .clk   (clk),
   .rst   (rst),
@@ -33259,7 +34678,8 @@ l1_arb_7_12(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l2_fifo_7_12 (
   .clk   (clk),
   .rst   (rst),
@@ -33296,7 +34716,8 @@ l1_arb_7_13(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l2_fifo_7_13 (
   .clk   (clk),
   .rst   (rst),
@@ -33333,7 +34754,8 @@ l1_arb_7_14(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l2_fifo_7_14 (
   .clk   (clk),
   .rst   (rst),
@@ -33370,7 +34792,8 @@ l1_arb_7_15(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l2_fifo_7_15 (
   .clk   (clk),
   .rst   (rst),
@@ -33408,7 +34831,8 @@ l2_arb_0_0(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l3_fifo_0_0 (
   .clk   (clk),
   .rst   (rst),
@@ -33445,7 +34869,8 @@ l2_arb_0_1(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l3_fifo_0_1 (
   .clk   (clk),
   .rst   (rst),
@@ -33482,7 +34907,8 @@ l2_arb_0_2(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l3_fifo_0_2 (
   .clk   (clk),
   .rst   (rst),
@@ -33519,7 +34945,8 @@ l2_arb_0_3(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l3_fifo_0_3 (
   .clk   (clk),
   .rst   (rst),
@@ -33556,7 +34983,8 @@ l2_arb_1_0(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l3_fifo_1_0 (
   .clk   (clk),
   .rst   (rst),
@@ -33593,7 +35021,8 @@ l2_arb_1_1(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l3_fifo_1_1 (
   .clk   (clk),
   .rst   (rst),
@@ -33630,7 +35059,8 @@ l2_arb_1_2(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l3_fifo_1_2 (
   .clk   (clk),
   .rst   (rst),
@@ -33667,7 +35097,8 @@ l2_arb_1_3(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l3_fifo_1_3 (
   .clk   (clk),
   .rst   (rst),
@@ -33704,7 +35135,8 @@ l2_arb_2_0(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l3_fifo_2_0 (
   .clk   (clk),
   .rst   (rst),
@@ -33741,7 +35173,8 @@ l2_arb_2_1(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l3_fifo_2_1 (
   .clk   (clk),
   .rst   (rst),
@@ -33778,7 +35211,8 @@ l2_arb_2_2(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l3_fifo_2_2 (
   .clk   (clk),
   .rst   (rst),
@@ -33815,7 +35249,8 @@ l2_arb_2_3(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l3_fifo_2_3 (
   .clk   (clk),
   .rst   (rst),
@@ -33852,7 +35287,8 @@ l2_arb_3_0(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l3_fifo_3_0 (
   .clk   (clk),
   .rst   (rst),
@@ -33889,7 +35325,8 @@ l2_arb_3_1(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l3_fifo_3_1 (
   .clk   (clk),
   .rst   (rst),
@@ -33926,7 +35363,8 @@ l2_arb_3_2(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l3_fifo_3_2 (
   .clk   (clk),
   .rst   (rst),
@@ -33963,7 +35401,8 @@ l2_arb_3_3(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l3_fifo_3_3 (
   .clk   (clk),
   .rst   (rst),
@@ -34000,7 +35439,8 @@ l2_arb_4_0(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l3_fifo_4_0 (
   .clk   (clk),
   .rst   (rst),
@@ -34037,7 +35477,8 @@ l2_arb_4_1(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l3_fifo_4_1 (
   .clk   (clk),
   .rst   (rst),
@@ -34074,7 +35515,8 @@ l2_arb_4_2(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l3_fifo_4_2 (
   .clk   (clk),
   .rst   (rst),
@@ -34111,7 +35553,8 @@ l2_arb_4_3(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l3_fifo_4_3 (
   .clk   (clk),
   .rst   (rst),
@@ -34148,7 +35591,8 @@ l2_arb_5_0(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l3_fifo_5_0 (
   .clk   (clk),
   .rst   (rst),
@@ -34185,7 +35629,8 @@ l2_arb_5_1(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l3_fifo_5_1 (
   .clk   (clk),
   .rst   (rst),
@@ -34222,7 +35667,8 @@ l2_arb_5_2(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l3_fifo_5_2 (
   .clk   (clk),
   .rst   (rst),
@@ -34259,7 +35705,8 @@ l2_arb_5_3(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l3_fifo_5_3 (
   .clk   (clk),
   .rst   (rst),
@@ -34296,7 +35743,8 @@ l2_arb_6_0(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l3_fifo_6_0 (
   .clk   (clk),
   .rst   (rst),
@@ -34333,7 +35781,8 @@ l2_arb_6_1(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l3_fifo_6_1 (
   .clk   (clk),
   .rst   (rst),
@@ -34370,7 +35819,8 @@ l2_arb_6_2(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l3_fifo_6_2 (
   .clk   (clk),
   .rst   (rst),
@@ -34407,7 +35857,8 @@ l2_arb_6_3(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l3_fifo_6_3 (
   .clk   (clk),
   .rst   (rst),
@@ -34444,7 +35895,8 @@ l2_arb_7_0(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l3_fifo_7_0 (
   .clk   (clk),
   .rst   (rst),
@@ -34481,7 +35933,8 @@ l2_arb_7_1(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l3_fifo_7_1 (
   .clk   (clk),
   .rst   (rst),
@@ -34518,7 +35971,8 @@ l2_arb_7_2(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l3_fifo_7_2 (
   .clk   (clk),
   .rst   (rst),
@@ -34555,7 +36009,8 @@ l2_arb_7_3(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l3_fifo_7_3 (
   .clk   (clk),
   .rst   (rst),
@@ -34593,7 +36048,8 @@ l3_arb_0(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l4_fifo_0 (
   .clk   (clk),
   .rst   (rst),
@@ -34630,7 +36086,8 @@ l3_arb_1(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l4_fifo_1 (
   .clk   (clk),
   .rst   (rst),
@@ -34667,7 +36124,8 @@ l3_arb_2(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l4_fifo_2 (
   .clk   (clk),
   .rst   (rst),
@@ -34704,7 +36162,8 @@ l3_arb_3(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l4_fifo_3 (
   .clk   (clk),
   .rst   (rst),
@@ -34741,7 +36200,8 @@ l3_arb_4(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l4_fifo_4 (
   .clk   (clk),
   .rst   (rst),
@@ -34778,7 +36238,8 @@ l3_arb_5(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l4_fifo_5 (
   .clk   (clk),
   .rst   (rst),
@@ -34815,7 +36276,8 @@ l3_arb_6(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l4_fifo_6 (
   .clk   (clk),
   .rst   (rst),
@@ -34852,7 +36314,8 @@ l3_arb_7(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l4_fifo_7 (
   .clk   (clk),
   .rst   (rst),
@@ -34888,7 +36351,7 @@ rom_2port #(
 hashtable_inst_0(
     .q_a       (ht_q_0),    
     .q_b       (),    
-    .address_a (ht_addr_0[15-1:0]),
+    .address_a (ht_addr_0),
     .address_b (),
     .clk       (clk)   
 );
@@ -34901,7 +36364,7 @@ rom_2port #(
 hashtable_inst_1(
     .q_a       (ht_q_1),    
     .q_b       (),    
-    .address_a (ht_addr_1[15-1:0]),
+    .address_a (ht_addr_1),
     .address_b (),
     .clk       (clk)   
 );
@@ -34914,7 +36377,7 @@ rom_2port #(
 hashtable_inst_2(
     .q_a       (ht_q_2),    
     .q_b       (),    
-    .address_a (ht_addr_2[12-1:0]),
+    .address_a (ht_addr_2),
     .address_b (),
     .clk       (clk)   
 );
@@ -34927,7 +36390,7 @@ rom_2port #(
 hashtable_inst_3(
     .q_a       (ht_q_3),    
     .q_b       (),    
-    .address_a (ht_addr_3[12-1:0]),
+    .address_a (ht_addr_3),
     .address_b (),
     .clk       (clk)   
 );
@@ -34940,7 +36403,7 @@ rom_2port #(
 hashtable_inst_4(
     .q_a       (ht_q_4),    
     .q_b       (),    
-    .address_a (ht_addr_4[11-1:0]),
+    .address_a (ht_addr_4),
     .address_b (),
     .clk       (clk)   
 );
@@ -34953,7 +36416,7 @@ rom_2port #(
 hashtable_inst_5(
     .q_a       (ht_q_5),    
     .q_b       (),    
-    .address_a (ht_addr_5[12-1:0]),
+    .address_a (ht_addr_5),
     .address_b (),
     .clk       (clk)   
 );
@@ -34966,7 +36429,7 @@ rom_2port #(
 hashtable_inst_6(
     .q_a       (ht_q_6),    
     .q_b       (),    
-    .address_a (ht_addr_6[10-1:0]),
+    .address_a (ht_addr_6),
     .address_b (),
     .clk       (clk)   
 );
@@ -34979,9 +36442,11 @@ rom_2port #(
 hashtable_inst_7(
     .q_a       (ht_q_7),    
     .q_b       (),    
-    .address_a (ht_addr_7[8-1:0]),
+    .address_a (ht_addr_7),
     .address_b (),
     .clk       (clk)   
 );
+
+assign status_readdata_valid = 1'b0;
 
 endmodule

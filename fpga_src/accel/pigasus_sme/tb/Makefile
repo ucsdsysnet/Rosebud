@@ -24,8 +24,13 @@ VERILOG_SOURCES += $(RTL_DIR)/ips.sv
 VERILOG_SOURCES += $(RTL_DIR)/mul_hash.sv
 VERILOG_SOURCES += $(RTL_DIR)/rr_arbiter.sv
 VERILOG_SOURCES += $(RTL_DIR)/rr_arbiter_4.sv
+VERILOG_SOURCES += $(RTL_DIR)/data_shift.sv
 VERILOG_SOURCES += $(RTL_DIR)/hyper_pipe.sv
+VERILOG_SOURCES += $(RTL_DIR)/hyper_pipe_rst.sv
 VERILOG_SOURCES += $(RTL_DIR)/string_matcher.sv
+VERILOG_SOURCES += $(RTL_DIR)/port_unit.sv
+VERILOG_SOURCES += $(RTL_DIR)/rule_unit.sv
+VERILOG_SOURCES += $(RTL_DIR)/port_group.sv
 
 COMPILE_ARGS  = -I ./struct_s.sv
 PLUSARGS+=-fst 

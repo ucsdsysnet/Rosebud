@@ -7,7 +7,14 @@ module backend(clk,rst,
     din_almost_full_{{i}}_{{j}},
 {% endfor %}
 {% endfor %}
-    ruleID,ruleID_valid,ruleID_last,ruleID_almost_full
+    ruleID,ruleID_valid,ruleID_last,ruleID_almost_full,
+    clk_status,
+    status_addr,
+    status_read,
+    status_write,
+    status_writedata,
+    status_readdata,
+    status_readdata_valid
 );
 
 input clk;
@@ -23,6 +30,14 @@ output logic [127:0] ruleID;
 output logic ruleID_valid;
 output logic ruleID_last;
 input ruleID_almost_full;
+// status register bus
+input   logic          clk_status;
+input   logic   [29:0] status_addr;
+input   logic          status_read;
+input   logic          status_write;
+input   logic   [31:0] status_writedata;
+output  logic   [31:0] status_readdata;
+output  logic          status_readdata_valid;
 
 localparam L1_FIFO_DEPTH = 64;
 localparam FIFO_DEPTH = 32;
@@ -35,9 +50,13 @@ localparam L4_TH = (FIFO_DEPTH-3);
 //L1 FIFO
 {% for i in range(0,context['bucket_size']) %}
 {% for j in range(0,32) %}
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_{{i}}_{{j}};
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_{{i}}_{{j}}_r1;
-logic [$clog2(L1_FIFO_DEPTH):0] din_csr_readdata_{{i}}_{{j}}_r2;
+logic          din_csr_address_{{i}}_{{j}};
+logic          din_csr_read_{{i}}_{{j}};
+logic          din_csr_write_{{i}}_{{j}};
+logic [31:0]   din_csr_readdata_{{i}}_{{j}};
+logic [31:0]   din_csr_readdata_{{i}}_{{j}}_r1;
+logic [31:0]   din_csr_readdata_{{i}}_{{j}}_r2;
+logic [31:0]   din_csr_writedata_{{i}}_{{j}};
 
 rule_s_t    l1_data_{{i}}_{{j}};
 logic       l1_ready_{{i}}_{{j}};
@@ -57,7 +76,7 @@ logic       l2_in_ready_{{i}}_{{j}};
 logic       l2_out_valid_{{i}}_{{j}};
 logic       l2_out_ready_{{i}}_{{j}};
 logic       l2_almost_full_{{i}}_{{j}};
-logic [$clog2(FIFO_DEPTH):0] l2_csr_readdata_{{i}}_{{j}};
+logic [31:0] l2_csr_readdata_{{i}}_{{j}};
 logic       l2_newdata_{{i}}_{{j}};
 logic [RID_WIDTH-1:0] l2_cache_{{i}}_{{j}};
 logic [1:0] l1_req_{{i}}_{{j}};
@@ -78,7 +97,7 @@ logic l3_in_ready_{{i}}_{{j}};
 logic l3_out_valid_{{i}}_{{j}};
 logic l3_out_ready_{{i}}_{{j}};
 logic l3_almost_full_{{i}}_{{j}};
-logic [$clog2(FIFO_DEPTH):0] l3_csr_readdata_{{i}}_{{j}};
+logic [31:0] l3_csr_readdata_{{i}}_{{j}};
 logic       l3_newdata_{{i}}_{{j}};
 logic [RID_WIDTH-1:0] l3_cache_{{i}}_{{j}};
 logic [3:0] l2_req_{{i}}_{{j}};
@@ -98,7 +117,7 @@ logic l4_in_ready_{{i}};
 logic l4_out_valid_{{i}};
 logic l4_out_ready_{{i}};
 logic l4_almost_full_{{i}};
-logic [$clog2(FIFO_DEPTH):0] l4_csr_readdata_{{i}};
+logic [31:0] l4_csr_readdata_{{i}};
 logic [RID_WIDTH-1:0] l4_cache_{{i}};
 logic [3:0] l3_req_{{i}};
 logic [3:0] l3_grant_{{i}};
@@ -488,7 +507,8 @@ end
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_{{i}}_{{j}} (
   .clk   (clk),
   .rst   (rst),
@@ -531,7 +551,8 @@ l1_arb_{{i}}_{{j}}(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l2_fifo_{{i}}_{{j}} (
   .clk   (clk),
   .rst   (rst),
@@ -573,7 +594,8 @@ l2_arb_{{i}}_{{j}}(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l3_fifo_{{i}}_{{j}} (
   .clk   (clk),
   .rst   (rst),
@@ -614,7 +636,8 @@ l3_arb_{{i}}(
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH)
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l4_fifo_{{i}} (
   .clk   (clk),
   .rst   (rst),
@@ -652,10 +675,12 @@ rom_2port #(
 hashtable_inst_{{i}}(
     .q_a       (ht_q_{{i}}),    
     .q_b       (),    
-    .address_a (ht_addr_{{i}}[{{context['nbits'][i]}}-1:0]),
+    .address_a (ht_addr_{{i}}),
     .address_b (),
     .clk       (clk)   
 );
 {% endfor %}
+
+assign status_readdata_valid = 1'b0;
 
 endmodule

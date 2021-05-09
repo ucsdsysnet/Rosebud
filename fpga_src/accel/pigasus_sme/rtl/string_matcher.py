@@ -9,7 +9,7 @@ from math import log2
 from math import ceil
 
 context = {}
-byte_size = 8
+byte_size = 32
 half_byte_size = int(byte_size/2)
 bucket_size = 8
 byte_pos = []

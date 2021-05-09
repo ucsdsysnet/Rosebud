@@ -14,10 +14,15 @@ module rom_2port #(
 );
 
   reg [DWIDTH-1:0] mem [0:(1<<AWIDTH)-1];
+  reg [AWIDTH-1:0] address_a_r;
+  reg [AWIDTH-1:0] address_b_r;
   
   always @ (posedge clk) begin
-    q_a <= mem[address_a];
-    q_b <= mem[address_b];
+    address_a_r <= address_a;
+    address_b_r <= address_b;
+
+    q_a <= mem[address_a_r];
+    q_b <= mem[address_b_r];
   end
 
   initial begin
@@ -44,9 +49,9 @@ module rom_2port_noreg #(
 
   reg [DWIDTH-1:0] mem [0:(1<<AWIDTH)-1];
   
-  always @ (*) begin
-    q_a = mem[address_a];
-    q_b = mem[address_b];
+  always @ (posedge clk) begin
+    q_a <= mem[address_a];
+    q_b <= mem[address_b];
   end
 
   initial begin
@@ -69,9 +74,12 @@ module rom_1port_mlab #(
 );
 
   reg [DWIDTH-1:0] mem [0:(1<<AWIDTH)-1];
+  reg [AWIDTH-1:0] address_r;
   
-  always @ (posedge clk)
-    q <= mem[address];
+  always @ (posedge clk) begin
+    address_r <= address;
+    q <= mem[address_r];
+  end
 
   initial begin
     if (INIT_FILE!="")

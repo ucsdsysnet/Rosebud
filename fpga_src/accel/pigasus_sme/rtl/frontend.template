@@ -8,8 +8,8 @@ module frontend (clk,rst,
 {% endfor %}
     in_data,
     in_valid,
-    init,
-    in_last,
+    in_sop,
+    in_eop,
     in_empty,
     out_new_pkt
 );
@@ -18,8 +18,8 @@ input clk;
 input rst;
 input [255:0] in_data;
 input in_valid;
-input init;
-input in_last;
+input in_sop;
+input in_eop;
 input [4:0] in_empty;
 {% for i in range(0,context['bucket_size'])%}
 {% for j in range(0,context['byte_size'])%}
@@ -59,7 +59,7 @@ assign hash_out_valid_filter_{{i}}_{{j}} = hash_out_valid_{{i}}_{{j}} & !filter_
 {% endfor %}
 {% endfor %}
 
-assign new_pkt = in_last & in_valid;
+assign new_pkt = in_eop & in_valid;
 
 //Make sure all the flits of the pkts have been checked before moving it. 
 always @ (posedge clk) begin
@@ -102,14 +102,15 @@ always @ (posedge clk) begin
     //end
 end
 
+
 //Instantiation
 first_filter filter_inst(
     .clk(clk),
     .rst(rst),
-	  .in_data    (in_data),
+	.in_data    (in_data),
     .in_valid   (in_valid),
-    .init       (init),
-    .in_last    (in_last),
+    .in_sop     (in_sop),
+    .in_eop     (in_eop),
     .in_empty   (in_empty),
     .out_data   (filter_out),
     .out_valid  (filter_out_valid)
@@ -120,11 +121,11 @@ hashtable_top hashtable_top_inst (
 {% for i in range(0,context['bucket_size'])%}
 {% for j in range(0,context['byte_size'])%}
 	.dout_{{i}}_{{j}} (hash_out_{{i}}_{{j}}),
-  .dout_valid_{{i}}_{{j}} (hash_out_valid_{{i}}_{{j}}),
+    .dout_valid_{{i}}_{{j}} (hash_out_valid_{{i}}_{{j}}),
 {% endfor %}
 {% endfor %}
-  .din (hash_in),
-  .din_valid (hash_in_valid)
+    .din (hash_in),
+    .din_valid (hash_in_valid)
 );
 
 endmodule //top
