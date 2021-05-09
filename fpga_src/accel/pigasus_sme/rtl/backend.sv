@@ -1,5 +1,6 @@
 `include "struct_s.sv"
-module backend(clk,rst,
+module backend(front_clk,front_rst,
+    back_clk,back_rst,
     din_0_0,
     din_valid_0_0,
     din_almost_full_0_0,
@@ -778,8 +779,10 @@ module backend(clk,rst,
     status_readdata_valid
 );
 
-input clk;
-input rst;
+input front_clk;
+input front_rst;
+input back_clk;
+input back_rst;
 input rule_s_t din_0_0;
 input din_valid_0_0;
 output logic din_almost_full_0_0;
@@ -7496,7 +7499,7 @@ logic [2:0] bucket_7_r1;
 logic [2:0] bucket_7_r2;
 
 //L1 
-always @(posedge clk)begin
+always @(posedge front_clk)begin
     din_csr_readdata_0_0_r1 <= din_csr_readdata_0_0;
     din_csr_readdata_0_0_r2 <= din_csr_readdata_0_0_r1;
     din_csr_readdata_0_1_r1 <= din_csr_readdata_0_1;
@@ -8044,8 +8047,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l1_cache_0_0 <= 0;
         l1_cache_0_1 <= 0;
     end else begin
@@ -8063,8 +8066,8 @@ always @(posedge clk)begin
     end
 end
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_in_valid_0_0 <= 0;
     end else begin
         //sync case
@@ -8121,8 +8124,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l1_cache_0_2 <= 0;
         l1_cache_0_3 <= 0;
     end else begin
@@ -8140,8 +8143,8 @@ always @(posedge clk)begin
     end
 end
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_in_valid_0_1 <= 0;
     end else begin
         //sync case
@@ -8198,8 +8201,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l1_cache_0_4 <= 0;
         l1_cache_0_5 <= 0;
     end else begin
@@ -8217,8 +8220,8 @@ always @(posedge clk)begin
     end
 end
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_in_valid_0_2 <= 0;
     end else begin
         //sync case
@@ -8275,8 +8278,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l1_cache_0_6 <= 0;
         l1_cache_0_7 <= 0;
     end else begin
@@ -8294,8 +8297,8 @@ always @(posedge clk)begin
     end
 end
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_in_valid_0_3 <= 0;
     end else begin
         //sync case
@@ -8352,8 +8355,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l1_cache_0_8 <= 0;
         l1_cache_0_9 <= 0;
     end else begin
@@ -8371,8 +8374,8 @@ always @(posedge clk)begin
     end
 end
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_in_valid_0_4 <= 0;
     end else begin
         //sync case
@@ -8429,8 +8432,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l1_cache_0_10 <= 0;
         l1_cache_0_11 <= 0;
     end else begin
@@ -8448,8 +8451,8 @@ always @(posedge clk)begin
     end
 end
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_in_valid_0_5 <= 0;
     end else begin
         //sync case
@@ -8506,8 +8509,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l1_cache_0_12 <= 0;
         l1_cache_0_13 <= 0;
     end else begin
@@ -8525,8 +8528,8 @@ always @(posedge clk)begin
     end
 end
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_in_valid_0_6 <= 0;
     end else begin
         //sync case
@@ -8583,8 +8586,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l1_cache_0_14 <= 0;
         l1_cache_0_15 <= 0;
     end else begin
@@ -8602,8 +8605,8 @@ always @(posedge clk)begin
     end
 end
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_in_valid_0_7 <= 0;
     end else begin
         //sync case
@@ -8660,8 +8663,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l1_cache_0_16 <= 0;
         l1_cache_0_17 <= 0;
     end else begin
@@ -8679,8 +8682,8 @@ always @(posedge clk)begin
     end
 end
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_in_valid_0_8 <= 0;
     end else begin
         //sync case
@@ -8737,8 +8740,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l1_cache_0_18 <= 0;
         l1_cache_0_19 <= 0;
     end else begin
@@ -8756,8 +8759,8 @@ always @(posedge clk)begin
     end
 end
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_in_valid_0_9 <= 0;
     end else begin
         //sync case
@@ -8814,8 +8817,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l1_cache_0_20 <= 0;
         l1_cache_0_21 <= 0;
     end else begin
@@ -8833,8 +8836,8 @@ always @(posedge clk)begin
     end
 end
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_in_valid_0_10 <= 0;
     end else begin
         //sync case
@@ -8891,8 +8894,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l1_cache_0_22 <= 0;
         l1_cache_0_23 <= 0;
     end else begin
@@ -8910,8 +8913,8 @@ always @(posedge clk)begin
     end
 end
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_in_valid_0_11 <= 0;
     end else begin
         //sync case
@@ -8968,8 +8971,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l1_cache_0_24 <= 0;
         l1_cache_0_25 <= 0;
     end else begin
@@ -8987,8 +8990,8 @@ always @(posedge clk)begin
     end
 end
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_in_valid_0_12 <= 0;
     end else begin
         //sync case
@@ -9045,8 +9048,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l1_cache_0_26 <= 0;
         l1_cache_0_27 <= 0;
     end else begin
@@ -9064,8 +9067,8 @@ always @(posedge clk)begin
     end
 end
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_in_valid_0_13 <= 0;
     end else begin
         //sync case
@@ -9122,8 +9125,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l1_cache_0_28 <= 0;
         l1_cache_0_29 <= 0;
     end else begin
@@ -9141,8 +9144,8 @@ always @(posedge clk)begin
     end
 end
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_in_valid_0_14 <= 0;
     end else begin
         //sync case
@@ -9199,8 +9202,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l1_cache_0_30 <= 0;
         l1_cache_0_31 <= 0;
     end else begin
@@ -9218,8 +9221,8 @@ always @(posedge clk)begin
     end
 end
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_in_valid_0_15 <= 0;
     end else begin
         //sync case
@@ -9276,8 +9279,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l1_cache_1_0 <= 0;
         l1_cache_1_1 <= 0;
     end else begin
@@ -9295,8 +9298,8 @@ always @(posedge clk)begin
     end
 end
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_in_valid_1_0 <= 0;
     end else begin
         //sync case
@@ -9353,8 +9356,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l1_cache_1_2 <= 0;
         l1_cache_1_3 <= 0;
     end else begin
@@ -9372,8 +9375,8 @@ always @(posedge clk)begin
     end
 end
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_in_valid_1_1 <= 0;
     end else begin
         //sync case
@@ -9430,8 +9433,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l1_cache_1_4 <= 0;
         l1_cache_1_5 <= 0;
     end else begin
@@ -9449,8 +9452,8 @@ always @(posedge clk)begin
     end
 end
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_in_valid_1_2 <= 0;
     end else begin
         //sync case
@@ -9507,8 +9510,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l1_cache_1_6 <= 0;
         l1_cache_1_7 <= 0;
     end else begin
@@ -9526,8 +9529,8 @@ always @(posedge clk)begin
     end
 end
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_in_valid_1_3 <= 0;
     end else begin
         //sync case
@@ -9584,8 +9587,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l1_cache_1_8 <= 0;
         l1_cache_1_9 <= 0;
     end else begin
@@ -9603,8 +9606,8 @@ always @(posedge clk)begin
     end
 end
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_in_valid_1_4 <= 0;
     end else begin
         //sync case
@@ -9661,8 +9664,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l1_cache_1_10 <= 0;
         l1_cache_1_11 <= 0;
     end else begin
@@ -9680,8 +9683,8 @@ always @(posedge clk)begin
     end
 end
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_in_valid_1_5 <= 0;
     end else begin
         //sync case
@@ -9738,8 +9741,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l1_cache_1_12 <= 0;
         l1_cache_1_13 <= 0;
     end else begin
@@ -9757,8 +9760,8 @@ always @(posedge clk)begin
     end
 end
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_in_valid_1_6 <= 0;
     end else begin
         //sync case
@@ -9815,8 +9818,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l1_cache_1_14 <= 0;
         l1_cache_1_15 <= 0;
     end else begin
@@ -9834,8 +9837,8 @@ always @(posedge clk)begin
     end
 end
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_in_valid_1_7 <= 0;
     end else begin
         //sync case
@@ -9892,8 +9895,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l1_cache_1_16 <= 0;
         l1_cache_1_17 <= 0;
     end else begin
@@ -9911,8 +9914,8 @@ always @(posedge clk)begin
     end
 end
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_in_valid_1_8 <= 0;
     end else begin
         //sync case
@@ -9969,8 +9972,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l1_cache_1_18 <= 0;
         l1_cache_1_19 <= 0;
     end else begin
@@ -9988,8 +9991,8 @@ always @(posedge clk)begin
     end
 end
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_in_valid_1_9 <= 0;
     end else begin
         //sync case
@@ -10046,8 +10049,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l1_cache_1_20 <= 0;
         l1_cache_1_21 <= 0;
     end else begin
@@ -10065,8 +10068,8 @@ always @(posedge clk)begin
     end
 end
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_in_valid_1_10 <= 0;
     end else begin
         //sync case
@@ -10123,8 +10126,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l1_cache_1_22 <= 0;
         l1_cache_1_23 <= 0;
     end else begin
@@ -10142,8 +10145,8 @@ always @(posedge clk)begin
     end
 end
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_in_valid_1_11 <= 0;
     end else begin
         //sync case
@@ -10200,8 +10203,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l1_cache_1_24 <= 0;
         l1_cache_1_25 <= 0;
     end else begin
@@ -10219,8 +10222,8 @@ always @(posedge clk)begin
     end
 end
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_in_valid_1_12 <= 0;
     end else begin
         //sync case
@@ -10277,8 +10280,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l1_cache_1_26 <= 0;
         l1_cache_1_27 <= 0;
     end else begin
@@ -10296,8 +10299,8 @@ always @(posedge clk)begin
     end
 end
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_in_valid_1_13 <= 0;
     end else begin
         //sync case
@@ -10354,8 +10357,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l1_cache_1_28 <= 0;
         l1_cache_1_29 <= 0;
     end else begin
@@ -10373,8 +10376,8 @@ always @(posedge clk)begin
     end
 end
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_in_valid_1_14 <= 0;
     end else begin
         //sync case
@@ -10431,8 +10434,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l1_cache_1_30 <= 0;
         l1_cache_1_31 <= 0;
     end else begin
@@ -10450,8 +10453,8 @@ always @(posedge clk)begin
     end
 end
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_in_valid_1_15 <= 0;
     end else begin
         //sync case
@@ -10508,8 +10511,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l1_cache_2_0 <= 0;
         l1_cache_2_1 <= 0;
     end else begin
@@ -10527,8 +10530,8 @@ always @(posedge clk)begin
     end
 end
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_in_valid_2_0 <= 0;
     end else begin
         //sync case
@@ -10585,8 +10588,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l1_cache_2_2 <= 0;
         l1_cache_2_3 <= 0;
     end else begin
@@ -10604,8 +10607,8 @@ always @(posedge clk)begin
     end
 end
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_in_valid_2_1 <= 0;
     end else begin
         //sync case
@@ -10662,8 +10665,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l1_cache_2_4 <= 0;
         l1_cache_2_5 <= 0;
     end else begin
@@ -10681,8 +10684,8 @@ always @(posedge clk)begin
     end
 end
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_in_valid_2_2 <= 0;
     end else begin
         //sync case
@@ -10739,8 +10742,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l1_cache_2_6 <= 0;
         l1_cache_2_7 <= 0;
     end else begin
@@ -10758,8 +10761,8 @@ always @(posedge clk)begin
     end
 end
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_in_valid_2_3 <= 0;
     end else begin
         //sync case
@@ -10816,8 +10819,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l1_cache_2_8 <= 0;
         l1_cache_2_9 <= 0;
     end else begin
@@ -10835,8 +10838,8 @@ always @(posedge clk)begin
     end
 end
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_in_valid_2_4 <= 0;
     end else begin
         //sync case
@@ -10893,8 +10896,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l1_cache_2_10 <= 0;
         l1_cache_2_11 <= 0;
     end else begin
@@ -10912,8 +10915,8 @@ always @(posedge clk)begin
     end
 end
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_in_valid_2_5 <= 0;
     end else begin
         //sync case
@@ -10970,8 +10973,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l1_cache_2_12 <= 0;
         l1_cache_2_13 <= 0;
     end else begin
@@ -10989,8 +10992,8 @@ always @(posedge clk)begin
     end
 end
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_in_valid_2_6 <= 0;
     end else begin
         //sync case
@@ -11047,8 +11050,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l1_cache_2_14 <= 0;
         l1_cache_2_15 <= 0;
     end else begin
@@ -11066,8 +11069,8 @@ always @(posedge clk)begin
     end
 end
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_in_valid_2_7 <= 0;
     end else begin
         //sync case
@@ -11124,8 +11127,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l1_cache_2_16 <= 0;
         l1_cache_2_17 <= 0;
     end else begin
@@ -11143,8 +11146,8 @@ always @(posedge clk)begin
     end
 end
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_in_valid_2_8 <= 0;
     end else begin
         //sync case
@@ -11201,8 +11204,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l1_cache_2_18 <= 0;
         l1_cache_2_19 <= 0;
     end else begin
@@ -11220,8 +11223,8 @@ always @(posedge clk)begin
     end
 end
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_in_valid_2_9 <= 0;
     end else begin
         //sync case
@@ -11278,8 +11281,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l1_cache_2_20 <= 0;
         l1_cache_2_21 <= 0;
     end else begin
@@ -11297,8 +11300,8 @@ always @(posedge clk)begin
     end
 end
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_in_valid_2_10 <= 0;
     end else begin
         //sync case
@@ -11355,8 +11358,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l1_cache_2_22 <= 0;
         l1_cache_2_23 <= 0;
     end else begin
@@ -11374,8 +11377,8 @@ always @(posedge clk)begin
     end
 end
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_in_valid_2_11 <= 0;
     end else begin
         //sync case
@@ -11432,8 +11435,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l1_cache_2_24 <= 0;
         l1_cache_2_25 <= 0;
     end else begin
@@ -11451,8 +11454,8 @@ always @(posedge clk)begin
     end
 end
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_in_valid_2_12 <= 0;
     end else begin
         //sync case
@@ -11509,8 +11512,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l1_cache_2_26 <= 0;
         l1_cache_2_27 <= 0;
     end else begin
@@ -11528,8 +11531,8 @@ always @(posedge clk)begin
     end
 end
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_in_valid_2_13 <= 0;
     end else begin
         //sync case
@@ -11586,8 +11589,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l1_cache_2_28 <= 0;
         l1_cache_2_29 <= 0;
     end else begin
@@ -11605,8 +11608,8 @@ always @(posedge clk)begin
     end
 end
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_in_valid_2_14 <= 0;
     end else begin
         //sync case
@@ -11663,8 +11666,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l1_cache_2_30 <= 0;
         l1_cache_2_31 <= 0;
     end else begin
@@ -11682,8 +11685,8 @@ always @(posedge clk)begin
     end
 end
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_in_valid_2_15 <= 0;
     end else begin
         //sync case
@@ -11740,8 +11743,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l1_cache_3_0 <= 0;
         l1_cache_3_1 <= 0;
     end else begin
@@ -11759,8 +11762,8 @@ always @(posedge clk)begin
     end
 end
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_in_valid_3_0 <= 0;
     end else begin
         //sync case
@@ -11817,8 +11820,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l1_cache_3_2 <= 0;
         l1_cache_3_3 <= 0;
     end else begin
@@ -11836,8 +11839,8 @@ always @(posedge clk)begin
     end
 end
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_in_valid_3_1 <= 0;
     end else begin
         //sync case
@@ -11894,8 +11897,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l1_cache_3_4 <= 0;
         l1_cache_3_5 <= 0;
     end else begin
@@ -11913,8 +11916,8 @@ always @(posedge clk)begin
     end
 end
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_in_valid_3_2 <= 0;
     end else begin
         //sync case
@@ -11971,8 +11974,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l1_cache_3_6 <= 0;
         l1_cache_3_7 <= 0;
     end else begin
@@ -11990,8 +11993,8 @@ always @(posedge clk)begin
     end
 end
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_in_valid_3_3 <= 0;
     end else begin
         //sync case
@@ -12048,8 +12051,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l1_cache_3_8 <= 0;
         l1_cache_3_9 <= 0;
     end else begin
@@ -12067,8 +12070,8 @@ always @(posedge clk)begin
     end
 end
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_in_valid_3_4 <= 0;
     end else begin
         //sync case
@@ -12125,8 +12128,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l1_cache_3_10 <= 0;
         l1_cache_3_11 <= 0;
     end else begin
@@ -12144,8 +12147,8 @@ always @(posedge clk)begin
     end
 end
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_in_valid_3_5 <= 0;
     end else begin
         //sync case
@@ -12202,8 +12205,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l1_cache_3_12 <= 0;
         l1_cache_3_13 <= 0;
     end else begin
@@ -12221,8 +12224,8 @@ always @(posedge clk)begin
     end
 end
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_in_valid_3_6 <= 0;
     end else begin
         //sync case
@@ -12279,8 +12282,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l1_cache_3_14 <= 0;
         l1_cache_3_15 <= 0;
     end else begin
@@ -12298,8 +12301,8 @@ always @(posedge clk)begin
     end
 end
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_in_valid_3_7 <= 0;
     end else begin
         //sync case
@@ -12356,8 +12359,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l1_cache_3_16 <= 0;
         l1_cache_3_17 <= 0;
     end else begin
@@ -12375,8 +12378,8 @@ always @(posedge clk)begin
     end
 end
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_in_valid_3_8 <= 0;
     end else begin
         //sync case
@@ -12433,8 +12436,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l1_cache_3_18 <= 0;
         l1_cache_3_19 <= 0;
     end else begin
@@ -12452,8 +12455,8 @@ always @(posedge clk)begin
     end
 end
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_in_valid_3_9 <= 0;
     end else begin
         //sync case
@@ -12510,8 +12513,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l1_cache_3_20 <= 0;
         l1_cache_3_21 <= 0;
     end else begin
@@ -12529,8 +12532,8 @@ always @(posedge clk)begin
     end
 end
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_in_valid_3_10 <= 0;
     end else begin
         //sync case
@@ -12587,8 +12590,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l1_cache_3_22 <= 0;
         l1_cache_3_23 <= 0;
     end else begin
@@ -12606,8 +12609,8 @@ always @(posedge clk)begin
     end
 end
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_in_valid_3_11 <= 0;
     end else begin
         //sync case
@@ -12664,8 +12667,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l1_cache_3_24 <= 0;
         l1_cache_3_25 <= 0;
     end else begin
@@ -12683,8 +12686,8 @@ always @(posedge clk)begin
     end
 end
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_in_valid_3_12 <= 0;
     end else begin
         //sync case
@@ -12741,8 +12744,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l1_cache_3_26 <= 0;
         l1_cache_3_27 <= 0;
     end else begin
@@ -12760,8 +12763,8 @@ always @(posedge clk)begin
     end
 end
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_in_valid_3_13 <= 0;
     end else begin
         //sync case
@@ -12818,8 +12821,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l1_cache_3_28 <= 0;
         l1_cache_3_29 <= 0;
     end else begin
@@ -12837,8 +12840,8 @@ always @(posedge clk)begin
     end
 end
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_in_valid_3_14 <= 0;
     end else begin
         //sync case
@@ -12895,8 +12898,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l1_cache_3_30 <= 0;
         l1_cache_3_31 <= 0;
     end else begin
@@ -12914,8 +12917,8 @@ always @(posedge clk)begin
     end
 end
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_in_valid_3_15 <= 0;
     end else begin
         //sync case
@@ -12972,8 +12975,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l1_cache_4_0 <= 0;
         l1_cache_4_1 <= 0;
     end else begin
@@ -12991,8 +12994,8 @@ always @(posedge clk)begin
     end
 end
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_in_valid_4_0 <= 0;
     end else begin
         //sync case
@@ -13049,8 +13052,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l1_cache_4_2 <= 0;
         l1_cache_4_3 <= 0;
     end else begin
@@ -13068,8 +13071,8 @@ always @(posedge clk)begin
     end
 end
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_in_valid_4_1 <= 0;
     end else begin
         //sync case
@@ -13126,8 +13129,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l1_cache_4_4 <= 0;
         l1_cache_4_5 <= 0;
     end else begin
@@ -13145,8 +13148,8 @@ always @(posedge clk)begin
     end
 end
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_in_valid_4_2 <= 0;
     end else begin
         //sync case
@@ -13203,8 +13206,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l1_cache_4_6 <= 0;
         l1_cache_4_7 <= 0;
     end else begin
@@ -13222,8 +13225,8 @@ always @(posedge clk)begin
     end
 end
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_in_valid_4_3 <= 0;
     end else begin
         //sync case
@@ -13280,8 +13283,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l1_cache_4_8 <= 0;
         l1_cache_4_9 <= 0;
     end else begin
@@ -13299,8 +13302,8 @@ always @(posedge clk)begin
     end
 end
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_in_valid_4_4 <= 0;
     end else begin
         //sync case
@@ -13357,8 +13360,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l1_cache_4_10 <= 0;
         l1_cache_4_11 <= 0;
     end else begin
@@ -13376,8 +13379,8 @@ always @(posedge clk)begin
     end
 end
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_in_valid_4_5 <= 0;
     end else begin
         //sync case
@@ -13434,8 +13437,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l1_cache_4_12 <= 0;
         l1_cache_4_13 <= 0;
     end else begin
@@ -13453,8 +13456,8 @@ always @(posedge clk)begin
     end
 end
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_in_valid_4_6 <= 0;
     end else begin
         //sync case
@@ -13511,8 +13514,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l1_cache_4_14 <= 0;
         l1_cache_4_15 <= 0;
     end else begin
@@ -13530,8 +13533,8 @@ always @(posedge clk)begin
     end
 end
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_in_valid_4_7 <= 0;
     end else begin
         //sync case
@@ -13588,8 +13591,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l1_cache_4_16 <= 0;
         l1_cache_4_17 <= 0;
     end else begin
@@ -13607,8 +13610,8 @@ always @(posedge clk)begin
     end
 end
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_in_valid_4_8 <= 0;
     end else begin
         //sync case
@@ -13665,8 +13668,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l1_cache_4_18 <= 0;
         l1_cache_4_19 <= 0;
     end else begin
@@ -13684,8 +13687,8 @@ always @(posedge clk)begin
     end
 end
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_in_valid_4_9 <= 0;
     end else begin
         //sync case
@@ -13742,8 +13745,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l1_cache_4_20 <= 0;
         l1_cache_4_21 <= 0;
     end else begin
@@ -13761,8 +13764,8 @@ always @(posedge clk)begin
     end
 end
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_in_valid_4_10 <= 0;
     end else begin
         //sync case
@@ -13819,8 +13822,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l1_cache_4_22 <= 0;
         l1_cache_4_23 <= 0;
     end else begin
@@ -13838,8 +13841,8 @@ always @(posedge clk)begin
     end
 end
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_in_valid_4_11 <= 0;
     end else begin
         //sync case
@@ -13896,8 +13899,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l1_cache_4_24 <= 0;
         l1_cache_4_25 <= 0;
     end else begin
@@ -13915,8 +13918,8 @@ always @(posedge clk)begin
     end
 end
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_in_valid_4_12 <= 0;
     end else begin
         //sync case
@@ -13973,8 +13976,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l1_cache_4_26 <= 0;
         l1_cache_4_27 <= 0;
     end else begin
@@ -13992,8 +13995,8 @@ always @(posedge clk)begin
     end
 end
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_in_valid_4_13 <= 0;
     end else begin
         //sync case
@@ -14050,8 +14053,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l1_cache_4_28 <= 0;
         l1_cache_4_29 <= 0;
     end else begin
@@ -14069,8 +14072,8 @@ always @(posedge clk)begin
     end
 end
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_in_valid_4_14 <= 0;
     end else begin
         //sync case
@@ -14127,8 +14130,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l1_cache_4_30 <= 0;
         l1_cache_4_31 <= 0;
     end else begin
@@ -14146,8 +14149,8 @@ always @(posedge clk)begin
     end
 end
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_in_valid_4_15 <= 0;
     end else begin
         //sync case
@@ -14204,8 +14207,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l1_cache_5_0 <= 0;
         l1_cache_5_1 <= 0;
     end else begin
@@ -14223,8 +14226,8 @@ always @(posedge clk)begin
     end
 end
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_in_valid_5_0 <= 0;
     end else begin
         //sync case
@@ -14281,8 +14284,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l1_cache_5_2 <= 0;
         l1_cache_5_3 <= 0;
     end else begin
@@ -14300,8 +14303,8 @@ always @(posedge clk)begin
     end
 end
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_in_valid_5_1 <= 0;
     end else begin
         //sync case
@@ -14358,8 +14361,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l1_cache_5_4 <= 0;
         l1_cache_5_5 <= 0;
     end else begin
@@ -14377,8 +14380,8 @@ always @(posedge clk)begin
     end
 end
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_in_valid_5_2 <= 0;
     end else begin
         //sync case
@@ -14435,8 +14438,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l1_cache_5_6 <= 0;
         l1_cache_5_7 <= 0;
     end else begin
@@ -14454,8 +14457,8 @@ always @(posedge clk)begin
     end
 end
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_in_valid_5_3 <= 0;
     end else begin
         //sync case
@@ -14512,8 +14515,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l1_cache_5_8 <= 0;
         l1_cache_5_9 <= 0;
     end else begin
@@ -14531,8 +14534,8 @@ always @(posedge clk)begin
     end
 end
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_in_valid_5_4 <= 0;
     end else begin
         //sync case
@@ -14589,8 +14592,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l1_cache_5_10 <= 0;
         l1_cache_5_11 <= 0;
     end else begin
@@ -14608,8 +14611,8 @@ always @(posedge clk)begin
     end
 end
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_in_valid_5_5 <= 0;
     end else begin
         //sync case
@@ -14666,8 +14669,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l1_cache_5_12 <= 0;
         l1_cache_5_13 <= 0;
     end else begin
@@ -14685,8 +14688,8 @@ always @(posedge clk)begin
     end
 end
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_in_valid_5_6 <= 0;
     end else begin
         //sync case
@@ -14743,8 +14746,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l1_cache_5_14 <= 0;
         l1_cache_5_15 <= 0;
     end else begin
@@ -14762,8 +14765,8 @@ always @(posedge clk)begin
     end
 end
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_in_valid_5_7 <= 0;
     end else begin
         //sync case
@@ -14820,8 +14823,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l1_cache_5_16 <= 0;
         l1_cache_5_17 <= 0;
     end else begin
@@ -14839,8 +14842,8 @@ always @(posedge clk)begin
     end
 end
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_in_valid_5_8 <= 0;
     end else begin
         //sync case
@@ -14897,8 +14900,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l1_cache_5_18 <= 0;
         l1_cache_5_19 <= 0;
     end else begin
@@ -14916,8 +14919,8 @@ always @(posedge clk)begin
     end
 end
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_in_valid_5_9 <= 0;
     end else begin
         //sync case
@@ -14974,8 +14977,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l1_cache_5_20 <= 0;
         l1_cache_5_21 <= 0;
     end else begin
@@ -14993,8 +14996,8 @@ always @(posedge clk)begin
     end
 end
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_in_valid_5_10 <= 0;
     end else begin
         //sync case
@@ -15051,8 +15054,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l1_cache_5_22 <= 0;
         l1_cache_5_23 <= 0;
     end else begin
@@ -15070,8 +15073,8 @@ always @(posedge clk)begin
     end
 end
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_in_valid_5_11 <= 0;
     end else begin
         //sync case
@@ -15128,8 +15131,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l1_cache_5_24 <= 0;
         l1_cache_5_25 <= 0;
     end else begin
@@ -15147,8 +15150,8 @@ always @(posedge clk)begin
     end
 end
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_in_valid_5_12 <= 0;
     end else begin
         //sync case
@@ -15205,8 +15208,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l1_cache_5_26 <= 0;
         l1_cache_5_27 <= 0;
     end else begin
@@ -15224,8 +15227,8 @@ always @(posedge clk)begin
     end
 end
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_in_valid_5_13 <= 0;
     end else begin
         //sync case
@@ -15282,8 +15285,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l1_cache_5_28 <= 0;
         l1_cache_5_29 <= 0;
     end else begin
@@ -15301,8 +15304,8 @@ always @(posedge clk)begin
     end
 end
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_in_valid_5_14 <= 0;
     end else begin
         //sync case
@@ -15359,8 +15362,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l1_cache_5_30 <= 0;
         l1_cache_5_31 <= 0;
     end else begin
@@ -15378,8 +15381,8 @@ always @(posedge clk)begin
     end
 end
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_in_valid_5_15 <= 0;
     end else begin
         //sync case
@@ -15436,8 +15439,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l1_cache_6_0 <= 0;
         l1_cache_6_1 <= 0;
     end else begin
@@ -15455,8 +15458,8 @@ always @(posedge clk)begin
     end
 end
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_in_valid_6_0 <= 0;
     end else begin
         //sync case
@@ -15513,8 +15516,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l1_cache_6_2 <= 0;
         l1_cache_6_3 <= 0;
     end else begin
@@ -15532,8 +15535,8 @@ always @(posedge clk)begin
     end
 end
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_in_valid_6_1 <= 0;
     end else begin
         //sync case
@@ -15590,8 +15593,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l1_cache_6_4 <= 0;
         l1_cache_6_5 <= 0;
     end else begin
@@ -15609,8 +15612,8 @@ always @(posedge clk)begin
     end
 end
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_in_valid_6_2 <= 0;
     end else begin
         //sync case
@@ -15667,8 +15670,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l1_cache_6_6 <= 0;
         l1_cache_6_7 <= 0;
     end else begin
@@ -15686,8 +15689,8 @@ always @(posedge clk)begin
     end
 end
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_in_valid_6_3 <= 0;
     end else begin
         //sync case
@@ -15744,8 +15747,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l1_cache_6_8 <= 0;
         l1_cache_6_9 <= 0;
     end else begin
@@ -15763,8 +15766,8 @@ always @(posedge clk)begin
     end
 end
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_in_valid_6_4 <= 0;
     end else begin
         //sync case
@@ -15821,8 +15824,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l1_cache_6_10 <= 0;
         l1_cache_6_11 <= 0;
     end else begin
@@ -15840,8 +15843,8 @@ always @(posedge clk)begin
     end
 end
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_in_valid_6_5 <= 0;
     end else begin
         //sync case
@@ -15898,8 +15901,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l1_cache_6_12 <= 0;
         l1_cache_6_13 <= 0;
     end else begin
@@ -15917,8 +15920,8 @@ always @(posedge clk)begin
     end
 end
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_in_valid_6_6 <= 0;
     end else begin
         //sync case
@@ -15975,8 +15978,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l1_cache_6_14 <= 0;
         l1_cache_6_15 <= 0;
     end else begin
@@ -15994,8 +15997,8 @@ always @(posedge clk)begin
     end
 end
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_in_valid_6_7 <= 0;
     end else begin
         //sync case
@@ -16052,8 +16055,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l1_cache_6_16 <= 0;
         l1_cache_6_17 <= 0;
     end else begin
@@ -16071,8 +16074,8 @@ always @(posedge clk)begin
     end
 end
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_in_valid_6_8 <= 0;
     end else begin
         //sync case
@@ -16129,8 +16132,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l1_cache_6_18 <= 0;
         l1_cache_6_19 <= 0;
     end else begin
@@ -16148,8 +16151,8 @@ always @(posedge clk)begin
     end
 end
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_in_valid_6_9 <= 0;
     end else begin
         //sync case
@@ -16206,8 +16209,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l1_cache_6_20 <= 0;
         l1_cache_6_21 <= 0;
     end else begin
@@ -16225,8 +16228,8 @@ always @(posedge clk)begin
     end
 end
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_in_valid_6_10 <= 0;
     end else begin
         //sync case
@@ -16283,8 +16286,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l1_cache_6_22 <= 0;
         l1_cache_6_23 <= 0;
     end else begin
@@ -16302,8 +16305,8 @@ always @(posedge clk)begin
     end
 end
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_in_valid_6_11 <= 0;
     end else begin
         //sync case
@@ -16360,8 +16363,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l1_cache_6_24 <= 0;
         l1_cache_6_25 <= 0;
     end else begin
@@ -16379,8 +16382,8 @@ always @(posedge clk)begin
     end
 end
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_in_valid_6_12 <= 0;
     end else begin
         //sync case
@@ -16437,8 +16440,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l1_cache_6_26 <= 0;
         l1_cache_6_27 <= 0;
     end else begin
@@ -16456,8 +16459,8 @@ always @(posedge clk)begin
     end
 end
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_in_valid_6_13 <= 0;
     end else begin
         //sync case
@@ -16514,8 +16517,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l1_cache_6_28 <= 0;
         l1_cache_6_29 <= 0;
     end else begin
@@ -16533,8 +16536,8 @@ always @(posedge clk)begin
     end
 end
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_in_valid_6_14 <= 0;
     end else begin
         //sync case
@@ -16591,8 +16594,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l1_cache_6_30 <= 0;
         l1_cache_6_31 <= 0;
     end else begin
@@ -16610,8 +16613,8 @@ always @(posedge clk)begin
     end
 end
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_in_valid_6_15 <= 0;
     end else begin
         //sync case
@@ -16668,8 +16671,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l1_cache_7_0 <= 0;
         l1_cache_7_1 <= 0;
     end else begin
@@ -16687,8 +16690,8 @@ always @(posedge clk)begin
     end
 end
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_in_valid_7_0 <= 0;
     end else begin
         //sync case
@@ -16745,8 +16748,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l1_cache_7_2 <= 0;
         l1_cache_7_3 <= 0;
     end else begin
@@ -16764,8 +16767,8 @@ always @(posedge clk)begin
     end
 end
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_in_valid_7_1 <= 0;
     end else begin
         //sync case
@@ -16822,8 +16825,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l1_cache_7_4 <= 0;
         l1_cache_7_5 <= 0;
     end else begin
@@ -16841,8 +16844,8 @@ always @(posedge clk)begin
     end
 end
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_in_valid_7_2 <= 0;
     end else begin
         //sync case
@@ -16899,8 +16902,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l1_cache_7_6 <= 0;
         l1_cache_7_7 <= 0;
     end else begin
@@ -16918,8 +16921,8 @@ always @(posedge clk)begin
     end
 end
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_in_valid_7_3 <= 0;
     end else begin
         //sync case
@@ -16976,8 +16979,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l1_cache_7_8 <= 0;
         l1_cache_7_9 <= 0;
     end else begin
@@ -16995,8 +16998,8 @@ always @(posedge clk)begin
     end
 end
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_in_valid_7_4 <= 0;
     end else begin
         //sync case
@@ -17053,8 +17056,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l1_cache_7_10 <= 0;
         l1_cache_7_11 <= 0;
     end else begin
@@ -17072,8 +17075,8 @@ always @(posedge clk)begin
     end
 end
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_in_valid_7_5 <= 0;
     end else begin
         //sync case
@@ -17130,8 +17133,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l1_cache_7_12 <= 0;
         l1_cache_7_13 <= 0;
     end else begin
@@ -17149,8 +17152,8 @@ always @(posedge clk)begin
     end
 end
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_in_valid_7_6 <= 0;
     end else begin
         //sync case
@@ -17207,8 +17210,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l1_cache_7_14 <= 0;
         l1_cache_7_15 <= 0;
     end else begin
@@ -17226,8 +17229,8 @@ always @(posedge clk)begin
     end
 end
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_in_valid_7_7 <= 0;
     end else begin
         //sync case
@@ -17284,8 +17287,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l1_cache_7_16 <= 0;
         l1_cache_7_17 <= 0;
     end else begin
@@ -17303,8 +17306,8 @@ always @(posedge clk)begin
     end
 end
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_in_valid_7_8 <= 0;
     end else begin
         //sync case
@@ -17361,8 +17364,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l1_cache_7_18 <= 0;
         l1_cache_7_19 <= 0;
     end else begin
@@ -17380,8 +17383,8 @@ always @(posedge clk)begin
     end
 end
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_in_valid_7_9 <= 0;
     end else begin
         //sync case
@@ -17438,8 +17441,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l1_cache_7_20 <= 0;
         l1_cache_7_21 <= 0;
     end else begin
@@ -17457,8 +17460,8 @@ always @(posedge clk)begin
     end
 end
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_in_valid_7_10 <= 0;
     end else begin
         //sync case
@@ -17515,8 +17518,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l1_cache_7_22 <= 0;
         l1_cache_7_23 <= 0;
     end else begin
@@ -17534,8 +17537,8 @@ always @(posedge clk)begin
     end
 end
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_in_valid_7_11 <= 0;
     end else begin
         //sync case
@@ -17592,8 +17595,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l1_cache_7_24 <= 0;
         l1_cache_7_25 <= 0;
     end else begin
@@ -17611,8 +17614,8 @@ always @(posedge clk)begin
     end
 end
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_in_valid_7_12 <= 0;
     end else begin
         //sync case
@@ -17669,8 +17672,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l1_cache_7_26 <= 0;
         l1_cache_7_27 <= 0;
     end else begin
@@ -17688,8 +17691,8 @@ always @(posedge clk)begin
     end
 end
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_in_valid_7_13 <= 0;
     end else begin
         //sync case
@@ -17746,8 +17749,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l1_cache_7_28 <= 0;
         l1_cache_7_29 <= 0;
     end else begin
@@ -17765,8 +17768,8 @@ always @(posedge clk)begin
     end
 end
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_in_valid_7_14 <= 0;
     end else begin
         //sync case
@@ -17823,8 +17826,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l1_cache_7_30 <= 0;
         l1_cache_7_31 <= 0;
     end else begin
@@ -17842,8 +17845,8 @@ always @(posedge clk)begin
     end
 end
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_in_valid_7_15 <= 0;
     end else begin
         //sync case
@@ -17925,8 +17928,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_cache_0_0 <= 0;
         l2_cache_0_1 <= 0;
         l2_cache_0_2 <= 0;
@@ -17955,8 +17958,8 @@ always @(posedge clk)begin
 end
 
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l3_in_valid_0_0 <= 0;
     end else begin
         //sync case
@@ -18035,8 +18038,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_cache_0_4 <= 0;
         l2_cache_0_5 <= 0;
         l2_cache_0_6 <= 0;
@@ -18065,8 +18068,8 @@ always @(posedge clk)begin
 end
 
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l3_in_valid_0_1 <= 0;
     end else begin
         //sync case
@@ -18145,8 +18148,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_cache_0_8 <= 0;
         l2_cache_0_9 <= 0;
         l2_cache_0_10 <= 0;
@@ -18175,8 +18178,8 @@ always @(posedge clk)begin
 end
 
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l3_in_valid_0_2 <= 0;
     end else begin
         //sync case
@@ -18255,8 +18258,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_cache_0_12 <= 0;
         l2_cache_0_13 <= 0;
         l2_cache_0_14 <= 0;
@@ -18285,8 +18288,8 @@ always @(posedge clk)begin
 end
 
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l3_in_valid_0_3 <= 0;
     end else begin
         //sync case
@@ -18365,8 +18368,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_cache_1_0 <= 0;
         l2_cache_1_1 <= 0;
         l2_cache_1_2 <= 0;
@@ -18395,8 +18398,8 @@ always @(posedge clk)begin
 end
 
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l3_in_valid_1_0 <= 0;
     end else begin
         //sync case
@@ -18475,8 +18478,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_cache_1_4 <= 0;
         l2_cache_1_5 <= 0;
         l2_cache_1_6 <= 0;
@@ -18505,8 +18508,8 @@ always @(posedge clk)begin
 end
 
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l3_in_valid_1_1 <= 0;
     end else begin
         //sync case
@@ -18585,8 +18588,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_cache_1_8 <= 0;
         l2_cache_1_9 <= 0;
         l2_cache_1_10 <= 0;
@@ -18615,8 +18618,8 @@ always @(posedge clk)begin
 end
 
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l3_in_valid_1_2 <= 0;
     end else begin
         //sync case
@@ -18695,8 +18698,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_cache_1_12 <= 0;
         l2_cache_1_13 <= 0;
         l2_cache_1_14 <= 0;
@@ -18725,8 +18728,8 @@ always @(posedge clk)begin
 end
 
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l3_in_valid_1_3 <= 0;
     end else begin
         //sync case
@@ -18805,8 +18808,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_cache_2_0 <= 0;
         l2_cache_2_1 <= 0;
         l2_cache_2_2 <= 0;
@@ -18835,8 +18838,8 @@ always @(posedge clk)begin
 end
 
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l3_in_valid_2_0 <= 0;
     end else begin
         //sync case
@@ -18915,8 +18918,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_cache_2_4 <= 0;
         l2_cache_2_5 <= 0;
         l2_cache_2_6 <= 0;
@@ -18945,8 +18948,8 @@ always @(posedge clk)begin
 end
 
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l3_in_valid_2_1 <= 0;
     end else begin
         //sync case
@@ -19025,8 +19028,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_cache_2_8 <= 0;
         l2_cache_2_9 <= 0;
         l2_cache_2_10 <= 0;
@@ -19055,8 +19058,8 @@ always @(posedge clk)begin
 end
 
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l3_in_valid_2_2 <= 0;
     end else begin
         //sync case
@@ -19135,8 +19138,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_cache_2_12 <= 0;
         l2_cache_2_13 <= 0;
         l2_cache_2_14 <= 0;
@@ -19165,8 +19168,8 @@ always @(posedge clk)begin
 end
 
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l3_in_valid_2_3 <= 0;
     end else begin
         //sync case
@@ -19245,8 +19248,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_cache_3_0 <= 0;
         l2_cache_3_1 <= 0;
         l2_cache_3_2 <= 0;
@@ -19275,8 +19278,8 @@ always @(posedge clk)begin
 end
 
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l3_in_valid_3_0 <= 0;
     end else begin
         //sync case
@@ -19355,8 +19358,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_cache_3_4 <= 0;
         l2_cache_3_5 <= 0;
         l2_cache_3_6 <= 0;
@@ -19385,8 +19388,8 @@ always @(posedge clk)begin
 end
 
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l3_in_valid_3_1 <= 0;
     end else begin
         //sync case
@@ -19465,8 +19468,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_cache_3_8 <= 0;
         l2_cache_3_9 <= 0;
         l2_cache_3_10 <= 0;
@@ -19495,8 +19498,8 @@ always @(posedge clk)begin
 end
 
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l3_in_valid_3_2 <= 0;
     end else begin
         //sync case
@@ -19575,8 +19578,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_cache_3_12 <= 0;
         l2_cache_3_13 <= 0;
         l2_cache_3_14 <= 0;
@@ -19605,8 +19608,8 @@ always @(posedge clk)begin
 end
 
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l3_in_valid_3_3 <= 0;
     end else begin
         //sync case
@@ -19685,8 +19688,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_cache_4_0 <= 0;
         l2_cache_4_1 <= 0;
         l2_cache_4_2 <= 0;
@@ -19715,8 +19718,8 @@ always @(posedge clk)begin
 end
 
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l3_in_valid_4_0 <= 0;
     end else begin
         //sync case
@@ -19795,8 +19798,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_cache_4_4 <= 0;
         l2_cache_4_5 <= 0;
         l2_cache_4_6 <= 0;
@@ -19825,8 +19828,8 @@ always @(posedge clk)begin
 end
 
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l3_in_valid_4_1 <= 0;
     end else begin
         //sync case
@@ -19905,8 +19908,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_cache_4_8 <= 0;
         l2_cache_4_9 <= 0;
         l2_cache_4_10 <= 0;
@@ -19935,8 +19938,8 @@ always @(posedge clk)begin
 end
 
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l3_in_valid_4_2 <= 0;
     end else begin
         //sync case
@@ -20015,8 +20018,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_cache_4_12 <= 0;
         l2_cache_4_13 <= 0;
         l2_cache_4_14 <= 0;
@@ -20045,8 +20048,8 @@ always @(posedge clk)begin
 end
 
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l3_in_valid_4_3 <= 0;
     end else begin
         //sync case
@@ -20125,8 +20128,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_cache_5_0 <= 0;
         l2_cache_5_1 <= 0;
         l2_cache_5_2 <= 0;
@@ -20155,8 +20158,8 @@ always @(posedge clk)begin
 end
 
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l3_in_valid_5_0 <= 0;
     end else begin
         //sync case
@@ -20235,8 +20238,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_cache_5_4 <= 0;
         l2_cache_5_5 <= 0;
         l2_cache_5_6 <= 0;
@@ -20265,8 +20268,8 @@ always @(posedge clk)begin
 end
 
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l3_in_valid_5_1 <= 0;
     end else begin
         //sync case
@@ -20345,8 +20348,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_cache_5_8 <= 0;
         l2_cache_5_9 <= 0;
         l2_cache_5_10 <= 0;
@@ -20375,8 +20378,8 @@ always @(posedge clk)begin
 end
 
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l3_in_valid_5_2 <= 0;
     end else begin
         //sync case
@@ -20455,8 +20458,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_cache_5_12 <= 0;
         l2_cache_5_13 <= 0;
         l2_cache_5_14 <= 0;
@@ -20485,8 +20488,8 @@ always @(posedge clk)begin
 end
 
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l3_in_valid_5_3 <= 0;
     end else begin
         //sync case
@@ -20565,8 +20568,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_cache_6_0 <= 0;
         l2_cache_6_1 <= 0;
         l2_cache_6_2 <= 0;
@@ -20595,8 +20598,8 @@ always @(posedge clk)begin
 end
 
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l3_in_valid_6_0 <= 0;
     end else begin
         //sync case
@@ -20675,8 +20678,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_cache_6_4 <= 0;
         l2_cache_6_5 <= 0;
         l2_cache_6_6 <= 0;
@@ -20705,8 +20708,8 @@ always @(posedge clk)begin
 end
 
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l3_in_valid_6_1 <= 0;
     end else begin
         //sync case
@@ -20785,8 +20788,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_cache_6_8 <= 0;
         l2_cache_6_9 <= 0;
         l2_cache_6_10 <= 0;
@@ -20815,8 +20818,8 @@ always @(posedge clk)begin
 end
 
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l3_in_valid_6_2 <= 0;
     end else begin
         //sync case
@@ -20895,8 +20898,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_cache_6_12 <= 0;
         l2_cache_6_13 <= 0;
         l2_cache_6_14 <= 0;
@@ -20925,8 +20928,8 @@ always @(posedge clk)begin
 end
 
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l3_in_valid_6_3 <= 0;
     end else begin
         //sync case
@@ -21005,8 +21008,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_cache_7_0 <= 0;
         l2_cache_7_1 <= 0;
         l2_cache_7_2 <= 0;
@@ -21035,8 +21038,8 @@ always @(posedge clk)begin
 end
 
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l3_in_valid_7_0 <= 0;
     end else begin
         //sync case
@@ -21115,8 +21118,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_cache_7_4 <= 0;
         l2_cache_7_5 <= 0;
         l2_cache_7_6 <= 0;
@@ -21145,8 +21148,8 @@ always @(posedge clk)begin
 end
 
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l3_in_valid_7_1 <= 0;
     end else begin
         //sync case
@@ -21225,8 +21228,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_cache_7_8 <= 0;
         l2_cache_7_9 <= 0;
         l2_cache_7_10 <= 0;
@@ -21255,8 +21258,8 @@ always @(posedge clk)begin
 end
 
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l3_in_valid_7_2 <= 0;
     end else begin
         //sync case
@@ -21335,8 +21338,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l2_cache_7_12 <= 0;
         l2_cache_7_13 <= 0;
         l2_cache_7_14 <= 0;
@@ -21365,8 +21368,8 @@ always @(posedge clk)begin
 end
 
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l3_in_valid_7_3 <= 0;
     end else begin
         //sync case
@@ -21446,8 +21449,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l3_cache_0_0 <= 0;
         l3_cache_0_1 <= 0;
         l3_cache_0_2 <= 0;
@@ -21476,8 +21479,8 @@ always @(posedge clk)begin
 end
 
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l4_in_valid_0 <= 0;
     end else begin
         //sync case
@@ -21555,8 +21558,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l3_cache_1_0 <= 0;
         l3_cache_1_1 <= 0;
         l3_cache_1_2 <= 0;
@@ -21585,8 +21588,8 @@ always @(posedge clk)begin
 end
 
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l4_in_valid_1 <= 0;
     end else begin
         //sync case
@@ -21664,8 +21667,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l3_cache_2_0 <= 0;
         l3_cache_2_1 <= 0;
         l3_cache_2_2 <= 0;
@@ -21694,8 +21697,8 @@ always @(posedge clk)begin
 end
 
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l4_in_valid_2 <= 0;
     end else begin
         //sync case
@@ -21773,8 +21776,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l3_cache_3_0 <= 0;
         l3_cache_3_1 <= 0;
         l3_cache_3_2 <= 0;
@@ -21803,8 +21806,8 @@ always @(posedge clk)begin
 end
 
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l4_in_valid_3 <= 0;
     end else begin
         //sync case
@@ -21882,8 +21885,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l3_cache_4_0 <= 0;
         l3_cache_4_1 <= 0;
         l3_cache_4_2 <= 0;
@@ -21912,8 +21915,8 @@ always @(posedge clk)begin
 end
 
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l4_in_valid_4 <= 0;
     end else begin
         //sync case
@@ -21991,8 +21994,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l3_cache_5_0 <= 0;
         l3_cache_5_1 <= 0;
         l3_cache_5_2 <= 0;
@@ -22021,8 +22024,8 @@ always @(posedge clk)begin
 end
 
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l4_in_valid_5 <= 0;
     end else begin
         //sync case
@@ -22100,8 +22103,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l3_cache_6_0 <= 0;
         l3_cache_6_1 <= 0;
         l3_cache_6_2 <= 0;
@@ -22130,8 +22133,8 @@ always @(posedge clk)begin
 end
 
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l4_in_valid_6 <= 0;
     end else begin
         //sync case
@@ -22209,8 +22212,8 @@ always @(*)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l3_cache_7_0 <= 0;
         l3_cache_7_1 <= 0;
         l3_cache_7_2 <= 0;
@@ -22239,8 +22242,8 @@ always @(posedge clk)begin
 end
 
 //dequeue FIFO and write to next FIFO
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         l4_in_valid_7 <= 0;
     end else begin
         //sync case
@@ -22271,7 +22274,7 @@ end
 //BACK, after arbiter
 assign all_last =  l4_out_data_0.last & l4_out_valid_0 &  l4_out_data_1.last & l4_out_valid_1 &  l4_out_data_2.last & l4_out_valid_2 &  l4_out_data_3.last & l4_out_valid_3 &  l4_out_data_4.last & l4_out_valid_4 &  l4_out_data_5.last & l4_out_valid_5 &  l4_out_data_6.last & l4_out_valid_6 &  l4_out_data_7.last & l4_out_valid_7 &  !ruleID_almost_full;
 
-always @(posedge clk)begin
+always @(posedge back_clk)begin
     if(all_last_r3)begin
         ruleID[15:0] <= 0;
     end else begin
@@ -22346,8 +22349,8 @@ always @(posedge clk)begin
     end
 end
 
-always @(posedge clk)begin
-    if(rst)begin
+always @(posedge back_clk)begin
+    if(back_rst)begin
         ruleID_last <= 0;
         ruleID_valid <= 0;
     end else begin
@@ -22405,8 +22408,8 @@ assign ht_rd_6 = l4_out_valid_6 & !l4_out_data_6.last & !ruleID_almost_full & (l
 assign ht_addr_7 = l4_out_data_7.data;
 assign ht_rd_7 = l4_out_valid_7 & !l4_out_data_7.last & !ruleID_almost_full & (l4_out_data_7.data!=l4_cache_7);
 
-always @(posedge clk)begin
-    if (rst)begin
+always @(posedge back_clk)begin
+    if (back_rst)begin
 
         l4_cache_0 <= 0;
         l4_cache_1 <= 0;
@@ -22529,14 +22532,13 @@ always @(posedge clk)begin
 end
 //L1 FIFO
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_0_0 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_0_0),
   .din(din_0_0),
@@ -22544,28 +22546,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_0_0),
   .dout(l1_data_0_0),
-  .dout_ready(l1_ready_0_0),
-
-  .item_count(din_csr_readdata_0_0),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_0_0)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_0_0 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_0_0_r2 > L1_TH)
     din_almost_full_0_0 <= 1'b1;
   else
     din_almost_full_0_0 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_0_1 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_0_1),
   .din(din_0_1),
@@ -22573,28 +22572,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_0_1),
   .dout(l1_data_0_1),
-  .dout_ready(l1_ready_0_1),
-
-  .item_count(din_csr_readdata_0_1),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_0_1)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_0_1 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_0_1_r2 > L1_TH)
     din_almost_full_0_1 <= 1'b1;
   else
     din_almost_full_0_1 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_0_2 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_0_2),
   .din(din_0_2),
@@ -22602,28 +22598,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_0_2),
   .dout(l1_data_0_2),
-  .dout_ready(l1_ready_0_2),
-
-  .item_count(din_csr_readdata_0_2),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_0_2)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_0_2 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_0_2_r2 > L1_TH)
     din_almost_full_0_2 <= 1'b1;
   else
     din_almost_full_0_2 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_0_3 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_0_3),
   .din(din_0_3),
@@ -22631,28 +22624,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_0_3),
   .dout(l1_data_0_3),
-  .dout_ready(l1_ready_0_3),
-
-  .item_count(din_csr_readdata_0_3),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_0_3)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_0_3 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_0_3_r2 > L1_TH)
     din_almost_full_0_3 <= 1'b1;
   else
     din_almost_full_0_3 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_0_4 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_0_4),
   .din(din_0_4),
@@ -22660,28 +22650,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_0_4),
   .dout(l1_data_0_4),
-  .dout_ready(l1_ready_0_4),
-
-  .item_count(din_csr_readdata_0_4),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_0_4)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_0_4 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_0_4_r2 > L1_TH)
     din_almost_full_0_4 <= 1'b1;
   else
     din_almost_full_0_4 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_0_5 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_0_5),
   .din(din_0_5),
@@ -22689,28 +22676,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_0_5),
   .dout(l1_data_0_5),
-  .dout_ready(l1_ready_0_5),
-
-  .item_count(din_csr_readdata_0_5),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_0_5)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_0_5 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_0_5_r2 > L1_TH)
     din_almost_full_0_5 <= 1'b1;
   else
     din_almost_full_0_5 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_0_6 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_0_6),
   .din(din_0_6),
@@ -22718,28 +22702,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_0_6),
   .dout(l1_data_0_6),
-  .dout_ready(l1_ready_0_6),
-
-  .item_count(din_csr_readdata_0_6),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_0_6)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_0_6 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_0_6_r2 > L1_TH)
     din_almost_full_0_6 <= 1'b1;
   else
     din_almost_full_0_6 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_0_7 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_0_7),
   .din(din_0_7),
@@ -22747,28 +22728,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_0_7),
   .dout(l1_data_0_7),
-  .dout_ready(l1_ready_0_7),
-
-  .item_count(din_csr_readdata_0_7),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_0_7)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_0_7 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_0_7_r2 > L1_TH)
     din_almost_full_0_7 <= 1'b1;
   else
     din_almost_full_0_7 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_0_8 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_0_8),
   .din(din_0_8),
@@ -22776,28 +22754,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_0_8),
   .dout(l1_data_0_8),
-  .dout_ready(l1_ready_0_8),
-
-  .item_count(din_csr_readdata_0_8),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_0_8)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_0_8 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_0_8_r2 > L1_TH)
     din_almost_full_0_8 <= 1'b1;
   else
     din_almost_full_0_8 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_0_9 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_0_9),
   .din(din_0_9),
@@ -22805,28 +22780,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_0_9),
   .dout(l1_data_0_9),
-  .dout_ready(l1_ready_0_9),
-
-  .item_count(din_csr_readdata_0_9),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_0_9)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_0_9 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_0_9_r2 > L1_TH)
     din_almost_full_0_9 <= 1'b1;
   else
     din_almost_full_0_9 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_0_10 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_0_10),
   .din(din_0_10),
@@ -22834,28 +22806,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_0_10),
   .dout(l1_data_0_10),
-  .dout_ready(l1_ready_0_10),
-
-  .item_count(din_csr_readdata_0_10),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_0_10)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_0_10 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_0_10_r2 > L1_TH)
     din_almost_full_0_10 <= 1'b1;
   else
     din_almost_full_0_10 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_0_11 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_0_11),
   .din(din_0_11),
@@ -22863,28 +22832,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_0_11),
   .dout(l1_data_0_11),
-  .dout_ready(l1_ready_0_11),
-
-  .item_count(din_csr_readdata_0_11),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_0_11)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_0_11 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_0_11_r2 > L1_TH)
     din_almost_full_0_11 <= 1'b1;
   else
     din_almost_full_0_11 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_0_12 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_0_12),
   .din(din_0_12),
@@ -22892,28 +22858,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_0_12),
   .dout(l1_data_0_12),
-  .dout_ready(l1_ready_0_12),
-
-  .item_count(din_csr_readdata_0_12),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_0_12)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_0_12 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_0_12_r2 > L1_TH)
     din_almost_full_0_12 <= 1'b1;
   else
     din_almost_full_0_12 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_0_13 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_0_13),
   .din(din_0_13),
@@ -22921,28 +22884,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_0_13),
   .dout(l1_data_0_13),
-  .dout_ready(l1_ready_0_13),
-
-  .item_count(din_csr_readdata_0_13),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_0_13)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_0_13 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_0_13_r2 > L1_TH)
     din_almost_full_0_13 <= 1'b1;
   else
     din_almost_full_0_13 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_0_14 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_0_14),
   .din(din_0_14),
@@ -22950,28 +22910,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_0_14),
   .dout(l1_data_0_14),
-  .dout_ready(l1_ready_0_14),
-
-  .item_count(din_csr_readdata_0_14),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_0_14)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_0_14 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_0_14_r2 > L1_TH)
     din_almost_full_0_14 <= 1'b1;
   else
     din_almost_full_0_14 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_0_15 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_0_15),
   .din(din_0_15),
@@ -22979,28 +22936,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_0_15),
   .dout(l1_data_0_15),
-  .dout_ready(l1_ready_0_15),
-
-  .item_count(din_csr_readdata_0_15),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_0_15)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_0_15 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_0_15_r2 > L1_TH)
     din_almost_full_0_15 <= 1'b1;
   else
     din_almost_full_0_15 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_0_16 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_0_16),
   .din(din_0_16),
@@ -23008,28 +22962,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_0_16),
   .dout(l1_data_0_16),
-  .dout_ready(l1_ready_0_16),
-
-  .item_count(din_csr_readdata_0_16),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_0_16)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_0_16 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_0_16_r2 > L1_TH)
     din_almost_full_0_16 <= 1'b1;
   else
     din_almost_full_0_16 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_0_17 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_0_17),
   .din(din_0_17),
@@ -23037,28 +22988,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_0_17),
   .dout(l1_data_0_17),
-  .dout_ready(l1_ready_0_17),
-
-  .item_count(din_csr_readdata_0_17),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_0_17)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_0_17 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_0_17_r2 > L1_TH)
     din_almost_full_0_17 <= 1'b1;
   else
     din_almost_full_0_17 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_0_18 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_0_18),
   .din(din_0_18),
@@ -23066,28 +23014,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_0_18),
   .dout(l1_data_0_18),
-  .dout_ready(l1_ready_0_18),
-
-  .item_count(din_csr_readdata_0_18),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_0_18)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_0_18 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_0_18_r2 > L1_TH)
     din_almost_full_0_18 <= 1'b1;
   else
     din_almost_full_0_18 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_0_19 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_0_19),
   .din(din_0_19),
@@ -23095,28 +23040,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_0_19),
   .dout(l1_data_0_19),
-  .dout_ready(l1_ready_0_19),
-
-  .item_count(din_csr_readdata_0_19),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_0_19)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_0_19 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_0_19_r2 > L1_TH)
     din_almost_full_0_19 <= 1'b1;
   else
     din_almost_full_0_19 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_0_20 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_0_20),
   .din(din_0_20),
@@ -23124,28 +23066,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_0_20),
   .dout(l1_data_0_20),
-  .dout_ready(l1_ready_0_20),
-
-  .item_count(din_csr_readdata_0_20),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_0_20)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_0_20 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_0_20_r2 > L1_TH)
     din_almost_full_0_20 <= 1'b1;
   else
     din_almost_full_0_20 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_0_21 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_0_21),
   .din(din_0_21),
@@ -23153,28 +23092,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_0_21),
   .dout(l1_data_0_21),
-  .dout_ready(l1_ready_0_21),
-
-  .item_count(din_csr_readdata_0_21),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_0_21)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_0_21 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_0_21_r2 > L1_TH)
     din_almost_full_0_21 <= 1'b1;
   else
     din_almost_full_0_21 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_0_22 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_0_22),
   .din(din_0_22),
@@ -23182,28 +23118,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_0_22),
   .dout(l1_data_0_22),
-  .dout_ready(l1_ready_0_22),
-
-  .item_count(din_csr_readdata_0_22),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_0_22)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_0_22 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_0_22_r2 > L1_TH)
     din_almost_full_0_22 <= 1'b1;
   else
     din_almost_full_0_22 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_0_23 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_0_23),
   .din(din_0_23),
@@ -23211,28 +23144,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_0_23),
   .dout(l1_data_0_23),
-  .dout_ready(l1_ready_0_23),
-
-  .item_count(din_csr_readdata_0_23),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_0_23)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_0_23 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_0_23_r2 > L1_TH)
     din_almost_full_0_23 <= 1'b1;
   else
     din_almost_full_0_23 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_0_24 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_0_24),
   .din(din_0_24),
@@ -23240,28 +23170,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_0_24),
   .dout(l1_data_0_24),
-  .dout_ready(l1_ready_0_24),
-
-  .item_count(din_csr_readdata_0_24),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_0_24)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_0_24 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_0_24_r2 > L1_TH)
     din_almost_full_0_24 <= 1'b1;
   else
     din_almost_full_0_24 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_0_25 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_0_25),
   .din(din_0_25),
@@ -23269,28 +23196,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_0_25),
   .dout(l1_data_0_25),
-  .dout_ready(l1_ready_0_25),
-
-  .item_count(din_csr_readdata_0_25),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_0_25)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_0_25 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_0_25_r2 > L1_TH)
     din_almost_full_0_25 <= 1'b1;
   else
     din_almost_full_0_25 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_0_26 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_0_26),
   .din(din_0_26),
@@ -23298,28 +23222,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_0_26),
   .dout(l1_data_0_26),
-  .dout_ready(l1_ready_0_26),
-
-  .item_count(din_csr_readdata_0_26),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_0_26)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_0_26 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_0_26_r2 > L1_TH)
     din_almost_full_0_26 <= 1'b1;
   else
     din_almost_full_0_26 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_0_27 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_0_27),
   .din(din_0_27),
@@ -23327,28 +23248,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_0_27),
   .dout(l1_data_0_27),
-  .dout_ready(l1_ready_0_27),
-
-  .item_count(din_csr_readdata_0_27),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_0_27)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_0_27 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_0_27_r2 > L1_TH)
     din_almost_full_0_27 <= 1'b1;
   else
     din_almost_full_0_27 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_0_28 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_0_28),
   .din(din_0_28),
@@ -23356,28 +23274,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_0_28),
   .dout(l1_data_0_28),
-  .dout_ready(l1_ready_0_28),
-
-  .item_count(din_csr_readdata_0_28),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_0_28)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_0_28 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_0_28_r2 > L1_TH)
     din_almost_full_0_28 <= 1'b1;
   else
     din_almost_full_0_28 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_0_29 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_0_29),
   .din(din_0_29),
@@ -23385,28 +23300,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_0_29),
   .dout(l1_data_0_29),
-  .dout_ready(l1_ready_0_29),
-
-  .item_count(din_csr_readdata_0_29),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_0_29)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_0_29 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_0_29_r2 > L1_TH)
     din_almost_full_0_29 <= 1'b1;
   else
     din_almost_full_0_29 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_0_30 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_0_30),
   .din(din_0_30),
@@ -23414,28 +23326,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_0_30),
   .dout(l1_data_0_30),
-  .dout_ready(l1_ready_0_30),
-
-  .item_count(din_csr_readdata_0_30),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_0_30)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_0_30 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_0_30_r2 > L1_TH)
     din_almost_full_0_30 <= 1'b1;
   else
     din_almost_full_0_30 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_0_31 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_0_31),
   .din(din_0_31),
@@ -23443,28 +23352,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_0_31),
   .dout(l1_data_0_31),
-  .dout_ready(l1_ready_0_31),
-
-  .item_count(din_csr_readdata_0_31),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_0_31)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_0_31 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_0_31_r2 > L1_TH)
     din_almost_full_0_31 <= 1'b1;
   else
     din_almost_full_0_31 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_1_0 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_1_0),
   .din(din_1_0),
@@ -23472,28 +23378,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_1_0),
   .dout(l1_data_1_0),
-  .dout_ready(l1_ready_1_0),
-
-  .item_count(din_csr_readdata_1_0),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_1_0)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_1_0 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_1_0_r2 > L1_TH)
     din_almost_full_1_0 <= 1'b1;
   else
     din_almost_full_1_0 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_1_1 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_1_1),
   .din(din_1_1),
@@ -23501,28 +23404,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_1_1),
   .dout(l1_data_1_1),
-  .dout_ready(l1_ready_1_1),
-
-  .item_count(din_csr_readdata_1_1),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_1_1)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_1_1 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_1_1_r2 > L1_TH)
     din_almost_full_1_1 <= 1'b1;
   else
     din_almost_full_1_1 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_1_2 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_1_2),
   .din(din_1_2),
@@ -23530,28 +23430,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_1_2),
   .dout(l1_data_1_2),
-  .dout_ready(l1_ready_1_2),
-
-  .item_count(din_csr_readdata_1_2),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_1_2)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_1_2 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_1_2_r2 > L1_TH)
     din_almost_full_1_2 <= 1'b1;
   else
     din_almost_full_1_2 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_1_3 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_1_3),
   .din(din_1_3),
@@ -23559,28 +23456,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_1_3),
   .dout(l1_data_1_3),
-  .dout_ready(l1_ready_1_3),
-
-  .item_count(din_csr_readdata_1_3),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_1_3)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_1_3 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_1_3_r2 > L1_TH)
     din_almost_full_1_3 <= 1'b1;
   else
     din_almost_full_1_3 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_1_4 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_1_4),
   .din(din_1_4),
@@ -23588,28 +23482,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_1_4),
   .dout(l1_data_1_4),
-  .dout_ready(l1_ready_1_4),
-
-  .item_count(din_csr_readdata_1_4),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_1_4)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_1_4 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_1_4_r2 > L1_TH)
     din_almost_full_1_4 <= 1'b1;
   else
     din_almost_full_1_4 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_1_5 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_1_5),
   .din(din_1_5),
@@ -23617,28 +23508,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_1_5),
   .dout(l1_data_1_5),
-  .dout_ready(l1_ready_1_5),
-
-  .item_count(din_csr_readdata_1_5),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_1_5)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_1_5 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_1_5_r2 > L1_TH)
     din_almost_full_1_5 <= 1'b1;
   else
     din_almost_full_1_5 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_1_6 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_1_6),
   .din(din_1_6),
@@ -23646,28 +23534,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_1_6),
   .dout(l1_data_1_6),
-  .dout_ready(l1_ready_1_6),
-
-  .item_count(din_csr_readdata_1_6),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_1_6)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_1_6 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_1_6_r2 > L1_TH)
     din_almost_full_1_6 <= 1'b1;
   else
     din_almost_full_1_6 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_1_7 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_1_7),
   .din(din_1_7),
@@ -23675,28 +23560,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_1_7),
   .dout(l1_data_1_7),
-  .dout_ready(l1_ready_1_7),
-
-  .item_count(din_csr_readdata_1_7),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_1_7)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_1_7 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_1_7_r2 > L1_TH)
     din_almost_full_1_7 <= 1'b1;
   else
     din_almost_full_1_7 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_1_8 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_1_8),
   .din(din_1_8),
@@ -23704,28 +23586,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_1_8),
   .dout(l1_data_1_8),
-  .dout_ready(l1_ready_1_8),
-
-  .item_count(din_csr_readdata_1_8),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_1_8)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_1_8 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_1_8_r2 > L1_TH)
     din_almost_full_1_8 <= 1'b1;
   else
     din_almost_full_1_8 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_1_9 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_1_9),
   .din(din_1_9),
@@ -23733,28 +23612,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_1_9),
   .dout(l1_data_1_9),
-  .dout_ready(l1_ready_1_9),
-
-  .item_count(din_csr_readdata_1_9),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_1_9)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_1_9 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_1_9_r2 > L1_TH)
     din_almost_full_1_9 <= 1'b1;
   else
     din_almost_full_1_9 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_1_10 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_1_10),
   .din(din_1_10),
@@ -23762,28 +23638,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_1_10),
   .dout(l1_data_1_10),
-  .dout_ready(l1_ready_1_10),
-
-  .item_count(din_csr_readdata_1_10),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_1_10)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_1_10 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_1_10_r2 > L1_TH)
     din_almost_full_1_10 <= 1'b1;
   else
     din_almost_full_1_10 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_1_11 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_1_11),
   .din(din_1_11),
@@ -23791,28 +23664,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_1_11),
   .dout(l1_data_1_11),
-  .dout_ready(l1_ready_1_11),
-
-  .item_count(din_csr_readdata_1_11),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_1_11)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_1_11 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_1_11_r2 > L1_TH)
     din_almost_full_1_11 <= 1'b1;
   else
     din_almost_full_1_11 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_1_12 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_1_12),
   .din(din_1_12),
@@ -23820,28 +23690,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_1_12),
   .dout(l1_data_1_12),
-  .dout_ready(l1_ready_1_12),
-
-  .item_count(din_csr_readdata_1_12),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_1_12)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_1_12 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_1_12_r2 > L1_TH)
     din_almost_full_1_12 <= 1'b1;
   else
     din_almost_full_1_12 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_1_13 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_1_13),
   .din(din_1_13),
@@ -23849,28 +23716,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_1_13),
   .dout(l1_data_1_13),
-  .dout_ready(l1_ready_1_13),
-
-  .item_count(din_csr_readdata_1_13),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_1_13)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_1_13 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_1_13_r2 > L1_TH)
     din_almost_full_1_13 <= 1'b1;
   else
     din_almost_full_1_13 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_1_14 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_1_14),
   .din(din_1_14),
@@ -23878,28 +23742,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_1_14),
   .dout(l1_data_1_14),
-  .dout_ready(l1_ready_1_14),
-
-  .item_count(din_csr_readdata_1_14),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_1_14)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_1_14 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_1_14_r2 > L1_TH)
     din_almost_full_1_14 <= 1'b1;
   else
     din_almost_full_1_14 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_1_15 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_1_15),
   .din(din_1_15),
@@ -23907,28 +23768,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_1_15),
   .dout(l1_data_1_15),
-  .dout_ready(l1_ready_1_15),
-
-  .item_count(din_csr_readdata_1_15),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_1_15)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_1_15 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_1_15_r2 > L1_TH)
     din_almost_full_1_15 <= 1'b1;
   else
     din_almost_full_1_15 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_1_16 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_1_16),
   .din(din_1_16),
@@ -23936,28 +23794,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_1_16),
   .dout(l1_data_1_16),
-  .dout_ready(l1_ready_1_16),
-
-  .item_count(din_csr_readdata_1_16),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_1_16)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_1_16 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_1_16_r2 > L1_TH)
     din_almost_full_1_16 <= 1'b1;
   else
     din_almost_full_1_16 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_1_17 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_1_17),
   .din(din_1_17),
@@ -23965,28 +23820,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_1_17),
   .dout(l1_data_1_17),
-  .dout_ready(l1_ready_1_17),
-
-  .item_count(din_csr_readdata_1_17),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_1_17)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_1_17 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_1_17_r2 > L1_TH)
     din_almost_full_1_17 <= 1'b1;
   else
     din_almost_full_1_17 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_1_18 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_1_18),
   .din(din_1_18),
@@ -23994,28 +23846,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_1_18),
   .dout(l1_data_1_18),
-  .dout_ready(l1_ready_1_18),
-
-  .item_count(din_csr_readdata_1_18),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_1_18)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_1_18 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_1_18_r2 > L1_TH)
     din_almost_full_1_18 <= 1'b1;
   else
     din_almost_full_1_18 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_1_19 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_1_19),
   .din(din_1_19),
@@ -24023,28 +23872,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_1_19),
   .dout(l1_data_1_19),
-  .dout_ready(l1_ready_1_19),
-
-  .item_count(din_csr_readdata_1_19),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_1_19)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_1_19 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_1_19_r2 > L1_TH)
     din_almost_full_1_19 <= 1'b1;
   else
     din_almost_full_1_19 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_1_20 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_1_20),
   .din(din_1_20),
@@ -24052,28 +23898,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_1_20),
   .dout(l1_data_1_20),
-  .dout_ready(l1_ready_1_20),
-
-  .item_count(din_csr_readdata_1_20),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_1_20)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_1_20 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_1_20_r2 > L1_TH)
     din_almost_full_1_20 <= 1'b1;
   else
     din_almost_full_1_20 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_1_21 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_1_21),
   .din(din_1_21),
@@ -24081,28 +23924,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_1_21),
   .dout(l1_data_1_21),
-  .dout_ready(l1_ready_1_21),
-
-  .item_count(din_csr_readdata_1_21),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_1_21)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_1_21 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_1_21_r2 > L1_TH)
     din_almost_full_1_21 <= 1'b1;
   else
     din_almost_full_1_21 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_1_22 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_1_22),
   .din(din_1_22),
@@ -24110,28 +23950,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_1_22),
   .dout(l1_data_1_22),
-  .dout_ready(l1_ready_1_22),
-
-  .item_count(din_csr_readdata_1_22),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_1_22)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_1_22 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_1_22_r2 > L1_TH)
     din_almost_full_1_22 <= 1'b1;
   else
     din_almost_full_1_22 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_1_23 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_1_23),
   .din(din_1_23),
@@ -24139,28 +23976,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_1_23),
   .dout(l1_data_1_23),
-  .dout_ready(l1_ready_1_23),
-
-  .item_count(din_csr_readdata_1_23),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_1_23)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_1_23 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_1_23_r2 > L1_TH)
     din_almost_full_1_23 <= 1'b1;
   else
     din_almost_full_1_23 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_1_24 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_1_24),
   .din(din_1_24),
@@ -24168,28 +24002,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_1_24),
   .dout(l1_data_1_24),
-  .dout_ready(l1_ready_1_24),
-
-  .item_count(din_csr_readdata_1_24),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_1_24)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_1_24 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_1_24_r2 > L1_TH)
     din_almost_full_1_24 <= 1'b1;
   else
     din_almost_full_1_24 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_1_25 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_1_25),
   .din(din_1_25),
@@ -24197,28 +24028,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_1_25),
   .dout(l1_data_1_25),
-  .dout_ready(l1_ready_1_25),
-
-  .item_count(din_csr_readdata_1_25),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_1_25)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_1_25 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_1_25_r2 > L1_TH)
     din_almost_full_1_25 <= 1'b1;
   else
     din_almost_full_1_25 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_1_26 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_1_26),
   .din(din_1_26),
@@ -24226,28 +24054,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_1_26),
   .dout(l1_data_1_26),
-  .dout_ready(l1_ready_1_26),
-
-  .item_count(din_csr_readdata_1_26),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_1_26)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_1_26 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_1_26_r2 > L1_TH)
     din_almost_full_1_26 <= 1'b1;
   else
     din_almost_full_1_26 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_1_27 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_1_27),
   .din(din_1_27),
@@ -24255,28 +24080,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_1_27),
   .dout(l1_data_1_27),
-  .dout_ready(l1_ready_1_27),
-
-  .item_count(din_csr_readdata_1_27),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_1_27)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_1_27 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_1_27_r2 > L1_TH)
     din_almost_full_1_27 <= 1'b1;
   else
     din_almost_full_1_27 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_1_28 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_1_28),
   .din(din_1_28),
@@ -24284,28 +24106,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_1_28),
   .dout(l1_data_1_28),
-  .dout_ready(l1_ready_1_28),
-
-  .item_count(din_csr_readdata_1_28),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_1_28)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_1_28 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_1_28_r2 > L1_TH)
     din_almost_full_1_28 <= 1'b1;
   else
     din_almost_full_1_28 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_1_29 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_1_29),
   .din(din_1_29),
@@ -24313,28 +24132,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_1_29),
   .dout(l1_data_1_29),
-  .dout_ready(l1_ready_1_29),
-
-  .item_count(din_csr_readdata_1_29),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_1_29)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_1_29 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_1_29_r2 > L1_TH)
     din_almost_full_1_29 <= 1'b1;
   else
     din_almost_full_1_29 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_1_30 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_1_30),
   .din(din_1_30),
@@ -24342,28 +24158,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_1_30),
   .dout(l1_data_1_30),
-  .dout_ready(l1_ready_1_30),
-
-  .item_count(din_csr_readdata_1_30),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_1_30)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_1_30 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_1_30_r2 > L1_TH)
     din_almost_full_1_30 <= 1'b1;
   else
     din_almost_full_1_30 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_1_31 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_1_31),
   .din(din_1_31),
@@ -24371,28 +24184,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_1_31),
   .dout(l1_data_1_31),
-  .dout_ready(l1_ready_1_31),
-
-  .item_count(din_csr_readdata_1_31),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_1_31)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_1_31 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_1_31_r2 > L1_TH)
     din_almost_full_1_31 <= 1'b1;
   else
     din_almost_full_1_31 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_2_0 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_2_0),
   .din(din_2_0),
@@ -24400,28 +24210,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_2_0),
   .dout(l1_data_2_0),
-  .dout_ready(l1_ready_2_0),
-
-  .item_count(din_csr_readdata_2_0),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_2_0)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_2_0 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_2_0_r2 > L1_TH)
     din_almost_full_2_0 <= 1'b1;
   else
     din_almost_full_2_0 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_2_1 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_2_1),
   .din(din_2_1),
@@ -24429,28 +24236,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_2_1),
   .dout(l1_data_2_1),
-  .dout_ready(l1_ready_2_1),
-
-  .item_count(din_csr_readdata_2_1),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_2_1)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_2_1 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_2_1_r2 > L1_TH)
     din_almost_full_2_1 <= 1'b1;
   else
     din_almost_full_2_1 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_2_2 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_2_2),
   .din(din_2_2),
@@ -24458,28 +24262,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_2_2),
   .dout(l1_data_2_2),
-  .dout_ready(l1_ready_2_2),
-
-  .item_count(din_csr_readdata_2_2),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_2_2)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_2_2 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_2_2_r2 > L1_TH)
     din_almost_full_2_2 <= 1'b1;
   else
     din_almost_full_2_2 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_2_3 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_2_3),
   .din(din_2_3),
@@ -24487,28 +24288,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_2_3),
   .dout(l1_data_2_3),
-  .dout_ready(l1_ready_2_3),
-
-  .item_count(din_csr_readdata_2_3),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_2_3)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_2_3 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_2_3_r2 > L1_TH)
     din_almost_full_2_3 <= 1'b1;
   else
     din_almost_full_2_3 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_2_4 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_2_4),
   .din(din_2_4),
@@ -24516,28 +24314,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_2_4),
   .dout(l1_data_2_4),
-  .dout_ready(l1_ready_2_4),
-
-  .item_count(din_csr_readdata_2_4),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_2_4)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_2_4 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_2_4_r2 > L1_TH)
     din_almost_full_2_4 <= 1'b1;
   else
     din_almost_full_2_4 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_2_5 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_2_5),
   .din(din_2_5),
@@ -24545,28 +24340,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_2_5),
   .dout(l1_data_2_5),
-  .dout_ready(l1_ready_2_5),
-
-  .item_count(din_csr_readdata_2_5),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_2_5)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_2_5 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_2_5_r2 > L1_TH)
     din_almost_full_2_5 <= 1'b1;
   else
     din_almost_full_2_5 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_2_6 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_2_6),
   .din(din_2_6),
@@ -24574,28 +24366,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_2_6),
   .dout(l1_data_2_6),
-  .dout_ready(l1_ready_2_6),
-
-  .item_count(din_csr_readdata_2_6),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_2_6)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_2_6 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_2_6_r2 > L1_TH)
     din_almost_full_2_6 <= 1'b1;
   else
     din_almost_full_2_6 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_2_7 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_2_7),
   .din(din_2_7),
@@ -24603,28 +24392,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_2_7),
   .dout(l1_data_2_7),
-  .dout_ready(l1_ready_2_7),
-
-  .item_count(din_csr_readdata_2_7),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_2_7)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_2_7 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_2_7_r2 > L1_TH)
     din_almost_full_2_7 <= 1'b1;
   else
     din_almost_full_2_7 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_2_8 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_2_8),
   .din(din_2_8),
@@ -24632,28 +24418,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_2_8),
   .dout(l1_data_2_8),
-  .dout_ready(l1_ready_2_8),
-
-  .item_count(din_csr_readdata_2_8),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_2_8)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_2_8 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_2_8_r2 > L1_TH)
     din_almost_full_2_8 <= 1'b1;
   else
     din_almost_full_2_8 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_2_9 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_2_9),
   .din(din_2_9),
@@ -24661,28 +24444,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_2_9),
   .dout(l1_data_2_9),
-  .dout_ready(l1_ready_2_9),
-
-  .item_count(din_csr_readdata_2_9),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_2_9)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_2_9 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_2_9_r2 > L1_TH)
     din_almost_full_2_9 <= 1'b1;
   else
     din_almost_full_2_9 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_2_10 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_2_10),
   .din(din_2_10),
@@ -24690,28 +24470,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_2_10),
   .dout(l1_data_2_10),
-  .dout_ready(l1_ready_2_10),
-
-  .item_count(din_csr_readdata_2_10),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_2_10)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_2_10 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_2_10_r2 > L1_TH)
     din_almost_full_2_10 <= 1'b1;
   else
     din_almost_full_2_10 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_2_11 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_2_11),
   .din(din_2_11),
@@ -24719,28 +24496,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_2_11),
   .dout(l1_data_2_11),
-  .dout_ready(l1_ready_2_11),
-
-  .item_count(din_csr_readdata_2_11),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_2_11)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_2_11 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_2_11_r2 > L1_TH)
     din_almost_full_2_11 <= 1'b1;
   else
     din_almost_full_2_11 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_2_12 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_2_12),
   .din(din_2_12),
@@ -24748,28 +24522,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_2_12),
   .dout(l1_data_2_12),
-  .dout_ready(l1_ready_2_12),
-
-  .item_count(din_csr_readdata_2_12),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_2_12)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_2_12 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_2_12_r2 > L1_TH)
     din_almost_full_2_12 <= 1'b1;
   else
     din_almost_full_2_12 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_2_13 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_2_13),
   .din(din_2_13),
@@ -24777,28 +24548,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_2_13),
   .dout(l1_data_2_13),
-  .dout_ready(l1_ready_2_13),
-
-  .item_count(din_csr_readdata_2_13),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_2_13)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_2_13 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_2_13_r2 > L1_TH)
     din_almost_full_2_13 <= 1'b1;
   else
     din_almost_full_2_13 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_2_14 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_2_14),
   .din(din_2_14),
@@ -24806,28 +24574,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_2_14),
   .dout(l1_data_2_14),
-  .dout_ready(l1_ready_2_14),
-
-  .item_count(din_csr_readdata_2_14),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_2_14)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_2_14 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_2_14_r2 > L1_TH)
     din_almost_full_2_14 <= 1'b1;
   else
     din_almost_full_2_14 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_2_15 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_2_15),
   .din(din_2_15),
@@ -24835,28 +24600,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_2_15),
   .dout(l1_data_2_15),
-  .dout_ready(l1_ready_2_15),
-
-  .item_count(din_csr_readdata_2_15),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_2_15)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_2_15 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_2_15_r2 > L1_TH)
     din_almost_full_2_15 <= 1'b1;
   else
     din_almost_full_2_15 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_2_16 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_2_16),
   .din(din_2_16),
@@ -24864,28 +24626,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_2_16),
   .dout(l1_data_2_16),
-  .dout_ready(l1_ready_2_16),
-
-  .item_count(din_csr_readdata_2_16),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_2_16)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_2_16 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_2_16_r2 > L1_TH)
     din_almost_full_2_16 <= 1'b1;
   else
     din_almost_full_2_16 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_2_17 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_2_17),
   .din(din_2_17),
@@ -24893,28 +24652,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_2_17),
   .dout(l1_data_2_17),
-  .dout_ready(l1_ready_2_17),
-
-  .item_count(din_csr_readdata_2_17),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_2_17)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_2_17 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_2_17_r2 > L1_TH)
     din_almost_full_2_17 <= 1'b1;
   else
     din_almost_full_2_17 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_2_18 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_2_18),
   .din(din_2_18),
@@ -24922,28 +24678,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_2_18),
   .dout(l1_data_2_18),
-  .dout_ready(l1_ready_2_18),
-
-  .item_count(din_csr_readdata_2_18),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_2_18)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_2_18 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_2_18_r2 > L1_TH)
     din_almost_full_2_18 <= 1'b1;
   else
     din_almost_full_2_18 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_2_19 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_2_19),
   .din(din_2_19),
@@ -24951,28 +24704,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_2_19),
   .dout(l1_data_2_19),
-  .dout_ready(l1_ready_2_19),
-
-  .item_count(din_csr_readdata_2_19),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_2_19)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_2_19 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_2_19_r2 > L1_TH)
     din_almost_full_2_19 <= 1'b1;
   else
     din_almost_full_2_19 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_2_20 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_2_20),
   .din(din_2_20),
@@ -24980,28 +24730,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_2_20),
   .dout(l1_data_2_20),
-  .dout_ready(l1_ready_2_20),
-
-  .item_count(din_csr_readdata_2_20),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_2_20)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_2_20 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_2_20_r2 > L1_TH)
     din_almost_full_2_20 <= 1'b1;
   else
     din_almost_full_2_20 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_2_21 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_2_21),
   .din(din_2_21),
@@ -25009,28 +24756,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_2_21),
   .dout(l1_data_2_21),
-  .dout_ready(l1_ready_2_21),
-
-  .item_count(din_csr_readdata_2_21),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_2_21)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_2_21 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_2_21_r2 > L1_TH)
     din_almost_full_2_21 <= 1'b1;
   else
     din_almost_full_2_21 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_2_22 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_2_22),
   .din(din_2_22),
@@ -25038,28 +24782,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_2_22),
   .dout(l1_data_2_22),
-  .dout_ready(l1_ready_2_22),
-
-  .item_count(din_csr_readdata_2_22),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_2_22)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_2_22 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_2_22_r2 > L1_TH)
     din_almost_full_2_22 <= 1'b1;
   else
     din_almost_full_2_22 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_2_23 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_2_23),
   .din(din_2_23),
@@ -25067,28 +24808,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_2_23),
   .dout(l1_data_2_23),
-  .dout_ready(l1_ready_2_23),
-
-  .item_count(din_csr_readdata_2_23),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_2_23)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_2_23 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_2_23_r2 > L1_TH)
     din_almost_full_2_23 <= 1'b1;
   else
     din_almost_full_2_23 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_2_24 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_2_24),
   .din(din_2_24),
@@ -25096,28 +24834,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_2_24),
   .dout(l1_data_2_24),
-  .dout_ready(l1_ready_2_24),
-
-  .item_count(din_csr_readdata_2_24),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_2_24)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_2_24 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_2_24_r2 > L1_TH)
     din_almost_full_2_24 <= 1'b1;
   else
     din_almost_full_2_24 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_2_25 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_2_25),
   .din(din_2_25),
@@ -25125,28 +24860,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_2_25),
   .dout(l1_data_2_25),
-  .dout_ready(l1_ready_2_25),
-
-  .item_count(din_csr_readdata_2_25),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_2_25)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_2_25 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_2_25_r2 > L1_TH)
     din_almost_full_2_25 <= 1'b1;
   else
     din_almost_full_2_25 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_2_26 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_2_26),
   .din(din_2_26),
@@ -25154,28 +24886,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_2_26),
   .dout(l1_data_2_26),
-  .dout_ready(l1_ready_2_26),
-
-  .item_count(din_csr_readdata_2_26),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_2_26)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_2_26 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_2_26_r2 > L1_TH)
     din_almost_full_2_26 <= 1'b1;
   else
     din_almost_full_2_26 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_2_27 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_2_27),
   .din(din_2_27),
@@ -25183,28 +24912,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_2_27),
   .dout(l1_data_2_27),
-  .dout_ready(l1_ready_2_27),
-
-  .item_count(din_csr_readdata_2_27),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_2_27)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_2_27 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_2_27_r2 > L1_TH)
     din_almost_full_2_27 <= 1'b1;
   else
     din_almost_full_2_27 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_2_28 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_2_28),
   .din(din_2_28),
@@ -25212,28 +24938,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_2_28),
   .dout(l1_data_2_28),
-  .dout_ready(l1_ready_2_28),
-
-  .item_count(din_csr_readdata_2_28),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_2_28)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_2_28 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_2_28_r2 > L1_TH)
     din_almost_full_2_28 <= 1'b1;
   else
     din_almost_full_2_28 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_2_29 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_2_29),
   .din(din_2_29),
@@ -25241,28 +24964,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_2_29),
   .dout(l1_data_2_29),
-  .dout_ready(l1_ready_2_29),
-
-  .item_count(din_csr_readdata_2_29),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_2_29)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_2_29 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_2_29_r2 > L1_TH)
     din_almost_full_2_29 <= 1'b1;
   else
     din_almost_full_2_29 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_2_30 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_2_30),
   .din(din_2_30),
@@ -25270,28 +24990,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_2_30),
   .dout(l1_data_2_30),
-  .dout_ready(l1_ready_2_30),
-
-  .item_count(din_csr_readdata_2_30),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_2_30)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_2_30 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_2_30_r2 > L1_TH)
     din_almost_full_2_30 <= 1'b1;
   else
     din_almost_full_2_30 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_2_31 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_2_31),
   .din(din_2_31),
@@ -25299,28 +25016,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_2_31),
   .dout(l1_data_2_31),
-  .dout_ready(l1_ready_2_31),
-
-  .item_count(din_csr_readdata_2_31),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_2_31)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_2_31 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_2_31_r2 > L1_TH)
     din_almost_full_2_31 <= 1'b1;
   else
     din_almost_full_2_31 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_3_0 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_3_0),
   .din(din_3_0),
@@ -25328,28 +25042,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_3_0),
   .dout(l1_data_3_0),
-  .dout_ready(l1_ready_3_0),
-
-  .item_count(din_csr_readdata_3_0),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_3_0)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_3_0 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_3_0_r2 > L1_TH)
     din_almost_full_3_0 <= 1'b1;
   else
     din_almost_full_3_0 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_3_1 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_3_1),
   .din(din_3_1),
@@ -25357,28 +25068,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_3_1),
   .dout(l1_data_3_1),
-  .dout_ready(l1_ready_3_1),
-
-  .item_count(din_csr_readdata_3_1),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_3_1)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_3_1 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_3_1_r2 > L1_TH)
     din_almost_full_3_1 <= 1'b1;
   else
     din_almost_full_3_1 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_3_2 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_3_2),
   .din(din_3_2),
@@ -25386,28 +25094,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_3_2),
   .dout(l1_data_3_2),
-  .dout_ready(l1_ready_3_2),
-
-  .item_count(din_csr_readdata_3_2),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_3_2)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_3_2 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_3_2_r2 > L1_TH)
     din_almost_full_3_2 <= 1'b1;
   else
     din_almost_full_3_2 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_3_3 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_3_3),
   .din(din_3_3),
@@ -25415,28 +25120,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_3_3),
   .dout(l1_data_3_3),
-  .dout_ready(l1_ready_3_3),
-
-  .item_count(din_csr_readdata_3_3),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_3_3)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_3_3 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_3_3_r2 > L1_TH)
     din_almost_full_3_3 <= 1'b1;
   else
     din_almost_full_3_3 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_3_4 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_3_4),
   .din(din_3_4),
@@ -25444,28 +25146,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_3_4),
   .dout(l1_data_3_4),
-  .dout_ready(l1_ready_3_4),
-
-  .item_count(din_csr_readdata_3_4),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_3_4)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_3_4 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_3_4_r2 > L1_TH)
     din_almost_full_3_4 <= 1'b1;
   else
     din_almost_full_3_4 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_3_5 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_3_5),
   .din(din_3_5),
@@ -25473,28 +25172,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_3_5),
   .dout(l1_data_3_5),
-  .dout_ready(l1_ready_3_5),
-
-  .item_count(din_csr_readdata_3_5),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_3_5)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_3_5 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_3_5_r2 > L1_TH)
     din_almost_full_3_5 <= 1'b1;
   else
     din_almost_full_3_5 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_3_6 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_3_6),
   .din(din_3_6),
@@ -25502,28 +25198,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_3_6),
   .dout(l1_data_3_6),
-  .dout_ready(l1_ready_3_6),
-
-  .item_count(din_csr_readdata_3_6),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_3_6)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_3_6 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_3_6_r2 > L1_TH)
     din_almost_full_3_6 <= 1'b1;
   else
     din_almost_full_3_6 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_3_7 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_3_7),
   .din(din_3_7),
@@ -25531,28 +25224,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_3_7),
   .dout(l1_data_3_7),
-  .dout_ready(l1_ready_3_7),
-
-  .item_count(din_csr_readdata_3_7),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_3_7)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_3_7 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_3_7_r2 > L1_TH)
     din_almost_full_3_7 <= 1'b1;
   else
     din_almost_full_3_7 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_3_8 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_3_8),
   .din(din_3_8),
@@ -25560,28 +25250,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_3_8),
   .dout(l1_data_3_8),
-  .dout_ready(l1_ready_3_8),
-
-  .item_count(din_csr_readdata_3_8),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_3_8)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_3_8 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_3_8_r2 > L1_TH)
     din_almost_full_3_8 <= 1'b1;
   else
     din_almost_full_3_8 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_3_9 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_3_9),
   .din(din_3_9),
@@ -25589,28 +25276,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_3_9),
   .dout(l1_data_3_9),
-  .dout_ready(l1_ready_3_9),
-
-  .item_count(din_csr_readdata_3_9),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_3_9)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_3_9 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_3_9_r2 > L1_TH)
     din_almost_full_3_9 <= 1'b1;
   else
     din_almost_full_3_9 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_3_10 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_3_10),
   .din(din_3_10),
@@ -25618,28 +25302,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_3_10),
   .dout(l1_data_3_10),
-  .dout_ready(l1_ready_3_10),
-
-  .item_count(din_csr_readdata_3_10),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_3_10)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_3_10 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_3_10_r2 > L1_TH)
     din_almost_full_3_10 <= 1'b1;
   else
     din_almost_full_3_10 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_3_11 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_3_11),
   .din(din_3_11),
@@ -25647,28 +25328,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_3_11),
   .dout(l1_data_3_11),
-  .dout_ready(l1_ready_3_11),
-
-  .item_count(din_csr_readdata_3_11),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_3_11)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_3_11 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_3_11_r2 > L1_TH)
     din_almost_full_3_11 <= 1'b1;
   else
     din_almost_full_3_11 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_3_12 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_3_12),
   .din(din_3_12),
@@ -25676,28 +25354,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_3_12),
   .dout(l1_data_3_12),
-  .dout_ready(l1_ready_3_12),
-
-  .item_count(din_csr_readdata_3_12),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_3_12)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_3_12 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_3_12_r2 > L1_TH)
     din_almost_full_3_12 <= 1'b1;
   else
     din_almost_full_3_12 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_3_13 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_3_13),
   .din(din_3_13),
@@ -25705,28 +25380,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_3_13),
   .dout(l1_data_3_13),
-  .dout_ready(l1_ready_3_13),
-
-  .item_count(din_csr_readdata_3_13),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_3_13)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_3_13 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_3_13_r2 > L1_TH)
     din_almost_full_3_13 <= 1'b1;
   else
     din_almost_full_3_13 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_3_14 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_3_14),
   .din(din_3_14),
@@ -25734,28 +25406,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_3_14),
   .dout(l1_data_3_14),
-  .dout_ready(l1_ready_3_14),
-
-  .item_count(din_csr_readdata_3_14),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_3_14)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_3_14 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_3_14_r2 > L1_TH)
     din_almost_full_3_14 <= 1'b1;
   else
     din_almost_full_3_14 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_3_15 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_3_15),
   .din(din_3_15),
@@ -25763,28 +25432,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_3_15),
   .dout(l1_data_3_15),
-  .dout_ready(l1_ready_3_15),
-
-  .item_count(din_csr_readdata_3_15),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_3_15)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_3_15 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_3_15_r2 > L1_TH)
     din_almost_full_3_15 <= 1'b1;
   else
     din_almost_full_3_15 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_3_16 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_3_16),
   .din(din_3_16),
@@ -25792,28 +25458,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_3_16),
   .dout(l1_data_3_16),
-  .dout_ready(l1_ready_3_16),
-
-  .item_count(din_csr_readdata_3_16),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_3_16)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_3_16 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_3_16_r2 > L1_TH)
     din_almost_full_3_16 <= 1'b1;
   else
     din_almost_full_3_16 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_3_17 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_3_17),
   .din(din_3_17),
@@ -25821,28 +25484,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_3_17),
   .dout(l1_data_3_17),
-  .dout_ready(l1_ready_3_17),
-
-  .item_count(din_csr_readdata_3_17),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_3_17)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_3_17 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_3_17_r2 > L1_TH)
     din_almost_full_3_17 <= 1'b1;
   else
     din_almost_full_3_17 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_3_18 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_3_18),
   .din(din_3_18),
@@ -25850,28 +25510,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_3_18),
   .dout(l1_data_3_18),
-  .dout_ready(l1_ready_3_18),
-
-  .item_count(din_csr_readdata_3_18),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_3_18)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_3_18 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_3_18_r2 > L1_TH)
     din_almost_full_3_18 <= 1'b1;
   else
     din_almost_full_3_18 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_3_19 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_3_19),
   .din(din_3_19),
@@ -25879,28 +25536,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_3_19),
   .dout(l1_data_3_19),
-  .dout_ready(l1_ready_3_19),
-
-  .item_count(din_csr_readdata_3_19),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_3_19)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_3_19 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_3_19_r2 > L1_TH)
     din_almost_full_3_19 <= 1'b1;
   else
     din_almost_full_3_19 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_3_20 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_3_20),
   .din(din_3_20),
@@ -25908,28 +25562,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_3_20),
   .dout(l1_data_3_20),
-  .dout_ready(l1_ready_3_20),
-
-  .item_count(din_csr_readdata_3_20),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_3_20)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_3_20 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_3_20_r2 > L1_TH)
     din_almost_full_3_20 <= 1'b1;
   else
     din_almost_full_3_20 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_3_21 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_3_21),
   .din(din_3_21),
@@ -25937,28 +25588,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_3_21),
   .dout(l1_data_3_21),
-  .dout_ready(l1_ready_3_21),
-
-  .item_count(din_csr_readdata_3_21),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_3_21)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_3_21 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_3_21_r2 > L1_TH)
     din_almost_full_3_21 <= 1'b1;
   else
     din_almost_full_3_21 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_3_22 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_3_22),
   .din(din_3_22),
@@ -25966,28 +25614,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_3_22),
   .dout(l1_data_3_22),
-  .dout_ready(l1_ready_3_22),
-
-  .item_count(din_csr_readdata_3_22),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_3_22)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_3_22 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_3_22_r2 > L1_TH)
     din_almost_full_3_22 <= 1'b1;
   else
     din_almost_full_3_22 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_3_23 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_3_23),
   .din(din_3_23),
@@ -25995,28 +25640,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_3_23),
   .dout(l1_data_3_23),
-  .dout_ready(l1_ready_3_23),
-
-  .item_count(din_csr_readdata_3_23),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_3_23)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_3_23 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_3_23_r2 > L1_TH)
     din_almost_full_3_23 <= 1'b1;
   else
     din_almost_full_3_23 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_3_24 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_3_24),
   .din(din_3_24),
@@ -26024,28 +25666,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_3_24),
   .dout(l1_data_3_24),
-  .dout_ready(l1_ready_3_24),
-
-  .item_count(din_csr_readdata_3_24),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_3_24)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_3_24 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_3_24_r2 > L1_TH)
     din_almost_full_3_24 <= 1'b1;
   else
     din_almost_full_3_24 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_3_25 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_3_25),
   .din(din_3_25),
@@ -26053,28 +25692,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_3_25),
   .dout(l1_data_3_25),
-  .dout_ready(l1_ready_3_25),
-
-  .item_count(din_csr_readdata_3_25),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_3_25)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_3_25 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_3_25_r2 > L1_TH)
     din_almost_full_3_25 <= 1'b1;
   else
     din_almost_full_3_25 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_3_26 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_3_26),
   .din(din_3_26),
@@ -26082,28 +25718,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_3_26),
   .dout(l1_data_3_26),
-  .dout_ready(l1_ready_3_26),
-
-  .item_count(din_csr_readdata_3_26),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_3_26)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_3_26 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_3_26_r2 > L1_TH)
     din_almost_full_3_26 <= 1'b1;
   else
     din_almost_full_3_26 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_3_27 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_3_27),
   .din(din_3_27),
@@ -26111,28 +25744,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_3_27),
   .dout(l1_data_3_27),
-  .dout_ready(l1_ready_3_27),
-
-  .item_count(din_csr_readdata_3_27),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_3_27)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_3_27 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_3_27_r2 > L1_TH)
     din_almost_full_3_27 <= 1'b1;
   else
     din_almost_full_3_27 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_3_28 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_3_28),
   .din(din_3_28),
@@ -26140,28 +25770,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_3_28),
   .dout(l1_data_3_28),
-  .dout_ready(l1_ready_3_28),
-
-  .item_count(din_csr_readdata_3_28),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_3_28)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_3_28 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_3_28_r2 > L1_TH)
     din_almost_full_3_28 <= 1'b1;
   else
     din_almost_full_3_28 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_3_29 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_3_29),
   .din(din_3_29),
@@ -26169,28 +25796,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_3_29),
   .dout(l1_data_3_29),
-  .dout_ready(l1_ready_3_29),
-
-  .item_count(din_csr_readdata_3_29),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_3_29)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_3_29 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_3_29_r2 > L1_TH)
     din_almost_full_3_29 <= 1'b1;
   else
     din_almost_full_3_29 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_3_30 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_3_30),
   .din(din_3_30),
@@ -26198,28 +25822,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_3_30),
   .dout(l1_data_3_30),
-  .dout_ready(l1_ready_3_30),
-
-  .item_count(din_csr_readdata_3_30),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_3_30)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_3_30 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_3_30_r2 > L1_TH)
     din_almost_full_3_30 <= 1'b1;
   else
     din_almost_full_3_30 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_3_31 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_3_31),
   .din(din_3_31),
@@ -26227,28 +25848,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_3_31),
   .dout(l1_data_3_31),
-  .dout_ready(l1_ready_3_31),
-
-  .item_count(din_csr_readdata_3_31),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_3_31)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_3_31 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_3_31_r2 > L1_TH)
     din_almost_full_3_31 <= 1'b1;
   else
     din_almost_full_3_31 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_4_0 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_4_0),
   .din(din_4_0),
@@ -26256,28 +25874,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_4_0),
   .dout(l1_data_4_0),
-  .dout_ready(l1_ready_4_0),
-
-  .item_count(din_csr_readdata_4_0),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_4_0)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_4_0 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_4_0_r2 > L1_TH)
     din_almost_full_4_0 <= 1'b1;
   else
     din_almost_full_4_0 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_4_1 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_4_1),
   .din(din_4_1),
@@ -26285,28 +25900,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_4_1),
   .dout(l1_data_4_1),
-  .dout_ready(l1_ready_4_1),
-
-  .item_count(din_csr_readdata_4_1),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_4_1)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_4_1 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_4_1_r2 > L1_TH)
     din_almost_full_4_1 <= 1'b1;
   else
     din_almost_full_4_1 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_4_2 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_4_2),
   .din(din_4_2),
@@ -26314,28 +25926,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_4_2),
   .dout(l1_data_4_2),
-  .dout_ready(l1_ready_4_2),
-
-  .item_count(din_csr_readdata_4_2),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_4_2)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_4_2 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_4_2_r2 > L1_TH)
     din_almost_full_4_2 <= 1'b1;
   else
     din_almost_full_4_2 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_4_3 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_4_3),
   .din(din_4_3),
@@ -26343,28 +25952,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_4_3),
   .dout(l1_data_4_3),
-  .dout_ready(l1_ready_4_3),
-
-  .item_count(din_csr_readdata_4_3),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_4_3)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_4_3 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_4_3_r2 > L1_TH)
     din_almost_full_4_3 <= 1'b1;
   else
     din_almost_full_4_3 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_4_4 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_4_4),
   .din(din_4_4),
@@ -26372,28 +25978,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_4_4),
   .dout(l1_data_4_4),
-  .dout_ready(l1_ready_4_4),
-
-  .item_count(din_csr_readdata_4_4),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_4_4)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_4_4 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_4_4_r2 > L1_TH)
     din_almost_full_4_4 <= 1'b1;
   else
     din_almost_full_4_4 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_4_5 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_4_5),
   .din(din_4_5),
@@ -26401,28 +26004,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_4_5),
   .dout(l1_data_4_5),
-  .dout_ready(l1_ready_4_5),
-
-  .item_count(din_csr_readdata_4_5),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_4_5)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_4_5 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_4_5_r2 > L1_TH)
     din_almost_full_4_5 <= 1'b1;
   else
     din_almost_full_4_5 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_4_6 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_4_6),
   .din(din_4_6),
@@ -26430,28 +26030,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_4_6),
   .dout(l1_data_4_6),
-  .dout_ready(l1_ready_4_6),
-
-  .item_count(din_csr_readdata_4_6),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_4_6)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_4_6 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_4_6_r2 > L1_TH)
     din_almost_full_4_6 <= 1'b1;
   else
     din_almost_full_4_6 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_4_7 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_4_7),
   .din(din_4_7),
@@ -26459,28 +26056,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_4_7),
   .dout(l1_data_4_7),
-  .dout_ready(l1_ready_4_7),
-
-  .item_count(din_csr_readdata_4_7),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_4_7)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_4_7 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_4_7_r2 > L1_TH)
     din_almost_full_4_7 <= 1'b1;
   else
     din_almost_full_4_7 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_4_8 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_4_8),
   .din(din_4_8),
@@ -26488,28 +26082,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_4_8),
   .dout(l1_data_4_8),
-  .dout_ready(l1_ready_4_8),
-
-  .item_count(din_csr_readdata_4_8),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_4_8)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_4_8 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_4_8_r2 > L1_TH)
     din_almost_full_4_8 <= 1'b1;
   else
     din_almost_full_4_8 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_4_9 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_4_9),
   .din(din_4_9),
@@ -26517,28 +26108,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_4_9),
   .dout(l1_data_4_9),
-  .dout_ready(l1_ready_4_9),
-
-  .item_count(din_csr_readdata_4_9),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_4_9)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_4_9 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_4_9_r2 > L1_TH)
     din_almost_full_4_9 <= 1'b1;
   else
     din_almost_full_4_9 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_4_10 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_4_10),
   .din(din_4_10),
@@ -26546,28 +26134,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_4_10),
   .dout(l1_data_4_10),
-  .dout_ready(l1_ready_4_10),
-
-  .item_count(din_csr_readdata_4_10),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_4_10)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_4_10 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_4_10_r2 > L1_TH)
     din_almost_full_4_10 <= 1'b1;
   else
     din_almost_full_4_10 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_4_11 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_4_11),
   .din(din_4_11),
@@ -26575,28 +26160,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_4_11),
   .dout(l1_data_4_11),
-  .dout_ready(l1_ready_4_11),
-
-  .item_count(din_csr_readdata_4_11),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_4_11)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_4_11 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_4_11_r2 > L1_TH)
     din_almost_full_4_11 <= 1'b1;
   else
     din_almost_full_4_11 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_4_12 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_4_12),
   .din(din_4_12),
@@ -26604,28 +26186,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_4_12),
   .dout(l1_data_4_12),
-  .dout_ready(l1_ready_4_12),
-
-  .item_count(din_csr_readdata_4_12),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_4_12)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_4_12 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_4_12_r2 > L1_TH)
     din_almost_full_4_12 <= 1'b1;
   else
     din_almost_full_4_12 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_4_13 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_4_13),
   .din(din_4_13),
@@ -26633,28 +26212,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_4_13),
   .dout(l1_data_4_13),
-  .dout_ready(l1_ready_4_13),
-
-  .item_count(din_csr_readdata_4_13),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_4_13)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_4_13 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_4_13_r2 > L1_TH)
     din_almost_full_4_13 <= 1'b1;
   else
     din_almost_full_4_13 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_4_14 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_4_14),
   .din(din_4_14),
@@ -26662,28 +26238,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_4_14),
   .dout(l1_data_4_14),
-  .dout_ready(l1_ready_4_14),
-
-  .item_count(din_csr_readdata_4_14),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_4_14)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_4_14 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_4_14_r2 > L1_TH)
     din_almost_full_4_14 <= 1'b1;
   else
     din_almost_full_4_14 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_4_15 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_4_15),
   .din(din_4_15),
@@ -26691,28 +26264,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_4_15),
   .dout(l1_data_4_15),
-  .dout_ready(l1_ready_4_15),
-
-  .item_count(din_csr_readdata_4_15),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_4_15)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_4_15 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_4_15_r2 > L1_TH)
     din_almost_full_4_15 <= 1'b1;
   else
     din_almost_full_4_15 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_4_16 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_4_16),
   .din(din_4_16),
@@ -26720,28 +26290,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_4_16),
   .dout(l1_data_4_16),
-  .dout_ready(l1_ready_4_16),
-
-  .item_count(din_csr_readdata_4_16),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_4_16)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_4_16 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_4_16_r2 > L1_TH)
     din_almost_full_4_16 <= 1'b1;
   else
     din_almost_full_4_16 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_4_17 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_4_17),
   .din(din_4_17),
@@ -26749,28 +26316,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_4_17),
   .dout(l1_data_4_17),
-  .dout_ready(l1_ready_4_17),
-
-  .item_count(din_csr_readdata_4_17),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_4_17)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_4_17 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_4_17_r2 > L1_TH)
     din_almost_full_4_17 <= 1'b1;
   else
     din_almost_full_4_17 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_4_18 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_4_18),
   .din(din_4_18),
@@ -26778,28 +26342,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_4_18),
   .dout(l1_data_4_18),
-  .dout_ready(l1_ready_4_18),
-
-  .item_count(din_csr_readdata_4_18),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_4_18)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_4_18 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_4_18_r2 > L1_TH)
     din_almost_full_4_18 <= 1'b1;
   else
     din_almost_full_4_18 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_4_19 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_4_19),
   .din(din_4_19),
@@ -26807,28 +26368,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_4_19),
   .dout(l1_data_4_19),
-  .dout_ready(l1_ready_4_19),
-
-  .item_count(din_csr_readdata_4_19),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_4_19)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_4_19 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_4_19_r2 > L1_TH)
     din_almost_full_4_19 <= 1'b1;
   else
     din_almost_full_4_19 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_4_20 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_4_20),
   .din(din_4_20),
@@ -26836,28 +26394,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_4_20),
   .dout(l1_data_4_20),
-  .dout_ready(l1_ready_4_20),
-
-  .item_count(din_csr_readdata_4_20),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_4_20)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_4_20 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_4_20_r2 > L1_TH)
     din_almost_full_4_20 <= 1'b1;
   else
     din_almost_full_4_20 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_4_21 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_4_21),
   .din(din_4_21),
@@ -26865,28 +26420,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_4_21),
   .dout(l1_data_4_21),
-  .dout_ready(l1_ready_4_21),
-
-  .item_count(din_csr_readdata_4_21),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_4_21)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_4_21 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_4_21_r2 > L1_TH)
     din_almost_full_4_21 <= 1'b1;
   else
     din_almost_full_4_21 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_4_22 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_4_22),
   .din(din_4_22),
@@ -26894,28 +26446,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_4_22),
   .dout(l1_data_4_22),
-  .dout_ready(l1_ready_4_22),
-
-  .item_count(din_csr_readdata_4_22),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_4_22)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_4_22 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_4_22_r2 > L1_TH)
     din_almost_full_4_22 <= 1'b1;
   else
     din_almost_full_4_22 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_4_23 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_4_23),
   .din(din_4_23),
@@ -26923,28 +26472,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_4_23),
   .dout(l1_data_4_23),
-  .dout_ready(l1_ready_4_23),
-
-  .item_count(din_csr_readdata_4_23),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_4_23)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_4_23 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_4_23_r2 > L1_TH)
     din_almost_full_4_23 <= 1'b1;
   else
     din_almost_full_4_23 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_4_24 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_4_24),
   .din(din_4_24),
@@ -26952,28 +26498,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_4_24),
   .dout(l1_data_4_24),
-  .dout_ready(l1_ready_4_24),
-
-  .item_count(din_csr_readdata_4_24),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_4_24)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_4_24 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_4_24_r2 > L1_TH)
     din_almost_full_4_24 <= 1'b1;
   else
     din_almost_full_4_24 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_4_25 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_4_25),
   .din(din_4_25),
@@ -26981,28 +26524,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_4_25),
   .dout(l1_data_4_25),
-  .dout_ready(l1_ready_4_25),
-
-  .item_count(din_csr_readdata_4_25),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_4_25)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_4_25 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_4_25_r2 > L1_TH)
     din_almost_full_4_25 <= 1'b1;
   else
     din_almost_full_4_25 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_4_26 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_4_26),
   .din(din_4_26),
@@ -27010,28 +26550,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_4_26),
   .dout(l1_data_4_26),
-  .dout_ready(l1_ready_4_26),
-
-  .item_count(din_csr_readdata_4_26),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_4_26)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_4_26 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_4_26_r2 > L1_TH)
     din_almost_full_4_26 <= 1'b1;
   else
     din_almost_full_4_26 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_4_27 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_4_27),
   .din(din_4_27),
@@ -27039,28 +26576,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_4_27),
   .dout(l1_data_4_27),
-  .dout_ready(l1_ready_4_27),
-
-  .item_count(din_csr_readdata_4_27),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_4_27)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_4_27 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_4_27_r2 > L1_TH)
     din_almost_full_4_27 <= 1'b1;
   else
     din_almost_full_4_27 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_4_28 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_4_28),
   .din(din_4_28),
@@ -27068,28 +26602,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_4_28),
   .dout(l1_data_4_28),
-  .dout_ready(l1_ready_4_28),
-
-  .item_count(din_csr_readdata_4_28),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_4_28)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_4_28 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_4_28_r2 > L1_TH)
     din_almost_full_4_28 <= 1'b1;
   else
     din_almost_full_4_28 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_4_29 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_4_29),
   .din(din_4_29),
@@ -27097,28 +26628,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_4_29),
   .dout(l1_data_4_29),
-  .dout_ready(l1_ready_4_29),
-
-  .item_count(din_csr_readdata_4_29),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_4_29)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_4_29 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_4_29_r2 > L1_TH)
     din_almost_full_4_29 <= 1'b1;
   else
     din_almost_full_4_29 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_4_30 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_4_30),
   .din(din_4_30),
@@ -27126,28 +26654,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_4_30),
   .dout(l1_data_4_30),
-  .dout_ready(l1_ready_4_30),
-
-  .item_count(din_csr_readdata_4_30),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_4_30)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_4_30 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_4_30_r2 > L1_TH)
     din_almost_full_4_30 <= 1'b1;
   else
     din_almost_full_4_30 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_4_31 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_4_31),
   .din(din_4_31),
@@ -27155,28 +26680,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_4_31),
   .dout(l1_data_4_31),
-  .dout_ready(l1_ready_4_31),
-
-  .item_count(din_csr_readdata_4_31),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_4_31)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_4_31 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_4_31_r2 > L1_TH)
     din_almost_full_4_31 <= 1'b1;
   else
     din_almost_full_4_31 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_5_0 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_5_0),
   .din(din_5_0),
@@ -27184,28 +26706,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_5_0),
   .dout(l1_data_5_0),
-  .dout_ready(l1_ready_5_0),
-
-  .item_count(din_csr_readdata_5_0),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_5_0)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_5_0 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_5_0_r2 > L1_TH)
     din_almost_full_5_0 <= 1'b1;
   else
     din_almost_full_5_0 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_5_1 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_5_1),
   .din(din_5_1),
@@ -27213,28 +26732,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_5_1),
   .dout(l1_data_5_1),
-  .dout_ready(l1_ready_5_1),
-
-  .item_count(din_csr_readdata_5_1),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_5_1)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_5_1 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_5_1_r2 > L1_TH)
     din_almost_full_5_1 <= 1'b1;
   else
     din_almost_full_5_1 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_5_2 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_5_2),
   .din(din_5_2),
@@ -27242,28 +26758,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_5_2),
   .dout(l1_data_5_2),
-  .dout_ready(l1_ready_5_2),
-
-  .item_count(din_csr_readdata_5_2),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_5_2)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_5_2 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_5_2_r2 > L1_TH)
     din_almost_full_5_2 <= 1'b1;
   else
     din_almost_full_5_2 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_5_3 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_5_3),
   .din(din_5_3),
@@ -27271,28 +26784,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_5_3),
   .dout(l1_data_5_3),
-  .dout_ready(l1_ready_5_3),
-
-  .item_count(din_csr_readdata_5_3),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_5_3)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_5_3 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_5_3_r2 > L1_TH)
     din_almost_full_5_3 <= 1'b1;
   else
     din_almost_full_5_3 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_5_4 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_5_4),
   .din(din_5_4),
@@ -27300,28 +26810,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_5_4),
   .dout(l1_data_5_4),
-  .dout_ready(l1_ready_5_4),
-
-  .item_count(din_csr_readdata_5_4),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_5_4)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_5_4 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_5_4_r2 > L1_TH)
     din_almost_full_5_4 <= 1'b1;
   else
     din_almost_full_5_4 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_5_5 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_5_5),
   .din(din_5_5),
@@ -27329,28 +26836,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_5_5),
   .dout(l1_data_5_5),
-  .dout_ready(l1_ready_5_5),
-
-  .item_count(din_csr_readdata_5_5),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_5_5)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_5_5 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_5_5_r2 > L1_TH)
     din_almost_full_5_5 <= 1'b1;
   else
     din_almost_full_5_5 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_5_6 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_5_6),
   .din(din_5_6),
@@ -27358,28 +26862,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_5_6),
   .dout(l1_data_5_6),
-  .dout_ready(l1_ready_5_6),
-
-  .item_count(din_csr_readdata_5_6),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_5_6)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_5_6 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_5_6_r2 > L1_TH)
     din_almost_full_5_6 <= 1'b1;
   else
     din_almost_full_5_6 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_5_7 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_5_7),
   .din(din_5_7),
@@ -27387,28 +26888,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_5_7),
   .dout(l1_data_5_7),
-  .dout_ready(l1_ready_5_7),
-
-  .item_count(din_csr_readdata_5_7),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_5_7)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_5_7 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_5_7_r2 > L1_TH)
     din_almost_full_5_7 <= 1'b1;
   else
     din_almost_full_5_7 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_5_8 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_5_8),
   .din(din_5_8),
@@ -27416,28 +26914,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_5_8),
   .dout(l1_data_5_8),
-  .dout_ready(l1_ready_5_8),
-
-  .item_count(din_csr_readdata_5_8),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_5_8)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_5_8 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_5_8_r2 > L1_TH)
     din_almost_full_5_8 <= 1'b1;
   else
     din_almost_full_5_8 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_5_9 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_5_9),
   .din(din_5_9),
@@ -27445,28 +26940,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_5_9),
   .dout(l1_data_5_9),
-  .dout_ready(l1_ready_5_9),
-
-  .item_count(din_csr_readdata_5_9),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_5_9)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_5_9 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_5_9_r2 > L1_TH)
     din_almost_full_5_9 <= 1'b1;
   else
     din_almost_full_5_9 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_5_10 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_5_10),
   .din(din_5_10),
@@ -27474,28 +26966,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_5_10),
   .dout(l1_data_5_10),
-  .dout_ready(l1_ready_5_10),
-
-  .item_count(din_csr_readdata_5_10),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_5_10)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_5_10 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_5_10_r2 > L1_TH)
     din_almost_full_5_10 <= 1'b1;
   else
     din_almost_full_5_10 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_5_11 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_5_11),
   .din(din_5_11),
@@ -27503,28 +26992,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_5_11),
   .dout(l1_data_5_11),
-  .dout_ready(l1_ready_5_11),
-
-  .item_count(din_csr_readdata_5_11),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_5_11)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_5_11 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_5_11_r2 > L1_TH)
     din_almost_full_5_11 <= 1'b1;
   else
     din_almost_full_5_11 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_5_12 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_5_12),
   .din(din_5_12),
@@ -27532,28 +27018,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_5_12),
   .dout(l1_data_5_12),
-  .dout_ready(l1_ready_5_12),
-
-  .item_count(din_csr_readdata_5_12),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_5_12)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_5_12 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_5_12_r2 > L1_TH)
     din_almost_full_5_12 <= 1'b1;
   else
     din_almost_full_5_12 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_5_13 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_5_13),
   .din(din_5_13),
@@ -27561,28 +27044,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_5_13),
   .dout(l1_data_5_13),
-  .dout_ready(l1_ready_5_13),
-
-  .item_count(din_csr_readdata_5_13),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_5_13)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_5_13 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_5_13_r2 > L1_TH)
     din_almost_full_5_13 <= 1'b1;
   else
     din_almost_full_5_13 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_5_14 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_5_14),
   .din(din_5_14),
@@ -27590,28 +27070,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_5_14),
   .dout(l1_data_5_14),
-  .dout_ready(l1_ready_5_14),
-
-  .item_count(din_csr_readdata_5_14),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_5_14)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_5_14 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_5_14_r2 > L1_TH)
     din_almost_full_5_14 <= 1'b1;
   else
     din_almost_full_5_14 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_5_15 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_5_15),
   .din(din_5_15),
@@ -27619,28 +27096,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_5_15),
   .dout(l1_data_5_15),
-  .dout_ready(l1_ready_5_15),
-
-  .item_count(din_csr_readdata_5_15),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_5_15)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_5_15 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_5_15_r2 > L1_TH)
     din_almost_full_5_15 <= 1'b1;
   else
     din_almost_full_5_15 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_5_16 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_5_16),
   .din(din_5_16),
@@ -27648,28 +27122,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_5_16),
   .dout(l1_data_5_16),
-  .dout_ready(l1_ready_5_16),
-
-  .item_count(din_csr_readdata_5_16),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_5_16)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_5_16 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_5_16_r2 > L1_TH)
     din_almost_full_5_16 <= 1'b1;
   else
     din_almost_full_5_16 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_5_17 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_5_17),
   .din(din_5_17),
@@ -27677,28 +27148,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_5_17),
   .dout(l1_data_5_17),
-  .dout_ready(l1_ready_5_17),
-
-  .item_count(din_csr_readdata_5_17),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_5_17)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_5_17 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_5_17_r2 > L1_TH)
     din_almost_full_5_17 <= 1'b1;
   else
     din_almost_full_5_17 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_5_18 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_5_18),
   .din(din_5_18),
@@ -27706,28 +27174,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_5_18),
   .dout(l1_data_5_18),
-  .dout_ready(l1_ready_5_18),
-
-  .item_count(din_csr_readdata_5_18),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_5_18)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_5_18 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_5_18_r2 > L1_TH)
     din_almost_full_5_18 <= 1'b1;
   else
     din_almost_full_5_18 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_5_19 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_5_19),
   .din(din_5_19),
@@ -27735,28 +27200,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_5_19),
   .dout(l1_data_5_19),
-  .dout_ready(l1_ready_5_19),
-
-  .item_count(din_csr_readdata_5_19),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_5_19)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_5_19 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_5_19_r2 > L1_TH)
     din_almost_full_5_19 <= 1'b1;
   else
     din_almost_full_5_19 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_5_20 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_5_20),
   .din(din_5_20),
@@ -27764,28 +27226,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_5_20),
   .dout(l1_data_5_20),
-  .dout_ready(l1_ready_5_20),
-
-  .item_count(din_csr_readdata_5_20),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_5_20)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_5_20 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_5_20_r2 > L1_TH)
     din_almost_full_5_20 <= 1'b1;
   else
     din_almost_full_5_20 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_5_21 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_5_21),
   .din(din_5_21),
@@ -27793,28 +27252,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_5_21),
   .dout(l1_data_5_21),
-  .dout_ready(l1_ready_5_21),
-
-  .item_count(din_csr_readdata_5_21),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_5_21)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_5_21 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_5_21_r2 > L1_TH)
     din_almost_full_5_21 <= 1'b1;
   else
     din_almost_full_5_21 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_5_22 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_5_22),
   .din(din_5_22),
@@ -27822,28 +27278,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_5_22),
   .dout(l1_data_5_22),
-  .dout_ready(l1_ready_5_22),
-
-  .item_count(din_csr_readdata_5_22),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_5_22)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_5_22 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_5_22_r2 > L1_TH)
     din_almost_full_5_22 <= 1'b1;
   else
     din_almost_full_5_22 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_5_23 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_5_23),
   .din(din_5_23),
@@ -27851,28 +27304,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_5_23),
   .dout(l1_data_5_23),
-  .dout_ready(l1_ready_5_23),
-
-  .item_count(din_csr_readdata_5_23),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_5_23)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_5_23 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_5_23_r2 > L1_TH)
     din_almost_full_5_23 <= 1'b1;
   else
     din_almost_full_5_23 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_5_24 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_5_24),
   .din(din_5_24),
@@ -27880,28 +27330,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_5_24),
   .dout(l1_data_5_24),
-  .dout_ready(l1_ready_5_24),
-
-  .item_count(din_csr_readdata_5_24),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_5_24)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_5_24 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_5_24_r2 > L1_TH)
     din_almost_full_5_24 <= 1'b1;
   else
     din_almost_full_5_24 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_5_25 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_5_25),
   .din(din_5_25),
@@ -27909,28 +27356,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_5_25),
   .dout(l1_data_5_25),
-  .dout_ready(l1_ready_5_25),
-
-  .item_count(din_csr_readdata_5_25),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_5_25)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_5_25 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_5_25_r2 > L1_TH)
     din_almost_full_5_25 <= 1'b1;
   else
     din_almost_full_5_25 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_5_26 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_5_26),
   .din(din_5_26),
@@ -27938,28 +27382,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_5_26),
   .dout(l1_data_5_26),
-  .dout_ready(l1_ready_5_26),
-
-  .item_count(din_csr_readdata_5_26),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_5_26)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_5_26 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_5_26_r2 > L1_TH)
     din_almost_full_5_26 <= 1'b1;
   else
     din_almost_full_5_26 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_5_27 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_5_27),
   .din(din_5_27),
@@ -27967,28 +27408,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_5_27),
   .dout(l1_data_5_27),
-  .dout_ready(l1_ready_5_27),
-
-  .item_count(din_csr_readdata_5_27),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_5_27)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_5_27 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_5_27_r2 > L1_TH)
     din_almost_full_5_27 <= 1'b1;
   else
     din_almost_full_5_27 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_5_28 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_5_28),
   .din(din_5_28),
@@ -27996,28 +27434,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_5_28),
   .dout(l1_data_5_28),
-  .dout_ready(l1_ready_5_28),
-
-  .item_count(din_csr_readdata_5_28),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_5_28)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_5_28 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_5_28_r2 > L1_TH)
     din_almost_full_5_28 <= 1'b1;
   else
     din_almost_full_5_28 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_5_29 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_5_29),
   .din(din_5_29),
@@ -28025,28 +27460,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_5_29),
   .dout(l1_data_5_29),
-  .dout_ready(l1_ready_5_29),
-
-  .item_count(din_csr_readdata_5_29),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_5_29)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_5_29 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_5_29_r2 > L1_TH)
     din_almost_full_5_29 <= 1'b1;
   else
     din_almost_full_5_29 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_5_30 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_5_30),
   .din(din_5_30),
@@ -28054,28 +27486,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_5_30),
   .dout(l1_data_5_30),
-  .dout_ready(l1_ready_5_30),
-
-  .item_count(din_csr_readdata_5_30),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_5_30)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_5_30 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_5_30_r2 > L1_TH)
     din_almost_full_5_30 <= 1'b1;
   else
     din_almost_full_5_30 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_5_31 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_5_31),
   .din(din_5_31),
@@ -28083,28 +27512,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_5_31),
   .dout(l1_data_5_31),
-  .dout_ready(l1_ready_5_31),
-
-  .item_count(din_csr_readdata_5_31),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_5_31)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_5_31 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_5_31_r2 > L1_TH)
     din_almost_full_5_31 <= 1'b1;
   else
     din_almost_full_5_31 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_6_0 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_6_0),
   .din(din_6_0),
@@ -28112,28 +27538,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_6_0),
   .dout(l1_data_6_0),
-  .dout_ready(l1_ready_6_0),
-
-  .item_count(din_csr_readdata_6_0),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_6_0)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_6_0 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_6_0_r2 > L1_TH)
     din_almost_full_6_0 <= 1'b1;
   else
     din_almost_full_6_0 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_6_1 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_6_1),
   .din(din_6_1),
@@ -28141,28 +27564,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_6_1),
   .dout(l1_data_6_1),
-  .dout_ready(l1_ready_6_1),
-
-  .item_count(din_csr_readdata_6_1),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_6_1)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_6_1 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_6_1_r2 > L1_TH)
     din_almost_full_6_1 <= 1'b1;
   else
     din_almost_full_6_1 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_6_2 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_6_2),
   .din(din_6_2),
@@ -28170,28 +27590,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_6_2),
   .dout(l1_data_6_2),
-  .dout_ready(l1_ready_6_2),
-
-  .item_count(din_csr_readdata_6_2),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_6_2)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_6_2 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_6_2_r2 > L1_TH)
     din_almost_full_6_2 <= 1'b1;
   else
     din_almost_full_6_2 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_6_3 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_6_3),
   .din(din_6_3),
@@ -28199,28 +27616,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_6_3),
   .dout(l1_data_6_3),
-  .dout_ready(l1_ready_6_3),
-
-  .item_count(din_csr_readdata_6_3),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_6_3)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_6_3 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_6_3_r2 > L1_TH)
     din_almost_full_6_3 <= 1'b1;
   else
     din_almost_full_6_3 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_6_4 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_6_4),
   .din(din_6_4),
@@ -28228,28 +27642,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_6_4),
   .dout(l1_data_6_4),
-  .dout_ready(l1_ready_6_4),
-
-  .item_count(din_csr_readdata_6_4),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_6_4)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_6_4 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_6_4_r2 > L1_TH)
     din_almost_full_6_4 <= 1'b1;
   else
     din_almost_full_6_4 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_6_5 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_6_5),
   .din(din_6_5),
@@ -28257,28 +27668,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_6_5),
   .dout(l1_data_6_5),
-  .dout_ready(l1_ready_6_5),
-
-  .item_count(din_csr_readdata_6_5),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_6_5)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_6_5 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_6_5_r2 > L1_TH)
     din_almost_full_6_5 <= 1'b1;
   else
     din_almost_full_6_5 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_6_6 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_6_6),
   .din(din_6_6),
@@ -28286,28 +27694,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_6_6),
   .dout(l1_data_6_6),
-  .dout_ready(l1_ready_6_6),
-
-  .item_count(din_csr_readdata_6_6),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_6_6)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_6_6 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_6_6_r2 > L1_TH)
     din_almost_full_6_6 <= 1'b1;
   else
     din_almost_full_6_6 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_6_7 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_6_7),
   .din(din_6_7),
@@ -28315,28 +27720,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_6_7),
   .dout(l1_data_6_7),
-  .dout_ready(l1_ready_6_7),
-
-  .item_count(din_csr_readdata_6_7),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_6_7)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_6_7 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_6_7_r2 > L1_TH)
     din_almost_full_6_7 <= 1'b1;
   else
     din_almost_full_6_7 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_6_8 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_6_8),
   .din(din_6_8),
@@ -28344,28 +27746,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_6_8),
   .dout(l1_data_6_8),
-  .dout_ready(l1_ready_6_8),
-
-  .item_count(din_csr_readdata_6_8),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_6_8)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_6_8 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_6_8_r2 > L1_TH)
     din_almost_full_6_8 <= 1'b1;
   else
     din_almost_full_6_8 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_6_9 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_6_9),
   .din(din_6_9),
@@ -28373,28 +27772,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_6_9),
   .dout(l1_data_6_9),
-  .dout_ready(l1_ready_6_9),
-
-  .item_count(din_csr_readdata_6_9),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_6_9)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_6_9 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_6_9_r2 > L1_TH)
     din_almost_full_6_9 <= 1'b1;
   else
     din_almost_full_6_9 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_6_10 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_6_10),
   .din(din_6_10),
@@ -28402,28 +27798,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_6_10),
   .dout(l1_data_6_10),
-  .dout_ready(l1_ready_6_10),
-
-  .item_count(din_csr_readdata_6_10),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_6_10)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_6_10 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_6_10_r2 > L1_TH)
     din_almost_full_6_10 <= 1'b1;
   else
     din_almost_full_6_10 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_6_11 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_6_11),
   .din(din_6_11),
@@ -28431,28 +27824,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_6_11),
   .dout(l1_data_6_11),
-  .dout_ready(l1_ready_6_11),
-
-  .item_count(din_csr_readdata_6_11),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_6_11)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_6_11 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_6_11_r2 > L1_TH)
     din_almost_full_6_11 <= 1'b1;
   else
     din_almost_full_6_11 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_6_12 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_6_12),
   .din(din_6_12),
@@ -28460,28 +27850,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_6_12),
   .dout(l1_data_6_12),
-  .dout_ready(l1_ready_6_12),
-
-  .item_count(din_csr_readdata_6_12),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_6_12)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_6_12 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_6_12_r2 > L1_TH)
     din_almost_full_6_12 <= 1'b1;
   else
     din_almost_full_6_12 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_6_13 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_6_13),
   .din(din_6_13),
@@ -28489,28 +27876,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_6_13),
   .dout(l1_data_6_13),
-  .dout_ready(l1_ready_6_13),
-
-  .item_count(din_csr_readdata_6_13),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_6_13)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_6_13 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_6_13_r2 > L1_TH)
     din_almost_full_6_13 <= 1'b1;
   else
     din_almost_full_6_13 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_6_14 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_6_14),
   .din(din_6_14),
@@ -28518,28 +27902,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_6_14),
   .dout(l1_data_6_14),
-  .dout_ready(l1_ready_6_14),
-
-  .item_count(din_csr_readdata_6_14),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_6_14)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_6_14 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_6_14_r2 > L1_TH)
     din_almost_full_6_14 <= 1'b1;
   else
     din_almost_full_6_14 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_6_15 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_6_15),
   .din(din_6_15),
@@ -28547,28 +27928,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_6_15),
   .dout(l1_data_6_15),
-  .dout_ready(l1_ready_6_15),
-
-  .item_count(din_csr_readdata_6_15),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_6_15)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_6_15 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_6_15_r2 > L1_TH)
     din_almost_full_6_15 <= 1'b1;
   else
     din_almost_full_6_15 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_6_16 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_6_16),
   .din(din_6_16),
@@ -28576,28 +27954,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_6_16),
   .dout(l1_data_6_16),
-  .dout_ready(l1_ready_6_16),
-
-  .item_count(din_csr_readdata_6_16),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_6_16)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_6_16 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_6_16_r2 > L1_TH)
     din_almost_full_6_16 <= 1'b1;
   else
     din_almost_full_6_16 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_6_17 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_6_17),
   .din(din_6_17),
@@ -28605,28 +27980,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_6_17),
   .dout(l1_data_6_17),
-  .dout_ready(l1_ready_6_17),
-
-  .item_count(din_csr_readdata_6_17),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_6_17)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_6_17 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_6_17_r2 > L1_TH)
     din_almost_full_6_17 <= 1'b1;
   else
     din_almost_full_6_17 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_6_18 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_6_18),
   .din(din_6_18),
@@ -28634,28 +28006,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_6_18),
   .dout(l1_data_6_18),
-  .dout_ready(l1_ready_6_18),
-
-  .item_count(din_csr_readdata_6_18),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_6_18)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_6_18 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_6_18_r2 > L1_TH)
     din_almost_full_6_18 <= 1'b1;
   else
     din_almost_full_6_18 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_6_19 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_6_19),
   .din(din_6_19),
@@ -28663,28 +28032,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_6_19),
   .dout(l1_data_6_19),
-  .dout_ready(l1_ready_6_19),
-
-  .item_count(din_csr_readdata_6_19),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_6_19)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_6_19 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_6_19_r2 > L1_TH)
     din_almost_full_6_19 <= 1'b1;
   else
     din_almost_full_6_19 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_6_20 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_6_20),
   .din(din_6_20),
@@ -28692,28 +28058,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_6_20),
   .dout(l1_data_6_20),
-  .dout_ready(l1_ready_6_20),
-
-  .item_count(din_csr_readdata_6_20),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_6_20)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_6_20 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_6_20_r2 > L1_TH)
     din_almost_full_6_20 <= 1'b1;
   else
     din_almost_full_6_20 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_6_21 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_6_21),
   .din(din_6_21),
@@ -28721,28 +28084,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_6_21),
   .dout(l1_data_6_21),
-  .dout_ready(l1_ready_6_21),
-
-  .item_count(din_csr_readdata_6_21),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_6_21)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_6_21 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_6_21_r2 > L1_TH)
     din_almost_full_6_21 <= 1'b1;
   else
     din_almost_full_6_21 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_6_22 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_6_22),
   .din(din_6_22),
@@ -28750,28 +28110,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_6_22),
   .dout(l1_data_6_22),
-  .dout_ready(l1_ready_6_22),
-
-  .item_count(din_csr_readdata_6_22),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_6_22)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_6_22 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_6_22_r2 > L1_TH)
     din_almost_full_6_22 <= 1'b1;
   else
     din_almost_full_6_22 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_6_23 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_6_23),
   .din(din_6_23),
@@ -28779,28 +28136,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_6_23),
   .dout(l1_data_6_23),
-  .dout_ready(l1_ready_6_23),
-
-  .item_count(din_csr_readdata_6_23),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_6_23)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_6_23 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_6_23_r2 > L1_TH)
     din_almost_full_6_23 <= 1'b1;
   else
     din_almost_full_6_23 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_6_24 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_6_24),
   .din(din_6_24),
@@ -28808,28 +28162,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_6_24),
   .dout(l1_data_6_24),
-  .dout_ready(l1_ready_6_24),
-
-  .item_count(din_csr_readdata_6_24),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_6_24)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_6_24 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_6_24_r2 > L1_TH)
     din_almost_full_6_24 <= 1'b1;
   else
     din_almost_full_6_24 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_6_25 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_6_25),
   .din(din_6_25),
@@ -28837,28 +28188,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_6_25),
   .dout(l1_data_6_25),
-  .dout_ready(l1_ready_6_25),
-
-  .item_count(din_csr_readdata_6_25),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_6_25)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_6_25 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_6_25_r2 > L1_TH)
     din_almost_full_6_25 <= 1'b1;
   else
     din_almost_full_6_25 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_6_26 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_6_26),
   .din(din_6_26),
@@ -28866,28 +28214,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_6_26),
   .dout(l1_data_6_26),
-  .dout_ready(l1_ready_6_26),
-
-  .item_count(din_csr_readdata_6_26),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_6_26)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_6_26 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_6_26_r2 > L1_TH)
     din_almost_full_6_26 <= 1'b1;
   else
     din_almost_full_6_26 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_6_27 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_6_27),
   .din(din_6_27),
@@ -28895,28 +28240,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_6_27),
   .dout(l1_data_6_27),
-  .dout_ready(l1_ready_6_27),
-
-  .item_count(din_csr_readdata_6_27),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_6_27)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_6_27 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_6_27_r2 > L1_TH)
     din_almost_full_6_27 <= 1'b1;
   else
     din_almost_full_6_27 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_6_28 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_6_28),
   .din(din_6_28),
@@ -28924,28 +28266,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_6_28),
   .dout(l1_data_6_28),
-  .dout_ready(l1_ready_6_28),
-
-  .item_count(din_csr_readdata_6_28),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_6_28)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_6_28 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_6_28_r2 > L1_TH)
     din_almost_full_6_28 <= 1'b1;
   else
     din_almost_full_6_28 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_6_29 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_6_29),
   .din(din_6_29),
@@ -28953,28 +28292,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_6_29),
   .dout(l1_data_6_29),
-  .dout_ready(l1_ready_6_29),
-
-  .item_count(din_csr_readdata_6_29),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_6_29)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_6_29 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_6_29_r2 > L1_TH)
     din_almost_full_6_29 <= 1'b1;
   else
     din_almost_full_6_29 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_6_30 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_6_30),
   .din(din_6_30),
@@ -28982,28 +28318,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_6_30),
   .dout(l1_data_6_30),
-  .dout_ready(l1_ready_6_30),
-
-  .item_count(din_csr_readdata_6_30),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_6_30)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_6_30 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_6_30_r2 > L1_TH)
     din_almost_full_6_30 <= 1'b1;
   else
     din_almost_full_6_30 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_6_31 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_6_31),
   .din(din_6_31),
@@ -29011,28 +28344,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_6_31),
   .dout(l1_data_6_31),
-  .dout_ready(l1_ready_6_31),
-
-  .item_count(din_csr_readdata_6_31),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_6_31)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_6_31 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_6_31_r2 > L1_TH)
     din_almost_full_6_31 <= 1'b1;
   else
     din_almost_full_6_31 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_7_0 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_7_0),
   .din(din_7_0),
@@ -29040,28 +28370,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_7_0),
   .dout(l1_data_7_0),
-  .dout_ready(l1_ready_7_0),
-
-  .item_count(din_csr_readdata_7_0),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_7_0)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_7_0 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_7_0_r2 > L1_TH)
     din_almost_full_7_0 <= 1'b1;
   else
     din_almost_full_7_0 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_7_1 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_7_1),
   .din(din_7_1),
@@ -29069,28 +28396,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_7_1),
   .dout(l1_data_7_1),
-  .dout_ready(l1_ready_7_1),
-
-  .item_count(din_csr_readdata_7_1),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_7_1)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_7_1 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_7_1_r2 > L1_TH)
     din_almost_full_7_1 <= 1'b1;
   else
     din_almost_full_7_1 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_7_2 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_7_2),
   .din(din_7_2),
@@ -29098,28 +28422,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_7_2),
   .dout(l1_data_7_2),
-  .dout_ready(l1_ready_7_2),
-
-  .item_count(din_csr_readdata_7_2),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_7_2)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_7_2 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_7_2_r2 > L1_TH)
     din_almost_full_7_2 <= 1'b1;
   else
     din_almost_full_7_2 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_7_3 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_7_3),
   .din(din_7_3),
@@ -29127,28 +28448,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_7_3),
   .dout(l1_data_7_3),
-  .dout_ready(l1_ready_7_3),
-
-  .item_count(din_csr_readdata_7_3),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_7_3)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_7_3 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_7_3_r2 > L1_TH)
     din_almost_full_7_3 <= 1'b1;
   else
     din_almost_full_7_3 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_7_4 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_7_4),
   .din(din_7_4),
@@ -29156,28 +28474,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_7_4),
   .dout(l1_data_7_4),
-  .dout_ready(l1_ready_7_4),
-
-  .item_count(din_csr_readdata_7_4),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_7_4)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_7_4 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_7_4_r2 > L1_TH)
     din_almost_full_7_4 <= 1'b1;
   else
     din_almost_full_7_4 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_7_5 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_7_5),
   .din(din_7_5),
@@ -29185,28 +28500,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_7_5),
   .dout(l1_data_7_5),
-  .dout_ready(l1_ready_7_5),
-
-  .item_count(din_csr_readdata_7_5),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_7_5)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_7_5 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_7_5_r2 > L1_TH)
     din_almost_full_7_5 <= 1'b1;
   else
     din_almost_full_7_5 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_7_6 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_7_6),
   .din(din_7_6),
@@ -29214,28 +28526,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_7_6),
   .dout(l1_data_7_6),
-  .dout_ready(l1_ready_7_6),
-
-  .item_count(din_csr_readdata_7_6),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_7_6)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_7_6 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_7_6_r2 > L1_TH)
     din_almost_full_7_6 <= 1'b1;
   else
     din_almost_full_7_6 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_7_7 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_7_7),
   .din(din_7_7),
@@ -29243,28 +28552,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_7_7),
   .dout(l1_data_7_7),
-  .dout_ready(l1_ready_7_7),
-
-  .item_count(din_csr_readdata_7_7),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_7_7)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_7_7 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_7_7_r2 > L1_TH)
     din_almost_full_7_7 <= 1'b1;
   else
     din_almost_full_7_7 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_7_8 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_7_8),
   .din(din_7_8),
@@ -29272,28 +28578,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_7_8),
   .dout(l1_data_7_8),
-  .dout_ready(l1_ready_7_8),
-
-  .item_count(din_csr_readdata_7_8),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_7_8)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_7_8 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_7_8_r2 > L1_TH)
     din_almost_full_7_8 <= 1'b1;
   else
     din_almost_full_7_8 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_7_9 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_7_9),
   .din(din_7_9),
@@ -29301,28 +28604,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_7_9),
   .dout(l1_data_7_9),
-  .dout_ready(l1_ready_7_9),
-
-  .item_count(din_csr_readdata_7_9),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_7_9)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_7_9 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_7_9_r2 > L1_TH)
     din_almost_full_7_9 <= 1'b1;
   else
     din_almost_full_7_9 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_7_10 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_7_10),
   .din(din_7_10),
@@ -29330,28 +28630,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_7_10),
   .dout(l1_data_7_10),
-  .dout_ready(l1_ready_7_10),
-
-  .item_count(din_csr_readdata_7_10),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_7_10)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_7_10 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_7_10_r2 > L1_TH)
     din_almost_full_7_10 <= 1'b1;
   else
     din_almost_full_7_10 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_7_11 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_7_11),
   .din(din_7_11),
@@ -29359,28 +28656,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_7_11),
   .dout(l1_data_7_11),
-  .dout_ready(l1_ready_7_11),
-
-  .item_count(din_csr_readdata_7_11),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_7_11)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_7_11 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_7_11_r2 > L1_TH)
     din_almost_full_7_11 <= 1'b1;
   else
     din_almost_full_7_11 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_7_12 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_7_12),
   .din(din_7_12),
@@ -29388,28 +28682,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_7_12),
   .dout(l1_data_7_12),
-  .dout_ready(l1_ready_7_12),
-
-  .item_count(din_csr_readdata_7_12),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_7_12)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_7_12 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_7_12_r2 > L1_TH)
     din_almost_full_7_12 <= 1'b1;
   else
     din_almost_full_7_12 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_7_13 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_7_13),
   .din(din_7_13),
@@ -29417,28 +28708,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_7_13),
   .dout(l1_data_7_13),
-  .dout_ready(l1_ready_7_13),
-
-  .item_count(din_csr_readdata_7_13),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_7_13)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_7_13 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_7_13_r2 > L1_TH)
     din_almost_full_7_13 <= 1'b1;
   else
     din_almost_full_7_13 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_7_14 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_7_14),
   .din(din_7_14),
@@ -29446,28 +28734,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_7_14),
   .dout(l1_data_7_14),
-  .dout_ready(l1_ready_7_14),
-
-  .item_count(din_csr_readdata_7_14),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_7_14)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_7_14 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_7_14_r2 > L1_TH)
     din_almost_full_7_14 <= 1'b1;
   else
     din_almost_full_7_14 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_7_15 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_7_15),
   .din(din_7_15),
@@ -29475,28 +28760,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_7_15),
   .dout(l1_data_7_15),
-  .dout_ready(l1_ready_7_15),
-
-  .item_count(din_csr_readdata_7_15),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_7_15)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_7_15 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_7_15_r2 > L1_TH)
     din_almost_full_7_15 <= 1'b1;
   else
     din_almost_full_7_15 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_7_16 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_7_16),
   .din(din_7_16),
@@ -29504,28 +28786,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_7_16),
   .dout(l1_data_7_16),
-  .dout_ready(l1_ready_7_16),
-
-  .item_count(din_csr_readdata_7_16),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_7_16)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_7_16 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_7_16_r2 > L1_TH)
     din_almost_full_7_16 <= 1'b1;
   else
     din_almost_full_7_16 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_7_17 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_7_17),
   .din(din_7_17),
@@ -29533,28 +28812,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_7_17),
   .dout(l1_data_7_17),
-  .dout_ready(l1_ready_7_17),
-
-  .item_count(din_csr_readdata_7_17),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_7_17)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_7_17 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_7_17_r2 > L1_TH)
     din_almost_full_7_17 <= 1'b1;
   else
     din_almost_full_7_17 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_7_18 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_7_18),
   .din(din_7_18),
@@ -29562,28 +28838,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_7_18),
   .dout(l1_data_7_18),
-  .dout_ready(l1_ready_7_18),
-
-  .item_count(din_csr_readdata_7_18),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_7_18)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_7_18 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_7_18_r2 > L1_TH)
     din_almost_full_7_18 <= 1'b1;
   else
     din_almost_full_7_18 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_7_19 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_7_19),
   .din(din_7_19),
@@ -29591,28 +28864,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_7_19),
   .dout(l1_data_7_19),
-  .dout_ready(l1_ready_7_19),
-
-  .item_count(din_csr_readdata_7_19),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_7_19)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_7_19 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_7_19_r2 > L1_TH)
     din_almost_full_7_19 <= 1'b1;
   else
     din_almost_full_7_19 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_7_20 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_7_20),
   .din(din_7_20),
@@ -29620,28 +28890,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_7_20),
   .dout(l1_data_7_20),
-  .dout_ready(l1_ready_7_20),
-
-  .item_count(din_csr_readdata_7_20),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_7_20)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_7_20 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_7_20_r2 > L1_TH)
     din_almost_full_7_20 <= 1'b1;
   else
     din_almost_full_7_20 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_7_21 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_7_21),
   .din(din_7_21),
@@ -29649,28 +28916,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_7_21),
   .dout(l1_data_7_21),
-  .dout_ready(l1_ready_7_21),
-
-  .item_count(din_csr_readdata_7_21),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_7_21)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_7_21 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_7_21_r2 > L1_TH)
     din_almost_full_7_21 <= 1'b1;
   else
     din_almost_full_7_21 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_7_22 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_7_22),
   .din(din_7_22),
@@ -29678,28 +28942,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_7_22),
   .dout(l1_data_7_22),
-  .dout_ready(l1_ready_7_22),
-
-  .item_count(din_csr_readdata_7_22),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_7_22)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_7_22 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_7_22_r2 > L1_TH)
     din_almost_full_7_22 <= 1'b1;
   else
     din_almost_full_7_22 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_7_23 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_7_23),
   .din(din_7_23),
@@ -29707,28 +28968,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_7_23),
   .dout(l1_data_7_23),
-  .dout_ready(l1_ready_7_23),
-
-  .item_count(din_csr_readdata_7_23),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_7_23)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_7_23 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_7_23_r2 > L1_TH)
     din_almost_full_7_23 <= 1'b1;
   else
     din_almost_full_7_23 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_7_24 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_7_24),
   .din(din_7_24),
@@ -29736,28 +28994,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_7_24),
   .dout(l1_data_7_24),
-  .dout_ready(l1_ready_7_24),
-
-  .item_count(din_csr_readdata_7_24),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_7_24)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_7_24 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_7_24_r2 > L1_TH)
     din_almost_full_7_24 <= 1'b1;
   else
     din_almost_full_7_24 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_7_25 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_7_25),
   .din(din_7_25),
@@ -29765,28 +29020,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_7_25),
   .dout(l1_data_7_25),
-  .dout_ready(l1_ready_7_25),
-
-  .item_count(din_csr_readdata_7_25),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_7_25)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_7_25 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_7_25_r2 > L1_TH)
     din_almost_full_7_25 <= 1'b1;
   else
     din_almost_full_7_25 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_7_26 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_7_26),
   .din(din_7_26),
@@ -29794,28 +29046,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_7_26),
   .dout(l1_data_7_26),
-  .dout_ready(l1_ready_7_26),
-
-  .item_count(din_csr_readdata_7_26),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_7_26)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_7_26 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_7_26_r2 > L1_TH)
     din_almost_full_7_26 <= 1'b1;
   else
     din_almost_full_7_26 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_7_27 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_7_27),
   .din(din_7_27),
@@ -29823,28 +29072,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_7_27),
   .dout(l1_data_7_27),
-  .dout_ready(l1_ready_7_27),
-
-  .item_count(din_csr_readdata_7_27),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_7_27)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_7_27 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_7_27_r2 > L1_TH)
     din_almost_full_7_27 <= 1'b1;
   else
     din_almost_full_7_27 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_7_28 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_7_28),
   .din(din_7_28),
@@ -29852,28 +29098,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_7_28),
   .dout(l1_data_7_28),
-  .dout_ready(l1_ready_7_28),
-
-  .item_count(din_csr_readdata_7_28),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_7_28)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_7_28 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_7_28_r2 > L1_TH)
     din_almost_full_7_28 <= 1'b1;
   else
     din_almost_full_7_28 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_7_29 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_7_29),
   .din(din_7_29),
@@ -29881,28 +29124,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_7_29),
   .dout(l1_data_7_29),
-  .dout_ready(l1_ready_7_29),
-
-  .item_count(din_csr_readdata_7_29),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_7_29)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_7_29 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_7_29_r2 > L1_TH)
     din_almost_full_7_29 <= 1'b1;
   else
     din_almost_full_7_29 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_7_30 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_7_30),
   .din(din_7_30),
@@ -29910,28 +29150,25 @@ simple_fifo # (
 
   .dout_valid(l1_valid_7_30),
   .dout(l1_data_7_30),
-  .dout_ready(l1_ready_7_30),
-
-  .item_count(din_csr_readdata_7_30),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_7_30)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_7_30 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_7_30_r2 > L1_TH)
     din_almost_full_7_30 <= 1'b1;
   else
     din_almost_full_7_30 <= 1'b0;
 
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
-  .DATA_WIDTH(RULE_S_WIDTH),
-  .INIT_ZERO(1)
+simple_async_fifo # (
+  .DEPTH(L1_FIFO_DEPTH),
+  .DATA_WIDTH(RULE_S_WIDTH)
 ) l1_dc_fifo_mlab_7_31 (
-  .clk   (clk),
-  .rst   (rst),
-  .clear (1'b0),
+  .din_clk    (front_clk),
+  .dout_clk   (back_clk),
+  .async_rst  (front_rst|back_rst),
 
   .din_valid(din_valid_7_31),
   .din(din_7_31),
@@ -29939,14 +29176,12 @@ simple_fifo # (
 
   .dout_valid(l1_valid_7_31),
   .dout(l1_data_7_31),
-  .dout_ready(l1_ready_7_31),
-
-  .item_count(din_csr_readdata_7_31),
-  .full(),
-  .empty()
+  .dout_ready(l1_ready_7_31)
 );
 
-always @ (posedge clk)
+assign din_csr_readdata_7_31 = 0;
+
+always @ (posedge back_clk)
   if (din_csr_readdata_7_31_r2 > L1_TH)
     din_almost_full_7_31 <= 1'b1;
   else
@@ -29958,8 +29193,8 @@ rr_arbiter #(
     .DWIDTH(2)
 )
 l1_arb_0_0(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l1_req_0_0),
     .grant  (l1_grant_0_0)
 );
@@ -29969,8 +29204,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l2_fifo_0_0 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l2_in_valid_0_0),
@@ -29986,7 +29221,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l2_csr_readdata_0_0 > L2_TH)
     l2_almost_full_0_0 <= 1'b1;
   else
@@ -29996,8 +29231,8 @@ rr_arbiter #(
     .DWIDTH(2)
 )
 l1_arb_0_1(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l1_req_0_1),
     .grant  (l1_grant_0_1)
 );
@@ -30007,8 +29242,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l2_fifo_0_1 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l2_in_valid_0_1),
@@ -30024,7 +29259,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l2_csr_readdata_0_1 > L2_TH)
     l2_almost_full_0_1 <= 1'b1;
   else
@@ -30034,8 +29269,8 @@ rr_arbiter #(
     .DWIDTH(2)
 )
 l1_arb_0_2(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l1_req_0_2),
     .grant  (l1_grant_0_2)
 );
@@ -30045,8 +29280,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l2_fifo_0_2 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l2_in_valid_0_2),
@@ -30062,7 +29297,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l2_csr_readdata_0_2 > L2_TH)
     l2_almost_full_0_2 <= 1'b1;
   else
@@ -30072,8 +29307,8 @@ rr_arbiter #(
     .DWIDTH(2)
 )
 l1_arb_0_3(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l1_req_0_3),
     .grant  (l1_grant_0_3)
 );
@@ -30083,8 +29318,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l2_fifo_0_3 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l2_in_valid_0_3),
@@ -30100,7 +29335,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l2_csr_readdata_0_3 > L2_TH)
     l2_almost_full_0_3 <= 1'b1;
   else
@@ -30110,8 +29345,8 @@ rr_arbiter #(
     .DWIDTH(2)
 )
 l1_arb_0_4(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l1_req_0_4),
     .grant  (l1_grant_0_4)
 );
@@ -30121,8 +29356,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l2_fifo_0_4 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l2_in_valid_0_4),
@@ -30138,7 +29373,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l2_csr_readdata_0_4 > L2_TH)
     l2_almost_full_0_4 <= 1'b1;
   else
@@ -30148,8 +29383,8 @@ rr_arbiter #(
     .DWIDTH(2)
 )
 l1_arb_0_5(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l1_req_0_5),
     .grant  (l1_grant_0_5)
 );
@@ -30159,8 +29394,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l2_fifo_0_5 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l2_in_valid_0_5),
@@ -30176,7 +29411,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l2_csr_readdata_0_5 > L2_TH)
     l2_almost_full_0_5 <= 1'b1;
   else
@@ -30186,8 +29421,8 @@ rr_arbiter #(
     .DWIDTH(2)
 )
 l1_arb_0_6(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l1_req_0_6),
     .grant  (l1_grant_0_6)
 );
@@ -30197,8 +29432,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l2_fifo_0_6 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l2_in_valid_0_6),
@@ -30214,7 +29449,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l2_csr_readdata_0_6 > L2_TH)
     l2_almost_full_0_6 <= 1'b1;
   else
@@ -30224,8 +29459,8 @@ rr_arbiter #(
     .DWIDTH(2)
 )
 l1_arb_0_7(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l1_req_0_7),
     .grant  (l1_grant_0_7)
 );
@@ -30235,8 +29470,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l2_fifo_0_7 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l2_in_valid_0_7),
@@ -30252,7 +29487,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l2_csr_readdata_0_7 > L2_TH)
     l2_almost_full_0_7 <= 1'b1;
   else
@@ -30262,8 +29497,8 @@ rr_arbiter #(
     .DWIDTH(2)
 )
 l1_arb_0_8(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l1_req_0_8),
     .grant  (l1_grant_0_8)
 );
@@ -30273,8 +29508,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l2_fifo_0_8 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l2_in_valid_0_8),
@@ -30290,7 +29525,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l2_csr_readdata_0_8 > L2_TH)
     l2_almost_full_0_8 <= 1'b1;
   else
@@ -30300,8 +29535,8 @@ rr_arbiter #(
     .DWIDTH(2)
 )
 l1_arb_0_9(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l1_req_0_9),
     .grant  (l1_grant_0_9)
 );
@@ -30311,8 +29546,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l2_fifo_0_9 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l2_in_valid_0_9),
@@ -30328,7 +29563,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l2_csr_readdata_0_9 > L2_TH)
     l2_almost_full_0_9 <= 1'b1;
   else
@@ -30338,8 +29573,8 @@ rr_arbiter #(
     .DWIDTH(2)
 )
 l1_arb_0_10(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l1_req_0_10),
     .grant  (l1_grant_0_10)
 );
@@ -30349,8 +29584,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l2_fifo_0_10 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l2_in_valid_0_10),
@@ -30366,7 +29601,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l2_csr_readdata_0_10 > L2_TH)
     l2_almost_full_0_10 <= 1'b1;
   else
@@ -30376,8 +29611,8 @@ rr_arbiter #(
     .DWIDTH(2)
 )
 l1_arb_0_11(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l1_req_0_11),
     .grant  (l1_grant_0_11)
 );
@@ -30387,8 +29622,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l2_fifo_0_11 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l2_in_valid_0_11),
@@ -30404,7 +29639,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l2_csr_readdata_0_11 > L2_TH)
     l2_almost_full_0_11 <= 1'b1;
   else
@@ -30414,8 +29649,8 @@ rr_arbiter #(
     .DWIDTH(2)
 )
 l1_arb_0_12(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l1_req_0_12),
     .grant  (l1_grant_0_12)
 );
@@ -30425,8 +29660,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l2_fifo_0_12 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l2_in_valid_0_12),
@@ -30442,7 +29677,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l2_csr_readdata_0_12 > L2_TH)
     l2_almost_full_0_12 <= 1'b1;
   else
@@ -30452,8 +29687,8 @@ rr_arbiter #(
     .DWIDTH(2)
 )
 l1_arb_0_13(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l1_req_0_13),
     .grant  (l1_grant_0_13)
 );
@@ -30463,8 +29698,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l2_fifo_0_13 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l2_in_valid_0_13),
@@ -30480,7 +29715,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l2_csr_readdata_0_13 > L2_TH)
     l2_almost_full_0_13 <= 1'b1;
   else
@@ -30490,8 +29725,8 @@ rr_arbiter #(
     .DWIDTH(2)
 )
 l1_arb_0_14(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l1_req_0_14),
     .grant  (l1_grant_0_14)
 );
@@ -30501,8 +29736,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l2_fifo_0_14 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l2_in_valid_0_14),
@@ -30518,7 +29753,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l2_csr_readdata_0_14 > L2_TH)
     l2_almost_full_0_14 <= 1'b1;
   else
@@ -30528,8 +29763,8 @@ rr_arbiter #(
     .DWIDTH(2)
 )
 l1_arb_0_15(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l1_req_0_15),
     .grant  (l1_grant_0_15)
 );
@@ -30539,8 +29774,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l2_fifo_0_15 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l2_in_valid_0_15),
@@ -30556,7 +29791,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l2_csr_readdata_0_15 > L2_TH)
     l2_almost_full_0_15 <= 1'b1;
   else
@@ -30566,8 +29801,8 @@ rr_arbiter #(
     .DWIDTH(2)
 )
 l1_arb_1_0(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l1_req_1_0),
     .grant  (l1_grant_1_0)
 );
@@ -30577,8 +29812,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l2_fifo_1_0 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l2_in_valid_1_0),
@@ -30594,7 +29829,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l2_csr_readdata_1_0 > L2_TH)
     l2_almost_full_1_0 <= 1'b1;
   else
@@ -30604,8 +29839,8 @@ rr_arbiter #(
     .DWIDTH(2)
 )
 l1_arb_1_1(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l1_req_1_1),
     .grant  (l1_grant_1_1)
 );
@@ -30615,8 +29850,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l2_fifo_1_1 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l2_in_valid_1_1),
@@ -30632,7 +29867,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l2_csr_readdata_1_1 > L2_TH)
     l2_almost_full_1_1 <= 1'b1;
   else
@@ -30642,8 +29877,8 @@ rr_arbiter #(
     .DWIDTH(2)
 )
 l1_arb_1_2(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l1_req_1_2),
     .grant  (l1_grant_1_2)
 );
@@ -30653,8 +29888,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l2_fifo_1_2 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l2_in_valid_1_2),
@@ -30670,7 +29905,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l2_csr_readdata_1_2 > L2_TH)
     l2_almost_full_1_2 <= 1'b1;
   else
@@ -30680,8 +29915,8 @@ rr_arbiter #(
     .DWIDTH(2)
 )
 l1_arb_1_3(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l1_req_1_3),
     .grant  (l1_grant_1_3)
 );
@@ -30691,8 +29926,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l2_fifo_1_3 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l2_in_valid_1_3),
@@ -30708,7 +29943,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l2_csr_readdata_1_3 > L2_TH)
     l2_almost_full_1_3 <= 1'b1;
   else
@@ -30718,8 +29953,8 @@ rr_arbiter #(
     .DWIDTH(2)
 )
 l1_arb_1_4(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l1_req_1_4),
     .grant  (l1_grant_1_4)
 );
@@ -30729,8 +29964,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l2_fifo_1_4 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l2_in_valid_1_4),
@@ -30746,7 +29981,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l2_csr_readdata_1_4 > L2_TH)
     l2_almost_full_1_4 <= 1'b1;
   else
@@ -30756,8 +29991,8 @@ rr_arbiter #(
     .DWIDTH(2)
 )
 l1_arb_1_5(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l1_req_1_5),
     .grant  (l1_grant_1_5)
 );
@@ -30767,8 +30002,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l2_fifo_1_5 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l2_in_valid_1_5),
@@ -30784,7 +30019,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l2_csr_readdata_1_5 > L2_TH)
     l2_almost_full_1_5 <= 1'b1;
   else
@@ -30794,8 +30029,8 @@ rr_arbiter #(
     .DWIDTH(2)
 )
 l1_arb_1_6(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l1_req_1_6),
     .grant  (l1_grant_1_6)
 );
@@ -30805,8 +30040,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l2_fifo_1_6 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l2_in_valid_1_6),
@@ -30822,7 +30057,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l2_csr_readdata_1_6 > L2_TH)
     l2_almost_full_1_6 <= 1'b1;
   else
@@ -30832,8 +30067,8 @@ rr_arbiter #(
     .DWIDTH(2)
 )
 l1_arb_1_7(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l1_req_1_7),
     .grant  (l1_grant_1_7)
 );
@@ -30843,8 +30078,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l2_fifo_1_7 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l2_in_valid_1_7),
@@ -30860,7 +30095,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l2_csr_readdata_1_7 > L2_TH)
     l2_almost_full_1_7 <= 1'b1;
   else
@@ -30870,8 +30105,8 @@ rr_arbiter #(
     .DWIDTH(2)
 )
 l1_arb_1_8(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l1_req_1_8),
     .grant  (l1_grant_1_8)
 );
@@ -30881,8 +30116,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l2_fifo_1_8 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l2_in_valid_1_8),
@@ -30898,7 +30133,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l2_csr_readdata_1_8 > L2_TH)
     l2_almost_full_1_8 <= 1'b1;
   else
@@ -30908,8 +30143,8 @@ rr_arbiter #(
     .DWIDTH(2)
 )
 l1_arb_1_9(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l1_req_1_9),
     .grant  (l1_grant_1_9)
 );
@@ -30919,8 +30154,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l2_fifo_1_9 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l2_in_valid_1_9),
@@ -30936,7 +30171,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l2_csr_readdata_1_9 > L2_TH)
     l2_almost_full_1_9 <= 1'b1;
   else
@@ -30946,8 +30181,8 @@ rr_arbiter #(
     .DWIDTH(2)
 )
 l1_arb_1_10(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l1_req_1_10),
     .grant  (l1_grant_1_10)
 );
@@ -30957,8 +30192,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l2_fifo_1_10 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l2_in_valid_1_10),
@@ -30974,7 +30209,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l2_csr_readdata_1_10 > L2_TH)
     l2_almost_full_1_10 <= 1'b1;
   else
@@ -30984,8 +30219,8 @@ rr_arbiter #(
     .DWIDTH(2)
 )
 l1_arb_1_11(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l1_req_1_11),
     .grant  (l1_grant_1_11)
 );
@@ -30995,8 +30230,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l2_fifo_1_11 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l2_in_valid_1_11),
@@ -31012,7 +30247,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l2_csr_readdata_1_11 > L2_TH)
     l2_almost_full_1_11 <= 1'b1;
   else
@@ -31022,8 +30257,8 @@ rr_arbiter #(
     .DWIDTH(2)
 )
 l1_arb_1_12(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l1_req_1_12),
     .grant  (l1_grant_1_12)
 );
@@ -31033,8 +30268,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l2_fifo_1_12 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l2_in_valid_1_12),
@@ -31050,7 +30285,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l2_csr_readdata_1_12 > L2_TH)
     l2_almost_full_1_12 <= 1'b1;
   else
@@ -31060,8 +30295,8 @@ rr_arbiter #(
     .DWIDTH(2)
 )
 l1_arb_1_13(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l1_req_1_13),
     .grant  (l1_grant_1_13)
 );
@@ -31071,8 +30306,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l2_fifo_1_13 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l2_in_valid_1_13),
@@ -31088,7 +30323,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l2_csr_readdata_1_13 > L2_TH)
     l2_almost_full_1_13 <= 1'b1;
   else
@@ -31098,8 +30333,8 @@ rr_arbiter #(
     .DWIDTH(2)
 )
 l1_arb_1_14(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l1_req_1_14),
     .grant  (l1_grant_1_14)
 );
@@ -31109,8 +30344,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l2_fifo_1_14 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l2_in_valid_1_14),
@@ -31126,7 +30361,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l2_csr_readdata_1_14 > L2_TH)
     l2_almost_full_1_14 <= 1'b1;
   else
@@ -31136,8 +30371,8 @@ rr_arbiter #(
     .DWIDTH(2)
 )
 l1_arb_1_15(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l1_req_1_15),
     .grant  (l1_grant_1_15)
 );
@@ -31147,8 +30382,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l2_fifo_1_15 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l2_in_valid_1_15),
@@ -31164,7 +30399,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l2_csr_readdata_1_15 > L2_TH)
     l2_almost_full_1_15 <= 1'b1;
   else
@@ -31174,8 +30409,8 @@ rr_arbiter #(
     .DWIDTH(2)
 )
 l1_arb_2_0(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l1_req_2_0),
     .grant  (l1_grant_2_0)
 );
@@ -31185,8 +30420,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l2_fifo_2_0 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l2_in_valid_2_0),
@@ -31202,7 +30437,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l2_csr_readdata_2_0 > L2_TH)
     l2_almost_full_2_0 <= 1'b1;
   else
@@ -31212,8 +30447,8 @@ rr_arbiter #(
     .DWIDTH(2)
 )
 l1_arb_2_1(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l1_req_2_1),
     .grant  (l1_grant_2_1)
 );
@@ -31223,8 +30458,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l2_fifo_2_1 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l2_in_valid_2_1),
@@ -31240,7 +30475,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l2_csr_readdata_2_1 > L2_TH)
     l2_almost_full_2_1 <= 1'b1;
   else
@@ -31250,8 +30485,8 @@ rr_arbiter #(
     .DWIDTH(2)
 )
 l1_arb_2_2(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l1_req_2_2),
     .grant  (l1_grant_2_2)
 );
@@ -31261,8 +30496,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l2_fifo_2_2 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l2_in_valid_2_2),
@@ -31278,7 +30513,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l2_csr_readdata_2_2 > L2_TH)
     l2_almost_full_2_2 <= 1'b1;
   else
@@ -31288,8 +30523,8 @@ rr_arbiter #(
     .DWIDTH(2)
 )
 l1_arb_2_3(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l1_req_2_3),
     .grant  (l1_grant_2_3)
 );
@@ -31299,8 +30534,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l2_fifo_2_3 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l2_in_valid_2_3),
@@ -31316,7 +30551,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l2_csr_readdata_2_3 > L2_TH)
     l2_almost_full_2_3 <= 1'b1;
   else
@@ -31326,8 +30561,8 @@ rr_arbiter #(
     .DWIDTH(2)
 )
 l1_arb_2_4(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l1_req_2_4),
     .grant  (l1_grant_2_4)
 );
@@ -31337,8 +30572,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l2_fifo_2_4 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l2_in_valid_2_4),
@@ -31354,7 +30589,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l2_csr_readdata_2_4 > L2_TH)
     l2_almost_full_2_4 <= 1'b1;
   else
@@ -31364,8 +30599,8 @@ rr_arbiter #(
     .DWIDTH(2)
 )
 l1_arb_2_5(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l1_req_2_5),
     .grant  (l1_grant_2_5)
 );
@@ -31375,8 +30610,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l2_fifo_2_5 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l2_in_valid_2_5),
@@ -31392,7 +30627,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l2_csr_readdata_2_5 > L2_TH)
     l2_almost_full_2_5 <= 1'b1;
   else
@@ -31402,8 +30637,8 @@ rr_arbiter #(
     .DWIDTH(2)
 )
 l1_arb_2_6(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l1_req_2_6),
     .grant  (l1_grant_2_6)
 );
@@ -31413,8 +30648,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l2_fifo_2_6 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l2_in_valid_2_6),
@@ -31430,7 +30665,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l2_csr_readdata_2_6 > L2_TH)
     l2_almost_full_2_6 <= 1'b1;
   else
@@ -31440,8 +30675,8 @@ rr_arbiter #(
     .DWIDTH(2)
 )
 l1_arb_2_7(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l1_req_2_7),
     .grant  (l1_grant_2_7)
 );
@@ -31451,8 +30686,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l2_fifo_2_7 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l2_in_valid_2_7),
@@ -31468,7 +30703,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l2_csr_readdata_2_7 > L2_TH)
     l2_almost_full_2_7 <= 1'b1;
   else
@@ -31478,8 +30713,8 @@ rr_arbiter #(
     .DWIDTH(2)
 )
 l1_arb_2_8(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l1_req_2_8),
     .grant  (l1_grant_2_8)
 );
@@ -31489,8 +30724,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l2_fifo_2_8 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l2_in_valid_2_8),
@@ -31506,7 +30741,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l2_csr_readdata_2_8 > L2_TH)
     l2_almost_full_2_8 <= 1'b1;
   else
@@ -31516,8 +30751,8 @@ rr_arbiter #(
     .DWIDTH(2)
 )
 l1_arb_2_9(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l1_req_2_9),
     .grant  (l1_grant_2_9)
 );
@@ -31527,8 +30762,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l2_fifo_2_9 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l2_in_valid_2_9),
@@ -31544,7 +30779,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l2_csr_readdata_2_9 > L2_TH)
     l2_almost_full_2_9 <= 1'b1;
   else
@@ -31554,8 +30789,8 @@ rr_arbiter #(
     .DWIDTH(2)
 )
 l1_arb_2_10(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l1_req_2_10),
     .grant  (l1_grant_2_10)
 );
@@ -31565,8 +30800,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l2_fifo_2_10 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l2_in_valid_2_10),
@@ -31582,7 +30817,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l2_csr_readdata_2_10 > L2_TH)
     l2_almost_full_2_10 <= 1'b1;
   else
@@ -31592,8 +30827,8 @@ rr_arbiter #(
     .DWIDTH(2)
 )
 l1_arb_2_11(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l1_req_2_11),
     .grant  (l1_grant_2_11)
 );
@@ -31603,8 +30838,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l2_fifo_2_11 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l2_in_valid_2_11),
@@ -31620,7 +30855,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l2_csr_readdata_2_11 > L2_TH)
     l2_almost_full_2_11 <= 1'b1;
   else
@@ -31630,8 +30865,8 @@ rr_arbiter #(
     .DWIDTH(2)
 )
 l1_arb_2_12(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l1_req_2_12),
     .grant  (l1_grant_2_12)
 );
@@ -31641,8 +30876,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l2_fifo_2_12 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l2_in_valid_2_12),
@@ -31658,7 +30893,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l2_csr_readdata_2_12 > L2_TH)
     l2_almost_full_2_12 <= 1'b1;
   else
@@ -31668,8 +30903,8 @@ rr_arbiter #(
     .DWIDTH(2)
 )
 l1_arb_2_13(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l1_req_2_13),
     .grant  (l1_grant_2_13)
 );
@@ -31679,8 +30914,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l2_fifo_2_13 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l2_in_valid_2_13),
@@ -31696,7 +30931,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l2_csr_readdata_2_13 > L2_TH)
     l2_almost_full_2_13 <= 1'b1;
   else
@@ -31706,8 +30941,8 @@ rr_arbiter #(
     .DWIDTH(2)
 )
 l1_arb_2_14(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l1_req_2_14),
     .grant  (l1_grant_2_14)
 );
@@ -31717,8 +30952,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l2_fifo_2_14 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l2_in_valid_2_14),
@@ -31734,7 +30969,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l2_csr_readdata_2_14 > L2_TH)
     l2_almost_full_2_14 <= 1'b1;
   else
@@ -31744,8 +30979,8 @@ rr_arbiter #(
     .DWIDTH(2)
 )
 l1_arb_2_15(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l1_req_2_15),
     .grant  (l1_grant_2_15)
 );
@@ -31755,8 +30990,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l2_fifo_2_15 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l2_in_valid_2_15),
@@ -31772,7 +31007,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l2_csr_readdata_2_15 > L2_TH)
     l2_almost_full_2_15 <= 1'b1;
   else
@@ -31782,8 +31017,8 @@ rr_arbiter #(
     .DWIDTH(2)
 )
 l1_arb_3_0(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l1_req_3_0),
     .grant  (l1_grant_3_0)
 );
@@ -31793,8 +31028,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l2_fifo_3_0 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l2_in_valid_3_0),
@@ -31810,7 +31045,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l2_csr_readdata_3_0 > L2_TH)
     l2_almost_full_3_0 <= 1'b1;
   else
@@ -31820,8 +31055,8 @@ rr_arbiter #(
     .DWIDTH(2)
 )
 l1_arb_3_1(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l1_req_3_1),
     .grant  (l1_grant_3_1)
 );
@@ -31831,8 +31066,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l2_fifo_3_1 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l2_in_valid_3_1),
@@ -31848,7 +31083,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l2_csr_readdata_3_1 > L2_TH)
     l2_almost_full_3_1 <= 1'b1;
   else
@@ -31858,8 +31093,8 @@ rr_arbiter #(
     .DWIDTH(2)
 )
 l1_arb_3_2(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l1_req_3_2),
     .grant  (l1_grant_3_2)
 );
@@ -31869,8 +31104,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l2_fifo_3_2 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l2_in_valid_3_2),
@@ -31886,7 +31121,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l2_csr_readdata_3_2 > L2_TH)
     l2_almost_full_3_2 <= 1'b1;
   else
@@ -31896,8 +31131,8 @@ rr_arbiter #(
     .DWIDTH(2)
 )
 l1_arb_3_3(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l1_req_3_3),
     .grant  (l1_grant_3_3)
 );
@@ -31907,8 +31142,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l2_fifo_3_3 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l2_in_valid_3_3),
@@ -31924,7 +31159,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l2_csr_readdata_3_3 > L2_TH)
     l2_almost_full_3_3 <= 1'b1;
   else
@@ -31934,8 +31169,8 @@ rr_arbiter #(
     .DWIDTH(2)
 )
 l1_arb_3_4(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l1_req_3_4),
     .grant  (l1_grant_3_4)
 );
@@ -31945,8 +31180,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l2_fifo_3_4 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l2_in_valid_3_4),
@@ -31962,7 +31197,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l2_csr_readdata_3_4 > L2_TH)
     l2_almost_full_3_4 <= 1'b1;
   else
@@ -31972,8 +31207,8 @@ rr_arbiter #(
     .DWIDTH(2)
 )
 l1_arb_3_5(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l1_req_3_5),
     .grant  (l1_grant_3_5)
 );
@@ -31983,8 +31218,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l2_fifo_3_5 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l2_in_valid_3_5),
@@ -32000,7 +31235,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l2_csr_readdata_3_5 > L2_TH)
     l2_almost_full_3_5 <= 1'b1;
   else
@@ -32010,8 +31245,8 @@ rr_arbiter #(
     .DWIDTH(2)
 )
 l1_arb_3_6(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l1_req_3_6),
     .grant  (l1_grant_3_6)
 );
@@ -32021,8 +31256,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l2_fifo_3_6 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l2_in_valid_3_6),
@@ -32038,7 +31273,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l2_csr_readdata_3_6 > L2_TH)
     l2_almost_full_3_6 <= 1'b1;
   else
@@ -32048,8 +31283,8 @@ rr_arbiter #(
     .DWIDTH(2)
 )
 l1_arb_3_7(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l1_req_3_7),
     .grant  (l1_grant_3_7)
 );
@@ -32059,8 +31294,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l2_fifo_3_7 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l2_in_valid_3_7),
@@ -32076,7 +31311,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l2_csr_readdata_3_7 > L2_TH)
     l2_almost_full_3_7 <= 1'b1;
   else
@@ -32086,8 +31321,8 @@ rr_arbiter #(
     .DWIDTH(2)
 )
 l1_arb_3_8(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l1_req_3_8),
     .grant  (l1_grant_3_8)
 );
@@ -32097,8 +31332,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l2_fifo_3_8 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l2_in_valid_3_8),
@@ -32114,7 +31349,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l2_csr_readdata_3_8 > L2_TH)
     l2_almost_full_3_8 <= 1'b1;
   else
@@ -32124,8 +31359,8 @@ rr_arbiter #(
     .DWIDTH(2)
 )
 l1_arb_3_9(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l1_req_3_9),
     .grant  (l1_grant_3_9)
 );
@@ -32135,8 +31370,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l2_fifo_3_9 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l2_in_valid_3_9),
@@ -32152,7 +31387,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l2_csr_readdata_3_9 > L2_TH)
     l2_almost_full_3_9 <= 1'b1;
   else
@@ -32162,8 +31397,8 @@ rr_arbiter #(
     .DWIDTH(2)
 )
 l1_arb_3_10(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l1_req_3_10),
     .grant  (l1_grant_3_10)
 );
@@ -32173,8 +31408,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l2_fifo_3_10 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l2_in_valid_3_10),
@@ -32190,7 +31425,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l2_csr_readdata_3_10 > L2_TH)
     l2_almost_full_3_10 <= 1'b1;
   else
@@ -32200,8 +31435,8 @@ rr_arbiter #(
     .DWIDTH(2)
 )
 l1_arb_3_11(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l1_req_3_11),
     .grant  (l1_grant_3_11)
 );
@@ -32211,8 +31446,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l2_fifo_3_11 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l2_in_valid_3_11),
@@ -32228,7 +31463,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l2_csr_readdata_3_11 > L2_TH)
     l2_almost_full_3_11 <= 1'b1;
   else
@@ -32238,8 +31473,8 @@ rr_arbiter #(
     .DWIDTH(2)
 )
 l1_arb_3_12(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l1_req_3_12),
     .grant  (l1_grant_3_12)
 );
@@ -32249,8 +31484,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l2_fifo_3_12 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l2_in_valid_3_12),
@@ -32266,7 +31501,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l2_csr_readdata_3_12 > L2_TH)
     l2_almost_full_3_12 <= 1'b1;
   else
@@ -32276,8 +31511,8 @@ rr_arbiter #(
     .DWIDTH(2)
 )
 l1_arb_3_13(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l1_req_3_13),
     .grant  (l1_grant_3_13)
 );
@@ -32287,8 +31522,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l2_fifo_3_13 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l2_in_valid_3_13),
@@ -32304,7 +31539,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l2_csr_readdata_3_13 > L2_TH)
     l2_almost_full_3_13 <= 1'b1;
   else
@@ -32314,8 +31549,8 @@ rr_arbiter #(
     .DWIDTH(2)
 )
 l1_arb_3_14(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l1_req_3_14),
     .grant  (l1_grant_3_14)
 );
@@ -32325,8 +31560,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l2_fifo_3_14 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l2_in_valid_3_14),
@@ -32342,7 +31577,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l2_csr_readdata_3_14 > L2_TH)
     l2_almost_full_3_14 <= 1'b1;
   else
@@ -32352,8 +31587,8 @@ rr_arbiter #(
     .DWIDTH(2)
 )
 l1_arb_3_15(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l1_req_3_15),
     .grant  (l1_grant_3_15)
 );
@@ -32363,8 +31598,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l2_fifo_3_15 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l2_in_valid_3_15),
@@ -32380,7 +31615,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l2_csr_readdata_3_15 > L2_TH)
     l2_almost_full_3_15 <= 1'b1;
   else
@@ -32390,8 +31625,8 @@ rr_arbiter #(
     .DWIDTH(2)
 )
 l1_arb_4_0(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l1_req_4_0),
     .grant  (l1_grant_4_0)
 );
@@ -32401,8 +31636,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l2_fifo_4_0 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l2_in_valid_4_0),
@@ -32418,7 +31653,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l2_csr_readdata_4_0 > L2_TH)
     l2_almost_full_4_0 <= 1'b1;
   else
@@ -32428,8 +31663,8 @@ rr_arbiter #(
     .DWIDTH(2)
 )
 l1_arb_4_1(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l1_req_4_1),
     .grant  (l1_grant_4_1)
 );
@@ -32439,8 +31674,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l2_fifo_4_1 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l2_in_valid_4_1),
@@ -32456,7 +31691,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l2_csr_readdata_4_1 > L2_TH)
     l2_almost_full_4_1 <= 1'b1;
   else
@@ -32466,8 +31701,8 @@ rr_arbiter #(
     .DWIDTH(2)
 )
 l1_arb_4_2(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l1_req_4_2),
     .grant  (l1_grant_4_2)
 );
@@ -32477,8 +31712,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l2_fifo_4_2 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l2_in_valid_4_2),
@@ -32494,7 +31729,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l2_csr_readdata_4_2 > L2_TH)
     l2_almost_full_4_2 <= 1'b1;
   else
@@ -32504,8 +31739,8 @@ rr_arbiter #(
     .DWIDTH(2)
 )
 l1_arb_4_3(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l1_req_4_3),
     .grant  (l1_grant_4_3)
 );
@@ -32515,8 +31750,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l2_fifo_4_3 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l2_in_valid_4_3),
@@ -32532,7 +31767,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l2_csr_readdata_4_3 > L2_TH)
     l2_almost_full_4_3 <= 1'b1;
   else
@@ -32542,8 +31777,8 @@ rr_arbiter #(
     .DWIDTH(2)
 )
 l1_arb_4_4(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l1_req_4_4),
     .grant  (l1_grant_4_4)
 );
@@ -32553,8 +31788,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l2_fifo_4_4 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l2_in_valid_4_4),
@@ -32570,7 +31805,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l2_csr_readdata_4_4 > L2_TH)
     l2_almost_full_4_4 <= 1'b1;
   else
@@ -32580,8 +31815,8 @@ rr_arbiter #(
     .DWIDTH(2)
 )
 l1_arb_4_5(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l1_req_4_5),
     .grant  (l1_grant_4_5)
 );
@@ -32591,8 +31826,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l2_fifo_4_5 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l2_in_valid_4_5),
@@ -32608,7 +31843,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l2_csr_readdata_4_5 > L2_TH)
     l2_almost_full_4_5 <= 1'b1;
   else
@@ -32618,8 +31853,8 @@ rr_arbiter #(
     .DWIDTH(2)
 )
 l1_arb_4_6(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l1_req_4_6),
     .grant  (l1_grant_4_6)
 );
@@ -32629,8 +31864,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l2_fifo_4_6 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l2_in_valid_4_6),
@@ -32646,7 +31881,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l2_csr_readdata_4_6 > L2_TH)
     l2_almost_full_4_6 <= 1'b1;
   else
@@ -32656,8 +31891,8 @@ rr_arbiter #(
     .DWIDTH(2)
 )
 l1_arb_4_7(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l1_req_4_7),
     .grant  (l1_grant_4_7)
 );
@@ -32667,8 +31902,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l2_fifo_4_7 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l2_in_valid_4_7),
@@ -32684,7 +31919,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l2_csr_readdata_4_7 > L2_TH)
     l2_almost_full_4_7 <= 1'b1;
   else
@@ -32694,8 +31929,8 @@ rr_arbiter #(
     .DWIDTH(2)
 )
 l1_arb_4_8(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l1_req_4_8),
     .grant  (l1_grant_4_8)
 );
@@ -32705,8 +31940,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l2_fifo_4_8 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l2_in_valid_4_8),
@@ -32722,7 +31957,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l2_csr_readdata_4_8 > L2_TH)
     l2_almost_full_4_8 <= 1'b1;
   else
@@ -32732,8 +31967,8 @@ rr_arbiter #(
     .DWIDTH(2)
 )
 l1_arb_4_9(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l1_req_4_9),
     .grant  (l1_grant_4_9)
 );
@@ -32743,8 +31978,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l2_fifo_4_9 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l2_in_valid_4_9),
@@ -32760,7 +31995,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l2_csr_readdata_4_9 > L2_TH)
     l2_almost_full_4_9 <= 1'b1;
   else
@@ -32770,8 +32005,8 @@ rr_arbiter #(
     .DWIDTH(2)
 )
 l1_arb_4_10(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l1_req_4_10),
     .grant  (l1_grant_4_10)
 );
@@ -32781,8 +32016,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l2_fifo_4_10 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l2_in_valid_4_10),
@@ -32798,7 +32033,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l2_csr_readdata_4_10 > L2_TH)
     l2_almost_full_4_10 <= 1'b1;
   else
@@ -32808,8 +32043,8 @@ rr_arbiter #(
     .DWIDTH(2)
 )
 l1_arb_4_11(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l1_req_4_11),
     .grant  (l1_grant_4_11)
 );
@@ -32819,8 +32054,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l2_fifo_4_11 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l2_in_valid_4_11),
@@ -32836,7 +32071,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l2_csr_readdata_4_11 > L2_TH)
     l2_almost_full_4_11 <= 1'b1;
   else
@@ -32846,8 +32081,8 @@ rr_arbiter #(
     .DWIDTH(2)
 )
 l1_arb_4_12(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l1_req_4_12),
     .grant  (l1_grant_4_12)
 );
@@ -32857,8 +32092,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l2_fifo_4_12 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l2_in_valid_4_12),
@@ -32874,7 +32109,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l2_csr_readdata_4_12 > L2_TH)
     l2_almost_full_4_12 <= 1'b1;
   else
@@ -32884,8 +32119,8 @@ rr_arbiter #(
     .DWIDTH(2)
 )
 l1_arb_4_13(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l1_req_4_13),
     .grant  (l1_grant_4_13)
 );
@@ -32895,8 +32130,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l2_fifo_4_13 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l2_in_valid_4_13),
@@ -32912,7 +32147,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l2_csr_readdata_4_13 > L2_TH)
     l2_almost_full_4_13 <= 1'b1;
   else
@@ -32922,8 +32157,8 @@ rr_arbiter #(
     .DWIDTH(2)
 )
 l1_arb_4_14(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l1_req_4_14),
     .grant  (l1_grant_4_14)
 );
@@ -32933,8 +32168,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l2_fifo_4_14 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l2_in_valid_4_14),
@@ -32950,7 +32185,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l2_csr_readdata_4_14 > L2_TH)
     l2_almost_full_4_14 <= 1'b1;
   else
@@ -32960,8 +32195,8 @@ rr_arbiter #(
     .DWIDTH(2)
 )
 l1_arb_4_15(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l1_req_4_15),
     .grant  (l1_grant_4_15)
 );
@@ -32971,8 +32206,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l2_fifo_4_15 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l2_in_valid_4_15),
@@ -32988,7 +32223,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l2_csr_readdata_4_15 > L2_TH)
     l2_almost_full_4_15 <= 1'b1;
   else
@@ -32998,8 +32233,8 @@ rr_arbiter #(
     .DWIDTH(2)
 )
 l1_arb_5_0(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l1_req_5_0),
     .grant  (l1_grant_5_0)
 );
@@ -33009,8 +32244,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l2_fifo_5_0 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l2_in_valid_5_0),
@@ -33026,7 +32261,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l2_csr_readdata_5_0 > L2_TH)
     l2_almost_full_5_0 <= 1'b1;
   else
@@ -33036,8 +32271,8 @@ rr_arbiter #(
     .DWIDTH(2)
 )
 l1_arb_5_1(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l1_req_5_1),
     .grant  (l1_grant_5_1)
 );
@@ -33047,8 +32282,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l2_fifo_5_1 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l2_in_valid_5_1),
@@ -33064,7 +32299,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l2_csr_readdata_5_1 > L2_TH)
     l2_almost_full_5_1 <= 1'b1;
   else
@@ -33074,8 +32309,8 @@ rr_arbiter #(
     .DWIDTH(2)
 )
 l1_arb_5_2(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l1_req_5_2),
     .grant  (l1_grant_5_2)
 );
@@ -33085,8 +32320,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l2_fifo_5_2 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l2_in_valid_5_2),
@@ -33102,7 +32337,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l2_csr_readdata_5_2 > L2_TH)
     l2_almost_full_5_2 <= 1'b1;
   else
@@ -33112,8 +32347,8 @@ rr_arbiter #(
     .DWIDTH(2)
 )
 l1_arb_5_3(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l1_req_5_3),
     .grant  (l1_grant_5_3)
 );
@@ -33123,8 +32358,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l2_fifo_5_3 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l2_in_valid_5_3),
@@ -33140,7 +32375,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l2_csr_readdata_5_3 > L2_TH)
     l2_almost_full_5_3 <= 1'b1;
   else
@@ -33150,8 +32385,8 @@ rr_arbiter #(
     .DWIDTH(2)
 )
 l1_arb_5_4(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l1_req_5_4),
     .grant  (l1_grant_5_4)
 );
@@ -33161,8 +32396,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l2_fifo_5_4 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l2_in_valid_5_4),
@@ -33178,7 +32413,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l2_csr_readdata_5_4 > L2_TH)
     l2_almost_full_5_4 <= 1'b1;
   else
@@ -33188,8 +32423,8 @@ rr_arbiter #(
     .DWIDTH(2)
 )
 l1_arb_5_5(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l1_req_5_5),
     .grant  (l1_grant_5_5)
 );
@@ -33199,8 +32434,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l2_fifo_5_5 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l2_in_valid_5_5),
@@ -33216,7 +32451,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l2_csr_readdata_5_5 > L2_TH)
     l2_almost_full_5_5 <= 1'b1;
   else
@@ -33226,8 +32461,8 @@ rr_arbiter #(
     .DWIDTH(2)
 )
 l1_arb_5_6(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l1_req_5_6),
     .grant  (l1_grant_5_6)
 );
@@ -33237,8 +32472,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l2_fifo_5_6 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l2_in_valid_5_6),
@@ -33254,7 +32489,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l2_csr_readdata_5_6 > L2_TH)
     l2_almost_full_5_6 <= 1'b1;
   else
@@ -33264,8 +32499,8 @@ rr_arbiter #(
     .DWIDTH(2)
 )
 l1_arb_5_7(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l1_req_5_7),
     .grant  (l1_grant_5_7)
 );
@@ -33275,8 +32510,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l2_fifo_5_7 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l2_in_valid_5_7),
@@ -33292,7 +32527,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l2_csr_readdata_5_7 > L2_TH)
     l2_almost_full_5_7 <= 1'b1;
   else
@@ -33302,8 +32537,8 @@ rr_arbiter #(
     .DWIDTH(2)
 )
 l1_arb_5_8(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l1_req_5_8),
     .grant  (l1_grant_5_8)
 );
@@ -33313,8 +32548,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l2_fifo_5_8 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l2_in_valid_5_8),
@@ -33330,7 +32565,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l2_csr_readdata_5_8 > L2_TH)
     l2_almost_full_5_8 <= 1'b1;
   else
@@ -33340,8 +32575,8 @@ rr_arbiter #(
     .DWIDTH(2)
 )
 l1_arb_5_9(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l1_req_5_9),
     .grant  (l1_grant_5_9)
 );
@@ -33351,8 +32586,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l2_fifo_5_9 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l2_in_valid_5_9),
@@ -33368,7 +32603,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l2_csr_readdata_5_9 > L2_TH)
     l2_almost_full_5_9 <= 1'b1;
   else
@@ -33378,8 +32613,8 @@ rr_arbiter #(
     .DWIDTH(2)
 )
 l1_arb_5_10(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l1_req_5_10),
     .grant  (l1_grant_5_10)
 );
@@ -33389,8 +32624,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l2_fifo_5_10 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l2_in_valid_5_10),
@@ -33406,7 +32641,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l2_csr_readdata_5_10 > L2_TH)
     l2_almost_full_5_10 <= 1'b1;
   else
@@ -33416,8 +32651,8 @@ rr_arbiter #(
     .DWIDTH(2)
 )
 l1_arb_5_11(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l1_req_5_11),
     .grant  (l1_grant_5_11)
 );
@@ -33427,8 +32662,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l2_fifo_5_11 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l2_in_valid_5_11),
@@ -33444,7 +32679,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l2_csr_readdata_5_11 > L2_TH)
     l2_almost_full_5_11 <= 1'b1;
   else
@@ -33454,8 +32689,8 @@ rr_arbiter #(
     .DWIDTH(2)
 )
 l1_arb_5_12(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l1_req_5_12),
     .grant  (l1_grant_5_12)
 );
@@ -33465,8 +32700,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l2_fifo_5_12 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l2_in_valid_5_12),
@@ -33482,7 +32717,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l2_csr_readdata_5_12 > L2_TH)
     l2_almost_full_5_12 <= 1'b1;
   else
@@ -33492,8 +32727,8 @@ rr_arbiter #(
     .DWIDTH(2)
 )
 l1_arb_5_13(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l1_req_5_13),
     .grant  (l1_grant_5_13)
 );
@@ -33503,8 +32738,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l2_fifo_5_13 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l2_in_valid_5_13),
@@ -33520,7 +32755,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l2_csr_readdata_5_13 > L2_TH)
     l2_almost_full_5_13 <= 1'b1;
   else
@@ -33530,8 +32765,8 @@ rr_arbiter #(
     .DWIDTH(2)
 )
 l1_arb_5_14(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l1_req_5_14),
     .grant  (l1_grant_5_14)
 );
@@ -33541,8 +32776,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l2_fifo_5_14 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l2_in_valid_5_14),
@@ -33558,7 +32793,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l2_csr_readdata_5_14 > L2_TH)
     l2_almost_full_5_14 <= 1'b1;
   else
@@ -33568,8 +32803,8 @@ rr_arbiter #(
     .DWIDTH(2)
 )
 l1_arb_5_15(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l1_req_5_15),
     .grant  (l1_grant_5_15)
 );
@@ -33579,8 +32814,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l2_fifo_5_15 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l2_in_valid_5_15),
@@ -33596,7 +32831,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l2_csr_readdata_5_15 > L2_TH)
     l2_almost_full_5_15 <= 1'b1;
   else
@@ -33606,8 +32841,8 @@ rr_arbiter #(
     .DWIDTH(2)
 )
 l1_arb_6_0(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l1_req_6_0),
     .grant  (l1_grant_6_0)
 );
@@ -33617,8 +32852,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l2_fifo_6_0 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l2_in_valid_6_0),
@@ -33634,7 +32869,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l2_csr_readdata_6_0 > L2_TH)
     l2_almost_full_6_0 <= 1'b1;
   else
@@ -33644,8 +32879,8 @@ rr_arbiter #(
     .DWIDTH(2)
 )
 l1_arb_6_1(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l1_req_6_1),
     .grant  (l1_grant_6_1)
 );
@@ -33655,8 +32890,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l2_fifo_6_1 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l2_in_valid_6_1),
@@ -33672,7 +32907,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l2_csr_readdata_6_1 > L2_TH)
     l2_almost_full_6_1 <= 1'b1;
   else
@@ -33682,8 +32917,8 @@ rr_arbiter #(
     .DWIDTH(2)
 )
 l1_arb_6_2(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l1_req_6_2),
     .grant  (l1_grant_6_2)
 );
@@ -33693,8 +32928,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l2_fifo_6_2 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l2_in_valid_6_2),
@@ -33710,7 +32945,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l2_csr_readdata_6_2 > L2_TH)
     l2_almost_full_6_2 <= 1'b1;
   else
@@ -33720,8 +32955,8 @@ rr_arbiter #(
     .DWIDTH(2)
 )
 l1_arb_6_3(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l1_req_6_3),
     .grant  (l1_grant_6_3)
 );
@@ -33731,8 +32966,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l2_fifo_6_3 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l2_in_valid_6_3),
@@ -33748,7 +32983,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l2_csr_readdata_6_3 > L2_TH)
     l2_almost_full_6_3 <= 1'b1;
   else
@@ -33758,8 +32993,8 @@ rr_arbiter #(
     .DWIDTH(2)
 )
 l1_arb_6_4(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l1_req_6_4),
     .grant  (l1_grant_6_4)
 );
@@ -33769,8 +33004,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l2_fifo_6_4 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l2_in_valid_6_4),
@@ -33786,7 +33021,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l2_csr_readdata_6_4 > L2_TH)
     l2_almost_full_6_4 <= 1'b1;
   else
@@ -33796,8 +33031,8 @@ rr_arbiter #(
     .DWIDTH(2)
 )
 l1_arb_6_5(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l1_req_6_5),
     .grant  (l1_grant_6_5)
 );
@@ -33807,8 +33042,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l2_fifo_6_5 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l2_in_valid_6_5),
@@ -33824,7 +33059,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l2_csr_readdata_6_5 > L2_TH)
     l2_almost_full_6_5 <= 1'b1;
   else
@@ -33834,8 +33069,8 @@ rr_arbiter #(
     .DWIDTH(2)
 )
 l1_arb_6_6(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l1_req_6_6),
     .grant  (l1_grant_6_6)
 );
@@ -33845,8 +33080,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l2_fifo_6_6 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l2_in_valid_6_6),
@@ -33862,7 +33097,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l2_csr_readdata_6_6 > L2_TH)
     l2_almost_full_6_6 <= 1'b1;
   else
@@ -33872,8 +33107,8 @@ rr_arbiter #(
     .DWIDTH(2)
 )
 l1_arb_6_7(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l1_req_6_7),
     .grant  (l1_grant_6_7)
 );
@@ -33883,8 +33118,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l2_fifo_6_7 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l2_in_valid_6_7),
@@ -33900,7 +33135,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l2_csr_readdata_6_7 > L2_TH)
     l2_almost_full_6_7 <= 1'b1;
   else
@@ -33910,8 +33145,8 @@ rr_arbiter #(
     .DWIDTH(2)
 )
 l1_arb_6_8(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l1_req_6_8),
     .grant  (l1_grant_6_8)
 );
@@ -33921,8 +33156,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l2_fifo_6_8 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l2_in_valid_6_8),
@@ -33938,7 +33173,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l2_csr_readdata_6_8 > L2_TH)
     l2_almost_full_6_8 <= 1'b1;
   else
@@ -33948,8 +33183,8 @@ rr_arbiter #(
     .DWIDTH(2)
 )
 l1_arb_6_9(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l1_req_6_9),
     .grant  (l1_grant_6_9)
 );
@@ -33959,8 +33194,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l2_fifo_6_9 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l2_in_valid_6_9),
@@ -33976,7 +33211,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l2_csr_readdata_6_9 > L2_TH)
     l2_almost_full_6_9 <= 1'b1;
   else
@@ -33986,8 +33221,8 @@ rr_arbiter #(
     .DWIDTH(2)
 )
 l1_arb_6_10(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l1_req_6_10),
     .grant  (l1_grant_6_10)
 );
@@ -33997,8 +33232,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l2_fifo_6_10 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l2_in_valid_6_10),
@@ -34014,7 +33249,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l2_csr_readdata_6_10 > L2_TH)
     l2_almost_full_6_10 <= 1'b1;
   else
@@ -34024,8 +33259,8 @@ rr_arbiter #(
     .DWIDTH(2)
 )
 l1_arb_6_11(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l1_req_6_11),
     .grant  (l1_grant_6_11)
 );
@@ -34035,8 +33270,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l2_fifo_6_11 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l2_in_valid_6_11),
@@ -34052,7 +33287,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l2_csr_readdata_6_11 > L2_TH)
     l2_almost_full_6_11 <= 1'b1;
   else
@@ -34062,8 +33297,8 @@ rr_arbiter #(
     .DWIDTH(2)
 )
 l1_arb_6_12(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l1_req_6_12),
     .grant  (l1_grant_6_12)
 );
@@ -34073,8 +33308,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l2_fifo_6_12 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l2_in_valid_6_12),
@@ -34090,7 +33325,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l2_csr_readdata_6_12 > L2_TH)
     l2_almost_full_6_12 <= 1'b1;
   else
@@ -34100,8 +33335,8 @@ rr_arbiter #(
     .DWIDTH(2)
 )
 l1_arb_6_13(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l1_req_6_13),
     .grant  (l1_grant_6_13)
 );
@@ -34111,8 +33346,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l2_fifo_6_13 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l2_in_valid_6_13),
@@ -34128,7 +33363,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l2_csr_readdata_6_13 > L2_TH)
     l2_almost_full_6_13 <= 1'b1;
   else
@@ -34138,8 +33373,8 @@ rr_arbiter #(
     .DWIDTH(2)
 )
 l1_arb_6_14(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l1_req_6_14),
     .grant  (l1_grant_6_14)
 );
@@ -34149,8 +33384,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l2_fifo_6_14 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l2_in_valid_6_14),
@@ -34166,7 +33401,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l2_csr_readdata_6_14 > L2_TH)
     l2_almost_full_6_14 <= 1'b1;
   else
@@ -34176,8 +33411,8 @@ rr_arbiter #(
     .DWIDTH(2)
 )
 l1_arb_6_15(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l1_req_6_15),
     .grant  (l1_grant_6_15)
 );
@@ -34187,8 +33422,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l2_fifo_6_15 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l2_in_valid_6_15),
@@ -34204,7 +33439,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l2_csr_readdata_6_15 > L2_TH)
     l2_almost_full_6_15 <= 1'b1;
   else
@@ -34214,8 +33449,8 @@ rr_arbiter #(
     .DWIDTH(2)
 )
 l1_arb_7_0(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l1_req_7_0),
     .grant  (l1_grant_7_0)
 );
@@ -34225,8 +33460,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l2_fifo_7_0 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l2_in_valid_7_0),
@@ -34242,7 +33477,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l2_csr_readdata_7_0 > L2_TH)
     l2_almost_full_7_0 <= 1'b1;
   else
@@ -34252,8 +33487,8 @@ rr_arbiter #(
     .DWIDTH(2)
 )
 l1_arb_7_1(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l1_req_7_1),
     .grant  (l1_grant_7_1)
 );
@@ -34263,8 +33498,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l2_fifo_7_1 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l2_in_valid_7_1),
@@ -34280,7 +33515,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l2_csr_readdata_7_1 > L2_TH)
     l2_almost_full_7_1 <= 1'b1;
   else
@@ -34290,8 +33525,8 @@ rr_arbiter #(
     .DWIDTH(2)
 )
 l1_arb_7_2(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l1_req_7_2),
     .grant  (l1_grant_7_2)
 );
@@ -34301,8 +33536,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l2_fifo_7_2 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l2_in_valid_7_2),
@@ -34318,7 +33553,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l2_csr_readdata_7_2 > L2_TH)
     l2_almost_full_7_2 <= 1'b1;
   else
@@ -34328,8 +33563,8 @@ rr_arbiter #(
     .DWIDTH(2)
 )
 l1_arb_7_3(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l1_req_7_3),
     .grant  (l1_grant_7_3)
 );
@@ -34339,8 +33574,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l2_fifo_7_3 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l2_in_valid_7_3),
@@ -34356,7 +33591,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l2_csr_readdata_7_3 > L2_TH)
     l2_almost_full_7_3 <= 1'b1;
   else
@@ -34366,8 +33601,8 @@ rr_arbiter #(
     .DWIDTH(2)
 )
 l1_arb_7_4(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l1_req_7_4),
     .grant  (l1_grant_7_4)
 );
@@ -34377,8 +33612,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l2_fifo_7_4 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l2_in_valid_7_4),
@@ -34394,7 +33629,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l2_csr_readdata_7_4 > L2_TH)
     l2_almost_full_7_4 <= 1'b1;
   else
@@ -34404,8 +33639,8 @@ rr_arbiter #(
     .DWIDTH(2)
 )
 l1_arb_7_5(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l1_req_7_5),
     .grant  (l1_grant_7_5)
 );
@@ -34415,8 +33650,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l2_fifo_7_5 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l2_in_valid_7_5),
@@ -34432,7 +33667,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l2_csr_readdata_7_5 > L2_TH)
     l2_almost_full_7_5 <= 1'b1;
   else
@@ -34442,8 +33677,8 @@ rr_arbiter #(
     .DWIDTH(2)
 )
 l1_arb_7_6(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l1_req_7_6),
     .grant  (l1_grant_7_6)
 );
@@ -34453,8 +33688,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l2_fifo_7_6 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l2_in_valid_7_6),
@@ -34470,7 +33705,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l2_csr_readdata_7_6 > L2_TH)
     l2_almost_full_7_6 <= 1'b1;
   else
@@ -34480,8 +33715,8 @@ rr_arbiter #(
     .DWIDTH(2)
 )
 l1_arb_7_7(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l1_req_7_7),
     .grant  (l1_grant_7_7)
 );
@@ -34491,8 +33726,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l2_fifo_7_7 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l2_in_valid_7_7),
@@ -34508,7 +33743,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l2_csr_readdata_7_7 > L2_TH)
     l2_almost_full_7_7 <= 1'b1;
   else
@@ -34518,8 +33753,8 @@ rr_arbiter #(
     .DWIDTH(2)
 )
 l1_arb_7_8(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l1_req_7_8),
     .grant  (l1_grant_7_8)
 );
@@ -34529,8 +33764,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l2_fifo_7_8 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l2_in_valid_7_8),
@@ -34546,7 +33781,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l2_csr_readdata_7_8 > L2_TH)
     l2_almost_full_7_8 <= 1'b1;
   else
@@ -34556,8 +33791,8 @@ rr_arbiter #(
     .DWIDTH(2)
 )
 l1_arb_7_9(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l1_req_7_9),
     .grant  (l1_grant_7_9)
 );
@@ -34567,8 +33802,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l2_fifo_7_9 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l2_in_valid_7_9),
@@ -34584,7 +33819,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l2_csr_readdata_7_9 > L2_TH)
     l2_almost_full_7_9 <= 1'b1;
   else
@@ -34594,8 +33829,8 @@ rr_arbiter #(
     .DWIDTH(2)
 )
 l1_arb_7_10(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l1_req_7_10),
     .grant  (l1_grant_7_10)
 );
@@ -34605,8 +33840,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l2_fifo_7_10 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l2_in_valid_7_10),
@@ -34622,7 +33857,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l2_csr_readdata_7_10 > L2_TH)
     l2_almost_full_7_10 <= 1'b1;
   else
@@ -34632,8 +33867,8 @@ rr_arbiter #(
     .DWIDTH(2)
 )
 l1_arb_7_11(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l1_req_7_11),
     .grant  (l1_grant_7_11)
 );
@@ -34643,8 +33878,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l2_fifo_7_11 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l2_in_valid_7_11),
@@ -34660,7 +33895,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l2_csr_readdata_7_11 > L2_TH)
     l2_almost_full_7_11 <= 1'b1;
   else
@@ -34670,8 +33905,8 @@ rr_arbiter #(
     .DWIDTH(2)
 )
 l1_arb_7_12(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l1_req_7_12),
     .grant  (l1_grant_7_12)
 );
@@ -34681,8 +33916,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l2_fifo_7_12 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l2_in_valid_7_12),
@@ -34698,7 +33933,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l2_csr_readdata_7_12 > L2_TH)
     l2_almost_full_7_12 <= 1'b1;
   else
@@ -34708,8 +33943,8 @@ rr_arbiter #(
     .DWIDTH(2)
 )
 l1_arb_7_13(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l1_req_7_13),
     .grant  (l1_grant_7_13)
 );
@@ -34719,8 +33954,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l2_fifo_7_13 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l2_in_valid_7_13),
@@ -34736,7 +33971,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l2_csr_readdata_7_13 > L2_TH)
     l2_almost_full_7_13 <= 1'b1;
   else
@@ -34746,8 +33981,8 @@ rr_arbiter #(
     .DWIDTH(2)
 )
 l1_arb_7_14(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l1_req_7_14),
     .grant  (l1_grant_7_14)
 );
@@ -34757,8 +33992,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l2_fifo_7_14 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l2_in_valid_7_14),
@@ -34774,7 +34009,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l2_csr_readdata_7_14 > L2_TH)
     l2_almost_full_7_14 <= 1'b1;
   else
@@ -34784,8 +34019,8 @@ rr_arbiter #(
     .DWIDTH(2)
 )
 l1_arb_7_15(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l1_req_7_15),
     .grant  (l1_grant_7_15)
 );
@@ -34795,8 +34030,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l2_fifo_7_15 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l2_in_valid_7_15),
@@ -34812,7 +34047,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l2_csr_readdata_7_15 > L2_TH)
     l2_almost_full_7_15 <= 1'b1;
   else
@@ -34823,8 +34058,8 @@ rr_arbiter_4 #(
     .DWIDTH(4)
 )
 l2_arb_0_0(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l2_req_0_0),
     .grant  (l2_grant_0_0)
 );
@@ -34834,8 +34069,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l3_fifo_0_0 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l3_in_valid_0_0),
@@ -34851,7 +34086,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l3_csr_readdata_0_0 > L3_TH)
     l3_almost_full_0_0 <= 1'b1;
   else
@@ -34861,8 +34096,8 @@ rr_arbiter_4 #(
     .DWIDTH(4)
 )
 l2_arb_0_1(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l2_req_0_1),
     .grant  (l2_grant_0_1)
 );
@@ -34872,8 +34107,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l3_fifo_0_1 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l3_in_valid_0_1),
@@ -34889,7 +34124,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l3_csr_readdata_0_1 > L3_TH)
     l3_almost_full_0_1 <= 1'b1;
   else
@@ -34899,8 +34134,8 @@ rr_arbiter_4 #(
     .DWIDTH(4)
 )
 l2_arb_0_2(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l2_req_0_2),
     .grant  (l2_grant_0_2)
 );
@@ -34910,8 +34145,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l3_fifo_0_2 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l3_in_valid_0_2),
@@ -34927,7 +34162,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l3_csr_readdata_0_2 > L3_TH)
     l3_almost_full_0_2 <= 1'b1;
   else
@@ -34937,8 +34172,8 @@ rr_arbiter_4 #(
     .DWIDTH(4)
 )
 l2_arb_0_3(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l2_req_0_3),
     .grant  (l2_grant_0_3)
 );
@@ -34948,8 +34183,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l3_fifo_0_3 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l3_in_valid_0_3),
@@ -34965,7 +34200,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l3_csr_readdata_0_3 > L3_TH)
     l3_almost_full_0_3 <= 1'b1;
   else
@@ -34975,8 +34210,8 @@ rr_arbiter_4 #(
     .DWIDTH(4)
 )
 l2_arb_1_0(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l2_req_1_0),
     .grant  (l2_grant_1_0)
 );
@@ -34986,8 +34221,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l3_fifo_1_0 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l3_in_valid_1_0),
@@ -35003,7 +34238,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l3_csr_readdata_1_0 > L3_TH)
     l3_almost_full_1_0 <= 1'b1;
   else
@@ -35013,8 +34248,8 @@ rr_arbiter_4 #(
     .DWIDTH(4)
 )
 l2_arb_1_1(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l2_req_1_1),
     .grant  (l2_grant_1_1)
 );
@@ -35024,8 +34259,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l3_fifo_1_1 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l3_in_valid_1_1),
@@ -35041,7 +34276,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l3_csr_readdata_1_1 > L3_TH)
     l3_almost_full_1_1 <= 1'b1;
   else
@@ -35051,8 +34286,8 @@ rr_arbiter_4 #(
     .DWIDTH(4)
 )
 l2_arb_1_2(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l2_req_1_2),
     .grant  (l2_grant_1_2)
 );
@@ -35062,8 +34297,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l3_fifo_1_2 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l3_in_valid_1_2),
@@ -35079,7 +34314,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l3_csr_readdata_1_2 > L3_TH)
     l3_almost_full_1_2 <= 1'b1;
   else
@@ -35089,8 +34324,8 @@ rr_arbiter_4 #(
     .DWIDTH(4)
 )
 l2_arb_1_3(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l2_req_1_3),
     .grant  (l2_grant_1_3)
 );
@@ -35100,8 +34335,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l3_fifo_1_3 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l3_in_valid_1_3),
@@ -35117,7 +34352,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l3_csr_readdata_1_3 > L3_TH)
     l3_almost_full_1_3 <= 1'b1;
   else
@@ -35127,8 +34362,8 @@ rr_arbiter_4 #(
     .DWIDTH(4)
 )
 l2_arb_2_0(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l2_req_2_0),
     .grant  (l2_grant_2_0)
 );
@@ -35138,8 +34373,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l3_fifo_2_0 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l3_in_valid_2_0),
@@ -35155,7 +34390,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l3_csr_readdata_2_0 > L3_TH)
     l3_almost_full_2_0 <= 1'b1;
   else
@@ -35165,8 +34400,8 @@ rr_arbiter_4 #(
     .DWIDTH(4)
 )
 l2_arb_2_1(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l2_req_2_1),
     .grant  (l2_grant_2_1)
 );
@@ -35176,8 +34411,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l3_fifo_2_1 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l3_in_valid_2_1),
@@ -35193,7 +34428,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l3_csr_readdata_2_1 > L3_TH)
     l3_almost_full_2_1 <= 1'b1;
   else
@@ -35203,8 +34438,8 @@ rr_arbiter_4 #(
     .DWIDTH(4)
 )
 l2_arb_2_2(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l2_req_2_2),
     .grant  (l2_grant_2_2)
 );
@@ -35214,8 +34449,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l3_fifo_2_2 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l3_in_valid_2_2),
@@ -35231,7 +34466,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l3_csr_readdata_2_2 > L3_TH)
     l3_almost_full_2_2 <= 1'b1;
   else
@@ -35241,8 +34476,8 @@ rr_arbiter_4 #(
     .DWIDTH(4)
 )
 l2_arb_2_3(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l2_req_2_3),
     .grant  (l2_grant_2_3)
 );
@@ -35252,8 +34487,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l3_fifo_2_3 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l3_in_valid_2_3),
@@ -35269,7 +34504,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l3_csr_readdata_2_3 > L3_TH)
     l3_almost_full_2_3 <= 1'b1;
   else
@@ -35279,8 +34514,8 @@ rr_arbiter_4 #(
     .DWIDTH(4)
 )
 l2_arb_3_0(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l2_req_3_0),
     .grant  (l2_grant_3_0)
 );
@@ -35290,8 +34525,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l3_fifo_3_0 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l3_in_valid_3_0),
@@ -35307,7 +34542,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l3_csr_readdata_3_0 > L3_TH)
     l3_almost_full_3_0 <= 1'b1;
   else
@@ -35317,8 +34552,8 @@ rr_arbiter_4 #(
     .DWIDTH(4)
 )
 l2_arb_3_1(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l2_req_3_1),
     .grant  (l2_grant_3_1)
 );
@@ -35328,8 +34563,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l3_fifo_3_1 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l3_in_valid_3_1),
@@ -35345,7 +34580,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l3_csr_readdata_3_1 > L3_TH)
     l3_almost_full_3_1 <= 1'b1;
   else
@@ -35355,8 +34590,8 @@ rr_arbiter_4 #(
     .DWIDTH(4)
 )
 l2_arb_3_2(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l2_req_3_2),
     .grant  (l2_grant_3_2)
 );
@@ -35366,8 +34601,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l3_fifo_3_2 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l3_in_valid_3_2),
@@ -35383,7 +34618,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l3_csr_readdata_3_2 > L3_TH)
     l3_almost_full_3_2 <= 1'b1;
   else
@@ -35393,8 +34628,8 @@ rr_arbiter_4 #(
     .DWIDTH(4)
 )
 l2_arb_3_3(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l2_req_3_3),
     .grant  (l2_grant_3_3)
 );
@@ -35404,8 +34639,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l3_fifo_3_3 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l3_in_valid_3_3),
@@ -35421,7 +34656,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l3_csr_readdata_3_3 > L3_TH)
     l3_almost_full_3_3 <= 1'b1;
   else
@@ -35431,8 +34666,8 @@ rr_arbiter_4 #(
     .DWIDTH(4)
 )
 l2_arb_4_0(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l2_req_4_0),
     .grant  (l2_grant_4_0)
 );
@@ -35442,8 +34677,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l3_fifo_4_0 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l3_in_valid_4_0),
@@ -35459,7 +34694,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l3_csr_readdata_4_0 > L3_TH)
     l3_almost_full_4_0 <= 1'b1;
   else
@@ -35469,8 +34704,8 @@ rr_arbiter_4 #(
     .DWIDTH(4)
 )
 l2_arb_4_1(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l2_req_4_1),
     .grant  (l2_grant_4_1)
 );
@@ -35480,8 +34715,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l3_fifo_4_1 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l3_in_valid_4_1),
@@ -35497,7 +34732,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l3_csr_readdata_4_1 > L3_TH)
     l3_almost_full_4_1 <= 1'b1;
   else
@@ -35507,8 +34742,8 @@ rr_arbiter_4 #(
     .DWIDTH(4)
 )
 l2_arb_4_2(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l2_req_4_2),
     .grant  (l2_grant_4_2)
 );
@@ -35518,8 +34753,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l3_fifo_4_2 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l3_in_valid_4_2),
@@ -35535,7 +34770,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l3_csr_readdata_4_2 > L3_TH)
     l3_almost_full_4_2 <= 1'b1;
   else
@@ -35545,8 +34780,8 @@ rr_arbiter_4 #(
     .DWIDTH(4)
 )
 l2_arb_4_3(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l2_req_4_3),
     .grant  (l2_grant_4_3)
 );
@@ -35556,8 +34791,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l3_fifo_4_3 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l3_in_valid_4_3),
@@ -35573,7 +34808,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l3_csr_readdata_4_3 > L3_TH)
     l3_almost_full_4_3 <= 1'b1;
   else
@@ -35583,8 +34818,8 @@ rr_arbiter_4 #(
     .DWIDTH(4)
 )
 l2_arb_5_0(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l2_req_5_0),
     .grant  (l2_grant_5_0)
 );
@@ -35594,8 +34829,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l3_fifo_5_0 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l3_in_valid_5_0),
@@ -35611,7 +34846,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l3_csr_readdata_5_0 > L3_TH)
     l3_almost_full_5_0 <= 1'b1;
   else
@@ -35621,8 +34856,8 @@ rr_arbiter_4 #(
     .DWIDTH(4)
 )
 l2_arb_5_1(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l2_req_5_1),
     .grant  (l2_grant_5_1)
 );
@@ -35632,8 +34867,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l3_fifo_5_1 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l3_in_valid_5_1),
@@ -35649,7 +34884,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l3_csr_readdata_5_1 > L3_TH)
     l3_almost_full_5_1 <= 1'b1;
   else
@@ -35659,8 +34894,8 @@ rr_arbiter_4 #(
     .DWIDTH(4)
 )
 l2_arb_5_2(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l2_req_5_2),
     .grant  (l2_grant_5_2)
 );
@@ -35670,8 +34905,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l3_fifo_5_2 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l3_in_valid_5_2),
@@ -35687,7 +34922,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l3_csr_readdata_5_2 > L3_TH)
     l3_almost_full_5_2 <= 1'b1;
   else
@@ -35697,8 +34932,8 @@ rr_arbiter_4 #(
     .DWIDTH(4)
 )
 l2_arb_5_3(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l2_req_5_3),
     .grant  (l2_grant_5_3)
 );
@@ -35708,8 +34943,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l3_fifo_5_3 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l3_in_valid_5_3),
@@ -35725,7 +34960,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l3_csr_readdata_5_3 > L3_TH)
     l3_almost_full_5_3 <= 1'b1;
   else
@@ -35735,8 +34970,8 @@ rr_arbiter_4 #(
     .DWIDTH(4)
 )
 l2_arb_6_0(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l2_req_6_0),
     .grant  (l2_grant_6_0)
 );
@@ -35746,8 +34981,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l3_fifo_6_0 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l3_in_valid_6_0),
@@ -35763,7 +34998,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l3_csr_readdata_6_0 > L3_TH)
     l3_almost_full_6_0 <= 1'b1;
   else
@@ -35773,8 +35008,8 @@ rr_arbiter_4 #(
     .DWIDTH(4)
 )
 l2_arb_6_1(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l2_req_6_1),
     .grant  (l2_grant_6_1)
 );
@@ -35784,8 +35019,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l3_fifo_6_1 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l3_in_valid_6_1),
@@ -35801,7 +35036,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l3_csr_readdata_6_1 > L3_TH)
     l3_almost_full_6_1 <= 1'b1;
   else
@@ -35811,8 +35046,8 @@ rr_arbiter_4 #(
     .DWIDTH(4)
 )
 l2_arb_6_2(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l2_req_6_2),
     .grant  (l2_grant_6_2)
 );
@@ -35822,8 +35057,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l3_fifo_6_2 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l3_in_valid_6_2),
@@ -35839,7 +35074,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l3_csr_readdata_6_2 > L3_TH)
     l3_almost_full_6_2 <= 1'b1;
   else
@@ -35849,8 +35084,8 @@ rr_arbiter_4 #(
     .DWIDTH(4)
 )
 l2_arb_6_3(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l2_req_6_3),
     .grant  (l2_grant_6_3)
 );
@@ -35860,8 +35095,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l3_fifo_6_3 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l3_in_valid_6_3),
@@ -35877,7 +35112,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l3_csr_readdata_6_3 > L3_TH)
     l3_almost_full_6_3 <= 1'b1;
   else
@@ -35887,8 +35122,8 @@ rr_arbiter_4 #(
     .DWIDTH(4)
 )
 l2_arb_7_0(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l2_req_7_0),
     .grant  (l2_grant_7_0)
 );
@@ -35898,8 +35133,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l3_fifo_7_0 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l3_in_valid_7_0),
@@ -35915,7 +35150,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l3_csr_readdata_7_0 > L3_TH)
     l3_almost_full_7_0 <= 1'b1;
   else
@@ -35925,8 +35160,8 @@ rr_arbiter_4 #(
     .DWIDTH(4)
 )
 l2_arb_7_1(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l2_req_7_1),
     .grant  (l2_grant_7_1)
 );
@@ -35936,8 +35171,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l3_fifo_7_1 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l3_in_valid_7_1),
@@ -35953,7 +35188,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l3_csr_readdata_7_1 > L3_TH)
     l3_almost_full_7_1 <= 1'b1;
   else
@@ -35963,8 +35198,8 @@ rr_arbiter_4 #(
     .DWIDTH(4)
 )
 l2_arb_7_2(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l2_req_7_2),
     .grant  (l2_grant_7_2)
 );
@@ -35974,8 +35209,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l3_fifo_7_2 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l3_in_valid_7_2),
@@ -35991,7 +35226,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l3_csr_readdata_7_2 > L3_TH)
     l3_almost_full_7_2 <= 1'b1;
   else
@@ -36001,8 +35236,8 @@ rr_arbiter_4 #(
     .DWIDTH(4)
 )
 l2_arb_7_3(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l2_req_7_3),
     .grant  (l2_grant_7_3)
 );
@@ -36012,8 +35247,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l3_fifo_7_3 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l3_in_valid_7_3),
@@ -36029,7 +35264,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l3_csr_readdata_7_3 > L3_TH)
     l3_almost_full_7_3 <= 1'b1;
   else
@@ -36040,8 +35275,8 @@ rr_arbiter_4 #(
     .DWIDTH(4)
 )
 l3_arb_0(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l3_req_0),
     .grant  (l3_grant_0)
 );
@@ -36051,8 +35286,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l4_fifo_0 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l4_in_valid_0),
@@ -36068,7 +35303,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l4_csr_readdata_0 > L3_TH)
     l4_almost_full_0 <= 1'b1;
   else
@@ -36078,8 +35313,8 @@ rr_arbiter_4 #(
     .DWIDTH(4)
 )
 l3_arb_1(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l3_req_1),
     .grant  (l3_grant_1)
 );
@@ -36089,8 +35324,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l4_fifo_1 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l4_in_valid_1),
@@ -36106,7 +35341,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l4_csr_readdata_1 > L3_TH)
     l4_almost_full_1 <= 1'b1;
   else
@@ -36116,8 +35351,8 @@ rr_arbiter_4 #(
     .DWIDTH(4)
 )
 l3_arb_2(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l3_req_2),
     .grant  (l3_grant_2)
 );
@@ -36127,8 +35362,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l4_fifo_2 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l4_in_valid_2),
@@ -36144,7 +35379,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l4_csr_readdata_2 > L3_TH)
     l4_almost_full_2 <= 1'b1;
   else
@@ -36154,8 +35389,8 @@ rr_arbiter_4 #(
     .DWIDTH(4)
 )
 l3_arb_3(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l3_req_3),
     .grant  (l3_grant_3)
 );
@@ -36165,8 +35400,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l4_fifo_3 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l4_in_valid_3),
@@ -36182,7 +35417,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l4_csr_readdata_3 > L3_TH)
     l4_almost_full_3 <= 1'b1;
   else
@@ -36192,8 +35427,8 @@ rr_arbiter_4 #(
     .DWIDTH(4)
 )
 l3_arb_4(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l3_req_4),
     .grant  (l3_grant_4)
 );
@@ -36203,8 +35438,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l4_fifo_4 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l4_in_valid_4),
@@ -36220,7 +35455,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l4_csr_readdata_4 > L3_TH)
     l4_almost_full_4 <= 1'b1;
   else
@@ -36230,8 +35465,8 @@ rr_arbiter_4 #(
     .DWIDTH(4)
 )
 l3_arb_5(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l3_req_5),
     .grant  (l3_grant_5)
 );
@@ -36241,8 +35476,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l4_fifo_5 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l4_in_valid_5),
@@ -36258,7 +35493,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l4_csr_readdata_5 > L3_TH)
     l4_almost_full_5 <= 1'b1;
   else
@@ -36268,8 +35503,8 @@ rr_arbiter_4 #(
     .DWIDTH(4)
 )
 l3_arb_6(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l3_req_6),
     .grant  (l3_grant_6)
 );
@@ -36279,8 +35514,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l4_fifo_6 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l4_in_valid_6),
@@ -36296,7 +35531,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l4_csr_readdata_6 > L3_TH)
     l4_almost_full_6 <= 1'b1;
   else
@@ -36306,8 +35541,8 @@ rr_arbiter_4 #(
     .DWIDTH(4)
 )
 l3_arb_7(
-    .clk    (clk),
-    .rst    (rst),
+    .clk    (back_clk),
+    .rst    (back_rst),
     .req    (l3_req_7),
     .grant  (l3_grant_7)
 );
@@ -36317,8 +35552,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l4_fifo_7 (
-  .clk   (clk),
-  .rst   (rst),
+  .clk   (back_clk),
+  .rst   (back_rst),
   .clear (1'b0),
 
   .din_valid(l4_in_valid_7),
@@ -36334,7 +35569,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge clk)
+always @ (posedge back_clk)
   if (l4_csr_readdata_7 > L3_TH)
     l4_almost_full_7 <= 1'b1;
   else
@@ -36353,7 +35588,7 @@ hashtable_inst_0(
     .q_b       (),    
     .address_a (ht_addr_0),
     .address_b (),
-    .clk       (clk)   
+    .clk       (back_clk)   
 );
 rom_2port #(
     .DWIDTH(RID_WIDTH),
@@ -36366,7 +35601,7 @@ hashtable_inst_1(
     .q_b       (),    
     .address_a (ht_addr_1),
     .address_b (),
-    .clk       (clk)   
+    .clk       (back_clk)   
 );
 rom_2port #(
     .DWIDTH(RID_WIDTH),
@@ -36379,7 +35614,7 @@ hashtable_inst_2(
     .q_b       (),    
     .address_a (ht_addr_2),
     .address_b (),
-    .clk       (clk)   
+    .clk       (back_clk)   
 );
 rom_2port #(
     .DWIDTH(RID_WIDTH),
@@ -36392,7 +35627,7 @@ hashtable_inst_3(
     .q_b       (),    
     .address_a (ht_addr_3),
     .address_b (),
-    .clk       (clk)   
+    .clk       (back_clk)   
 );
 rom_2port #(
     .DWIDTH(RID_WIDTH),
@@ -36405,7 +35640,7 @@ hashtable_inst_4(
     .q_b       (),    
     .address_a (ht_addr_4),
     .address_b (),
-    .clk       (clk)   
+    .clk       (back_clk)   
 );
 rom_2port #(
     .DWIDTH(RID_WIDTH),
@@ -36418,7 +35653,7 @@ hashtable_inst_5(
     .q_b       (),    
     .address_a (ht_addr_5),
     .address_b (),
-    .clk       (clk)   
+    .clk       (back_clk)   
 );
 rom_2port #(
     .DWIDTH(RID_WIDTH),
@@ -36431,7 +35666,7 @@ hashtable_inst_6(
     .q_b       (),    
     .address_a (ht_addr_6),
     .address_b (),
-    .clk       (clk)   
+    .clk       (back_clk)   
 );
 rom_2port #(
     .DWIDTH(RID_WIDTH),
@@ -36444,7 +35679,7 @@ hashtable_inst_7(
     .q_b       (),    
     .address_a (ht_addr_7),
     .address_b (),
-    .clk       (clk)   
+    .clk       (back_clk)   
 );
 
 assign status_readdata_valid = 1'b0;

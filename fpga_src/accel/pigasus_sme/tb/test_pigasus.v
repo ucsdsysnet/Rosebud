@@ -1,8 +1,10 @@
 module test_pigasus # (
   parameter BYTE_COUNT = 32
 ) (
-  input  wire                    clk,
-  input  wire                    rst,
+  input  wire                    front_clk,
+  input  wire                    front_rst,
+  input  wire                    back_clk,
+  input  wire                    back_rst,
 
   // AXI Stream input
   input  wire [BYTE_COUNT*8-1:0] s_axis_tdata,
@@ -28,8 +30,8 @@ localparam EMPTY_PAD = 5-$clog2(BYTE_COUNT);
 wire [4:0] empty = {{EMPTY_PAD{1'b1}}, s_axis_tempty};
 
 reg valid_r;
-always @ (posedge clk)
-  if(rst)
+always @ (posedge front_clk)
+  if(front_rst)
     valid_r <= 1'b0;
   else
     valid_r <= s_axis_tvalid;
@@ -44,18 +46,24 @@ wire [4:0]    shifted_empty;
 wire          shifted_ready;
 reg  [55:0]   last_7_bytes;
 
+reg [BYTE_COUNT*8-1:0] s_axis_tdata_rev;
+integer k;
+always @ (*)
+  for (k=1;k<=BYTE_COUNT;k=k+1)
+    s_axis_tdata_rev[(k-1)*8+:8] = s_axis_tdata[(BYTE_COUNT-k)*8+:8];
+
 data_shift shifter (
-    .clk(clk),
-    .rst(rst),
+    .clk(front_clk),
+    .rst(front_rst),
     .in_pkt_sop(sop),
     .in_pkt_eop(s_axis_tlast),
     .in_pkt_valid(s_axis_tvalid),
-    .in_pkt_data({s_axis_tdata, {((32-BYTE_COUNT)*8){1'b0}}}),
+    .in_pkt_data({s_axis_tdata_rev, {((32-BYTE_COUNT)*8){1'b0}}}),
     .in_pkt_empty(empty),
     .in_pkt_ready(s_axis_tready),
 
     .last_7_bytes({56{1'b1}}), //last_7_bytes),
-    .last_7_bytes_valid(1'b0),
+    .last_7_bytes_valid(1'b1),
     .last_7_bytes_ready(),
 
     .out_pkt_sop  (shifted_sop),
@@ -71,9 +79,11 @@ wire         pigasus_valid;
 wire         pigasus_last;
 
 string_matcher pigasus (
-  .clk(clk),
-  .rst(rst),
-
+  .front_clk(front_clk),
+  .front_rst(front_rst),
+  .back_clk(back_clk),
+  .back_rst(back_rst),
+    
   .in_data (shifted_data),
   .in_empty(shifted_empty),
   .in_valid(shifted_valid),
@@ -91,8 +101,8 @@ string_matcher pigasus (
 wire [127:0] pigasus_output;
 
   port_group pg_inst (
-    .clk(clk),
-    .rst(rst),
+    .clk(back_clk),
+    .rst(back_rst),
     .in_match_sop(),
     .in_match_eop(pigasus_last),
     .in_match_data(pigasus_data),
@@ -127,7 +137,7 @@ wire [127:0] pigasus_output;
   reg [$clog2(BYTE_COUNT)-1:0] last_word_shift;
   reg                          last_word_valid;
 
-  always @ (posedge clk) begin
+  always @ (posedge back_clk) begin
     last_word_valid <= 1'b0; //1 hot
     if (s_axis_tvalid && s_axis_tready) begin
       if (!s_axis_tlast) begin
@@ -139,7 +149,7 @@ wire [127:0] pigasus_output;
       end
     end
 
-    if (sop | rst) begin
+    if (sop | back_rst) begin
       one_to_last_word <= {64{1'b1}}; //not correct
       last_word_valid <= 1'b0;
     end
@@ -147,10 +157,10 @@ wire [127:0] pigasus_output;
 
   wire [(BYTE_COUNT+8)*8-1:0] shifted_word = {last_word,one_to_last_word} << last_word_shift;
 
-  always @ (posedge clk) begin
+  always @ (posedge back_clk) begin
     if (last_word_valid)
       last_7_bytes <= shifted_word[(BYTE_COUNT+8)*8-1:(BYTE_COUNT+1)*8];
-    if (rst)
+    if (back_rst)
       last_7_bytes <= {56{1'b1}};
   end
 

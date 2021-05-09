@@ -7,12 +7,16 @@ export COCOTB_REDUCED_LOG_FMT=1
 CWD = .
 RTL_DIR = ../rtl
 MYLIB_DIR = ../../../lib/smartFPGA/rtl
+AXIS_DIR = ../../../lib/axis/rtl
 
 MODULE = test_pigasus
 TOPLEVEL = test_pigasus
 
 VERILOG_SOURCES  = ./test_pigasus.v
 
+VERILOG_SOURCES += $(AXIS_DIR)/axis_async_fifo.v
+VERILOG_SOURCES += $(AXIS_DIR)/arbiter.v
+VERILOG_SOURCES += $(AXIS_DIR)/priority_encoder.v
 VERILOG_SOURCES += $(MYLIB_DIR)/simple_fifo.v
 
 VERILOG_SOURCES += $(RTL_DIR)/backend.sv

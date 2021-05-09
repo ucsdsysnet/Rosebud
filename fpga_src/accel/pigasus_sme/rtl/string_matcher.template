@@ -1,7 +1,9 @@
 `include "struct_s.sv"
 module string_matcher (
-    clk,
-    rst,
+    front_clk,
+    front_rst,
+    back_clk,
+    back_rst,
     in_data,
     in_valid,
     in_sop,
@@ -28,8 +30,10 @@ module string_matcher (
     status_readdata_valid
 );
 
-input clk;
-input rst;
+input front_clk;
+input front_rst;
+input back_clk;
+input back_rst;
 input [255:0] in_data;
 input in_valid;
 input in_sop;
@@ -113,7 +117,7 @@ logic [31:0] test_din_r2_{{i}};
 assign in_convt[7+{{j}}*8:0+{{j}}*8] = in_data[255-{{j}}*8:255-7-{{j}}*8];
 {% endfor %}
 
-always @ (posedge clk) begin
+always @ (posedge front_clk) begin
     //in_ready <= {% for i in range(0,context['bucket_size'])%} {% for j in range(0,context['byte_size'])%} !din_almost_full_{{i}}_{{j}} & {% endfor %} {% endfor %} !gap;
     in_ready <= {% for i in range(0,context['bucket_size'])%} {% for j in range(0,context['byte_size'])%} !din_almost_full_{{i}}_{{j}} & {% endfor %} {% endfor %} 1;
     //in_ready <= !in_eop; //create a gap
@@ -134,8 +138,8 @@ end
 
 assign gap = (in_eop & in_valid & in_ready);
 
-always@(posedge clk)begin
-    if(rst)begin
+always@(posedge front_clk)begin
+    if(front_rst)begin
         out_meta_valid <= 0;
     end else begin
         if(out_new_pkt)begin
@@ -153,7 +157,7 @@ end
 assign internal_meta_ready = out_new_pkt;
 //assign in_meta_ready = in_ready;
 
-always@(posedge clk)begin
+always@(posedge front_clk)begin
 {% for i in range(0,context['bucket_size'])%}
 {% for j in range(0,context['byte_size'])%}
     din_valid_{{i}}_{{j}} <= out_new_pkt | hash_out_valid_filter_{{i}}_{{j}};
@@ -192,8 +196,8 @@ simple_fifo #(
     .DATA_WIDTH(META_WIDTH),
     .ADDR_WIDTH(9)
 ) meta_fifo (
-	.clk               (clk),                      
-	.rst               (rst),            
+	.clk               (front_clk),                      
+	.rst               (front_rst),            
 	.din               (in_meta_data),          
 	.din_valid         (in_meta_valid),         
 	.din_ready         (in_meta_ready),         
@@ -204,8 +208,8 @@ simple_fifo #(
 
 
 frontend front(
-    .clk(clk),
-    .rst(rst),
+    .clk(front_clk),
+    .rst(front_rst),
 {% for i in range(0,context['bucket_size'])%}
 {% for j in range(0,context['byte_size'])%}
     .hash_out_{{i}}_{{j}}(hash_out_{{i}}_{{j}}),
@@ -222,8 +226,10 @@ frontend front(
 
 //RuleID reduction logic
 backend back(
-    .clk(clk),
-    .rst(rst),
+    .front_clk(front_clk),
+    .front_rst(front_rst),
+    .back_clk(back_clk),
+    .back_rst(back_rst),
 {% for i in range(0,context['bucket_size']) %}
 {% for j in range(0,32) %}
     .din_{{i}}_{{j}}(din_{{i}}_{{j}}_r2),

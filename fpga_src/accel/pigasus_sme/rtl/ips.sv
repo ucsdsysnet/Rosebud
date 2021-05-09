@@ -113,7 +113,7 @@ module singledsp (
       ax_rr <= ax_r;
       ay_rr <= ay_r;
 
-      mul  <= ax_r*ay_r;
+      mul  <= ax_rr*ay_rr;
 
       resulta <= {1'b0, mul};
     end
