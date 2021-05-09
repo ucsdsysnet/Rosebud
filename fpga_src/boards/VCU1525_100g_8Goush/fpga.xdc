@@ -279,46 +279,46 @@ set_property SNAPPING_MODE ON [get_pblocks Gousheh_4]
 set_property IS_SOFT FALSE [get_pblocks Gousheh_4]
 create_pblock Gousheh_5
 add_cells_to_pblock [get_pblocks Gousheh_5] [get_cells -quiet [list {core_inst/riscv_cores[4].pr_wrapper}]]
-resize_pblock [get_pblocks Gousheh_5] -add {SLICE_X21Y630:SLICE_X82Y749}
+resize_pblock [get_pblocks Gousheh_5] -add {SLICE_X21Y630:SLICE_X83Y749}
 resize_pblock [get_pblocks Gousheh_5] -add {DSP48E2_X2Y252:DSP48E2_X9Y299}
 resize_pblock [get_pblocks Gousheh_5] -add {IOB_X0Y546:IOB_X0Y649}
-resize_pblock [get_pblocks Gousheh_5] -add {RAMB18_X2Y252:RAMB18_X4Y299}
-resize_pblock [get_pblocks Gousheh_5] -add {RAMB36_X2Y126:RAMB36_X4Y149}
+resize_pblock [get_pblocks Gousheh_5] -add {RAMB18_X2Y252:RAMB18_X5Y299}
+resize_pblock [get_pblocks Gousheh_5] -add {RAMB36_X2Y126:RAMB36_X5Y149}
 resize_pblock [get_pblocks Gousheh_5] -add {URAM288_X0Y168:URAM288_X1Y199}
 set_property HD.PARTPIN_RANGE {SLICE_X21Y630:SLICE_X32Y644 SLICE_X35Y630:SLICE_X46Y644 SLICE_X49Y630:SLICE_X54Y644 SLICE_X56Y630:SLICE_X61Y644 SLICE_X64Y630:SLICE_X77Y644 SLICE_X80Y630:SLICE_X82Y644} [get_pins -regexp {core_inst/riscv_cores\[4\].pr_wrapper/(?!clk).*}]
 set_property SNAPPING_MODE ON [get_pblocks Gousheh_5]
 set_property IS_SOFT FALSE [get_pblocks Gousheh_5]
 create_pblock Gousheh_6
 add_cells_to_pblock [get_pblocks Gousheh_6] [get_cells -quiet [list {core_inst/riscv_cores[5].pr_wrapper}]]
-resize_pblock [get_pblocks Gousheh_6] -add {SLICE_X88Y630:SLICE_X154Y749}
+resize_pblock [get_pblocks Gousheh_6] -add {SLICE_X88Y630:SLICE_X155Y749}
 resize_pblock [get_pblocks Gousheh_6] -add {DSP48E2_X11Y252:DSP48E2_X17Y299}
 resize_pblock [get_pblocks Gousheh_6] -add {IOB_X1Y546:IOB_X1Y649}
-resize_pblock [get_pblocks Gousheh_6] -add {RAMB18_X7Y252:RAMB18_X9Y299}
-resize_pblock [get_pblocks Gousheh_6] -add {RAMB36_X7Y126:RAMB36_X9Y149}
+resize_pblock [get_pblocks Gousheh_6] -add {RAMB18_X7Y252:RAMB18_X10Y299}
+resize_pblock [get_pblocks Gousheh_6] -add {RAMB36_X7Y126:RAMB36_X10Y149}
 resize_pblock [get_pblocks Gousheh_6] -add {URAM288_X2Y168:URAM288_X3Y199}
 set_property HD.PARTPIN_RANGE {SLICE_X88Y630:SLICE_X89Y644 SLICE_X92Y630:SLICE_X103Y644 SLICE_X106Y630:SLICE_X111Y644 SLICE_X113Y630:SLICE_X118Y644 SLICE_X121Y630:SLICE_X134Y644 SLICE_X137Y630:SLICE_X149Y644 SLICE_X152Y630:SLICE_X154Y644} [get_pins -regexp {core_inst/riscv_cores\[5\].pr_wrapper/(?!clk).*}]
 set_property SNAPPING_MODE ON [get_pblocks Gousheh_6]
 set_property IS_SOFT FALSE [get_pblocks Gousheh_6]
 create_pblock Gousheh_7
 add_cells_to_pblock [get_pblocks Gousheh_7] [get_cells -quiet [list {core_inst/riscv_cores[6].pr_wrapper}]]
-resize_pblock [get_pblocks Gousheh_7] -add {SLICE_X21Y780:SLICE_X82Y899}
+resize_pblock [get_pblocks Gousheh_7] -add {SLICE_X21Y780:SLICE_X83Y899}
 resize_pblock [get_pblocks Gousheh_7] -add {DSP48E2_X2Y312:DSP48E2_X9Y359}
 resize_pblock [get_pblocks Gousheh_7] -add {IOB_X0Y676:IOB_X0Y779}
 resize_pblock [get_pblocks Gousheh_7] -add {LAGUNA_X4Y600:LAGUNA_X11Y719}
-resize_pblock [get_pblocks Gousheh_7] -add {RAMB18_X2Y312:RAMB18_X4Y359}
-resize_pblock [get_pblocks Gousheh_7] -add {RAMB36_X2Y156:RAMB36_X4Y179}
+resize_pblock [get_pblocks Gousheh_7] -add {RAMB18_X2Y312:RAMB18_X5Y359}
+resize_pblock [get_pblocks Gousheh_7] -add {RAMB36_X2Y156:RAMB36_X5Y179}
 resize_pblock [get_pblocks Gousheh_7] -add {URAM288_X0Y208:URAM288_X1Y239}
 set_property HD.PARTPIN_RANGE {SLICE_X21Y780:SLICE_X82Y794} [get_pins -regexp {core_inst/riscv_cores\[6\].pr_wrapper/(?!clk).*}]
 set_property SNAPPING_MODE ON [get_pblocks Gousheh_7]
 set_property IS_SOFT FALSE [get_pblocks Gousheh_7]
 create_pblock Gousheh_8
 add_cells_to_pblock [get_pblocks Gousheh_8] [get_cells -quiet [list {core_inst/riscv_cores[7].pr_wrapper}]]
-resize_pblock [get_pblocks Gousheh_8] -add {SLICE_X88Y780:SLICE_X154Y899}
+resize_pblock [get_pblocks Gousheh_8] -add {SLICE_X88Y780:SLICE_X155Y899}
 resize_pblock [get_pblocks Gousheh_8] -add {DSP48E2_X11Y312:DSP48E2_X17Y359}
 resize_pblock [get_pblocks Gousheh_8] -add {IOB_X1Y676:IOB_X1Y779}
 resize_pblock [get_pblocks Gousheh_8] -add {LAGUNA_X12Y600:LAGUNA_X21Y719}
-resize_pblock [get_pblocks Gousheh_8] -add {RAMB18_X7Y312:RAMB18_X9Y359}
-resize_pblock [get_pblocks Gousheh_8] -add {RAMB36_X7Y156:RAMB36_X9Y179}
+resize_pblock [get_pblocks Gousheh_8] -add {RAMB18_X7Y312:RAMB18_X10Y359}
+resize_pblock [get_pblocks Gousheh_8] -add {RAMB36_X7Y156:RAMB36_X10Y179}
 resize_pblock [get_pblocks Gousheh_8] -add {URAM288_X2Y208:URAM288_X3Y239}
 set_property HD.PARTPIN_RANGE {SLICE_X88Y780:SLICE_X154Y794} [get_pins -regexp {core_inst/riscv_cores\[7\].pr_wrapper/(?!clk).*}]
 set_property SNAPPING_MODE ON [get_pblocks Gousheh_8]
@@ -370,10 +370,10 @@ resize_pblock [get_pblocks Wrapper_6] -add {RAMB36_X7Y123:RAMB36_X9Y125}
 set_property IS_SOFT TRUE [get_pblocks Wrapper_6]
 create_pblock Wrapper_7
 add_cells_to_pblock [get_pblocks Wrapper_7] [get_cells -quiet [list {core_inst/riscv_cores[6].core_wrapper}]]
-resize_pblock [get_pblocks Wrapper_7] -add {SLICE_X21Y765:SLICE_X82Y779}
+resize_pblock [get_pblocks Wrapper_7] -add {SLICE_X21Y765:SLICE_X83Y779}
 resize_pblock [get_pblocks Wrapper_7] -add {DSP48E2_X2Y306:DSP48E2_X9Y311}
-resize_pblock [get_pblocks Wrapper_7] -add {RAMB18_X2Y306:RAMB18_X4Y311}
-resize_pblock [get_pblocks Wrapper_7] -add {RAMB36_X2Y153:RAMB36_X4Y155}
+resize_pblock [get_pblocks Wrapper_7] -add {RAMB18_X2Y306:RAMB18_X5Y311}
+resize_pblock [get_pblocks Wrapper_7] -add {RAMB36_X2Y153:RAMB36_X5Y155}
 set_property IS_SOFT TRUE [get_pblocks Wrapper_7]
 create_pblock Wrapper_8
 add_cells_to_pblock [get_pblocks Wrapper_8] [get_cells -quiet [list {core_inst/riscv_cores[7].core_wrapper}]]
@@ -466,8 +466,8 @@ resize_pblock [get_pblocks User_Scheduler] -add {RAMB18_X0Y144:RAMB18_X4Y215}
 resize_pblock [get_pblocks User_Scheduler] -add {RAMB36_X0Y72:RAMB36_X4Y107}
 resize_pblock [get_pblocks User_Scheduler] -add {URAM288_X0Y96:URAM288_X1Y143}
 set_property HD.PARTPIN_RANGE {SLICE_X75Y360:SLICE_X79Y539} [get_pins [list core_inst/scheduler_PR_inst/data_s* core_inst/scheduler_PR_inst/ctrl* core_inst/scheduler_PR_inst/host_cmd* core_inst/scheduler_PR_inst/rst]]
-set_property HD.PARTPIN_RANGE {SLICE_X0Y535:SLICE_X75Y539} [get_pins core_inst/scheduler_PR_inst/tx_axis*]
-set_property HD.PARTPIN_RANGE {SLICE_X0Y535:SLICE_X75Y539} [get_pins core_inst/scheduler_PR_inst/rx_axis*]
+set_property HD.PARTPIN_RANGE {SLICE_X0Y535:SLICE_X50Y539} [get_pins core_inst/scheduler_PR_inst/tx_axis*]
+set_property HD.PARTPIN_RANGE {SLICE_X0Y535:SLICE_X50Y539} [get_pins core_inst/scheduler_PR_inst/rx_axis*]
 set_property HD.PARTPIN_RANGE {SLICE_X0Y360:SLICE_X75Y364} [get_pins core_inst/scheduler_PR_inst/data_m*]
 set_property SNAPPING_MODE ON [get_pblocks User_Scheduler]
 set_property IS_SOFT FALSE [get_pblocks User_Scheduler]
