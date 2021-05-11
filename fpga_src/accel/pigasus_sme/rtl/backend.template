@@ -79,7 +79,7 @@ logic       l2_in_ready_{{i}}_{{j}};
 logic       l2_out_valid_{{i}}_{{j}};
 logic       l2_out_ready_{{i}}_{{j}};
 logic       l2_almost_full_{{i}}_{{j}};
-logic [31:0] l2_csr_readdata_{{i}}_{{j}};
+logic [$clog2(FIFO_DEPTH):0] l2_csr_readdata_{{i}}_{{j}};
 logic       l2_newdata_{{i}}_{{j}};
 logic [RID_WIDTH-1:0] l2_cache_{{i}}_{{j}};
 logic [1:0] l1_req_{{i}}_{{j}};
@@ -100,7 +100,7 @@ logic l3_in_ready_{{i}}_{{j}};
 logic l3_out_valid_{{i}}_{{j}};
 logic l3_out_ready_{{i}}_{{j}};
 logic l3_almost_full_{{i}}_{{j}};
-logic [31:0] l3_csr_readdata_{{i}}_{{j}};
+logic [$clog2(FIFO_DEPTH):0] l3_csr_readdata_{{i}}_{{j}};
 logic       l3_newdata_{{i}}_{{j}};
 logic [RID_WIDTH-1:0] l3_cache_{{i}}_{{j}};
 logic [3:0] l2_req_{{i}}_{{j}};
@@ -120,7 +120,7 @@ logic l4_in_ready_{{i}};
 logic l4_out_valid_{{i}};
 logic l4_out_ready_{{i}};
 logic l4_almost_full_{{i}};
-logic [31:0] l4_csr_readdata_{{i}};
+logic [$clog2(FIFO_DEPTH):0] l4_csr_readdata_{{i}};
 logic [RID_WIDTH-1:0] l4_cache_{{i}};
 logic [3:0] l3_req_{{i}};
 logic [3:0] l3_grant_{{i}};
@@ -675,7 +675,7 @@ rom_2port #(
 hashtable_inst_{{i}}(
     .q_a       (ht_q_{{i}}),    
     .q_b       (),    
-    .address_a (ht_addr_{{i}}),
+    .address_a (ht_addr_{{i}}[{{context['nbits'][i]}}-1:0]),
     .address_b (),
     .clock     (back_clk)   
 );

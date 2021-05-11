@@ -1,4 +1,4 @@
-`include "./struct_s.sv"
+`include "struct_s.sv"
 module hashtable_top(clk,
 {% for i in range(0,context['bucket_size'])%}
 {% for j in range(0,context['byte_size'])%}
@@ -20,22 +20,70 @@ output wire dout_valid_{{i}}_{{j}};
 
 {% for i in range(0,context['bucket_size'])%}
 {% for j in range(0,context['byte_size'])%}
-wire [63:0] din_{{i}}_{{j}};
+reg  [{{context['nbits'][i]}}-1:0] addr_{{i}}_{{j}};
 wire din_valid_{{i}}_{{j}};
+wire addr_valid_{{i}}_{{j}};
 {% endfor %}
 {% endfor %}
 
 reg [63:0] din_reg;
 reg din_valid_reg;
 
-{% for i in range(0,context['bucket_size'])%}
-{% for j in range(0,7)%}
-assign din_{{i}}_{{j}} = {din[{{(j+1)*8-1}}:0],din_reg[63:{{(j+1)*8}}]};
+// Doing all necessary multiplies per double_byte
+wire [({{context['byte_size']}}+7)*8-1:0] padded_din;
+wire [{{context['byte_size']}}-1:0] din_signs;
+wire [{{context['byte_size']}}-1:0] din_signs_reg;
+
+{% for i in range(0,context['byte_size']+7)%}
+wire [31:0] din_{{i}}_ab0;
+wire [31:0] din_{{i}}_ab1;
+wire [31:0] din_{{i}}_ab2;
+wire [31:0] din_{{i}}_ab3;
+wire [31:0] din_{{i}}_ab0_1sc;
+wire [31:0] din_{{i}}_ab1_1sc;
+wire [31:0] din_{{i}}_ab2_1sc;
+wire [31:0] din_{{i}}_ab3_1sc;
+wire [23:0] din_{{i}}_msk_ab0;
+wire [23:0] din_{{i}}_msk_ab1;
+wire [23:0] din_{{i}}_msk_ab2;
+wire [23:0] din_{{i}}_msk_ab3;
+wire [23:0] din_{{i}}_msk_ab0_1sc;
+wire [23:0] din_{{i}}_msk_ab1_1sc;
+wire [23:0] din_{{i}}_msk_ab2_1sc;
+wire [23:0] din_{{i}}_msk_ab3_1sc;
 {% endfor %}
 
-{% for j in range(7,context['byte_size'])%}
-assign din_{{i}}_{{j}} = din[{{(j+1)*8-1}}:{{((j+1)*8-64)}}];
+{% for i in range(0,context['byte_size']) %}
+assign din_signs[{{i}}] = din[{{i}}*8+7];
 {% endfor %}
+
+hyper_pipe #(.NUM_PIPES(6),.WIDTH({{context['byte_size']}})) sign_bits_pipe (
+    .clk(clk),.din(din_signs),.dout(din_signs_reg));
+
+assign padded_din = {din[{{context['byte_size']}}*8-1:0], din_reg[63:8]};
+
+{% for i in range(0,context['byte_size']+7) %}
+mul_hash din_{{i}}_mul_hash (
+    .clk(clk),
+    .a(padded_din[{{i}}*8+:16]), 
+    .ab0(din_{{i}}_ab0),                 
+    .ab1(din_{{i}}_ab1), 
+    .ab2(din_{{i}}_ab2),                 
+    .ab3(din_{{i}}_ab3),
+    .ab0_1sc(din_{{i}}_ab0_1sc),         
+    .ab1_1sc(din_{{i}}_ab1_1sc), 
+    .ab2_1sc(din_{{i}}_ab2_1sc),         
+    .ab3_1sc(din_{{i}}_ab3_1sc),
+    .msk_ab0(din_{{i}}_msk_ab0),        
+    .msk_ab1(din_{{i}}_msk_ab1), 
+    .msk_ab2(din_{{i}}_msk_ab2),        
+    .msk_ab3(din_{{i}}_msk_ab3),
+    .msk_ab0_1sc(din_{{i}}_msk_ab0_1sc), 
+    .msk_ab1_1sc(din_{{i}}_msk_ab1_1sc), 
+    .msk_ab2_1sc(din_{{i}}_msk_ab2_1sc), 
+    .msk_ab3_1sc(din_{{i}}_msk_ab3_1sc)
+);
+
 {% endfor %}
 
 //Valid signals
@@ -94,14 +142,53 @@ assign din_valid_7_{{j}} = din_valid;
 always @ (posedge clk) begin
     //din_reg <= din[127:64];
     din_reg <= din[255:192];
+    // din_reg <= din[63:0];
     din_valid_reg <= din_valid;
 end
+
+{% for i in range(0,context['bucket_size'])%}
+{% for j in range(0,context['byte_size'])%}
+hyper_pipe #(.NUM_PIPES(12)) addr_valid_{{i}}_{{j}}_pipe (
+    .clk(clk),.din(din_valid_{{i}}_{{j}}),.dout(addr_valid_{{i}}_{{j}}));
+{% endfor %}
+{% endfor %}
+
+// Mask and Nbits is dependent on bucket number
+// data selection is dependent on first byte location
+{% for i in range(0,context['bucket_size'])%}
+{% for j in range(0,context['byte_size'])%}
+acc_hash # (
+	.ANDMSK({{context['andmsk'][i]}}),
+	.NBITS({{context['nbits'][i]}})
+) addr_{{i}}_{{j}}_calc (
+           .clk(clk), .sign(din_signs_reg[{{j}}]), 
+           .p(addr_{{i}}_{{j}}),
+           .a0b0(din_{{j}}_ab0), .a0b1(din_{{j}}_ab1), .a0b2(din_{{j}}_ab2), .a0b3(din_{{j}}_ab3),
+           .a0b0_1sc(din_{{j}}_ab0_1sc), .a0b1_1sc(din_{{j}}_ab1_1sc), .a0b2_1sc(din_{{j}}_ab2_1sc), .a0b3_1sc(din_{{j}}_ab3_1sc),
+           .msk_a0b0(din_{{j}}_msk_ab0), .msk_a0b1(din_{{j}}_msk_ab1), .msk_a0b2(din_{{j}}_msk_ab2), .msk_a0b3(din_{{j}}_msk_ab3),
+           .msk_a0b0_1sc(din_{{j}}_msk_ab0_1sc), .msk_a0b1_1sc(din_{{j}}_msk_ab1_1sc), .msk_a0b2_1sc(din_{{j}}_msk_ab2_1sc), .msk_a0b3_1sc(din_{{j}}_msk_ab3_1sc),
+
+           .a1b0(din_{{j+2}}_ab0), .a1b1(din_{{j+2}}_ab1), .a1b2(din_{{j+2}}_ab2),
+           .a1b0_1sc(din_{{j+2}}_ab0_1sc), .a1b1_1sc(din_{{j+2}}_ab1_1sc), .a1b2_1sc(din_{{j+2}}_ab2_1sc),
+           .msk_a1b0(din_{{j+2}}_msk_ab0), .msk_a1b1(din_{{j+2}}_msk_ab1), .msk_a1b2(din_{{j+2}}_msk_ab2),
+           .msk_a1b0_1sc(din_{{j+2}}_msk_ab0_1sc), .msk_a1b1_1sc(din_{{j+2}}_msk_ab1_1sc), .msk_a1b2_1sc(din_{{j+2}}_msk_ab2_1sc),
+
+           .a2b0(din_{{j+4}}_ab0), .a2b1(din_{{j+4}}_ab1),
+           .a2b0_1sc(din_{{j+4}}_ab0_1sc), .a2b1_1sc(din_{{j+4}}_ab1_1sc),
+           .msk_a2b0(din_{{j+4}}_msk_ab0), .msk_a2b1(din_{{j+4}}_msk_ab1),
+           .msk_a2b0_1sc(din_{{j+4}}_msk_ab0_1sc), .msk_a2b1_1sc(din_{{j+4}}_msk_ab1_1sc),
+           
+           .a3b0(din_{{j+6}}_ab0),
+           .a3b0_1sc(din_{{j+6}}_ab0_1sc)
+);
+
+{% endfor %}
+{% endfor %}
 
 {% for i in range(0,context['bucket_size'])%}
 {% for j in range(0,context['half_byte_size'])%}
 
 hashtable #(
-	.ANDMSK({{context['andmsk'][i]}}),
 	.NBITS({{context['nbits'][i]}}),
 	.DWIDTH(RID_WIDTH),
 	.MEM_SIZE({{context['bm_size'][i]}}),
@@ -109,10 +196,10 @@ hashtable #(
 )
 hashtable_{{i}}_{{j}} (
 	.clk (clk),
-	.din0 (din_{{i}}_{{2*j}}),
-	.din0_valid (din_valid_{{i}}_{{2*j}}),
-	.din1 (din_{{i}}_{{2*j+1}}),
-	.din1_valid (din_valid_{{i}}_{{2*j+1}}),
+	.addr0 (addr_{{i}}_{{2*j}}),
+	.addr0_valid (addr_valid_{{i}}_{{2*j}}),
+	.addr1 (addr_{{i}}_{{2*j+1}}),
+	.addr1_valid (addr_valid_{{i}}_{{2*j+1}}),
 	.dout0 (dout_{{i}}_{{2*j}}),
 	.dout0_valid (dout_valid_{{i}}_{{2*j}}),
 	.dout1 (dout_{{i}}_{{2*j+1}}),
