@@ -50,7 +50,7 @@ reg [BYTE_COUNT*8-1:0] s_axis_tdata_rev;
 integer k;
 always @ (*)
   for (k=1;k<=BYTE_COUNT;k=k+1)
-    s_axis_tdata_rev[(k-1)*8+:8] = s_axis_tdata[(BYTE_COUNT-k)*8+:8];
+    s_axis_tdata_rev[(k-1)*8+:8] = s_axis_tdata[(BYTE_COUNT-k)*8+:8] | {8{~s_axis_tkeep[BYTE_COUNT-k]}};
 
 data_shift shifter (
     .clk(front_clk),

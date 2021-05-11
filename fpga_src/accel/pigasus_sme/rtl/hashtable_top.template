@@ -57,7 +57,7 @@ wire [23:0] din_{{i}}_msk_ab3_1sc;
 assign din_signs[{{i}}] = din[{{i}}*8+7];
 {% endfor %}
 
-hyper_pipe #(.NUM_PIPES(6),.WIDTH({{context['byte_size']}})) sign_bits_pipe (
+hyper_pipe #(.NUM_PIPES(5),.WIDTH({{context['byte_size']}})) sign_bits_pipe (
     .clk(clk),.din(din_signs),.dout(din_signs_reg));
 
 assign padded_din = {din[{{context['byte_size']}}*8-1:0], din_reg[63:8]};
@@ -148,7 +148,7 @@ end
 
 {% for i in range(0,context['bucket_size'])%}
 {% for j in range(0,context['byte_size'])%}
-hyper_pipe #(.NUM_PIPES(12)) addr_valid_{{i}}_{{j}}_pipe (
+hyper_pipe #(.NUM_PIPES(11)) addr_valid_{{i}}_{{j}}_pipe (
     .clk(clk),.din(din_valid_{{i}}_{{j}}),.dout(addr_valid_{{i}}_{{j}}));
 {% endfor %}
 {% endfor %}

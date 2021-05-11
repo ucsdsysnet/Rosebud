@@ -32,6 +32,10 @@ async def run_test_mul_hash(dut):
         
     await RisingEdge(dut.clk)
 
+    val = 0x8822FBF8A5FAFFFF
+    dut.a <= val
+    cocotb.fork(check(dut.p, dut.clk, val, mask, -3))
+    await RisingEdge(dut.clk)
     val = 2**64 - 1; 
     dut.a <= val
     cocotb.fork(check(dut.p, dut.clk, val, mask, -2))

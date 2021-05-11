@@ -9,11 +9,11 @@ RTL_DIR = ../rtl
 MYLIB_DIR = ../../../lib/smartFPGA/rtl
 AXIS_DIR = ../../../lib/axis/rtl
 
-# MODULE = test_pigasus
-MODULE = test_mul_hash
+MODULE = test_pigasus
+# MODULE = test_mul_hash
 TOPLEVEL = $(MODULE)
 
-COMPILE_ARGS += -P $(TOPLEVEL).MSK_BYTES=0
+# COMPILE_ARGS += -P $(TOPLEVEL).MSK_BYTES=2
 
 VERILOG_SOURCES  = ./$(MODULE).v
 
