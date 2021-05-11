@@ -4,7 +4,8 @@ module test_mul_hash (
   output [63:0] p
 );
 
-parameter ANDMSK = 64'hffff_ffff_ffff_ffff;
+parameter MSK_BYTES = 0;
+localparam ANDMSK   = {{(8-MSK_BYTES)*8{1'b1}},{MSK_BYTES*8{1'b0}}};
 
 wire [31:0] a0b0;
 wire [31:0] a0b1;

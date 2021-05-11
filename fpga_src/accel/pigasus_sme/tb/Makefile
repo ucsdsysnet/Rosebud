@@ -13,6 +13,8 @@ AXIS_DIR = ../../../lib/axis/rtl
 MODULE = test_mul_hash
 TOPLEVEL = $(MODULE)
 
+COMPILE_ARGS += -P $(TOPLEVEL).MSK_BYTES=0
+
 VERILOG_SOURCES  = ./$(MODULE).v
 
 VERILOG_SOURCES += $(AXIS_DIR)/axis_async_fifo.v
@@ -38,7 +40,7 @@ VERILOG_SOURCES += $(RTL_DIR)/port_unit.sv
 VERILOG_SOURCES += $(RTL_DIR)/rule_unit.sv
 VERILOG_SOURCES += $(RTL_DIR)/port_group.sv
 
-COMPILE_ARGS  = -I ./struct_s.sv
+COMPILE_ARGS  += -I ./struct_s.sv
 PLUSARGS+=-fst 
 INC_DIR=$(ICARUS_INC_DIR)
 

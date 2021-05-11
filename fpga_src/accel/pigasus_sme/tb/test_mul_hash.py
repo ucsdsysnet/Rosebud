@@ -27,8 +27,8 @@ async def check (signal, clk, value, mask, num):
 async def run_test_mul_hash(dut):
 
     clk = cocotb.fork(Clock(dut.clk, 2).start())
-    mask = twos_comp(int(dut.ANDMSK.value))
-    print ("Mask: ", hex(mask))
+    mask = (0xffffffffffffffff << (8*int(dut.MSK_BYTES.value))) & 0xffffffffffffffff
+    print ("Mask:", hex(mask))
         
     await RisingEdge(dut.clk)
 
