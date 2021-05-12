@@ -1,4 +1,4 @@
-// Latency = 3 + DSP latency
+// Latency = 2 + DSP latency
 module mul_hash(clk, a, ab0, ab1, ab2, ab3,
            ab0_1sc, ab1_1sc, ab2_1sc, ab3_1sc,
            msk_ab0, msk_ab1, msk_ab2, msk_ab3,
@@ -34,13 +34,12 @@ wire [17:0] b2 = {2'b00, b[47:32]};
 wire [17:0] b3 = {2'b00, b[63:48]};
 
 reg [15:0] a_reg0;
-reg [15:0] a_reg1;
-reg [15:0] a_1sc_reg1;
+reg [15:0] a_1sc_reg0;
 
-wire [17:0] a_f     = { 2'd0, a_reg1};
-wire [17:0] a_1sc_f = { 2'd0, a_1sc_reg1};
-wire [17:0] a_h     = {10'd0, a_reg1[15:8]};
-wire [17:0] a_1sc_h = {10'd0, a_1sc_reg1[15:8]};
+wire [17:0] a_f     = { 2'd0, a_reg0};
+wire [17:0] a_1sc_f = { 2'd0, a_1sc_reg0};
+wire [17:0] a_h     = {10'd0, a_reg0[15:8]};
+wire [17:0] a_1sc_h = {10'd0, a_1sc_reg0[15:8]};
   
 wire [36:0] ab0_n;
 wire [36:0] ab1_n;
@@ -60,10 +59,10 @@ wire [36:0] msk_ab2_1sc_n;
 wire [36:0] msk_ab3_1sc_n;
 
 always @ (posedge clk) begin
-    // register the input and make 1s compliment
+    // register the input and it's 1s compliment
+    // Each mul_hash has unique input, no need for extra registering.
     a_reg0      <= a;
-    a_reg1      <= a_reg0;
-    a_1sc_reg1  <= ~a_reg0;
+    a_1sc_reg0  <= ~a;
 
     // Register the outputs
     ab0         <= ab0_n[31:0];

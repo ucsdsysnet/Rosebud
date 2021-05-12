@@ -103,19 +103,19 @@ module singledsp (
 
   reg [17:0] ax_r;
   reg [17:0] ay_r;
-  // reg [17:0] ax_rr;
-  // reg [17:0] ay_rr;
-  wire [35:0] mul = ax_r * ay_r;
+  reg [17:0] ax_rr;
+  reg [17:0] ay_rr;
+  reg [35:0] mul;
 
   always @ (posedge clk0)
     if (ena[0]) begin
       ax_r <= ax;
       ay_r <= ay;
 
-      // ax_rr <= ax_r;
-      // ay_rr <= ay_r;
+      ax_rr <= ax_r;
+      ay_rr <= ay_r;
 
-      // mul  <= ax_r*ay_r;
+      mul  <= ax_rr*ay_rr;
 
       resulta <= {1'b0, mul};
     end

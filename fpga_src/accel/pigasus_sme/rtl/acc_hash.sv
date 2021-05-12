@@ -1,4 +1,4 @@
-// Latency 5
+// Latency 6
 module acc_hash(clk, sign, p,
            a0b0, a0b1, a0b2, a0b3,
            a0b0_1sc, a0b1_1sc, a0b2_1sc, a0b3_1sc,
@@ -115,7 +115,6 @@ wire [63:0] b = 64'h0b4e0ef37bc32127;
 // First level selection of 32-bit multiply factors
 // Note that it is a single mux based on the sign input, 
 // parameter muxes are resolved in synthesie.
-// Synthesizer should merge the sign muxes across buckets.
 generate 
   if (LSB_BYTES_MASKED % 2 == 0) begin
     always @ (posedge clk) begin
@@ -130,7 +129,7 @@ generate
         updated_a1b2 <= (LSB_BYTES_MASKED>=4) ? 32'd0 : a1b2_1sc;
         updated_a2b0 <= (LSB_BYTES_MASKED>=6) ? 32'd0 : a2b0_1sc;
         updated_a2b1 <= (LSB_BYTES_MASKED>=6) ? 32'd0 : a2b1_1sc;
-        updated_a3b0 <= (LSB_BYTES_MASKED==8) ? 32'd0 : a3b0_1sc; //Never happens
+        updated_a3b0 <= (LSB_BYTES_MASKED==8) ? 32'd0 : a3b0_1sc; // Always non-zero
       end else begin
         updated_a0b0 <= (LSB_BYTES_MASKED>=2) ? 32'd0 : a0b0;
         updated_a0b1 <= (LSB_BYTES_MASKED>=2) ? 32'd0 : a0b1;
@@ -141,7 +140,7 @@ generate
         updated_a1b2 <= (LSB_BYTES_MASKED>=4) ? 32'd0 : a1b2;
         updated_a2b0 <= (LSB_BYTES_MASKED>=6) ? 32'd0 : a2b0;
         updated_a2b1 <= (LSB_BYTES_MASKED>=6) ? 32'd0 : a2b1;
-        updated_a3b0 <= (LSB_BYTES_MASKED==8) ? 32'd0 : a3b0; //Never happens
+        updated_a3b0 <= (LSB_BYTES_MASKED==8) ? 32'd0 : a3b0; // Always non-zero
       end
     end
   end else begin
@@ -162,10 +161,10 @@ generate
         updated_a1b2 <= (LSB_BYTES_MASKED>=5) ? 32'd0                : 
                         (LSB_BYTES_MASKED==3) ? {msk_a1b2_1sc, 8'd0} :
                                                 a1b2_1sc;
-        updated_a2b0 <= (LSB_BYTES_MASKED>=7) ? 32'd0                : // Never happens
+        updated_a2b0 <= (LSB_BYTES_MASKED>=7) ? 32'd0                : // Always non-zero
                         (LSB_BYTES_MASKED==5) ? {msk_a2b0_1sc, 8'd0} :
                                                 a2b0_1sc;
-        updated_a2b1 <= (LSB_BYTES_MASKED>=7) ? 32'd0                : // Never happens
+        updated_a2b1 <= (LSB_BYTES_MASKED>=7) ? 32'd0                : // Always non-zero
                         (LSB_BYTES_MASKED==5) ? {msk_a2b1_1sc, 8'd0} :
                                                 a2b1_1sc;
         // updated_a3b0 <= (LSB_BYTES_MASKED==7) ? {msk_a3b0_1sc, 8'd0} : //Never happens
@@ -186,10 +185,10 @@ generate
         updated_a1b2 <= (LSB_BYTES_MASKED>=5) ? 32'd0            : 
                         (LSB_BYTES_MASKED==3) ? {msk_a1b2, 8'd0} :
                                                 a1b2;
-        updated_a2b0 <= (LSB_BYTES_MASKED>=7) ? 32'd0            : // Never happens
+        updated_a2b0 <= (LSB_BYTES_MASKED>=7) ? 32'd0            : // Always non-zero
                         (LSB_BYTES_MASKED==5) ? {msk_a2b0, 8'd0} :
                                                 a2b0;
-        updated_a2b1 <= (LSB_BYTES_MASKED>=7) ? 32'd0            : // Never happens
+        updated_a2b1 <= (LSB_BYTES_MASKED>=7) ? 32'd0            : // Always non-zero
                         (LSB_BYTES_MASKED==5) ? {msk_a2b1, 8'd0} :
                                                 a2b1;
         // updated_a3b0 <= (LSB_BYTES_MASKED==7) ? {msk_a3b0, 8'd0} : //Never happens
