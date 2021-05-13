@@ -66,7 +66,7 @@ PACKETS_0 = []
 
 with PcapReader(open(PCAP, 'rb')) as pcap:
     for pkt in pcap:
-        PACKETS_0.append(pkt[Raw].load)
+        PACKETS_0.append(bytearray(8*[255])+pkt[Raw].load)
 
 @cocotb.test()
 async def run_test_pigasus(dut):

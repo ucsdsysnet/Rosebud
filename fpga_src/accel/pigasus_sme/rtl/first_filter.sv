@@ -197,21 +197,20 @@ assign temp_st30 = q30 << 6*8;
 assign temp_st31 = q31 << 7*8;
 
 
-
-assign temp_low = temp_st0|temp_st1|temp_st2|temp_st3|temp_st4|temp_st5|temp_st6|temp_st7;     
-assign temp_high = temp_st8|temp_st9|temp_st10|temp_st11|temp_st12|temp_st13|temp_st14|temp_st15;     
-assign temp_high1 = temp_st16|temp_st17|temp_st18|temp_st19|temp_st20|temp_st21|temp_st22|temp_st23;     
-assign temp_high2 = temp_st24|temp_st25|temp_st26|temp_st27|temp_st28|temp_st29|temp_st30|temp_st31;     
+assign temp_low = temp_st0|temp_st1|temp_st2|temp_st3|temp_st4|temp_st5|temp_st6|temp_st7;
+assign temp_high = temp_st8|temp_st9|temp_st10|temp_st11|temp_st12|temp_st13|temp_st14|temp_st15;
+assign temp_high1 = temp_st16|temp_st17|temp_st18|temp_st19|temp_st20|temp_st21|temp_st22|temp_st23;
+assign temp_high2 = temp_st24|temp_st25|temp_st26|temp_st27|temp_st28|temp_st29|temp_st30|temp_st31;
 assign state_low = temp_low | state;
 assign state_high = temp_high | temp_low[127:64];
 assign state_high1 = temp_high1 | temp_high[127:64];
 assign state_high2 = temp_high2 | temp_high1[127:64];
 
-//assign out_data = {state_high[63:0],state_low[63:0]};
-assign out_data = {state_high2[63:0],state_high1[63:0],state_high[63:0],state_low[63:0]} | mask;
+// assign out_data = {state_high[63:0],state_low[63:0]} | mask; // 16 bytes
+assign out_data = {state_high2[63:0],state_high1[63:0],state_high[63:0],state_low[63:0]} | mask; //32 bytes
 
-assign next_state = state_high2[127:64];
-// assign next_state = temp_low[127:64]; //state_high2[127:64];
+// assign next_state = state_high[127:64]; // 16 bytes
+assign next_state = state_high2[127:64]; //32 bytes
 
 
 always @ (posedge clk) begin
@@ -228,6 +227,7 @@ always @ (posedge clk) begin
         mask <= {256{1'b1}} << shift;
     end else begin
         mask <= 0;
+        // mask <= {{128{1'b1}}, {128{1'b0}}};
     end
 end
 
@@ -269,11 +269,11 @@ rom_2port_noreg #(
 	.INIT_FILE("./memory_init/match_table.mif")
 )
 match_table_0 (
-	.q_a       (q0),    
-	.q_b       (q1),    
+	.q_a       (q0),
+	.q_b       (q1),
 	.address_a (addr0),
 	.address_b (addr1),
-	.clock     (clk)   
+	.clock     (clk)
 );
 rom_2port_noreg #(
 	.DWIDTH(64),
@@ -282,11 +282,11 @@ rom_2port_noreg #(
 	.INIT_FILE("./memory_init/match_table.mif")
 )
 match_table_1 (
-	.q_a       (q2),    
-	.q_b       (q3),    
+	.q_a       (q2),
+	.q_b       (q3),
 	.address_a (addr2),
 	.address_b (addr3),
-	.clock     (clk)   
+	.clock     (clk)
 );
 rom_2port_noreg #(
 	.DWIDTH(64),
@@ -295,11 +295,11 @@ rom_2port_noreg #(
 	.INIT_FILE("./memory_init/match_table.mif")
 )
 match_table_2 (
-	.q_a       (q4),    
-	.q_b       (q5),    
+	.q_a       (q4),
+	.q_b       (q5),
 	.address_a (addr4),
 	.address_b (addr5),
-	.clock     (clk)   
+	.clock     (clk)
 );
 rom_2port_noreg #(
 	.DWIDTH(64),
@@ -308,11 +308,11 @@ rom_2port_noreg #(
 	.INIT_FILE("./memory_init/match_table.mif")
 )
 match_table_3 (
-	.q_a       (q6),    
-	.q_b       (q7),    
+	.q_a       (q6),
+	.q_b       (q7),
 	.address_a (addr6),
 	.address_b (addr7),
-	.clock     (clk)   
+	.clock     (clk)
 );
 rom_2port_noreg #(
 	.DWIDTH(64),
@@ -321,11 +321,11 @@ rom_2port_noreg #(
 	.INIT_FILE("./memory_init/match_table.mif")
 )
 match_table_4 (
-	.q_a       (q8),    
-	.q_b       (q9),    
+	.q_a       (q8),
+	.q_b       (q9),
 	.address_a (addr8),
 	.address_b (addr9),
-	.clock     (clk)   
+	.clock     (clk)
 );
 rom_2port_noreg #(
 	.DWIDTH(64),
@@ -334,11 +334,11 @@ rom_2port_noreg #(
 	.INIT_FILE("./memory_init/match_table.mif")
 )
 match_table_5 (
-	.q_a       (q10),    
-	.q_b       (q11),    
+	.q_a       (q10),
+	.q_b       (q11),
 	.address_a (addr10),
 	.address_b (addr11),
-	.clock     (clk)   
+	.clock     (clk)
 );
 rom_2port_noreg #(
 	.DWIDTH(64),
@@ -347,11 +347,11 @@ rom_2port_noreg #(
 	.INIT_FILE("./memory_init/match_table.mif")
 )
 match_table_6 (
-	.q_a       (q12),    
-	.q_b       (q13),    
+	.q_a       (q12),
+	.q_b       (q13),
 	.address_a (addr12),
 	.address_b (addr13),
-	.clock     (clk)   
+	.clock     (clk)
 );
 rom_2port_noreg #(
 	.DWIDTH(64),
@@ -360,11 +360,11 @@ rom_2port_noreg #(
 	.INIT_FILE("./memory_init/match_table.mif")
 )
 match_table_7 (
-	.q_a       (q14),    
-	.q_b       (q15),    
+	.q_a       (q14),
+	.q_b       (q15),
 	.address_a (addr14),
 	.address_b (addr15),
-	.clock     (clk)   
+	.clock     (clk)
 );
 rom_2port_noreg #(
 	.DWIDTH(64),
@@ -373,11 +373,11 @@ rom_2port_noreg #(
 	.INIT_FILE("./memory_init/match_table.mif")
 )
 match_table_8 (
-	.q_a       (q16),    
-	.q_b       (q17),    
+	.q_a       (q16),
+	.q_b       (q17),
 	.address_a (addr16),
 	.address_b (addr17),
-	.clock     (clk)   
+	.clock     (clk)
 );
 rom_2port_noreg #(
 	.DWIDTH(64),
@@ -386,11 +386,11 @@ rom_2port_noreg #(
 	.INIT_FILE("./memory_init/match_table.mif")
 )
 match_table_9 (
-	.q_a       (q18),    
-	.q_b       (q19),    
+	.q_a       (q18),
+	.q_b       (q19),
 	.address_a (addr18),
 	.address_b (addr19),
-	.clock     (clk)   
+	.clock     (clk)
 );
 rom_2port_noreg #(
 	.DWIDTH(64),
@@ -399,11 +399,11 @@ rom_2port_noreg #(
 	.INIT_FILE("./memory_init/match_table.mif")
 )
 match_table_10 (
-	.q_a       (q20),    
-	.q_b       (q21),    
+	.q_a       (q20),
+	.q_b       (q21),
 	.address_a (addr20),
 	.address_b (addr21),
-	.clock     (clk)   
+	.clock     (clk)
 );
 rom_2port_noreg #(
 	.DWIDTH(64),
@@ -412,11 +412,11 @@ rom_2port_noreg #(
 	.INIT_FILE("./memory_init/match_table.mif")
 )
 match_table_11 (
-	.q_a       (q22),    
-	.q_b       (q23),    
+	.q_a       (q22),
+	.q_b       (q23),
 	.address_a (addr22),
 	.address_b (addr23),
-	.clock     (clk)   
+	.clock     (clk)
 );
 rom_2port_noreg #(
 	.DWIDTH(64),
@@ -425,11 +425,11 @@ rom_2port_noreg #(
 	.INIT_FILE("./memory_init/match_table.mif")
 )
 match_table_12 (
-	.q_a       (q24),    
-	.q_b       (q25),    
+	.q_a       (q24),
+	.q_b       (q25),
 	.address_a (addr24),
 	.address_b (addr25),
-	.clock     (clk)   
+	.clock     (clk)
 );
 rom_2port_noreg #(
 	.DWIDTH(64),
@@ -438,11 +438,11 @@ rom_2port_noreg #(
 	.INIT_FILE("./memory_init/match_table.mif")
 )
 match_table_13 (
-	.q_a       (q26),    
-	.q_b       (q27),    
+	.q_a       (q26),
+	.q_b       (q27),
 	.address_a (addr26),
 	.address_b (addr27),
-	.clock     (clk)   
+	.clock     (clk)
 );
 rom_2port_noreg #(
 	.DWIDTH(64),
@@ -451,11 +451,11 @@ rom_2port_noreg #(
 	.INIT_FILE("./memory_init/match_table.mif")
 )
 match_table_14 (
-	.q_a       (q28),    
-	.q_b       (q29),    
+	.q_a       (q28),
+	.q_b       (q29),
 	.address_a (addr28),
 	.address_b (addr29),
-	.clock     (clk)   
+	.clock     (clk)
 );
 rom_2port_noreg #(
 	.DWIDTH(64),
@@ -464,11 +464,11 @@ rom_2port_noreg #(
 	.INIT_FILE("./memory_init/match_table.mif")
 )
 match_table_15 (
-	.q_a       (q30),    
-	.q_b       (q31),    
+	.q_a       (q30),
+	.q_b       (q31),
 	.address_a (addr30),
 	.address_b (addr31),
-	.clock     (clk)   
+	.clock     (clk)
 );
 
 endmodule

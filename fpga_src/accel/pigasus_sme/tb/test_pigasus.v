@@ -38,12 +38,6 @@ always @ (posedge front_clk)
 
 wire sop = s_axis_tvalid & !valid_r;
 
-wire          shifted_sop;
-wire          shifted_eop;
-wire          shifted_valid;
-wire [255:0]  shifted_data;
-wire [4:0]    shifted_empty;
-wire          shifted_ready;
 reg  [55:0]   last_7_bytes;
 
 reg [BYTE_COUNT*8-1:0] s_axis_tdata_rev;
@@ -51,28 +45,6 @@ integer k;
 always @ (*)
   for (k=1;k<=BYTE_COUNT;k=k+1)
     s_axis_tdata_rev[(k-1)*8+:8] = s_axis_tdata[(BYTE_COUNT-k)*8+:8] | {8{~s_axis_tkeep[BYTE_COUNT-k]}};
-
-data_shift shifter (
-    .clk(front_clk),
-    .rst(front_rst),
-    .in_pkt_sop(sop),
-    .in_pkt_eop(s_axis_tlast),
-    .in_pkt_valid(s_axis_tvalid),
-    .in_pkt_data({s_axis_tdata_rev, {((32-BYTE_COUNT)*8){1'b0}}}),
-    .in_pkt_empty(empty),
-    .in_pkt_ready(s_axis_tready),
-
-    .last_7_bytes({56{1'b1}}), //last_7_bytes),
-    .last_7_bytes_valid(1'b1),
-    .last_7_bytes_ready(),
-
-    .out_pkt_sop  (shifted_sop),
-    .out_pkt_eop  (shifted_eop),
-    .out_pkt_valid(shifted_valid),
-    .out_pkt_data (shifted_data),
-    .out_pkt_empty(shifted_empty),
-    .out_pkt_ready(shifted_ready)
-);
 
 wire [127:0] pigasus_data;
 wire         pigasus_valid;
@@ -83,13 +55,13 @@ string_matcher pigasus (
   .front_rst(front_rst),
   .back_clk(back_clk),
   .back_rst(back_rst),
-    
-  .in_data (shifted_data),
-  .in_empty(shifted_empty),
-  .in_valid(shifted_valid),
-  .in_sop  (shifted_sop),
-  .in_eop  (shifted_eop),
-  .in_ready(shifted_ready),
+
+  .in_data({s_axis_tdata_rev, {((32-BYTE_COUNT)*8){1'b0}}}),
+  .in_empty(empty),
+  .in_valid(s_axis_tvalid),
+  .in_sop(sop),
+  .in_eop(s_axis_tlast),
+  .in_ready(s_axis_tready),
 
   .out_data(pigasus_data),
   .out_valid(pigasus_valid),
