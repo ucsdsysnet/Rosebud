@@ -31,57 +31,24 @@ reg din_valid_reg;
 
 // Doing all necessary multiplies per double_byte
 wire [({{context['byte_size']}}+7)*8-1:0] padded_din;
-wire [{{context['byte_size']}}-1:0] din_signs;
-wire [{{context['byte_size']}}-1:0] din_signs_reg;
 
 {% for i in range(0,context['byte_size']+7)%}
-wire [31:0] din_{{i}}_ab0;
-wire [31:0] din_{{i}}_ab1;
-wire [31:0] din_{{i}}_ab2;
-wire [31:0] din_{{i}}_ab3;
-wire [31:0] din_{{i}}_ab0_1sc;
-wire [31:0] din_{{i}}_ab1_1sc;
-wire [31:0] din_{{i}}_ab2_1sc;
-wire [31:0] din_{{i}}_ab3_1sc;
-wire [23:0] din_{{i}}_msk_ab0;
-wire [23:0] din_{{i}}_msk_ab1;
-wire [23:0] din_{{i}}_msk_ab2;
-wire [23:0] din_{{i}}_msk_ab3;
-wire [23:0] din_{{i}}_msk_ab0_1sc;
-wire [23:0] din_{{i}}_msk_ab1_1sc;
-wire [23:0] din_{{i}}_msk_ab2_1sc;
-wire [23:0] din_{{i}}_msk_ab3_1sc;
+wire [23:0] din_{{i}}_ab0;
+wire [23:0] din_{{i}}_ab1;
+wire [23:0] din_{{i}}_ab2;
+wire [23:0] din_{{i}}_ab3;
 {% endfor %}
-
-{% for i in range(0,context['byte_size']) %}
-assign din_signs[{{i}}] = din[{{i}}*8+7];
-{% endfor %}
-
-hyper_pipe #(.NUM_PIPES(6),.WIDTH({{context['byte_size']}})) sign_bits_pipe (
-    .clk(clk),.din(din_signs),.dout(din_signs_reg));
 
 assign padded_din = {din[{{context['byte_size']}}*8-1:0], din_reg[63:8]};
 
-{% for i in range(0,context['byte_size']+6) %}
+{% for i in range(0,context['byte_size']+7) %}
 mul_hash din_{{i}}_mul_hash (
     .clk(clk),
-    .a(padded_din[{{i}}*8+:16]), 
+    .a(padded_din[{{i}}*8+:8]), 
     .ab0(din_{{i}}_ab0),                 
     .ab1(din_{{i}}_ab1), 
     .ab2(din_{{i}}_ab2),                 
-    .ab3(din_{{i}}_ab3),
-    .ab0_1sc(din_{{i}}_ab0_1sc),         
-    .ab1_1sc(din_{{i}}_ab1_1sc), 
-    .ab2_1sc(din_{{i}}_ab2_1sc),         
-    .ab3_1sc(din_{{i}}_ab3_1sc),
-    .msk_ab0(din_{{i}}_msk_ab0),        
-    .msk_ab1(din_{{i}}_msk_ab1), 
-    .msk_ab2(din_{{i}}_msk_ab2),        
-    .msk_ab3(din_{{i}}_msk_ab3),
-    .msk_ab0_1sc(din_{{i}}_msk_ab0_1sc), 
-    .msk_ab1_1sc(din_{{i}}_msk_ab1_1sc), 
-    .msk_ab2_1sc(din_{{i}}_msk_ab2_1sc), 
-    .msk_ab3_1sc(din_{{i}}_msk_ab3_1sc)
+    .ab3(din_{{i}}_ab3)
 );
 
 {% endfor %}
@@ -161,25 +128,15 @@ acc_hash # (
 	.ANDMSK({{context['andmsk'][i]}}),
 	.NBITS({{context['nbits'][i]}})
 ) addr_{{i}}_{{j}}_calc (
-           .clk(clk), .sign(din_signs_reg[{{j}}]), 
-           .p(addr_{{i}}_{{j}}),
-           .a0b0(din_{{j}}_ab0), .a0b1(din_{{j}}_ab1), .a0b2(din_{{j}}_ab2), .a0b3(din_{{j}}_ab3),
-           .a0b0_1sc(din_{{j}}_ab0_1sc), .a0b1_1sc(din_{{j}}_ab1_1sc), .a0b2_1sc(din_{{j}}_ab2_1sc), .a0b3_1sc(din_{{j}}_ab3_1sc),
-           .msk_a0b0(din_{{j}}_msk_ab0), .msk_a0b1(din_{{j}}_msk_ab1), .msk_a0b2(din_{{j}}_msk_ab2), .msk_a0b3(din_{{j}}_msk_ab3),
-           .msk_a0b0_1sc(din_{{j}}_msk_ab0_1sc), .msk_a0b1_1sc(din_{{j}}_msk_ab1_1sc), .msk_a0b2_1sc(din_{{j}}_msk_ab2_1sc), .msk_a0b3_1sc(din_{{j}}_msk_ab3_1sc),
-
-           .a1b0(din_{{j+2}}_ab0), .a1b1(din_{{j+2}}_ab1), .a1b2(din_{{j+2}}_ab2),
-           .a1b0_1sc(din_{{j+2}}_ab0_1sc), .a1b1_1sc(din_{{j+2}}_ab1_1sc), .a1b2_1sc(din_{{j+2}}_ab2_1sc),
-           .msk_a1b0(din_{{j+2}}_msk_ab0), .msk_a1b1(din_{{j+2}}_msk_ab1), .msk_a1b2(din_{{j+2}}_msk_ab2),
-           .msk_a1b0_1sc(din_{{j+2}}_msk_ab0_1sc), .msk_a1b1_1sc(din_{{j+2}}_msk_ab1_1sc), .msk_a1b2_1sc(din_{{j+2}}_msk_ab2_1sc),
-
-           .a2b0(din_{{j+4}}_ab0), .a2b1(din_{{j+4}}_ab1),
-           .a2b0_1sc(din_{{j+4}}_ab0_1sc), .a2b1_1sc(din_{{j+4}}_ab1_1sc),
-           .msk_a2b0(din_{{j+4}}_msk_ab0), .msk_a2b1(din_{{j+4}}_msk_ab1),
-           .msk_a2b0_1sc(din_{{j+4}}_msk_ab0_1sc), .msk_a2b1_1sc(din_{{j+4}}_msk_ab1_1sc),
-           
-           .a3b0(din_{{j+6}}_ab0),
-           .a3b0_1sc(din_{{j+6}}_ab0_1sc)
+  .clk(clk), .p(addr_{{i}}_{{j}}),
+  .a0b0(din_{{j}}_ab0), .a0b1(din_{{j}}_ab1), .a0b2(din_{{j}}_ab2), .a0b3(din_{{j}}_ab3),
+  .a1b0(din_{{j+1}}_ab0), .a1b1(din_{{j+1}}_ab1), .a1b2(din_{{j+1}}_ab2), .a1b3(din_{{j+1}}_ab3),
+  .a2b0(din_{{j+2}}_ab0), .a2b1(din_{{j+2}}_ab1), .a2b2(din_{{j+2}}_ab2),
+  .a3b0(din_{{j+3}}_ab0), .a3b1(din_{{j+3}}_ab1), .a3b2(din_{{j+3}}_ab2),
+  .a4b0(din_{{j+4}}_ab0), .a4b1(din_{{j+4}}_ab1),
+  .a5b0(din_{{j+5}}_ab0), .a5b1(din_{{j+5}}_ab1),
+  .a6b0(din_{{j+6}}_ab0),
+  .a7b0(din_{{j+7}}_ab0)
 );
 
 {% endfor %}

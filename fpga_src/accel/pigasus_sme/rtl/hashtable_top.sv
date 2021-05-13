@@ -1549,1468 +1549,515 @@ reg din_valid_reg;
 
 // Doing all necessary multiplies per double_byte
 wire [(32+7)*8-1:0] padded_din;
-wire [32-1:0] din_signs;
-wire [32-1:0] din_signs_reg;
 
-wire [31:0] din_0_ab0;
-wire [31:0] din_0_ab1;
-wire [31:0] din_0_ab2;
-wire [31:0] din_0_ab3;
-wire [31:0] din_0_ab0_1sc;
-wire [31:0] din_0_ab1_1sc;
-wire [31:0] din_0_ab2_1sc;
-wire [31:0] din_0_ab3_1sc;
-wire [23:0] din_0_msk_ab0;
-wire [23:0] din_0_msk_ab1;
-wire [23:0] din_0_msk_ab2;
-wire [23:0] din_0_msk_ab3;
-wire [23:0] din_0_msk_ab0_1sc;
-wire [23:0] din_0_msk_ab1_1sc;
-wire [23:0] din_0_msk_ab2_1sc;
-wire [23:0] din_0_msk_ab3_1sc;
-wire [31:0] din_1_ab0;
-wire [31:0] din_1_ab1;
-wire [31:0] din_1_ab2;
-wire [31:0] din_1_ab3;
-wire [31:0] din_1_ab0_1sc;
-wire [31:0] din_1_ab1_1sc;
-wire [31:0] din_1_ab2_1sc;
-wire [31:0] din_1_ab3_1sc;
-wire [23:0] din_1_msk_ab0;
-wire [23:0] din_1_msk_ab1;
-wire [23:0] din_1_msk_ab2;
-wire [23:0] din_1_msk_ab3;
-wire [23:0] din_1_msk_ab0_1sc;
-wire [23:0] din_1_msk_ab1_1sc;
-wire [23:0] din_1_msk_ab2_1sc;
-wire [23:0] din_1_msk_ab3_1sc;
-wire [31:0] din_2_ab0;
-wire [31:0] din_2_ab1;
-wire [31:0] din_2_ab2;
-wire [31:0] din_2_ab3;
-wire [31:0] din_2_ab0_1sc;
-wire [31:0] din_2_ab1_1sc;
-wire [31:0] din_2_ab2_1sc;
-wire [31:0] din_2_ab3_1sc;
-wire [23:0] din_2_msk_ab0;
-wire [23:0] din_2_msk_ab1;
-wire [23:0] din_2_msk_ab2;
-wire [23:0] din_2_msk_ab3;
-wire [23:0] din_2_msk_ab0_1sc;
-wire [23:0] din_2_msk_ab1_1sc;
-wire [23:0] din_2_msk_ab2_1sc;
-wire [23:0] din_2_msk_ab3_1sc;
-wire [31:0] din_3_ab0;
-wire [31:0] din_3_ab1;
-wire [31:0] din_3_ab2;
-wire [31:0] din_3_ab3;
-wire [31:0] din_3_ab0_1sc;
-wire [31:0] din_3_ab1_1sc;
-wire [31:0] din_3_ab2_1sc;
-wire [31:0] din_3_ab3_1sc;
-wire [23:0] din_3_msk_ab0;
-wire [23:0] din_3_msk_ab1;
-wire [23:0] din_3_msk_ab2;
-wire [23:0] din_3_msk_ab3;
-wire [23:0] din_3_msk_ab0_1sc;
-wire [23:0] din_3_msk_ab1_1sc;
-wire [23:0] din_3_msk_ab2_1sc;
-wire [23:0] din_3_msk_ab3_1sc;
-wire [31:0] din_4_ab0;
-wire [31:0] din_4_ab1;
-wire [31:0] din_4_ab2;
-wire [31:0] din_4_ab3;
-wire [31:0] din_4_ab0_1sc;
-wire [31:0] din_4_ab1_1sc;
-wire [31:0] din_4_ab2_1sc;
-wire [31:0] din_4_ab3_1sc;
-wire [23:0] din_4_msk_ab0;
-wire [23:0] din_4_msk_ab1;
-wire [23:0] din_4_msk_ab2;
-wire [23:0] din_4_msk_ab3;
-wire [23:0] din_4_msk_ab0_1sc;
-wire [23:0] din_4_msk_ab1_1sc;
-wire [23:0] din_4_msk_ab2_1sc;
-wire [23:0] din_4_msk_ab3_1sc;
-wire [31:0] din_5_ab0;
-wire [31:0] din_5_ab1;
-wire [31:0] din_5_ab2;
-wire [31:0] din_5_ab3;
-wire [31:0] din_5_ab0_1sc;
-wire [31:0] din_5_ab1_1sc;
-wire [31:0] din_5_ab2_1sc;
-wire [31:0] din_5_ab3_1sc;
-wire [23:0] din_5_msk_ab0;
-wire [23:0] din_5_msk_ab1;
-wire [23:0] din_5_msk_ab2;
-wire [23:0] din_5_msk_ab3;
-wire [23:0] din_5_msk_ab0_1sc;
-wire [23:0] din_5_msk_ab1_1sc;
-wire [23:0] din_5_msk_ab2_1sc;
-wire [23:0] din_5_msk_ab3_1sc;
-wire [31:0] din_6_ab0;
-wire [31:0] din_6_ab1;
-wire [31:0] din_6_ab2;
-wire [31:0] din_6_ab3;
-wire [31:0] din_6_ab0_1sc;
-wire [31:0] din_6_ab1_1sc;
-wire [31:0] din_6_ab2_1sc;
-wire [31:0] din_6_ab3_1sc;
-wire [23:0] din_6_msk_ab0;
-wire [23:0] din_6_msk_ab1;
-wire [23:0] din_6_msk_ab2;
-wire [23:0] din_6_msk_ab3;
-wire [23:0] din_6_msk_ab0_1sc;
-wire [23:0] din_6_msk_ab1_1sc;
-wire [23:0] din_6_msk_ab2_1sc;
-wire [23:0] din_6_msk_ab3_1sc;
-wire [31:0] din_7_ab0;
-wire [31:0] din_7_ab1;
-wire [31:0] din_7_ab2;
-wire [31:0] din_7_ab3;
-wire [31:0] din_7_ab0_1sc;
-wire [31:0] din_7_ab1_1sc;
-wire [31:0] din_7_ab2_1sc;
-wire [31:0] din_7_ab3_1sc;
-wire [23:0] din_7_msk_ab0;
-wire [23:0] din_7_msk_ab1;
-wire [23:0] din_7_msk_ab2;
-wire [23:0] din_7_msk_ab3;
-wire [23:0] din_7_msk_ab0_1sc;
-wire [23:0] din_7_msk_ab1_1sc;
-wire [23:0] din_7_msk_ab2_1sc;
-wire [23:0] din_7_msk_ab3_1sc;
-wire [31:0] din_8_ab0;
-wire [31:0] din_8_ab1;
-wire [31:0] din_8_ab2;
-wire [31:0] din_8_ab3;
-wire [31:0] din_8_ab0_1sc;
-wire [31:0] din_8_ab1_1sc;
-wire [31:0] din_8_ab2_1sc;
-wire [31:0] din_8_ab3_1sc;
-wire [23:0] din_8_msk_ab0;
-wire [23:0] din_8_msk_ab1;
-wire [23:0] din_8_msk_ab2;
-wire [23:0] din_8_msk_ab3;
-wire [23:0] din_8_msk_ab0_1sc;
-wire [23:0] din_8_msk_ab1_1sc;
-wire [23:0] din_8_msk_ab2_1sc;
-wire [23:0] din_8_msk_ab3_1sc;
-wire [31:0] din_9_ab0;
-wire [31:0] din_9_ab1;
-wire [31:0] din_9_ab2;
-wire [31:0] din_9_ab3;
-wire [31:0] din_9_ab0_1sc;
-wire [31:0] din_9_ab1_1sc;
-wire [31:0] din_9_ab2_1sc;
-wire [31:0] din_9_ab3_1sc;
-wire [23:0] din_9_msk_ab0;
-wire [23:0] din_9_msk_ab1;
-wire [23:0] din_9_msk_ab2;
-wire [23:0] din_9_msk_ab3;
-wire [23:0] din_9_msk_ab0_1sc;
-wire [23:0] din_9_msk_ab1_1sc;
-wire [23:0] din_9_msk_ab2_1sc;
-wire [23:0] din_9_msk_ab3_1sc;
-wire [31:0] din_10_ab0;
-wire [31:0] din_10_ab1;
-wire [31:0] din_10_ab2;
-wire [31:0] din_10_ab3;
-wire [31:0] din_10_ab0_1sc;
-wire [31:0] din_10_ab1_1sc;
-wire [31:0] din_10_ab2_1sc;
-wire [31:0] din_10_ab3_1sc;
-wire [23:0] din_10_msk_ab0;
-wire [23:0] din_10_msk_ab1;
-wire [23:0] din_10_msk_ab2;
-wire [23:0] din_10_msk_ab3;
-wire [23:0] din_10_msk_ab0_1sc;
-wire [23:0] din_10_msk_ab1_1sc;
-wire [23:0] din_10_msk_ab2_1sc;
-wire [23:0] din_10_msk_ab3_1sc;
-wire [31:0] din_11_ab0;
-wire [31:0] din_11_ab1;
-wire [31:0] din_11_ab2;
-wire [31:0] din_11_ab3;
-wire [31:0] din_11_ab0_1sc;
-wire [31:0] din_11_ab1_1sc;
-wire [31:0] din_11_ab2_1sc;
-wire [31:0] din_11_ab3_1sc;
-wire [23:0] din_11_msk_ab0;
-wire [23:0] din_11_msk_ab1;
-wire [23:0] din_11_msk_ab2;
-wire [23:0] din_11_msk_ab3;
-wire [23:0] din_11_msk_ab0_1sc;
-wire [23:0] din_11_msk_ab1_1sc;
-wire [23:0] din_11_msk_ab2_1sc;
-wire [23:0] din_11_msk_ab3_1sc;
-wire [31:0] din_12_ab0;
-wire [31:0] din_12_ab1;
-wire [31:0] din_12_ab2;
-wire [31:0] din_12_ab3;
-wire [31:0] din_12_ab0_1sc;
-wire [31:0] din_12_ab1_1sc;
-wire [31:0] din_12_ab2_1sc;
-wire [31:0] din_12_ab3_1sc;
-wire [23:0] din_12_msk_ab0;
-wire [23:0] din_12_msk_ab1;
-wire [23:0] din_12_msk_ab2;
-wire [23:0] din_12_msk_ab3;
-wire [23:0] din_12_msk_ab0_1sc;
-wire [23:0] din_12_msk_ab1_1sc;
-wire [23:0] din_12_msk_ab2_1sc;
-wire [23:0] din_12_msk_ab3_1sc;
-wire [31:0] din_13_ab0;
-wire [31:0] din_13_ab1;
-wire [31:0] din_13_ab2;
-wire [31:0] din_13_ab3;
-wire [31:0] din_13_ab0_1sc;
-wire [31:0] din_13_ab1_1sc;
-wire [31:0] din_13_ab2_1sc;
-wire [31:0] din_13_ab3_1sc;
-wire [23:0] din_13_msk_ab0;
-wire [23:0] din_13_msk_ab1;
-wire [23:0] din_13_msk_ab2;
-wire [23:0] din_13_msk_ab3;
-wire [23:0] din_13_msk_ab0_1sc;
-wire [23:0] din_13_msk_ab1_1sc;
-wire [23:0] din_13_msk_ab2_1sc;
-wire [23:0] din_13_msk_ab3_1sc;
-wire [31:0] din_14_ab0;
-wire [31:0] din_14_ab1;
-wire [31:0] din_14_ab2;
-wire [31:0] din_14_ab3;
-wire [31:0] din_14_ab0_1sc;
-wire [31:0] din_14_ab1_1sc;
-wire [31:0] din_14_ab2_1sc;
-wire [31:0] din_14_ab3_1sc;
-wire [23:0] din_14_msk_ab0;
-wire [23:0] din_14_msk_ab1;
-wire [23:0] din_14_msk_ab2;
-wire [23:0] din_14_msk_ab3;
-wire [23:0] din_14_msk_ab0_1sc;
-wire [23:0] din_14_msk_ab1_1sc;
-wire [23:0] din_14_msk_ab2_1sc;
-wire [23:0] din_14_msk_ab3_1sc;
-wire [31:0] din_15_ab0;
-wire [31:0] din_15_ab1;
-wire [31:0] din_15_ab2;
-wire [31:0] din_15_ab3;
-wire [31:0] din_15_ab0_1sc;
-wire [31:0] din_15_ab1_1sc;
-wire [31:0] din_15_ab2_1sc;
-wire [31:0] din_15_ab3_1sc;
-wire [23:0] din_15_msk_ab0;
-wire [23:0] din_15_msk_ab1;
-wire [23:0] din_15_msk_ab2;
-wire [23:0] din_15_msk_ab3;
-wire [23:0] din_15_msk_ab0_1sc;
-wire [23:0] din_15_msk_ab1_1sc;
-wire [23:0] din_15_msk_ab2_1sc;
-wire [23:0] din_15_msk_ab3_1sc;
-wire [31:0] din_16_ab0;
-wire [31:0] din_16_ab1;
-wire [31:0] din_16_ab2;
-wire [31:0] din_16_ab3;
-wire [31:0] din_16_ab0_1sc;
-wire [31:0] din_16_ab1_1sc;
-wire [31:0] din_16_ab2_1sc;
-wire [31:0] din_16_ab3_1sc;
-wire [23:0] din_16_msk_ab0;
-wire [23:0] din_16_msk_ab1;
-wire [23:0] din_16_msk_ab2;
-wire [23:0] din_16_msk_ab3;
-wire [23:0] din_16_msk_ab0_1sc;
-wire [23:0] din_16_msk_ab1_1sc;
-wire [23:0] din_16_msk_ab2_1sc;
-wire [23:0] din_16_msk_ab3_1sc;
-wire [31:0] din_17_ab0;
-wire [31:0] din_17_ab1;
-wire [31:0] din_17_ab2;
-wire [31:0] din_17_ab3;
-wire [31:0] din_17_ab0_1sc;
-wire [31:0] din_17_ab1_1sc;
-wire [31:0] din_17_ab2_1sc;
-wire [31:0] din_17_ab3_1sc;
-wire [23:0] din_17_msk_ab0;
-wire [23:0] din_17_msk_ab1;
-wire [23:0] din_17_msk_ab2;
-wire [23:0] din_17_msk_ab3;
-wire [23:0] din_17_msk_ab0_1sc;
-wire [23:0] din_17_msk_ab1_1sc;
-wire [23:0] din_17_msk_ab2_1sc;
-wire [23:0] din_17_msk_ab3_1sc;
-wire [31:0] din_18_ab0;
-wire [31:0] din_18_ab1;
-wire [31:0] din_18_ab2;
-wire [31:0] din_18_ab3;
-wire [31:0] din_18_ab0_1sc;
-wire [31:0] din_18_ab1_1sc;
-wire [31:0] din_18_ab2_1sc;
-wire [31:0] din_18_ab3_1sc;
-wire [23:0] din_18_msk_ab0;
-wire [23:0] din_18_msk_ab1;
-wire [23:0] din_18_msk_ab2;
-wire [23:0] din_18_msk_ab3;
-wire [23:0] din_18_msk_ab0_1sc;
-wire [23:0] din_18_msk_ab1_1sc;
-wire [23:0] din_18_msk_ab2_1sc;
-wire [23:0] din_18_msk_ab3_1sc;
-wire [31:0] din_19_ab0;
-wire [31:0] din_19_ab1;
-wire [31:0] din_19_ab2;
-wire [31:0] din_19_ab3;
-wire [31:0] din_19_ab0_1sc;
-wire [31:0] din_19_ab1_1sc;
-wire [31:0] din_19_ab2_1sc;
-wire [31:0] din_19_ab3_1sc;
-wire [23:0] din_19_msk_ab0;
-wire [23:0] din_19_msk_ab1;
-wire [23:0] din_19_msk_ab2;
-wire [23:0] din_19_msk_ab3;
-wire [23:0] din_19_msk_ab0_1sc;
-wire [23:0] din_19_msk_ab1_1sc;
-wire [23:0] din_19_msk_ab2_1sc;
-wire [23:0] din_19_msk_ab3_1sc;
-wire [31:0] din_20_ab0;
-wire [31:0] din_20_ab1;
-wire [31:0] din_20_ab2;
-wire [31:0] din_20_ab3;
-wire [31:0] din_20_ab0_1sc;
-wire [31:0] din_20_ab1_1sc;
-wire [31:0] din_20_ab2_1sc;
-wire [31:0] din_20_ab3_1sc;
-wire [23:0] din_20_msk_ab0;
-wire [23:0] din_20_msk_ab1;
-wire [23:0] din_20_msk_ab2;
-wire [23:0] din_20_msk_ab3;
-wire [23:0] din_20_msk_ab0_1sc;
-wire [23:0] din_20_msk_ab1_1sc;
-wire [23:0] din_20_msk_ab2_1sc;
-wire [23:0] din_20_msk_ab3_1sc;
-wire [31:0] din_21_ab0;
-wire [31:0] din_21_ab1;
-wire [31:0] din_21_ab2;
-wire [31:0] din_21_ab3;
-wire [31:0] din_21_ab0_1sc;
-wire [31:0] din_21_ab1_1sc;
-wire [31:0] din_21_ab2_1sc;
-wire [31:0] din_21_ab3_1sc;
-wire [23:0] din_21_msk_ab0;
-wire [23:0] din_21_msk_ab1;
-wire [23:0] din_21_msk_ab2;
-wire [23:0] din_21_msk_ab3;
-wire [23:0] din_21_msk_ab0_1sc;
-wire [23:0] din_21_msk_ab1_1sc;
-wire [23:0] din_21_msk_ab2_1sc;
-wire [23:0] din_21_msk_ab3_1sc;
-wire [31:0] din_22_ab0;
-wire [31:0] din_22_ab1;
-wire [31:0] din_22_ab2;
-wire [31:0] din_22_ab3;
-wire [31:0] din_22_ab0_1sc;
-wire [31:0] din_22_ab1_1sc;
-wire [31:0] din_22_ab2_1sc;
-wire [31:0] din_22_ab3_1sc;
-wire [23:0] din_22_msk_ab0;
-wire [23:0] din_22_msk_ab1;
-wire [23:0] din_22_msk_ab2;
-wire [23:0] din_22_msk_ab3;
-wire [23:0] din_22_msk_ab0_1sc;
-wire [23:0] din_22_msk_ab1_1sc;
-wire [23:0] din_22_msk_ab2_1sc;
-wire [23:0] din_22_msk_ab3_1sc;
-wire [31:0] din_23_ab0;
-wire [31:0] din_23_ab1;
-wire [31:0] din_23_ab2;
-wire [31:0] din_23_ab3;
-wire [31:0] din_23_ab0_1sc;
-wire [31:0] din_23_ab1_1sc;
-wire [31:0] din_23_ab2_1sc;
-wire [31:0] din_23_ab3_1sc;
-wire [23:0] din_23_msk_ab0;
-wire [23:0] din_23_msk_ab1;
-wire [23:0] din_23_msk_ab2;
-wire [23:0] din_23_msk_ab3;
-wire [23:0] din_23_msk_ab0_1sc;
-wire [23:0] din_23_msk_ab1_1sc;
-wire [23:0] din_23_msk_ab2_1sc;
-wire [23:0] din_23_msk_ab3_1sc;
-wire [31:0] din_24_ab0;
-wire [31:0] din_24_ab1;
-wire [31:0] din_24_ab2;
-wire [31:0] din_24_ab3;
-wire [31:0] din_24_ab0_1sc;
-wire [31:0] din_24_ab1_1sc;
-wire [31:0] din_24_ab2_1sc;
-wire [31:0] din_24_ab3_1sc;
-wire [23:0] din_24_msk_ab0;
-wire [23:0] din_24_msk_ab1;
-wire [23:0] din_24_msk_ab2;
-wire [23:0] din_24_msk_ab3;
-wire [23:0] din_24_msk_ab0_1sc;
-wire [23:0] din_24_msk_ab1_1sc;
-wire [23:0] din_24_msk_ab2_1sc;
-wire [23:0] din_24_msk_ab3_1sc;
-wire [31:0] din_25_ab0;
-wire [31:0] din_25_ab1;
-wire [31:0] din_25_ab2;
-wire [31:0] din_25_ab3;
-wire [31:0] din_25_ab0_1sc;
-wire [31:0] din_25_ab1_1sc;
-wire [31:0] din_25_ab2_1sc;
-wire [31:0] din_25_ab3_1sc;
-wire [23:0] din_25_msk_ab0;
-wire [23:0] din_25_msk_ab1;
-wire [23:0] din_25_msk_ab2;
-wire [23:0] din_25_msk_ab3;
-wire [23:0] din_25_msk_ab0_1sc;
-wire [23:0] din_25_msk_ab1_1sc;
-wire [23:0] din_25_msk_ab2_1sc;
-wire [23:0] din_25_msk_ab3_1sc;
-wire [31:0] din_26_ab0;
-wire [31:0] din_26_ab1;
-wire [31:0] din_26_ab2;
-wire [31:0] din_26_ab3;
-wire [31:0] din_26_ab0_1sc;
-wire [31:0] din_26_ab1_1sc;
-wire [31:0] din_26_ab2_1sc;
-wire [31:0] din_26_ab3_1sc;
-wire [23:0] din_26_msk_ab0;
-wire [23:0] din_26_msk_ab1;
-wire [23:0] din_26_msk_ab2;
-wire [23:0] din_26_msk_ab3;
-wire [23:0] din_26_msk_ab0_1sc;
-wire [23:0] din_26_msk_ab1_1sc;
-wire [23:0] din_26_msk_ab2_1sc;
-wire [23:0] din_26_msk_ab3_1sc;
-wire [31:0] din_27_ab0;
-wire [31:0] din_27_ab1;
-wire [31:0] din_27_ab2;
-wire [31:0] din_27_ab3;
-wire [31:0] din_27_ab0_1sc;
-wire [31:0] din_27_ab1_1sc;
-wire [31:0] din_27_ab2_1sc;
-wire [31:0] din_27_ab3_1sc;
-wire [23:0] din_27_msk_ab0;
-wire [23:0] din_27_msk_ab1;
-wire [23:0] din_27_msk_ab2;
-wire [23:0] din_27_msk_ab3;
-wire [23:0] din_27_msk_ab0_1sc;
-wire [23:0] din_27_msk_ab1_1sc;
-wire [23:0] din_27_msk_ab2_1sc;
-wire [23:0] din_27_msk_ab3_1sc;
-wire [31:0] din_28_ab0;
-wire [31:0] din_28_ab1;
-wire [31:0] din_28_ab2;
-wire [31:0] din_28_ab3;
-wire [31:0] din_28_ab0_1sc;
-wire [31:0] din_28_ab1_1sc;
-wire [31:0] din_28_ab2_1sc;
-wire [31:0] din_28_ab3_1sc;
-wire [23:0] din_28_msk_ab0;
-wire [23:0] din_28_msk_ab1;
-wire [23:0] din_28_msk_ab2;
-wire [23:0] din_28_msk_ab3;
-wire [23:0] din_28_msk_ab0_1sc;
-wire [23:0] din_28_msk_ab1_1sc;
-wire [23:0] din_28_msk_ab2_1sc;
-wire [23:0] din_28_msk_ab3_1sc;
-wire [31:0] din_29_ab0;
-wire [31:0] din_29_ab1;
-wire [31:0] din_29_ab2;
-wire [31:0] din_29_ab3;
-wire [31:0] din_29_ab0_1sc;
-wire [31:0] din_29_ab1_1sc;
-wire [31:0] din_29_ab2_1sc;
-wire [31:0] din_29_ab3_1sc;
-wire [23:0] din_29_msk_ab0;
-wire [23:0] din_29_msk_ab1;
-wire [23:0] din_29_msk_ab2;
-wire [23:0] din_29_msk_ab3;
-wire [23:0] din_29_msk_ab0_1sc;
-wire [23:0] din_29_msk_ab1_1sc;
-wire [23:0] din_29_msk_ab2_1sc;
-wire [23:0] din_29_msk_ab3_1sc;
-wire [31:0] din_30_ab0;
-wire [31:0] din_30_ab1;
-wire [31:0] din_30_ab2;
-wire [31:0] din_30_ab3;
-wire [31:0] din_30_ab0_1sc;
-wire [31:0] din_30_ab1_1sc;
-wire [31:0] din_30_ab2_1sc;
-wire [31:0] din_30_ab3_1sc;
-wire [23:0] din_30_msk_ab0;
-wire [23:0] din_30_msk_ab1;
-wire [23:0] din_30_msk_ab2;
-wire [23:0] din_30_msk_ab3;
-wire [23:0] din_30_msk_ab0_1sc;
-wire [23:0] din_30_msk_ab1_1sc;
-wire [23:0] din_30_msk_ab2_1sc;
-wire [23:0] din_30_msk_ab3_1sc;
-wire [31:0] din_31_ab0;
-wire [31:0] din_31_ab1;
-wire [31:0] din_31_ab2;
-wire [31:0] din_31_ab3;
-wire [31:0] din_31_ab0_1sc;
-wire [31:0] din_31_ab1_1sc;
-wire [31:0] din_31_ab2_1sc;
-wire [31:0] din_31_ab3_1sc;
-wire [23:0] din_31_msk_ab0;
-wire [23:0] din_31_msk_ab1;
-wire [23:0] din_31_msk_ab2;
-wire [23:0] din_31_msk_ab3;
-wire [23:0] din_31_msk_ab0_1sc;
-wire [23:0] din_31_msk_ab1_1sc;
-wire [23:0] din_31_msk_ab2_1sc;
-wire [23:0] din_31_msk_ab3_1sc;
-wire [31:0] din_32_ab0;
-wire [31:0] din_32_ab1;
-wire [31:0] din_32_ab2;
-wire [31:0] din_32_ab3;
-wire [31:0] din_32_ab0_1sc;
-wire [31:0] din_32_ab1_1sc;
-wire [31:0] din_32_ab2_1sc;
-wire [31:0] din_32_ab3_1sc;
-wire [23:0] din_32_msk_ab0;
-wire [23:0] din_32_msk_ab1;
-wire [23:0] din_32_msk_ab2;
-wire [23:0] din_32_msk_ab3;
-wire [23:0] din_32_msk_ab0_1sc;
-wire [23:0] din_32_msk_ab1_1sc;
-wire [23:0] din_32_msk_ab2_1sc;
-wire [23:0] din_32_msk_ab3_1sc;
-wire [31:0] din_33_ab0;
-wire [31:0] din_33_ab1;
-wire [31:0] din_33_ab2;
-wire [31:0] din_33_ab3;
-wire [31:0] din_33_ab0_1sc;
-wire [31:0] din_33_ab1_1sc;
-wire [31:0] din_33_ab2_1sc;
-wire [31:0] din_33_ab3_1sc;
-wire [23:0] din_33_msk_ab0;
-wire [23:0] din_33_msk_ab1;
-wire [23:0] din_33_msk_ab2;
-wire [23:0] din_33_msk_ab3;
-wire [23:0] din_33_msk_ab0_1sc;
-wire [23:0] din_33_msk_ab1_1sc;
-wire [23:0] din_33_msk_ab2_1sc;
-wire [23:0] din_33_msk_ab3_1sc;
-wire [31:0] din_34_ab0;
-wire [31:0] din_34_ab1;
-wire [31:0] din_34_ab2;
-wire [31:0] din_34_ab3;
-wire [31:0] din_34_ab0_1sc;
-wire [31:0] din_34_ab1_1sc;
-wire [31:0] din_34_ab2_1sc;
-wire [31:0] din_34_ab3_1sc;
-wire [23:0] din_34_msk_ab0;
-wire [23:0] din_34_msk_ab1;
-wire [23:0] din_34_msk_ab2;
-wire [23:0] din_34_msk_ab3;
-wire [23:0] din_34_msk_ab0_1sc;
-wire [23:0] din_34_msk_ab1_1sc;
-wire [23:0] din_34_msk_ab2_1sc;
-wire [23:0] din_34_msk_ab3_1sc;
-wire [31:0] din_35_ab0;
-wire [31:0] din_35_ab1;
-wire [31:0] din_35_ab2;
-wire [31:0] din_35_ab3;
-wire [31:0] din_35_ab0_1sc;
-wire [31:0] din_35_ab1_1sc;
-wire [31:0] din_35_ab2_1sc;
-wire [31:0] din_35_ab3_1sc;
-wire [23:0] din_35_msk_ab0;
-wire [23:0] din_35_msk_ab1;
-wire [23:0] din_35_msk_ab2;
-wire [23:0] din_35_msk_ab3;
-wire [23:0] din_35_msk_ab0_1sc;
-wire [23:0] din_35_msk_ab1_1sc;
-wire [23:0] din_35_msk_ab2_1sc;
-wire [23:0] din_35_msk_ab3_1sc;
-wire [31:0] din_36_ab0;
-wire [31:0] din_36_ab1;
-wire [31:0] din_36_ab2;
-wire [31:0] din_36_ab3;
-wire [31:0] din_36_ab0_1sc;
-wire [31:0] din_36_ab1_1sc;
-wire [31:0] din_36_ab2_1sc;
-wire [31:0] din_36_ab3_1sc;
-wire [23:0] din_36_msk_ab0;
-wire [23:0] din_36_msk_ab1;
-wire [23:0] din_36_msk_ab2;
-wire [23:0] din_36_msk_ab3;
-wire [23:0] din_36_msk_ab0_1sc;
-wire [23:0] din_36_msk_ab1_1sc;
-wire [23:0] din_36_msk_ab2_1sc;
-wire [23:0] din_36_msk_ab3_1sc;
-wire [31:0] din_37_ab0;
-wire [31:0] din_37_ab1;
-wire [31:0] din_37_ab2;
-wire [31:0] din_37_ab3;
-wire [31:0] din_37_ab0_1sc;
-wire [31:0] din_37_ab1_1sc;
-wire [31:0] din_37_ab2_1sc;
-wire [31:0] din_37_ab3_1sc;
-wire [23:0] din_37_msk_ab0;
-wire [23:0] din_37_msk_ab1;
-wire [23:0] din_37_msk_ab2;
-wire [23:0] din_37_msk_ab3;
-wire [23:0] din_37_msk_ab0_1sc;
-wire [23:0] din_37_msk_ab1_1sc;
-wire [23:0] din_37_msk_ab2_1sc;
-wire [23:0] din_37_msk_ab3_1sc;
-wire [31:0] din_38_ab0;
-wire [31:0] din_38_ab1;
-wire [31:0] din_38_ab2;
-wire [31:0] din_38_ab3;
-wire [31:0] din_38_ab0_1sc;
-wire [31:0] din_38_ab1_1sc;
-wire [31:0] din_38_ab2_1sc;
-wire [31:0] din_38_ab3_1sc;
-wire [23:0] din_38_msk_ab0;
-wire [23:0] din_38_msk_ab1;
-wire [23:0] din_38_msk_ab2;
-wire [23:0] din_38_msk_ab3;
-wire [23:0] din_38_msk_ab0_1sc;
-wire [23:0] din_38_msk_ab1_1sc;
-wire [23:0] din_38_msk_ab2_1sc;
-wire [23:0] din_38_msk_ab3_1sc;
-
-assign din_signs[0] = din[0*8+7];
-assign din_signs[1] = din[1*8+7];
-assign din_signs[2] = din[2*8+7];
-assign din_signs[3] = din[3*8+7];
-assign din_signs[4] = din[4*8+7];
-assign din_signs[5] = din[5*8+7];
-assign din_signs[6] = din[6*8+7];
-assign din_signs[7] = din[7*8+7];
-assign din_signs[8] = din[8*8+7];
-assign din_signs[9] = din[9*8+7];
-assign din_signs[10] = din[10*8+7];
-assign din_signs[11] = din[11*8+7];
-assign din_signs[12] = din[12*8+7];
-assign din_signs[13] = din[13*8+7];
-assign din_signs[14] = din[14*8+7];
-assign din_signs[15] = din[15*8+7];
-assign din_signs[16] = din[16*8+7];
-assign din_signs[17] = din[17*8+7];
-assign din_signs[18] = din[18*8+7];
-assign din_signs[19] = din[19*8+7];
-assign din_signs[20] = din[20*8+7];
-assign din_signs[21] = din[21*8+7];
-assign din_signs[22] = din[22*8+7];
-assign din_signs[23] = din[23*8+7];
-assign din_signs[24] = din[24*8+7];
-assign din_signs[25] = din[25*8+7];
-assign din_signs[26] = din[26*8+7];
-assign din_signs[27] = din[27*8+7];
-assign din_signs[28] = din[28*8+7];
-assign din_signs[29] = din[29*8+7];
-assign din_signs[30] = din[30*8+7];
-assign din_signs[31] = din[31*8+7];
-
-hyper_pipe #(.NUM_PIPES(6),.WIDTH(32)) sign_bits_pipe (
-    .clk(clk),.din(din_signs),.dout(din_signs_reg));
+wire [23:0] din_0_ab0;
+wire [23:0] din_0_ab1;
+wire [23:0] din_0_ab2;
+wire [23:0] din_0_ab3;
+wire [23:0] din_1_ab0;
+wire [23:0] din_1_ab1;
+wire [23:0] din_1_ab2;
+wire [23:0] din_1_ab3;
+wire [23:0] din_2_ab0;
+wire [23:0] din_2_ab1;
+wire [23:0] din_2_ab2;
+wire [23:0] din_2_ab3;
+wire [23:0] din_3_ab0;
+wire [23:0] din_3_ab1;
+wire [23:0] din_3_ab2;
+wire [23:0] din_3_ab3;
+wire [23:0] din_4_ab0;
+wire [23:0] din_4_ab1;
+wire [23:0] din_4_ab2;
+wire [23:0] din_4_ab3;
+wire [23:0] din_5_ab0;
+wire [23:0] din_5_ab1;
+wire [23:0] din_5_ab2;
+wire [23:0] din_5_ab3;
+wire [23:0] din_6_ab0;
+wire [23:0] din_6_ab1;
+wire [23:0] din_6_ab2;
+wire [23:0] din_6_ab3;
+wire [23:0] din_7_ab0;
+wire [23:0] din_7_ab1;
+wire [23:0] din_7_ab2;
+wire [23:0] din_7_ab3;
+wire [23:0] din_8_ab0;
+wire [23:0] din_8_ab1;
+wire [23:0] din_8_ab2;
+wire [23:0] din_8_ab3;
+wire [23:0] din_9_ab0;
+wire [23:0] din_9_ab1;
+wire [23:0] din_9_ab2;
+wire [23:0] din_9_ab3;
+wire [23:0] din_10_ab0;
+wire [23:0] din_10_ab1;
+wire [23:0] din_10_ab2;
+wire [23:0] din_10_ab3;
+wire [23:0] din_11_ab0;
+wire [23:0] din_11_ab1;
+wire [23:0] din_11_ab2;
+wire [23:0] din_11_ab3;
+wire [23:0] din_12_ab0;
+wire [23:0] din_12_ab1;
+wire [23:0] din_12_ab2;
+wire [23:0] din_12_ab3;
+wire [23:0] din_13_ab0;
+wire [23:0] din_13_ab1;
+wire [23:0] din_13_ab2;
+wire [23:0] din_13_ab3;
+wire [23:0] din_14_ab0;
+wire [23:0] din_14_ab1;
+wire [23:0] din_14_ab2;
+wire [23:0] din_14_ab3;
+wire [23:0] din_15_ab0;
+wire [23:0] din_15_ab1;
+wire [23:0] din_15_ab2;
+wire [23:0] din_15_ab3;
+wire [23:0] din_16_ab0;
+wire [23:0] din_16_ab1;
+wire [23:0] din_16_ab2;
+wire [23:0] din_16_ab3;
+wire [23:0] din_17_ab0;
+wire [23:0] din_17_ab1;
+wire [23:0] din_17_ab2;
+wire [23:0] din_17_ab3;
+wire [23:0] din_18_ab0;
+wire [23:0] din_18_ab1;
+wire [23:0] din_18_ab2;
+wire [23:0] din_18_ab3;
+wire [23:0] din_19_ab0;
+wire [23:0] din_19_ab1;
+wire [23:0] din_19_ab2;
+wire [23:0] din_19_ab3;
+wire [23:0] din_20_ab0;
+wire [23:0] din_20_ab1;
+wire [23:0] din_20_ab2;
+wire [23:0] din_20_ab3;
+wire [23:0] din_21_ab0;
+wire [23:0] din_21_ab1;
+wire [23:0] din_21_ab2;
+wire [23:0] din_21_ab3;
+wire [23:0] din_22_ab0;
+wire [23:0] din_22_ab1;
+wire [23:0] din_22_ab2;
+wire [23:0] din_22_ab3;
+wire [23:0] din_23_ab0;
+wire [23:0] din_23_ab1;
+wire [23:0] din_23_ab2;
+wire [23:0] din_23_ab3;
+wire [23:0] din_24_ab0;
+wire [23:0] din_24_ab1;
+wire [23:0] din_24_ab2;
+wire [23:0] din_24_ab3;
+wire [23:0] din_25_ab0;
+wire [23:0] din_25_ab1;
+wire [23:0] din_25_ab2;
+wire [23:0] din_25_ab3;
+wire [23:0] din_26_ab0;
+wire [23:0] din_26_ab1;
+wire [23:0] din_26_ab2;
+wire [23:0] din_26_ab3;
+wire [23:0] din_27_ab0;
+wire [23:0] din_27_ab1;
+wire [23:0] din_27_ab2;
+wire [23:0] din_27_ab3;
+wire [23:0] din_28_ab0;
+wire [23:0] din_28_ab1;
+wire [23:0] din_28_ab2;
+wire [23:0] din_28_ab3;
+wire [23:0] din_29_ab0;
+wire [23:0] din_29_ab1;
+wire [23:0] din_29_ab2;
+wire [23:0] din_29_ab3;
+wire [23:0] din_30_ab0;
+wire [23:0] din_30_ab1;
+wire [23:0] din_30_ab2;
+wire [23:0] din_30_ab3;
+wire [23:0] din_31_ab0;
+wire [23:0] din_31_ab1;
+wire [23:0] din_31_ab2;
+wire [23:0] din_31_ab3;
+wire [23:0] din_32_ab0;
+wire [23:0] din_32_ab1;
+wire [23:0] din_32_ab2;
+wire [23:0] din_32_ab3;
+wire [23:0] din_33_ab0;
+wire [23:0] din_33_ab1;
+wire [23:0] din_33_ab2;
+wire [23:0] din_33_ab3;
+wire [23:0] din_34_ab0;
+wire [23:0] din_34_ab1;
+wire [23:0] din_34_ab2;
+wire [23:0] din_34_ab3;
+wire [23:0] din_35_ab0;
+wire [23:0] din_35_ab1;
+wire [23:0] din_35_ab2;
+wire [23:0] din_35_ab3;
+wire [23:0] din_36_ab0;
+wire [23:0] din_36_ab1;
+wire [23:0] din_36_ab2;
+wire [23:0] din_36_ab3;
+wire [23:0] din_37_ab0;
+wire [23:0] din_37_ab1;
+wire [23:0] din_37_ab2;
+wire [23:0] din_37_ab3;
+wire [23:0] din_38_ab0;
+wire [23:0] din_38_ab1;
+wire [23:0] din_38_ab2;
+wire [23:0] din_38_ab3;
 
 assign padded_din = {din[32*8-1:0], din_reg[63:8]};
 
 mul_hash din_0_mul_hash (
     .clk(clk),
-    .a(padded_din[0*8+:16]), 
+    .a(padded_din[0*8+:8]), 
     .ab0(din_0_ab0),                 
     .ab1(din_0_ab1), 
     .ab2(din_0_ab2),                 
-    .ab3(din_0_ab3),
-    .ab0_1sc(din_0_ab0_1sc),         
-    .ab1_1sc(din_0_ab1_1sc), 
-    .ab2_1sc(din_0_ab2_1sc),         
-    .ab3_1sc(din_0_ab3_1sc),
-    .msk_ab0(din_0_msk_ab0),        
-    .msk_ab1(din_0_msk_ab1), 
-    .msk_ab2(din_0_msk_ab2),        
-    .msk_ab3(din_0_msk_ab3),
-    .msk_ab0_1sc(din_0_msk_ab0_1sc), 
-    .msk_ab1_1sc(din_0_msk_ab1_1sc), 
-    .msk_ab2_1sc(din_0_msk_ab2_1sc), 
-    .msk_ab3_1sc(din_0_msk_ab3_1sc)
+    .ab3(din_0_ab3)
 );
 
 mul_hash din_1_mul_hash (
     .clk(clk),
-    .a(padded_din[1*8+:16]), 
+    .a(padded_din[1*8+:8]), 
     .ab0(din_1_ab0),                 
     .ab1(din_1_ab1), 
     .ab2(din_1_ab2),                 
-    .ab3(din_1_ab3),
-    .ab0_1sc(din_1_ab0_1sc),         
-    .ab1_1sc(din_1_ab1_1sc), 
-    .ab2_1sc(din_1_ab2_1sc),         
-    .ab3_1sc(din_1_ab3_1sc),
-    .msk_ab0(din_1_msk_ab0),        
-    .msk_ab1(din_1_msk_ab1), 
-    .msk_ab2(din_1_msk_ab2),        
-    .msk_ab3(din_1_msk_ab3),
-    .msk_ab0_1sc(din_1_msk_ab0_1sc), 
-    .msk_ab1_1sc(din_1_msk_ab1_1sc), 
-    .msk_ab2_1sc(din_1_msk_ab2_1sc), 
-    .msk_ab3_1sc(din_1_msk_ab3_1sc)
+    .ab3(din_1_ab3)
 );
 
 mul_hash din_2_mul_hash (
     .clk(clk),
-    .a(padded_din[2*8+:16]), 
+    .a(padded_din[2*8+:8]), 
     .ab0(din_2_ab0),                 
     .ab1(din_2_ab1), 
     .ab2(din_2_ab2),                 
-    .ab3(din_2_ab3),
-    .ab0_1sc(din_2_ab0_1sc),         
-    .ab1_1sc(din_2_ab1_1sc), 
-    .ab2_1sc(din_2_ab2_1sc),         
-    .ab3_1sc(din_2_ab3_1sc),
-    .msk_ab0(din_2_msk_ab0),        
-    .msk_ab1(din_2_msk_ab1), 
-    .msk_ab2(din_2_msk_ab2),        
-    .msk_ab3(din_2_msk_ab3),
-    .msk_ab0_1sc(din_2_msk_ab0_1sc), 
-    .msk_ab1_1sc(din_2_msk_ab1_1sc), 
-    .msk_ab2_1sc(din_2_msk_ab2_1sc), 
-    .msk_ab3_1sc(din_2_msk_ab3_1sc)
+    .ab3(din_2_ab3)
 );
 
 mul_hash din_3_mul_hash (
     .clk(clk),
-    .a(padded_din[3*8+:16]), 
+    .a(padded_din[3*8+:8]), 
     .ab0(din_3_ab0),                 
     .ab1(din_3_ab1), 
     .ab2(din_3_ab2),                 
-    .ab3(din_3_ab3),
-    .ab0_1sc(din_3_ab0_1sc),         
-    .ab1_1sc(din_3_ab1_1sc), 
-    .ab2_1sc(din_3_ab2_1sc),         
-    .ab3_1sc(din_3_ab3_1sc),
-    .msk_ab0(din_3_msk_ab0),        
-    .msk_ab1(din_3_msk_ab1), 
-    .msk_ab2(din_3_msk_ab2),        
-    .msk_ab3(din_3_msk_ab3),
-    .msk_ab0_1sc(din_3_msk_ab0_1sc), 
-    .msk_ab1_1sc(din_3_msk_ab1_1sc), 
-    .msk_ab2_1sc(din_3_msk_ab2_1sc), 
-    .msk_ab3_1sc(din_3_msk_ab3_1sc)
+    .ab3(din_3_ab3)
 );
 
 mul_hash din_4_mul_hash (
     .clk(clk),
-    .a(padded_din[4*8+:16]), 
+    .a(padded_din[4*8+:8]), 
     .ab0(din_4_ab0),                 
     .ab1(din_4_ab1), 
     .ab2(din_4_ab2),                 
-    .ab3(din_4_ab3),
-    .ab0_1sc(din_4_ab0_1sc),         
-    .ab1_1sc(din_4_ab1_1sc), 
-    .ab2_1sc(din_4_ab2_1sc),         
-    .ab3_1sc(din_4_ab3_1sc),
-    .msk_ab0(din_4_msk_ab0),        
-    .msk_ab1(din_4_msk_ab1), 
-    .msk_ab2(din_4_msk_ab2),        
-    .msk_ab3(din_4_msk_ab3),
-    .msk_ab0_1sc(din_4_msk_ab0_1sc), 
-    .msk_ab1_1sc(din_4_msk_ab1_1sc), 
-    .msk_ab2_1sc(din_4_msk_ab2_1sc), 
-    .msk_ab3_1sc(din_4_msk_ab3_1sc)
+    .ab3(din_4_ab3)
 );
 
 mul_hash din_5_mul_hash (
     .clk(clk),
-    .a(padded_din[5*8+:16]), 
+    .a(padded_din[5*8+:8]), 
     .ab0(din_5_ab0),                 
     .ab1(din_5_ab1), 
     .ab2(din_5_ab2),                 
-    .ab3(din_5_ab3),
-    .ab0_1sc(din_5_ab0_1sc),         
-    .ab1_1sc(din_5_ab1_1sc), 
-    .ab2_1sc(din_5_ab2_1sc),         
-    .ab3_1sc(din_5_ab3_1sc),
-    .msk_ab0(din_5_msk_ab0),        
-    .msk_ab1(din_5_msk_ab1), 
-    .msk_ab2(din_5_msk_ab2),        
-    .msk_ab3(din_5_msk_ab3),
-    .msk_ab0_1sc(din_5_msk_ab0_1sc), 
-    .msk_ab1_1sc(din_5_msk_ab1_1sc), 
-    .msk_ab2_1sc(din_5_msk_ab2_1sc), 
-    .msk_ab3_1sc(din_5_msk_ab3_1sc)
+    .ab3(din_5_ab3)
 );
 
 mul_hash din_6_mul_hash (
     .clk(clk),
-    .a(padded_din[6*8+:16]), 
+    .a(padded_din[6*8+:8]), 
     .ab0(din_6_ab0),                 
     .ab1(din_6_ab1), 
     .ab2(din_6_ab2),                 
-    .ab3(din_6_ab3),
-    .ab0_1sc(din_6_ab0_1sc),         
-    .ab1_1sc(din_6_ab1_1sc), 
-    .ab2_1sc(din_6_ab2_1sc),         
-    .ab3_1sc(din_6_ab3_1sc),
-    .msk_ab0(din_6_msk_ab0),        
-    .msk_ab1(din_6_msk_ab1), 
-    .msk_ab2(din_6_msk_ab2),        
-    .msk_ab3(din_6_msk_ab3),
-    .msk_ab0_1sc(din_6_msk_ab0_1sc), 
-    .msk_ab1_1sc(din_6_msk_ab1_1sc), 
-    .msk_ab2_1sc(din_6_msk_ab2_1sc), 
-    .msk_ab3_1sc(din_6_msk_ab3_1sc)
+    .ab3(din_6_ab3)
 );
 
 mul_hash din_7_mul_hash (
     .clk(clk),
-    .a(padded_din[7*8+:16]), 
+    .a(padded_din[7*8+:8]), 
     .ab0(din_7_ab0),                 
     .ab1(din_7_ab1), 
     .ab2(din_7_ab2),                 
-    .ab3(din_7_ab3),
-    .ab0_1sc(din_7_ab0_1sc),         
-    .ab1_1sc(din_7_ab1_1sc), 
-    .ab2_1sc(din_7_ab2_1sc),         
-    .ab3_1sc(din_7_ab3_1sc),
-    .msk_ab0(din_7_msk_ab0),        
-    .msk_ab1(din_7_msk_ab1), 
-    .msk_ab2(din_7_msk_ab2),        
-    .msk_ab3(din_7_msk_ab3),
-    .msk_ab0_1sc(din_7_msk_ab0_1sc), 
-    .msk_ab1_1sc(din_7_msk_ab1_1sc), 
-    .msk_ab2_1sc(din_7_msk_ab2_1sc), 
-    .msk_ab3_1sc(din_7_msk_ab3_1sc)
+    .ab3(din_7_ab3)
 );
 
 mul_hash din_8_mul_hash (
     .clk(clk),
-    .a(padded_din[8*8+:16]), 
+    .a(padded_din[8*8+:8]), 
     .ab0(din_8_ab0),                 
     .ab1(din_8_ab1), 
     .ab2(din_8_ab2),                 
-    .ab3(din_8_ab3),
-    .ab0_1sc(din_8_ab0_1sc),         
-    .ab1_1sc(din_8_ab1_1sc), 
-    .ab2_1sc(din_8_ab2_1sc),         
-    .ab3_1sc(din_8_ab3_1sc),
-    .msk_ab0(din_8_msk_ab0),        
-    .msk_ab1(din_8_msk_ab1), 
-    .msk_ab2(din_8_msk_ab2),        
-    .msk_ab3(din_8_msk_ab3),
-    .msk_ab0_1sc(din_8_msk_ab0_1sc), 
-    .msk_ab1_1sc(din_8_msk_ab1_1sc), 
-    .msk_ab2_1sc(din_8_msk_ab2_1sc), 
-    .msk_ab3_1sc(din_8_msk_ab3_1sc)
+    .ab3(din_8_ab3)
 );
 
 mul_hash din_9_mul_hash (
     .clk(clk),
-    .a(padded_din[9*8+:16]), 
+    .a(padded_din[9*8+:8]), 
     .ab0(din_9_ab0),                 
     .ab1(din_9_ab1), 
     .ab2(din_9_ab2),                 
-    .ab3(din_9_ab3),
-    .ab0_1sc(din_9_ab0_1sc),         
-    .ab1_1sc(din_9_ab1_1sc), 
-    .ab2_1sc(din_9_ab2_1sc),         
-    .ab3_1sc(din_9_ab3_1sc),
-    .msk_ab0(din_9_msk_ab0),        
-    .msk_ab1(din_9_msk_ab1), 
-    .msk_ab2(din_9_msk_ab2),        
-    .msk_ab3(din_9_msk_ab3),
-    .msk_ab0_1sc(din_9_msk_ab0_1sc), 
-    .msk_ab1_1sc(din_9_msk_ab1_1sc), 
-    .msk_ab2_1sc(din_9_msk_ab2_1sc), 
-    .msk_ab3_1sc(din_9_msk_ab3_1sc)
+    .ab3(din_9_ab3)
 );
 
 mul_hash din_10_mul_hash (
     .clk(clk),
-    .a(padded_din[10*8+:16]), 
+    .a(padded_din[10*8+:8]), 
     .ab0(din_10_ab0),                 
     .ab1(din_10_ab1), 
     .ab2(din_10_ab2),                 
-    .ab3(din_10_ab3),
-    .ab0_1sc(din_10_ab0_1sc),         
-    .ab1_1sc(din_10_ab1_1sc), 
-    .ab2_1sc(din_10_ab2_1sc),         
-    .ab3_1sc(din_10_ab3_1sc),
-    .msk_ab0(din_10_msk_ab0),        
-    .msk_ab1(din_10_msk_ab1), 
-    .msk_ab2(din_10_msk_ab2),        
-    .msk_ab3(din_10_msk_ab3),
-    .msk_ab0_1sc(din_10_msk_ab0_1sc), 
-    .msk_ab1_1sc(din_10_msk_ab1_1sc), 
-    .msk_ab2_1sc(din_10_msk_ab2_1sc), 
-    .msk_ab3_1sc(din_10_msk_ab3_1sc)
+    .ab3(din_10_ab3)
 );
 
 mul_hash din_11_mul_hash (
     .clk(clk),
-    .a(padded_din[11*8+:16]), 
+    .a(padded_din[11*8+:8]), 
     .ab0(din_11_ab0),                 
     .ab1(din_11_ab1), 
     .ab2(din_11_ab2),                 
-    .ab3(din_11_ab3),
-    .ab0_1sc(din_11_ab0_1sc),         
-    .ab1_1sc(din_11_ab1_1sc), 
-    .ab2_1sc(din_11_ab2_1sc),         
-    .ab3_1sc(din_11_ab3_1sc),
-    .msk_ab0(din_11_msk_ab0),        
-    .msk_ab1(din_11_msk_ab1), 
-    .msk_ab2(din_11_msk_ab2),        
-    .msk_ab3(din_11_msk_ab3),
-    .msk_ab0_1sc(din_11_msk_ab0_1sc), 
-    .msk_ab1_1sc(din_11_msk_ab1_1sc), 
-    .msk_ab2_1sc(din_11_msk_ab2_1sc), 
-    .msk_ab3_1sc(din_11_msk_ab3_1sc)
+    .ab3(din_11_ab3)
 );
 
 mul_hash din_12_mul_hash (
     .clk(clk),
-    .a(padded_din[12*8+:16]), 
+    .a(padded_din[12*8+:8]), 
     .ab0(din_12_ab0),                 
     .ab1(din_12_ab1), 
     .ab2(din_12_ab2),                 
-    .ab3(din_12_ab3),
-    .ab0_1sc(din_12_ab0_1sc),         
-    .ab1_1sc(din_12_ab1_1sc), 
-    .ab2_1sc(din_12_ab2_1sc),         
-    .ab3_1sc(din_12_ab3_1sc),
-    .msk_ab0(din_12_msk_ab0),        
-    .msk_ab1(din_12_msk_ab1), 
-    .msk_ab2(din_12_msk_ab2),        
-    .msk_ab3(din_12_msk_ab3),
-    .msk_ab0_1sc(din_12_msk_ab0_1sc), 
-    .msk_ab1_1sc(din_12_msk_ab1_1sc), 
-    .msk_ab2_1sc(din_12_msk_ab2_1sc), 
-    .msk_ab3_1sc(din_12_msk_ab3_1sc)
+    .ab3(din_12_ab3)
 );
 
 mul_hash din_13_mul_hash (
     .clk(clk),
-    .a(padded_din[13*8+:16]), 
+    .a(padded_din[13*8+:8]), 
     .ab0(din_13_ab0),                 
     .ab1(din_13_ab1), 
     .ab2(din_13_ab2),                 
-    .ab3(din_13_ab3),
-    .ab0_1sc(din_13_ab0_1sc),         
-    .ab1_1sc(din_13_ab1_1sc), 
-    .ab2_1sc(din_13_ab2_1sc),         
-    .ab3_1sc(din_13_ab3_1sc),
-    .msk_ab0(din_13_msk_ab0),        
-    .msk_ab1(din_13_msk_ab1), 
-    .msk_ab2(din_13_msk_ab2),        
-    .msk_ab3(din_13_msk_ab3),
-    .msk_ab0_1sc(din_13_msk_ab0_1sc), 
-    .msk_ab1_1sc(din_13_msk_ab1_1sc), 
-    .msk_ab2_1sc(din_13_msk_ab2_1sc), 
-    .msk_ab3_1sc(din_13_msk_ab3_1sc)
+    .ab3(din_13_ab3)
 );
 
 mul_hash din_14_mul_hash (
     .clk(clk),
-    .a(padded_din[14*8+:16]), 
+    .a(padded_din[14*8+:8]), 
     .ab0(din_14_ab0),                 
     .ab1(din_14_ab1), 
     .ab2(din_14_ab2),                 
-    .ab3(din_14_ab3),
-    .ab0_1sc(din_14_ab0_1sc),         
-    .ab1_1sc(din_14_ab1_1sc), 
-    .ab2_1sc(din_14_ab2_1sc),         
-    .ab3_1sc(din_14_ab3_1sc),
-    .msk_ab0(din_14_msk_ab0),        
-    .msk_ab1(din_14_msk_ab1), 
-    .msk_ab2(din_14_msk_ab2),        
-    .msk_ab3(din_14_msk_ab3),
-    .msk_ab0_1sc(din_14_msk_ab0_1sc), 
-    .msk_ab1_1sc(din_14_msk_ab1_1sc), 
-    .msk_ab2_1sc(din_14_msk_ab2_1sc), 
-    .msk_ab3_1sc(din_14_msk_ab3_1sc)
+    .ab3(din_14_ab3)
 );
 
 mul_hash din_15_mul_hash (
     .clk(clk),
-    .a(padded_din[15*8+:16]), 
+    .a(padded_din[15*8+:8]), 
     .ab0(din_15_ab0),                 
     .ab1(din_15_ab1), 
     .ab2(din_15_ab2),                 
-    .ab3(din_15_ab3),
-    .ab0_1sc(din_15_ab0_1sc),         
-    .ab1_1sc(din_15_ab1_1sc), 
-    .ab2_1sc(din_15_ab2_1sc),         
-    .ab3_1sc(din_15_ab3_1sc),
-    .msk_ab0(din_15_msk_ab0),        
-    .msk_ab1(din_15_msk_ab1), 
-    .msk_ab2(din_15_msk_ab2),        
-    .msk_ab3(din_15_msk_ab3),
-    .msk_ab0_1sc(din_15_msk_ab0_1sc), 
-    .msk_ab1_1sc(din_15_msk_ab1_1sc), 
-    .msk_ab2_1sc(din_15_msk_ab2_1sc), 
-    .msk_ab3_1sc(din_15_msk_ab3_1sc)
+    .ab3(din_15_ab3)
 );
 
 mul_hash din_16_mul_hash (
     .clk(clk),
-    .a(padded_din[16*8+:16]), 
+    .a(padded_din[16*8+:8]), 
     .ab0(din_16_ab0),                 
     .ab1(din_16_ab1), 
     .ab2(din_16_ab2),                 
-    .ab3(din_16_ab3),
-    .ab0_1sc(din_16_ab0_1sc),         
-    .ab1_1sc(din_16_ab1_1sc), 
-    .ab2_1sc(din_16_ab2_1sc),         
-    .ab3_1sc(din_16_ab3_1sc),
-    .msk_ab0(din_16_msk_ab0),        
-    .msk_ab1(din_16_msk_ab1), 
-    .msk_ab2(din_16_msk_ab2),        
-    .msk_ab3(din_16_msk_ab3),
-    .msk_ab0_1sc(din_16_msk_ab0_1sc), 
-    .msk_ab1_1sc(din_16_msk_ab1_1sc), 
-    .msk_ab2_1sc(din_16_msk_ab2_1sc), 
-    .msk_ab3_1sc(din_16_msk_ab3_1sc)
+    .ab3(din_16_ab3)
 );
 
 mul_hash din_17_mul_hash (
     .clk(clk),
-    .a(padded_din[17*8+:16]), 
+    .a(padded_din[17*8+:8]), 
     .ab0(din_17_ab0),                 
     .ab1(din_17_ab1), 
     .ab2(din_17_ab2),                 
-    .ab3(din_17_ab3),
-    .ab0_1sc(din_17_ab0_1sc),         
-    .ab1_1sc(din_17_ab1_1sc), 
-    .ab2_1sc(din_17_ab2_1sc),         
-    .ab3_1sc(din_17_ab3_1sc),
-    .msk_ab0(din_17_msk_ab0),        
-    .msk_ab1(din_17_msk_ab1), 
-    .msk_ab2(din_17_msk_ab2),        
-    .msk_ab3(din_17_msk_ab3),
-    .msk_ab0_1sc(din_17_msk_ab0_1sc), 
-    .msk_ab1_1sc(din_17_msk_ab1_1sc), 
-    .msk_ab2_1sc(din_17_msk_ab2_1sc), 
-    .msk_ab3_1sc(din_17_msk_ab3_1sc)
+    .ab3(din_17_ab3)
 );
 
 mul_hash din_18_mul_hash (
     .clk(clk),
-    .a(padded_din[18*8+:16]), 
+    .a(padded_din[18*8+:8]), 
     .ab0(din_18_ab0),                 
     .ab1(din_18_ab1), 
     .ab2(din_18_ab2),                 
-    .ab3(din_18_ab3),
-    .ab0_1sc(din_18_ab0_1sc),         
-    .ab1_1sc(din_18_ab1_1sc), 
-    .ab2_1sc(din_18_ab2_1sc),         
-    .ab3_1sc(din_18_ab3_1sc),
-    .msk_ab0(din_18_msk_ab0),        
-    .msk_ab1(din_18_msk_ab1), 
-    .msk_ab2(din_18_msk_ab2),        
-    .msk_ab3(din_18_msk_ab3),
-    .msk_ab0_1sc(din_18_msk_ab0_1sc), 
-    .msk_ab1_1sc(din_18_msk_ab1_1sc), 
-    .msk_ab2_1sc(din_18_msk_ab2_1sc), 
-    .msk_ab3_1sc(din_18_msk_ab3_1sc)
+    .ab3(din_18_ab3)
 );
 
 mul_hash din_19_mul_hash (
     .clk(clk),
-    .a(padded_din[19*8+:16]), 
+    .a(padded_din[19*8+:8]), 
     .ab0(din_19_ab0),                 
     .ab1(din_19_ab1), 
     .ab2(din_19_ab2),                 
-    .ab3(din_19_ab3),
-    .ab0_1sc(din_19_ab0_1sc),         
-    .ab1_1sc(din_19_ab1_1sc), 
-    .ab2_1sc(din_19_ab2_1sc),         
-    .ab3_1sc(din_19_ab3_1sc),
-    .msk_ab0(din_19_msk_ab0),        
-    .msk_ab1(din_19_msk_ab1), 
-    .msk_ab2(din_19_msk_ab2),        
-    .msk_ab3(din_19_msk_ab3),
-    .msk_ab0_1sc(din_19_msk_ab0_1sc), 
-    .msk_ab1_1sc(din_19_msk_ab1_1sc), 
-    .msk_ab2_1sc(din_19_msk_ab2_1sc), 
-    .msk_ab3_1sc(din_19_msk_ab3_1sc)
+    .ab3(din_19_ab3)
 );
 
 mul_hash din_20_mul_hash (
     .clk(clk),
-    .a(padded_din[20*8+:16]), 
+    .a(padded_din[20*8+:8]), 
     .ab0(din_20_ab0),                 
     .ab1(din_20_ab1), 
     .ab2(din_20_ab2),                 
-    .ab3(din_20_ab3),
-    .ab0_1sc(din_20_ab0_1sc),         
-    .ab1_1sc(din_20_ab1_1sc), 
-    .ab2_1sc(din_20_ab2_1sc),         
-    .ab3_1sc(din_20_ab3_1sc),
-    .msk_ab0(din_20_msk_ab0),        
-    .msk_ab1(din_20_msk_ab1), 
-    .msk_ab2(din_20_msk_ab2),        
-    .msk_ab3(din_20_msk_ab3),
-    .msk_ab0_1sc(din_20_msk_ab0_1sc), 
-    .msk_ab1_1sc(din_20_msk_ab1_1sc), 
-    .msk_ab2_1sc(din_20_msk_ab2_1sc), 
-    .msk_ab3_1sc(din_20_msk_ab3_1sc)
+    .ab3(din_20_ab3)
 );
 
 mul_hash din_21_mul_hash (
     .clk(clk),
-    .a(padded_din[21*8+:16]), 
+    .a(padded_din[21*8+:8]), 
     .ab0(din_21_ab0),                 
     .ab1(din_21_ab1), 
     .ab2(din_21_ab2),                 
-    .ab3(din_21_ab3),
-    .ab0_1sc(din_21_ab0_1sc),         
-    .ab1_1sc(din_21_ab1_1sc), 
-    .ab2_1sc(din_21_ab2_1sc),         
-    .ab3_1sc(din_21_ab3_1sc),
-    .msk_ab0(din_21_msk_ab0),        
-    .msk_ab1(din_21_msk_ab1), 
-    .msk_ab2(din_21_msk_ab2),        
-    .msk_ab3(din_21_msk_ab3),
-    .msk_ab0_1sc(din_21_msk_ab0_1sc), 
-    .msk_ab1_1sc(din_21_msk_ab1_1sc), 
-    .msk_ab2_1sc(din_21_msk_ab2_1sc), 
-    .msk_ab3_1sc(din_21_msk_ab3_1sc)
+    .ab3(din_21_ab3)
 );
 
 mul_hash din_22_mul_hash (
     .clk(clk),
-    .a(padded_din[22*8+:16]), 
+    .a(padded_din[22*8+:8]), 
     .ab0(din_22_ab0),                 
     .ab1(din_22_ab1), 
     .ab2(din_22_ab2),                 
-    .ab3(din_22_ab3),
-    .ab0_1sc(din_22_ab0_1sc),         
-    .ab1_1sc(din_22_ab1_1sc), 
-    .ab2_1sc(din_22_ab2_1sc),         
-    .ab3_1sc(din_22_ab3_1sc),
-    .msk_ab0(din_22_msk_ab0),        
-    .msk_ab1(din_22_msk_ab1), 
-    .msk_ab2(din_22_msk_ab2),        
-    .msk_ab3(din_22_msk_ab3),
-    .msk_ab0_1sc(din_22_msk_ab0_1sc), 
-    .msk_ab1_1sc(din_22_msk_ab1_1sc), 
-    .msk_ab2_1sc(din_22_msk_ab2_1sc), 
-    .msk_ab3_1sc(din_22_msk_ab3_1sc)
+    .ab3(din_22_ab3)
 );
 
 mul_hash din_23_mul_hash (
     .clk(clk),
-    .a(padded_din[23*8+:16]), 
+    .a(padded_din[23*8+:8]), 
     .ab0(din_23_ab0),                 
     .ab1(din_23_ab1), 
     .ab2(din_23_ab2),                 
-    .ab3(din_23_ab3),
-    .ab0_1sc(din_23_ab0_1sc),         
-    .ab1_1sc(din_23_ab1_1sc), 
-    .ab2_1sc(din_23_ab2_1sc),         
-    .ab3_1sc(din_23_ab3_1sc),
-    .msk_ab0(din_23_msk_ab0),        
-    .msk_ab1(din_23_msk_ab1), 
-    .msk_ab2(din_23_msk_ab2),        
-    .msk_ab3(din_23_msk_ab3),
-    .msk_ab0_1sc(din_23_msk_ab0_1sc), 
-    .msk_ab1_1sc(din_23_msk_ab1_1sc), 
-    .msk_ab2_1sc(din_23_msk_ab2_1sc), 
-    .msk_ab3_1sc(din_23_msk_ab3_1sc)
+    .ab3(din_23_ab3)
 );
 
 mul_hash din_24_mul_hash (
     .clk(clk),
-    .a(padded_din[24*8+:16]), 
+    .a(padded_din[24*8+:8]), 
     .ab0(din_24_ab0),                 
     .ab1(din_24_ab1), 
     .ab2(din_24_ab2),                 
-    .ab3(din_24_ab3),
-    .ab0_1sc(din_24_ab0_1sc),         
-    .ab1_1sc(din_24_ab1_1sc), 
-    .ab2_1sc(din_24_ab2_1sc),         
-    .ab3_1sc(din_24_ab3_1sc),
-    .msk_ab0(din_24_msk_ab0),        
-    .msk_ab1(din_24_msk_ab1), 
-    .msk_ab2(din_24_msk_ab2),        
-    .msk_ab3(din_24_msk_ab3),
-    .msk_ab0_1sc(din_24_msk_ab0_1sc), 
-    .msk_ab1_1sc(din_24_msk_ab1_1sc), 
-    .msk_ab2_1sc(din_24_msk_ab2_1sc), 
-    .msk_ab3_1sc(din_24_msk_ab3_1sc)
+    .ab3(din_24_ab3)
 );
 
 mul_hash din_25_mul_hash (
     .clk(clk),
-    .a(padded_din[25*8+:16]), 
+    .a(padded_din[25*8+:8]), 
     .ab0(din_25_ab0),                 
     .ab1(din_25_ab1), 
     .ab2(din_25_ab2),                 
-    .ab3(din_25_ab3),
-    .ab0_1sc(din_25_ab0_1sc),         
-    .ab1_1sc(din_25_ab1_1sc), 
-    .ab2_1sc(din_25_ab2_1sc),         
-    .ab3_1sc(din_25_ab3_1sc),
-    .msk_ab0(din_25_msk_ab0),        
-    .msk_ab1(din_25_msk_ab1), 
-    .msk_ab2(din_25_msk_ab2),        
-    .msk_ab3(din_25_msk_ab3),
-    .msk_ab0_1sc(din_25_msk_ab0_1sc), 
-    .msk_ab1_1sc(din_25_msk_ab1_1sc), 
-    .msk_ab2_1sc(din_25_msk_ab2_1sc), 
-    .msk_ab3_1sc(din_25_msk_ab3_1sc)
+    .ab3(din_25_ab3)
 );
 
 mul_hash din_26_mul_hash (
     .clk(clk),
-    .a(padded_din[26*8+:16]), 
+    .a(padded_din[26*8+:8]), 
     .ab0(din_26_ab0),                 
     .ab1(din_26_ab1), 
     .ab2(din_26_ab2),                 
-    .ab3(din_26_ab3),
-    .ab0_1sc(din_26_ab0_1sc),         
-    .ab1_1sc(din_26_ab1_1sc), 
-    .ab2_1sc(din_26_ab2_1sc),         
-    .ab3_1sc(din_26_ab3_1sc),
-    .msk_ab0(din_26_msk_ab0),        
-    .msk_ab1(din_26_msk_ab1), 
-    .msk_ab2(din_26_msk_ab2),        
-    .msk_ab3(din_26_msk_ab3),
-    .msk_ab0_1sc(din_26_msk_ab0_1sc), 
-    .msk_ab1_1sc(din_26_msk_ab1_1sc), 
-    .msk_ab2_1sc(din_26_msk_ab2_1sc), 
-    .msk_ab3_1sc(din_26_msk_ab3_1sc)
+    .ab3(din_26_ab3)
 );
 
 mul_hash din_27_mul_hash (
     .clk(clk),
-    .a(padded_din[27*8+:16]), 
+    .a(padded_din[27*8+:8]), 
     .ab0(din_27_ab0),                 
     .ab1(din_27_ab1), 
     .ab2(din_27_ab2),                 
-    .ab3(din_27_ab3),
-    .ab0_1sc(din_27_ab0_1sc),         
-    .ab1_1sc(din_27_ab1_1sc), 
-    .ab2_1sc(din_27_ab2_1sc),         
-    .ab3_1sc(din_27_ab3_1sc),
-    .msk_ab0(din_27_msk_ab0),        
-    .msk_ab1(din_27_msk_ab1), 
-    .msk_ab2(din_27_msk_ab2),        
-    .msk_ab3(din_27_msk_ab3),
-    .msk_ab0_1sc(din_27_msk_ab0_1sc), 
-    .msk_ab1_1sc(din_27_msk_ab1_1sc), 
-    .msk_ab2_1sc(din_27_msk_ab2_1sc), 
-    .msk_ab3_1sc(din_27_msk_ab3_1sc)
+    .ab3(din_27_ab3)
 );
 
 mul_hash din_28_mul_hash (
     .clk(clk),
-    .a(padded_din[28*8+:16]), 
+    .a(padded_din[28*8+:8]), 
     .ab0(din_28_ab0),                 
     .ab1(din_28_ab1), 
     .ab2(din_28_ab2),                 
-    .ab3(din_28_ab3),
-    .ab0_1sc(din_28_ab0_1sc),         
-    .ab1_1sc(din_28_ab1_1sc), 
-    .ab2_1sc(din_28_ab2_1sc),         
-    .ab3_1sc(din_28_ab3_1sc),
-    .msk_ab0(din_28_msk_ab0),        
-    .msk_ab1(din_28_msk_ab1), 
-    .msk_ab2(din_28_msk_ab2),        
-    .msk_ab3(din_28_msk_ab3),
-    .msk_ab0_1sc(din_28_msk_ab0_1sc), 
-    .msk_ab1_1sc(din_28_msk_ab1_1sc), 
-    .msk_ab2_1sc(din_28_msk_ab2_1sc), 
-    .msk_ab3_1sc(din_28_msk_ab3_1sc)
+    .ab3(din_28_ab3)
 );
 
 mul_hash din_29_mul_hash (
     .clk(clk),
-    .a(padded_din[29*8+:16]), 
+    .a(padded_din[29*8+:8]), 
     .ab0(din_29_ab0),                 
     .ab1(din_29_ab1), 
     .ab2(din_29_ab2),                 
-    .ab3(din_29_ab3),
-    .ab0_1sc(din_29_ab0_1sc),         
-    .ab1_1sc(din_29_ab1_1sc), 
-    .ab2_1sc(din_29_ab2_1sc),         
-    .ab3_1sc(din_29_ab3_1sc),
-    .msk_ab0(din_29_msk_ab0),        
-    .msk_ab1(din_29_msk_ab1), 
-    .msk_ab2(din_29_msk_ab2),        
-    .msk_ab3(din_29_msk_ab3),
-    .msk_ab0_1sc(din_29_msk_ab0_1sc), 
-    .msk_ab1_1sc(din_29_msk_ab1_1sc), 
-    .msk_ab2_1sc(din_29_msk_ab2_1sc), 
-    .msk_ab3_1sc(din_29_msk_ab3_1sc)
+    .ab3(din_29_ab3)
 );
 
 mul_hash din_30_mul_hash (
     .clk(clk),
-    .a(padded_din[30*8+:16]), 
+    .a(padded_din[30*8+:8]), 
     .ab0(din_30_ab0),                 
     .ab1(din_30_ab1), 
     .ab2(din_30_ab2),                 
-    .ab3(din_30_ab3),
-    .ab0_1sc(din_30_ab0_1sc),         
-    .ab1_1sc(din_30_ab1_1sc), 
-    .ab2_1sc(din_30_ab2_1sc),         
-    .ab3_1sc(din_30_ab3_1sc),
-    .msk_ab0(din_30_msk_ab0),        
-    .msk_ab1(din_30_msk_ab1), 
-    .msk_ab2(din_30_msk_ab2),        
-    .msk_ab3(din_30_msk_ab3),
-    .msk_ab0_1sc(din_30_msk_ab0_1sc), 
-    .msk_ab1_1sc(din_30_msk_ab1_1sc), 
-    .msk_ab2_1sc(din_30_msk_ab2_1sc), 
-    .msk_ab3_1sc(din_30_msk_ab3_1sc)
+    .ab3(din_30_ab3)
 );
 
 mul_hash din_31_mul_hash (
     .clk(clk),
-    .a(padded_din[31*8+:16]), 
+    .a(padded_din[31*8+:8]), 
     .ab0(din_31_ab0),                 
     .ab1(din_31_ab1), 
     .ab2(din_31_ab2),                 
-    .ab3(din_31_ab3),
-    .ab0_1sc(din_31_ab0_1sc),         
-    .ab1_1sc(din_31_ab1_1sc), 
-    .ab2_1sc(din_31_ab2_1sc),         
-    .ab3_1sc(din_31_ab3_1sc),
-    .msk_ab0(din_31_msk_ab0),        
-    .msk_ab1(din_31_msk_ab1), 
-    .msk_ab2(din_31_msk_ab2),        
-    .msk_ab3(din_31_msk_ab3),
-    .msk_ab0_1sc(din_31_msk_ab0_1sc), 
-    .msk_ab1_1sc(din_31_msk_ab1_1sc), 
-    .msk_ab2_1sc(din_31_msk_ab2_1sc), 
-    .msk_ab3_1sc(din_31_msk_ab3_1sc)
+    .ab3(din_31_ab3)
 );
 
 mul_hash din_32_mul_hash (
     .clk(clk),
-    .a(padded_din[32*8+:16]), 
+    .a(padded_din[32*8+:8]), 
     .ab0(din_32_ab0),                 
     .ab1(din_32_ab1), 
     .ab2(din_32_ab2),                 
-    .ab3(din_32_ab3),
-    .ab0_1sc(din_32_ab0_1sc),         
-    .ab1_1sc(din_32_ab1_1sc), 
-    .ab2_1sc(din_32_ab2_1sc),         
-    .ab3_1sc(din_32_ab3_1sc),
-    .msk_ab0(din_32_msk_ab0),        
-    .msk_ab1(din_32_msk_ab1), 
-    .msk_ab2(din_32_msk_ab2),        
-    .msk_ab3(din_32_msk_ab3),
-    .msk_ab0_1sc(din_32_msk_ab0_1sc), 
-    .msk_ab1_1sc(din_32_msk_ab1_1sc), 
-    .msk_ab2_1sc(din_32_msk_ab2_1sc), 
-    .msk_ab3_1sc(din_32_msk_ab3_1sc)
+    .ab3(din_32_ab3)
 );
 
 mul_hash din_33_mul_hash (
     .clk(clk),
-    .a(padded_din[33*8+:16]), 
+    .a(padded_din[33*8+:8]), 
     .ab0(din_33_ab0),                 
     .ab1(din_33_ab1), 
     .ab2(din_33_ab2),                 
-    .ab3(din_33_ab3),
-    .ab0_1sc(din_33_ab0_1sc),         
-    .ab1_1sc(din_33_ab1_1sc), 
-    .ab2_1sc(din_33_ab2_1sc),         
-    .ab3_1sc(din_33_ab3_1sc),
-    .msk_ab0(din_33_msk_ab0),        
-    .msk_ab1(din_33_msk_ab1), 
-    .msk_ab2(din_33_msk_ab2),        
-    .msk_ab3(din_33_msk_ab3),
-    .msk_ab0_1sc(din_33_msk_ab0_1sc), 
-    .msk_ab1_1sc(din_33_msk_ab1_1sc), 
-    .msk_ab2_1sc(din_33_msk_ab2_1sc), 
-    .msk_ab3_1sc(din_33_msk_ab3_1sc)
+    .ab3(din_33_ab3)
 );
 
 mul_hash din_34_mul_hash (
     .clk(clk),
-    .a(padded_din[34*8+:16]), 
+    .a(padded_din[34*8+:8]), 
     .ab0(din_34_ab0),                 
     .ab1(din_34_ab1), 
     .ab2(din_34_ab2),                 
-    .ab3(din_34_ab3),
-    .ab0_1sc(din_34_ab0_1sc),         
-    .ab1_1sc(din_34_ab1_1sc), 
-    .ab2_1sc(din_34_ab2_1sc),         
-    .ab3_1sc(din_34_ab3_1sc),
-    .msk_ab0(din_34_msk_ab0),        
-    .msk_ab1(din_34_msk_ab1), 
-    .msk_ab2(din_34_msk_ab2),        
-    .msk_ab3(din_34_msk_ab3),
-    .msk_ab0_1sc(din_34_msk_ab0_1sc), 
-    .msk_ab1_1sc(din_34_msk_ab1_1sc), 
-    .msk_ab2_1sc(din_34_msk_ab2_1sc), 
-    .msk_ab3_1sc(din_34_msk_ab3_1sc)
+    .ab3(din_34_ab3)
 );
 
 mul_hash din_35_mul_hash (
     .clk(clk),
-    .a(padded_din[35*8+:16]), 
+    .a(padded_din[35*8+:8]), 
     .ab0(din_35_ab0),                 
     .ab1(din_35_ab1), 
     .ab2(din_35_ab2),                 
-    .ab3(din_35_ab3),
-    .ab0_1sc(din_35_ab0_1sc),         
-    .ab1_1sc(din_35_ab1_1sc), 
-    .ab2_1sc(din_35_ab2_1sc),         
-    .ab3_1sc(din_35_ab3_1sc),
-    .msk_ab0(din_35_msk_ab0),        
-    .msk_ab1(din_35_msk_ab1), 
-    .msk_ab2(din_35_msk_ab2),        
-    .msk_ab3(din_35_msk_ab3),
-    .msk_ab0_1sc(din_35_msk_ab0_1sc), 
-    .msk_ab1_1sc(din_35_msk_ab1_1sc), 
-    .msk_ab2_1sc(din_35_msk_ab2_1sc), 
-    .msk_ab3_1sc(din_35_msk_ab3_1sc)
+    .ab3(din_35_ab3)
 );
 
 mul_hash din_36_mul_hash (
     .clk(clk),
-    .a(padded_din[36*8+:16]), 
+    .a(padded_din[36*8+:8]), 
     .ab0(din_36_ab0),                 
     .ab1(din_36_ab1), 
     .ab2(din_36_ab2),                 
-    .ab3(din_36_ab3),
-    .ab0_1sc(din_36_ab0_1sc),         
-    .ab1_1sc(din_36_ab1_1sc), 
-    .ab2_1sc(din_36_ab2_1sc),         
-    .ab3_1sc(din_36_ab3_1sc),
-    .msk_ab0(din_36_msk_ab0),        
-    .msk_ab1(din_36_msk_ab1), 
-    .msk_ab2(din_36_msk_ab2),        
-    .msk_ab3(din_36_msk_ab3),
-    .msk_ab0_1sc(din_36_msk_ab0_1sc), 
-    .msk_ab1_1sc(din_36_msk_ab1_1sc), 
-    .msk_ab2_1sc(din_36_msk_ab2_1sc), 
-    .msk_ab3_1sc(din_36_msk_ab3_1sc)
+    .ab3(din_36_ab3)
 );
 
 mul_hash din_37_mul_hash (
     .clk(clk),
-    .a(padded_din[37*8+:16]), 
+    .a(padded_din[37*8+:8]), 
     .ab0(din_37_ab0),                 
     .ab1(din_37_ab1), 
     .ab2(din_37_ab2),                 
-    .ab3(din_37_ab3),
-    .ab0_1sc(din_37_ab0_1sc),         
-    .ab1_1sc(din_37_ab1_1sc), 
-    .ab2_1sc(din_37_ab2_1sc),         
-    .ab3_1sc(din_37_ab3_1sc),
-    .msk_ab0(din_37_msk_ab0),        
-    .msk_ab1(din_37_msk_ab1), 
-    .msk_ab2(din_37_msk_ab2),        
-    .msk_ab3(din_37_msk_ab3),
-    .msk_ab0_1sc(din_37_msk_ab0_1sc), 
-    .msk_ab1_1sc(din_37_msk_ab1_1sc), 
-    .msk_ab2_1sc(din_37_msk_ab2_1sc), 
-    .msk_ab3_1sc(din_37_msk_ab3_1sc)
+    .ab3(din_37_ab3)
+);
+
+mul_hash din_38_mul_hash (
+    .clk(clk),
+    .a(padded_din[38*8+:8]), 
+    .ab0(din_38_ab0),                 
+    .ab1(din_38_ab1), 
+    .ab2(din_38_ab2),                 
+    .ab3(din_38_ab3)
 );
 
 
@@ -3805,6400 +2852,3840 @@ acc_hash # (
 	.ANDMSK(64'hffffffffffffffff),
 	.NBITS(15)
 ) addr_0_0_calc (
-           .clk(clk), .sign(din_signs_reg[0]), 
-           .p(addr_0_0),
-           .a0b0(din_0_ab0), .a0b1(din_0_ab1), .a0b2(din_0_ab2), .a0b3(din_0_ab3),
-           .a0b0_1sc(din_0_ab0_1sc), .a0b1_1sc(din_0_ab1_1sc), .a0b2_1sc(din_0_ab2_1sc), .a0b3_1sc(din_0_ab3_1sc),
-           .msk_a0b0(din_0_msk_ab0), .msk_a0b1(din_0_msk_ab1), .msk_a0b2(din_0_msk_ab2), .msk_a0b3(din_0_msk_ab3),
-           .msk_a0b0_1sc(din_0_msk_ab0_1sc), .msk_a0b1_1sc(din_0_msk_ab1_1sc), .msk_a0b2_1sc(din_0_msk_ab2_1sc), .msk_a0b3_1sc(din_0_msk_ab3_1sc),
-
-           .a1b0(din_2_ab0), .a1b1(din_2_ab1), .a1b2(din_2_ab2),
-           .a1b0_1sc(din_2_ab0_1sc), .a1b1_1sc(din_2_ab1_1sc), .a1b2_1sc(din_2_ab2_1sc),
-           .msk_a1b0(din_2_msk_ab0), .msk_a1b1(din_2_msk_ab1), .msk_a1b2(din_2_msk_ab2),
-           .msk_a1b0_1sc(din_2_msk_ab0_1sc), .msk_a1b1_1sc(din_2_msk_ab1_1sc), .msk_a1b2_1sc(din_2_msk_ab2_1sc),
-
-           .a2b0(din_4_ab0), .a2b1(din_4_ab1),
-           .a2b0_1sc(din_4_ab0_1sc), .a2b1_1sc(din_4_ab1_1sc),
-           .msk_a2b0(din_4_msk_ab0), .msk_a2b1(din_4_msk_ab1),
-           .msk_a2b0_1sc(din_4_msk_ab0_1sc), .msk_a2b1_1sc(din_4_msk_ab1_1sc),
-           
-           .a3b0(din_6_ab0),
-           .a3b0_1sc(din_6_ab0_1sc)
+  .clk(clk), .p(addr_0_0),
+  .a0b0(din_0_ab0), .a0b1(din_0_ab1), .a0b2(din_0_ab2), .a0b3(din_0_ab3),
+  .a1b0(din_1_ab0), .a1b1(din_1_ab1), .a1b2(din_1_ab2), .a1b3(din_1_ab3),
+  .a2b0(din_2_ab0), .a2b1(din_2_ab1), .a2b2(din_2_ab2),
+  .a3b0(din_3_ab0), .a3b1(din_3_ab1), .a3b2(din_3_ab2),
+  .a4b0(din_4_ab0), .a4b1(din_4_ab1),
+  .a5b0(din_5_ab0), .a5b1(din_5_ab1),
+  .a6b0(din_6_ab0),
+  .a7b0(din_7_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffffffffff),
 	.NBITS(15)
 ) addr_0_1_calc (
-           .clk(clk), .sign(din_signs_reg[1]), 
-           .p(addr_0_1),
-           .a0b0(din_1_ab0), .a0b1(din_1_ab1), .a0b2(din_1_ab2), .a0b3(din_1_ab3),
-           .a0b0_1sc(din_1_ab0_1sc), .a0b1_1sc(din_1_ab1_1sc), .a0b2_1sc(din_1_ab2_1sc), .a0b3_1sc(din_1_ab3_1sc),
-           .msk_a0b0(din_1_msk_ab0), .msk_a0b1(din_1_msk_ab1), .msk_a0b2(din_1_msk_ab2), .msk_a0b3(din_1_msk_ab3),
-           .msk_a0b0_1sc(din_1_msk_ab0_1sc), .msk_a0b1_1sc(din_1_msk_ab1_1sc), .msk_a0b2_1sc(din_1_msk_ab2_1sc), .msk_a0b3_1sc(din_1_msk_ab3_1sc),
-
-           .a1b0(din_3_ab0), .a1b1(din_3_ab1), .a1b2(din_3_ab2),
-           .a1b0_1sc(din_3_ab0_1sc), .a1b1_1sc(din_3_ab1_1sc), .a1b2_1sc(din_3_ab2_1sc),
-           .msk_a1b0(din_3_msk_ab0), .msk_a1b1(din_3_msk_ab1), .msk_a1b2(din_3_msk_ab2),
-           .msk_a1b0_1sc(din_3_msk_ab0_1sc), .msk_a1b1_1sc(din_3_msk_ab1_1sc), .msk_a1b2_1sc(din_3_msk_ab2_1sc),
-
-           .a2b0(din_5_ab0), .a2b1(din_5_ab1),
-           .a2b0_1sc(din_5_ab0_1sc), .a2b1_1sc(din_5_ab1_1sc),
-           .msk_a2b0(din_5_msk_ab0), .msk_a2b1(din_5_msk_ab1),
-           .msk_a2b0_1sc(din_5_msk_ab0_1sc), .msk_a2b1_1sc(din_5_msk_ab1_1sc),
-           
-           .a3b0(din_7_ab0),
-           .a3b0_1sc(din_7_ab0_1sc)
+  .clk(clk), .p(addr_0_1),
+  .a0b0(din_1_ab0), .a0b1(din_1_ab1), .a0b2(din_1_ab2), .a0b3(din_1_ab3),
+  .a1b0(din_2_ab0), .a1b1(din_2_ab1), .a1b2(din_2_ab2), .a1b3(din_2_ab3),
+  .a2b0(din_3_ab0), .a2b1(din_3_ab1), .a2b2(din_3_ab2),
+  .a3b0(din_4_ab0), .a3b1(din_4_ab1), .a3b2(din_4_ab2),
+  .a4b0(din_5_ab0), .a4b1(din_5_ab1),
+  .a5b0(din_6_ab0), .a5b1(din_6_ab1),
+  .a6b0(din_7_ab0),
+  .a7b0(din_8_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffffffffff),
 	.NBITS(15)
 ) addr_0_2_calc (
-           .clk(clk), .sign(din_signs_reg[2]), 
-           .p(addr_0_2),
-           .a0b0(din_2_ab0), .a0b1(din_2_ab1), .a0b2(din_2_ab2), .a0b3(din_2_ab3),
-           .a0b0_1sc(din_2_ab0_1sc), .a0b1_1sc(din_2_ab1_1sc), .a0b2_1sc(din_2_ab2_1sc), .a0b3_1sc(din_2_ab3_1sc),
-           .msk_a0b0(din_2_msk_ab0), .msk_a0b1(din_2_msk_ab1), .msk_a0b2(din_2_msk_ab2), .msk_a0b3(din_2_msk_ab3),
-           .msk_a0b0_1sc(din_2_msk_ab0_1sc), .msk_a0b1_1sc(din_2_msk_ab1_1sc), .msk_a0b2_1sc(din_2_msk_ab2_1sc), .msk_a0b3_1sc(din_2_msk_ab3_1sc),
-
-           .a1b0(din_4_ab0), .a1b1(din_4_ab1), .a1b2(din_4_ab2),
-           .a1b0_1sc(din_4_ab0_1sc), .a1b1_1sc(din_4_ab1_1sc), .a1b2_1sc(din_4_ab2_1sc),
-           .msk_a1b0(din_4_msk_ab0), .msk_a1b1(din_4_msk_ab1), .msk_a1b2(din_4_msk_ab2),
-           .msk_a1b0_1sc(din_4_msk_ab0_1sc), .msk_a1b1_1sc(din_4_msk_ab1_1sc), .msk_a1b2_1sc(din_4_msk_ab2_1sc),
-
-           .a2b0(din_6_ab0), .a2b1(din_6_ab1),
-           .a2b0_1sc(din_6_ab0_1sc), .a2b1_1sc(din_6_ab1_1sc),
-           .msk_a2b0(din_6_msk_ab0), .msk_a2b1(din_6_msk_ab1),
-           .msk_a2b0_1sc(din_6_msk_ab0_1sc), .msk_a2b1_1sc(din_6_msk_ab1_1sc),
-           
-           .a3b0(din_8_ab0),
-           .a3b0_1sc(din_8_ab0_1sc)
+  .clk(clk), .p(addr_0_2),
+  .a0b0(din_2_ab0), .a0b1(din_2_ab1), .a0b2(din_2_ab2), .a0b3(din_2_ab3),
+  .a1b0(din_3_ab0), .a1b1(din_3_ab1), .a1b2(din_3_ab2), .a1b3(din_3_ab3),
+  .a2b0(din_4_ab0), .a2b1(din_4_ab1), .a2b2(din_4_ab2),
+  .a3b0(din_5_ab0), .a3b1(din_5_ab1), .a3b2(din_5_ab2),
+  .a4b0(din_6_ab0), .a4b1(din_6_ab1),
+  .a5b0(din_7_ab0), .a5b1(din_7_ab1),
+  .a6b0(din_8_ab0),
+  .a7b0(din_9_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffffffffff),
 	.NBITS(15)
 ) addr_0_3_calc (
-           .clk(clk), .sign(din_signs_reg[3]), 
-           .p(addr_0_3),
-           .a0b0(din_3_ab0), .a0b1(din_3_ab1), .a0b2(din_3_ab2), .a0b3(din_3_ab3),
-           .a0b0_1sc(din_3_ab0_1sc), .a0b1_1sc(din_3_ab1_1sc), .a0b2_1sc(din_3_ab2_1sc), .a0b3_1sc(din_3_ab3_1sc),
-           .msk_a0b0(din_3_msk_ab0), .msk_a0b1(din_3_msk_ab1), .msk_a0b2(din_3_msk_ab2), .msk_a0b3(din_3_msk_ab3),
-           .msk_a0b0_1sc(din_3_msk_ab0_1sc), .msk_a0b1_1sc(din_3_msk_ab1_1sc), .msk_a0b2_1sc(din_3_msk_ab2_1sc), .msk_a0b3_1sc(din_3_msk_ab3_1sc),
-
-           .a1b0(din_5_ab0), .a1b1(din_5_ab1), .a1b2(din_5_ab2),
-           .a1b0_1sc(din_5_ab0_1sc), .a1b1_1sc(din_5_ab1_1sc), .a1b2_1sc(din_5_ab2_1sc),
-           .msk_a1b0(din_5_msk_ab0), .msk_a1b1(din_5_msk_ab1), .msk_a1b2(din_5_msk_ab2),
-           .msk_a1b0_1sc(din_5_msk_ab0_1sc), .msk_a1b1_1sc(din_5_msk_ab1_1sc), .msk_a1b2_1sc(din_5_msk_ab2_1sc),
-
-           .a2b0(din_7_ab0), .a2b1(din_7_ab1),
-           .a2b0_1sc(din_7_ab0_1sc), .a2b1_1sc(din_7_ab1_1sc),
-           .msk_a2b0(din_7_msk_ab0), .msk_a2b1(din_7_msk_ab1),
-           .msk_a2b0_1sc(din_7_msk_ab0_1sc), .msk_a2b1_1sc(din_7_msk_ab1_1sc),
-           
-           .a3b0(din_9_ab0),
-           .a3b0_1sc(din_9_ab0_1sc)
+  .clk(clk), .p(addr_0_3),
+  .a0b0(din_3_ab0), .a0b1(din_3_ab1), .a0b2(din_3_ab2), .a0b3(din_3_ab3),
+  .a1b0(din_4_ab0), .a1b1(din_4_ab1), .a1b2(din_4_ab2), .a1b3(din_4_ab3),
+  .a2b0(din_5_ab0), .a2b1(din_5_ab1), .a2b2(din_5_ab2),
+  .a3b0(din_6_ab0), .a3b1(din_6_ab1), .a3b2(din_6_ab2),
+  .a4b0(din_7_ab0), .a4b1(din_7_ab1),
+  .a5b0(din_8_ab0), .a5b1(din_8_ab1),
+  .a6b0(din_9_ab0),
+  .a7b0(din_10_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffffffffff),
 	.NBITS(15)
 ) addr_0_4_calc (
-           .clk(clk), .sign(din_signs_reg[4]), 
-           .p(addr_0_4),
-           .a0b0(din_4_ab0), .a0b1(din_4_ab1), .a0b2(din_4_ab2), .a0b3(din_4_ab3),
-           .a0b0_1sc(din_4_ab0_1sc), .a0b1_1sc(din_4_ab1_1sc), .a0b2_1sc(din_4_ab2_1sc), .a0b3_1sc(din_4_ab3_1sc),
-           .msk_a0b0(din_4_msk_ab0), .msk_a0b1(din_4_msk_ab1), .msk_a0b2(din_4_msk_ab2), .msk_a0b3(din_4_msk_ab3),
-           .msk_a0b0_1sc(din_4_msk_ab0_1sc), .msk_a0b1_1sc(din_4_msk_ab1_1sc), .msk_a0b2_1sc(din_4_msk_ab2_1sc), .msk_a0b3_1sc(din_4_msk_ab3_1sc),
-
-           .a1b0(din_6_ab0), .a1b1(din_6_ab1), .a1b2(din_6_ab2),
-           .a1b0_1sc(din_6_ab0_1sc), .a1b1_1sc(din_6_ab1_1sc), .a1b2_1sc(din_6_ab2_1sc),
-           .msk_a1b0(din_6_msk_ab0), .msk_a1b1(din_6_msk_ab1), .msk_a1b2(din_6_msk_ab2),
-           .msk_a1b0_1sc(din_6_msk_ab0_1sc), .msk_a1b1_1sc(din_6_msk_ab1_1sc), .msk_a1b2_1sc(din_6_msk_ab2_1sc),
-
-           .a2b0(din_8_ab0), .a2b1(din_8_ab1),
-           .a2b0_1sc(din_8_ab0_1sc), .a2b1_1sc(din_8_ab1_1sc),
-           .msk_a2b0(din_8_msk_ab0), .msk_a2b1(din_8_msk_ab1),
-           .msk_a2b0_1sc(din_8_msk_ab0_1sc), .msk_a2b1_1sc(din_8_msk_ab1_1sc),
-           
-           .a3b0(din_10_ab0),
-           .a3b0_1sc(din_10_ab0_1sc)
+  .clk(clk), .p(addr_0_4),
+  .a0b0(din_4_ab0), .a0b1(din_4_ab1), .a0b2(din_4_ab2), .a0b3(din_4_ab3),
+  .a1b0(din_5_ab0), .a1b1(din_5_ab1), .a1b2(din_5_ab2), .a1b3(din_5_ab3),
+  .a2b0(din_6_ab0), .a2b1(din_6_ab1), .a2b2(din_6_ab2),
+  .a3b0(din_7_ab0), .a3b1(din_7_ab1), .a3b2(din_7_ab2),
+  .a4b0(din_8_ab0), .a4b1(din_8_ab1),
+  .a5b0(din_9_ab0), .a5b1(din_9_ab1),
+  .a6b0(din_10_ab0),
+  .a7b0(din_11_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffffffffff),
 	.NBITS(15)
 ) addr_0_5_calc (
-           .clk(clk), .sign(din_signs_reg[5]), 
-           .p(addr_0_5),
-           .a0b0(din_5_ab0), .a0b1(din_5_ab1), .a0b2(din_5_ab2), .a0b3(din_5_ab3),
-           .a0b0_1sc(din_5_ab0_1sc), .a0b1_1sc(din_5_ab1_1sc), .a0b2_1sc(din_5_ab2_1sc), .a0b3_1sc(din_5_ab3_1sc),
-           .msk_a0b0(din_5_msk_ab0), .msk_a0b1(din_5_msk_ab1), .msk_a0b2(din_5_msk_ab2), .msk_a0b3(din_5_msk_ab3),
-           .msk_a0b0_1sc(din_5_msk_ab0_1sc), .msk_a0b1_1sc(din_5_msk_ab1_1sc), .msk_a0b2_1sc(din_5_msk_ab2_1sc), .msk_a0b3_1sc(din_5_msk_ab3_1sc),
-
-           .a1b0(din_7_ab0), .a1b1(din_7_ab1), .a1b2(din_7_ab2),
-           .a1b0_1sc(din_7_ab0_1sc), .a1b1_1sc(din_7_ab1_1sc), .a1b2_1sc(din_7_ab2_1sc),
-           .msk_a1b0(din_7_msk_ab0), .msk_a1b1(din_7_msk_ab1), .msk_a1b2(din_7_msk_ab2),
-           .msk_a1b0_1sc(din_7_msk_ab0_1sc), .msk_a1b1_1sc(din_7_msk_ab1_1sc), .msk_a1b2_1sc(din_7_msk_ab2_1sc),
-
-           .a2b0(din_9_ab0), .a2b1(din_9_ab1),
-           .a2b0_1sc(din_9_ab0_1sc), .a2b1_1sc(din_9_ab1_1sc),
-           .msk_a2b0(din_9_msk_ab0), .msk_a2b1(din_9_msk_ab1),
-           .msk_a2b0_1sc(din_9_msk_ab0_1sc), .msk_a2b1_1sc(din_9_msk_ab1_1sc),
-           
-           .a3b0(din_11_ab0),
-           .a3b0_1sc(din_11_ab0_1sc)
+  .clk(clk), .p(addr_0_5),
+  .a0b0(din_5_ab0), .a0b1(din_5_ab1), .a0b2(din_5_ab2), .a0b3(din_5_ab3),
+  .a1b0(din_6_ab0), .a1b1(din_6_ab1), .a1b2(din_6_ab2), .a1b3(din_6_ab3),
+  .a2b0(din_7_ab0), .a2b1(din_7_ab1), .a2b2(din_7_ab2),
+  .a3b0(din_8_ab0), .a3b1(din_8_ab1), .a3b2(din_8_ab2),
+  .a4b0(din_9_ab0), .a4b1(din_9_ab1),
+  .a5b0(din_10_ab0), .a5b1(din_10_ab1),
+  .a6b0(din_11_ab0),
+  .a7b0(din_12_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffffffffff),
 	.NBITS(15)
 ) addr_0_6_calc (
-           .clk(clk), .sign(din_signs_reg[6]), 
-           .p(addr_0_6),
-           .a0b0(din_6_ab0), .a0b1(din_6_ab1), .a0b2(din_6_ab2), .a0b3(din_6_ab3),
-           .a0b0_1sc(din_6_ab0_1sc), .a0b1_1sc(din_6_ab1_1sc), .a0b2_1sc(din_6_ab2_1sc), .a0b3_1sc(din_6_ab3_1sc),
-           .msk_a0b0(din_6_msk_ab0), .msk_a0b1(din_6_msk_ab1), .msk_a0b2(din_6_msk_ab2), .msk_a0b3(din_6_msk_ab3),
-           .msk_a0b0_1sc(din_6_msk_ab0_1sc), .msk_a0b1_1sc(din_6_msk_ab1_1sc), .msk_a0b2_1sc(din_6_msk_ab2_1sc), .msk_a0b3_1sc(din_6_msk_ab3_1sc),
-
-           .a1b0(din_8_ab0), .a1b1(din_8_ab1), .a1b2(din_8_ab2),
-           .a1b0_1sc(din_8_ab0_1sc), .a1b1_1sc(din_8_ab1_1sc), .a1b2_1sc(din_8_ab2_1sc),
-           .msk_a1b0(din_8_msk_ab0), .msk_a1b1(din_8_msk_ab1), .msk_a1b2(din_8_msk_ab2),
-           .msk_a1b0_1sc(din_8_msk_ab0_1sc), .msk_a1b1_1sc(din_8_msk_ab1_1sc), .msk_a1b2_1sc(din_8_msk_ab2_1sc),
-
-           .a2b0(din_10_ab0), .a2b1(din_10_ab1),
-           .a2b0_1sc(din_10_ab0_1sc), .a2b1_1sc(din_10_ab1_1sc),
-           .msk_a2b0(din_10_msk_ab0), .msk_a2b1(din_10_msk_ab1),
-           .msk_a2b0_1sc(din_10_msk_ab0_1sc), .msk_a2b1_1sc(din_10_msk_ab1_1sc),
-           
-           .a3b0(din_12_ab0),
-           .a3b0_1sc(din_12_ab0_1sc)
+  .clk(clk), .p(addr_0_6),
+  .a0b0(din_6_ab0), .a0b1(din_6_ab1), .a0b2(din_6_ab2), .a0b3(din_6_ab3),
+  .a1b0(din_7_ab0), .a1b1(din_7_ab1), .a1b2(din_7_ab2), .a1b3(din_7_ab3),
+  .a2b0(din_8_ab0), .a2b1(din_8_ab1), .a2b2(din_8_ab2),
+  .a3b0(din_9_ab0), .a3b1(din_9_ab1), .a3b2(din_9_ab2),
+  .a4b0(din_10_ab0), .a4b1(din_10_ab1),
+  .a5b0(din_11_ab0), .a5b1(din_11_ab1),
+  .a6b0(din_12_ab0),
+  .a7b0(din_13_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffffffffff),
 	.NBITS(15)
 ) addr_0_7_calc (
-           .clk(clk), .sign(din_signs_reg[7]), 
-           .p(addr_0_7),
-           .a0b0(din_7_ab0), .a0b1(din_7_ab1), .a0b2(din_7_ab2), .a0b3(din_7_ab3),
-           .a0b0_1sc(din_7_ab0_1sc), .a0b1_1sc(din_7_ab1_1sc), .a0b2_1sc(din_7_ab2_1sc), .a0b3_1sc(din_7_ab3_1sc),
-           .msk_a0b0(din_7_msk_ab0), .msk_a0b1(din_7_msk_ab1), .msk_a0b2(din_7_msk_ab2), .msk_a0b3(din_7_msk_ab3),
-           .msk_a0b0_1sc(din_7_msk_ab0_1sc), .msk_a0b1_1sc(din_7_msk_ab1_1sc), .msk_a0b2_1sc(din_7_msk_ab2_1sc), .msk_a0b3_1sc(din_7_msk_ab3_1sc),
-
-           .a1b0(din_9_ab0), .a1b1(din_9_ab1), .a1b2(din_9_ab2),
-           .a1b0_1sc(din_9_ab0_1sc), .a1b1_1sc(din_9_ab1_1sc), .a1b2_1sc(din_9_ab2_1sc),
-           .msk_a1b0(din_9_msk_ab0), .msk_a1b1(din_9_msk_ab1), .msk_a1b2(din_9_msk_ab2),
-           .msk_a1b0_1sc(din_9_msk_ab0_1sc), .msk_a1b1_1sc(din_9_msk_ab1_1sc), .msk_a1b2_1sc(din_9_msk_ab2_1sc),
-
-           .a2b0(din_11_ab0), .a2b1(din_11_ab1),
-           .a2b0_1sc(din_11_ab0_1sc), .a2b1_1sc(din_11_ab1_1sc),
-           .msk_a2b0(din_11_msk_ab0), .msk_a2b1(din_11_msk_ab1),
-           .msk_a2b0_1sc(din_11_msk_ab0_1sc), .msk_a2b1_1sc(din_11_msk_ab1_1sc),
-           
-           .a3b0(din_13_ab0),
-           .a3b0_1sc(din_13_ab0_1sc)
+  .clk(clk), .p(addr_0_7),
+  .a0b0(din_7_ab0), .a0b1(din_7_ab1), .a0b2(din_7_ab2), .a0b3(din_7_ab3),
+  .a1b0(din_8_ab0), .a1b1(din_8_ab1), .a1b2(din_8_ab2), .a1b3(din_8_ab3),
+  .a2b0(din_9_ab0), .a2b1(din_9_ab1), .a2b2(din_9_ab2),
+  .a3b0(din_10_ab0), .a3b1(din_10_ab1), .a3b2(din_10_ab2),
+  .a4b0(din_11_ab0), .a4b1(din_11_ab1),
+  .a5b0(din_12_ab0), .a5b1(din_12_ab1),
+  .a6b0(din_13_ab0),
+  .a7b0(din_14_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffffffffff),
 	.NBITS(15)
 ) addr_0_8_calc (
-           .clk(clk), .sign(din_signs_reg[8]), 
-           .p(addr_0_8),
-           .a0b0(din_8_ab0), .a0b1(din_8_ab1), .a0b2(din_8_ab2), .a0b3(din_8_ab3),
-           .a0b0_1sc(din_8_ab0_1sc), .a0b1_1sc(din_8_ab1_1sc), .a0b2_1sc(din_8_ab2_1sc), .a0b3_1sc(din_8_ab3_1sc),
-           .msk_a0b0(din_8_msk_ab0), .msk_a0b1(din_8_msk_ab1), .msk_a0b2(din_8_msk_ab2), .msk_a0b3(din_8_msk_ab3),
-           .msk_a0b0_1sc(din_8_msk_ab0_1sc), .msk_a0b1_1sc(din_8_msk_ab1_1sc), .msk_a0b2_1sc(din_8_msk_ab2_1sc), .msk_a0b3_1sc(din_8_msk_ab3_1sc),
-
-           .a1b0(din_10_ab0), .a1b1(din_10_ab1), .a1b2(din_10_ab2),
-           .a1b0_1sc(din_10_ab0_1sc), .a1b1_1sc(din_10_ab1_1sc), .a1b2_1sc(din_10_ab2_1sc),
-           .msk_a1b0(din_10_msk_ab0), .msk_a1b1(din_10_msk_ab1), .msk_a1b2(din_10_msk_ab2),
-           .msk_a1b0_1sc(din_10_msk_ab0_1sc), .msk_a1b1_1sc(din_10_msk_ab1_1sc), .msk_a1b2_1sc(din_10_msk_ab2_1sc),
-
-           .a2b0(din_12_ab0), .a2b1(din_12_ab1),
-           .a2b0_1sc(din_12_ab0_1sc), .a2b1_1sc(din_12_ab1_1sc),
-           .msk_a2b0(din_12_msk_ab0), .msk_a2b1(din_12_msk_ab1),
-           .msk_a2b0_1sc(din_12_msk_ab0_1sc), .msk_a2b1_1sc(din_12_msk_ab1_1sc),
-           
-           .a3b0(din_14_ab0),
-           .a3b0_1sc(din_14_ab0_1sc)
+  .clk(clk), .p(addr_0_8),
+  .a0b0(din_8_ab0), .a0b1(din_8_ab1), .a0b2(din_8_ab2), .a0b3(din_8_ab3),
+  .a1b0(din_9_ab0), .a1b1(din_9_ab1), .a1b2(din_9_ab2), .a1b3(din_9_ab3),
+  .a2b0(din_10_ab0), .a2b1(din_10_ab1), .a2b2(din_10_ab2),
+  .a3b0(din_11_ab0), .a3b1(din_11_ab1), .a3b2(din_11_ab2),
+  .a4b0(din_12_ab0), .a4b1(din_12_ab1),
+  .a5b0(din_13_ab0), .a5b1(din_13_ab1),
+  .a6b0(din_14_ab0),
+  .a7b0(din_15_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffffffffff),
 	.NBITS(15)
 ) addr_0_9_calc (
-           .clk(clk), .sign(din_signs_reg[9]), 
-           .p(addr_0_9),
-           .a0b0(din_9_ab0), .a0b1(din_9_ab1), .a0b2(din_9_ab2), .a0b3(din_9_ab3),
-           .a0b0_1sc(din_9_ab0_1sc), .a0b1_1sc(din_9_ab1_1sc), .a0b2_1sc(din_9_ab2_1sc), .a0b3_1sc(din_9_ab3_1sc),
-           .msk_a0b0(din_9_msk_ab0), .msk_a0b1(din_9_msk_ab1), .msk_a0b2(din_9_msk_ab2), .msk_a0b3(din_9_msk_ab3),
-           .msk_a0b0_1sc(din_9_msk_ab0_1sc), .msk_a0b1_1sc(din_9_msk_ab1_1sc), .msk_a0b2_1sc(din_9_msk_ab2_1sc), .msk_a0b3_1sc(din_9_msk_ab3_1sc),
-
-           .a1b0(din_11_ab0), .a1b1(din_11_ab1), .a1b2(din_11_ab2),
-           .a1b0_1sc(din_11_ab0_1sc), .a1b1_1sc(din_11_ab1_1sc), .a1b2_1sc(din_11_ab2_1sc),
-           .msk_a1b0(din_11_msk_ab0), .msk_a1b1(din_11_msk_ab1), .msk_a1b2(din_11_msk_ab2),
-           .msk_a1b0_1sc(din_11_msk_ab0_1sc), .msk_a1b1_1sc(din_11_msk_ab1_1sc), .msk_a1b2_1sc(din_11_msk_ab2_1sc),
-
-           .a2b0(din_13_ab0), .a2b1(din_13_ab1),
-           .a2b0_1sc(din_13_ab0_1sc), .a2b1_1sc(din_13_ab1_1sc),
-           .msk_a2b0(din_13_msk_ab0), .msk_a2b1(din_13_msk_ab1),
-           .msk_a2b0_1sc(din_13_msk_ab0_1sc), .msk_a2b1_1sc(din_13_msk_ab1_1sc),
-           
-           .a3b0(din_15_ab0),
-           .a3b0_1sc(din_15_ab0_1sc)
+  .clk(clk), .p(addr_0_9),
+  .a0b0(din_9_ab0), .a0b1(din_9_ab1), .a0b2(din_9_ab2), .a0b3(din_9_ab3),
+  .a1b0(din_10_ab0), .a1b1(din_10_ab1), .a1b2(din_10_ab2), .a1b3(din_10_ab3),
+  .a2b0(din_11_ab0), .a2b1(din_11_ab1), .a2b2(din_11_ab2),
+  .a3b0(din_12_ab0), .a3b1(din_12_ab1), .a3b2(din_12_ab2),
+  .a4b0(din_13_ab0), .a4b1(din_13_ab1),
+  .a5b0(din_14_ab0), .a5b1(din_14_ab1),
+  .a6b0(din_15_ab0),
+  .a7b0(din_16_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffffffffff),
 	.NBITS(15)
 ) addr_0_10_calc (
-           .clk(clk), .sign(din_signs_reg[10]), 
-           .p(addr_0_10),
-           .a0b0(din_10_ab0), .a0b1(din_10_ab1), .a0b2(din_10_ab2), .a0b3(din_10_ab3),
-           .a0b0_1sc(din_10_ab0_1sc), .a0b1_1sc(din_10_ab1_1sc), .a0b2_1sc(din_10_ab2_1sc), .a0b3_1sc(din_10_ab3_1sc),
-           .msk_a0b0(din_10_msk_ab0), .msk_a0b1(din_10_msk_ab1), .msk_a0b2(din_10_msk_ab2), .msk_a0b3(din_10_msk_ab3),
-           .msk_a0b0_1sc(din_10_msk_ab0_1sc), .msk_a0b1_1sc(din_10_msk_ab1_1sc), .msk_a0b2_1sc(din_10_msk_ab2_1sc), .msk_a0b3_1sc(din_10_msk_ab3_1sc),
-
-           .a1b0(din_12_ab0), .a1b1(din_12_ab1), .a1b2(din_12_ab2),
-           .a1b0_1sc(din_12_ab0_1sc), .a1b1_1sc(din_12_ab1_1sc), .a1b2_1sc(din_12_ab2_1sc),
-           .msk_a1b0(din_12_msk_ab0), .msk_a1b1(din_12_msk_ab1), .msk_a1b2(din_12_msk_ab2),
-           .msk_a1b0_1sc(din_12_msk_ab0_1sc), .msk_a1b1_1sc(din_12_msk_ab1_1sc), .msk_a1b2_1sc(din_12_msk_ab2_1sc),
-
-           .a2b0(din_14_ab0), .a2b1(din_14_ab1),
-           .a2b0_1sc(din_14_ab0_1sc), .a2b1_1sc(din_14_ab1_1sc),
-           .msk_a2b0(din_14_msk_ab0), .msk_a2b1(din_14_msk_ab1),
-           .msk_a2b0_1sc(din_14_msk_ab0_1sc), .msk_a2b1_1sc(din_14_msk_ab1_1sc),
-           
-           .a3b0(din_16_ab0),
-           .a3b0_1sc(din_16_ab0_1sc)
+  .clk(clk), .p(addr_0_10),
+  .a0b0(din_10_ab0), .a0b1(din_10_ab1), .a0b2(din_10_ab2), .a0b3(din_10_ab3),
+  .a1b0(din_11_ab0), .a1b1(din_11_ab1), .a1b2(din_11_ab2), .a1b3(din_11_ab3),
+  .a2b0(din_12_ab0), .a2b1(din_12_ab1), .a2b2(din_12_ab2),
+  .a3b0(din_13_ab0), .a3b1(din_13_ab1), .a3b2(din_13_ab2),
+  .a4b0(din_14_ab0), .a4b1(din_14_ab1),
+  .a5b0(din_15_ab0), .a5b1(din_15_ab1),
+  .a6b0(din_16_ab0),
+  .a7b0(din_17_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffffffffff),
 	.NBITS(15)
 ) addr_0_11_calc (
-           .clk(clk), .sign(din_signs_reg[11]), 
-           .p(addr_0_11),
-           .a0b0(din_11_ab0), .a0b1(din_11_ab1), .a0b2(din_11_ab2), .a0b3(din_11_ab3),
-           .a0b0_1sc(din_11_ab0_1sc), .a0b1_1sc(din_11_ab1_1sc), .a0b2_1sc(din_11_ab2_1sc), .a0b3_1sc(din_11_ab3_1sc),
-           .msk_a0b0(din_11_msk_ab0), .msk_a0b1(din_11_msk_ab1), .msk_a0b2(din_11_msk_ab2), .msk_a0b3(din_11_msk_ab3),
-           .msk_a0b0_1sc(din_11_msk_ab0_1sc), .msk_a0b1_1sc(din_11_msk_ab1_1sc), .msk_a0b2_1sc(din_11_msk_ab2_1sc), .msk_a0b3_1sc(din_11_msk_ab3_1sc),
-
-           .a1b0(din_13_ab0), .a1b1(din_13_ab1), .a1b2(din_13_ab2),
-           .a1b0_1sc(din_13_ab0_1sc), .a1b1_1sc(din_13_ab1_1sc), .a1b2_1sc(din_13_ab2_1sc),
-           .msk_a1b0(din_13_msk_ab0), .msk_a1b1(din_13_msk_ab1), .msk_a1b2(din_13_msk_ab2),
-           .msk_a1b0_1sc(din_13_msk_ab0_1sc), .msk_a1b1_1sc(din_13_msk_ab1_1sc), .msk_a1b2_1sc(din_13_msk_ab2_1sc),
-
-           .a2b0(din_15_ab0), .a2b1(din_15_ab1),
-           .a2b0_1sc(din_15_ab0_1sc), .a2b1_1sc(din_15_ab1_1sc),
-           .msk_a2b0(din_15_msk_ab0), .msk_a2b1(din_15_msk_ab1),
-           .msk_a2b0_1sc(din_15_msk_ab0_1sc), .msk_a2b1_1sc(din_15_msk_ab1_1sc),
-           
-           .a3b0(din_17_ab0),
-           .a3b0_1sc(din_17_ab0_1sc)
+  .clk(clk), .p(addr_0_11),
+  .a0b0(din_11_ab0), .a0b1(din_11_ab1), .a0b2(din_11_ab2), .a0b3(din_11_ab3),
+  .a1b0(din_12_ab0), .a1b1(din_12_ab1), .a1b2(din_12_ab2), .a1b3(din_12_ab3),
+  .a2b0(din_13_ab0), .a2b1(din_13_ab1), .a2b2(din_13_ab2),
+  .a3b0(din_14_ab0), .a3b1(din_14_ab1), .a3b2(din_14_ab2),
+  .a4b0(din_15_ab0), .a4b1(din_15_ab1),
+  .a5b0(din_16_ab0), .a5b1(din_16_ab1),
+  .a6b0(din_17_ab0),
+  .a7b0(din_18_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffffffffff),
 	.NBITS(15)
 ) addr_0_12_calc (
-           .clk(clk), .sign(din_signs_reg[12]), 
-           .p(addr_0_12),
-           .a0b0(din_12_ab0), .a0b1(din_12_ab1), .a0b2(din_12_ab2), .a0b3(din_12_ab3),
-           .a0b0_1sc(din_12_ab0_1sc), .a0b1_1sc(din_12_ab1_1sc), .a0b2_1sc(din_12_ab2_1sc), .a0b3_1sc(din_12_ab3_1sc),
-           .msk_a0b0(din_12_msk_ab0), .msk_a0b1(din_12_msk_ab1), .msk_a0b2(din_12_msk_ab2), .msk_a0b3(din_12_msk_ab3),
-           .msk_a0b0_1sc(din_12_msk_ab0_1sc), .msk_a0b1_1sc(din_12_msk_ab1_1sc), .msk_a0b2_1sc(din_12_msk_ab2_1sc), .msk_a0b3_1sc(din_12_msk_ab3_1sc),
-
-           .a1b0(din_14_ab0), .a1b1(din_14_ab1), .a1b2(din_14_ab2),
-           .a1b0_1sc(din_14_ab0_1sc), .a1b1_1sc(din_14_ab1_1sc), .a1b2_1sc(din_14_ab2_1sc),
-           .msk_a1b0(din_14_msk_ab0), .msk_a1b1(din_14_msk_ab1), .msk_a1b2(din_14_msk_ab2),
-           .msk_a1b0_1sc(din_14_msk_ab0_1sc), .msk_a1b1_1sc(din_14_msk_ab1_1sc), .msk_a1b2_1sc(din_14_msk_ab2_1sc),
-
-           .a2b0(din_16_ab0), .a2b1(din_16_ab1),
-           .a2b0_1sc(din_16_ab0_1sc), .a2b1_1sc(din_16_ab1_1sc),
-           .msk_a2b0(din_16_msk_ab0), .msk_a2b1(din_16_msk_ab1),
-           .msk_a2b0_1sc(din_16_msk_ab0_1sc), .msk_a2b1_1sc(din_16_msk_ab1_1sc),
-           
-           .a3b0(din_18_ab0),
-           .a3b0_1sc(din_18_ab0_1sc)
+  .clk(clk), .p(addr_0_12),
+  .a0b0(din_12_ab0), .a0b1(din_12_ab1), .a0b2(din_12_ab2), .a0b3(din_12_ab3),
+  .a1b0(din_13_ab0), .a1b1(din_13_ab1), .a1b2(din_13_ab2), .a1b3(din_13_ab3),
+  .a2b0(din_14_ab0), .a2b1(din_14_ab1), .a2b2(din_14_ab2),
+  .a3b0(din_15_ab0), .a3b1(din_15_ab1), .a3b2(din_15_ab2),
+  .a4b0(din_16_ab0), .a4b1(din_16_ab1),
+  .a5b0(din_17_ab0), .a5b1(din_17_ab1),
+  .a6b0(din_18_ab0),
+  .a7b0(din_19_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffffffffff),
 	.NBITS(15)
 ) addr_0_13_calc (
-           .clk(clk), .sign(din_signs_reg[13]), 
-           .p(addr_0_13),
-           .a0b0(din_13_ab0), .a0b1(din_13_ab1), .a0b2(din_13_ab2), .a0b3(din_13_ab3),
-           .a0b0_1sc(din_13_ab0_1sc), .a0b1_1sc(din_13_ab1_1sc), .a0b2_1sc(din_13_ab2_1sc), .a0b3_1sc(din_13_ab3_1sc),
-           .msk_a0b0(din_13_msk_ab0), .msk_a0b1(din_13_msk_ab1), .msk_a0b2(din_13_msk_ab2), .msk_a0b3(din_13_msk_ab3),
-           .msk_a0b0_1sc(din_13_msk_ab0_1sc), .msk_a0b1_1sc(din_13_msk_ab1_1sc), .msk_a0b2_1sc(din_13_msk_ab2_1sc), .msk_a0b3_1sc(din_13_msk_ab3_1sc),
-
-           .a1b0(din_15_ab0), .a1b1(din_15_ab1), .a1b2(din_15_ab2),
-           .a1b0_1sc(din_15_ab0_1sc), .a1b1_1sc(din_15_ab1_1sc), .a1b2_1sc(din_15_ab2_1sc),
-           .msk_a1b0(din_15_msk_ab0), .msk_a1b1(din_15_msk_ab1), .msk_a1b2(din_15_msk_ab2),
-           .msk_a1b0_1sc(din_15_msk_ab0_1sc), .msk_a1b1_1sc(din_15_msk_ab1_1sc), .msk_a1b2_1sc(din_15_msk_ab2_1sc),
-
-           .a2b0(din_17_ab0), .a2b1(din_17_ab1),
-           .a2b0_1sc(din_17_ab0_1sc), .a2b1_1sc(din_17_ab1_1sc),
-           .msk_a2b0(din_17_msk_ab0), .msk_a2b1(din_17_msk_ab1),
-           .msk_a2b0_1sc(din_17_msk_ab0_1sc), .msk_a2b1_1sc(din_17_msk_ab1_1sc),
-           
-           .a3b0(din_19_ab0),
-           .a3b0_1sc(din_19_ab0_1sc)
+  .clk(clk), .p(addr_0_13),
+  .a0b0(din_13_ab0), .a0b1(din_13_ab1), .a0b2(din_13_ab2), .a0b3(din_13_ab3),
+  .a1b0(din_14_ab0), .a1b1(din_14_ab1), .a1b2(din_14_ab2), .a1b3(din_14_ab3),
+  .a2b0(din_15_ab0), .a2b1(din_15_ab1), .a2b2(din_15_ab2),
+  .a3b0(din_16_ab0), .a3b1(din_16_ab1), .a3b2(din_16_ab2),
+  .a4b0(din_17_ab0), .a4b1(din_17_ab1),
+  .a5b0(din_18_ab0), .a5b1(din_18_ab1),
+  .a6b0(din_19_ab0),
+  .a7b0(din_20_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffffffffff),
 	.NBITS(15)
 ) addr_0_14_calc (
-           .clk(clk), .sign(din_signs_reg[14]), 
-           .p(addr_0_14),
-           .a0b0(din_14_ab0), .a0b1(din_14_ab1), .a0b2(din_14_ab2), .a0b3(din_14_ab3),
-           .a0b0_1sc(din_14_ab0_1sc), .a0b1_1sc(din_14_ab1_1sc), .a0b2_1sc(din_14_ab2_1sc), .a0b3_1sc(din_14_ab3_1sc),
-           .msk_a0b0(din_14_msk_ab0), .msk_a0b1(din_14_msk_ab1), .msk_a0b2(din_14_msk_ab2), .msk_a0b3(din_14_msk_ab3),
-           .msk_a0b0_1sc(din_14_msk_ab0_1sc), .msk_a0b1_1sc(din_14_msk_ab1_1sc), .msk_a0b2_1sc(din_14_msk_ab2_1sc), .msk_a0b3_1sc(din_14_msk_ab3_1sc),
-
-           .a1b0(din_16_ab0), .a1b1(din_16_ab1), .a1b2(din_16_ab2),
-           .a1b0_1sc(din_16_ab0_1sc), .a1b1_1sc(din_16_ab1_1sc), .a1b2_1sc(din_16_ab2_1sc),
-           .msk_a1b0(din_16_msk_ab0), .msk_a1b1(din_16_msk_ab1), .msk_a1b2(din_16_msk_ab2),
-           .msk_a1b0_1sc(din_16_msk_ab0_1sc), .msk_a1b1_1sc(din_16_msk_ab1_1sc), .msk_a1b2_1sc(din_16_msk_ab2_1sc),
-
-           .a2b0(din_18_ab0), .a2b1(din_18_ab1),
-           .a2b0_1sc(din_18_ab0_1sc), .a2b1_1sc(din_18_ab1_1sc),
-           .msk_a2b0(din_18_msk_ab0), .msk_a2b1(din_18_msk_ab1),
-           .msk_a2b0_1sc(din_18_msk_ab0_1sc), .msk_a2b1_1sc(din_18_msk_ab1_1sc),
-           
-           .a3b0(din_20_ab0),
-           .a3b0_1sc(din_20_ab0_1sc)
+  .clk(clk), .p(addr_0_14),
+  .a0b0(din_14_ab0), .a0b1(din_14_ab1), .a0b2(din_14_ab2), .a0b3(din_14_ab3),
+  .a1b0(din_15_ab0), .a1b1(din_15_ab1), .a1b2(din_15_ab2), .a1b3(din_15_ab3),
+  .a2b0(din_16_ab0), .a2b1(din_16_ab1), .a2b2(din_16_ab2),
+  .a3b0(din_17_ab0), .a3b1(din_17_ab1), .a3b2(din_17_ab2),
+  .a4b0(din_18_ab0), .a4b1(din_18_ab1),
+  .a5b0(din_19_ab0), .a5b1(din_19_ab1),
+  .a6b0(din_20_ab0),
+  .a7b0(din_21_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffffffffff),
 	.NBITS(15)
 ) addr_0_15_calc (
-           .clk(clk), .sign(din_signs_reg[15]), 
-           .p(addr_0_15),
-           .a0b0(din_15_ab0), .a0b1(din_15_ab1), .a0b2(din_15_ab2), .a0b3(din_15_ab3),
-           .a0b0_1sc(din_15_ab0_1sc), .a0b1_1sc(din_15_ab1_1sc), .a0b2_1sc(din_15_ab2_1sc), .a0b3_1sc(din_15_ab3_1sc),
-           .msk_a0b0(din_15_msk_ab0), .msk_a0b1(din_15_msk_ab1), .msk_a0b2(din_15_msk_ab2), .msk_a0b3(din_15_msk_ab3),
-           .msk_a0b0_1sc(din_15_msk_ab0_1sc), .msk_a0b1_1sc(din_15_msk_ab1_1sc), .msk_a0b2_1sc(din_15_msk_ab2_1sc), .msk_a0b3_1sc(din_15_msk_ab3_1sc),
-
-           .a1b0(din_17_ab0), .a1b1(din_17_ab1), .a1b2(din_17_ab2),
-           .a1b0_1sc(din_17_ab0_1sc), .a1b1_1sc(din_17_ab1_1sc), .a1b2_1sc(din_17_ab2_1sc),
-           .msk_a1b0(din_17_msk_ab0), .msk_a1b1(din_17_msk_ab1), .msk_a1b2(din_17_msk_ab2),
-           .msk_a1b0_1sc(din_17_msk_ab0_1sc), .msk_a1b1_1sc(din_17_msk_ab1_1sc), .msk_a1b2_1sc(din_17_msk_ab2_1sc),
-
-           .a2b0(din_19_ab0), .a2b1(din_19_ab1),
-           .a2b0_1sc(din_19_ab0_1sc), .a2b1_1sc(din_19_ab1_1sc),
-           .msk_a2b0(din_19_msk_ab0), .msk_a2b1(din_19_msk_ab1),
-           .msk_a2b0_1sc(din_19_msk_ab0_1sc), .msk_a2b1_1sc(din_19_msk_ab1_1sc),
-           
-           .a3b0(din_21_ab0),
-           .a3b0_1sc(din_21_ab0_1sc)
+  .clk(clk), .p(addr_0_15),
+  .a0b0(din_15_ab0), .a0b1(din_15_ab1), .a0b2(din_15_ab2), .a0b3(din_15_ab3),
+  .a1b0(din_16_ab0), .a1b1(din_16_ab1), .a1b2(din_16_ab2), .a1b3(din_16_ab3),
+  .a2b0(din_17_ab0), .a2b1(din_17_ab1), .a2b2(din_17_ab2),
+  .a3b0(din_18_ab0), .a3b1(din_18_ab1), .a3b2(din_18_ab2),
+  .a4b0(din_19_ab0), .a4b1(din_19_ab1),
+  .a5b0(din_20_ab0), .a5b1(din_20_ab1),
+  .a6b0(din_21_ab0),
+  .a7b0(din_22_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffffffffff),
 	.NBITS(15)
 ) addr_0_16_calc (
-           .clk(clk), .sign(din_signs_reg[16]), 
-           .p(addr_0_16),
-           .a0b0(din_16_ab0), .a0b1(din_16_ab1), .a0b2(din_16_ab2), .a0b3(din_16_ab3),
-           .a0b0_1sc(din_16_ab0_1sc), .a0b1_1sc(din_16_ab1_1sc), .a0b2_1sc(din_16_ab2_1sc), .a0b3_1sc(din_16_ab3_1sc),
-           .msk_a0b0(din_16_msk_ab0), .msk_a0b1(din_16_msk_ab1), .msk_a0b2(din_16_msk_ab2), .msk_a0b3(din_16_msk_ab3),
-           .msk_a0b0_1sc(din_16_msk_ab0_1sc), .msk_a0b1_1sc(din_16_msk_ab1_1sc), .msk_a0b2_1sc(din_16_msk_ab2_1sc), .msk_a0b3_1sc(din_16_msk_ab3_1sc),
-
-           .a1b0(din_18_ab0), .a1b1(din_18_ab1), .a1b2(din_18_ab2),
-           .a1b0_1sc(din_18_ab0_1sc), .a1b1_1sc(din_18_ab1_1sc), .a1b2_1sc(din_18_ab2_1sc),
-           .msk_a1b0(din_18_msk_ab0), .msk_a1b1(din_18_msk_ab1), .msk_a1b2(din_18_msk_ab2),
-           .msk_a1b0_1sc(din_18_msk_ab0_1sc), .msk_a1b1_1sc(din_18_msk_ab1_1sc), .msk_a1b2_1sc(din_18_msk_ab2_1sc),
-
-           .a2b0(din_20_ab0), .a2b1(din_20_ab1),
-           .a2b0_1sc(din_20_ab0_1sc), .a2b1_1sc(din_20_ab1_1sc),
-           .msk_a2b0(din_20_msk_ab0), .msk_a2b1(din_20_msk_ab1),
-           .msk_a2b0_1sc(din_20_msk_ab0_1sc), .msk_a2b1_1sc(din_20_msk_ab1_1sc),
-           
-           .a3b0(din_22_ab0),
-           .a3b0_1sc(din_22_ab0_1sc)
+  .clk(clk), .p(addr_0_16),
+  .a0b0(din_16_ab0), .a0b1(din_16_ab1), .a0b2(din_16_ab2), .a0b3(din_16_ab3),
+  .a1b0(din_17_ab0), .a1b1(din_17_ab1), .a1b2(din_17_ab2), .a1b3(din_17_ab3),
+  .a2b0(din_18_ab0), .a2b1(din_18_ab1), .a2b2(din_18_ab2),
+  .a3b0(din_19_ab0), .a3b1(din_19_ab1), .a3b2(din_19_ab2),
+  .a4b0(din_20_ab0), .a4b1(din_20_ab1),
+  .a5b0(din_21_ab0), .a5b1(din_21_ab1),
+  .a6b0(din_22_ab0),
+  .a7b0(din_23_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffffffffff),
 	.NBITS(15)
 ) addr_0_17_calc (
-           .clk(clk), .sign(din_signs_reg[17]), 
-           .p(addr_0_17),
-           .a0b0(din_17_ab0), .a0b1(din_17_ab1), .a0b2(din_17_ab2), .a0b3(din_17_ab3),
-           .a0b0_1sc(din_17_ab0_1sc), .a0b1_1sc(din_17_ab1_1sc), .a0b2_1sc(din_17_ab2_1sc), .a0b3_1sc(din_17_ab3_1sc),
-           .msk_a0b0(din_17_msk_ab0), .msk_a0b1(din_17_msk_ab1), .msk_a0b2(din_17_msk_ab2), .msk_a0b3(din_17_msk_ab3),
-           .msk_a0b0_1sc(din_17_msk_ab0_1sc), .msk_a0b1_1sc(din_17_msk_ab1_1sc), .msk_a0b2_1sc(din_17_msk_ab2_1sc), .msk_a0b3_1sc(din_17_msk_ab3_1sc),
-
-           .a1b0(din_19_ab0), .a1b1(din_19_ab1), .a1b2(din_19_ab2),
-           .a1b0_1sc(din_19_ab0_1sc), .a1b1_1sc(din_19_ab1_1sc), .a1b2_1sc(din_19_ab2_1sc),
-           .msk_a1b0(din_19_msk_ab0), .msk_a1b1(din_19_msk_ab1), .msk_a1b2(din_19_msk_ab2),
-           .msk_a1b0_1sc(din_19_msk_ab0_1sc), .msk_a1b1_1sc(din_19_msk_ab1_1sc), .msk_a1b2_1sc(din_19_msk_ab2_1sc),
-
-           .a2b0(din_21_ab0), .a2b1(din_21_ab1),
-           .a2b0_1sc(din_21_ab0_1sc), .a2b1_1sc(din_21_ab1_1sc),
-           .msk_a2b0(din_21_msk_ab0), .msk_a2b1(din_21_msk_ab1),
-           .msk_a2b0_1sc(din_21_msk_ab0_1sc), .msk_a2b1_1sc(din_21_msk_ab1_1sc),
-           
-           .a3b0(din_23_ab0),
-           .a3b0_1sc(din_23_ab0_1sc)
+  .clk(clk), .p(addr_0_17),
+  .a0b0(din_17_ab0), .a0b1(din_17_ab1), .a0b2(din_17_ab2), .a0b3(din_17_ab3),
+  .a1b0(din_18_ab0), .a1b1(din_18_ab1), .a1b2(din_18_ab2), .a1b3(din_18_ab3),
+  .a2b0(din_19_ab0), .a2b1(din_19_ab1), .a2b2(din_19_ab2),
+  .a3b0(din_20_ab0), .a3b1(din_20_ab1), .a3b2(din_20_ab2),
+  .a4b0(din_21_ab0), .a4b1(din_21_ab1),
+  .a5b0(din_22_ab0), .a5b1(din_22_ab1),
+  .a6b0(din_23_ab0),
+  .a7b0(din_24_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffffffffff),
 	.NBITS(15)
 ) addr_0_18_calc (
-           .clk(clk), .sign(din_signs_reg[18]), 
-           .p(addr_0_18),
-           .a0b0(din_18_ab0), .a0b1(din_18_ab1), .a0b2(din_18_ab2), .a0b3(din_18_ab3),
-           .a0b0_1sc(din_18_ab0_1sc), .a0b1_1sc(din_18_ab1_1sc), .a0b2_1sc(din_18_ab2_1sc), .a0b3_1sc(din_18_ab3_1sc),
-           .msk_a0b0(din_18_msk_ab0), .msk_a0b1(din_18_msk_ab1), .msk_a0b2(din_18_msk_ab2), .msk_a0b3(din_18_msk_ab3),
-           .msk_a0b0_1sc(din_18_msk_ab0_1sc), .msk_a0b1_1sc(din_18_msk_ab1_1sc), .msk_a0b2_1sc(din_18_msk_ab2_1sc), .msk_a0b3_1sc(din_18_msk_ab3_1sc),
-
-           .a1b0(din_20_ab0), .a1b1(din_20_ab1), .a1b2(din_20_ab2),
-           .a1b0_1sc(din_20_ab0_1sc), .a1b1_1sc(din_20_ab1_1sc), .a1b2_1sc(din_20_ab2_1sc),
-           .msk_a1b0(din_20_msk_ab0), .msk_a1b1(din_20_msk_ab1), .msk_a1b2(din_20_msk_ab2),
-           .msk_a1b0_1sc(din_20_msk_ab0_1sc), .msk_a1b1_1sc(din_20_msk_ab1_1sc), .msk_a1b2_1sc(din_20_msk_ab2_1sc),
-
-           .a2b0(din_22_ab0), .a2b1(din_22_ab1),
-           .a2b0_1sc(din_22_ab0_1sc), .a2b1_1sc(din_22_ab1_1sc),
-           .msk_a2b0(din_22_msk_ab0), .msk_a2b1(din_22_msk_ab1),
-           .msk_a2b0_1sc(din_22_msk_ab0_1sc), .msk_a2b1_1sc(din_22_msk_ab1_1sc),
-           
-           .a3b0(din_24_ab0),
-           .a3b0_1sc(din_24_ab0_1sc)
+  .clk(clk), .p(addr_0_18),
+  .a0b0(din_18_ab0), .a0b1(din_18_ab1), .a0b2(din_18_ab2), .a0b3(din_18_ab3),
+  .a1b0(din_19_ab0), .a1b1(din_19_ab1), .a1b2(din_19_ab2), .a1b3(din_19_ab3),
+  .a2b0(din_20_ab0), .a2b1(din_20_ab1), .a2b2(din_20_ab2),
+  .a3b0(din_21_ab0), .a3b1(din_21_ab1), .a3b2(din_21_ab2),
+  .a4b0(din_22_ab0), .a4b1(din_22_ab1),
+  .a5b0(din_23_ab0), .a5b1(din_23_ab1),
+  .a6b0(din_24_ab0),
+  .a7b0(din_25_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffffffffff),
 	.NBITS(15)
 ) addr_0_19_calc (
-           .clk(clk), .sign(din_signs_reg[19]), 
-           .p(addr_0_19),
-           .a0b0(din_19_ab0), .a0b1(din_19_ab1), .a0b2(din_19_ab2), .a0b3(din_19_ab3),
-           .a0b0_1sc(din_19_ab0_1sc), .a0b1_1sc(din_19_ab1_1sc), .a0b2_1sc(din_19_ab2_1sc), .a0b3_1sc(din_19_ab3_1sc),
-           .msk_a0b0(din_19_msk_ab0), .msk_a0b1(din_19_msk_ab1), .msk_a0b2(din_19_msk_ab2), .msk_a0b3(din_19_msk_ab3),
-           .msk_a0b0_1sc(din_19_msk_ab0_1sc), .msk_a0b1_1sc(din_19_msk_ab1_1sc), .msk_a0b2_1sc(din_19_msk_ab2_1sc), .msk_a0b3_1sc(din_19_msk_ab3_1sc),
-
-           .a1b0(din_21_ab0), .a1b1(din_21_ab1), .a1b2(din_21_ab2),
-           .a1b0_1sc(din_21_ab0_1sc), .a1b1_1sc(din_21_ab1_1sc), .a1b2_1sc(din_21_ab2_1sc),
-           .msk_a1b0(din_21_msk_ab0), .msk_a1b1(din_21_msk_ab1), .msk_a1b2(din_21_msk_ab2),
-           .msk_a1b0_1sc(din_21_msk_ab0_1sc), .msk_a1b1_1sc(din_21_msk_ab1_1sc), .msk_a1b2_1sc(din_21_msk_ab2_1sc),
-
-           .a2b0(din_23_ab0), .a2b1(din_23_ab1),
-           .a2b0_1sc(din_23_ab0_1sc), .a2b1_1sc(din_23_ab1_1sc),
-           .msk_a2b0(din_23_msk_ab0), .msk_a2b1(din_23_msk_ab1),
-           .msk_a2b0_1sc(din_23_msk_ab0_1sc), .msk_a2b1_1sc(din_23_msk_ab1_1sc),
-           
-           .a3b0(din_25_ab0),
-           .a3b0_1sc(din_25_ab0_1sc)
+  .clk(clk), .p(addr_0_19),
+  .a0b0(din_19_ab0), .a0b1(din_19_ab1), .a0b2(din_19_ab2), .a0b3(din_19_ab3),
+  .a1b0(din_20_ab0), .a1b1(din_20_ab1), .a1b2(din_20_ab2), .a1b3(din_20_ab3),
+  .a2b0(din_21_ab0), .a2b1(din_21_ab1), .a2b2(din_21_ab2),
+  .a3b0(din_22_ab0), .a3b1(din_22_ab1), .a3b2(din_22_ab2),
+  .a4b0(din_23_ab0), .a4b1(din_23_ab1),
+  .a5b0(din_24_ab0), .a5b1(din_24_ab1),
+  .a6b0(din_25_ab0),
+  .a7b0(din_26_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffffffffff),
 	.NBITS(15)
 ) addr_0_20_calc (
-           .clk(clk), .sign(din_signs_reg[20]), 
-           .p(addr_0_20),
-           .a0b0(din_20_ab0), .a0b1(din_20_ab1), .a0b2(din_20_ab2), .a0b3(din_20_ab3),
-           .a0b0_1sc(din_20_ab0_1sc), .a0b1_1sc(din_20_ab1_1sc), .a0b2_1sc(din_20_ab2_1sc), .a0b3_1sc(din_20_ab3_1sc),
-           .msk_a0b0(din_20_msk_ab0), .msk_a0b1(din_20_msk_ab1), .msk_a0b2(din_20_msk_ab2), .msk_a0b3(din_20_msk_ab3),
-           .msk_a0b0_1sc(din_20_msk_ab0_1sc), .msk_a0b1_1sc(din_20_msk_ab1_1sc), .msk_a0b2_1sc(din_20_msk_ab2_1sc), .msk_a0b3_1sc(din_20_msk_ab3_1sc),
-
-           .a1b0(din_22_ab0), .a1b1(din_22_ab1), .a1b2(din_22_ab2),
-           .a1b0_1sc(din_22_ab0_1sc), .a1b1_1sc(din_22_ab1_1sc), .a1b2_1sc(din_22_ab2_1sc),
-           .msk_a1b0(din_22_msk_ab0), .msk_a1b1(din_22_msk_ab1), .msk_a1b2(din_22_msk_ab2),
-           .msk_a1b0_1sc(din_22_msk_ab0_1sc), .msk_a1b1_1sc(din_22_msk_ab1_1sc), .msk_a1b2_1sc(din_22_msk_ab2_1sc),
-
-           .a2b0(din_24_ab0), .a2b1(din_24_ab1),
-           .a2b0_1sc(din_24_ab0_1sc), .a2b1_1sc(din_24_ab1_1sc),
-           .msk_a2b0(din_24_msk_ab0), .msk_a2b1(din_24_msk_ab1),
-           .msk_a2b0_1sc(din_24_msk_ab0_1sc), .msk_a2b1_1sc(din_24_msk_ab1_1sc),
-           
-           .a3b0(din_26_ab0),
-           .a3b0_1sc(din_26_ab0_1sc)
+  .clk(clk), .p(addr_0_20),
+  .a0b0(din_20_ab0), .a0b1(din_20_ab1), .a0b2(din_20_ab2), .a0b3(din_20_ab3),
+  .a1b0(din_21_ab0), .a1b1(din_21_ab1), .a1b2(din_21_ab2), .a1b3(din_21_ab3),
+  .a2b0(din_22_ab0), .a2b1(din_22_ab1), .a2b2(din_22_ab2),
+  .a3b0(din_23_ab0), .a3b1(din_23_ab1), .a3b2(din_23_ab2),
+  .a4b0(din_24_ab0), .a4b1(din_24_ab1),
+  .a5b0(din_25_ab0), .a5b1(din_25_ab1),
+  .a6b0(din_26_ab0),
+  .a7b0(din_27_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffffffffff),
 	.NBITS(15)
 ) addr_0_21_calc (
-           .clk(clk), .sign(din_signs_reg[21]), 
-           .p(addr_0_21),
-           .a0b0(din_21_ab0), .a0b1(din_21_ab1), .a0b2(din_21_ab2), .a0b3(din_21_ab3),
-           .a0b0_1sc(din_21_ab0_1sc), .a0b1_1sc(din_21_ab1_1sc), .a0b2_1sc(din_21_ab2_1sc), .a0b3_1sc(din_21_ab3_1sc),
-           .msk_a0b0(din_21_msk_ab0), .msk_a0b1(din_21_msk_ab1), .msk_a0b2(din_21_msk_ab2), .msk_a0b3(din_21_msk_ab3),
-           .msk_a0b0_1sc(din_21_msk_ab0_1sc), .msk_a0b1_1sc(din_21_msk_ab1_1sc), .msk_a0b2_1sc(din_21_msk_ab2_1sc), .msk_a0b3_1sc(din_21_msk_ab3_1sc),
-
-           .a1b0(din_23_ab0), .a1b1(din_23_ab1), .a1b2(din_23_ab2),
-           .a1b0_1sc(din_23_ab0_1sc), .a1b1_1sc(din_23_ab1_1sc), .a1b2_1sc(din_23_ab2_1sc),
-           .msk_a1b0(din_23_msk_ab0), .msk_a1b1(din_23_msk_ab1), .msk_a1b2(din_23_msk_ab2),
-           .msk_a1b0_1sc(din_23_msk_ab0_1sc), .msk_a1b1_1sc(din_23_msk_ab1_1sc), .msk_a1b2_1sc(din_23_msk_ab2_1sc),
-
-           .a2b0(din_25_ab0), .a2b1(din_25_ab1),
-           .a2b0_1sc(din_25_ab0_1sc), .a2b1_1sc(din_25_ab1_1sc),
-           .msk_a2b0(din_25_msk_ab0), .msk_a2b1(din_25_msk_ab1),
-           .msk_a2b0_1sc(din_25_msk_ab0_1sc), .msk_a2b1_1sc(din_25_msk_ab1_1sc),
-           
-           .a3b0(din_27_ab0),
-           .a3b0_1sc(din_27_ab0_1sc)
+  .clk(clk), .p(addr_0_21),
+  .a0b0(din_21_ab0), .a0b1(din_21_ab1), .a0b2(din_21_ab2), .a0b3(din_21_ab3),
+  .a1b0(din_22_ab0), .a1b1(din_22_ab1), .a1b2(din_22_ab2), .a1b3(din_22_ab3),
+  .a2b0(din_23_ab0), .a2b1(din_23_ab1), .a2b2(din_23_ab2),
+  .a3b0(din_24_ab0), .a3b1(din_24_ab1), .a3b2(din_24_ab2),
+  .a4b0(din_25_ab0), .a4b1(din_25_ab1),
+  .a5b0(din_26_ab0), .a5b1(din_26_ab1),
+  .a6b0(din_27_ab0),
+  .a7b0(din_28_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffffffffff),
 	.NBITS(15)
 ) addr_0_22_calc (
-           .clk(clk), .sign(din_signs_reg[22]), 
-           .p(addr_0_22),
-           .a0b0(din_22_ab0), .a0b1(din_22_ab1), .a0b2(din_22_ab2), .a0b3(din_22_ab3),
-           .a0b0_1sc(din_22_ab0_1sc), .a0b1_1sc(din_22_ab1_1sc), .a0b2_1sc(din_22_ab2_1sc), .a0b3_1sc(din_22_ab3_1sc),
-           .msk_a0b0(din_22_msk_ab0), .msk_a0b1(din_22_msk_ab1), .msk_a0b2(din_22_msk_ab2), .msk_a0b3(din_22_msk_ab3),
-           .msk_a0b0_1sc(din_22_msk_ab0_1sc), .msk_a0b1_1sc(din_22_msk_ab1_1sc), .msk_a0b2_1sc(din_22_msk_ab2_1sc), .msk_a0b3_1sc(din_22_msk_ab3_1sc),
-
-           .a1b0(din_24_ab0), .a1b1(din_24_ab1), .a1b2(din_24_ab2),
-           .a1b0_1sc(din_24_ab0_1sc), .a1b1_1sc(din_24_ab1_1sc), .a1b2_1sc(din_24_ab2_1sc),
-           .msk_a1b0(din_24_msk_ab0), .msk_a1b1(din_24_msk_ab1), .msk_a1b2(din_24_msk_ab2),
-           .msk_a1b0_1sc(din_24_msk_ab0_1sc), .msk_a1b1_1sc(din_24_msk_ab1_1sc), .msk_a1b2_1sc(din_24_msk_ab2_1sc),
-
-           .a2b0(din_26_ab0), .a2b1(din_26_ab1),
-           .a2b0_1sc(din_26_ab0_1sc), .a2b1_1sc(din_26_ab1_1sc),
-           .msk_a2b0(din_26_msk_ab0), .msk_a2b1(din_26_msk_ab1),
-           .msk_a2b0_1sc(din_26_msk_ab0_1sc), .msk_a2b1_1sc(din_26_msk_ab1_1sc),
-           
-           .a3b0(din_28_ab0),
-           .a3b0_1sc(din_28_ab0_1sc)
+  .clk(clk), .p(addr_0_22),
+  .a0b0(din_22_ab0), .a0b1(din_22_ab1), .a0b2(din_22_ab2), .a0b3(din_22_ab3),
+  .a1b0(din_23_ab0), .a1b1(din_23_ab1), .a1b2(din_23_ab2), .a1b3(din_23_ab3),
+  .a2b0(din_24_ab0), .a2b1(din_24_ab1), .a2b2(din_24_ab2),
+  .a3b0(din_25_ab0), .a3b1(din_25_ab1), .a3b2(din_25_ab2),
+  .a4b0(din_26_ab0), .a4b1(din_26_ab1),
+  .a5b0(din_27_ab0), .a5b1(din_27_ab1),
+  .a6b0(din_28_ab0),
+  .a7b0(din_29_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffffffffff),
 	.NBITS(15)
 ) addr_0_23_calc (
-           .clk(clk), .sign(din_signs_reg[23]), 
-           .p(addr_0_23),
-           .a0b0(din_23_ab0), .a0b1(din_23_ab1), .a0b2(din_23_ab2), .a0b3(din_23_ab3),
-           .a0b0_1sc(din_23_ab0_1sc), .a0b1_1sc(din_23_ab1_1sc), .a0b2_1sc(din_23_ab2_1sc), .a0b3_1sc(din_23_ab3_1sc),
-           .msk_a0b0(din_23_msk_ab0), .msk_a0b1(din_23_msk_ab1), .msk_a0b2(din_23_msk_ab2), .msk_a0b3(din_23_msk_ab3),
-           .msk_a0b0_1sc(din_23_msk_ab0_1sc), .msk_a0b1_1sc(din_23_msk_ab1_1sc), .msk_a0b2_1sc(din_23_msk_ab2_1sc), .msk_a0b3_1sc(din_23_msk_ab3_1sc),
-
-           .a1b0(din_25_ab0), .a1b1(din_25_ab1), .a1b2(din_25_ab2),
-           .a1b0_1sc(din_25_ab0_1sc), .a1b1_1sc(din_25_ab1_1sc), .a1b2_1sc(din_25_ab2_1sc),
-           .msk_a1b0(din_25_msk_ab0), .msk_a1b1(din_25_msk_ab1), .msk_a1b2(din_25_msk_ab2),
-           .msk_a1b0_1sc(din_25_msk_ab0_1sc), .msk_a1b1_1sc(din_25_msk_ab1_1sc), .msk_a1b2_1sc(din_25_msk_ab2_1sc),
-
-           .a2b0(din_27_ab0), .a2b1(din_27_ab1),
-           .a2b0_1sc(din_27_ab0_1sc), .a2b1_1sc(din_27_ab1_1sc),
-           .msk_a2b0(din_27_msk_ab0), .msk_a2b1(din_27_msk_ab1),
-           .msk_a2b0_1sc(din_27_msk_ab0_1sc), .msk_a2b1_1sc(din_27_msk_ab1_1sc),
-           
-           .a3b0(din_29_ab0),
-           .a3b0_1sc(din_29_ab0_1sc)
+  .clk(clk), .p(addr_0_23),
+  .a0b0(din_23_ab0), .a0b1(din_23_ab1), .a0b2(din_23_ab2), .a0b3(din_23_ab3),
+  .a1b0(din_24_ab0), .a1b1(din_24_ab1), .a1b2(din_24_ab2), .a1b3(din_24_ab3),
+  .a2b0(din_25_ab0), .a2b1(din_25_ab1), .a2b2(din_25_ab2),
+  .a3b0(din_26_ab0), .a3b1(din_26_ab1), .a3b2(din_26_ab2),
+  .a4b0(din_27_ab0), .a4b1(din_27_ab1),
+  .a5b0(din_28_ab0), .a5b1(din_28_ab1),
+  .a6b0(din_29_ab0),
+  .a7b0(din_30_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffffffffff),
 	.NBITS(15)
 ) addr_0_24_calc (
-           .clk(clk), .sign(din_signs_reg[24]), 
-           .p(addr_0_24),
-           .a0b0(din_24_ab0), .a0b1(din_24_ab1), .a0b2(din_24_ab2), .a0b3(din_24_ab3),
-           .a0b0_1sc(din_24_ab0_1sc), .a0b1_1sc(din_24_ab1_1sc), .a0b2_1sc(din_24_ab2_1sc), .a0b3_1sc(din_24_ab3_1sc),
-           .msk_a0b0(din_24_msk_ab0), .msk_a0b1(din_24_msk_ab1), .msk_a0b2(din_24_msk_ab2), .msk_a0b3(din_24_msk_ab3),
-           .msk_a0b0_1sc(din_24_msk_ab0_1sc), .msk_a0b1_1sc(din_24_msk_ab1_1sc), .msk_a0b2_1sc(din_24_msk_ab2_1sc), .msk_a0b3_1sc(din_24_msk_ab3_1sc),
-
-           .a1b0(din_26_ab0), .a1b1(din_26_ab1), .a1b2(din_26_ab2),
-           .a1b0_1sc(din_26_ab0_1sc), .a1b1_1sc(din_26_ab1_1sc), .a1b2_1sc(din_26_ab2_1sc),
-           .msk_a1b0(din_26_msk_ab0), .msk_a1b1(din_26_msk_ab1), .msk_a1b2(din_26_msk_ab2),
-           .msk_a1b0_1sc(din_26_msk_ab0_1sc), .msk_a1b1_1sc(din_26_msk_ab1_1sc), .msk_a1b2_1sc(din_26_msk_ab2_1sc),
-
-           .a2b0(din_28_ab0), .a2b1(din_28_ab1),
-           .a2b0_1sc(din_28_ab0_1sc), .a2b1_1sc(din_28_ab1_1sc),
-           .msk_a2b0(din_28_msk_ab0), .msk_a2b1(din_28_msk_ab1),
-           .msk_a2b0_1sc(din_28_msk_ab0_1sc), .msk_a2b1_1sc(din_28_msk_ab1_1sc),
-           
-           .a3b0(din_30_ab0),
-           .a3b0_1sc(din_30_ab0_1sc)
+  .clk(clk), .p(addr_0_24),
+  .a0b0(din_24_ab0), .a0b1(din_24_ab1), .a0b2(din_24_ab2), .a0b3(din_24_ab3),
+  .a1b0(din_25_ab0), .a1b1(din_25_ab1), .a1b2(din_25_ab2), .a1b3(din_25_ab3),
+  .a2b0(din_26_ab0), .a2b1(din_26_ab1), .a2b2(din_26_ab2),
+  .a3b0(din_27_ab0), .a3b1(din_27_ab1), .a3b2(din_27_ab2),
+  .a4b0(din_28_ab0), .a4b1(din_28_ab1),
+  .a5b0(din_29_ab0), .a5b1(din_29_ab1),
+  .a6b0(din_30_ab0),
+  .a7b0(din_31_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffffffffff),
 	.NBITS(15)
 ) addr_0_25_calc (
-           .clk(clk), .sign(din_signs_reg[25]), 
-           .p(addr_0_25),
-           .a0b0(din_25_ab0), .a0b1(din_25_ab1), .a0b2(din_25_ab2), .a0b3(din_25_ab3),
-           .a0b0_1sc(din_25_ab0_1sc), .a0b1_1sc(din_25_ab1_1sc), .a0b2_1sc(din_25_ab2_1sc), .a0b3_1sc(din_25_ab3_1sc),
-           .msk_a0b0(din_25_msk_ab0), .msk_a0b1(din_25_msk_ab1), .msk_a0b2(din_25_msk_ab2), .msk_a0b3(din_25_msk_ab3),
-           .msk_a0b0_1sc(din_25_msk_ab0_1sc), .msk_a0b1_1sc(din_25_msk_ab1_1sc), .msk_a0b2_1sc(din_25_msk_ab2_1sc), .msk_a0b3_1sc(din_25_msk_ab3_1sc),
-
-           .a1b0(din_27_ab0), .a1b1(din_27_ab1), .a1b2(din_27_ab2),
-           .a1b0_1sc(din_27_ab0_1sc), .a1b1_1sc(din_27_ab1_1sc), .a1b2_1sc(din_27_ab2_1sc),
-           .msk_a1b0(din_27_msk_ab0), .msk_a1b1(din_27_msk_ab1), .msk_a1b2(din_27_msk_ab2),
-           .msk_a1b0_1sc(din_27_msk_ab0_1sc), .msk_a1b1_1sc(din_27_msk_ab1_1sc), .msk_a1b2_1sc(din_27_msk_ab2_1sc),
-
-           .a2b0(din_29_ab0), .a2b1(din_29_ab1),
-           .a2b0_1sc(din_29_ab0_1sc), .a2b1_1sc(din_29_ab1_1sc),
-           .msk_a2b0(din_29_msk_ab0), .msk_a2b1(din_29_msk_ab1),
-           .msk_a2b0_1sc(din_29_msk_ab0_1sc), .msk_a2b1_1sc(din_29_msk_ab1_1sc),
-           
-           .a3b0(din_31_ab0),
-           .a3b0_1sc(din_31_ab0_1sc)
+  .clk(clk), .p(addr_0_25),
+  .a0b0(din_25_ab0), .a0b1(din_25_ab1), .a0b2(din_25_ab2), .a0b3(din_25_ab3),
+  .a1b0(din_26_ab0), .a1b1(din_26_ab1), .a1b2(din_26_ab2), .a1b3(din_26_ab3),
+  .a2b0(din_27_ab0), .a2b1(din_27_ab1), .a2b2(din_27_ab2),
+  .a3b0(din_28_ab0), .a3b1(din_28_ab1), .a3b2(din_28_ab2),
+  .a4b0(din_29_ab0), .a4b1(din_29_ab1),
+  .a5b0(din_30_ab0), .a5b1(din_30_ab1),
+  .a6b0(din_31_ab0),
+  .a7b0(din_32_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffffffffff),
 	.NBITS(15)
 ) addr_0_26_calc (
-           .clk(clk), .sign(din_signs_reg[26]), 
-           .p(addr_0_26),
-           .a0b0(din_26_ab0), .a0b1(din_26_ab1), .a0b2(din_26_ab2), .a0b3(din_26_ab3),
-           .a0b0_1sc(din_26_ab0_1sc), .a0b1_1sc(din_26_ab1_1sc), .a0b2_1sc(din_26_ab2_1sc), .a0b3_1sc(din_26_ab3_1sc),
-           .msk_a0b0(din_26_msk_ab0), .msk_a0b1(din_26_msk_ab1), .msk_a0b2(din_26_msk_ab2), .msk_a0b3(din_26_msk_ab3),
-           .msk_a0b0_1sc(din_26_msk_ab0_1sc), .msk_a0b1_1sc(din_26_msk_ab1_1sc), .msk_a0b2_1sc(din_26_msk_ab2_1sc), .msk_a0b3_1sc(din_26_msk_ab3_1sc),
-
-           .a1b0(din_28_ab0), .a1b1(din_28_ab1), .a1b2(din_28_ab2),
-           .a1b0_1sc(din_28_ab0_1sc), .a1b1_1sc(din_28_ab1_1sc), .a1b2_1sc(din_28_ab2_1sc),
-           .msk_a1b0(din_28_msk_ab0), .msk_a1b1(din_28_msk_ab1), .msk_a1b2(din_28_msk_ab2),
-           .msk_a1b0_1sc(din_28_msk_ab0_1sc), .msk_a1b1_1sc(din_28_msk_ab1_1sc), .msk_a1b2_1sc(din_28_msk_ab2_1sc),
-
-           .a2b0(din_30_ab0), .a2b1(din_30_ab1),
-           .a2b0_1sc(din_30_ab0_1sc), .a2b1_1sc(din_30_ab1_1sc),
-           .msk_a2b0(din_30_msk_ab0), .msk_a2b1(din_30_msk_ab1),
-           .msk_a2b0_1sc(din_30_msk_ab0_1sc), .msk_a2b1_1sc(din_30_msk_ab1_1sc),
-           
-           .a3b0(din_32_ab0),
-           .a3b0_1sc(din_32_ab0_1sc)
+  .clk(clk), .p(addr_0_26),
+  .a0b0(din_26_ab0), .a0b1(din_26_ab1), .a0b2(din_26_ab2), .a0b3(din_26_ab3),
+  .a1b0(din_27_ab0), .a1b1(din_27_ab1), .a1b2(din_27_ab2), .a1b3(din_27_ab3),
+  .a2b0(din_28_ab0), .a2b1(din_28_ab1), .a2b2(din_28_ab2),
+  .a3b0(din_29_ab0), .a3b1(din_29_ab1), .a3b2(din_29_ab2),
+  .a4b0(din_30_ab0), .a4b1(din_30_ab1),
+  .a5b0(din_31_ab0), .a5b1(din_31_ab1),
+  .a6b0(din_32_ab0),
+  .a7b0(din_33_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffffffffff),
 	.NBITS(15)
 ) addr_0_27_calc (
-           .clk(clk), .sign(din_signs_reg[27]), 
-           .p(addr_0_27),
-           .a0b0(din_27_ab0), .a0b1(din_27_ab1), .a0b2(din_27_ab2), .a0b3(din_27_ab3),
-           .a0b0_1sc(din_27_ab0_1sc), .a0b1_1sc(din_27_ab1_1sc), .a0b2_1sc(din_27_ab2_1sc), .a0b3_1sc(din_27_ab3_1sc),
-           .msk_a0b0(din_27_msk_ab0), .msk_a0b1(din_27_msk_ab1), .msk_a0b2(din_27_msk_ab2), .msk_a0b3(din_27_msk_ab3),
-           .msk_a0b0_1sc(din_27_msk_ab0_1sc), .msk_a0b1_1sc(din_27_msk_ab1_1sc), .msk_a0b2_1sc(din_27_msk_ab2_1sc), .msk_a0b3_1sc(din_27_msk_ab3_1sc),
-
-           .a1b0(din_29_ab0), .a1b1(din_29_ab1), .a1b2(din_29_ab2),
-           .a1b0_1sc(din_29_ab0_1sc), .a1b1_1sc(din_29_ab1_1sc), .a1b2_1sc(din_29_ab2_1sc),
-           .msk_a1b0(din_29_msk_ab0), .msk_a1b1(din_29_msk_ab1), .msk_a1b2(din_29_msk_ab2),
-           .msk_a1b0_1sc(din_29_msk_ab0_1sc), .msk_a1b1_1sc(din_29_msk_ab1_1sc), .msk_a1b2_1sc(din_29_msk_ab2_1sc),
-
-           .a2b0(din_31_ab0), .a2b1(din_31_ab1),
-           .a2b0_1sc(din_31_ab0_1sc), .a2b1_1sc(din_31_ab1_1sc),
-           .msk_a2b0(din_31_msk_ab0), .msk_a2b1(din_31_msk_ab1),
-           .msk_a2b0_1sc(din_31_msk_ab0_1sc), .msk_a2b1_1sc(din_31_msk_ab1_1sc),
-           
-           .a3b0(din_33_ab0),
-           .a3b0_1sc(din_33_ab0_1sc)
+  .clk(clk), .p(addr_0_27),
+  .a0b0(din_27_ab0), .a0b1(din_27_ab1), .a0b2(din_27_ab2), .a0b3(din_27_ab3),
+  .a1b0(din_28_ab0), .a1b1(din_28_ab1), .a1b2(din_28_ab2), .a1b3(din_28_ab3),
+  .a2b0(din_29_ab0), .a2b1(din_29_ab1), .a2b2(din_29_ab2),
+  .a3b0(din_30_ab0), .a3b1(din_30_ab1), .a3b2(din_30_ab2),
+  .a4b0(din_31_ab0), .a4b1(din_31_ab1),
+  .a5b0(din_32_ab0), .a5b1(din_32_ab1),
+  .a6b0(din_33_ab0),
+  .a7b0(din_34_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffffffffff),
 	.NBITS(15)
 ) addr_0_28_calc (
-           .clk(clk), .sign(din_signs_reg[28]), 
-           .p(addr_0_28),
-           .a0b0(din_28_ab0), .a0b1(din_28_ab1), .a0b2(din_28_ab2), .a0b3(din_28_ab3),
-           .a0b0_1sc(din_28_ab0_1sc), .a0b1_1sc(din_28_ab1_1sc), .a0b2_1sc(din_28_ab2_1sc), .a0b3_1sc(din_28_ab3_1sc),
-           .msk_a0b0(din_28_msk_ab0), .msk_a0b1(din_28_msk_ab1), .msk_a0b2(din_28_msk_ab2), .msk_a0b3(din_28_msk_ab3),
-           .msk_a0b0_1sc(din_28_msk_ab0_1sc), .msk_a0b1_1sc(din_28_msk_ab1_1sc), .msk_a0b2_1sc(din_28_msk_ab2_1sc), .msk_a0b3_1sc(din_28_msk_ab3_1sc),
-
-           .a1b0(din_30_ab0), .a1b1(din_30_ab1), .a1b2(din_30_ab2),
-           .a1b0_1sc(din_30_ab0_1sc), .a1b1_1sc(din_30_ab1_1sc), .a1b2_1sc(din_30_ab2_1sc),
-           .msk_a1b0(din_30_msk_ab0), .msk_a1b1(din_30_msk_ab1), .msk_a1b2(din_30_msk_ab2),
-           .msk_a1b0_1sc(din_30_msk_ab0_1sc), .msk_a1b1_1sc(din_30_msk_ab1_1sc), .msk_a1b2_1sc(din_30_msk_ab2_1sc),
-
-           .a2b0(din_32_ab0), .a2b1(din_32_ab1),
-           .a2b0_1sc(din_32_ab0_1sc), .a2b1_1sc(din_32_ab1_1sc),
-           .msk_a2b0(din_32_msk_ab0), .msk_a2b1(din_32_msk_ab1),
-           .msk_a2b0_1sc(din_32_msk_ab0_1sc), .msk_a2b1_1sc(din_32_msk_ab1_1sc),
-           
-           .a3b0(din_34_ab0),
-           .a3b0_1sc(din_34_ab0_1sc)
+  .clk(clk), .p(addr_0_28),
+  .a0b0(din_28_ab0), .a0b1(din_28_ab1), .a0b2(din_28_ab2), .a0b3(din_28_ab3),
+  .a1b0(din_29_ab0), .a1b1(din_29_ab1), .a1b2(din_29_ab2), .a1b3(din_29_ab3),
+  .a2b0(din_30_ab0), .a2b1(din_30_ab1), .a2b2(din_30_ab2),
+  .a3b0(din_31_ab0), .a3b1(din_31_ab1), .a3b2(din_31_ab2),
+  .a4b0(din_32_ab0), .a4b1(din_32_ab1),
+  .a5b0(din_33_ab0), .a5b1(din_33_ab1),
+  .a6b0(din_34_ab0),
+  .a7b0(din_35_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffffffffff),
 	.NBITS(15)
 ) addr_0_29_calc (
-           .clk(clk), .sign(din_signs_reg[29]), 
-           .p(addr_0_29),
-           .a0b0(din_29_ab0), .a0b1(din_29_ab1), .a0b2(din_29_ab2), .a0b3(din_29_ab3),
-           .a0b0_1sc(din_29_ab0_1sc), .a0b1_1sc(din_29_ab1_1sc), .a0b2_1sc(din_29_ab2_1sc), .a0b3_1sc(din_29_ab3_1sc),
-           .msk_a0b0(din_29_msk_ab0), .msk_a0b1(din_29_msk_ab1), .msk_a0b2(din_29_msk_ab2), .msk_a0b3(din_29_msk_ab3),
-           .msk_a0b0_1sc(din_29_msk_ab0_1sc), .msk_a0b1_1sc(din_29_msk_ab1_1sc), .msk_a0b2_1sc(din_29_msk_ab2_1sc), .msk_a0b3_1sc(din_29_msk_ab3_1sc),
-
-           .a1b0(din_31_ab0), .a1b1(din_31_ab1), .a1b2(din_31_ab2),
-           .a1b0_1sc(din_31_ab0_1sc), .a1b1_1sc(din_31_ab1_1sc), .a1b2_1sc(din_31_ab2_1sc),
-           .msk_a1b0(din_31_msk_ab0), .msk_a1b1(din_31_msk_ab1), .msk_a1b2(din_31_msk_ab2),
-           .msk_a1b0_1sc(din_31_msk_ab0_1sc), .msk_a1b1_1sc(din_31_msk_ab1_1sc), .msk_a1b2_1sc(din_31_msk_ab2_1sc),
-
-           .a2b0(din_33_ab0), .a2b1(din_33_ab1),
-           .a2b0_1sc(din_33_ab0_1sc), .a2b1_1sc(din_33_ab1_1sc),
-           .msk_a2b0(din_33_msk_ab0), .msk_a2b1(din_33_msk_ab1),
-           .msk_a2b0_1sc(din_33_msk_ab0_1sc), .msk_a2b1_1sc(din_33_msk_ab1_1sc),
-           
-           .a3b0(din_35_ab0),
-           .a3b0_1sc(din_35_ab0_1sc)
+  .clk(clk), .p(addr_0_29),
+  .a0b0(din_29_ab0), .a0b1(din_29_ab1), .a0b2(din_29_ab2), .a0b3(din_29_ab3),
+  .a1b0(din_30_ab0), .a1b1(din_30_ab1), .a1b2(din_30_ab2), .a1b3(din_30_ab3),
+  .a2b0(din_31_ab0), .a2b1(din_31_ab1), .a2b2(din_31_ab2),
+  .a3b0(din_32_ab0), .a3b1(din_32_ab1), .a3b2(din_32_ab2),
+  .a4b0(din_33_ab0), .a4b1(din_33_ab1),
+  .a5b0(din_34_ab0), .a5b1(din_34_ab1),
+  .a6b0(din_35_ab0),
+  .a7b0(din_36_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffffffffff),
 	.NBITS(15)
 ) addr_0_30_calc (
-           .clk(clk), .sign(din_signs_reg[30]), 
-           .p(addr_0_30),
-           .a0b0(din_30_ab0), .a0b1(din_30_ab1), .a0b2(din_30_ab2), .a0b3(din_30_ab3),
-           .a0b0_1sc(din_30_ab0_1sc), .a0b1_1sc(din_30_ab1_1sc), .a0b2_1sc(din_30_ab2_1sc), .a0b3_1sc(din_30_ab3_1sc),
-           .msk_a0b0(din_30_msk_ab0), .msk_a0b1(din_30_msk_ab1), .msk_a0b2(din_30_msk_ab2), .msk_a0b3(din_30_msk_ab3),
-           .msk_a0b0_1sc(din_30_msk_ab0_1sc), .msk_a0b1_1sc(din_30_msk_ab1_1sc), .msk_a0b2_1sc(din_30_msk_ab2_1sc), .msk_a0b3_1sc(din_30_msk_ab3_1sc),
-
-           .a1b0(din_32_ab0), .a1b1(din_32_ab1), .a1b2(din_32_ab2),
-           .a1b0_1sc(din_32_ab0_1sc), .a1b1_1sc(din_32_ab1_1sc), .a1b2_1sc(din_32_ab2_1sc),
-           .msk_a1b0(din_32_msk_ab0), .msk_a1b1(din_32_msk_ab1), .msk_a1b2(din_32_msk_ab2),
-           .msk_a1b0_1sc(din_32_msk_ab0_1sc), .msk_a1b1_1sc(din_32_msk_ab1_1sc), .msk_a1b2_1sc(din_32_msk_ab2_1sc),
-
-           .a2b0(din_34_ab0), .a2b1(din_34_ab1),
-           .a2b0_1sc(din_34_ab0_1sc), .a2b1_1sc(din_34_ab1_1sc),
-           .msk_a2b0(din_34_msk_ab0), .msk_a2b1(din_34_msk_ab1),
-           .msk_a2b0_1sc(din_34_msk_ab0_1sc), .msk_a2b1_1sc(din_34_msk_ab1_1sc),
-           
-           .a3b0(din_36_ab0),
-           .a3b0_1sc(din_36_ab0_1sc)
+  .clk(clk), .p(addr_0_30),
+  .a0b0(din_30_ab0), .a0b1(din_30_ab1), .a0b2(din_30_ab2), .a0b3(din_30_ab3),
+  .a1b0(din_31_ab0), .a1b1(din_31_ab1), .a1b2(din_31_ab2), .a1b3(din_31_ab3),
+  .a2b0(din_32_ab0), .a2b1(din_32_ab1), .a2b2(din_32_ab2),
+  .a3b0(din_33_ab0), .a3b1(din_33_ab1), .a3b2(din_33_ab2),
+  .a4b0(din_34_ab0), .a4b1(din_34_ab1),
+  .a5b0(din_35_ab0), .a5b1(din_35_ab1),
+  .a6b0(din_36_ab0),
+  .a7b0(din_37_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffffffffff),
 	.NBITS(15)
 ) addr_0_31_calc (
-           .clk(clk), .sign(din_signs_reg[31]), 
-           .p(addr_0_31),
-           .a0b0(din_31_ab0), .a0b1(din_31_ab1), .a0b2(din_31_ab2), .a0b3(din_31_ab3),
-           .a0b0_1sc(din_31_ab0_1sc), .a0b1_1sc(din_31_ab1_1sc), .a0b2_1sc(din_31_ab2_1sc), .a0b3_1sc(din_31_ab3_1sc),
-           .msk_a0b0(din_31_msk_ab0), .msk_a0b1(din_31_msk_ab1), .msk_a0b2(din_31_msk_ab2), .msk_a0b3(din_31_msk_ab3),
-           .msk_a0b0_1sc(din_31_msk_ab0_1sc), .msk_a0b1_1sc(din_31_msk_ab1_1sc), .msk_a0b2_1sc(din_31_msk_ab2_1sc), .msk_a0b3_1sc(din_31_msk_ab3_1sc),
-
-           .a1b0(din_33_ab0), .a1b1(din_33_ab1), .a1b2(din_33_ab2),
-           .a1b0_1sc(din_33_ab0_1sc), .a1b1_1sc(din_33_ab1_1sc), .a1b2_1sc(din_33_ab2_1sc),
-           .msk_a1b0(din_33_msk_ab0), .msk_a1b1(din_33_msk_ab1), .msk_a1b2(din_33_msk_ab2),
-           .msk_a1b0_1sc(din_33_msk_ab0_1sc), .msk_a1b1_1sc(din_33_msk_ab1_1sc), .msk_a1b2_1sc(din_33_msk_ab2_1sc),
-
-           .a2b0(din_35_ab0), .a2b1(din_35_ab1),
-           .a2b0_1sc(din_35_ab0_1sc), .a2b1_1sc(din_35_ab1_1sc),
-           .msk_a2b0(din_35_msk_ab0), .msk_a2b1(din_35_msk_ab1),
-           .msk_a2b0_1sc(din_35_msk_ab0_1sc), .msk_a2b1_1sc(din_35_msk_ab1_1sc),
-           
-           .a3b0(din_37_ab0),
-           .a3b0_1sc(din_37_ab0_1sc)
+  .clk(clk), .p(addr_0_31),
+  .a0b0(din_31_ab0), .a0b1(din_31_ab1), .a0b2(din_31_ab2), .a0b3(din_31_ab3),
+  .a1b0(din_32_ab0), .a1b1(din_32_ab1), .a1b2(din_32_ab2), .a1b3(din_32_ab3),
+  .a2b0(din_33_ab0), .a2b1(din_33_ab1), .a2b2(din_33_ab2),
+  .a3b0(din_34_ab0), .a3b1(din_34_ab1), .a3b2(din_34_ab2),
+  .a4b0(din_35_ab0), .a4b1(din_35_ab1),
+  .a5b0(din_36_ab0), .a5b1(din_36_ab1),
+  .a6b0(din_37_ab0),
+  .a7b0(din_38_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffffffffff),
 	.NBITS(15)
 ) addr_1_0_calc (
-           .clk(clk), .sign(din_signs_reg[0]), 
-           .p(addr_1_0),
-           .a0b0(din_0_ab0), .a0b1(din_0_ab1), .a0b2(din_0_ab2), .a0b3(din_0_ab3),
-           .a0b0_1sc(din_0_ab0_1sc), .a0b1_1sc(din_0_ab1_1sc), .a0b2_1sc(din_0_ab2_1sc), .a0b3_1sc(din_0_ab3_1sc),
-           .msk_a0b0(din_0_msk_ab0), .msk_a0b1(din_0_msk_ab1), .msk_a0b2(din_0_msk_ab2), .msk_a0b3(din_0_msk_ab3),
-           .msk_a0b0_1sc(din_0_msk_ab0_1sc), .msk_a0b1_1sc(din_0_msk_ab1_1sc), .msk_a0b2_1sc(din_0_msk_ab2_1sc), .msk_a0b3_1sc(din_0_msk_ab3_1sc),
-
-           .a1b0(din_2_ab0), .a1b1(din_2_ab1), .a1b2(din_2_ab2),
-           .a1b0_1sc(din_2_ab0_1sc), .a1b1_1sc(din_2_ab1_1sc), .a1b2_1sc(din_2_ab2_1sc),
-           .msk_a1b0(din_2_msk_ab0), .msk_a1b1(din_2_msk_ab1), .msk_a1b2(din_2_msk_ab2),
-           .msk_a1b0_1sc(din_2_msk_ab0_1sc), .msk_a1b1_1sc(din_2_msk_ab1_1sc), .msk_a1b2_1sc(din_2_msk_ab2_1sc),
-
-           .a2b0(din_4_ab0), .a2b1(din_4_ab1),
-           .a2b0_1sc(din_4_ab0_1sc), .a2b1_1sc(din_4_ab1_1sc),
-           .msk_a2b0(din_4_msk_ab0), .msk_a2b1(din_4_msk_ab1),
-           .msk_a2b0_1sc(din_4_msk_ab0_1sc), .msk_a2b1_1sc(din_4_msk_ab1_1sc),
-           
-           .a3b0(din_6_ab0),
-           .a3b0_1sc(din_6_ab0_1sc)
+  .clk(clk), .p(addr_1_0),
+  .a0b0(din_0_ab0), .a0b1(din_0_ab1), .a0b2(din_0_ab2), .a0b3(din_0_ab3),
+  .a1b0(din_1_ab0), .a1b1(din_1_ab1), .a1b2(din_1_ab2), .a1b3(din_1_ab3),
+  .a2b0(din_2_ab0), .a2b1(din_2_ab1), .a2b2(din_2_ab2),
+  .a3b0(din_3_ab0), .a3b1(din_3_ab1), .a3b2(din_3_ab2),
+  .a4b0(din_4_ab0), .a4b1(din_4_ab1),
+  .a5b0(din_5_ab0), .a5b1(din_5_ab1),
+  .a6b0(din_6_ab0),
+  .a7b0(din_7_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffffffffff),
 	.NBITS(15)
 ) addr_1_1_calc (
-           .clk(clk), .sign(din_signs_reg[1]), 
-           .p(addr_1_1),
-           .a0b0(din_1_ab0), .a0b1(din_1_ab1), .a0b2(din_1_ab2), .a0b3(din_1_ab3),
-           .a0b0_1sc(din_1_ab0_1sc), .a0b1_1sc(din_1_ab1_1sc), .a0b2_1sc(din_1_ab2_1sc), .a0b3_1sc(din_1_ab3_1sc),
-           .msk_a0b0(din_1_msk_ab0), .msk_a0b1(din_1_msk_ab1), .msk_a0b2(din_1_msk_ab2), .msk_a0b3(din_1_msk_ab3),
-           .msk_a0b0_1sc(din_1_msk_ab0_1sc), .msk_a0b1_1sc(din_1_msk_ab1_1sc), .msk_a0b2_1sc(din_1_msk_ab2_1sc), .msk_a0b3_1sc(din_1_msk_ab3_1sc),
-
-           .a1b0(din_3_ab0), .a1b1(din_3_ab1), .a1b2(din_3_ab2),
-           .a1b0_1sc(din_3_ab0_1sc), .a1b1_1sc(din_3_ab1_1sc), .a1b2_1sc(din_3_ab2_1sc),
-           .msk_a1b0(din_3_msk_ab0), .msk_a1b1(din_3_msk_ab1), .msk_a1b2(din_3_msk_ab2),
-           .msk_a1b0_1sc(din_3_msk_ab0_1sc), .msk_a1b1_1sc(din_3_msk_ab1_1sc), .msk_a1b2_1sc(din_3_msk_ab2_1sc),
-
-           .a2b0(din_5_ab0), .a2b1(din_5_ab1),
-           .a2b0_1sc(din_5_ab0_1sc), .a2b1_1sc(din_5_ab1_1sc),
-           .msk_a2b0(din_5_msk_ab0), .msk_a2b1(din_5_msk_ab1),
-           .msk_a2b0_1sc(din_5_msk_ab0_1sc), .msk_a2b1_1sc(din_5_msk_ab1_1sc),
-           
-           .a3b0(din_7_ab0),
-           .a3b0_1sc(din_7_ab0_1sc)
+  .clk(clk), .p(addr_1_1),
+  .a0b0(din_1_ab0), .a0b1(din_1_ab1), .a0b2(din_1_ab2), .a0b3(din_1_ab3),
+  .a1b0(din_2_ab0), .a1b1(din_2_ab1), .a1b2(din_2_ab2), .a1b3(din_2_ab3),
+  .a2b0(din_3_ab0), .a2b1(din_3_ab1), .a2b2(din_3_ab2),
+  .a3b0(din_4_ab0), .a3b1(din_4_ab1), .a3b2(din_4_ab2),
+  .a4b0(din_5_ab0), .a4b1(din_5_ab1),
+  .a5b0(din_6_ab0), .a5b1(din_6_ab1),
+  .a6b0(din_7_ab0),
+  .a7b0(din_8_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffffffffff),
 	.NBITS(15)
 ) addr_1_2_calc (
-           .clk(clk), .sign(din_signs_reg[2]), 
-           .p(addr_1_2),
-           .a0b0(din_2_ab0), .a0b1(din_2_ab1), .a0b2(din_2_ab2), .a0b3(din_2_ab3),
-           .a0b0_1sc(din_2_ab0_1sc), .a0b1_1sc(din_2_ab1_1sc), .a0b2_1sc(din_2_ab2_1sc), .a0b3_1sc(din_2_ab3_1sc),
-           .msk_a0b0(din_2_msk_ab0), .msk_a0b1(din_2_msk_ab1), .msk_a0b2(din_2_msk_ab2), .msk_a0b3(din_2_msk_ab3),
-           .msk_a0b0_1sc(din_2_msk_ab0_1sc), .msk_a0b1_1sc(din_2_msk_ab1_1sc), .msk_a0b2_1sc(din_2_msk_ab2_1sc), .msk_a0b3_1sc(din_2_msk_ab3_1sc),
-
-           .a1b0(din_4_ab0), .a1b1(din_4_ab1), .a1b2(din_4_ab2),
-           .a1b0_1sc(din_4_ab0_1sc), .a1b1_1sc(din_4_ab1_1sc), .a1b2_1sc(din_4_ab2_1sc),
-           .msk_a1b0(din_4_msk_ab0), .msk_a1b1(din_4_msk_ab1), .msk_a1b2(din_4_msk_ab2),
-           .msk_a1b0_1sc(din_4_msk_ab0_1sc), .msk_a1b1_1sc(din_4_msk_ab1_1sc), .msk_a1b2_1sc(din_4_msk_ab2_1sc),
-
-           .a2b0(din_6_ab0), .a2b1(din_6_ab1),
-           .a2b0_1sc(din_6_ab0_1sc), .a2b1_1sc(din_6_ab1_1sc),
-           .msk_a2b0(din_6_msk_ab0), .msk_a2b1(din_6_msk_ab1),
-           .msk_a2b0_1sc(din_6_msk_ab0_1sc), .msk_a2b1_1sc(din_6_msk_ab1_1sc),
-           
-           .a3b0(din_8_ab0),
-           .a3b0_1sc(din_8_ab0_1sc)
+  .clk(clk), .p(addr_1_2),
+  .a0b0(din_2_ab0), .a0b1(din_2_ab1), .a0b2(din_2_ab2), .a0b3(din_2_ab3),
+  .a1b0(din_3_ab0), .a1b1(din_3_ab1), .a1b2(din_3_ab2), .a1b3(din_3_ab3),
+  .a2b0(din_4_ab0), .a2b1(din_4_ab1), .a2b2(din_4_ab2),
+  .a3b0(din_5_ab0), .a3b1(din_5_ab1), .a3b2(din_5_ab2),
+  .a4b0(din_6_ab0), .a4b1(din_6_ab1),
+  .a5b0(din_7_ab0), .a5b1(din_7_ab1),
+  .a6b0(din_8_ab0),
+  .a7b0(din_9_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffffffffff),
 	.NBITS(15)
 ) addr_1_3_calc (
-           .clk(clk), .sign(din_signs_reg[3]), 
-           .p(addr_1_3),
-           .a0b0(din_3_ab0), .a0b1(din_3_ab1), .a0b2(din_3_ab2), .a0b3(din_3_ab3),
-           .a0b0_1sc(din_3_ab0_1sc), .a0b1_1sc(din_3_ab1_1sc), .a0b2_1sc(din_3_ab2_1sc), .a0b3_1sc(din_3_ab3_1sc),
-           .msk_a0b0(din_3_msk_ab0), .msk_a0b1(din_3_msk_ab1), .msk_a0b2(din_3_msk_ab2), .msk_a0b3(din_3_msk_ab3),
-           .msk_a0b0_1sc(din_3_msk_ab0_1sc), .msk_a0b1_1sc(din_3_msk_ab1_1sc), .msk_a0b2_1sc(din_3_msk_ab2_1sc), .msk_a0b3_1sc(din_3_msk_ab3_1sc),
-
-           .a1b0(din_5_ab0), .a1b1(din_5_ab1), .a1b2(din_5_ab2),
-           .a1b0_1sc(din_5_ab0_1sc), .a1b1_1sc(din_5_ab1_1sc), .a1b2_1sc(din_5_ab2_1sc),
-           .msk_a1b0(din_5_msk_ab0), .msk_a1b1(din_5_msk_ab1), .msk_a1b2(din_5_msk_ab2),
-           .msk_a1b0_1sc(din_5_msk_ab0_1sc), .msk_a1b1_1sc(din_5_msk_ab1_1sc), .msk_a1b2_1sc(din_5_msk_ab2_1sc),
-
-           .a2b0(din_7_ab0), .a2b1(din_7_ab1),
-           .a2b0_1sc(din_7_ab0_1sc), .a2b1_1sc(din_7_ab1_1sc),
-           .msk_a2b0(din_7_msk_ab0), .msk_a2b1(din_7_msk_ab1),
-           .msk_a2b0_1sc(din_7_msk_ab0_1sc), .msk_a2b1_1sc(din_7_msk_ab1_1sc),
-           
-           .a3b0(din_9_ab0),
-           .a3b0_1sc(din_9_ab0_1sc)
+  .clk(clk), .p(addr_1_3),
+  .a0b0(din_3_ab0), .a0b1(din_3_ab1), .a0b2(din_3_ab2), .a0b3(din_3_ab3),
+  .a1b0(din_4_ab0), .a1b1(din_4_ab1), .a1b2(din_4_ab2), .a1b3(din_4_ab3),
+  .a2b0(din_5_ab0), .a2b1(din_5_ab1), .a2b2(din_5_ab2),
+  .a3b0(din_6_ab0), .a3b1(din_6_ab1), .a3b2(din_6_ab2),
+  .a4b0(din_7_ab0), .a4b1(din_7_ab1),
+  .a5b0(din_8_ab0), .a5b1(din_8_ab1),
+  .a6b0(din_9_ab0),
+  .a7b0(din_10_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffffffffff),
 	.NBITS(15)
 ) addr_1_4_calc (
-           .clk(clk), .sign(din_signs_reg[4]), 
-           .p(addr_1_4),
-           .a0b0(din_4_ab0), .a0b1(din_4_ab1), .a0b2(din_4_ab2), .a0b3(din_4_ab3),
-           .a0b0_1sc(din_4_ab0_1sc), .a0b1_1sc(din_4_ab1_1sc), .a0b2_1sc(din_4_ab2_1sc), .a0b3_1sc(din_4_ab3_1sc),
-           .msk_a0b0(din_4_msk_ab0), .msk_a0b1(din_4_msk_ab1), .msk_a0b2(din_4_msk_ab2), .msk_a0b3(din_4_msk_ab3),
-           .msk_a0b0_1sc(din_4_msk_ab0_1sc), .msk_a0b1_1sc(din_4_msk_ab1_1sc), .msk_a0b2_1sc(din_4_msk_ab2_1sc), .msk_a0b3_1sc(din_4_msk_ab3_1sc),
-
-           .a1b0(din_6_ab0), .a1b1(din_6_ab1), .a1b2(din_6_ab2),
-           .a1b0_1sc(din_6_ab0_1sc), .a1b1_1sc(din_6_ab1_1sc), .a1b2_1sc(din_6_ab2_1sc),
-           .msk_a1b0(din_6_msk_ab0), .msk_a1b1(din_6_msk_ab1), .msk_a1b2(din_6_msk_ab2),
-           .msk_a1b0_1sc(din_6_msk_ab0_1sc), .msk_a1b1_1sc(din_6_msk_ab1_1sc), .msk_a1b2_1sc(din_6_msk_ab2_1sc),
-
-           .a2b0(din_8_ab0), .a2b1(din_8_ab1),
-           .a2b0_1sc(din_8_ab0_1sc), .a2b1_1sc(din_8_ab1_1sc),
-           .msk_a2b0(din_8_msk_ab0), .msk_a2b1(din_8_msk_ab1),
-           .msk_a2b0_1sc(din_8_msk_ab0_1sc), .msk_a2b1_1sc(din_8_msk_ab1_1sc),
-           
-           .a3b0(din_10_ab0),
-           .a3b0_1sc(din_10_ab0_1sc)
+  .clk(clk), .p(addr_1_4),
+  .a0b0(din_4_ab0), .a0b1(din_4_ab1), .a0b2(din_4_ab2), .a0b3(din_4_ab3),
+  .a1b0(din_5_ab0), .a1b1(din_5_ab1), .a1b2(din_5_ab2), .a1b3(din_5_ab3),
+  .a2b0(din_6_ab0), .a2b1(din_6_ab1), .a2b2(din_6_ab2),
+  .a3b0(din_7_ab0), .a3b1(din_7_ab1), .a3b2(din_7_ab2),
+  .a4b0(din_8_ab0), .a4b1(din_8_ab1),
+  .a5b0(din_9_ab0), .a5b1(din_9_ab1),
+  .a6b0(din_10_ab0),
+  .a7b0(din_11_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffffffffff),
 	.NBITS(15)
 ) addr_1_5_calc (
-           .clk(clk), .sign(din_signs_reg[5]), 
-           .p(addr_1_5),
-           .a0b0(din_5_ab0), .a0b1(din_5_ab1), .a0b2(din_5_ab2), .a0b3(din_5_ab3),
-           .a0b0_1sc(din_5_ab0_1sc), .a0b1_1sc(din_5_ab1_1sc), .a0b2_1sc(din_5_ab2_1sc), .a0b3_1sc(din_5_ab3_1sc),
-           .msk_a0b0(din_5_msk_ab0), .msk_a0b1(din_5_msk_ab1), .msk_a0b2(din_5_msk_ab2), .msk_a0b3(din_5_msk_ab3),
-           .msk_a0b0_1sc(din_5_msk_ab0_1sc), .msk_a0b1_1sc(din_5_msk_ab1_1sc), .msk_a0b2_1sc(din_5_msk_ab2_1sc), .msk_a0b3_1sc(din_5_msk_ab3_1sc),
-
-           .a1b0(din_7_ab0), .a1b1(din_7_ab1), .a1b2(din_7_ab2),
-           .a1b0_1sc(din_7_ab0_1sc), .a1b1_1sc(din_7_ab1_1sc), .a1b2_1sc(din_7_ab2_1sc),
-           .msk_a1b0(din_7_msk_ab0), .msk_a1b1(din_7_msk_ab1), .msk_a1b2(din_7_msk_ab2),
-           .msk_a1b0_1sc(din_7_msk_ab0_1sc), .msk_a1b1_1sc(din_7_msk_ab1_1sc), .msk_a1b2_1sc(din_7_msk_ab2_1sc),
-
-           .a2b0(din_9_ab0), .a2b1(din_9_ab1),
-           .a2b0_1sc(din_9_ab0_1sc), .a2b1_1sc(din_9_ab1_1sc),
-           .msk_a2b0(din_9_msk_ab0), .msk_a2b1(din_9_msk_ab1),
-           .msk_a2b0_1sc(din_9_msk_ab0_1sc), .msk_a2b1_1sc(din_9_msk_ab1_1sc),
-           
-           .a3b0(din_11_ab0),
-           .a3b0_1sc(din_11_ab0_1sc)
+  .clk(clk), .p(addr_1_5),
+  .a0b0(din_5_ab0), .a0b1(din_5_ab1), .a0b2(din_5_ab2), .a0b3(din_5_ab3),
+  .a1b0(din_6_ab0), .a1b1(din_6_ab1), .a1b2(din_6_ab2), .a1b3(din_6_ab3),
+  .a2b0(din_7_ab0), .a2b1(din_7_ab1), .a2b2(din_7_ab2),
+  .a3b0(din_8_ab0), .a3b1(din_8_ab1), .a3b2(din_8_ab2),
+  .a4b0(din_9_ab0), .a4b1(din_9_ab1),
+  .a5b0(din_10_ab0), .a5b1(din_10_ab1),
+  .a6b0(din_11_ab0),
+  .a7b0(din_12_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffffffffff),
 	.NBITS(15)
 ) addr_1_6_calc (
-           .clk(clk), .sign(din_signs_reg[6]), 
-           .p(addr_1_6),
-           .a0b0(din_6_ab0), .a0b1(din_6_ab1), .a0b2(din_6_ab2), .a0b3(din_6_ab3),
-           .a0b0_1sc(din_6_ab0_1sc), .a0b1_1sc(din_6_ab1_1sc), .a0b2_1sc(din_6_ab2_1sc), .a0b3_1sc(din_6_ab3_1sc),
-           .msk_a0b0(din_6_msk_ab0), .msk_a0b1(din_6_msk_ab1), .msk_a0b2(din_6_msk_ab2), .msk_a0b3(din_6_msk_ab3),
-           .msk_a0b0_1sc(din_6_msk_ab0_1sc), .msk_a0b1_1sc(din_6_msk_ab1_1sc), .msk_a0b2_1sc(din_6_msk_ab2_1sc), .msk_a0b3_1sc(din_6_msk_ab3_1sc),
-
-           .a1b0(din_8_ab0), .a1b1(din_8_ab1), .a1b2(din_8_ab2),
-           .a1b0_1sc(din_8_ab0_1sc), .a1b1_1sc(din_8_ab1_1sc), .a1b2_1sc(din_8_ab2_1sc),
-           .msk_a1b0(din_8_msk_ab0), .msk_a1b1(din_8_msk_ab1), .msk_a1b2(din_8_msk_ab2),
-           .msk_a1b0_1sc(din_8_msk_ab0_1sc), .msk_a1b1_1sc(din_8_msk_ab1_1sc), .msk_a1b2_1sc(din_8_msk_ab2_1sc),
-
-           .a2b0(din_10_ab0), .a2b1(din_10_ab1),
-           .a2b0_1sc(din_10_ab0_1sc), .a2b1_1sc(din_10_ab1_1sc),
-           .msk_a2b0(din_10_msk_ab0), .msk_a2b1(din_10_msk_ab1),
-           .msk_a2b0_1sc(din_10_msk_ab0_1sc), .msk_a2b1_1sc(din_10_msk_ab1_1sc),
-           
-           .a3b0(din_12_ab0),
-           .a3b0_1sc(din_12_ab0_1sc)
+  .clk(clk), .p(addr_1_6),
+  .a0b0(din_6_ab0), .a0b1(din_6_ab1), .a0b2(din_6_ab2), .a0b3(din_6_ab3),
+  .a1b0(din_7_ab0), .a1b1(din_7_ab1), .a1b2(din_7_ab2), .a1b3(din_7_ab3),
+  .a2b0(din_8_ab0), .a2b1(din_8_ab1), .a2b2(din_8_ab2),
+  .a3b0(din_9_ab0), .a3b1(din_9_ab1), .a3b2(din_9_ab2),
+  .a4b0(din_10_ab0), .a4b1(din_10_ab1),
+  .a5b0(din_11_ab0), .a5b1(din_11_ab1),
+  .a6b0(din_12_ab0),
+  .a7b0(din_13_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffffffffff),
 	.NBITS(15)
 ) addr_1_7_calc (
-           .clk(clk), .sign(din_signs_reg[7]), 
-           .p(addr_1_7),
-           .a0b0(din_7_ab0), .a0b1(din_7_ab1), .a0b2(din_7_ab2), .a0b3(din_7_ab3),
-           .a0b0_1sc(din_7_ab0_1sc), .a0b1_1sc(din_7_ab1_1sc), .a0b2_1sc(din_7_ab2_1sc), .a0b3_1sc(din_7_ab3_1sc),
-           .msk_a0b0(din_7_msk_ab0), .msk_a0b1(din_7_msk_ab1), .msk_a0b2(din_7_msk_ab2), .msk_a0b3(din_7_msk_ab3),
-           .msk_a0b0_1sc(din_7_msk_ab0_1sc), .msk_a0b1_1sc(din_7_msk_ab1_1sc), .msk_a0b2_1sc(din_7_msk_ab2_1sc), .msk_a0b3_1sc(din_7_msk_ab3_1sc),
-
-           .a1b0(din_9_ab0), .a1b1(din_9_ab1), .a1b2(din_9_ab2),
-           .a1b0_1sc(din_9_ab0_1sc), .a1b1_1sc(din_9_ab1_1sc), .a1b2_1sc(din_9_ab2_1sc),
-           .msk_a1b0(din_9_msk_ab0), .msk_a1b1(din_9_msk_ab1), .msk_a1b2(din_9_msk_ab2),
-           .msk_a1b0_1sc(din_9_msk_ab0_1sc), .msk_a1b1_1sc(din_9_msk_ab1_1sc), .msk_a1b2_1sc(din_9_msk_ab2_1sc),
-
-           .a2b0(din_11_ab0), .a2b1(din_11_ab1),
-           .a2b0_1sc(din_11_ab0_1sc), .a2b1_1sc(din_11_ab1_1sc),
-           .msk_a2b0(din_11_msk_ab0), .msk_a2b1(din_11_msk_ab1),
-           .msk_a2b0_1sc(din_11_msk_ab0_1sc), .msk_a2b1_1sc(din_11_msk_ab1_1sc),
-           
-           .a3b0(din_13_ab0),
-           .a3b0_1sc(din_13_ab0_1sc)
+  .clk(clk), .p(addr_1_7),
+  .a0b0(din_7_ab0), .a0b1(din_7_ab1), .a0b2(din_7_ab2), .a0b3(din_7_ab3),
+  .a1b0(din_8_ab0), .a1b1(din_8_ab1), .a1b2(din_8_ab2), .a1b3(din_8_ab3),
+  .a2b0(din_9_ab0), .a2b1(din_9_ab1), .a2b2(din_9_ab2),
+  .a3b0(din_10_ab0), .a3b1(din_10_ab1), .a3b2(din_10_ab2),
+  .a4b0(din_11_ab0), .a4b1(din_11_ab1),
+  .a5b0(din_12_ab0), .a5b1(din_12_ab1),
+  .a6b0(din_13_ab0),
+  .a7b0(din_14_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffffffffff),
 	.NBITS(15)
 ) addr_1_8_calc (
-           .clk(clk), .sign(din_signs_reg[8]), 
-           .p(addr_1_8),
-           .a0b0(din_8_ab0), .a0b1(din_8_ab1), .a0b2(din_8_ab2), .a0b3(din_8_ab3),
-           .a0b0_1sc(din_8_ab0_1sc), .a0b1_1sc(din_8_ab1_1sc), .a0b2_1sc(din_8_ab2_1sc), .a0b3_1sc(din_8_ab3_1sc),
-           .msk_a0b0(din_8_msk_ab0), .msk_a0b1(din_8_msk_ab1), .msk_a0b2(din_8_msk_ab2), .msk_a0b3(din_8_msk_ab3),
-           .msk_a0b0_1sc(din_8_msk_ab0_1sc), .msk_a0b1_1sc(din_8_msk_ab1_1sc), .msk_a0b2_1sc(din_8_msk_ab2_1sc), .msk_a0b3_1sc(din_8_msk_ab3_1sc),
-
-           .a1b0(din_10_ab0), .a1b1(din_10_ab1), .a1b2(din_10_ab2),
-           .a1b0_1sc(din_10_ab0_1sc), .a1b1_1sc(din_10_ab1_1sc), .a1b2_1sc(din_10_ab2_1sc),
-           .msk_a1b0(din_10_msk_ab0), .msk_a1b1(din_10_msk_ab1), .msk_a1b2(din_10_msk_ab2),
-           .msk_a1b0_1sc(din_10_msk_ab0_1sc), .msk_a1b1_1sc(din_10_msk_ab1_1sc), .msk_a1b2_1sc(din_10_msk_ab2_1sc),
-
-           .a2b0(din_12_ab0), .a2b1(din_12_ab1),
-           .a2b0_1sc(din_12_ab0_1sc), .a2b1_1sc(din_12_ab1_1sc),
-           .msk_a2b0(din_12_msk_ab0), .msk_a2b1(din_12_msk_ab1),
-           .msk_a2b0_1sc(din_12_msk_ab0_1sc), .msk_a2b1_1sc(din_12_msk_ab1_1sc),
-           
-           .a3b0(din_14_ab0),
-           .a3b0_1sc(din_14_ab0_1sc)
+  .clk(clk), .p(addr_1_8),
+  .a0b0(din_8_ab0), .a0b1(din_8_ab1), .a0b2(din_8_ab2), .a0b3(din_8_ab3),
+  .a1b0(din_9_ab0), .a1b1(din_9_ab1), .a1b2(din_9_ab2), .a1b3(din_9_ab3),
+  .a2b0(din_10_ab0), .a2b1(din_10_ab1), .a2b2(din_10_ab2),
+  .a3b0(din_11_ab0), .a3b1(din_11_ab1), .a3b2(din_11_ab2),
+  .a4b0(din_12_ab0), .a4b1(din_12_ab1),
+  .a5b0(din_13_ab0), .a5b1(din_13_ab1),
+  .a6b0(din_14_ab0),
+  .a7b0(din_15_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffffffffff),
 	.NBITS(15)
 ) addr_1_9_calc (
-           .clk(clk), .sign(din_signs_reg[9]), 
-           .p(addr_1_9),
-           .a0b0(din_9_ab0), .a0b1(din_9_ab1), .a0b2(din_9_ab2), .a0b3(din_9_ab3),
-           .a0b0_1sc(din_9_ab0_1sc), .a0b1_1sc(din_9_ab1_1sc), .a0b2_1sc(din_9_ab2_1sc), .a0b3_1sc(din_9_ab3_1sc),
-           .msk_a0b0(din_9_msk_ab0), .msk_a0b1(din_9_msk_ab1), .msk_a0b2(din_9_msk_ab2), .msk_a0b3(din_9_msk_ab3),
-           .msk_a0b0_1sc(din_9_msk_ab0_1sc), .msk_a0b1_1sc(din_9_msk_ab1_1sc), .msk_a0b2_1sc(din_9_msk_ab2_1sc), .msk_a0b3_1sc(din_9_msk_ab3_1sc),
-
-           .a1b0(din_11_ab0), .a1b1(din_11_ab1), .a1b2(din_11_ab2),
-           .a1b0_1sc(din_11_ab0_1sc), .a1b1_1sc(din_11_ab1_1sc), .a1b2_1sc(din_11_ab2_1sc),
-           .msk_a1b0(din_11_msk_ab0), .msk_a1b1(din_11_msk_ab1), .msk_a1b2(din_11_msk_ab2),
-           .msk_a1b0_1sc(din_11_msk_ab0_1sc), .msk_a1b1_1sc(din_11_msk_ab1_1sc), .msk_a1b2_1sc(din_11_msk_ab2_1sc),
-
-           .a2b0(din_13_ab0), .a2b1(din_13_ab1),
-           .a2b0_1sc(din_13_ab0_1sc), .a2b1_1sc(din_13_ab1_1sc),
-           .msk_a2b0(din_13_msk_ab0), .msk_a2b1(din_13_msk_ab1),
-           .msk_a2b0_1sc(din_13_msk_ab0_1sc), .msk_a2b1_1sc(din_13_msk_ab1_1sc),
-           
-           .a3b0(din_15_ab0),
-           .a3b0_1sc(din_15_ab0_1sc)
+  .clk(clk), .p(addr_1_9),
+  .a0b0(din_9_ab0), .a0b1(din_9_ab1), .a0b2(din_9_ab2), .a0b3(din_9_ab3),
+  .a1b0(din_10_ab0), .a1b1(din_10_ab1), .a1b2(din_10_ab2), .a1b3(din_10_ab3),
+  .a2b0(din_11_ab0), .a2b1(din_11_ab1), .a2b2(din_11_ab2),
+  .a3b0(din_12_ab0), .a3b1(din_12_ab1), .a3b2(din_12_ab2),
+  .a4b0(din_13_ab0), .a4b1(din_13_ab1),
+  .a5b0(din_14_ab0), .a5b1(din_14_ab1),
+  .a6b0(din_15_ab0),
+  .a7b0(din_16_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffffffffff),
 	.NBITS(15)
 ) addr_1_10_calc (
-           .clk(clk), .sign(din_signs_reg[10]), 
-           .p(addr_1_10),
-           .a0b0(din_10_ab0), .a0b1(din_10_ab1), .a0b2(din_10_ab2), .a0b3(din_10_ab3),
-           .a0b0_1sc(din_10_ab0_1sc), .a0b1_1sc(din_10_ab1_1sc), .a0b2_1sc(din_10_ab2_1sc), .a0b3_1sc(din_10_ab3_1sc),
-           .msk_a0b0(din_10_msk_ab0), .msk_a0b1(din_10_msk_ab1), .msk_a0b2(din_10_msk_ab2), .msk_a0b3(din_10_msk_ab3),
-           .msk_a0b0_1sc(din_10_msk_ab0_1sc), .msk_a0b1_1sc(din_10_msk_ab1_1sc), .msk_a0b2_1sc(din_10_msk_ab2_1sc), .msk_a0b3_1sc(din_10_msk_ab3_1sc),
-
-           .a1b0(din_12_ab0), .a1b1(din_12_ab1), .a1b2(din_12_ab2),
-           .a1b0_1sc(din_12_ab0_1sc), .a1b1_1sc(din_12_ab1_1sc), .a1b2_1sc(din_12_ab2_1sc),
-           .msk_a1b0(din_12_msk_ab0), .msk_a1b1(din_12_msk_ab1), .msk_a1b2(din_12_msk_ab2),
-           .msk_a1b0_1sc(din_12_msk_ab0_1sc), .msk_a1b1_1sc(din_12_msk_ab1_1sc), .msk_a1b2_1sc(din_12_msk_ab2_1sc),
-
-           .a2b0(din_14_ab0), .a2b1(din_14_ab1),
-           .a2b0_1sc(din_14_ab0_1sc), .a2b1_1sc(din_14_ab1_1sc),
-           .msk_a2b0(din_14_msk_ab0), .msk_a2b1(din_14_msk_ab1),
-           .msk_a2b0_1sc(din_14_msk_ab0_1sc), .msk_a2b1_1sc(din_14_msk_ab1_1sc),
-           
-           .a3b0(din_16_ab0),
-           .a3b0_1sc(din_16_ab0_1sc)
+  .clk(clk), .p(addr_1_10),
+  .a0b0(din_10_ab0), .a0b1(din_10_ab1), .a0b2(din_10_ab2), .a0b3(din_10_ab3),
+  .a1b0(din_11_ab0), .a1b1(din_11_ab1), .a1b2(din_11_ab2), .a1b3(din_11_ab3),
+  .a2b0(din_12_ab0), .a2b1(din_12_ab1), .a2b2(din_12_ab2),
+  .a3b0(din_13_ab0), .a3b1(din_13_ab1), .a3b2(din_13_ab2),
+  .a4b0(din_14_ab0), .a4b1(din_14_ab1),
+  .a5b0(din_15_ab0), .a5b1(din_15_ab1),
+  .a6b0(din_16_ab0),
+  .a7b0(din_17_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffffffffff),
 	.NBITS(15)
 ) addr_1_11_calc (
-           .clk(clk), .sign(din_signs_reg[11]), 
-           .p(addr_1_11),
-           .a0b0(din_11_ab0), .a0b1(din_11_ab1), .a0b2(din_11_ab2), .a0b3(din_11_ab3),
-           .a0b0_1sc(din_11_ab0_1sc), .a0b1_1sc(din_11_ab1_1sc), .a0b2_1sc(din_11_ab2_1sc), .a0b3_1sc(din_11_ab3_1sc),
-           .msk_a0b0(din_11_msk_ab0), .msk_a0b1(din_11_msk_ab1), .msk_a0b2(din_11_msk_ab2), .msk_a0b3(din_11_msk_ab3),
-           .msk_a0b0_1sc(din_11_msk_ab0_1sc), .msk_a0b1_1sc(din_11_msk_ab1_1sc), .msk_a0b2_1sc(din_11_msk_ab2_1sc), .msk_a0b3_1sc(din_11_msk_ab3_1sc),
-
-           .a1b0(din_13_ab0), .a1b1(din_13_ab1), .a1b2(din_13_ab2),
-           .a1b0_1sc(din_13_ab0_1sc), .a1b1_1sc(din_13_ab1_1sc), .a1b2_1sc(din_13_ab2_1sc),
-           .msk_a1b0(din_13_msk_ab0), .msk_a1b1(din_13_msk_ab1), .msk_a1b2(din_13_msk_ab2),
-           .msk_a1b0_1sc(din_13_msk_ab0_1sc), .msk_a1b1_1sc(din_13_msk_ab1_1sc), .msk_a1b2_1sc(din_13_msk_ab2_1sc),
-
-           .a2b0(din_15_ab0), .a2b1(din_15_ab1),
-           .a2b0_1sc(din_15_ab0_1sc), .a2b1_1sc(din_15_ab1_1sc),
-           .msk_a2b0(din_15_msk_ab0), .msk_a2b1(din_15_msk_ab1),
-           .msk_a2b0_1sc(din_15_msk_ab0_1sc), .msk_a2b1_1sc(din_15_msk_ab1_1sc),
-           
-           .a3b0(din_17_ab0),
-           .a3b0_1sc(din_17_ab0_1sc)
+  .clk(clk), .p(addr_1_11),
+  .a0b0(din_11_ab0), .a0b1(din_11_ab1), .a0b2(din_11_ab2), .a0b3(din_11_ab3),
+  .a1b0(din_12_ab0), .a1b1(din_12_ab1), .a1b2(din_12_ab2), .a1b3(din_12_ab3),
+  .a2b0(din_13_ab0), .a2b1(din_13_ab1), .a2b2(din_13_ab2),
+  .a3b0(din_14_ab0), .a3b1(din_14_ab1), .a3b2(din_14_ab2),
+  .a4b0(din_15_ab0), .a4b1(din_15_ab1),
+  .a5b0(din_16_ab0), .a5b1(din_16_ab1),
+  .a6b0(din_17_ab0),
+  .a7b0(din_18_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffffffffff),
 	.NBITS(15)
 ) addr_1_12_calc (
-           .clk(clk), .sign(din_signs_reg[12]), 
-           .p(addr_1_12),
-           .a0b0(din_12_ab0), .a0b1(din_12_ab1), .a0b2(din_12_ab2), .a0b3(din_12_ab3),
-           .a0b0_1sc(din_12_ab0_1sc), .a0b1_1sc(din_12_ab1_1sc), .a0b2_1sc(din_12_ab2_1sc), .a0b3_1sc(din_12_ab3_1sc),
-           .msk_a0b0(din_12_msk_ab0), .msk_a0b1(din_12_msk_ab1), .msk_a0b2(din_12_msk_ab2), .msk_a0b3(din_12_msk_ab3),
-           .msk_a0b0_1sc(din_12_msk_ab0_1sc), .msk_a0b1_1sc(din_12_msk_ab1_1sc), .msk_a0b2_1sc(din_12_msk_ab2_1sc), .msk_a0b3_1sc(din_12_msk_ab3_1sc),
-
-           .a1b0(din_14_ab0), .a1b1(din_14_ab1), .a1b2(din_14_ab2),
-           .a1b0_1sc(din_14_ab0_1sc), .a1b1_1sc(din_14_ab1_1sc), .a1b2_1sc(din_14_ab2_1sc),
-           .msk_a1b0(din_14_msk_ab0), .msk_a1b1(din_14_msk_ab1), .msk_a1b2(din_14_msk_ab2),
-           .msk_a1b0_1sc(din_14_msk_ab0_1sc), .msk_a1b1_1sc(din_14_msk_ab1_1sc), .msk_a1b2_1sc(din_14_msk_ab2_1sc),
-
-           .a2b0(din_16_ab0), .a2b1(din_16_ab1),
-           .a2b0_1sc(din_16_ab0_1sc), .a2b1_1sc(din_16_ab1_1sc),
-           .msk_a2b0(din_16_msk_ab0), .msk_a2b1(din_16_msk_ab1),
-           .msk_a2b0_1sc(din_16_msk_ab0_1sc), .msk_a2b1_1sc(din_16_msk_ab1_1sc),
-           
-           .a3b0(din_18_ab0),
-           .a3b0_1sc(din_18_ab0_1sc)
+  .clk(clk), .p(addr_1_12),
+  .a0b0(din_12_ab0), .a0b1(din_12_ab1), .a0b2(din_12_ab2), .a0b3(din_12_ab3),
+  .a1b0(din_13_ab0), .a1b1(din_13_ab1), .a1b2(din_13_ab2), .a1b3(din_13_ab3),
+  .a2b0(din_14_ab0), .a2b1(din_14_ab1), .a2b2(din_14_ab2),
+  .a3b0(din_15_ab0), .a3b1(din_15_ab1), .a3b2(din_15_ab2),
+  .a4b0(din_16_ab0), .a4b1(din_16_ab1),
+  .a5b0(din_17_ab0), .a5b1(din_17_ab1),
+  .a6b0(din_18_ab0),
+  .a7b0(din_19_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffffffffff),
 	.NBITS(15)
 ) addr_1_13_calc (
-           .clk(clk), .sign(din_signs_reg[13]), 
-           .p(addr_1_13),
-           .a0b0(din_13_ab0), .a0b1(din_13_ab1), .a0b2(din_13_ab2), .a0b3(din_13_ab3),
-           .a0b0_1sc(din_13_ab0_1sc), .a0b1_1sc(din_13_ab1_1sc), .a0b2_1sc(din_13_ab2_1sc), .a0b3_1sc(din_13_ab3_1sc),
-           .msk_a0b0(din_13_msk_ab0), .msk_a0b1(din_13_msk_ab1), .msk_a0b2(din_13_msk_ab2), .msk_a0b3(din_13_msk_ab3),
-           .msk_a0b0_1sc(din_13_msk_ab0_1sc), .msk_a0b1_1sc(din_13_msk_ab1_1sc), .msk_a0b2_1sc(din_13_msk_ab2_1sc), .msk_a0b3_1sc(din_13_msk_ab3_1sc),
-
-           .a1b0(din_15_ab0), .a1b1(din_15_ab1), .a1b2(din_15_ab2),
-           .a1b0_1sc(din_15_ab0_1sc), .a1b1_1sc(din_15_ab1_1sc), .a1b2_1sc(din_15_ab2_1sc),
-           .msk_a1b0(din_15_msk_ab0), .msk_a1b1(din_15_msk_ab1), .msk_a1b2(din_15_msk_ab2),
-           .msk_a1b0_1sc(din_15_msk_ab0_1sc), .msk_a1b1_1sc(din_15_msk_ab1_1sc), .msk_a1b2_1sc(din_15_msk_ab2_1sc),
-
-           .a2b0(din_17_ab0), .a2b1(din_17_ab1),
-           .a2b0_1sc(din_17_ab0_1sc), .a2b1_1sc(din_17_ab1_1sc),
-           .msk_a2b0(din_17_msk_ab0), .msk_a2b1(din_17_msk_ab1),
-           .msk_a2b0_1sc(din_17_msk_ab0_1sc), .msk_a2b1_1sc(din_17_msk_ab1_1sc),
-           
-           .a3b0(din_19_ab0),
-           .a3b0_1sc(din_19_ab0_1sc)
+  .clk(clk), .p(addr_1_13),
+  .a0b0(din_13_ab0), .a0b1(din_13_ab1), .a0b2(din_13_ab2), .a0b3(din_13_ab3),
+  .a1b0(din_14_ab0), .a1b1(din_14_ab1), .a1b2(din_14_ab2), .a1b3(din_14_ab3),
+  .a2b0(din_15_ab0), .a2b1(din_15_ab1), .a2b2(din_15_ab2),
+  .a3b0(din_16_ab0), .a3b1(din_16_ab1), .a3b2(din_16_ab2),
+  .a4b0(din_17_ab0), .a4b1(din_17_ab1),
+  .a5b0(din_18_ab0), .a5b1(din_18_ab1),
+  .a6b0(din_19_ab0),
+  .a7b0(din_20_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffffffffff),
 	.NBITS(15)
 ) addr_1_14_calc (
-           .clk(clk), .sign(din_signs_reg[14]), 
-           .p(addr_1_14),
-           .a0b0(din_14_ab0), .a0b1(din_14_ab1), .a0b2(din_14_ab2), .a0b3(din_14_ab3),
-           .a0b0_1sc(din_14_ab0_1sc), .a0b1_1sc(din_14_ab1_1sc), .a0b2_1sc(din_14_ab2_1sc), .a0b3_1sc(din_14_ab3_1sc),
-           .msk_a0b0(din_14_msk_ab0), .msk_a0b1(din_14_msk_ab1), .msk_a0b2(din_14_msk_ab2), .msk_a0b3(din_14_msk_ab3),
-           .msk_a0b0_1sc(din_14_msk_ab0_1sc), .msk_a0b1_1sc(din_14_msk_ab1_1sc), .msk_a0b2_1sc(din_14_msk_ab2_1sc), .msk_a0b3_1sc(din_14_msk_ab3_1sc),
-
-           .a1b0(din_16_ab0), .a1b1(din_16_ab1), .a1b2(din_16_ab2),
-           .a1b0_1sc(din_16_ab0_1sc), .a1b1_1sc(din_16_ab1_1sc), .a1b2_1sc(din_16_ab2_1sc),
-           .msk_a1b0(din_16_msk_ab0), .msk_a1b1(din_16_msk_ab1), .msk_a1b2(din_16_msk_ab2),
-           .msk_a1b0_1sc(din_16_msk_ab0_1sc), .msk_a1b1_1sc(din_16_msk_ab1_1sc), .msk_a1b2_1sc(din_16_msk_ab2_1sc),
-
-           .a2b0(din_18_ab0), .a2b1(din_18_ab1),
-           .a2b0_1sc(din_18_ab0_1sc), .a2b1_1sc(din_18_ab1_1sc),
-           .msk_a2b0(din_18_msk_ab0), .msk_a2b1(din_18_msk_ab1),
-           .msk_a2b0_1sc(din_18_msk_ab0_1sc), .msk_a2b1_1sc(din_18_msk_ab1_1sc),
-           
-           .a3b0(din_20_ab0),
-           .a3b0_1sc(din_20_ab0_1sc)
+  .clk(clk), .p(addr_1_14),
+  .a0b0(din_14_ab0), .a0b1(din_14_ab1), .a0b2(din_14_ab2), .a0b3(din_14_ab3),
+  .a1b0(din_15_ab0), .a1b1(din_15_ab1), .a1b2(din_15_ab2), .a1b3(din_15_ab3),
+  .a2b0(din_16_ab0), .a2b1(din_16_ab1), .a2b2(din_16_ab2),
+  .a3b0(din_17_ab0), .a3b1(din_17_ab1), .a3b2(din_17_ab2),
+  .a4b0(din_18_ab0), .a4b1(din_18_ab1),
+  .a5b0(din_19_ab0), .a5b1(din_19_ab1),
+  .a6b0(din_20_ab0),
+  .a7b0(din_21_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffffffffff),
 	.NBITS(15)
 ) addr_1_15_calc (
-           .clk(clk), .sign(din_signs_reg[15]), 
-           .p(addr_1_15),
-           .a0b0(din_15_ab0), .a0b1(din_15_ab1), .a0b2(din_15_ab2), .a0b3(din_15_ab3),
-           .a0b0_1sc(din_15_ab0_1sc), .a0b1_1sc(din_15_ab1_1sc), .a0b2_1sc(din_15_ab2_1sc), .a0b3_1sc(din_15_ab3_1sc),
-           .msk_a0b0(din_15_msk_ab0), .msk_a0b1(din_15_msk_ab1), .msk_a0b2(din_15_msk_ab2), .msk_a0b3(din_15_msk_ab3),
-           .msk_a0b0_1sc(din_15_msk_ab0_1sc), .msk_a0b1_1sc(din_15_msk_ab1_1sc), .msk_a0b2_1sc(din_15_msk_ab2_1sc), .msk_a0b3_1sc(din_15_msk_ab3_1sc),
-
-           .a1b0(din_17_ab0), .a1b1(din_17_ab1), .a1b2(din_17_ab2),
-           .a1b0_1sc(din_17_ab0_1sc), .a1b1_1sc(din_17_ab1_1sc), .a1b2_1sc(din_17_ab2_1sc),
-           .msk_a1b0(din_17_msk_ab0), .msk_a1b1(din_17_msk_ab1), .msk_a1b2(din_17_msk_ab2),
-           .msk_a1b0_1sc(din_17_msk_ab0_1sc), .msk_a1b1_1sc(din_17_msk_ab1_1sc), .msk_a1b2_1sc(din_17_msk_ab2_1sc),
-
-           .a2b0(din_19_ab0), .a2b1(din_19_ab1),
-           .a2b0_1sc(din_19_ab0_1sc), .a2b1_1sc(din_19_ab1_1sc),
-           .msk_a2b0(din_19_msk_ab0), .msk_a2b1(din_19_msk_ab1),
-           .msk_a2b0_1sc(din_19_msk_ab0_1sc), .msk_a2b1_1sc(din_19_msk_ab1_1sc),
-           
-           .a3b0(din_21_ab0),
-           .a3b0_1sc(din_21_ab0_1sc)
+  .clk(clk), .p(addr_1_15),
+  .a0b0(din_15_ab0), .a0b1(din_15_ab1), .a0b2(din_15_ab2), .a0b3(din_15_ab3),
+  .a1b0(din_16_ab0), .a1b1(din_16_ab1), .a1b2(din_16_ab2), .a1b3(din_16_ab3),
+  .a2b0(din_17_ab0), .a2b1(din_17_ab1), .a2b2(din_17_ab2),
+  .a3b0(din_18_ab0), .a3b1(din_18_ab1), .a3b2(din_18_ab2),
+  .a4b0(din_19_ab0), .a4b1(din_19_ab1),
+  .a5b0(din_20_ab0), .a5b1(din_20_ab1),
+  .a6b0(din_21_ab0),
+  .a7b0(din_22_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffffffffff),
 	.NBITS(15)
 ) addr_1_16_calc (
-           .clk(clk), .sign(din_signs_reg[16]), 
-           .p(addr_1_16),
-           .a0b0(din_16_ab0), .a0b1(din_16_ab1), .a0b2(din_16_ab2), .a0b3(din_16_ab3),
-           .a0b0_1sc(din_16_ab0_1sc), .a0b1_1sc(din_16_ab1_1sc), .a0b2_1sc(din_16_ab2_1sc), .a0b3_1sc(din_16_ab3_1sc),
-           .msk_a0b0(din_16_msk_ab0), .msk_a0b1(din_16_msk_ab1), .msk_a0b2(din_16_msk_ab2), .msk_a0b3(din_16_msk_ab3),
-           .msk_a0b0_1sc(din_16_msk_ab0_1sc), .msk_a0b1_1sc(din_16_msk_ab1_1sc), .msk_a0b2_1sc(din_16_msk_ab2_1sc), .msk_a0b3_1sc(din_16_msk_ab3_1sc),
-
-           .a1b0(din_18_ab0), .a1b1(din_18_ab1), .a1b2(din_18_ab2),
-           .a1b0_1sc(din_18_ab0_1sc), .a1b1_1sc(din_18_ab1_1sc), .a1b2_1sc(din_18_ab2_1sc),
-           .msk_a1b0(din_18_msk_ab0), .msk_a1b1(din_18_msk_ab1), .msk_a1b2(din_18_msk_ab2),
-           .msk_a1b0_1sc(din_18_msk_ab0_1sc), .msk_a1b1_1sc(din_18_msk_ab1_1sc), .msk_a1b2_1sc(din_18_msk_ab2_1sc),
-
-           .a2b0(din_20_ab0), .a2b1(din_20_ab1),
-           .a2b0_1sc(din_20_ab0_1sc), .a2b1_1sc(din_20_ab1_1sc),
-           .msk_a2b0(din_20_msk_ab0), .msk_a2b1(din_20_msk_ab1),
-           .msk_a2b0_1sc(din_20_msk_ab0_1sc), .msk_a2b1_1sc(din_20_msk_ab1_1sc),
-           
-           .a3b0(din_22_ab0),
-           .a3b0_1sc(din_22_ab0_1sc)
+  .clk(clk), .p(addr_1_16),
+  .a0b0(din_16_ab0), .a0b1(din_16_ab1), .a0b2(din_16_ab2), .a0b3(din_16_ab3),
+  .a1b0(din_17_ab0), .a1b1(din_17_ab1), .a1b2(din_17_ab2), .a1b3(din_17_ab3),
+  .a2b0(din_18_ab0), .a2b1(din_18_ab1), .a2b2(din_18_ab2),
+  .a3b0(din_19_ab0), .a3b1(din_19_ab1), .a3b2(din_19_ab2),
+  .a4b0(din_20_ab0), .a4b1(din_20_ab1),
+  .a5b0(din_21_ab0), .a5b1(din_21_ab1),
+  .a6b0(din_22_ab0),
+  .a7b0(din_23_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffffffffff),
 	.NBITS(15)
 ) addr_1_17_calc (
-           .clk(clk), .sign(din_signs_reg[17]), 
-           .p(addr_1_17),
-           .a0b0(din_17_ab0), .a0b1(din_17_ab1), .a0b2(din_17_ab2), .a0b3(din_17_ab3),
-           .a0b0_1sc(din_17_ab0_1sc), .a0b1_1sc(din_17_ab1_1sc), .a0b2_1sc(din_17_ab2_1sc), .a0b3_1sc(din_17_ab3_1sc),
-           .msk_a0b0(din_17_msk_ab0), .msk_a0b1(din_17_msk_ab1), .msk_a0b2(din_17_msk_ab2), .msk_a0b3(din_17_msk_ab3),
-           .msk_a0b0_1sc(din_17_msk_ab0_1sc), .msk_a0b1_1sc(din_17_msk_ab1_1sc), .msk_a0b2_1sc(din_17_msk_ab2_1sc), .msk_a0b3_1sc(din_17_msk_ab3_1sc),
-
-           .a1b0(din_19_ab0), .a1b1(din_19_ab1), .a1b2(din_19_ab2),
-           .a1b0_1sc(din_19_ab0_1sc), .a1b1_1sc(din_19_ab1_1sc), .a1b2_1sc(din_19_ab2_1sc),
-           .msk_a1b0(din_19_msk_ab0), .msk_a1b1(din_19_msk_ab1), .msk_a1b2(din_19_msk_ab2),
-           .msk_a1b0_1sc(din_19_msk_ab0_1sc), .msk_a1b1_1sc(din_19_msk_ab1_1sc), .msk_a1b2_1sc(din_19_msk_ab2_1sc),
-
-           .a2b0(din_21_ab0), .a2b1(din_21_ab1),
-           .a2b0_1sc(din_21_ab0_1sc), .a2b1_1sc(din_21_ab1_1sc),
-           .msk_a2b0(din_21_msk_ab0), .msk_a2b1(din_21_msk_ab1),
-           .msk_a2b0_1sc(din_21_msk_ab0_1sc), .msk_a2b1_1sc(din_21_msk_ab1_1sc),
-           
-           .a3b0(din_23_ab0),
-           .a3b0_1sc(din_23_ab0_1sc)
+  .clk(clk), .p(addr_1_17),
+  .a0b0(din_17_ab0), .a0b1(din_17_ab1), .a0b2(din_17_ab2), .a0b3(din_17_ab3),
+  .a1b0(din_18_ab0), .a1b1(din_18_ab1), .a1b2(din_18_ab2), .a1b3(din_18_ab3),
+  .a2b0(din_19_ab0), .a2b1(din_19_ab1), .a2b2(din_19_ab2),
+  .a3b0(din_20_ab0), .a3b1(din_20_ab1), .a3b2(din_20_ab2),
+  .a4b0(din_21_ab0), .a4b1(din_21_ab1),
+  .a5b0(din_22_ab0), .a5b1(din_22_ab1),
+  .a6b0(din_23_ab0),
+  .a7b0(din_24_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffffffffff),
 	.NBITS(15)
 ) addr_1_18_calc (
-           .clk(clk), .sign(din_signs_reg[18]), 
-           .p(addr_1_18),
-           .a0b0(din_18_ab0), .a0b1(din_18_ab1), .a0b2(din_18_ab2), .a0b3(din_18_ab3),
-           .a0b0_1sc(din_18_ab0_1sc), .a0b1_1sc(din_18_ab1_1sc), .a0b2_1sc(din_18_ab2_1sc), .a0b3_1sc(din_18_ab3_1sc),
-           .msk_a0b0(din_18_msk_ab0), .msk_a0b1(din_18_msk_ab1), .msk_a0b2(din_18_msk_ab2), .msk_a0b3(din_18_msk_ab3),
-           .msk_a0b0_1sc(din_18_msk_ab0_1sc), .msk_a0b1_1sc(din_18_msk_ab1_1sc), .msk_a0b2_1sc(din_18_msk_ab2_1sc), .msk_a0b3_1sc(din_18_msk_ab3_1sc),
-
-           .a1b0(din_20_ab0), .a1b1(din_20_ab1), .a1b2(din_20_ab2),
-           .a1b0_1sc(din_20_ab0_1sc), .a1b1_1sc(din_20_ab1_1sc), .a1b2_1sc(din_20_ab2_1sc),
-           .msk_a1b0(din_20_msk_ab0), .msk_a1b1(din_20_msk_ab1), .msk_a1b2(din_20_msk_ab2),
-           .msk_a1b0_1sc(din_20_msk_ab0_1sc), .msk_a1b1_1sc(din_20_msk_ab1_1sc), .msk_a1b2_1sc(din_20_msk_ab2_1sc),
-
-           .a2b0(din_22_ab0), .a2b1(din_22_ab1),
-           .a2b0_1sc(din_22_ab0_1sc), .a2b1_1sc(din_22_ab1_1sc),
-           .msk_a2b0(din_22_msk_ab0), .msk_a2b1(din_22_msk_ab1),
-           .msk_a2b0_1sc(din_22_msk_ab0_1sc), .msk_a2b1_1sc(din_22_msk_ab1_1sc),
-           
-           .a3b0(din_24_ab0),
-           .a3b0_1sc(din_24_ab0_1sc)
+  .clk(clk), .p(addr_1_18),
+  .a0b0(din_18_ab0), .a0b1(din_18_ab1), .a0b2(din_18_ab2), .a0b3(din_18_ab3),
+  .a1b0(din_19_ab0), .a1b1(din_19_ab1), .a1b2(din_19_ab2), .a1b3(din_19_ab3),
+  .a2b0(din_20_ab0), .a2b1(din_20_ab1), .a2b2(din_20_ab2),
+  .a3b0(din_21_ab0), .a3b1(din_21_ab1), .a3b2(din_21_ab2),
+  .a4b0(din_22_ab0), .a4b1(din_22_ab1),
+  .a5b0(din_23_ab0), .a5b1(din_23_ab1),
+  .a6b0(din_24_ab0),
+  .a7b0(din_25_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffffffffff),
 	.NBITS(15)
 ) addr_1_19_calc (
-           .clk(clk), .sign(din_signs_reg[19]), 
-           .p(addr_1_19),
-           .a0b0(din_19_ab0), .a0b1(din_19_ab1), .a0b2(din_19_ab2), .a0b3(din_19_ab3),
-           .a0b0_1sc(din_19_ab0_1sc), .a0b1_1sc(din_19_ab1_1sc), .a0b2_1sc(din_19_ab2_1sc), .a0b3_1sc(din_19_ab3_1sc),
-           .msk_a0b0(din_19_msk_ab0), .msk_a0b1(din_19_msk_ab1), .msk_a0b2(din_19_msk_ab2), .msk_a0b3(din_19_msk_ab3),
-           .msk_a0b0_1sc(din_19_msk_ab0_1sc), .msk_a0b1_1sc(din_19_msk_ab1_1sc), .msk_a0b2_1sc(din_19_msk_ab2_1sc), .msk_a0b3_1sc(din_19_msk_ab3_1sc),
-
-           .a1b0(din_21_ab0), .a1b1(din_21_ab1), .a1b2(din_21_ab2),
-           .a1b0_1sc(din_21_ab0_1sc), .a1b1_1sc(din_21_ab1_1sc), .a1b2_1sc(din_21_ab2_1sc),
-           .msk_a1b0(din_21_msk_ab0), .msk_a1b1(din_21_msk_ab1), .msk_a1b2(din_21_msk_ab2),
-           .msk_a1b0_1sc(din_21_msk_ab0_1sc), .msk_a1b1_1sc(din_21_msk_ab1_1sc), .msk_a1b2_1sc(din_21_msk_ab2_1sc),
-
-           .a2b0(din_23_ab0), .a2b1(din_23_ab1),
-           .a2b0_1sc(din_23_ab0_1sc), .a2b1_1sc(din_23_ab1_1sc),
-           .msk_a2b0(din_23_msk_ab0), .msk_a2b1(din_23_msk_ab1),
-           .msk_a2b0_1sc(din_23_msk_ab0_1sc), .msk_a2b1_1sc(din_23_msk_ab1_1sc),
-           
-           .a3b0(din_25_ab0),
-           .a3b0_1sc(din_25_ab0_1sc)
+  .clk(clk), .p(addr_1_19),
+  .a0b0(din_19_ab0), .a0b1(din_19_ab1), .a0b2(din_19_ab2), .a0b3(din_19_ab3),
+  .a1b0(din_20_ab0), .a1b1(din_20_ab1), .a1b2(din_20_ab2), .a1b3(din_20_ab3),
+  .a2b0(din_21_ab0), .a2b1(din_21_ab1), .a2b2(din_21_ab2),
+  .a3b0(din_22_ab0), .a3b1(din_22_ab1), .a3b2(din_22_ab2),
+  .a4b0(din_23_ab0), .a4b1(din_23_ab1),
+  .a5b0(din_24_ab0), .a5b1(din_24_ab1),
+  .a6b0(din_25_ab0),
+  .a7b0(din_26_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffffffffff),
 	.NBITS(15)
 ) addr_1_20_calc (
-           .clk(clk), .sign(din_signs_reg[20]), 
-           .p(addr_1_20),
-           .a0b0(din_20_ab0), .a0b1(din_20_ab1), .a0b2(din_20_ab2), .a0b3(din_20_ab3),
-           .a0b0_1sc(din_20_ab0_1sc), .a0b1_1sc(din_20_ab1_1sc), .a0b2_1sc(din_20_ab2_1sc), .a0b3_1sc(din_20_ab3_1sc),
-           .msk_a0b0(din_20_msk_ab0), .msk_a0b1(din_20_msk_ab1), .msk_a0b2(din_20_msk_ab2), .msk_a0b3(din_20_msk_ab3),
-           .msk_a0b0_1sc(din_20_msk_ab0_1sc), .msk_a0b1_1sc(din_20_msk_ab1_1sc), .msk_a0b2_1sc(din_20_msk_ab2_1sc), .msk_a0b3_1sc(din_20_msk_ab3_1sc),
-
-           .a1b0(din_22_ab0), .a1b1(din_22_ab1), .a1b2(din_22_ab2),
-           .a1b0_1sc(din_22_ab0_1sc), .a1b1_1sc(din_22_ab1_1sc), .a1b2_1sc(din_22_ab2_1sc),
-           .msk_a1b0(din_22_msk_ab0), .msk_a1b1(din_22_msk_ab1), .msk_a1b2(din_22_msk_ab2),
-           .msk_a1b0_1sc(din_22_msk_ab0_1sc), .msk_a1b1_1sc(din_22_msk_ab1_1sc), .msk_a1b2_1sc(din_22_msk_ab2_1sc),
-
-           .a2b0(din_24_ab0), .a2b1(din_24_ab1),
-           .a2b0_1sc(din_24_ab0_1sc), .a2b1_1sc(din_24_ab1_1sc),
-           .msk_a2b0(din_24_msk_ab0), .msk_a2b1(din_24_msk_ab1),
-           .msk_a2b0_1sc(din_24_msk_ab0_1sc), .msk_a2b1_1sc(din_24_msk_ab1_1sc),
-           
-           .a3b0(din_26_ab0),
-           .a3b0_1sc(din_26_ab0_1sc)
+  .clk(clk), .p(addr_1_20),
+  .a0b0(din_20_ab0), .a0b1(din_20_ab1), .a0b2(din_20_ab2), .a0b3(din_20_ab3),
+  .a1b0(din_21_ab0), .a1b1(din_21_ab1), .a1b2(din_21_ab2), .a1b3(din_21_ab3),
+  .a2b0(din_22_ab0), .a2b1(din_22_ab1), .a2b2(din_22_ab2),
+  .a3b0(din_23_ab0), .a3b1(din_23_ab1), .a3b2(din_23_ab2),
+  .a4b0(din_24_ab0), .a4b1(din_24_ab1),
+  .a5b0(din_25_ab0), .a5b1(din_25_ab1),
+  .a6b0(din_26_ab0),
+  .a7b0(din_27_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffffffffff),
 	.NBITS(15)
 ) addr_1_21_calc (
-           .clk(clk), .sign(din_signs_reg[21]), 
-           .p(addr_1_21),
-           .a0b0(din_21_ab0), .a0b1(din_21_ab1), .a0b2(din_21_ab2), .a0b3(din_21_ab3),
-           .a0b0_1sc(din_21_ab0_1sc), .a0b1_1sc(din_21_ab1_1sc), .a0b2_1sc(din_21_ab2_1sc), .a0b3_1sc(din_21_ab3_1sc),
-           .msk_a0b0(din_21_msk_ab0), .msk_a0b1(din_21_msk_ab1), .msk_a0b2(din_21_msk_ab2), .msk_a0b3(din_21_msk_ab3),
-           .msk_a0b0_1sc(din_21_msk_ab0_1sc), .msk_a0b1_1sc(din_21_msk_ab1_1sc), .msk_a0b2_1sc(din_21_msk_ab2_1sc), .msk_a0b3_1sc(din_21_msk_ab3_1sc),
-
-           .a1b0(din_23_ab0), .a1b1(din_23_ab1), .a1b2(din_23_ab2),
-           .a1b0_1sc(din_23_ab0_1sc), .a1b1_1sc(din_23_ab1_1sc), .a1b2_1sc(din_23_ab2_1sc),
-           .msk_a1b0(din_23_msk_ab0), .msk_a1b1(din_23_msk_ab1), .msk_a1b2(din_23_msk_ab2),
-           .msk_a1b0_1sc(din_23_msk_ab0_1sc), .msk_a1b1_1sc(din_23_msk_ab1_1sc), .msk_a1b2_1sc(din_23_msk_ab2_1sc),
-
-           .a2b0(din_25_ab0), .a2b1(din_25_ab1),
-           .a2b0_1sc(din_25_ab0_1sc), .a2b1_1sc(din_25_ab1_1sc),
-           .msk_a2b0(din_25_msk_ab0), .msk_a2b1(din_25_msk_ab1),
-           .msk_a2b0_1sc(din_25_msk_ab0_1sc), .msk_a2b1_1sc(din_25_msk_ab1_1sc),
-           
-           .a3b0(din_27_ab0),
-           .a3b0_1sc(din_27_ab0_1sc)
+  .clk(clk), .p(addr_1_21),
+  .a0b0(din_21_ab0), .a0b1(din_21_ab1), .a0b2(din_21_ab2), .a0b3(din_21_ab3),
+  .a1b0(din_22_ab0), .a1b1(din_22_ab1), .a1b2(din_22_ab2), .a1b3(din_22_ab3),
+  .a2b0(din_23_ab0), .a2b1(din_23_ab1), .a2b2(din_23_ab2),
+  .a3b0(din_24_ab0), .a3b1(din_24_ab1), .a3b2(din_24_ab2),
+  .a4b0(din_25_ab0), .a4b1(din_25_ab1),
+  .a5b0(din_26_ab0), .a5b1(din_26_ab1),
+  .a6b0(din_27_ab0),
+  .a7b0(din_28_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffffffffff),
 	.NBITS(15)
 ) addr_1_22_calc (
-           .clk(clk), .sign(din_signs_reg[22]), 
-           .p(addr_1_22),
-           .a0b0(din_22_ab0), .a0b1(din_22_ab1), .a0b2(din_22_ab2), .a0b3(din_22_ab3),
-           .a0b0_1sc(din_22_ab0_1sc), .a0b1_1sc(din_22_ab1_1sc), .a0b2_1sc(din_22_ab2_1sc), .a0b3_1sc(din_22_ab3_1sc),
-           .msk_a0b0(din_22_msk_ab0), .msk_a0b1(din_22_msk_ab1), .msk_a0b2(din_22_msk_ab2), .msk_a0b3(din_22_msk_ab3),
-           .msk_a0b0_1sc(din_22_msk_ab0_1sc), .msk_a0b1_1sc(din_22_msk_ab1_1sc), .msk_a0b2_1sc(din_22_msk_ab2_1sc), .msk_a0b3_1sc(din_22_msk_ab3_1sc),
-
-           .a1b0(din_24_ab0), .a1b1(din_24_ab1), .a1b2(din_24_ab2),
-           .a1b0_1sc(din_24_ab0_1sc), .a1b1_1sc(din_24_ab1_1sc), .a1b2_1sc(din_24_ab2_1sc),
-           .msk_a1b0(din_24_msk_ab0), .msk_a1b1(din_24_msk_ab1), .msk_a1b2(din_24_msk_ab2),
-           .msk_a1b0_1sc(din_24_msk_ab0_1sc), .msk_a1b1_1sc(din_24_msk_ab1_1sc), .msk_a1b2_1sc(din_24_msk_ab2_1sc),
-
-           .a2b0(din_26_ab0), .a2b1(din_26_ab1),
-           .a2b0_1sc(din_26_ab0_1sc), .a2b1_1sc(din_26_ab1_1sc),
-           .msk_a2b0(din_26_msk_ab0), .msk_a2b1(din_26_msk_ab1),
-           .msk_a2b0_1sc(din_26_msk_ab0_1sc), .msk_a2b1_1sc(din_26_msk_ab1_1sc),
-           
-           .a3b0(din_28_ab0),
-           .a3b0_1sc(din_28_ab0_1sc)
+  .clk(clk), .p(addr_1_22),
+  .a0b0(din_22_ab0), .a0b1(din_22_ab1), .a0b2(din_22_ab2), .a0b3(din_22_ab3),
+  .a1b0(din_23_ab0), .a1b1(din_23_ab1), .a1b2(din_23_ab2), .a1b3(din_23_ab3),
+  .a2b0(din_24_ab0), .a2b1(din_24_ab1), .a2b2(din_24_ab2),
+  .a3b0(din_25_ab0), .a3b1(din_25_ab1), .a3b2(din_25_ab2),
+  .a4b0(din_26_ab0), .a4b1(din_26_ab1),
+  .a5b0(din_27_ab0), .a5b1(din_27_ab1),
+  .a6b0(din_28_ab0),
+  .a7b0(din_29_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffffffffff),
 	.NBITS(15)
 ) addr_1_23_calc (
-           .clk(clk), .sign(din_signs_reg[23]), 
-           .p(addr_1_23),
-           .a0b0(din_23_ab0), .a0b1(din_23_ab1), .a0b2(din_23_ab2), .a0b3(din_23_ab3),
-           .a0b0_1sc(din_23_ab0_1sc), .a0b1_1sc(din_23_ab1_1sc), .a0b2_1sc(din_23_ab2_1sc), .a0b3_1sc(din_23_ab3_1sc),
-           .msk_a0b0(din_23_msk_ab0), .msk_a0b1(din_23_msk_ab1), .msk_a0b2(din_23_msk_ab2), .msk_a0b3(din_23_msk_ab3),
-           .msk_a0b0_1sc(din_23_msk_ab0_1sc), .msk_a0b1_1sc(din_23_msk_ab1_1sc), .msk_a0b2_1sc(din_23_msk_ab2_1sc), .msk_a0b3_1sc(din_23_msk_ab3_1sc),
-
-           .a1b0(din_25_ab0), .a1b1(din_25_ab1), .a1b2(din_25_ab2),
-           .a1b0_1sc(din_25_ab0_1sc), .a1b1_1sc(din_25_ab1_1sc), .a1b2_1sc(din_25_ab2_1sc),
-           .msk_a1b0(din_25_msk_ab0), .msk_a1b1(din_25_msk_ab1), .msk_a1b2(din_25_msk_ab2),
-           .msk_a1b0_1sc(din_25_msk_ab0_1sc), .msk_a1b1_1sc(din_25_msk_ab1_1sc), .msk_a1b2_1sc(din_25_msk_ab2_1sc),
-
-           .a2b0(din_27_ab0), .a2b1(din_27_ab1),
-           .a2b0_1sc(din_27_ab0_1sc), .a2b1_1sc(din_27_ab1_1sc),
-           .msk_a2b0(din_27_msk_ab0), .msk_a2b1(din_27_msk_ab1),
-           .msk_a2b0_1sc(din_27_msk_ab0_1sc), .msk_a2b1_1sc(din_27_msk_ab1_1sc),
-           
-           .a3b0(din_29_ab0),
-           .a3b0_1sc(din_29_ab0_1sc)
+  .clk(clk), .p(addr_1_23),
+  .a0b0(din_23_ab0), .a0b1(din_23_ab1), .a0b2(din_23_ab2), .a0b3(din_23_ab3),
+  .a1b0(din_24_ab0), .a1b1(din_24_ab1), .a1b2(din_24_ab2), .a1b3(din_24_ab3),
+  .a2b0(din_25_ab0), .a2b1(din_25_ab1), .a2b2(din_25_ab2),
+  .a3b0(din_26_ab0), .a3b1(din_26_ab1), .a3b2(din_26_ab2),
+  .a4b0(din_27_ab0), .a4b1(din_27_ab1),
+  .a5b0(din_28_ab0), .a5b1(din_28_ab1),
+  .a6b0(din_29_ab0),
+  .a7b0(din_30_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffffffffff),
 	.NBITS(15)
 ) addr_1_24_calc (
-           .clk(clk), .sign(din_signs_reg[24]), 
-           .p(addr_1_24),
-           .a0b0(din_24_ab0), .a0b1(din_24_ab1), .a0b2(din_24_ab2), .a0b3(din_24_ab3),
-           .a0b0_1sc(din_24_ab0_1sc), .a0b1_1sc(din_24_ab1_1sc), .a0b2_1sc(din_24_ab2_1sc), .a0b3_1sc(din_24_ab3_1sc),
-           .msk_a0b0(din_24_msk_ab0), .msk_a0b1(din_24_msk_ab1), .msk_a0b2(din_24_msk_ab2), .msk_a0b3(din_24_msk_ab3),
-           .msk_a0b0_1sc(din_24_msk_ab0_1sc), .msk_a0b1_1sc(din_24_msk_ab1_1sc), .msk_a0b2_1sc(din_24_msk_ab2_1sc), .msk_a0b3_1sc(din_24_msk_ab3_1sc),
-
-           .a1b0(din_26_ab0), .a1b1(din_26_ab1), .a1b2(din_26_ab2),
-           .a1b0_1sc(din_26_ab0_1sc), .a1b1_1sc(din_26_ab1_1sc), .a1b2_1sc(din_26_ab2_1sc),
-           .msk_a1b0(din_26_msk_ab0), .msk_a1b1(din_26_msk_ab1), .msk_a1b2(din_26_msk_ab2),
-           .msk_a1b0_1sc(din_26_msk_ab0_1sc), .msk_a1b1_1sc(din_26_msk_ab1_1sc), .msk_a1b2_1sc(din_26_msk_ab2_1sc),
-
-           .a2b0(din_28_ab0), .a2b1(din_28_ab1),
-           .a2b0_1sc(din_28_ab0_1sc), .a2b1_1sc(din_28_ab1_1sc),
-           .msk_a2b0(din_28_msk_ab0), .msk_a2b1(din_28_msk_ab1),
-           .msk_a2b0_1sc(din_28_msk_ab0_1sc), .msk_a2b1_1sc(din_28_msk_ab1_1sc),
-           
-           .a3b0(din_30_ab0),
-           .a3b0_1sc(din_30_ab0_1sc)
+  .clk(clk), .p(addr_1_24),
+  .a0b0(din_24_ab0), .a0b1(din_24_ab1), .a0b2(din_24_ab2), .a0b3(din_24_ab3),
+  .a1b0(din_25_ab0), .a1b1(din_25_ab1), .a1b2(din_25_ab2), .a1b3(din_25_ab3),
+  .a2b0(din_26_ab0), .a2b1(din_26_ab1), .a2b2(din_26_ab2),
+  .a3b0(din_27_ab0), .a3b1(din_27_ab1), .a3b2(din_27_ab2),
+  .a4b0(din_28_ab0), .a4b1(din_28_ab1),
+  .a5b0(din_29_ab0), .a5b1(din_29_ab1),
+  .a6b0(din_30_ab0),
+  .a7b0(din_31_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffffffffff),
 	.NBITS(15)
 ) addr_1_25_calc (
-           .clk(clk), .sign(din_signs_reg[25]), 
-           .p(addr_1_25),
-           .a0b0(din_25_ab0), .a0b1(din_25_ab1), .a0b2(din_25_ab2), .a0b3(din_25_ab3),
-           .a0b0_1sc(din_25_ab0_1sc), .a0b1_1sc(din_25_ab1_1sc), .a0b2_1sc(din_25_ab2_1sc), .a0b3_1sc(din_25_ab3_1sc),
-           .msk_a0b0(din_25_msk_ab0), .msk_a0b1(din_25_msk_ab1), .msk_a0b2(din_25_msk_ab2), .msk_a0b3(din_25_msk_ab3),
-           .msk_a0b0_1sc(din_25_msk_ab0_1sc), .msk_a0b1_1sc(din_25_msk_ab1_1sc), .msk_a0b2_1sc(din_25_msk_ab2_1sc), .msk_a0b3_1sc(din_25_msk_ab3_1sc),
-
-           .a1b0(din_27_ab0), .a1b1(din_27_ab1), .a1b2(din_27_ab2),
-           .a1b0_1sc(din_27_ab0_1sc), .a1b1_1sc(din_27_ab1_1sc), .a1b2_1sc(din_27_ab2_1sc),
-           .msk_a1b0(din_27_msk_ab0), .msk_a1b1(din_27_msk_ab1), .msk_a1b2(din_27_msk_ab2),
-           .msk_a1b0_1sc(din_27_msk_ab0_1sc), .msk_a1b1_1sc(din_27_msk_ab1_1sc), .msk_a1b2_1sc(din_27_msk_ab2_1sc),
-
-           .a2b0(din_29_ab0), .a2b1(din_29_ab1),
-           .a2b0_1sc(din_29_ab0_1sc), .a2b1_1sc(din_29_ab1_1sc),
-           .msk_a2b0(din_29_msk_ab0), .msk_a2b1(din_29_msk_ab1),
-           .msk_a2b0_1sc(din_29_msk_ab0_1sc), .msk_a2b1_1sc(din_29_msk_ab1_1sc),
-           
-           .a3b0(din_31_ab0),
-           .a3b0_1sc(din_31_ab0_1sc)
+  .clk(clk), .p(addr_1_25),
+  .a0b0(din_25_ab0), .a0b1(din_25_ab1), .a0b2(din_25_ab2), .a0b3(din_25_ab3),
+  .a1b0(din_26_ab0), .a1b1(din_26_ab1), .a1b2(din_26_ab2), .a1b3(din_26_ab3),
+  .a2b0(din_27_ab0), .a2b1(din_27_ab1), .a2b2(din_27_ab2),
+  .a3b0(din_28_ab0), .a3b1(din_28_ab1), .a3b2(din_28_ab2),
+  .a4b0(din_29_ab0), .a4b1(din_29_ab1),
+  .a5b0(din_30_ab0), .a5b1(din_30_ab1),
+  .a6b0(din_31_ab0),
+  .a7b0(din_32_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffffffffff),
 	.NBITS(15)
 ) addr_1_26_calc (
-           .clk(clk), .sign(din_signs_reg[26]), 
-           .p(addr_1_26),
-           .a0b0(din_26_ab0), .a0b1(din_26_ab1), .a0b2(din_26_ab2), .a0b3(din_26_ab3),
-           .a0b0_1sc(din_26_ab0_1sc), .a0b1_1sc(din_26_ab1_1sc), .a0b2_1sc(din_26_ab2_1sc), .a0b3_1sc(din_26_ab3_1sc),
-           .msk_a0b0(din_26_msk_ab0), .msk_a0b1(din_26_msk_ab1), .msk_a0b2(din_26_msk_ab2), .msk_a0b3(din_26_msk_ab3),
-           .msk_a0b0_1sc(din_26_msk_ab0_1sc), .msk_a0b1_1sc(din_26_msk_ab1_1sc), .msk_a0b2_1sc(din_26_msk_ab2_1sc), .msk_a0b3_1sc(din_26_msk_ab3_1sc),
-
-           .a1b0(din_28_ab0), .a1b1(din_28_ab1), .a1b2(din_28_ab2),
-           .a1b0_1sc(din_28_ab0_1sc), .a1b1_1sc(din_28_ab1_1sc), .a1b2_1sc(din_28_ab2_1sc),
-           .msk_a1b0(din_28_msk_ab0), .msk_a1b1(din_28_msk_ab1), .msk_a1b2(din_28_msk_ab2),
-           .msk_a1b0_1sc(din_28_msk_ab0_1sc), .msk_a1b1_1sc(din_28_msk_ab1_1sc), .msk_a1b2_1sc(din_28_msk_ab2_1sc),
-
-           .a2b0(din_30_ab0), .a2b1(din_30_ab1),
-           .a2b0_1sc(din_30_ab0_1sc), .a2b1_1sc(din_30_ab1_1sc),
-           .msk_a2b0(din_30_msk_ab0), .msk_a2b1(din_30_msk_ab1),
-           .msk_a2b0_1sc(din_30_msk_ab0_1sc), .msk_a2b1_1sc(din_30_msk_ab1_1sc),
-           
-           .a3b0(din_32_ab0),
-           .a3b0_1sc(din_32_ab0_1sc)
+  .clk(clk), .p(addr_1_26),
+  .a0b0(din_26_ab0), .a0b1(din_26_ab1), .a0b2(din_26_ab2), .a0b3(din_26_ab3),
+  .a1b0(din_27_ab0), .a1b1(din_27_ab1), .a1b2(din_27_ab2), .a1b3(din_27_ab3),
+  .a2b0(din_28_ab0), .a2b1(din_28_ab1), .a2b2(din_28_ab2),
+  .a3b0(din_29_ab0), .a3b1(din_29_ab1), .a3b2(din_29_ab2),
+  .a4b0(din_30_ab0), .a4b1(din_30_ab1),
+  .a5b0(din_31_ab0), .a5b1(din_31_ab1),
+  .a6b0(din_32_ab0),
+  .a7b0(din_33_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffffffffff),
 	.NBITS(15)
 ) addr_1_27_calc (
-           .clk(clk), .sign(din_signs_reg[27]), 
-           .p(addr_1_27),
-           .a0b0(din_27_ab0), .a0b1(din_27_ab1), .a0b2(din_27_ab2), .a0b3(din_27_ab3),
-           .a0b0_1sc(din_27_ab0_1sc), .a0b1_1sc(din_27_ab1_1sc), .a0b2_1sc(din_27_ab2_1sc), .a0b3_1sc(din_27_ab3_1sc),
-           .msk_a0b0(din_27_msk_ab0), .msk_a0b1(din_27_msk_ab1), .msk_a0b2(din_27_msk_ab2), .msk_a0b3(din_27_msk_ab3),
-           .msk_a0b0_1sc(din_27_msk_ab0_1sc), .msk_a0b1_1sc(din_27_msk_ab1_1sc), .msk_a0b2_1sc(din_27_msk_ab2_1sc), .msk_a0b3_1sc(din_27_msk_ab3_1sc),
-
-           .a1b0(din_29_ab0), .a1b1(din_29_ab1), .a1b2(din_29_ab2),
-           .a1b0_1sc(din_29_ab0_1sc), .a1b1_1sc(din_29_ab1_1sc), .a1b2_1sc(din_29_ab2_1sc),
-           .msk_a1b0(din_29_msk_ab0), .msk_a1b1(din_29_msk_ab1), .msk_a1b2(din_29_msk_ab2),
-           .msk_a1b0_1sc(din_29_msk_ab0_1sc), .msk_a1b1_1sc(din_29_msk_ab1_1sc), .msk_a1b2_1sc(din_29_msk_ab2_1sc),
-
-           .a2b0(din_31_ab0), .a2b1(din_31_ab1),
-           .a2b0_1sc(din_31_ab0_1sc), .a2b1_1sc(din_31_ab1_1sc),
-           .msk_a2b0(din_31_msk_ab0), .msk_a2b1(din_31_msk_ab1),
-           .msk_a2b0_1sc(din_31_msk_ab0_1sc), .msk_a2b1_1sc(din_31_msk_ab1_1sc),
-           
-           .a3b0(din_33_ab0),
-           .a3b0_1sc(din_33_ab0_1sc)
+  .clk(clk), .p(addr_1_27),
+  .a0b0(din_27_ab0), .a0b1(din_27_ab1), .a0b2(din_27_ab2), .a0b3(din_27_ab3),
+  .a1b0(din_28_ab0), .a1b1(din_28_ab1), .a1b2(din_28_ab2), .a1b3(din_28_ab3),
+  .a2b0(din_29_ab0), .a2b1(din_29_ab1), .a2b2(din_29_ab2),
+  .a3b0(din_30_ab0), .a3b1(din_30_ab1), .a3b2(din_30_ab2),
+  .a4b0(din_31_ab0), .a4b1(din_31_ab1),
+  .a5b0(din_32_ab0), .a5b1(din_32_ab1),
+  .a6b0(din_33_ab0),
+  .a7b0(din_34_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffffffffff),
 	.NBITS(15)
 ) addr_1_28_calc (
-           .clk(clk), .sign(din_signs_reg[28]), 
-           .p(addr_1_28),
-           .a0b0(din_28_ab0), .a0b1(din_28_ab1), .a0b2(din_28_ab2), .a0b3(din_28_ab3),
-           .a0b0_1sc(din_28_ab0_1sc), .a0b1_1sc(din_28_ab1_1sc), .a0b2_1sc(din_28_ab2_1sc), .a0b3_1sc(din_28_ab3_1sc),
-           .msk_a0b0(din_28_msk_ab0), .msk_a0b1(din_28_msk_ab1), .msk_a0b2(din_28_msk_ab2), .msk_a0b3(din_28_msk_ab3),
-           .msk_a0b0_1sc(din_28_msk_ab0_1sc), .msk_a0b1_1sc(din_28_msk_ab1_1sc), .msk_a0b2_1sc(din_28_msk_ab2_1sc), .msk_a0b3_1sc(din_28_msk_ab3_1sc),
-
-           .a1b0(din_30_ab0), .a1b1(din_30_ab1), .a1b2(din_30_ab2),
-           .a1b0_1sc(din_30_ab0_1sc), .a1b1_1sc(din_30_ab1_1sc), .a1b2_1sc(din_30_ab2_1sc),
-           .msk_a1b0(din_30_msk_ab0), .msk_a1b1(din_30_msk_ab1), .msk_a1b2(din_30_msk_ab2),
-           .msk_a1b0_1sc(din_30_msk_ab0_1sc), .msk_a1b1_1sc(din_30_msk_ab1_1sc), .msk_a1b2_1sc(din_30_msk_ab2_1sc),
-
-           .a2b0(din_32_ab0), .a2b1(din_32_ab1),
-           .a2b0_1sc(din_32_ab0_1sc), .a2b1_1sc(din_32_ab1_1sc),
-           .msk_a2b0(din_32_msk_ab0), .msk_a2b1(din_32_msk_ab1),
-           .msk_a2b0_1sc(din_32_msk_ab0_1sc), .msk_a2b1_1sc(din_32_msk_ab1_1sc),
-           
-           .a3b0(din_34_ab0),
-           .a3b0_1sc(din_34_ab0_1sc)
+  .clk(clk), .p(addr_1_28),
+  .a0b0(din_28_ab0), .a0b1(din_28_ab1), .a0b2(din_28_ab2), .a0b3(din_28_ab3),
+  .a1b0(din_29_ab0), .a1b1(din_29_ab1), .a1b2(din_29_ab2), .a1b3(din_29_ab3),
+  .a2b0(din_30_ab0), .a2b1(din_30_ab1), .a2b2(din_30_ab2),
+  .a3b0(din_31_ab0), .a3b1(din_31_ab1), .a3b2(din_31_ab2),
+  .a4b0(din_32_ab0), .a4b1(din_32_ab1),
+  .a5b0(din_33_ab0), .a5b1(din_33_ab1),
+  .a6b0(din_34_ab0),
+  .a7b0(din_35_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffffffffff),
 	.NBITS(15)
 ) addr_1_29_calc (
-           .clk(clk), .sign(din_signs_reg[29]), 
-           .p(addr_1_29),
-           .a0b0(din_29_ab0), .a0b1(din_29_ab1), .a0b2(din_29_ab2), .a0b3(din_29_ab3),
-           .a0b0_1sc(din_29_ab0_1sc), .a0b1_1sc(din_29_ab1_1sc), .a0b2_1sc(din_29_ab2_1sc), .a0b3_1sc(din_29_ab3_1sc),
-           .msk_a0b0(din_29_msk_ab0), .msk_a0b1(din_29_msk_ab1), .msk_a0b2(din_29_msk_ab2), .msk_a0b3(din_29_msk_ab3),
-           .msk_a0b0_1sc(din_29_msk_ab0_1sc), .msk_a0b1_1sc(din_29_msk_ab1_1sc), .msk_a0b2_1sc(din_29_msk_ab2_1sc), .msk_a0b3_1sc(din_29_msk_ab3_1sc),
-
-           .a1b0(din_31_ab0), .a1b1(din_31_ab1), .a1b2(din_31_ab2),
-           .a1b0_1sc(din_31_ab0_1sc), .a1b1_1sc(din_31_ab1_1sc), .a1b2_1sc(din_31_ab2_1sc),
-           .msk_a1b0(din_31_msk_ab0), .msk_a1b1(din_31_msk_ab1), .msk_a1b2(din_31_msk_ab2),
-           .msk_a1b0_1sc(din_31_msk_ab0_1sc), .msk_a1b1_1sc(din_31_msk_ab1_1sc), .msk_a1b2_1sc(din_31_msk_ab2_1sc),
-
-           .a2b0(din_33_ab0), .a2b1(din_33_ab1),
-           .a2b0_1sc(din_33_ab0_1sc), .a2b1_1sc(din_33_ab1_1sc),
-           .msk_a2b0(din_33_msk_ab0), .msk_a2b1(din_33_msk_ab1),
-           .msk_a2b0_1sc(din_33_msk_ab0_1sc), .msk_a2b1_1sc(din_33_msk_ab1_1sc),
-           
-           .a3b0(din_35_ab0),
-           .a3b0_1sc(din_35_ab0_1sc)
+  .clk(clk), .p(addr_1_29),
+  .a0b0(din_29_ab0), .a0b1(din_29_ab1), .a0b2(din_29_ab2), .a0b3(din_29_ab3),
+  .a1b0(din_30_ab0), .a1b1(din_30_ab1), .a1b2(din_30_ab2), .a1b3(din_30_ab3),
+  .a2b0(din_31_ab0), .a2b1(din_31_ab1), .a2b2(din_31_ab2),
+  .a3b0(din_32_ab0), .a3b1(din_32_ab1), .a3b2(din_32_ab2),
+  .a4b0(din_33_ab0), .a4b1(din_33_ab1),
+  .a5b0(din_34_ab0), .a5b1(din_34_ab1),
+  .a6b0(din_35_ab0),
+  .a7b0(din_36_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffffffffff),
 	.NBITS(15)
 ) addr_1_30_calc (
-           .clk(clk), .sign(din_signs_reg[30]), 
-           .p(addr_1_30),
-           .a0b0(din_30_ab0), .a0b1(din_30_ab1), .a0b2(din_30_ab2), .a0b3(din_30_ab3),
-           .a0b0_1sc(din_30_ab0_1sc), .a0b1_1sc(din_30_ab1_1sc), .a0b2_1sc(din_30_ab2_1sc), .a0b3_1sc(din_30_ab3_1sc),
-           .msk_a0b0(din_30_msk_ab0), .msk_a0b1(din_30_msk_ab1), .msk_a0b2(din_30_msk_ab2), .msk_a0b3(din_30_msk_ab3),
-           .msk_a0b0_1sc(din_30_msk_ab0_1sc), .msk_a0b1_1sc(din_30_msk_ab1_1sc), .msk_a0b2_1sc(din_30_msk_ab2_1sc), .msk_a0b3_1sc(din_30_msk_ab3_1sc),
-
-           .a1b0(din_32_ab0), .a1b1(din_32_ab1), .a1b2(din_32_ab2),
-           .a1b0_1sc(din_32_ab0_1sc), .a1b1_1sc(din_32_ab1_1sc), .a1b2_1sc(din_32_ab2_1sc),
-           .msk_a1b0(din_32_msk_ab0), .msk_a1b1(din_32_msk_ab1), .msk_a1b2(din_32_msk_ab2),
-           .msk_a1b0_1sc(din_32_msk_ab0_1sc), .msk_a1b1_1sc(din_32_msk_ab1_1sc), .msk_a1b2_1sc(din_32_msk_ab2_1sc),
-
-           .a2b0(din_34_ab0), .a2b1(din_34_ab1),
-           .a2b0_1sc(din_34_ab0_1sc), .a2b1_1sc(din_34_ab1_1sc),
-           .msk_a2b0(din_34_msk_ab0), .msk_a2b1(din_34_msk_ab1),
-           .msk_a2b0_1sc(din_34_msk_ab0_1sc), .msk_a2b1_1sc(din_34_msk_ab1_1sc),
-           
-           .a3b0(din_36_ab0),
-           .a3b0_1sc(din_36_ab0_1sc)
+  .clk(clk), .p(addr_1_30),
+  .a0b0(din_30_ab0), .a0b1(din_30_ab1), .a0b2(din_30_ab2), .a0b3(din_30_ab3),
+  .a1b0(din_31_ab0), .a1b1(din_31_ab1), .a1b2(din_31_ab2), .a1b3(din_31_ab3),
+  .a2b0(din_32_ab0), .a2b1(din_32_ab1), .a2b2(din_32_ab2),
+  .a3b0(din_33_ab0), .a3b1(din_33_ab1), .a3b2(din_33_ab2),
+  .a4b0(din_34_ab0), .a4b1(din_34_ab1),
+  .a5b0(din_35_ab0), .a5b1(din_35_ab1),
+  .a6b0(din_36_ab0),
+  .a7b0(din_37_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffffffffff),
 	.NBITS(15)
 ) addr_1_31_calc (
-           .clk(clk), .sign(din_signs_reg[31]), 
-           .p(addr_1_31),
-           .a0b0(din_31_ab0), .a0b1(din_31_ab1), .a0b2(din_31_ab2), .a0b3(din_31_ab3),
-           .a0b0_1sc(din_31_ab0_1sc), .a0b1_1sc(din_31_ab1_1sc), .a0b2_1sc(din_31_ab2_1sc), .a0b3_1sc(din_31_ab3_1sc),
-           .msk_a0b0(din_31_msk_ab0), .msk_a0b1(din_31_msk_ab1), .msk_a0b2(din_31_msk_ab2), .msk_a0b3(din_31_msk_ab3),
-           .msk_a0b0_1sc(din_31_msk_ab0_1sc), .msk_a0b1_1sc(din_31_msk_ab1_1sc), .msk_a0b2_1sc(din_31_msk_ab2_1sc), .msk_a0b3_1sc(din_31_msk_ab3_1sc),
-
-           .a1b0(din_33_ab0), .a1b1(din_33_ab1), .a1b2(din_33_ab2),
-           .a1b0_1sc(din_33_ab0_1sc), .a1b1_1sc(din_33_ab1_1sc), .a1b2_1sc(din_33_ab2_1sc),
-           .msk_a1b0(din_33_msk_ab0), .msk_a1b1(din_33_msk_ab1), .msk_a1b2(din_33_msk_ab2),
-           .msk_a1b0_1sc(din_33_msk_ab0_1sc), .msk_a1b1_1sc(din_33_msk_ab1_1sc), .msk_a1b2_1sc(din_33_msk_ab2_1sc),
-
-           .a2b0(din_35_ab0), .a2b1(din_35_ab1),
-           .a2b0_1sc(din_35_ab0_1sc), .a2b1_1sc(din_35_ab1_1sc),
-           .msk_a2b0(din_35_msk_ab0), .msk_a2b1(din_35_msk_ab1),
-           .msk_a2b0_1sc(din_35_msk_ab0_1sc), .msk_a2b1_1sc(din_35_msk_ab1_1sc),
-           
-           .a3b0(din_37_ab0),
-           .a3b0_1sc(din_37_ab0_1sc)
+  .clk(clk), .p(addr_1_31),
+  .a0b0(din_31_ab0), .a0b1(din_31_ab1), .a0b2(din_31_ab2), .a0b3(din_31_ab3),
+  .a1b0(din_32_ab0), .a1b1(din_32_ab1), .a1b2(din_32_ab2), .a1b3(din_32_ab3),
+  .a2b0(din_33_ab0), .a2b1(din_33_ab1), .a2b2(din_33_ab2),
+  .a3b0(din_34_ab0), .a3b1(din_34_ab1), .a3b2(din_34_ab2),
+  .a4b0(din_35_ab0), .a4b1(din_35_ab1),
+  .a5b0(din_36_ab0), .a5b1(din_36_ab1),
+  .a6b0(din_37_ab0),
+  .a7b0(din_38_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffffffff00),
 	.NBITS(12)
 ) addr_2_0_calc (
-           .clk(clk), .sign(din_signs_reg[0]), 
-           .p(addr_2_0),
-           .a0b0(din_0_ab0), .a0b1(din_0_ab1), .a0b2(din_0_ab2), .a0b3(din_0_ab3),
-           .a0b0_1sc(din_0_ab0_1sc), .a0b1_1sc(din_0_ab1_1sc), .a0b2_1sc(din_0_ab2_1sc), .a0b3_1sc(din_0_ab3_1sc),
-           .msk_a0b0(din_0_msk_ab0), .msk_a0b1(din_0_msk_ab1), .msk_a0b2(din_0_msk_ab2), .msk_a0b3(din_0_msk_ab3),
-           .msk_a0b0_1sc(din_0_msk_ab0_1sc), .msk_a0b1_1sc(din_0_msk_ab1_1sc), .msk_a0b2_1sc(din_0_msk_ab2_1sc), .msk_a0b3_1sc(din_0_msk_ab3_1sc),
-
-           .a1b0(din_2_ab0), .a1b1(din_2_ab1), .a1b2(din_2_ab2),
-           .a1b0_1sc(din_2_ab0_1sc), .a1b1_1sc(din_2_ab1_1sc), .a1b2_1sc(din_2_ab2_1sc),
-           .msk_a1b0(din_2_msk_ab0), .msk_a1b1(din_2_msk_ab1), .msk_a1b2(din_2_msk_ab2),
-           .msk_a1b0_1sc(din_2_msk_ab0_1sc), .msk_a1b1_1sc(din_2_msk_ab1_1sc), .msk_a1b2_1sc(din_2_msk_ab2_1sc),
-
-           .a2b0(din_4_ab0), .a2b1(din_4_ab1),
-           .a2b0_1sc(din_4_ab0_1sc), .a2b1_1sc(din_4_ab1_1sc),
-           .msk_a2b0(din_4_msk_ab0), .msk_a2b1(din_4_msk_ab1),
-           .msk_a2b0_1sc(din_4_msk_ab0_1sc), .msk_a2b1_1sc(din_4_msk_ab1_1sc),
-           
-           .a3b0(din_6_ab0),
-           .a3b0_1sc(din_6_ab0_1sc)
+  .clk(clk), .p(addr_2_0),
+  .a0b0(din_0_ab0), .a0b1(din_0_ab1), .a0b2(din_0_ab2), .a0b3(din_0_ab3),
+  .a1b0(din_1_ab0), .a1b1(din_1_ab1), .a1b2(din_1_ab2), .a1b3(din_1_ab3),
+  .a2b0(din_2_ab0), .a2b1(din_2_ab1), .a2b2(din_2_ab2),
+  .a3b0(din_3_ab0), .a3b1(din_3_ab1), .a3b2(din_3_ab2),
+  .a4b0(din_4_ab0), .a4b1(din_4_ab1),
+  .a5b0(din_5_ab0), .a5b1(din_5_ab1),
+  .a6b0(din_6_ab0),
+  .a7b0(din_7_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffffffff00),
 	.NBITS(12)
 ) addr_2_1_calc (
-           .clk(clk), .sign(din_signs_reg[1]), 
-           .p(addr_2_1),
-           .a0b0(din_1_ab0), .a0b1(din_1_ab1), .a0b2(din_1_ab2), .a0b3(din_1_ab3),
-           .a0b0_1sc(din_1_ab0_1sc), .a0b1_1sc(din_1_ab1_1sc), .a0b2_1sc(din_1_ab2_1sc), .a0b3_1sc(din_1_ab3_1sc),
-           .msk_a0b0(din_1_msk_ab0), .msk_a0b1(din_1_msk_ab1), .msk_a0b2(din_1_msk_ab2), .msk_a0b3(din_1_msk_ab3),
-           .msk_a0b0_1sc(din_1_msk_ab0_1sc), .msk_a0b1_1sc(din_1_msk_ab1_1sc), .msk_a0b2_1sc(din_1_msk_ab2_1sc), .msk_a0b3_1sc(din_1_msk_ab3_1sc),
-
-           .a1b0(din_3_ab0), .a1b1(din_3_ab1), .a1b2(din_3_ab2),
-           .a1b0_1sc(din_3_ab0_1sc), .a1b1_1sc(din_3_ab1_1sc), .a1b2_1sc(din_3_ab2_1sc),
-           .msk_a1b0(din_3_msk_ab0), .msk_a1b1(din_3_msk_ab1), .msk_a1b2(din_3_msk_ab2),
-           .msk_a1b0_1sc(din_3_msk_ab0_1sc), .msk_a1b1_1sc(din_3_msk_ab1_1sc), .msk_a1b2_1sc(din_3_msk_ab2_1sc),
-
-           .a2b0(din_5_ab0), .a2b1(din_5_ab1),
-           .a2b0_1sc(din_5_ab0_1sc), .a2b1_1sc(din_5_ab1_1sc),
-           .msk_a2b0(din_5_msk_ab0), .msk_a2b1(din_5_msk_ab1),
-           .msk_a2b0_1sc(din_5_msk_ab0_1sc), .msk_a2b1_1sc(din_5_msk_ab1_1sc),
-           
-           .a3b0(din_7_ab0),
-           .a3b0_1sc(din_7_ab0_1sc)
+  .clk(clk), .p(addr_2_1),
+  .a0b0(din_1_ab0), .a0b1(din_1_ab1), .a0b2(din_1_ab2), .a0b3(din_1_ab3),
+  .a1b0(din_2_ab0), .a1b1(din_2_ab1), .a1b2(din_2_ab2), .a1b3(din_2_ab3),
+  .a2b0(din_3_ab0), .a2b1(din_3_ab1), .a2b2(din_3_ab2),
+  .a3b0(din_4_ab0), .a3b1(din_4_ab1), .a3b2(din_4_ab2),
+  .a4b0(din_5_ab0), .a4b1(din_5_ab1),
+  .a5b0(din_6_ab0), .a5b1(din_6_ab1),
+  .a6b0(din_7_ab0),
+  .a7b0(din_8_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffffffff00),
 	.NBITS(12)
 ) addr_2_2_calc (
-           .clk(clk), .sign(din_signs_reg[2]), 
-           .p(addr_2_2),
-           .a0b0(din_2_ab0), .a0b1(din_2_ab1), .a0b2(din_2_ab2), .a0b3(din_2_ab3),
-           .a0b0_1sc(din_2_ab0_1sc), .a0b1_1sc(din_2_ab1_1sc), .a0b2_1sc(din_2_ab2_1sc), .a0b3_1sc(din_2_ab3_1sc),
-           .msk_a0b0(din_2_msk_ab0), .msk_a0b1(din_2_msk_ab1), .msk_a0b2(din_2_msk_ab2), .msk_a0b3(din_2_msk_ab3),
-           .msk_a0b0_1sc(din_2_msk_ab0_1sc), .msk_a0b1_1sc(din_2_msk_ab1_1sc), .msk_a0b2_1sc(din_2_msk_ab2_1sc), .msk_a0b3_1sc(din_2_msk_ab3_1sc),
-
-           .a1b0(din_4_ab0), .a1b1(din_4_ab1), .a1b2(din_4_ab2),
-           .a1b0_1sc(din_4_ab0_1sc), .a1b1_1sc(din_4_ab1_1sc), .a1b2_1sc(din_4_ab2_1sc),
-           .msk_a1b0(din_4_msk_ab0), .msk_a1b1(din_4_msk_ab1), .msk_a1b2(din_4_msk_ab2),
-           .msk_a1b0_1sc(din_4_msk_ab0_1sc), .msk_a1b1_1sc(din_4_msk_ab1_1sc), .msk_a1b2_1sc(din_4_msk_ab2_1sc),
-
-           .a2b0(din_6_ab0), .a2b1(din_6_ab1),
-           .a2b0_1sc(din_6_ab0_1sc), .a2b1_1sc(din_6_ab1_1sc),
-           .msk_a2b0(din_6_msk_ab0), .msk_a2b1(din_6_msk_ab1),
-           .msk_a2b0_1sc(din_6_msk_ab0_1sc), .msk_a2b1_1sc(din_6_msk_ab1_1sc),
-           
-           .a3b0(din_8_ab0),
-           .a3b0_1sc(din_8_ab0_1sc)
+  .clk(clk), .p(addr_2_2),
+  .a0b0(din_2_ab0), .a0b1(din_2_ab1), .a0b2(din_2_ab2), .a0b3(din_2_ab3),
+  .a1b0(din_3_ab0), .a1b1(din_3_ab1), .a1b2(din_3_ab2), .a1b3(din_3_ab3),
+  .a2b0(din_4_ab0), .a2b1(din_4_ab1), .a2b2(din_4_ab2),
+  .a3b0(din_5_ab0), .a3b1(din_5_ab1), .a3b2(din_5_ab2),
+  .a4b0(din_6_ab0), .a4b1(din_6_ab1),
+  .a5b0(din_7_ab0), .a5b1(din_7_ab1),
+  .a6b0(din_8_ab0),
+  .a7b0(din_9_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffffffff00),
 	.NBITS(12)
 ) addr_2_3_calc (
-           .clk(clk), .sign(din_signs_reg[3]), 
-           .p(addr_2_3),
-           .a0b0(din_3_ab0), .a0b1(din_3_ab1), .a0b2(din_3_ab2), .a0b3(din_3_ab3),
-           .a0b0_1sc(din_3_ab0_1sc), .a0b1_1sc(din_3_ab1_1sc), .a0b2_1sc(din_3_ab2_1sc), .a0b3_1sc(din_3_ab3_1sc),
-           .msk_a0b0(din_3_msk_ab0), .msk_a0b1(din_3_msk_ab1), .msk_a0b2(din_3_msk_ab2), .msk_a0b3(din_3_msk_ab3),
-           .msk_a0b0_1sc(din_3_msk_ab0_1sc), .msk_a0b1_1sc(din_3_msk_ab1_1sc), .msk_a0b2_1sc(din_3_msk_ab2_1sc), .msk_a0b3_1sc(din_3_msk_ab3_1sc),
-
-           .a1b0(din_5_ab0), .a1b1(din_5_ab1), .a1b2(din_5_ab2),
-           .a1b0_1sc(din_5_ab0_1sc), .a1b1_1sc(din_5_ab1_1sc), .a1b2_1sc(din_5_ab2_1sc),
-           .msk_a1b0(din_5_msk_ab0), .msk_a1b1(din_5_msk_ab1), .msk_a1b2(din_5_msk_ab2),
-           .msk_a1b0_1sc(din_5_msk_ab0_1sc), .msk_a1b1_1sc(din_5_msk_ab1_1sc), .msk_a1b2_1sc(din_5_msk_ab2_1sc),
-
-           .a2b0(din_7_ab0), .a2b1(din_7_ab1),
-           .a2b0_1sc(din_7_ab0_1sc), .a2b1_1sc(din_7_ab1_1sc),
-           .msk_a2b0(din_7_msk_ab0), .msk_a2b1(din_7_msk_ab1),
-           .msk_a2b0_1sc(din_7_msk_ab0_1sc), .msk_a2b1_1sc(din_7_msk_ab1_1sc),
-           
-           .a3b0(din_9_ab0),
-           .a3b0_1sc(din_9_ab0_1sc)
+  .clk(clk), .p(addr_2_3),
+  .a0b0(din_3_ab0), .a0b1(din_3_ab1), .a0b2(din_3_ab2), .a0b3(din_3_ab3),
+  .a1b0(din_4_ab0), .a1b1(din_4_ab1), .a1b2(din_4_ab2), .a1b3(din_4_ab3),
+  .a2b0(din_5_ab0), .a2b1(din_5_ab1), .a2b2(din_5_ab2),
+  .a3b0(din_6_ab0), .a3b1(din_6_ab1), .a3b2(din_6_ab2),
+  .a4b0(din_7_ab0), .a4b1(din_7_ab1),
+  .a5b0(din_8_ab0), .a5b1(din_8_ab1),
+  .a6b0(din_9_ab0),
+  .a7b0(din_10_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffffffff00),
 	.NBITS(12)
 ) addr_2_4_calc (
-           .clk(clk), .sign(din_signs_reg[4]), 
-           .p(addr_2_4),
-           .a0b0(din_4_ab0), .a0b1(din_4_ab1), .a0b2(din_4_ab2), .a0b3(din_4_ab3),
-           .a0b0_1sc(din_4_ab0_1sc), .a0b1_1sc(din_4_ab1_1sc), .a0b2_1sc(din_4_ab2_1sc), .a0b3_1sc(din_4_ab3_1sc),
-           .msk_a0b0(din_4_msk_ab0), .msk_a0b1(din_4_msk_ab1), .msk_a0b2(din_4_msk_ab2), .msk_a0b3(din_4_msk_ab3),
-           .msk_a0b0_1sc(din_4_msk_ab0_1sc), .msk_a0b1_1sc(din_4_msk_ab1_1sc), .msk_a0b2_1sc(din_4_msk_ab2_1sc), .msk_a0b3_1sc(din_4_msk_ab3_1sc),
-
-           .a1b0(din_6_ab0), .a1b1(din_6_ab1), .a1b2(din_6_ab2),
-           .a1b0_1sc(din_6_ab0_1sc), .a1b1_1sc(din_6_ab1_1sc), .a1b2_1sc(din_6_ab2_1sc),
-           .msk_a1b0(din_6_msk_ab0), .msk_a1b1(din_6_msk_ab1), .msk_a1b2(din_6_msk_ab2),
-           .msk_a1b0_1sc(din_6_msk_ab0_1sc), .msk_a1b1_1sc(din_6_msk_ab1_1sc), .msk_a1b2_1sc(din_6_msk_ab2_1sc),
-
-           .a2b0(din_8_ab0), .a2b1(din_8_ab1),
-           .a2b0_1sc(din_8_ab0_1sc), .a2b1_1sc(din_8_ab1_1sc),
-           .msk_a2b0(din_8_msk_ab0), .msk_a2b1(din_8_msk_ab1),
-           .msk_a2b0_1sc(din_8_msk_ab0_1sc), .msk_a2b1_1sc(din_8_msk_ab1_1sc),
-           
-           .a3b0(din_10_ab0),
-           .a3b0_1sc(din_10_ab0_1sc)
+  .clk(clk), .p(addr_2_4),
+  .a0b0(din_4_ab0), .a0b1(din_4_ab1), .a0b2(din_4_ab2), .a0b3(din_4_ab3),
+  .a1b0(din_5_ab0), .a1b1(din_5_ab1), .a1b2(din_5_ab2), .a1b3(din_5_ab3),
+  .a2b0(din_6_ab0), .a2b1(din_6_ab1), .a2b2(din_6_ab2),
+  .a3b0(din_7_ab0), .a3b1(din_7_ab1), .a3b2(din_7_ab2),
+  .a4b0(din_8_ab0), .a4b1(din_8_ab1),
+  .a5b0(din_9_ab0), .a5b1(din_9_ab1),
+  .a6b0(din_10_ab0),
+  .a7b0(din_11_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffffffff00),
 	.NBITS(12)
 ) addr_2_5_calc (
-           .clk(clk), .sign(din_signs_reg[5]), 
-           .p(addr_2_5),
-           .a0b0(din_5_ab0), .a0b1(din_5_ab1), .a0b2(din_5_ab2), .a0b3(din_5_ab3),
-           .a0b0_1sc(din_5_ab0_1sc), .a0b1_1sc(din_5_ab1_1sc), .a0b2_1sc(din_5_ab2_1sc), .a0b3_1sc(din_5_ab3_1sc),
-           .msk_a0b0(din_5_msk_ab0), .msk_a0b1(din_5_msk_ab1), .msk_a0b2(din_5_msk_ab2), .msk_a0b3(din_5_msk_ab3),
-           .msk_a0b0_1sc(din_5_msk_ab0_1sc), .msk_a0b1_1sc(din_5_msk_ab1_1sc), .msk_a0b2_1sc(din_5_msk_ab2_1sc), .msk_a0b3_1sc(din_5_msk_ab3_1sc),
-
-           .a1b0(din_7_ab0), .a1b1(din_7_ab1), .a1b2(din_7_ab2),
-           .a1b0_1sc(din_7_ab0_1sc), .a1b1_1sc(din_7_ab1_1sc), .a1b2_1sc(din_7_ab2_1sc),
-           .msk_a1b0(din_7_msk_ab0), .msk_a1b1(din_7_msk_ab1), .msk_a1b2(din_7_msk_ab2),
-           .msk_a1b0_1sc(din_7_msk_ab0_1sc), .msk_a1b1_1sc(din_7_msk_ab1_1sc), .msk_a1b2_1sc(din_7_msk_ab2_1sc),
-
-           .a2b0(din_9_ab0), .a2b1(din_9_ab1),
-           .a2b0_1sc(din_9_ab0_1sc), .a2b1_1sc(din_9_ab1_1sc),
-           .msk_a2b0(din_9_msk_ab0), .msk_a2b1(din_9_msk_ab1),
-           .msk_a2b0_1sc(din_9_msk_ab0_1sc), .msk_a2b1_1sc(din_9_msk_ab1_1sc),
-           
-           .a3b0(din_11_ab0),
-           .a3b0_1sc(din_11_ab0_1sc)
+  .clk(clk), .p(addr_2_5),
+  .a0b0(din_5_ab0), .a0b1(din_5_ab1), .a0b2(din_5_ab2), .a0b3(din_5_ab3),
+  .a1b0(din_6_ab0), .a1b1(din_6_ab1), .a1b2(din_6_ab2), .a1b3(din_6_ab3),
+  .a2b0(din_7_ab0), .a2b1(din_7_ab1), .a2b2(din_7_ab2),
+  .a3b0(din_8_ab0), .a3b1(din_8_ab1), .a3b2(din_8_ab2),
+  .a4b0(din_9_ab0), .a4b1(din_9_ab1),
+  .a5b0(din_10_ab0), .a5b1(din_10_ab1),
+  .a6b0(din_11_ab0),
+  .a7b0(din_12_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffffffff00),
 	.NBITS(12)
 ) addr_2_6_calc (
-           .clk(clk), .sign(din_signs_reg[6]), 
-           .p(addr_2_6),
-           .a0b0(din_6_ab0), .a0b1(din_6_ab1), .a0b2(din_6_ab2), .a0b3(din_6_ab3),
-           .a0b0_1sc(din_6_ab0_1sc), .a0b1_1sc(din_6_ab1_1sc), .a0b2_1sc(din_6_ab2_1sc), .a0b3_1sc(din_6_ab3_1sc),
-           .msk_a0b0(din_6_msk_ab0), .msk_a0b1(din_6_msk_ab1), .msk_a0b2(din_6_msk_ab2), .msk_a0b3(din_6_msk_ab3),
-           .msk_a0b0_1sc(din_6_msk_ab0_1sc), .msk_a0b1_1sc(din_6_msk_ab1_1sc), .msk_a0b2_1sc(din_6_msk_ab2_1sc), .msk_a0b3_1sc(din_6_msk_ab3_1sc),
-
-           .a1b0(din_8_ab0), .a1b1(din_8_ab1), .a1b2(din_8_ab2),
-           .a1b0_1sc(din_8_ab0_1sc), .a1b1_1sc(din_8_ab1_1sc), .a1b2_1sc(din_8_ab2_1sc),
-           .msk_a1b0(din_8_msk_ab0), .msk_a1b1(din_8_msk_ab1), .msk_a1b2(din_8_msk_ab2),
-           .msk_a1b0_1sc(din_8_msk_ab0_1sc), .msk_a1b1_1sc(din_8_msk_ab1_1sc), .msk_a1b2_1sc(din_8_msk_ab2_1sc),
-
-           .a2b0(din_10_ab0), .a2b1(din_10_ab1),
-           .a2b0_1sc(din_10_ab0_1sc), .a2b1_1sc(din_10_ab1_1sc),
-           .msk_a2b0(din_10_msk_ab0), .msk_a2b1(din_10_msk_ab1),
-           .msk_a2b0_1sc(din_10_msk_ab0_1sc), .msk_a2b1_1sc(din_10_msk_ab1_1sc),
-           
-           .a3b0(din_12_ab0),
-           .a3b0_1sc(din_12_ab0_1sc)
+  .clk(clk), .p(addr_2_6),
+  .a0b0(din_6_ab0), .a0b1(din_6_ab1), .a0b2(din_6_ab2), .a0b3(din_6_ab3),
+  .a1b0(din_7_ab0), .a1b1(din_7_ab1), .a1b2(din_7_ab2), .a1b3(din_7_ab3),
+  .a2b0(din_8_ab0), .a2b1(din_8_ab1), .a2b2(din_8_ab2),
+  .a3b0(din_9_ab0), .a3b1(din_9_ab1), .a3b2(din_9_ab2),
+  .a4b0(din_10_ab0), .a4b1(din_10_ab1),
+  .a5b0(din_11_ab0), .a5b1(din_11_ab1),
+  .a6b0(din_12_ab0),
+  .a7b0(din_13_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffffffff00),
 	.NBITS(12)
 ) addr_2_7_calc (
-           .clk(clk), .sign(din_signs_reg[7]), 
-           .p(addr_2_7),
-           .a0b0(din_7_ab0), .a0b1(din_7_ab1), .a0b2(din_7_ab2), .a0b3(din_7_ab3),
-           .a0b0_1sc(din_7_ab0_1sc), .a0b1_1sc(din_7_ab1_1sc), .a0b2_1sc(din_7_ab2_1sc), .a0b3_1sc(din_7_ab3_1sc),
-           .msk_a0b0(din_7_msk_ab0), .msk_a0b1(din_7_msk_ab1), .msk_a0b2(din_7_msk_ab2), .msk_a0b3(din_7_msk_ab3),
-           .msk_a0b0_1sc(din_7_msk_ab0_1sc), .msk_a0b1_1sc(din_7_msk_ab1_1sc), .msk_a0b2_1sc(din_7_msk_ab2_1sc), .msk_a0b3_1sc(din_7_msk_ab3_1sc),
-
-           .a1b0(din_9_ab0), .a1b1(din_9_ab1), .a1b2(din_9_ab2),
-           .a1b0_1sc(din_9_ab0_1sc), .a1b1_1sc(din_9_ab1_1sc), .a1b2_1sc(din_9_ab2_1sc),
-           .msk_a1b0(din_9_msk_ab0), .msk_a1b1(din_9_msk_ab1), .msk_a1b2(din_9_msk_ab2),
-           .msk_a1b0_1sc(din_9_msk_ab0_1sc), .msk_a1b1_1sc(din_9_msk_ab1_1sc), .msk_a1b2_1sc(din_9_msk_ab2_1sc),
-
-           .a2b0(din_11_ab0), .a2b1(din_11_ab1),
-           .a2b0_1sc(din_11_ab0_1sc), .a2b1_1sc(din_11_ab1_1sc),
-           .msk_a2b0(din_11_msk_ab0), .msk_a2b1(din_11_msk_ab1),
-           .msk_a2b0_1sc(din_11_msk_ab0_1sc), .msk_a2b1_1sc(din_11_msk_ab1_1sc),
-           
-           .a3b0(din_13_ab0),
-           .a3b0_1sc(din_13_ab0_1sc)
+  .clk(clk), .p(addr_2_7),
+  .a0b0(din_7_ab0), .a0b1(din_7_ab1), .a0b2(din_7_ab2), .a0b3(din_7_ab3),
+  .a1b0(din_8_ab0), .a1b1(din_8_ab1), .a1b2(din_8_ab2), .a1b3(din_8_ab3),
+  .a2b0(din_9_ab0), .a2b1(din_9_ab1), .a2b2(din_9_ab2),
+  .a3b0(din_10_ab0), .a3b1(din_10_ab1), .a3b2(din_10_ab2),
+  .a4b0(din_11_ab0), .a4b1(din_11_ab1),
+  .a5b0(din_12_ab0), .a5b1(din_12_ab1),
+  .a6b0(din_13_ab0),
+  .a7b0(din_14_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffffffff00),
 	.NBITS(12)
 ) addr_2_8_calc (
-           .clk(clk), .sign(din_signs_reg[8]), 
-           .p(addr_2_8),
-           .a0b0(din_8_ab0), .a0b1(din_8_ab1), .a0b2(din_8_ab2), .a0b3(din_8_ab3),
-           .a0b0_1sc(din_8_ab0_1sc), .a0b1_1sc(din_8_ab1_1sc), .a0b2_1sc(din_8_ab2_1sc), .a0b3_1sc(din_8_ab3_1sc),
-           .msk_a0b0(din_8_msk_ab0), .msk_a0b1(din_8_msk_ab1), .msk_a0b2(din_8_msk_ab2), .msk_a0b3(din_8_msk_ab3),
-           .msk_a0b0_1sc(din_8_msk_ab0_1sc), .msk_a0b1_1sc(din_8_msk_ab1_1sc), .msk_a0b2_1sc(din_8_msk_ab2_1sc), .msk_a0b3_1sc(din_8_msk_ab3_1sc),
-
-           .a1b0(din_10_ab0), .a1b1(din_10_ab1), .a1b2(din_10_ab2),
-           .a1b0_1sc(din_10_ab0_1sc), .a1b1_1sc(din_10_ab1_1sc), .a1b2_1sc(din_10_ab2_1sc),
-           .msk_a1b0(din_10_msk_ab0), .msk_a1b1(din_10_msk_ab1), .msk_a1b2(din_10_msk_ab2),
-           .msk_a1b0_1sc(din_10_msk_ab0_1sc), .msk_a1b1_1sc(din_10_msk_ab1_1sc), .msk_a1b2_1sc(din_10_msk_ab2_1sc),
-
-           .a2b0(din_12_ab0), .a2b1(din_12_ab1),
-           .a2b0_1sc(din_12_ab0_1sc), .a2b1_1sc(din_12_ab1_1sc),
-           .msk_a2b0(din_12_msk_ab0), .msk_a2b1(din_12_msk_ab1),
-           .msk_a2b0_1sc(din_12_msk_ab0_1sc), .msk_a2b1_1sc(din_12_msk_ab1_1sc),
-           
-           .a3b0(din_14_ab0),
-           .a3b0_1sc(din_14_ab0_1sc)
+  .clk(clk), .p(addr_2_8),
+  .a0b0(din_8_ab0), .a0b1(din_8_ab1), .a0b2(din_8_ab2), .a0b3(din_8_ab3),
+  .a1b0(din_9_ab0), .a1b1(din_9_ab1), .a1b2(din_9_ab2), .a1b3(din_9_ab3),
+  .a2b0(din_10_ab0), .a2b1(din_10_ab1), .a2b2(din_10_ab2),
+  .a3b0(din_11_ab0), .a3b1(din_11_ab1), .a3b2(din_11_ab2),
+  .a4b0(din_12_ab0), .a4b1(din_12_ab1),
+  .a5b0(din_13_ab0), .a5b1(din_13_ab1),
+  .a6b0(din_14_ab0),
+  .a7b0(din_15_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffffffff00),
 	.NBITS(12)
 ) addr_2_9_calc (
-           .clk(clk), .sign(din_signs_reg[9]), 
-           .p(addr_2_9),
-           .a0b0(din_9_ab0), .a0b1(din_9_ab1), .a0b2(din_9_ab2), .a0b3(din_9_ab3),
-           .a0b0_1sc(din_9_ab0_1sc), .a0b1_1sc(din_9_ab1_1sc), .a0b2_1sc(din_9_ab2_1sc), .a0b3_1sc(din_9_ab3_1sc),
-           .msk_a0b0(din_9_msk_ab0), .msk_a0b1(din_9_msk_ab1), .msk_a0b2(din_9_msk_ab2), .msk_a0b3(din_9_msk_ab3),
-           .msk_a0b0_1sc(din_9_msk_ab0_1sc), .msk_a0b1_1sc(din_9_msk_ab1_1sc), .msk_a0b2_1sc(din_9_msk_ab2_1sc), .msk_a0b3_1sc(din_9_msk_ab3_1sc),
-
-           .a1b0(din_11_ab0), .a1b1(din_11_ab1), .a1b2(din_11_ab2),
-           .a1b0_1sc(din_11_ab0_1sc), .a1b1_1sc(din_11_ab1_1sc), .a1b2_1sc(din_11_ab2_1sc),
-           .msk_a1b0(din_11_msk_ab0), .msk_a1b1(din_11_msk_ab1), .msk_a1b2(din_11_msk_ab2),
-           .msk_a1b0_1sc(din_11_msk_ab0_1sc), .msk_a1b1_1sc(din_11_msk_ab1_1sc), .msk_a1b2_1sc(din_11_msk_ab2_1sc),
-
-           .a2b0(din_13_ab0), .a2b1(din_13_ab1),
-           .a2b0_1sc(din_13_ab0_1sc), .a2b1_1sc(din_13_ab1_1sc),
-           .msk_a2b0(din_13_msk_ab0), .msk_a2b1(din_13_msk_ab1),
-           .msk_a2b0_1sc(din_13_msk_ab0_1sc), .msk_a2b1_1sc(din_13_msk_ab1_1sc),
-           
-           .a3b0(din_15_ab0),
-           .a3b0_1sc(din_15_ab0_1sc)
+  .clk(clk), .p(addr_2_9),
+  .a0b0(din_9_ab0), .a0b1(din_9_ab1), .a0b2(din_9_ab2), .a0b3(din_9_ab3),
+  .a1b0(din_10_ab0), .a1b1(din_10_ab1), .a1b2(din_10_ab2), .a1b3(din_10_ab3),
+  .a2b0(din_11_ab0), .a2b1(din_11_ab1), .a2b2(din_11_ab2),
+  .a3b0(din_12_ab0), .a3b1(din_12_ab1), .a3b2(din_12_ab2),
+  .a4b0(din_13_ab0), .a4b1(din_13_ab1),
+  .a5b0(din_14_ab0), .a5b1(din_14_ab1),
+  .a6b0(din_15_ab0),
+  .a7b0(din_16_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffffffff00),
 	.NBITS(12)
 ) addr_2_10_calc (
-           .clk(clk), .sign(din_signs_reg[10]), 
-           .p(addr_2_10),
-           .a0b0(din_10_ab0), .a0b1(din_10_ab1), .a0b2(din_10_ab2), .a0b3(din_10_ab3),
-           .a0b0_1sc(din_10_ab0_1sc), .a0b1_1sc(din_10_ab1_1sc), .a0b2_1sc(din_10_ab2_1sc), .a0b3_1sc(din_10_ab3_1sc),
-           .msk_a0b0(din_10_msk_ab0), .msk_a0b1(din_10_msk_ab1), .msk_a0b2(din_10_msk_ab2), .msk_a0b3(din_10_msk_ab3),
-           .msk_a0b0_1sc(din_10_msk_ab0_1sc), .msk_a0b1_1sc(din_10_msk_ab1_1sc), .msk_a0b2_1sc(din_10_msk_ab2_1sc), .msk_a0b3_1sc(din_10_msk_ab3_1sc),
-
-           .a1b0(din_12_ab0), .a1b1(din_12_ab1), .a1b2(din_12_ab2),
-           .a1b0_1sc(din_12_ab0_1sc), .a1b1_1sc(din_12_ab1_1sc), .a1b2_1sc(din_12_ab2_1sc),
-           .msk_a1b0(din_12_msk_ab0), .msk_a1b1(din_12_msk_ab1), .msk_a1b2(din_12_msk_ab2),
-           .msk_a1b0_1sc(din_12_msk_ab0_1sc), .msk_a1b1_1sc(din_12_msk_ab1_1sc), .msk_a1b2_1sc(din_12_msk_ab2_1sc),
-
-           .a2b0(din_14_ab0), .a2b1(din_14_ab1),
-           .a2b0_1sc(din_14_ab0_1sc), .a2b1_1sc(din_14_ab1_1sc),
-           .msk_a2b0(din_14_msk_ab0), .msk_a2b1(din_14_msk_ab1),
-           .msk_a2b0_1sc(din_14_msk_ab0_1sc), .msk_a2b1_1sc(din_14_msk_ab1_1sc),
-           
-           .a3b0(din_16_ab0),
-           .a3b0_1sc(din_16_ab0_1sc)
+  .clk(clk), .p(addr_2_10),
+  .a0b0(din_10_ab0), .a0b1(din_10_ab1), .a0b2(din_10_ab2), .a0b3(din_10_ab3),
+  .a1b0(din_11_ab0), .a1b1(din_11_ab1), .a1b2(din_11_ab2), .a1b3(din_11_ab3),
+  .a2b0(din_12_ab0), .a2b1(din_12_ab1), .a2b2(din_12_ab2),
+  .a3b0(din_13_ab0), .a3b1(din_13_ab1), .a3b2(din_13_ab2),
+  .a4b0(din_14_ab0), .a4b1(din_14_ab1),
+  .a5b0(din_15_ab0), .a5b1(din_15_ab1),
+  .a6b0(din_16_ab0),
+  .a7b0(din_17_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffffffff00),
 	.NBITS(12)
 ) addr_2_11_calc (
-           .clk(clk), .sign(din_signs_reg[11]), 
-           .p(addr_2_11),
-           .a0b0(din_11_ab0), .a0b1(din_11_ab1), .a0b2(din_11_ab2), .a0b3(din_11_ab3),
-           .a0b0_1sc(din_11_ab0_1sc), .a0b1_1sc(din_11_ab1_1sc), .a0b2_1sc(din_11_ab2_1sc), .a0b3_1sc(din_11_ab3_1sc),
-           .msk_a0b0(din_11_msk_ab0), .msk_a0b1(din_11_msk_ab1), .msk_a0b2(din_11_msk_ab2), .msk_a0b3(din_11_msk_ab3),
-           .msk_a0b0_1sc(din_11_msk_ab0_1sc), .msk_a0b1_1sc(din_11_msk_ab1_1sc), .msk_a0b2_1sc(din_11_msk_ab2_1sc), .msk_a0b3_1sc(din_11_msk_ab3_1sc),
-
-           .a1b0(din_13_ab0), .a1b1(din_13_ab1), .a1b2(din_13_ab2),
-           .a1b0_1sc(din_13_ab0_1sc), .a1b1_1sc(din_13_ab1_1sc), .a1b2_1sc(din_13_ab2_1sc),
-           .msk_a1b0(din_13_msk_ab0), .msk_a1b1(din_13_msk_ab1), .msk_a1b2(din_13_msk_ab2),
-           .msk_a1b0_1sc(din_13_msk_ab0_1sc), .msk_a1b1_1sc(din_13_msk_ab1_1sc), .msk_a1b2_1sc(din_13_msk_ab2_1sc),
-
-           .a2b0(din_15_ab0), .a2b1(din_15_ab1),
-           .a2b0_1sc(din_15_ab0_1sc), .a2b1_1sc(din_15_ab1_1sc),
-           .msk_a2b0(din_15_msk_ab0), .msk_a2b1(din_15_msk_ab1),
-           .msk_a2b0_1sc(din_15_msk_ab0_1sc), .msk_a2b1_1sc(din_15_msk_ab1_1sc),
-           
-           .a3b0(din_17_ab0),
-           .a3b0_1sc(din_17_ab0_1sc)
+  .clk(clk), .p(addr_2_11),
+  .a0b0(din_11_ab0), .a0b1(din_11_ab1), .a0b2(din_11_ab2), .a0b3(din_11_ab3),
+  .a1b0(din_12_ab0), .a1b1(din_12_ab1), .a1b2(din_12_ab2), .a1b3(din_12_ab3),
+  .a2b0(din_13_ab0), .a2b1(din_13_ab1), .a2b2(din_13_ab2),
+  .a3b0(din_14_ab0), .a3b1(din_14_ab1), .a3b2(din_14_ab2),
+  .a4b0(din_15_ab0), .a4b1(din_15_ab1),
+  .a5b0(din_16_ab0), .a5b1(din_16_ab1),
+  .a6b0(din_17_ab0),
+  .a7b0(din_18_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffffffff00),
 	.NBITS(12)
 ) addr_2_12_calc (
-           .clk(clk), .sign(din_signs_reg[12]), 
-           .p(addr_2_12),
-           .a0b0(din_12_ab0), .a0b1(din_12_ab1), .a0b2(din_12_ab2), .a0b3(din_12_ab3),
-           .a0b0_1sc(din_12_ab0_1sc), .a0b1_1sc(din_12_ab1_1sc), .a0b2_1sc(din_12_ab2_1sc), .a0b3_1sc(din_12_ab3_1sc),
-           .msk_a0b0(din_12_msk_ab0), .msk_a0b1(din_12_msk_ab1), .msk_a0b2(din_12_msk_ab2), .msk_a0b3(din_12_msk_ab3),
-           .msk_a0b0_1sc(din_12_msk_ab0_1sc), .msk_a0b1_1sc(din_12_msk_ab1_1sc), .msk_a0b2_1sc(din_12_msk_ab2_1sc), .msk_a0b3_1sc(din_12_msk_ab3_1sc),
-
-           .a1b0(din_14_ab0), .a1b1(din_14_ab1), .a1b2(din_14_ab2),
-           .a1b0_1sc(din_14_ab0_1sc), .a1b1_1sc(din_14_ab1_1sc), .a1b2_1sc(din_14_ab2_1sc),
-           .msk_a1b0(din_14_msk_ab0), .msk_a1b1(din_14_msk_ab1), .msk_a1b2(din_14_msk_ab2),
-           .msk_a1b0_1sc(din_14_msk_ab0_1sc), .msk_a1b1_1sc(din_14_msk_ab1_1sc), .msk_a1b2_1sc(din_14_msk_ab2_1sc),
-
-           .a2b0(din_16_ab0), .a2b1(din_16_ab1),
-           .a2b0_1sc(din_16_ab0_1sc), .a2b1_1sc(din_16_ab1_1sc),
-           .msk_a2b0(din_16_msk_ab0), .msk_a2b1(din_16_msk_ab1),
-           .msk_a2b0_1sc(din_16_msk_ab0_1sc), .msk_a2b1_1sc(din_16_msk_ab1_1sc),
-           
-           .a3b0(din_18_ab0),
-           .a3b0_1sc(din_18_ab0_1sc)
+  .clk(clk), .p(addr_2_12),
+  .a0b0(din_12_ab0), .a0b1(din_12_ab1), .a0b2(din_12_ab2), .a0b3(din_12_ab3),
+  .a1b0(din_13_ab0), .a1b1(din_13_ab1), .a1b2(din_13_ab2), .a1b3(din_13_ab3),
+  .a2b0(din_14_ab0), .a2b1(din_14_ab1), .a2b2(din_14_ab2),
+  .a3b0(din_15_ab0), .a3b1(din_15_ab1), .a3b2(din_15_ab2),
+  .a4b0(din_16_ab0), .a4b1(din_16_ab1),
+  .a5b0(din_17_ab0), .a5b1(din_17_ab1),
+  .a6b0(din_18_ab0),
+  .a7b0(din_19_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffffffff00),
 	.NBITS(12)
 ) addr_2_13_calc (
-           .clk(clk), .sign(din_signs_reg[13]), 
-           .p(addr_2_13),
-           .a0b0(din_13_ab0), .a0b1(din_13_ab1), .a0b2(din_13_ab2), .a0b3(din_13_ab3),
-           .a0b0_1sc(din_13_ab0_1sc), .a0b1_1sc(din_13_ab1_1sc), .a0b2_1sc(din_13_ab2_1sc), .a0b3_1sc(din_13_ab3_1sc),
-           .msk_a0b0(din_13_msk_ab0), .msk_a0b1(din_13_msk_ab1), .msk_a0b2(din_13_msk_ab2), .msk_a0b3(din_13_msk_ab3),
-           .msk_a0b0_1sc(din_13_msk_ab0_1sc), .msk_a0b1_1sc(din_13_msk_ab1_1sc), .msk_a0b2_1sc(din_13_msk_ab2_1sc), .msk_a0b3_1sc(din_13_msk_ab3_1sc),
-
-           .a1b0(din_15_ab0), .a1b1(din_15_ab1), .a1b2(din_15_ab2),
-           .a1b0_1sc(din_15_ab0_1sc), .a1b1_1sc(din_15_ab1_1sc), .a1b2_1sc(din_15_ab2_1sc),
-           .msk_a1b0(din_15_msk_ab0), .msk_a1b1(din_15_msk_ab1), .msk_a1b2(din_15_msk_ab2),
-           .msk_a1b0_1sc(din_15_msk_ab0_1sc), .msk_a1b1_1sc(din_15_msk_ab1_1sc), .msk_a1b2_1sc(din_15_msk_ab2_1sc),
-
-           .a2b0(din_17_ab0), .a2b1(din_17_ab1),
-           .a2b0_1sc(din_17_ab0_1sc), .a2b1_1sc(din_17_ab1_1sc),
-           .msk_a2b0(din_17_msk_ab0), .msk_a2b1(din_17_msk_ab1),
-           .msk_a2b0_1sc(din_17_msk_ab0_1sc), .msk_a2b1_1sc(din_17_msk_ab1_1sc),
-           
-           .a3b0(din_19_ab0),
-           .a3b0_1sc(din_19_ab0_1sc)
+  .clk(clk), .p(addr_2_13),
+  .a0b0(din_13_ab0), .a0b1(din_13_ab1), .a0b2(din_13_ab2), .a0b3(din_13_ab3),
+  .a1b0(din_14_ab0), .a1b1(din_14_ab1), .a1b2(din_14_ab2), .a1b3(din_14_ab3),
+  .a2b0(din_15_ab0), .a2b1(din_15_ab1), .a2b2(din_15_ab2),
+  .a3b0(din_16_ab0), .a3b1(din_16_ab1), .a3b2(din_16_ab2),
+  .a4b0(din_17_ab0), .a4b1(din_17_ab1),
+  .a5b0(din_18_ab0), .a5b1(din_18_ab1),
+  .a6b0(din_19_ab0),
+  .a7b0(din_20_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffffffff00),
 	.NBITS(12)
 ) addr_2_14_calc (
-           .clk(clk), .sign(din_signs_reg[14]), 
-           .p(addr_2_14),
-           .a0b0(din_14_ab0), .a0b1(din_14_ab1), .a0b2(din_14_ab2), .a0b3(din_14_ab3),
-           .a0b0_1sc(din_14_ab0_1sc), .a0b1_1sc(din_14_ab1_1sc), .a0b2_1sc(din_14_ab2_1sc), .a0b3_1sc(din_14_ab3_1sc),
-           .msk_a0b0(din_14_msk_ab0), .msk_a0b1(din_14_msk_ab1), .msk_a0b2(din_14_msk_ab2), .msk_a0b3(din_14_msk_ab3),
-           .msk_a0b0_1sc(din_14_msk_ab0_1sc), .msk_a0b1_1sc(din_14_msk_ab1_1sc), .msk_a0b2_1sc(din_14_msk_ab2_1sc), .msk_a0b3_1sc(din_14_msk_ab3_1sc),
-
-           .a1b0(din_16_ab0), .a1b1(din_16_ab1), .a1b2(din_16_ab2),
-           .a1b0_1sc(din_16_ab0_1sc), .a1b1_1sc(din_16_ab1_1sc), .a1b2_1sc(din_16_ab2_1sc),
-           .msk_a1b0(din_16_msk_ab0), .msk_a1b1(din_16_msk_ab1), .msk_a1b2(din_16_msk_ab2),
-           .msk_a1b0_1sc(din_16_msk_ab0_1sc), .msk_a1b1_1sc(din_16_msk_ab1_1sc), .msk_a1b2_1sc(din_16_msk_ab2_1sc),
-
-           .a2b0(din_18_ab0), .a2b1(din_18_ab1),
-           .a2b0_1sc(din_18_ab0_1sc), .a2b1_1sc(din_18_ab1_1sc),
-           .msk_a2b0(din_18_msk_ab0), .msk_a2b1(din_18_msk_ab1),
-           .msk_a2b0_1sc(din_18_msk_ab0_1sc), .msk_a2b1_1sc(din_18_msk_ab1_1sc),
-           
-           .a3b0(din_20_ab0),
-           .a3b0_1sc(din_20_ab0_1sc)
+  .clk(clk), .p(addr_2_14),
+  .a0b0(din_14_ab0), .a0b1(din_14_ab1), .a0b2(din_14_ab2), .a0b3(din_14_ab3),
+  .a1b0(din_15_ab0), .a1b1(din_15_ab1), .a1b2(din_15_ab2), .a1b3(din_15_ab3),
+  .a2b0(din_16_ab0), .a2b1(din_16_ab1), .a2b2(din_16_ab2),
+  .a3b0(din_17_ab0), .a3b1(din_17_ab1), .a3b2(din_17_ab2),
+  .a4b0(din_18_ab0), .a4b1(din_18_ab1),
+  .a5b0(din_19_ab0), .a5b1(din_19_ab1),
+  .a6b0(din_20_ab0),
+  .a7b0(din_21_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffffffff00),
 	.NBITS(12)
 ) addr_2_15_calc (
-           .clk(clk), .sign(din_signs_reg[15]), 
-           .p(addr_2_15),
-           .a0b0(din_15_ab0), .a0b1(din_15_ab1), .a0b2(din_15_ab2), .a0b3(din_15_ab3),
-           .a0b0_1sc(din_15_ab0_1sc), .a0b1_1sc(din_15_ab1_1sc), .a0b2_1sc(din_15_ab2_1sc), .a0b3_1sc(din_15_ab3_1sc),
-           .msk_a0b0(din_15_msk_ab0), .msk_a0b1(din_15_msk_ab1), .msk_a0b2(din_15_msk_ab2), .msk_a0b3(din_15_msk_ab3),
-           .msk_a0b0_1sc(din_15_msk_ab0_1sc), .msk_a0b1_1sc(din_15_msk_ab1_1sc), .msk_a0b2_1sc(din_15_msk_ab2_1sc), .msk_a0b3_1sc(din_15_msk_ab3_1sc),
-
-           .a1b0(din_17_ab0), .a1b1(din_17_ab1), .a1b2(din_17_ab2),
-           .a1b0_1sc(din_17_ab0_1sc), .a1b1_1sc(din_17_ab1_1sc), .a1b2_1sc(din_17_ab2_1sc),
-           .msk_a1b0(din_17_msk_ab0), .msk_a1b1(din_17_msk_ab1), .msk_a1b2(din_17_msk_ab2),
-           .msk_a1b0_1sc(din_17_msk_ab0_1sc), .msk_a1b1_1sc(din_17_msk_ab1_1sc), .msk_a1b2_1sc(din_17_msk_ab2_1sc),
-
-           .a2b0(din_19_ab0), .a2b1(din_19_ab1),
-           .a2b0_1sc(din_19_ab0_1sc), .a2b1_1sc(din_19_ab1_1sc),
-           .msk_a2b0(din_19_msk_ab0), .msk_a2b1(din_19_msk_ab1),
-           .msk_a2b0_1sc(din_19_msk_ab0_1sc), .msk_a2b1_1sc(din_19_msk_ab1_1sc),
-           
-           .a3b0(din_21_ab0),
-           .a3b0_1sc(din_21_ab0_1sc)
+  .clk(clk), .p(addr_2_15),
+  .a0b0(din_15_ab0), .a0b1(din_15_ab1), .a0b2(din_15_ab2), .a0b3(din_15_ab3),
+  .a1b0(din_16_ab0), .a1b1(din_16_ab1), .a1b2(din_16_ab2), .a1b3(din_16_ab3),
+  .a2b0(din_17_ab0), .a2b1(din_17_ab1), .a2b2(din_17_ab2),
+  .a3b0(din_18_ab0), .a3b1(din_18_ab1), .a3b2(din_18_ab2),
+  .a4b0(din_19_ab0), .a4b1(din_19_ab1),
+  .a5b0(din_20_ab0), .a5b1(din_20_ab1),
+  .a6b0(din_21_ab0),
+  .a7b0(din_22_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffffffff00),
 	.NBITS(12)
 ) addr_2_16_calc (
-           .clk(clk), .sign(din_signs_reg[16]), 
-           .p(addr_2_16),
-           .a0b0(din_16_ab0), .a0b1(din_16_ab1), .a0b2(din_16_ab2), .a0b3(din_16_ab3),
-           .a0b0_1sc(din_16_ab0_1sc), .a0b1_1sc(din_16_ab1_1sc), .a0b2_1sc(din_16_ab2_1sc), .a0b3_1sc(din_16_ab3_1sc),
-           .msk_a0b0(din_16_msk_ab0), .msk_a0b1(din_16_msk_ab1), .msk_a0b2(din_16_msk_ab2), .msk_a0b3(din_16_msk_ab3),
-           .msk_a0b0_1sc(din_16_msk_ab0_1sc), .msk_a0b1_1sc(din_16_msk_ab1_1sc), .msk_a0b2_1sc(din_16_msk_ab2_1sc), .msk_a0b3_1sc(din_16_msk_ab3_1sc),
-
-           .a1b0(din_18_ab0), .a1b1(din_18_ab1), .a1b2(din_18_ab2),
-           .a1b0_1sc(din_18_ab0_1sc), .a1b1_1sc(din_18_ab1_1sc), .a1b2_1sc(din_18_ab2_1sc),
-           .msk_a1b0(din_18_msk_ab0), .msk_a1b1(din_18_msk_ab1), .msk_a1b2(din_18_msk_ab2),
-           .msk_a1b0_1sc(din_18_msk_ab0_1sc), .msk_a1b1_1sc(din_18_msk_ab1_1sc), .msk_a1b2_1sc(din_18_msk_ab2_1sc),
-
-           .a2b0(din_20_ab0), .a2b1(din_20_ab1),
-           .a2b0_1sc(din_20_ab0_1sc), .a2b1_1sc(din_20_ab1_1sc),
-           .msk_a2b0(din_20_msk_ab0), .msk_a2b1(din_20_msk_ab1),
-           .msk_a2b0_1sc(din_20_msk_ab0_1sc), .msk_a2b1_1sc(din_20_msk_ab1_1sc),
-           
-           .a3b0(din_22_ab0),
-           .a3b0_1sc(din_22_ab0_1sc)
+  .clk(clk), .p(addr_2_16),
+  .a0b0(din_16_ab0), .a0b1(din_16_ab1), .a0b2(din_16_ab2), .a0b3(din_16_ab3),
+  .a1b0(din_17_ab0), .a1b1(din_17_ab1), .a1b2(din_17_ab2), .a1b3(din_17_ab3),
+  .a2b0(din_18_ab0), .a2b1(din_18_ab1), .a2b2(din_18_ab2),
+  .a3b0(din_19_ab0), .a3b1(din_19_ab1), .a3b2(din_19_ab2),
+  .a4b0(din_20_ab0), .a4b1(din_20_ab1),
+  .a5b0(din_21_ab0), .a5b1(din_21_ab1),
+  .a6b0(din_22_ab0),
+  .a7b0(din_23_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffffffff00),
 	.NBITS(12)
 ) addr_2_17_calc (
-           .clk(clk), .sign(din_signs_reg[17]), 
-           .p(addr_2_17),
-           .a0b0(din_17_ab0), .a0b1(din_17_ab1), .a0b2(din_17_ab2), .a0b3(din_17_ab3),
-           .a0b0_1sc(din_17_ab0_1sc), .a0b1_1sc(din_17_ab1_1sc), .a0b2_1sc(din_17_ab2_1sc), .a0b3_1sc(din_17_ab3_1sc),
-           .msk_a0b0(din_17_msk_ab0), .msk_a0b1(din_17_msk_ab1), .msk_a0b2(din_17_msk_ab2), .msk_a0b3(din_17_msk_ab3),
-           .msk_a0b0_1sc(din_17_msk_ab0_1sc), .msk_a0b1_1sc(din_17_msk_ab1_1sc), .msk_a0b2_1sc(din_17_msk_ab2_1sc), .msk_a0b3_1sc(din_17_msk_ab3_1sc),
-
-           .a1b0(din_19_ab0), .a1b1(din_19_ab1), .a1b2(din_19_ab2),
-           .a1b0_1sc(din_19_ab0_1sc), .a1b1_1sc(din_19_ab1_1sc), .a1b2_1sc(din_19_ab2_1sc),
-           .msk_a1b0(din_19_msk_ab0), .msk_a1b1(din_19_msk_ab1), .msk_a1b2(din_19_msk_ab2),
-           .msk_a1b0_1sc(din_19_msk_ab0_1sc), .msk_a1b1_1sc(din_19_msk_ab1_1sc), .msk_a1b2_1sc(din_19_msk_ab2_1sc),
-
-           .a2b0(din_21_ab0), .a2b1(din_21_ab1),
-           .a2b0_1sc(din_21_ab0_1sc), .a2b1_1sc(din_21_ab1_1sc),
-           .msk_a2b0(din_21_msk_ab0), .msk_a2b1(din_21_msk_ab1),
-           .msk_a2b0_1sc(din_21_msk_ab0_1sc), .msk_a2b1_1sc(din_21_msk_ab1_1sc),
-           
-           .a3b0(din_23_ab0),
-           .a3b0_1sc(din_23_ab0_1sc)
+  .clk(clk), .p(addr_2_17),
+  .a0b0(din_17_ab0), .a0b1(din_17_ab1), .a0b2(din_17_ab2), .a0b3(din_17_ab3),
+  .a1b0(din_18_ab0), .a1b1(din_18_ab1), .a1b2(din_18_ab2), .a1b3(din_18_ab3),
+  .a2b0(din_19_ab0), .a2b1(din_19_ab1), .a2b2(din_19_ab2),
+  .a3b0(din_20_ab0), .a3b1(din_20_ab1), .a3b2(din_20_ab2),
+  .a4b0(din_21_ab0), .a4b1(din_21_ab1),
+  .a5b0(din_22_ab0), .a5b1(din_22_ab1),
+  .a6b0(din_23_ab0),
+  .a7b0(din_24_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffffffff00),
 	.NBITS(12)
 ) addr_2_18_calc (
-           .clk(clk), .sign(din_signs_reg[18]), 
-           .p(addr_2_18),
-           .a0b0(din_18_ab0), .a0b1(din_18_ab1), .a0b2(din_18_ab2), .a0b3(din_18_ab3),
-           .a0b0_1sc(din_18_ab0_1sc), .a0b1_1sc(din_18_ab1_1sc), .a0b2_1sc(din_18_ab2_1sc), .a0b3_1sc(din_18_ab3_1sc),
-           .msk_a0b0(din_18_msk_ab0), .msk_a0b1(din_18_msk_ab1), .msk_a0b2(din_18_msk_ab2), .msk_a0b3(din_18_msk_ab3),
-           .msk_a0b0_1sc(din_18_msk_ab0_1sc), .msk_a0b1_1sc(din_18_msk_ab1_1sc), .msk_a0b2_1sc(din_18_msk_ab2_1sc), .msk_a0b3_1sc(din_18_msk_ab3_1sc),
-
-           .a1b0(din_20_ab0), .a1b1(din_20_ab1), .a1b2(din_20_ab2),
-           .a1b0_1sc(din_20_ab0_1sc), .a1b1_1sc(din_20_ab1_1sc), .a1b2_1sc(din_20_ab2_1sc),
-           .msk_a1b0(din_20_msk_ab0), .msk_a1b1(din_20_msk_ab1), .msk_a1b2(din_20_msk_ab2),
-           .msk_a1b0_1sc(din_20_msk_ab0_1sc), .msk_a1b1_1sc(din_20_msk_ab1_1sc), .msk_a1b2_1sc(din_20_msk_ab2_1sc),
-
-           .a2b0(din_22_ab0), .a2b1(din_22_ab1),
-           .a2b0_1sc(din_22_ab0_1sc), .a2b1_1sc(din_22_ab1_1sc),
-           .msk_a2b0(din_22_msk_ab0), .msk_a2b1(din_22_msk_ab1),
-           .msk_a2b0_1sc(din_22_msk_ab0_1sc), .msk_a2b1_1sc(din_22_msk_ab1_1sc),
-           
-           .a3b0(din_24_ab0),
-           .a3b0_1sc(din_24_ab0_1sc)
+  .clk(clk), .p(addr_2_18),
+  .a0b0(din_18_ab0), .a0b1(din_18_ab1), .a0b2(din_18_ab2), .a0b3(din_18_ab3),
+  .a1b0(din_19_ab0), .a1b1(din_19_ab1), .a1b2(din_19_ab2), .a1b3(din_19_ab3),
+  .a2b0(din_20_ab0), .a2b1(din_20_ab1), .a2b2(din_20_ab2),
+  .a3b0(din_21_ab0), .a3b1(din_21_ab1), .a3b2(din_21_ab2),
+  .a4b0(din_22_ab0), .a4b1(din_22_ab1),
+  .a5b0(din_23_ab0), .a5b1(din_23_ab1),
+  .a6b0(din_24_ab0),
+  .a7b0(din_25_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffffffff00),
 	.NBITS(12)
 ) addr_2_19_calc (
-           .clk(clk), .sign(din_signs_reg[19]), 
-           .p(addr_2_19),
-           .a0b0(din_19_ab0), .a0b1(din_19_ab1), .a0b2(din_19_ab2), .a0b3(din_19_ab3),
-           .a0b0_1sc(din_19_ab0_1sc), .a0b1_1sc(din_19_ab1_1sc), .a0b2_1sc(din_19_ab2_1sc), .a0b3_1sc(din_19_ab3_1sc),
-           .msk_a0b0(din_19_msk_ab0), .msk_a0b1(din_19_msk_ab1), .msk_a0b2(din_19_msk_ab2), .msk_a0b3(din_19_msk_ab3),
-           .msk_a0b0_1sc(din_19_msk_ab0_1sc), .msk_a0b1_1sc(din_19_msk_ab1_1sc), .msk_a0b2_1sc(din_19_msk_ab2_1sc), .msk_a0b3_1sc(din_19_msk_ab3_1sc),
-
-           .a1b0(din_21_ab0), .a1b1(din_21_ab1), .a1b2(din_21_ab2),
-           .a1b0_1sc(din_21_ab0_1sc), .a1b1_1sc(din_21_ab1_1sc), .a1b2_1sc(din_21_ab2_1sc),
-           .msk_a1b0(din_21_msk_ab0), .msk_a1b1(din_21_msk_ab1), .msk_a1b2(din_21_msk_ab2),
-           .msk_a1b0_1sc(din_21_msk_ab0_1sc), .msk_a1b1_1sc(din_21_msk_ab1_1sc), .msk_a1b2_1sc(din_21_msk_ab2_1sc),
-
-           .a2b0(din_23_ab0), .a2b1(din_23_ab1),
-           .a2b0_1sc(din_23_ab0_1sc), .a2b1_1sc(din_23_ab1_1sc),
-           .msk_a2b0(din_23_msk_ab0), .msk_a2b1(din_23_msk_ab1),
-           .msk_a2b0_1sc(din_23_msk_ab0_1sc), .msk_a2b1_1sc(din_23_msk_ab1_1sc),
-           
-           .a3b0(din_25_ab0),
-           .a3b0_1sc(din_25_ab0_1sc)
+  .clk(clk), .p(addr_2_19),
+  .a0b0(din_19_ab0), .a0b1(din_19_ab1), .a0b2(din_19_ab2), .a0b3(din_19_ab3),
+  .a1b0(din_20_ab0), .a1b1(din_20_ab1), .a1b2(din_20_ab2), .a1b3(din_20_ab3),
+  .a2b0(din_21_ab0), .a2b1(din_21_ab1), .a2b2(din_21_ab2),
+  .a3b0(din_22_ab0), .a3b1(din_22_ab1), .a3b2(din_22_ab2),
+  .a4b0(din_23_ab0), .a4b1(din_23_ab1),
+  .a5b0(din_24_ab0), .a5b1(din_24_ab1),
+  .a6b0(din_25_ab0),
+  .a7b0(din_26_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffffffff00),
 	.NBITS(12)
 ) addr_2_20_calc (
-           .clk(clk), .sign(din_signs_reg[20]), 
-           .p(addr_2_20),
-           .a0b0(din_20_ab0), .a0b1(din_20_ab1), .a0b2(din_20_ab2), .a0b3(din_20_ab3),
-           .a0b0_1sc(din_20_ab0_1sc), .a0b1_1sc(din_20_ab1_1sc), .a0b2_1sc(din_20_ab2_1sc), .a0b3_1sc(din_20_ab3_1sc),
-           .msk_a0b0(din_20_msk_ab0), .msk_a0b1(din_20_msk_ab1), .msk_a0b2(din_20_msk_ab2), .msk_a0b3(din_20_msk_ab3),
-           .msk_a0b0_1sc(din_20_msk_ab0_1sc), .msk_a0b1_1sc(din_20_msk_ab1_1sc), .msk_a0b2_1sc(din_20_msk_ab2_1sc), .msk_a0b3_1sc(din_20_msk_ab3_1sc),
-
-           .a1b0(din_22_ab0), .a1b1(din_22_ab1), .a1b2(din_22_ab2),
-           .a1b0_1sc(din_22_ab0_1sc), .a1b1_1sc(din_22_ab1_1sc), .a1b2_1sc(din_22_ab2_1sc),
-           .msk_a1b0(din_22_msk_ab0), .msk_a1b1(din_22_msk_ab1), .msk_a1b2(din_22_msk_ab2),
-           .msk_a1b0_1sc(din_22_msk_ab0_1sc), .msk_a1b1_1sc(din_22_msk_ab1_1sc), .msk_a1b2_1sc(din_22_msk_ab2_1sc),
-
-           .a2b0(din_24_ab0), .a2b1(din_24_ab1),
-           .a2b0_1sc(din_24_ab0_1sc), .a2b1_1sc(din_24_ab1_1sc),
-           .msk_a2b0(din_24_msk_ab0), .msk_a2b1(din_24_msk_ab1),
-           .msk_a2b0_1sc(din_24_msk_ab0_1sc), .msk_a2b1_1sc(din_24_msk_ab1_1sc),
-           
-           .a3b0(din_26_ab0),
-           .a3b0_1sc(din_26_ab0_1sc)
+  .clk(clk), .p(addr_2_20),
+  .a0b0(din_20_ab0), .a0b1(din_20_ab1), .a0b2(din_20_ab2), .a0b3(din_20_ab3),
+  .a1b0(din_21_ab0), .a1b1(din_21_ab1), .a1b2(din_21_ab2), .a1b3(din_21_ab3),
+  .a2b0(din_22_ab0), .a2b1(din_22_ab1), .a2b2(din_22_ab2),
+  .a3b0(din_23_ab0), .a3b1(din_23_ab1), .a3b2(din_23_ab2),
+  .a4b0(din_24_ab0), .a4b1(din_24_ab1),
+  .a5b0(din_25_ab0), .a5b1(din_25_ab1),
+  .a6b0(din_26_ab0),
+  .a7b0(din_27_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffffffff00),
 	.NBITS(12)
 ) addr_2_21_calc (
-           .clk(clk), .sign(din_signs_reg[21]), 
-           .p(addr_2_21),
-           .a0b0(din_21_ab0), .a0b1(din_21_ab1), .a0b2(din_21_ab2), .a0b3(din_21_ab3),
-           .a0b0_1sc(din_21_ab0_1sc), .a0b1_1sc(din_21_ab1_1sc), .a0b2_1sc(din_21_ab2_1sc), .a0b3_1sc(din_21_ab3_1sc),
-           .msk_a0b0(din_21_msk_ab0), .msk_a0b1(din_21_msk_ab1), .msk_a0b2(din_21_msk_ab2), .msk_a0b3(din_21_msk_ab3),
-           .msk_a0b0_1sc(din_21_msk_ab0_1sc), .msk_a0b1_1sc(din_21_msk_ab1_1sc), .msk_a0b2_1sc(din_21_msk_ab2_1sc), .msk_a0b3_1sc(din_21_msk_ab3_1sc),
-
-           .a1b0(din_23_ab0), .a1b1(din_23_ab1), .a1b2(din_23_ab2),
-           .a1b0_1sc(din_23_ab0_1sc), .a1b1_1sc(din_23_ab1_1sc), .a1b2_1sc(din_23_ab2_1sc),
-           .msk_a1b0(din_23_msk_ab0), .msk_a1b1(din_23_msk_ab1), .msk_a1b2(din_23_msk_ab2),
-           .msk_a1b0_1sc(din_23_msk_ab0_1sc), .msk_a1b1_1sc(din_23_msk_ab1_1sc), .msk_a1b2_1sc(din_23_msk_ab2_1sc),
-
-           .a2b0(din_25_ab0), .a2b1(din_25_ab1),
-           .a2b0_1sc(din_25_ab0_1sc), .a2b1_1sc(din_25_ab1_1sc),
-           .msk_a2b0(din_25_msk_ab0), .msk_a2b1(din_25_msk_ab1),
-           .msk_a2b0_1sc(din_25_msk_ab0_1sc), .msk_a2b1_1sc(din_25_msk_ab1_1sc),
-           
-           .a3b0(din_27_ab0),
-           .a3b0_1sc(din_27_ab0_1sc)
+  .clk(clk), .p(addr_2_21),
+  .a0b0(din_21_ab0), .a0b1(din_21_ab1), .a0b2(din_21_ab2), .a0b3(din_21_ab3),
+  .a1b0(din_22_ab0), .a1b1(din_22_ab1), .a1b2(din_22_ab2), .a1b3(din_22_ab3),
+  .a2b0(din_23_ab0), .a2b1(din_23_ab1), .a2b2(din_23_ab2),
+  .a3b0(din_24_ab0), .a3b1(din_24_ab1), .a3b2(din_24_ab2),
+  .a4b0(din_25_ab0), .a4b1(din_25_ab1),
+  .a5b0(din_26_ab0), .a5b1(din_26_ab1),
+  .a6b0(din_27_ab0),
+  .a7b0(din_28_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffffffff00),
 	.NBITS(12)
 ) addr_2_22_calc (
-           .clk(clk), .sign(din_signs_reg[22]), 
-           .p(addr_2_22),
-           .a0b0(din_22_ab0), .a0b1(din_22_ab1), .a0b2(din_22_ab2), .a0b3(din_22_ab3),
-           .a0b0_1sc(din_22_ab0_1sc), .a0b1_1sc(din_22_ab1_1sc), .a0b2_1sc(din_22_ab2_1sc), .a0b3_1sc(din_22_ab3_1sc),
-           .msk_a0b0(din_22_msk_ab0), .msk_a0b1(din_22_msk_ab1), .msk_a0b2(din_22_msk_ab2), .msk_a0b3(din_22_msk_ab3),
-           .msk_a0b0_1sc(din_22_msk_ab0_1sc), .msk_a0b1_1sc(din_22_msk_ab1_1sc), .msk_a0b2_1sc(din_22_msk_ab2_1sc), .msk_a0b3_1sc(din_22_msk_ab3_1sc),
-
-           .a1b0(din_24_ab0), .a1b1(din_24_ab1), .a1b2(din_24_ab2),
-           .a1b0_1sc(din_24_ab0_1sc), .a1b1_1sc(din_24_ab1_1sc), .a1b2_1sc(din_24_ab2_1sc),
-           .msk_a1b0(din_24_msk_ab0), .msk_a1b1(din_24_msk_ab1), .msk_a1b2(din_24_msk_ab2),
-           .msk_a1b0_1sc(din_24_msk_ab0_1sc), .msk_a1b1_1sc(din_24_msk_ab1_1sc), .msk_a1b2_1sc(din_24_msk_ab2_1sc),
-
-           .a2b0(din_26_ab0), .a2b1(din_26_ab1),
-           .a2b0_1sc(din_26_ab0_1sc), .a2b1_1sc(din_26_ab1_1sc),
-           .msk_a2b0(din_26_msk_ab0), .msk_a2b1(din_26_msk_ab1),
-           .msk_a2b0_1sc(din_26_msk_ab0_1sc), .msk_a2b1_1sc(din_26_msk_ab1_1sc),
-           
-           .a3b0(din_28_ab0),
-           .a3b0_1sc(din_28_ab0_1sc)
+  .clk(clk), .p(addr_2_22),
+  .a0b0(din_22_ab0), .a0b1(din_22_ab1), .a0b2(din_22_ab2), .a0b3(din_22_ab3),
+  .a1b0(din_23_ab0), .a1b1(din_23_ab1), .a1b2(din_23_ab2), .a1b3(din_23_ab3),
+  .a2b0(din_24_ab0), .a2b1(din_24_ab1), .a2b2(din_24_ab2),
+  .a3b0(din_25_ab0), .a3b1(din_25_ab1), .a3b2(din_25_ab2),
+  .a4b0(din_26_ab0), .a4b1(din_26_ab1),
+  .a5b0(din_27_ab0), .a5b1(din_27_ab1),
+  .a6b0(din_28_ab0),
+  .a7b0(din_29_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffffffff00),
 	.NBITS(12)
 ) addr_2_23_calc (
-           .clk(clk), .sign(din_signs_reg[23]), 
-           .p(addr_2_23),
-           .a0b0(din_23_ab0), .a0b1(din_23_ab1), .a0b2(din_23_ab2), .a0b3(din_23_ab3),
-           .a0b0_1sc(din_23_ab0_1sc), .a0b1_1sc(din_23_ab1_1sc), .a0b2_1sc(din_23_ab2_1sc), .a0b3_1sc(din_23_ab3_1sc),
-           .msk_a0b0(din_23_msk_ab0), .msk_a0b1(din_23_msk_ab1), .msk_a0b2(din_23_msk_ab2), .msk_a0b3(din_23_msk_ab3),
-           .msk_a0b0_1sc(din_23_msk_ab0_1sc), .msk_a0b1_1sc(din_23_msk_ab1_1sc), .msk_a0b2_1sc(din_23_msk_ab2_1sc), .msk_a0b3_1sc(din_23_msk_ab3_1sc),
-
-           .a1b0(din_25_ab0), .a1b1(din_25_ab1), .a1b2(din_25_ab2),
-           .a1b0_1sc(din_25_ab0_1sc), .a1b1_1sc(din_25_ab1_1sc), .a1b2_1sc(din_25_ab2_1sc),
-           .msk_a1b0(din_25_msk_ab0), .msk_a1b1(din_25_msk_ab1), .msk_a1b2(din_25_msk_ab2),
-           .msk_a1b0_1sc(din_25_msk_ab0_1sc), .msk_a1b1_1sc(din_25_msk_ab1_1sc), .msk_a1b2_1sc(din_25_msk_ab2_1sc),
-
-           .a2b0(din_27_ab0), .a2b1(din_27_ab1),
-           .a2b0_1sc(din_27_ab0_1sc), .a2b1_1sc(din_27_ab1_1sc),
-           .msk_a2b0(din_27_msk_ab0), .msk_a2b1(din_27_msk_ab1),
-           .msk_a2b0_1sc(din_27_msk_ab0_1sc), .msk_a2b1_1sc(din_27_msk_ab1_1sc),
-           
-           .a3b0(din_29_ab0),
-           .a3b0_1sc(din_29_ab0_1sc)
+  .clk(clk), .p(addr_2_23),
+  .a0b0(din_23_ab0), .a0b1(din_23_ab1), .a0b2(din_23_ab2), .a0b3(din_23_ab3),
+  .a1b0(din_24_ab0), .a1b1(din_24_ab1), .a1b2(din_24_ab2), .a1b3(din_24_ab3),
+  .a2b0(din_25_ab0), .a2b1(din_25_ab1), .a2b2(din_25_ab2),
+  .a3b0(din_26_ab0), .a3b1(din_26_ab1), .a3b2(din_26_ab2),
+  .a4b0(din_27_ab0), .a4b1(din_27_ab1),
+  .a5b0(din_28_ab0), .a5b1(din_28_ab1),
+  .a6b0(din_29_ab0),
+  .a7b0(din_30_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffffffff00),
 	.NBITS(12)
 ) addr_2_24_calc (
-           .clk(clk), .sign(din_signs_reg[24]), 
-           .p(addr_2_24),
-           .a0b0(din_24_ab0), .a0b1(din_24_ab1), .a0b2(din_24_ab2), .a0b3(din_24_ab3),
-           .a0b0_1sc(din_24_ab0_1sc), .a0b1_1sc(din_24_ab1_1sc), .a0b2_1sc(din_24_ab2_1sc), .a0b3_1sc(din_24_ab3_1sc),
-           .msk_a0b0(din_24_msk_ab0), .msk_a0b1(din_24_msk_ab1), .msk_a0b2(din_24_msk_ab2), .msk_a0b3(din_24_msk_ab3),
-           .msk_a0b0_1sc(din_24_msk_ab0_1sc), .msk_a0b1_1sc(din_24_msk_ab1_1sc), .msk_a0b2_1sc(din_24_msk_ab2_1sc), .msk_a0b3_1sc(din_24_msk_ab3_1sc),
-
-           .a1b0(din_26_ab0), .a1b1(din_26_ab1), .a1b2(din_26_ab2),
-           .a1b0_1sc(din_26_ab0_1sc), .a1b1_1sc(din_26_ab1_1sc), .a1b2_1sc(din_26_ab2_1sc),
-           .msk_a1b0(din_26_msk_ab0), .msk_a1b1(din_26_msk_ab1), .msk_a1b2(din_26_msk_ab2),
-           .msk_a1b0_1sc(din_26_msk_ab0_1sc), .msk_a1b1_1sc(din_26_msk_ab1_1sc), .msk_a1b2_1sc(din_26_msk_ab2_1sc),
-
-           .a2b0(din_28_ab0), .a2b1(din_28_ab1),
-           .a2b0_1sc(din_28_ab0_1sc), .a2b1_1sc(din_28_ab1_1sc),
-           .msk_a2b0(din_28_msk_ab0), .msk_a2b1(din_28_msk_ab1),
-           .msk_a2b0_1sc(din_28_msk_ab0_1sc), .msk_a2b1_1sc(din_28_msk_ab1_1sc),
-           
-           .a3b0(din_30_ab0),
-           .a3b0_1sc(din_30_ab0_1sc)
+  .clk(clk), .p(addr_2_24),
+  .a0b0(din_24_ab0), .a0b1(din_24_ab1), .a0b2(din_24_ab2), .a0b3(din_24_ab3),
+  .a1b0(din_25_ab0), .a1b1(din_25_ab1), .a1b2(din_25_ab2), .a1b3(din_25_ab3),
+  .a2b0(din_26_ab0), .a2b1(din_26_ab1), .a2b2(din_26_ab2),
+  .a3b0(din_27_ab0), .a3b1(din_27_ab1), .a3b2(din_27_ab2),
+  .a4b0(din_28_ab0), .a4b1(din_28_ab1),
+  .a5b0(din_29_ab0), .a5b1(din_29_ab1),
+  .a6b0(din_30_ab0),
+  .a7b0(din_31_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffffffff00),
 	.NBITS(12)
 ) addr_2_25_calc (
-           .clk(clk), .sign(din_signs_reg[25]), 
-           .p(addr_2_25),
-           .a0b0(din_25_ab0), .a0b1(din_25_ab1), .a0b2(din_25_ab2), .a0b3(din_25_ab3),
-           .a0b0_1sc(din_25_ab0_1sc), .a0b1_1sc(din_25_ab1_1sc), .a0b2_1sc(din_25_ab2_1sc), .a0b3_1sc(din_25_ab3_1sc),
-           .msk_a0b0(din_25_msk_ab0), .msk_a0b1(din_25_msk_ab1), .msk_a0b2(din_25_msk_ab2), .msk_a0b3(din_25_msk_ab3),
-           .msk_a0b0_1sc(din_25_msk_ab0_1sc), .msk_a0b1_1sc(din_25_msk_ab1_1sc), .msk_a0b2_1sc(din_25_msk_ab2_1sc), .msk_a0b3_1sc(din_25_msk_ab3_1sc),
-
-           .a1b0(din_27_ab0), .a1b1(din_27_ab1), .a1b2(din_27_ab2),
-           .a1b0_1sc(din_27_ab0_1sc), .a1b1_1sc(din_27_ab1_1sc), .a1b2_1sc(din_27_ab2_1sc),
-           .msk_a1b0(din_27_msk_ab0), .msk_a1b1(din_27_msk_ab1), .msk_a1b2(din_27_msk_ab2),
-           .msk_a1b0_1sc(din_27_msk_ab0_1sc), .msk_a1b1_1sc(din_27_msk_ab1_1sc), .msk_a1b2_1sc(din_27_msk_ab2_1sc),
-
-           .a2b0(din_29_ab0), .a2b1(din_29_ab1),
-           .a2b0_1sc(din_29_ab0_1sc), .a2b1_1sc(din_29_ab1_1sc),
-           .msk_a2b0(din_29_msk_ab0), .msk_a2b1(din_29_msk_ab1),
-           .msk_a2b0_1sc(din_29_msk_ab0_1sc), .msk_a2b1_1sc(din_29_msk_ab1_1sc),
-           
-           .a3b0(din_31_ab0),
-           .a3b0_1sc(din_31_ab0_1sc)
+  .clk(clk), .p(addr_2_25),
+  .a0b0(din_25_ab0), .a0b1(din_25_ab1), .a0b2(din_25_ab2), .a0b3(din_25_ab3),
+  .a1b0(din_26_ab0), .a1b1(din_26_ab1), .a1b2(din_26_ab2), .a1b3(din_26_ab3),
+  .a2b0(din_27_ab0), .a2b1(din_27_ab1), .a2b2(din_27_ab2),
+  .a3b0(din_28_ab0), .a3b1(din_28_ab1), .a3b2(din_28_ab2),
+  .a4b0(din_29_ab0), .a4b1(din_29_ab1),
+  .a5b0(din_30_ab0), .a5b1(din_30_ab1),
+  .a6b0(din_31_ab0),
+  .a7b0(din_32_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffffffff00),
 	.NBITS(12)
 ) addr_2_26_calc (
-           .clk(clk), .sign(din_signs_reg[26]), 
-           .p(addr_2_26),
-           .a0b0(din_26_ab0), .a0b1(din_26_ab1), .a0b2(din_26_ab2), .a0b3(din_26_ab3),
-           .a0b0_1sc(din_26_ab0_1sc), .a0b1_1sc(din_26_ab1_1sc), .a0b2_1sc(din_26_ab2_1sc), .a0b3_1sc(din_26_ab3_1sc),
-           .msk_a0b0(din_26_msk_ab0), .msk_a0b1(din_26_msk_ab1), .msk_a0b2(din_26_msk_ab2), .msk_a0b3(din_26_msk_ab3),
-           .msk_a0b0_1sc(din_26_msk_ab0_1sc), .msk_a0b1_1sc(din_26_msk_ab1_1sc), .msk_a0b2_1sc(din_26_msk_ab2_1sc), .msk_a0b3_1sc(din_26_msk_ab3_1sc),
-
-           .a1b0(din_28_ab0), .a1b1(din_28_ab1), .a1b2(din_28_ab2),
-           .a1b0_1sc(din_28_ab0_1sc), .a1b1_1sc(din_28_ab1_1sc), .a1b2_1sc(din_28_ab2_1sc),
-           .msk_a1b0(din_28_msk_ab0), .msk_a1b1(din_28_msk_ab1), .msk_a1b2(din_28_msk_ab2),
-           .msk_a1b0_1sc(din_28_msk_ab0_1sc), .msk_a1b1_1sc(din_28_msk_ab1_1sc), .msk_a1b2_1sc(din_28_msk_ab2_1sc),
-
-           .a2b0(din_30_ab0), .a2b1(din_30_ab1),
-           .a2b0_1sc(din_30_ab0_1sc), .a2b1_1sc(din_30_ab1_1sc),
-           .msk_a2b0(din_30_msk_ab0), .msk_a2b1(din_30_msk_ab1),
-           .msk_a2b0_1sc(din_30_msk_ab0_1sc), .msk_a2b1_1sc(din_30_msk_ab1_1sc),
-           
-           .a3b0(din_32_ab0),
-           .a3b0_1sc(din_32_ab0_1sc)
+  .clk(clk), .p(addr_2_26),
+  .a0b0(din_26_ab0), .a0b1(din_26_ab1), .a0b2(din_26_ab2), .a0b3(din_26_ab3),
+  .a1b0(din_27_ab0), .a1b1(din_27_ab1), .a1b2(din_27_ab2), .a1b3(din_27_ab3),
+  .a2b0(din_28_ab0), .a2b1(din_28_ab1), .a2b2(din_28_ab2),
+  .a3b0(din_29_ab0), .a3b1(din_29_ab1), .a3b2(din_29_ab2),
+  .a4b0(din_30_ab0), .a4b1(din_30_ab1),
+  .a5b0(din_31_ab0), .a5b1(din_31_ab1),
+  .a6b0(din_32_ab0),
+  .a7b0(din_33_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffffffff00),
 	.NBITS(12)
 ) addr_2_27_calc (
-           .clk(clk), .sign(din_signs_reg[27]), 
-           .p(addr_2_27),
-           .a0b0(din_27_ab0), .a0b1(din_27_ab1), .a0b2(din_27_ab2), .a0b3(din_27_ab3),
-           .a0b0_1sc(din_27_ab0_1sc), .a0b1_1sc(din_27_ab1_1sc), .a0b2_1sc(din_27_ab2_1sc), .a0b3_1sc(din_27_ab3_1sc),
-           .msk_a0b0(din_27_msk_ab0), .msk_a0b1(din_27_msk_ab1), .msk_a0b2(din_27_msk_ab2), .msk_a0b3(din_27_msk_ab3),
-           .msk_a0b0_1sc(din_27_msk_ab0_1sc), .msk_a0b1_1sc(din_27_msk_ab1_1sc), .msk_a0b2_1sc(din_27_msk_ab2_1sc), .msk_a0b3_1sc(din_27_msk_ab3_1sc),
-
-           .a1b0(din_29_ab0), .a1b1(din_29_ab1), .a1b2(din_29_ab2),
-           .a1b0_1sc(din_29_ab0_1sc), .a1b1_1sc(din_29_ab1_1sc), .a1b2_1sc(din_29_ab2_1sc),
-           .msk_a1b0(din_29_msk_ab0), .msk_a1b1(din_29_msk_ab1), .msk_a1b2(din_29_msk_ab2),
-           .msk_a1b0_1sc(din_29_msk_ab0_1sc), .msk_a1b1_1sc(din_29_msk_ab1_1sc), .msk_a1b2_1sc(din_29_msk_ab2_1sc),
-
-           .a2b0(din_31_ab0), .a2b1(din_31_ab1),
-           .a2b0_1sc(din_31_ab0_1sc), .a2b1_1sc(din_31_ab1_1sc),
-           .msk_a2b0(din_31_msk_ab0), .msk_a2b1(din_31_msk_ab1),
-           .msk_a2b0_1sc(din_31_msk_ab0_1sc), .msk_a2b1_1sc(din_31_msk_ab1_1sc),
-           
-           .a3b0(din_33_ab0),
-           .a3b0_1sc(din_33_ab0_1sc)
+  .clk(clk), .p(addr_2_27),
+  .a0b0(din_27_ab0), .a0b1(din_27_ab1), .a0b2(din_27_ab2), .a0b3(din_27_ab3),
+  .a1b0(din_28_ab0), .a1b1(din_28_ab1), .a1b2(din_28_ab2), .a1b3(din_28_ab3),
+  .a2b0(din_29_ab0), .a2b1(din_29_ab1), .a2b2(din_29_ab2),
+  .a3b0(din_30_ab0), .a3b1(din_30_ab1), .a3b2(din_30_ab2),
+  .a4b0(din_31_ab0), .a4b1(din_31_ab1),
+  .a5b0(din_32_ab0), .a5b1(din_32_ab1),
+  .a6b0(din_33_ab0),
+  .a7b0(din_34_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffffffff00),
 	.NBITS(12)
 ) addr_2_28_calc (
-           .clk(clk), .sign(din_signs_reg[28]), 
-           .p(addr_2_28),
-           .a0b0(din_28_ab0), .a0b1(din_28_ab1), .a0b2(din_28_ab2), .a0b3(din_28_ab3),
-           .a0b0_1sc(din_28_ab0_1sc), .a0b1_1sc(din_28_ab1_1sc), .a0b2_1sc(din_28_ab2_1sc), .a0b3_1sc(din_28_ab3_1sc),
-           .msk_a0b0(din_28_msk_ab0), .msk_a0b1(din_28_msk_ab1), .msk_a0b2(din_28_msk_ab2), .msk_a0b3(din_28_msk_ab3),
-           .msk_a0b0_1sc(din_28_msk_ab0_1sc), .msk_a0b1_1sc(din_28_msk_ab1_1sc), .msk_a0b2_1sc(din_28_msk_ab2_1sc), .msk_a0b3_1sc(din_28_msk_ab3_1sc),
-
-           .a1b0(din_30_ab0), .a1b1(din_30_ab1), .a1b2(din_30_ab2),
-           .a1b0_1sc(din_30_ab0_1sc), .a1b1_1sc(din_30_ab1_1sc), .a1b2_1sc(din_30_ab2_1sc),
-           .msk_a1b0(din_30_msk_ab0), .msk_a1b1(din_30_msk_ab1), .msk_a1b2(din_30_msk_ab2),
-           .msk_a1b0_1sc(din_30_msk_ab0_1sc), .msk_a1b1_1sc(din_30_msk_ab1_1sc), .msk_a1b2_1sc(din_30_msk_ab2_1sc),
-
-           .a2b0(din_32_ab0), .a2b1(din_32_ab1),
-           .a2b0_1sc(din_32_ab0_1sc), .a2b1_1sc(din_32_ab1_1sc),
-           .msk_a2b0(din_32_msk_ab0), .msk_a2b1(din_32_msk_ab1),
-           .msk_a2b0_1sc(din_32_msk_ab0_1sc), .msk_a2b1_1sc(din_32_msk_ab1_1sc),
-           
-           .a3b0(din_34_ab0),
-           .a3b0_1sc(din_34_ab0_1sc)
+  .clk(clk), .p(addr_2_28),
+  .a0b0(din_28_ab0), .a0b1(din_28_ab1), .a0b2(din_28_ab2), .a0b3(din_28_ab3),
+  .a1b0(din_29_ab0), .a1b1(din_29_ab1), .a1b2(din_29_ab2), .a1b3(din_29_ab3),
+  .a2b0(din_30_ab0), .a2b1(din_30_ab1), .a2b2(din_30_ab2),
+  .a3b0(din_31_ab0), .a3b1(din_31_ab1), .a3b2(din_31_ab2),
+  .a4b0(din_32_ab0), .a4b1(din_32_ab1),
+  .a5b0(din_33_ab0), .a5b1(din_33_ab1),
+  .a6b0(din_34_ab0),
+  .a7b0(din_35_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffffffff00),
 	.NBITS(12)
 ) addr_2_29_calc (
-           .clk(clk), .sign(din_signs_reg[29]), 
-           .p(addr_2_29),
-           .a0b0(din_29_ab0), .a0b1(din_29_ab1), .a0b2(din_29_ab2), .a0b3(din_29_ab3),
-           .a0b0_1sc(din_29_ab0_1sc), .a0b1_1sc(din_29_ab1_1sc), .a0b2_1sc(din_29_ab2_1sc), .a0b3_1sc(din_29_ab3_1sc),
-           .msk_a0b0(din_29_msk_ab0), .msk_a0b1(din_29_msk_ab1), .msk_a0b2(din_29_msk_ab2), .msk_a0b3(din_29_msk_ab3),
-           .msk_a0b0_1sc(din_29_msk_ab0_1sc), .msk_a0b1_1sc(din_29_msk_ab1_1sc), .msk_a0b2_1sc(din_29_msk_ab2_1sc), .msk_a0b3_1sc(din_29_msk_ab3_1sc),
-
-           .a1b0(din_31_ab0), .a1b1(din_31_ab1), .a1b2(din_31_ab2),
-           .a1b0_1sc(din_31_ab0_1sc), .a1b1_1sc(din_31_ab1_1sc), .a1b2_1sc(din_31_ab2_1sc),
-           .msk_a1b0(din_31_msk_ab0), .msk_a1b1(din_31_msk_ab1), .msk_a1b2(din_31_msk_ab2),
-           .msk_a1b0_1sc(din_31_msk_ab0_1sc), .msk_a1b1_1sc(din_31_msk_ab1_1sc), .msk_a1b2_1sc(din_31_msk_ab2_1sc),
-
-           .a2b0(din_33_ab0), .a2b1(din_33_ab1),
-           .a2b0_1sc(din_33_ab0_1sc), .a2b1_1sc(din_33_ab1_1sc),
-           .msk_a2b0(din_33_msk_ab0), .msk_a2b1(din_33_msk_ab1),
-           .msk_a2b0_1sc(din_33_msk_ab0_1sc), .msk_a2b1_1sc(din_33_msk_ab1_1sc),
-           
-           .a3b0(din_35_ab0),
-           .a3b0_1sc(din_35_ab0_1sc)
+  .clk(clk), .p(addr_2_29),
+  .a0b0(din_29_ab0), .a0b1(din_29_ab1), .a0b2(din_29_ab2), .a0b3(din_29_ab3),
+  .a1b0(din_30_ab0), .a1b1(din_30_ab1), .a1b2(din_30_ab2), .a1b3(din_30_ab3),
+  .a2b0(din_31_ab0), .a2b1(din_31_ab1), .a2b2(din_31_ab2),
+  .a3b0(din_32_ab0), .a3b1(din_32_ab1), .a3b2(din_32_ab2),
+  .a4b0(din_33_ab0), .a4b1(din_33_ab1),
+  .a5b0(din_34_ab0), .a5b1(din_34_ab1),
+  .a6b0(din_35_ab0),
+  .a7b0(din_36_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffffffff00),
 	.NBITS(12)
 ) addr_2_30_calc (
-           .clk(clk), .sign(din_signs_reg[30]), 
-           .p(addr_2_30),
-           .a0b0(din_30_ab0), .a0b1(din_30_ab1), .a0b2(din_30_ab2), .a0b3(din_30_ab3),
-           .a0b0_1sc(din_30_ab0_1sc), .a0b1_1sc(din_30_ab1_1sc), .a0b2_1sc(din_30_ab2_1sc), .a0b3_1sc(din_30_ab3_1sc),
-           .msk_a0b0(din_30_msk_ab0), .msk_a0b1(din_30_msk_ab1), .msk_a0b2(din_30_msk_ab2), .msk_a0b3(din_30_msk_ab3),
-           .msk_a0b0_1sc(din_30_msk_ab0_1sc), .msk_a0b1_1sc(din_30_msk_ab1_1sc), .msk_a0b2_1sc(din_30_msk_ab2_1sc), .msk_a0b3_1sc(din_30_msk_ab3_1sc),
-
-           .a1b0(din_32_ab0), .a1b1(din_32_ab1), .a1b2(din_32_ab2),
-           .a1b0_1sc(din_32_ab0_1sc), .a1b1_1sc(din_32_ab1_1sc), .a1b2_1sc(din_32_ab2_1sc),
-           .msk_a1b0(din_32_msk_ab0), .msk_a1b1(din_32_msk_ab1), .msk_a1b2(din_32_msk_ab2),
-           .msk_a1b0_1sc(din_32_msk_ab0_1sc), .msk_a1b1_1sc(din_32_msk_ab1_1sc), .msk_a1b2_1sc(din_32_msk_ab2_1sc),
-
-           .a2b0(din_34_ab0), .a2b1(din_34_ab1),
-           .a2b0_1sc(din_34_ab0_1sc), .a2b1_1sc(din_34_ab1_1sc),
-           .msk_a2b0(din_34_msk_ab0), .msk_a2b1(din_34_msk_ab1),
-           .msk_a2b0_1sc(din_34_msk_ab0_1sc), .msk_a2b1_1sc(din_34_msk_ab1_1sc),
-           
-           .a3b0(din_36_ab0),
-           .a3b0_1sc(din_36_ab0_1sc)
+  .clk(clk), .p(addr_2_30),
+  .a0b0(din_30_ab0), .a0b1(din_30_ab1), .a0b2(din_30_ab2), .a0b3(din_30_ab3),
+  .a1b0(din_31_ab0), .a1b1(din_31_ab1), .a1b2(din_31_ab2), .a1b3(din_31_ab3),
+  .a2b0(din_32_ab0), .a2b1(din_32_ab1), .a2b2(din_32_ab2),
+  .a3b0(din_33_ab0), .a3b1(din_33_ab1), .a3b2(din_33_ab2),
+  .a4b0(din_34_ab0), .a4b1(din_34_ab1),
+  .a5b0(din_35_ab0), .a5b1(din_35_ab1),
+  .a6b0(din_36_ab0),
+  .a7b0(din_37_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffffffff00),
 	.NBITS(12)
 ) addr_2_31_calc (
-           .clk(clk), .sign(din_signs_reg[31]), 
-           .p(addr_2_31),
-           .a0b0(din_31_ab0), .a0b1(din_31_ab1), .a0b2(din_31_ab2), .a0b3(din_31_ab3),
-           .a0b0_1sc(din_31_ab0_1sc), .a0b1_1sc(din_31_ab1_1sc), .a0b2_1sc(din_31_ab2_1sc), .a0b3_1sc(din_31_ab3_1sc),
-           .msk_a0b0(din_31_msk_ab0), .msk_a0b1(din_31_msk_ab1), .msk_a0b2(din_31_msk_ab2), .msk_a0b3(din_31_msk_ab3),
-           .msk_a0b0_1sc(din_31_msk_ab0_1sc), .msk_a0b1_1sc(din_31_msk_ab1_1sc), .msk_a0b2_1sc(din_31_msk_ab2_1sc), .msk_a0b3_1sc(din_31_msk_ab3_1sc),
-
-           .a1b0(din_33_ab0), .a1b1(din_33_ab1), .a1b2(din_33_ab2),
-           .a1b0_1sc(din_33_ab0_1sc), .a1b1_1sc(din_33_ab1_1sc), .a1b2_1sc(din_33_ab2_1sc),
-           .msk_a1b0(din_33_msk_ab0), .msk_a1b1(din_33_msk_ab1), .msk_a1b2(din_33_msk_ab2),
-           .msk_a1b0_1sc(din_33_msk_ab0_1sc), .msk_a1b1_1sc(din_33_msk_ab1_1sc), .msk_a1b2_1sc(din_33_msk_ab2_1sc),
-
-           .a2b0(din_35_ab0), .a2b1(din_35_ab1),
-           .a2b0_1sc(din_35_ab0_1sc), .a2b1_1sc(din_35_ab1_1sc),
-           .msk_a2b0(din_35_msk_ab0), .msk_a2b1(din_35_msk_ab1),
-           .msk_a2b0_1sc(din_35_msk_ab0_1sc), .msk_a2b1_1sc(din_35_msk_ab1_1sc),
-           
-           .a3b0(din_37_ab0),
-           .a3b0_1sc(din_37_ab0_1sc)
+  .clk(clk), .p(addr_2_31),
+  .a0b0(din_31_ab0), .a0b1(din_31_ab1), .a0b2(din_31_ab2), .a0b3(din_31_ab3),
+  .a1b0(din_32_ab0), .a1b1(din_32_ab1), .a1b2(din_32_ab2), .a1b3(din_32_ab3),
+  .a2b0(din_33_ab0), .a2b1(din_33_ab1), .a2b2(din_33_ab2),
+  .a3b0(din_34_ab0), .a3b1(din_34_ab1), .a3b2(din_34_ab2),
+  .a4b0(din_35_ab0), .a4b1(din_35_ab1),
+  .a5b0(din_36_ab0), .a5b1(din_36_ab1),
+  .a6b0(din_37_ab0),
+  .a7b0(din_38_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffffff0000),
 	.NBITS(12)
 ) addr_3_0_calc (
-           .clk(clk), .sign(din_signs_reg[0]), 
-           .p(addr_3_0),
-           .a0b0(din_0_ab0), .a0b1(din_0_ab1), .a0b2(din_0_ab2), .a0b3(din_0_ab3),
-           .a0b0_1sc(din_0_ab0_1sc), .a0b1_1sc(din_0_ab1_1sc), .a0b2_1sc(din_0_ab2_1sc), .a0b3_1sc(din_0_ab3_1sc),
-           .msk_a0b0(din_0_msk_ab0), .msk_a0b1(din_0_msk_ab1), .msk_a0b2(din_0_msk_ab2), .msk_a0b3(din_0_msk_ab3),
-           .msk_a0b0_1sc(din_0_msk_ab0_1sc), .msk_a0b1_1sc(din_0_msk_ab1_1sc), .msk_a0b2_1sc(din_0_msk_ab2_1sc), .msk_a0b3_1sc(din_0_msk_ab3_1sc),
-
-           .a1b0(din_2_ab0), .a1b1(din_2_ab1), .a1b2(din_2_ab2),
-           .a1b0_1sc(din_2_ab0_1sc), .a1b1_1sc(din_2_ab1_1sc), .a1b2_1sc(din_2_ab2_1sc),
-           .msk_a1b0(din_2_msk_ab0), .msk_a1b1(din_2_msk_ab1), .msk_a1b2(din_2_msk_ab2),
-           .msk_a1b0_1sc(din_2_msk_ab0_1sc), .msk_a1b1_1sc(din_2_msk_ab1_1sc), .msk_a1b2_1sc(din_2_msk_ab2_1sc),
-
-           .a2b0(din_4_ab0), .a2b1(din_4_ab1),
-           .a2b0_1sc(din_4_ab0_1sc), .a2b1_1sc(din_4_ab1_1sc),
-           .msk_a2b0(din_4_msk_ab0), .msk_a2b1(din_4_msk_ab1),
-           .msk_a2b0_1sc(din_4_msk_ab0_1sc), .msk_a2b1_1sc(din_4_msk_ab1_1sc),
-           
-           .a3b0(din_6_ab0),
-           .a3b0_1sc(din_6_ab0_1sc)
+  .clk(clk), .p(addr_3_0),
+  .a0b0(din_0_ab0), .a0b1(din_0_ab1), .a0b2(din_0_ab2), .a0b3(din_0_ab3),
+  .a1b0(din_1_ab0), .a1b1(din_1_ab1), .a1b2(din_1_ab2), .a1b3(din_1_ab3),
+  .a2b0(din_2_ab0), .a2b1(din_2_ab1), .a2b2(din_2_ab2),
+  .a3b0(din_3_ab0), .a3b1(din_3_ab1), .a3b2(din_3_ab2),
+  .a4b0(din_4_ab0), .a4b1(din_4_ab1),
+  .a5b0(din_5_ab0), .a5b1(din_5_ab1),
+  .a6b0(din_6_ab0),
+  .a7b0(din_7_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffffff0000),
 	.NBITS(12)
 ) addr_3_1_calc (
-           .clk(clk), .sign(din_signs_reg[1]), 
-           .p(addr_3_1),
-           .a0b0(din_1_ab0), .a0b1(din_1_ab1), .a0b2(din_1_ab2), .a0b3(din_1_ab3),
-           .a0b0_1sc(din_1_ab0_1sc), .a0b1_1sc(din_1_ab1_1sc), .a0b2_1sc(din_1_ab2_1sc), .a0b3_1sc(din_1_ab3_1sc),
-           .msk_a0b0(din_1_msk_ab0), .msk_a0b1(din_1_msk_ab1), .msk_a0b2(din_1_msk_ab2), .msk_a0b3(din_1_msk_ab3),
-           .msk_a0b0_1sc(din_1_msk_ab0_1sc), .msk_a0b1_1sc(din_1_msk_ab1_1sc), .msk_a0b2_1sc(din_1_msk_ab2_1sc), .msk_a0b3_1sc(din_1_msk_ab3_1sc),
-
-           .a1b0(din_3_ab0), .a1b1(din_3_ab1), .a1b2(din_3_ab2),
-           .a1b0_1sc(din_3_ab0_1sc), .a1b1_1sc(din_3_ab1_1sc), .a1b2_1sc(din_3_ab2_1sc),
-           .msk_a1b0(din_3_msk_ab0), .msk_a1b1(din_3_msk_ab1), .msk_a1b2(din_3_msk_ab2),
-           .msk_a1b0_1sc(din_3_msk_ab0_1sc), .msk_a1b1_1sc(din_3_msk_ab1_1sc), .msk_a1b2_1sc(din_3_msk_ab2_1sc),
-
-           .a2b0(din_5_ab0), .a2b1(din_5_ab1),
-           .a2b0_1sc(din_5_ab0_1sc), .a2b1_1sc(din_5_ab1_1sc),
-           .msk_a2b0(din_5_msk_ab0), .msk_a2b1(din_5_msk_ab1),
-           .msk_a2b0_1sc(din_5_msk_ab0_1sc), .msk_a2b1_1sc(din_5_msk_ab1_1sc),
-           
-           .a3b0(din_7_ab0),
-           .a3b0_1sc(din_7_ab0_1sc)
+  .clk(clk), .p(addr_3_1),
+  .a0b0(din_1_ab0), .a0b1(din_1_ab1), .a0b2(din_1_ab2), .a0b3(din_1_ab3),
+  .a1b0(din_2_ab0), .a1b1(din_2_ab1), .a1b2(din_2_ab2), .a1b3(din_2_ab3),
+  .a2b0(din_3_ab0), .a2b1(din_3_ab1), .a2b2(din_3_ab2),
+  .a3b0(din_4_ab0), .a3b1(din_4_ab1), .a3b2(din_4_ab2),
+  .a4b0(din_5_ab0), .a4b1(din_5_ab1),
+  .a5b0(din_6_ab0), .a5b1(din_6_ab1),
+  .a6b0(din_7_ab0),
+  .a7b0(din_8_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffffff0000),
 	.NBITS(12)
 ) addr_3_2_calc (
-           .clk(clk), .sign(din_signs_reg[2]), 
-           .p(addr_3_2),
-           .a0b0(din_2_ab0), .a0b1(din_2_ab1), .a0b2(din_2_ab2), .a0b3(din_2_ab3),
-           .a0b0_1sc(din_2_ab0_1sc), .a0b1_1sc(din_2_ab1_1sc), .a0b2_1sc(din_2_ab2_1sc), .a0b3_1sc(din_2_ab3_1sc),
-           .msk_a0b0(din_2_msk_ab0), .msk_a0b1(din_2_msk_ab1), .msk_a0b2(din_2_msk_ab2), .msk_a0b3(din_2_msk_ab3),
-           .msk_a0b0_1sc(din_2_msk_ab0_1sc), .msk_a0b1_1sc(din_2_msk_ab1_1sc), .msk_a0b2_1sc(din_2_msk_ab2_1sc), .msk_a0b3_1sc(din_2_msk_ab3_1sc),
-
-           .a1b0(din_4_ab0), .a1b1(din_4_ab1), .a1b2(din_4_ab2),
-           .a1b0_1sc(din_4_ab0_1sc), .a1b1_1sc(din_4_ab1_1sc), .a1b2_1sc(din_4_ab2_1sc),
-           .msk_a1b0(din_4_msk_ab0), .msk_a1b1(din_4_msk_ab1), .msk_a1b2(din_4_msk_ab2),
-           .msk_a1b0_1sc(din_4_msk_ab0_1sc), .msk_a1b1_1sc(din_4_msk_ab1_1sc), .msk_a1b2_1sc(din_4_msk_ab2_1sc),
-
-           .a2b0(din_6_ab0), .a2b1(din_6_ab1),
-           .a2b0_1sc(din_6_ab0_1sc), .a2b1_1sc(din_6_ab1_1sc),
-           .msk_a2b0(din_6_msk_ab0), .msk_a2b1(din_6_msk_ab1),
-           .msk_a2b0_1sc(din_6_msk_ab0_1sc), .msk_a2b1_1sc(din_6_msk_ab1_1sc),
-           
-           .a3b0(din_8_ab0),
-           .a3b0_1sc(din_8_ab0_1sc)
+  .clk(clk), .p(addr_3_2),
+  .a0b0(din_2_ab0), .a0b1(din_2_ab1), .a0b2(din_2_ab2), .a0b3(din_2_ab3),
+  .a1b0(din_3_ab0), .a1b1(din_3_ab1), .a1b2(din_3_ab2), .a1b3(din_3_ab3),
+  .a2b0(din_4_ab0), .a2b1(din_4_ab1), .a2b2(din_4_ab2),
+  .a3b0(din_5_ab0), .a3b1(din_5_ab1), .a3b2(din_5_ab2),
+  .a4b0(din_6_ab0), .a4b1(din_6_ab1),
+  .a5b0(din_7_ab0), .a5b1(din_7_ab1),
+  .a6b0(din_8_ab0),
+  .a7b0(din_9_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffffff0000),
 	.NBITS(12)
 ) addr_3_3_calc (
-           .clk(clk), .sign(din_signs_reg[3]), 
-           .p(addr_3_3),
-           .a0b0(din_3_ab0), .a0b1(din_3_ab1), .a0b2(din_3_ab2), .a0b3(din_3_ab3),
-           .a0b0_1sc(din_3_ab0_1sc), .a0b1_1sc(din_3_ab1_1sc), .a0b2_1sc(din_3_ab2_1sc), .a0b3_1sc(din_3_ab3_1sc),
-           .msk_a0b0(din_3_msk_ab0), .msk_a0b1(din_3_msk_ab1), .msk_a0b2(din_3_msk_ab2), .msk_a0b3(din_3_msk_ab3),
-           .msk_a0b0_1sc(din_3_msk_ab0_1sc), .msk_a0b1_1sc(din_3_msk_ab1_1sc), .msk_a0b2_1sc(din_3_msk_ab2_1sc), .msk_a0b3_1sc(din_3_msk_ab3_1sc),
-
-           .a1b0(din_5_ab0), .a1b1(din_5_ab1), .a1b2(din_5_ab2),
-           .a1b0_1sc(din_5_ab0_1sc), .a1b1_1sc(din_5_ab1_1sc), .a1b2_1sc(din_5_ab2_1sc),
-           .msk_a1b0(din_5_msk_ab0), .msk_a1b1(din_5_msk_ab1), .msk_a1b2(din_5_msk_ab2),
-           .msk_a1b0_1sc(din_5_msk_ab0_1sc), .msk_a1b1_1sc(din_5_msk_ab1_1sc), .msk_a1b2_1sc(din_5_msk_ab2_1sc),
-
-           .a2b0(din_7_ab0), .a2b1(din_7_ab1),
-           .a2b0_1sc(din_7_ab0_1sc), .a2b1_1sc(din_7_ab1_1sc),
-           .msk_a2b0(din_7_msk_ab0), .msk_a2b1(din_7_msk_ab1),
-           .msk_a2b0_1sc(din_7_msk_ab0_1sc), .msk_a2b1_1sc(din_7_msk_ab1_1sc),
-           
-           .a3b0(din_9_ab0),
-           .a3b0_1sc(din_9_ab0_1sc)
+  .clk(clk), .p(addr_3_3),
+  .a0b0(din_3_ab0), .a0b1(din_3_ab1), .a0b2(din_3_ab2), .a0b3(din_3_ab3),
+  .a1b0(din_4_ab0), .a1b1(din_4_ab1), .a1b2(din_4_ab2), .a1b3(din_4_ab3),
+  .a2b0(din_5_ab0), .a2b1(din_5_ab1), .a2b2(din_5_ab2),
+  .a3b0(din_6_ab0), .a3b1(din_6_ab1), .a3b2(din_6_ab2),
+  .a4b0(din_7_ab0), .a4b1(din_7_ab1),
+  .a5b0(din_8_ab0), .a5b1(din_8_ab1),
+  .a6b0(din_9_ab0),
+  .a7b0(din_10_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffffff0000),
 	.NBITS(12)
 ) addr_3_4_calc (
-           .clk(clk), .sign(din_signs_reg[4]), 
-           .p(addr_3_4),
-           .a0b0(din_4_ab0), .a0b1(din_4_ab1), .a0b2(din_4_ab2), .a0b3(din_4_ab3),
-           .a0b0_1sc(din_4_ab0_1sc), .a0b1_1sc(din_4_ab1_1sc), .a0b2_1sc(din_4_ab2_1sc), .a0b3_1sc(din_4_ab3_1sc),
-           .msk_a0b0(din_4_msk_ab0), .msk_a0b1(din_4_msk_ab1), .msk_a0b2(din_4_msk_ab2), .msk_a0b3(din_4_msk_ab3),
-           .msk_a0b0_1sc(din_4_msk_ab0_1sc), .msk_a0b1_1sc(din_4_msk_ab1_1sc), .msk_a0b2_1sc(din_4_msk_ab2_1sc), .msk_a0b3_1sc(din_4_msk_ab3_1sc),
-
-           .a1b0(din_6_ab0), .a1b1(din_6_ab1), .a1b2(din_6_ab2),
-           .a1b0_1sc(din_6_ab0_1sc), .a1b1_1sc(din_6_ab1_1sc), .a1b2_1sc(din_6_ab2_1sc),
-           .msk_a1b0(din_6_msk_ab0), .msk_a1b1(din_6_msk_ab1), .msk_a1b2(din_6_msk_ab2),
-           .msk_a1b0_1sc(din_6_msk_ab0_1sc), .msk_a1b1_1sc(din_6_msk_ab1_1sc), .msk_a1b2_1sc(din_6_msk_ab2_1sc),
-
-           .a2b0(din_8_ab0), .a2b1(din_8_ab1),
-           .a2b0_1sc(din_8_ab0_1sc), .a2b1_1sc(din_8_ab1_1sc),
-           .msk_a2b0(din_8_msk_ab0), .msk_a2b1(din_8_msk_ab1),
-           .msk_a2b0_1sc(din_8_msk_ab0_1sc), .msk_a2b1_1sc(din_8_msk_ab1_1sc),
-           
-           .a3b0(din_10_ab0),
-           .a3b0_1sc(din_10_ab0_1sc)
+  .clk(clk), .p(addr_3_4),
+  .a0b0(din_4_ab0), .a0b1(din_4_ab1), .a0b2(din_4_ab2), .a0b3(din_4_ab3),
+  .a1b0(din_5_ab0), .a1b1(din_5_ab1), .a1b2(din_5_ab2), .a1b3(din_5_ab3),
+  .a2b0(din_6_ab0), .a2b1(din_6_ab1), .a2b2(din_6_ab2),
+  .a3b0(din_7_ab0), .a3b1(din_7_ab1), .a3b2(din_7_ab2),
+  .a4b0(din_8_ab0), .a4b1(din_8_ab1),
+  .a5b0(din_9_ab0), .a5b1(din_9_ab1),
+  .a6b0(din_10_ab0),
+  .a7b0(din_11_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffffff0000),
 	.NBITS(12)
 ) addr_3_5_calc (
-           .clk(clk), .sign(din_signs_reg[5]), 
-           .p(addr_3_5),
-           .a0b0(din_5_ab0), .a0b1(din_5_ab1), .a0b2(din_5_ab2), .a0b3(din_5_ab3),
-           .a0b0_1sc(din_5_ab0_1sc), .a0b1_1sc(din_5_ab1_1sc), .a0b2_1sc(din_5_ab2_1sc), .a0b3_1sc(din_5_ab3_1sc),
-           .msk_a0b0(din_5_msk_ab0), .msk_a0b1(din_5_msk_ab1), .msk_a0b2(din_5_msk_ab2), .msk_a0b3(din_5_msk_ab3),
-           .msk_a0b0_1sc(din_5_msk_ab0_1sc), .msk_a0b1_1sc(din_5_msk_ab1_1sc), .msk_a0b2_1sc(din_5_msk_ab2_1sc), .msk_a0b3_1sc(din_5_msk_ab3_1sc),
-
-           .a1b0(din_7_ab0), .a1b1(din_7_ab1), .a1b2(din_7_ab2),
-           .a1b0_1sc(din_7_ab0_1sc), .a1b1_1sc(din_7_ab1_1sc), .a1b2_1sc(din_7_ab2_1sc),
-           .msk_a1b0(din_7_msk_ab0), .msk_a1b1(din_7_msk_ab1), .msk_a1b2(din_7_msk_ab2),
-           .msk_a1b0_1sc(din_7_msk_ab0_1sc), .msk_a1b1_1sc(din_7_msk_ab1_1sc), .msk_a1b2_1sc(din_7_msk_ab2_1sc),
-
-           .a2b0(din_9_ab0), .a2b1(din_9_ab1),
-           .a2b0_1sc(din_9_ab0_1sc), .a2b1_1sc(din_9_ab1_1sc),
-           .msk_a2b0(din_9_msk_ab0), .msk_a2b1(din_9_msk_ab1),
-           .msk_a2b0_1sc(din_9_msk_ab0_1sc), .msk_a2b1_1sc(din_9_msk_ab1_1sc),
-           
-           .a3b0(din_11_ab0),
-           .a3b0_1sc(din_11_ab0_1sc)
+  .clk(clk), .p(addr_3_5),
+  .a0b0(din_5_ab0), .a0b1(din_5_ab1), .a0b2(din_5_ab2), .a0b3(din_5_ab3),
+  .a1b0(din_6_ab0), .a1b1(din_6_ab1), .a1b2(din_6_ab2), .a1b3(din_6_ab3),
+  .a2b0(din_7_ab0), .a2b1(din_7_ab1), .a2b2(din_7_ab2),
+  .a3b0(din_8_ab0), .a3b1(din_8_ab1), .a3b2(din_8_ab2),
+  .a4b0(din_9_ab0), .a4b1(din_9_ab1),
+  .a5b0(din_10_ab0), .a5b1(din_10_ab1),
+  .a6b0(din_11_ab0),
+  .a7b0(din_12_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffffff0000),
 	.NBITS(12)
 ) addr_3_6_calc (
-           .clk(clk), .sign(din_signs_reg[6]), 
-           .p(addr_3_6),
-           .a0b0(din_6_ab0), .a0b1(din_6_ab1), .a0b2(din_6_ab2), .a0b3(din_6_ab3),
-           .a0b0_1sc(din_6_ab0_1sc), .a0b1_1sc(din_6_ab1_1sc), .a0b2_1sc(din_6_ab2_1sc), .a0b3_1sc(din_6_ab3_1sc),
-           .msk_a0b0(din_6_msk_ab0), .msk_a0b1(din_6_msk_ab1), .msk_a0b2(din_6_msk_ab2), .msk_a0b3(din_6_msk_ab3),
-           .msk_a0b0_1sc(din_6_msk_ab0_1sc), .msk_a0b1_1sc(din_6_msk_ab1_1sc), .msk_a0b2_1sc(din_6_msk_ab2_1sc), .msk_a0b3_1sc(din_6_msk_ab3_1sc),
-
-           .a1b0(din_8_ab0), .a1b1(din_8_ab1), .a1b2(din_8_ab2),
-           .a1b0_1sc(din_8_ab0_1sc), .a1b1_1sc(din_8_ab1_1sc), .a1b2_1sc(din_8_ab2_1sc),
-           .msk_a1b0(din_8_msk_ab0), .msk_a1b1(din_8_msk_ab1), .msk_a1b2(din_8_msk_ab2),
-           .msk_a1b0_1sc(din_8_msk_ab0_1sc), .msk_a1b1_1sc(din_8_msk_ab1_1sc), .msk_a1b2_1sc(din_8_msk_ab2_1sc),
-
-           .a2b0(din_10_ab0), .a2b1(din_10_ab1),
-           .a2b0_1sc(din_10_ab0_1sc), .a2b1_1sc(din_10_ab1_1sc),
-           .msk_a2b0(din_10_msk_ab0), .msk_a2b1(din_10_msk_ab1),
-           .msk_a2b0_1sc(din_10_msk_ab0_1sc), .msk_a2b1_1sc(din_10_msk_ab1_1sc),
-           
-           .a3b0(din_12_ab0),
-           .a3b0_1sc(din_12_ab0_1sc)
+  .clk(clk), .p(addr_3_6),
+  .a0b0(din_6_ab0), .a0b1(din_6_ab1), .a0b2(din_6_ab2), .a0b3(din_6_ab3),
+  .a1b0(din_7_ab0), .a1b1(din_7_ab1), .a1b2(din_7_ab2), .a1b3(din_7_ab3),
+  .a2b0(din_8_ab0), .a2b1(din_8_ab1), .a2b2(din_8_ab2),
+  .a3b0(din_9_ab0), .a3b1(din_9_ab1), .a3b2(din_9_ab2),
+  .a4b0(din_10_ab0), .a4b1(din_10_ab1),
+  .a5b0(din_11_ab0), .a5b1(din_11_ab1),
+  .a6b0(din_12_ab0),
+  .a7b0(din_13_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffffff0000),
 	.NBITS(12)
 ) addr_3_7_calc (
-           .clk(clk), .sign(din_signs_reg[7]), 
-           .p(addr_3_7),
-           .a0b0(din_7_ab0), .a0b1(din_7_ab1), .a0b2(din_7_ab2), .a0b3(din_7_ab3),
-           .a0b0_1sc(din_7_ab0_1sc), .a0b1_1sc(din_7_ab1_1sc), .a0b2_1sc(din_7_ab2_1sc), .a0b3_1sc(din_7_ab3_1sc),
-           .msk_a0b0(din_7_msk_ab0), .msk_a0b1(din_7_msk_ab1), .msk_a0b2(din_7_msk_ab2), .msk_a0b3(din_7_msk_ab3),
-           .msk_a0b0_1sc(din_7_msk_ab0_1sc), .msk_a0b1_1sc(din_7_msk_ab1_1sc), .msk_a0b2_1sc(din_7_msk_ab2_1sc), .msk_a0b3_1sc(din_7_msk_ab3_1sc),
-
-           .a1b0(din_9_ab0), .a1b1(din_9_ab1), .a1b2(din_9_ab2),
-           .a1b0_1sc(din_9_ab0_1sc), .a1b1_1sc(din_9_ab1_1sc), .a1b2_1sc(din_9_ab2_1sc),
-           .msk_a1b0(din_9_msk_ab0), .msk_a1b1(din_9_msk_ab1), .msk_a1b2(din_9_msk_ab2),
-           .msk_a1b0_1sc(din_9_msk_ab0_1sc), .msk_a1b1_1sc(din_9_msk_ab1_1sc), .msk_a1b2_1sc(din_9_msk_ab2_1sc),
-
-           .a2b0(din_11_ab0), .a2b1(din_11_ab1),
-           .a2b0_1sc(din_11_ab0_1sc), .a2b1_1sc(din_11_ab1_1sc),
-           .msk_a2b0(din_11_msk_ab0), .msk_a2b1(din_11_msk_ab1),
-           .msk_a2b0_1sc(din_11_msk_ab0_1sc), .msk_a2b1_1sc(din_11_msk_ab1_1sc),
-           
-           .a3b0(din_13_ab0),
-           .a3b0_1sc(din_13_ab0_1sc)
+  .clk(clk), .p(addr_3_7),
+  .a0b0(din_7_ab0), .a0b1(din_7_ab1), .a0b2(din_7_ab2), .a0b3(din_7_ab3),
+  .a1b0(din_8_ab0), .a1b1(din_8_ab1), .a1b2(din_8_ab2), .a1b3(din_8_ab3),
+  .a2b0(din_9_ab0), .a2b1(din_9_ab1), .a2b2(din_9_ab2),
+  .a3b0(din_10_ab0), .a3b1(din_10_ab1), .a3b2(din_10_ab2),
+  .a4b0(din_11_ab0), .a4b1(din_11_ab1),
+  .a5b0(din_12_ab0), .a5b1(din_12_ab1),
+  .a6b0(din_13_ab0),
+  .a7b0(din_14_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffffff0000),
 	.NBITS(12)
 ) addr_3_8_calc (
-           .clk(clk), .sign(din_signs_reg[8]), 
-           .p(addr_3_8),
-           .a0b0(din_8_ab0), .a0b1(din_8_ab1), .a0b2(din_8_ab2), .a0b3(din_8_ab3),
-           .a0b0_1sc(din_8_ab0_1sc), .a0b1_1sc(din_8_ab1_1sc), .a0b2_1sc(din_8_ab2_1sc), .a0b3_1sc(din_8_ab3_1sc),
-           .msk_a0b0(din_8_msk_ab0), .msk_a0b1(din_8_msk_ab1), .msk_a0b2(din_8_msk_ab2), .msk_a0b3(din_8_msk_ab3),
-           .msk_a0b0_1sc(din_8_msk_ab0_1sc), .msk_a0b1_1sc(din_8_msk_ab1_1sc), .msk_a0b2_1sc(din_8_msk_ab2_1sc), .msk_a0b3_1sc(din_8_msk_ab3_1sc),
-
-           .a1b0(din_10_ab0), .a1b1(din_10_ab1), .a1b2(din_10_ab2),
-           .a1b0_1sc(din_10_ab0_1sc), .a1b1_1sc(din_10_ab1_1sc), .a1b2_1sc(din_10_ab2_1sc),
-           .msk_a1b0(din_10_msk_ab0), .msk_a1b1(din_10_msk_ab1), .msk_a1b2(din_10_msk_ab2),
-           .msk_a1b0_1sc(din_10_msk_ab0_1sc), .msk_a1b1_1sc(din_10_msk_ab1_1sc), .msk_a1b2_1sc(din_10_msk_ab2_1sc),
-
-           .a2b0(din_12_ab0), .a2b1(din_12_ab1),
-           .a2b0_1sc(din_12_ab0_1sc), .a2b1_1sc(din_12_ab1_1sc),
-           .msk_a2b0(din_12_msk_ab0), .msk_a2b1(din_12_msk_ab1),
-           .msk_a2b0_1sc(din_12_msk_ab0_1sc), .msk_a2b1_1sc(din_12_msk_ab1_1sc),
-           
-           .a3b0(din_14_ab0),
-           .a3b0_1sc(din_14_ab0_1sc)
+  .clk(clk), .p(addr_3_8),
+  .a0b0(din_8_ab0), .a0b1(din_8_ab1), .a0b2(din_8_ab2), .a0b3(din_8_ab3),
+  .a1b0(din_9_ab0), .a1b1(din_9_ab1), .a1b2(din_9_ab2), .a1b3(din_9_ab3),
+  .a2b0(din_10_ab0), .a2b1(din_10_ab1), .a2b2(din_10_ab2),
+  .a3b0(din_11_ab0), .a3b1(din_11_ab1), .a3b2(din_11_ab2),
+  .a4b0(din_12_ab0), .a4b1(din_12_ab1),
+  .a5b0(din_13_ab0), .a5b1(din_13_ab1),
+  .a6b0(din_14_ab0),
+  .a7b0(din_15_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffffff0000),
 	.NBITS(12)
 ) addr_3_9_calc (
-           .clk(clk), .sign(din_signs_reg[9]), 
-           .p(addr_3_9),
-           .a0b0(din_9_ab0), .a0b1(din_9_ab1), .a0b2(din_9_ab2), .a0b3(din_9_ab3),
-           .a0b0_1sc(din_9_ab0_1sc), .a0b1_1sc(din_9_ab1_1sc), .a0b2_1sc(din_9_ab2_1sc), .a0b3_1sc(din_9_ab3_1sc),
-           .msk_a0b0(din_9_msk_ab0), .msk_a0b1(din_9_msk_ab1), .msk_a0b2(din_9_msk_ab2), .msk_a0b3(din_9_msk_ab3),
-           .msk_a0b0_1sc(din_9_msk_ab0_1sc), .msk_a0b1_1sc(din_9_msk_ab1_1sc), .msk_a0b2_1sc(din_9_msk_ab2_1sc), .msk_a0b3_1sc(din_9_msk_ab3_1sc),
-
-           .a1b0(din_11_ab0), .a1b1(din_11_ab1), .a1b2(din_11_ab2),
-           .a1b0_1sc(din_11_ab0_1sc), .a1b1_1sc(din_11_ab1_1sc), .a1b2_1sc(din_11_ab2_1sc),
-           .msk_a1b0(din_11_msk_ab0), .msk_a1b1(din_11_msk_ab1), .msk_a1b2(din_11_msk_ab2),
-           .msk_a1b0_1sc(din_11_msk_ab0_1sc), .msk_a1b1_1sc(din_11_msk_ab1_1sc), .msk_a1b2_1sc(din_11_msk_ab2_1sc),
-
-           .a2b0(din_13_ab0), .a2b1(din_13_ab1),
-           .a2b0_1sc(din_13_ab0_1sc), .a2b1_1sc(din_13_ab1_1sc),
-           .msk_a2b0(din_13_msk_ab0), .msk_a2b1(din_13_msk_ab1),
-           .msk_a2b0_1sc(din_13_msk_ab0_1sc), .msk_a2b1_1sc(din_13_msk_ab1_1sc),
-           
-           .a3b0(din_15_ab0),
-           .a3b0_1sc(din_15_ab0_1sc)
+  .clk(clk), .p(addr_3_9),
+  .a0b0(din_9_ab0), .a0b1(din_9_ab1), .a0b2(din_9_ab2), .a0b3(din_9_ab3),
+  .a1b0(din_10_ab0), .a1b1(din_10_ab1), .a1b2(din_10_ab2), .a1b3(din_10_ab3),
+  .a2b0(din_11_ab0), .a2b1(din_11_ab1), .a2b2(din_11_ab2),
+  .a3b0(din_12_ab0), .a3b1(din_12_ab1), .a3b2(din_12_ab2),
+  .a4b0(din_13_ab0), .a4b1(din_13_ab1),
+  .a5b0(din_14_ab0), .a5b1(din_14_ab1),
+  .a6b0(din_15_ab0),
+  .a7b0(din_16_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffffff0000),
 	.NBITS(12)
 ) addr_3_10_calc (
-           .clk(clk), .sign(din_signs_reg[10]), 
-           .p(addr_3_10),
-           .a0b0(din_10_ab0), .a0b1(din_10_ab1), .a0b2(din_10_ab2), .a0b3(din_10_ab3),
-           .a0b0_1sc(din_10_ab0_1sc), .a0b1_1sc(din_10_ab1_1sc), .a0b2_1sc(din_10_ab2_1sc), .a0b3_1sc(din_10_ab3_1sc),
-           .msk_a0b0(din_10_msk_ab0), .msk_a0b1(din_10_msk_ab1), .msk_a0b2(din_10_msk_ab2), .msk_a0b3(din_10_msk_ab3),
-           .msk_a0b0_1sc(din_10_msk_ab0_1sc), .msk_a0b1_1sc(din_10_msk_ab1_1sc), .msk_a0b2_1sc(din_10_msk_ab2_1sc), .msk_a0b3_1sc(din_10_msk_ab3_1sc),
-
-           .a1b0(din_12_ab0), .a1b1(din_12_ab1), .a1b2(din_12_ab2),
-           .a1b0_1sc(din_12_ab0_1sc), .a1b1_1sc(din_12_ab1_1sc), .a1b2_1sc(din_12_ab2_1sc),
-           .msk_a1b0(din_12_msk_ab0), .msk_a1b1(din_12_msk_ab1), .msk_a1b2(din_12_msk_ab2),
-           .msk_a1b0_1sc(din_12_msk_ab0_1sc), .msk_a1b1_1sc(din_12_msk_ab1_1sc), .msk_a1b2_1sc(din_12_msk_ab2_1sc),
-
-           .a2b0(din_14_ab0), .a2b1(din_14_ab1),
-           .a2b0_1sc(din_14_ab0_1sc), .a2b1_1sc(din_14_ab1_1sc),
-           .msk_a2b0(din_14_msk_ab0), .msk_a2b1(din_14_msk_ab1),
-           .msk_a2b0_1sc(din_14_msk_ab0_1sc), .msk_a2b1_1sc(din_14_msk_ab1_1sc),
-           
-           .a3b0(din_16_ab0),
-           .a3b0_1sc(din_16_ab0_1sc)
+  .clk(clk), .p(addr_3_10),
+  .a0b0(din_10_ab0), .a0b1(din_10_ab1), .a0b2(din_10_ab2), .a0b3(din_10_ab3),
+  .a1b0(din_11_ab0), .a1b1(din_11_ab1), .a1b2(din_11_ab2), .a1b3(din_11_ab3),
+  .a2b0(din_12_ab0), .a2b1(din_12_ab1), .a2b2(din_12_ab2),
+  .a3b0(din_13_ab0), .a3b1(din_13_ab1), .a3b2(din_13_ab2),
+  .a4b0(din_14_ab0), .a4b1(din_14_ab1),
+  .a5b0(din_15_ab0), .a5b1(din_15_ab1),
+  .a6b0(din_16_ab0),
+  .a7b0(din_17_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffffff0000),
 	.NBITS(12)
 ) addr_3_11_calc (
-           .clk(clk), .sign(din_signs_reg[11]), 
-           .p(addr_3_11),
-           .a0b0(din_11_ab0), .a0b1(din_11_ab1), .a0b2(din_11_ab2), .a0b3(din_11_ab3),
-           .a0b0_1sc(din_11_ab0_1sc), .a0b1_1sc(din_11_ab1_1sc), .a0b2_1sc(din_11_ab2_1sc), .a0b3_1sc(din_11_ab3_1sc),
-           .msk_a0b0(din_11_msk_ab0), .msk_a0b1(din_11_msk_ab1), .msk_a0b2(din_11_msk_ab2), .msk_a0b3(din_11_msk_ab3),
-           .msk_a0b0_1sc(din_11_msk_ab0_1sc), .msk_a0b1_1sc(din_11_msk_ab1_1sc), .msk_a0b2_1sc(din_11_msk_ab2_1sc), .msk_a0b3_1sc(din_11_msk_ab3_1sc),
-
-           .a1b0(din_13_ab0), .a1b1(din_13_ab1), .a1b2(din_13_ab2),
-           .a1b0_1sc(din_13_ab0_1sc), .a1b1_1sc(din_13_ab1_1sc), .a1b2_1sc(din_13_ab2_1sc),
-           .msk_a1b0(din_13_msk_ab0), .msk_a1b1(din_13_msk_ab1), .msk_a1b2(din_13_msk_ab2),
-           .msk_a1b0_1sc(din_13_msk_ab0_1sc), .msk_a1b1_1sc(din_13_msk_ab1_1sc), .msk_a1b2_1sc(din_13_msk_ab2_1sc),
-
-           .a2b0(din_15_ab0), .a2b1(din_15_ab1),
-           .a2b0_1sc(din_15_ab0_1sc), .a2b1_1sc(din_15_ab1_1sc),
-           .msk_a2b0(din_15_msk_ab0), .msk_a2b1(din_15_msk_ab1),
-           .msk_a2b0_1sc(din_15_msk_ab0_1sc), .msk_a2b1_1sc(din_15_msk_ab1_1sc),
-           
-           .a3b0(din_17_ab0),
-           .a3b0_1sc(din_17_ab0_1sc)
+  .clk(clk), .p(addr_3_11),
+  .a0b0(din_11_ab0), .a0b1(din_11_ab1), .a0b2(din_11_ab2), .a0b3(din_11_ab3),
+  .a1b0(din_12_ab0), .a1b1(din_12_ab1), .a1b2(din_12_ab2), .a1b3(din_12_ab3),
+  .a2b0(din_13_ab0), .a2b1(din_13_ab1), .a2b2(din_13_ab2),
+  .a3b0(din_14_ab0), .a3b1(din_14_ab1), .a3b2(din_14_ab2),
+  .a4b0(din_15_ab0), .a4b1(din_15_ab1),
+  .a5b0(din_16_ab0), .a5b1(din_16_ab1),
+  .a6b0(din_17_ab0),
+  .a7b0(din_18_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffffff0000),
 	.NBITS(12)
 ) addr_3_12_calc (
-           .clk(clk), .sign(din_signs_reg[12]), 
-           .p(addr_3_12),
-           .a0b0(din_12_ab0), .a0b1(din_12_ab1), .a0b2(din_12_ab2), .a0b3(din_12_ab3),
-           .a0b0_1sc(din_12_ab0_1sc), .a0b1_1sc(din_12_ab1_1sc), .a0b2_1sc(din_12_ab2_1sc), .a0b3_1sc(din_12_ab3_1sc),
-           .msk_a0b0(din_12_msk_ab0), .msk_a0b1(din_12_msk_ab1), .msk_a0b2(din_12_msk_ab2), .msk_a0b3(din_12_msk_ab3),
-           .msk_a0b0_1sc(din_12_msk_ab0_1sc), .msk_a0b1_1sc(din_12_msk_ab1_1sc), .msk_a0b2_1sc(din_12_msk_ab2_1sc), .msk_a0b3_1sc(din_12_msk_ab3_1sc),
-
-           .a1b0(din_14_ab0), .a1b1(din_14_ab1), .a1b2(din_14_ab2),
-           .a1b0_1sc(din_14_ab0_1sc), .a1b1_1sc(din_14_ab1_1sc), .a1b2_1sc(din_14_ab2_1sc),
-           .msk_a1b0(din_14_msk_ab0), .msk_a1b1(din_14_msk_ab1), .msk_a1b2(din_14_msk_ab2),
-           .msk_a1b0_1sc(din_14_msk_ab0_1sc), .msk_a1b1_1sc(din_14_msk_ab1_1sc), .msk_a1b2_1sc(din_14_msk_ab2_1sc),
-
-           .a2b0(din_16_ab0), .a2b1(din_16_ab1),
-           .a2b0_1sc(din_16_ab0_1sc), .a2b1_1sc(din_16_ab1_1sc),
-           .msk_a2b0(din_16_msk_ab0), .msk_a2b1(din_16_msk_ab1),
-           .msk_a2b0_1sc(din_16_msk_ab0_1sc), .msk_a2b1_1sc(din_16_msk_ab1_1sc),
-           
-           .a3b0(din_18_ab0),
-           .a3b0_1sc(din_18_ab0_1sc)
+  .clk(clk), .p(addr_3_12),
+  .a0b0(din_12_ab0), .a0b1(din_12_ab1), .a0b2(din_12_ab2), .a0b3(din_12_ab3),
+  .a1b0(din_13_ab0), .a1b1(din_13_ab1), .a1b2(din_13_ab2), .a1b3(din_13_ab3),
+  .a2b0(din_14_ab0), .a2b1(din_14_ab1), .a2b2(din_14_ab2),
+  .a3b0(din_15_ab0), .a3b1(din_15_ab1), .a3b2(din_15_ab2),
+  .a4b0(din_16_ab0), .a4b1(din_16_ab1),
+  .a5b0(din_17_ab0), .a5b1(din_17_ab1),
+  .a6b0(din_18_ab0),
+  .a7b0(din_19_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffffff0000),
 	.NBITS(12)
 ) addr_3_13_calc (
-           .clk(clk), .sign(din_signs_reg[13]), 
-           .p(addr_3_13),
-           .a0b0(din_13_ab0), .a0b1(din_13_ab1), .a0b2(din_13_ab2), .a0b3(din_13_ab3),
-           .a0b0_1sc(din_13_ab0_1sc), .a0b1_1sc(din_13_ab1_1sc), .a0b2_1sc(din_13_ab2_1sc), .a0b3_1sc(din_13_ab3_1sc),
-           .msk_a0b0(din_13_msk_ab0), .msk_a0b1(din_13_msk_ab1), .msk_a0b2(din_13_msk_ab2), .msk_a0b3(din_13_msk_ab3),
-           .msk_a0b0_1sc(din_13_msk_ab0_1sc), .msk_a0b1_1sc(din_13_msk_ab1_1sc), .msk_a0b2_1sc(din_13_msk_ab2_1sc), .msk_a0b3_1sc(din_13_msk_ab3_1sc),
-
-           .a1b0(din_15_ab0), .a1b1(din_15_ab1), .a1b2(din_15_ab2),
-           .a1b0_1sc(din_15_ab0_1sc), .a1b1_1sc(din_15_ab1_1sc), .a1b2_1sc(din_15_ab2_1sc),
-           .msk_a1b0(din_15_msk_ab0), .msk_a1b1(din_15_msk_ab1), .msk_a1b2(din_15_msk_ab2),
-           .msk_a1b0_1sc(din_15_msk_ab0_1sc), .msk_a1b1_1sc(din_15_msk_ab1_1sc), .msk_a1b2_1sc(din_15_msk_ab2_1sc),
-
-           .a2b0(din_17_ab0), .a2b1(din_17_ab1),
-           .a2b0_1sc(din_17_ab0_1sc), .a2b1_1sc(din_17_ab1_1sc),
-           .msk_a2b0(din_17_msk_ab0), .msk_a2b1(din_17_msk_ab1),
-           .msk_a2b0_1sc(din_17_msk_ab0_1sc), .msk_a2b1_1sc(din_17_msk_ab1_1sc),
-           
-           .a3b0(din_19_ab0),
-           .a3b0_1sc(din_19_ab0_1sc)
+  .clk(clk), .p(addr_3_13),
+  .a0b0(din_13_ab0), .a0b1(din_13_ab1), .a0b2(din_13_ab2), .a0b3(din_13_ab3),
+  .a1b0(din_14_ab0), .a1b1(din_14_ab1), .a1b2(din_14_ab2), .a1b3(din_14_ab3),
+  .a2b0(din_15_ab0), .a2b1(din_15_ab1), .a2b2(din_15_ab2),
+  .a3b0(din_16_ab0), .a3b1(din_16_ab1), .a3b2(din_16_ab2),
+  .a4b0(din_17_ab0), .a4b1(din_17_ab1),
+  .a5b0(din_18_ab0), .a5b1(din_18_ab1),
+  .a6b0(din_19_ab0),
+  .a7b0(din_20_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffffff0000),
 	.NBITS(12)
 ) addr_3_14_calc (
-           .clk(clk), .sign(din_signs_reg[14]), 
-           .p(addr_3_14),
-           .a0b0(din_14_ab0), .a0b1(din_14_ab1), .a0b2(din_14_ab2), .a0b3(din_14_ab3),
-           .a0b0_1sc(din_14_ab0_1sc), .a0b1_1sc(din_14_ab1_1sc), .a0b2_1sc(din_14_ab2_1sc), .a0b3_1sc(din_14_ab3_1sc),
-           .msk_a0b0(din_14_msk_ab0), .msk_a0b1(din_14_msk_ab1), .msk_a0b2(din_14_msk_ab2), .msk_a0b3(din_14_msk_ab3),
-           .msk_a0b0_1sc(din_14_msk_ab0_1sc), .msk_a0b1_1sc(din_14_msk_ab1_1sc), .msk_a0b2_1sc(din_14_msk_ab2_1sc), .msk_a0b3_1sc(din_14_msk_ab3_1sc),
-
-           .a1b0(din_16_ab0), .a1b1(din_16_ab1), .a1b2(din_16_ab2),
-           .a1b0_1sc(din_16_ab0_1sc), .a1b1_1sc(din_16_ab1_1sc), .a1b2_1sc(din_16_ab2_1sc),
-           .msk_a1b0(din_16_msk_ab0), .msk_a1b1(din_16_msk_ab1), .msk_a1b2(din_16_msk_ab2),
-           .msk_a1b0_1sc(din_16_msk_ab0_1sc), .msk_a1b1_1sc(din_16_msk_ab1_1sc), .msk_a1b2_1sc(din_16_msk_ab2_1sc),
-
-           .a2b0(din_18_ab0), .a2b1(din_18_ab1),
-           .a2b0_1sc(din_18_ab0_1sc), .a2b1_1sc(din_18_ab1_1sc),
-           .msk_a2b0(din_18_msk_ab0), .msk_a2b1(din_18_msk_ab1),
-           .msk_a2b0_1sc(din_18_msk_ab0_1sc), .msk_a2b1_1sc(din_18_msk_ab1_1sc),
-           
-           .a3b0(din_20_ab0),
-           .a3b0_1sc(din_20_ab0_1sc)
+  .clk(clk), .p(addr_3_14),
+  .a0b0(din_14_ab0), .a0b1(din_14_ab1), .a0b2(din_14_ab2), .a0b3(din_14_ab3),
+  .a1b0(din_15_ab0), .a1b1(din_15_ab1), .a1b2(din_15_ab2), .a1b3(din_15_ab3),
+  .a2b0(din_16_ab0), .a2b1(din_16_ab1), .a2b2(din_16_ab2),
+  .a3b0(din_17_ab0), .a3b1(din_17_ab1), .a3b2(din_17_ab2),
+  .a4b0(din_18_ab0), .a4b1(din_18_ab1),
+  .a5b0(din_19_ab0), .a5b1(din_19_ab1),
+  .a6b0(din_20_ab0),
+  .a7b0(din_21_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffffff0000),
 	.NBITS(12)
 ) addr_3_15_calc (
-           .clk(clk), .sign(din_signs_reg[15]), 
-           .p(addr_3_15),
-           .a0b0(din_15_ab0), .a0b1(din_15_ab1), .a0b2(din_15_ab2), .a0b3(din_15_ab3),
-           .a0b0_1sc(din_15_ab0_1sc), .a0b1_1sc(din_15_ab1_1sc), .a0b2_1sc(din_15_ab2_1sc), .a0b3_1sc(din_15_ab3_1sc),
-           .msk_a0b0(din_15_msk_ab0), .msk_a0b1(din_15_msk_ab1), .msk_a0b2(din_15_msk_ab2), .msk_a0b3(din_15_msk_ab3),
-           .msk_a0b0_1sc(din_15_msk_ab0_1sc), .msk_a0b1_1sc(din_15_msk_ab1_1sc), .msk_a0b2_1sc(din_15_msk_ab2_1sc), .msk_a0b3_1sc(din_15_msk_ab3_1sc),
-
-           .a1b0(din_17_ab0), .a1b1(din_17_ab1), .a1b2(din_17_ab2),
-           .a1b0_1sc(din_17_ab0_1sc), .a1b1_1sc(din_17_ab1_1sc), .a1b2_1sc(din_17_ab2_1sc),
-           .msk_a1b0(din_17_msk_ab0), .msk_a1b1(din_17_msk_ab1), .msk_a1b2(din_17_msk_ab2),
-           .msk_a1b0_1sc(din_17_msk_ab0_1sc), .msk_a1b1_1sc(din_17_msk_ab1_1sc), .msk_a1b2_1sc(din_17_msk_ab2_1sc),
-
-           .a2b0(din_19_ab0), .a2b1(din_19_ab1),
-           .a2b0_1sc(din_19_ab0_1sc), .a2b1_1sc(din_19_ab1_1sc),
-           .msk_a2b0(din_19_msk_ab0), .msk_a2b1(din_19_msk_ab1),
-           .msk_a2b0_1sc(din_19_msk_ab0_1sc), .msk_a2b1_1sc(din_19_msk_ab1_1sc),
-           
-           .a3b0(din_21_ab0),
-           .a3b0_1sc(din_21_ab0_1sc)
+  .clk(clk), .p(addr_3_15),
+  .a0b0(din_15_ab0), .a0b1(din_15_ab1), .a0b2(din_15_ab2), .a0b3(din_15_ab3),
+  .a1b0(din_16_ab0), .a1b1(din_16_ab1), .a1b2(din_16_ab2), .a1b3(din_16_ab3),
+  .a2b0(din_17_ab0), .a2b1(din_17_ab1), .a2b2(din_17_ab2),
+  .a3b0(din_18_ab0), .a3b1(din_18_ab1), .a3b2(din_18_ab2),
+  .a4b0(din_19_ab0), .a4b1(din_19_ab1),
+  .a5b0(din_20_ab0), .a5b1(din_20_ab1),
+  .a6b0(din_21_ab0),
+  .a7b0(din_22_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffffff0000),
 	.NBITS(12)
 ) addr_3_16_calc (
-           .clk(clk), .sign(din_signs_reg[16]), 
-           .p(addr_3_16),
-           .a0b0(din_16_ab0), .a0b1(din_16_ab1), .a0b2(din_16_ab2), .a0b3(din_16_ab3),
-           .a0b0_1sc(din_16_ab0_1sc), .a0b1_1sc(din_16_ab1_1sc), .a0b2_1sc(din_16_ab2_1sc), .a0b3_1sc(din_16_ab3_1sc),
-           .msk_a0b0(din_16_msk_ab0), .msk_a0b1(din_16_msk_ab1), .msk_a0b2(din_16_msk_ab2), .msk_a0b3(din_16_msk_ab3),
-           .msk_a0b0_1sc(din_16_msk_ab0_1sc), .msk_a0b1_1sc(din_16_msk_ab1_1sc), .msk_a0b2_1sc(din_16_msk_ab2_1sc), .msk_a0b3_1sc(din_16_msk_ab3_1sc),
-
-           .a1b0(din_18_ab0), .a1b1(din_18_ab1), .a1b2(din_18_ab2),
-           .a1b0_1sc(din_18_ab0_1sc), .a1b1_1sc(din_18_ab1_1sc), .a1b2_1sc(din_18_ab2_1sc),
-           .msk_a1b0(din_18_msk_ab0), .msk_a1b1(din_18_msk_ab1), .msk_a1b2(din_18_msk_ab2),
-           .msk_a1b0_1sc(din_18_msk_ab0_1sc), .msk_a1b1_1sc(din_18_msk_ab1_1sc), .msk_a1b2_1sc(din_18_msk_ab2_1sc),
-
-           .a2b0(din_20_ab0), .a2b1(din_20_ab1),
-           .a2b0_1sc(din_20_ab0_1sc), .a2b1_1sc(din_20_ab1_1sc),
-           .msk_a2b0(din_20_msk_ab0), .msk_a2b1(din_20_msk_ab1),
-           .msk_a2b0_1sc(din_20_msk_ab0_1sc), .msk_a2b1_1sc(din_20_msk_ab1_1sc),
-           
-           .a3b0(din_22_ab0),
-           .a3b0_1sc(din_22_ab0_1sc)
+  .clk(clk), .p(addr_3_16),
+  .a0b0(din_16_ab0), .a0b1(din_16_ab1), .a0b2(din_16_ab2), .a0b3(din_16_ab3),
+  .a1b0(din_17_ab0), .a1b1(din_17_ab1), .a1b2(din_17_ab2), .a1b3(din_17_ab3),
+  .a2b0(din_18_ab0), .a2b1(din_18_ab1), .a2b2(din_18_ab2),
+  .a3b0(din_19_ab0), .a3b1(din_19_ab1), .a3b2(din_19_ab2),
+  .a4b0(din_20_ab0), .a4b1(din_20_ab1),
+  .a5b0(din_21_ab0), .a5b1(din_21_ab1),
+  .a6b0(din_22_ab0),
+  .a7b0(din_23_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffffff0000),
 	.NBITS(12)
 ) addr_3_17_calc (
-           .clk(clk), .sign(din_signs_reg[17]), 
-           .p(addr_3_17),
-           .a0b0(din_17_ab0), .a0b1(din_17_ab1), .a0b2(din_17_ab2), .a0b3(din_17_ab3),
-           .a0b0_1sc(din_17_ab0_1sc), .a0b1_1sc(din_17_ab1_1sc), .a0b2_1sc(din_17_ab2_1sc), .a0b3_1sc(din_17_ab3_1sc),
-           .msk_a0b0(din_17_msk_ab0), .msk_a0b1(din_17_msk_ab1), .msk_a0b2(din_17_msk_ab2), .msk_a0b3(din_17_msk_ab3),
-           .msk_a0b0_1sc(din_17_msk_ab0_1sc), .msk_a0b1_1sc(din_17_msk_ab1_1sc), .msk_a0b2_1sc(din_17_msk_ab2_1sc), .msk_a0b3_1sc(din_17_msk_ab3_1sc),
-
-           .a1b0(din_19_ab0), .a1b1(din_19_ab1), .a1b2(din_19_ab2),
-           .a1b0_1sc(din_19_ab0_1sc), .a1b1_1sc(din_19_ab1_1sc), .a1b2_1sc(din_19_ab2_1sc),
-           .msk_a1b0(din_19_msk_ab0), .msk_a1b1(din_19_msk_ab1), .msk_a1b2(din_19_msk_ab2),
-           .msk_a1b0_1sc(din_19_msk_ab0_1sc), .msk_a1b1_1sc(din_19_msk_ab1_1sc), .msk_a1b2_1sc(din_19_msk_ab2_1sc),
-
-           .a2b0(din_21_ab0), .a2b1(din_21_ab1),
-           .a2b0_1sc(din_21_ab0_1sc), .a2b1_1sc(din_21_ab1_1sc),
-           .msk_a2b0(din_21_msk_ab0), .msk_a2b1(din_21_msk_ab1),
-           .msk_a2b0_1sc(din_21_msk_ab0_1sc), .msk_a2b1_1sc(din_21_msk_ab1_1sc),
-           
-           .a3b0(din_23_ab0),
-           .a3b0_1sc(din_23_ab0_1sc)
+  .clk(clk), .p(addr_3_17),
+  .a0b0(din_17_ab0), .a0b1(din_17_ab1), .a0b2(din_17_ab2), .a0b3(din_17_ab3),
+  .a1b0(din_18_ab0), .a1b1(din_18_ab1), .a1b2(din_18_ab2), .a1b3(din_18_ab3),
+  .a2b0(din_19_ab0), .a2b1(din_19_ab1), .a2b2(din_19_ab2),
+  .a3b0(din_20_ab0), .a3b1(din_20_ab1), .a3b2(din_20_ab2),
+  .a4b0(din_21_ab0), .a4b1(din_21_ab1),
+  .a5b0(din_22_ab0), .a5b1(din_22_ab1),
+  .a6b0(din_23_ab0),
+  .a7b0(din_24_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffffff0000),
 	.NBITS(12)
 ) addr_3_18_calc (
-           .clk(clk), .sign(din_signs_reg[18]), 
-           .p(addr_3_18),
-           .a0b0(din_18_ab0), .a0b1(din_18_ab1), .a0b2(din_18_ab2), .a0b3(din_18_ab3),
-           .a0b0_1sc(din_18_ab0_1sc), .a0b1_1sc(din_18_ab1_1sc), .a0b2_1sc(din_18_ab2_1sc), .a0b3_1sc(din_18_ab3_1sc),
-           .msk_a0b0(din_18_msk_ab0), .msk_a0b1(din_18_msk_ab1), .msk_a0b2(din_18_msk_ab2), .msk_a0b3(din_18_msk_ab3),
-           .msk_a0b0_1sc(din_18_msk_ab0_1sc), .msk_a0b1_1sc(din_18_msk_ab1_1sc), .msk_a0b2_1sc(din_18_msk_ab2_1sc), .msk_a0b3_1sc(din_18_msk_ab3_1sc),
-
-           .a1b0(din_20_ab0), .a1b1(din_20_ab1), .a1b2(din_20_ab2),
-           .a1b0_1sc(din_20_ab0_1sc), .a1b1_1sc(din_20_ab1_1sc), .a1b2_1sc(din_20_ab2_1sc),
-           .msk_a1b0(din_20_msk_ab0), .msk_a1b1(din_20_msk_ab1), .msk_a1b2(din_20_msk_ab2),
-           .msk_a1b0_1sc(din_20_msk_ab0_1sc), .msk_a1b1_1sc(din_20_msk_ab1_1sc), .msk_a1b2_1sc(din_20_msk_ab2_1sc),
-
-           .a2b0(din_22_ab0), .a2b1(din_22_ab1),
-           .a2b0_1sc(din_22_ab0_1sc), .a2b1_1sc(din_22_ab1_1sc),
-           .msk_a2b0(din_22_msk_ab0), .msk_a2b1(din_22_msk_ab1),
-           .msk_a2b0_1sc(din_22_msk_ab0_1sc), .msk_a2b1_1sc(din_22_msk_ab1_1sc),
-           
-           .a3b0(din_24_ab0),
-           .a3b0_1sc(din_24_ab0_1sc)
+  .clk(clk), .p(addr_3_18),
+  .a0b0(din_18_ab0), .a0b1(din_18_ab1), .a0b2(din_18_ab2), .a0b3(din_18_ab3),
+  .a1b0(din_19_ab0), .a1b1(din_19_ab1), .a1b2(din_19_ab2), .a1b3(din_19_ab3),
+  .a2b0(din_20_ab0), .a2b1(din_20_ab1), .a2b2(din_20_ab2),
+  .a3b0(din_21_ab0), .a3b1(din_21_ab1), .a3b2(din_21_ab2),
+  .a4b0(din_22_ab0), .a4b1(din_22_ab1),
+  .a5b0(din_23_ab0), .a5b1(din_23_ab1),
+  .a6b0(din_24_ab0),
+  .a7b0(din_25_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffffff0000),
 	.NBITS(12)
 ) addr_3_19_calc (
-           .clk(clk), .sign(din_signs_reg[19]), 
-           .p(addr_3_19),
-           .a0b0(din_19_ab0), .a0b1(din_19_ab1), .a0b2(din_19_ab2), .a0b3(din_19_ab3),
-           .a0b0_1sc(din_19_ab0_1sc), .a0b1_1sc(din_19_ab1_1sc), .a0b2_1sc(din_19_ab2_1sc), .a0b3_1sc(din_19_ab3_1sc),
-           .msk_a0b0(din_19_msk_ab0), .msk_a0b1(din_19_msk_ab1), .msk_a0b2(din_19_msk_ab2), .msk_a0b3(din_19_msk_ab3),
-           .msk_a0b0_1sc(din_19_msk_ab0_1sc), .msk_a0b1_1sc(din_19_msk_ab1_1sc), .msk_a0b2_1sc(din_19_msk_ab2_1sc), .msk_a0b3_1sc(din_19_msk_ab3_1sc),
-
-           .a1b0(din_21_ab0), .a1b1(din_21_ab1), .a1b2(din_21_ab2),
-           .a1b0_1sc(din_21_ab0_1sc), .a1b1_1sc(din_21_ab1_1sc), .a1b2_1sc(din_21_ab2_1sc),
-           .msk_a1b0(din_21_msk_ab0), .msk_a1b1(din_21_msk_ab1), .msk_a1b2(din_21_msk_ab2),
-           .msk_a1b0_1sc(din_21_msk_ab0_1sc), .msk_a1b1_1sc(din_21_msk_ab1_1sc), .msk_a1b2_1sc(din_21_msk_ab2_1sc),
-
-           .a2b0(din_23_ab0), .a2b1(din_23_ab1),
-           .a2b0_1sc(din_23_ab0_1sc), .a2b1_1sc(din_23_ab1_1sc),
-           .msk_a2b0(din_23_msk_ab0), .msk_a2b1(din_23_msk_ab1),
-           .msk_a2b0_1sc(din_23_msk_ab0_1sc), .msk_a2b1_1sc(din_23_msk_ab1_1sc),
-           
-           .a3b0(din_25_ab0),
-           .a3b0_1sc(din_25_ab0_1sc)
+  .clk(clk), .p(addr_3_19),
+  .a0b0(din_19_ab0), .a0b1(din_19_ab1), .a0b2(din_19_ab2), .a0b3(din_19_ab3),
+  .a1b0(din_20_ab0), .a1b1(din_20_ab1), .a1b2(din_20_ab2), .a1b3(din_20_ab3),
+  .a2b0(din_21_ab0), .a2b1(din_21_ab1), .a2b2(din_21_ab2),
+  .a3b0(din_22_ab0), .a3b1(din_22_ab1), .a3b2(din_22_ab2),
+  .a4b0(din_23_ab0), .a4b1(din_23_ab1),
+  .a5b0(din_24_ab0), .a5b1(din_24_ab1),
+  .a6b0(din_25_ab0),
+  .a7b0(din_26_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffffff0000),
 	.NBITS(12)
 ) addr_3_20_calc (
-           .clk(clk), .sign(din_signs_reg[20]), 
-           .p(addr_3_20),
-           .a0b0(din_20_ab0), .a0b1(din_20_ab1), .a0b2(din_20_ab2), .a0b3(din_20_ab3),
-           .a0b0_1sc(din_20_ab0_1sc), .a0b1_1sc(din_20_ab1_1sc), .a0b2_1sc(din_20_ab2_1sc), .a0b3_1sc(din_20_ab3_1sc),
-           .msk_a0b0(din_20_msk_ab0), .msk_a0b1(din_20_msk_ab1), .msk_a0b2(din_20_msk_ab2), .msk_a0b3(din_20_msk_ab3),
-           .msk_a0b0_1sc(din_20_msk_ab0_1sc), .msk_a0b1_1sc(din_20_msk_ab1_1sc), .msk_a0b2_1sc(din_20_msk_ab2_1sc), .msk_a0b3_1sc(din_20_msk_ab3_1sc),
-
-           .a1b0(din_22_ab0), .a1b1(din_22_ab1), .a1b2(din_22_ab2),
-           .a1b0_1sc(din_22_ab0_1sc), .a1b1_1sc(din_22_ab1_1sc), .a1b2_1sc(din_22_ab2_1sc),
-           .msk_a1b0(din_22_msk_ab0), .msk_a1b1(din_22_msk_ab1), .msk_a1b2(din_22_msk_ab2),
-           .msk_a1b0_1sc(din_22_msk_ab0_1sc), .msk_a1b1_1sc(din_22_msk_ab1_1sc), .msk_a1b2_1sc(din_22_msk_ab2_1sc),
-
-           .a2b0(din_24_ab0), .a2b1(din_24_ab1),
-           .a2b0_1sc(din_24_ab0_1sc), .a2b1_1sc(din_24_ab1_1sc),
-           .msk_a2b0(din_24_msk_ab0), .msk_a2b1(din_24_msk_ab1),
-           .msk_a2b0_1sc(din_24_msk_ab0_1sc), .msk_a2b1_1sc(din_24_msk_ab1_1sc),
-           
-           .a3b0(din_26_ab0),
-           .a3b0_1sc(din_26_ab0_1sc)
+  .clk(clk), .p(addr_3_20),
+  .a0b0(din_20_ab0), .a0b1(din_20_ab1), .a0b2(din_20_ab2), .a0b3(din_20_ab3),
+  .a1b0(din_21_ab0), .a1b1(din_21_ab1), .a1b2(din_21_ab2), .a1b3(din_21_ab3),
+  .a2b0(din_22_ab0), .a2b1(din_22_ab1), .a2b2(din_22_ab2),
+  .a3b0(din_23_ab0), .a3b1(din_23_ab1), .a3b2(din_23_ab2),
+  .a4b0(din_24_ab0), .a4b1(din_24_ab1),
+  .a5b0(din_25_ab0), .a5b1(din_25_ab1),
+  .a6b0(din_26_ab0),
+  .a7b0(din_27_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffffff0000),
 	.NBITS(12)
 ) addr_3_21_calc (
-           .clk(clk), .sign(din_signs_reg[21]), 
-           .p(addr_3_21),
-           .a0b0(din_21_ab0), .a0b1(din_21_ab1), .a0b2(din_21_ab2), .a0b3(din_21_ab3),
-           .a0b0_1sc(din_21_ab0_1sc), .a0b1_1sc(din_21_ab1_1sc), .a0b2_1sc(din_21_ab2_1sc), .a0b3_1sc(din_21_ab3_1sc),
-           .msk_a0b0(din_21_msk_ab0), .msk_a0b1(din_21_msk_ab1), .msk_a0b2(din_21_msk_ab2), .msk_a0b3(din_21_msk_ab3),
-           .msk_a0b0_1sc(din_21_msk_ab0_1sc), .msk_a0b1_1sc(din_21_msk_ab1_1sc), .msk_a0b2_1sc(din_21_msk_ab2_1sc), .msk_a0b3_1sc(din_21_msk_ab3_1sc),
-
-           .a1b0(din_23_ab0), .a1b1(din_23_ab1), .a1b2(din_23_ab2),
-           .a1b0_1sc(din_23_ab0_1sc), .a1b1_1sc(din_23_ab1_1sc), .a1b2_1sc(din_23_ab2_1sc),
-           .msk_a1b0(din_23_msk_ab0), .msk_a1b1(din_23_msk_ab1), .msk_a1b2(din_23_msk_ab2),
-           .msk_a1b0_1sc(din_23_msk_ab0_1sc), .msk_a1b1_1sc(din_23_msk_ab1_1sc), .msk_a1b2_1sc(din_23_msk_ab2_1sc),
-
-           .a2b0(din_25_ab0), .a2b1(din_25_ab1),
-           .a2b0_1sc(din_25_ab0_1sc), .a2b1_1sc(din_25_ab1_1sc),
-           .msk_a2b0(din_25_msk_ab0), .msk_a2b1(din_25_msk_ab1),
-           .msk_a2b0_1sc(din_25_msk_ab0_1sc), .msk_a2b1_1sc(din_25_msk_ab1_1sc),
-           
-           .a3b0(din_27_ab0),
-           .a3b0_1sc(din_27_ab0_1sc)
+  .clk(clk), .p(addr_3_21),
+  .a0b0(din_21_ab0), .a0b1(din_21_ab1), .a0b2(din_21_ab2), .a0b3(din_21_ab3),
+  .a1b0(din_22_ab0), .a1b1(din_22_ab1), .a1b2(din_22_ab2), .a1b3(din_22_ab3),
+  .a2b0(din_23_ab0), .a2b1(din_23_ab1), .a2b2(din_23_ab2),
+  .a3b0(din_24_ab0), .a3b1(din_24_ab1), .a3b2(din_24_ab2),
+  .a4b0(din_25_ab0), .a4b1(din_25_ab1),
+  .a5b0(din_26_ab0), .a5b1(din_26_ab1),
+  .a6b0(din_27_ab0),
+  .a7b0(din_28_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffffff0000),
 	.NBITS(12)
 ) addr_3_22_calc (
-           .clk(clk), .sign(din_signs_reg[22]), 
-           .p(addr_3_22),
-           .a0b0(din_22_ab0), .a0b1(din_22_ab1), .a0b2(din_22_ab2), .a0b3(din_22_ab3),
-           .a0b0_1sc(din_22_ab0_1sc), .a0b1_1sc(din_22_ab1_1sc), .a0b2_1sc(din_22_ab2_1sc), .a0b3_1sc(din_22_ab3_1sc),
-           .msk_a0b0(din_22_msk_ab0), .msk_a0b1(din_22_msk_ab1), .msk_a0b2(din_22_msk_ab2), .msk_a0b3(din_22_msk_ab3),
-           .msk_a0b0_1sc(din_22_msk_ab0_1sc), .msk_a0b1_1sc(din_22_msk_ab1_1sc), .msk_a0b2_1sc(din_22_msk_ab2_1sc), .msk_a0b3_1sc(din_22_msk_ab3_1sc),
-
-           .a1b0(din_24_ab0), .a1b1(din_24_ab1), .a1b2(din_24_ab2),
-           .a1b0_1sc(din_24_ab0_1sc), .a1b1_1sc(din_24_ab1_1sc), .a1b2_1sc(din_24_ab2_1sc),
-           .msk_a1b0(din_24_msk_ab0), .msk_a1b1(din_24_msk_ab1), .msk_a1b2(din_24_msk_ab2),
-           .msk_a1b0_1sc(din_24_msk_ab0_1sc), .msk_a1b1_1sc(din_24_msk_ab1_1sc), .msk_a1b2_1sc(din_24_msk_ab2_1sc),
-
-           .a2b0(din_26_ab0), .a2b1(din_26_ab1),
-           .a2b0_1sc(din_26_ab0_1sc), .a2b1_1sc(din_26_ab1_1sc),
-           .msk_a2b0(din_26_msk_ab0), .msk_a2b1(din_26_msk_ab1),
-           .msk_a2b0_1sc(din_26_msk_ab0_1sc), .msk_a2b1_1sc(din_26_msk_ab1_1sc),
-           
-           .a3b0(din_28_ab0),
-           .a3b0_1sc(din_28_ab0_1sc)
+  .clk(clk), .p(addr_3_22),
+  .a0b0(din_22_ab0), .a0b1(din_22_ab1), .a0b2(din_22_ab2), .a0b3(din_22_ab3),
+  .a1b0(din_23_ab0), .a1b1(din_23_ab1), .a1b2(din_23_ab2), .a1b3(din_23_ab3),
+  .a2b0(din_24_ab0), .a2b1(din_24_ab1), .a2b2(din_24_ab2),
+  .a3b0(din_25_ab0), .a3b1(din_25_ab1), .a3b2(din_25_ab2),
+  .a4b0(din_26_ab0), .a4b1(din_26_ab1),
+  .a5b0(din_27_ab0), .a5b1(din_27_ab1),
+  .a6b0(din_28_ab0),
+  .a7b0(din_29_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffffff0000),
 	.NBITS(12)
 ) addr_3_23_calc (
-           .clk(clk), .sign(din_signs_reg[23]), 
-           .p(addr_3_23),
-           .a0b0(din_23_ab0), .a0b1(din_23_ab1), .a0b2(din_23_ab2), .a0b3(din_23_ab3),
-           .a0b0_1sc(din_23_ab0_1sc), .a0b1_1sc(din_23_ab1_1sc), .a0b2_1sc(din_23_ab2_1sc), .a0b3_1sc(din_23_ab3_1sc),
-           .msk_a0b0(din_23_msk_ab0), .msk_a0b1(din_23_msk_ab1), .msk_a0b2(din_23_msk_ab2), .msk_a0b3(din_23_msk_ab3),
-           .msk_a0b0_1sc(din_23_msk_ab0_1sc), .msk_a0b1_1sc(din_23_msk_ab1_1sc), .msk_a0b2_1sc(din_23_msk_ab2_1sc), .msk_a0b3_1sc(din_23_msk_ab3_1sc),
-
-           .a1b0(din_25_ab0), .a1b1(din_25_ab1), .a1b2(din_25_ab2),
-           .a1b0_1sc(din_25_ab0_1sc), .a1b1_1sc(din_25_ab1_1sc), .a1b2_1sc(din_25_ab2_1sc),
-           .msk_a1b0(din_25_msk_ab0), .msk_a1b1(din_25_msk_ab1), .msk_a1b2(din_25_msk_ab2),
-           .msk_a1b0_1sc(din_25_msk_ab0_1sc), .msk_a1b1_1sc(din_25_msk_ab1_1sc), .msk_a1b2_1sc(din_25_msk_ab2_1sc),
-
-           .a2b0(din_27_ab0), .a2b1(din_27_ab1),
-           .a2b0_1sc(din_27_ab0_1sc), .a2b1_1sc(din_27_ab1_1sc),
-           .msk_a2b0(din_27_msk_ab0), .msk_a2b1(din_27_msk_ab1),
-           .msk_a2b0_1sc(din_27_msk_ab0_1sc), .msk_a2b1_1sc(din_27_msk_ab1_1sc),
-           
-           .a3b0(din_29_ab0),
-           .a3b0_1sc(din_29_ab0_1sc)
+  .clk(clk), .p(addr_3_23),
+  .a0b0(din_23_ab0), .a0b1(din_23_ab1), .a0b2(din_23_ab2), .a0b3(din_23_ab3),
+  .a1b0(din_24_ab0), .a1b1(din_24_ab1), .a1b2(din_24_ab2), .a1b3(din_24_ab3),
+  .a2b0(din_25_ab0), .a2b1(din_25_ab1), .a2b2(din_25_ab2),
+  .a3b0(din_26_ab0), .a3b1(din_26_ab1), .a3b2(din_26_ab2),
+  .a4b0(din_27_ab0), .a4b1(din_27_ab1),
+  .a5b0(din_28_ab0), .a5b1(din_28_ab1),
+  .a6b0(din_29_ab0),
+  .a7b0(din_30_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffffff0000),
 	.NBITS(12)
 ) addr_3_24_calc (
-           .clk(clk), .sign(din_signs_reg[24]), 
-           .p(addr_3_24),
-           .a0b0(din_24_ab0), .a0b1(din_24_ab1), .a0b2(din_24_ab2), .a0b3(din_24_ab3),
-           .a0b0_1sc(din_24_ab0_1sc), .a0b1_1sc(din_24_ab1_1sc), .a0b2_1sc(din_24_ab2_1sc), .a0b3_1sc(din_24_ab3_1sc),
-           .msk_a0b0(din_24_msk_ab0), .msk_a0b1(din_24_msk_ab1), .msk_a0b2(din_24_msk_ab2), .msk_a0b3(din_24_msk_ab3),
-           .msk_a0b0_1sc(din_24_msk_ab0_1sc), .msk_a0b1_1sc(din_24_msk_ab1_1sc), .msk_a0b2_1sc(din_24_msk_ab2_1sc), .msk_a0b3_1sc(din_24_msk_ab3_1sc),
-
-           .a1b0(din_26_ab0), .a1b1(din_26_ab1), .a1b2(din_26_ab2),
-           .a1b0_1sc(din_26_ab0_1sc), .a1b1_1sc(din_26_ab1_1sc), .a1b2_1sc(din_26_ab2_1sc),
-           .msk_a1b0(din_26_msk_ab0), .msk_a1b1(din_26_msk_ab1), .msk_a1b2(din_26_msk_ab2),
-           .msk_a1b0_1sc(din_26_msk_ab0_1sc), .msk_a1b1_1sc(din_26_msk_ab1_1sc), .msk_a1b2_1sc(din_26_msk_ab2_1sc),
-
-           .a2b0(din_28_ab0), .a2b1(din_28_ab1),
-           .a2b0_1sc(din_28_ab0_1sc), .a2b1_1sc(din_28_ab1_1sc),
-           .msk_a2b0(din_28_msk_ab0), .msk_a2b1(din_28_msk_ab1),
-           .msk_a2b0_1sc(din_28_msk_ab0_1sc), .msk_a2b1_1sc(din_28_msk_ab1_1sc),
-           
-           .a3b0(din_30_ab0),
-           .a3b0_1sc(din_30_ab0_1sc)
+  .clk(clk), .p(addr_3_24),
+  .a0b0(din_24_ab0), .a0b1(din_24_ab1), .a0b2(din_24_ab2), .a0b3(din_24_ab3),
+  .a1b0(din_25_ab0), .a1b1(din_25_ab1), .a1b2(din_25_ab2), .a1b3(din_25_ab3),
+  .a2b0(din_26_ab0), .a2b1(din_26_ab1), .a2b2(din_26_ab2),
+  .a3b0(din_27_ab0), .a3b1(din_27_ab1), .a3b2(din_27_ab2),
+  .a4b0(din_28_ab0), .a4b1(din_28_ab1),
+  .a5b0(din_29_ab0), .a5b1(din_29_ab1),
+  .a6b0(din_30_ab0),
+  .a7b0(din_31_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffffff0000),
 	.NBITS(12)
 ) addr_3_25_calc (
-           .clk(clk), .sign(din_signs_reg[25]), 
-           .p(addr_3_25),
-           .a0b0(din_25_ab0), .a0b1(din_25_ab1), .a0b2(din_25_ab2), .a0b3(din_25_ab3),
-           .a0b0_1sc(din_25_ab0_1sc), .a0b1_1sc(din_25_ab1_1sc), .a0b2_1sc(din_25_ab2_1sc), .a0b3_1sc(din_25_ab3_1sc),
-           .msk_a0b0(din_25_msk_ab0), .msk_a0b1(din_25_msk_ab1), .msk_a0b2(din_25_msk_ab2), .msk_a0b3(din_25_msk_ab3),
-           .msk_a0b0_1sc(din_25_msk_ab0_1sc), .msk_a0b1_1sc(din_25_msk_ab1_1sc), .msk_a0b2_1sc(din_25_msk_ab2_1sc), .msk_a0b3_1sc(din_25_msk_ab3_1sc),
-
-           .a1b0(din_27_ab0), .a1b1(din_27_ab1), .a1b2(din_27_ab2),
-           .a1b0_1sc(din_27_ab0_1sc), .a1b1_1sc(din_27_ab1_1sc), .a1b2_1sc(din_27_ab2_1sc),
-           .msk_a1b0(din_27_msk_ab0), .msk_a1b1(din_27_msk_ab1), .msk_a1b2(din_27_msk_ab2),
-           .msk_a1b0_1sc(din_27_msk_ab0_1sc), .msk_a1b1_1sc(din_27_msk_ab1_1sc), .msk_a1b2_1sc(din_27_msk_ab2_1sc),
-
-           .a2b0(din_29_ab0), .a2b1(din_29_ab1),
-           .a2b0_1sc(din_29_ab0_1sc), .a2b1_1sc(din_29_ab1_1sc),
-           .msk_a2b0(din_29_msk_ab0), .msk_a2b1(din_29_msk_ab1),
-           .msk_a2b0_1sc(din_29_msk_ab0_1sc), .msk_a2b1_1sc(din_29_msk_ab1_1sc),
-           
-           .a3b0(din_31_ab0),
-           .a3b0_1sc(din_31_ab0_1sc)
+  .clk(clk), .p(addr_3_25),
+  .a0b0(din_25_ab0), .a0b1(din_25_ab1), .a0b2(din_25_ab2), .a0b3(din_25_ab3),
+  .a1b0(din_26_ab0), .a1b1(din_26_ab1), .a1b2(din_26_ab2), .a1b3(din_26_ab3),
+  .a2b0(din_27_ab0), .a2b1(din_27_ab1), .a2b2(din_27_ab2),
+  .a3b0(din_28_ab0), .a3b1(din_28_ab1), .a3b2(din_28_ab2),
+  .a4b0(din_29_ab0), .a4b1(din_29_ab1),
+  .a5b0(din_30_ab0), .a5b1(din_30_ab1),
+  .a6b0(din_31_ab0),
+  .a7b0(din_32_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffffff0000),
 	.NBITS(12)
 ) addr_3_26_calc (
-           .clk(clk), .sign(din_signs_reg[26]), 
-           .p(addr_3_26),
-           .a0b0(din_26_ab0), .a0b1(din_26_ab1), .a0b2(din_26_ab2), .a0b3(din_26_ab3),
-           .a0b0_1sc(din_26_ab0_1sc), .a0b1_1sc(din_26_ab1_1sc), .a0b2_1sc(din_26_ab2_1sc), .a0b3_1sc(din_26_ab3_1sc),
-           .msk_a0b0(din_26_msk_ab0), .msk_a0b1(din_26_msk_ab1), .msk_a0b2(din_26_msk_ab2), .msk_a0b3(din_26_msk_ab3),
-           .msk_a0b0_1sc(din_26_msk_ab0_1sc), .msk_a0b1_1sc(din_26_msk_ab1_1sc), .msk_a0b2_1sc(din_26_msk_ab2_1sc), .msk_a0b3_1sc(din_26_msk_ab3_1sc),
-
-           .a1b0(din_28_ab0), .a1b1(din_28_ab1), .a1b2(din_28_ab2),
-           .a1b0_1sc(din_28_ab0_1sc), .a1b1_1sc(din_28_ab1_1sc), .a1b2_1sc(din_28_ab2_1sc),
-           .msk_a1b0(din_28_msk_ab0), .msk_a1b1(din_28_msk_ab1), .msk_a1b2(din_28_msk_ab2),
-           .msk_a1b0_1sc(din_28_msk_ab0_1sc), .msk_a1b1_1sc(din_28_msk_ab1_1sc), .msk_a1b2_1sc(din_28_msk_ab2_1sc),
-
-           .a2b0(din_30_ab0), .a2b1(din_30_ab1),
-           .a2b0_1sc(din_30_ab0_1sc), .a2b1_1sc(din_30_ab1_1sc),
-           .msk_a2b0(din_30_msk_ab0), .msk_a2b1(din_30_msk_ab1),
-           .msk_a2b0_1sc(din_30_msk_ab0_1sc), .msk_a2b1_1sc(din_30_msk_ab1_1sc),
-           
-           .a3b0(din_32_ab0),
-           .a3b0_1sc(din_32_ab0_1sc)
+  .clk(clk), .p(addr_3_26),
+  .a0b0(din_26_ab0), .a0b1(din_26_ab1), .a0b2(din_26_ab2), .a0b3(din_26_ab3),
+  .a1b0(din_27_ab0), .a1b1(din_27_ab1), .a1b2(din_27_ab2), .a1b3(din_27_ab3),
+  .a2b0(din_28_ab0), .a2b1(din_28_ab1), .a2b2(din_28_ab2),
+  .a3b0(din_29_ab0), .a3b1(din_29_ab1), .a3b2(din_29_ab2),
+  .a4b0(din_30_ab0), .a4b1(din_30_ab1),
+  .a5b0(din_31_ab0), .a5b1(din_31_ab1),
+  .a6b0(din_32_ab0),
+  .a7b0(din_33_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffffff0000),
 	.NBITS(12)
 ) addr_3_27_calc (
-           .clk(clk), .sign(din_signs_reg[27]), 
-           .p(addr_3_27),
-           .a0b0(din_27_ab0), .a0b1(din_27_ab1), .a0b2(din_27_ab2), .a0b3(din_27_ab3),
-           .a0b0_1sc(din_27_ab0_1sc), .a0b1_1sc(din_27_ab1_1sc), .a0b2_1sc(din_27_ab2_1sc), .a0b3_1sc(din_27_ab3_1sc),
-           .msk_a0b0(din_27_msk_ab0), .msk_a0b1(din_27_msk_ab1), .msk_a0b2(din_27_msk_ab2), .msk_a0b3(din_27_msk_ab3),
-           .msk_a0b0_1sc(din_27_msk_ab0_1sc), .msk_a0b1_1sc(din_27_msk_ab1_1sc), .msk_a0b2_1sc(din_27_msk_ab2_1sc), .msk_a0b3_1sc(din_27_msk_ab3_1sc),
-
-           .a1b0(din_29_ab0), .a1b1(din_29_ab1), .a1b2(din_29_ab2),
-           .a1b0_1sc(din_29_ab0_1sc), .a1b1_1sc(din_29_ab1_1sc), .a1b2_1sc(din_29_ab2_1sc),
-           .msk_a1b0(din_29_msk_ab0), .msk_a1b1(din_29_msk_ab1), .msk_a1b2(din_29_msk_ab2),
-           .msk_a1b0_1sc(din_29_msk_ab0_1sc), .msk_a1b1_1sc(din_29_msk_ab1_1sc), .msk_a1b2_1sc(din_29_msk_ab2_1sc),
-
-           .a2b0(din_31_ab0), .a2b1(din_31_ab1),
-           .a2b0_1sc(din_31_ab0_1sc), .a2b1_1sc(din_31_ab1_1sc),
-           .msk_a2b0(din_31_msk_ab0), .msk_a2b1(din_31_msk_ab1),
-           .msk_a2b0_1sc(din_31_msk_ab0_1sc), .msk_a2b1_1sc(din_31_msk_ab1_1sc),
-           
-           .a3b0(din_33_ab0),
-           .a3b0_1sc(din_33_ab0_1sc)
+  .clk(clk), .p(addr_3_27),
+  .a0b0(din_27_ab0), .a0b1(din_27_ab1), .a0b2(din_27_ab2), .a0b3(din_27_ab3),
+  .a1b0(din_28_ab0), .a1b1(din_28_ab1), .a1b2(din_28_ab2), .a1b3(din_28_ab3),
+  .a2b0(din_29_ab0), .a2b1(din_29_ab1), .a2b2(din_29_ab2),
+  .a3b0(din_30_ab0), .a3b1(din_30_ab1), .a3b2(din_30_ab2),
+  .a4b0(din_31_ab0), .a4b1(din_31_ab1),
+  .a5b0(din_32_ab0), .a5b1(din_32_ab1),
+  .a6b0(din_33_ab0),
+  .a7b0(din_34_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffffff0000),
 	.NBITS(12)
 ) addr_3_28_calc (
-           .clk(clk), .sign(din_signs_reg[28]), 
-           .p(addr_3_28),
-           .a0b0(din_28_ab0), .a0b1(din_28_ab1), .a0b2(din_28_ab2), .a0b3(din_28_ab3),
-           .a0b0_1sc(din_28_ab0_1sc), .a0b1_1sc(din_28_ab1_1sc), .a0b2_1sc(din_28_ab2_1sc), .a0b3_1sc(din_28_ab3_1sc),
-           .msk_a0b0(din_28_msk_ab0), .msk_a0b1(din_28_msk_ab1), .msk_a0b2(din_28_msk_ab2), .msk_a0b3(din_28_msk_ab3),
-           .msk_a0b0_1sc(din_28_msk_ab0_1sc), .msk_a0b1_1sc(din_28_msk_ab1_1sc), .msk_a0b2_1sc(din_28_msk_ab2_1sc), .msk_a0b3_1sc(din_28_msk_ab3_1sc),
-
-           .a1b0(din_30_ab0), .a1b1(din_30_ab1), .a1b2(din_30_ab2),
-           .a1b0_1sc(din_30_ab0_1sc), .a1b1_1sc(din_30_ab1_1sc), .a1b2_1sc(din_30_ab2_1sc),
-           .msk_a1b0(din_30_msk_ab0), .msk_a1b1(din_30_msk_ab1), .msk_a1b2(din_30_msk_ab2),
-           .msk_a1b0_1sc(din_30_msk_ab0_1sc), .msk_a1b1_1sc(din_30_msk_ab1_1sc), .msk_a1b2_1sc(din_30_msk_ab2_1sc),
-
-           .a2b0(din_32_ab0), .a2b1(din_32_ab1),
-           .a2b0_1sc(din_32_ab0_1sc), .a2b1_1sc(din_32_ab1_1sc),
-           .msk_a2b0(din_32_msk_ab0), .msk_a2b1(din_32_msk_ab1),
-           .msk_a2b0_1sc(din_32_msk_ab0_1sc), .msk_a2b1_1sc(din_32_msk_ab1_1sc),
-           
-           .a3b0(din_34_ab0),
-           .a3b0_1sc(din_34_ab0_1sc)
+  .clk(clk), .p(addr_3_28),
+  .a0b0(din_28_ab0), .a0b1(din_28_ab1), .a0b2(din_28_ab2), .a0b3(din_28_ab3),
+  .a1b0(din_29_ab0), .a1b1(din_29_ab1), .a1b2(din_29_ab2), .a1b3(din_29_ab3),
+  .a2b0(din_30_ab0), .a2b1(din_30_ab1), .a2b2(din_30_ab2),
+  .a3b0(din_31_ab0), .a3b1(din_31_ab1), .a3b2(din_31_ab2),
+  .a4b0(din_32_ab0), .a4b1(din_32_ab1),
+  .a5b0(din_33_ab0), .a5b1(din_33_ab1),
+  .a6b0(din_34_ab0),
+  .a7b0(din_35_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffffff0000),
 	.NBITS(12)
 ) addr_3_29_calc (
-           .clk(clk), .sign(din_signs_reg[29]), 
-           .p(addr_3_29),
-           .a0b0(din_29_ab0), .a0b1(din_29_ab1), .a0b2(din_29_ab2), .a0b3(din_29_ab3),
-           .a0b0_1sc(din_29_ab0_1sc), .a0b1_1sc(din_29_ab1_1sc), .a0b2_1sc(din_29_ab2_1sc), .a0b3_1sc(din_29_ab3_1sc),
-           .msk_a0b0(din_29_msk_ab0), .msk_a0b1(din_29_msk_ab1), .msk_a0b2(din_29_msk_ab2), .msk_a0b3(din_29_msk_ab3),
-           .msk_a0b0_1sc(din_29_msk_ab0_1sc), .msk_a0b1_1sc(din_29_msk_ab1_1sc), .msk_a0b2_1sc(din_29_msk_ab2_1sc), .msk_a0b3_1sc(din_29_msk_ab3_1sc),
-
-           .a1b0(din_31_ab0), .a1b1(din_31_ab1), .a1b2(din_31_ab2),
-           .a1b0_1sc(din_31_ab0_1sc), .a1b1_1sc(din_31_ab1_1sc), .a1b2_1sc(din_31_ab2_1sc),
-           .msk_a1b0(din_31_msk_ab0), .msk_a1b1(din_31_msk_ab1), .msk_a1b2(din_31_msk_ab2),
-           .msk_a1b0_1sc(din_31_msk_ab0_1sc), .msk_a1b1_1sc(din_31_msk_ab1_1sc), .msk_a1b2_1sc(din_31_msk_ab2_1sc),
-
-           .a2b0(din_33_ab0), .a2b1(din_33_ab1),
-           .a2b0_1sc(din_33_ab0_1sc), .a2b1_1sc(din_33_ab1_1sc),
-           .msk_a2b0(din_33_msk_ab0), .msk_a2b1(din_33_msk_ab1),
-           .msk_a2b0_1sc(din_33_msk_ab0_1sc), .msk_a2b1_1sc(din_33_msk_ab1_1sc),
-           
-           .a3b0(din_35_ab0),
-           .a3b0_1sc(din_35_ab0_1sc)
+  .clk(clk), .p(addr_3_29),
+  .a0b0(din_29_ab0), .a0b1(din_29_ab1), .a0b2(din_29_ab2), .a0b3(din_29_ab3),
+  .a1b0(din_30_ab0), .a1b1(din_30_ab1), .a1b2(din_30_ab2), .a1b3(din_30_ab3),
+  .a2b0(din_31_ab0), .a2b1(din_31_ab1), .a2b2(din_31_ab2),
+  .a3b0(din_32_ab0), .a3b1(din_32_ab1), .a3b2(din_32_ab2),
+  .a4b0(din_33_ab0), .a4b1(din_33_ab1),
+  .a5b0(din_34_ab0), .a5b1(din_34_ab1),
+  .a6b0(din_35_ab0),
+  .a7b0(din_36_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffffff0000),
 	.NBITS(12)
 ) addr_3_30_calc (
-           .clk(clk), .sign(din_signs_reg[30]), 
-           .p(addr_3_30),
-           .a0b0(din_30_ab0), .a0b1(din_30_ab1), .a0b2(din_30_ab2), .a0b3(din_30_ab3),
-           .a0b0_1sc(din_30_ab0_1sc), .a0b1_1sc(din_30_ab1_1sc), .a0b2_1sc(din_30_ab2_1sc), .a0b3_1sc(din_30_ab3_1sc),
-           .msk_a0b0(din_30_msk_ab0), .msk_a0b1(din_30_msk_ab1), .msk_a0b2(din_30_msk_ab2), .msk_a0b3(din_30_msk_ab3),
-           .msk_a0b0_1sc(din_30_msk_ab0_1sc), .msk_a0b1_1sc(din_30_msk_ab1_1sc), .msk_a0b2_1sc(din_30_msk_ab2_1sc), .msk_a0b3_1sc(din_30_msk_ab3_1sc),
-
-           .a1b0(din_32_ab0), .a1b1(din_32_ab1), .a1b2(din_32_ab2),
-           .a1b0_1sc(din_32_ab0_1sc), .a1b1_1sc(din_32_ab1_1sc), .a1b2_1sc(din_32_ab2_1sc),
-           .msk_a1b0(din_32_msk_ab0), .msk_a1b1(din_32_msk_ab1), .msk_a1b2(din_32_msk_ab2),
-           .msk_a1b0_1sc(din_32_msk_ab0_1sc), .msk_a1b1_1sc(din_32_msk_ab1_1sc), .msk_a1b2_1sc(din_32_msk_ab2_1sc),
-
-           .a2b0(din_34_ab0), .a2b1(din_34_ab1),
-           .a2b0_1sc(din_34_ab0_1sc), .a2b1_1sc(din_34_ab1_1sc),
-           .msk_a2b0(din_34_msk_ab0), .msk_a2b1(din_34_msk_ab1),
-           .msk_a2b0_1sc(din_34_msk_ab0_1sc), .msk_a2b1_1sc(din_34_msk_ab1_1sc),
-           
-           .a3b0(din_36_ab0),
-           .a3b0_1sc(din_36_ab0_1sc)
+  .clk(clk), .p(addr_3_30),
+  .a0b0(din_30_ab0), .a0b1(din_30_ab1), .a0b2(din_30_ab2), .a0b3(din_30_ab3),
+  .a1b0(din_31_ab0), .a1b1(din_31_ab1), .a1b2(din_31_ab2), .a1b3(din_31_ab3),
+  .a2b0(din_32_ab0), .a2b1(din_32_ab1), .a2b2(din_32_ab2),
+  .a3b0(din_33_ab0), .a3b1(din_33_ab1), .a3b2(din_33_ab2),
+  .a4b0(din_34_ab0), .a4b1(din_34_ab1),
+  .a5b0(din_35_ab0), .a5b1(din_35_ab1),
+  .a6b0(din_36_ab0),
+  .a7b0(din_37_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffffff0000),
 	.NBITS(12)
 ) addr_3_31_calc (
-           .clk(clk), .sign(din_signs_reg[31]), 
-           .p(addr_3_31),
-           .a0b0(din_31_ab0), .a0b1(din_31_ab1), .a0b2(din_31_ab2), .a0b3(din_31_ab3),
-           .a0b0_1sc(din_31_ab0_1sc), .a0b1_1sc(din_31_ab1_1sc), .a0b2_1sc(din_31_ab2_1sc), .a0b3_1sc(din_31_ab3_1sc),
-           .msk_a0b0(din_31_msk_ab0), .msk_a0b1(din_31_msk_ab1), .msk_a0b2(din_31_msk_ab2), .msk_a0b3(din_31_msk_ab3),
-           .msk_a0b0_1sc(din_31_msk_ab0_1sc), .msk_a0b1_1sc(din_31_msk_ab1_1sc), .msk_a0b2_1sc(din_31_msk_ab2_1sc), .msk_a0b3_1sc(din_31_msk_ab3_1sc),
-
-           .a1b0(din_33_ab0), .a1b1(din_33_ab1), .a1b2(din_33_ab2),
-           .a1b0_1sc(din_33_ab0_1sc), .a1b1_1sc(din_33_ab1_1sc), .a1b2_1sc(din_33_ab2_1sc),
-           .msk_a1b0(din_33_msk_ab0), .msk_a1b1(din_33_msk_ab1), .msk_a1b2(din_33_msk_ab2),
-           .msk_a1b0_1sc(din_33_msk_ab0_1sc), .msk_a1b1_1sc(din_33_msk_ab1_1sc), .msk_a1b2_1sc(din_33_msk_ab2_1sc),
-
-           .a2b0(din_35_ab0), .a2b1(din_35_ab1),
-           .a2b0_1sc(din_35_ab0_1sc), .a2b1_1sc(din_35_ab1_1sc),
-           .msk_a2b0(din_35_msk_ab0), .msk_a2b1(din_35_msk_ab1),
-           .msk_a2b0_1sc(din_35_msk_ab0_1sc), .msk_a2b1_1sc(din_35_msk_ab1_1sc),
-           
-           .a3b0(din_37_ab0),
-           .a3b0_1sc(din_37_ab0_1sc)
+  .clk(clk), .p(addr_3_31),
+  .a0b0(din_31_ab0), .a0b1(din_31_ab1), .a0b2(din_31_ab2), .a0b3(din_31_ab3),
+  .a1b0(din_32_ab0), .a1b1(din_32_ab1), .a1b2(din_32_ab2), .a1b3(din_32_ab3),
+  .a2b0(din_33_ab0), .a2b1(din_33_ab1), .a2b2(din_33_ab2),
+  .a3b0(din_34_ab0), .a3b1(din_34_ab1), .a3b2(din_34_ab2),
+  .a4b0(din_35_ab0), .a4b1(din_35_ab1),
+  .a5b0(din_36_ab0), .a5b1(din_36_ab1),
+  .a6b0(din_37_ab0),
+  .a7b0(din_38_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffff000000),
 	.NBITS(11)
 ) addr_4_0_calc (
-           .clk(clk), .sign(din_signs_reg[0]), 
-           .p(addr_4_0),
-           .a0b0(din_0_ab0), .a0b1(din_0_ab1), .a0b2(din_0_ab2), .a0b3(din_0_ab3),
-           .a0b0_1sc(din_0_ab0_1sc), .a0b1_1sc(din_0_ab1_1sc), .a0b2_1sc(din_0_ab2_1sc), .a0b3_1sc(din_0_ab3_1sc),
-           .msk_a0b0(din_0_msk_ab0), .msk_a0b1(din_0_msk_ab1), .msk_a0b2(din_0_msk_ab2), .msk_a0b3(din_0_msk_ab3),
-           .msk_a0b0_1sc(din_0_msk_ab0_1sc), .msk_a0b1_1sc(din_0_msk_ab1_1sc), .msk_a0b2_1sc(din_0_msk_ab2_1sc), .msk_a0b3_1sc(din_0_msk_ab3_1sc),
-
-           .a1b0(din_2_ab0), .a1b1(din_2_ab1), .a1b2(din_2_ab2),
-           .a1b0_1sc(din_2_ab0_1sc), .a1b1_1sc(din_2_ab1_1sc), .a1b2_1sc(din_2_ab2_1sc),
-           .msk_a1b0(din_2_msk_ab0), .msk_a1b1(din_2_msk_ab1), .msk_a1b2(din_2_msk_ab2),
-           .msk_a1b0_1sc(din_2_msk_ab0_1sc), .msk_a1b1_1sc(din_2_msk_ab1_1sc), .msk_a1b2_1sc(din_2_msk_ab2_1sc),
-
-           .a2b0(din_4_ab0), .a2b1(din_4_ab1),
-           .a2b0_1sc(din_4_ab0_1sc), .a2b1_1sc(din_4_ab1_1sc),
-           .msk_a2b0(din_4_msk_ab0), .msk_a2b1(din_4_msk_ab1),
-           .msk_a2b0_1sc(din_4_msk_ab0_1sc), .msk_a2b1_1sc(din_4_msk_ab1_1sc),
-           
-           .a3b0(din_6_ab0),
-           .a3b0_1sc(din_6_ab0_1sc)
+  .clk(clk), .p(addr_4_0),
+  .a0b0(din_0_ab0), .a0b1(din_0_ab1), .a0b2(din_0_ab2), .a0b3(din_0_ab3),
+  .a1b0(din_1_ab0), .a1b1(din_1_ab1), .a1b2(din_1_ab2), .a1b3(din_1_ab3),
+  .a2b0(din_2_ab0), .a2b1(din_2_ab1), .a2b2(din_2_ab2),
+  .a3b0(din_3_ab0), .a3b1(din_3_ab1), .a3b2(din_3_ab2),
+  .a4b0(din_4_ab0), .a4b1(din_4_ab1),
+  .a5b0(din_5_ab0), .a5b1(din_5_ab1),
+  .a6b0(din_6_ab0),
+  .a7b0(din_7_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffff000000),
 	.NBITS(11)
 ) addr_4_1_calc (
-           .clk(clk), .sign(din_signs_reg[1]), 
-           .p(addr_4_1),
-           .a0b0(din_1_ab0), .a0b1(din_1_ab1), .a0b2(din_1_ab2), .a0b3(din_1_ab3),
-           .a0b0_1sc(din_1_ab0_1sc), .a0b1_1sc(din_1_ab1_1sc), .a0b2_1sc(din_1_ab2_1sc), .a0b3_1sc(din_1_ab3_1sc),
-           .msk_a0b0(din_1_msk_ab0), .msk_a0b1(din_1_msk_ab1), .msk_a0b2(din_1_msk_ab2), .msk_a0b3(din_1_msk_ab3),
-           .msk_a0b0_1sc(din_1_msk_ab0_1sc), .msk_a0b1_1sc(din_1_msk_ab1_1sc), .msk_a0b2_1sc(din_1_msk_ab2_1sc), .msk_a0b3_1sc(din_1_msk_ab3_1sc),
-
-           .a1b0(din_3_ab0), .a1b1(din_3_ab1), .a1b2(din_3_ab2),
-           .a1b0_1sc(din_3_ab0_1sc), .a1b1_1sc(din_3_ab1_1sc), .a1b2_1sc(din_3_ab2_1sc),
-           .msk_a1b0(din_3_msk_ab0), .msk_a1b1(din_3_msk_ab1), .msk_a1b2(din_3_msk_ab2),
-           .msk_a1b0_1sc(din_3_msk_ab0_1sc), .msk_a1b1_1sc(din_3_msk_ab1_1sc), .msk_a1b2_1sc(din_3_msk_ab2_1sc),
-
-           .a2b0(din_5_ab0), .a2b1(din_5_ab1),
-           .a2b0_1sc(din_5_ab0_1sc), .a2b1_1sc(din_5_ab1_1sc),
-           .msk_a2b0(din_5_msk_ab0), .msk_a2b1(din_5_msk_ab1),
-           .msk_a2b0_1sc(din_5_msk_ab0_1sc), .msk_a2b1_1sc(din_5_msk_ab1_1sc),
-           
-           .a3b0(din_7_ab0),
-           .a3b0_1sc(din_7_ab0_1sc)
+  .clk(clk), .p(addr_4_1),
+  .a0b0(din_1_ab0), .a0b1(din_1_ab1), .a0b2(din_1_ab2), .a0b3(din_1_ab3),
+  .a1b0(din_2_ab0), .a1b1(din_2_ab1), .a1b2(din_2_ab2), .a1b3(din_2_ab3),
+  .a2b0(din_3_ab0), .a2b1(din_3_ab1), .a2b2(din_3_ab2),
+  .a3b0(din_4_ab0), .a3b1(din_4_ab1), .a3b2(din_4_ab2),
+  .a4b0(din_5_ab0), .a4b1(din_5_ab1),
+  .a5b0(din_6_ab0), .a5b1(din_6_ab1),
+  .a6b0(din_7_ab0),
+  .a7b0(din_8_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffff000000),
 	.NBITS(11)
 ) addr_4_2_calc (
-           .clk(clk), .sign(din_signs_reg[2]), 
-           .p(addr_4_2),
-           .a0b0(din_2_ab0), .a0b1(din_2_ab1), .a0b2(din_2_ab2), .a0b3(din_2_ab3),
-           .a0b0_1sc(din_2_ab0_1sc), .a0b1_1sc(din_2_ab1_1sc), .a0b2_1sc(din_2_ab2_1sc), .a0b3_1sc(din_2_ab3_1sc),
-           .msk_a0b0(din_2_msk_ab0), .msk_a0b1(din_2_msk_ab1), .msk_a0b2(din_2_msk_ab2), .msk_a0b3(din_2_msk_ab3),
-           .msk_a0b0_1sc(din_2_msk_ab0_1sc), .msk_a0b1_1sc(din_2_msk_ab1_1sc), .msk_a0b2_1sc(din_2_msk_ab2_1sc), .msk_a0b3_1sc(din_2_msk_ab3_1sc),
-
-           .a1b0(din_4_ab0), .a1b1(din_4_ab1), .a1b2(din_4_ab2),
-           .a1b0_1sc(din_4_ab0_1sc), .a1b1_1sc(din_4_ab1_1sc), .a1b2_1sc(din_4_ab2_1sc),
-           .msk_a1b0(din_4_msk_ab0), .msk_a1b1(din_4_msk_ab1), .msk_a1b2(din_4_msk_ab2),
-           .msk_a1b0_1sc(din_4_msk_ab0_1sc), .msk_a1b1_1sc(din_4_msk_ab1_1sc), .msk_a1b2_1sc(din_4_msk_ab2_1sc),
-
-           .a2b0(din_6_ab0), .a2b1(din_6_ab1),
-           .a2b0_1sc(din_6_ab0_1sc), .a2b1_1sc(din_6_ab1_1sc),
-           .msk_a2b0(din_6_msk_ab0), .msk_a2b1(din_6_msk_ab1),
-           .msk_a2b0_1sc(din_6_msk_ab0_1sc), .msk_a2b1_1sc(din_6_msk_ab1_1sc),
-           
-           .a3b0(din_8_ab0),
-           .a3b0_1sc(din_8_ab0_1sc)
+  .clk(clk), .p(addr_4_2),
+  .a0b0(din_2_ab0), .a0b1(din_2_ab1), .a0b2(din_2_ab2), .a0b3(din_2_ab3),
+  .a1b0(din_3_ab0), .a1b1(din_3_ab1), .a1b2(din_3_ab2), .a1b3(din_3_ab3),
+  .a2b0(din_4_ab0), .a2b1(din_4_ab1), .a2b2(din_4_ab2),
+  .a3b0(din_5_ab0), .a3b1(din_5_ab1), .a3b2(din_5_ab2),
+  .a4b0(din_6_ab0), .a4b1(din_6_ab1),
+  .a5b0(din_7_ab0), .a5b1(din_7_ab1),
+  .a6b0(din_8_ab0),
+  .a7b0(din_9_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffff000000),
 	.NBITS(11)
 ) addr_4_3_calc (
-           .clk(clk), .sign(din_signs_reg[3]), 
-           .p(addr_4_3),
-           .a0b0(din_3_ab0), .a0b1(din_3_ab1), .a0b2(din_3_ab2), .a0b3(din_3_ab3),
-           .a0b0_1sc(din_3_ab0_1sc), .a0b1_1sc(din_3_ab1_1sc), .a0b2_1sc(din_3_ab2_1sc), .a0b3_1sc(din_3_ab3_1sc),
-           .msk_a0b0(din_3_msk_ab0), .msk_a0b1(din_3_msk_ab1), .msk_a0b2(din_3_msk_ab2), .msk_a0b3(din_3_msk_ab3),
-           .msk_a0b0_1sc(din_3_msk_ab0_1sc), .msk_a0b1_1sc(din_3_msk_ab1_1sc), .msk_a0b2_1sc(din_3_msk_ab2_1sc), .msk_a0b3_1sc(din_3_msk_ab3_1sc),
-
-           .a1b0(din_5_ab0), .a1b1(din_5_ab1), .a1b2(din_5_ab2),
-           .a1b0_1sc(din_5_ab0_1sc), .a1b1_1sc(din_5_ab1_1sc), .a1b2_1sc(din_5_ab2_1sc),
-           .msk_a1b0(din_5_msk_ab0), .msk_a1b1(din_5_msk_ab1), .msk_a1b2(din_5_msk_ab2),
-           .msk_a1b0_1sc(din_5_msk_ab0_1sc), .msk_a1b1_1sc(din_5_msk_ab1_1sc), .msk_a1b2_1sc(din_5_msk_ab2_1sc),
-
-           .a2b0(din_7_ab0), .a2b1(din_7_ab1),
-           .a2b0_1sc(din_7_ab0_1sc), .a2b1_1sc(din_7_ab1_1sc),
-           .msk_a2b0(din_7_msk_ab0), .msk_a2b1(din_7_msk_ab1),
-           .msk_a2b0_1sc(din_7_msk_ab0_1sc), .msk_a2b1_1sc(din_7_msk_ab1_1sc),
-           
-           .a3b0(din_9_ab0),
-           .a3b0_1sc(din_9_ab0_1sc)
+  .clk(clk), .p(addr_4_3),
+  .a0b0(din_3_ab0), .a0b1(din_3_ab1), .a0b2(din_3_ab2), .a0b3(din_3_ab3),
+  .a1b0(din_4_ab0), .a1b1(din_4_ab1), .a1b2(din_4_ab2), .a1b3(din_4_ab3),
+  .a2b0(din_5_ab0), .a2b1(din_5_ab1), .a2b2(din_5_ab2),
+  .a3b0(din_6_ab0), .a3b1(din_6_ab1), .a3b2(din_6_ab2),
+  .a4b0(din_7_ab0), .a4b1(din_7_ab1),
+  .a5b0(din_8_ab0), .a5b1(din_8_ab1),
+  .a6b0(din_9_ab0),
+  .a7b0(din_10_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffff000000),
 	.NBITS(11)
 ) addr_4_4_calc (
-           .clk(clk), .sign(din_signs_reg[4]), 
-           .p(addr_4_4),
-           .a0b0(din_4_ab0), .a0b1(din_4_ab1), .a0b2(din_4_ab2), .a0b3(din_4_ab3),
-           .a0b0_1sc(din_4_ab0_1sc), .a0b1_1sc(din_4_ab1_1sc), .a0b2_1sc(din_4_ab2_1sc), .a0b3_1sc(din_4_ab3_1sc),
-           .msk_a0b0(din_4_msk_ab0), .msk_a0b1(din_4_msk_ab1), .msk_a0b2(din_4_msk_ab2), .msk_a0b3(din_4_msk_ab3),
-           .msk_a0b0_1sc(din_4_msk_ab0_1sc), .msk_a0b1_1sc(din_4_msk_ab1_1sc), .msk_a0b2_1sc(din_4_msk_ab2_1sc), .msk_a0b3_1sc(din_4_msk_ab3_1sc),
-
-           .a1b0(din_6_ab0), .a1b1(din_6_ab1), .a1b2(din_6_ab2),
-           .a1b0_1sc(din_6_ab0_1sc), .a1b1_1sc(din_6_ab1_1sc), .a1b2_1sc(din_6_ab2_1sc),
-           .msk_a1b0(din_6_msk_ab0), .msk_a1b1(din_6_msk_ab1), .msk_a1b2(din_6_msk_ab2),
-           .msk_a1b0_1sc(din_6_msk_ab0_1sc), .msk_a1b1_1sc(din_6_msk_ab1_1sc), .msk_a1b2_1sc(din_6_msk_ab2_1sc),
-
-           .a2b0(din_8_ab0), .a2b1(din_8_ab1),
-           .a2b0_1sc(din_8_ab0_1sc), .a2b1_1sc(din_8_ab1_1sc),
-           .msk_a2b0(din_8_msk_ab0), .msk_a2b1(din_8_msk_ab1),
-           .msk_a2b0_1sc(din_8_msk_ab0_1sc), .msk_a2b1_1sc(din_8_msk_ab1_1sc),
-           
-           .a3b0(din_10_ab0),
-           .a3b0_1sc(din_10_ab0_1sc)
+  .clk(clk), .p(addr_4_4),
+  .a0b0(din_4_ab0), .a0b1(din_4_ab1), .a0b2(din_4_ab2), .a0b3(din_4_ab3),
+  .a1b0(din_5_ab0), .a1b1(din_5_ab1), .a1b2(din_5_ab2), .a1b3(din_5_ab3),
+  .a2b0(din_6_ab0), .a2b1(din_6_ab1), .a2b2(din_6_ab2),
+  .a3b0(din_7_ab0), .a3b1(din_7_ab1), .a3b2(din_7_ab2),
+  .a4b0(din_8_ab0), .a4b1(din_8_ab1),
+  .a5b0(din_9_ab0), .a5b1(din_9_ab1),
+  .a6b0(din_10_ab0),
+  .a7b0(din_11_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffff000000),
 	.NBITS(11)
 ) addr_4_5_calc (
-           .clk(clk), .sign(din_signs_reg[5]), 
-           .p(addr_4_5),
-           .a0b0(din_5_ab0), .a0b1(din_5_ab1), .a0b2(din_5_ab2), .a0b3(din_5_ab3),
-           .a0b0_1sc(din_5_ab0_1sc), .a0b1_1sc(din_5_ab1_1sc), .a0b2_1sc(din_5_ab2_1sc), .a0b3_1sc(din_5_ab3_1sc),
-           .msk_a0b0(din_5_msk_ab0), .msk_a0b1(din_5_msk_ab1), .msk_a0b2(din_5_msk_ab2), .msk_a0b3(din_5_msk_ab3),
-           .msk_a0b0_1sc(din_5_msk_ab0_1sc), .msk_a0b1_1sc(din_5_msk_ab1_1sc), .msk_a0b2_1sc(din_5_msk_ab2_1sc), .msk_a0b3_1sc(din_5_msk_ab3_1sc),
-
-           .a1b0(din_7_ab0), .a1b1(din_7_ab1), .a1b2(din_7_ab2),
-           .a1b0_1sc(din_7_ab0_1sc), .a1b1_1sc(din_7_ab1_1sc), .a1b2_1sc(din_7_ab2_1sc),
-           .msk_a1b0(din_7_msk_ab0), .msk_a1b1(din_7_msk_ab1), .msk_a1b2(din_7_msk_ab2),
-           .msk_a1b0_1sc(din_7_msk_ab0_1sc), .msk_a1b1_1sc(din_7_msk_ab1_1sc), .msk_a1b2_1sc(din_7_msk_ab2_1sc),
-
-           .a2b0(din_9_ab0), .a2b1(din_9_ab1),
-           .a2b0_1sc(din_9_ab0_1sc), .a2b1_1sc(din_9_ab1_1sc),
-           .msk_a2b0(din_9_msk_ab0), .msk_a2b1(din_9_msk_ab1),
-           .msk_a2b0_1sc(din_9_msk_ab0_1sc), .msk_a2b1_1sc(din_9_msk_ab1_1sc),
-           
-           .a3b0(din_11_ab0),
-           .a3b0_1sc(din_11_ab0_1sc)
+  .clk(clk), .p(addr_4_5),
+  .a0b0(din_5_ab0), .a0b1(din_5_ab1), .a0b2(din_5_ab2), .a0b3(din_5_ab3),
+  .a1b0(din_6_ab0), .a1b1(din_6_ab1), .a1b2(din_6_ab2), .a1b3(din_6_ab3),
+  .a2b0(din_7_ab0), .a2b1(din_7_ab1), .a2b2(din_7_ab2),
+  .a3b0(din_8_ab0), .a3b1(din_8_ab1), .a3b2(din_8_ab2),
+  .a4b0(din_9_ab0), .a4b1(din_9_ab1),
+  .a5b0(din_10_ab0), .a5b1(din_10_ab1),
+  .a6b0(din_11_ab0),
+  .a7b0(din_12_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffff000000),
 	.NBITS(11)
 ) addr_4_6_calc (
-           .clk(clk), .sign(din_signs_reg[6]), 
-           .p(addr_4_6),
-           .a0b0(din_6_ab0), .a0b1(din_6_ab1), .a0b2(din_6_ab2), .a0b3(din_6_ab3),
-           .a0b0_1sc(din_6_ab0_1sc), .a0b1_1sc(din_6_ab1_1sc), .a0b2_1sc(din_6_ab2_1sc), .a0b3_1sc(din_6_ab3_1sc),
-           .msk_a0b0(din_6_msk_ab0), .msk_a0b1(din_6_msk_ab1), .msk_a0b2(din_6_msk_ab2), .msk_a0b3(din_6_msk_ab3),
-           .msk_a0b0_1sc(din_6_msk_ab0_1sc), .msk_a0b1_1sc(din_6_msk_ab1_1sc), .msk_a0b2_1sc(din_6_msk_ab2_1sc), .msk_a0b3_1sc(din_6_msk_ab3_1sc),
-
-           .a1b0(din_8_ab0), .a1b1(din_8_ab1), .a1b2(din_8_ab2),
-           .a1b0_1sc(din_8_ab0_1sc), .a1b1_1sc(din_8_ab1_1sc), .a1b2_1sc(din_8_ab2_1sc),
-           .msk_a1b0(din_8_msk_ab0), .msk_a1b1(din_8_msk_ab1), .msk_a1b2(din_8_msk_ab2),
-           .msk_a1b0_1sc(din_8_msk_ab0_1sc), .msk_a1b1_1sc(din_8_msk_ab1_1sc), .msk_a1b2_1sc(din_8_msk_ab2_1sc),
-
-           .a2b0(din_10_ab0), .a2b1(din_10_ab1),
-           .a2b0_1sc(din_10_ab0_1sc), .a2b1_1sc(din_10_ab1_1sc),
-           .msk_a2b0(din_10_msk_ab0), .msk_a2b1(din_10_msk_ab1),
-           .msk_a2b0_1sc(din_10_msk_ab0_1sc), .msk_a2b1_1sc(din_10_msk_ab1_1sc),
-           
-           .a3b0(din_12_ab0),
-           .a3b0_1sc(din_12_ab0_1sc)
+  .clk(clk), .p(addr_4_6),
+  .a0b0(din_6_ab0), .a0b1(din_6_ab1), .a0b2(din_6_ab2), .a0b3(din_6_ab3),
+  .a1b0(din_7_ab0), .a1b1(din_7_ab1), .a1b2(din_7_ab2), .a1b3(din_7_ab3),
+  .a2b0(din_8_ab0), .a2b1(din_8_ab1), .a2b2(din_8_ab2),
+  .a3b0(din_9_ab0), .a3b1(din_9_ab1), .a3b2(din_9_ab2),
+  .a4b0(din_10_ab0), .a4b1(din_10_ab1),
+  .a5b0(din_11_ab0), .a5b1(din_11_ab1),
+  .a6b0(din_12_ab0),
+  .a7b0(din_13_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffff000000),
 	.NBITS(11)
 ) addr_4_7_calc (
-           .clk(clk), .sign(din_signs_reg[7]), 
-           .p(addr_4_7),
-           .a0b0(din_7_ab0), .a0b1(din_7_ab1), .a0b2(din_7_ab2), .a0b3(din_7_ab3),
-           .a0b0_1sc(din_7_ab0_1sc), .a0b1_1sc(din_7_ab1_1sc), .a0b2_1sc(din_7_ab2_1sc), .a0b3_1sc(din_7_ab3_1sc),
-           .msk_a0b0(din_7_msk_ab0), .msk_a0b1(din_7_msk_ab1), .msk_a0b2(din_7_msk_ab2), .msk_a0b3(din_7_msk_ab3),
-           .msk_a0b0_1sc(din_7_msk_ab0_1sc), .msk_a0b1_1sc(din_7_msk_ab1_1sc), .msk_a0b2_1sc(din_7_msk_ab2_1sc), .msk_a0b3_1sc(din_7_msk_ab3_1sc),
-
-           .a1b0(din_9_ab0), .a1b1(din_9_ab1), .a1b2(din_9_ab2),
-           .a1b0_1sc(din_9_ab0_1sc), .a1b1_1sc(din_9_ab1_1sc), .a1b2_1sc(din_9_ab2_1sc),
-           .msk_a1b0(din_9_msk_ab0), .msk_a1b1(din_9_msk_ab1), .msk_a1b2(din_9_msk_ab2),
-           .msk_a1b0_1sc(din_9_msk_ab0_1sc), .msk_a1b1_1sc(din_9_msk_ab1_1sc), .msk_a1b2_1sc(din_9_msk_ab2_1sc),
-
-           .a2b0(din_11_ab0), .a2b1(din_11_ab1),
-           .a2b0_1sc(din_11_ab0_1sc), .a2b1_1sc(din_11_ab1_1sc),
-           .msk_a2b0(din_11_msk_ab0), .msk_a2b1(din_11_msk_ab1),
-           .msk_a2b0_1sc(din_11_msk_ab0_1sc), .msk_a2b1_1sc(din_11_msk_ab1_1sc),
-           
-           .a3b0(din_13_ab0),
-           .a3b0_1sc(din_13_ab0_1sc)
+  .clk(clk), .p(addr_4_7),
+  .a0b0(din_7_ab0), .a0b1(din_7_ab1), .a0b2(din_7_ab2), .a0b3(din_7_ab3),
+  .a1b0(din_8_ab0), .a1b1(din_8_ab1), .a1b2(din_8_ab2), .a1b3(din_8_ab3),
+  .a2b0(din_9_ab0), .a2b1(din_9_ab1), .a2b2(din_9_ab2),
+  .a3b0(din_10_ab0), .a3b1(din_10_ab1), .a3b2(din_10_ab2),
+  .a4b0(din_11_ab0), .a4b1(din_11_ab1),
+  .a5b0(din_12_ab0), .a5b1(din_12_ab1),
+  .a6b0(din_13_ab0),
+  .a7b0(din_14_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffff000000),
 	.NBITS(11)
 ) addr_4_8_calc (
-           .clk(clk), .sign(din_signs_reg[8]), 
-           .p(addr_4_8),
-           .a0b0(din_8_ab0), .a0b1(din_8_ab1), .a0b2(din_8_ab2), .a0b3(din_8_ab3),
-           .a0b0_1sc(din_8_ab0_1sc), .a0b1_1sc(din_8_ab1_1sc), .a0b2_1sc(din_8_ab2_1sc), .a0b3_1sc(din_8_ab3_1sc),
-           .msk_a0b0(din_8_msk_ab0), .msk_a0b1(din_8_msk_ab1), .msk_a0b2(din_8_msk_ab2), .msk_a0b3(din_8_msk_ab3),
-           .msk_a0b0_1sc(din_8_msk_ab0_1sc), .msk_a0b1_1sc(din_8_msk_ab1_1sc), .msk_a0b2_1sc(din_8_msk_ab2_1sc), .msk_a0b3_1sc(din_8_msk_ab3_1sc),
-
-           .a1b0(din_10_ab0), .a1b1(din_10_ab1), .a1b2(din_10_ab2),
-           .a1b0_1sc(din_10_ab0_1sc), .a1b1_1sc(din_10_ab1_1sc), .a1b2_1sc(din_10_ab2_1sc),
-           .msk_a1b0(din_10_msk_ab0), .msk_a1b1(din_10_msk_ab1), .msk_a1b2(din_10_msk_ab2),
-           .msk_a1b0_1sc(din_10_msk_ab0_1sc), .msk_a1b1_1sc(din_10_msk_ab1_1sc), .msk_a1b2_1sc(din_10_msk_ab2_1sc),
-
-           .a2b0(din_12_ab0), .a2b1(din_12_ab1),
-           .a2b0_1sc(din_12_ab0_1sc), .a2b1_1sc(din_12_ab1_1sc),
-           .msk_a2b0(din_12_msk_ab0), .msk_a2b1(din_12_msk_ab1),
-           .msk_a2b0_1sc(din_12_msk_ab0_1sc), .msk_a2b1_1sc(din_12_msk_ab1_1sc),
-           
-           .a3b0(din_14_ab0),
-           .a3b0_1sc(din_14_ab0_1sc)
+  .clk(clk), .p(addr_4_8),
+  .a0b0(din_8_ab0), .a0b1(din_8_ab1), .a0b2(din_8_ab2), .a0b3(din_8_ab3),
+  .a1b0(din_9_ab0), .a1b1(din_9_ab1), .a1b2(din_9_ab2), .a1b3(din_9_ab3),
+  .a2b0(din_10_ab0), .a2b1(din_10_ab1), .a2b2(din_10_ab2),
+  .a3b0(din_11_ab0), .a3b1(din_11_ab1), .a3b2(din_11_ab2),
+  .a4b0(din_12_ab0), .a4b1(din_12_ab1),
+  .a5b0(din_13_ab0), .a5b1(din_13_ab1),
+  .a6b0(din_14_ab0),
+  .a7b0(din_15_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffff000000),
 	.NBITS(11)
 ) addr_4_9_calc (
-           .clk(clk), .sign(din_signs_reg[9]), 
-           .p(addr_4_9),
-           .a0b0(din_9_ab0), .a0b1(din_9_ab1), .a0b2(din_9_ab2), .a0b3(din_9_ab3),
-           .a0b0_1sc(din_9_ab0_1sc), .a0b1_1sc(din_9_ab1_1sc), .a0b2_1sc(din_9_ab2_1sc), .a0b3_1sc(din_9_ab3_1sc),
-           .msk_a0b0(din_9_msk_ab0), .msk_a0b1(din_9_msk_ab1), .msk_a0b2(din_9_msk_ab2), .msk_a0b3(din_9_msk_ab3),
-           .msk_a0b0_1sc(din_9_msk_ab0_1sc), .msk_a0b1_1sc(din_9_msk_ab1_1sc), .msk_a0b2_1sc(din_9_msk_ab2_1sc), .msk_a0b3_1sc(din_9_msk_ab3_1sc),
-
-           .a1b0(din_11_ab0), .a1b1(din_11_ab1), .a1b2(din_11_ab2),
-           .a1b0_1sc(din_11_ab0_1sc), .a1b1_1sc(din_11_ab1_1sc), .a1b2_1sc(din_11_ab2_1sc),
-           .msk_a1b0(din_11_msk_ab0), .msk_a1b1(din_11_msk_ab1), .msk_a1b2(din_11_msk_ab2),
-           .msk_a1b0_1sc(din_11_msk_ab0_1sc), .msk_a1b1_1sc(din_11_msk_ab1_1sc), .msk_a1b2_1sc(din_11_msk_ab2_1sc),
-
-           .a2b0(din_13_ab0), .a2b1(din_13_ab1),
-           .a2b0_1sc(din_13_ab0_1sc), .a2b1_1sc(din_13_ab1_1sc),
-           .msk_a2b0(din_13_msk_ab0), .msk_a2b1(din_13_msk_ab1),
-           .msk_a2b0_1sc(din_13_msk_ab0_1sc), .msk_a2b1_1sc(din_13_msk_ab1_1sc),
-           
-           .a3b0(din_15_ab0),
-           .a3b0_1sc(din_15_ab0_1sc)
+  .clk(clk), .p(addr_4_9),
+  .a0b0(din_9_ab0), .a0b1(din_9_ab1), .a0b2(din_9_ab2), .a0b3(din_9_ab3),
+  .a1b0(din_10_ab0), .a1b1(din_10_ab1), .a1b2(din_10_ab2), .a1b3(din_10_ab3),
+  .a2b0(din_11_ab0), .a2b1(din_11_ab1), .a2b2(din_11_ab2),
+  .a3b0(din_12_ab0), .a3b1(din_12_ab1), .a3b2(din_12_ab2),
+  .a4b0(din_13_ab0), .a4b1(din_13_ab1),
+  .a5b0(din_14_ab0), .a5b1(din_14_ab1),
+  .a6b0(din_15_ab0),
+  .a7b0(din_16_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffff000000),
 	.NBITS(11)
 ) addr_4_10_calc (
-           .clk(clk), .sign(din_signs_reg[10]), 
-           .p(addr_4_10),
-           .a0b0(din_10_ab0), .a0b1(din_10_ab1), .a0b2(din_10_ab2), .a0b3(din_10_ab3),
-           .a0b0_1sc(din_10_ab0_1sc), .a0b1_1sc(din_10_ab1_1sc), .a0b2_1sc(din_10_ab2_1sc), .a0b3_1sc(din_10_ab3_1sc),
-           .msk_a0b0(din_10_msk_ab0), .msk_a0b1(din_10_msk_ab1), .msk_a0b2(din_10_msk_ab2), .msk_a0b3(din_10_msk_ab3),
-           .msk_a0b0_1sc(din_10_msk_ab0_1sc), .msk_a0b1_1sc(din_10_msk_ab1_1sc), .msk_a0b2_1sc(din_10_msk_ab2_1sc), .msk_a0b3_1sc(din_10_msk_ab3_1sc),
-
-           .a1b0(din_12_ab0), .a1b1(din_12_ab1), .a1b2(din_12_ab2),
-           .a1b0_1sc(din_12_ab0_1sc), .a1b1_1sc(din_12_ab1_1sc), .a1b2_1sc(din_12_ab2_1sc),
-           .msk_a1b0(din_12_msk_ab0), .msk_a1b1(din_12_msk_ab1), .msk_a1b2(din_12_msk_ab2),
-           .msk_a1b0_1sc(din_12_msk_ab0_1sc), .msk_a1b1_1sc(din_12_msk_ab1_1sc), .msk_a1b2_1sc(din_12_msk_ab2_1sc),
-
-           .a2b0(din_14_ab0), .a2b1(din_14_ab1),
-           .a2b0_1sc(din_14_ab0_1sc), .a2b1_1sc(din_14_ab1_1sc),
-           .msk_a2b0(din_14_msk_ab0), .msk_a2b1(din_14_msk_ab1),
-           .msk_a2b0_1sc(din_14_msk_ab0_1sc), .msk_a2b1_1sc(din_14_msk_ab1_1sc),
-           
-           .a3b0(din_16_ab0),
-           .a3b0_1sc(din_16_ab0_1sc)
+  .clk(clk), .p(addr_4_10),
+  .a0b0(din_10_ab0), .a0b1(din_10_ab1), .a0b2(din_10_ab2), .a0b3(din_10_ab3),
+  .a1b0(din_11_ab0), .a1b1(din_11_ab1), .a1b2(din_11_ab2), .a1b3(din_11_ab3),
+  .a2b0(din_12_ab0), .a2b1(din_12_ab1), .a2b2(din_12_ab2),
+  .a3b0(din_13_ab0), .a3b1(din_13_ab1), .a3b2(din_13_ab2),
+  .a4b0(din_14_ab0), .a4b1(din_14_ab1),
+  .a5b0(din_15_ab0), .a5b1(din_15_ab1),
+  .a6b0(din_16_ab0),
+  .a7b0(din_17_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffff000000),
 	.NBITS(11)
 ) addr_4_11_calc (
-           .clk(clk), .sign(din_signs_reg[11]), 
-           .p(addr_4_11),
-           .a0b0(din_11_ab0), .a0b1(din_11_ab1), .a0b2(din_11_ab2), .a0b3(din_11_ab3),
-           .a0b0_1sc(din_11_ab0_1sc), .a0b1_1sc(din_11_ab1_1sc), .a0b2_1sc(din_11_ab2_1sc), .a0b3_1sc(din_11_ab3_1sc),
-           .msk_a0b0(din_11_msk_ab0), .msk_a0b1(din_11_msk_ab1), .msk_a0b2(din_11_msk_ab2), .msk_a0b3(din_11_msk_ab3),
-           .msk_a0b0_1sc(din_11_msk_ab0_1sc), .msk_a0b1_1sc(din_11_msk_ab1_1sc), .msk_a0b2_1sc(din_11_msk_ab2_1sc), .msk_a0b3_1sc(din_11_msk_ab3_1sc),
-
-           .a1b0(din_13_ab0), .a1b1(din_13_ab1), .a1b2(din_13_ab2),
-           .a1b0_1sc(din_13_ab0_1sc), .a1b1_1sc(din_13_ab1_1sc), .a1b2_1sc(din_13_ab2_1sc),
-           .msk_a1b0(din_13_msk_ab0), .msk_a1b1(din_13_msk_ab1), .msk_a1b2(din_13_msk_ab2),
-           .msk_a1b0_1sc(din_13_msk_ab0_1sc), .msk_a1b1_1sc(din_13_msk_ab1_1sc), .msk_a1b2_1sc(din_13_msk_ab2_1sc),
-
-           .a2b0(din_15_ab0), .a2b1(din_15_ab1),
-           .a2b0_1sc(din_15_ab0_1sc), .a2b1_1sc(din_15_ab1_1sc),
-           .msk_a2b0(din_15_msk_ab0), .msk_a2b1(din_15_msk_ab1),
-           .msk_a2b0_1sc(din_15_msk_ab0_1sc), .msk_a2b1_1sc(din_15_msk_ab1_1sc),
-           
-           .a3b0(din_17_ab0),
-           .a3b0_1sc(din_17_ab0_1sc)
+  .clk(clk), .p(addr_4_11),
+  .a0b0(din_11_ab0), .a0b1(din_11_ab1), .a0b2(din_11_ab2), .a0b3(din_11_ab3),
+  .a1b0(din_12_ab0), .a1b1(din_12_ab1), .a1b2(din_12_ab2), .a1b3(din_12_ab3),
+  .a2b0(din_13_ab0), .a2b1(din_13_ab1), .a2b2(din_13_ab2),
+  .a3b0(din_14_ab0), .a3b1(din_14_ab1), .a3b2(din_14_ab2),
+  .a4b0(din_15_ab0), .a4b1(din_15_ab1),
+  .a5b0(din_16_ab0), .a5b1(din_16_ab1),
+  .a6b0(din_17_ab0),
+  .a7b0(din_18_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffff000000),
 	.NBITS(11)
 ) addr_4_12_calc (
-           .clk(clk), .sign(din_signs_reg[12]), 
-           .p(addr_4_12),
-           .a0b0(din_12_ab0), .a0b1(din_12_ab1), .a0b2(din_12_ab2), .a0b3(din_12_ab3),
-           .a0b0_1sc(din_12_ab0_1sc), .a0b1_1sc(din_12_ab1_1sc), .a0b2_1sc(din_12_ab2_1sc), .a0b3_1sc(din_12_ab3_1sc),
-           .msk_a0b0(din_12_msk_ab0), .msk_a0b1(din_12_msk_ab1), .msk_a0b2(din_12_msk_ab2), .msk_a0b3(din_12_msk_ab3),
-           .msk_a0b0_1sc(din_12_msk_ab0_1sc), .msk_a0b1_1sc(din_12_msk_ab1_1sc), .msk_a0b2_1sc(din_12_msk_ab2_1sc), .msk_a0b3_1sc(din_12_msk_ab3_1sc),
-
-           .a1b0(din_14_ab0), .a1b1(din_14_ab1), .a1b2(din_14_ab2),
-           .a1b0_1sc(din_14_ab0_1sc), .a1b1_1sc(din_14_ab1_1sc), .a1b2_1sc(din_14_ab2_1sc),
-           .msk_a1b0(din_14_msk_ab0), .msk_a1b1(din_14_msk_ab1), .msk_a1b2(din_14_msk_ab2),
-           .msk_a1b0_1sc(din_14_msk_ab0_1sc), .msk_a1b1_1sc(din_14_msk_ab1_1sc), .msk_a1b2_1sc(din_14_msk_ab2_1sc),
-
-           .a2b0(din_16_ab0), .a2b1(din_16_ab1),
-           .a2b0_1sc(din_16_ab0_1sc), .a2b1_1sc(din_16_ab1_1sc),
-           .msk_a2b0(din_16_msk_ab0), .msk_a2b1(din_16_msk_ab1),
-           .msk_a2b0_1sc(din_16_msk_ab0_1sc), .msk_a2b1_1sc(din_16_msk_ab1_1sc),
-           
-           .a3b0(din_18_ab0),
-           .a3b0_1sc(din_18_ab0_1sc)
+  .clk(clk), .p(addr_4_12),
+  .a0b0(din_12_ab0), .a0b1(din_12_ab1), .a0b2(din_12_ab2), .a0b3(din_12_ab3),
+  .a1b0(din_13_ab0), .a1b1(din_13_ab1), .a1b2(din_13_ab2), .a1b3(din_13_ab3),
+  .a2b0(din_14_ab0), .a2b1(din_14_ab1), .a2b2(din_14_ab2),
+  .a3b0(din_15_ab0), .a3b1(din_15_ab1), .a3b2(din_15_ab2),
+  .a4b0(din_16_ab0), .a4b1(din_16_ab1),
+  .a5b0(din_17_ab0), .a5b1(din_17_ab1),
+  .a6b0(din_18_ab0),
+  .a7b0(din_19_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffff000000),
 	.NBITS(11)
 ) addr_4_13_calc (
-           .clk(clk), .sign(din_signs_reg[13]), 
-           .p(addr_4_13),
-           .a0b0(din_13_ab0), .a0b1(din_13_ab1), .a0b2(din_13_ab2), .a0b3(din_13_ab3),
-           .a0b0_1sc(din_13_ab0_1sc), .a0b1_1sc(din_13_ab1_1sc), .a0b2_1sc(din_13_ab2_1sc), .a0b3_1sc(din_13_ab3_1sc),
-           .msk_a0b0(din_13_msk_ab0), .msk_a0b1(din_13_msk_ab1), .msk_a0b2(din_13_msk_ab2), .msk_a0b3(din_13_msk_ab3),
-           .msk_a0b0_1sc(din_13_msk_ab0_1sc), .msk_a0b1_1sc(din_13_msk_ab1_1sc), .msk_a0b2_1sc(din_13_msk_ab2_1sc), .msk_a0b3_1sc(din_13_msk_ab3_1sc),
-
-           .a1b0(din_15_ab0), .a1b1(din_15_ab1), .a1b2(din_15_ab2),
-           .a1b0_1sc(din_15_ab0_1sc), .a1b1_1sc(din_15_ab1_1sc), .a1b2_1sc(din_15_ab2_1sc),
-           .msk_a1b0(din_15_msk_ab0), .msk_a1b1(din_15_msk_ab1), .msk_a1b2(din_15_msk_ab2),
-           .msk_a1b0_1sc(din_15_msk_ab0_1sc), .msk_a1b1_1sc(din_15_msk_ab1_1sc), .msk_a1b2_1sc(din_15_msk_ab2_1sc),
-
-           .a2b0(din_17_ab0), .a2b1(din_17_ab1),
-           .a2b0_1sc(din_17_ab0_1sc), .a2b1_1sc(din_17_ab1_1sc),
-           .msk_a2b0(din_17_msk_ab0), .msk_a2b1(din_17_msk_ab1),
-           .msk_a2b0_1sc(din_17_msk_ab0_1sc), .msk_a2b1_1sc(din_17_msk_ab1_1sc),
-           
-           .a3b0(din_19_ab0),
-           .a3b0_1sc(din_19_ab0_1sc)
+  .clk(clk), .p(addr_4_13),
+  .a0b0(din_13_ab0), .a0b1(din_13_ab1), .a0b2(din_13_ab2), .a0b3(din_13_ab3),
+  .a1b0(din_14_ab0), .a1b1(din_14_ab1), .a1b2(din_14_ab2), .a1b3(din_14_ab3),
+  .a2b0(din_15_ab0), .a2b1(din_15_ab1), .a2b2(din_15_ab2),
+  .a3b0(din_16_ab0), .a3b1(din_16_ab1), .a3b2(din_16_ab2),
+  .a4b0(din_17_ab0), .a4b1(din_17_ab1),
+  .a5b0(din_18_ab0), .a5b1(din_18_ab1),
+  .a6b0(din_19_ab0),
+  .a7b0(din_20_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffff000000),
 	.NBITS(11)
 ) addr_4_14_calc (
-           .clk(clk), .sign(din_signs_reg[14]), 
-           .p(addr_4_14),
-           .a0b0(din_14_ab0), .a0b1(din_14_ab1), .a0b2(din_14_ab2), .a0b3(din_14_ab3),
-           .a0b0_1sc(din_14_ab0_1sc), .a0b1_1sc(din_14_ab1_1sc), .a0b2_1sc(din_14_ab2_1sc), .a0b3_1sc(din_14_ab3_1sc),
-           .msk_a0b0(din_14_msk_ab0), .msk_a0b1(din_14_msk_ab1), .msk_a0b2(din_14_msk_ab2), .msk_a0b3(din_14_msk_ab3),
-           .msk_a0b0_1sc(din_14_msk_ab0_1sc), .msk_a0b1_1sc(din_14_msk_ab1_1sc), .msk_a0b2_1sc(din_14_msk_ab2_1sc), .msk_a0b3_1sc(din_14_msk_ab3_1sc),
-
-           .a1b0(din_16_ab0), .a1b1(din_16_ab1), .a1b2(din_16_ab2),
-           .a1b0_1sc(din_16_ab0_1sc), .a1b1_1sc(din_16_ab1_1sc), .a1b2_1sc(din_16_ab2_1sc),
-           .msk_a1b0(din_16_msk_ab0), .msk_a1b1(din_16_msk_ab1), .msk_a1b2(din_16_msk_ab2),
-           .msk_a1b0_1sc(din_16_msk_ab0_1sc), .msk_a1b1_1sc(din_16_msk_ab1_1sc), .msk_a1b2_1sc(din_16_msk_ab2_1sc),
-
-           .a2b0(din_18_ab0), .a2b1(din_18_ab1),
-           .a2b0_1sc(din_18_ab0_1sc), .a2b1_1sc(din_18_ab1_1sc),
-           .msk_a2b0(din_18_msk_ab0), .msk_a2b1(din_18_msk_ab1),
-           .msk_a2b0_1sc(din_18_msk_ab0_1sc), .msk_a2b1_1sc(din_18_msk_ab1_1sc),
-           
-           .a3b0(din_20_ab0),
-           .a3b0_1sc(din_20_ab0_1sc)
+  .clk(clk), .p(addr_4_14),
+  .a0b0(din_14_ab0), .a0b1(din_14_ab1), .a0b2(din_14_ab2), .a0b3(din_14_ab3),
+  .a1b0(din_15_ab0), .a1b1(din_15_ab1), .a1b2(din_15_ab2), .a1b3(din_15_ab3),
+  .a2b0(din_16_ab0), .a2b1(din_16_ab1), .a2b2(din_16_ab2),
+  .a3b0(din_17_ab0), .a3b1(din_17_ab1), .a3b2(din_17_ab2),
+  .a4b0(din_18_ab0), .a4b1(din_18_ab1),
+  .a5b0(din_19_ab0), .a5b1(din_19_ab1),
+  .a6b0(din_20_ab0),
+  .a7b0(din_21_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffff000000),
 	.NBITS(11)
 ) addr_4_15_calc (
-           .clk(clk), .sign(din_signs_reg[15]), 
-           .p(addr_4_15),
-           .a0b0(din_15_ab0), .a0b1(din_15_ab1), .a0b2(din_15_ab2), .a0b3(din_15_ab3),
-           .a0b0_1sc(din_15_ab0_1sc), .a0b1_1sc(din_15_ab1_1sc), .a0b2_1sc(din_15_ab2_1sc), .a0b3_1sc(din_15_ab3_1sc),
-           .msk_a0b0(din_15_msk_ab0), .msk_a0b1(din_15_msk_ab1), .msk_a0b2(din_15_msk_ab2), .msk_a0b3(din_15_msk_ab3),
-           .msk_a0b0_1sc(din_15_msk_ab0_1sc), .msk_a0b1_1sc(din_15_msk_ab1_1sc), .msk_a0b2_1sc(din_15_msk_ab2_1sc), .msk_a0b3_1sc(din_15_msk_ab3_1sc),
-
-           .a1b0(din_17_ab0), .a1b1(din_17_ab1), .a1b2(din_17_ab2),
-           .a1b0_1sc(din_17_ab0_1sc), .a1b1_1sc(din_17_ab1_1sc), .a1b2_1sc(din_17_ab2_1sc),
-           .msk_a1b0(din_17_msk_ab0), .msk_a1b1(din_17_msk_ab1), .msk_a1b2(din_17_msk_ab2),
-           .msk_a1b0_1sc(din_17_msk_ab0_1sc), .msk_a1b1_1sc(din_17_msk_ab1_1sc), .msk_a1b2_1sc(din_17_msk_ab2_1sc),
-
-           .a2b0(din_19_ab0), .a2b1(din_19_ab1),
-           .a2b0_1sc(din_19_ab0_1sc), .a2b1_1sc(din_19_ab1_1sc),
-           .msk_a2b0(din_19_msk_ab0), .msk_a2b1(din_19_msk_ab1),
-           .msk_a2b0_1sc(din_19_msk_ab0_1sc), .msk_a2b1_1sc(din_19_msk_ab1_1sc),
-           
-           .a3b0(din_21_ab0),
-           .a3b0_1sc(din_21_ab0_1sc)
+  .clk(clk), .p(addr_4_15),
+  .a0b0(din_15_ab0), .a0b1(din_15_ab1), .a0b2(din_15_ab2), .a0b3(din_15_ab3),
+  .a1b0(din_16_ab0), .a1b1(din_16_ab1), .a1b2(din_16_ab2), .a1b3(din_16_ab3),
+  .a2b0(din_17_ab0), .a2b1(din_17_ab1), .a2b2(din_17_ab2),
+  .a3b0(din_18_ab0), .a3b1(din_18_ab1), .a3b2(din_18_ab2),
+  .a4b0(din_19_ab0), .a4b1(din_19_ab1),
+  .a5b0(din_20_ab0), .a5b1(din_20_ab1),
+  .a6b0(din_21_ab0),
+  .a7b0(din_22_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffff000000),
 	.NBITS(11)
 ) addr_4_16_calc (
-           .clk(clk), .sign(din_signs_reg[16]), 
-           .p(addr_4_16),
-           .a0b0(din_16_ab0), .a0b1(din_16_ab1), .a0b2(din_16_ab2), .a0b3(din_16_ab3),
-           .a0b0_1sc(din_16_ab0_1sc), .a0b1_1sc(din_16_ab1_1sc), .a0b2_1sc(din_16_ab2_1sc), .a0b3_1sc(din_16_ab3_1sc),
-           .msk_a0b0(din_16_msk_ab0), .msk_a0b1(din_16_msk_ab1), .msk_a0b2(din_16_msk_ab2), .msk_a0b3(din_16_msk_ab3),
-           .msk_a0b0_1sc(din_16_msk_ab0_1sc), .msk_a0b1_1sc(din_16_msk_ab1_1sc), .msk_a0b2_1sc(din_16_msk_ab2_1sc), .msk_a0b3_1sc(din_16_msk_ab3_1sc),
-
-           .a1b0(din_18_ab0), .a1b1(din_18_ab1), .a1b2(din_18_ab2),
-           .a1b0_1sc(din_18_ab0_1sc), .a1b1_1sc(din_18_ab1_1sc), .a1b2_1sc(din_18_ab2_1sc),
-           .msk_a1b0(din_18_msk_ab0), .msk_a1b1(din_18_msk_ab1), .msk_a1b2(din_18_msk_ab2),
-           .msk_a1b0_1sc(din_18_msk_ab0_1sc), .msk_a1b1_1sc(din_18_msk_ab1_1sc), .msk_a1b2_1sc(din_18_msk_ab2_1sc),
-
-           .a2b0(din_20_ab0), .a2b1(din_20_ab1),
-           .a2b0_1sc(din_20_ab0_1sc), .a2b1_1sc(din_20_ab1_1sc),
-           .msk_a2b0(din_20_msk_ab0), .msk_a2b1(din_20_msk_ab1),
-           .msk_a2b0_1sc(din_20_msk_ab0_1sc), .msk_a2b1_1sc(din_20_msk_ab1_1sc),
-           
-           .a3b0(din_22_ab0),
-           .a3b0_1sc(din_22_ab0_1sc)
+  .clk(clk), .p(addr_4_16),
+  .a0b0(din_16_ab0), .a0b1(din_16_ab1), .a0b2(din_16_ab2), .a0b3(din_16_ab3),
+  .a1b0(din_17_ab0), .a1b1(din_17_ab1), .a1b2(din_17_ab2), .a1b3(din_17_ab3),
+  .a2b0(din_18_ab0), .a2b1(din_18_ab1), .a2b2(din_18_ab2),
+  .a3b0(din_19_ab0), .a3b1(din_19_ab1), .a3b2(din_19_ab2),
+  .a4b0(din_20_ab0), .a4b1(din_20_ab1),
+  .a5b0(din_21_ab0), .a5b1(din_21_ab1),
+  .a6b0(din_22_ab0),
+  .a7b0(din_23_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffff000000),
 	.NBITS(11)
 ) addr_4_17_calc (
-           .clk(clk), .sign(din_signs_reg[17]), 
-           .p(addr_4_17),
-           .a0b0(din_17_ab0), .a0b1(din_17_ab1), .a0b2(din_17_ab2), .a0b3(din_17_ab3),
-           .a0b0_1sc(din_17_ab0_1sc), .a0b1_1sc(din_17_ab1_1sc), .a0b2_1sc(din_17_ab2_1sc), .a0b3_1sc(din_17_ab3_1sc),
-           .msk_a0b0(din_17_msk_ab0), .msk_a0b1(din_17_msk_ab1), .msk_a0b2(din_17_msk_ab2), .msk_a0b3(din_17_msk_ab3),
-           .msk_a0b0_1sc(din_17_msk_ab0_1sc), .msk_a0b1_1sc(din_17_msk_ab1_1sc), .msk_a0b2_1sc(din_17_msk_ab2_1sc), .msk_a0b3_1sc(din_17_msk_ab3_1sc),
-
-           .a1b0(din_19_ab0), .a1b1(din_19_ab1), .a1b2(din_19_ab2),
-           .a1b0_1sc(din_19_ab0_1sc), .a1b1_1sc(din_19_ab1_1sc), .a1b2_1sc(din_19_ab2_1sc),
-           .msk_a1b0(din_19_msk_ab0), .msk_a1b1(din_19_msk_ab1), .msk_a1b2(din_19_msk_ab2),
-           .msk_a1b0_1sc(din_19_msk_ab0_1sc), .msk_a1b1_1sc(din_19_msk_ab1_1sc), .msk_a1b2_1sc(din_19_msk_ab2_1sc),
-
-           .a2b0(din_21_ab0), .a2b1(din_21_ab1),
-           .a2b0_1sc(din_21_ab0_1sc), .a2b1_1sc(din_21_ab1_1sc),
-           .msk_a2b0(din_21_msk_ab0), .msk_a2b1(din_21_msk_ab1),
-           .msk_a2b0_1sc(din_21_msk_ab0_1sc), .msk_a2b1_1sc(din_21_msk_ab1_1sc),
-           
-           .a3b0(din_23_ab0),
-           .a3b0_1sc(din_23_ab0_1sc)
+  .clk(clk), .p(addr_4_17),
+  .a0b0(din_17_ab0), .a0b1(din_17_ab1), .a0b2(din_17_ab2), .a0b3(din_17_ab3),
+  .a1b0(din_18_ab0), .a1b1(din_18_ab1), .a1b2(din_18_ab2), .a1b3(din_18_ab3),
+  .a2b0(din_19_ab0), .a2b1(din_19_ab1), .a2b2(din_19_ab2),
+  .a3b0(din_20_ab0), .a3b1(din_20_ab1), .a3b2(din_20_ab2),
+  .a4b0(din_21_ab0), .a4b1(din_21_ab1),
+  .a5b0(din_22_ab0), .a5b1(din_22_ab1),
+  .a6b0(din_23_ab0),
+  .a7b0(din_24_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffff000000),
 	.NBITS(11)
 ) addr_4_18_calc (
-           .clk(clk), .sign(din_signs_reg[18]), 
-           .p(addr_4_18),
-           .a0b0(din_18_ab0), .a0b1(din_18_ab1), .a0b2(din_18_ab2), .a0b3(din_18_ab3),
-           .a0b0_1sc(din_18_ab0_1sc), .a0b1_1sc(din_18_ab1_1sc), .a0b2_1sc(din_18_ab2_1sc), .a0b3_1sc(din_18_ab3_1sc),
-           .msk_a0b0(din_18_msk_ab0), .msk_a0b1(din_18_msk_ab1), .msk_a0b2(din_18_msk_ab2), .msk_a0b3(din_18_msk_ab3),
-           .msk_a0b0_1sc(din_18_msk_ab0_1sc), .msk_a0b1_1sc(din_18_msk_ab1_1sc), .msk_a0b2_1sc(din_18_msk_ab2_1sc), .msk_a0b3_1sc(din_18_msk_ab3_1sc),
-
-           .a1b0(din_20_ab0), .a1b1(din_20_ab1), .a1b2(din_20_ab2),
-           .a1b0_1sc(din_20_ab0_1sc), .a1b1_1sc(din_20_ab1_1sc), .a1b2_1sc(din_20_ab2_1sc),
-           .msk_a1b0(din_20_msk_ab0), .msk_a1b1(din_20_msk_ab1), .msk_a1b2(din_20_msk_ab2),
-           .msk_a1b0_1sc(din_20_msk_ab0_1sc), .msk_a1b1_1sc(din_20_msk_ab1_1sc), .msk_a1b2_1sc(din_20_msk_ab2_1sc),
-
-           .a2b0(din_22_ab0), .a2b1(din_22_ab1),
-           .a2b0_1sc(din_22_ab0_1sc), .a2b1_1sc(din_22_ab1_1sc),
-           .msk_a2b0(din_22_msk_ab0), .msk_a2b1(din_22_msk_ab1),
-           .msk_a2b0_1sc(din_22_msk_ab0_1sc), .msk_a2b1_1sc(din_22_msk_ab1_1sc),
-           
-           .a3b0(din_24_ab0),
-           .a3b0_1sc(din_24_ab0_1sc)
+  .clk(clk), .p(addr_4_18),
+  .a0b0(din_18_ab0), .a0b1(din_18_ab1), .a0b2(din_18_ab2), .a0b3(din_18_ab3),
+  .a1b0(din_19_ab0), .a1b1(din_19_ab1), .a1b2(din_19_ab2), .a1b3(din_19_ab3),
+  .a2b0(din_20_ab0), .a2b1(din_20_ab1), .a2b2(din_20_ab2),
+  .a3b0(din_21_ab0), .a3b1(din_21_ab1), .a3b2(din_21_ab2),
+  .a4b0(din_22_ab0), .a4b1(din_22_ab1),
+  .a5b0(din_23_ab0), .a5b1(din_23_ab1),
+  .a6b0(din_24_ab0),
+  .a7b0(din_25_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffff000000),
 	.NBITS(11)
 ) addr_4_19_calc (
-           .clk(clk), .sign(din_signs_reg[19]), 
-           .p(addr_4_19),
-           .a0b0(din_19_ab0), .a0b1(din_19_ab1), .a0b2(din_19_ab2), .a0b3(din_19_ab3),
-           .a0b0_1sc(din_19_ab0_1sc), .a0b1_1sc(din_19_ab1_1sc), .a0b2_1sc(din_19_ab2_1sc), .a0b3_1sc(din_19_ab3_1sc),
-           .msk_a0b0(din_19_msk_ab0), .msk_a0b1(din_19_msk_ab1), .msk_a0b2(din_19_msk_ab2), .msk_a0b3(din_19_msk_ab3),
-           .msk_a0b0_1sc(din_19_msk_ab0_1sc), .msk_a0b1_1sc(din_19_msk_ab1_1sc), .msk_a0b2_1sc(din_19_msk_ab2_1sc), .msk_a0b3_1sc(din_19_msk_ab3_1sc),
-
-           .a1b0(din_21_ab0), .a1b1(din_21_ab1), .a1b2(din_21_ab2),
-           .a1b0_1sc(din_21_ab0_1sc), .a1b1_1sc(din_21_ab1_1sc), .a1b2_1sc(din_21_ab2_1sc),
-           .msk_a1b0(din_21_msk_ab0), .msk_a1b1(din_21_msk_ab1), .msk_a1b2(din_21_msk_ab2),
-           .msk_a1b0_1sc(din_21_msk_ab0_1sc), .msk_a1b1_1sc(din_21_msk_ab1_1sc), .msk_a1b2_1sc(din_21_msk_ab2_1sc),
-
-           .a2b0(din_23_ab0), .a2b1(din_23_ab1),
-           .a2b0_1sc(din_23_ab0_1sc), .a2b1_1sc(din_23_ab1_1sc),
-           .msk_a2b0(din_23_msk_ab0), .msk_a2b1(din_23_msk_ab1),
-           .msk_a2b0_1sc(din_23_msk_ab0_1sc), .msk_a2b1_1sc(din_23_msk_ab1_1sc),
-           
-           .a3b0(din_25_ab0),
-           .a3b0_1sc(din_25_ab0_1sc)
+  .clk(clk), .p(addr_4_19),
+  .a0b0(din_19_ab0), .a0b1(din_19_ab1), .a0b2(din_19_ab2), .a0b3(din_19_ab3),
+  .a1b0(din_20_ab0), .a1b1(din_20_ab1), .a1b2(din_20_ab2), .a1b3(din_20_ab3),
+  .a2b0(din_21_ab0), .a2b1(din_21_ab1), .a2b2(din_21_ab2),
+  .a3b0(din_22_ab0), .a3b1(din_22_ab1), .a3b2(din_22_ab2),
+  .a4b0(din_23_ab0), .a4b1(din_23_ab1),
+  .a5b0(din_24_ab0), .a5b1(din_24_ab1),
+  .a6b0(din_25_ab0),
+  .a7b0(din_26_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffff000000),
 	.NBITS(11)
 ) addr_4_20_calc (
-           .clk(clk), .sign(din_signs_reg[20]), 
-           .p(addr_4_20),
-           .a0b0(din_20_ab0), .a0b1(din_20_ab1), .a0b2(din_20_ab2), .a0b3(din_20_ab3),
-           .a0b0_1sc(din_20_ab0_1sc), .a0b1_1sc(din_20_ab1_1sc), .a0b2_1sc(din_20_ab2_1sc), .a0b3_1sc(din_20_ab3_1sc),
-           .msk_a0b0(din_20_msk_ab0), .msk_a0b1(din_20_msk_ab1), .msk_a0b2(din_20_msk_ab2), .msk_a0b3(din_20_msk_ab3),
-           .msk_a0b0_1sc(din_20_msk_ab0_1sc), .msk_a0b1_1sc(din_20_msk_ab1_1sc), .msk_a0b2_1sc(din_20_msk_ab2_1sc), .msk_a0b3_1sc(din_20_msk_ab3_1sc),
-
-           .a1b0(din_22_ab0), .a1b1(din_22_ab1), .a1b2(din_22_ab2),
-           .a1b0_1sc(din_22_ab0_1sc), .a1b1_1sc(din_22_ab1_1sc), .a1b2_1sc(din_22_ab2_1sc),
-           .msk_a1b0(din_22_msk_ab0), .msk_a1b1(din_22_msk_ab1), .msk_a1b2(din_22_msk_ab2),
-           .msk_a1b0_1sc(din_22_msk_ab0_1sc), .msk_a1b1_1sc(din_22_msk_ab1_1sc), .msk_a1b2_1sc(din_22_msk_ab2_1sc),
-
-           .a2b0(din_24_ab0), .a2b1(din_24_ab1),
-           .a2b0_1sc(din_24_ab0_1sc), .a2b1_1sc(din_24_ab1_1sc),
-           .msk_a2b0(din_24_msk_ab0), .msk_a2b1(din_24_msk_ab1),
-           .msk_a2b0_1sc(din_24_msk_ab0_1sc), .msk_a2b1_1sc(din_24_msk_ab1_1sc),
-           
-           .a3b0(din_26_ab0),
-           .a3b0_1sc(din_26_ab0_1sc)
+  .clk(clk), .p(addr_4_20),
+  .a0b0(din_20_ab0), .a0b1(din_20_ab1), .a0b2(din_20_ab2), .a0b3(din_20_ab3),
+  .a1b0(din_21_ab0), .a1b1(din_21_ab1), .a1b2(din_21_ab2), .a1b3(din_21_ab3),
+  .a2b0(din_22_ab0), .a2b1(din_22_ab1), .a2b2(din_22_ab2),
+  .a3b0(din_23_ab0), .a3b1(din_23_ab1), .a3b2(din_23_ab2),
+  .a4b0(din_24_ab0), .a4b1(din_24_ab1),
+  .a5b0(din_25_ab0), .a5b1(din_25_ab1),
+  .a6b0(din_26_ab0),
+  .a7b0(din_27_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffff000000),
 	.NBITS(11)
 ) addr_4_21_calc (
-           .clk(clk), .sign(din_signs_reg[21]), 
-           .p(addr_4_21),
-           .a0b0(din_21_ab0), .a0b1(din_21_ab1), .a0b2(din_21_ab2), .a0b3(din_21_ab3),
-           .a0b0_1sc(din_21_ab0_1sc), .a0b1_1sc(din_21_ab1_1sc), .a0b2_1sc(din_21_ab2_1sc), .a0b3_1sc(din_21_ab3_1sc),
-           .msk_a0b0(din_21_msk_ab0), .msk_a0b1(din_21_msk_ab1), .msk_a0b2(din_21_msk_ab2), .msk_a0b3(din_21_msk_ab3),
-           .msk_a0b0_1sc(din_21_msk_ab0_1sc), .msk_a0b1_1sc(din_21_msk_ab1_1sc), .msk_a0b2_1sc(din_21_msk_ab2_1sc), .msk_a0b3_1sc(din_21_msk_ab3_1sc),
-
-           .a1b0(din_23_ab0), .a1b1(din_23_ab1), .a1b2(din_23_ab2),
-           .a1b0_1sc(din_23_ab0_1sc), .a1b1_1sc(din_23_ab1_1sc), .a1b2_1sc(din_23_ab2_1sc),
-           .msk_a1b0(din_23_msk_ab0), .msk_a1b1(din_23_msk_ab1), .msk_a1b2(din_23_msk_ab2),
-           .msk_a1b0_1sc(din_23_msk_ab0_1sc), .msk_a1b1_1sc(din_23_msk_ab1_1sc), .msk_a1b2_1sc(din_23_msk_ab2_1sc),
-
-           .a2b0(din_25_ab0), .a2b1(din_25_ab1),
-           .a2b0_1sc(din_25_ab0_1sc), .a2b1_1sc(din_25_ab1_1sc),
-           .msk_a2b0(din_25_msk_ab0), .msk_a2b1(din_25_msk_ab1),
-           .msk_a2b0_1sc(din_25_msk_ab0_1sc), .msk_a2b1_1sc(din_25_msk_ab1_1sc),
-           
-           .a3b0(din_27_ab0),
-           .a3b0_1sc(din_27_ab0_1sc)
+  .clk(clk), .p(addr_4_21),
+  .a0b0(din_21_ab0), .a0b1(din_21_ab1), .a0b2(din_21_ab2), .a0b3(din_21_ab3),
+  .a1b0(din_22_ab0), .a1b1(din_22_ab1), .a1b2(din_22_ab2), .a1b3(din_22_ab3),
+  .a2b0(din_23_ab0), .a2b1(din_23_ab1), .a2b2(din_23_ab2),
+  .a3b0(din_24_ab0), .a3b1(din_24_ab1), .a3b2(din_24_ab2),
+  .a4b0(din_25_ab0), .a4b1(din_25_ab1),
+  .a5b0(din_26_ab0), .a5b1(din_26_ab1),
+  .a6b0(din_27_ab0),
+  .a7b0(din_28_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffff000000),
 	.NBITS(11)
 ) addr_4_22_calc (
-           .clk(clk), .sign(din_signs_reg[22]), 
-           .p(addr_4_22),
-           .a0b0(din_22_ab0), .a0b1(din_22_ab1), .a0b2(din_22_ab2), .a0b3(din_22_ab3),
-           .a0b0_1sc(din_22_ab0_1sc), .a0b1_1sc(din_22_ab1_1sc), .a0b2_1sc(din_22_ab2_1sc), .a0b3_1sc(din_22_ab3_1sc),
-           .msk_a0b0(din_22_msk_ab0), .msk_a0b1(din_22_msk_ab1), .msk_a0b2(din_22_msk_ab2), .msk_a0b3(din_22_msk_ab3),
-           .msk_a0b0_1sc(din_22_msk_ab0_1sc), .msk_a0b1_1sc(din_22_msk_ab1_1sc), .msk_a0b2_1sc(din_22_msk_ab2_1sc), .msk_a0b3_1sc(din_22_msk_ab3_1sc),
-
-           .a1b0(din_24_ab0), .a1b1(din_24_ab1), .a1b2(din_24_ab2),
-           .a1b0_1sc(din_24_ab0_1sc), .a1b1_1sc(din_24_ab1_1sc), .a1b2_1sc(din_24_ab2_1sc),
-           .msk_a1b0(din_24_msk_ab0), .msk_a1b1(din_24_msk_ab1), .msk_a1b2(din_24_msk_ab2),
-           .msk_a1b0_1sc(din_24_msk_ab0_1sc), .msk_a1b1_1sc(din_24_msk_ab1_1sc), .msk_a1b2_1sc(din_24_msk_ab2_1sc),
-
-           .a2b0(din_26_ab0), .a2b1(din_26_ab1),
-           .a2b0_1sc(din_26_ab0_1sc), .a2b1_1sc(din_26_ab1_1sc),
-           .msk_a2b0(din_26_msk_ab0), .msk_a2b1(din_26_msk_ab1),
-           .msk_a2b0_1sc(din_26_msk_ab0_1sc), .msk_a2b1_1sc(din_26_msk_ab1_1sc),
-           
-           .a3b0(din_28_ab0),
-           .a3b0_1sc(din_28_ab0_1sc)
+  .clk(clk), .p(addr_4_22),
+  .a0b0(din_22_ab0), .a0b1(din_22_ab1), .a0b2(din_22_ab2), .a0b3(din_22_ab3),
+  .a1b0(din_23_ab0), .a1b1(din_23_ab1), .a1b2(din_23_ab2), .a1b3(din_23_ab3),
+  .a2b0(din_24_ab0), .a2b1(din_24_ab1), .a2b2(din_24_ab2),
+  .a3b0(din_25_ab0), .a3b1(din_25_ab1), .a3b2(din_25_ab2),
+  .a4b0(din_26_ab0), .a4b1(din_26_ab1),
+  .a5b0(din_27_ab0), .a5b1(din_27_ab1),
+  .a6b0(din_28_ab0),
+  .a7b0(din_29_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffff000000),
 	.NBITS(11)
 ) addr_4_23_calc (
-           .clk(clk), .sign(din_signs_reg[23]), 
-           .p(addr_4_23),
-           .a0b0(din_23_ab0), .a0b1(din_23_ab1), .a0b2(din_23_ab2), .a0b3(din_23_ab3),
-           .a0b0_1sc(din_23_ab0_1sc), .a0b1_1sc(din_23_ab1_1sc), .a0b2_1sc(din_23_ab2_1sc), .a0b3_1sc(din_23_ab3_1sc),
-           .msk_a0b0(din_23_msk_ab0), .msk_a0b1(din_23_msk_ab1), .msk_a0b2(din_23_msk_ab2), .msk_a0b3(din_23_msk_ab3),
-           .msk_a0b0_1sc(din_23_msk_ab0_1sc), .msk_a0b1_1sc(din_23_msk_ab1_1sc), .msk_a0b2_1sc(din_23_msk_ab2_1sc), .msk_a0b3_1sc(din_23_msk_ab3_1sc),
-
-           .a1b0(din_25_ab0), .a1b1(din_25_ab1), .a1b2(din_25_ab2),
-           .a1b0_1sc(din_25_ab0_1sc), .a1b1_1sc(din_25_ab1_1sc), .a1b2_1sc(din_25_ab2_1sc),
-           .msk_a1b0(din_25_msk_ab0), .msk_a1b1(din_25_msk_ab1), .msk_a1b2(din_25_msk_ab2),
-           .msk_a1b0_1sc(din_25_msk_ab0_1sc), .msk_a1b1_1sc(din_25_msk_ab1_1sc), .msk_a1b2_1sc(din_25_msk_ab2_1sc),
-
-           .a2b0(din_27_ab0), .a2b1(din_27_ab1),
-           .a2b0_1sc(din_27_ab0_1sc), .a2b1_1sc(din_27_ab1_1sc),
-           .msk_a2b0(din_27_msk_ab0), .msk_a2b1(din_27_msk_ab1),
-           .msk_a2b0_1sc(din_27_msk_ab0_1sc), .msk_a2b1_1sc(din_27_msk_ab1_1sc),
-           
-           .a3b0(din_29_ab0),
-           .a3b0_1sc(din_29_ab0_1sc)
+  .clk(clk), .p(addr_4_23),
+  .a0b0(din_23_ab0), .a0b1(din_23_ab1), .a0b2(din_23_ab2), .a0b3(din_23_ab3),
+  .a1b0(din_24_ab0), .a1b1(din_24_ab1), .a1b2(din_24_ab2), .a1b3(din_24_ab3),
+  .a2b0(din_25_ab0), .a2b1(din_25_ab1), .a2b2(din_25_ab2),
+  .a3b0(din_26_ab0), .a3b1(din_26_ab1), .a3b2(din_26_ab2),
+  .a4b0(din_27_ab0), .a4b1(din_27_ab1),
+  .a5b0(din_28_ab0), .a5b1(din_28_ab1),
+  .a6b0(din_29_ab0),
+  .a7b0(din_30_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffff000000),
 	.NBITS(11)
 ) addr_4_24_calc (
-           .clk(clk), .sign(din_signs_reg[24]), 
-           .p(addr_4_24),
-           .a0b0(din_24_ab0), .a0b1(din_24_ab1), .a0b2(din_24_ab2), .a0b3(din_24_ab3),
-           .a0b0_1sc(din_24_ab0_1sc), .a0b1_1sc(din_24_ab1_1sc), .a0b2_1sc(din_24_ab2_1sc), .a0b3_1sc(din_24_ab3_1sc),
-           .msk_a0b0(din_24_msk_ab0), .msk_a0b1(din_24_msk_ab1), .msk_a0b2(din_24_msk_ab2), .msk_a0b3(din_24_msk_ab3),
-           .msk_a0b0_1sc(din_24_msk_ab0_1sc), .msk_a0b1_1sc(din_24_msk_ab1_1sc), .msk_a0b2_1sc(din_24_msk_ab2_1sc), .msk_a0b3_1sc(din_24_msk_ab3_1sc),
-
-           .a1b0(din_26_ab0), .a1b1(din_26_ab1), .a1b2(din_26_ab2),
-           .a1b0_1sc(din_26_ab0_1sc), .a1b1_1sc(din_26_ab1_1sc), .a1b2_1sc(din_26_ab2_1sc),
-           .msk_a1b0(din_26_msk_ab0), .msk_a1b1(din_26_msk_ab1), .msk_a1b2(din_26_msk_ab2),
-           .msk_a1b0_1sc(din_26_msk_ab0_1sc), .msk_a1b1_1sc(din_26_msk_ab1_1sc), .msk_a1b2_1sc(din_26_msk_ab2_1sc),
-
-           .a2b0(din_28_ab0), .a2b1(din_28_ab1),
-           .a2b0_1sc(din_28_ab0_1sc), .a2b1_1sc(din_28_ab1_1sc),
-           .msk_a2b0(din_28_msk_ab0), .msk_a2b1(din_28_msk_ab1),
-           .msk_a2b0_1sc(din_28_msk_ab0_1sc), .msk_a2b1_1sc(din_28_msk_ab1_1sc),
-           
-           .a3b0(din_30_ab0),
-           .a3b0_1sc(din_30_ab0_1sc)
+  .clk(clk), .p(addr_4_24),
+  .a0b0(din_24_ab0), .a0b1(din_24_ab1), .a0b2(din_24_ab2), .a0b3(din_24_ab3),
+  .a1b0(din_25_ab0), .a1b1(din_25_ab1), .a1b2(din_25_ab2), .a1b3(din_25_ab3),
+  .a2b0(din_26_ab0), .a2b1(din_26_ab1), .a2b2(din_26_ab2),
+  .a3b0(din_27_ab0), .a3b1(din_27_ab1), .a3b2(din_27_ab2),
+  .a4b0(din_28_ab0), .a4b1(din_28_ab1),
+  .a5b0(din_29_ab0), .a5b1(din_29_ab1),
+  .a6b0(din_30_ab0),
+  .a7b0(din_31_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffff000000),
 	.NBITS(11)
 ) addr_4_25_calc (
-           .clk(clk), .sign(din_signs_reg[25]), 
-           .p(addr_4_25),
-           .a0b0(din_25_ab0), .a0b1(din_25_ab1), .a0b2(din_25_ab2), .a0b3(din_25_ab3),
-           .a0b0_1sc(din_25_ab0_1sc), .a0b1_1sc(din_25_ab1_1sc), .a0b2_1sc(din_25_ab2_1sc), .a0b3_1sc(din_25_ab3_1sc),
-           .msk_a0b0(din_25_msk_ab0), .msk_a0b1(din_25_msk_ab1), .msk_a0b2(din_25_msk_ab2), .msk_a0b3(din_25_msk_ab3),
-           .msk_a0b0_1sc(din_25_msk_ab0_1sc), .msk_a0b1_1sc(din_25_msk_ab1_1sc), .msk_a0b2_1sc(din_25_msk_ab2_1sc), .msk_a0b3_1sc(din_25_msk_ab3_1sc),
-
-           .a1b0(din_27_ab0), .a1b1(din_27_ab1), .a1b2(din_27_ab2),
-           .a1b0_1sc(din_27_ab0_1sc), .a1b1_1sc(din_27_ab1_1sc), .a1b2_1sc(din_27_ab2_1sc),
-           .msk_a1b0(din_27_msk_ab0), .msk_a1b1(din_27_msk_ab1), .msk_a1b2(din_27_msk_ab2),
-           .msk_a1b0_1sc(din_27_msk_ab0_1sc), .msk_a1b1_1sc(din_27_msk_ab1_1sc), .msk_a1b2_1sc(din_27_msk_ab2_1sc),
-
-           .a2b0(din_29_ab0), .a2b1(din_29_ab1),
-           .a2b0_1sc(din_29_ab0_1sc), .a2b1_1sc(din_29_ab1_1sc),
-           .msk_a2b0(din_29_msk_ab0), .msk_a2b1(din_29_msk_ab1),
-           .msk_a2b0_1sc(din_29_msk_ab0_1sc), .msk_a2b1_1sc(din_29_msk_ab1_1sc),
-           
-           .a3b0(din_31_ab0),
-           .a3b0_1sc(din_31_ab0_1sc)
+  .clk(clk), .p(addr_4_25),
+  .a0b0(din_25_ab0), .a0b1(din_25_ab1), .a0b2(din_25_ab2), .a0b3(din_25_ab3),
+  .a1b0(din_26_ab0), .a1b1(din_26_ab1), .a1b2(din_26_ab2), .a1b3(din_26_ab3),
+  .a2b0(din_27_ab0), .a2b1(din_27_ab1), .a2b2(din_27_ab2),
+  .a3b0(din_28_ab0), .a3b1(din_28_ab1), .a3b2(din_28_ab2),
+  .a4b0(din_29_ab0), .a4b1(din_29_ab1),
+  .a5b0(din_30_ab0), .a5b1(din_30_ab1),
+  .a6b0(din_31_ab0),
+  .a7b0(din_32_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffff000000),
 	.NBITS(11)
 ) addr_4_26_calc (
-           .clk(clk), .sign(din_signs_reg[26]), 
-           .p(addr_4_26),
-           .a0b0(din_26_ab0), .a0b1(din_26_ab1), .a0b2(din_26_ab2), .a0b3(din_26_ab3),
-           .a0b0_1sc(din_26_ab0_1sc), .a0b1_1sc(din_26_ab1_1sc), .a0b2_1sc(din_26_ab2_1sc), .a0b3_1sc(din_26_ab3_1sc),
-           .msk_a0b0(din_26_msk_ab0), .msk_a0b1(din_26_msk_ab1), .msk_a0b2(din_26_msk_ab2), .msk_a0b3(din_26_msk_ab3),
-           .msk_a0b0_1sc(din_26_msk_ab0_1sc), .msk_a0b1_1sc(din_26_msk_ab1_1sc), .msk_a0b2_1sc(din_26_msk_ab2_1sc), .msk_a0b3_1sc(din_26_msk_ab3_1sc),
-
-           .a1b0(din_28_ab0), .a1b1(din_28_ab1), .a1b2(din_28_ab2),
-           .a1b0_1sc(din_28_ab0_1sc), .a1b1_1sc(din_28_ab1_1sc), .a1b2_1sc(din_28_ab2_1sc),
-           .msk_a1b0(din_28_msk_ab0), .msk_a1b1(din_28_msk_ab1), .msk_a1b2(din_28_msk_ab2),
-           .msk_a1b0_1sc(din_28_msk_ab0_1sc), .msk_a1b1_1sc(din_28_msk_ab1_1sc), .msk_a1b2_1sc(din_28_msk_ab2_1sc),
-
-           .a2b0(din_30_ab0), .a2b1(din_30_ab1),
-           .a2b0_1sc(din_30_ab0_1sc), .a2b1_1sc(din_30_ab1_1sc),
-           .msk_a2b0(din_30_msk_ab0), .msk_a2b1(din_30_msk_ab1),
-           .msk_a2b0_1sc(din_30_msk_ab0_1sc), .msk_a2b1_1sc(din_30_msk_ab1_1sc),
-           
-           .a3b0(din_32_ab0),
-           .a3b0_1sc(din_32_ab0_1sc)
+  .clk(clk), .p(addr_4_26),
+  .a0b0(din_26_ab0), .a0b1(din_26_ab1), .a0b2(din_26_ab2), .a0b3(din_26_ab3),
+  .a1b0(din_27_ab0), .a1b1(din_27_ab1), .a1b2(din_27_ab2), .a1b3(din_27_ab3),
+  .a2b0(din_28_ab0), .a2b1(din_28_ab1), .a2b2(din_28_ab2),
+  .a3b0(din_29_ab0), .a3b1(din_29_ab1), .a3b2(din_29_ab2),
+  .a4b0(din_30_ab0), .a4b1(din_30_ab1),
+  .a5b0(din_31_ab0), .a5b1(din_31_ab1),
+  .a6b0(din_32_ab0),
+  .a7b0(din_33_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffff000000),
 	.NBITS(11)
 ) addr_4_27_calc (
-           .clk(clk), .sign(din_signs_reg[27]), 
-           .p(addr_4_27),
-           .a0b0(din_27_ab0), .a0b1(din_27_ab1), .a0b2(din_27_ab2), .a0b3(din_27_ab3),
-           .a0b0_1sc(din_27_ab0_1sc), .a0b1_1sc(din_27_ab1_1sc), .a0b2_1sc(din_27_ab2_1sc), .a0b3_1sc(din_27_ab3_1sc),
-           .msk_a0b0(din_27_msk_ab0), .msk_a0b1(din_27_msk_ab1), .msk_a0b2(din_27_msk_ab2), .msk_a0b3(din_27_msk_ab3),
-           .msk_a0b0_1sc(din_27_msk_ab0_1sc), .msk_a0b1_1sc(din_27_msk_ab1_1sc), .msk_a0b2_1sc(din_27_msk_ab2_1sc), .msk_a0b3_1sc(din_27_msk_ab3_1sc),
-
-           .a1b0(din_29_ab0), .a1b1(din_29_ab1), .a1b2(din_29_ab2),
-           .a1b0_1sc(din_29_ab0_1sc), .a1b1_1sc(din_29_ab1_1sc), .a1b2_1sc(din_29_ab2_1sc),
-           .msk_a1b0(din_29_msk_ab0), .msk_a1b1(din_29_msk_ab1), .msk_a1b2(din_29_msk_ab2),
-           .msk_a1b0_1sc(din_29_msk_ab0_1sc), .msk_a1b1_1sc(din_29_msk_ab1_1sc), .msk_a1b2_1sc(din_29_msk_ab2_1sc),
-
-           .a2b0(din_31_ab0), .a2b1(din_31_ab1),
-           .a2b0_1sc(din_31_ab0_1sc), .a2b1_1sc(din_31_ab1_1sc),
-           .msk_a2b0(din_31_msk_ab0), .msk_a2b1(din_31_msk_ab1),
-           .msk_a2b0_1sc(din_31_msk_ab0_1sc), .msk_a2b1_1sc(din_31_msk_ab1_1sc),
-           
-           .a3b0(din_33_ab0),
-           .a3b0_1sc(din_33_ab0_1sc)
+  .clk(clk), .p(addr_4_27),
+  .a0b0(din_27_ab0), .a0b1(din_27_ab1), .a0b2(din_27_ab2), .a0b3(din_27_ab3),
+  .a1b0(din_28_ab0), .a1b1(din_28_ab1), .a1b2(din_28_ab2), .a1b3(din_28_ab3),
+  .a2b0(din_29_ab0), .a2b1(din_29_ab1), .a2b2(din_29_ab2),
+  .a3b0(din_30_ab0), .a3b1(din_30_ab1), .a3b2(din_30_ab2),
+  .a4b0(din_31_ab0), .a4b1(din_31_ab1),
+  .a5b0(din_32_ab0), .a5b1(din_32_ab1),
+  .a6b0(din_33_ab0),
+  .a7b0(din_34_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffff000000),
 	.NBITS(11)
 ) addr_4_28_calc (
-           .clk(clk), .sign(din_signs_reg[28]), 
-           .p(addr_4_28),
-           .a0b0(din_28_ab0), .a0b1(din_28_ab1), .a0b2(din_28_ab2), .a0b3(din_28_ab3),
-           .a0b0_1sc(din_28_ab0_1sc), .a0b1_1sc(din_28_ab1_1sc), .a0b2_1sc(din_28_ab2_1sc), .a0b3_1sc(din_28_ab3_1sc),
-           .msk_a0b0(din_28_msk_ab0), .msk_a0b1(din_28_msk_ab1), .msk_a0b2(din_28_msk_ab2), .msk_a0b3(din_28_msk_ab3),
-           .msk_a0b0_1sc(din_28_msk_ab0_1sc), .msk_a0b1_1sc(din_28_msk_ab1_1sc), .msk_a0b2_1sc(din_28_msk_ab2_1sc), .msk_a0b3_1sc(din_28_msk_ab3_1sc),
-
-           .a1b0(din_30_ab0), .a1b1(din_30_ab1), .a1b2(din_30_ab2),
-           .a1b0_1sc(din_30_ab0_1sc), .a1b1_1sc(din_30_ab1_1sc), .a1b2_1sc(din_30_ab2_1sc),
-           .msk_a1b0(din_30_msk_ab0), .msk_a1b1(din_30_msk_ab1), .msk_a1b2(din_30_msk_ab2),
-           .msk_a1b0_1sc(din_30_msk_ab0_1sc), .msk_a1b1_1sc(din_30_msk_ab1_1sc), .msk_a1b2_1sc(din_30_msk_ab2_1sc),
-
-           .a2b0(din_32_ab0), .a2b1(din_32_ab1),
-           .a2b0_1sc(din_32_ab0_1sc), .a2b1_1sc(din_32_ab1_1sc),
-           .msk_a2b0(din_32_msk_ab0), .msk_a2b1(din_32_msk_ab1),
-           .msk_a2b0_1sc(din_32_msk_ab0_1sc), .msk_a2b1_1sc(din_32_msk_ab1_1sc),
-           
-           .a3b0(din_34_ab0),
-           .a3b0_1sc(din_34_ab0_1sc)
+  .clk(clk), .p(addr_4_28),
+  .a0b0(din_28_ab0), .a0b1(din_28_ab1), .a0b2(din_28_ab2), .a0b3(din_28_ab3),
+  .a1b0(din_29_ab0), .a1b1(din_29_ab1), .a1b2(din_29_ab2), .a1b3(din_29_ab3),
+  .a2b0(din_30_ab0), .a2b1(din_30_ab1), .a2b2(din_30_ab2),
+  .a3b0(din_31_ab0), .a3b1(din_31_ab1), .a3b2(din_31_ab2),
+  .a4b0(din_32_ab0), .a4b1(din_32_ab1),
+  .a5b0(din_33_ab0), .a5b1(din_33_ab1),
+  .a6b0(din_34_ab0),
+  .a7b0(din_35_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffff000000),
 	.NBITS(11)
 ) addr_4_29_calc (
-           .clk(clk), .sign(din_signs_reg[29]), 
-           .p(addr_4_29),
-           .a0b0(din_29_ab0), .a0b1(din_29_ab1), .a0b2(din_29_ab2), .a0b3(din_29_ab3),
-           .a0b0_1sc(din_29_ab0_1sc), .a0b1_1sc(din_29_ab1_1sc), .a0b2_1sc(din_29_ab2_1sc), .a0b3_1sc(din_29_ab3_1sc),
-           .msk_a0b0(din_29_msk_ab0), .msk_a0b1(din_29_msk_ab1), .msk_a0b2(din_29_msk_ab2), .msk_a0b3(din_29_msk_ab3),
-           .msk_a0b0_1sc(din_29_msk_ab0_1sc), .msk_a0b1_1sc(din_29_msk_ab1_1sc), .msk_a0b2_1sc(din_29_msk_ab2_1sc), .msk_a0b3_1sc(din_29_msk_ab3_1sc),
-
-           .a1b0(din_31_ab0), .a1b1(din_31_ab1), .a1b2(din_31_ab2),
-           .a1b0_1sc(din_31_ab0_1sc), .a1b1_1sc(din_31_ab1_1sc), .a1b2_1sc(din_31_ab2_1sc),
-           .msk_a1b0(din_31_msk_ab0), .msk_a1b1(din_31_msk_ab1), .msk_a1b2(din_31_msk_ab2),
-           .msk_a1b0_1sc(din_31_msk_ab0_1sc), .msk_a1b1_1sc(din_31_msk_ab1_1sc), .msk_a1b2_1sc(din_31_msk_ab2_1sc),
-
-           .a2b0(din_33_ab0), .a2b1(din_33_ab1),
-           .a2b0_1sc(din_33_ab0_1sc), .a2b1_1sc(din_33_ab1_1sc),
-           .msk_a2b0(din_33_msk_ab0), .msk_a2b1(din_33_msk_ab1),
-           .msk_a2b0_1sc(din_33_msk_ab0_1sc), .msk_a2b1_1sc(din_33_msk_ab1_1sc),
-           
-           .a3b0(din_35_ab0),
-           .a3b0_1sc(din_35_ab0_1sc)
+  .clk(clk), .p(addr_4_29),
+  .a0b0(din_29_ab0), .a0b1(din_29_ab1), .a0b2(din_29_ab2), .a0b3(din_29_ab3),
+  .a1b0(din_30_ab0), .a1b1(din_30_ab1), .a1b2(din_30_ab2), .a1b3(din_30_ab3),
+  .a2b0(din_31_ab0), .a2b1(din_31_ab1), .a2b2(din_31_ab2),
+  .a3b0(din_32_ab0), .a3b1(din_32_ab1), .a3b2(din_32_ab2),
+  .a4b0(din_33_ab0), .a4b1(din_33_ab1),
+  .a5b0(din_34_ab0), .a5b1(din_34_ab1),
+  .a6b0(din_35_ab0),
+  .a7b0(din_36_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffff000000),
 	.NBITS(11)
 ) addr_4_30_calc (
-           .clk(clk), .sign(din_signs_reg[30]), 
-           .p(addr_4_30),
-           .a0b0(din_30_ab0), .a0b1(din_30_ab1), .a0b2(din_30_ab2), .a0b3(din_30_ab3),
-           .a0b0_1sc(din_30_ab0_1sc), .a0b1_1sc(din_30_ab1_1sc), .a0b2_1sc(din_30_ab2_1sc), .a0b3_1sc(din_30_ab3_1sc),
-           .msk_a0b0(din_30_msk_ab0), .msk_a0b1(din_30_msk_ab1), .msk_a0b2(din_30_msk_ab2), .msk_a0b3(din_30_msk_ab3),
-           .msk_a0b0_1sc(din_30_msk_ab0_1sc), .msk_a0b1_1sc(din_30_msk_ab1_1sc), .msk_a0b2_1sc(din_30_msk_ab2_1sc), .msk_a0b3_1sc(din_30_msk_ab3_1sc),
-
-           .a1b0(din_32_ab0), .a1b1(din_32_ab1), .a1b2(din_32_ab2),
-           .a1b0_1sc(din_32_ab0_1sc), .a1b1_1sc(din_32_ab1_1sc), .a1b2_1sc(din_32_ab2_1sc),
-           .msk_a1b0(din_32_msk_ab0), .msk_a1b1(din_32_msk_ab1), .msk_a1b2(din_32_msk_ab2),
-           .msk_a1b0_1sc(din_32_msk_ab0_1sc), .msk_a1b1_1sc(din_32_msk_ab1_1sc), .msk_a1b2_1sc(din_32_msk_ab2_1sc),
-
-           .a2b0(din_34_ab0), .a2b1(din_34_ab1),
-           .a2b0_1sc(din_34_ab0_1sc), .a2b1_1sc(din_34_ab1_1sc),
-           .msk_a2b0(din_34_msk_ab0), .msk_a2b1(din_34_msk_ab1),
-           .msk_a2b0_1sc(din_34_msk_ab0_1sc), .msk_a2b1_1sc(din_34_msk_ab1_1sc),
-           
-           .a3b0(din_36_ab0),
-           .a3b0_1sc(din_36_ab0_1sc)
+  .clk(clk), .p(addr_4_30),
+  .a0b0(din_30_ab0), .a0b1(din_30_ab1), .a0b2(din_30_ab2), .a0b3(din_30_ab3),
+  .a1b0(din_31_ab0), .a1b1(din_31_ab1), .a1b2(din_31_ab2), .a1b3(din_31_ab3),
+  .a2b0(din_32_ab0), .a2b1(din_32_ab1), .a2b2(din_32_ab2),
+  .a3b0(din_33_ab0), .a3b1(din_33_ab1), .a3b2(din_33_ab2),
+  .a4b0(din_34_ab0), .a4b1(din_34_ab1),
+  .a5b0(din_35_ab0), .a5b1(din_35_ab1),
+  .a6b0(din_36_ab0),
+  .a7b0(din_37_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffffff000000),
 	.NBITS(11)
 ) addr_4_31_calc (
-           .clk(clk), .sign(din_signs_reg[31]), 
-           .p(addr_4_31),
-           .a0b0(din_31_ab0), .a0b1(din_31_ab1), .a0b2(din_31_ab2), .a0b3(din_31_ab3),
-           .a0b0_1sc(din_31_ab0_1sc), .a0b1_1sc(din_31_ab1_1sc), .a0b2_1sc(din_31_ab2_1sc), .a0b3_1sc(din_31_ab3_1sc),
-           .msk_a0b0(din_31_msk_ab0), .msk_a0b1(din_31_msk_ab1), .msk_a0b2(din_31_msk_ab2), .msk_a0b3(din_31_msk_ab3),
-           .msk_a0b0_1sc(din_31_msk_ab0_1sc), .msk_a0b1_1sc(din_31_msk_ab1_1sc), .msk_a0b2_1sc(din_31_msk_ab2_1sc), .msk_a0b3_1sc(din_31_msk_ab3_1sc),
-
-           .a1b0(din_33_ab0), .a1b1(din_33_ab1), .a1b2(din_33_ab2),
-           .a1b0_1sc(din_33_ab0_1sc), .a1b1_1sc(din_33_ab1_1sc), .a1b2_1sc(din_33_ab2_1sc),
-           .msk_a1b0(din_33_msk_ab0), .msk_a1b1(din_33_msk_ab1), .msk_a1b2(din_33_msk_ab2),
-           .msk_a1b0_1sc(din_33_msk_ab0_1sc), .msk_a1b1_1sc(din_33_msk_ab1_1sc), .msk_a1b2_1sc(din_33_msk_ab2_1sc),
-
-           .a2b0(din_35_ab0), .a2b1(din_35_ab1),
-           .a2b0_1sc(din_35_ab0_1sc), .a2b1_1sc(din_35_ab1_1sc),
-           .msk_a2b0(din_35_msk_ab0), .msk_a2b1(din_35_msk_ab1),
-           .msk_a2b0_1sc(din_35_msk_ab0_1sc), .msk_a2b1_1sc(din_35_msk_ab1_1sc),
-           
-           .a3b0(din_37_ab0),
-           .a3b0_1sc(din_37_ab0_1sc)
+  .clk(clk), .p(addr_4_31),
+  .a0b0(din_31_ab0), .a0b1(din_31_ab1), .a0b2(din_31_ab2), .a0b3(din_31_ab3),
+  .a1b0(din_32_ab0), .a1b1(din_32_ab1), .a1b2(din_32_ab2), .a1b3(din_32_ab3),
+  .a2b0(din_33_ab0), .a2b1(din_33_ab1), .a2b2(din_33_ab2),
+  .a3b0(din_34_ab0), .a3b1(din_34_ab1), .a3b2(din_34_ab2),
+  .a4b0(din_35_ab0), .a4b1(din_35_ab1),
+  .a5b0(din_36_ab0), .a5b1(din_36_ab1),
+  .a6b0(din_37_ab0),
+  .a7b0(din_38_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffff00000000),
 	.NBITS(12)
 ) addr_5_0_calc (
-           .clk(clk), .sign(din_signs_reg[0]), 
-           .p(addr_5_0),
-           .a0b0(din_0_ab0), .a0b1(din_0_ab1), .a0b2(din_0_ab2), .a0b3(din_0_ab3),
-           .a0b0_1sc(din_0_ab0_1sc), .a0b1_1sc(din_0_ab1_1sc), .a0b2_1sc(din_0_ab2_1sc), .a0b3_1sc(din_0_ab3_1sc),
-           .msk_a0b0(din_0_msk_ab0), .msk_a0b1(din_0_msk_ab1), .msk_a0b2(din_0_msk_ab2), .msk_a0b3(din_0_msk_ab3),
-           .msk_a0b0_1sc(din_0_msk_ab0_1sc), .msk_a0b1_1sc(din_0_msk_ab1_1sc), .msk_a0b2_1sc(din_0_msk_ab2_1sc), .msk_a0b3_1sc(din_0_msk_ab3_1sc),
-
-           .a1b0(din_2_ab0), .a1b1(din_2_ab1), .a1b2(din_2_ab2),
-           .a1b0_1sc(din_2_ab0_1sc), .a1b1_1sc(din_2_ab1_1sc), .a1b2_1sc(din_2_ab2_1sc),
-           .msk_a1b0(din_2_msk_ab0), .msk_a1b1(din_2_msk_ab1), .msk_a1b2(din_2_msk_ab2),
-           .msk_a1b0_1sc(din_2_msk_ab0_1sc), .msk_a1b1_1sc(din_2_msk_ab1_1sc), .msk_a1b2_1sc(din_2_msk_ab2_1sc),
-
-           .a2b0(din_4_ab0), .a2b1(din_4_ab1),
-           .a2b0_1sc(din_4_ab0_1sc), .a2b1_1sc(din_4_ab1_1sc),
-           .msk_a2b0(din_4_msk_ab0), .msk_a2b1(din_4_msk_ab1),
-           .msk_a2b0_1sc(din_4_msk_ab0_1sc), .msk_a2b1_1sc(din_4_msk_ab1_1sc),
-           
-           .a3b0(din_6_ab0),
-           .a3b0_1sc(din_6_ab0_1sc)
+  .clk(clk), .p(addr_5_0),
+  .a0b0(din_0_ab0), .a0b1(din_0_ab1), .a0b2(din_0_ab2), .a0b3(din_0_ab3),
+  .a1b0(din_1_ab0), .a1b1(din_1_ab1), .a1b2(din_1_ab2), .a1b3(din_1_ab3),
+  .a2b0(din_2_ab0), .a2b1(din_2_ab1), .a2b2(din_2_ab2),
+  .a3b0(din_3_ab0), .a3b1(din_3_ab1), .a3b2(din_3_ab2),
+  .a4b0(din_4_ab0), .a4b1(din_4_ab1),
+  .a5b0(din_5_ab0), .a5b1(din_5_ab1),
+  .a6b0(din_6_ab0),
+  .a7b0(din_7_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffff00000000),
 	.NBITS(12)
 ) addr_5_1_calc (
-           .clk(clk), .sign(din_signs_reg[1]), 
-           .p(addr_5_1),
-           .a0b0(din_1_ab0), .a0b1(din_1_ab1), .a0b2(din_1_ab2), .a0b3(din_1_ab3),
-           .a0b0_1sc(din_1_ab0_1sc), .a0b1_1sc(din_1_ab1_1sc), .a0b2_1sc(din_1_ab2_1sc), .a0b3_1sc(din_1_ab3_1sc),
-           .msk_a0b0(din_1_msk_ab0), .msk_a0b1(din_1_msk_ab1), .msk_a0b2(din_1_msk_ab2), .msk_a0b3(din_1_msk_ab3),
-           .msk_a0b0_1sc(din_1_msk_ab0_1sc), .msk_a0b1_1sc(din_1_msk_ab1_1sc), .msk_a0b2_1sc(din_1_msk_ab2_1sc), .msk_a0b3_1sc(din_1_msk_ab3_1sc),
-
-           .a1b0(din_3_ab0), .a1b1(din_3_ab1), .a1b2(din_3_ab2),
-           .a1b0_1sc(din_3_ab0_1sc), .a1b1_1sc(din_3_ab1_1sc), .a1b2_1sc(din_3_ab2_1sc),
-           .msk_a1b0(din_3_msk_ab0), .msk_a1b1(din_3_msk_ab1), .msk_a1b2(din_3_msk_ab2),
-           .msk_a1b0_1sc(din_3_msk_ab0_1sc), .msk_a1b1_1sc(din_3_msk_ab1_1sc), .msk_a1b2_1sc(din_3_msk_ab2_1sc),
-
-           .a2b0(din_5_ab0), .a2b1(din_5_ab1),
-           .a2b0_1sc(din_5_ab0_1sc), .a2b1_1sc(din_5_ab1_1sc),
-           .msk_a2b0(din_5_msk_ab0), .msk_a2b1(din_5_msk_ab1),
-           .msk_a2b0_1sc(din_5_msk_ab0_1sc), .msk_a2b1_1sc(din_5_msk_ab1_1sc),
-           
-           .a3b0(din_7_ab0),
-           .a3b0_1sc(din_7_ab0_1sc)
+  .clk(clk), .p(addr_5_1),
+  .a0b0(din_1_ab0), .a0b1(din_1_ab1), .a0b2(din_1_ab2), .a0b3(din_1_ab3),
+  .a1b0(din_2_ab0), .a1b1(din_2_ab1), .a1b2(din_2_ab2), .a1b3(din_2_ab3),
+  .a2b0(din_3_ab0), .a2b1(din_3_ab1), .a2b2(din_3_ab2),
+  .a3b0(din_4_ab0), .a3b1(din_4_ab1), .a3b2(din_4_ab2),
+  .a4b0(din_5_ab0), .a4b1(din_5_ab1),
+  .a5b0(din_6_ab0), .a5b1(din_6_ab1),
+  .a6b0(din_7_ab0),
+  .a7b0(din_8_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffff00000000),
 	.NBITS(12)
 ) addr_5_2_calc (
-           .clk(clk), .sign(din_signs_reg[2]), 
-           .p(addr_5_2),
-           .a0b0(din_2_ab0), .a0b1(din_2_ab1), .a0b2(din_2_ab2), .a0b3(din_2_ab3),
-           .a0b0_1sc(din_2_ab0_1sc), .a0b1_1sc(din_2_ab1_1sc), .a0b2_1sc(din_2_ab2_1sc), .a0b3_1sc(din_2_ab3_1sc),
-           .msk_a0b0(din_2_msk_ab0), .msk_a0b1(din_2_msk_ab1), .msk_a0b2(din_2_msk_ab2), .msk_a0b3(din_2_msk_ab3),
-           .msk_a0b0_1sc(din_2_msk_ab0_1sc), .msk_a0b1_1sc(din_2_msk_ab1_1sc), .msk_a0b2_1sc(din_2_msk_ab2_1sc), .msk_a0b3_1sc(din_2_msk_ab3_1sc),
-
-           .a1b0(din_4_ab0), .a1b1(din_4_ab1), .a1b2(din_4_ab2),
-           .a1b0_1sc(din_4_ab0_1sc), .a1b1_1sc(din_4_ab1_1sc), .a1b2_1sc(din_4_ab2_1sc),
-           .msk_a1b0(din_4_msk_ab0), .msk_a1b1(din_4_msk_ab1), .msk_a1b2(din_4_msk_ab2),
-           .msk_a1b0_1sc(din_4_msk_ab0_1sc), .msk_a1b1_1sc(din_4_msk_ab1_1sc), .msk_a1b2_1sc(din_4_msk_ab2_1sc),
-
-           .a2b0(din_6_ab0), .a2b1(din_6_ab1),
-           .a2b0_1sc(din_6_ab0_1sc), .a2b1_1sc(din_6_ab1_1sc),
-           .msk_a2b0(din_6_msk_ab0), .msk_a2b1(din_6_msk_ab1),
-           .msk_a2b0_1sc(din_6_msk_ab0_1sc), .msk_a2b1_1sc(din_6_msk_ab1_1sc),
-           
-           .a3b0(din_8_ab0),
-           .a3b0_1sc(din_8_ab0_1sc)
+  .clk(clk), .p(addr_5_2),
+  .a0b0(din_2_ab0), .a0b1(din_2_ab1), .a0b2(din_2_ab2), .a0b3(din_2_ab3),
+  .a1b0(din_3_ab0), .a1b1(din_3_ab1), .a1b2(din_3_ab2), .a1b3(din_3_ab3),
+  .a2b0(din_4_ab0), .a2b1(din_4_ab1), .a2b2(din_4_ab2),
+  .a3b0(din_5_ab0), .a3b1(din_5_ab1), .a3b2(din_5_ab2),
+  .a4b0(din_6_ab0), .a4b1(din_6_ab1),
+  .a5b0(din_7_ab0), .a5b1(din_7_ab1),
+  .a6b0(din_8_ab0),
+  .a7b0(din_9_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffff00000000),
 	.NBITS(12)
 ) addr_5_3_calc (
-           .clk(clk), .sign(din_signs_reg[3]), 
-           .p(addr_5_3),
-           .a0b0(din_3_ab0), .a0b1(din_3_ab1), .a0b2(din_3_ab2), .a0b3(din_3_ab3),
-           .a0b0_1sc(din_3_ab0_1sc), .a0b1_1sc(din_3_ab1_1sc), .a0b2_1sc(din_3_ab2_1sc), .a0b3_1sc(din_3_ab3_1sc),
-           .msk_a0b0(din_3_msk_ab0), .msk_a0b1(din_3_msk_ab1), .msk_a0b2(din_3_msk_ab2), .msk_a0b3(din_3_msk_ab3),
-           .msk_a0b0_1sc(din_3_msk_ab0_1sc), .msk_a0b1_1sc(din_3_msk_ab1_1sc), .msk_a0b2_1sc(din_3_msk_ab2_1sc), .msk_a0b3_1sc(din_3_msk_ab3_1sc),
-
-           .a1b0(din_5_ab0), .a1b1(din_5_ab1), .a1b2(din_5_ab2),
-           .a1b0_1sc(din_5_ab0_1sc), .a1b1_1sc(din_5_ab1_1sc), .a1b2_1sc(din_5_ab2_1sc),
-           .msk_a1b0(din_5_msk_ab0), .msk_a1b1(din_5_msk_ab1), .msk_a1b2(din_5_msk_ab2),
-           .msk_a1b0_1sc(din_5_msk_ab0_1sc), .msk_a1b1_1sc(din_5_msk_ab1_1sc), .msk_a1b2_1sc(din_5_msk_ab2_1sc),
-
-           .a2b0(din_7_ab0), .a2b1(din_7_ab1),
-           .a2b0_1sc(din_7_ab0_1sc), .a2b1_1sc(din_7_ab1_1sc),
-           .msk_a2b0(din_7_msk_ab0), .msk_a2b1(din_7_msk_ab1),
-           .msk_a2b0_1sc(din_7_msk_ab0_1sc), .msk_a2b1_1sc(din_7_msk_ab1_1sc),
-           
-           .a3b0(din_9_ab0),
-           .a3b0_1sc(din_9_ab0_1sc)
+  .clk(clk), .p(addr_5_3),
+  .a0b0(din_3_ab0), .a0b1(din_3_ab1), .a0b2(din_3_ab2), .a0b3(din_3_ab3),
+  .a1b0(din_4_ab0), .a1b1(din_4_ab1), .a1b2(din_4_ab2), .a1b3(din_4_ab3),
+  .a2b0(din_5_ab0), .a2b1(din_5_ab1), .a2b2(din_5_ab2),
+  .a3b0(din_6_ab0), .a3b1(din_6_ab1), .a3b2(din_6_ab2),
+  .a4b0(din_7_ab0), .a4b1(din_7_ab1),
+  .a5b0(din_8_ab0), .a5b1(din_8_ab1),
+  .a6b0(din_9_ab0),
+  .a7b0(din_10_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffff00000000),
 	.NBITS(12)
 ) addr_5_4_calc (
-           .clk(clk), .sign(din_signs_reg[4]), 
-           .p(addr_5_4),
-           .a0b0(din_4_ab0), .a0b1(din_4_ab1), .a0b2(din_4_ab2), .a0b3(din_4_ab3),
-           .a0b0_1sc(din_4_ab0_1sc), .a0b1_1sc(din_4_ab1_1sc), .a0b2_1sc(din_4_ab2_1sc), .a0b3_1sc(din_4_ab3_1sc),
-           .msk_a0b0(din_4_msk_ab0), .msk_a0b1(din_4_msk_ab1), .msk_a0b2(din_4_msk_ab2), .msk_a0b3(din_4_msk_ab3),
-           .msk_a0b0_1sc(din_4_msk_ab0_1sc), .msk_a0b1_1sc(din_4_msk_ab1_1sc), .msk_a0b2_1sc(din_4_msk_ab2_1sc), .msk_a0b3_1sc(din_4_msk_ab3_1sc),
-
-           .a1b0(din_6_ab0), .a1b1(din_6_ab1), .a1b2(din_6_ab2),
-           .a1b0_1sc(din_6_ab0_1sc), .a1b1_1sc(din_6_ab1_1sc), .a1b2_1sc(din_6_ab2_1sc),
-           .msk_a1b0(din_6_msk_ab0), .msk_a1b1(din_6_msk_ab1), .msk_a1b2(din_6_msk_ab2),
-           .msk_a1b0_1sc(din_6_msk_ab0_1sc), .msk_a1b1_1sc(din_6_msk_ab1_1sc), .msk_a1b2_1sc(din_6_msk_ab2_1sc),
-
-           .a2b0(din_8_ab0), .a2b1(din_8_ab1),
-           .a2b0_1sc(din_8_ab0_1sc), .a2b1_1sc(din_8_ab1_1sc),
-           .msk_a2b0(din_8_msk_ab0), .msk_a2b1(din_8_msk_ab1),
-           .msk_a2b0_1sc(din_8_msk_ab0_1sc), .msk_a2b1_1sc(din_8_msk_ab1_1sc),
-           
-           .a3b0(din_10_ab0),
-           .a3b0_1sc(din_10_ab0_1sc)
+  .clk(clk), .p(addr_5_4),
+  .a0b0(din_4_ab0), .a0b1(din_4_ab1), .a0b2(din_4_ab2), .a0b3(din_4_ab3),
+  .a1b0(din_5_ab0), .a1b1(din_5_ab1), .a1b2(din_5_ab2), .a1b3(din_5_ab3),
+  .a2b0(din_6_ab0), .a2b1(din_6_ab1), .a2b2(din_6_ab2),
+  .a3b0(din_7_ab0), .a3b1(din_7_ab1), .a3b2(din_7_ab2),
+  .a4b0(din_8_ab0), .a4b1(din_8_ab1),
+  .a5b0(din_9_ab0), .a5b1(din_9_ab1),
+  .a6b0(din_10_ab0),
+  .a7b0(din_11_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffff00000000),
 	.NBITS(12)
 ) addr_5_5_calc (
-           .clk(clk), .sign(din_signs_reg[5]), 
-           .p(addr_5_5),
-           .a0b0(din_5_ab0), .a0b1(din_5_ab1), .a0b2(din_5_ab2), .a0b3(din_5_ab3),
-           .a0b0_1sc(din_5_ab0_1sc), .a0b1_1sc(din_5_ab1_1sc), .a0b2_1sc(din_5_ab2_1sc), .a0b3_1sc(din_5_ab3_1sc),
-           .msk_a0b0(din_5_msk_ab0), .msk_a0b1(din_5_msk_ab1), .msk_a0b2(din_5_msk_ab2), .msk_a0b3(din_5_msk_ab3),
-           .msk_a0b0_1sc(din_5_msk_ab0_1sc), .msk_a0b1_1sc(din_5_msk_ab1_1sc), .msk_a0b2_1sc(din_5_msk_ab2_1sc), .msk_a0b3_1sc(din_5_msk_ab3_1sc),
-
-           .a1b0(din_7_ab0), .a1b1(din_7_ab1), .a1b2(din_7_ab2),
-           .a1b0_1sc(din_7_ab0_1sc), .a1b1_1sc(din_7_ab1_1sc), .a1b2_1sc(din_7_ab2_1sc),
-           .msk_a1b0(din_7_msk_ab0), .msk_a1b1(din_7_msk_ab1), .msk_a1b2(din_7_msk_ab2),
-           .msk_a1b0_1sc(din_7_msk_ab0_1sc), .msk_a1b1_1sc(din_7_msk_ab1_1sc), .msk_a1b2_1sc(din_7_msk_ab2_1sc),
-
-           .a2b0(din_9_ab0), .a2b1(din_9_ab1),
-           .a2b0_1sc(din_9_ab0_1sc), .a2b1_1sc(din_9_ab1_1sc),
-           .msk_a2b0(din_9_msk_ab0), .msk_a2b1(din_9_msk_ab1),
-           .msk_a2b0_1sc(din_9_msk_ab0_1sc), .msk_a2b1_1sc(din_9_msk_ab1_1sc),
-           
-           .a3b0(din_11_ab0),
-           .a3b0_1sc(din_11_ab0_1sc)
+  .clk(clk), .p(addr_5_5),
+  .a0b0(din_5_ab0), .a0b1(din_5_ab1), .a0b2(din_5_ab2), .a0b3(din_5_ab3),
+  .a1b0(din_6_ab0), .a1b1(din_6_ab1), .a1b2(din_6_ab2), .a1b3(din_6_ab3),
+  .a2b0(din_7_ab0), .a2b1(din_7_ab1), .a2b2(din_7_ab2),
+  .a3b0(din_8_ab0), .a3b1(din_8_ab1), .a3b2(din_8_ab2),
+  .a4b0(din_9_ab0), .a4b1(din_9_ab1),
+  .a5b0(din_10_ab0), .a5b1(din_10_ab1),
+  .a6b0(din_11_ab0),
+  .a7b0(din_12_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffff00000000),
 	.NBITS(12)
 ) addr_5_6_calc (
-           .clk(clk), .sign(din_signs_reg[6]), 
-           .p(addr_5_6),
-           .a0b0(din_6_ab0), .a0b1(din_6_ab1), .a0b2(din_6_ab2), .a0b3(din_6_ab3),
-           .a0b0_1sc(din_6_ab0_1sc), .a0b1_1sc(din_6_ab1_1sc), .a0b2_1sc(din_6_ab2_1sc), .a0b3_1sc(din_6_ab3_1sc),
-           .msk_a0b0(din_6_msk_ab0), .msk_a0b1(din_6_msk_ab1), .msk_a0b2(din_6_msk_ab2), .msk_a0b3(din_6_msk_ab3),
-           .msk_a0b0_1sc(din_6_msk_ab0_1sc), .msk_a0b1_1sc(din_6_msk_ab1_1sc), .msk_a0b2_1sc(din_6_msk_ab2_1sc), .msk_a0b3_1sc(din_6_msk_ab3_1sc),
-
-           .a1b0(din_8_ab0), .a1b1(din_8_ab1), .a1b2(din_8_ab2),
-           .a1b0_1sc(din_8_ab0_1sc), .a1b1_1sc(din_8_ab1_1sc), .a1b2_1sc(din_8_ab2_1sc),
-           .msk_a1b0(din_8_msk_ab0), .msk_a1b1(din_8_msk_ab1), .msk_a1b2(din_8_msk_ab2),
-           .msk_a1b0_1sc(din_8_msk_ab0_1sc), .msk_a1b1_1sc(din_8_msk_ab1_1sc), .msk_a1b2_1sc(din_8_msk_ab2_1sc),
-
-           .a2b0(din_10_ab0), .a2b1(din_10_ab1),
-           .a2b0_1sc(din_10_ab0_1sc), .a2b1_1sc(din_10_ab1_1sc),
-           .msk_a2b0(din_10_msk_ab0), .msk_a2b1(din_10_msk_ab1),
-           .msk_a2b0_1sc(din_10_msk_ab0_1sc), .msk_a2b1_1sc(din_10_msk_ab1_1sc),
-           
-           .a3b0(din_12_ab0),
-           .a3b0_1sc(din_12_ab0_1sc)
+  .clk(clk), .p(addr_5_6),
+  .a0b0(din_6_ab0), .a0b1(din_6_ab1), .a0b2(din_6_ab2), .a0b3(din_6_ab3),
+  .a1b0(din_7_ab0), .a1b1(din_7_ab1), .a1b2(din_7_ab2), .a1b3(din_7_ab3),
+  .a2b0(din_8_ab0), .a2b1(din_8_ab1), .a2b2(din_8_ab2),
+  .a3b0(din_9_ab0), .a3b1(din_9_ab1), .a3b2(din_9_ab2),
+  .a4b0(din_10_ab0), .a4b1(din_10_ab1),
+  .a5b0(din_11_ab0), .a5b1(din_11_ab1),
+  .a6b0(din_12_ab0),
+  .a7b0(din_13_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffff00000000),
 	.NBITS(12)
 ) addr_5_7_calc (
-           .clk(clk), .sign(din_signs_reg[7]), 
-           .p(addr_5_7),
-           .a0b0(din_7_ab0), .a0b1(din_7_ab1), .a0b2(din_7_ab2), .a0b3(din_7_ab3),
-           .a0b0_1sc(din_7_ab0_1sc), .a0b1_1sc(din_7_ab1_1sc), .a0b2_1sc(din_7_ab2_1sc), .a0b3_1sc(din_7_ab3_1sc),
-           .msk_a0b0(din_7_msk_ab0), .msk_a0b1(din_7_msk_ab1), .msk_a0b2(din_7_msk_ab2), .msk_a0b3(din_7_msk_ab3),
-           .msk_a0b0_1sc(din_7_msk_ab0_1sc), .msk_a0b1_1sc(din_7_msk_ab1_1sc), .msk_a0b2_1sc(din_7_msk_ab2_1sc), .msk_a0b3_1sc(din_7_msk_ab3_1sc),
-
-           .a1b0(din_9_ab0), .a1b1(din_9_ab1), .a1b2(din_9_ab2),
-           .a1b0_1sc(din_9_ab0_1sc), .a1b1_1sc(din_9_ab1_1sc), .a1b2_1sc(din_9_ab2_1sc),
-           .msk_a1b0(din_9_msk_ab0), .msk_a1b1(din_9_msk_ab1), .msk_a1b2(din_9_msk_ab2),
-           .msk_a1b0_1sc(din_9_msk_ab0_1sc), .msk_a1b1_1sc(din_9_msk_ab1_1sc), .msk_a1b2_1sc(din_9_msk_ab2_1sc),
-
-           .a2b0(din_11_ab0), .a2b1(din_11_ab1),
-           .a2b0_1sc(din_11_ab0_1sc), .a2b1_1sc(din_11_ab1_1sc),
-           .msk_a2b0(din_11_msk_ab0), .msk_a2b1(din_11_msk_ab1),
-           .msk_a2b0_1sc(din_11_msk_ab0_1sc), .msk_a2b1_1sc(din_11_msk_ab1_1sc),
-           
-           .a3b0(din_13_ab0),
-           .a3b0_1sc(din_13_ab0_1sc)
+  .clk(clk), .p(addr_5_7),
+  .a0b0(din_7_ab0), .a0b1(din_7_ab1), .a0b2(din_7_ab2), .a0b3(din_7_ab3),
+  .a1b0(din_8_ab0), .a1b1(din_8_ab1), .a1b2(din_8_ab2), .a1b3(din_8_ab3),
+  .a2b0(din_9_ab0), .a2b1(din_9_ab1), .a2b2(din_9_ab2),
+  .a3b0(din_10_ab0), .a3b1(din_10_ab1), .a3b2(din_10_ab2),
+  .a4b0(din_11_ab0), .a4b1(din_11_ab1),
+  .a5b0(din_12_ab0), .a5b1(din_12_ab1),
+  .a6b0(din_13_ab0),
+  .a7b0(din_14_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffff00000000),
 	.NBITS(12)
 ) addr_5_8_calc (
-           .clk(clk), .sign(din_signs_reg[8]), 
-           .p(addr_5_8),
-           .a0b0(din_8_ab0), .a0b1(din_8_ab1), .a0b2(din_8_ab2), .a0b3(din_8_ab3),
-           .a0b0_1sc(din_8_ab0_1sc), .a0b1_1sc(din_8_ab1_1sc), .a0b2_1sc(din_8_ab2_1sc), .a0b3_1sc(din_8_ab3_1sc),
-           .msk_a0b0(din_8_msk_ab0), .msk_a0b1(din_8_msk_ab1), .msk_a0b2(din_8_msk_ab2), .msk_a0b3(din_8_msk_ab3),
-           .msk_a0b0_1sc(din_8_msk_ab0_1sc), .msk_a0b1_1sc(din_8_msk_ab1_1sc), .msk_a0b2_1sc(din_8_msk_ab2_1sc), .msk_a0b3_1sc(din_8_msk_ab3_1sc),
-
-           .a1b0(din_10_ab0), .a1b1(din_10_ab1), .a1b2(din_10_ab2),
-           .a1b0_1sc(din_10_ab0_1sc), .a1b1_1sc(din_10_ab1_1sc), .a1b2_1sc(din_10_ab2_1sc),
-           .msk_a1b0(din_10_msk_ab0), .msk_a1b1(din_10_msk_ab1), .msk_a1b2(din_10_msk_ab2),
-           .msk_a1b0_1sc(din_10_msk_ab0_1sc), .msk_a1b1_1sc(din_10_msk_ab1_1sc), .msk_a1b2_1sc(din_10_msk_ab2_1sc),
-
-           .a2b0(din_12_ab0), .a2b1(din_12_ab1),
-           .a2b0_1sc(din_12_ab0_1sc), .a2b1_1sc(din_12_ab1_1sc),
-           .msk_a2b0(din_12_msk_ab0), .msk_a2b1(din_12_msk_ab1),
-           .msk_a2b0_1sc(din_12_msk_ab0_1sc), .msk_a2b1_1sc(din_12_msk_ab1_1sc),
-           
-           .a3b0(din_14_ab0),
-           .a3b0_1sc(din_14_ab0_1sc)
+  .clk(clk), .p(addr_5_8),
+  .a0b0(din_8_ab0), .a0b1(din_8_ab1), .a0b2(din_8_ab2), .a0b3(din_8_ab3),
+  .a1b0(din_9_ab0), .a1b1(din_9_ab1), .a1b2(din_9_ab2), .a1b3(din_9_ab3),
+  .a2b0(din_10_ab0), .a2b1(din_10_ab1), .a2b2(din_10_ab2),
+  .a3b0(din_11_ab0), .a3b1(din_11_ab1), .a3b2(din_11_ab2),
+  .a4b0(din_12_ab0), .a4b1(din_12_ab1),
+  .a5b0(din_13_ab0), .a5b1(din_13_ab1),
+  .a6b0(din_14_ab0),
+  .a7b0(din_15_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffff00000000),
 	.NBITS(12)
 ) addr_5_9_calc (
-           .clk(clk), .sign(din_signs_reg[9]), 
-           .p(addr_5_9),
-           .a0b0(din_9_ab0), .a0b1(din_9_ab1), .a0b2(din_9_ab2), .a0b3(din_9_ab3),
-           .a0b0_1sc(din_9_ab0_1sc), .a0b1_1sc(din_9_ab1_1sc), .a0b2_1sc(din_9_ab2_1sc), .a0b3_1sc(din_9_ab3_1sc),
-           .msk_a0b0(din_9_msk_ab0), .msk_a0b1(din_9_msk_ab1), .msk_a0b2(din_9_msk_ab2), .msk_a0b3(din_9_msk_ab3),
-           .msk_a0b0_1sc(din_9_msk_ab0_1sc), .msk_a0b1_1sc(din_9_msk_ab1_1sc), .msk_a0b2_1sc(din_9_msk_ab2_1sc), .msk_a0b3_1sc(din_9_msk_ab3_1sc),
-
-           .a1b0(din_11_ab0), .a1b1(din_11_ab1), .a1b2(din_11_ab2),
-           .a1b0_1sc(din_11_ab0_1sc), .a1b1_1sc(din_11_ab1_1sc), .a1b2_1sc(din_11_ab2_1sc),
-           .msk_a1b0(din_11_msk_ab0), .msk_a1b1(din_11_msk_ab1), .msk_a1b2(din_11_msk_ab2),
-           .msk_a1b0_1sc(din_11_msk_ab0_1sc), .msk_a1b1_1sc(din_11_msk_ab1_1sc), .msk_a1b2_1sc(din_11_msk_ab2_1sc),
-
-           .a2b0(din_13_ab0), .a2b1(din_13_ab1),
-           .a2b0_1sc(din_13_ab0_1sc), .a2b1_1sc(din_13_ab1_1sc),
-           .msk_a2b0(din_13_msk_ab0), .msk_a2b1(din_13_msk_ab1),
-           .msk_a2b0_1sc(din_13_msk_ab0_1sc), .msk_a2b1_1sc(din_13_msk_ab1_1sc),
-           
-           .a3b0(din_15_ab0),
-           .a3b0_1sc(din_15_ab0_1sc)
+  .clk(clk), .p(addr_5_9),
+  .a0b0(din_9_ab0), .a0b1(din_9_ab1), .a0b2(din_9_ab2), .a0b3(din_9_ab3),
+  .a1b0(din_10_ab0), .a1b1(din_10_ab1), .a1b2(din_10_ab2), .a1b3(din_10_ab3),
+  .a2b0(din_11_ab0), .a2b1(din_11_ab1), .a2b2(din_11_ab2),
+  .a3b0(din_12_ab0), .a3b1(din_12_ab1), .a3b2(din_12_ab2),
+  .a4b0(din_13_ab0), .a4b1(din_13_ab1),
+  .a5b0(din_14_ab0), .a5b1(din_14_ab1),
+  .a6b0(din_15_ab0),
+  .a7b0(din_16_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffff00000000),
 	.NBITS(12)
 ) addr_5_10_calc (
-           .clk(clk), .sign(din_signs_reg[10]), 
-           .p(addr_5_10),
-           .a0b0(din_10_ab0), .a0b1(din_10_ab1), .a0b2(din_10_ab2), .a0b3(din_10_ab3),
-           .a0b0_1sc(din_10_ab0_1sc), .a0b1_1sc(din_10_ab1_1sc), .a0b2_1sc(din_10_ab2_1sc), .a0b3_1sc(din_10_ab3_1sc),
-           .msk_a0b0(din_10_msk_ab0), .msk_a0b1(din_10_msk_ab1), .msk_a0b2(din_10_msk_ab2), .msk_a0b3(din_10_msk_ab3),
-           .msk_a0b0_1sc(din_10_msk_ab0_1sc), .msk_a0b1_1sc(din_10_msk_ab1_1sc), .msk_a0b2_1sc(din_10_msk_ab2_1sc), .msk_a0b3_1sc(din_10_msk_ab3_1sc),
-
-           .a1b0(din_12_ab0), .a1b1(din_12_ab1), .a1b2(din_12_ab2),
-           .a1b0_1sc(din_12_ab0_1sc), .a1b1_1sc(din_12_ab1_1sc), .a1b2_1sc(din_12_ab2_1sc),
-           .msk_a1b0(din_12_msk_ab0), .msk_a1b1(din_12_msk_ab1), .msk_a1b2(din_12_msk_ab2),
-           .msk_a1b0_1sc(din_12_msk_ab0_1sc), .msk_a1b1_1sc(din_12_msk_ab1_1sc), .msk_a1b2_1sc(din_12_msk_ab2_1sc),
-
-           .a2b0(din_14_ab0), .a2b1(din_14_ab1),
-           .a2b0_1sc(din_14_ab0_1sc), .a2b1_1sc(din_14_ab1_1sc),
-           .msk_a2b0(din_14_msk_ab0), .msk_a2b1(din_14_msk_ab1),
-           .msk_a2b0_1sc(din_14_msk_ab0_1sc), .msk_a2b1_1sc(din_14_msk_ab1_1sc),
-           
-           .a3b0(din_16_ab0),
-           .a3b0_1sc(din_16_ab0_1sc)
+  .clk(clk), .p(addr_5_10),
+  .a0b0(din_10_ab0), .a0b1(din_10_ab1), .a0b2(din_10_ab2), .a0b3(din_10_ab3),
+  .a1b0(din_11_ab0), .a1b1(din_11_ab1), .a1b2(din_11_ab2), .a1b3(din_11_ab3),
+  .a2b0(din_12_ab0), .a2b1(din_12_ab1), .a2b2(din_12_ab2),
+  .a3b0(din_13_ab0), .a3b1(din_13_ab1), .a3b2(din_13_ab2),
+  .a4b0(din_14_ab0), .a4b1(din_14_ab1),
+  .a5b0(din_15_ab0), .a5b1(din_15_ab1),
+  .a6b0(din_16_ab0),
+  .a7b0(din_17_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffff00000000),
 	.NBITS(12)
 ) addr_5_11_calc (
-           .clk(clk), .sign(din_signs_reg[11]), 
-           .p(addr_5_11),
-           .a0b0(din_11_ab0), .a0b1(din_11_ab1), .a0b2(din_11_ab2), .a0b3(din_11_ab3),
-           .a0b0_1sc(din_11_ab0_1sc), .a0b1_1sc(din_11_ab1_1sc), .a0b2_1sc(din_11_ab2_1sc), .a0b3_1sc(din_11_ab3_1sc),
-           .msk_a0b0(din_11_msk_ab0), .msk_a0b1(din_11_msk_ab1), .msk_a0b2(din_11_msk_ab2), .msk_a0b3(din_11_msk_ab3),
-           .msk_a0b0_1sc(din_11_msk_ab0_1sc), .msk_a0b1_1sc(din_11_msk_ab1_1sc), .msk_a0b2_1sc(din_11_msk_ab2_1sc), .msk_a0b3_1sc(din_11_msk_ab3_1sc),
-
-           .a1b0(din_13_ab0), .a1b1(din_13_ab1), .a1b2(din_13_ab2),
-           .a1b0_1sc(din_13_ab0_1sc), .a1b1_1sc(din_13_ab1_1sc), .a1b2_1sc(din_13_ab2_1sc),
-           .msk_a1b0(din_13_msk_ab0), .msk_a1b1(din_13_msk_ab1), .msk_a1b2(din_13_msk_ab2),
-           .msk_a1b0_1sc(din_13_msk_ab0_1sc), .msk_a1b1_1sc(din_13_msk_ab1_1sc), .msk_a1b2_1sc(din_13_msk_ab2_1sc),
-
-           .a2b0(din_15_ab0), .a2b1(din_15_ab1),
-           .a2b0_1sc(din_15_ab0_1sc), .a2b1_1sc(din_15_ab1_1sc),
-           .msk_a2b0(din_15_msk_ab0), .msk_a2b1(din_15_msk_ab1),
-           .msk_a2b0_1sc(din_15_msk_ab0_1sc), .msk_a2b1_1sc(din_15_msk_ab1_1sc),
-           
-           .a3b0(din_17_ab0),
-           .a3b0_1sc(din_17_ab0_1sc)
+  .clk(clk), .p(addr_5_11),
+  .a0b0(din_11_ab0), .a0b1(din_11_ab1), .a0b2(din_11_ab2), .a0b3(din_11_ab3),
+  .a1b0(din_12_ab0), .a1b1(din_12_ab1), .a1b2(din_12_ab2), .a1b3(din_12_ab3),
+  .a2b0(din_13_ab0), .a2b1(din_13_ab1), .a2b2(din_13_ab2),
+  .a3b0(din_14_ab0), .a3b1(din_14_ab1), .a3b2(din_14_ab2),
+  .a4b0(din_15_ab0), .a4b1(din_15_ab1),
+  .a5b0(din_16_ab0), .a5b1(din_16_ab1),
+  .a6b0(din_17_ab0),
+  .a7b0(din_18_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffff00000000),
 	.NBITS(12)
 ) addr_5_12_calc (
-           .clk(clk), .sign(din_signs_reg[12]), 
-           .p(addr_5_12),
-           .a0b0(din_12_ab0), .a0b1(din_12_ab1), .a0b2(din_12_ab2), .a0b3(din_12_ab3),
-           .a0b0_1sc(din_12_ab0_1sc), .a0b1_1sc(din_12_ab1_1sc), .a0b2_1sc(din_12_ab2_1sc), .a0b3_1sc(din_12_ab3_1sc),
-           .msk_a0b0(din_12_msk_ab0), .msk_a0b1(din_12_msk_ab1), .msk_a0b2(din_12_msk_ab2), .msk_a0b3(din_12_msk_ab3),
-           .msk_a0b0_1sc(din_12_msk_ab0_1sc), .msk_a0b1_1sc(din_12_msk_ab1_1sc), .msk_a0b2_1sc(din_12_msk_ab2_1sc), .msk_a0b3_1sc(din_12_msk_ab3_1sc),
-
-           .a1b0(din_14_ab0), .a1b1(din_14_ab1), .a1b2(din_14_ab2),
-           .a1b0_1sc(din_14_ab0_1sc), .a1b1_1sc(din_14_ab1_1sc), .a1b2_1sc(din_14_ab2_1sc),
-           .msk_a1b0(din_14_msk_ab0), .msk_a1b1(din_14_msk_ab1), .msk_a1b2(din_14_msk_ab2),
-           .msk_a1b0_1sc(din_14_msk_ab0_1sc), .msk_a1b1_1sc(din_14_msk_ab1_1sc), .msk_a1b2_1sc(din_14_msk_ab2_1sc),
-
-           .a2b0(din_16_ab0), .a2b1(din_16_ab1),
-           .a2b0_1sc(din_16_ab0_1sc), .a2b1_1sc(din_16_ab1_1sc),
-           .msk_a2b0(din_16_msk_ab0), .msk_a2b1(din_16_msk_ab1),
-           .msk_a2b0_1sc(din_16_msk_ab0_1sc), .msk_a2b1_1sc(din_16_msk_ab1_1sc),
-           
-           .a3b0(din_18_ab0),
-           .a3b0_1sc(din_18_ab0_1sc)
+  .clk(clk), .p(addr_5_12),
+  .a0b0(din_12_ab0), .a0b1(din_12_ab1), .a0b2(din_12_ab2), .a0b3(din_12_ab3),
+  .a1b0(din_13_ab0), .a1b1(din_13_ab1), .a1b2(din_13_ab2), .a1b3(din_13_ab3),
+  .a2b0(din_14_ab0), .a2b1(din_14_ab1), .a2b2(din_14_ab2),
+  .a3b0(din_15_ab0), .a3b1(din_15_ab1), .a3b2(din_15_ab2),
+  .a4b0(din_16_ab0), .a4b1(din_16_ab1),
+  .a5b0(din_17_ab0), .a5b1(din_17_ab1),
+  .a6b0(din_18_ab0),
+  .a7b0(din_19_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffff00000000),
 	.NBITS(12)
 ) addr_5_13_calc (
-           .clk(clk), .sign(din_signs_reg[13]), 
-           .p(addr_5_13),
-           .a0b0(din_13_ab0), .a0b1(din_13_ab1), .a0b2(din_13_ab2), .a0b3(din_13_ab3),
-           .a0b0_1sc(din_13_ab0_1sc), .a0b1_1sc(din_13_ab1_1sc), .a0b2_1sc(din_13_ab2_1sc), .a0b3_1sc(din_13_ab3_1sc),
-           .msk_a0b0(din_13_msk_ab0), .msk_a0b1(din_13_msk_ab1), .msk_a0b2(din_13_msk_ab2), .msk_a0b3(din_13_msk_ab3),
-           .msk_a0b0_1sc(din_13_msk_ab0_1sc), .msk_a0b1_1sc(din_13_msk_ab1_1sc), .msk_a0b2_1sc(din_13_msk_ab2_1sc), .msk_a0b3_1sc(din_13_msk_ab3_1sc),
-
-           .a1b0(din_15_ab0), .a1b1(din_15_ab1), .a1b2(din_15_ab2),
-           .a1b0_1sc(din_15_ab0_1sc), .a1b1_1sc(din_15_ab1_1sc), .a1b2_1sc(din_15_ab2_1sc),
-           .msk_a1b0(din_15_msk_ab0), .msk_a1b1(din_15_msk_ab1), .msk_a1b2(din_15_msk_ab2),
-           .msk_a1b0_1sc(din_15_msk_ab0_1sc), .msk_a1b1_1sc(din_15_msk_ab1_1sc), .msk_a1b2_1sc(din_15_msk_ab2_1sc),
-
-           .a2b0(din_17_ab0), .a2b1(din_17_ab1),
-           .a2b0_1sc(din_17_ab0_1sc), .a2b1_1sc(din_17_ab1_1sc),
-           .msk_a2b0(din_17_msk_ab0), .msk_a2b1(din_17_msk_ab1),
-           .msk_a2b0_1sc(din_17_msk_ab0_1sc), .msk_a2b1_1sc(din_17_msk_ab1_1sc),
-           
-           .a3b0(din_19_ab0),
-           .a3b0_1sc(din_19_ab0_1sc)
+  .clk(clk), .p(addr_5_13),
+  .a0b0(din_13_ab0), .a0b1(din_13_ab1), .a0b2(din_13_ab2), .a0b3(din_13_ab3),
+  .a1b0(din_14_ab0), .a1b1(din_14_ab1), .a1b2(din_14_ab2), .a1b3(din_14_ab3),
+  .a2b0(din_15_ab0), .a2b1(din_15_ab1), .a2b2(din_15_ab2),
+  .a3b0(din_16_ab0), .a3b1(din_16_ab1), .a3b2(din_16_ab2),
+  .a4b0(din_17_ab0), .a4b1(din_17_ab1),
+  .a5b0(din_18_ab0), .a5b1(din_18_ab1),
+  .a6b0(din_19_ab0),
+  .a7b0(din_20_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffff00000000),
 	.NBITS(12)
 ) addr_5_14_calc (
-           .clk(clk), .sign(din_signs_reg[14]), 
-           .p(addr_5_14),
-           .a0b0(din_14_ab0), .a0b1(din_14_ab1), .a0b2(din_14_ab2), .a0b3(din_14_ab3),
-           .a0b0_1sc(din_14_ab0_1sc), .a0b1_1sc(din_14_ab1_1sc), .a0b2_1sc(din_14_ab2_1sc), .a0b3_1sc(din_14_ab3_1sc),
-           .msk_a0b0(din_14_msk_ab0), .msk_a0b1(din_14_msk_ab1), .msk_a0b2(din_14_msk_ab2), .msk_a0b3(din_14_msk_ab3),
-           .msk_a0b0_1sc(din_14_msk_ab0_1sc), .msk_a0b1_1sc(din_14_msk_ab1_1sc), .msk_a0b2_1sc(din_14_msk_ab2_1sc), .msk_a0b3_1sc(din_14_msk_ab3_1sc),
-
-           .a1b0(din_16_ab0), .a1b1(din_16_ab1), .a1b2(din_16_ab2),
-           .a1b0_1sc(din_16_ab0_1sc), .a1b1_1sc(din_16_ab1_1sc), .a1b2_1sc(din_16_ab2_1sc),
-           .msk_a1b0(din_16_msk_ab0), .msk_a1b1(din_16_msk_ab1), .msk_a1b2(din_16_msk_ab2),
-           .msk_a1b0_1sc(din_16_msk_ab0_1sc), .msk_a1b1_1sc(din_16_msk_ab1_1sc), .msk_a1b2_1sc(din_16_msk_ab2_1sc),
-
-           .a2b0(din_18_ab0), .a2b1(din_18_ab1),
-           .a2b0_1sc(din_18_ab0_1sc), .a2b1_1sc(din_18_ab1_1sc),
-           .msk_a2b0(din_18_msk_ab0), .msk_a2b1(din_18_msk_ab1),
-           .msk_a2b0_1sc(din_18_msk_ab0_1sc), .msk_a2b1_1sc(din_18_msk_ab1_1sc),
-           
-           .a3b0(din_20_ab0),
-           .a3b0_1sc(din_20_ab0_1sc)
+  .clk(clk), .p(addr_5_14),
+  .a0b0(din_14_ab0), .a0b1(din_14_ab1), .a0b2(din_14_ab2), .a0b3(din_14_ab3),
+  .a1b0(din_15_ab0), .a1b1(din_15_ab1), .a1b2(din_15_ab2), .a1b3(din_15_ab3),
+  .a2b0(din_16_ab0), .a2b1(din_16_ab1), .a2b2(din_16_ab2),
+  .a3b0(din_17_ab0), .a3b1(din_17_ab1), .a3b2(din_17_ab2),
+  .a4b0(din_18_ab0), .a4b1(din_18_ab1),
+  .a5b0(din_19_ab0), .a5b1(din_19_ab1),
+  .a6b0(din_20_ab0),
+  .a7b0(din_21_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffff00000000),
 	.NBITS(12)
 ) addr_5_15_calc (
-           .clk(clk), .sign(din_signs_reg[15]), 
-           .p(addr_5_15),
-           .a0b0(din_15_ab0), .a0b1(din_15_ab1), .a0b2(din_15_ab2), .a0b3(din_15_ab3),
-           .a0b0_1sc(din_15_ab0_1sc), .a0b1_1sc(din_15_ab1_1sc), .a0b2_1sc(din_15_ab2_1sc), .a0b3_1sc(din_15_ab3_1sc),
-           .msk_a0b0(din_15_msk_ab0), .msk_a0b1(din_15_msk_ab1), .msk_a0b2(din_15_msk_ab2), .msk_a0b3(din_15_msk_ab3),
-           .msk_a0b0_1sc(din_15_msk_ab0_1sc), .msk_a0b1_1sc(din_15_msk_ab1_1sc), .msk_a0b2_1sc(din_15_msk_ab2_1sc), .msk_a0b3_1sc(din_15_msk_ab3_1sc),
-
-           .a1b0(din_17_ab0), .a1b1(din_17_ab1), .a1b2(din_17_ab2),
-           .a1b0_1sc(din_17_ab0_1sc), .a1b1_1sc(din_17_ab1_1sc), .a1b2_1sc(din_17_ab2_1sc),
-           .msk_a1b0(din_17_msk_ab0), .msk_a1b1(din_17_msk_ab1), .msk_a1b2(din_17_msk_ab2),
-           .msk_a1b0_1sc(din_17_msk_ab0_1sc), .msk_a1b1_1sc(din_17_msk_ab1_1sc), .msk_a1b2_1sc(din_17_msk_ab2_1sc),
-
-           .a2b0(din_19_ab0), .a2b1(din_19_ab1),
-           .a2b0_1sc(din_19_ab0_1sc), .a2b1_1sc(din_19_ab1_1sc),
-           .msk_a2b0(din_19_msk_ab0), .msk_a2b1(din_19_msk_ab1),
-           .msk_a2b0_1sc(din_19_msk_ab0_1sc), .msk_a2b1_1sc(din_19_msk_ab1_1sc),
-           
-           .a3b0(din_21_ab0),
-           .a3b0_1sc(din_21_ab0_1sc)
+  .clk(clk), .p(addr_5_15),
+  .a0b0(din_15_ab0), .a0b1(din_15_ab1), .a0b2(din_15_ab2), .a0b3(din_15_ab3),
+  .a1b0(din_16_ab0), .a1b1(din_16_ab1), .a1b2(din_16_ab2), .a1b3(din_16_ab3),
+  .a2b0(din_17_ab0), .a2b1(din_17_ab1), .a2b2(din_17_ab2),
+  .a3b0(din_18_ab0), .a3b1(din_18_ab1), .a3b2(din_18_ab2),
+  .a4b0(din_19_ab0), .a4b1(din_19_ab1),
+  .a5b0(din_20_ab0), .a5b1(din_20_ab1),
+  .a6b0(din_21_ab0),
+  .a7b0(din_22_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffff00000000),
 	.NBITS(12)
 ) addr_5_16_calc (
-           .clk(clk), .sign(din_signs_reg[16]), 
-           .p(addr_5_16),
-           .a0b0(din_16_ab0), .a0b1(din_16_ab1), .a0b2(din_16_ab2), .a0b3(din_16_ab3),
-           .a0b0_1sc(din_16_ab0_1sc), .a0b1_1sc(din_16_ab1_1sc), .a0b2_1sc(din_16_ab2_1sc), .a0b3_1sc(din_16_ab3_1sc),
-           .msk_a0b0(din_16_msk_ab0), .msk_a0b1(din_16_msk_ab1), .msk_a0b2(din_16_msk_ab2), .msk_a0b3(din_16_msk_ab3),
-           .msk_a0b0_1sc(din_16_msk_ab0_1sc), .msk_a0b1_1sc(din_16_msk_ab1_1sc), .msk_a0b2_1sc(din_16_msk_ab2_1sc), .msk_a0b3_1sc(din_16_msk_ab3_1sc),
-
-           .a1b0(din_18_ab0), .a1b1(din_18_ab1), .a1b2(din_18_ab2),
-           .a1b0_1sc(din_18_ab0_1sc), .a1b1_1sc(din_18_ab1_1sc), .a1b2_1sc(din_18_ab2_1sc),
-           .msk_a1b0(din_18_msk_ab0), .msk_a1b1(din_18_msk_ab1), .msk_a1b2(din_18_msk_ab2),
-           .msk_a1b0_1sc(din_18_msk_ab0_1sc), .msk_a1b1_1sc(din_18_msk_ab1_1sc), .msk_a1b2_1sc(din_18_msk_ab2_1sc),
-
-           .a2b0(din_20_ab0), .a2b1(din_20_ab1),
-           .a2b0_1sc(din_20_ab0_1sc), .a2b1_1sc(din_20_ab1_1sc),
-           .msk_a2b0(din_20_msk_ab0), .msk_a2b1(din_20_msk_ab1),
-           .msk_a2b0_1sc(din_20_msk_ab0_1sc), .msk_a2b1_1sc(din_20_msk_ab1_1sc),
-           
-           .a3b0(din_22_ab0),
-           .a3b0_1sc(din_22_ab0_1sc)
+  .clk(clk), .p(addr_5_16),
+  .a0b0(din_16_ab0), .a0b1(din_16_ab1), .a0b2(din_16_ab2), .a0b3(din_16_ab3),
+  .a1b0(din_17_ab0), .a1b1(din_17_ab1), .a1b2(din_17_ab2), .a1b3(din_17_ab3),
+  .a2b0(din_18_ab0), .a2b1(din_18_ab1), .a2b2(din_18_ab2),
+  .a3b0(din_19_ab0), .a3b1(din_19_ab1), .a3b2(din_19_ab2),
+  .a4b0(din_20_ab0), .a4b1(din_20_ab1),
+  .a5b0(din_21_ab0), .a5b1(din_21_ab1),
+  .a6b0(din_22_ab0),
+  .a7b0(din_23_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffff00000000),
 	.NBITS(12)
 ) addr_5_17_calc (
-           .clk(clk), .sign(din_signs_reg[17]), 
-           .p(addr_5_17),
-           .a0b0(din_17_ab0), .a0b1(din_17_ab1), .a0b2(din_17_ab2), .a0b3(din_17_ab3),
-           .a0b0_1sc(din_17_ab0_1sc), .a0b1_1sc(din_17_ab1_1sc), .a0b2_1sc(din_17_ab2_1sc), .a0b3_1sc(din_17_ab3_1sc),
-           .msk_a0b0(din_17_msk_ab0), .msk_a0b1(din_17_msk_ab1), .msk_a0b2(din_17_msk_ab2), .msk_a0b3(din_17_msk_ab3),
-           .msk_a0b0_1sc(din_17_msk_ab0_1sc), .msk_a0b1_1sc(din_17_msk_ab1_1sc), .msk_a0b2_1sc(din_17_msk_ab2_1sc), .msk_a0b3_1sc(din_17_msk_ab3_1sc),
-
-           .a1b0(din_19_ab0), .a1b1(din_19_ab1), .a1b2(din_19_ab2),
-           .a1b0_1sc(din_19_ab0_1sc), .a1b1_1sc(din_19_ab1_1sc), .a1b2_1sc(din_19_ab2_1sc),
-           .msk_a1b0(din_19_msk_ab0), .msk_a1b1(din_19_msk_ab1), .msk_a1b2(din_19_msk_ab2),
-           .msk_a1b0_1sc(din_19_msk_ab0_1sc), .msk_a1b1_1sc(din_19_msk_ab1_1sc), .msk_a1b2_1sc(din_19_msk_ab2_1sc),
-
-           .a2b0(din_21_ab0), .a2b1(din_21_ab1),
-           .a2b0_1sc(din_21_ab0_1sc), .a2b1_1sc(din_21_ab1_1sc),
-           .msk_a2b0(din_21_msk_ab0), .msk_a2b1(din_21_msk_ab1),
-           .msk_a2b0_1sc(din_21_msk_ab0_1sc), .msk_a2b1_1sc(din_21_msk_ab1_1sc),
-           
-           .a3b0(din_23_ab0),
-           .a3b0_1sc(din_23_ab0_1sc)
+  .clk(clk), .p(addr_5_17),
+  .a0b0(din_17_ab0), .a0b1(din_17_ab1), .a0b2(din_17_ab2), .a0b3(din_17_ab3),
+  .a1b0(din_18_ab0), .a1b1(din_18_ab1), .a1b2(din_18_ab2), .a1b3(din_18_ab3),
+  .a2b0(din_19_ab0), .a2b1(din_19_ab1), .a2b2(din_19_ab2),
+  .a3b0(din_20_ab0), .a3b1(din_20_ab1), .a3b2(din_20_ab2),
+  .a4b0(din_21_ab0), .a4b1(din_21_ab1),
+  .a5b0(din_22_ab0), .a5b1(din_22_ab1),
+  .a6b0(din_23_ab0),
+  .a7b0(din_24_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffff00000000),
 	.NBITS(12)
 ) addr_5_18_calc (
-           .clk(clk), .sign(din_signs_reg[18]), 
-           .p(addr_5_18),
-           .a0b0(din_18_ab0), .a0b1(din_18_ab1), .a0b2(din_18_ab2), .a0b3(din_18_ab3),
-           .a0b0_1sc(din_18_ab0_1sc), .a0b1_1sc(din_18_ab1_1sc), .a0b2_1sc(din_18_ab2_1sc), .a0b3_1sc(din_18_ab3_1sc),
-           .msk_a0b0(din_18_msk_ab0), .msk_a0b1(din_18_msk_ab1), .msk_a0b2(din_18_msk_ab2), .msk_a0b3(din_18_msk_ab3),
-           .msk_a0b0_1sc(din_18_msk_ab0_1sc), .msk_a0b1_1sc(din_18_msk_ab1_1sc), .msk_a0b2_1sc(din_18_msk_ab2_1sc), .msk_a0b3_1sc(din_18_msk_ab3_1sc),
-
-           .a1b0(din_20_ab0), .a1b1(din_20_ab1), .a1b2(din_20_ab2),
-           .a1b0_1sc(din_20_ab0_1sc), .a1b1_1sc(din_20_ab1_1sc), .a1b2_1sc(din_20_ab2_1sc),
-           .msk_a1b0(din_20_msk_ab0), .msk_a1b1(din_20_msk_ab1), .msk_a1b2(din_20_msk_ab2),
-           .msk_a1b0_1sc(din_20_msk_ab0_1sc), .msk_a1b1_1sc(din_20_msk_ab1_1sc), .msk_a1b2_1sc(din_20_msk_ab2_1sc),
-
-           .a2b0(din_22_ab0), .a2b1(din_22_ab1),
-           .a2b0_1sc(din_22_ab0_1sc), .a2b1_1sc(din_22_ab1_1sc),
-           .msk_a2b0(din_22_msk_ab0), .msk_a2b1(din_22_msk_ab1),
-           .msk_a2b0_1sc(din_22_msk_ab0_1sc), .msk_a2b1_1sc(din_22_msk_ab1_1sc),
-           
-           .a3b0(din_24_ab0),
-           .a3b0_1sc(din_24_ab0_1sc)
+  .clk(clk), .p(addr_5_18),
+  .a0b0(din_18_ab0), .a0b1(din_18_ab1), .a0b2(din_18_ab2), .a0b3(din_18_ab3),
+  .a1b0(din_19_ab0), .a1b1(din_19_ab1), .a1b2(din_19_ab2), .a1b3(din_19_ab3),
+  .a2b0(din_20_ab0), .a2b1(din_20_ab1), .a2b2(din_20_ab2),
+  .a3b0(din_21_ab0), .a3b1(din_21_ab1), .a3b2(din_21_ab2),
+  .a4b0(din_22_ab0), .a4b1(din_22_ab1),
+  .a5b0(din_23_ab0), .a5b1(din_23_ab1),
+  .a6b0(din_24_ab0),
+  .a7b0(din_25_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffff00000000),
 	.NBITS(12)
 ) addr_5_19_calc (
-           .clk(clk), .sign(din_signs_reg[19]), 
-           .p(addr_5_19),
-           .a0b0(din_19_ab0), .a0b1(din_19_ab1), .a0b2(din_19_ab2), .a0b3(din_19_ab3),
-           .a0b0_1sc(din_19_ab0_1sc), .a0b1_1sc(din_19_ab1_1sc), .a0b2_1sc(din_19_ab2_1sc), .a0b3_1sc(din_19_ab3_1sc),
-           .msk_a0b0(din_19_msk_ab0), .msk_a0b1(din_19_msk_ab1), .msk_a0b2(din_19_msk_ab2), .msk_a0b3(din_19_msk_ab3),
-           .msk_a0b0_1sc(din_19_msk_ab0_1sc), .msk_a0b1_1sc(din_19_msk_ab1_1sc), .msk_a0b2_1sc(din_19_msk_ab2_1sc), .msk_a0b3_1sc(din_19_msk_ab3_1sc),
-
-           .a1b0(din_21_ab0), .a1b1(din_21_ab1), .a1b2(din_21_ab2),
-           .a1b0_1sc(din_21_ab0_1sc), .a1b1_1sc(din_21_ab1_1sc), .a1b2_1sc(din_21_ab2_1sc),
-           .msk_a1b0(din_21_msk_ab0), .msk_a1b1(din_21_msk_ab1), .msk_a1b2(din_21_msk_ab2),
-           .msk_a1b0_1sc(din_21_msk_ab0_1sc), .msk_a1b1_1sc(din_21_msk_ab1_1sc), .msk_a1b2_1sc(din_21_msk_ab2_1sc),
-
-           .a2b0(din_23_ab0), .a2b1(din_23_ab1),
-           .a2b0_1sc(din_23_ab0_1sc), .a2b1_1sc(din_23_ab1_1sc),
-           .msk_a2b0(din_23_msk_ab0), .msk_a2b1(din_23_msk_ab1),
-           .msk_a2b0_1sc(din_23_msk_ab0_1sc), .msk_a2b1_1sc(din_23_msk_ab1_1sc),
-           
-           .a3b0(din_25_ab0),
-           .a3b0_1sc(din_25_ab0_1sc)
+  .clk(clk), .p(addr_5_19),
+  .a0b0(din_19_ab0), .a0b1(din_19_ab1), .a0b2(din_19_ab2), .a0b3(din_19_ab3),
+  .a1b0(din_20_ab0), .a1b1(din_20_ab1), .a1b2(din_20_ab2), .a1b3(din_20_ab3),
+  .a2b0(din_21_ab0), .a2b1(din_21_ab1), .a2b2(din_21_ab2),
+  .a3b0(din_22_ab0), .a3b1(din_22_ab1), .a3b2(din_22_ab2),
+  .a4b0(din_23_ab0), .a4b1(din_23_ab1),
+  .a5b0(din_24_ab0), .a5b1(din_24_ab1),
+  .a6b0(din_25_ab0),
+  .a7b0(din_26_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffff00000000),
 	.NBITS(12)
 ) addr_5_20_calc (
-           .clk(clk), .sign(din_signs_reg[20]), 
-           .p(addr_5_20),
-           .a0b0(din_20_ab0), .a0b1(din_20_ab1), .a0b2(din_20_ab2), .a0b3(din_20_ab3),
-           .a0b0_1sc(din_20_ab0_1sc), .a0b1_1sc(din_20_ab1_1sc), .a0b2_1sc(din_20_ab2_1sc), .a0b3_1sc(din_20_ab3_1sc),
-           .msk_a0b0(din_20_msk_ab0), .msk_a0b1(din_20_msk_ab1), .msk_a0b2(din_20_msk_ab2), .msk_a0b3(din_20_msk_ab3),
-           .msk_a0b0_1sc(din_20_msk_ab0_1sc), .msk_a0b1_1sc(din_20_msk_ab1_1sc), .msk_a0b2_1sc(din_20_msk_ab2_1sc), .msk_a0b3_1sc(din_20_msk_ab3_1sc),
-
-           .a1b0(din_22_ab0), .a1b1(din_22_ab1), .a1b2(din_22_ab2),
-           .a1b0_1sc(din_22_ab0_1sc), .a1b1_1sc(din_22_ab1_1sc), .a1b2_1sc(din_22_ab2_1sc),
-           .msk_a1b0(din_22_msk_ab0), .msk_a1b1(din_22_msk_ab1), .msk_a1b2(din_22_msk_ab2),
-           .msk_a1b0_1sc(din_22_msk_ab0_1sc), .msk_a1b1_1sc(din_22_msk_ab1_1sc), .msk_a1b2_1sc(din_22_msk_ab2_1sc),
-
-           .a2b0(din_24_ab0), .a2b1(din_24_ab1),
-           .a2b0_1sc(din_24_ab0_1sc), .a2b1_1sc(din_24_ab1_1sc),
-           .msk_a2b0(din_24_msk_ab0), .msk_a2b1(din_24_msk_ab1),
-           .msk_a2b0_1sc(din_24_msk_ab0_1sc), .msk_a2b1_1sc(din_24_msk_ab1_1sc),
-           
-           .a3b0(din_26_ab0),
-           .a3b0_1sc(din_26_ab0_1sc)
+  .clk(clk), .p(addr_5_20),
+  .a0b0(din_20_ab0), .a0b1(din_20_ab1), .a0b2(din_20_ab2), .a0b3(din_20_ab3),
+  .a1b0(din_21_ab0), .a1b1(din_21_ab1), .a1b2(din_21_ab2), .a1b3(din_21_ab3),
+  .a2b0(din_22_ab0), .a2b1(din_22_ab1), .a2b2(din_22_ab2),
+  .a3b0(din_23_ab0), .a3b1(din_23_ab1), .a3b2(din_23_ab2),
+  .a4b0(din_24_ab0), .a4b1(din_24_ab1),
+  .a5b0(din_25_ab0), .a5b1(din_25_ab1),
+  .a6b0(din_26_ab0),
+  .a7b0(din_27_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffff00000000),
 	.NBITS(12)
 ) addr_5_21_calc (
-           .clk(clk), .sign(din_signs_reg[21]), 
-           .p(addr_5_21),
-           .a0b0(din_21_ab0), .a0b1(din_21_ab1), .a0b2(din_21_ab2), .a0b3(din_21_ab3),
-           .a0b0_1sc(din_21_ab0_1sc), .a0b1_1sc(din_21_ab1_1sc), .a0b2_1sc(din_21_ab2_1sc), .a0b3_1sc(din_21_ab3_1sc),
-           .msk_a0b0(din_21_msk_ab0), .msk_a0b1(din_21_msk_ab1), .msk_a0b2(din_21_msk_ab2), .msk_a0b3(din_21_msk_ab3),
-           .msk_a0b0_1sc(din_21_msk_ab0_1sc), .msk_a0b1_1sc(din_21_msk_ab1_1sc), .msk_a0b2_1sc(din_21_msk_ab2_1sc), .msk_a0b3_1sc(din_21_msk_ab3_1sc),
-
-           .a1b0(din_23_ab0), .a1b1(din_23_ab1), .a1b2(din_23_ab2),
-           .a1b0_1sc(din_23_ab0_1sc), .a1b1_1sc(din_23_ab1_1sc), .a1b2_1sc(din_23_ab2_1sc),
-           .msk_a1b0(din_23_msk_ab0), .msk_a1b1(din_23_msk_ab1), .msk_a1b2(din_23_msk_ab2),
-           .msk_a1b0_1sc(din_23_msk_ab0_1sc), .msk_a1b1_1sc(din_23_msk_ab1_1sc), .msk_a1b2_1sc(din_23_msk_ab2_1sc),
-
-           .a2b0(din_25_ab0), .a2b1(din_25_ab1),
-           .a2b0_1sc(din_25_ab0_1sc), .a2b1_1sc(din_25_ab1_1sc),
-           .msk_a2b0(din_25_msk_ab0), .msk_a2b1(din_25_msk_ab1),
-           .msk_a2b0_1sc(din_25_msk_ab0_1sc), .msk_a2b1_1sc(din_25_msk_ab1_1sc),
-           
-           .a3b0(din_27_ab0),
-           .a3b0_1sc(din_27_ab0_1sc)
+  .clk(clk), .p(addr_5_21),
+  .a0b0(din_21_ab0), .a0b1(din_21_ab1), .a0b2(din_21_ab2), .a0b3(din_21_ab3),
+  .a1b0(din_22_ab0), .a1b1(din_22_ab1), .a1b2(din_22_ab2), .a1b3(din_22_ab3),
+  .a2b0(din_23_ab0), .a2b1(din_23_ab1), .a2b2(din_23_ab2),
+  .a3b0(din_24_ab0), .a3b1(din_24_ab1), .a3b2(din_24_ab2),
+  .a4b0(din_25_ab0), .a4b1(din_25_ab1),
+  .a5b0(din_26_ab0), .a5b1(din_26_ab1),
+  .a6b0(din_27_ab0),
+  .a7b0(din_28_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffff00000000),
 	.NBITS(12)
 ) addr_5_22_calc (
-           .clk(clk), .sign(din_signs_reg[22]), 
-           .p(addr_5_22),
-           .a0b0(din_22_ab0), .a0b1(din_22_ab1), .a0b2(din_22_ab2), .a0b3(din_22_ab3),
-           .a0b0_1sc(din_22_ab0_1sc), .a0b1_1sc(din_22_ab1_1sc), .a0b2_1sc(din_22_ab2_1sc), .a0b3_1sc(din_22_ab3_1sc),
-           .msk_a0b0(din_22_msk_ab0), .msk_a0b1(din_22_msk_ab1), .msk_a0b2(din_22_msk_ab2), .msk_a0b3(din_22_msk_ab3),
-           .msk_a0b0_1sc(din_22_msk_ab0_1sc), .msk_a0b1_1sc(din_22_msk_ab1_1sc), .msk_a0b2_1sc(din_22_msk_ab2_1sc), .msk_a0b3_1sc(din_22_msk_ab3_1sc),
-
-           .a1b0(din_24_ab0), .a1b1(din_24_ab1), .a1b2(din_24_ab2),
-           .a1b0_1sc(din_24_ab0_1sc), .a1b1_1sc(din_24_ab1_1sc), .a1b2_1sc(din_24_ab2_1sc),
-           .msk_a1b0(din_24_msk_ab0), .msk_a1b1(din_24_msk_ab1), .msk_a1b2(din_24_msk_ab2),
-           .msk_a1b0_1sc(din_24_msk_ab0_1sc), .msk_a1b1_1sc(din_24_msk_ab1_1sc), .msk_a1b2_1sc(din_24_msk_ab2_1sc),
-
-           .a2b0(din_26_ab0), .a2b1(din_26_ab1),
-           .a2b0_1sc(din_26_ab0_1sc), .a2b1_1sc(din_26_ab1_1sc),
-           .msk_a2b0(din_26_msk_ab0), .msk_a2b1(din_26_msk_ab1),
-           .msk_a2b0_1sc(din_26_msk_ab0_1sc), .msk_a2b1_1sc(din_26_msk_ab1_1sc),
-           
-           .a3b0(din_28_ab0),
-           .a3b0_1sc(din_28_ab0_1sc)
+  .clk(clk), .p(addr_5_22),
+  .a0b0(din_22_ab0), .a0b1(din_22_ab1), .a0b2(din_22_ab2), .a0b3(din_22_ab3),
+  .a1b0(din_23_ab0), .a1b1(din_23_ab1), .a1b2(din_23_ab2), .a1b3(din_23_ab3),
+  .a2b0(din_24_ab0), .a2b1(din_24_ab1), .a2b2(din_24_ab2),
+  .a3b0(din_25_ab0), .a3b1(din_25_ab1), .a3b2(din_25_ab2),
+  .a4b0(din_26_ab0), .a4b1(din_26_ab1),
+  .a5b0(din_27_ab0), .a5b1(din_27_ab1),
+  .a6b0(din_28_ab0),
+  .a7b0(din_29_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffff00000000),
 	.NBITS(12)
 ) addr_5_23_calc (
-           .clk(clk), .sign(din_signs_reg[23]), 
-           .p(addr_5_23),
-           .a0b0(din_23_ab0), .a0b1(din_23_ab1), .a0b2(din_23_ab2), .a0b3(din_23_ab3),
-           .a0b0_1sc(din_23_ab0_1sc), .a0b1_1sc(din_23_ab1_1sc), .a0b2_1sc(din_23_ab2_1sc), .a0b3_1sc(din_23_ab3_1sc),
-           .msk_a0b0(din_23_msk_ab0), .msk_a0b1(din_23_msk_ab1), .msk_a0b2(din_23_msk_ab2), .msk_a0b3(din_23_msk_ab3),
-           .msk_a0b0_1sc(din_23_msk_ab0_1sc), .msk_a0b1_1sc(din_23_msk_ab1_1sc), .msk_a0b2_1sc(din_23_msk_ab2_1sc), .msk_a0b3_1sc(din_23_msk_ab3_1sc),
-
-           .a1b0(din_25_ab0), .a1b1(din_25_ab1), .a1b2(din_25_ab2),
-           .a1b0_1sc(din_25_ab0_1sc), .a1b1_1sc(din_25_ab1_1sc), .a1b2_1sc(din_25_ab2_1sc),
-           .msk_a1b0(din_25_msk_ab0), .msk_a1b1(din_25_msk_ab1), .msk_a1b2(din_25_msk_ab2),
-           .msk_a1b0_1sc(din_25_msk_ab0_1sc), .msk_a1b1_1sc(din_25_msk_ab1_1sc), .msk_a1b2_1sc(din_25_msk_ab2_1sc),
-
-           .a2b0(din_27_ab0), .a2b1(din_27_ab1),
-           .a2b0_1sc(din_27_ab0_1sc), .a2b1_1sc(din_27_ab1_1sc),
-           .msk_a2b0(din_27_msk_ab0), .msk_a2b1(din_27_msk_ab1),
-           .msk_a2b0_1sc(din_27_msk_ab0_1sc), .msk_a2b1_1sc(din_27_msk_ab1_1sc),
-           
-           .a3b0(din_29_ab0),
-           .a3b0_1sc(din_29_ab0_1sc)
+  .clk(clk), .p(addr_5_23),
+  .a0b0(din_23_ab0), .a0b1(din_23_ab1), .a0b2(din_23_ab2), .a0b3(din_23_ab3),
+  .a1b0(din_24_ab0), .a1b1(din_24_ab1), .a1b2(din_24_ab2), .a1b3(din_24_ab3),
+  .a2b0(din_25_ab0), .a2b1(din_25_ab1), .a2b2(din_25_ab2),
+  .a3b0(din_26_ab0), .a3b1(din_26_ab1), .a3b2(din_26_ab2),
+  .a4b0(din_27_ab0), .a4b1(din_27_ab1),
+  .a5b0(din_28_ab0), .a5b1(din_28_ab1),
+  .a6b0(din_29_ab0),
+  .a7b0(din_30_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffff00000000),
 	.NBITS(12)
 ) addr_5_24_calc (
-           .clk(clk), .sign(din_signs_reg[24]), 
-           .p(addr_5_24),
-           .a0b0(din_24_ab0), .a0b1(din_24_ab1), .a0b2(din_24_ab2), .a0b3(din_24_ab3),
-           .a0b0_1sc(din_24_ab0_1sc), .a0b1_1sc(din_24_ab1_1sc), .a0b2_1sc(din_24_ab2_1sc), .a0b3_1sc(din_24_ab3_1sc),
-           .msk_a0b0(din_24_msk_ab0), .msk_a0b1(din_24_msk_ab1), .msk_a0b2(din_24_msk_ab2), .msk_a0b3(din_24_msk_ab3),
-           .msk_a0b0_1sc(din_24_msk_ab0_1sc), .msk_a0b1_1sc(din_24_msk_ab1_1sc), .msk_a0b2_1sc(din_24_msk_ab2_1sc), .msk_a0b3_1sc(din_24_msk_ab3_1sc),
-
-           .a1b0(din_26_ab0), .a1b1(din_26_ab1), .a1b2(din_26_ab2),
-           .a1b0_1sc(din_26_ab0_1sc), .a1b1_1sc(din_26_ab1_1sc), .a1b2_1sc(din_26_ab2_1sc),
-           .msk_a1b0(din_26_msk_ab0), .msk_a1b1(din_26_msk_ab1), .msk_a1b2(din_26_msk_ab2),
-           .msk_a1b0_1sc(din_26_msk_ab0_1sc), .msk_a1b1_1sc(din_26_msk_ab1_1sc), .msk_a1b2_1sc(din_26_msk_ab2_1sc),
-
-           .a2b0(din_28_ab0), .a2b1(din_28_ab1),
-           .a2b0_1sc(din_28_ab0_1sc), .a2b1_1sc(din_28_ab1_1sc),
-           .msk_a2b0(din_28_msk_ab0), .msk_a2b1(din_28_msk_ab1),
-           .msk_a2b0_1sc(din_28_msk_ab0_1sc), .msk_a2b1_1sc(din_28_msk_ab1_1sc),
-           
-           .a3b0(din_30_ab0),
-           .a3b0_1sc(din_30_ab0_1sc)
+  .clk(clk), .p(addr_5_24),
+  .a0b0(din_24_ab0), .a0b1(din_24_ab1), .a0b2(din_24_ab2), .a0b3(din_24_ab3),
+  .a1b0(din_25_ab0), .a1b1(din_25_ab1), .a1b2(din_25_ab2), .a1b3(din_25_ab3),
+  .a2b0(din_26_ab0), .a2b1(din_26_ab1), .a2b2(din_26_ab2),
+  .a3b0(din_27_ab0), .a3b1(din_27_ab1), .a3b2(din_27_ab2),
+  .a4b0(din_28_ab0), .a4b1(din_28_ab1),
+  .a5b0(din_29_ab0), .a5b1(din_29_ab1),
+  .a6b0(din_30_ab0),
+  .a7b0(din_31_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffff00000000),
 	.NBITS(12)
 ) addr_5_25_calc (
-           .clk(clk), .sign(din_signs_reg[25]), 
-           .p(addr_5_25),
-           .a0b0(din_25_ab0), .a0b1(din_25_ab1), .a0b2(din_25_ab2), .a0b3(din_25_ab3),
-           .a0b0_1sc(din_25_ab0_1sc), .a0b1_1sc(din_25_ab1_1sc), .a0b2_1sc(din_25_ab2_1sc), .a0b3_1sc(din_25_ab3_1sc),
-           .msk_a0b0(din_25_msk_ab0), .msk_a0b1(din_25_msk_ab1), .msk_a0b2(din_25_msk_ab2), .msk_a0b3(din_25_msk_ab3),
-           .msk_a0b0_1sc(din_25_msk_ab0_1sc), .msk_a0b1_1sc(din_25_msk_ab1_1sc), .msk_a0b2_1sc(din_25_msk_ab2_1sc), .msk_a0b3_1sc(din_25_msk_ab3_1sc),
-
-           .a1b0(din_27_ab0), .a1b1(din_27_ab1), .a1b2(din_27_ab2),
-           .a1b0_1sc(din_27_ab0_1sc), .a1b1_1sc(din_27_ab1_1sc), .a1b2_1sc(din_27_ab2_1sc),
-           .msk_a1b0(din_27_msk_ab0), .msk_a1b1(din_27_msk_ab1), .msk_a1b2(din_27_msk_ab2),
-           .msk_a1b0_1sc(din_27_msk_ab0_1sc), .msk_a1b1_1sc(din_27_msk_ab1_1sc), .msk_a1b2_1sc(din_27_msk_ab2_1sc),
-
-           .a2b0(din_29_ab0), .a2b1(din_29_ab1),
-           .a2b0_1sc(din_29_ab0_1sc), .a2b1_1sc(din_29_ab1_1sc),
-           .msk_a2b0(din_29_msk_ab0), .msk_a2b1(din_29_msk_ab1),
-           .msk_a2b0_1sc(din_29_msk_ab0_1sc), .msk_a2b1_1sc(din_29_msk_ab1_1sc),
-           
-           .a3b0(din_31_ab0),
-           .a3b0_1sc(din_31_ab0_1sc)
+  .clk(clk), .p(addr_5_25),
+  .a0b0(din_25_ab0), .a0b1(din_25_ab1), .a0b2(din_25_ab2), .a0b3(din_25_ab3),
+  .a1b0(din_26_ab0), .a1b1(din_26_ab1), .a1b2(din_26_ab2), .a1b3(din_26_ab3),
+  .a2b0(din_27_ab0), .a2b1(din_27_ab1), .a2b2(din_27_ab2),
+  .a3b0(din_28_ab0), .a3b1(din_28_ab1), .a3b2(din_28_ab2),
+  .a4b0(din_29_ab0), .a4b1(din_29_ab1),
+  .a5b0(din_30_ab0), .a5b1(din_30_ab1),
+  .a6b0(din_31_ab0),
+  .a7b0(din_32_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffff00000000),
 	.NBITS(12)
 ) addr_5_26_calc (
-           .clk(clk), .sign(din_signs_reg[26]), 
-           .p(addr_5_26),
-           .a0b0(din_26_ab0), .a0b1(din_26_ab1), .a0b2(din_26_ab2), .a0b3(din_26_ab3),
-           .a0b0_1sc(din_26_ab0_1sc), .a0b1_1sc(din_26_ab1_1sc), .a0b2_1sc(din_26_ab2_1sc), .a0b3_1sc(din_26_ab3_1sc),
-           .msk_a0b0(din_26_msk_ab0), .msk_a0b1(din_26_msk_ab1), .msk_a0b2(din_26_msk_ab2), .msk_a0b3(din_26_msk_ab3),
-           .msk_a0b0_1sc(din_26_msk_ab0_1sc), .msk_a0b1_1sc(din_26_msk_ab1_1sc), .msk_a0b2_1sc(din_26_msk_ab2_1sc), .msk_a0b3_1sc(din_26_msk_ab3_1sc),
-
-           .a1b0(din_28_ab0), .a1b1(din_28_ab1), .a1b2(din_28_ab2),
-           .a1b0_1sc(din_28_ab0_1sc), .a1b1_1sc(din_28_ab1_1sc), .a1b2_1sc(din_28_ab2_1sc),
-           .msk_a1b0(din_28_msk_ab0), .msk_a1b1(din_28_msk_ab1), .msk_a1b2(din_28_msk_ab2),
-           .msk_a1b0_1sc(din_28_msk_ab0_1sc), .msk_a1b1_1sc(din_28_msk_ab1_1sc), .msk_a1b2_1sc(din_28_msk_ab2_1sc),
-
-           .a2b0(din_30_ab0), .a2b1(din_30_ab1),
-           .a2b0_1sc(din_30_ab0_1sc), .a2b1_1sc(din_30_ab1_1sc),
-           .msk_a2b0(din_30_msk_ab0), .msk_a2b1(din_30_msk_ab1),
-           .msk_a2b0_1sc(din_30_msk_ab0_1sc), .msk_a2b1_1sc(din_30_msk_ab1_1sc),
-           
-           .a3b0(din_32_ab0),
-           .a3b0_1sc(din_32_ab0_1sc)
+  .clk(clk), .p(addr_5_26),
+  .a0b0(din_26_ab0), .a0b1(din_26_ab1), .a0b2(din_26_ab2), .a0b3(din_26_ab3),
+  .a1b0(din_27_ab0), .a1b1(din_27_ab1), .a1b2(din_27_ab2), .a1b3(din_27_ab3),
+  .a2b0(din_28_ab0), .a2b1(din_28_ab1), .a2b2(din_28_ab2),
+  .a3b0(din_29_ab0), .a3b1(din_29_ab1), .a3b2(din_29_ab2),
+  .a4b0(din_30_ab0), .a4b1(din_30_ab1),
+  .a5b0(din_31_ab0), .a5b1(din_31_ab1),
+  .a6b0(din_32_ab0),
+  .a7b0(din_33_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffff00000000),
 	.NBITS(12)
 ) addr_5_27_calc (
-           .clk(clk), .sign(din_signs_reg[27]), 
-           .p(addr_5_27),
-           .a0b0(din_27_ab0), .a0b1(din_27_ab1), .a0b2(din_27_ab2), .a0b3(din_27_ab3),
-           .a0b0_1sc(din_27_ab0_1sc), .a0b1_1sc(din_27_ab1_1sc), .a0b2_1sc(din_27_ab2_1sc), .a0b3_1sc(din_27_ab3_1sc),
-           .msk_a0b0(din_27_msk_ab0), .msk_a0b1(din_27_msk_ab1), .msk_a0b2(din_27_msk_ab2), .msk_a0b3(din_27_msk_ab3),
-           .msk_a0b0_1sc(din_27_msk_ab0_1sc), .msk_a0b1_1sc(din_27_msk_ab1_1sc), .msk_a0b2_1sc(din_27_msk_ab2_1sc), .msk_a0b3_1sc(din_27_msk_ab3_1sc),
-
-           .a1b0(din_29_ab0), .a1b1(din_29_ab1), .a1b2(din_29_ab2),
-           .a1b0_1sc(din_29_ab0_1sc), .a1b1_1sc(din_29_ab1_1sc), .a1b2_1sc(din_29_ab2_1sc),
-           .msk_a1b0(din_29_msk_ab0), .msk_a1b1(din_29_msk_ab1), .msk_a1b2(din_29_msk_ab2),
-           .msk_a1b0_1sc(din_29_msk_ab0_1sc), .msk_a1b1_1sc(din_29_msk_ab1_1sc), .msk_a1b2_1sc(din_29_msk_ab2_1sc),
-
-           .a2b0(din_31_ab0), .a2b1(din_31_ab1),
-           .a2b0_1sc(din_31_ab0_1sc), .a2b1_1sc(din_31_ab1_1sc),
-           .msk_a2b0(din_31_msk_ab0), .msk_a2b1(din_31_msk_ab1),
-           .msk_a2b0_1sc(din_31_msk_ab0_1sc), .msk_a2b1_1sc(din_31_msk_ab1_1sc),
-           
-           .a3b0(din_33_ab0),
-           .a3b0_1sc(din_33_ab0_1sc)
+  .clk(clk), .p(addr_5_27),
+  .a0b0(din_27_ab0), .a0b1(din_27_ab1), .a0b2(din_27_ab2), .a0b3(din_27_ab3),
+  .a1b0(din_28_ab0), .a1b1(din_28_ab1), .a1b2(din_28_ab2), .a1b3(din_28_ab3),
+  .a2b0(din_29_ab0), .a2b1(din_29_ab1), .a2b2(din_29_ab2),
+  .a3b0(din_30_ab0), .a3b1(din_30_ab1), .a3b2(din_30_ab2),
+  .a4b0(din_31_ab0), .a4b1(din_31_ab1),
+  .a5b0(din_32_ab0), .a5b1(din_32_ab1),
+  .a6b0(din_33_ab0),
+  .a7b0(din_34_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffff00000000),
 	.NBITS(12)
 ) addr_5_28_calc (
-           .clk(clk), .sign(din_signs_reg[28]), 
-           .p(addr_5_28),
-           .a0b0(din_28_ab0), .a0b1(din_28_ab1), .a0b2(din_28_ab2), .a0b3(din_28_ab3),
-           .a0b0_1sc(din_28_ab0_1sc), .a0b1_1sc(din_28_ab1_1sc), .a0b2_1sc(din_28_ab2_1sc), .a0b3_1sc(din_28_ab3_1sc),
-           .msk_a0b0(din_28_msk_ab0), .msk_a0b1(din_28_msk_ab1), .msk_a0b2(din_28_msk_ab2), .msk_a0b3(din_28_msk_ab3),
-           .msk_a0b0_1sc(din_28_msk_ab0_1sc), .msk_a0b1_1sc(din_28_msk_ab1_1sc), .msk_a0b2_1sc(din_28_msk_ab2_1sc), .msk_a0b3_1sc(din_28_msk_ab3_1sc),
-
-           .a1b0(din_30_ab0), .a1b1(din_30_ab1), .a1b2(din_30_ab2),
-           .a1b0_1sc(din_30_ab0_1sc), .a1b1_1sc(din_30_ab1_1sc), .a1b2_1sc(din_30_ab2_1sc),
-           .msk_a1b0(din_30_msk_ab0), .msk_a1b1(din_30_msk_ab1), .msk_a1b2(din_30_msk_ab2),
-           .msk_a1b0_1sc(din_30_msk_ab0_1sc), .msk_a1b1_1sc(din_30_msk_ab1_1sc), .msk_a1b2_1sc(din_30_msk_ab2_1sc),
-
-           .a2b0(din_32_ab0), .a2b1(din_32_ab1),
-           .a2b0_1sc(din_32_ab0_1sc), .a2b1_1sc(din_32_ab1_1sc),
-           .msk_a2b0(din_32_msk_ab0), .msk_a2b1(din_32_msk_ab1),
-           .msk_a2b0_1sc(din_32_msk_ab0_1sc), .msk_a2b1_1sc(din_32_msk_ab1_1sc),
-           
-           .a3b0(din_34_ab0),
-           .a3b0_1sc(din_34_ab0_1sc)
+  .clk(clk), .p(addr_5_28),
+  .a0b0(din_28_ab0), .a0b1(din_28_ab1), .a0b2(din_28_ab2), .a0b3(din_28_ab3),
+  .a1b0(din_29_ab0), .a1b1(din_29_ab1), .a1b2(din_29_ab2), .a1b3(din_29_ab3),
+  .a2b0(din_30_ab0), .a2b1(din_30_ab1), .a2b2(din_30_ab2),
+  .a3b0(din_31_ab0), .a3b1(din_31_ab1), .a3b2(din_31_ab2),
+  .a4b0(din_32_ab0), .a4b1(din_32_ab1),
+  .a5b0(din_33_ab0), .a5b1(din_33_ab1),
+  .a6b0(din_34_ab0),
+  .a7b0(din_35_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffff00000000),
 	.NBITS(12)
 ) addr_5_29_calc (
-           .clk(clk), .sign(din_signs_reg[29]), 
-           .p(addr_5_29),
-           .a0b0(din_29_ab0), .a0b1(din_29_ab1), .a0b2(din_29_ab2), .a0b3(din_29_ab3),
-           .a0b0_1sc(din_29_ab0_1sc), .a0b1_1sc(din_29_ab1_1sc), .a0b2_1sc(din_29_ab2_1sc), .a0b3_1sc(din_29_ab3_1sc),
-           .msk_a0b0(din_29_msk_ab0), .msk_a0b1(din_29_msk_ab1), .msk_a0b2(din_29_msk_ab2), .msk_a0b3(din_29_msk_ab3),
-           .msk_a0b0_1sc(din_29_msk_ab0_1sc), .msk_a0b1_1sc(din_29_msk_ab1_1sc), .msk_a0b2_1sc(din_29_msk_ab2_1sc), .msk_a0b3_1sc(din_29_msk_ab3_1sc),
-
-           .a1b0(din_31_ab0), .a1b1(din_31_ab1), .a1b2(din_31_ab2),
-           .a1b0_1sc(din_31_ab0_1sc), .a1b1_1sc(din_31_ab1_1sc), .a1b2_1sc(din_31_ab2_1sc),
-           .msk_a1b0(din_31_msk_ab0), .msk_a1b1(din_31_msk_ab1), .msk_a1b2(din_31_msk_ab2),
-           .msk_a1b0_1sc(din_31_msk_ab0_1sc), .msk_a1b1_1sc(din_31_msk_ab1_1sc), .msk_a1b2_1sc(din_31_msk_ab2_1sc),
-
-           .a2b0(din_33_ab0), .a2b1(din_33_ab1),
-           .a2b0_1sc(din_33_ab0_1sc), .a2b1_1sc(din_33_ab1_1sc),
-           .msk_a2b0(din_33_msk_ab0), .msk_a2b1(din_33_msk_ab1),
-           .msk_a2b0_1sc(din_33_msk_ab0_1sc), .msk_a2b1_1sc(din_33_msk_ab1_1sc),
-           
-           .a3b0(din_35_ab0),
-           .a3b0_1sc(din_35_ab0_1sc)
+  .clk(clk), .p(addr_5_29),
+  .a0b0(din_29_ab0), .a0b1(din_29_ab1), .a0b2(din_29_ab2), .a0b3(din_29_ab3),
+  .a1b0(din_30_ab0), .a1b1(din_30_ab1), .a1b2(din_30_ab2), .a1b3(din_30_ab3),
+  .a2b0(din_31_ab0), .a2b1(din_31_ab1), .a2b2(din_31_ab2),
+  .a3b0(din_32_ab0), .a3b1(din_32_ab1), .a3b2(din_32_ab2),
+  .a4b0(din_33_ab0), .a4b1(din_33_ab1),
+  .a5b0(din_34_ab0), .a5b1(din_34_ab1),
+  .a6b0(din_35_ab0),
+  .a7b0(din_36_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffff00000000),
 	.NBITS(12)
 ) addr_5_30_calc (
-           .clk(clk), .sign(din_signs_reg[30]), 
-           .p(addr_5_30),
-           .a0b0(din_30_ab0), .a0b1(din_30_ab1), .a0b2(din_30_ab2), .a0b3(din_30_ab3),
-           .a0b0_1sc(din_30_ab0_1sc), .a0b1_1sc(din_30_ab1_1sc), .a0b2_1sc(din_30_ab2_1sc), .a0b3_1sc(din_30_ab3_1sc),
-           .msk_a0b0(din_30_msk_ab0), .msk_a0b1(din_30_msk_ab1), .msk_a0b2(din_30_msk_ab2), .msk_a0b3(din_30_msk_ab3),
-           .msk_a0b0_1sc(din_30_msk_ab0_1sc), .msk_a0b1_1sc(din_30_msk_ab1_1sc), .msk_a0b2_1sc(din_30_msk_ab2_1sc), .msk_a0b3_1sc(din_30_msk_ab3_1sc),
-
-           .a1b0(din_32_ab0), .a1b1(din_32_ab1), .a1b2(din_32_ab2),
-           .a1b0_1sc(din_32_ab0_1sc), .a1b1_1sc(din_32_ab1_1sc), .a1b2_1sc(din_32_ab2_1sc),
-           .msk_a1b0(din_32_msk_ab0), .msk_a1b1(din_32_msk_ab1), .msk_a1b2(din_32_msk_ab2),
-           .msk_a1b0_1sc(din_32_msk_ab0_1sc), .msk_a1b1_1sc(din_32_msk_ab1_1sc), .msk_a1b2_1sc(din_32_msk_ab2_1sc),
-
-           .a2b0(din_34_ab0), .a2b1(din_34_ab1),
-           .a2b0_1sc(din_34_ab0_1sc), .a2b1_1sc(din_34_ab1_1sc),
-           .msk_a2b0(din_34_msk_ab0), .msk_a2b1(din_34_msk_ab1),
-           .msk_a2b0_1sc(din_34_msk_ab0_1sc), .msk_a2b1_1sc(din_34_msk_ab1_1sc),
-           
-           .a3b0(din_36_ab0),
-           .a3b0_1sc(din_36_ab0_1sc)
+  .clk(clk), .p(addr_5_30),
+  .a0b0(din_30_ab0), .a0b1(din_30_ab1), .a0b2(din_30_ab2), .a0b3(din_30_ab3),
+  .a1b0(din_31_ab0), .a1b1(din_31_ab1), .a1b2(din_31_ab2), .a1b3(din_31_ab3),
+  .a2b0(din_32_ab0), .a2b1(din_32_ab1), .a2b2(din_32_ab2),
+  .a3b0(din_33_ab0), .a3b1(din_33_ab1), .a3b2(din_33_ab2),
+  .a4b0(din_34_ab0), .a4b1(din_34_ab1),
+  .a5b0(din_35_ab0), .a5b1(din_35_ab1),
+  .a6b0(din_36_ab0),
+  .a7b0(din_37_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffffff00000000),
 	.NBITS(12)
 ) addr_5_31_calc (
-           .clk(clk), .sign(din_signs_reg[31]), 
-           .p(addr_5_31),
-           .a0b0(din_31_ab0), .a0b1(din_31_ab1), .a0b2(din_31_ab2), .a0b3(din_31_ab3),
-           .a0b0_1sc(din_31_ab0_1sc), .a0b1_1sc(din_31_ab1_1sc), .a0b2_1sc(din_31_ab2_1sc), .a0b3_1sc(din_31_ab3_1sc),
-           .msk_a0b0(din_31_msk_ab0), .msk_a0b1(din_31_msk_ab1), .msk_a0b2(din_31_msk_ab2), .msk_a0b3(din_31_msk_ab3),
-           .msk_a0b0_1sc(din_31_msk_ab0_1sc), .msk_a0b1_1sc(din_31_msk_ab1_1sc), .msk_a0b2_1sc(din_31_msk_ab2_1sc), .msk_a0b3_1sc(din_31_msk_ab3_1sc),
-
-           .a1b0(din_33_ab0), .a1b1(din_33_ab1), .a1b2(din_33_ab2),
-           .a1b0_1sc(din_33_ab0_1sc), .a1b1_1sc(din_33_ab1_1sc), .a1b2_1sc(din_33_ab2_1sc),
-           .msk_a1b0(din_33_msk_ab0), .msk_a1b1(din_33_msk_ab1), .msk_a1b2(din_33_msk_ab2),
-           .msk_a1b0_1sc(din_33_msk_ab0_1sc), .msk_a1b1_1sc(din_33_msk_ab1_1sc), .msk_a1b2_1sc(din_33_msk_ab2_1sc),
-
-           .a2b0(din_35_ab0), .a2b1(din_35_ab1),
-           .a2b0_1sc(din_35_ab0_1sc), .a2b1_1sc(din_35_ab1_1sc),
-           .msk_a2b0(din_35_msk_ab0), .msk_a2b1(din_35_msk_ab1),
-           .msk_a2b0_1sc(din_35_msk_ab0_1sc), .msk_a2b1_1sc(din_35_msk_ab1_1sc),
-           
-           .a3b0(din_37_ab0),
-           .a3b0_1sc(din_37_ab0_1sc)
+  .clk(clk), .p(addr_5_31),
+  .a0b0(din_31_ab0), .a0b1(din_31_ab1), .a0b2(din_31_ab2), .a0b3(din_31_ab3),
+  .a1b0(din_32_ab0), .a1b1(din_32_ab1), .a1b2(din_32_ab2), .a1b3(din_32_ab3),
+  .a2b0(din_33_ab0), .a2b1(din_33_ab1), .a2b2(din_33_ab2),
+  .a3b0(din_34_ab0), .a3b1(din_34_ab1), .a3b2(din_34_ab2),
+  .a4b0(din_35_ab0), .a4b1(din_35_ab1),
+  .a5b0(din_36_ab0), .a5b1(din_36_ab1),
+  .a6b0(din_37_ab0),
+  .a7b0(din_38_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffff0000000000),
 	.NBITS(10)
 ) addr_6_0_calc (
-           .clk(clk), .sign(din_signs_reg[0]), 
-           .p(addr_6_0),
-           .a0b0(din_0_ab0), .a0b1(din_0_ab1), .a0b2(din_0_ab2), .a0b3(din_0_ab3),
-           .a0b0_1sc(din_0_ab0_1sc), .a0b1_1sc(din_0_ab1_1sc), .a0b2_1sc(din_0_ab2_1sc), .a0b3_1sc(din_0_ab3_1sc),
-           .msk_a0b0(din_0_msk_ab0), .msk_a0b1(din_0_msk_ab1), .msk_a0b2(din_0_msk_ab2), .msk_a0b3(din_0_msk_ab3),
-           .msk_a0b0_1sc(din_0_msk_ab0_1sc), .msk_a0b1_1sc(din_0_msk_ab1_1sc), .msk_a0b2_1sc(din_0_msk_ab2_1sc), .msk_a0b3_1sc(din_0_msk_ab3_1sc),
-
-           .a1b0(din_2_ab0), .a1b1(din_2_ab1), .a1b2(din_2_ab2),
-           .a1b0_1sc(din_2_ab0_1sc), .a1b1_1sc(din_2_ab1_1sc), .a1b2_1sc(din_2_ab2_1sc),
-           .msk_a1b0(din_2_msk_ab0), .msk_a1b1(din_2_msk_ab1), .msk_a1b2(din_2_msk_ab2),
-           .msk_a1b0_1sc(din_2_msk_ab0_1sc), .msk_a1b1_1sc(din_2_msk_ab1_1sc), .msk_a1b2_1sc(din_2_msk_ab2_1sc),
-
-           .a2b0(din_4_ab0), .a2b1(din_4_ab1),
-           .a2b0_1sc(din_4_ab0_1sc), .a2b1_1sc(din_4_ab1_1sc),
-           .msk_a2b0(din_4_msk_ab0), .msk_a2b1(din_4_msk_ab1),
-           .msk_a2b0_1sc(din_4_msk_ab0_1sc), .msk_a2b1_1sc(din_4_msk_ab1_1sc),
-           
-           .a3b0(din_6_ab0),
-           .a3b0_1sc(din_6_ab0_1sc)
+  .clk(clk), .p(addr_6_0),
+  .a0b0(din_0_ab0), .a0b1(din_0_ab1), .a0b2(din_0_ab2), .a0b3(din_0_ab3),
+  .a1b0(din_1_ab0), .a1b1(din_1_ab1), .a1b2(din_1_ab2), .a1b3(din_1_ab3),
+  .a2b0(din_2_ab0), .a2b1(din_2_ab1), .a2b2(din_2_ab2),
+  .a3b0(din_3_ab0), .a3b1(din_3_ab1), .a3b2(din_3_ab2),
+  .a4b0(din_4_ab0), .a4b1(din_4_ab1),
+  .a5b0(din_5_ab0), .a5b1(din_5_ab1),
+  .a6b0(din_6_ab0),
+  .a7b0(din_7_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffff0000000000),
 	.NBITS(10)
 ) addr_6_1_calc (
-           .clk(clk), .sign(din_signs_reg[1]), 
-           .p(addr_6_1),
-           .a0b0(din_1_ab0), .a0b1(din_1_ab1), .a0b2(din_1_ab2), .a0b3(din_1_ab3),
-           .a0b0_1sc(din_1_ab0_1sc), .a0b1_1sc(din_1_ab1_1sc), .a0b2_1sc(din_1_ab2_1sc), .a0b3_1sc(din_1_ab3_1sc),
-           .msk_a0b0(din_1_msk_ab0), .msk_a0b1(din_1_msk_ab1), .msk_a0b2(din_1_msk_ab2), .msk_a0b3(din_1_msk_ab3),
-           .msk_a0b0_1sc(din_1_msk_ab0_1sc), .msk_a0b1_1sc(din_1_msk_ab1_1sc), .msk_a0b2_1sc(din_1_msk_ab2_1sc), .msk_a0b3_1sc(din_1_msk_ab3_1sc),
-
-           .a1b0(din_3_ab0), .a1b1(din_3_ab1), .a1b2(din_3_ab2),
-           .a1b0_1sc(din_3_ab0_1sc), .a1b1_1sc(din_3_ab1_1sc), .a1b2_1sc(din_3_ab2_1sc),
-           .msk_a1b0(din_3_msk_ab0), .msk_a1b1(din_3_msk_ab1), .msk_a1b2(din_3_msk_ab2),
-           .msk_a1b0_1sc(din_3_msk_ab0_1sc), .msk_a1b1_1sc(din_3_msk_ab1_1sc), .msk_a1b2_1sc(din_3_msk_ab2_1sc),
-
-           .a2b0(din_5_ab0), .a2b1(din_5_ab1),
-           .a2b0_1sc(din_5_ab0_1sc), .a2b1_1sc(din_5_ab1_1sc),
-           .msk_a2b0(din_5_msk_ab0), .msk_a2b1(din_5_msk_ab1),
-           .msk_a2b0_1sc(din_5_msk_ab0_1sc), .msk_a2b1_1sc(din_5_msk_ab1_1sc),
-           
-           .a3b0(din_7_ab0),
-           .a3b0_1sc(din_7_ab0_1sc)
+  .clk(clk), .p(addr_6_1),
+  .a0b0(din_1_ab0), .a0b1(din_1_ab1), .a0b2(din_1_ab2), .a0b3(din_1_ab3),
+  .a1b0(din_2_ab0), .a1b1(din_2_ab1), .a1b2(din_2_ab2), .a1b3(din_2_ab3),
+  .a2b0(din_3_ab0), .a2b1(din_3_ab1), .a2b2(din_3_ab2),
+  .a3b0(din_4_ab0), .a3b1(din_4_ab1), .a3b2(din_4_ab2),
+  .a4b0(din_5_ab0), .a4b1(din_5_ab1),
+  .a5b0(din_6_ab0), .a5b1(din_6_ab1),
+  .a6b0(din_7_ab0),
+  .a7b0(din_8_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffff0000000000),
 	.NBITS(10)
 ) addr_6_2_calc (
-           .clk(clk), .sign(din_signs_reg[2]), 
-           .p(addr_6_2),
-           .a0b0(din_2_ab0), .a0b1(din_2_ab1), .a0b2(din_2_ab2), .a0b3(din_2_ab3),
-           .a0b0_1sc(din_2_ab0_1sc), .a0b1_1sc(din_2_ab1_1sc), .a0b2_1sc(din_2_ab2_1sc), .a0b3_1sc(din_2_ab3_1sc),
-           .msk_a0b0(din_2_msk_ab0), .msk_a0b1(din_2_msk_ab1), .msk_a0b2(din_2_msk_ab2), .msk_a0b3(din_2_msk_ab3),
-           .msk_a0b0_1sc(din_2_msk_ab0_1sc), .msk_a0b1_1sc(din_2_msk_ab1_1sc), .msk_a0b2_1sc(din_2_msk_ab2_1sc), .msk_a0b3_1sc(din_2_msk_ab3_1sc),
-
-           .a1b0(din_4_ab0), .a1b1(din_4_ab1), .a1b2(din_4_ab2),
-           .a1b0_1sc(din_4_ab0_1sc), .a1b1_1sc(din_4_ab1_1sc), .a1b2_1sc(din_4_ab2_1sc),
-           .msk_a1b0(din_4_msk_ab0), .msk_a1b1(din_4_msk_ab1), .msk_a1b2(din_4_msk_ab2),
-           .msk_a1b0_1sc(din_4_msk_ab0_1sc), .msk_a1b1_1sc(din_4_msk_ab1_1sc), .msk_a1b2_1sc(din_4_msk_ab2_1sc),
-
-           .a2b0(din_6_ab0), .a2b1(din_6_ab1),
-           .a2b0_1sc(din_6_ab0_1sc), .a2b1_1sc(din_6_ab1_1sc),
-           .msk_a2b0(din_6_msk_ab0), .msk_a2b1(din_6_msk_ab1),
-           .msk_a2b0_1sc(din_6_msk_ab0_1sc), .msk_a2b1_1sc(din_6_msk_ab1_1sc),
-           
-           .a3b0(din_8_ab0),
-           .a3b0_1sc(din_8_ab0_1sc)
+  .clk(clk), .p(addr_6_2),
+  .a0b0(din_2_ab0), .a0b1(din_2_ab1), .a0b2(din_2_ab2), .a0b3(din_2_ab3),
+  .a1b0(din_3_ab0), .a1b1(din_3_ab1), .a1b2(din_3_ab2), .a1b3(din_3_ab3),
+  .a2b0(din_4_ab0), .a2b1(din_4_ab1), .a2b2(din_4_ab2),
+  .a3b0(din_5_ab0), .a3b1(din_5_ab1), .a3b2(din_5_ab2),
+  .a4b0(din_6_ab0), .a4b1(din_6_ab1),
+  .a5b0(din_7_ab0), .a5b1(din_7_ab1),
+  .a6b0(din_8_ab0),
+  .a7b0(din_9_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffff0000000000),
 	.NBITS(10)
 ) addr_6_3_calc (
-           .clk(clk), .sign(din_signs_reg[3]), 
-           .p(addr_6_3),
-           .a0b0(din_3_ab0), .a0b1(din_3_ab1), .a0b2(din_3_ab2), .a0b3(din_3_ab3),
-           .a0b0_1sc(din_3_ab0_1sc), .a0b1_1sc(din_3_ab1_1sc), .a0b2_1sc(din_3_ab2_1sc), .a0b3_1sc(din_3_ab3_1sc),
-           .msk_a0b0(din_3_msk_ab0), .msk_a0b1(din_3_msk_ab1), .msk_a0b2(din_3_msk_ab2), .msk_a0b3(din_3_msk_ab3),
-           .msk_a0b0_1sc(din_3_msk_ab0_1sc), .msk_a0b1_1sc(din_3_msk_ab1_1sc), .msk_a0b2_1sc(din_3_msk_ab2_1sc), .msk_a0b3_1sc(din_3_msk_ab3_1sc),
-
-           .a1b0(din_5_ab0), .a1b1(din_5_ab1), .a1b2(din_5_ab2),
-           .a1b0_1sc(din_5_ab0_1sc), .a1b1_1sc(din_5_ab1_1sc), .a1b2_1sc(din_5_ab2_1sc),
-           .msk_a1b0(din_5_msk_ab0), .msk_a1b1(din_5_msk_ab1), .msk_a1b2(din_5_msk_ab2),
-           .msk_a1b0_1sc(din_5_msk_ab0_1sc), .msk_a1b1_1sc(din_5_msk_ab1_1sc), .msk_a1b2_1sc(din_5_msk_ab2_1sc),
-
-           .a2b0(din_7_ab0), .a2b1(din_7_ab1),
-           .a2b0_1sc(din_7_ab0_1sc), .a2b1_1sc(din_7_ab1_1sc),
-           .msk_a2b0(din_7_msk_ab0), .msk_a2b1(din_7_msk_ab1),
-           .msk_a2b0_1sc(din_7_msk_ab0_1sc), .msk_a2b1_1sc(din_7_msk_ab1_1sc),
-           
-           .a3b0(din_9_ab0),
-           .a3b0_1sc(din_9_ab0_1sc)
+  .clk(clk), .p(addr_6_3),
+  .a0b0(din_3_ab0), .a0b1(din_3_ab1), .a0b2(din_3_ab2), .a0b3(din_3_ab3),
+  .a1b0(din_4_ab0), .a1b1(din_4_ab1), .a1b2(din_4_ab2), .a1b3(din_4_ab3),
+  .a2b0(din_5_ab0), .a2b1(din_5_ab1), .a2b2(din_5_ab2),
+  .a3b0(din_6_ab0), .a3b1(din_6_ab1), .a3b2(din_6_ab2),
+  .a4b0(din_7_ab0), .a4b1(din_7_ab1),
+  .a5b0(din_8_ab0), .a5b1(din_8_ab1),
+  .a6b0(din_9_ab0),
+  .a7b0(din_10_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffff0000000000),
 	.NBITS(10)
 ) addr_6_4_calc (
-           .clk(clk), .sign(din_signs_reg[4]), 
-           .p(addr_6_4),
-           .a0b0(din_4_ab0), .a0b1(din_4_ab1), .a0b2(din_4_ab2), .a0b3(din_4_ab3),
-           .a0b0_1sc(din_4_ab0_1sc), .a0b1_1sc(din_4_ab1_1sc), .a0b2_1sc(din_4_ab2_1sc), .a0b3_1sc(din_4_ab3_1sc),
-           .msk_a0b0(din_4_msk_ab0), .msk_a0b1(din_4_msk_ab1), .msk_a0b2(din_4_msk_ab2), .msk_a0b3(din_4_msk_ab3),
-           .msk_a0b0_1sc(din_4_msk_ab0_1sc), .msk_a0b1_1sc(din_4_msk_ab1_1sc), .msk_a0b2_1sc(din_4_msk_ab2_1sc), .msk_a0b3_1sc(din_4_msk_ab3_1sc),
-
-           .a1b0(din_6_ab0), .a1b1(din_6_ab1), .a1b2(din_6_ab2),
-           .a1b0_1sc(din_6_ab0_1sc), .a1b1_1sc(din_6_ab1_1sc), .a1b2_1sc(din_6_ab2_1sc),
-           .msk_a1b0(din_6_msk_ab0), .msk_a1b1(din_6_msk_ab1), .msk_a1b2(din_6_msk_ab2),
-           .msk_a1b0_1sc(din_6_msk_ab0_1sc), .msk_a1b1_1sc(din_6_msk_ab1_1sc), .msk_a1b2_1sc(din_6_msk_ab2_1sc),
-
-           .a2b0(din_8_ab0), .a2b1(din_8_ab1),
-           .a2b0_1sc(din_8_ab0_1sc), .a2b1_1sc(din_8_ab1_1sc),
-           .msk_a2b0(din_8_msk_ab0), .msk_a2b1(din_8_msk_ab1),
-           .msk_a2b0_1sc(din_8_msk_ab0_1sc), .msk_a2b1_1sc(din_8_msk_ab1_1sc),
-           
-           .a3b0(din_10_ab0),
-           .a3b0_1sc(din_10_ab0_1sc)
+  .clk(clk), .p(addr_6_4),
+  .a0b0(din_4_ab0), .a0b1(din_4_ab1), .a0b2(din_4_ab2), .a0b3(din_4_ab3),
+  .a1b0(din_5_ab0), .a1b1(din_5_ab1), .a1b2(din_5_ab2), .a1b3(din_5_ab3),
+  .a2b0(din_6_ab0), .a2b1(din_6_ab1), .a2b2(din_6_ab2),
+  .a3b0(din_7_ab0), .a3b1(din_7_ab1), .a3b2(din_7_ab2),
+  .a4b0(din_8_ab0), .a4b1(din_8_ab1),
+  .a5b0(din_9_ab0), .a5b1(din_9_ab1),
+  .a6b0(din_10_ab0),
+  .a7b0(din_11_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffff0000000000),
 	.NBITS(10)
 ) addr_6_5_calc (
-           .clk(clk), .sign(din_signs_reg[5]), 
-           .p(addr_6_5),
-           .a0b0(din_5_ab0), .a0b1(din_5_ab1), .a0b2(din_5_ab2), .a0b3(din_5_ab3),
-           .a0b0_1sc(din_5_ab0_1sc), .a0b1_1sc(din_5_ab1_1sc), .a0b2_1sc(din_5_ab2_1sc), .a0b3_1sc(din_5_ab3_1sc),
-           .msk_a0b0(din_5_msk_ab0), .msk_a0b1(din_5_msk_ab1), .msk_a0b2(din_5_msk_ab2), .msk_a0b3(din_5_msk_ab3),
-           .msk_a0b0_1sc(din_5_msk_ab0_1sc), .msk_a0b1_1sc(din_5_msk_ab1_1sc), .msk_a0b2_1sc(din_5_msk_ab2_1sc), .msk_a0b3_1sc(din_5_msk_ab3_1sc),
-
-           .a1b0(din_7_ab0), .a1b1(din_7_ab1), .a1b2(din_7_ab2),
-           .a1b0_1sc(din_7_ab0_1sc), .a1b1_1sc(din_7_ab1_1sc), .a1b2_1sc(din_7_ab2_1sc),
-           .msk_a1b0(din_7_msk_ab0), .msk_a1b1(din_7_msk_ab1), .msk_a1b2(din_7_msk_ab2),
-           .msk_a1b0_1sc(din_7_msk_ab0_1sc), .msk_a1b1_1sc(din_7_msk_ab1_1sc), .msk_a1b2_1sc(din_7_msk_ab2_1sc),
-
-           .a2b0(din_9_ab0), .a2b1(din_9_ab1),
-           .a2b0_1sc(din_9_ab0_1sc), .a2b1_1sc(din_9_ab1_1sc),
-           .msk_a2b0(din_9_msk_ab0), .msk_a2b1(din_9_msk_ab1),
-           .msk_a2b0_1sc(din_9_msk_ab0_1sc), .msk_a2b1_1sc(din_9_msk_ab1_1sc),
-           
-           .a3b0(din_11_ab0),
-           .a3b0_1sc(din_11_ab0_1sc)
+  .clk(clk), .p(addr_6_5),
+  .a0b0(din_5_ab0), .a0b1(din_5_ab1), .a0b2(din_5_ab2), .a0b3(din_5_ab3),
+  .a1b0(din_6_ab0), .a1b1(din_6_ab1), .a1b2(din_6_ab2), .a1b3(din_6_ab3),
+  .a2b0(din_7_ab0), .a2b1(din_7_ab1), .a2b2(din_7_ab2),
+  .a3b0(din_8_ab0), .a3b1(din_8_ab1), .a3b2(din_8_ab2),
+  .a4b0(din_9_ab0), .a4b1(din_9_ab1),
+  .a5b0(din_10_ab0), .a5b1(din_10_ab1),
+  .a6b0(din_11_ab0),
+  .a7b0(din_12_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffff0000000000),
 	.NBITS(10)
 ) addr_6_6_calc (
-           .clk(clk), .sign(din_signs_reg[6]), 
-           .p(addr_6_6),
-           .a0b0(din_6_ab0), .a0b1(din_6_ab1), .a0b2(din_6_ab2), .a0b3(din_6_ab3),
-           .a0b0_1sc(din_6_ab0_1sc), .a0b1_1sc(din_6_ab1_1sc), .a0b2_1sc(din_6_ab2_1sc), .a0b3_1sc(din_6_ab3_1sc),
-           .msk_a0b0(din_6_msk_ab0), .msk_a0b1(din_6_msk_ab1), .msk_a0b2(din_6_msk_ab2), .msk_a0b3(din_6_msk_ab3),
-           .msk_a0b0_1sc(din_6_msk_ab0_1sc), .msk_a0b1_1sc(din_6_msk_ab1_1sc), .msk_a0b2_1sc(din_6_msk_ab2_1sc), .msk_a0b3_1sc(din_6_msk_ab3_1sc),
-
-           .a1b0(din_8_ab0), .a1b1(din_8_ab1), .a1b2(din_8_ab2),
-           .a1b0_1sc(din_8_ab0_1sc), .a1b1_1sc(din_8_ab1_1sc), .a1b2_1sc(din_8_ab2_1sc),
-           .msk_a1b0(din_8_msk_ab0), .msk_a1b1(din_8_msk_ab1), .msk_a1b2(din_8_msk_ab2),
-           .msk_a1b0_1sc(din_8_msk_ab0_1sc), .msk_a1b1_1sc(din_8_msk_ab1_1sc), .msk_a1b2_1sc(din_8_msk_ab2_1sc),
-
-           .a2b0(din_10_ab0), .a2b1(din_10_ab1),
-           .a2b0_1sc(din_10_ab0_1sc), .a2b1_1sc(din_10_ab1_1sc),
-           .msk_a2b0(din_10_msk_ab0), .msk_a2b1(din_10_msk_ab1),
-           .msk_a2b0_1sc(din_10_msk_ab0_1sc), .msk_a2b1_1sc(din_10_msk_ab1_1sc),
-           
-           .a3b0(din_12_ab0),
-           .a3b0_1sc(din_12_ab0_1sc)
+  .clk(clk), .p(addr_6_6),
+  .a0b0(din_6_ab0), .a0b1(din_6_ab1), .a0b2(din_6_ab2), .a0b3(din_6_ab3),
+  .a1b0(din_7_ab0), .a1b1(din_7_ab1), .a1b2(din_7_ab2), .a1b3(din_7_ab3),
+  .a2b0(din_8_ab0), .a2b1(din_8_ab1), .a2b2(din_8_ab2),
+  .a3b0(din_9_ab0), .a3b1(din_9_ab1), .a3b2(din_9_ab2),
+  .a4b0(din_10_ab0), .a4b1(din_10_ab1),
+  .a5b0(din_11_ab0), .a5b1(din_11_ab1),
+  .a6b0(din_12_ab0),
+  .a7b0(din_13_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffff0000000000),
 	.NBITS(10)
 ) addr_6_7_calc (
-           .clk(clk), .sign(din_signs_reg[7]), 
-           .p(addr_6_7),
-           .a0b0(din_7_ab0), .a0b1(din_7_ab1), .a0b2(din_7_ab2), .a0b3(din_7_ab3),
-           .a0b0_1sc(din_7_ab0_1sc), .a0b1_1sc(din_7_ab1_1sc), .a0b2_1sc(din_7_ab2_1sc), .a0b3_1sc(din_7_ab3_1sc),
-           .msk_a0b0(din_7_msk_ab0), .msk_a0b1(din_7_msk_ab1), .msk_a0b2(din_7_msk_ab2), .msk_a0b3(din_7_msk_ab3),
-           .msk_a0b0_1sc(din_7_msk_ab0_1sc), .msk_a0b1_1sc(din_7_msk_ab1_1sc), .msk_a0b2_1sc(din_7_msk_ab2_1sc), .msk_a0b3_1sc(din_7_msk_ab3_1sc),
-
-           .a1b0(din_9_ab0), .a1b1(din_9_ab1), .a1b2(din_9_ab2),
-           .a1b0_1sc(din_9_ab0_1sc), .a1b1_1sc(din_9_ab1_1sc), .a1b2_1sc(din_9_ab2_1sc),
-           .msk_a1b0(din_9_msk_ab0), .msk_a1b1(din_9_msk_ab1), .msk_a1b2(din_9_msk_ab2),
-           .msk_a1b0_1sc(din_9_msk_ab0_1sc), .msk_a1b1_1sc(din_9_msk_ab1_1sc), .msk_a1b2_1sc(din_9_msk_ab2_1sc),
-
-           .a2b0(din_11_ab0), .a2b1(din_11_ab1),
-           .a2b0_1sc(din_11_ab0_1sc), .a2b1_1sc(din_11_ab1_1sc),
-           .msk_a2b0(din_11_msk_ab0), .msk_a2b1(din_11_msk_ab1),
-           .msk_a2b0_1sc(din_11_msk_ab0_1sc), .msk_a2b1_1sc(din_11_msk_ab1_1sc),
-           
-           .a3b0(din_13_ab0),
-           .a3b0_1sc(din_13_ab0_1sc)
+  .clk(clk), .p(addr_6_7),
+  .a0b0(din_7_ab0), .a0b1(din_7_ab1), .a0b2(din_7_ab2), .a0b3(din_7_ab3),
+  .a1b0(din_8_ab0), .a1b1(din_8_ab1), .a1b2(din_8_ab2), .a1b3(din_8_ab3),
+  .a2b0(din_9_ab0), .a2b1(din_9_ab1), .a2b2(din_9_ab2),
+  .a3b0(din_10_ab0), .a3b1(din_10_ab1), .a3b2(din_10_ab2),
+  .a4b0(din_11_ab0), .a4b1(din_11_ab1),
+  .a5b0(din_12_ab0), .a5b1(din_12_ab1),
+  .a6b0(din_13_ab0),
+  .a7b0(din_14_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffff0000000000),
 	.NBITS(10)
 ) addr_6_8_calc (
-           .clk(clk), .sign(din_signs_reg[8]), 
-           .p(addr_6_8),
-           .a0b0(din_8_ab0), .a0b1(din_8_ab1), .a0b2(din_8_ab2), .a0b3(din_8_ab3),
-           .a0b0_1sc(din_8_ab0_1sc), .a0b1_1sc(din_8_ab1_1sc), .a0b2_1sc(din_8_ab2_1sc), .a0b3_1sc(din_8_ab3_1sc),
-           .msk_a0b0(din_8_msk_ab0), .msk_a0b1(din_8_msk_ab1), .msk_a0b2(din_8_msk_ab2), .msk_a0b3(din_8_msk_ab3),
-           .msk_a0b0_1sc(din_8_msk_ab0_1sc), .msk_a0b1_1sc(din_8_msk_ab1_1sc), .msk_a0b2_1sc(din_8_msk_ab2_1sc), .msk_a0b3_1sc(din_8_msk_ab3_1sc),
-
-           .a1b0(din_10_ab0), .a1b1(din_10_ab1), .a1b2(din_10_ab2),
-           .a1b0_1sc(din_10_ab0_1sc), .a1b1_1sc(din_10_ab1_1sc), .a1b2_1sc(din_10_ab2_1sc),
-           .msk_a1b0(din_10_msk_ab0), .msk_a1b1(din_10_msk_ab1), .msk_a1b2(din_10_msk_ab2),
-           .msk_a1b0_1sc(din_10_msk_ab0_1sc), .msk_a1b1_1sc(din_10_msk_ab1_1sc), .msk_a1b2_1sc(din_10_msk_ab2_1sc),
-
-           .a2b0(din_12_ab0), .a2b1(din_12_ab1),
-           .a2b0_1sc(din_12_ab0_1sc), .a2b1_1sc(din_12_ab1_1sc),
-           .msk_a2b0(din_12_msk_ab0), .msk_a2b1(din_12_msk_ab1),
-           .msk_a2b0_1sc(din_12_msk_ab0_1sc), .msk_a2b1_1sc(din_12_msk_ab1_1sc),
-           
-           .a3b0(din_14_ab0),
-           .a3b0_1sc(din_14_ab0_1sc)
+  .clk(clk), .p(addr_6_8),
+  .a0b0(din_8_ab0), .a0b1(din_8_ab1), .a0b2(din_8_ab2), .a0b3(din_8_ab3),
+  .a1b0(din_9_ab0), .a1b1(din_9_ab1), .a1b2(din_9_ab2), .a1b3(din_9_ab3),
+  .a2b0(din_10_ab0), .a2b1(din_10_ab1), .a2b2(din_10_ab2),
+  .a3b0(din_11_ab0), .a3b1(din_11_ab1), .a3b2(din_11_ab2),
+  .a4b0(din_12_ab0), .a4b1(din_12_ab1),
+  .a5b0(din_13_ab0), .a5b1(din_13_ab1),
+  .a6b0(din_14_ab0),
+  .a7b0(din_15_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffff0000000000),
 	.NBITS(10)
 ) addr_6_9_calc (
-           .clk(clk), .sign(din_signs_reg[9]), 
-           .p(addr_6_9),
-           .a0b0(din_9_ab0), .a0b1(din_9_ab1), .a0b2(din_9_ab2), .a0b3(din_9_ab3),
-           .a0b0_1sc(din_9_ab0_1sc), .a0b1_1sc(din_9_ab1_1sc), .a0b2_1sc(din_9_ab2_1sc), .a0b3_1sc(din_9_ab3_1sc),
-           .msk_a0b0(din_9_msk_ab0), .msk_a0b1(din_9_msk_ab1), .msk_a0b2(din_9_msk_ab2), .msk_a0b3(din_9_msk_ab3),
-           .msk_a0b0_1sc(din_9_msk_ab0_1sc), .msk_a0b1_1sc(din_9_msk_ab1_1sc), .msk_a0b2_1sc(din_9_msk_ab2_1sc), .msk_a0b3_1sc(din_9_msk_ab3_1sc),
-
-           .a1b0(din_11_ab0), .a1b1(din_11_ab1), .a1b2(din_11_ab2),
-           .a1b0_1sc(din_11_ab0_1sc), .a1b1_1sc(din_11_ab1_1sc), .a1b2_1sc(din_11_ab2_1sc),
-           .msk_a1b0(din_11_msk_ab0), .msk_a1b1(din_11_msk_ab1), .msk_a1b2(din_11_msk_ab2),
-           .msk_a1b0_1sc(din_11_msk_ab0_1sc), .msk_a1b1_1sc(din_11_msk_ab1_1sc), .msk_a1b2_1sc(din_11_msk_ab2_1sc),
-
-           .a2b0(din_13_ab0), .a2b1(din_13_ab1),
-           .a2b0_1sc(din_13_ab0_1sc), .a2b1_1sc(din_13_ab1_1sc),
-           .msk_a2b0(din_13_msk_ab0), .msk_a2b1(din_13_msk_ab1),
-           .msk_a2b0_1sc(din_13_msk_ab0_1sc), .msk_a2b1_1sc(din_13_msk_ab1_1sc),
-           
-           .a3b0(din_15_ab0),
-           .a3b0_1sc(din_15_ab0_1sc)
+  .clk(clk), .p(addr_6_9),
+  .a0b0(din_9_ab0), .a0b1(din_9_ab1), .a0b2(din_9_ab2), .a0b3(din_9_ab3),
+  .a1b0(din_10_ab0), .a1b1(din_10_ab1), .a1b2(din_10_ab2), .a1b3(din_10_ab3),
+  .a2b0(din_11_ab0), .a2b1(din_11_ab1), .a2b2(din_11_ab2),
+  .a3b0(din_12_ab0), .a3b1(din_12_ab1), .a3b2(din_12_ab2),
+  .a4b0(din_13_ab0), .a4b1(din_13_ab1),
+  .a5b0(din_14_ab0), .a5b1(din_14_ab1),
+  .a6b0(din_15_ab0),
+  .a7b0(din_16_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffff0000000000),
 	.NBITS(10)
 ) addr_6_10_calc (
-           .clk(clk), .sign(din_signs_reg[10]), 
-           .p(addr_6_10),
-           .a0b0(din_10_ab0), .a0b1(din_10_ab1), .a0b2(din_10_ab2), .a0b3(din_10_ab3),
-           .a0b0_1sc(din_10_ab0_1sc), .a0b1_1sc(din_10_ab1_1sc), .a0b2_1sc(din_10_ab2_1sc), .a0b3_1sc(din_10_ab3_1sc),
-           .msk_a0b0(din_10_msk_ab0), .msk_a0b1(din_10_msk_ab1), .msk_a0b2(din_10_msk_ab2), .msk_a0b3(din_10_msk_ab3),
-           .msk_a0b0_1sc(din_10_msk_ab0_1sc), .msk_a0b1_1sc(din_10_msk_ab1_1sc), .msk_a0b2_1sc(din_10_msk_ab2_1sc), .msk_a0b3_1sc(din_10_msk_ab3_1sc),
-
-           .a1b0(din_12_ab0), .a1b1(din_12_ab1), .a1b2(din_12_ab2),
-           .a1b0_1sc(din_12_ab0_1sc), .a1b1_1sc(din_12_ab1_1sc), .a1b2_1sc(din_12_ab2_1sc),
-           .msk_a1b0(din_12_msk_ab0), .msk_a1b1(din_12_msk_ab1), .msk_a1b2(din_12_msk_ab2),
-           .msk_a1b0_1sc(din_12_msk_ab0_1sc), .msk_a1b1_1sc(din_12_msk_ab1_1sc), .msk_a1b2_1sc(din_12_msk_ab2_1sc),
-
-           .a2b0(din_14_ab0), .a2b1(din_14_ab1),
-           .a2b0_1sc(din_14_ab0_1sc), .a2b1_1sc(din_14_ab1_1sc),
-           .msk_a2b0(din_14_msk_ab0), .msk_a2b1(din_14_msk_ab1),
-           .msk_a2b0_1sc(din_14_msk_ab0_1sc), .msk_a2b1_1sc(din_14_msk_ab1_1sc),
-           
-           .a3b0(din_16_ab0),
-           .a3b0_1sc(din_16_ab0_1sc)
+  .clk(clk), .p(addr_6_10),
+  .a0b0(din_10_ab0), .a0b1(din_10_ab1), .a0b2(din_10_ab2), .a0b3(din_10_ab3),
+  .a1b0(din_11_ab0), .a1b1(din_11_ab1), .a1b2(din_11_ab2), .a1b3(din_11_ab3),
+  .a2b0(din_12_ab0), .a2b1(din_12_ab1), .a2b2(din_12_ab2),
+  .a3b0(din_13_ab0), .a3b1(din_13_ab1), .a3b2(din_13_ab2),
+  .a4b0(din_14_ab0), .a4b1(din_14_ab1),
+  .a5b0(din_15_ab0), .a5b1(din_15_ab1),
+  .a6b0(din_16_ab0),
+  .a7b0(din_17_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffff0000000000),
 	.NBITS(10)
 ) addr_6_11_calc (
-           .clk(clk), .sign(din_signs_reg[11]), 
-           .p(addr_6_11),
-           .a0b0(din_11_ab0), .a0b1(din_11_ab1), .a0b2(din_11_ab2), .a0b3(din_11_ab3),
-           .a0b0_1sc(din_11_ab0_1sc), .a0b1_1sc(din_11_ab1_1sc), .a0b2_1sc(din_11_ab2_1sc), .a0b3_1sc(din_11_ab3_1sc),
-           .msk_a0b0(din_11_msk_ab0), .msk_a0b1(din_11_msk_ab1), .msk_a0b2(din_11_msk_ab2), .msk_a0b3(din_11_msk_ab3),
-           .msk_a0b0_1sc(din_11_msk_ab0_1sc), .msk_a0b1_1sc(din_11_msk_ab1_1sc), .msk_a0b2_1sc(din_11_msk_ab2_1sc), .msk_a0b3_1sc(din_11_msk_ab3_1sc),
-
-           .a1b0(din_13_ab0), .a1b1(din_13_ab1), .a1b2(din_13_ab2),
-           .a1b0_1sc(din_13_ab0_1sc), .a1b1_1sc(din_13_ab1_1sc), .a1b2_1sc(din_13_ab2_1sc),
-           .msk_a1b0(din_13_msk_ab0), .msk_a1b1(din_13_msk_ab1), .msk_a1b2(din_13_msk_ab2),
-           .msk_a1b0_1sc(din_13_msk_ab0_1sc), .msk_a1b1_1sc(din_13_msk_ab1_1sc), .msk_a1b2_1sc(din_13_msk_ab2_1sc),
-
-           .a2b0(din_15_ab0), .a2b1(din_15_ab1),
-           .a2b0_1sc(din_15_ab0_1sc), .a2b1_1sc(din_15_ab1_1sc),
-           .msk_a2b0(din_15_msk_ab0), .msk_a2b1(din_15_msk_ab1),
-           .msk_a2b0_1sc(din_15_msk_ab0_1sc), .msk_a2b1_1sc(din_15_msk_ab1_1sc),
-           
-           .a3b0(din_17_ab0),
-           .a3b0_1sc(din_17_ab0_1sc)
+  .clk(clk), .p(addr_6_11),
+  .a0b0(din_11_ab0), .a0b1(din_11_ab1), .a0b2(din_11_ab2), .a0b3(din_11_ab3),
+  .a1b0(din_12_ab0), .a1b1(din_12_ab1), .a1b2(din_12_ab2), .a1b3(din_12_ab3),
+  .a2b0(din_13_ab0), .a2b1(din_13_ab1), .a2b2(din_13_ab2),
+  .a3b0(din_14_ab0), .a3b1(din_14_ab1), .a3b2(din_14_ab2),
+  .a4b0(din_15_ab0), .a4b1(din_15_ab1),
+  .a5b0(din_16_ab0), .a5b1(din_16_ab1),
+  .a6b0(din_17_ab0),
+  .a7b0(din_18_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffff0000000000),
 	.NBITS(10)
 ) addr_6_12_calc (
-           .clk(clk), .sign(din_signs_reg[12]), 
-           .p(addr_6_12),
-           .a0b0(din_12_ab0), .a0b1(din_12_ab1), .a0b2(din_12_ab2), .a0b3(din_12_ab3),
-           .a0b0_1sc(din_12_ab0_1sc), .a0b1_1sc(din_12_ab1_1sc), .a0b2_1sc(din_12_ab2_1sc), .a0b3_1sc(din_12_ab3_1sc),
-           .msk_a0b0(din_12_msk_ab0), .msk_a0b1(din_12_msk_ab1), .msk_a0b2(din_12_msk_ab2), .msk_a0b3(din_12_msk_ab3),
-           .msk_a0b0_1sc(din_12_msk_ab0_1sc), .msk_a0b1_1sc(din_12_msk_ab1_1sc), .msk_a0b2_1sc(din_12_msk_ab2_1sc), .msk_a0b3_1sc(din_12_msk_ab3_1sc),
-
-           .a1b0(din_14_ab0), .a1b1(din_14_ab1), .a1b2(din_14_ab2),
-           .a1b0_1sc(din_14_ab0_1sc), .a1b1_1sc(din_14_ab1_1sc), .a1b2_1sc(din_14_ab2_1sc),
-           .msk_a1b0(din_14_msk_ab0), .msk_a1b1(din_14_msk_ab1), .msk_a1b2(din_14_msk_ab2),
-           .msk_a1b0_1sc(din_14_msk_ab0_1sc), .msk_a1b1_1sc(din_14_msk_ab1_1sc), .msk_a1b2_1sc(din_14_msk_ab2_1sc),
-
-           .a2b0(din_16_ab0), .a2b1(din_16_ab1),
-           .a2b0_1sc(din_16_ab0_1sc), .a2b1_1sc(din_16_ab1_1sc),
-           .msk_a2b0(din_16_msk_ab0), .msk_a2b1(din_16_msk_ab1),
-           .msk_a2b0_1sc(din_16_msk_ab0_1sc), .msk_a2b1_1sc(din_16_msk_ab1_1sc),
-           
-           .a3b0(din_18_ab0),
-           .a3b0_1sc(din_18_ab0_1sc)
+  .clk(clk), .p(addr_6_12),
+  .a0b0(din_12_ab0), .a0b1(din_12_ab1), .a0b2(din_12_ab2), .a0b3(din_12_ab3),
+  .a1b0(din_13_ab0), .a1b1(din_13_ab1), .a1b2(din_13_ab2), .a1b3(din_13_ab3),
+  .a2b0(din_14_ab0), .a2b1(din_14_ab1), .a2b2(din_14_ab2),
+  .a3b0(din_15_ab0), .a3b1(din_15_ab1), .a3b2(din_15_ab2),
+  .a4b0(din_16_ab0), .a4b1(din_16_ab1),
+  .a5b0(din_17_ab0), .a5b1(din_17_ab1),
+  .a6b0(din_18_ab0),
+  .a7b0(din_19_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffff0000000000),
 	.NBITS(10)
 ) addr_6_13_calc (
-           .clk(clk), .sign(din_signs_reg[13]), 
-           .p(addr_6_13),
-           .a0b0(din_13_ab0), .a0b1(din_13_ab1), .a0b2(din_13_ab2), .a0b3(din_13_ab3),
-           .a0b0_1sc(din_13_ab0_1sc), .a0b1_1sc(din_13_ab1_1sc), .a0b2_1sc(din_13_ab2_1sc), .a0b3_1sc(din_13_ab3_1sc),
-           .msk_a0b0(din_13_msk_ab0), .msk_a0b1(din_13_msk_ab1), .msk_a0b2(din_13_msk_ab2), .msk_a0b3(din_13_msk_ab3),
-           .msk_a0b0_1sc(din_13_msk_ab0_1sc), .msk_a0b1_1sc(din_13_msk_ab1_1sc), .msk_a0b2_1sc(din_13_msk_ab2_1sc), .msk_a0b3_1sc(din_13_msk_ab3_1sc),
-
-           .a1b0(din_15_ab0), .a1b1(din_15_ab1), .a1b2(din_15_ab2),
-           .a1b0_1sc(din_15_ab0_1sc), .a1b1_1sc(din_15_ab1_1sc), .a1b2_1sc(din_15_ab2_1sc),
-           .msk_a1b0(din_15_msk_ab0), .msk_a1b1(din_15_msk_ab1), .msk_a1b2(din_15_msk_ab2),
-           .msk_a1b0_1sc(din_15_msk_ab0_1sc), .msk_a1b1_1sc(din_15_msk_ab1_1sc), .msk_a1b2_1sc(din_15_msk_ab2_1sc),
-
-           .a2b0(din_17_ab0), .a2b1(din_17_ab1),
-           .a2b0_1sc(din_17_ab0_1sc), .a2b1_1sc(din_17_ab1_1sc),
-           .msk_a2b0(din_17_msk_ab0), .msk_a2b1(din_17_msk_ab1),
-           .msk_a2b0_1sc(din_17_msk_ab0_1sc), .msk_a2b1_1sc(din_17_msk_ab1_1sc),
-           
-           .a3b0(din_19_ab0),
-           .a3b0_1sc(din_19_ab0_1sc)
+  .clk(clk), .p(addr_6_13),
+  .a0b0(din_13_ab0), .a0b1(din_13_ab1), .a0b2(din_13_ab2), .a0b3(din_13_ab3),
+  .a1b0(din_14_ab0), .a1b1(din_14_ab1), .a1b2(din_14_ab2), .a1b3(din_14_ab3),
+  .a2b0(din_15_ab0), .a2b1(din_15_ab1), .a2b2(din_15_ab2),
+  .a3b0(din_16_ab0), .a3b1(din_16_ab1), .a3b2(din_16_ab2),
+  .a4b0(din_17_ab0), .a4b1(din_17_ab1),
+  .a5b0(din_18_ab0), .a5b1(din_18_ab1),
+  .a6b0(din_19_ab0),
+  .a7b0(din_20_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffff0000000000),
 	.NBITS(10)
 ) addr_6_14_calc (
-           .clk(clk), .sign(din_signs_reg[14]), 
-           .p(addr_6_14),
-           .a0b0(din_14_ab0), .a0b1(din_14_ab1), .a0b2(din_14_ab2), .a0b3(din_14_ab3),
-           .a0b0_1sc(din_14_ab0_1sc), .a0b1_1sc(din_14_ab1_1sc), .a0b2_1sc(din_14_ab2_1sc), .a0b3_1sc(din_14_ab3_1sc),
-           .msk_a0b0(din_14_msk_ab0), .msk_a0b1(din_14_msk_ab1), .msk_a0b2(din_14_msk_ab2), .msk_a0b3(din_14_msk_ab3),
-           .msk_a0b0_1sc(din_14_msk_ab0_1sc), .msk_a0b1_1sc(din_14_msk_ab1_1sc), .msk_a0b2_1sc(din_14_msk_ab2_1sc), .msk_a0b3_1sc(din_14_msk_ab3_1sc),
-
-           .a1b0(din_16_ab0), .a1b1(din_16_ab1), .a1b2(din_16_ab2),
-           .a1b0_1sc(din_16_ab0_1sc), .a1b1_1sc(din_16_ab1_1sc), .a1b2_1sc(din_16_ab2_1sc),
-           .msk_a1b0(din_16_msk_ab0), .msk_a1b1(din_16_msk_ab1), .msk_a1b2(din_16_msk_ab2),
-           .msk_a1b0_1sc(din_16_msk_ab0_1sc), .msk_a1b1_1sc(din_16_msk_ab1_1sc), .msk_a1b2_1sc(din_16_msk_ab2_1sc),
-
-           .a2b0(din_18_ab0), .a2b1(din_18_ab1),
-           .a2b0_1sc(din_18_ab0_1sc), .a2b1_1sc(din_18_ab1_1sc),
-           .msk_a2b0(din_18_msk_ab0), .msk_a2b1(din_18_msk_ab1),
-           .msk_a2b0_1sc(din_18_msk_ab0_1sc), .msk_a2b1_1sc(din_18_msk_ab1_1sc),
-           
-           .a3b0(din_20_ab0),
-           .a3b0_1sc(din_20_ab0_1sc)
+  .clk(clk), .p(addr_6_14),
+  .a0b0(din_14_ab0), .a0b1(din_14_ab1), .a0b2(din_14_ab2), .a0b3(din_14_ab3),
+  .a1b0(din_15_ab0), .a1b1(din_15_ab1), .a1b2(din_15_ab2), .a1b3(din_15_ab3),
+  .a2b0(din_16_ab0), .a2b1(din_16_ab1), .a2b2(din_16_ab2),
+  .a3b0(din_17_ab0), .a3b1(din_17_ab1), .a3b2(din_17_ab2),
+  .a4b0(din_18_ab0), .a4b1(din_18_ab1),
+  .a5b0(din_19_ab0), .a5b1(din_19_ab1),
+  .a6b0(din_20_ab0),
+  .a7b0(din_21_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffff0000000000),
 	.NBITS(10)
 ) addr_6_15_calc (
-           .clk(clk), .sign(din_signs_reg[15]), 
-           .p(addr_6_15),
-           .a0b0(din_15_ab0), .a0b1(din_15_ab1), .a0b2(din_15_ab2), .a0b3(din_15_ab3),
-           .a0b0_1sc(din_15_ab0_1sc), .a0b1_1sc(din_15_ab1_1sc), .a0b2_1sc(din_15_ab2_1sc), .a0b3_1sc(din_15_ab3_1sc),
-           .msk_a0b0(din_15_msk_ab0), .msk_a0b1(din_15_msk_ab1), .msk_a0b2(din_15_msk_ab2), .msk_a0b3(din_15_msk_ab3),
-           .msk_a0b0_1sc(din_15_msk_ab0_1sc), .msk_a0b1_1sc(din_15_msk_ab1_1sc), .msk_a0b2_1sc(din_15_msk_ab2_1sc), .msk_a0b3_1sc(din_15_msk_ab3_1sc),
-
-           .a1b0(din_17_ab0), .a1b1(din_17_ab1), .a1b2(din_17_ab2),
-           .a1b0_1sc(din_17_ab0_1sc), .a1b1_1sc(din_17_ab1_1sc), .a1b2_1sc(din_17_ab2_1sc),
-           .msk_a1b0(din_17_msk_ab0), .msk_a1b1(din_17_msk_ab1), .msk_a1b2(din_17_msk_ab2),
-           .msk_a1b0_1sc(din_17_msk_ab0_1sc), .msk_a1b1_1sc(din_17_msk_ab1_1sc), .msk_a1b2_1sc(din_17_msk_ab2_1sc),
-
-           .a2b0(din_19_ab0), .a2b1(din_19_ab1),
-           .a2b0_1sc(din_19_ab0_1sc), .a2b1_1sc(din_19_ab1_1sc),
-           .msk_a2b0(din_19_msk_ab0), .msk_a2b1(din_19_msk_ab1),
-           .msk_a2b0_1sc(din_19_msk_ab0_1sc), .msk_a2b1_1sc(din_19_msk_ab1_1sc),
-           
-           .a3b0(din_21_ab0),
-           .a3b0_1sc(din_21_ab0_1sc)
+  .clk(clk), .p(addr_6_15),
+  .a0b0(din_15_ab0), .a0b1(din_15_ab1), .a0b2(din_15_ab2), .a0b3(din_15_ab3),
+  .a1b0(din_16_ab0), .a1b1(din_16_ab1), .a1b2(din_16_ab2), .a1b3(din_16_ab3),
+  .a2b0(din_17_ab0), .a2b1(din_17_ab1), .a2b2(din_17_ab2),
+  .a3b0(din_18_ab0), .a3b1(din_18_ab1), .a3b2(din_18_ab2),
+  .a4b0(din_19_ab0), .a4b1(din_19_ab1),
+  .a5b0(din_20_ab0), .a5b1(din_20_ab1),
+  .a6b0(din_21_ab0),
+  .a7b0(din_22_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffff0000000000),
 	.NBITS(10)
 ) addr_6_16_calc (
-           .clk(clk), .sign(din_signs_reg[16]), 
-           .p(addr_6_16),
-           .a0b0(din_16_ab0), .a0b1(din_16_ab1), .a0b2(din_16_ab2), .a0b3(din_16_ab3),
-           .a0b0_1sc(din_16_ab0_1sc), .a0b1_1sc(din_16_ab1_1sc), .a0b2_1sc(din_16_ab2_1sc), .a0b3_1sc(din_16_ab3_1sc),
-           .msk_a0b0(din_16_msk_ab0), .msk_a0b1(din_16_msk_ab1), .msk_a0b2(din_16_msk_ab2), .msk_a0b3(din_16_msk_ab3),
-           .msk_a0b0_1sc(din_16_msk_ab0_1sc), .msk_a0b1_1sc(din_16_msk_ab1_1sc), .msk_a0b2_1sc(din_16_msk_ab2_1sc), .msk_a0b3_1sc(din_16_msk_ab3_1sc),
-
-           .a1b0(din_18_ab0), .a1b1(din_18_ab1), .a1b2(din_18_ab2),
-           .a1b0_1sc(din_18_ab0_1sc), .a1b1_1sc(din_18_ab1_1sc), .a1b2_1sc(din_18_ab2_1sc),
-           .msk_a1b0(din_18_msk_ab0), .msk_a1b1(din_18_msk_ab1), .msk_a1b2(din_18_msk_ab2),
-           .msk_a1b0_1sc(din_18_msk_ab0_1sc), .msk_a1b1_1sc(din_18_msk_ab1_1sc), .msk_a1b2_1sc(din_18_msk_ab2_1sc),
-
-           .a2b0(din_20_ab0), .a2b1(din_20_ab1),
-           .a2b0_1sc(din_20_ab0_1sc), .a2b1_1sc(din_20_ab1_1sc),
-           .msk_a2b0(din_20_msk_ab0), .msk_a2b1(din_20_msk_ab1),
-           .msk_a2b0_1sc(din_20_msk_ab0_1sc), .msk_a2b1_1sc(din_20_msk_ab1_1sc),
-           
-           .a3b0(din_22_ab0),
-           .a3b0_1sc(din_22_ab0_1sc)
+  .clk(clk), .p(addr_6_16),
+  .a0b0(din_16_ab0), .a0b1(din_16_ab1), .a0b2(din_16_ab2), .a0b3(din_16_ab3),
+  .a1b0(din_17_ab0), .a1b1(din_17_ab1), .a1b2(din_17_ab2), .a1b3(din_17_ab3),
+  .a2b0(din_18_ab0), .a2b1(din_18_ab1), .a2b2(din_18_ab2),
+  .a3b0(din_19_ab0), .a3b1(din_19_ab1), .a3b2(din_19_ab2),
+  .a4b0(din_20_ab0), .a4b1(din_20_ab1),
+  .a5b0(din_21_ab0), .a5b1(din_21_ab1),
+  .a6b0(din_22_ab0),
+  .a7b0(din_23_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffff0000000000),
 	.NBITS(10)
 ) addr_6_17_calc (
-           .clk(clk), .sign(din_signs_reg[17]), 
-           .p(addr_6_17),
-           .a0b0(din_17_ab0), .a0b1(din_17_ab1), .a0b2(din_17_ab2), .a0b3(din_17_ab3),
-           .a0b0_1sc(din_17_ab0_1sc), .a0b1_1sc(din_17_ab1_1sc), .a0b2_1sc(din_17_ab2_1sc), .a0b3_1sc(din_17_ab3_1sc),
-           .msk_a0b0(din_17_msk_ab0), .msk_a0b1(din_17_msk_ab1), .msk_a0b2(din_17_msk_ab2), .msk_a0b3(din_17_msk_ab3),
-           .msk_a0b0_1sc(din_17_msk_ab0_1sc), .msk_a0b1_1sc(din_17_msk_ab1_1sc), .msk_a0b2_1sc(din_17_msk_ab2_1sc), .msk_a0b3_1sc(din_17_msk_ab3_1sc),
-
-           .a1b0(din_19_ab0), .a1b1(din_19_ab1), .a1b2(din_19_ab2),
-           .a1b0_1sc(din_19_ab0_1sc), .a1b1_1sc(din_19_ab1_1sc), .a1b2_1sc(din_19_ab2_1sc),
-           .msk_a1b0(din_19_msk_ab0), .msk_a1b1(din_19_msk_ab1), .msk_a1b2(din_19_msk_ab2),
-           .msk_a1b0_1sc(din_19_msk_ab0_1sc), .msk_a1b1_1sc(din_19_msk_ab1_1sc), .msk_a1b2_1sc(din_19_msk_ab2_1sc),
-
-           .a2b0(din_21_ab0), .a2b1(din_21_ab1),
-           .a2b0_1sc(din_21_ab0_1sc), .a2b1_1sc(din_21_ab1_1sc),
-           .msk_a2b0(din_21_msk_ab0), .msk_a2b1(din_21_msk_ab1),
-           .msk_a2b0_1sc(din_21_msk_ab0_1sc), .msk_a2b1_1sc(din_21_msk_ab1_1sc),
-           
-           .a3b0(din_23_ab0),
-           .a3b0_1sc(din_23_ab0_1sc)
+  .clk(clk), .p(addr_6_17),
+  .a0b0(din_17_ab0), .a0b1(din_17_ab1), .a0b2(din_17_ab2), .a0b3(din_17_ab3),
+  .a1b0(din_18_ab0), .a1b1(din_18_ab1), .a1b2(din_18_ab2), .a1b3(din_18_ab3),
+  .a2b0(din_19_ab0), .a2b1(din_19_ab1), .a2b2(din_19_ab2),
+  .a3b0(din_20_ab0), .a3b1(din_20_ab1), .a3b2(din_20_ab2),
+  .a4b0(din_21_ab0), .a4b1(din_21_ab1),
+  .a5b0(din_22_ab0), .a5b1(din_22_ab1),
+  .a6b0(din_23_ab0),
+  .a7b0(din_24_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffff0000000000),
 	.NBITS(10)
 ) addr_6_18_calc (
-           .clk(clk), .sign(din_signs_reg[18]), 
-           .p(addr_6_18),
-           .a0b0(din_18_ab0), .a0b1(din_18_ab1), .a0b2(din_18_ab2), .a0b3(din_18_ab3),
-           .a0b0_1sc(din_18_ab0_1sc), .a0b1_1sc(din_18_ab1_1sc), .a0b2_1sc(din_18_ab2_1sc), .a0b3_1sc(din_18_ab3_1sc),
-           .msk_a0b0(din_18_msk_ab0), .msk_a0b1(din_18_msk_ab1), .msk_a0b2(din_18_msk_ab2), .msk_a0b3(din_18_msk_ab3),
-           .msk_a0b0_1sc(din_18_msk_ab0_1sc), .msk_a0b1_1sc(din_18_msk_ab1_1sc), .msk_a0b2_1sc(din_18_msk_ab2_1sc), .msk_a0b3_1sc(din_18_msk_ab3_1sc),
-
-           .a1b0(din_20_ab0), .a1b1(din_20_ab1), .a1b2(din_20_ab2),
-           .a1b0_1sc(din_20_ab0_1sc), .a1b1_1sc(din_20_ab1_1sc), .a1b2_1sc(din_20_ab2_1sc),
-           .msk_a1b0(din_20_msk_ab0), .msk_a1b1(din_20_msk_ab1), .msk_a1b2(din_20_msk_ab2),
-           .msk_a1b0_1sc(din_20_msk_ab0_1sc), .msk_a1b1_1sc(din_20_msk_ab1_1sc), .msk_a1b2_1sc(din_20_msk_ab2_1sc),
-
-           .a2b0(din_22_ab0), .a2b1(din_22_ab1),
-           .a2b0_1sc(din_22_ab0_1sc), .a2b1_1sc(din_22_ab1_1sc),
-           .msk_a2b0(din_22_msk_ab0), .msk_a2b1(din_22_msk_ab1),
-           .msk_a2b0_1sc(din_22_msk_ab0_1sc), .msk_a2b1_1sc(din_22_msk_ab1_1sc),
-           
-           .a3b0(din_24_ab0),
-           .a3b0_1sc(din_24_ab0_1sc)
+  .clk(clk), .p(addr_6_18),
+  .a0b0(din_18_ab0), .a0b1(din_18_ab1), .a0b2(din_18_ab2), .a0b3(din_18_ab3),
+  .a1b0(din_19_ab0), .a1b1(din_19_ab1), .a1b2(din_19_ab2), .a1b3(din_19_ab3),
+  .a2b0(din_20_ab0), .a2b1(din_20_ab1), .a2b2(din_20_ab2),
+  .a3b0(din_21_ab0), .a3b1(din_21_ab1), .a3b2(din_21_ab2),
+  .a4b0(din_22_ab0), .a4b1(din_22_ab1),
+  .a5b0(din_23_ab0), .a5b1(din_23_ab1),
+  .a6b0(din_24_ab0),
+  .a7b0(din_25_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffff0000000000),
 	.NBITS(10)
 ) addr_6_19_calc (
-           .clk(clk), .sign(din_signs_reg[19]), 
-           .p(addr_6_19),
-           .a0b0(din_19_ab0), .a0b1(din_19_ab1), .a0b2(din_19_ab2), .a0b3(din_19_ab3),
-           .a0b0_1sc(din_19_ab0_1sc), .a0b1_1sc(din_19_ab1_1sc), .a0b2_1sc(din_19_ab2_1sc), .a0b3_1sc(din_19_ab3_1sc),
-           .msk_a0b0(din_19_msk_ab0), .msk_a0b1(din_19_msk_ab1), .msk_a0b2(din_19_msk_ab2), .msk_a0b3(din_19_msk_ab3),
-           .msk_a0b0_1sc(din_19_msk_ab0_1sc), .msk_a0b1_1sc(din_19_msk_ab1_1sc), .msk_a0b2_1sc(din_19_msk_ab2_1sc), .msk_a0b3_1sc(din_19_msk_ab3_1sc),
-
-           .a1b0(din_21_ab0), .a1b1(din_21_ab1), .a1b2(din_21_ab2),
-           .a1b0_1sc(din_21_ab0_1sc), .a1b1_1sc(din_21_ab1_1sc), .a1b2_1sc(din_21_ab2_1sc),
-           .msk_a1b0(din_21_msk_ab0), .msk_a1b1(din_21_msk_ab1), .msk_a1b2(din_21_msk_ab2),
-           .msk_a1b0_1sc(din_21_msk_ab0_1sc), .msk_a1b1_1sc(din_21_msk_ab1_1sc), .msk_a1b2_1sc(din_21_msk_ab2_1sc),
-
-           .a2b0(din_23_ab0), .a2b1(din_23_ab1),
-           .a2b0_1sc(din_23_ab0_1sc), .a2b1_1sc(din_23_ab1_1sc),
-           .msk_a2b0(din_23_msk_ab0), .msk_a2b1(din_23_msk_ab1),
-           .msk_a2b0_1sc(din_23_msk_ab0_1sc), .msk_a2b1_1sc(din_23_msk_ab1_1sc),
-           
-           .a3b0(din_25_ab0),
-           .a3b0_1sc(din_25_ab0_1sc)
+  .clk(clk), .p(addr_6_19),
+  .a0b0(din_19_ab0), .a0b1(din_19_ab1), .a0b2(din_19_ab2), .a0b3(din_19_ab3),
+  .a1b0(din_20_ab0), .a1b1(din_20_ab1), .a1b2(din_20_ab2), .a1b3(din_20_ab3),
+  .a2b0(din_21_ab0), .a2b1(din_21_ab1), .a2b2(din_21_ab2),
+  .a3b0(din_22_ab0), .a3b1(din_22_ab1), .a3b2(din_22_ab2),
+  .a4b0(din_23_ab0), .a4b1(din_23_ab1),
+  .a5b0(din_24_ab0), .a5b1(din_24_ab1),
+  .a6b0(din_25_ab0),
+  .a7b0(din_26_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffff0000000000),
 	.NBITS(10)
 ) addr_6_20_calc (
-           .clk(clk), .sign(din_signs_reg[20]), 
-           .p(addr_6_20),
-           .a0b0(din_20_ab0), .a0b1(din_20_ab1), .a0b2(din_20_ab2), .a0b3(din_20_ab3),
-           .a0b0_1sc(din_20_ab0_1sc), .a0b1_1sc(din_20_ab1_1sc), .a0b2_1sc(din_20_ab2_1sc), .a0b3_1sc(din_20_ab3_1sc),
-           .msk_a0b0(din_20_msk_ab0), .msk_a0b1(din_20_msk_ab1), .msk_a0b2(din_20_msk_ab2), .msk_a0b3(din_20_msk_ab3),
-           .msk_a0b0_1sc(din_20_msk_ab0_1sc), .msk_a0b1_1sc(din_20_msk_ab1_1sc), .msk_a0b2_1sc(din_20_msk_ab2_1sc), .msk_a0b3_1sc(din_20_msk_ab3_1sc),
-
-           .a1b0(din_22_ab0), .a1b1(din_22_ab1), .a1b2(din_22_ab2),
-           .a1b0_1sc(din_22_ab0_1sc), .a1b1_1sc(din_22_ab1_1sc), .a1b2_1sc(din_22_ab2_1sc),
-           .msk_a1b0(din_22_msk_ab0), .msk_a1b1(din_22_msk_ab1), .msk_a1b2(din_22_msk_ab2),
-           .msk_a1b0_1sc(din_22_msk_ab0_1sc), .msk_a1b1_1sc(din_22_msk_ab1_1sc), .msk_a1b2_1sc(din_22_msk_ab2_1sc),
-
-           .a2b0(din_24_ab0), .a2b1(din_24_ab1),
-           .a2b0_1sc(din_24_ab0_1sc), .a2b1_1sc(din_24_ab1_1sc),
-           .msk_a2b0(din_24_msk_ab0), .msk_a2b1(din_24_msk_ab1),
-           .msk_a2b0_1sc(din_24_msk_ab0_1sc), .msk_a2b1_1sc(din_24_msk_ab1_1sc),
-           
-           .a3b0(din_26_ab0),
-           .a3b0_1sc(din_26_ab0_1sc)
+  .clk(clk), .p(addr_6_20),
+  .a0b0(din_20_ab0), .a0b1(din_20_ab1), .a0b2(din_20_ab2), .a0b3(din_20_ab3),
+  .a1b0(din_21_ab0), .a1b1(din_21_ab1), .a1b2(din_21_ab2), .a1b3(din_21_ab3),
+  .a2b0(din_22_ab0), .a2b1(din_22_ab1), .a2b2(din_22_ab2),
+  .a3b0(din_23_ab0), .a3b1(din_23_ab1), .a3b2(din_23_ab2),
+  .a4b0(din_24_ab0), .a4b1(din_24_ab1),
+  .a5b0(din_25_ab0), .a5b1(din_25_ab1),
+  .a6b0(din_26_ab0),
+  .a7b0(din_27_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffff0000000000),
 	.NBITS(10)
 ) addr_6_21_calc (
-           .clk(clk), .sign(din_signs_reg[21]), 
-           .p(addr_6_21),
-           .a0b0(din_21_ab0), .a0b1(din_21_ab1), .a0b2(din_21_ab2), .a0b3(din_21_ab3),
-           .a0b0_1sc(din_21_ab0_1sc), .a0b1_1sc(din_21_ab1_1sc), .a0b2_1sc(din_21_ab2_1sc), .a0b3_1sc(din_21_ab3_1sc),
-           .msk_a0b0(din_21_msk_ab0), .msk_a0b1(din_21_msk_ab1), .msk_a0b2(din_21_msk_ab2), .msk_a0b3(din_21_msk_ab3),
-           .msk_a0b0_1sc(din_21_msk_ab0_1sc), .msk_a0b1_1sc(din_21_msk_ab1_1sc), .msk_a0b2_1sc(din_21_msk_ab2_1sc), .msk_a0b3_1sc(din_21_msk_ab3_1sc),
-
-           .a1b0(din_23_ab0), .a1b1(din_23_ab1), .a1b2(din_23_ab2),
-           .a1b0_1sc(din_23_ab0_1sc), .a1b1_1sc(din_23_ab1_1sc), .a1b2_1sc(din_23_ab2_1sc),
-           .msk_a1b0(din_23_msk_ab0), .msk_a1b1(din_23_msk_ab1), .msk_a1b2(din_23_msk_ab2),
-           .msk_a1b0_1sc(din_23_msk_ab0_1sc), .msk_a1b1_1sc(din_23_msk_ab1_1sc), .msk_a1b2_1sc(din_23_msk_ab2_1sc),
-
-           .a2b0(din_25_ab0), .a2b1(din_25_ab1),
-           .a2b0_1sc(din_25_ab0_1sc), .a2b1_1sc(din_25_ab1_1sc),
-           .msk_a2b0(din_25_msk_ab0), .msk_a2b1(din_25_msk_ab1),
-           .msk_a2b0_1sc(din_25_msk_ab0_1sc), .msk_a2b1_1sc(din_25_msk_ab1_1sc),
-           
-           .a3b0(din_27_ab0),
-           .a3b0_1sc(din_27_ab0_1sc)
+  .clk(clk), .p(addr_6_21),
+  .a0b0(din_21_ab0), .a0b1(din_21_ab1), .a0b2(din_21_ab2), .a0b3(din_21_ab3),
+  .a1b0(din_22_ab0), .a1b1(din_22_ab1), .a1b2(din_22_ab2), .a1b3(din_22_ab3),
+  .a2b0(din_23_ab0), .a2b1(din_23_ab1), .a2b2(din_23_ab2),
+  .a3b0(din_24_ab0), .a3b1(din_24_ab1), .a3b2(din_24_ab2),
+  .a4b0(din_25_ab0), .a4b1(din_25_ab1),
+  .a5b0(din_26_ab0), .a5b1(din_26_ab1),
+  .a6b0(din_27_ab0),
+  .a7b0(din_28_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffff0000000000),
 	.NBITS(10)
 ) addr_6_22_calc (
-           .clk(clk), .sign(din_signs_reg[22]), 
-           .p(addr_6_22),
-           .a0b0(din_22_ab0), .a0b1(din_22_ab1), .a0b2(din_22_ab2), .a0b3(din_22_ab3),
-           .a0b0_1sc(din_22_ab0_1sc), .a0b1_1sc(din_22_ab1_1sc), .a0b2_1sc(din_22_ab2_1sc), .a0b3_1sc(din_22_ab3_1sc),
-           .msk_a0b0(din_22_msk_ab0), .msk_a0b1(din_22_msk_ab1), .msk_a0b2(din_22_msk_ab2), .msk_a0b3(din_22_msk_ab3),
-           .msk_a0b0_1sc(din_22_msk_ab0_1sc), .msk_a0b1_1sc(din_22_msk_ab1_1sc), .msk_a0b2_1sc(din_22_msk_ab2_1sc), .msk_a0b3_1sc(din_22_msk_ab3_1sc),
-
-           .a1b0(din_24_ab0), .a1b1(din_24_ab1), .a1b2(din_24_ab2),
-           .a1b0_1sc(din_24_ab0_1sc), .a1b1_1sc(din_24_ab1_1sc), .a1b2_1sc(din_24_ab2_1sc),
-           .msk_a1b0(din_24_msk_ab0), .msk_a1b1(din_24_msk_ab1), .msk_a1b2(din_24_msk_ab2),
-           .msk_a1b0_1sc(din_24_msk_ab0_1sc), .msk_a1b1_1sc(din_24_msk_ab1_1sc), .msk_a1b2_1sc(din_24_msk_ab2_1sc),
-
-           .a2b0(din_26_ab0), .a2b1(din_26_ab1),
-           .a2b0_1sc(din_26_ab0_1sc), .a2b1_1sc(din_26_ab1_1sc),
-           .msk_a2b0(din_26_msk_ab0), .msk_a2b1(din_26_msk_ab1),
-           .msk_a2b0_1sc(din_26_msk_ab0_1sc), .msk_a2b1_1sc(din_26_msk_ab1_1sc),
-           
-           .a3b0(din_28_ab0),
-           .a3b0_1sc(din_28_ab0_1sc)
+  .clk(clk), .p(addr_6_22),
+  .a0b0(din_22_ab0), .a0b1(din_22_ab1), .a0b2(din_22_ab2), .a0b3(din_22_ab3),
+  .a1b0(din_23_ab0), .a1b1(din_23_ab1), .a1b2(din_23_ab2), .a1b3(din_23_ab3),
+  .a2b0(din_24_ab0), .a2b1(din_24_ab1), .a2b2(din_24_ab2),
+  .a3b0(din_25_ab0), .a3b1(din_25_ab1), .a3b2(din_25_ab2),
+  .a4b0(din_26_ab0), .a4b1(din_26_ab1),
+  .a5b0(din_27_ab0), .a5b1(din_27_ab1),
+  .a6b0(din_28_ab0),
+  .a7b0(din_29_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffff0000000000),
 	.NBITS(10)
 ) addr_6_23_calc (
-           .clk(clk), .sign(din_signs_reg[23]), 
-           .p(addr_6_23),
-           .a0b0(din_23_ab0), .a0b1(din_23_ab1), .a0b2(din_23_ab2), .a0b3(din_23_ab3),
-           .a0b0_1sc(din_23_ab0_1sc), .a0b1_1sc(din_23_ab1_1sc), .a0b2_1sc(din_23_ab2_1sc), .a0b3_1sc(din_23_ab3_1sc),
-           .msk_a0b0(din_23_msk_ab0), .msk_a0b1(din_23_msk_ab1), .msk_a0b2(din_23_msk_ab2), .msk_a0b3(din_23_msk_ab3),
-           .msk_a0b0_1sc(din_23_msk_ab0_1sc), .msk_a0b1_1sc(din_23_msk_ab1_1sc), .msk_a0b2_1sc(din_23_msk_ab2_1sc), .msk_a0b3_1sc(din_23_msk_ab3_1sc),
-
-           .a1b0(din_25_ab0), .a1b1(din_25_ab1), .a1b2(din_25_ab2),
-           .a1b0_1sc(din_25_ab0_1sc), .a1b1_1sc(din_25_ab1_1sc), .a1b2_1sc(din_25_ab2_1sc),
-           .msk_a1b0(din_25_msk_ab0), .msk_a1b1(din_25_msk_ab1), .msk_a1b2(din_25_msk_ab2),
-           .msk_a1b0_1sc(din_25_msk_ab0_1sc), .msk_a1b1_1sc(din_25_msk_ab1_1sc), .msk_a1b2_1sc(din_25_msk_ab2_1sc),
-
-           .a2b0(din_27_ab0), .a2b1(din_27_ab1),
-           .a2b0_1sc(din_27_ab0_1sc), .a2b1_1sc(din_27_ab1_1sc),
-           .msk_a2b0(din_27_msk_ab0), .msk_a2b1(din_27_msk_ab1),
-           .msk_a2b0_1sc(din_27_msk_ab0_1sc), .msk_a2b1_1sc(din_27_msk_ab1_1sc),
-           
-           .a3b0(din_29_ab0),
-           .a3b0_1sc(din_29_ab0_1sc)
+  .clk(clk), .p(addr_6_23),
+  .a0b0(din_23_ab0), .a0b1(din_23_ab1), .a0b2(din_23_ab2), .a0b3(din_23_ab3),
+  .a1b0(din_24_ab0), .a1b1(din_24_ab1), .a1b2(din_24_ab2), .a1b3(din_24_ab3),
+  .a2b0(din_25_ab0), .a2b1(din_25_ab1), .a2b2(din_25_ab2),
+  .a3b0(din_26_ab0), .a3b1(din_26_ab1), .a3b2(din_26_ab2),
+  .a4b0(din_27_ab0), .a4b1(din_27_ab1),
+  .a5b0(din_28_ab0), .a5b1(din_28_ab1),
+  .a6b0(din_29_ab0),
+  .a7b0(din_30_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffff0000000000),
 	.NBITS(10)
 ) addr_6_24_calc (
-           .clk(clk), .sign(din_signs_reg[24]), 
-           .p(addr_6_24),
-           .a0b0(din_24_ab0), .a0b1(din_24_ab1), .a0b2(din_24_ab2), .a0b3(din_24_ab3),
-           .a0b0_1sc(din_24_ab0_1sc), .a0b1_1sc(din_24_ab1_1sc), .a0b2_1sc(din_24_ab2_1sc), .a0b3_1sc(din_24_ab3_1sc),
-           .msk_a0b0(din_24_msk_ab0), .msk_a0b1(din_24_msk_ab1), .msk_a0b2(din_24_msk_ab2), .msk_a0b3(din_24_msk_ab3),
-           .msk_a0b0_1sc(din_24_msk_ab0_1sc), .msk_a0b1_1sc(din_24_msk_ab1_1sc), .msk_a0b2_1sc(din_24_msk_ab2_1sc), .msk_a0b3_1sc(din_24_msk_ab3_1sc),
-
-           .a1b0(din_26_ab0), .a1b1(din_26_ab1), .a1b2(din_26_ab2),
-           .a1b0_1sc(din_26_ab0_1sc), .a1b1_1sc(din_26_ab1_1sc), .a1b2_1sc(din_26_ab2_1sc),
-           .msk_a1b0(din_26_msk_ab0), .msk_a1b1(din_26_msk_ab1), .msk_a1b2(din_26_msk_ab2),
-           .msk_a1b0_1sc(din_26_msk_ab0_1sc), .msk_a1b1_1sc(din_26_msk_ab1_1sc), .msk_a1b2_1sc(din_26_msk_ab2_1sc),
-
-           .a2b0(din_28_ab0), .a2b1(din_28_ab1),
-           .a2b0_1sc(din_28_ab0_1sc), .a2b1_1sc(din_28_ab1_1sc),
-           .msk_a2b0(din_28_msk_ab0), .msk_a2b1(din_28_msk_ab1),
-           .msk_a2b0_1sc(din_28_msk_ab0_1sc), .msk_a2b1_1sc(din_28_msk_ab1_1sc),
-           
-           .a3b0(din_30_ab0),
-           .a3b0_1sc(din_30_ab0_1sc)
+  .clk(clk), .p(addr_6_24),
+  .a0b0(din_24_ab0), .a0b1(din_24_ab1), .a0b2(din_24_ab2), .a0b3(din_24_ab3),
+  .a1b0(din_25_ab0), .a1b1(din_25_ab1), .a1b2(din_25_ab2), .a1b3(din_25_ab3),
+  .a2b0(din_26_ab0), .a2b1(din_26_ab1), .a2b2(din_26_ab2),
+  .a3b0(din_27_ab0), .a3b1(din_27_ab1), .a3b2(din_27_ab2),
+  .a4b0(din_28_ab0), .a4b1(din_28_ab1),
+  .a5b0(din_29_ab0), .a5b1(din_29_ab1),
+  .a6b0(din_30_ab0),
+  .a7b0(din_31_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffff0000000000),
 	.NBITS(10)
 ) addr_6_25_calc (
-           .clk(clk), .sign(din_signs_reg[25]), 
-           .p(addr_6_25),
-           .a0b0(din_25_ab0), .a0b1(din_25_ab1), .a0b2(din_25_ab2), .a0b3(din_25_ab3),
-           .a0b0_1sc(din_25_ab0_1sc), .a0b1_1sc(din_25_ab1_1sc), .a0b2_1sc(din_25_ab2_1sc), .a0b3_1sc(din_25_ab3_1sc),
-           .msk_a0b0(din_25_msk_ab0), .msk_a0b1(din_25_msk_ab1), .msk_a0b2(din_25_msk_ab2), .msk_a0b3(din_25_msk_ab3),
-           .msk_a0b0_1sc(din_25_msk_ab0_1sc), .msk_a0b1_1sc(din_25_msk_ab1_1sc), .msk_a0b2_1sc(din_25_msk_ab2_1sc), .msk_a0b3_1sc(din_25_msk_ab3_1sc),
-
-           .a1b0(din_27_ab0), .a1b1(din_27_ab1), .a1b2(din_27_ab2),
-           .a1b0_1sc(din_27_ab0_1sc), .a1b1_1sc(din_27_ab1_1sc), .a1b2_1sc(din_27_ab2_1sc),
-           .msk_a1b0(din_27_msk_ab0), .msk_a1b1(din_27_msk_ab1), .msk_a1b2(din_27_msk_ab2),
-           .msk_a1b0_1sc(din_27_msk_ab0_1sc), .msk_a1b1_1sc(din_27_msk_ab1_1sc), .msk_a1b2_1sc(din_27_msk_ab2_1sc),
-
-           .a2b0(din_29_ab0), .a2b1(din_29_ab1),
-           .a2b0_1sc(din_29_ab0_1sc), .a2b1_1sc(din_29_ab1_1sc),
-           .msk_a2b0(din_29_msk_ab0), .msk_a2b1(din_29_msk_ab1),
-           .msk_a2b0_1sc(din_29_msk_ab0_1sc), .msk_a2b1_1sc(din_29_msk_ab1_1sc),
-           
-           .a3b0(din_31_ab0),
-           .a3b0_1sc(din_31_ab0_1sc)
+  .clk(clk), .p(addr_6_25),
+  .a0b0(din_25_ab0), .a0b1(din_25_ab1), .a0b2(din_25_ab2), .a0b3(din_25_ab3),
+  .a1b0(din_26_ab0), .a1b1(din_26_ab1), .a1b2(din_26_ab2), .a1b3(din_26_ab3),
+  .a2b0(din_27_ab0), .a2b1(din_27_ab1), .a2b2(din_27_ab2),
+  .a3b0(din_28_ab0), .a3b1(din_28_ab1), .a3b2(din_28_ab2),
+  .a4b0(din_29_ab0), .a4b1(din_29_ab1),
+  .a5b0(din_30_ab0), .a5b1(din_30_ab1),
+  .a6b0(din_31_ab0),
+  .a7b0(din_32_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffff0000000000),
 	.NBITS(10)
 ) addr_6_26_calc (
-           .clk(clk), .sign(din_signs_reg[26]), 
-           .p(addr_6_26),
-           .a0b0(din_26_ab0), .a0b1(din_26_ab1), .a0b2(din_26_ab2), .a0b3(din_26_ab3),
-           .a0b0_1sc(din_26_ab0_1sc), .a0b1_1sc(din_26_ab1_1sc), .a0b2_1sc(din_26_ab2_1sc), .a0b3_1sc(din_26_ab3_1sc),
-           .msk_a0b0(din_26_msk_ab0), .msk_a0b1(din_26_msk_ab1), .msk_a0b2(din_26_msk_ab2), .msk_a0b3(din_26_msk_ab3),
-           .msk_a0b0_1sc(din_26_msk_ab0_1sc), .msk_a0b1_1sc(din_26_msk_ab1_1sc), .msk_a0b2_1sc(din_26_msk_ab2_1sc), .msk_a0b3_1sc(din_26_msk_ab3_1sc),
-
-           .a1b0(din_28_ab0), .a1b1(din_28_ab1), .a1b2(din_28_ab2),
-           .a1b0_1sc(din_28_ab0_1sc), .a1b1_1sc(din_28_ab1_1sc), .a1b2_1sc(din_28_ab2_1sc),
-           .msk_a1b0(din_28_msk_ab0), .msk_a1b1(din_28_msk_ab1), .msk_a1b2(din_28_msk_ab2),
-           .msk_a1b0_1sc(din_28_msk_ab0_1sc), .msk_a1b1_1sc(din_28_msk_ab1_1sc), .msk_a1b2_1sc(din_28_msk_ab2_1sc),
-
-           .a2b0(din_30_ab0), .a2b1(din_30_ab1),
-           .a2b0_1sc(din_30_ab0_1sc), .a2b1_1sc(din_30_ab1_1sc),
-           .msk_a2b0(din_30_msk_ab0), .msk_a2b1(din_30_msk_ab1),
-           .msk_a2b0_1sc(din_30_msk_ab0_1sc), .msk_a2b1_1sc(din_30_msk_ab1_1sc),
-           
-           .a3b0(din_32_ab0),
-           .a3b0_1sc(din_32_ab0_1sc)
+  .clk(clk), .p(addr_6_26),
+  .a0b0(din_26_ab0), .a0b1(din_26_ab1), .a0b2(din_26_ab2), .a0b3(din_26_ab3),
+  .a1b0(din_27_ab0), .a1b1(din_27_ab1), .a1b2(din_27_ab2), .a1b3(din_27_ab3),
+  .a2b0(din_28_ab0), .a2b1(din_28_ab1), .a2b2(din_28_ab2),
+  .a3b0(din_29_ab0), .a3b1(din_29_ab1), .a3b2(din_29_ab2),
+  .a4b0(din_30_ab0), .a4b1(din_30_ab1),
+  .a5b0(din_31_ab0), .a5b1(din_31_ab1),
+  .a6b0(din_32_ab0),
+  .a7b0(din_33_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffff0000000000),
 	.NBITS(10)
 ) addr_6_27_calc (
-           .clk(clk), .sign(din_signs_reg[27]), 
-           .p(addr_6_27),
-           .a0b0(din_27_ab0), .a0b1(din_27_ab1), .a0b2(din_27_ab2), .a0b3(din_27_ab3),
-           .a0b0_1sc(din_27_ab0_1sc), .a0b1_1sc(din_27_ab1_1sc), .a0b2_1sc(din_27_ab2_1sc), .a0b3_1sc(din_27_ab3_1sc),
-           .msk_a0b0(din_27_msk_ab0), .msk_a0b1(din_27_msk_ab1), .msk_a0b2(din_27_msk_ab2), .msk_a0b3(din_27_msk_ab3),
-           .msk_a0b0_1sc(din_27_msk_ab0_1sc), .msk_a0b1_1sc(din_27_msk_ab1_1sc), .msk_a0b2_1sc(din_27_msk_ab2_1sc), .msk_a0b3_1sc(din_27_msk_ab3_1sc),
-
-           .a1b0(din_29_ab0), .a1b1(din_29_ab1), .a1b2(din_29_ab2),
-           .a1b0_1sc(din_29_ab0_1sc), .a1b1_1sc(din_29_ab1_1sc), .a1b2_1sc(din_29_ab2_1sc),
-           .msk_a1b0(din_29_msk_ab0), .msk_a1b1(din_29_msk_ab1), .msk_a1b2(din_29_msk_ab2),
-           .msk_a1b0_1sc(din_29_msk_ab0_1sc), .msk_a1b1_1sc(din_29_msk_ab1_1sc), .msk_a1b2_1sc(din_29_msk_ab2_1sc),
-
-           .a2b0(din_31_ab0), .a2b1(din_31_ab1),
-           .a2b0_1sc(din_31_ab0_1sc), .a2b1_1sc(din_31_ab1_1sc),
-           .msk_a2b0(din_31_msk_ab0), .msk_a2b1(din_31_msk_ab1),
-           .msk_a2b0_1sc(din_31_msk_ab0_1sc), .msk_a2b1_1sc(din_31_msk_ab1_1sc),
-           
-           .a3b0(din_33_ab0),
-           .a3b0_1sc(din_33_ab0_1sc)
+  .clk(clk), .p(addr_6_27),
+  .a0b0(din_27_ab0), .a0b1(din_27_ab1), .a0b2(din_27_ab2), .a0b3(din_27_ab3),
+  .a1b0(din_28_ab0), .a1b1(din_28_ab1), .a1b2(din_28_ab2), .a1b3(din_28_ab3),
+  .a2b0(din_29_ab0), .a2b1(din_29_ab1), .a2b2(din_29_ab2),
+  .a3b0(din_30_ab0), .a3b1(din_30_ab1), .a3b2(din_30_ab2),
+  .a4b0(din_31_ab0), .a4b1(din_31_ab1),
+  .a5b0(din_32_ab0), .a5b1(din_32_ab1),
+  .a6b0(din_33_ab0),
+  .a7b0(din_34_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffff0000000000),
 	.NBITS(10)
 ) addr_6_28_calc (
-           .clk(clk), .sign(din_signs_reg[28]), 
-           .p(addr_6_28),
-           .a0b0(din_28_ab0), .a0b1(din_28_ab1), .a0b2(din_28_ab2), .a0b3(din_28_ab3),
-           .a0b0_1sc(din_28_ab0_1sc), .a0b1_1sc(din_28_ab1_1sc), .a0b2_1sc(din_28_ab2_1sc), .a0b3_1sc(din_28_ab3_1sc),
-           .msk_a0b0(din_28_msk_ab0), .msk_a0b1(din_28_msk_ab1), .msk_a0b2(din_28_msk_ab2), .msk_a0b3(din_28_msk_ab3),
-           .msk_a0b0_1sc(din_28_msk_ab0_1sc), .msk_a0b1_1sc(din_28_msk_ab1_1sc), .msk_a0b2_1sc(din_28_msk_ab2_1sc), .msk_a0b3_1sc(din_28_msk_ab3_1sc),
-
-           .a1b0(din_30_ab0), .a1b1(din_30_ab1), .a1b2(din_30_ab2),
-           .a1b0_1sc(din_30_ab0_1sc), .a1b1_1sc(din_30_ab1_1sc), .a1b2_1sc(din_30_ab2_1sc),
-           .msk_a1b0(din_30_msk_ab0), .msk_a1b1(din_30_msk_ab1), .msk_a1b2(din_30_msk_ab2),
-           .msk_a1b0_1sc(din_30_msk_ab0_1sc), .msk_a1b1_1sc(din_30_msk_ab1_1sc), .msk_a1b2_1sc(din_30_msk_ab2_1sc),
-
-           .a2b0(din_32_ab0), .a2b1(din_32_ab1),
-           .a2b0_1sc(din_32_ab0_1sc), .a2b1_1sc(din_32_ab1_1sc),
-           .msk_a2b0(din_32_msk_ab0), .msk_a2b1(din_32_msk_ab1),
-           .msk_a2b0_1sc(din_32_msk_ab0_1sc), .msk_a2b1_1sc(din_32_msk_ab1_1sc),
-           
-           .a3b0(din_34_ab0),
-           .a3b0_1sc(din_34_ab0_1sc)
+  .clk(clk), .p(addr_6_28),
+  .a0b0(din_28_ab0), .a0b1(din_28_ab1), .a0b2(din_28_ab2), .a0b3(din_28_ab3),
+  .a1b0(din_29_ab0), .a1b1(din_29_ab1), .a1b2(din_29_ab2), .a1b3(din_29_ab3),
+  .a2b0(din_30_ab0), .a2b1(din_30_ab1), .a2b2(din_30_ab2),
+  .a3b0(din_31_ab0), .a3b1(din_31_ab1), .a3b2(din_31_ab2),
+  .a4b0(din_32_ab0), .a4b1(din_32_ab1),
+  .a5b0(din_33_ab0), .a5b1(din_33_ab1),
+  .a6b0(din_34_ab0),
+  .a7b0(din_35_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffff0000000000),
 	.NBITS(10)
 ) addr_6_29_calc (
-           .clk(clk), .sign(din_signs_reg[29]), 
-           .p(addr_6_29),
-           .a0b0(din_29_ab0), .a0b1(din_29_ab1), .a0b2(din_29_ab2), .a0b3(din_29_ab3),
-           .a0b0_1sc(din_29_ab0_1sc), .a0b1_1sc(din_29_ab1_1sc), .a0b2_1sc(din_29_ab2_1sc), .a0b3_1sc(din_29_ab3_1sc),
-           .msk_a0b0(din_29_msk_ab0), .msk_a0b1(din_29_msk_ab1), .msk_a0b2(din_29_msk_ab2), .msk_a0b3(din_29_msk_ab3),
-           .msk_a0b0_1sc(din_29_msk_ab0_1sc), .msk_a0b1_1sc(din_29_msk_ab1_1sc), .msk_a0b2_1sc(din_29_msk_ab2_1sc), .msk_a0b3_1sc(din_29_msk_ab3_1sc),
-
-           .a1b0(din_31_ab0), .a1b1(din_31_ab1), .a1b2(din_31_ab2),
-           .a1b0_1sc(din_31_ab0_1sc), .a1b1_1sc(din_31_ab1_1sc), .a1b2_1sc(din_31_ab2_1sc),
-           .msk_a1b0(din_31_msk_ab0), .msk_a1b1(din_31_msk_ab1), .msk_a1b2(din_31_msk_ab2),
-           .msk_a1b0_1sc(din_31_msk_ab0_1sc), .msk_a1b1_1sc(din_31_msk_ab1_1sc), .msk_a1b2_1sc(din_31_msk_ab2_1sc),
-
-           .a2b0(din_33_ab0), .a2b1(din_33_ab1),
-           .a2b0_1sc(din_33_ab0_1sc), .a2b1_1sc(din_33_ab1_1sc),
-           .msk_a2b0(din_33_msk_ab0), .msk_a2b1(din_33_msk_ab1),
-           .msk_a2b0_1sc(din_33_msk_ab0_1sc), .msk_a2b1_1sc(din_33_msk_ab1_1sc),
-           
-           .a3b0(din_35_ab0),
-           .a3b0_1sc(din_35_ab0_1sc)
+  .clk(clk), .p(addr_6_29),
+  .a0b0(din_29_ab0), .a0b1(din_29_ab1), .a0b2(din_29_ab2), .a0b3(din_29_ab3),
+  .a1b0(din_30_ab0), .a1b1(din_30_ab1), .a1b2(din_30_ab2), .a1b3(din_30_ab3),
+  .a2b0(din_31_ab0), .a2b1(din_31_ab1), .a2b2(din_31_ab2),
+  .a3b0(din_32_ab0), .a3b1(din_32_ab1), .a3b2(din_32_ab2),
+  .a4b0(din_33_ab0), .a4b1(din_33_ab1),
+  .a5b0(din_34_ab0), .a5b1(din_34_ab1),
+  .a6b0(din_35_ab0),
+  .a7b0(din_36_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffff0000000000),
 	.NBITS(10)
 ) addr_6_30_calc (
-           .clk(clk), .sign(din_signs_reg[30]), 
-           .p(addr_6_30),
-           .a0b0(din_30_ab0), .a0b1(din_30_ab1), .a0b2(din_30_ab2), .a0b3(din_30_ab3),
-           .a0b0_1sc(din_30_ab0_1sc), .a0b1_1sc(din_30_ab1_1sc), .a0b2_1sc(din_30_ab2_1sc), .a0b3_1sc(din_30_ab3_1sc),
-           .msk_a0b0(din_30_msk_ab0), .msk_a0b1(din_30_msk_ab1), .msk_a0b2(din_30_msk_ab2), .msk_a0b3(din_30_msk_ab3),
-           .msk_a0b0_1sc(din_30_msk_ab0_1sc), .msk_a0b1_1sc(din_30_msk_ab1_1sc), .msk_a0b2_1sc(din_30_msk_ab2_1sc), .msk_a0b3_1sc(din_30_msk_ab3_1sc),
-
-           .a1b0(din_32_ab0), .a1b1(din_32_ab1), .a1b2(din_32_ab2),
-           .a1b0_1sc(din_32_ab0_1sc), .a1b1_1sc(din_32_ab1_1sc), .a1b2_1sc(din_32_ab2_1sc),
-           .msk_a1b0(din_32_msk_ab0), .msk_a1b1(din_32_msk_ab1), .msk_a1b2(din_32_msk_ab2),
-           .msk_a1b0_1sc(din_32_msk_ab0_1sc), .msk_a1b1_1sc(din_32_msk_ab1_1sc), .msk_a1b2_1sc(din_32_msk_ab2_1sc),
-
-           .a2b0(din_34_ab0), .a2b1(din_34_ab1),
-           .a2b0_1sc(din_34_ab0_1sc), .a2b1_1sc(din_34_ab1_1sc),
-           .msk_a2b0(din_34_msk_ab0), .msk_a2b1(din_34_msk_ab1),
-           .msk_a2b0_1sc(din_34_msk_ab0_1sc), .msk_a2b1_1sc(din_34_msk_ab1_1sc),
-           
-           .a3b0(din_36_ab0),
-           .a3b0_1sc(din_36_ab0_1sc)
+  .clk(clk), .p(addr_6_30),
+  .a0b0(din_30_ab0), .a0b1(din_30_ab1), .a0b2(din_30_ab2), .a0b3(din_30_ab3),
+  .a1b0(din_31_ab0), .a1b1(din_31_ab1), .a1b2(din_31_ab2), .a1b3(din_31_ab3),
+  .a2b0(din_32_ab0), .a2b1(din_32_ab1), .a2b2(din_32_ab2),
+  .a3b0(din_33_ab0), .a3b1(din_33_ab1), .a3b2(din_33_ab2),
+  .a4b0(din_34_ab0), .a4b1(din_34_ab1),
+  .a5b0(din_35_ab0), .a5b1(din_35_ab1),
+  .a6b0(din_36_ab0),
+  .a7b0(din_37_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffffff0000000000),
 	.NBITS(10)
 ) addr_6_31_calc (
-           .clk(clk), .sign(din_signs_reg[31]), 
-           .p(addr_6_31),
-           .a0b0(din_31_ab0), .a0b1(din_31_ab1), .a0b2(din_31_ab2), .a0b3(din_31_ab3),
-           .a0b0_1sc(din_31_ab0_1sc), .a0b1_1sc(din_31_ab1_1sc), .a0b2_1sc(din_31_ab2_1sc), .a0b3_1sc(din_31_ab3_1sc),
-           .msk_a0b0(din_31_msk_ab0), .msk_a0b1(din_31_msk_ab1), .msk_a0b2(din_31_msk_ab2), .msk_a0b3(din_31_msk_ab3),
-           .msk_a0b0_1sc(din_31_msk_ab0_1sc), .msk_a0b1_1sc(din_31_msk_ab1_1sc), .msk_a0b2_1sc(din_31_msk_ab2_1sc), .msk_a0b3_1sc(din_31_msk_ab3_1sc),
-
-           .a1b0(din_33_ab0), .a1b1(din_33_ab1), .a1b2(din_33_ab2),
-           .a1b0_1sc(din_33_ab0_1sc), .a1b1_1sc(din_33_ab1_1sc), .a1b2_1sc(din_33_ab2_1sc),
-           .msk_a1b0(din_33_msk_ab0), .msk_a1b1(din_33_msk_ab1), .msk_a1b2(din_33_msk_ab2),
-           .msk_a1b0_1sc(din_33_msk_ab0_1sc), .msk_a1b1_1sc(din_33_msk_ab1_1sc), .msk_a1b2_1sc(din_33_msk_ab2_1sc),
-
-           .a2b0(din_35_ab0), .a2b1(din_35_ab1),
-           .a2b0_1sc(din_35_ab0_1sc), .a2b1_1sc(din_35_ab1_1sc),
-           .msk_a2b0(din_35_msk_ab0), .msk_a2b1(din_35_msk_ab1),
-           .msk_a2b0_1sc(din_35_msk_ab0_1sc), .msk_a2b1_1sc(din_35_msk_ab1_1sc),
-           
-           .a3b0(din_37_ab0),
-           .a3b0_1sc(din_37_ab0_1sc)
+  .clk(clk), .p(addr_6_31),
+  .a0b0(din_31_ab0), .a0b1(din_31_ab1), .a0b2(din_31_ab2), .a0b3(din_31_ab3),
+  .a1b0(din_32_ab0), .a1b1(din_32_ab1), .a1b2(din_32_ab2), .a1b3(din_32_ab3),
+  .a2b0(din_33_ab0), .a2b1(din_33_ab1), .a2b2(din_33_ab2),
+  .a3b0(din_34_ab0), .a3b1(din_34_ab1), .a3b2(din_34_ab2),
+  .a4b0(din_35_ab0), .a4b1(din_35_ab1),
+  .a5b0(din_36_ab0), .a5b1(din_36_ab1),
+  .a6b0(din_37_ab0),
+  .a7b0(din_38_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffff000000000000),
 	.NBITS(8)
 ) addr_7_0_calc (
-           .clk(clk), .sign(din_signs_reg[0]), 
-           .p(addr_7_0),
-           .a0b0(din_0_ab0), .a0b1(din_0_ab1), .a0b2(din_0_ab2), .a0b3(din_0_ab3),
-           .a0b0_1sc(din_0_ab0_1sc), .a0b1_1sc(din_0_ab1_1sc), .a0b2_1sc(din_0_ab2_1sc), .a0b3_1sc(din_0_ab3_1sc),
-           .msk_a0b0(din_0_msk_ab0), .msk_a0b1(din_0_msk_ab1), .msk_a0b2(din_0_msk_ab2), .msk_a0b3(din_0_msk_ab3),
-           .msk_a0b0_1sc(din_0_msk_ab0_1sc), .msk_a0b1_1sc(din_0_msk_ab1_1sc), .msk_a0b2_1sc(din_0_msk_ab2_1sc), .msk_a0b3_1sc(din_0_msk_ab3_1sc),
-
-           .a1b0(din_2_ab0), .a1b1(din_2_ab1), .a1b2(din_2_ab2),
-           .a1b0_1sc(din_2_ab0_1sc), .a1b1_1sc(din_2_ab1_1sc), .a1b2_1sc(din_2_ab2_1sc),
-           .msk_a1b0(din_2_msk_ab0), .msk_a1b1(din_2_msk_ab1), .msk_a1b2(din_2_msk_ab2),
-           .msk_a1b0_1sc(din_2_msk_ab0_1sc), .msk_a1b1_1sc(din_2_msk_ab1_1sc), .msk_a1b2_1sc(din_2_msk_ab2_1sc),
-
-           .a2b0(din_4_ab0), .a2b1(din_4_ab1),
-           .a2b0_1sc(din_4_ab0_1sc), .a2b1_1sc(din_4_ab1_1sc),
-           .msk_a2b0(din_4_msk_ab0), .msk_a2b1(din_4_msk_ab1),
-           .msk_a2b0_1sc(din_4_msk_ab0_1sc), .msk_a2b1_1sc(din_4_msk_ab1_1sc),
-           
-           .a3b0(din_6_ab0),
-           .a3b0_1sc(din_6_ab0_1sc)
+  .clk(clk), .p(addr_7_0),
+  .a0b0(din_0_ab0), .a0b1(din_0_ab1), .a0b2(din_0_ab2), .a0b3(din_0_ab3),
+  .a1b0(din_1_ab0), .a1b1(din_1_ab1), .a1b2(din_1_ab2), .a1b3(din_1_ab3),
+  .a2b0(din_2_ab0), .a2b1(din_2_ab1), .a2b2(din_2_ab2),
+  .a3b0(din_3_ab0), .a3b1(din_3_ab1), .a3b2(din_3_ab2),
+  .a4b0(din_4_ab0), .a4b1(din_4_ab1),
+  .a5b0(din_5_ab0), .a5b1(din_5_ab1),
+  .a6b0(din_6_ab0),
+  .a7b0(din_7_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffff000000000000),
 	.NBITS(8)
 ) addr_7_1_calc (
-           .clk(clk), .sign(din_signs_reg[1]), 
-           .p(addr_7_1),
-           .a0b0(din_1_ab0), .a0b1(din_1_ab1), .a0b2(din_1_ab2), .a0b3(din_1_ab3),
-           .a0b0_1sc(din_1_ab0_1sc), .a0b1_1sc(din_1_ab1_1sc), .a0b2_1sc(din_1_ab2_1sc), .a0b3_1sc(din_1_ab3_1sc),
-           .msk_a0b0(din_1_msk_ab0), .msk_a0b1(din_1_msk_ab1), .msk_a0b2(din_1_msk_ab2), .msk_a0b3(din_1_msk_ab3),
-           .msk_a0b0_1sc(din_1_msk_ab0_1sc), .msk_a0b1_1sc(din_1_msk_ab1_1sc), .msk_a0b2_1sc(din_1_msk_ab2_1sc), .msk_a0b3_1sc(din_1_msk_ab3_1sc),
-
-           .a1b0(din_3_ab0), .a1b1(din_3_ab1), .a1b2(din_3_ab2),
-           .a1b0_1sc(din_3_ab0_1sc), .a1b1_1sc(din_3_ab1_1sc), .a1b2_1sc(din_3_ab2_1sc),
-           .msk_a1b0(din_3_msk_ab0), .msk_a1b1(din_3_msk_ab1), .msk_a1b2(din_3_msk_ab2),
-           .msk_a1b0_1sc(din_3_msk_ab0_1sc), .msk_a1b1_1sc(din_3_msk_ab1_1sc), .msk_a1b2_1sc(din_3_msk_ab2_1sc),
-
-           .a2b0(din_5_ab0), .a2b1(din_5_ab1),
-           .a2b0_1sc(din_5_ab0_1sc), .a2b1_1sc(din_5_ab1_1sc),
-           .msk_a2b0(din_5_msk_ab0), .msk_a2b1(din_5_msk_ab1),
-           .msk_a2b0_1sc(din_5_msk_ab0_1sc), .msk_a2b1_1sc(din_5_msk_ab1_1sc),
-           
-           .a3b0(din_7_ab0),
-           .a3b0_1sc(din_7_ab0_1sc)
+  .clk(clk), .p(addr_7_1),
+  .a0b0(din_1_ab0), .a0b1(din_1_ab1), .a0b2(din_1_ab2), .a0b3(din_1_ab3),
+  .a1b0(din_2_ab0), .a1b1(din_2_ab1), .a1b2(din_2_ab2), .a1b3(din_2_ab3),
+  .a2b0(din_3_ab0), .a2b1(din_3_ab1), .a2b2(din_3_ab2),
+  .a3b0(din_4_ab0), .a3b1(din_4_ab1), .a3b2(din_4_ab2),
+  .a4b0(din_5_ab0), .a4b1(din_5_ab1),
+  .a5b0(din_6_ab0), .a5b1(din_6_ab1),
+  .a6b0(din_7_ab0),
+  .a7b0(din_8_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffff000000000000),
 	.NBITS(8)
 ) addr_7_2_calc (
-           .clk(clk), .sign(din_signs_reg[2]), 
-           .p(addr_7_2),
-           .a0b0(din_2_ab0), .a0b1(din_2_ab1), .a0b2(din_2_ab2), .a0b3(din_2_ab3),
-           .a0b0_1sc(din_2_ab0_1sc), .a0b1_1sc(din_2_ab1_1sc), .a0b2_1sc(din_2_ab2_1sc), .a0b3_1sc(din_2_ab3_1sc),
-           .msk_a0b0(din_2_msk_ab0), .msk_a0b1(din_2_msk_ab1), .msk_a0b2(din_2_msk_ab2), .msk_a0b3(din_2_msk_ab3),
-           .msk_a0b0_1sc(din_2_msk_ab0_1sc), .msk_a0b1_1sc(din_2_msk_ab1_1sc), .msk_a0b2_1sc(din_2_msk_ab2_1sc), .msk_a0b3_1sc(din_2_msk_ab3_1sc),
-
-           .a1b0(din_4_ab0), .a1b1(din_4_ab1), .a1b2(din_4_ab2),
-           .a1b0_1sc(din_4_ab0_1sc), .a1b1_1sc(din_4_ab1_1sc), .a1b2_1sc(din_4_ab2_1sc),
-           .msk_a1b0(din_4_msk_ab0), .msk_a1b1(din_4_msk_ab1), .msk_a1b2(din_4_msk_ab2),
-           .msk_a1b0_1sc(din_4_msk_ab0_1sc), .msk_a1b1_1sc(din_4_msk_ab1_1sc), .msk_a1b2_1sc(din_4_msk_ab2_1sc),
-
-           .a2b0(din_6_ab0), .a2b1(din_6_ab1),
-           .a2b0_1sc(din_6_ab0_1sc), .a2b1_1sc(din_6_ab1_1sc),
-           .msk_a2b0(din_6_msk_ab0), .msk_a2b1(din_6_msk_ab1),
-           .msk_a2b0_1sc(din_6_msk_ab0_1sc), .msk_a2b1_1sc(din_6_msk_ab1_1sc),
-           
-           .a3b0(din_8_ab0),
-           .a3b0_1sc(din_8_ab0_1sc)
+  .clk(clk), .p(addr_7_2),
+  .a0b0(din_2_ab0), .a0b1(din_2_ab1), .a0b2(din_2_ab2), .a0b3(din_2_ab3),
+  .a1b0(din_3_ab0), .a1b1(din_3_ab1), .a1b2(din_3_ab2), .a1b3(din_3_ab3),
+  .a2b0(din_4_ab0), .a2b1(din_4_ab1), .a2b2(din_4_ab2),
+  .a3b0(din_5_ab0), .a3b1(din_5_ab1), .a3b2(din_5_ab2),
+  .a4b0(din_6_ab0), .a4b1(din_6_ab1),
+  .a5b0(din_7_ab0), .a5b1(din_7_ab1),
+  .a6b0(din_8_ab0),
+  .a7b0(din_9_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffff000000000000),
 	.NBITS(8)
 ) addr_7_3_calc (
-           .clk(clk), .sign(din_signs_reg[3]), 
-           .p(addr_7_3),
-           .a0b0(din_3_ab0), .a0b1(din_3_ab1), .a0b2(din_3_ab2), .a0b3(din_3_ab3),
-           .a0b0_1sc(din_3_ab0_1sc), .a0b1_1sc(din_3_ab1_1sc), .a0b2_1sc(din_3_ab2_1sc), .a0b3_1sc(din_3_ab3_1sc),
-           .msk_a0b0(din_3_msk_ab0), .msk_a0b1(din_3_msk_ab1), .msk_a0b2(din_3_msk_ab2), .msk_a0b3(din_3_msk_ab3),
-           .msk_a0b0_1sc(din_3_msk_ab0_1sc), .msk_a0b1_1sc(din_3_msk_ab1_1sc), .msk_a0b2_1sc(din_3_msk_ab2_1sc), .msk_a0b3_1sc(din_3_msk_ab3_1sc),
-
-           .a1b0(din_5_ab0), .a1b1(din_5_ab1), .a1b2(din_5_ab2),
-           .a1b0_1sc(din_5_ab0_1sc), .a1b1_1sc(din_5_ab1_1sc), .a1b2_1sc(din_5_ab2_1sc),
-           .msk_a1b0(din_5_msk_ab0), .msk_a1b1(din_5_msk_ab1), .msk_a1b2(din_5_msk_ab2),
-           .msk_a1b0_1sc(din_5_msk_ab0_1sc), .msk_a1b1_1sc(din_5_msk_ab1_1sc), .msk_a1b2_1sc(din_5_msk_ab2_1sc),
-
-           .a2b0(din_7_ab0), .a2b1(din_7_ab1),
-           .a2b0_1sc(din_7_ab0_1sc), .a2b1_1sc(din_7_ab1_1sc),
-           .msk_a2b0(din_7_msk_ab0), .msk_a2b1(din_7_msk_ab1),
-           .msk_a2b0_1sc(din_7_msk_ab0_1sc), .msk_a2b1_1sc(din_7_msk_ab1_1sc),
-           
-           .a3b0(din_9_ab0),
-           .a3b0_1sc(din_9_ab0_1sc)
+  .clk(clk), .p(addr_7_3),
+  .a0b0(din_3_ab0), .a0b1(din_3_ab1), .a0b2(din_3_ab2), .a0b3(din_3_ab3),
+  .a1b0(din_4_ab0), .a1b1(din_4_ab1), .a1b2(din_4_ab2), .a1b3(din_4_ab3),
+  .a2b0(din_5_ab0), .a2b1(din_5_ab1), .a2b2(din_5_ab2),
+  .a3b0(din_6_ab0), .a3b1(din_6_ab1), .a3b2(din_6_ab2),
+  .a4b0(din_7_ab0), .a4b1(din_7_ab1),
+  .a5b0(din_8_ab0), .a5b1(din_8_ab1),
+  .a6b0(din_9_ab0),
+  .a7b0(din_10_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffff000000000000),
 	.NBITS(8)
 ) addr_7_4_calc (
-           .clk(clk), .sign(din_signs_reg[4]), 
-           .p(addr_7_4),
-           .a0b0(din_4_ab0), .a0b1(din_4_ab1), .a0b2(din_4_ab2), .a0b3(din_4_ab3),
-           .a0b0_1sc(din_4_ab0_1sc), .a0b1_1sc(din_4_ab1_1sc), .a0b2_1sc(din_4_ab2_1sc), .a0b3_1sc(din_4_ab3_1sc),
-           .msk_a0b0(din_4_msk_ab0), .msk_a0b1(din_4_msk_ab1), .msk_a0b2(din_4_msk_ab2), .msk_a0b3(din_4_msk_ab3),
-           .msk_a0b0_1sc(din_4_msk_ab0_1sc), .msk_a0b1_1sc(din_4_msk_ab1_1sc), .msk_a0b2_1sc(din_4_msk_ab2_1sc), .msk_a0b3_1sc(din_4_msk_ab3_1sc),
-
-           .a1b0(din_6_ab0), .a1b1(din_6_ab1), .a1b2(din_6_ab2),
-           .a1b0_1sc(din_6_ab0_1sc), .a1b1_1sc(din_6_ab1_1sc), .a1b2_1sc(din_6_ab2_1sc),
-           .msk_a1b0(din_6_msk_ab0), .msk_a1b1(din_6_msk_ab1), .msk_a1b2(din_6_msk_ab2),
-           .msk_a1b0_1sc(din_6_msk_ab0_1sc), .msk_a1b1_1sc(din_6_msk_ab1_1sc), .msk_a1b2_1sc(din_6_msk_ab2_1sc),
-
-           .a2b0(din_8_ab0), .a2b1(din_8_ab1),
-           .a2b0_1sc(din_8_ab0_1sc), .a2b1_1sc(din_8_ab1_1sc),
-           .msk_a2b0(din_8_msk_ab0), .msk_a2b1(din_8_msk_ab1),
-           .msk_a2b0_1sc(din_8_msk_ab0_1sc), .msk_a2b1_1sc(din_8_msk_ab1_1sc),
-           
-           .a3b0(din_10_ab0),
-           .a3b0_1sc(din_10_ab0_1sc)
+  .clk(clk), .p(addr_7_4),
+  .a0b0(din_4_ab0), .a0b1(din_4_ab1), .a0b2(din_4_ab2), .a0b3(din_4_ab3),
+  .a1b0(din_5_ab0), .a1b1(din_5_ab1), .a1b2(din_5_ab2), .a1b3(din_5_ab3),
+  .a2b0(din_6_ab0), .a2b1(din_6_ab1), .a2b2(din_6_ab2),
+  .a3b0(din_7_ab0), .a3b1(din_7_ab1), .a3b2(din_7_ab2),
+  .a4b0(din_8_ab0), .a4b1(din_8_ab1),
+  .a5b0(din_9_ab0), .a5b1(din_9_ab1),
+  .a6b0(din_10_ab0),
+  .a7b0(din_11_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffff000000000000),
 	.NBITS(8)
 ) addr_7_5_calc (
-           .clk(clk), .sign(din_signs_reg[5]), 
-           .p(addr_7_5),
-           .a0b0(din_5_ab0), .a0b1(din_5_ab1), .a0b2(din_5_ab2), .a0b3(din_5_ab3),
-           .a0b0_1sc(din_5_ab0_1sc), .a0b1_1sc(din_5_ab1_1sc), .a0b2_1sc(din_5_ab2_1sc), .a0b3_1sc(din_5_ab3_1sc),
-           .msk_a0b0(din_5_msk_ab0), .msk_a0b1(din_5_msk_ab1), .msk_a0b2(din_5_msk_ab2), .msk_a0b3(din_5_msk_ab3),
-           .msk_a0b0_1sc(din_5_msk_ab0_1sc), .msk_a0b1_1sc(din_5_msk_ab1_1sc), .msk_a0b2_1sc(din_5_msk_ab2_1sc), .msk_a0b3_1sc(din_5_msk_ab3_1sc),
-
-           .a1b0(din_7_ab0), .a1b1(din_7_ab1), .a1b2(din_7_ab2),
-           .a1b0_1sc(din_7_ab0_1sc), .a1b1_1sc(din_7_ab1_1sc), .a1b2_1sc(din_7_ab2_1sc),
-           .msk_a1b0(din_7_msk_ab0), .msk_a1b1(din_7_msk_ab1), .msk_a1b2(din_7_msk_ab2),
-           .msk_a1b0_1sc(din_7_msk_ab0_1sc), .msk_a1b1_1sc(din_7_msk_ab1_1sc), .msk_a1b2_1sc(din_7_msk_ab2_1sc),
-
-           .a2b0(din_9_ab0), .a2b1(din_9_ab1),
-           .a2b0_1sc(din_9_ab0_1sc), .a2b1_1sc(din_9_ab1_1sc),
-           .msk_a2b0(din_9_msk_ab0), .msk_a2b1(din_9_msk_ab1),
-           .msk_a2b0_1sc(din_9_msk_ab0_1sc), .msk_a2b1_1sc(din_9_msk_ab1_1sc),
-           
-           .a3b0(din_11_ab0),
-           .a3b0_1sc(din_11_ab0_1sc)
+  .clk(clk), .p(addr_7_5),
+  .a0b0(din_5_ab0), .a0b1(din_5_ab1), .a0b2(din_5_ab2), .a0b3(din_5_ab3),
+  .a1b0(din_6_ab0), .a1b1(din_6_ab1), .a1b2(din_6_ab2), .a1b3(din_6_ab3),
+  .a2b0(din_7_ab0), .a2b1(din_7_ab1), .a2b2(din_7_ab2),
+  .a3b0(din_8_ab0), .a3b1(din_8_ab1), .a3b2(din_8_ab2),
+  .a4b0(din_9_ab0), .a4b1(din_9_ab1),
+  .a5b0(din_10_ab0), .a5b1(din_10_ab1),
+  .a6b0(din_11_ab0),
+  .a7b0(din_12_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffff000000000000),
 	.NBITS(8)
 ) addr_7_6_calc (
-           .clk(clk), .sign(din_signs_reg[6]), 
-           .p(addr_7_6),
-           .a0b0(din_6_ab0), .a0b1(din_6_ab1), .a0b2(din_6_ab2), .a0b3(din_6_ab3),
-           .a0b0_1sc(din_6_ab0_1sc), .a0b1_1sc(din_6_ab1_1sc), .a0b2_1sc(din_6_ab2_1sc), .a0b3_1sc(din_6_ab3_1sc),
-           .msk_a0b0(din_6_msk_ab0), .msk_a0b1(din_6_msk_ab1), .msk_a0b2(din_6_msk_ab2), .msk_a0b3(din_6_msk_ab3),
-           .msk_a0b0_1sc(din_6_msk_ab0_1sc), .msk_a0b1_1sc(din_6_msk_ab1_1sc), .msk_a0b2_1sc(din_6_msk_ab2_1sc), .msk_a0b3_1sc(din_6_msk_ab3_1sc),
-
-           .a1b0(din_8_ab0), .a1b1(din_8_ab1), .a1b2(din_8_ab2),
-           .a1b0_1sc(din_8_ab0_1sc), .a1b1_1sc(din_8_ab1_1sc), .a1b2_1sc(din_8_ab2_1sc),
-           .msk_a1b0(din_8_msk_ab0), .msk_a1b1(din_8_msk_ab1), .msk_a1b2(din_8_msk_ab2),
-           .msk_a1b0_1sc(din_8_msk_ab0_1sc), .msk_a1b1_1sc(din_8_msk_ab1_1sc), .msk_a1b2_1sc(din_8_msk_ab2_1sc),
-
-           .a2b0(din_10_ab0), .a2b1(din_10_ab1),
-           .a2b0_1sc(din_10_ab0_1sc), .a2b1_1sc(din_10_ab1_1sc),
-           .msk_a2b0(din_10_msk_ab0), .msk_a2b1(din_10_msk_ab1),
-           .msk_a2b0_1sc(din_10_msk_ab0_1sc), .msk_a2b1_1sc(din_10_msk_ab1_1sc),
-           
-           .a3b0(din_12_ab0),
-           .a3b0_1sc(din_12_ab0_1sc)
+  .clk(clk), .p(addr_7_6),
+  .a0b0(din_6_ab0), .a0b1(din_6_ab1), .a0b2(din_6_ab2), .a0b3(din_6_ab3),
+  .a1b0(din_7_ab0), .a1b1(din_7_ab1), .a1b2(din_7_ab2), .a1b3(din_7_ab3),
+  .a2b0(din_8_ab0), .a2b1(din_8_ab1), .a2b2(din_8_ab2),
+  .a3b0(din_9_ab0), .a3b1(din_9_ab1), .a3b2(din_9_ab2),
+  .a4b0(din_10_ab0), .a4b1(din_10_ab1),
+  .a5b0(din_11_ab0), .a5b1(din_11_ab1),
+  .a6b0(din_12_ab0),
+  .a7b0(din_13_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffff000000000000),
 	.NBITS(8)
 ) addr_7_7_calc (
-           .clk(clk), .sign(din_signs_reg[7]), 
-           .p(addr_7_7),
-           .a0b0(din_7_ab0), .a0b1(din_7_ab1), .a0b2(din_7_ab2), .a0b3(din_7_ab3),
-           .a0b0_1sc(din_7_ab0_1sc), .a0b1_1sc(din_7_ab1_1sc), .a0b2_1sc(din_7_ab2_1sc), .a0b3_1sc(din_7_ab3_1sc),
-           .msk_a0b0(din_7_msk_ab0), .msk_a0b1(din_7_msk_ab1), .msk_a0b2(din_7_msk_ab2), .msk_a0b3(din_7_msk_ab3),
-           .msk_a0b0_1sc(din_7_msk_ab0_1sc), .msk_a0b1_1sc(din_7_msk_ab1_1sc), .msk_a0b2_1sc(din_7_msk_ab2_1sc), .msk_a0b3_1sc(din_7_msk_ab3_1sc),
-
-           .a1b0(din_9_ab0), .a1b1(din_9_ab1), .a1b2(din_9_ab2),
-           .a1b0_1sc(din_9_ab0_1sc), .a1b1_1sc(din_9_ab1_1sc), .a1b2_1sc(din_9_ab2_1sc),
-           .msk_a1b0(din_9_msk_ab0), .msk_a1b1(din_9_msk_ab1), .msk_a1b2(din_9_msk_ab2),
-           .msk_a1b0_1sc(din_9_msk_ab0_1sc), .msk_a1b1_1sc(din_9_msk_ab1_1sc), .msk_a1b2_1sc(din_9_msk_ab2_1sc),
-
-           .a2b0(din_11_ab0), .a2b1(din_11_ab1),
-           .a2b0_1sc(din_11_ab0_1sc), .a2b1_1sc(din_11_ab1_1sc),
-           .msk_a2b0(din_11_msk_ab0), .msk_a2b1(din_11_msk_ab1),
-           .msk_a2b0_1sc(din_11_msk_ab0_1sc), .msk_a2b1_1sc(din_11_msk_ab1_1sc),
-           
-           .a3b0(din_13_ab0),
-           .a3b0_1sc(din_13_ab0_1sc)
+  .clk(clk), .p(addr_7_7),
+  .a0b0(din_7_ab0), .a0b1(din_7_ab1), .a0b2(din_7_ab2), .a0b3(din_7_ab3),
+  .a1b0(din_8_ab0), .a1b1(din_8_ab1), .a1b2(din_8_ab2), .a1b3(din_8_ab3),
+  .a2b0(din_9_ab0), .a2b1(din_9_ab1), .a2b2(din_9_ab2),
+  .a3b0(din_10_ab0), .a3b1(din_10_ab1), .a3b2(din_10_ab2),
+  .a4b0(din_11_ab0), .a4b1(din_11_ab1),
+  .a5b0(din_12_ab0), .a5b1(din_12_ab1),
+  .a6b0(din_13_ab0),
+  .a7b0(din_14_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffff000000000000),
 	.NBITS(8)
 ) addr_7_8_calc (
-           .clk(clk), .sign(din_signs_reg[8]), 
-           .p(addr_7_8),
-           .a0b0(din_8_ab0), .a0b1(din_8_ab1), .a0b2(din_8_ab2), .a0b3(din_8_ab3),
-           .a0b0_1sc(din_8_ab0_1sc), .a0b1_1sc(din_8_ab1_1sc), .a0b2_1sc(din_8_ab2_1sc), .a0b3_1sc(din_8_ab3_1sc),
-           .msk_a0b0(din_8_msk_ab0), .msk_a0b1(din_8_msk_ab1), .msk_a0b2(din_8_msk_ab2), .msk_a0b3(din_8_msk_ab3),
-           .msk_a0b0_1sc(din_8_msk_ab0_1sc), .msk_a0b1_1sc(din_8_msk_ab1_1sc), .msk_a0b2_1sc(din_8_msk_ab2_1sc), .msk_a0b3_1sc(din_8_msk_ab3_1sc),
-
-           .a1b0(din_10_ab0), .a1b1(din_10_ab1), .a1b2(din_10_ab2),
-           .a1b0_1sc(din_10_ab0_1sc), .a1b1_1sc(din_10_ab1_1sc), .a1b2_1sc(din_10_ab2_1sc),
-           .msk_a1b0(din_10_msk_ab0), .msk_a1b1(din_10_msk_ab1), .msk_a1b2(din_10_msk_ab2),
-           .msk_a1b0_1sc(din_10_msk_ab0_1sc), .msk_a1b1_1sc(din_10_msk_ab1_1sc), .msk_a1b2_1sc(din_10_msk_ab2_1sc),
-
-           .a2b0(din_12_ab0), .a2b1(din_12_ab1),
-           .a2b0_1sc(din_12_ab0_1sc), .a2b1_1sc(din_12_ab1_1sc),
-           .msk_a2b0(din_12_msk_ab0), .msk_a2b1(din_12_msk_ab1),
-           .msk_a2b0_1sc(din_12_msk_ab0_1sc), .msk_a2b1_1sc(din_12_msk_ab1_1sc),
-           
-           .a3b0(din_14_ab0),
-           .a3b0_1sc(din_14_ab0_1sc)
+  .clk(clk), .p(addr_7_8),
+  .a0b0(din_8_ab0), .a0b1(din_8_ab1), .a0b2(din_8_ab2), .a0b3(din_8_ab3),
+  .a1b0(din_9_ab0), .a1b1(din_9_ab1), .a1b2(din_9_ab2), .a1b3(din_9_ab3),
+  .a2b0(din_10_ab0), .a2b1(din_10_ab1), .a2b2(din_10_ab2),
+  .a3b0(din_11_ab0), .a3b1(din_11_ab1), .a3b2(din_11_ab2),
+  .a4b0(din_12_ab0), .a4b1(din_12_ab1),
+  .a5b0(din_13_ab0), .a5b1(din_13_ab1),
+  .a6b0(din_14_ab0),
+  .a7b0(din_15_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffff000000000000),
 	.NBITS(8)
 ) addr_7_9_calc (
-           .clk(clk), .sign(din_signs_reg[9]), 
-           .p(addr_7_9),
-           .a0b0(din_9_ab0), .a0b1(din_9_ab1), .a0b2(din_9_ab2), .a0b3(din_9_ab3),
-           .a0b0_1sc(din_9_ab0_1sc), .a0b1_1sc(din_9_ab1_1sc), .a0b2_1sc(din_9_ab2_1sc), .a0b3_1sc(din_9_ab3_1sc),
-           .msk_a0b0(din_9_msk_ab0), .msk_a0b1(din_9_msk_ab1), .msk_a0b2(din_9_msk_ab2), .msk_a0b3(din_9_msk_ab3),
-           .msk_a0b0_1sc(din_9_msk_ab0_1sc), .msk_a0b1_1sc(din_9_msk_ab1_1sc), .msk_a0b2_1sc(din_9_msk_ab2_1sc), .msk_a0b3_1sc(din_9_msk_ab3_1sc),
-
-           .a1b0(din_11_ab0), .a1b1(din_11_ab1), .a1b2(din_11_ab2),
-           .a1b0_1sc(din_11_ab0_1sc), .a1b1_1sc(din_11_ab1_1sc), .a1b2_1sc(din_11_ab2_1sc),
-           .msk_a1b0(din_11_msk_ab0), .msk_a1b1(din_11_msk_ab1), .msk_a1b2(din_11_msk_ab2),
-           .msk_a1b0_1sc(din_11_msk_ab0_1sc), .msk_a1b1_1sc(din_11_msk_ab1_1sc), .msk_a1b2_1sc(din_11_msk_ab2_1sc),
-
-           .a2b0(din_13_ab0), .a2b1(din_13_ab1),
-           .a2b0_1sc(din_13_ab0_1sc), .a2b1_1sc(din_13_ab1_1sc),
-           .msk_a2b0(din_13_msk_ab0), .msk_a2b1(din_13_msk_ab1),
-           .msk_a2b0_1sc(din_13_msk_ab0_1sc), .msk_a2b1_1sc(din_13_msk_ab1_1sc),
-           
-           .a3b0(din_15_ab0),
-           .a3b0_1sc(din_15_ab0_1sc)
+  .clk(clk), .p(addr_7_9),
+  .a0b0(din_9_ab0), .a0b1(din_9_ab1), .a0b2(din_9_ab2), .a0b3(din_9_ab3),
+  .a1b0(din_10_ab0), .a1b1(din_10_ab1), .a1b2(din_10_ab2), .a1b3(din_10_ab3),
+  .a2b0(din_11_ab0), .a2b1(din_11_ab1), .a2b2(din_11_ab2),
+  .a3b0(din_12_ab0), .a3b1(din_12_ab1), .a3b2(din_12_ab2),
+  .a4b0(din_13_ab0), .a4b1(din_13_ab1),
+  .a5b0(din_14_ab0), .a5b1(din_14_ab1),
+  .a6b0(din_15_ab0),
+  .a7b0(din_16_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffff000000000000),
 	.NBITS(8)
 ) addr_7_10_calc (
-           .clk(clk), .sign(din_signs_reg[10]), 
-           .p(addr_7_10),
-           .a0b0(din_10_ab0), .a0b1(din_10_ab1), .a0b2(din_10_ab2), .a0b3(din_10_ab3),
-           .a0b0_1sc(din_10_ab0_1sc), .a0b1_1sc(din_10_ab1_1sc), .a0b2_1sc(din_10_ab2_1sc), .a0b3_1sc(din_10_ab3_1sc),
-           .msk_a0b0(din_10_msk_ab0), .msk_a0b1(din_10_msk_ab1), .msk_a0b2(din_10_msk_ab2), .msk_a0b3(din_10_msk_ab3),
-           .msk_a0b0_1sc(din_10_msk_ab0_1sc), .msk_a0b1_1sc(din_10_msk_ab1_1sc), .msk_a0b2_1sc(din_10_msk_ab2_1sc), .msk_a0b3_1sc(din_10_msk_ab3_1sc),
-
-           .a1b0(din_12_ab0), .a1b1(din_12_ab1), .a1b2(din_12_ab2),
-           .a1b0_1sc(din_12_ab0_1sc), .a1b1_1sc(din_12_ab1_1sc), .a1b2_1sc(din_12_ab2_1sc),
-           .msk_a1b0(din_12_msk_ab0), .msk_a1b1(din_12_msk_ab1), .msk_a1b2(din_12_msk_ab2),
-           .msk_a1b0_1sc(din_12_msk_ab0_1sc), .msk_a1b1_1sc(din_12_msk_ab1_1sc), .msk_a1b2_1sc(din_12_msk_ab2_1sc),
-
-           .a2b0(din_14_ab0), .a2b1(din_14_ab1),
-           .a2b0_1sc(din_14_ab0_1sc), .a2b1_1sc(din_14_ab1_1sc),
-           .msk_a2b0(din_14_msk_ab0), .msk_a2b1(din_14_msk_ab1),
-           .msk_a2b0_1sc(din_14_msk_ab0_1sc), .msk_a2b1_1sc(din_14_msk_ab1_1sc),
-           
-           .a3b0(din_16_ab0),
-           .a3b0_1sc(din_16_ab0_1sc)
+  .clk(clk), .p(addr_7_10),
+  .a0b0(din_10_ab0), .a0b1(din_10_ab1), .a0b2(din_10_ab2), .a0b3(din_10_ab3),
+  .a1b0(din_11_ab0), .a1b1(din_11_ab1), .a1b2(din_11_ab2), .a1b3(din_11_ab3),
+  .a2b0(din_12_ab0), .a2b1(din_12_ab1), .a2b2(din_12_ab2),
+  .a3b0(din_13_ab0), .a3b1(din_13_ab1), .a3b2(din_13_ab2),
+  .a4b0(din_14_ab0), .a4b1(din_14_ab1),
+  .a5b0(din_15_ab0), .a5b1(din_15_ab1),
+  .a6b0(din_16_ab0),
+  .a7b0(din_17_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffff000000000000),
 	.NBITS(8)
 ) addr_7_11_calc (
-           .clk(clk), .sign(din_signs_reg[11]), 
-           .p(addr_7_11),
-           .a0b0(din_11_ab0), .a0b1(din_11_ab1), .a0b2(din_11_ab2), .a0b3(din_11_ab3),
-           .a0b0_1sc(din_11_ab0_1sc), .a0b1_1sc(din_11_ab1_1sc), .a0b2_1sc(din_11_ab2_1sc), .a0b3_1sc(din_11_ab3_1sc),
-           .msk_a0b0(din_11_msk_ab0), .msk_a0b1(din_11_msk_ab1), .msk_a0b2(din_11_msk_ab2), .msk_a0b3(din_11_msk_ab3),
-           .msk_a0b0_1sc(din_11_msk_ab0_1sc), .msk_a0b1_1sc(din_11_msk_ab1_1sc), .msk_a0b2_1sc(din_11_msk_ab2_1sc), .msk_a0b3_1sc(din_11_msk_ab3_1sc),
-
-           .a1b0(din_13_ab0), .a1b1(din_13_ab1), .a1b2(din_13_ab2),
-           .a1b0_1sc(din_13_ab0_1sc), .a1b1_1sc(din_13_ab1_1sc), .a1b2_1sc(din_13_ab2_1sc),
-           .msk_a1b0(din_13_msk_ab0), .msk_a1b1(din_13_msk_ab1), .msk_a1b2(din_13_msk_ab2),
-           .msk_a1b0_1sc(din_13_msk_ab0_1sc), .msk_a1b1_1sc(din_13_msk_ab1_1sc), .msk_a1b2_1sc(din_13_msk_ab2_1sc),
-
-           .a2b0(din_15_ab0), .a2b1(din_15_ab1),
-           .a2b0_1sc(din_15_ab0_1sc), .a2b1_1sc(din_15_ab1_1sc),
-           .msk_a2b0(din_15_msk_ab0), .msk_a2b1(din_15_msk_ab1),
-           .msk_a2b0_1sc(din_15_msk_ab0_1sc), .msk_a2b1_1sc(din_15_msk_ab1_1sc),
-           
-           .a3b0(din_17_ab0),
-           .a3b0_1sc(din_17_ab0_1sc)
+  .clk(clk), .p(addr_7_11),
+  .a0b0(din_11_ab0), .a0b1(din_11_ab1), .a0b2(din_11_ab2), .a0b3(din_11_ab3),
+  .a1b0(din_12_ab0), .a1b1(din_12_ab1), .a1b2(din_12_ab2), .a1b3(din_12_ab3),
+  .a2b0(din_13_ab0), .a2b1(din_13_ab1), .a2b2(din_13_ab2),
+  .a3b0(din_14_ab0), .a3b1(din_14_ab1), .a3b2(din_14_ab2),
+  .a4b0(din_15_ab0), .a4b1(din_15_ab1),
+  .a5b0(din_16_ab0), .a5b1(din_16_ab1),
+  .a6b0(din_17_ab0),
+  .a7b0(din_18_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffff000000000000),
 	.NBITS(8)
 ) addr_7_12_calc (
-           .clk(clk), .sign(din_signs_reg[12]), 
-           .p(addr_7_12),
-           .a0b0(din_12_ab0), .a0b1(din_12_ab1), .a0b2(din_12_ab2), .a0b3(din_12_ab3),
-           .a0b0_1sc(din_12_ab0_1sc), .a0b1_1sc(din_12_ab1_1sc), .a0b2_1sc(din_12_ab2_1sc), .a0b3_1sc(din_12_ab3_1sc),
-           .msk_a0b0(din_12_msk_ab0), .msk_a0b1(din_12_msk_ab1), .msk_a0b2(din_12_msk_ab2), .msk_a0b3(din_12_msk_ab3),
-           .msk_a0b0_1sc(din_12_msk_ab0_1sc), .msk_a0b1_1sc(din_12_msk_ab1_1sc), .msk_a0b2_1sc(din_12_msk_ab2_1sc), .msk_a0b3_1sc(din_12_msk_ab3_1sc),
-
-           .a1b0(din_14_ab0), .a1b1(din_14_ab1), .a1b2(din_14_ab2),
-           .a1b0_1sc(din_14_ab0_1sc), .a1b1_1sc(din_14_ab1_1sc), .a1b2_1sc(din_14_ab2_1sc),
-           .msk_a1b0(din_14_msk_ab0), .msk_a1b1(din_14_msk_ab1), .msk_a1b2(din_14_msk_ab2),
-           .msk_a1b0_1sc(din_14_msk_ab0_1sc), .msk_a1b1_1sc(din_14_msk_ab1_1sc), .msk_a1b2_1sc(din_14_msk_ab2_1sc),
-
-           .a2b0(din_16_ab0), .a2b1(din_16_ab1),
-           .a2b0_1sc(din_16_ab0_1sc), .a2b1_1sc(din_16_ab1_1sc),
-           .msk_a2b0(din_16_msk_ab0), .msk_a2b1(din_16_msk_ab1),
-           .msk_a2b0_1sc(din_16_msk_ab0_1sc), .msk_a2b1_1sc(din_16_msk_ab1_1sc),
-           
-           .a3b0(din_18_ab0),
-           .a3b0_1sc(din_18_ab0_1sc)
+  .clk(clk), .p(addr_7_12),
+  .a0b0(din_12_ab0), .a0b1(din_12_ab1), .a0b2(din_12_ab2), .a0b3(din_12_ab3),
+  .a1b0(din_13_ab0), .a1b1(din_13_ab1), .a1b2(din_13_ab2), .a1b3(din_13_ab3),
+  .a2b0(din_14_ab0), .a2b1(din_14_ab1), .a2b2(din_14_ab2),
+  .a3b0(din_15_ab0), .a3b1(din_15_ab1), .a3b2(din_15_ab2),
+  .a4b0(din_16_ab0), .a4b1(din_16_ab1),
+  .a5b0(din_17_ab0), .a5b1(din_17_ab1),
+  .a6b0(din_18_ab0),
+  .a7b0(din_19_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffff000000000000),
 	.NBITS(8)
 ) addr_7_13_calc (
-           .clk(clk), .sign(din_signs_reg[13]), 
-           .p(addr_7_13),
-           .a0b0(din_13_ab0), .a0b1(din_13_ab1), .a0b2(din_13_ab2), .a0b3(din_13_ab3),
-           .a0b0_1sc(din_13_ab0_1sc), .a0b1_1sc(din_13_ab1_1sc), .a0b2_1sc(din_13_ab2_1sc), .a0b3_1sc(din_13_ab3_1sc),
-           .msk_a0b0(din_13_msk_ab0), .msk_a0b1(din_13_msk_ab1), .msk_a0b2(din_13_msk_ab2), .msk_a0b3(din_13_msk_ab3),
-           .msk_a0b0_1sc(din_13_msk_ab0_1sc), .msk_a0b1_1sc(din_13_msk_ab1_1sc), .msk_a0b2_1sc(din_13_msk_ab2_1sc), .msk_a0b3_1sc(din_13_msk_ab3_1sc),
-
-           .a1b0(din_15_ab0), .a1b1(din_15_ab1), .a1b2(din_15_ab2),
-           .a1b0_1sc(din_15_ab0_1sc), .a1b1_1sc(din_15_ab1_1sc), .a1b2_1sc(din_15_ab2_1sc),
-           .msk_a1b0(din_15_msk_ab0), .msk_a1b1(din_15_msk_ab1), .msk_a1b2(din_15_msk_ab2),
-           .msk_a1b0_1sc(din_15_msk_ab0_1sc), .msk_a1b1_1sc(din_15_msk_ab1_1sc), .msk_a1b2_1sc(din_15_msk_ab2_1sc),
-
-           .a2b0(din_17_ab0), .a2b1(din_17_ab1),
-           .a2b0_1sc(din_17_ab0_1sc), .a2b1_1sc(din_17_ab1_1sc),
-           .msk_a2b0(din_17_msk_ab0), .msk_a2b1(din_17_msk_ab1),
-           .msk_a2b0_1sc(din_17_msk_ab0_1sc), .msk_a2b1_1sc(din_17_msk_ab1_1sc),
-           
-           .a3b0(din_19_ab0),
-           .a3b0_1sc(din_19_ab0_1sc)
+  .clk(clk), .p(addr_7_13),
+  .a0b0(din_13_ab0), .a0b1(din_13_ab1), .a0b2(din_13_ab2), .a0b3(din_13_ab3),
+  .a1b0(din_14_ab0), .a1b1(din_14_ab1), .a1b2(din_14_ab2), .a1b3(din_14_ab3),
+  .a2b0(din_15_ab0), .a2b1(din_15_ab1), .a2b2(din_15_ab2),
+  .a3b0(din_16_ab0), .a3b1(din_16_ab1), .a3b2(din_16_ab2),
+  .a4b0(din_17_ab0), .a4b1(din_17_ab1),
+  .a5b0(din_18_ab0), .a5b1(din_18_ab1),
+  .a6b0(din_19_ab0),
+  .a7b0(din_20_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffff000000000000),
 	.NBITS(8)
 ) addr_7_14_calc (
-           .clk(clk), .sign(din_signs_reg[14]), 
-           .p(addr_7_14),
-           .a0b0(din_14_ab0), .a0b1(din_14_ab1), .a0b2(din_14_ab2), .a0b3(din_14_ab3),
-           .a0b0_1sc(din_14_ab0_1sc), .a0b1_1sc(din_14_ab1_1sc), .a0b2_1sc(din_14_ab2_1sc), .a0b3_1sc(din_14_ab3_1sc),
-           .msk_a0b0(din_14_msk_ab0), .msk_a0b1(din_14_msk_ab1), .msk_a0b2(din_14_msk_ab2), .msk_a0b3(din_14_msk_ab3),
-           .msk_a0b0_1sc(din_14_msk_ab0_1sc), .msk_a0b1_1sc(din_14_msk_ab1_1sc), .msk_a0b2_1sc(din_14_msk_ab2_1sc), .msk_a0b3_1sc(din_14_msk_ab3_1sc),
-
-           .a1b0(din_16_ab0), .a1b1(din_16_ab1), .a1b2(din_16_ab2),
-           .a1b0_1sc(din_16_ab0_1sc), .a1b1_1sc(din_16_ab1_1sc), .a1b2_1sc(din_16_ab2_1sc),
-           .msk_a1b0(din_16_msk_ab0), .msk_a1b1(din_16_msk_ab1), .msk_a1b2(din_16_msk_ab2),
-           .msk_a1b0_1sc(din_16_msk_ab0_1sc), .msk_a1b1_1sc(din_16_msk_ab1_1sc), .msk_a1b2_1sc(din_16_msk_ab2_1sc),
-
-           .a2b0(din_18_ab0), .a2b1(din_18_ab1),
-           .a2b0_1sc(din_18_ab0_1sc), .a2b1_1sc(din_18_ab1_1sc),
-           .msk_a2b0(din_18_msk_ab0), .msk_a2b1(din_18_msk_ab1),
-           .msk_a2b0_1sc(din_18_msk_ab0_1sc), .msk_a2b1_1sc(din_18_msk_ab1_1sc),
-           
-           .a3b0(din_20_ab0),
-           .a3b0_1sc(din_20_ab0_1sc)
+  .clk(clk), .p(addr_7_14),
+  .a0b0(din_14_ab0), .a0b1(din_14_ab1), .a0b2(din_14_ab2), .a0b3(din_14_ab3),
+  .a1b0(din_15_ab0), .a1b1(din_15_ab1), .a1b2(din_15_ab2), .a1b3(din_15_ab3),
+  .a2b0(din_16_ab0), .a2b1(din_16_ab1), .a2b2(din_16_ab2),
+  .a3b0(din_17_ab0), .a3b1(din_17_ab1), .a3b2(din_17_ab2),
+  .a4b0(din_18_ab0), .a4b1(din_18_ab1),
+  .a5b0(din_19_ab0), .a5b1(din_19_ab1),
+  .a6b0(din_20_ab0),
+  .a7b0(din_21_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffff000000000000),
 	.NBITS(8)
 ) addr_7_15_calc (
-           .clk(clk), .sign(din_signs_reg[15]), 
-           .p(addr_7_15),
-           .a0b0(din_15_ab0), .a0b1(din_15_ab1), .a0b2(din_15_ab2), .a0b3(din_15_ab3),
-           .a0b0_1sc(din_15_ab0_1sc), .a0b1_1sc(din_15_ab1_1sc), .a0b2_1sc(din_15_ab2_1sc), .a0b3_1sc(din_15_ab3_1sc),
-           .msk_a0b0(din_15_msk_ab0), .msk_a0b1(din_15_msk_ab1), .msk_a0b2(din_15_msk_ab2), .msk_a0b3(din_15_msk_ab3),
-           .msk_a0b0_1sc(din_15_msk_ab0_1sc), .msk_a0b1_1sc(din_15_msk_ab1_1sc), .msk_a0b2_1sc(din_15_msk_ab2_1sc), .msk_a0b3_1sc(din_15_msk_ab3_1sc),
-
-           .a1b0(din_17_ab0), .a1b1(din_17_ab1), .a1b2(din_17_ab2),
-           .a1b0_1sc(din_17_ab0_1sc), .a1b1_1sc(din_17_ab1_1sc), .a1b2_1sc(din_17_ab2_1sc),
-           .msk_a1b0(din_17_msk_ab0), .msk_a1b1(din_17_msk_ab1), .msk_a1b2(din_17_msk_ab2),
-           .msk_a1b0_1sc(din_17_msk_ab0_1sc), .msk_a1b1_1sc(din_17_msk_ab1_1sc), .msk_a1b2_1sc(din_17_msk_ab2_1sc),
-
-           .a2b0(din_19_ab0), .a2b1(din_19_ab1),
-           .a2b0_1sc(din_19_ab0_1sc), .a2b1_1sc(din_19_ab1_1sc),
-           .msk_a2b0(din_19_msk_ab0), .msk_a2b1(din_19_msk_ab1),
-           .msk_a2b0_1sc(din_19_msk_ab0_1sc), .msk_a2b1_1sc(din_19_msk_ab1_1sc),
-           
-           .a3b0(din_21_ab0),
-           .a3b0_1sc(din_21_ab0_1sc)
+  .clk(clk), .p(addr_7_15),
+  .a0b0(din_15_ab0), .a0b1(din_15_ab1), .a0b2(din_15_ab2), .a0b3(din_15_ab3),
+  .a1b0(din_16_ab0), .a1b1(din_16_ab1), .a1b2(din_16_ab2), .a1b3(din_16_ab3),
+  .a2b0(din_17_ab0), .a2b1(din_17_ab1), .a2b2(din_17_ab2),
+  .a3b0(din_18_ab0), .a3b1(din_18_ab1), .a3b2(din_18_ab2),
+  .a4b0(din_19_ab0), .a4b1(din_19_ab1),
+  .a5b0(din_20_ab0), .a5b1(din_20_ab1),
+  .a6b0(din_21_ab0),
+  .a7b0(din_22_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffff000000000000),
 	.NBITS(8)
 ) addr_7_16_calc (
-           .clk(clk), .sign(din_signs_reg[16]), 
-           .p(addr_7_16),
-           .a0b0(din_16_ab0), .a0b1(din_16_ab1), .a0b2(din_16_ab2), .a0b3(din_16_ab3),
-           .a0b0_1sc(din_16_ab0_1sc), .a0b1_1sc(din_16_ab1_1sc), .a0b2_1sc(din_16_ab2_1sc), .a0b3_1sc(din_16_ab3_1sc),
-           .msk_a0b0(din_16_msk_ab0), .msk_a0b1(din_16_msk_ab1), .msk_a0b2(din_16_msk_ab2), .msk_a0b3(din_16_msk_ab3),
-           .msk_a0b0_1sc(din_16_msk_ab0_1sc), .msk_a0b1_1sc(din_16_msk_ab1_1sc), .msk_a0b2_1sc(din_16_msk_ab2_1sc), .msk_a0b3_1sc(din_16_msk_ab3_1sc),
-
-           .a1b0(din_18_ab0), .a1b1(din_18_ab1), .a1b2(din_18_ab2),
-           .a1b0_1sc(din_18_ab0_1sc), .a1b1_1sc(din_18_ab1_1sc), .a1b2_1sc(din_18_ab2_1sc),
-           .msk_a1b0(din_18_msk_ab0), .msk_a1b1(din_18_msk_ab1), .msk_a1b2(din_18_msk_ab2),
-           .msk_a1b0_1sc(din_18_msk_ab0_1sc), .msk_a1b1_1sc(din_18_msk_ab1_1sc), .msk_a1b2_1sc(din_18_msk_ab2_1sc),
-
-           .a2b0(din_20_ab0), .a2b1(din_20_ab1),
-           .a2b0_1sc(din_20_ab0_1sc), .a2b1_1sc(din_20_ab1_1sc),
-           .msk_a2b0(din_20_msk_ab0), .msk_a2b1(din_20_msk_ab1),
-           .msk_a2b0_1sc(din_20_msk_ab0_1sc), .msk_a2b1_1sc(din_20_msk_ab1_1sc),
-           
-           .a3b0(din_22_ab0),
-           .a3b0_1sc(din_22_ab0_1sc)
+  .clk(clk), .p(addr_7_16),
+  .a0b0(din_16_ab0), .a0b1(din_16_ab1), .a0b2(din_16_ab2), .a0b3(din_16_ab3),
+  .a1b0(din_17_ab0), .a1b1(din_17_ab1), .a1b2(din_17_ab2), .a1b3(din_17_ab3),
+  .a2b0(din_18_ab0), .a2b1(din_18_ab1), .a2b2(din_18_ab2),
+  .a3b0(din_19_ab0), .a3b1(din_19_ab1), .a3b2(din_19_ab2),
+  .a4b0(din_20_ab0), .a4b1(din_20_ab1),
+  .a5b0(din_21_ab0), .a5b1(din_21_ab1),
+  .a6b0(din_22_ab0),
+  .a7b0(din_23_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffff000000000000),
 	.NBITS(8)
 ) addr_7_17_calc (
-           .clk(clk), .sign(din_signs_reg[17]), 
-           .p(addr_7_17),
-           .a0b0(din_17_ab0), .a0b1(din_17_ab1), .a0b2(din_17_ab2), .a0b3(din_17_ab3),
-           .a0b0_1sc(din_17_ab0_1sc), .a0b1_1sc(din_17_ab1_1sc), .a0b2_1sc(din_17_ab2_1sc), .a0b3_1sc(din_17_ab3_1sc),
-           .msk_a0b0(din_17_msk_ab0), .msk_a0b1(din_17_msk_ab1), .msk_a0b2(din_17_msk_ab2), .msk_a0b3(din_17_msk_ab3),
-           .msk_a0b0_1sc(din_17_msk_ab0_1sc), .msk_a0b1_1sc(din_17_msk_ab1_1sc), .msk_a0b2_1sc(din_17_msk_ab2_1sc), .msk_a0b3_1sc(din_17_msk_ab3_1sc),
-
-           .a1b0(din_19_ab0), .a1b1(din_19_ab1), .a1b2(din_19_ab2),
-           .a1b0_1sc(din_19_ab0_1sc), .a1b1_1sc(din_19_ab1_1sc), .a1b2_1sc(din_19_ab2_1sc),
-           .msk_a1b0(din_19_msk_ab0), .msk_a1b1(din_19_msk_ab1), .msk_a1b2(din_19_msk_ab2),
-           .msk_a1b0_1sc(din_19_msk_ab0_1sc), .msk_a1b1_1sc(din_19_msk_ab1_1sc), .msk_a1b2_1sc(din_19_msk_ab2_1sc),
-
-           .a2b0(din_21_ab0), .a2b1(din_21_ab1),
-           .a2b0_1sc(din_21_ab0_1sc), .a2b1_1sc(din_21_ab1_1sc),
-           .msk_a2b0(din_21_msk_ab0), .msk_a2b1(din_21_msk_ab1),
-           .msk_a2b0_1sc(din_21_msk_ab0_1sc), .msk_a2b1_1sc(din_21_msk_ab1_1sc),
-           
-           .a3b0(din_23_ab0),
-           .a3b0_1sc(din_23_ab0_1sc)
+  .clk(clk), .p(addr_7_17),
+  .a0b0(din_17_ab0), .a0b1(din_17_ab1), .a0b2(din_17_ab2), .a0b3(din_17_ab3),
+  .a1b0(din_18_ab0), .a1b1(din_18_ab1), .a1b2(din_18_ab2), .a1b3(din_18_ab3),
+  .a2b0(din_19_ab0), .a2b1(din_19_ab1), .a2b2(din_19_ab2),
+  .a3b0(din_20_ab0), .a3b1(din_20_ab1), .a3b2(din_20_ab2),
+  .a4b0(din_21_ab0), .a4b1(din_21_ab1),
+  .a5b0(din_22_ab0), .a5b1(din_22_ab1),
+  .a6b0(din_23_ab0),
+  .a7b0(din_24_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffff000000000000),
 	.NBITS(8)
 ) addr_7_18_calc (
-           .clk(clk), .sign(din_signs_reg[18]), 
-           .p(addr_7_18),
-           .a0b0(din_18_ab0), .a0b1(din_18_ab1), .a0b2(din_18_ab2), .a0b3(din_18_ab3),
-           .a0b0_1sc(din_18_ab0_1sc), .a0b1_1sc(din_18_ab1_1sc), .a0b2_1sc(din_18_ab2_1sc), .a0b3_1sc(din_18_ab3_1sc),
-           .msk_a0b0(din_18_msk_ab0), .msk_a0b1(din_18_msk_ab1), .msk_a0b2(din_18_msk_ab2), .msk_a0b3(din_18_msk_ab3),
-           .msk_a0b0_1sc(din_18_msk_ab0_1sc), .msk_a0b1_1sc(din_18_msk_ab1_1sc), .msk_a0b2_1sc(din_18_msk_ab2_1sc), .msk_a0b3_1sc(din_18_msk_ab3_1sc),
-
-           .a1b0(din_20_ab0), .a1b1(din_20_ab1), .a1b2(din_20_ab2),
-           .a1b0_1sc(din_20_ab0_1sc), .a1b1_1sc(din_20_ab1_1sc), .a1b2_1sc(din_20_ab2_1sc),
-           .msk_a1b0(din_20_msk_ab0), .msk_a1b1(din_20_msk_ab1), .msk_a1b2(din_20_msk_ab2),
-           .msk_a1b0_1sc(din_20_msk_ab0_1sc), .msk_a1b1_1sc(din_20_msk_ab1_1sc), .msk_a1b2_1sc(din_20_msk_ab2_1sc),
-
-           .a2b0(din_22_ab0), .a2b1(din_22_ab1),
-           .a2b0_1sc(din_22_ab0_1sc), .a2b1_1sc(din_22_ab1_1sc),
-           .msk_a2b0(din_22_msk_ab0), .msk_a2b1(din_22_msk_ab1),
-           .msk_a2b0_1sc(din_22_msk_ab0_1sc), .msk_a2b1_1sc(din_22_msk_ab1_1sc),
-           
-           .a3b0(din_24_ab0),
-           .a3b0_1sc(din_24_ab0_1sc)
+  .clk(clk), .p(addr_7_18),
+  .a0b0(din_18_ab0), .a0b1(din_18_ab1), .a0b2(din_18_ab2), .a0b3(din_18_ab3),
+  .a1b0(din_19_ab0), .a1b1(din_19_ab1), .a1b2(din_19_ab2), .a1b3(din_19_ab3),
+  .a2b0(din_20_ab0), .a2b1(din_20_ab1), .a2b2(din_20_ab2),
+  .a3b0(din_21_ab0), .a3b1(din_21_ab1), .a3b2(din_21_ab2),
+  .a4b0(din_22_ab0), .a4b1(din_22_ab1),
+  .a5b0(din_23_ab0), .a5b1(din_23_ab1),
+  .a6b0(din_24_ab0),
+  .a7b0(din_25_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffff000000000000),
 	.NBITS(8)
 ) addr_7_19_calc (
-           .clk(clk), .sign(din_signs_reg[19]), 
-           .p(addr_7_19),
-           .a0b0(din_19_ab0), .a0b1(din_19_ab1), .a0b2(din_19_ab2), .a0b3(din_19_ab3),
-           .a0b0_1sc(din_19_ab0_1sc), .a0b1_1sc(din_19_ab1_1sc), .a0b2_1sc(din_19_ab2_1sc), .a0b3_1sc(din_19_ab3_1sc),
-           .msk_a0b0(din_19_msk_ab0), .msk_a0b1(din_19_msk_ab1), .msk_a0b2(din_19_msk_ab2), .msk_a0b3(din_19_msk_ab3),
-           .msk_a0b0_1sc(din_19_msk_ab0_1sc), .msk_a0b1_1sc(din_19_msk_ab1_1sc), .msk_a0b2_1sc(din_19_msk_ab2_1sc), .msk_a0b3_1sc(din_19_msk_ab3_1sc),
-
-           .a1b0(din_21_ab0), .a1b1(din_21_ab1), .a1b2(din_21_ab2),
-           .a1b0_1sc(din_21_ab0_1sc), .a1b1_1sc(din_21_ab1_1sc), .a1b2_1sc(din_21_ab2_1sc),
-           .msk_a1b0(din_21_msk_ab0), .msk_a1b1(din_21_msk_ab1), .msk_a1b2(din_21_msk_ab2),
-           .msk_a1b0_1sc(din_21_msk_ab0_1sc), .msk_a1b1_1sc(din_21_msk_ab1_1sc), .msk_a1b2_1sc(din_21_msk_ab2_1sc),
-
-           .a2b0(din_23_ab0), .a2b1(din_23_ab1),
-           .a2b0_1sc(din_23_ab0_1sc), .a2b1_1sc(din_23_ab1_1sc),
-           .msk_a2b0(din_23_msk_ab0), .msk_a2b1(din_23_msk_ab1),
-           .msk_a2b0_1sc(din_23_msk_ab0_1sc), .msk_a2b1_1sc(din_23_msk_ab1_1sc),
-           
-           .a3b0(din_25_ab0),
-           .a3b0_1sc(din_25_ab0_1sc)
+  .clk(clk), .p(addr_7_19),
+  .a0b0(din_19_ab0), .a0b1(din_19_ab1), .a0b2(din_19_ab2), .a0b3(din_19_ab3),
+  .a1b0(din_20_ab0), .a1b1(din_20_ab1), .a1b2(din_20_ab2), .a1b3(din_20_ab3),
+  .a2b0(din_21_ab0), .a2b1(din_21_ab1), .a2b2(din_21_ab2),
+  .a3b0(din_22_ab0), .a3b1(din_22_ab1), .a3b2(din_22_ab2),
+  .a4b0(din_23_ab0), .a4b1(din_23_ab1),
+  .a5b0(din_24_ab0), .a5b1(din_24_ab1),
+  .a6b0(din_25_ab0),
+  .a7b0(din_26_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffff000000000000),
 	.NBITS(8)
 ) addr_7_20_calc (
-           .clk(clk), .sign(din_signs_reg[20]), 
-           .p(addr_7_20),
-           .a0b0(din_20_ab0), .a0b1(din_20_ab1), .a0b2(din_20_ab2), .a0b3(din_20_ab3),
-           .a0b0_1sc(din_20_ab0_1sc), .a0b1_1sc(din_20_ab1_1sc), .a0b2_1sc(din_20_ab2_1sc), .a0b3_1sc(din_20_ab3_1sc),
-           .msk_a0b0(din_20_msk_ab0), .msk_a0b1(din_20_msk_ab1), .msk_a0b2(din_20_msk_ab2), .msk_a0b3(din_20_msk_ab3),
-           .msk_a0b0_1sc(din_20_msk_ab0_1sc), .msk_a0b1_1sc(din_20_msk_ab1_1sc), .msk_a0b2_1sc(din_20_msk_ab2_1sc), .msk_a0b3_1sc(din_20_msk_ab3_1sc),
-
-           .a1b0(din_22_ab0), .a1b1(din_22_ab1), .a1b2(din_22_ab2),
-           .a1b0_1sc(din_22_ab0_1sc), .a1b1_1sc(din_22_ab1_1sc), .a1b2_1sc(din_22_ab2_1sc),
-           .msk_a1b0(din_22_msk_ab0), .msk_a1b1(din_22_msk_ab1), .msk_a1b2(din_22_msk_ab2),
-           .msk_a1b0_1sc(din_22_msk_ab0_1sc), .msk_a1b1_1sc(din_22_msk_ab1_1sc), .msk_a1b2_1sc(din_22_msk_ab2_1sc),
-
-           .a2b0(din_24_ab0), .a2b1(din_24_ab1),
-           .a2b0_1sc(din_24_ab0_1sc), .a2b1_1sc(din_24_ab1_1sc),
-           .msk_a2b0(din_24_msk_ab0), .msk_a2b1(din_24_msk_ab1),
-           .msk_a2b0_1sc(din_24_msk_ab0_1sc), .msk_a2b1_1sc(din_24_msk_ab1_1sc),
-           
-           .a3b0(din_26_ab0),
-           .a3b0_1sc(din_26_ab0_1sc)
+  .clk(clk), .p(addr_7_20),
+  .a0b0(din_20_ab0), .a0b1(din_20_ab1), .a0b2(din_20_ab2), .a0b3(din_20_ab3),
+  .a1b0(din_21_ab0), .a1b1(din_21_ab1), .a1b2(din_21_ab2), .a1b3(din_21_ab3),
+  .a2b0(din_22_ab0), .a2b1(din_22_ab1), .a2b2(din_22_ab2),
+  .a3b0(din_23_ab0), .a3b1(din_23_ab1), .a3b2(din_23_ab2),
+  .a4b0(din_24_ab0), .a4b1(din_24_ab1),
+  .a5b0(din_25_ab0), .a5b1(din_25_ab1),
+  .a6b0(din_26_ab0),
+  .a7b0(din_27_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffff000000000000),
 	.NBITS(8)
 ) addr_7_21_calc (
-           .clk(clk), .sign(din_signs_reg[21]), 
-           .p(addr_7_21),
-           .a0b0(din_21_ab0), .a0b1(din_21_ab1), .a0b2(din_21_ab2), .a0b3(din_21_ab3),
-           .a0b0_1sc(din_21_ab0_1sc), .a0b1_1sc(din_21_ab1_1sc), .a0b2_1sc(din_21_ab2_1sc), .a0b3_1sc(din_21_ab3_1sc),
-           .msk_a0b0(din_21_msk_ab0), .msk_a0b1(din_21_msk_ab1), .msk_a0b2(din_21_msk_ab2), .msk_a0b3(din_21_msk_ab3),
-           .msk_a0b0_1sc(din_21_msk_ab0_1sc), .msk_a0b1_1sc(din_21_msk_ab1_1sc), .msk_a0b2_1sc(din_21_msk_ab2_1sc), .msk_a0b3_1sc(din_21_msk_ab3_1sc),
-
-           .a1b0(din_23_ab0), .a1b1(din_23_ab1), .a1b2(din_23_ab2),
-           .a1b0_1sc(din_23_ab0_1sc), .a1b1_1sc(din_23_ab1_1sc), .a1b2_1sc(din_23_ab2_1sc),
-           .msk_a1b0(din_23_msk_ab0), .msk_a1b1(din_23_msk_ab1), .msk_a1b2(din_23_msk_ab2),
-           .msk_a1b0_1sc(din_23_msk_ab0_1sc), .msk_a1b1_1sc(din_23_msk_ab1_1sc), .msk_a1b2_1sc(din_23_msk_ab2_1sc),
-
-           .a2b0(din_25_ab0), .a2b1(din_25_ab1),
-           .a2b0_1sc(din_25_ab0_1sc), .a2b1_1sc(din_25_ab1_1sc),
-           .msk_a2b0(din_25_msk_ab0), .msk_a2b1(din_25_msk_ab1),
-           .msk_a2b0_1sc(din_25_msk_ab0_1sc), .msk_a2b1_1sc(din_25_msk_ab1_1sc),
-           
-           .a3b0(din_27_ab0),
-           .a3b0_1sc(din_27_ab0_1sc)
+  .clk(clk), .p(addr_7_21),
+  .a0b0(din_21_ab0), .a0b1(din_21_ab1), .a0b2(din_21_ab2), .a0b3(din_21_ab3),
+  .a1b0(din_22_ab0), .a1b1(din_22_ab1), .a1b2(din_22_ab2), .a1b3(din_22_ab3),
+  .a2b0(din_23_ab0), .a2b1(din_23_ab1), .a2b2(din_23_ab2),
+  .a3b0(din_24_ab0), .a3b1(din_24_ab1), .a3b2(din_24_ab2),
+  .a4b0(din_25_ab0), .a4b1(din_25_ab1),
+  .a5b0(din_26_ab0), .a5b1(din_26_ab1),
+  .a6b0(din_27_ab0),
+  .a7b0(din_28_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffff000000000000),
 	.NBITS(8)
 ) addr_7_22_calc (
-           .clk(clk), .sign(din_signs_reg[22]), 
-           .p(addr_7_22),
-           .a0b0(din_22_ab0), .a0b1(din_22_ab1), .a0b2(din_22_ab2), .a0b3(din_22_ab3),
-           .a0b0_1sc(din_22_ab0_1sc), .a0b1_1sc(din_22_ab1_1sc), .a0b2_1sc(din_22_ab2_1sc), .a0b3_1sc(din_22_ab3_1sc),
-           .msk_a0b0(din_22_msk_ab0), .msk_a0b1(din_22_msk_ab1), .msk_a0b2(din_22_msk_ab2), .msk_a0b3(din_22_msk_ab3),
-           .msk_a0b0_1sc(din_22_msk_ab0_1sc), .msk_a0b1_1sc(din_22_msk_ab1_1sc), .msk_a0b2_1sc(din_22_msk_ab2_1sc), .msk_a0b3_1sc(din_22_msk_ab3_1sc),
-
-           .a1b0(din_24_ab0), .a1b1(din_24_ab1), .a1b2(din_24_ab2),
-           .a1b0_1sc(din_24_ab0_1sc), .a1b1_1sc(din_24_ab1_1sc), .a1b2_1sc(din_24_ab2_1sc),
-           .msk_a1b0(din_24_msk_ab0), .msk_a1b1(din_24_msk_ab1), .msk_a1b2(din_24_msk_ab2),
-           .msk_a1b0_1sc(din_24_msk_ab0_1sc), .msk_a1b1_1sc(din_24_msk_ab1_1sc), .msk_a1b2_1sc(din_24_msk_ab2_1sc),
-
-           .a2b0(din_26_ab0), .a2b1(din_26_ab1),
-           .a2b0_1sc(din_26_ab0_1sc), .a2b1_1sc(din_26_ab1_1sc),
-           .msk_a2b0(din_26_msk_ab0), .msk_a2b1(din_26_msk_ab1),
-           .msk_a2b0_1sc(din_26_msk_ab0_1sc), .msk_a2b1_1sc(din_26_msk_ab1_1sc),
-           
-           .a3b0(din_28_ab0),
-           .a3b0_1sc(din_28_ab0_1sc)
+  .clk(clk), .p(addr_7_22),
+  .a0b0(din_22_ab0), .a0b1(din_22_ab1), .a0b2(din_22_ab2), .a0b3(din_22_ab3),
+  .a1b0(din_23_ab0), .a1b1(din_23_ab1), .a1b2(din_23_ab2), .a1b3(din_23_ab3),
+  .a2b0(din_24_ab0), .a2b1(din_24_ab1), .a2b2(din_24_ab2),
+  .a3b0(din_25_ab0), .a3b1(din_25_ab1), .a3b2(din_25_ab2),
+  .a4b0(din_26_ab0), .a4b1(din_26_ab1),
+  .a5b0(din_27_ab0), .a5b1(din_27_ab1),
+  .a6b0(din_28_ab0),
+  .a7b0(din_29_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffff000000000000),
 	.NBITS(8)
 ) addr_7_23_calc (
-           .clk(clk), .sign(din_signs_reg[23]), 
-           .p(addr_7_23),
-           .a0b0(din_23_ab0), .a0b1(din_23_ab1), .a0b2(din_23_ab2), .a0b3(din_23_ab3),
-           .a0b0_1sc(din_23_ab0_1sc), .a0b1_1sc(din_23_ab1_1sc), .a0b2_1sc(din_23_ab2_1sc), .a0b3_1sc(din_23_ab3_1sc),
-           .msk_a0b0(din_23_msk_ab0), .msk_a0b1(din_23_msk_ab1), .msk_a0b2(din_23_msk_ab2), .msk_a0b3(din_23_msk_ab3),
-           .msk_a0b0_1sc(din_23_msk_ab0_1sc), .msk_a0b1_1sc(din_23_msk_ab1_1sc), .msk_a0b2_1sc(din_23_msk_ab2_1sc), .msk_a0b3_1sc(din_23_msk_ab3_1sc),
-
-           .a1b0(din_25_ab0), .a1b1(din_25_ab1), .a1b2(din_25_ab2),
-           .a1b0_1sc(din_25_ab0_1sc), .a1b1_1sc(din_25_ab1_1sc), .a1b2_1sc(din_25_ab2_1sc),
-           .msk_a1b0(din_25_msk_ab0), .msk_a1b1(din_25_msk_ab1), .msk_a1b2(din_25_msk_ab2),
-           .msk_a1b0_1sc(din_25_msk_ab0_1sc), .msk_a1b1_1sc(din_25_msk_ab1_1sc), .msk_a1b2_1sc(din_25_msk_ab2_1sc),
-
-           .a2b0(din_27_ab0), .a2b1(din_27_ab1),
-           .a2b0_1sc(din_27_ab0_1sc), .a2b1_1sc(din_27_ab1_1sc),
-           .msk_a2b0(din_27_msk_ab0), .msk_a2b1(din_27_msk_ab1),
-           .msk_a2b0_1sc(din_27_msk_ab0_1sc), .msk_a2b1_1sc(din_27_msk_ab1_1sc),
-           
-           .a3b0(din_29_ab0),
-           .a3b0_1sc(din_29_ab0_1sc)
+  .clk(clk), .p(addr_7_23),
+  .a0b0(din_23_ab0), .a0b1(din_23_ab1), .a0b2(din_23_ab2), .a0b3(din_23_ab3),
+  .a1b0(din_24_ab0), .a1b1(din_24_ab1), .a1b2(din_24_ab2), .a1b3(din_24_ab3),
+  .a2b0(din_25_ab0), .a2b1(din_25_ab1), .a2b2(din_25_ab2),
+  .a3b0(din_26_ab0), .a3b1(din_26_ab1), .a3b2(din_26_ab2),
+  .a4b0(din_27_ab0), .a4b1(din_27_ab1),
+  .a5b0(din_28_ab0), .a5b1(din_28_ab1),
+  .a6b0(din_29_ab0),
+  .a7b0(din_30_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffff000000000000),
 	.NBITS(8)
 ) addr_7_24_calc (
-           .clk(clk), .sign(din_signs_reg[24]), 
-           .p(addr_7_24),
-           .a0b0(din_24_ab0), .a0b1(din_24_ab1), .a0b2(din_24_ab2), .a0b3(din_24_ab3),
-           .a0b0_1sc(din_24_ab0_1sc), .a0b1_1sc(din_24_ab1_1sc), .a0b2_1sc(din_24_ab2_1sc), .a0b3_1sc(din_24_ab3_1sc),
-           .msk_a0b0(din_24_msk_ab0), .msk_a0b1(din_24_msk_ab1), .msk_a0b2(din_24_msk_ab2), .msk_a0b3(din_24_msk_ab3),
-           .msk_a0b0_1sc(din_24_msk_ab0_1sc), .msk_a0b1_1sc(din_24_msk_ab1_1sc), .msk_a0b2_1sc(din_24_msk_ab2_1sc), .msk_a0b3_1sc(din_24_msk_ab3_1sc),
-
-           .a1b0(din_26_ab0), .a1b1(din_26_ab1), .a1b2(din_26_ab2),
-           .a1b0_1sc(din_26_ab0_1sc), .a1b1_1sc(din_26_ab1_1sc), .a1b2_1sc(din_26_ab2_1sc),
-           .msk_a1b0(din_26_msk_ab0), .msk_a1b1(din_26_msk_ab1), .msk_a1b2(din_26_msk_ab2),
-           .msk_a1b0_1sc(din_26_msk_ab0_1sc), .msk_a1b1_1sc(din_26_msk_ab1_1sc), .msk_a1b2_1sc(din_26_msk_ab2_1sc),
-
-           .a2b0(din_28_ab0), .a2b1(din_28_ab1),
-           .a2b0_1sc(din_28_ab0_1sc), .a2b1_1sc(din_28_ab1_1sc),
-           .msk_a2b0(din_28_msk_ab0), .msk_a2b1(din_28_msk_ab1),
-           .msk_a2b0_1sc(din_28_msk_ab0_1sc), .msk_a2b1_1sc(din_28_msk_ab1_1sc),
-           
-           .a3b0(din_30_ab0),
-           .a3b0_1sc(din_30_ab0_1sc)
+  .clk(clk), .p(addr_7_24),
+  .a0b0(din_24_ab0), .a0b1(din_24_ab1), .a0b2(din_24_ab2), .a0b3(din_24_ab3),
+  .a1b0(din_25_ab0), .a1b1(din_25_ab1), .a1b2(din_25_ab2), .a1b3(din_25_ab3),
+  .a2b0(din_26_ab0), .a2b1(din_26_ab1), .a2b2(din_26_ab2),
+  .a3b0(din_27_ab0), .a3b1(din_27_ab1), .a3b2(din_27_ab2),
+  .a4b0(din_28_ab0), .a4b1(din_28_ab1),
+  .a5b0(din_29_ab0), .a5b1(din_29_ab1),
+  .a6b0(din_30_ab0),
+  .a7b0(din_31_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffff000000000000),
 	.NBITS(8)
 ) addr_7_25_calc (
-           .clk(clk), .sign(din_signs_reg[25]), 
-           .p(addr_7_25),
-           .a0b0(din_25_ab0), .a0b1(din_25_ab1), .a0b2(din_25_ab2), .a0b3(din_25_ab3),
-           .a0b0_1sc(din_25_ab0_1sc), .a0b1_1sc(din_25_ab1_1sc), .a0b2_1sc(din_25_ab2_1sc), .a0b3_1sc(din_25_ab3_1sc),
-           .msk_a0b0(din_25_msk_ab0), .msk_a0b1(din_25_msk_ab1), .msk_a0b2(din_25_msk_ab2), .msk_a0b3(din_25_msk_ab3),
-           .msk_a0b0_1sc(din_25_msk_ab0_1sc), .msk_a0b1_1sc(din_25_msk_ab1_1sc), .msk_a0b2_1sc(din_25_msk_ab2_1sc), .msk_a0b3_1sc(din_25_msk_ab3_1sc),
-
-           .a1b0(din_27_ab0), .a1b1(din_27_ab1), .a1b2(din_27_ab2),
-           .a1b0_1sc(din_27_ab0_1sc), .a1b1_1sc(din_27_ab1_1sc), .a1b2_1sc(din_27_ab2_1sc),
-           .msk_a1b0(din_27_msk_ab0), .msk_a1b1(din_27_msk_ab1), .msk_a1b2(din_27_msk_ab2),
-           .msk_a1b0_1sc(din_27_msk_ab0_1sc), .msk_a1b1_1sc(din_27_msk_ab1_1sc), .msk_a1b2_1sc(din_27_msk_ab2_1sc),
-
-           .a2b0(din_29_ab0), .a2b1(din_29_ab1),
-           .a2b0_1sc(din_29_ab0_1sc), .a2b1_1sc(din_29_ab1_1sc),
-           .msk_a2b0(din_29_msk_ab0), .msk_a2b1(din_29_msk_ab1),
-           .msk_a2b0_1sc(din_29_msk_ab0_1sc), .msk_a2b1_1sc(din_29_msk_ab1_1sc),
-           
-           .a3b0(din_31_ab0),
-           .a3b0_1sc(din_31_ab0_1sc)
+  .clk(clk), .p(addr_7_25),
+  .a0b0(din_25_ab0), .a0b1(din_25_ab1), .a0b2(din_25_ab2), .a0b3(din_25_ab3),
+  .a1b0(din_26_ab0), .a1b1(din_26_ab1), .a1b2(din_26_ab2), .a1b3(din_26_ab3),
+  .a2b0(din_27_ab0), .a2b1(din_27_ab1), .a2b2(din_27_ab2),
+  .a3b0(din_28_ab0), .a3b1(din_28_ab1), .a3b2(din_28_ab2),
+  .a4b0(din_29_ab0), .a4b1(din_29_ab1),
+  .a5b0(din_30_ab0), .a5b1(din_30_ab1),
+  .a6b0(din_31_ab0),
+  .a7b0(din_32_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffff000000000000),
 	.NBITS(8)
 ) addr_7_26_calc (
-           .clk(clk), .sign(din_signs_reg[26]), 
-           .p(addr_7_26),
-           .a0b0(din_26_ab0), .a0b1(din_26_ab1), .a0b2(din_26_ab2), .a0b3(din_26_ab3),
-           .a0b0_1sc(din_26_ab0_1sc), .a0b1_1sc(din_26_ab1_1sc), .a0b2_1sc(din_26_ab2_1sc), .a0b3_1sc(din_26_ab3_1sc),
-           .msk_a0b0(din_26_msk_ab0), .msk_a0b1(din_26_msk_ab1), .msk_a0b2(din_26_msk_ab2), .msk_a0b3(din_26_msk_ab3),
-           .msk_a0b0_1sc(din_26_msk_ab0_1sc), .msk_a0b1_1sc(din_26_msk_ab1_1sc), .msk_a0b2_1sc(din_26_msk_ab2_1sc), .msk_a0b3_1sc(din_26_msk_ab3_1sc),
-
-           .a1b0(din_28_ab0), .a1b1(din_28_ab1), .a1b2(din_28_ab2),
-           .a1b0_1sc(din_28_ab0_1sc), .a1b1_1sc(din_28_ab1_1sc), .a1b2_1sc(din_28_ab2_1sc),
-           .msk_a1b0(din_28_msk_ab0), .msk_a1b1(din_28_msk_ab1), .msk_a1b2(din_28_msk_ab2),
-           .msk_a1b0_1sc(din_28_msk_ab0_1sc), .msk_a1b1_1sc(din_28_msk_ab1_1sc), .msk_a1b2_1sc(din_28_msk_ab2_1sc),
-
-           .a2b0(din_30_ab0), .a2b1(din_30_ab1),
-           .a2b0_1sc(din_30_ab0_1sc), .a2b1_1sc(din_30_ab1_1sc),
-           .msk_a2b0(din_30_msk_ab0), .msk_a2b1(din_30_msk_ab1),
-           .msk_a2b0_1sc(din_30_msk_ab0_1sc), .msk_a2b1_1sc(din_30_msk_ab1_1sc),
-           
-           .a3b0(din_32_ab0),
-           .a3b0_1sc(din_32_ab0_1sc)
+  .clk(clk), .p(addr_7_26),
+  .a0b0(din_26_ab0), .a0b1(din_26_ab1), .a0b2(din_26_ab2), .a0b3(din_26_ab3),
+  .a1b0(din_27_ab0), .a1b1(din_27_ab1), .a1b2(din_27_ab2), .a1b3(din_27_ab3),
+  .a2b0(din_28_ab0), .a2b1(din_28_ab1), .a2b2(din_28_ab2),
+  .a3b0(din_29_ab0), .a3b1(din_29_ab1), .a3b2(din_29_ab2),
+  .a4b0(din_30_ab0), .a4b1(din_30_ab1),
+  .a5b0(din_31_ab0), .a5b1(din_31_ab1),
+  .a6b0(din_32_ab0),
+  .a7b0(din_33_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffff000000000000),
 	.NBITS(8)
 ) addr_7_27_calc (
-           .clk(clk), .sign(din_signs_reg[27]), 
-           .p(addr_7_27),
-           .a0b0(din_27_ab0), .a0b1(din_27_ab1), .a0b2(din_27_ab2), .a0b3(din_27_ab3),
-           .a0b0_1sc(din_27_ab0_1sc), .a0b1_1sc(din_27_ab1_1sc), .a0b2_1sc(din_27_ab2_1sc), .a0b3_1sc(din_27_ab3_1sc),
-           .msk_a0b0(din_27_msk_ab0), .msk_a0b1(din_27_msk_ab1), .msk_a0b2(din_27_msk_ab2), .msk_a0b3(din_27_msk_ab3),
-           .msk_a0b0_1sc(din_27_msk_ab0_1sc), .msk_a0b1_1sc(din_27_msk_ab1_1sc), .msk_a0b2_1sc(din_27_msk_ab2_1sc), .msk_a0b3_1sc(din_27_msk_ab3_1sc),
-
-           .a1b0(din_29_ab0), .a1b1(din_29_ab1), .a1b2(din_29_ab2),
-           .a1b0_1sc(din_29_ab0_1sc), .a1b1_1sc(din_29_ab1_1sc), .a1b2_1sc(din_29_ab2_1sc),
-           .msk_a1b0(din_29_msk_ab0), .msk_a1b1(din_29_msk_ab1), .msk_a1b2(din_29_msk_ab2),
-           .msk_a1b0_1sc(din_29_msk_ab0_1sc), .msk_a1b1_1sc(din_29_msk_ab1_1sc), .msk_a1b2_1sc(din_29_msk_ab2_1sc),
-
-           .a2b0(din_31_ab0), .a2b1(din_31_ab1),
-           .a2b0_1sc(din_31_ab0_1sc), .a2b1_1sc(din_31_ab1_1sc),
-           .msk_a2b0(din_31_msk_ab0), .msk_a2b1(din_31_msk_ab1),
-           .msk_a2b0_1sc(din_31_msk_ab0_1sc), .msk_a2b1_1sc(din_31_msk_ab1_1sc),
-           
-           .a3b0(din_33_ab0),
-           .a3b0_1sc(din_33_ab0_1sc)
+  .clk(clk), .p(addr_7_27),
+  .a0b0(din_27_ab0), .a0b1(din_27_ab1), .a0b2(din_27_ab2), .a0b3(din_27_ab3),
+  .a1b0(din_28_ab0), .a1b1(din_28_ab1), .a1b2(din_28_ab2), .a1b3(din_28_ab3),
+  .a2b0(din_29_ab0), .a2b1(din_29_ab1), .a2b2(din_29_ab2),
+  .a3b0(din_30_ab0), .a3b1(din_30_ab1), .a3b2(din_30_ab2),
+  .a4b0(din_31_ab0), .a4b1(din_31_ab1),
+  .a5b0(din_32_ab0), .a5b1(din_32_ab1),
+  .a6b0(din_33_ab0),
+  .a7b0(din_34_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffff000000000000),
 	.NBITS(8)
 ) addr_7_28_calc (
-           .clk(clk), .sign(din_signs_reg[28]), 
-           .p(addr_7_28),
-           .a0b0(din_28_ab0), .a0b1(din_28_ab1), .a0b2(din_28_ab2), .a0b3(din_28_ab3),
-           .a0b0_1sc(din_28_ab0_1sc), .a0b1_1sc(din_28_ab1_1sc), .a0b2_1sc(din_28_ab2_1sc), .a0b3_1sc(din_28_ab3_1sc),
-           .msk_a0b0(din_28_msk_ab0), .msk_a0b1(din_28_msk_ab1), .msk_a0b2(din_28_msk_ab2), .msk_a0b3(din_28_msk_ab3),
-           .msk_a0b0_1sc(din_28_msk_ab0_1sc), .msk_a0b1_1sc(din_28_msk_ab1_1sc), .msk_a0b2_1sc(din_28_msk_ab2_1sc), .msk_a0b3_1sc(din_28_msk_ab3_1sc),
-
-           .a1b0(din_30_ab0), .a1b1(din_30_ab1), .a1b2(din_30_ab2),
-           .a1b0_1sc(din_30_ab0_1sc), .a1b1_1sc(din_30_ab1_1sc), .a1b2_1sc(din_30_ab2_1sc),
-           .msk_a1b0(din_30_msk_ab0), .msk_a1b1(din_30_msk_ab1), .msk_a1b2(din_30_msk_ab2),
-           .msk_a1b0_1sc(din_30_msk_ab0_1sc), .msk_a1b1_1sc(din_30_msk_ab1_1sc), .msk_a1b2_1sc(din_30_msk_ab2_1sc),
-
-           .a2b0(din_32_ab0), .a2b1(din_32_ab1),
-           .a2b0_1sc(din_32_ab0_1sc), .a2b1_1sc(din_32_ab1_1sc),
-           .msk_a2b0(din_32_msk_ab0), .msk_a2b1(din_32_msk_ab1),
-           .msk_a2b0_1sc(din_32_msk_ab0_1sc), .msk_a2b1_1sc(din_32_msk_ab1_1sc),
-           
-           .a3b0(din_34_ab0),
-           .a3b0_1sc(din_34_ab0_1sc)
+  .clk(clk), .p(addr_7_28),
+  .a0b0(din_28_ab0), .a0b1(din_28_ab1), .a0b2(din_28_ab2), .a0b3(din_28_ab3),
+  .a1b0(din_29_ab0), .a1b1(din_29_ab1), .a1b2(din_29_ab2), .a1b3(din_29_ab3),
+  .a2b0(din_30_ab0), .a2b1(din_30_ab1), .a2b2(din_30_ab2),
+  .a3b0(din_31_ab0), .a3b1(din_31_ab1), .a3b2(din_31_ab2),
+  .a4b0(din_32_ab0), .a4b1(din_32_ab1),
+  .a5b0(din_33_ab0), .a5b1(din_33_ab1),
+  .a6b0(din_34_ab0),
+  .a7b0(din_35_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffff000000000000),
 	.NBITS(8)
 ) addr_7_29_calc (
-           .clk(clk), .sign(din_signs_reg[29]), 
-           .p(addr_7_29),
-           .a0b0(din_29_ab0), .a0b1(din_29_ab1), .a0b2(din_29_ab2), .a0b3(din_29_ab3),
-           .a0b0_1sc(din_29_ab0_1sc), .a0b1_1sc(din_29_ab1_1sc), .a0b2_1sc(din_29_ab2_1sc), .a0b3_1sc(din_29_ab3_1sc),
-           .msk_a0b0(din_29_msk_ab0), .msk_a0b1(din_29_msk_ab1), .msk_a0b2(din_29_msk_ab2), .msk_a0b3(din_29_msk_ab3),
-           .msk_a0b0_1sc(din_29_msk_ab0_1sc), .msk_a0b1_1sc(din_29_msk_ab1_1sc), .msk_a0b2_1sc(din_29_msk_ab2_1sc), .msk_a0b3_1sc(din_29_msk_ab3_1sc),
-
-           .a1b0(din_31_ab0), .a1b1(din_31_ab1), .a1b2(din_31_ab2),
-           .a1b0_1sc(din_31_ab0_1sc), .a1b1_1sc(din_31_ab1_1sc), .a1b2_1sc(din_31_ab2_1sc),
-           .msk_a1b0(din_31_msk_ab0), .msk_a1b1(din_31_msk_ab1), .msk_a1b2(din_31_msk_ab2),
-           .msk_a1b0_1sc(din_31_msk_ab0_1sc), .msk_a1b1_1sc(din_31_msk_ab1_1sc), .msk_a1b2_1sc(din_31_msk_ab2_1sc),
-
-           .a2b0(din_33_ab0), .a2b1(din_33_ab1),
-           .a2b0_1sc(din_33_ab0_1sc), .a2b1_1sc(din_33_ab1_1sc),
-           .msk_a2b0(din_33_msk_ab0), .msk_a2b1(din_33_msk_ab1),
-           .msk_a2b0_1sc(din_33_msk_ab0_1sc), .msk_a2b1_1sc(din_33_msk_ab1_1sc),
-           
-           .a3b0(din_35_ab0),
-           .a3b0_1sc(din_35_ab0_1sc)
+  .clk(clk), .p(addr_7_29),
+  .a0b0(din_29_ab0), .a0b1(din_29_ab1), .a0b2(din_29_ab2), .a0b3(din_29_ab3),
+  .a1b0(din_30_ab0), .a1b1(din_30_ab1), .a1b2(din_30_ab2), .a1b3(din_30_ab3),
+  .a2b0(din_31_ab0), .a2b1(din_31_ab1), .a2b2(din_31_ab2),
+  .a3b0(din_32_ab0), .a3b1(din_32_ab1), .a3b2(din_32_ab2),
+  .a4b0(din_33_ab0), .a4b1(din_33_ab1),
+  .a5b0(din_34_ab0), .a5b1(din_34_ab1),
+  .a6b0(din_35_ab0),
+  .a7b0(din_36_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffff000000000000),
 	.NBITS(8)
 ) addr_7_30_calc (
-           .clk(clk), .sign(din_signs_reg[30]), 
-           .p(addr_7_30),
-           .a0b0(din_30_ab0), .a0b1(din_30_ab1), .a0b2(din_30_ab2), .a0b3(din_30_ab3),
-           .a0b0_1sc(din_30_ab0_1sc), .a0b1_1sc(din_30_ab1_1sc), .a0b2_1sc(din_30_ab2_1sc), .a0b3_1sc(din_30_ab3_1sc),
-           .msk_a0b0(din_30_msk_ab0), .msk_a0b1(din_30_msk_ab1), .msk_a0b2(din_30_msk_ab2), .msk_a0b3(din_30_msk_ab3),
-           .msk_a0b0_1sc(din_30_msk_ab0_1sc), .msk_a0b1_1sc(din_30_msk_ab1_1sc), .msk_a0b2_1sc(din_30_msk_ab2_1sc), .msk_a0b3_1sc(din_30_msk_ab3_1sc),
-
-           .a1b0(din_32_ab0), .a1b1(din_32_ab1), .a1b2(din_32_ab2),
-           .a1b0_1sc(din_32_ab0_1sc), .a1b1_1sc(din_32_ab1_1sc), .a1b2_1sc(din_32_ab2_1sc),
-           .msk_a1b0(din_32_msk_ab0), .msk_a1b1(din_32_msk_ab1), .msk_a1b2(din_32_msk_ab2),
-           .msk_a1b0_1sc(din_32_msk_ab0_1sc), .msk_a1b1_1sc(din_32_msk_ab1_1sc), .msk_a1b2_1sc(din_32_msk_ab2_1sc),
-
-           .a2b0(din_34_ab0), .a2b1(din_34_ab1),
-           .a2b0_1sc(din_34_ab0_1sc), .a2b1_1sc(din_34_ab1_1sc),
-           .msk_a2b0(din_34_msk_ab0), .msk_a2b1(din_34_msk_ab1),
-           .msk_a2b0_1sc(din_34_msk_ab0_1sc), .msk_a2b1_1sc(din_34_msk_ab1_1sc),
-           
-           .a3b0(din_36_ab0),
-           .a3b0_1sc(din_36_ab0_1sc)
+  .clk(clk), .p(addr_7_30),
+  .a0b0(din_30_ab0), .a0b1(din_30_ab1), .a0b2(din_30_ab2), .a0b3(din_30_ab3),
+  .a1b0(din_31_ab0), .a1b1(din_31_ab1), .a1b2(din_31_ab2), .a1b3(din_31_ab3),
+  .a2b0(din_32_ab0), .a2b1(din_32_ab1), .a2b2(din_32_ab2),
+  .a3b0(din_33_ab0), .a3b1(din_33_ab1), .a3b2(din_33_ab2),
+  .a4b0(din_34_ab0), .a4b1(din_34_ab1),
+  .a5b0(din_35_ab0), .a5b1(din_35_ab1),
+  .a6b0(din_36_ab0),
+  .a7b0(din_37_ab0)
 );
 
 acc_hash # (
 	.ANDMSK(64'hffff000000000000),
 	.NBITS(8)
 ) addr_7_31_calc (
-           .clk(clk), .sign(din_signs_reg[31]), 
-           .p(addr_7_31),
-           .a0b0(din_31_ab0), .a0b1(din_31_ab1), .a0b2(din_31_ab2), .a0b3(din_31_ab3),
-           .a0b0_1sc(din_31_ab0_1sc), .a0b1_1sc(din_31_ab1_1sc), .a0b2_1sc(din_31_ab2_1sc), .a0b3_1sc(din_31_ab3_1sc),
-           .msk_a0b0(din_31_msk_ab0), .msk_a0b1(din_31_msk_ab1), .msk_a0b2(din_31_msk_ab2), .msk_a0b3(din_31_msk_ab3),
-           .msk_a0b0_1sc(din_31_msk_ab0_1sc), .msk_a0b1_1sc(din_31_msk_ab1_1sc), .msk_a0b2_1sc(din_31_msk_ab2_1sc), .msk_a0b3_1sc(din_31_msk_ab3_1sc),
-
-           .a1b0(din_33_ab0), .a1b1(din_33_ab1), .a1b2(din_33_ab2),
-           .a1b0_1sc(din_33_ab0_1sc), .a1b1_1sc(din_33_ab1_1sc), .a1b2_1sc(din_33_ab2_1sc),
-           .msk_a1b0(din_33_msk_ab0), .msk_a1b1(din_33_msk_ab1), .msk_a1b2(din_33_msk_ab2),
-           .msk_a1b0_1sc(din_33_msk_ab0_1sc), .msk_a1b1_1sc(din_33_msk_ab1_1sc), .msk_a1b2_1sc(din_33_msk_ab2_1sc),
-
-           .a2b0(din_35_ab0), .a2b1(din_35_ab1),
-           .a2b0_1sc(din_35_ab0_1sc), .a2b1_1sc(din_35_ab1_1sc),
-           .msk_a2b0(din_35_msk_ab0), .msk_a2b1(din_35_msk_ab1),
-           .msk_a2b0_1sc(din_35_msk_ab0_1sc), .msk_a2b1_1sc(din_35_msk_ab1_1sc),
-           
-           .a3b0(din_37_ab0),
-           .a3b0_1sc(din_37_ab0_1sc)
+  .clk(clk), .p(addr_7_31),
+  .a0b0(din_31_ab0), .a0b1(din_31_ab1), .a0b2(din_31_ab2), .a0b3(din_31_ab3),
+  .a1b0(din_32_ab0), .a1b1(din_32_ab1), .a1b2(din_32_ab2), .a1b3(din_32_ab3),
+  .a2b0(din_33_ab0), .a2b1(din_33_ab1), .a2b2(din_33_ab2),
+  .a3b0(din_34_ab0), .a3b1(din_34_ab1), .a3b2(din_34_ab2),
+  .a4b0(din_35_ab0), .a4b1(din_35_ab1),
+  .a5b0(din_36_ab0), .a5b1(din_36_ab1),
+  .a6b0(din_37_ab0),
+  .a7b0(din_38_ab0)
 );
 
 
