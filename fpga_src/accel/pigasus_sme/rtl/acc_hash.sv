@@ -1,4 +1,4 @@
-// Latency 6
+// Latency = 6
 module acc_hash(clk, p,
            a0b0, a0b1, a0b2, a0b3,
            a1b0, a1b1, a1b2, a1b3,
@@ -68,7 +68,6 @@ reg [32:0] a01_b2;
 reg [32:0] a23_b2;
 reg [32:0] a01_b3;
 
-
 reg  [33:0] add_a01_b1_a23_b0;
 reg  [33:0] add_a01_b2_a45_b0;
 reg  [16:0] add_a01_b3_a23_b2;
@@ -86,12 +85,12 @@ reg  [35:0] half_sum1_reg;
 reg  [64:0] sum;
 
 localparam LSB_BYTES_MASKED = (ANDMSK[63:56]==0) ? 8 :
-                              (ANDMSK[55:48]==0) ? 7 : 
-                              (ANDMSK[47:40]==0) ? 6 : 
-                              (ANDMSK[39:32]==0) ? 5 : 
-                              (ANDMSK[31:24]==0) ? 4 : 
-                              (ANDMSK[23:16]==0) ? 3 : 
-                              (ANDMSK[15: 8]==0) ? 2 : 
+                              (ANDMSK[55:48]==0) ? 7 :
+                              (ANDMSK[47:40]==0) ? 6 :
+                              (ANDMSK[39:32]==0) ? 5 :
+                              (ANDMSK[31:24]==0) ? 4 :
+                              (ANDMSK[23:16]==0) ? 3 :
+                              (ANDMSK[15: 8]==0) ? 2 :
                               (ANDMSK[7 : 0]==0) ? 1 : 0;
 
 // These parameter muxes are resolved in synthesie.
@@ -132,7 +131,7 @@ always @ (posedge clk) begin
   a23_b2 <= msk_a2b2 + {msk_a3b2, 8'd0};
   a01_b3 <= msk_a0b3 + {msk_a1b3, 8'd0};
 
-  // Level 2, a01_b3, a23_b2, a45_b1, a67_b0 
+  // Level 2, a01_b3, a23_b2, a45_b1, a67_b0
   // are cut short because of final truncation
   add_a01_b1_a23_b0 <= a01_b1       + a23_b0;
   add_a01_b2_a45_b0 <= a01_b2       + a45_b0;

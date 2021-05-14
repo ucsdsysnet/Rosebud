@@ -1547,7 +1547,7 @@ wire addr_valid_7_31;
 reg [63:0] din_reg;
 reg din_valid_reg;
 
-// Doing all necessary multiplies per double_byte
+// Doing all necessary multiplies per input byte
 wire [(32+7)*8-1:0] padded_din;
 
 wire [23:0] din_0_ab0;
@@ -2333,6 +2333,7 @@ always @ (posedge clk) begin
     din_valid_reg <= din_valid;
 end
 
+// 12 cycles latency for valid signals
 hyper_pipe #(.NUM_PIPES(12)) addr_valid_0_0_pipe (
     .clk(clk),.din(din_valid_0_0),.dout(addr_valid_0_0));
 hyper_pipe #(.NUM_PIPES(12)) addr_valid_0_1_pipe (
@@ -2846,6 +2847,7 @@ hyper_pipe #(.NUM_PIPES(12)) addr_valid_7_30_pipe (
 hyper_pipe #(.NUM_PIPES(12)) addr_valid_7_31_pipe (
     .clk(clk),.din(din_valid_7_31),.dout(addr_valid_7_31));
 
+// Multiply accumulation step. 
 // Mask and Nbits is dependent on bucket number
 // data selection is dependent on first byte location
 acc_hash # (

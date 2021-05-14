@@ -29,7 +29,7 @@ wire addr_valid_{{i}}_{{j}};
 reg [63:0] din_reg;
 reg din_valid_reg;
 
-// Doing all necessary multiplies per double_byte
+// Doing all necessary multiplies per input byte
 wire [({{context['byte_size']}}+7)*8-1:0] padded_din;
 
 {% for i in range(0,context['byte_size']+7)%}
@@ -113,6 +113,7 @@ always @ (posedge clk) begin
     din_valid_reg <= din_valid;
 end
 
+// 12 cycles latency for valid signals
 {% for i in range(0,context['bucket_size'])%}
 {% for j in range(0,context['byte_size'])%}
 hyper_pipe #(.NUM_PIPES(12)) addr_valid_{{i}}_{{j}}_pipe (
@@ -120,6 +121,7 @@ hyper_pipe #(.NUM_PIPES(12)) addr_valid_{{i}}_{{j}}_pipe (
 {% endfor %}
 {% endfor %}
 
+// Multiply accumulation step. 
 // Mask and Nbits is dependent on bucket number
 // data selection is dependent on first byte location
 {% for i in range(0,context['bucket_size'])%}
