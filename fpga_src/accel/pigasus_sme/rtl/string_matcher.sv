@@ -1,64 +1,31 @@
 `include "struct_s.sv"
 module string_matcher (
-    front_clk,
-    front_rst,
-    back_clk,
-    back_rst,
+    clk,
+    rst,
     in_data,
     in_valid,
     in_sop,
     in_eop,
     in_empty,
     in_ready,
-    in_meta_data,
-    in_meta_valid,
-    in_meta_ready,
     out_data,
     out_valid,
     out_almost_full,
-    out_last,
-    out_meta_data,
-    out_meta_valid,
-    out_meta_ready,
-        // status register bus
-    clk_status,
-    status_addr,
-    status_read,
-    status_write,
-    status_writedata,
-    status_readdata,
-    status_readdata_valid
+    out_last
 );
 
-input front_clk;
-input front_rst;
-input back_clk;
-input back_rst;
+input clk;
+input rst;
 input [255:0] in_data;
 input in_valid;
 input in_sop;
 input in_eop;
 input [4:0] in_empty;
 output logic in_ready;
-input metadata_t in_meta_data;
-input in_meta_valid;
-output logic in_meta_ready;
-output metadata_t out_meta_data;
-output logic out_meta_valid;
-input logic out_meta_ready;
 output logic [127:0] out_data;
 output logic out_valid;
 output logic out_last;
 input out_almost_full;
-// status register bus
-input   logic          clk_status;
-input   logic   [29:0] status_addr;
-input   logic          status_read;
-input   logic          status_write;
-input   logic   [31:0] status_writedata;
-output  logic   [31:0] status_readdata;
-output  logic          status_readdata_valid;
-
 
 logic [255:0] in_data_r1;
 logic [255:0] in_data_r2;
@@ -70,10 +37,6 @@ logic         in_eop_r1;
 logic         in_eop_r2;
 logic [4:0]   in_empty_r1;
 logic [4:0]   in_empty_r2;
-
-metadata_t  internal_meta_data;
-logic       internal_meta_valid;
-logic       internal_meta_ready;
 
 logic [RID_WIDTH-1:0] hash_out_0_0;
 logic hash_out_valid_filter_0_0;
@@ -2383,36 +2346,6 @@ logic din_almost_full_7_31;
 logic out_new_pkt;
 
 logic [255:0] in_convt;
-logic gap;
-
-//status 
-logic [7:0] status_addr_r;
-logic [STAT_AWIDTH-1:0]  status_addr_sel_r;
-logic status_write_r;
-logic status_read_r;
-logic [31:0] status_writedata_r;
-logic [31:0] status_readdata_sm;
-logic status_readdata_valid_sm;
-logic [31:0] status_readdata_back;
-logic status_readdata_valid_back;
-logic [31:0] test_valid_cnt = 0;
-logic [31:0] test_empty;
-logic [31:0] test_din_0;
-logic [31:0] test_din_r2_0;
-logic [31:0] test_din_1;
-logic [31:0] test_din_r2_1;
-logic [31:0] test_din_2;
-logic [31:0] test_din_r2_2;
-logic [31:0] test_din_3;
-logic [31:0] test_din_r2_3;
-logic [31:0] test_din_4;
-logic [31:0] test_din_r2_4;
-logic [31:0] test_din_5;
-logic [31:0] test_din_r2_5;
-logic [31:0] test_din_6;
-logic [31:0] test_din_r2_6;
-logic [31:0] test_din_7;
-logic [31:0] test_din_r2_7;
 
 assign in_convt[7+0*8:0+0*8] = in_data[255-0*8:255-7-0*8];
 assign in_convt[7+1*8:0+1*8] = in_data[255-1*8:255-7-1*8];
@@ -2447,7 +2380,7 @@ assign in_convt[7+29*8:0+29*8] = in_data[255-29*8:255-7-29*8];
 assign in_convt[7+30*8:0+30*8] = in_data[255-30*8:255-7-30*8];
 assign in_convt[7+31*8:0+31*8] = in_data[255-31*8:255-7-31*8];
 
-always @ (posedge front_clk) begin
+always @ (posedge clk) begin
     //in_ready <=   !din_almost_full_0_0 &  !din_almost_full_0_1 &  !din_almost_full_0_2 &  !din_almost_full_0_3 &  !din_almost_full_0_4 &  !din_almost_full_0_5 &  !din_almost_full_0_6 &  !din_almost_full_0_7 &  !din_almost_full_0_8 &  !din_almost_full_0_9 &  !din_almost_full_0_10 &  !din_almost_full_0_11 &  !din_almost_full_0_12 &  !din_almost_full_0_13 &  !din_almost_full_0_14 &  !din_almost_full_0_15 &  !din_almost_full_0_16 &  !din_almost_full_0_17 &  !din_almost_full_0_18 &  !din_almost_full_0_19 &  !din_almost_full_0_20 &  !din_almost_full_0_21 &  !din_almost_full_0_22 &  !din_almost_full_0_23 &  !din_almost_full_0_24 &  !din_almost_full_0_25 &  !din_almost_full_0_26 &  !din_almost_full_0_27 &  !din_almost_full_0_28 &  !din_almost_full_0_29 &  !din_almost_full_0_30 &  !din_almost_full_0_31 &    !din_almost_full_1_0 &  !din_almost_full_1_1 &  !din_almost_full_1_2 &  !din_almost_full_1_3 &  !din_almost_full_1_4 &  !din_almost_full_1_5 &  !din_almost_full_1_6 &  !din_almost_full_1_7 &  !din_almost_full_1_8 &  !din_almost_full_1_9 &  !din_almost_full_1_10 &  !din_almost_full_1_11 &  !din_almost_full_1_12 &  !din_almost_full_1_13 &  !din_almost_full_1_14 &  !din_almost_full_1_15 &  !din_almost_full_1_16 &  !din_almost_full_1_17 &  !din_almost_full_1_18 &  !din_almost_full_1_19 &  !din_almost_full_1_20 &  !din_almost_full_1_21 &  !din_almost_full_1_22 &  !din_almost_full_1_23 &  !din_almost_full_1_24 &  !din_almost_full_1_25 &  !din_almost_full_1_26 &  !din_almost_full_1_27 &  !din_almost_full_1_28 &  !din_almost_full_1_29 &  !din_almost_full_1_30 &  !din_almost_full_1_31 &    !din_almost_full_2_0 &  !din_almost_full_2_1 &  !din_almost_full_2_2 &  !din_almost_full_2_3 &  !din_almost_full_2_4 &  !din_almost_full_2_5 &  !din_almost_full_2_6 &  !din_almost_full_2_7 &  !din_almost_full_2_8 &  !din_almost_full_2_9 &  !din_almost_full_2_10 &  !din_almost_full_2_11 &  !din_almost_full_2_12 &  !din_almost_full_2_13 &  !din_almost_full_2_14 &  !din_almost_full_2_15 &  !din_almost_full_2_16 &  !din_almost_full_2_17 &  !din_almost_full_2_18 &  !din_almost_full_2_19 &  !din_almost_full_2_20 &  !din_almost_full_2_21 &  !din_almost_full_2_22 &  !din_almost_full_2_23 &  !din_almost_full_2_24 &  !din_almost_full_2_25 &  !din_almost_full_2_26 &  !din_almost_full_2_27 &  !din_almost_full_2_28 &  !din_almost_full_2_29 &  !din_almost_full_2_30 &  !din_almost_full_2_31 &    !din_almost_full_3_0 &  !din_almost_full_3_1 &  !din_almost_full_3_2 &  !din_almost_full_3_3 &  !din_almost_full_3_4 &  !din_almost_full_3_5 &  !din_almost_full_3_6 &  !din_almost_full_3_7 &  !din_almost_full_3_8 &  !din_almost_full_3_9 &  !din_almost_full_3_10 &  !din_almost_full_3_11 &  !din_almost_full_3_12 &  !din_almost_full_3_13 &  !din_almost_full_3_14 &  !din_almost_full_3_15 &  !din_almost_full_3_16 &  !din_almost_full_3_17 &  !din_almost_full_3_18 &  !din_almost_full_3_19 &  !din_almost_full_3_20 &  !din_almost_full_3_21 &  !din_almost_full_3_22 &  !din_almost_full_3_23 &  !din_almost_full_3_24 &  !din_almost_full_3_25 &  !din_almost_full_3_26 &  !din_almost_full_3_27 &  !din_almost_full_3_28 &  !din_almost_full_3_29 &  !din_almost_full_3_30 &  !din_almost_full_3_31 &    !din_almost_full_4_0 &  !din_almost_full_4_1 &  !din_almost_full_4_2 &  !din_almost_full_4_3 &  !din_almost_full_4_4 &  !din_almost_full_4_5 &  !din_almost_full_4_6 &  !din_almost_full_4_7 &  !din_almost_full_4_8 &  !din_almost_full_4_9 &  !din_almost_full_4_10 &  !din_almost_full_4_11 &  !din_almost_full_4_12 &  !din_almost_full_4_13 &  !din_almost_full_4_14 &  !din_almost_full_4_15 &  !din_almost_full_4_16 &  !din_almost_full_4_17 &  !din_almost_full_4_18 &  !din_almost_full_4_19 &  !din_almost_full_4_20 &  !din_almost_full_4_21 &  !din_almost_full_4_22 &  !din_almost_full_4_23 &  !din_almost_full_4_24 &  !din_almost_full_4_25 &  !din_almost_full_4_26 &  !din_almost_full_4_27 &  !din_almost_full_4_28 &  !din_almost_full_4_29 &  !din_almost_full_4_30 &  !din_almost_full_4_31 &    !din_almost_full_5_0 &  !din_almost_full_5_1 &  !din_almost_full_5_2 &  !din_almost_full_5_3 &  !din_almost_full_5_4 &  !din_almost_full_5_5 &  !din_almost_full_5_6 &  !din_almost_full_5_7 &  !din_almost_full_5_8 &  !din_almost_full_5_9 &  !din_almost_full_5_10 &  !din_almost_full_5_11 &  !din_almost_full_5_12 &  !din_almost_full_5_13 &  !din_almost_full_5_14 &  !din_almost_full_5_15 &  !din_almost_full_5_16 &  !din_almost_full_5_17 &  !din_almost_full_5_18 &  !din_almost_full_5_19 &  !din_almost_full_5_20 &  !din_almost_full_5_21 &  !din_almost_full_5_22 &  !din_almost_full_5_23 &  !din_almost_full_5_24 &  !din_almost_full_5_25 &  !din_almost_full_5_26 &  !din_almost_full_5_27 &  !din_almost_full_5_28 &  !din_almost_full_5_29 &  !din_almost_full_5_30 &  !din_almost_full_5_31 &    !din_almost_full_6_0 &  !din_almost_full_6_1 &  !din_almost_full_6_2 &  !din_almost_full_6_3 &  !din_almost_full_6_4 &  !din_almost_full_6_5 &  !din_almost_full_6_6 &  !din_almost_full_6_7 &  !din_almost_full_6_8 &  !din_almost_full_6_9 &  !din_almost_full_6_10 &  !din_almost_full_6_11 &  !din_almost_full_6_12 &  !din_almost_full_6_13 &  !din_almost_full_6_14 &  !din_almost_full_6_15 &  !din_almost_full_6_16 &  !din_almost_full_6_17 &  !din_almost_full_6_18 &  !din_almost_full_6_19 &  !din_almost_full_6_20 &  !din_almost_full_6_21 &  !din_almost_full_6_22 &  !din_almost_full_6_23 &  !din_almost_full_6_24 &  !din_almost_full_6_25 &  !din_almost_full_6_26 &  !din_almost_full_6_27 &  !din_almost_full_6_28 &  !din_almost_full_6_29 &  !din_almost_full_6_30 &  !din_almost_full_6_31 &    !din_almost_full_7_0 &  !din_almost_full_7_1 &  !din_almost_full_7_2 &  !din_almost_full_7_3 &  !din_almost_full_7_4 &  !din_almost_full_7_5 &  !din_almost_full_7_6 &  !din_almost_full_7_7 &  !din_almost_full_7_8 &  !din_almost_full_7_9 &  !din_almost_full_7_10 &  !din_almost_full_7_11 &  !din_almost_full_7_12 &  !din_almost_full_7_13 &  !din_almost_full_7_14 &  !din_almost_full_7_15 &  !din_almost_full_7_16 &  !din_almost_full_7_17 &  !din_almost_full_7_18 &  !din_almost_full_7_19 &  !din_almost_full_7_20 &  !din_almost_full_7_21 &  !din_almost_full_7_22 &  !din_almost_full_7_23 &  !din_almost_full_7_24 &  !din_almost_full_7_25 &  !din_almost_full_7_26 &  !din_almost_full_7_27 &  !din_almost_full_7_28 &  !din_almost_full_7_29 &  !din_almost_full_7_30 &  !din_almost_full_7_31 &   !gap;
     in_ready <=   !din_almost_full_0_0 &  !din_almost_full_0_1 &  !din_almost_full_0_2 &  !din_almost_full_0_3 &  !din_almost_full_0_4 &  !din_almost_full_0_5 &  !din_almost_full_0_6 &  !din_almost_full_0_7 &  !din_almost_full_0_8 &  !din_almost_full_0_9 &  !din_almost_full_0_10 &  !din_almost_full_0_11 &  !din_almost_full_0_12 &  !din_almost_full_0_13 &  !din_almost_full_0_14 &  !din_almost_full_0_15 &  !din_almost_full_0_16 &  !din_almost_full_0_17 &  !din_almost_full_0_18 &  !din_almost_full_0_19 &  !din_almost_full_0_20 &  !din_almost_full_0_21 &  !din_almost_full_0_22 &  !din_almost_full_0_23 &  !din_almost_full_0_24 &  !din_almost_full_0_25 &  !din_almost_full_0_26 &  !din_almost_full_0_27 &  !din_almost_full_0_28 &  !din_almost_full_0_29 &  !din_almost_full_0_30 &  !din_almost_full_0_31 &    !din_almost_full_1_0 &  !din_almost_full_1_1 &  !din_almost_full_1_2 &  !din_almost_full_1_3 &  !din_almost_full_1_4 &  !din_almost_full_1_5 &  !din_almost_full_1_6 &  !din_almost_full_1_7 &  !din_almost_full_1_8 &  !din_almost_full_1_9 &  !din_almost_full_1_10 &  !din_almost_full_1_11 &  !din_almost_full_1_12 &  !din_almost_full_1_13 &  !din_almost_full_1_14 &  !din_almost_full_1_15 &  !din_almost_full_1_16 &  !din_almost_full_1_17 &  !din_almost_full_1_18 &  !din_almost_full_1_19 &  !din_almost_full_1_20 &  !din_almost_full_1_21 &  !din_almost_full_1_22 &  !din_almost_full_1_23 &  !din_almost_full_1_24 &  !din_almost_full_1_25 &  !din_almost_full_1_26 &  !din_almost_full_1_27 &  !din_almost_full_1_28 &  !din_almost_full_1_29 &  !din_almost_full_1_30 &  !din_almost_full_1_31 &    !din_almost_full_2_0 &  !din_almost_full_2_1 &  !din_almost_full_2_2 &  !din_almost_full_2_3 &  !din_almost_full_2_4 &  !din_almost_full_2_5 &  !din_almost_full_2_6 &  !din_almost_full_2_7 &  !din_almost_full_2_8 &  !din_almost_full_2_9 &  !din_almost_full_2_10 &  !din_almost_full_2_11 &  !din_almost_full_2_12 &  !din_almost_full_2_13 &  !din_almost_full_2_14 &  !din_almost_full_2_15 &  !din_almost_full_2_16 &  !din_almost_full_2_17 &  !din_almost_full_2_18 &  !din_almost_full_2_19 &  !din_almost_full_2_20 &  !din_almost_full_2_21 &  !din_almost_full_2_22 &  !din_almost_full_2_23 &  !din_almost_full_2_24 &  !din_almost_full_2_25 &  !din_almost_full_2_26 &  !din_almost_full_2_27 &  !din_almost_full_2_28 &  !din_almost_full_2_29 &  !din_almost_full_2_30 &  !din_almost_full_2_31 &    !din_almost_full_3_0 &  !din_almost_full_3_1 &  !din_almost_full_3_2 &  !din_almost_full_3_3 &  !din_almost_full_3_4 &  !din_almost_full_3_5 &  !din_almost_full_3_6 &  !din_almost_full_3_7 &  !din_almost_full_3_8 &  !din_almost_full_3_9 &  !din_almost_full_3_10 &  !din_almost_full_3_11 &  !din_almost_full_3_12 &  !din_almost_full_3_13 &  !din_almost_full_3_14 &  !din_almost_full_3_15 &  !din_almost_full_3_16 &  !din_almost_full_3_17 &  !din_almost_full_3_18 &  !din_almost_full_3_19 &  !din_almost_full_3_20 &  !din_almost_full_3_21 &  !din_almost_full_3_22 &  !din_almost_full_3_23 &  !din_almost_full_3_24 &  !din_almost_full_3_25 &  !din_almost_full_3_26 &  !din_almost_full_3_27 &  !din_almost_full_3_28 &  !din_almost_full_3_29 &  !din_almost_full_3_30 &  !din_almost_full_3_31 &    !din_almost_full_4_0 &  !din_almost_full_4_1 &  !din_almost_full_4_2 &  !din_almost_full_4_3 &  !din_almost_full_4_4 &  !din_almost_full_4_5 &  !din_almost_full_4_6 &  !din_almost_full_4_7 &  !din_almost_full_4_8 &  !din_almost_full_4_9 &  !din_almost_full_4_10 &  !din_almost_full_4_11 &  !din_almost_full_4_12 &  !din_almost_full_4_13 &  !din_almost_full_4_14 &  !din_almost_full_4_15 &  !din_almost_full_4_16 &  !din_almost_full_4_17 &  !din_almost_full_4_18 &  !din_almost_full_4_19 &  !din_almost_full_4_20 &  !din_almost_full_4_21 &  !din_almost_full_4_22 &  !din_almost_full_4_23 &  !din_almost_full_4_24 &  !din_almost_full_4_25 &  !din_almost_full_4_26 &  !din_almost_full_4_27 &  !din_almost_full_4_28 &  !din_almost_full_4_29 &  !din_almost_full_4_30 &  !din_almost_full_4_31 &    !din_almost_full_5_0 &  !din_almost_full_5_1 &  !din_almost_full_5_2 &  !din_almost_full_5_3 &  !din_almost_full_5_4 &  !din_almost_full_5_5 &  !din_almost_full_5_6 &  !din_almost_full_5_7 &  !din_almost_full_5_8 &  !din_almost_full_5_9 &  !din_almost_full_5_10 &  !din_almost_full_5_11 &  !din_almost_full_5_12 &  !din_almost_full_5_13 &  !din_almost_full_5_14 &  !din_almost_full_5_15 &  !din_almost_full_5_16 &  !din_almost_full_5_17 &  !din_almost_full_5_18 &  !din_almost_full_5_19 &  !din_almost_full_5_20 &  !din_almost_full_5_21 &  !din_almost_full_5_22 &  !din_almost_full_5_23 &  !din_almost_full_5_24 &  !din_almost_full_5_25 &  !din_almost_full_5_26 &  !din_almost_full_5_27 &  !din_almost_full_5_28 &  !din_almost_full_5_29 &  !din_almost_full_5_30 &  !din_almost_full_5_31 &    !din_almost_full_6_0 &  !din_almost_full_6_1 &  !din_almost_full_6_2 &  !din_almost_full_6_3 &  !din_almost_full_6_4 &  !din_almost_full_6_5 &  !din_almost_full_6_6 &  !din_almost_full_6_7 &  !din_almost_full_6_8 &  !din_almost_full_6_9 &  !din_almost_full_6_10 &  !din_almost_full_6_11 &  !din_almost_full_6_12 &  !din_almost_full_6_13 &  !din_almost_full_6_14 &  !din_almost_full_6_15 &  !din_almost_full_6_16 &  !din_almost_full_6_17 &  !din_almost_full_6_18 &  !din_almost_full_6_19 &  !din_almost_full_6_20 &  !din_almost_full_6_21 &  !din_almost_full_6_22 &  !din_almost_full_6_23 &  !din_almost_full_6_24 &  !din_almost_full_6_25 &  !din_almost_full_6_26 &  !din_almost_full_6_27 &  !din_almost_full_6_28 &  !din_almost_full_6_29 &  !din_almost_full_6_30 &  !din_almost_full_6_31 &    !din_almost_full_7_0 &  !din_almost_full_7_1 &  !din_almost_full_7_2 &  !din_almost_full_7_3 &  !din_almost_full_7_4 &  !din_almost_full_7_5 &  !din_almost_full_7_6 &  !din_almost_full_7_7 &  !din_almost_full_7_8 &  !din_almost_full_7_9 &  !din_almost_full_7_10 &  !din_almost_full_7_11 &  !din_almost_full_7_12 &  !din_almost_full_7_13 &  !din_almost_full_7_14 &  !din_almost_full_7_15 &  !din_almost_full_7_16 &  !din_almost_full_7_17 &  !din_almost_full_7_18 &  !din_almost_full_7_19 &  !din_almost_full_7_20 &  !din_almost_full_7_21 &  !din_almost_full_7_22 &  !din_almost_full_7_23 &  !din_almost_full_7_24 &  !din_almost_full_7_25 &  !din_almost_full_7_26 &  !din_almost_full_7_27 &  !din_almost_full_7_28 &  !din_almost_full_7_29 &  !din_almost_full_7_30 &  !din_almost_full_7_31 &   1;
     //in_ready <= !in_eop; //create a gap
@@ -2466,28 +2399,7 @@ always @ (posedge front_clk) begin
     in_empty_r2 <= in_empty_r1;
 end
 
-assign gap = (in_eop & in_valid & in_ready);
-
-always@(posedge front_clk)begin
-    if(front_rst)begin
-        out_meta_valid <= 0;
-    end else begin
-        if(out_new_pkt)begin
-            out_meta_valid <= 1;
-        end else begin
-            out_meta_valid <= 0;
-        end
-    end
-    if(out_new_pkt)begin
-        out_meta_data <= internal_meta_data;
-        out_meta_data.pkt_flags <= PKT_DONE;
-    end
-end
-
-assign internal_meta_ready = out_new_pkt;
-//assign in_meta_ready = in_ready;
-
-always@(posedge front_clk)begin
+always@(posedge clk)begin
     din_valid_0_0 <= out_new_pkt | hash_out_valid_filter_0_0;
     din_valid_0_0_r1 <= din_valid_0_0;
     din_valid_0_0_r2 <= din_valid_0_0_r1;
@@ -5323,24 +5235,9 @@ always@(posedge front_clk)begin
 end
 
 //Instantiation
-simple_fifo #(
-    .DATA_WIDTH(META_WIDTH),
-    .ADDR_WIDTH(9)
-) meta_fifo (
-	.clk               (front_clk),                      
-	.rst               (front_rst),            
-	.din               (in_meta_data),          
-	.din_valid         (in_meta_valid),         
-	.din_ready         (in_meta_ready),         
-	.dout              (internal_meta_data),                        
-	.dout_valid        (internal_meta_valid),                       
-	.dout_ready        (internal_meta_ready)                       
-);
-
-
 frontend front(
-    .clk(front_clk),
-    .rst(front_rst),
+    .clk(clk),
+    .rst(rst),
     .hash_out_0_0(hash_out_0_0),
     .hash_out_valid_filter_0_0(hash_out_valid_filter_0_0),
     .hash_out_0_1(hash_out_0_1),
@@ -5863,10 +5760,8 @@ frontend front(
 
 //RuleID reduction logic
 backend back(
-    .front_clk(front_clk),
-    .front_rst(front_rst),
-    .back_clk(back_clk),
-    .back_rst(back_rst),
+    .clk(clk),
+    .rst(rst),
     .din_0_0(din_0_0_r2),
     .din_valid_0_0(din_valid_0_0_r2),
     .din_almost_full_0_0(din_almost_full_0_0),
@@ -6638,14 +6533,7 @@ backend back(
     .ruleID(out_data),
     .ruleID_valid(out_valid),
     .ruleID_last(out_last),
-    .ruleID_almost_full(out_almost_full),
-    .clk_status         (clk_status),
-    .status_addr        (status_addr),
-    .status_read        (status_read),
-    .status_write       (status_write),
-    .status_writedata   (status_writedata),
-    .status_readdata    (status_readdata_back),
-    .status_readdata_valid (status_readdata_valid_back)
+    .ruleID_almost_full(out_almost_full)
 );
 
 endmodule //top

@@ -1,10 +1,8 @@
 module test_pigasus # (
   parameter BYTE_COUNT = 32
 ) (
-  input  wire                    front_clk,
-  input  wire                    front_rst,
-  input  wire                    back_clk,
-  input  wire                    back_rst,
+  input  wire                    clk,
+  input  wire                    rst,
 
   // AXI Stream input
   input  wire [BYTE_COUNT*8-1:0] s_axis_tdata,
@@ -30,8 +28,8 @@ localparam EMPTY_PAD = 5-$clog2(BYTE_COUNT);
 wire [4:0] empty = {{EMPTY_PAD{1'b1}}, s_axis_tempty};
 
 reg valid_r;
-always @ (posedge front_clk)
-  if(front_rst)
+always @ (posedge clk)
+  if(rst)
     valid_r <= 1'b0;
   else
     valid_r <= s_axis_tvalid;
@@ -51,11 +49,9 @@ wire         pigasus_valid;
 wire         pigasus_last;
 
 string_matcher pigasus (
-  .front_clk(front_clk),
-  .front_rst(front_rst),
-  .back_clk(back_clk),
-  .back_rst(back_rst),
-
+  .clk(clk),
+  .rst(rst),
+    
   .in_data({s_axis_tdata_rev, {((32-BYTE_COUNT)*8){1'b0}}}),
   .in_empty(empty),
   .in_valid(s_axis_tvalid),
@@ -73,8 +69,8 @@ string_matcher pigasus (
 wire [127:0] pigasus_output;
 
   port_group pg_inst (
-    .clk(back_clk),
-    .rst(back_rst),
+    .clk(clk),
+    .rst(rst),
     .in_match_sop(),
     .in_match_eop(pigasus_last),
     .in_match_data(pigasus_data),
@@ -109,7 +105,7 @@ wire [127:0] pigasus_output;
   reg [$clog2(BYTE_COUNT)-1:0] last_word_shift;
   reg                          last_word_valid;
 
-  always @ (posedge back_clk) begin
+  always @ (posedge clk) begin
     last_word_valid <= 1'b0; //1 hot
     if (s_axis_tvalid && s_axis_tready) begin
       if (!s_axis_tlast) begin
@@ -121,7 +117,7 @@ wire [127:0] pigasus_output;
       end
     end
 
-    if (sop | back_rst) begin
+    if (sop | rst) begin
       one_to_last_word <= {64{1'b1}}; //not correct
       last_word_valid <= 1'b0;
     end
@@ -129,10 +125,10 @@ wire [127:0] pigasus_output;
 
   wire [(BYTE_COUNT+8)*8-1:0] shifted_word = {last_word,one_to_last_word} << last_word_shift;
 
-  always @ (posedge back_clk) begin
+  always @ (posedge clk) begin
     if (last_word_valid)
       last_7_bytes <= shifted_word[(BYTE_COUNT+8)*8-1:(BYTE_COUNT+1)*8];
-    if (back_rst)
+    if (rst)
       last_7_bytes <= {56{1'b1}};
   end
 

@@ -1696,7 +1696,7 @@ end
 first_filter filter_inst(
     .clk(clk),
     .rst(rst),
-	  .in_data    (in_data),
+	.in_data    (in_data),
     .in_valid   (in_valid),
     .in_sop     (in_sop),
     .in_eop     (in_eop),

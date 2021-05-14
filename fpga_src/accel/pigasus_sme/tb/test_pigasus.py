@@ -71,37 +71,29 @@ with PcapReader(open(PCAP, 'rb')) as pcap:
 @cocotb.test()
 async def run_test_pigasus(dut):
 
-    f_clk = cocotb.fork(Clock(dut.front_clk, 2).start())
-    b_clk = cocotb.fork(Clock(dut.back_clk, 2).start())
+    sys_clk = cocotb.fork(Clock(dut.clk, 2).start())
         
-    data_ch_source = AxiStreamSource(AxiStreamBus.from_prefix(dut, "s_axis"),  dut.front_clk, dut.front_rst)
+    data_ch_source = AxiStreamSource(AxiStreamBus.from_prefix(dut, "s_axis"),  dut.clk, dut.rst)
     data_ch_source.log.setLevel("WARNING")
 
-    dut.front_rst <= 0
-    dut.back_rst <= 0
-    await RisingEdge(dut.front_clk)
-    await RisingEdge(dut.front_clk)
-    dut.front_rst <= 1
-    await RisingEdge(dut.back_clk)
-    dut.back_rst <= 1
-    await RisingEdge(dut.front_clk)
-    await RisingEdge(dut.front_clk)
-    await RisingEdge(dut.front_clk)
-    await RisingEdge(dut.front_clk)
-    dut.front_rst <= 0
-    await RisingEdge(dut.back_clk)
-    dut.back_rst <= 0
+    dut.rst <= 0
+    await RisingEdge(dut.clk)
+    await RisingEdge(dut.clk)
+    dut.rst <= 1
+    await RisingEdge(dut.clk)
+    await RisingEdge(dut.clk)
+    dut.rst <= 0
 
-    await RisingEdge(dut.front_clk)
-    await RisingEdge(dut.front_clk)
-    await RisingEdge(dut.front_clk)
-    await RisingEdge(dut.front_clk)
-    await RisingEdge(dut.front_clk)
+    await RisingEdge(dut.clk)
+    await RisingEdge(dut.clk)
+    await RisingEdge(dut.clk)
+    await RisingEdge(dut.clk)
+    await RisingEdge(dut.clk)
 
     for pkt in PACKETS_0:
-        await RisingEdge(dut.front_clk)
+        await RisingEdge(dut.clk)
         await data_ch_source.send(pkt)
         await data_ch_source.wait()
 
-    await Timer(2000)
-    await RisingEdge(dut.front_clk)
+    await Timer(1000)
+    await RisingEdge(dut.clk)

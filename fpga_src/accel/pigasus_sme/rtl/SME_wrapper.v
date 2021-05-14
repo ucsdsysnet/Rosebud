@@ -28,8 +28,19 @@ module pigasus_sme_wrapper (
   ///////////////////////////////////////////////
   //////////   Selecting input data   ///////////
   ///////////////////////////////////////////////
+
+  reg [$clog2(8)-1:0] s_axis_tempty;
+  integer p;
+  always @ (*) begin
+    s_axis_tempty = 0;
+    for (p=8-1; p>=0; p=p-1)
+      if (!s_axis_tkeep[p])
+        s_axis_tempty = s_axis_tempty+1;
+  end
+
+
   wire [63:0]   muxed_data;
-  wire [7:0]    muxed_strb;
+  wire [4:0]    muxed_empty;
   wire          muxed_last;
   wire          muxed_valid;
   wire          sme_ready;
@@ -38,7 +49,7 @@ module pigasus_sme_wrapper (
   assign muxed_data    = preamble_valid ? {8'hff,preamble_state[63:8]}
                                         : s_axis_tdata;
   assign muxed_strb    = preamble_valid ? 8'hff : s_axis_tkeep;
-  assign muxed_valid   = preamble_valid ? 1'b1  : s_axis_tvalid;
+  assign muxed_empty   = preamble_valid ? 5'd24 : {2'b11, s_axis_tempty};
   assign muxed_last    = preamble_valid ? 1'b0  : s_axis_tlast;
   assign s_axis_tready = preamble_valid ? 1'b0  : sme_ready;
 
@@ -69,15 +80,15 @@ module pigasus_sme_wrapper (
     .rst(rst),
 
     .in_data({mux_data, {192{1'b0}}}),
-    .in_strb(muxed_strb),
+    .in_empty(muxed_empty),
     .in_valid(muxed_valid),
-    .in_last(muxed_last),
+    .in_sop(reload),
+    .in_eop(muxed_last),
     .in_ready(sme_ready),
 
     .out_data(sme_output),
     .out_valid(sme_output_v),
 
-    .init(reload),
     .out_almost_full(1'b0),
     .out_last()
   );

@@ -1,6 +1,5 @@
 `include "struct_s.sv"
-module backend(front_clk,front_rst,
-    back_clk,back_rst,
+module backend(clk,rst,
 {% for i in range(0,context['bucket_size']) %}
 {% for j in range(0,32) %}
     din_{{i}}_{{j}},
@@ -18,10 +17,8 @@ module backend(front_clk,front_rst,
     status_readdata_valid
 );
 
-input front_clk;
-input front_rst;
-input back_clk;
-input back_rst;
+input clk;
+input rst;
 {% for i in range(0,context['bucket_size']) %}
 {% for j in range(0,32) %}
 input rule_s_t din_{{i}}_{{j}};
@@ -56,9 +53,9 @@ localparam L4_TH = (FIFO_DEPTH-3);
 logic          din_csr_address_{{i}}_{{j}};
 logic          din_csr_read_{{i}}_{{j}};
 logic          din_csr_write_{{i}}_{{j}};
-logic [31:0]   din_csr_readdata_{{i}}_{{j}};
-logic [31:0]   din_csr_readdata_{{i}}_{{j}}_r1;
-logic [31:0]   din_csr_readdata_{{i}}_{{j}}_r2;
+logic [$clog2(L1_FIFO_DEPTH):0]   din_csr_readdata_{{i}}_{{j}};
+logic [$clog2(L1_FIFO_DEPTH):0]   din_csr_readdata_{{i}}_{{j}}_r1;
+logic [$clog2(L1_FIFO_DEPTH):0]   din_csr_readdata_{{i}}_{{j}}_r2;
 logic [31:0]   din_csr_writedata_{{i}}_{{j}};
 
 rule_s_t    l1_data_{{i}}_{{j}};
@@ -147,7 +144,7 @@ logic [2:0] bucket_{{i}}_r2;
 {% endfor %}
 
 //L1 
-always @(posedge front_clk)begin
+always @(posedge clk)begin
 {% for i in range(0,context['bucket_size']) %}
 {% for j in range(0,32) %}
     din_csr_readdata_{{i}}_{{j}}_r1 <= din_csr_readdata_{{i}}_{{j}};
@@ -191,8 +188,8 @@ always @(*)begin
     end
 end
 
-always @(posedge back_clk)begin
-    if(back_rst)begin
+always @(posedge clk)begin
+    if(rst)begin
 {% for k in range(0,2) %}
         l1_cache_{{i}}_{{2*j+k}} <= 0;
 {% endfor %}
@@ -211,8 +208,8 @@ always @(posedge back_clk)begin
     end
 end
 //dequeue FIFO and write to next FIFO
-always @(posedge back_clk)begin
-    if(back_rst)begin
+always @(posedge clk)begin
+    if(rst)begin
         l2_in_valid_{{i}}_{{j}} <= 0;
     end else begin
         //sync case
@@ -282,8 +279,8 @@ always @(*)begin
     end
 end
 
-always @(posedge back_clk)begin
-    if(back_rst)begin
+always @(posedge clk)begin
+    if(rst)begin
 {% for k in range(0,4) %}
         l2_cache_{{i}}_{{4*j+k}} <= 0;
 {% endfor %}
@@ -303,8 +300,8 @@ always @(posedge back_clk)begin
 end
 
 //dequeue FIFO and write to next FIFO
-always @(posedge back_clk)begin
-    if(back_rst)begin
+always @(posedge clk)begin
+    if(rst)begin
         l3_in_valid_{{i}}_{{j}} <= 0;
     end else begin
         //sync case
@@ -371,8 +368,8 @@ always @(*)begin
     end
 end
 
-always @(posedge back_clk)begin
-    if(back_rst)begin
+always @(posedge clk)begin
+    if(rst)begin
 {% for k in range(0,4) %}
         l3_cache_{{i}}_{{k}} <= 0;
 {% endfor %}
@@ -392,8 +389,8 @@ always @(posedge back_clk)begin
 end
 
 //dequeue FIFO and write to next FIFO
-always @(posedge back_clk)begin
-    if(back_rst)begin
+always @(posedge clk)begin
+    if(rst)begin
         l4_in_valid_{{i}} <= 0;
     end else begin
         //sync case
@@ -425,7 +422,7 @@ end
 //BACK, after arbiter
 assign all_last = {% for i in range(0,8)%} l4_out_data_{{i}}.last & l4_out_valid_{{i}} & {% endfor %} !ruleID_almost_full;
 
-always @(posedge back_clk)begin
+always @(posedge clk)begin
     {% for i in range(0,8) %}
     if(all_last_r3)begin
         ruleID[{{i*16+15}}:{{i*16}}] <= 0;
@@ -439,8 +436,8 @@ always @(posedge back_clk)begin
     {% endfor %}
 end
 
-always @(posedge back_clk)begin
-    if(back_rst)begin
+always @(posedge clk)begin
+    if(rst)begin
         ruleID_last <= 0;
         ruleID_valid <= 0;
     end else begin
@@ -476,8 +473,8 @@ assign ht_addr_{{i}} = l4_out_data_{{i}}.data;
 assign ht_rd_{{i}} = l4_out_valid_{{i}} & !l4_out_data_{{i}}.last & !ruleID_almost_full & (l4_out_data_{{i}}.data!=l4_cache_{{i}});
 {% endfor %}
 
-always @(posedge back_clk)begin
-    if (back_rst)begin
+always @(posedge clk)begin
+    if (rst)begin
 
 {% for i in range(0,context['bucket_size'])%}
         l4_cache_{{i}} <= 0;
@@ -508,13 +505,14 @@ end
 {% for i in range(0,context['bucket_size']) %}
 {% for j in range(0,32) %}
 
-simple_async_fifo # (
-  .DEPTH(L1_FIFO_DEPTH),
-  .DATA_WIDTH(RULE_S_WIDTH)
+simple_fifo # (
+  .ADDR_WIDTH($clog2(L1_FIFO_DEPTH)),
+  .DATA_WIDTH(RULE_S_WIDTH),
+  .INIT_ZERO(1)
 ) l1_dc_fifo_mlab_{{i}}_{{j}} (
-  .din_clk    (front_clk),
-  .dout_clk   (back_clk),
-  .async_rst  (front_rst|back_rst),
+  .clk   (clk),
+  .rst   (rst),
+  .clear (1'b0),
 
   .din_valid(din_valid_{{i}}_{{j}}),
   .din(din_{{i}}_{{j}}),
@@ -522,12 +520,14 @@ simple_async_fifo # (
 
   .dout_valid(l1_valid_{{i}}_{{j}}),
   .dout(l1_data_{{i}}_{{j}}),
-  .dout_ready(l1_ready_{{i}}_{{j}})
+  .dout_ready(l1_ready_{{i}}_{{j}}),
+  
+  .item_count(din_csr_readdata_{{i}}_{{j}}),
+  .full(),
+  .empty()
 );
 
-assign din_csr_readdata_{{i}}_{{j}} = 0;
-
-always @ (posedge back_clk)
+always @ (posedge clk)
   if (din_csr_readdata_{{i}}_{{j}}_r2 > L1_TH)
     din_almost_full_{{i}}_{{j}} <= 1'b1;
   else
@@ -543,8 +543,8 @@ rr_arbiter #(
     .DWIDTH(2)
 )
 l1_arb_{{i}}_{{j}}(
-    .clk    (back_clk),
-    .rst    (back_rst),
+    .clk    (clk),
+    .rst    (rst),
     .req    (l1_req_{{i}}_{{j}}),
     .grant  (l1_grant_{{i}}_{{j}})
 );
@@ -554,8 +554,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l2_fifo_{{i}}_{{j}} (
-  .clk   (back_clk),
-  .rst   (back_rst),
+  .clk   (clk),
+  .rst   (rst),
   .clear (1'b0),
 
   .din_valid(l2_in_valid_{{i}}_{{j}}),
@@ -571,7 +571,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge back_clk)
+always @ (posedge clk)
   if (l2_csr_readdata_{{i}}_{{j}} > L2_TH)
     l2_almost_full_{{i}}_{{j}} <= 1'b1;
   else
@@ -586,8 +586,8 @@ rr_arbiter_4 #(
     .DWIDTH(4)
 )
 l2_arb_{{i}}_{{j}}(
-    .clk    (back_clk),
-    .rst    (back_rst),
+    .clk    (clk),
+    .rst    (rst),
     .req    (l2_req_{{i}}_{{j}}),
     .grant  (l2_grant_{{i}}_{{j}})
 );
@@ -597,8 +597,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l3_fifo_{{i}}_{{j}} (
-  .clk   (back_clk),
-  .rst   (back_rst),
+  .clk   (clk),
+  .rst   (rst),
   .clear (1'b0),
 
   .din_valid(l3_in_valid_{{i}}_{{j}}),
@@ -614,7 +614,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge back_clk)
+always @ (posedge clk)
   if (l3_csr_readdata_{{i}}_{{j}} > L3_TH)
     l3_almost_full_{{i}}_{{j}} <= 1'b1;
   else
@@ -628,8 +628,8 @@ rr_arbiter_4 #(
     .DWIDTH(4)
 )
 l3_arb_{{i}}(
-    .clk    (back_clk),
-    .rst    (back_rst),
+    .clk    (clk),
+    .rst    (rst),
     .req    (l3_req_{{i}}),
     .grant  (l3_grant_{{i}})
 );
@@ -639,8 +639,8 @@ simple_fifo # (
   .DATA_WIDTH(RULE_S_WIDTH),
   .INIT_ZERO(1)
 ) l4_fifo_{{i}} (
-  .clk   (back_clk),
-  .rst   (back_rst),
+  .clk   (clk),
+  .rst   (rst),
   .clear (1'b0),
 
   .din_valid(l4_in_valid_{{i}}),
@@ -656,7 +656,7 @@ simple_fifo # (
   .empty()
 );
 
-always @ (posedge back_clk)
+always @ (posedge clk)
   if (l4_csr_readdata_{{i}} > L3_TH)
     l4_almost_full_{{i}} <= 1'b1;
   else
@@ -677,7 +677,7 @@ hashtable_inst_{{i}}(
     .q_b       (),    
     .address_a (ht_addr_{{i}}[{{context['nbits'][i]}}-1:0]),
     .address_b (),
-    .clock     (back_clk)   
+    .clock     (clk)   
 );
 {% endfor %}
 
