@@ -30,8 +30,12 @@ set_property STEPS.POST_ROUTE_PHYS_OPT_DESIGN.ARGS.DIRECTIVE Explore [get_runs i
 # set_property STEPS.PHYS_OPT_DESIGN.TCL.POST [get_files force_phys_opt.tcl -of [get_fileset utils_1]] [get_runs impl_1]
 set_property STEPS.PLACE_DESIGN.ARGS.DIRECTIVE SSI_SpreadSLLs [get_runs impl_1]
 
+set_property IS_ENABLED false [get_report_config -of_object [get_runs impl_1] impl_1_route_report_drc_0]
+set_property IS_ENABLED false [get_report_config -of_object [get_runs impl_1] impl_1_route_report_power_0]
+set_property IS_ENABLED false [get_report_config -of_object [get_runs impl_1] impl_1_opt_report_drc_0]
+
 reset_run impl_1
-launch_runs impl_1
+launch_runs impl_1 -jobs 12
 wait_on_run impl_1
 
 exit

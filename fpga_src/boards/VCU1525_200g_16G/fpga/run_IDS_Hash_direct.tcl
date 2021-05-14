@@ -73,13 +73,13 @@ create_pr_configuration -name IDS_Hash_config -partitions [list \
   core_inst/riscv_cores[15].pr_wrapper:Gousheh_IDS \
   core_inst/scheduler_PR_inst:scheduler_Hash]
 
-if {[llength [get_runs "impl_IDS_Hash"]]!=0} then {delete_run impl_IDS_Hash}
-create_run impl_IDS_Hash -parent_run impl_1 -flow {Vivado Implementation 2020} -pr_config IDS_Hash_config
-set_property strategy Performance_ExtraTimingOpt [get_runs impl_IDS_Hash]
-set_property STEPS.POST_ROUTE_PHYS_OPT_DESIGN.IS_ENABLED true [get_runs impl_IDS_Hash]
-set_property STEPS.POST_ROUTE_PHYS_OPT_DESIGN.ARGS.DIRECTIVE Explore [get_runs impl_IDS_Hash]
-# set_property STEPS.PLACE_DESIGN.ARGS.DIRECTIVE Explore [get_runs impl_IDS_Hash]
-set_property AUTO_INCREMENTAL_CHECKPOINT 1 [get_runs impl_IDS_Hash]
+if {[llength [get_runs "impl_IDS_Hash_direct"]]!=0} then {delete_run impl_IDS_Hash_direct}
+create_run impl_IDS_Hash_direct -parent_run impl_1 -flow {Vivado Implementation 2020} -pr_config IDS_Hash_config
+set_property strategy Performance_ExtraTimingOpt [get_runs impl_IDS_Hash_direct]
+set_property STEPS.POST_ROUTE_PHYS_OPT_DESIGN.IS_ENABLED true [get_runs impl_IDS_Hash_direct]
+set_property STEPS.POST_ROUTE_PHYS_OPT_DESIGN.ARGS.DIRECTIVE Explore [get_runs impl_IDS_Hash_direct]
+# set_property STEPS.PLACE_DESIGN.ARGS.DIRECTIVE Explore [get_runs impl_IDS_Hash_direct]
+set_property AUTO_INCREMENTAL_CHECKPOINT 1 [get_runs impl_IDS_Hash_direct]
 
 update_compile_order -fileset scheduler_Hash
 update_compile_order -fileset sources_1
@@ -95,16 +95,20 @@ wait_on_run scheduler_Hash_synth_1
 create_fileset -quiet IDS_Hash_utils
 add_files -fileset IDS_Hash_utils -norecurse ../lib/axis/syn/sync_reset.tcl
 add_files -fileset IDS_Hash_utils -norecurse ../lib/smartFPGA/syn/simple_sync_sig.tcl
-set_property STEPS.OPT_DESIGN.TCL.PRE [ get_files ../lib/axis/syn/sync_reset.tcl -of [get_fileset IDS_Hash_utils] ] [get_runs impl_IDS_Hash]
-set_property STEPS.OPT_DESIGN.TCL.PRE [ get_files ../lib/smartFPGA/syn/simple_sync_sig.tcl -of [get_fileset IDS_Hash_utils] ] [get_runs impl_IDS_Hash]
-set_property STEPS.ROUTE_DESIGN.TCL.PRE [ get_files ../lib/axis/syn/sync_reset.tcl -of [get_fileset IDS_Hash_utils] ] [get_runs impl_IDS_Hash]
-set_property STEPS.ROUTE_DESIGN.TCL.PRE [ get_files ../lib/smartFPGA/syn/simple_sync_sig.tcl -of [get_fileset IDS_Hash_utils] ] [get_runs impl_IDS_Hash]
+set_property STEPS.OPT_DESIGN.TCL.PRE [ get_files ../lib/axis/syn/sync_reset.tcl -of [get_fileset IDS_Hash_utils] ] [get_runs impl_IDS_Hash_direct]
+set_property STEPS.OPT_DESIGN.TCL.PRE [ get_files ../lib/smartFPGA/syn/simple_sync_sig.tcl -of [get_fileset IDS_Hash_utils] ] [get_runs impl_IDS_Hash_direct]
+set_property STEPS.ROUTE_DESIGN.TCL.PRE [ get_files ../lib/axis/syn/sync_reset.tcl -of [get_fileset IDS_Hash_utils] ] [get_runs impl_IDS_Hash_direct]
+set_property STEPS.ROUTE_DESIGN.TCL.PRE [ get_files ../lib/smartFPGA/syn/simple_sync_sig.tcl -of [get_fileset IDS_Hash_utils] ] [get_runs impl_IDS_Hash_direct]
 
-reset_run impl_IDS_Hash
-launch_runs impl_IDS_Hash
-wait_on_run impl_IDS_Hash
+set_property IS_ENABLED false [get_report_config -of_object [get_runs impl_IDS_Hash_direct] impl_IDS_Hash_direct_route_report_drc_0]
+set_property IS_ENABLED false [get_report_config -of_object [get_runs impl_IDS_Hash_direct] impl_IDS_Hash_direct_route_report_power_0]
+set_property IS_ENABLED false [get_report_config -of_object [get_runs impl_IDS_Hash_direct] impl_IDS_Hash_direct_opt_report_drc_0]
 
-open_run impl_IDS_Hash
-write_bitstream -no_partial_bitfile -force fpga.runs/impl_IDS_Hash/fpga.bit
+reset_run impl_IDS_Hash_direct
+launch_runs impl_IDS_Hash_direct -jobs 12
+wait_on_run impl_IDS_Hash_direct
+
+open_run impl_IDS_Hash_direct
+write_bitstream -no_partial_bitfile -force fpga.runs/impl_IDS_Hash_direct/fpga.bit
 
 exit

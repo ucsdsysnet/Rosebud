@@ -55,8 +55,8 @@ wait_on_run scheduler_RR_synth_1
 create_fileset -quiet IDS_RR_utils
 add_files -fileset IDS_RR_utils -norecurse ../lib/axis/syn/sync_reset.tcl
 add_files -fileset IDS_RR_utils -norecurse ../lib/smartFPGA/syn/simple_sync_sig.tcl
-add_files -fileset IDS_RR_utils -norecurse fpga.runs/impl_IDS_RR/fpga_postroute_physopt.dcp
 
+# add_files -fileset IDS_RR_utils -norecurse fpga.runs/impl_IDS_Hash/fpga_postroute_physopt.dcp
 # set_property incremental_checkpoint fpga.runs/impl_IDS_RR/fpga_postroute_physopt.dcp [get_runs impl_IDS_RR]
 
 set_property STEPS.OPT_DESIGN.TCL.PRE [ get_files ../lib/axis/syn/sync_reset.tcl -of [get_fileset IDS_RR_utils] ] [get_runs impl_IDS_RR]

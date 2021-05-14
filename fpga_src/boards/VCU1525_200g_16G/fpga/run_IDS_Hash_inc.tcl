@@ -64,17 +64,19 @@ add_files -fileset IDS_Hash_utils -norecurse ../lib/axis/syn/sync_reset.tcl
 add_files -fileset IDS_Hash_utils -norecurse ../lib/smartFPGA/syn/simple_sync_sig.tcl
 add_files -fileset IDS_Hash_utils -norecurse fpga.runs/impl_IDS_RR/fpga_postroute_physopt.dcp
 
-set_property incremental_checkpoint fpga.runs/impl_IDS_RR/fpga_postroute_physopt.dcp [get_runs impl_IDS_Hash]
+# set_property incremental_checkpoint fpga.runs/impl_IDS_RR/fpga_postroute_physopt.dcp [get_runs impl_IDS_Hash]
 
 set_property STEPS.OPT_DESIGN.TCL.PRE [ get_files ../lib/axis/syn/sync_reset.tcl -of [get_fileset IDS_Hash_utils] ] [get_runs impl_IDS_Hash]
 set_property STEPS.OPT_DESIGN.TCL.PRE [ get_files ../lib/smartFPGA/syn/simple_sync_sig.tcl -of [get_fileset IDS_Hash_utils] ] [get_runs impl_IDS_Hash]
 set_property STEPS.ROUTE_DESIGN.TCL.PRE [ get_files ../lib/axis/syn/sync_reset.tcl -of [get_fileset IDS_Hash_utils] ] [get_runs impl_IDS_Hash]
 set_property STEPS.ROUTE_DESIGN.TCL.PRE [ get_files ../lib/smartFPGA/syn/simple_sync_sig.tcl -of [get_fileset IDS_Hash_utils] ] [get_runs impl_IDS_Hash]
 
-
+set_property IS_ENABLED false [get_report_config -of_object [get_runs impl_IDS_Hash] impl_IDS_Hash_route_report_drc_0]
+set_property IS_ENABLED false [get_report_config -of_object [get_runs impl_IDS_Hash] impl_IDS_Hash_route_report_power_0]
+set_property IS_ENABLED false [get_report_config -of_object [get_runs impl_IDS_Hash] impl_IDS_Hash_opt_report_drc_0]
 
 reset_run impl_IDS_Hash
-launch_runs impl_IDS_Hash
+launch_runs impl_IDS_Hash -jobs 12
 wait_on_run impl_IDS_Hash
 
 open_run impl_IDS_Hash

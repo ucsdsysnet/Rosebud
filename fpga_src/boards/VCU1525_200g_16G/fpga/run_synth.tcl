@@ -16,7 +16,7 @@ update_compile_order -fileset Gousheh_base
 update_compile_order -fileset sources_1
 
 reset_run synth_1
-launch_runs synth_1
+launch_runs synth_1 -jobs 12
 wait_on_run synth_1
 
 exit

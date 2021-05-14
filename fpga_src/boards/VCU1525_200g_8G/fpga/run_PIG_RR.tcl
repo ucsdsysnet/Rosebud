@@ -30,8 +30,10 @@ add_files -norecurse {
   ../accel/pigasus_sme/rtl/hashtable_top.sv
   ../accel/pigasus_sme/rtl/ips.sv
   ../accel/pigasus_sme/rtl/mul_hash.sv
+  ../accel/pigasus_sme/rtl/acc_hash.sv
   ../accel/pigasus_sme/rtl/rr_arbiter.sv
   ../accel/pigasus_sme/rtl/rr_arbiter_4.sv
+  ../accel/pigasus_sme/rtl/hyper_pipe.sv
   ../accel/pigasus_sme/rtl/string_matcher.sv
   ../accel/pigasus_sme/rtl/struct_s.sv
   ../accel/pigasus_sme/rtl/SME_wrapper.v
@@ -59,7 +61,7 @@ set_property strategy Performance_ExtraTimingOpt [get_runs impl_PIG_RR]
 set_property STEPS.POST_ROUTE_PHYS_OPT_DESIGN.IS_ENABLED true [get_runs impl_PIG_RR]
 set_property STEPS.POST_ROUTE_PHYS_OPT_DESIGN.ARGS.DIRECTIVE Explore [get_runs impl_PIG_RR]
 # set_property STEPS.PLACE_DESIGN.ARGS.DIRECTIVE Explore [get_runs impl_PIG_RR]
-set_property AUTO_INCREMENTAL_CHECKPOINT 1 [get_runs impl_PIG_RR]
+# set_property AUTO_INCREMENTAL_CHECKPOINT 1 [get_runs impl_PIG_RR]
 
 update_compile_order -fileset Gousheh_PIG
 update_compile_order -fileset sources_1
@@ -71,6 +73,10 @@ wait_on_run Gousheh_PIG_synth_1
 create_fileset -quiet PIG_RR_utils
 add_files -fileset PIG_RR_utils -norecurse ../lib/axis/syn/sync_reset.tcl
 add_files -fileset PIG_RR_utils -norecurse ../lib/smartFPGA/syn/simple_sync_sig.tcl
+
+# add_files -fileset PIG_RR_utils -norecurse fpga.runs/impl_IDS_RR/fpga_postroute_physopt.dcp
+# set_property incremental_checkpoint fpga.runs/impl_IDS_RR/fpga_postroute_physopt.dcp [get_runs impl_PIG_RR]
+
 set_property STEPS.OPT_DESIGN.TCL.PRE [ get_files ../lib/axis/syn/sync_reset.tcl -of [get_fileset PIG_RR_utils] ] [get_runs impl_PIG_RR]
 set_property STEPS.OPT_DESIGN.TCL.PRE [ get_files ../lib/smartFPGA/syn/simple_sync_sig.tcl -of [get_fileset PIG_RR_utils] ] [get_runs impl_PIG_RR]
 set_property STEPS.ROUTE_DESIGN.TCL.PRE [ get_files ../lib/axis/syn/sync_reset.tcl -of [get_fileset PIG_RR_utils] ] [get_runs impl_PIG_RR]
