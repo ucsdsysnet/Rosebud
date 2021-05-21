@@ -275,12 +275,6 @@ wire [ACCEL_COUNT-1:0]            accel_tlast;
 wire [ACCEL_COUNT-1:0]            accel_tvalid;
 wire [ACCEL_COUNT-1:0]            accel_tready;
 
-wire [ACCEL_COUNT*64-1:0] accel_tdata_r;
-wire [ACCEL_COUNT*8-1:0]  accel_tkeep_r;
-wire [ACCEL_COUNT-1:0]    accel_tlast_r;
-wire [ACCEL_COUNT-1:0]    accel_tvalid_r;
-wire [ACCEL_COUNT-1:0]    accel_tready_r;
-
 accel_rd_dma_sp # (
   .DATA_WIDTH(DATA_WIDTH),
   .KEEP_WIDTH(DATA_WIDTH/8),
@@ -335,40 +329,23 @@ endgenerate
 // Pigasus accelerator
 wire [ACCEL_COUNT-1:0] sme_match;
 
-accel_width_conv # (
-  .DATA_IN_WIDTH(DATA_WIDTH),
-  .DATA_OUT_WIDTH(64),
-  .USER_WIDTH(USER_WIDTH)
-) accel_width_conv_inst (
-  .clk(clk),
-  .rst(rst),
-
-  .s_axis_tdata (accel_tdata),
-  .s_axis_tuser (accel_tuser),
-  .s_axis_tlast (accel_tlast),
-  .s_axis_tvalid(accel_tvalid),
-  .s_axis_tready(accel_tready),
-
-  .m_axis_tdata (accel_tdata_r),
-  .m_axis_tkeep (accel_tkeep_r),
-  .m_axis_tlast (accel_tlast_r),
-  .m_axis_tvalid(accel_tvalid_r),
-  .m_axis_tready(accel_tready_r)
-);
-
 wire [15:0] match_index;
 wire [7:0]  match_valid_stat;
 wire [7:0]  match_error_stat;
+
+wire [4-1:0] temp_tempty = 4'hf-accel_tuser;
+
+wire [4:0] accel_tempty = (temp_tempty == 0) ? 5'd0 : {1'b1,temp_tempty};
 
 pigasus_sme_wrapper fast_pattern_sme_inst (
   .clk(clk),
   .rst(rst),
 
-  .s_axis_tdata(accel_tdata_r),
-  .s_axis_tkeep(accel_tkeep_r),
-  .s_axis_tvalid(accel_tvalid_r),
-  .s_axis_tlast(accel_tlast_r),
-  .s_axis_tready(accel_tready_r),
+  .s_axis_tdata({accel_tdata,accel_tdata}),
+  .s_axis_tempty(accel_tempty),
+  .s_axis_tvalid(accel_tvalid),
+  .s_axis_tlast(accel_tlast),
+  .s_axis_tready(accel_tready),
 
   .preamble_state(cmd_state_reg[63:0]),
   .reload(cmd_init_reg),
@@ -393,7 +370,7 @@ assign sme_match     = |match_valid_stat;
 
 always @ (posedge clk) begin
   status_match <= (status_match | sme_match) & (~cmd_init_reg);
-  status_done  <= (status_done  | (accel_tvalid_r&accel_tlast_r) | cmd_stop_reg)
+  status_done  <= (status_done  | (accel_tvalid & accel_tlast) | cmd_stop_reg)
                   & (~cmd_init_reg);
 
   if (rst) begin
