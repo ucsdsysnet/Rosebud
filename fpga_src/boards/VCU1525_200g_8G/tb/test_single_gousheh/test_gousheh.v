@@ -340,6 +340,12 @@ Gousheh_PR pr_wrapper (
     .core_status_addr(core_status_addr)
 );
 
+initial begin
+  $dumpfile ("sim_build/test_gousheh.fst");
+  $dumpvars (0,test_gousheh);
+  #1;
+end
+
 endmodule
 
 

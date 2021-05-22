@@ -326,6 +326,7 @@ assign timer_int_ack     = interrupt_ack && mem_wr_data[0];
 assign poke_int_ack      = interrupt_ack && mem_wr_data[4];
 assign evict_int_ack     = interrupt_ack && mem_wr_data[5];
 assign ext_io_err_ack    = interrupt_ack && mem_wr_data[9];
+// bc_int_fifo_err and ext_io_err are handled next to memory errors
 assign dupl_slot_int_ack = interrupt_ack && mem_wr_data[10];
 assign inv_slot_int_ack  = interrupt_ack && mem_wr_data[11];
 assign inv_desc_int_ack  = interrupt_ack && mem_wr_data[12];
@@ -368,7 +369,7 @@ always @ (posedge clk)
     else
         io_ren_r <= io_read;
 
-// User interrupts are masked, but error ones are not
+// User interrupts can be masked, but not the memory access errors
 wire [31:0] int_flags = {12'd0, io_access_err, pmem_access_err,
                          dmem_access_err, imem_access_err,
                          3'd0, inv_desc_int, inv_slot_int,

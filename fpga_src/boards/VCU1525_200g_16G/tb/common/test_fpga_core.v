@@ -235,14 +235,19 @@ fpga_core #(
     .qsfp1_intl(),
     .qsfp1_lpmode()
 );
-
-if (TB_LOG) begin
-  integer f;
   
-  initial begin
+integer f;
+initial begin
+  if (TB_LOG) begin
     f = $fopen("ctrl_log.txt","w"); 
     $timeformat(-9, 0, "ns", 8);
   end
+  $dumpfile ("sim_build/test_fpga_core.fst");
+  $dumpvars (0,test_fpga_core);
+  #1;
+end
+
+if (TB_LOG) begin
   
   wire [3:0] ctrl_s_type      = UUT.scheduler.ctrl_s_axis_tdata[35:32];
   wire [3:0] ctrl_s_dest_core = UUT.scheduler.ctrl_s_axis_tdata[27:24];
