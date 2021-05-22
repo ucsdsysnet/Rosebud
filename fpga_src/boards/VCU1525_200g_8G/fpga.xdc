@@ -327,56 +327,64 @@ set_property IS_SOFT FALSE [get_pblocks Gousheh_8]
 
 # Wrapper PBlocks
 create_pblock Wrapper_1
-add_cells_to_pblock [get_pblocks Wrapper_1] [get_cells -quiet [list {core_inst/riscv_cores[0].core_wrapper}]]
+add_cells_to_pblock [get_pblocks Wrapper_1] [get_cells -quiet [list {core_inst/riscv_cores[0].core_wrapper} \
+  core_inst/data_in_sw/grow.axis_switch_2lvl_grow_inst/output_registers[0].output_register/slr_dest_0/srl_fifo_0]]
 resize_pblock [get_pblocks Wrapper_1] -add {SLICE_X13Y120:SLICE_X79Y134}
 resize_pblock [get_pblocks Wrapper_1] -add {DSP48E2_X1Y48:DSP48E2_X8Y53}
 resize_pblock [get_pblocks Wrapper_1] -add {RAMB18_X1Y48:RAMB18_X4Y53}
 resize_pblock [get_pblocks Wrapper_1] -add {RAMB36_X1Y24:RAMB36_X4Y26}
 set_property IS_SOFT TRUE [get_pblocks Wrapper_1]
 create_pblock Wrapper_2
-add_cells_to_pblock [get_pblocks Wrapper_2] [get_cells -quiet [list {core_inst/riscv_cores[1].core_wrapper}]]
+add_cells_to_pblock [get_pblocks Wrapper_2] [get_cells -quiet [list {core_inst/riscv_cores[1].core_wrapper} \
+  core_inst/data_in_sw/grow.axis_switch_2lvl_grow_inst/output_registers[1].output_register/slr_dest_0/srl_fifo_0]]
 resize_pblock [get_pblocks Wrapper_2] -add {SLICE_X88Y120:SLICE_X155Y134}
 resize_pblock [get_pblocks Wrapper_2] -add {DSP48E2_X11Y48:DSP48E2_X17Y53}
 resize_pblock [get_pblocks Wrapper_2] -add {RAMB18_X7Y48:RAMB18_X10Y53}
 resize_pblock [get_pblocks Wrapper_2] -add {RAMB36_X7Y24:RAMB36_X10Y26}
 set_property IS_SOFT TRUE [get_pblocks Wrapper_2]
 create_pblock Wrapper_3
-add_cells_to_pblock [get_pblocks Wrapper_3] [get_cells -quiet [list {core_inst/riscv_cores[2].core_wrapper}]]
+add_cells_to_pblock [get_pblocks Wrapper_3] [get_cells -quiet [list {core_inst/riscv_cores[2].core_wrapper} \
+  core_inst/data_in_sw/grow.axis_switch_2lvl_grow_inst/output_registers[2].output_register/slr_dest_0/srl_fifo_0]]
 resize_pblock [get_pblocks Wrapper_3] -add {SLICE_X13Y270:SLICE_X79Y284}
 resize_pblock [get_pblocks Wrapper_3] -add {DSP48E2_X1Y108:DSP48E2_X8Y113}
 resize_pblock [get_pblocks Wrapper_3] -add {RAMB18_X1Y108:RAMB18_X4Y113}
 resize_pblock [get_pblocks Wrapper_3] -add {RAMB36_X1Y54:RAMB36_X4Y56}
 set_property IS_SOFT TRUE [get_pblocks Wrapper_3]
 create_pblock Wrapper_4
-add_cells_to_pblock [get_pblocks Wrapper_4] [get_cells -quiet [list {core_inst/riscv_cores[3].core_wrapper}]]
+add_cells_to_pblock [get_pblocks Wrapper_4] [get_cells -quiet [list {core_inst/riscv_cores[3].core_wrapper} \
+  core_inst/data_in_sw/grow.axis_switch_2lvl_grow_inst/output_registers[3].output_register/slr_dest_0/srl_fifo_0]]
 resize_pblock [get_pblocks Wrapper_4] -add {SLICE_X88Y270:SLICE_X155Y284}
 resize_pblock [get_pblocks Wrapper_4] -add {DSP48E2_X11Y108:DSP48E2_X17Y113}
 resize_pblock [get_pblocks Wrapper_4] -add {RAMB18_X7Y108:RAMB18_X10Y113}
 resize_pblock [get_pblocks Wrapper_4] -add {RAMB36_X7Y54:RAMB36_X10Y56}
 set_property IS_SOFT TRUE [get_pblocks Wrapper_4]
 create_pblock Wrapper_5
-add_cells_to_pblock [get_pblocks Wrapper_5] [get_cells -quiet [list {core_inst/riscv_cores[4].core_wrapper}]]
+add_cells_to_pblock [get_pblocks Wrapper_5] [get_cells -quiet [list {core_inst/riscv_cores[4].core_wrapper} \
+  core_inst/data_in_sw/grow.axis_switch_2lvl_grow_inst/output_registers[4].output_register/slr_dest_0/srl_fifo_0]]
 resize_pblock [get_pblocks Wrapper_5] -add {SLICE_X21Y615:SLICE_X82Y629}
 resize_pblock [get_pblocks Wrapper_5] -add {DSP48E2_X2Y246:DSP48E2_X9Y251}
 resize_pblock [get_pblocks Wrapper_5] -add {RAMB18_X2Y246:RAMB18_X4Y251}
 resize_pblock [get_pblocks Wrapper_5] -add {RAMB36_X2Y123:RAMB36_X4Y125}
 set_property IS_SOFT TRUE [get_pblocks Wrapper_5]
 create_pblock Wrapper_6
-add_cells_to_pblock [get_pblocks Wrapper_6] [get_cells -quiet [list {core_inst/riscv_cores[5].core_wrapper}]]
+add_cells_to_pblock [get_pblocks Wrapper_6] [get_cells -quiet [list {core_inst/riscv_cores[5].core_wrapper} \
+  core_inst/data_in_sw/grow.axis_switch_2lvl_grow_inst/output_registers[5].output_register/slr_dest_0/srl_fifo_0]]
 resize_pblock [get_pblocks Wrapper_6] -add {SLICE_X88Y615:SLICE_X154Y629}
 resize_pblock [get_pblocks Wrapper_6] -add {DSP48E2_X11Y246:DSP48E2_X17Y251}
 resize_pblock [get_pblocks Wrapper_6] -add {RAMB18_X7Y246:RAMB18_X9Y251}
 resize_pblock [get_pblocks Wrapper_6] -add {RAMB36_X7Y123:RAMB36_X9Y125}
 set_property IS_SOFT TRUE [get_pblocks Wrapper_6]
 create_pblock Wrapper_7
-add_cells_to_pblock [get_pblocks Wrapper_7] [get_cells -quiet [list {core_inst/riscv_cores[6].core_wrapper}]]
+add_cells_to_pblock [get_pblocks Wrapper_7] [get_cells -quiet [list {core_inst/riscv_cores[6].core_wrapper} \
+  core_inst/data_in_sw/grow.axis_switch_2lvl_grow_inst/output_registers[6].output_register/slr_dest_0/srl_fifo_0]]
 resize_pblock [get_pblocks Wrapper_7] -add {SLICE_X21Y765:SLICE_X83Y779}
 resize_pblock [get_pblocks Wrapper_7] -add {DSP48E2_X2Y306:DSP48E2_X9Y311}
 resize_pblock [get_pblocks Wrapper_7] -add {RAMB18_X2Y306:RAMB18_X5Y311}
 resize_pblock [get_pblocks Wrapper_7] -add {RAMB36_X2Y153:RAMB36_X5Y155}
 set_property IS_SOFT TRUE [get_pblocks Wrapper_7]
 create_pblock Wrapper_8
-add_cells_to_pblock [get_pblocks Wrapper_8] [get_cells -quiet [list {core_inst/riscv_cores[7].core_wrapper}]]
+add_cells_to_pblock [get_pblocks Wrapper_8] [get_cells -quiet [list {core_inst/riscv_cores[7].core_wrapper} \
+  core_inst/data_in_sw/grow.axis_switch_2lvl_grow_inst/output_registers[7].output_register/slr_dest_0/srl_fifo_0]]
 resize_pblock [get_pblocks Wrapper_8] -add {SLICE_X88Y765:SLICE_X154Y779}
 resize_pblock [get_pblocks Wrapper_8] -add {DSP48E2_X11Y306:DSP48E2_X17Y311}
 resize_pblock [get_pblocks Wrapper_8] -add {RAMB18_X7Y306:RAMB18_X9Y311}
@@ -422,31 +430,19 @@ set_property IS_SOFT TRUE [get_pblocks Switch_n_MSGs]
 
 # Rest of SLR crossing registers location
 create_pblock SLR2_edge
-add_cells_to_pblock [get_pblocks SLR2_edge] [get_cells -quiet [list \
-    {core_inst/data_in_sw/grow.axis_switch_2lvl_grow_inst/output_registers[4].output_register/slr_dest_0/laguna_s_payload_d_reg[*]} \
-    {core_inst/data_in_sw/grow.axis_switch_2lvl_grow_inst/output_registers[5].output_register/slr_dest_0/laguna_s_payload_d_reg[*]} \
-    {core_inst/data_in_sw/grow.axis_switch_2lvl_grow_inst/output_registers[6].output_register/slr_dest_0/laguna_s_payload_d_reg[*]} \
-    {core_inst/data_in_sw/grow.axis_switch_2lvl_grow_inst/output_registers[7].output_register/slr_dest_0/laguna_s_payload_d_reg[*]} \
-    {core_inst/data_out_sw/shrink.axis_switch_2lvl_shrink_inst/input_registers[4].input_register/slr_source_0/laguna_m_payload_i_reg[*]} \
-    {core_inst/data_out_sw/shrink.axis_switch_2lvl_shrink_inst/input_registers[5].input_register/slr_source_0/laguna_m_payload_i_reg[*]} \
-    {core_inst/data_out_sw/shrink.axis_switch_2lvl_shrink_inst/input_registers[6].input_register/slr_source_0/laguna_m_payload_i_reg[*]} \
-    {core_inst/data_out_sw/shrink.axis_switch_2lvl_shrink_inst/input_registers[7].input_register/slr_source_0/laguna_m_payload_i_reg[*]} \
-    {core_inst/MAC_async_FIFO[*].mac_rx_pipeline/slr_source_0/laguna_m_payload_i_reg[*]} \
-    {core_inst/MAC_async_FIFO[*].mac_tx_pipeline/slr_dest_0/laguna_s_payload_d_reg[*]}]]
+add_cells_to_pblock [get_pblocks SLR2_edge] [get_cells -quiet -regexp [list \
+    {core_inst/data_in_sw/grow.axis_switch_2lvl_grow_inst/output_registers\[[4-7]\].output_register/slr_dest_0/laguna_s_payload_d_reg\[.*\]} \
+    {core_inst/data_out_sw/shrink.axis_switch_2lvl_shrink_inst/input_registers\[[4-7]\].input_register/slr_source_0/laguna_m_payload_i_reg\[.*\]} \
+    {core_inst/MAC_async_FIFO\[.*\].mac_rx_pipeline/slr_source_0/laguna_m_payload_i_reg\[.*\]} \
+    {core_inst/MAC_async_FIFO\[.*\].mac_tx_pipeline/slr_dest_0/laguna_s_payload_d_reg\[.*\]}]]
 resize_pblock [get_pblocks SLR2_edge] -add {LAGUNA_X0Y480:LAGUNA_X23Y599}
 set_property EXCLUDE_PLACEMENT 1 [get_pblocks SLR2_edge]
 set_property IS_SOFT FALSE [get_pblocks SLR2_edge]
 
 create_pblock SLR0_edge
-add_cells_to_pblock [get_pblocks SLR0_edge] [get_cells -quiet [list \
-    {core_inst/data_in_sw/grow.axis_switch_2lvl_grow_inst/output_registers[0].output_register/slr_dest_0/laguna_s_payload_d_reg[*]} \
-    {core_inst/data_in_sw/grow.axis_switch_2lvl_grow_inst/output_registers[1].output_register/slr_dest_0/laguna_s_payload_d_reg[*]} \
-    {core_inst/data_in_sw/grow.axis_switch_2lvl_grow_inst/output_registers[2].output_register/slr_dest_0/laguna_s_payload_d_reg[*]} \
-    {core_inst/data_in_sw/grow.axis_switch_2lvl_grow_inst/output_registers[3].output_register/slr_dest_0/laguna_s_payload_d_reg[*]} \
-    {core_inst/data_out_sw/shrink.axis_switch_2lvl_shrink_inst/input_registers[0].input_register/slr_source_0/laguna_m_payload_i_reg[*]} \
-    {core_inst/data_out_sw/shrink.axis_switch_2lvl_shrink_inst/input_registers[1].input_register/slr_source_0/laguna_m_payload_i_reg[*]} \
-    {core_inst/data_out_sw/shrink.axis_switch_2lvl_shrink_inst/input_registers[2].input_register/slr_source_0/laguna_m_payload_i_reg[*]} \
-    {core_inst/data_out_sw/shrink.axis_switch_2lvl_shrink_inst/input_registers[3].input_register/slr_source_0/laguna_m_payload_i_reg[*]}]]
+add_cells_to_pblock [get_pblocks SLR0_edge] [get_cells -quiet -regexp [list \
+    {core_inst/data_in_sw/grow.axis_switch_2lvl_grow_inst/output_registers\[[0-3]\].output_register/slr_dest_0/laguna_s_payload_d_reg\[.*\]} \
+    {core_inst/data_out_sw/shrink.axis_switch_2lvl_shrink_inst/input_registers\[[0-3]\].input_register/slr_source_0/laguna_m_payload_i_reg\[.*\]}]]
 resize_pblock [get_pblocks SLR0_edge] -add {LAGUNA_X0Y120:LAGUNA_X23Y239}
 set_property EXCLUDE_PLACEMENT 1 [get_pblocks SLR0_edge]
 set_property IS_SOFT FALSE [get_pblocks SLR0_edge]
