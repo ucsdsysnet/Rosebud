@@ -1,4 +1,4 @@
-TEST=basic_fw2
+TEST=basic_fw
 SIZE=9000
 PREFIX=/usr/local
 BINDIR=$(DESTDIR)$(PREFIX)/bin

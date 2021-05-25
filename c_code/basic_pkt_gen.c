@@ -11,9 +11,9 @@ int main(void){
 
   // Do this at the beginnig, so scheduler can fill the slots while 
   // initializing other things.
-  init_hdr_slots(8, 0x804000, 128);
-  init_slots(8, 0x00000A, 16384);
-  set_masks(0xD0); //enable evict
+  init_hdr_slots(16, 0x804000, 128);
+  init_slots(16, 0x00000A, 16384);
+  set_masks(0x00);
 
   for (i=0;i<16;i++){
     pkt_data[i] = (unsigned int *)(0x01000000+i*16384);

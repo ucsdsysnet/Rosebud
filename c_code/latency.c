@@ -14,7 +14,7 @@ unsigned int first_packet;
 #endif
 
 #ifndef CONGESTION
-    #define CONGESTION 1
+    #define CONGESTION 0
 #endif
 
 #ifndef INTR_BASED
@@ -37,12 +37,12 @@ unsigned int first_packet;
     #endif
 #endif
 
-void __attribute__((interrupt)) int_handler(void) {
-  pkt_send(&summary_pkt);
-  // Update for next time if new data doesn't roll back
-  summary_pkt.data=((unsigned char*) wr_ptr);
-  interrupt_ack(0x01);
-}
+// void __attribute__((interrupt)) int_handler(void) {
+//   pkt_send(&summary_pkt);
+//   // Update for next time if new data doesn't roll back
+//   summary_pkt.data=((unsigned char*) wr_ptr);
+//   interrupt_ack(0x01);
+// }
 
 int main(void){
 

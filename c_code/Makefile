@@ -154,7 +154,7 @@ clean:
 	$(REMOVE) $(TARGET)_ins.bin
 	$(REMOVE) $(TARGET)_data.bin
 	$(REMOVE) $(TARGET).elf
-	$(REMOVE) $(TARGET).map
+	# $(REMOVE) $(TARGET).map
 	$(REMOVE) $(TARGET).sym
 	$(REMOVE) $(TARGET).lss
 	$(REMOVE) $(OBJ)
