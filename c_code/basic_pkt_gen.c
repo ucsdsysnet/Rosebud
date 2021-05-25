@@ -31,6 +31,7 @@ int main(void){
   while (1){
     for (i=0;i<16;i++) {
       // for (k=0; k<10000; k++);
+      // For max performance with unimportant data, comment out the next 2 lines
       pkt_data[i][1] = pkt_num;
       packet.data = (unsigned char *) pkt_data[i];
       pkt_send(&packet);
