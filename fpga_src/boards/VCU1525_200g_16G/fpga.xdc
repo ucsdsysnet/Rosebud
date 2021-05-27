@@ -604,10 +604,8 @@ resize_pblock [get_pblocks User_Scheduler] -add {PCIE40E4_X0Y3:PCIE40E4_X0Y3}
 resize_pblock [get_pblocks User_Scheduler] -add {RAMB18_X0Y144:RAMB18_X3Y215}
 resize_pblock [get_pblocks User_Scheduler] -add {RAMB36_X0Y72:RAMB36_X3Y107}
 resize_pblock [get_pblocks User_Scheduler] -add {URAM288_X0Y96:URAM288_X0Y143}
-set_property HD.PARTPIN_RANGE {SLICE_X50Y360:SLICE_X54Y539} [get_pins [list core_inst/scheduler_PR_inst/data_s* core_inst/scheduler_PR_inst/ctrl* core_inst/scheduler_PR_inst/host_cmd* core_inst/scheduler_PR_inst/rst]]
-set_property HD.PARTPIN_RANGE {SLICE_X0Y535:SLICE_X50Y539} [get_pins core_inst/scheduler_PR_inst/tx_axis*]
-set_property HD.PARTPIN_RANGE {SLICE_X0Y535:SLICE_X50Y539} [get_pins core_inst/scheduler_PR_inst/rx_axis*]
-set_property HD.PARTPIN_RANGE {SLICE_X0Y360:SLICE_X50Y364} [get_pins core_inst/scheduler_PR_inst/data_m*]
+set_property HD.PARTPIN_RANGE {SLICE_X50Y360:SLICE_X54Y539} [get_pins [list core_inst/scheduler_PR_inst/data_s* core_inst/scheduler_PR_inst/data_m* core_inst/scheduler_PR_inst/rst core_inst/scheduler_PR_inst/ctrl* core_inst/scheduler_PR_inst/host_cmd*]]
+set_property HD.PARTPIN_RANGE {SLICE_X0Y535:SLICE_X50Y539} [get_pins [list core_inst/scheduler_PR_inst/rx_axis* core_inst/scheduler_PR_inst/tx_axis*]]
 set_property SNAPPING_MODE ON [get_pblocks User_Scheduler]
 set_property IS_SOFT FALSE [get_pblocks User_Scheduler]
 
