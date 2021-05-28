@@ -195,7 +195,7 @@ parameter V_PORT_COUNT      = V_IF_COUNT * PORTS_PER_V_IF;
 parameter FIRST_LB_PORT     = INTERFACE_COUNT+V_PORT_COUNT+1-1;
 parameter PORT_COUNT        = INTERFACE_COUNT+V_PORT_COUNT+LB_PORT_COUNT+1;
 
-parameter IF_COUNT_WIDTH    = $clog2(INTERFACE_COUNT+V_PORT_COUNT);
+parameter PORT_WIDTH        = $clog2(PORT_COUNT);
 parameter BYTE_COUNT_WIDTH  = 32;
 parameter FRAME_COUNT_WIDTH = 32;
 parameter MAX_PKT_HDR_SIZE  = 128;
@@ -233,7 +233,6 @@ parameter AXIL_ADDR_WIDTH     = BAR0_APERTURE;
 
 // RISCV parameters, should match riscv_block
 parameter CORE_WIDTH      = $clog2(CORE_COUNT);
-parameter PORT_WIDTH      = $clog2(PORT_COUNT);
 parameter DRAM_PORT       = PORT_COUNT-1;
 parameter SLOT_COUNT      = 16;
 parameter SLOT_WIDTH      = $clog2(SLOT_COUNT+1);
@@ -729,7 +728,7 @@ pcie_config # (
   .CORE_COUNT(CORE_COUNT),
   .CORE_SLOT_WIDTH(SLOT_WIDTH),
   .ID_TAG_WIDTH(ID_TAG_WIDTH),
-  .INTERFACE_WIDTH(IF_COUNT_WIDTH),
+  .INTERFACE_WIDTH(PORT_WIDTH),
   .IF_COUNT(V_IF_COUNT),
   .PORTS_PER_IF(PORTS_PER_V_IF),
   .FW_ID(FW_ID),
@@ -861,13 +860,13 @@ end else begin //syncers as pipe registers to help with the timing
   );
 end
 
-wire [1:0]                 interface_reg_sel;
-wire                       interface_dir;
-wire [IF_COUNT_WIDTH-1:0]  interface_sel;
-wire [2:0]                 host_cmd_type;
+wire [1:0]            interface_reg_sel;
+wire                  interface_dir;
+wire [PORT_WIDTH-1:0] interface_sel;
+wire [2:0]            host_cmd_type;
 
 assign interface_reg_sel = host_cmd[1:0];
-assign interface_sel     = host_cmd[3 +: IF_COUNT_WIDTH];
+assign interface_sel     = host_cmd[3 +: PORT_WIDTH];
 assign interface_dir     = host_cmd[2];
 assign host_cmd_type     = host_cmd[31:29];
 
@@ -1306,21 +1305,21 @@ axis_switch_2lvl # (
 
 stat_reader # (
   .KEEP_WIDTH(LVL1_STRB_WIDTH),
-  .PORT_COUNT(INTERFACE_COUNT+V_PORT_COUNT),
+  .PORT_COUNT(PORT_COUNT),
   .BYTE_COUNT_WIDTH(BYTE_COUNT_WIDTH),
   .FRAME_COUNT_WIDTH(FRAME_COUNT_WIDTH),
-  .PORT_WIDTH(IF_COUNT_WIDTH),
+  .PORT_WIDTH(PORT_WIDTH),
   .PORT_CLUSTERS(2)
 ) interface_incoming_stat (
   .clk(sys_clk),
-  .port_rst({INTERFACE_COUNT+V_PORT_COUNT{stat_rst_r}}),
-  .port_clear({INTERFACE_COUNT+V_PORT_COUNT{1'b0}}),
+  .port_rst({PORT_COUNT{stat_rst_r}}),
+  .port_clear({PORT_COUNT{1'b0}}),
 
-  .monitor_axis_tkeep(sched_rx_axis_tkeep),
-  .monitor_axis_tvalid(sched_rx_axis_tvalid),
-  .monitor_axis_tready(sched_rx_axis_tready),
-  .monitor_axis_tlast(sched_rx_axis_tlast),
-  .monitor_drop_pulse({{V_PORT_COUNT{1'b0}},rx_drop_r}),
+  .monitor_axis_tkeep( {dram_rx_axis_tkeep, loopback_rx_axis_tkeep, sched_rx_axis_tkeep}),
+  .monitor_axis_tvalid({dram_rx_axis_tvalid,loopback_rx_axis_tvalid,sched_rx_axis_tvalid}),
+  .monitor_axis_tready({dram_rx_axis_tready,loopback_rx_axis_tready,sched_rx_axis_tready}),
+  .monitor_axis_tlast( {dram_rx_axis_tlast, loopback_rx_axis_tlast, sched_rx_axis_tlast}),
+  .monitor_drop_pulse({{(PORT_COUNT-INTERFACE_COUNT){1'b0}},rx_drop_r}),
 
   .port_select(interface_sel),
   .stat_addr(interface_reg_sel),
@@ -1380,21 +1379,21 @@ axis_switch_2lvl # (
 
 stat_reader # (
   .KEEP_WIDTH(LVL1_STRB_WIDTH),
-  .PORT_COUNT(INTERFACE_COUNT+V_PORT_COUNT),
+  .PORT_COUNT(PORT_COUNT),
   .BYTE_COUNT_WIDTH(BYTE_COUNT_WIDTH),
   .FRAME_COUNT_WIDTH(FRAME_COUNT_WIDTH),
-  .PORT_WIDTH(IF_COUNT_WIDTH),
+  .PORT_WIDTH(PORT_WIDTH),
   .PORT_CLUSTERS(2)
 ) interface_outgoing_stat (
   .clk(sys_clk),
-  .port_rst({INTERFACE_COUNT+V_PORT_COUNT{stat_rst_r}}),
-  .port_clear({INTERFACE_COUNT+V_PORT_COUNT{1'b0}}),
+  .port_rst({PORT_COUNT{stat_rst_r}}),
+  .port_clear({PORT_COUNT{1'b0}}),
 
-  .monitor_axis_tkeep(sched_tx_axis_tkeep),
-  .monitor_axis_tvalid(sched_tx_axis_tvalid),
-  .monitor_axis_tready(sched_tx_axis_tready),
-  .monitor_axis_tlast(sched_tx_axis_tlast),
-  .monitor_drop_pulse({INTERFACE_COUNT+V_PORT_COUNT{1'b0}}),
+  .monitor_axis_tkeep( {dram_tx_axis_tkeep, loopback_tx_axis_tkeep, sched_tx_axis_tkeep}),
+  .monitor_axis_tvalid({dram_tx_axis_tvalid,loopback_tx_axis_tvalid,sched_tx_axis_tvalid}),
+  .monitor_axis_tready({dram_tx_axis_tready,loopback_tx_axis_tready,sched_tx_axis_tready}),
+  .monitor_axis_tlast( {dram_tx_axis_tlast, loopback_tx_axis_tlast, sched_tx_axis_tlast}),
+  .monitor_drop_pulse({PORT_COUNT{1'b0}}),
 
   .port_select(interface_sel),
   .stat_addr(interface_reg_sel),
