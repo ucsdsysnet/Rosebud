@@ -86,9 +86,9 @@ SYN_FILES += lib/corundum/rtl/tdma_scheduler.v
 SYN_FILES += lib/corundum/rtl/event_mux.v
 # XDC files
 XDC_FILES = fpga.xdc
-XDC_FILES += lib/axis/syn/axis_async_fifo.tcl
-XDC_FILES += lib/axis/syn/sync_reset.tcl
-XDC_FILES += lib/smartFPGA/syn/simple_sync_sig.tcl
+XDC_FILES += lib/axis/syn/vivado/axis_async_fifo.tcl
+XDC_FILES += lib/axis/syn/vivado/sync_reset.tcl
+XDC_FILES += lib/smartFPGA/syn/vivado/simple_sync_sig.tcl
 
 # IP
 IP_TCL_FILES = ip/pcie4_uscale_plus_0.tcl
