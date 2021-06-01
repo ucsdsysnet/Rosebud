@@ -73,10 +73,9 @@ module axis_fifo #
     // When set, s_axis_tready is always asserted
     // Requires FRAME_FIFO set
     parameter DROP_WHEN_FULL = 0,
-    // Almost full and empty thresholds
-    // There have 2 cycles of delay
-    parameter ALMOST_FULL_LVL = (DEPTH-(DEPTH/8)),
-    parameter ALMOST_EMPTY_LVL = (DEPTH/8)
+    // ADDR_WIDTH of the FIFO
+    parameter ADDR_WIDTH = (KEEP_ENABLE && KEEP_WIDTH > 1) ? 
+                           $clog2(DEPTH/KEEP_WIDTH) : $clog2(DEPTH)
 )
 (
     input  wire                   clk,
@@ -112,11 +111,9 @@ module axis_fifo #
     output wire                   status_overflow,
     output wire                   status_bad_frame,
     output wire                   status_good_frame,
-    output wire                   status_almost_full,
-    output wire                   status_almost_empty
+    output wire [ADDR_WIDTH:0]    status_line_count
 );
 
-parameter ADDR_WIDTH = (KEEP_ENABLE && KEEP_WIDTH > 1) ? $clog2(DEPTH/KEEP_WIDTH) : $clog2(DEPTH);
 
 // check configuration
 initial begin
@@ -161,7 +158,6 @@ reg [ADDR_WIDTH:0] rd_addr_reg = {ADDR_WIDTH+1{1'b0}};
 
 wire [ADDR_WIDTH+1:0] count;
 reg  [ADDR_WIDTH:0]   count_r;
-reg  almost_full, almost_empty;
 
 reg [WIDTH-1:0] mem[(2**ADDR_WIDTH)-1:0];
 reg [WIDTH-1:0] mem_read_data_reg;
@@ -184,23 +180,15 @@ wire full_wr = ((wr_ptr_reg[ADDR_WIDTH] != wr_ptr_cur_reg[ADDR_WIDTH]) &&
                 (wr_ptr_reg[ADDR_WIDTH-1:0] == wr_ptr_cur_reg[ADDR_WIDTH-1:0]));
 
 // Almost full and empty calculation
-localparam SHIFT_AMOUNT = (KEEP_ENABLE && KEEP_WIDTH > 1) ? $clog2(KEEP_WIDTH) : 0;
 assign count = FRAME_FIFO ? (wr_ptr_cur_reg - rd_ptr_reg) : (wr_ptr_reg - rd_ptr_reg);
 
-always @ (posedge clk) begin
-  count_r      <= count[ADDR_WIDTH:0];
-  almost_full  <= ((count_r<<SHIFT_AMOUNT) >= ALMOST_FULL_LVL);
-  almost_empty <= ((count_r<<SHIFT_AMOUNT) <  ALMOST_EMPTY_LVL);
+always @ (posedge clk)
+  if (rst)
+    count_r <= 0;
+  else 
+    count_r <= count[ADDR_WIDTH:0];
 
-  if (rst) begin
-    count_r      <= 0;
-    almost_full  <= 1'b0;
-    almost_empty <= 1'b0;
-  end
-end
-
-assign status_almost_full  = almost_full;
-assign status_almost_empty = almost_empty;
+assign status_line_count  = count_r;
 
 // control signals
 reg write;

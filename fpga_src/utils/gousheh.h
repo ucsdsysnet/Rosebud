@@ -52,11 +52,13 @@ either expressed or implied, of The Regents of the University of California.
 #define SCHED_CORE_RECV     (0<<27)
 #define SCHED_CORE_EN       (1<<27)
 #define SCHED_CORE_SLOT     (2<<27) // RD_ONLY
-#define SCHED_CORE_FLUSH    (3<<27) // RD_ONLY
+#define SCHED_CORE_FLUSH    (3<<27) // WR_ONLY
 
 #define SCHED_INT_DESC      (4<<27) // RD_ONLY
 #define SCHED_INT_EN        (5<<27)
-#define SCHED_INT_DROP_DESC (6<<27) // WR_ONLY, RR SCHED
+#define SCHED_INT_RX_LINES  (6<<27) // RD_ONLY
+#define SCHED_INT_DROP_LMT  (6<<27) // WR_ONLY
+#define SCHED_INT_DROP_DESC (7<<27) // WR_ONLY, RR SCHED
 #define SCHED_INT_DROP_CNT  (7<<27) // RD_ONLY, HASH SCHED
 
 #define CORE_REG_WIDTH      4

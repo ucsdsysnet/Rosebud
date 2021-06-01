@@ -8,7 +8,7 @@ module scheduler_PR (
   input  wire [3-1:0]     rx_axis_tvalid,
   output wire [3-1:0]     rx_axis_tready,
   input  wire [3-1:0]     rx_axis_tlast,
-  input  wire [3-1:0]     rx_axis_almost_full,
+  input  wire [3*13-1:0]  rx_axis_line_count,
 
   output wire [3*512-1:0] tx_axis_tdata,
   output wire [3*64-1:0]  tx_axis_tkeep,
@@ -62,6 +62,7 @@ module scheduler_PR (
   parameter CTRL_REG_TYPE   = 2;
   parameter DATA_FIFO_DEPTH = 4096;
   parameter HASH_SEL_OFFSET = 0;
+  parameter RX_LINES_WIDTH  = 13;
 
   parameter SLOT_WIDTH      = $clog2(SLOT_COUNT+1);
   parameter CORE_ID_WIDTH   = $clog2(CORE_COUNT);
@@ -461,9 +462,12 @@ module scheduler_PR (
   reg [CORE_ID_WIDTH-1:0]   stat_read_core_r;
   reg [INTERFACE_WIDTH-1:0] stat_read_interface_r;
   reg [31:0]                host_cmd_rd_data_n;
-  reg [INTERFACE_COUNT-1:0] rx_almost_full_r;
+  reg [INTERFACE_COUNT-1:0] rx_almost_full;
   reg [INTERFACE_COUNT-1:0] enabled_ints;
   reg [2:0]                 sched_cmd_addr;
+  
+  reg [INTERFACE_COUNT*RX_LINES_WIDTH-1:0] rx_line_count_r;
+  reg [RX_LINES_WIDTH-1:0] drop_limit;
 
   // host cmd bit 31 high means wr. bit 30 low means command for cores
   always @ (posedge clk) begin
@@ -475,7 +479,7 @@ module scheduler_PR (
     stat_read_interface_r <= host_cmd[INTERFACE_WIDTH-1:0];
     sched_cmd_addr        <= host_cmd[29:27];
     host_cmd_rd_data      <= host_cmd_rd_data_n;
-    rx_almost_full_r      <= rx_axis_almost_full;
+    rx_line_count_r       <= rx_axis_line_count;
 
     if (host_to_sched_valid_r)
       case (sched_cmd_addr)
@@ -492,6 +496,9 @@ module scheduler_PR (
         end
         3'b101: begin
           enabled_ints  <= host_cmd_wr_data_r[INTERFACE_COUNT-1:0];
+        end
+        3'b110: begin
+          drop_limit    <= host_cmd_wr_data_r[RX_LINES_WIDTH-1:0];
         end
 
         default: begin //for one-cycle signals
@@ -514,6 +521,14 @@ module scheduler_PR (
 
   wire [3:0]                host_cores_cmd = host_cmd_r [3:0];
   wire [CORE_ID_WIDTH-1:0]  host_cmd_dest  = host_cmd_r [4 +: CORE_ID_WIDTH];
+  
+  integer j;
+  always @ (posedge clk) begin
+    for (j=0;j<INTERFACE_COUNT;j=j+1) 
+      rx_almost_full[j] <= (rx_line_count_r >= drop_limit);
+    if (rst)
+      rx_almost_full    <= {INTERFACE_COUNT{1'b0}};
+  end
 
   // Separate incoming ctrl messages
   parameter MSG_TYPE_WIDTH = 4;
@@ -873,7 +888,7 @@ module scheduler_PR (
         rx_hash_ready_f  = selected_port_r;
         hash_n_dest_in_v = selected_port_r;
 
-      end else if (rx_almost_full_r[selected_port_enc_r]) begin
+      end else if (rx_almost_full[selected_port_enc_r]) begin
         rx_hash_ready_f  = selected_port_r;
         hash_n_dest_in_v = selected_port_r;
       end
@@ -887,7 +902,7 @@ module scheduler_PR (
     if (rst_r)
       drop_count <= {INTERFACE_COUNT*ID_TAG_WIDTH{1'b0}};
     else if (selected_port_v_r && !msg_desc_pop[rx_dest_core] &&
-             !rx_desc_avail[rx_dest_core] && rx_almost_full_r[selected_port_enc_r])
+             !rx_desc_avail[rx_dest_core] && rx_almost_full[selected_port_enc_r])
       drop_count[selected_port_enc_r*32 +: 32] <=
         drop_count[selected_port_enc_r*32 +: 32] + 1;
   end
@@ -898,6 +913,8 @@ module scheduler_PR (
       3'b001:  host_cmd_rd_data_n <= enabled_cores;
       3'b010:  host_cmd_rd_data_n <= rx_desc_count[stat_read_core_r * SLOT_WIDTH +: SLOT_WIDTH];
       3'b101:  host_cmd_rd_data_n <= {{(32-INTERFACE_COUNT){1'b0}}, enabled_ints};
+      3'b110:  host_cmd_rd_data_n <= {{(32-RX_LINES_WIDTH){1'b0}}, 
+                                     rx_line_count_r[stat_read_interface_r*RX_LINES_WIDTH +: RX_LINES_WIDTH]};
       3'b111:  host_cmd_rd_data_n <= drop_count[stat_read_interface_r*32 +: 32];
       default: host_cmd_rd_data_n <= 32'hFEFEFEFE;
     endcase

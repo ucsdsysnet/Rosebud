@@ -8,7 +8,7 @@ module scheduler_PR (
   input  wire [3-1:0]     rx_axis_tvalid,
   output wire [3-1:0]     rx_axis_tready,
   input  wire [3-1:0]     rx_axis_tlast,
-  input  wire [3-1:0]     rx_axis_almost_full,
+  input  wire [3*13-1:0]  rx_axis_line_count,
 
   output wire [3*512-1:0] tx_axis_tdata,
   output wire [3*64-1:0]  tx_axis_tkeep,
@@ -61,6 +61,7 @@ module scheduler_PR (
   parameter DATA_REG_TYPE   = 2;
   parameter CTRL_REG_TYPE   = 2;
   parameter CLUSTER_COUNT   = 2;
+  parameter RX_LINES_WIDTH  = 13;
 
   parameter SLOT_WIDTH      = $clog2(SLOT_COUNT+1);
   parameter CORE_ID_WIDTH   = $clog2(CORE_COUNT);
@@ -290,10 +291,12 @@ module scheduler_PR (
   reg [CORE_ID_WIDTH-1:0]   stat_read_core_r;
   reg [INTERFACE_WIDTH-1:0] stat_read_interface_r;
   reg [31:0]                host_cmd_rd_data_n;
-  reg [INTERFACE_COUNT-1:0] rx_almost_full_r;
   reg [INTERFACE_COUNT-1:0] release_desc;
   reg [INTERFACE_COUNT-1:0] enabled_ints;
   reg [2:0]                 sched_cmd_addr;
+  
+  reg [INTERFACE_COUNT*RX_LINES_WIDTH-1:0] rx_line_count_r;
+  reg [RX_LINES_WIDTH-1:0] drop_limit;
 
   // host cmd bit 31 high means wr. bit 30 low means command for cores
   always @ (posedge clk) begin
@@ -305,7 +308,7 @@ module scheduler_PR (
     stat_read_interface_r <= host_cmd[INTERFACE_WIDTH-1:0];
     sched_cmd_addr        <= host_cmd[29:27];
     host_cmd_rd_data      <= host_cmd_rd_data_n;
-    rx_almost_full_r      <= rx_axis_almost_full;
+    rx_line_count_r       <= rx_axis_line_count;
 
     if (host_to_sched_valid_r)
       case (sched_cmd_addr)
@@ -324,6 +327,9 @@ module scheduler_PR (
           enabled_ints  <= host_cmd_wr_data_r[INTERFACE_COUNT-1:0];
         end
         3'b110: begin
+          drop_limit    <= host_cmd_wr_data_r[RX_LINES_WIDTH-1:0];
+        end
+        3'b111: begin
           release_desc  <= host_cmd_wr_data_r[INTERFACE_COUNT-1:0];
         end
 
@@ -786,13 +792,14 @@ module scheduler_PR (
       3'b000:  host_cmd_rd_data_n <= income_cores;
       3'b001:  host_cmd_rd_data_n <= enabled_cores;
       3'b010:  host_cmd_rd_data_n <= rx_desc_count[stat_read_core_r * SLOT_WIDTH +: SLOT_WIDTH];
-      3'b100:  host_cmd_rd_data_n <= {7'd0, rx_almost_full_r[stat_read_interface_r],
-                                      6'd0, port_state[stat_read_interface_r], 
+      3'b100:  host_cmd_rd_data_n <= {14'd0, port_state[stat_read_interface_r], 
                                      {(8-CORE_ID_WIDTH){1'b0}}, 
                                      dest_r[(stat_read_interface_r * ID_TAG_WIDTH) + TAG_WIDTH +: CORE_ID_WIDTH],
                                      {(8-TAG_WIDTH){1'b0}}, 
                                      dest_r[stat_read_interface_r * ID_TAG_WIDTH +: TAG_WIDTH]};
       3'b101:  host_cmd_rd_data_n <= {{(32-INTERFACE_COUNT){1'b0}}, enabled_ints};
+      3'b110:  host_cmd_rd_data_n <= {{(32-RX_LINES_WIDTH){1'b0}}, 
+                                     rx_line_count_r[stat_read_interface_r*RX_LINES_WIDTH +: RX_LINES_WIDTH]};
       default: host_cmd_rd_data_n <= 32'hFEFEFEFE;
     endcase
 

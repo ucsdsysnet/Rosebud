@@ -208,7 +208,7 @@ parameter LVL1_DRAM_WIDTH  = 32; //DRAM CONTROL
 parameter LVL2_DRAM_WIDTH  = 32; //DON'T CHANGE
 parameter RX_ASYNC_DEPTH   = 2048;
 parameter RX_FIFO_DEPTH    = 8*32768;
-parameter RX_ALMOST_FULL   = 7*32768;
+parameter RX_LINES_WIDTH   = $clog2(RX_FIFO_DEPTH/AXIS_ETH_KEEP_WIDTH)+1;
 parameter TX_FIFO_DEPTH    = 32768;
 parameter RX_STG_F_DEPTH   = 8*32768;
 parameter TX_STG_F_DEPTH   = 2*32768;
@@ -333,8 +333,8 @@ wire [INTERFACE_COUNT-1:0] port_rx_axis_tvalid_r;
 wire [INTERFACE_COUNT-1:0] port_rx_axis_tready_r;
 wire [INTERFACE_COUNT-1:0] port_rx_axis_tlast_r;
 wire [INTERFACE_COUNT-1:0] port_rx_axis_overflow_r;
-wire [INTERFACE_COUNT-1:0] port_rx_axis_almost_full_r;
 wire [INTERFACE_COUNT-1:0] port_rx_axis_bad_frame_r;
+wire [INTERFACE_COUNT*RX_LINES_WIDTH-1:0] port_rx_axis_line_count_r;
 
 if (QSFP0_IND >= 0 && QSFP0_IND < INTERFACE_COUNT) begin
     assign port_tx_clk[QSFP0_IND] = qsfp0_tx_clk;
@@ -396,8 +396,8 @@ wire [(INTERFACE_COUNT+V_PORT_COUNT)*LVL1_STRB_WIDTH-1:0] rx_axis_tkeep;
 wire [(INTERFACE_COUNT+V_PORT_COUNT)-1:0] rx_axis_tvalid, rx_axis_tready, rx_axis_tlast;
 
 (* KEEP = "TRUE" *) reg  [INTERFACE_COUNT-1:0] rx_drop, rx_drop_r;
-(* KEEP = "TRUE" *) reg  [INTERFACE_COUNT-1:0] rx_almost_full;
-                    wire [INTERFACE_COUNT-1:0] rx_almost_full_r;
+(* KEEP = "TRUE" *) reg  [INTERFACE_COUNT*RX_LINES_WIDTH-1:0] rx_line_count;
+                    wire [INTERFACE_COUNT*RX_LINES_WIDTH-1:0] rx_line_count_r;
 
 genvar m;
 generate
@@ -537,8 +537,7 @@ generate
             .USER_BAD_FRAME_VALUE(1'b1),
             .USER_BAD_FRAME_MASK(1'b1),
             .DROP_BAD_FRAME(1),
-            .DROP_WHEN_FULL(1),
-            .ALMOST_FULL_LVL(RX_ALMOST_FULL)
+            .DROP_WHEN_FULL(1)
         ) mac_rx_fifo_inst (
             .clk(sys_clk),
             .rst(int_rst_r),
@@ -564,8 +563,7 @@ generate
             .status_overflow(port_rx_axis_overflow_r[m]),
             .status_bad_frame(port_rx_axis_bad_frame_r[m]),
             .status_good_frame(),
-            .status_almost_full(port_rx_axis_almost_full_r[m]),
-            .status_almost_empty()
+            .status_line_count(port_rx_axis_line_count_r[m*RX_LINES_WIDTH +: RX_LINES_WIDTH])
         );
 
         axis_slr_crossing_register # (
@@ -603,21 +601,24 @@ generate
 
     always @ (posedge sys_clk)
         if (int_rst_r) begin
-            rx_drop           <= {INTERFACE_COUNT{1'b0}};
-            rx_drop_r         <= {INTERFACE_COUNT{1'b0}};
-            rx_almost_full    <= {INTERFACE_COUNT{1'b0}};
+            rx_drop       <= {INTERFACE_COUNT{1'b0}};
+            rx_drop_r     <= {INTERFACE_COUNT{1'b0}};
+            rx_line_count <= {INTERFACE_COUNT*RX_LINES_WIDTH{1'b0}};
         end else begin
-            rx_drop           <= port_rx_axis_overflow_r | port_rx_axis_bad_frame_r;
-            rx_drop_r         <= rx_drop;
-            rx_almost_full    <= port_rx_axis_almost_full_r;
+            rx_drop       <= port_rx_axis_overflow_r | port_rx_axis_bad_frame_r;
+            rx_drop_r     <= rx_drop;
+            rx_line_count <= port_rx_axis_line_count_r;
         end
 
     // Sync reg to help with the timing
-    simple_sync_sig # (.RST_VAL(1'b0),.WIDTH(INTERFACE_COUNT)) almost_full_sync_reg (
+    simple_sync_sig # (
+      .RST_VAL(1'b0),
+      .WIDTH(INTERFACE_COUNT*RX_LINES_WIDTH)
+    ) rx_line_count_sync_reg (
       .dst_clk(sys_clk),
       .dst_rst(sys_rst),
-      .in(rx_almost_full),
-      .out(rx_almost_full_r)
+      .in(rx_line_count),
+      .out(rx_line_count_r)
     );
 
 endgenerate
@@ -1185,7 +1186,7 @@ wire [CORE_WIDTH-1:0] sched_ctrl_s_axis_tuser;
     .rx_axis_tready(rx_axis_tready),
     .rx_axis_tlast(rx_axis_tlast),
 
-    .rx_axis_almost_full({{V_PORT_COUNT{1'b0}},rx_almost_full_r}),
+    .rx_axis_line_count({{V_PORT_COUNT*RX_LINES_WIDTH{1'b0}}, rx_line_count_r}),
 
     // DATA lines to/from cores
     .data_m_axis_tdata(sched_rx_axis_tdata),
