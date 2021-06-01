@@ -42,7 +42,9 @@ from scapy.layers.inet import IP, UDP, TCP
 import cocotb_test.simulator
 
 import cocotb
-from cocotb.triggers import RisingEdge, Timer
+from cocotb.log import SimLog
+from cocotb.clock import Clock
+from cocotb.triggers import RisingEdge, Timer, ClockCycles
 
 from cocotbext.axi.utils import hexdump_str
 
@@ -96,7 +98,7 @@ FIRMWARE = os.path.abspath(os.path.join(os.path.dirname(__file__),
 
 
 @cocotb.test()
-async def run_test_nic(dut):
+async def run_test_ins_load(dut):
 
     tb = TB(dut)
 
@@ -247,193 +249,3 @@ async def run_test_nic(dut):
     await RisingEdge(dut.pcie_clk)
     await RisingEdge(dut.pcie_clk)
 
-
-# cocotb-test
-
-tests_dir = os.path.dirname(__file__)
-rtl_dir = os.path.abspath(os.path.join(tests_dir, '..', '..', 'rtl'))
-lib_dir = os.path.abspath(os.path.join(rtl_dir, '..', 'lib'))
-axi_rtl_dir = os.path.abspath(os.path.join(lib_dir, 'axi', 'rtl'))
-axis_rtl_dir = os.path.abspath(os.path.join(lib_dir, 'axis', 'rtl'))
-eth_rtl_dir = os.path.abspath(os.path.join(lib_dir, 'eth', 'rtl'))
-pcie_rtl_dir = os.path.abspath(os.path.join(lib_dir, 'pcie', 'rtl'))
-corundum_rtl_dir = os.path.abspath(os.path.join(lib_dir, 'corundum', 'rtl'))
-smartfpga_rtl_dir = os.path.abspath(os.path.join(lib_dir, 'smartFPGA', 'rtl'))
-accel_dir = os.path.abspath(os.path.join(tests_dir, '..', '..', 'accel'))
-accel_rtl_dir = os.path.abspath(os.path.join(accel_dir, 'full_ids', 'rtl'))
-
-
-def test_fpga_core(request):
-    run_test(
-        sim_build=os.path.join("sim_build", request.node.name.replace('[', '-').replace(']', '')),
-    )
-
-
-def run_test(parameters=None, sim_build="sim_build", waves=None, force_compile=False, extra_env=None):
-    dut = "fpga_core"
-    module = os.path.splitext(os.path.basename(__file__))[0]
-    toplevel = f"test_{dut}"
-
-    verilog_sources = [
-        os.path.join(tests_dir, "..", "common", f"{toplevel}.v"),
-        os.path.join(tests_dir, "..", "common", "FDCE.v"),
-        os.path.join(rtl_dir, f"{dut}.v"),
-        os.path.join(rtl_dir, "Gousheh_PR.v"),
-        os.path.join(rtl_dir, "RR_LU_scheduler_PR.v"),
-        os.path.join(rtl_dir, "pcie_config.v"),
-
-        os.path.join(smartfpga_rtl_dir, "simple_fifo.v"),
-        os.path.join(smartfpga_rtl_dir, "max_finder_tree.v"),
-        os.path.join(smartfpga_rtl_dir, "slot_keeper.v"),
-        os.path.join(smartfpga_rtl_dir, "core_mems.v"),
-        os.path.join(smartfpga_rtl_dir, "axis_dma.v"),
-        os.path.join(smartfpga_rtl_dir, "VexRiscv.v"),
-        os.path.join(smartfpga_rtl_dir, "riscvcore.v"),
-        os.path.join(smartfpga_rtl_dir, "Gousheh.v"),
-        os.path.join(smartfpga_rtl_dir, "accel_wrap.v"),
-        os.path.join(smartfpga_rtl_dir, "Gousheh_controller.v"),
-        os.path.join(smartfpga_rtl_dir, "Gousheh_wrapper.v"),
-        os.path.join(smartfpga_rtl_dir, "mem_sys.v"),
-        os.path.join(smartfpga_rtl_dir, "simple_arbiter.v"),
-        os.path.join(smartfpga_rtl_dir, "simple_sync_sig.v"),
-        os.path.join(smartfpga_rtl_dir, "simple_axis_switch.v"),
-        os.path.join(smartfpga_rtl_dir, "axis_ram_switch.v"),
-        os.path.join(smartfpga_rtl_dir, "axis_stat.v"),
-        os.path.join(smartfpga_rtl_dir, "stat_reader.v"),
-        os.path.join(smartfpga_rtl_dir, "axis_slr_crossing_register.v"),
-        os.path.join(smartfpga_rtl_dir, "axis_switch_2lvl.v"),
-        os.path.join(smartfpga_rtl_dir, "loopback_msg_fifo.v"),
-        os.path.join(smartfpga_rtl_dir, "header.v"),
-        os.path.join(smartfpga_rtl_dir, "pcie_controller.v"),
-        os.path.join(smartfpga_rtl_dir, "pcie_cont_read.v"),
-        os.path.join(smartfpga_rtl_dir, "pcie_cont_write.v"),
-        os.path.join(smartfpga_rtl_dir, "corundum.v"),
-        os.path.join(smartfpga_rtl_dir, "axis_fifo.v"),
-
-        os.path.join(eth_rtl_dir, "axis_xgmii_rx_64.v"),
-        os.path.join(eth_rtl_dir, "axis_xgmii_tx_64.v"),
-        os.path.join(eth_rtl_dir, "lfsr.v"),
-
-        os.path.join(axis_rtl_dir, "arbiter.v"),
-        os.path.join(axis_rtl_dir, "priority_encoder.v"),
-        os.path.join(axis_rtl_dir, "sync_reset.v"),
-        os.path.join(axis_rtl_dir, "axis_adapter.v"),
-        os.path.join(axis_rtl_dir, "axis_arb_mux.v"),
-        os.path.join(axis_rtl_dir, "axis_async_fifo.v"),
-        os.path.join(axis_rtl_dir, "axis_async_fifo_adapter.v"),
-        os.path.join(axis_rtl_dir, "axis_fifo_adapter.v"),
-        os.path.join(axis_rtl_dir, "axis_register.v"),
-        os.path.join(axis_rtl_dir, "axis_pipeline_register.v"),
-
-        os.path.join(axi_rtl_dir, "axil_interconnect.v"),
-
-        os.path.join(pcie_rtl_dir, "pcie_us_axil_master.v"),
-        os.path.join(pcie_rtl_dir, "dma_client_axis_sink.v"),
-        os.path.join(pcie_rtl_dir, "dma_client_axis_source.v"),
-        os.path.join(pcie_rtl_dir, "dma_if_pcie_us.v"),
-        os.path.join(pcie_rtl_dir, "dma_if_pcie_us_rd.v"),
-        os.path.join(pcie_rtl_dir, "dma_if_pcie_us_wr.v"),
-        os.path.join(pcie_rtl_dir, "dma_if_mux.v"),
-        os.path.join(pcie_rtl_dir, "dma_if_mux_rd.v"),
-        os.path.join(pcie_rtl_dir, "dma_if_mux_wr.v"),
-        os.path.join(pcie_rtl_dir, "dma_psdpram.v"),
-        os.path.join(pcie_rtl_dir, "pcie_us_cfg.v"),
-        os.path.join(pcie_rtl_dir, "pcie_us_msi.v"),
-        os.path.join(pcie_rtl_dir, "pulse_merge.v"),
-
-        os.path.join(corundum_rtl_dir, "mqnic_interface.v"),
-        os.path.join(corundum_rtl_dir, "mqnic_port.v"),
-        os.path.join(corundum_rtl_dir, "cpl_write.v"),
-        os.path.join(corundum_rtl_dir, "cpl_op_mux.v"),
-        os.path.join(corundum_rtl_dir, "desc_fetch.v"),
-        os.path.join(corundum_rtl_dir, "desc_op_mux.v"),
-        os.path.join(corundum_rtl_dir, "queue_manager.v"),
-        os.path.join(corundum_rtl_dir, "cpl_queue_manager.v"),
-        os.path.join(corundum_rtl_dir, "tx_engine.v"),
-        os.path.join(corundum_rtl_dir, "rx_engine.v"),
-        os.path.join(corundum_rtl_dir, "tx_checksum.v"),
-        os.path.join(corundum_rtl_dir, "rx_checksum.v"),
-        os.path.join(corundum_rtl_dir, "rx_hash.v"),
-        os.path.join(corundum_rtl_dir, "tx_scheduler_rr.v"),
-        os.path.join(corundum_rtl_dir, "tdma_scheduler.v"),
-        os.path.join(corundum_rtl_dir, "event_mux.v"),
-    ]
-
-    if parameters is None:
-        parameters = {}
-    parameters = {k.upper(): v for k, v in parameters.items() if v is not None}
-
-    parameters.setdefault('AXIS_PCIE_DATA_WIDTH', 512)
-    parameters.setdefault('AXIS_PCIE_KEEP_WIDTH', parameters['AXIS_PCIE_DATA_WIDTH'] // 32)
-    parameters.setdefault('AXIS_PCIE_RQ_USER_WIDTH', 62 if parameters['AXIS_PCIE_DATA_WIDTH'] < 512 else 137)
-    parameters.setdefault('AXIS_PCIE_RC_USER_WIDTH', 75 if parameters['AXIS_PCIE_DATA_WIDTH'] < 512 else 161)
-    parameters.setdefault('AXIS_PCIE_CQ_USER_WIDTH', 88 if parameters['AXIS_PCIE_DATA_WIDTH'] < 512 else 183)
-    parameters.setdefault('AXIS_PCIE_CC_USER_WIDTH', 33 if parameters['AXIS_PCIE_DATA_WIDTH'] < 512 else 81)
-    parameters.setdefault('RQ_SEQ_NUM_WIDTH', 6)
-    parameters.setdefault('BAR0_APERTURE', 24)
-    parameters.setdefault('AXIS_ETH_DATA_WIDTH', 512)
-    parameters.setdefault('AXIS_ETH_KEEP_WIDTH', parameters['AXIS_ETH_DATA_WIDTH'] // 8)
-    parameters.setdefault('TB_LOG', 0)
-
-    if extra_env is None:
-        extra_env = {}
-    extra_env.update({f'PARAM_{k}': str(v) for k, v in parameters.items()})
-
-    extra_env.setdefault('COCOTB_RESOLVE_X', 'RANDOM')
-
-    sim_build = os.path.join(tests_dir, sim_build)
-
-    cocotb_test.simulator.run(
-        python_search=[tests_dir],
-        verilog_sources=verilog_sources,
-        toplevel=toplevel,
-        module=module,
-        parameters=parameters,
-        sim_build=sim_build,
-        extra_env=extra_env,
-        force_compile=force_compile,
-        waves=waves,
-    )
-
-
-if __name__ == '__main__':
-    import argparse
-
-    parser = argparse.ArgumentParser()
-
-    parser.add_argument('--axis_pcie_data_width', type=int, default=512)
-    parser.add_argument('--axis_pcie_keep_width')
-    parser.add_argument('--axis_pcie_rq_user_width')
-    parser.add_argument('--axis_pcie_rc_user_width')
-    parser.add_argument('--axis_pcie_cq_user_width')
-    parser.add_argument('--axis_pcie_cc_user_width')
-    parser.add_argument('--rq_seq_num_width', type=int, default=6)
-    parser.add_argument('--bar0_aperture', type=int, default=24)
-    parser.add_argument('--axis_eth_data_width', type=int, default=512)
-    parser.add_argument('--axis_eth_keep_width', type=int)
-    parser.add_argument('--tb_log', type=int, default=0)
-
-    parser.add_argument('--waves', type=bool)
-    parser.add_argument('--sim_build', type=str, default="sim_build")
-    parser.add_argument('--force_compile', type=bool, default=True)
-    parser.add_argument('--reduced_log', type=bool)
-    parser.add_argument('--clean', action='store_true')
-
-    args = vars(parser.parse_args())
-
-    if args.pop("clean"):
-        import shutil
-        shutil.rmtree(os.path.join(tests_dir, "sim_build"))
-
-    else:
-        sim_build = args.pop("sim_build")
-        waves = args.pop("waves")
-        force_compile = args.pop("force_compile")
-        reduced_log = args.pop("reduced_log")
-
-        extra_env = {}
-
-        if reduced_log is not None:
-            extra_env['COCOTB_REDUCED_LOG_FMT'] = str(int(reduced_log))
-
-        run_test(args, sim_build, waves, force_compile, extra_env)
