@@ -10,6 +10,9 @@ int main(void){
   init_slots(16, 0x000000, 16384);
   set_masks(0x00);
 
+  DEBUG_OUT_L = 0x12345678;
+  DEBUG_OUT_H = 0xABCDEFAB;
+
   while (1){
     if (in_pkt_ready()){
       SEND_DESC = RECV_DESC;

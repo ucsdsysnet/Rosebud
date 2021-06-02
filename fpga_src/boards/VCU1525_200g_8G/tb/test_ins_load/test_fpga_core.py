@@ -104,6 +104,8 @@ async def run_test_ins_load(dut):
 
     await tb.init()
 
+    await tb.set_enable_interfaces(0x0000)
+
     if (TEST_PCIE):
         tb.log.info("PCIe Test")
 
@@ -205,8 +207,8 @@ async def run_test_ins_load(dut):
         tb.log.info("Firmware reload")
         await tb.load_firmware(FIRMWARE)
 
-    tb.log.info("Reset single cores 4 to 11")
-    for k in range(4, 12):
+    tb.log.info("Reset single cores 4 to 7")
+    for k in range(4, 7):
         await tb.reset_single_core(k)
 
     tb.log.info("Read counters")
@@ -234,13 +236,13 @@ async def run_test_ins_load(dut):
             tb.log.info("%08x, %08x", debug_h, debug_l)
 
     for k in range(0, 3):
-        bytes_in   = await tb.interface_rd_cmd(k, 0, 0)
+        bytes_in   = await tb.interface_stat_rd(k, 0, 0)
         await Timer(100, 'ns')
-        bytes_out  = await tb.interface_rd_cmd(k, 1, 0)
+        bytes_out  = await tb.interface_stat_rd(k, 1, 0)
         await Timer(100, 'ns')
-        frames_in  = await tb.interface_rd_cmd(k, 0, 1)
+        frames_in  = await tb.interface_stat_rd(k, 0, 1)
         await Timer(100, 'ns')
-        frames_out = await tb.interface_rd_cmd(k, 1, 1)
+        frames_out = await tb.interface_stat_rd(k, 1, 1)
         await Timer(100, 'ns')
         desc       = await tb.read_interface_desc(k)
         tb.log.info("Interface %d stat read, bytes_in, byte_out, frames_in, frames_out, loaded desc", k)

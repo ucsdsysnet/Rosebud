@@ -38,6 +38,7 @@ SYN_FILES += lib/smartFPGA/rtl/pcie_cont_read.v
 SYN_FILES += lib/smartFPGA/rtl/pcie_cont_write.v
 SYN_FILES += lib/smartFPGA/rtl/corundum.v
 SYN_FILES += lib/smartFPGA/rtl/axis_fifo.v
+SYN_FILES += lib/smartFPGA/rtl/axis_stopper.v
 
 # SYN_FILES += lib/axis/rtl/axis_switch.v
 SYN_FILES += lib/axis/rtl/axis_arb_mux.v

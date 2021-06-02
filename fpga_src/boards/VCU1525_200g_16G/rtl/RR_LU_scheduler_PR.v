@@ -50,7 +50,7 @@ module scheduler_PR (
   input  wire             host_cmd_valid
 );
 
-  parameter INTERFACE_COUNT = 3;
+  parameter IF_COUNT        = 3;
   parameter PORT_COUNT      = 5;
   parameter CORE_COUNT      = 16;
   parameter SLOT_COUNT      = 16;
@@ -65,7 +65,7 @@ module scheduler_PR (
 
   parameter SLOT_WIDTH      = $clog2(SLOT_COUNT+1);
   parameter CORE_ID_WIDTH   = $clog2(CORE_COUNT);
-  parameter INTERFACE_WIDTH = $clog2(INTERFACE_COUNT);
+  parameter INTERFACE_WIDTH = $clog2(IF_COUNT);
   parameter PORT_WIDTH      = $clog2(PORT_COUNT);
   parameter TAG_WIDTH       = (SLOT_WIDTH>5)? SLOT_WIDTH:5;
   parameter ID_TAG_WIDTH    = CORE_ID_WIDTH+TAG_WIDTH;
@@ -73,29 +73,29 @@ module scheduler_PR (
 
 
   // Register inputs and outputs
-  wire [INTERFACE_COUNT*DATA_WIDTH-1:0]   data_m_axis_tdata_n;
-  wire [INTERFACE_COUNT*STRB_WIDTH-1:0]   data_m_axis_tkeep_n;
-  wire [INTERFACE_COUNT*ID_TAG_WIDTH-1:0] data_m_axis_tdest_n;
-  wire [INTERFACE_COUNT*PORT_WIDTH-1:0]   data_m_axis_tuser_n;
-  wire [INTERFACE_COUNT-1:0]              data_m_axis_tvalid_n;
-  wire [INTERFACE_COUNT-1:0]              data_m_axis_tready_n;
-  wire [INTERFACE_COUNT-1:0]              data_m_axis_tlast_n;
+  wire [IF_COUNT*DATA_WIDTH-1:0]   data_m_axis_tdata_n;
+  wire [IF_COUNT*STRB_WIDTH-1:0]   data_m_axis_tkeep_n;
+  wire [IF_COUNT*ID_TAG_WIDTH-1:0] data_m_axis_tdest_n;
+  wire [IF_COUNT*PORT_WIDTH-1:0]   data_m_axis_tuser_n;
+  wire [IF_COUNT-1:0]              data_m_axis_tvalid_n;
+  wire [IF_COUNT-1:0]              data_m_axis_tready_n;
+  wire [IF_COUNT-1:0]              data_m_axis_tlast_n;
 
-  wire [INTERFACE_COUNT*DATA_WIDTH-1:0]   rx_axis_tdata_r;
-  wire [INTERFACE_COUNT*STRB_WIDTH-1:0]   rx_axis_tkeep_r;
-  wire [INTERFACE_COUNT-1:0]              rx_axis_tvalid_r;
-  wire [INTERFACE_COUNT-1:0]              rx_axis_tready_r;
-  wire [INTERFACE_COUNT-1:0]              rx_axis_tlast_r;
+  wire [IF_COUNT*DATA_WIDTH-1:0]   rx_axis_tdata_r;
+  wire [IF_COUNT*STRB_WIDTH-1:0]   rx_axis_tkeep_r;
+  wire [IF_COUNT-1:0]              rx_axis_tvalid_r;
+  wire [IF_COUNT-1:0]              rx_axis_tready_r;
+  wire [IF_COUNT-1:0]              rx_axis_tlast_r;
 
-  wire [CTRL_WIDTH-1:0]    ctrl_s_axis_tdata_r;
-  wire                     ctrl_s_axis_tvalid_r;
-  wire                     ctrl_s_axis_tready_r;
-  wire [CORE_ID_WIDTH-1:0] ctrl_s_axis_tuser_r;
+  wire [CTRL_WIDTH-1:0]            ctrl_s_axis_tdata_r;
+  wire                             ctrl_s_axis_tvalid_r;
+  wire                             ctrl_s_axis_tready_r;
+  wire [CORE_ID_WIDTH-1:0]         ctrl_s_axis_tuser_r;
 
-  wire [CTRL_WIDTH-1:0]    ctrl_m_axis_tdata_n;
-  wire                     ctrl_m_axis_tvalid_n;
-  wire                     ctrl_m_axis_tready_n;
-  wire [CORE_ID_WIDTH-1:0] ctrl_m_axis_tdest_n;
+  wire [CTRL_WIDTH-1:0]            ctrl_m_axis_tdata_n;
+  wire                             ctrl_m_axis_tvalid_n;
+  wire                             ctrl_m_axis_tready_n;
+  wire [CORE_ID_WIDTH-1:0]         ctrl_m_axis_tdest_n;
 
   wire rst_r;
   sync_reset sync_rst_inst (
@@ -106,7 +106,7 @@ module scheduler_PR (
 
   genvar q;
   generate
-    for (q=0; q<INTERFACE_COUNT; q=q+1) begin: int_regs
+    for (q=0; q<IF_COUNT; q=q+1) begin: int_regs
 
       axis_pipeline_register # (
         .DATA_WIDTH(DATA_WIDTH),
@@ -283,79 +283,85 @@ module scheduler_PR (
 
   reg [31:0]                host_cmd_r;
   reg [31:0]                host_cmd_wr_data_r;
-  reg                       host_to_cores_valid_r;
-  reg                       host_to_sched_valid_r;
+  reg                       host_to_sched_wr_r;
+  reg                       host_to_int_not_core;
   reg [CORE_COUNT-1:0]      income_cores;
   reg [CORE_COUNT-1:0]      enabled_cores;
   reg [CORE_COUNT-1:0]      slots_flush;
   reg [CORE_ID_WIDTH-1:0]   stat_read_core_r;
   reg [INTERFACE_WIDTH-1:0] stat_read_interface_r;
   reg [31:0]                host_cmd_rd_data_n;
-  reg [INTERFACE_COUNT-1:0] release_desc;
-  reg [INTERFACE_COUNT-1:0] enabled_ints;
-  reg [2:0]                 sched_cmd_addr;
-  
-  reg [INTERFACE_COUNT*RX_LINES_WIDTH-1:0] rx_line_count_r;
-  reg [RX_LINES_WIDTH-1:0] drop_limit;
+  reg [IF_COUNT-1:0]        rx_almost_full;
+  reg [IF_COUNT-1:0]        release_desc;
+  reg [3:0]                 host_cmd_reg;
+
+  reg [IF_COUNT*RX_LINES_WIDTH-1:0] rx_line_count_r;
+  reg [RX_LINES_WIDTH-1:0]          drop_limit;
 
   // host cmd bit 31 high means wr. bit 30 low means command for cores
   always @ (posedge clk) begin
     host_cmd_r            <= host_cmd;
     host_cmd_wr_data_r    <= host_cmd_wr_data;
-    host_to_cores_valid_r <= host_cmd_valid && host_cmd[31] && !host_cmd[30];
-    host_to_sched_valid_r <= host_cmd_valid && host_cmd[31] &&  host_cmd[30];
-    stat_read_core_r      <= host_cmd[CORE_ID_WIDTH-1:0];
-    stat_read_interface_r <= host_cmd[INTERFACE_WIDTH-1:0];
-    sched_cmd_addr        <= host_cmd[29:27];
+    host_to_sched_wr_r    <= host_cmd_valid && host_cmd[31] && host_cmd[29];
+    host_to_int_not_core  <= host_cmd[30];
+    stat_read_core_r      <= host_cmd[CORE_ID_WIDTH+4-1:4];
+    stat_read_interface_r <= host_cmd[INTERFACE_WIDTH+4-1:4];
+    host_cmd_reg          <= host_cmd[3:0];
     host_cmd_rd_data      <= host_cmd_rd_data_n;
     rx_line_count_r       <= rx_axis_line_count;
 
-    if (host_to_sched_valid_r)
-      case (sched_cmd_addr)
-        3'b000: begin
+    if (host_to_sched_wr_r)
+      case ({host_to_int_not_core, host_cmd_reg})
+        // CORES
+        5'h00: begin
           // A core to be reset cannot be an incoming core.
-          income_cores  <= host_cmd_wr_data_r[CORE_COUNT-1:0] & enabled_cores;
-        end
-        3'b001: begin
           income_cores  <= income_cores & host_cmd_wr_data_r[CORE_COUNT-1:0];
           enabled_cores <= host_cmd_wr_data_r[CORE_COUNT-1:0];
         end
-        3'b011: begin
+        5'h01: begin
+          income_cores  <= host_cmd_wr_data_r[CORE_COUNT-1:0] & enabled_cores;
+        end
+        5'h02: begin
           slots_flush   <= host_cmd_wr_data_r[CORE_COUNT-1:0];
         end
-        3'b101: begin
-          enabled_ints  <= host_cmd_wr_data_r[INTERFACE_COUNT-1:0];
+        // INTS
+        5'h12: begin
+          release_desc  <= host_cmd_wr_data_r[IF_COUNT-1:0];
         end
-        3'b110: begin
+        5'h13: begin
           drop_limit    <= host_cmd_wr_data_r[RX_LINES_WIDTH-1:0];
-        end
-        3'b111: begin
-          release_desc  <= host_cmd_wr_data_r[INTERFACE_COUNT-1:0];
         end
 
         default: begin //for one-cycle signals
-          release_desc <= {INTERFACE_COUNT{1'b0}};
+          release_desc <= {IF_COUNT{1'b0}};
           slots_flush  <= {CORE_COUNT{1'b0}};
         end
       endcase
     else begin // for one-cycle signals
-          release_desc <= {INTERFACE_COUNT{1'b0}};
+          release_desc <= {IF_COUNT{1'b0}};
           slots_flush  <= {CORE_COUNT{1'b0}};
     end
 
     if (rst_r) begin
-      host_to_cores_valid_r <= 1'b0;
-      host_to_sched_valid_r <= 1'b0;
-      income_cores          <= {CORE_COUNT{1'b0}};
-      enabled_cores         <= {CORE_COUNT{1'b0}};
-      enabled_ints          <= {INTERFACE_COUNT{1'b0}};
-      release_desc          <= {INTERFACE_COUNT{1'b0}};
-      slots_flush           <= {CORE_COUNT{1'b0}};
+      host_to_sched_wr_r <= 1'b0;
+      income_cores       <= {CORE_COUNT{1'b0}};
+      enabled_cores      <= {CORE_COUNT{1'b0}};
+      release_desc       <= {IF_COUNT{1'b0}};
+      slots_flush        <= {CORE_COUNT{1'b0}};
+      drop_limit         <= RX_LINES_WIDTH > 4 ?
+                            {4'd7, {(RX_LINES_WIDTH-4){1'b0}}}:
+                            {1'b1, {(RX_LINES_WIDTH-1){1'b0}}};
     end
   end
 
-  wire [3:0]                host_cores_cmd = host_cmd_r [3:0];
-  wire [CORE_ID_WIDTH-1:0]  host_cmd_dest  = host_cmd_r [4 +: CORE_ID_WIDTH];
+  integer l;
+  always @ (posedge clk) begin
+    for (l=0;l<IF_COUNT;l=l+1)
+      rx_almost_full[l] <=
+          (rx_line_count_r[l*RX_LINES_WIDTH +: RX_LINES_WIDTH] >= drop_limit);
+    if (rst_r)
+      rx_almost_full    <= {IF_COUNT{1'b0}};
+  end
 
   // Separate incoming ctrl messages
   parameter MSG_TYPE_WIDTH = 4;
@@ -523,7 +529,7 @@ module scheduler_PR (
     end
   endgenerate
 
-  // Assing looback port
+  // Assigning looback port
   wire [CORE_ID_WIDTH-1:0] loopback_port;
 
   if (LOOPBACK_COUNT==1)
@@ -621,13 +627,10 @@ module scheduler_PR (
 
   assign ctrl_out_ready = (!ctrl_out_valid_r) || ctrl_out_ready_r;
 
-  // Arbiter between host cmd and scheduler messages
-  assign ctrl_m_axis_tdata_n  = host_to_cores_valid_r ? {host_cores_cmd, host_cmd_wr_data_r}
-                                                      : ctrl_out_desc_r;
-  assign ctrl_m_axis_tvalid_n = host_to_cores_valid_r || ctrl_out_valid_r;
-  assign ctrl_m_axis_tdest_n  = host_to_cores_valid_r ? host_cmd_dest : ctrl_out_dest_r;
-
-  assign ctrl_out_ready_r   = (!host_to_cores_valid_r) && ctrl_m_axis_tready_n;
+  assign ctrl_m_axis_tdata_n  = ctrl_out_desc_r;
+  assign ctrl_m_axis_tvalid_n = ctrl_out_valid_r;
+  assign ctrl_m_axis_tdest_n  = ctrl_out_dest_r;
+  assign ctrl_out_ready_r     = ctrl_m_axis_tready_n;
 
   // Selecting the core with most available slots
   // Since slots start from 1, SLOT WIDTH is already 1 bit extra
@@ -685,20 +688,20 @@ module scheduler_PR (
 
   // Adding tdest and tuser to input data from eth, dest based on
   // rx_desc_fifo and stamp the incoming port
-  wire [INTERFACE_COUNT-1:0] selected_port;
+  wire [IF_COUNT-1:0] selected_port;
   wire [INTERFACE_WIDTH-1:0] selected_port_enc;
 
-  reg  [INTERFACE_COUNT*ID_TAG_WIDTH-1:0] dest;
-  reg  [INTERFACE_COUNT*ID_TAG_WIDTH-1:0] dest_r;
-  reg  [INTERFACE_COUNT*ID_TAG_WIDTH-1:0] dest_rr;
+  reg  [IF_COUNT*ID_TAG_WIDTH-1:0] dest;
+  reg  [IF_COUNT*ID_TAG_WIDTH-1:0] dest_r;
+  reg  [IF_COUNT*ID_TAG_WIDTH-1:0] dest_rr;
 
-  assign rx_desc_pop                           = selected_port_v && max_valid;
-  wire [INTERFACE_COUNT-1:0] port_desc_avail   = {INTERFACE_COUNT{rx_desc_pop}} & selected_port;
-  wire [INTERFACE_COUNT-1:0] port_valid        = rx_axis_tvalid_r & rx_axis_tready_r;
-  wire [INTERFACE_COUNT-1:0] sending_last_word = port_valid & rx_axis_tlast_r;
+  assign rx_desc_pop                    = selected_port_v && max_valid;
+  wire [IF_COUNT-1:0] port_desc_avail   = {IF_COUNT{rx_desc_pop}} & selected_port;
+  wire [IF_COUNT-1:0] port_valid        = rx_axis_tvalid_r & rx_axis_tready_r;
+  wire [IF_COUNT-1:0] sending_last_word = port_valid & rx_axis_tlast_r;
 
   // State machine per port
-  reg [1:0] port_state [0:INTERFACE_COUNT-1];
+  reg [1:0] port_state [0:IF_COUNT-1];
   localparam STALL = 2'b00; // Don't accept until getting a desc
   localparam FIRST = 2'b01; // Ready to get new packet
   localparam WAIT  = 2'b10; // Accept while waiting for new desc
@@ -706,7 +709,7 @@ module scheduler_PR (
 
   integer n;
   always @ (posedge clk)
-      for (n=0; n<INTERFACE_COUNT; n=n+1)
+      for (n=0; n<IF_COUNT; n=n+1)
           if (rst_r) begin
               port_state[n]     <= STALL;
           end else begin
@@ -749,22 +752,22 @@ module scheduler_PR (
 
   // Desc request and port ready
   integer p;
-  reg [INTERFACE_COUNT-1:0] desc_req;
-  reg [INTERFACE_COUNT-1:0] port_not_stall;
+  reg [IF_COUNT-1:0] desc_req;
+  reg [IF_COUNT-1:0] port_not_stall;
   always @ (*)
-      for (p=0; p<INTERFACE_COUNT; p=p+1) begin
+      for (p=0; p<IF_COUNT; p=p+1) begin
           // When a packet starts we ask for new desc, or if we are in stall or wait.
           // If request in FIRST is responded during WAIT it would be cancedlled by !selected_port
           desc_req[p] = !(selected_port[p]) && ((port_state[p]==STALL) || (port_state[p]==WAIT) ||
                           ((port_state[p]==FIRST) && port_valid[p]));
-          port_not_stall[p] = (port_state[p]!=STALL) && enabled_ints[p];
+          port_not_stall[p] = (port_state[p]!=STALL);
           dest[p*ID_TAG_WIDTH +: ID_TAG_WIDTH] = (port_state[p]==FIRST) ?
               dest_r[p*ID_TAG_WIDTH +: ID_TAG_WIDTH] : dest_rr[p*ID_TAG_WIDTH +: ID_TAG_WIDTH];
       end
 
   // arbiter among ports for desc request
   arbiter # (
-    .PORTS(INTERFACE_COUNT),
+    .PORTS(IF_COUNT),
     .TYPE("ROUND_ROBIN"),
     .LSB_PRIORITY("HIGH")
   ) port_selector (
@@ -772,7 +775,7 @@ module scheduler_PR (
     .rst(rst_r),
 
     .request(desc_req),
-    .acknowledge({INTERFACE_COUNT{1'b0}}),
+    .acknowledge({IF_COUNT{1'b0}}),
 
     .grant(selected_port),
     .grant_valid(selected_port_v),
@@ -782,38 +785,57 @@ module scheduler_PR (
   // Load the new desc
   wire [ID_TAG_WIDTH-1:0] rx_desc_data = {selected_rx_core, {(TAG_WIDTH-SLOT_WIDTH){1'b0}},
                                           rx_desc_slot[selected_rx_core*SLOT_WIDTH +: SLOT_WIDTH]};
+  wire [IF_COUNT*32-1:0]  drop_count;
 
   always @ (posedge clk)
     if (rx_desc_pop)
       dest_r[selected_port_enc*ID_TAG_WIDTH +: ID_TAG_WIDTH] <= rx_desc_data;
 
   always @ (posedge clk)
-    case (sched_cmd_addr)
-      3'b000:  host_cmd_rd_data_n <= income_cores;
-      3'b001:  host_cmd_rd_data_n <= enabled_cores;
-      3'b010:  host_cmd_rd_data_n <= rx_desc_count[stat_read_core_r * SLOT_WIDTH +: SLOT_WIDTH];
-      3'b100:  host_cmd_rd_data_n <= {14'd0, port_state[stat_read_interface_r], 
-                                     {(8-CORE_ID_WIDTH){1'b0}}, 
-                                     dest_r[(stat_read_interface_r * ID_TAG_WIDTH) + TAG_WIDTH +: CORE_ID_WIDTH],
-                                     {(8-TAG_WIDTH){1'b0}}, 
-                                     dest_r[stat_read_interface_r * ID_TAG_WIDTH +: TAG_WIDTH]};
-      3'b101:  host_cmd_rd_data_n <= {{(32-INTERFACE_COUNT){1'b0}}, enabled_ints};
-      3'b110:  host_cmd_rd_data_n <= {{(32-RX_LINES_WIDTH){1'b0}}, 
-                                     rx_line_count_r[stat_read_interface_r*RX_LINES_WIDTH +: RX_LINES_WIDTH]};
+    case ({host_to_int_not_core, host_cmd_reg})
+      // CORES
+      5'h00:   host_cmd_rd_data_n <= enabled_cores;
+      5'h01:   host_cmd_rd_data_n <= income_cores;
+      5'h03:   host_cmd_rd_data_n <= rx_desc_count[stat_read_core_r * SLOT_WIDTH +: SLOT_WIDTH];
+      // INTS
+      5'h10:   host_cmd_rd_data_n <= {14'd0, port_state[stat_read_interface_r],
+                                  {(8-CORE_ID_WIDTH){1'b0}},
+                                  dest_r[(stat_read_interface_r * ID_TAG_WIDTH) + TAG_WIDTH +: CORE_ID_WIDTH],
+                                  {(8-TAG_WIDTH){1'b0}},
+                                  dest_r[stat_read_interface_r * ID_TAG_WIDTH +: TAG_WIDTH]};
+      5'h12:   host_cmd_rd_data_n <= drop_count[stat_read_interface_r*32 +: 32];
       default: host_cmd_rd_data_n <= 32'hFEFEFEFE;
     endcase
 
   genvar j;
   generate
-    for (j=0; j<INTERFACE_COUNT;j=j+1)
+    for (j=0; j<IF_COUNT;j=j+1)
       assign data_m_axis_tuser_n[j*PORT_WIDTH +: PORT_WIDTH] = j;
   endgenerate
 
+  axis_dropper # (
+    .PORT_COUNT(IF_COUNT),
+    .REG_FOR_DROP(0),
+    .SAME_CYCLE_DROP(0),
+    .DROP_CNT_WIDTH(32)
+  ) rx_dropper (
+    .clk(clk),
+    .rst(rst_r),
+
+    .drop(rx_almost_full),
+    .drop_count(drop_count),
+
+    .s_axis_tvalid(rx_axis_tvalid_r & port_not_stall),
+    .s_axis_tlast(rx_axis_tlast_r),
+    .s_axis_tready(rx_axis_tready_r),
+
+    .m_axis_tvalid(data_m_axis_tvalid_n),
+    .m_axis_tlast(data_m_axis_tlast_n),
+    .m_axis_tready(data_m_axis_tready_n & port_not_stall)
+  );
+
   assign data_m_axis_tdata_n  = rx_axis_tdata_r;
   assign data_m_axis_tkeep_n  = rx_axis_tkeep_r;
-  assign data_m_axis_tvalid_n = rx_axis_tvalid_r & port_not_stall;
-  assign data_m_axis_tlast_n  = rx_axis_tlast_r;
   assign data_m_axis_tdest_n  = dest;
-  assign rx_axis_tready_r     = data_m_axis_tready_n & port_not_stall;
 
 endmodule

@@ -186,14 +186,15 @@ module fpga_core #
 
 parameter CORE_COUNT        = 8;
 
-parameter INTERFACE_COUNT   = 2;
+parameter IF_COUNT          = 2;
 parameter V_IF_COUNT        = 1;
 parameter PORTS_PER_V_IF    = 1;
 parameter LB_PORT_COUNT     = 1;
 
 parameter V_PORT_COUNT      = V_IF_COUNT * PORTS_PER_V_IF;
-parameter FIRST_LB_PORT     = INTERFACE_COUNT+V_PORT_COUNT+1-1;
-parameter PORT_COUNT        = INTERFACE_COUNT+V_PORT_COUNT+LB_PORT_COUNT+1;
+parameter FIRST_LB_PORT     = IF_COUNT+V_PORT_COUNT+1-1;
+parameter SCHED_PORT_COUNT  = IF_COUNT+V_PORT_COUNT;
+parameter PORT_COUNT        = IF_COUNT+V_PORT_COUNT+LB_PORT_COUNT+1;
 
 parameter PORT_WIDTH        = $clog2(PORT_COUNT);
 parameter BYTE_COUNT_WIDTH  = 32;
@@ -298,45 +299,45 @@ assign led   = 3'd0;
 localparam QSFP0_IND = 0;
 localparam QSFP1_IND = 1;
 
-wire [INTERFACE_COUNT-1:0] port_tx_clk;
-wire [INTERFACE_COUNT-1:0] port_tx_rst;
-wire [INTERFACE_COUNT*AXIS_ETH_DATA_WIDTH-1:0] port_tx_axis_tdata;
-wire [INTERFACE_COUNT*AXIS_ETH_KEEP_WIDTH-1:0] port_tx_axis_tkeep;
-wire [INTERFACE_COUNT-1:0] port_tx_axis_tvalid;
-wire [INTERFACE_COUNT-1:0] port_tx_axis_tready;
-wire [INTERFACE_COUNT-1:0] port_tx_axis_tlast;
-wire [INTERFACE_COUNT-1:0] port_tx_axis_tuser = {INTERFACE_COUNT{1'b0}};
+wire [IF_COUNT-1:0] port_tx_clk;
+wire [IF_COUNT-1:0] port_tx_rst;
+wire [IF_COUNT*AXIS_ETH_DATA_WIDTH-1:0] port_tx_axis_tdata;
+wire [IF_COUNT*AXIS_ETH_KEEP_WIDTH-1:0] port_tx_axis_tkeep;
+wire [IF_COUNT-1:0] port_tx_axis_tvalid;
+wire [IF_COUNT-1:0] port_tx_axis_tready;
+wire [IF_COUNT-1:0] port_tx_axis_tlast;
+wire [IF_COUNT-1:0] port_tx_axis_tuser = {IF_COUNT{1'b0}};
 
-wire [INTERFACE_COUNT-1:0] port_rx_clk;
-wire [INTERFACE_COUNT-1:0] port_rx_rst;
-wire [INTERFACE_COUNT*AXIS_ETH_DATA_WIDTH-1:0] port_rx_axis_tdata;
-wire [INTERFACE_COUNT*AXIS_ETH_KEEP_WIDTH-1:0] port_rx_axis_tkeep;
-wire [INTERFACE_COUNT-1:0] port_rx_axis_tvalid;
-wire [INTERFACE_COUNT-1:0] port_rx_axis_tlast;
-wire [INTERFACE_COUNT-1:0] port_rx_axis_tuser;
+wire [IF_COUNT-1:0] port_rx_clk;
+wire [IF_COUNT-1:0] port_rx_rst;
+wire [IF_COUNT*AXIS_ETH_DATA_WIDTH-1:0] port_rx_axis_tdata;
+wire [IF_COUNT*AXIS_ETH_KEEP_WIDTH-1:0] port_rx_axis_tkeep;
+wire [IF_COUNT-1:0] port_rx_axis_tvalid;
+wire [IF_COUNT-1:0] port_rx_axis_tlast;
+wire [IF_COUNT-1:0] port_rx_axis_tuser;
 
-wire [INTERFACE_COUNT*AXIS_ETH_DATA_WIDTH-1:0] port_rx_axis_tdata_f;
-wire [INTERFACE_COUNT*AXIS_ETH_KEEP_WIDTH-1:0] port_rx_axis_tkeep_f;
-wire [INTERFACE_COUNT-1:0] port_rx_axis_tvalid_f;
-wire [INTERFACE_COUNT-1:0] port_rx_axis_tready_f;
-wire [INTERFACE_COUNT-1:0] port_rx_axis_tlast_f;
+wire [IF_COUNT*AXIS_ETH_DATA_WIDTH-1:0] port_rx_axis_tdata_f;
+wire [IF_COUNT*AXIS_ETH_KEEP_WIDTH-1:0] port_rx_axis_tkeep_f;
+wire [IF_COUNT-1:0] port_rx_axis_tvalid_f;
+wire [IF_COUNT-1:0] port_rx_axis_tready_f;
+wire [IF_COUNT-1:0] port_rx_axis_tlast_f;
 
-wire [INTERFACE_COUNT*AXIS_ETH_DATA_WIDTH-1:0] port_tx_axis_tdata_n;
-wire [INTERFACE_COUNT*AXIS_ETH_KEEP_WIDTH-1:0] port_tx_axis_tkeep_n;
-wire [INTERFACE_COUNT-1:0] port_tx_axis_tvalid_n;
-wire [INTERFACE_COUNT-1:0] port_tx_axis_tready_n;
-wire [INTERFACE_COUNT-1:0] port_tx_axis_tlast_n;
+wire [IF_COUNT*AXIS_ETH_DATA_WIDTH-1:0] port_tx_axis_tdata_n;
+wire [IF_COUNT*AXIS_ETH_KEEP_WIDTH-1:0] port_tx_axis_tkeep_n;
+wire [IF_COUNT-1:0] port_tx_axis_tvalid_n;
+wire [IF_COUNT-1:0] port_tx_axis_tready_n;
+wire [IF_COUNT-1:0] port_tx_axis_tlast_n;
 
-wire [INTERFACE_COUNT*AXIS_ETH_DATA_WIDTH-1:0] port_rx_axis_tdata_r;
-wire [INTERFACE_COUNT*AXIS_ETH_KEEP_WIDTH-1:0] port_rx_axis_tkeep_r;
-wire [INTERFACE_COUNT-1:0] port_rx_axis_tvalid_r;
-wire [INTERFACE_COUNT-1:0] port_rx_axis_tready_r;
-wire [INTERFACE_COUNT-1:0] port_rx_axis_tlast_r;
-wire [INTERFACE_COUNT-1:0] port_rx_axis_overflow_r;
-wire [INTERFACE_COUNT-1:0] port_rx_axis_bad_frame_r;
-wire [INTERFACE_COUNT*RX_LINES_WIDTH-1:0] port_rx_axis_line_count_r;
+wire [IF_COUNT*AXIS_ETH_DATA_WIDTH-1:0] port_rx_axis_tdata_r;
+wire [IF_COUNT*AXIS_ETH_KEEP_WIDTH-1:0] port_rx_axis_tkeep_r;
+wire [IF_COUNT-1:0] port_rx_axis_tvalid_r;
+wire [IF_COUNT-1:0] port_rx_axis_tready_r;
+wire [IF_COUNT-1:0] port_rx_axis_tlast_r;
+wire [IF_COUNT-1:0] port_rx_axis_overflow_r;
+wire [IF_COUNT-1:0] port_rx_axis_bad_frame_r;
+wire [IF_COUNT*RX_LINES_WIDTH-1:0] port_rx_axis_line_count_r;
 
-if (QSFP0_IND >= 0 && QSFP0_IND < INTERFACE_COUNT) begin
+if (QSFP0_IND >= 0 && QSFP0_IND < IF_COUNT) begin
     assign port_tx_clk[QSFP0_IND] = qsfp0_tx_clk;
     assign port_tx_rst[QSFP0_IND] = qsfp0_tx_rst;
     assign qsfp0_tx_axis_tdata = port_tx_axis_tdata[QSFP0_IND*AXIS_ETH_DATA_WIDTH +: AXIS_ETH_DATA_WIDTH];
@@ -361,7 +362,7 @@ end else begin
     assign qsfp0_tx_axis_tuser = 1'b0;
 end
 
-if (QSFP1_IND >= 0 && QSFP1_IND < INTERFACE_COUNT) begin
+if (QSFP1_IND >= 0 && QSFP1_IND < IF_COUNT) begin
     assign port_tx_clk[QSFP1_IND] = qsfp1_tx_clk;
     assign port_tx_rst[QSFP1_IND] = qsfp1_tx_rst;
     assign qsfp1_tx_axis_tdata = port_tx_axis_tdata[QSFP1_IND*AXIS_ETH_DATA_WIDTH +: AXIS_ETH_DATA_WIDTH];
@@ -387,21 +388,24 @@ end else begin
 end
 
 // Clock crossing for MAC
-wire [(INTERFACE_COUNT+V_PORT_COUNT)*LVL1_DATA_WIDTH-1:0] tx_axis_tdata;
-wire [(INTERFACE_COUNT+V_PORT_COUNT)*LVL1_STRB_WIDTH-1:0] tx_axis_tkeep;
-wire [(INTERFACE_COUNT+V_PORT_COUNT)-1:0] tx_axis_tvalid, tx_axis_tready, tx_axis_tlast;
+wire [SCHED_PORT_COUNT*LVL1_DATA_WIDTH-1:0] tx_axis_tdata;
+wire [SCHED_PORT_COUNT*LVL1_STRB_WIDTH-1:0] tx_axis_tkeep;
+wire [SCHED_PORT_COUNT-1:0] tx_axis_tvalid, tx_axis_tready, tx_axis_tlast;
 
-wire [(INTERFACE_COUNT+V_PORT_COUNT)*LVL1_DATA_WIDTH-1:0] rx_axis_tdata;
-wire [(INTERFACE_COUNT+V_PORT_COUNT)*LVL1_STRB_WIDTH-1:0] rx_axis_tkeep;
-wire [(INTERFACE_COUNT+V_PORT_COUNT)-1:0] rx_axis_tvalid, rx_axis_tready, rx_axis_tlast;
+wire [SCHED_PORT_COUNT*LVL1_DATA_WIDTH-1:0] rx_axis_tdata;
+wire [SCHED_PORT_COUNT*LVL1_STRB_WIDTH-1:0] rx_axis_tkeep;
+wire [SCHED_PORT_COUNT-1:0] rx_axis_tvalid, rx_axis_tready, rx_axis_tlast;
 
-(* KEEP = "TRUE" *) reg  [INTERFACE_COUNT-1:0] rx_drop, rx_drop_r;
-(* KEEP = "TRUE" *) reg  [INTERFACE_COUNT*RX_LINES_WIDTH-1:0] rx_line_count;
-                    wire [INTERFACE_COUNT*RX_LINES_WIDTH-1:0] rx_line_count_r;
+wire [SCHED_PORT_COUNT-1:0] rx_axis_tvalid_n, rx_axis_tready_n, rx_axis_tlast_n;
+reg  [SCHED_PORT_COUNT-1:0] rx_int_enable;
+
+(* KEEP = "TRUE" *) reg  [IF_COUNT-1:0] rx_drop, rx_drop_r;
+(* KEEP = "TRUE" *) reg  [IF_COUNT*RX_LINES_WIDTH-1:0] rx_line_count;
+                    wire [IF_COUNT*RX_LINES_WIDTH-1:0] rx_line_count_r;
 
 genvar m;
 generate
-    for (m=0;m<INTERFACE_COUNT;m=m+1) begin: MAC_async_FIFO
+    for (m=0;m<IF_COUNT;m=m+1) begin: MAC_async_FIFO
         axis_slr_crossing_register # (
             .DATA_WIDTH(LVL1_DATA_WIDTH),
             .KEEP_ENABLE(LVL1_STRB_WIDTH > 1),
@@ -589,9 +593,9 @@ generate
 
             .m_axis_tdata(rx_axis_tdata[m*LVL1_DATA_WIDTH +: LVL1_DATA_WIDTH]),
             .m_axis_tkeep(rx_axis_tkeep[m*LVL1_STRB_WIDTH +: LVL1_STRB_WIDTH]),
-            .m_axis_tvalid(rx_axis_tvalid[m]),
-            .m_axis_tready(rx_axis_tready[m]),
-            .m_axis_tlast(rx_axis_tlast[m]),
+            .m_axis_tvalid(rx_axis_tvalid_n[m]),
+            .m_axis_tready(rx_axis_tready_n[m]),
+            .m_axis_tlast(rx_axis_tlast_n[m]),
             .m_axis_tid(),
             .m_axis_tdest(),
             .m_axis_tuser()
@@ -599,11 +603,26 @@ generate
 
     end
 
+    axis_stopper #(.PORT_COUNT(SCHED_PORT_COUNT)) int_stopper_inst (
+      .clk(sys_clk),
+      .rst(int_rst_r),
+    
+      .enable(rx_int_enable),
+    
+      .s_axis_tvalid(rx_axis_tvalid_n),
+      .s_axis_tlast(rx_axis_tlast_n),
+      .s_axis_tready(rx_axis_tready_n),
+    
+      .m_axis_tvalid(rx_axis_tvalid),
+      .m_axis_tlast(rx_axis_tlast),
+      .m_axis_tready(rx_axis_tready)
+    );
+
     always @ (posedge sys_clk)
         if (int_rst_r) begin
-            rx_drop       <= {INTERFACE_COUNT{1'b0}};
-            rx_drop_r     <= {INTERFACE_COUNT{1'b0}};
-            rx_line_count <= {INTERFACE_COUNT*RX_LINES_WIDTH{1'b0}};
+            rx_drop       <= {IF_COUNT{1'b0}};
+            rx_drop_r     <= {IF_COUNT{1'b0}};
+            rx_line_count <= {IF_COUNT*RX_LINES_WIDTH{1'b0}};
         end else begin
             rx_drop       <= port_rx_axis_overflow_r | port_rx_axis_bad_frame_r;
             rx_drop_r     <= rx_drop;
@@ -613,7 +632,7 @@ generate
     // Sync reg to help with the timing
     simple_sync_sig # (
       .RST_VAL(1'b0),
-      .WIDTH(INTERFACE_COUNT*RX_LINES_WIDTH)
+      .WIDTH(IF_COUNT*RX_LINES_WIDTH)
     ) rx_line_count_sync_reg (
       .dst_clk(sys_clk),
       .dst_rst(sys_rst),
@@ -825,14 +844,28 @@ wire [31:0] interface_in_stat_data_r;
 wire [31:0] interface_out_stat_data_r;
 wire [31:0] host_rd_sched_data;
 wire [31:0] host_rd_sched_data_r;
-wire [CORE_WIDTH+4-1:0] core_select;
+
+wire                  host_to_cores_wr;
+wire                  host_to_ints_wr;
+wire                  host_to_cores_wr_r;
+wire                  host_to_ints_wr_r;
+// Assuming # of cores > # of ints
+wire [CORE_WIDTH-1:0] core_int_select_r; 
+wire [3:0]            host_reg_r;
+wire [31:0]           host_cmd_wr_data_r;
+wire [1:0]            host_cmd_type;
+
+assign host_to_cores_wr = host_cmd_valid && (host_cmd[31:30]==2'b00) && host_cmd[29];
+assign host_to_ints_wr  = host_cmd_valid && (host_cmd[31:30]==2'b01) && host_cmd[29];
 
 if (SEPARATE_CLOCKS) begin
-  simple_sync_sig # (.RST_VAL(1'b0),.WIDTH(CORE_WIDTH+4)) host_cmd_sync_reg (
+  simple_sync_sig # (.RST_VAL(1'b0),.WIDTH(1+1+2+CORE_WIDTH+4+32)) host_cmd_sync_reg (
     .dst_clk(core_clk),
     .dst_rst(core_rst_r),
-    .in(host_cmd[CORE_WIDTH+4-1:0]),
-    .out(core_select)
+    .in({host_to_cores_wr, host_to_ints_wr, host_cmd[31:30],
+         host_cmd[CORE_WIDTH+4-1:4], host_cmd[3:0], host_cmd_wr_data}),
+    .out({host_to_cores_wr_r, host_to_ints_wr_r, host_cmd_type,
+          core_int_select_r, host_reg_r, host_cmd_wr_data_r})
   );
 
   simple_sync_sig # (.RST_VAL(1'b0),.WIDTH(4*32)) host_cmd_rd_data_sync_reg (
@@ -844,11 +877,13 @@ if (SEPARATE_CLOCKS) begin
           interface_in_stat_data_r, interface_out_stat_data_r})
   );
 end else begin //syncers as pipe registers to help with the timing
-  simple_sync_sig # (.RST_VAL(1'b0),.WIDTH(CORE_WIDTH+4)) host_cmd_sync_reg (
+  simple_sync_sig # (.RST_VAL(1'b0),.WIDTH(1+1+2+CORE_WIDTH+4+32)) host_cmd_sync_reg (
     .dst_clk(pcie_clk),
     .dst_rst(pcie_rst),
-    .in(host_cmd[CORE_WIDTH+4-1:0]),
-    .out(core_select)
+    .in({host_to_cores_wr, host_to_ints_wr, host_cmd[31:30],
+         host_cmd[CORE_WIDTH+4-1:4], host_cmd[3:0], host_cmd_wr_data}),
+    .out({host_to_cores_wr_r, host_to_ints_wr_r, host_cmd_type,
+          core_int_select_r, host_reg_r, host_cmd_wr_data_r})
   );
 
   simple_sync_sig # (.RST_VAL(1'b0),.WIDTH(4*32)) host_cmd_rd_data_sync_reg (
@@ -861,23 +896,41 @@ end else begin //syncers as pipe registers to help with the timing
   );
 end
 
+// Only interface write
+always @ (posedge sys_clk)
+  if (sys_rst_r)
+    rx_int_enable <= {SCHED_PORT_COUNT{1'b1}};
+  else if (host_to_ints_wr_r)
+    rx_int_enable <= host_cmd_wr_data_r[SCHED_PORT_COUNT-1:0];
+
 wire [1:0]            interface_reg_sel;
 wire                  interface_dir;
 wire [PORT_WIDTH-1:0] interface_sel;
-wire [2:0]            host_cmd_type;
+// Selecting between interface reads
+assign interface_reg_sel = host_reg_r[1:0];
+assign interface_sel     = core_int_select_r[PORT_WIDTH-1:0];
 
-assign interface_reg_sel = host_cmd[1:0];
-assign interface_sel     = host_cmd[3 +: PORT_WIDTH];
-assign interface_dir     = host_cmd[2];
-assign host_cmd_type     = host_cmd[31:29];
+reg [RX_LINES_WIDTH-1:0] rx_line_muxed;
+always @ (posedge sys_clk)
+  rx_line_muxed <= rx_line_count_r[interface_sel*RX_LINES_WIDTH +: RX_LINES_WIDTH];
 
+reg  [31:0] int_stat_data_muxed;
+always @ (*) begin
+  casex (host_reg_r)
+    4'b0000: int_stat_data_muxed = {{(32-SCHED_PORT_COUNT){1'b0}}, rx_int_enable};
+    4'b0100: int_stat_data_muxed = {{(32-RX_LINES_WIDTH){1'b0}}, rx_line_muxed};
+    4'b10??: int_stat_data_muxed = interface_in_stat_data_r;
+    4'b11??: int_stat_data_muxed = interface_out_stat_data_r;
+    default: int_stat_data_muxed = 32'hFEFEFEFE;
+  endcase
+end
+
+// Selecting between read data to the host
 always @ (posedge sys_clk)
   casex (host_cmd_type)
-    3'b000: host_cmd_rd_data <= core_stat_data_muxed_r;
-    3'b001: host_cmd_rd_data <= interface_dir ? interface_out_stat_data_r :
-                                                interface_in_stat_data_r  ;
-    3'b01?: host_cmd_rd_data <= host_rd_sched_data_r;
-    3'b1??: host_cmd_rd_data <= 32'hffffffff; // wr command
+    2'b00: host_cmd_rd_data <= core_stat_data_muxed_r;
+    2'b01: host_cmd_rd_data <= int_stat_data_muxed;
+    2'b1?: host_cmd_rd_data <= host_rd_sched_data_r;
   endcase
 
 if (V_PORT_COUNT==0) begin: no_veth
@@ -891,18 +944,18 @@ if (V_PORT_COUNT==0) begin: no_veth
 
 end else begin: virtual_eth_connections
 
-  assign rx_axis_tdata[INTERFACE_COUNT*LVL1_DATA_WIDTH +: V_PORT_COUNT*LVL1_DATA_WIDTH] = v_rx_axis_tdata;
-  assign rx_axis_tkeep[INTERFACE_COUNT*LVL1_STRB_WIDTH +: V_PORT_COUNT*LVL1_STRB_WIDTH] = v_rx_axis_tkeep;
-  assign rx_axis_tvalid[INTERFACE_COUNT +: V_PORT_COUNT]                                = v_rx_axis_tvalid;
-  assign rx_axis_tlast[INTERFACE_COUNT +: V_PORT_COUNT]                                 = v_rx_axis_tlast;
-  assign v_rx_axis_tready = rx_axis_tready[INTERFACE_COUNT +: V_PORT_COUNT];
+  assign rx_axis_tdata[IF_COUNT*LVL1_DATA_WIDTH +: V_PORT_COUNT*LVL1_DATA_WIDTH] = v_rx_axis_tdata;
+  assign rx_axis_tkeep[IF_COUNT*LVL1_STRB_WIDTH +: V_PORT_COUNT*LVL1_STRB_WIDTH] = v_rx_axis_tkeep;
+  assign rx_axis_tvalid_n[IF_COUNT +: V_PORT_COUNT]                              = v_rx_axis_tvalid;
+  assign rx_axis_tlast_n[IF_COUNT +: V_PORT_COUNT]                               = v_rx_axis_tlast;
+  assign v_rx_axis_tready = rx_axis_tready_n[IF_COUNT +: V_PORT_COUNT];
 
-  assign v_tx_axis_tdata  = tx_axis_tdata[INTERFACE_COUNT*LVL1_DATA_WIDTH +: V_PORT_COUNT*LVL1_DATA_WIDTH];
-  assign v_tx_axis_tkeep  = tx_axis_tkeep[INTERFACE_COUNT*LVL1_STRB_WIDTH +: V_PORT_COUNT*LVL1_STRB_WIDTH];
-  assign v_tx_axis_tvalid = tx_axis_tvalid[INTERFACE_COUNT +: V_PORT_COUNT];
-  assign v_tx_axis_tlast  = tx_axis_tlast[INTERFACE_COUNT +: V_PORT_COUNT];
+  assign v_tx_axis_tdata  = tx_axis_tdata[IF_COUNT*LVL1_DATA_WIDTH +: V_PORT_COUNT*LVL1_DATA_WIDTH];
+  assign v_tx_axis_tkeep  = tx_axis_tkeep[IF_COUNT*LVL1_STRB_WIDTH +: V_PORT_COUNT*LVL1_STRB_WIDTH];
+  assign v_tx_axis_tvalid = tx_axis_tvalid[IF_COUNT +: V_PORT_COUNT];
+  assign v_tx_axis_tlast  = tx_axis_tlast[IF_COUNT +: V_PORT_COUNT];
   assign v_tx_axis_tuser  = {V_PORT_COUNT{1'b0}};
-  assign tx_axis_tready[INTERFACE_COUNT +: V_PORT_COUNT] = v_tx_axis_tready;
+  assign tx_axis_tready[IF_COUNT +: V_PORT_COUNT] = v_tx_axis_tready;
 end
 
 (* keep_hierarchy = "soft" *)
@@ -1127,20 +1180,25 @@ loopback_msg_fifo # (
 
 
 // Scheduler
-wire [(INTERFACE_COUNT+V_PORT_COUNT)*LVL1_DATA_WIDTH-1:0] sched_tx_axis_tdata;
-wire [(INTERFACE_COUNT+V_PORT_COUNT)*LVL1_STRB_WIDTH-1:0] sched_tx_axis_tkeep;
-wire [(INTERFACE_COUNT+V_PORT_COUNT)*ID_TAG_WIDTH-1:0]    sched_tx_axis_tuser;
-wire [(INTERFACE_COUNT+V_PORT_COUNT)-1:0]                 sched_tx_axis_tvalid,
-                                                          sched_tx_axis_tready,
-                                                          sched_tx_axis_tlast;
+wire [SCHED_PORT_COUNT*LVL1_DATA_WIDTH-1:0] sched_tx_axis_tdata;
+wire [SCHED_PORT_COUNT*LVL1_STRB_WIDTH-1:0] sched_tx_axis_tkeep;
+wire [SCHED_PORT_COUNT*ID_TAG_WIDTH-1:0]    sched_tx_axis_tuser;
+wire [SCHED_PORT_COUNT-1:0]                 sched_tx_axis_tvalid,
+                                            sched_tx_axis_tready,
+                                            sched_tx_axis_tlast;
 
-wire [(INTERFACE_COUNT+V_PORT_COUNT)*LVL1_DATA_WIDTH-1:0] sched_rx_axis_tdata;
-wire [(INTERFACE_COUNT+V_PORT_COUNT)*LVL1_STRB_WIDTH-1:0] sched_rx_axis_tkeep;
-wire [(INTERFACE_COUNT+V_PORT_COUNT)*ID_TAG_WIDTH-1:0]    sched_rx_axis_tdest;
-wire [(INTERFACE_COUNT+V_PORT_COUNT)*PORT_WIDTH-1:0]      sched_rx_axis_tuser;
-wire [(INTERFACE_COUNT+V_PORT_COUNT)-1:0]                 sched_rx_axis_tvalid,
-                                                          sched_rx_axis_tready,
-                                                          sched_rx_axis_tlast;
+wire [SCHED_PORT_COUNT*LVL1_DATA_WIDTH-1:0] sched_rx_axis_tdata;
+wire [SCHED_PORT_COUNT*LVL1_STRB_WIDTH-1:0] sched_rx_axis_tkeep;
+wire [SCHED_PORT_COUNT*ID_TAG_WIDTH-1:0]    sched_rx_axis_tdest;
+wire [SCHED_PORT_COUNT*PORT_WIDTH-1:0]      sched_rx_axis_tuser;
+wire [SCHED_PORT_COUNT-1:0]                 sched_rx_axis_tvalid,
+                                            sched_rx_axis_tready,
+                                            sched_rx_axis_tlast;
+
+wire [CTRL_WIDTH-1:0] sched_ctrl_m_axis_tdata_n;
+wire                  sched_ctrl_m_axis_tvalid_n;
+wire                  sched_ctrl_m_axis_tready_n;
+wire [CORE_WIDTH-1:0] sched_ctrl_m_axis_tdest_n;
 
 wire [CTRL_WIDTH-1:0] sched_ctrl_m_axis_tdata;
 wire                  sched_ctrl_m_axis_tvalid;
@@ -1155,7 +1213,7 @@ wire [CORE_WIDTH-1:0] sched_ctrl_s_axis_tuser;
 `ifndef PR_ENABLE
   scheduler # (
     .PORT_COUNT(PORT_COUNT),
-    .INTERFACE_COUNT(INTERFACE_COUNT+V_PORT_COUNT),
+    .IF_COUNT(SCHED_PORT_COUNT),
     .CORE_COUNT(CORE_COUNT),
     .SLOT_COUNT(SLOT_COUNT),
     .DATA_WIDTH(LVL1_DATA_WIDTH),
@@ -1205,10 +1263,10 @@ wire [CORE_WIDTH-1:0] sched_ctrl_s_axis_tuser;
     .data_s_axis_tlast(sched_tx_axis_tlast),
 
     // Control lines to/from cores
-    .ctrl_m_axis_tdata(sched_ctrl_m_axis_tdata),
-    .ctrl_m_axis_tvalid(sched_ctrl_m_axis_tvalid),
-    .ctrl_m_axis_tready(sched_ctrl_m_axis_tready),
-    .ctrl_m_axis_tdest(sched_ctrl_m_axis_tdest),
+    .ctrl_m_axis_tdata(sched_ctrl_m_axis_tdata_n),
+    .ctrl_m_axis_tvalid(sched_ctrl_m_axis_tvalid_n),
+    .ctrl_m_axis_tready(sched_ctrl_m_axis_tready_n),
+    .ctrl_m_axis_tdest(sched_ctrl_m_axis_tdest_n),
 
     .ctrl_s_axis_tdata(sched_ctrl_s_axis_tdata),
     .ctrl_s_axis_tvalid(sched_ctrl_s_axis_tvalid),
@@ -1221,6 +1279,15 @@ wire [CORE_WIDTH-1:0] sched_ctrl_s_axis_tuser;
     .host_cmd_rd_data (host_rd_sched_data),
     .host_cmd_valid   (host_cmd_valid)
   );
+
+// MUX between host commands and scheduler requests
+assign sched_ctrl_m_axis_tvalid   =   host_to_cores_wr_r  || sched_ctrl_m_axis_tvalid_n;
+assign sched_ctrl_m_axis_tready_n = (!host_to_cores_wr_r) && sched_ctrl_m_axis_tready;
+
+assign sched_ctrl_m_axis_tdata    =   host_to_cores_wr_r ? {host_reg_r, host_cmd_wr_data_r}
+                                                         : sched_ctrl_m_axis_tdata_n;
+assign sched_ctrl_m_axis_tdest    =   host_to_cores_wr_r ? core_int_select_r 
+                                                         : sched_ctrl_m_axis_tdest_n;
 
 // Switches
 wire [CORE_COUNT*LVL2_DATA_WIDTH-1:0] data_s_axis_tdata;
@@ -1320,7 +1387,7 @@ stat_reader # (
   .monitor_axis_tvalid({dram_rx_axis_tvalid,loopback_rx_axis_tvalid,sched_rx_axis_tvalid}),
   .monitor_axis_tready({dram_rx_axis_tready,loopback_rx_axis_tready,sched_rx_axis_tready}),
   .monitor_axis_tlast( {dram_rx_axis_tlast, loopback_rx_axis_tlast, sched_rx_axis_tlast}),
-  .monitor_drop_pulse({{(PORT_COUNT-INTERFACE_COUNT){1'b0}},rx_drop_r}),
+  .monitor_drop_pulse({{(PORT_COUNT-IF_COUNT){1'b0}},rx_drop_r}),
 
   .port_select(interface_sel),
   .stat_addr(interface_reg_sel),
@@ -1707,7 +1774,7 @@ wire [CORE_COUNT*32-1:0] core_stat_data;
 reg [BC_MSG_CLUSTERS*32-1:0] core_stat_data_rr;
 
 always @ (posedge core_clk) begin
-  core_select_r    <= core_select;
+  core_select_r    <= {core_int_select_r, host_reg_r};
   core_select_rr   <= {BC_MSG_CLUSTERS{core_select_r[LAST_SEL_BITS-1:0]}};
   core_stat_data_r <= core_stat_data;
 end

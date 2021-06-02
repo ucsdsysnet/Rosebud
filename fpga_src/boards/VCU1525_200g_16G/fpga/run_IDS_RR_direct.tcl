@@ -48,6 +48,7 @@ add_files -norecurse {
   ../lib/smartFPGA/rtl/simple_arbiter.v
   ../lib/smartFPGA/rtl/simple_fifo.v
   ../lib/smartFPGA/rtl/header.v
+  ../lib/smartFPGA/rtl/axis_dropper.v
   ../lib/smartFPGA/rtl/slot_keeper.v
   ../lib/smartFPGA/rtl/max_finder_tree.v
   ../rtl/RR_LU_scheduler_PR.v

@@ -20,6 +20,7 @@ add_files -norecurse {
   ../lib/smartFPGA/rtl/simple_arbiter.v
   ../lib/smartFPGA/rtl/simple_fifo.v
   ../lib/smartFPGA/rtl/header.v
+  ../lib/smartFPGA/rtl/axis_dropper.v
   ../lib/smartFPGA/rtl/slot_keeper.v
   ../lib/smartFPGA/rtl/max_finder_tree.v
   ../rtl/RR_LU_scheduler_PR.v
@@ -53,16 +54,16 @@ launch_runs scheduler_RR_synth_1
 wait_on_run scheduler_RR_synth_1
 
 create_fileset -quiet IDS_RR_utils
-add_files -fileset IDS_RR_utils -norecurse ../lib/axis/syn/vivado/sync_reset.tcl
-add_files -fileset IDS_RR_utils -norecurse ../lib/smartFPGA/syn/vivado/simple_sync_sig.tcl
+add_files -fileset IDS_RR_utils -norecurse ../lib/axis/syn/sync_reset.tcl
+add_files -fileset IDS_RR_utils -norecurse ../lib/smartFPGA/syn/simple_sync_sig.tcl
 
 # add_files -fileset IDS_RR_utils -norecurse fpga.runs/impl_IDS_Hash/fpga_postroute_physopt.dcp
 # set_property incremental_checkpoint fpga.runs/impl_IDS_RR/fpga_postroute_physopt.dcp [get_runs impl_IDS_RR]
 
-set_property STEPS.OPT_DESIGN.TCL.PRE [ get_files ../lib/axis/syn/vivado/sync_reset.tcl -of [get_fileset IDS_RR_utils] ] [get_runs impl_IDS_RR]
-set_property STEPS.OPT_DESIGN.TCL.PRE [ get_files ../lib/smartFPGA/syn/vivado/simple_sync_sig.tcl -of [get_fileset IDS_RR_utils] ] [get_runs impl_IDS_RR]
-set_property STEPS.ROUTE_DESIGN.TCL.PRE [ get_files ../lib/axis/syn/vivado/sync_reset.tcl -of [get_fileset IDS_RR_utils] ] [get_runs impl_IDS_RR]
-set_property STEPS.ROUTE_DESIGN.TCL.PRE [ get_files ../lib/smartFPGA/syn/vivado/simple_sync_sig.tcl -of [get_fileset IDS_RR_utils] ] [get_runs impl_IDS_RR]
+set_property STEPS.OPT_DESIGN.TCL.PRE [ get_files ../lib/axis/syn/sync_reset.tcl -of [get_fileset IDS_RR_utils] ] [get_runs impl_IDS_RR]
+set_property STEPS.OPT_DESIGN.TCL.PRE [ get_files ../lib/smartFPGA/syn/simple_sync_sig.tcl -of [get_fileset IDS_RR_utils] ] [get_runs impl_IDS_RR]
+set_property STEPS.ROUTE_DESIGN.TCL.PRE [ get_files ../lib/axis/syn/sync_reset.tcl -of [get_fileset IDS_RR_utils] ] [get_runs impl_IDS_RR]
+set_property STEPS.ROUTE_DESIGN.TCL.PRE [ get_files ../lib/smartFPGA/syn/simple_sync_sig.tcl -of [get_fileset IDS_RR_utils] ] [get_runs impl_IDS_RR]
 
 set_property IS_ENABLED false [get_report_config -of_object [get_runs impl_IDS_RR] impl_IDS_RR_route_report_drc_0]
 set_property IS_ENABLED false [get_report_config -of_object [get_runs impl_IDS_RR] impl_IDS_RR_route_report_power_0]

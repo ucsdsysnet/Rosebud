@@ -56,6 +56,8 @@ VERILOG_SOURCES += $(SMARTFPGA)/pcie_cont_read.v
 VERILOG_SOURCES += $(SMARTFPGA)/pcie_cont_write.v
 VERILOG_SOURCES += $(SMARTFPGA)/corundum.v
 VERILOG_SOURCES += $(SMARTFPGA)/axis_fifo.v
+VERILOG_SOURCES += $(SMARTFPGA)/axis_stopper.v
+VERILOG_SOURCES += $(SMARTFPGA)/axis_dropper.v
 
 VERILOG_SOURCES += $(ETH_LIB)/axis_xgmii_rx_64.v
 VERILOG_SOURCES += $(ETH_LIB)/axis_xgmii_tx_64.v
