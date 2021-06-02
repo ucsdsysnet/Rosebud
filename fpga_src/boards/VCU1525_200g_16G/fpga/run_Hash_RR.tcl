@@ -66,12 +66,12 @@ launch_runs Gousheh_Hash_synth_1
 wait_on_run Gousheh_Hash_synth_1
 
 create_fileset -quiet Hash_RR_utils
-add_files -fileset Hash_RR_utils -norecurse ../lib/axis/syn/sync_reset.tcl
-add_files -fileset Hash_RR_utils -norecurse ../lib/smartFPGA/syn/simple_sync_sig.tcl
-set_property STEPS.OPT_DESIGN.TCL.PRE [ get_files ../lib/axis/syn/sync_reset.tcl -of [get_fileset Hash_RR_utils] ] [get_runs impl_Hash_RR]
-set_property STEPS.OPT_DESIGN.TCL.PRE [ get_files ../lib/smartFPGA/syn/simple_sync_sig.tcl -of [get_fileset Hash_RR_utils] ] [get_runs impl_Hash_RR]
-set_property STEPS.ROUTE_DESIGN.TCL.PRE [ get_files ../lib/axis/syn/sync_reset.tcl -of [get_fileset Hash_RR_utils] ] [get_runs impl_Hash_RR]
-set_property STEPS.ROUTE_DESIGN.TCL.PRE [ get_files ../lib/smartFPGA/syn/simple_sync_sig.tcl -of [get_fileset Hash_RR_utils] ] [get_runs impl_Hash_RR]
+add_files -fileset Hash_RR_utils -norecurse ../lib/axis/syn/vivado/sync_reset.tcl
+add_files -fileset Hash_RR_utils -norecurse ../lib/smartFPGA/syn/vivado/simple_sync_sig.tcl
+set_property STEPS.OPT_DESIGN.TCL.PRE [ get_files ../lib/axis/syn/vivado/sync_reset.tcl -of [get_fileset Hash_RR_utils] ] [get_runs impl_Hash_RR]
+set_property STEPS.OPT_DESIGN.TCL.PRE [ get_files ../lib/smartFPGA/syn/vivado/simple_sync_sig.tcl -of [get_fileset Hash_RR_utils] ] [get_runs impl_Hash_RR]
+set_property STEPS.ROUTE_DESIGN.TCL.PRE [ get_files ../lib/axis/syn/vivado/sync_reset.tcl -of [get_fileset Hash_RR_utils] ] [get_runs impl_Hash_RR]
+set_property STEPS.ROUTE_DESIGN.TCL.PRE [ get_files ../lib/smartFPGA/syn/vivado/simple_sync_sig.tcl -of [get_fileset Hash_RR_utils] ] [get_runs impl_Hash_RR]
 
 set_property IS_ENABLED false [get_report_config -of_object [get_runs impl_Hash_RR] impl_Hash_RR_route_report_drc_0]
 set_property IS_ENABLED false [get_report_config -of_object [get_runs impl_Hash_RR] impl_Hash_RR_route_report_power_0]
