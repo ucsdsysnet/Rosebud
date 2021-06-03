@@ -109,13 +109,13 @@ async def run_test_pkt_gen(dut):
     pkt_count = 2*[0]
 
     for k in range(0, 2):
-        bytes_in   = await tb.interface_rd_cmd(k, 0, 0)
+        bytes_in   = await tb.interface_stat_rd(k, 0, 0)
         await Timer(100, 'ns')
-        bytes_out  = await tb.interface_rd_cmd(k, 1, 0)
+        bytes_out  = await tb.interface_stat_rd(k, 1, 0)
         await Timer(100, 'ns')
-        frames_in  = await tb.interface_rd_cmd(k, 0, 1)
+        frames_in  = await tb.interface_stat_rd(k, 0, 1)
         await Timer(100, 'ns')
-        frames_out = await tb.interface_rd_cmd(k, 1, 1)
+        frames_out = await tb.interface_stat_rd(k, 1, 1)
         await Timer(100, 'ns')
         desc       = await tb.read_interface_desc(k)
 

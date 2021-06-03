@@ -56,7 +56,6 @@ module pcie_controller #
   parameter AXIS_DATA_WIDTH         = 128,
   parameter AXIS_KEEP_WIDTH         = 16,
   parameter AXIS_TAG_WIDTH          = 9,
-  parameter CORE_SLOT_WIDTH         = 4,
   parameter CORE_DESC_WIDTH         = 128,
   parameter CORE_COUNT              = 16,
   parameter CORE_WIDTH              = $clog2(CORE_COUNT),

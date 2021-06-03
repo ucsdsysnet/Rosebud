@@ -3,7 +3,6 @@ module loopback_msg_fifo # (
     parameter STRB_WIDTH      = (DATA_WIDTH/8),
     parameter PORT_WIDTH      = 2,
     parameter CORE_WIDTH      = 4,
-    parameter SLOT_WIDTH      = 3,
     parameter PORT_COUNT      = 2,
     parameter FIRST_PORT      = 2,
     parameter ID_TAG_WIDTH    = 5+CORE_WIDTH

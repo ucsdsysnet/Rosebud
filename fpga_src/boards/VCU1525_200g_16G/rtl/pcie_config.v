@@ -7,7 +7,6 @@ module pcie_config # (
   parameter AXIL_STRB_WIDTH         = (AXIL_DATA_WIDTH/8),
   parameter AXIL_ADDR_WIDTH         = 32,
   parameter CORE_COUNT              = 16,
-  parameter CORE_SLOT_WIDTH         = 4,
   parameter CORE_WIDTH              = $clog2(CORE_COUNT),
   parameter ID_TAG_WIDTH            = 9,
   parameter INTERFACE_WIDTH         = 4,
