@@ -63,7 +63,7 @@ INC_DIR=$(ICARUS_INC_DIR)
 include $(shell cocotb-config --makefiles)/Makefile.sim
 
 compile:
-	make -C ../../../../../c_code/ NAME=basic_fw
+	make -C ../../accel/full_ids/c/ NAME=full_ids
 
 clean::
 	@rm -rf *.xml __pycache__

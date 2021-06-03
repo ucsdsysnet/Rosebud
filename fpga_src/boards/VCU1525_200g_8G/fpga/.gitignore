@@ -4,3 +4,4 @@
 fpga*
 create_project.tcl
 defines.v
+hd_visual

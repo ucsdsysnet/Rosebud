@@ -93,7 +93,7 @@ async def run_test_pkt_gen(dut):
     await tb.reset_all_cores()
 
     tb.log.info("Read counters")
-    for k in range(0, 16):
+    for k in range(0, 8):
         slots      = await tb.read_core_slots(k)
         await Timer(100, 'ns')
         bytes_in   = await tb.core_rd_cmd(k, 0)
