@@ -219,18 +219,18 @@ async def run_test_ins_load(dut):
         await Timer(100, 'ns')
         frames_in  = await tb.core_rd_cmd(k, 1)
         await Timer(100, 'ns')
-        bytes_out  = await tb.core_rd_cmd(k, 2)
+        bytes_out  = await tb.core_rd_cmd(k, 3)
         await Timer(100, 'ns')
-        frames_out = await tb.core_rd_cmd(k, 3)
+        frames_out = await tb.core_rd_cmd(k, 4)
         await Timer(100, 'ns')
 
         tb.log.info("Core %d stat read, slots: , bytes_in, byte_out, frames_in, frames_out", k)
         tb.log.info("%d, %d, %d, %d, %d", slots, bytes_in, bytes_out, frames_in, frames_out)
 
         if (TEST_DEBUG):
-            debug_l   = await tb.core_rd_cmd(k, 4)
+            debug_l   = await tb.core_rd_cmd(k, 6)
             await Timer(100, 'ns')
-            debug_h  = await tb.core_rd_cmd(k, 5)
+            debug_h  = await tb.core_rd_cmd(k, 7)
             await Timer(100, 'ns')
             tb.log.info("Core %d debug_h, debug_l", k)
             tb.log.info("%08x, %08x", debug_h, debug_l)

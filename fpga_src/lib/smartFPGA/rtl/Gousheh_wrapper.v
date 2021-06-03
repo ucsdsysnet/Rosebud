@@ -289,7 +289,6 @@ end
 /////////////////////////////////////////////////////////////////////
 ///////////////////// GENERATE WRAPPER STATUS ///////////////////////
 /////////////////////////////////////////////////////////////////////
-wire [31:0] slots_status;
 wire [7:0]  max_slot_count = SLOT_COUNT;
 wire [15:0] bc_region_size = BC_REGION_SIZE;
 
@@ -1348,20 +1347,6 @@ assign in_desc_ready_n = in_desc_taken || in_desc_drop || !in_desc_valid_r;
 assign in_desc_valid   = in_desc_valid_r && !in_desc_drop;
 assign in_desc         = in_desc_r;
 
-// Debug readback words
-wire [31:0] wrapper_errs = {14'd0, out_desc_err, invalid_out_desc,
-												   {(16-SLOT_COUNT){1'b0}}, override_in_slot_err};
-
-wire [31:0] wrapper_fifo_fulls =
-        {13'd0, !recv_desc_fifo_ready, !ctrl_s_fifo_ready, !dram_req_ready,
-         10'd0, !core_data_wr_ready,   !core_ctrl_wr_ready, !core_dram_wr_ready,
-                !core_dram_rd_ready,   !pkt_sent_ready,     !bc_msg_out_ready};
-
-assign      slots_status    = {{(16-SLOT_COUNT){1'b0}}, slots_to_send,
-                               {(16-SLOT_COUNT){1'b0}}, slots_in_prog};
-wire [31:0] core_slot_err   = {{(16-SLOT_COUNT){1'b0}}, override_out_slot_err,
-                               {(16-SLOT_COUNT){1'b0}}, invalid_out_slot_err};
-
 /////////////////////////////////////////////////////////////////////
 //////////////////////// STAT COLLECTION ////////////////////////////
 /////////////////////////////////////////////////////////////////////
@@ -1438,6 +1423,12 @@ axis_stat # (
   .stall_count(outgoing_stall_count)
 );
 
+// Debug readback words
+wire [31:0] wrapper_errs = {14'd0, out_desc_err, invalid_out_desc,
+          5'd0, !recv_desc_fifo_ready, !ctrl_s_fifo_ready, !dram_req_ready,
+          2'd0, !core_data_wr_ready,   !core_ctrl_wr_ready, !core_dram_wr_ready,
+                !core_dram_rd_ready,   !pkt_sent_ready,     !bc_msg_out_ready};
+
 reg [3:0] stat_addr_r;
 
 always @ (posedge clk) begin
@@ -1446,19 +1437,19 @@ always @ (posedge clk) begin
   case (stat_addr_r)
     4'h0: stat_data <= incoming_byte_count;
     4'h1: stat_data <= incoming_frame_count;
-    4'h2: stat_data <= outgoing_byte_count;
-    4'h3: stat_data <= outgoing_frame_count;
-    4'h4: stat_data <= core_debug_l;
-    4'h5: stat_data <= core_debug_h;
-    4'h6: stat_data <= incoming_stall_count;
-    4'h7: stat_data <= outgoing_stall_count;
+    4'h2: stat_data <= incoming_stall_count;
+    4'h3: stat_data <= outgoing_byte_count;
+    4'h4: stat_data <= outgoing_frame_count;
+    4'h5: stat_data <= outgoing_stall_count;
+    4'h6: stat_data <= core_debug_l;
+    4'h7: stat_data <= core_debug_h;
     4'h8: stat_data <= core_stat_reg;
-    4'h9: stat_data <= slots_status;
-    4'hA: stat_data <= wrapper_fifo_fulls;
-    4'hB: stat_data <= core_slot_err;
-    4'hC: stat_data <= wrapper_errs;
-    4'hD: stat_data <= 32'd0;
-    4'hE: stat_data <= 32'd0;
+    4'h9: stat_data <= wrapper_errs;
+    4'hA: stat_data <= {{(32-SLOT_COUNT){1'b0}}, slots_in_prog};
+    4'hB: stat_data <= {{(32-SLOT_COUNT){1'b0}}, slots_to_send};
+    4'hC: stat_data <= {{(32-SLOT_COUNT){1'b0}}, override_in_slot_err};
+    4'hD: stat_data <= {{(32-SLOT_COUNT){1'b0}}, override_out_slot_err};
+    4'hE: stat_data <= {{(32-SLOT_COUNT){1'b0}}, invalid_out_slot_err};
     4'hF: stat_data <= 32'd0;
   endcase
 end

@@ -28,6 +28,7 @@ VERILOG_SOURCES += $(CWD)/../common/FDCE.v
 VERILOG_SOURCES += $(RTL_DIR)/fpga_core.v
 VERILOG_SOURCES += $(RTL_DIR)/Gousheh_PR.v
 VERILOG_SOURCES += $(RTL_DIR)/RR_LU_scheduler_PR.v
+# VERILOG_SOURCES += $(RTL_DIR)/Hash_Dropping_scheduler_PR.v
 VERILOG_SOURCES += $(RTL_DIR)/pcie_config.v
 
 VERILOG_SOURCES += $(SMARTFPGA)/simple_fifo.v
@@ -56,6 +57,8 @@ VERILOG_SOURCES += $(SMARTFPGA)/pcie_cont_read.v
 VERILOG_SOURCES += $(SMARTFPGA)/pcie_cont_write.v
 VERILOG_SOURCES += $(SMARTFPGA)/corundum.v
 VERILOG_SOURCES += $(SMARTFPGA)/axis_fifo.v
+VERILOG_SOURCES += $(SMARTFPGA)/axis_stopper.v
+VERILOG_SOURCES += $(SMARTFPGA)/axis_dropper.v
 VERILOG_SOURCES += $(SMARTFPGA)/accel_rd_dma_sp.v
 
 VERILOG_SOURCES += $(ACC_DIR)/accel_wrap_full_ids.v
