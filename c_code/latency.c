@@ -14,7 +14,7 @@ unsigned int first_packet;
 #endif
 
 #ifndef CONGESTION
-    #define CONGESTION 0
+    #define CONGESTION 1
 #endif
 
 #ifndef INTR_BASED
