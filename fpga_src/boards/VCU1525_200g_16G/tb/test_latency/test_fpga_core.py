@@ -70,7 +70,7 @@ FIRMWARE = os.path.abspath(os.path.join(os.path.dirname(__file__),
 
 
 @cocotb.test()
-async def run_test_pkt_gen(dut):
+async def run_test_latency(dut):
 
     tb = TB(dut)
         

@@ -114,10 +114,7 @@ INC_DIR=$(ICARUS_INC_DIR)
 include $(shell cocotb-config --makefiles)/Makefile.sim
 
 compile:
-	make -C ../../../../../c_code/ NAME=basic_fw
-	make -C ../../../../../c_code/ NAME=basic_fw_n_bc
-	make -C ../../../../../c_code/ NAME=dram_test
-	make -C ../../../../../c_code/ NAME=drop
+	make -C ../../../../../c_code/ NAME=inter_core
 
 clean::
 	@rm -rf *.xml __pycache__

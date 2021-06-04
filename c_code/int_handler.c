@@ -1,5 +1,5 @@
 #include "core.h"
-volatile int k;
+volatile int int_delayer;
 
 void __attribute__((interrupt)) int_handler(void) {
   int cause = read_csr(mcause);
@@ -27,7 +27,7 @@ void __attribute__((interrupt)) int_handler(void) {
         }
 
         // Few cycles delay not to read last dropped packet
-        for (k=0;k<10;k++);
+        for (int_delayer=0;int_delayer<10;int_delayer++);
 
         // Find remaining active packets and drop them
         packet.len=0;

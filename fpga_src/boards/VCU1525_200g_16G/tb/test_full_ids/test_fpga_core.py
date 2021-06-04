@@ -97,6 +97,16 @@ PATTERNS     = [
     b"GET / HTTP/1.1\r\n\r\n\r\n",
     b"HTTP/1.0\r\nAccept: */*\r\nAccept-Language: ",
 ]
+    
+# For the old RegEx engine (re_multi), drop rate 0.66, basic_fw_re_multi.elf
+# PATTERNS     = [
+#     b"page.php?id=%27%3B%20SELECT%20%2A%20FROM%20users%3B%20--",
+#     b"page.php?id=%27%3B%20DELETE%20FROM%20prod_data%3B%20--",
+#     b"page.php?id=%27%3B%20INSERT%20INTO%20users%20VALUES%20%28%27skroob%27%2C%20%271234%27%29%3B%20--",
+#     b"page.php?id=%27%3B%20DELETE%20FROM%20prod_data%3B%20--",
+#     b"page.php?id=%27%3B%20UPDATE%20users%20SET%20password%20%3D%20%271234%27%20WHERE%20username%20%3D%20%27skroob%27%20prod_data%3B%20--",
+#     b"page.php?id=this%20is%20fine"
+# ]
 
 PACKETS = []
 
@@ -169,7 +179,6 @@ else:
 
 FIRMWARE = os.path.abspath(os.path.join(os.path.dirname(__file__),
     '..', '..', 'accel', 'full_ids', 'c', 'full_ids.elf'))
-
 
 @cocotb.test()
 async def run_test_full_ids(dut):
