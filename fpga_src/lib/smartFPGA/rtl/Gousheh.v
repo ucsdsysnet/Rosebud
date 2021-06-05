@@ -10,7 +10,8 @@ module Gousheh # (
   parameter MSG_WIDTH      = 32+4+MSG_ADDR_WIDTH,
   parameter SLOW_M_B_LINES = 4096,
   parameter FAST_M_B_LINES = 1024,
-  parameter CORE_ID_WIDTH  = 4
+  parameter CORE_ID_WIDTH  = 4,
+  parameter SLOT_COUNT     = 16
 ) (
   input  wire                     clk,
   input  wire                     rst,
@@ -68,7 +69,6 @@ localparam ACC_ADDR_WIDTH  = $clog2(SLOW_M_B_LINES);
 localparam PMEM_SEL_BITS   = PMEM_ADDR_WIDTH-$clog2(STRB_WIDTH)
                              -1-$clog2(SLOW_M_B_LINES);
 localparam ACC_MEM_BLOCKS  = 2**PMEM_SEL_BITS;
-localparam MAX_SLOTS       = 16; // For controller to keep track of
 
 ///////////////////////////////////////////////////////////////////////////
 //////////////////////////// RISCV CORE ///////////////////////////////////
@@ -138,7 +138,7 @@ wire [63:0] core_desc_dram_addr;
 wire        core_desc_ready;
 wire        core_desc_valid;
 
-wire [MAX_SLOTS:1] slots_in_prog;
+wire [SLOT_COUNT:1] slots_in_prog;
 
 wire [DMEM_ADDR_WIDTH-1:0] bc_msg_addr;
 wire                       bc_msg_valid;
@@ -187,7 +187,7 @@ riscvcore #(
   .out_desc_valid(core_desc_valid),
   .out_desc_ready(core_desc_ready),
 
-  .active_slots({{(32-MAX_SLOTS){1'b0}},slots_in_prog}),
+  .active_slots({{(32-SLOT_COUNT){1'b0}},slots_in_prog}),
   .bc_region_size(bc_region_size),
   .core_id(core_id),
   .max_slot_count(max_slot_count),
@@ -239,7 +239,7 @@ Gousheh_controller # (
   .DMEM_ADDR_WIDTH(DMEM_ADDR_WIDTH),
   .MSG_ADDR_WIDTH(MSG_ADDR_WIDTH),
   .MSG_WIDTH(MSG_WIDTH),
-  .SLOT_COUNT(MAX_SLOTS)
+  .SLOT_COUNT(SLOT_COUNT)
 ) Gousheh_controller_inst (
   .clk       (clk),
   .rst       (rst),

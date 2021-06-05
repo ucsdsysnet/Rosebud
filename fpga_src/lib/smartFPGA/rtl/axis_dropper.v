@@ -60,14 +60,14 @@ module axis_dropper # (
         // we start dropping, and if its in the middle of a packet we wait for tlast.
         // If we ignore corner case of drop signal being asserted at the same cycle
         // as SoP, we start dropping when IDLE or wait for tlast.
-        if (drop_r[i])
+        if (drop_r[i] && !dropping[i])
           dropping[i] <= SAME_CYCLE_DROP ?
                                    (SoP[i] || (s_axis_transaction[i] && s_axis_tlast[i])):
             ((SoP[i] && !s_axis_tvalid[i]) || (s_axis_transaction[i] && s_axis_tlast[i]));
         // When drop is deasserted while dropping is set, if we have SAME_CYCLE_DROP,
         // either SoP, IDLE or tlast would deasserted the dropping. If we ignore the
         // corner case, only tlast or idle deasserts the dropping.
-        else if (dropping[i])
+        else if (!drop_r[i] && dropping[i])
           dropping[i] <= SAME_CYCLE_DROP ?
                                   !(SoP[i] || (s_axis_transaction[i] && s_axis_tlast[i])):
            !((SoP[i] && !s_axis_tvalid[i]) || (s_axis_transaction[i] && s_axis_tlast[i]));

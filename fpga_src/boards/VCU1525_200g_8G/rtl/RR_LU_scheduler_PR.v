@@ -815,14 +815,14 @@ module scheduler_PR (
 
   axis_dropper # (
     .PORT_COUNT(IF_COUNT),
-    .REG_FOR_DROP(0),
+    .REG_FOR_DROP(1),
     .SAME_CYCLE_DROP(0),
     .DROP_CNT_WIDTH(32)
   ) rx_dropper (
     .clk(clk),
     .rst(rst_r),
 
-    .drop(rx_almost_full),
+    .drop(rx_almost_full & ~{IF_COUNT{max_valid}}), // There is no free core
     .drop_count(drop_count),
 
     .s_axis_tvalid(rx_axis_tvalid_r & port_not_stall),

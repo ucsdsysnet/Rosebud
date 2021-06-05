@@ -2,7 +2,7 @@ module Gousheh_controller # (
   parameter DMEM_ADDR_WIDTH = 15,
   parameter MSG_ADDR_WIDTH  = 11,
   parameter MSG_WIDTH       = 32+4+MSG_ADDR_WIDTH,
-  parameter SLOT_COUNT      = 32
+  parameter SLOT_COUNT      = 16
 ) (
   input  wire                       clk,
   input  wire                       rst,

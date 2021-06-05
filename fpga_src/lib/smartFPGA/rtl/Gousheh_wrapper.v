@@ -11,7 +11,7 @@ module Gousheh_wrapper # (
     parameter PORT_WIDTH       = 3,
     parameter CORE_ID_WIDTH    = 4,
     parameter DRAM_PORT        = 6,
-    parameter SLOT_COUNT       = 8,
+    parameter SLOT_COUNT       = 16,
     parameter MSG_WIDTH        = 46,
     parameter BC_REGION_SIZE   = 4096,
     parameter STRB_WIDTH       = (DATA_WIDTH/8),
