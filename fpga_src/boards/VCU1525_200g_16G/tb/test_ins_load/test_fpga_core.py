@@ -176,7 +176,8 @@ async def run_test_ins_load(dut):
 
         if (not DROP_TEST):
             lengths = []
-            for j in range(0, SEND_COUNT_1):
+            # basic_fw sends to the same port
+            for j in range(0, SEND_COUNT_0):
                 rx_frame = await tb.qsfp0_sink.recv()
                 tb.log.info("packet number from port 0: %d", j)
                 if PRINT_PKTS:
@@ -187,7 +188,7 @@ async def run_test_ins_load(dut):
                     # assert rx_frame.tdata[15:]  == PACKETS[0].payload[15:]
                 lengths.append(len(rx_frame.tdata)-8)
 
-            for j in range(0, SEND_COUNT_0):
+            for j in range(0, SEND_COUNT_1):
                 rx_frame = await tb.qsfp1_sink.recv()
                 tb.log.info("packet number from port 1: %d", j)
                 if PRINT_PKTS:
