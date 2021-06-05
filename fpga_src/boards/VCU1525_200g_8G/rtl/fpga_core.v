@@ -235,7 +235,7 @@ parameter AXIL_ADDR_WIDTH     = BAR0_APERTURE;
 // RISCV parameters, should match riscv_block
 parameter CORE_WIDTH      = $clog2(CORE_COUNT);
 parameter DRAM_PORT       = PORT_COUNT-1;
-parameter SLOT_COUNT      = 16;
+parameter SLOT_COUNT      = 32;
 parameter SLOT_WIDTH      = $clog2(SLOT_COUNT+1);
 parameter TAG_WIDTH       = (SLOT_WIDTH>5)? SLOT_WIDTH:5;
 
