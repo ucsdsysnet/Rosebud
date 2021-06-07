@@ -253,7 +253,7 @@ int main(int argc, char *argv[])
             uint32_t core_rx_frames_raw = core_rd_cmd(dev, k, 1);
             int bytes = 0;
             int frames = 0;
-            write_to_core(dev, i_segment, (1<<25), ins_len, k);
+            block_write(dev, i_segment, (1<<25), ins_len, k);
 
             usleep(10000);
             // Making sure instruction memory is loaded

@@ -102,7 +102,7 @@ int main(int argc, char *argv[])
     printf("IF CSR offset: 0x%08x\n", dev->if_csr_offset);
 
     int core_count = MAX_CORE_COUNT;
-    int if_count = MAX_IF_COUNT;
+    int if_count = MAX_TOT_IF_COUNT;
 
     printf("DMA enable: %u\n", mqnic_reg_read32(dev->regs, 0x000400));
 
@@ -111,19 +111,19 @@ int main(int argc, char *argv[])
         mqnic_reg_write32(dev->regs, 0x000410, k);
         printf("core %d slots: %u\n",     k, read_core_slots(dev, k));
         printf("core %d rx bytes: %u\n",  k, core_rd_cmd(dev, k, 0));
-        printf("core %d tx bytes: %u\n",  k, core_rd_cmd(dev, k, 2));
+        printf("core %d tx bytes: %u\n",  k, core_rd_cmd(dev, k, 3));
         printf("core %d rx frames: %u\n", k, core_rd_cmd(dev, k, 1));
-        printf("core %d tx frames: %u\n", k, core_rd_cmd(dev, k, 3));
+        printf("core %d tx frames: %u\n", k, core_rd_cmd(dev, k, 4));
     }
 
     for (int k=0; k<if_count; k++)
     {
         mqnic_reg_write32(dev->regs, 0x000414, k);
-        printf("interface %d rx bytes: %u\n",  k, interface_rd_cmd(dev, k, 0, 0));
-        printf("interface %d tx bytes: %u\n",  k, interface_rd_cmd(dev, k, 1, 0));
-        printf("interface %d rx frames: %u\n", k, interface_rd_cmd(dev, k, 0, 1));
-        printf("interface %d tx frames: %u\n", k, interface_rd_cmd(dev, k, 1, 1));
-        printf("interface %d rx drops: %u\n",  k, interface_rd_cmd(dev, k, 0, 2));
+        printf("interface %d rx bytes: %u\n",  k, interface_stat_rd(dev, k, 0, 0));
+        printf("interface %d tx bytes: %u\n",  k, interface_stat_rd(dev, k, 1, 0));
+        printf("interface %d rx frames: %u\n", k, interface_stat_rd(dev, k, 0, 1));
+        printf("interface %d tx frames: %u\n", k, interface_stat_rd(dev, k, 1, 1));
+        printf("interface %d rx drops: %u\n",  k, interface_stat_rd(dev, k, 0, 2));
     }
 
 err:
@@ -132,7 +132,3 @@ err:
 
     return ret;
 }
-
-
-
-

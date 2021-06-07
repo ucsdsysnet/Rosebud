@@ -121,7 +121,7 @@ int main(int argc, char *argv[])
     printf("Board version: %d.%d\n", dev->board_ver >> 16, dev->board_ver & 0xffff);
 
     int core_count = MAX_CORE_COUNT;
-    int if_count = MAX_IF_COUNT;
+    int if_count = MAX_ETH_IF_COUNT; // To be updated
 
     char need_comma;
 
@@ -131,59 +131,59 @@ int main(int argc, char *argv[])
     uint32_t temp, temp2;
     uint32_t updates = 0;
 
-    uint64_t core_rx_bytes[MAX_CORE_COUNT];
-    uint64_t core_tx_bytes[MAX_CORE_COUNT];
+    uint64_t core_rx_bytes [MAX_CORE_COUNT];
     uint64_t core_rx_frames[MAX_CORE_COUNT];
-    uint64_t core_tx_frames[MAX_CORE_COUNT];
     uint64_t core_rx_stalls[MAX_CORE_COUNT];
+    uint64_t core_tx_bytes [MAX_CORE_COUNT];
+    uint64_t core_tx_frames[MAX_CORE_COUNT];
     uint64_t core_tx_stalls[MAX_CORE_COUNT];
 
-    uint64_t total_core_rx_bytes[MAX_CORE_COUNT];
-    uint64_t total_core_tx_bytes[MAX_CORE_COUNT];
+    uint64_t total_core_rx_bytes [MAX_CORE_COUNT];
     uint64_t total_core_rx_frames[MAX_CORE_COUNT];
-    uint64_t total_core_tx_frames[MAX_CORE_COUNT];
     uint64_t total_core_rx_stalls[MAX_CORE_COUNT];
+    uint64_t total_core_tx_bytes [MAX_CORE_COUNT];
+    uint64_t total_core_tx_frames[MAX_CORE_COUNT];
     uint64_t total_core_tx_stalls[MAX_CORE_COUNT];
 
-    uint32_t core_rx_bytes_raw[MAX_CORE_COUNT];
-    uint32_t core_tx_bytes_raw[MAX_CORE_COUNT];
+    uint32_t core_rx_bytes_raw [MAX_CORE_COUNT];
     uint32_t core_rx_frames_raw[MAX_CORE_COUNT];
-    uint32_t core_tx_frames_raw[MAX_CORE_COUNT];
     uint32_t core_rx_stalls_raw[MAX_CORE_COUNT];
+    uint32_t core_tx_bytes_raw [MAX_CORE_COUNT];
+    uint32_t core_tx_frames_raw[MAX_CORE_COUNT];
     uint32_t core_tx_stalls_raw[MAX_CORE_COUNT];
 
-    uint64_t if_rx_bytes[MAX_IF_COUNT];
-    uint64_t if_tx_bytes[MAX_IF_COUNT];
-    uint64_t if_rx_frames[MAX_IF_COUNT];
-    uint64_t if_tx_frames[MAX_IF_COUNT];
-    uint64_t if_rx_stalls[MAX_IF_COUNT];
-    uint64_t if_tx_stalls[MAX_IF_COUNT];
-    uint64_t if_rx_drops[MAX_IF_COUNT];
-    uint64_t if_sched_drop[MAX_IF_COUNT];
+    uint64_t if_rx_bytes  [MAX_TOT_IF_COUNT];
+    uint64_t if_rx_frames [MAX_TOT_IF_COUNT];
+    uint64_t if_rx_stalls [MAX_TOT_IF_COUNT];
+    uint64_t if_rx_drops  [MAX_TOT_IF_COUNT];
+    uint64_t if_tx_bytes  [MAX_TOT_IF_COUNT];
+    uint64_t if_tx_frames [MAX_TOT_IF_COUNT];
+    uint64_t if_tx_stalls [MAX_TOT_IF_COUNT];
+    uint64_t if_sched_drop[MAX_ETH_IF_COUNT];
 
-    uint64_t total_if_rx_bytes[MAX_IF_COUNT];
-    uint64_t total_if_tx_bytes[MAX_IF_COUNT];
-    uint64_t total_if_rx_frames[MAX_IF_COUNT];
-    uint64_t total_if_tx_frames[MAX_IF_COUNT];
-    uint64_t total_if_rx_drops[MAX_IF_COUNT];
-    uint64_t total_if_sched_drop[MAX_IF_COUNT];
+    uint64_t total_if_rx_bytes  [MAX_TOT_IF_COUNT];
+    uint64_t total_if_rx_frames [MAX_TOT_IF_COUNT];
+    uint64_t total_if_rx_drops  [MAX_TOT_IF_COUNT];
+    uint64_t total_if_tx_bytes  [MAX_TOT_IF_COUNT];
+    uint64_t total_if_tx_frames [MAX_TOT_IF_COUNT];
+    uint64_t total_if_sched_drop[MAX_ETH_IF_COUNT];
 
-    uint32_t if_rx_bytes_raw[MAX_IF_COUNT];
-    uint32_t if_tx_bytes_raw[MAX_IF_COUNT];
-    uint32_t if_rx_frames_raw[MAX_IF_COUNT];
-    uint32_t if_tx_frames_raw[MAX_IF_COUNT];
-    uint32_t if_rx_stalls_raw[MAX_IF_COUNT];
-    uint32_t if_tx_stalls_raw[MAX_IF_COUNT];
-    uint32_t if_rx_drops_raw[MAX_IF_COUNT];
-    uint32_t if_sched_drop_raw[MAX_IF_COUNT];
+    uint32_t if_rx_bytes_raw  [MAX_TOT_IF_COUNT];
+    uint32_t if_rx_frames_raw [MAX_TOT_IF_COUNT];
+    uint32_t if_rx_stalls_raw [MAX_TOT_IF_COUNT];
+    uint32_t if_rx_drops_raw  [MAX_TOT_IF_COUNT];
+    uint32_t if_tx_bytes_raw  [MAX_TOT_IF_COUNT];
+    uint32_t if_tx_frames_raw [MAX_TOT_IF_COUNT];
+    uint32_t if_tx_stalls_raw [MAX_TOT_IF_COUNT];
+    uint32_t if_sched_drop_raw[MAX_ETH_IF_COUNT];
 
     uint64_t total_rx_bytes;
-    uint64_t total_tx_bytes;
     uint64_t total_rx_frames;
-    uint64_t total_tx_frames;
     uint64_t total_rx_stalls;
-    uint64_t total_tx_stalls;
     uint64_t total_rx_drops;
+    uint64_t total_tx_bytes;
+    uint64_t total_tx_frames;
+    uint64_t total_tx_stalls;
 
     struct timespec desired_time;
     struct timespec current_time;
@@ -226,75 +226,74 @@ int main(int argc, char *argv[])
 
     for (int k=0; k<core_count; k++)
     {
-        core_rx_bytes[k] = 0;
-        core_tx_bytes[k] = 0;
-        core_rx_frames[k] = 0;
-        core_tx_frames[k] = 0;
-        total_core_rx_bytes[k] = 0;
-        total_core_tx_bytes[k] = 0;
+        core_rx_bytes [k]       = 0;
+        core_rx_frames[k]       = 0;
+        core_tx_bytes [k]       = 0;
+        core_tx_frames[k]       = 0;
+        total_core_rx_bytes [k] = 0;
         total_core_rx_frames[k] = 0;
+        total_core_tx_bytes [k] = 0;
         total_core_tx_frames[k] = 0;
 
         core_rx_bytes_raw [k] = core_rd_cmd(dev, k, 0);
-        core_tx_bytes_raw [k] = core_rd_cmd(dev, k, 2);
         core_rx_frames_raw[k] = core_rd_cmd(dev, k, 1);
-        core_tx_frames_raw[k] = core_rd_cmd(dev, k, 3);
-        core_rx_stalls_raw[k] = core_rd_cmd(dev, k, 6);
-        core_tx_stalls_raw[k] = core_rd_cmd(dev, k, 7);
+        core_rx_stalls_raw[k] = core_rd_cmd(dev, k, 2);
+        core_tx_bytes_raw [k] = core_rd_cmd(dev, k, 3);
+        core_tx_frames_raw[k] = core_rd_cmd(dev, k, 4);
+        core_tx_stalls_raw[k] = core_rd_cmd(dev, k, 5);
     }
 
     for (int k=0; k<if_count; k++)
     {
-        if_rx_bytes[k] = 0;
-        if_tx_bytes[k] = 0;
-        if_rx_frames[k] = 0;
-        if_tx_frames[k] = 0;
-        if_rx_stalls[k] = 0;
-        if_tx_stalls[k] = 0;
-        if_rx_drops[k] = 0;
-        if_sched_drop[k] = 0;
-        total_if_rx_bytes[k] = 0;
-        total_if_tx_bytes[k] = 0;
-        total_if_rx_frames[k] = 0;
-        total_if_tx_frames[k] = 0;
-        total_if_rx_drops[k] = 0;
+        if_rx_bytes        [k] = 0;
+        if_rx_frames       [k] = 0;
+        if_rx_stalls       [k] = 0;
+        if_rx_drops        [k] = 0;
+        if_tx_bytes        [k] = 0;
+        if_tx_frames       [k] = 0;
+        if_tx_stalls       [k] = 0;
+        if_sched_drop      [k] = 0;
+        total_if_rx_bytes  [k] = 0;
+        total_if_rx_frames [k] = 0;
+        total_if_rx_drops  [k] = 0;
+        total_if_tx_bytes  [k] = 0;
+        total_if_tx_frames [k] = 0;
         total_if_sched_drop[k] = 0;
 
-        if_rx_bytes_raw[k]  = interface_rd_cmd(dev, k, 0, 0);
-        if_tx_bytes_raw[k]  = interface_rd_cmd(dev, k, 1, 0);
-        if_rx_frames_raw[k] = interface_rd_cmd(dev, k, 0, 1);
-        if_tx_frames_raw[k] = interface_rd_cmd(dev, k, 1, 1);
-        if_rx_stalls_raw[k] = interface_rd_cmd(dev, k, 0, 3);
-        if_tx_stalls_raw[k] = interface_rd_cmd(dev, k, 1, 3);
-        if_rx_drops_raw[k]  = interface_rd_cmd(dev, k, 0, 2);
+        if_rx_bytes_raw  [k] = interface_stat_rd(dev, k, 0, 0);
+        if_rx_frames_raw [k] = interface_stat_rd(dev, k, 0, 1);
+        if_rx_drops_raw  [k] = interface_stat_rd(dev, k, 0, 2);
+        if_rx_stalls_raw [k] = interface_stat_rd(dev, k, 0, 3);
+        if_tx_bytes_raw  [k] = interface_stat_rd(dev, k, 1, 0);
+        if_tx_frames_raw [k] = interface_stat_rd(dev, k, 1, 1);
+        if_tx_stalls_raw [k] = interface_stat_rd(dev, k, 1, 3);
         if_sched_drop_raw[k] = read_interface_drops(dev, k);
 
-        // When scheduler doesn't drop reports
+        // When scheduler doesn't report drops
         if (if_sched_drop_raw[k]==0xFEFEFEFE) if_sched_drop_raw[k]=0;
-
     }
 
     while (keep_running)
     {
         for (int k=0; k<core_count; k++)
         {
-            core_rx_bytes[k] = 0;
-            core_tx_bytes[k] = 0;
+            core_rx_bytes [k] = 0;
             core_rx_frames[k] = 0;
-            core_tx_frames[k] = 0;
             core_rx_stalls[k] = 0;
+            core_tx_bytes [k] = 0;
+            core_tx_frames[k] = 0;
             core_tx_stalls[k] = 0;
         }
 
         for (int k=0; k<if_count; k++)
         {
-            if_rx_bytes[k] = 0;
-            if_tx_bytes[k] = 0;
-            if_rx_frames[k] = 0;
-            if_tx_frames[k] = 0;
-            if_rx_stalls[k] = 0;
-            if_tx_stalls[k] = 0;
-            if_rx_drops[k] = 0;
+            if_rx_bytes  [k] = 0;
+            if_rx_frames [k] = 0;
+            if_rx_stalls [k] = 0;
+            if_rx_drops  [k] = 0;
+            if_tx_bytes  [k] = 0;
+            if_tx_frames [k] = 0;
+            if_tx_stalls [k] = 0;
             if_sched_drop[k] = 0;
         }
 
@@ -313,23 +312,23 @@ int main(int argc, char *argv[])
                 core_rx_bytes[k] += temp - core_rx_bytes_raw[k];
                 core_rx_bytes_raw[k] = temp;
 
-                temp = core_rd_cmd(dev, k, 2);
-                core_tx_bytes[k] += temp - core_tx_bytes_raw[k];
-                core_tx_bytes_raw[k] = temp;
-
                 temp = core_rd_cmd(dev, k, 1);
                 core_rx_frames[k] += temp - core_rx_frames_raw[k];
                 core_rx_frames_raw[k] = temp;
 
-                temp = core_rd_cmd(dev, k, 3);
-                core_tx_frames[k] += temp - core_tx_frames_raw[k];
-                core_tx_frames_raw[k] = temp;
-
-                temp = core_rd_cmd(dev, k, 6);
+                temp = core_rd_cmd(dev, k, 2);
                 core_rx_stalls[k] += temp - core_rx_stalls_raw[k];
                 core_rx_stalls_raw[k] = temp;
 
-                temp = core_rd_cmd(dev, k, 7);
+                temp = core_rd_cmd(dev, k, 3);
+                core_tx_bytes[k] += temp - core_tx_bytes_raw[k];
+                core_tx_bytes_raw[k] = temp;
+
+                temp = core_rd_cmd(dev, k, 4);
+                core_tx_frames[k] += temp - core_tx_frames_raw[k];
+                core_tx_frames_raw[k] = temp;
+
+                temp = core_rd_cmd(dev, k, 5);
                 core_tx_stalls[k] += temp - core_tx_stalls_raw[k];
                 core_tx_stalls_raw[k] = temp;
 
@@ -344,33 +343,33 @@ int main(int argc, char *argv[])
             for (int k=0; k<if_count; k++)
             {
 
-                temp = interface_rd_cmd(dev, k, 0, 0);
+                temp = interface_stat_rd(dev, k, 0, 0);
                 if_rx_bytes[k] += temp - if_rx_bytes_raw[k];
                 if_rx_bytes_raw[k] = temp;
 
-                temp = interface_rd_cmd(dev, k, 1, 0);
-                if_tx_bytes[k] += temp - if_tx_bytes_raw[k];
-                if_tx_bytes_raw[k] = temp;
-
-                temp = interface_rd_cmd(dev, k, 0, 1);
+                temp = interface_stat_rd(dev, k, 0, 1);
                 if_rx_frames[k] += temp - if_rx_frames_raw[k];
                 if_rx_frames_raw[k] = temp;
 
-                temp = interface_rd_cmd(dev, k, 1, 1);
-                if_tx_frames[k] += temp - if_tx_frames_raw[k];
-                if_tx_frames_raw[k] = temp;
+                temp = interface_stat_rd(dev, k, 0, 2);
+                if_rx_drops[k] += temp - if_rx_drops_raw[k];
+                if_rx_drops_raw[k] = temp;
 
-                temp = interface_rd_cmd(dev, k, 0, 3);
+                temp = interface_stat_rd(dev, k, 0, 3);
                 if_rx_stalls[k] += temp - if_rx_stalls_raw[k];
                 if_rx_stalls_raw[k] = temp;
 
-                temp = interface_rd_cmd(dev, k, 1, 3);
+                temp = interface_stat_rd(dev, k, 1, 0);
+                if_tx_bytes[k] += temp - if_tx_bytes_raw[k];
+                if_tx_bytes_raw[k] = temp;
+
+                temp = interface_stat_rd(dev, k, 1, 1);
+                if_tx_frames[k] += temp - if_tx_frames_raw[k];
+                if_tx_frames_raw[k] = temp;
+
+                temp = interface_stat_rd(dev, k, 1, 3);
                 if_tx_stalls[k] += temp - if_tx_stalls_raw[k];
                 if_tx_stalls_raw[k] = temp;
-
-                temp = interface_rd_cmd(dev, k, 0, 2);
-                if_rx_drops[k] += temp - if_rx_drops_raw[k];
-                if_rx_drops_raw[k] = temp;
 
                 temp = read_interface_drops(dev, k);
                 // When scheduler doesn't drop reports
@@ -391,10 +390,10 @@ int main(int argc, char *argv[])
                 if (temp!=0)
                   printf("core %d status: %08x \n", k, temp);
             }
-        } else if ((debug_reg==4) || (debug_reg==5)){
+        } else if ((debug_reg==6) || (debug_reg==7)){
             for (int k=0; k<core_count; k++) {
-                temp  = core_rd_cmd(dev, k, 4);
-                temp2 = core_rd_cmd(dev, k, 5);
+                temp  = core_rd_cmd(dev, k, 6);
+                temp2 = core_rd_cmd(dev, k, 7);
                 if ((temp!=0)||(temp2!=0))
                     printf("core %d debug_h: %08x, debug_l: %08x\n", k, temp2, temp);
             }
@@ -406,54 +405,54 @@ int main(int argc, char *argv[])
         printf("\n");
         printf("             RX bytes      TX bytes     RX frames     TX frames      RX drops      RX stalls      TX stalls    Avail slots\n");
 
-        total_rx_bytes = 0;
-        total_tx_bytes = 0;
+        total_rx_bytes  = 0;
         total_rx_frames = 0;
-        total_tx_frames = 0;
         total_rx_stalls = 0;
+        total_tx_bytes  = 0;
+        total_tx_frames = 0;
         total_tx_stalls = 0;
 
         for (int k=0; k<core_count; k++)
         {
             printf("core %2d  %12ld  %12ld  %12ld  %12ld                 %12ld   %12ld   %12ld\n", k, core_rx_bytes[k], core_tx_bytes[k], core_rx_frames[k], core_tx_frames[k], core_rx_stalls[k], core_tx_stalls[k], core_slots[k]);
-            total_core_rx_bytes[k] += core_rx_bytes[k];
-            total_core_tx_bytes[k] += core_tx_bytes[k];
+            total_core_rx_bytes [k] += core_rx_bytes [k];
             total_core_rx_frames[k] += core_rx_frames[k];
-            total_core_tx_frames[k] += core_tx_frames[k];
             total_core_rx_stalls[k] += core_rx_stalls[k];
+            total_core_tx_bytes [k] += core_tx_bytes [k];
+            total_core_tx_frames[k] += core_tx_frames[k];
             total_core_tx_stalls[k] += core_tx_stalls[k];
-            total_rx_bytes += core_rx_bytes[k];
-            total_tx_bytes += core_tx_bytes[k];
+            total_rx_bytes  += core_rx_bytes [k];
             total_rx_frames += core_rx_frames[k];
-            total_tx_frames += core_tx_frames[k];
             total_rx_stalls += core_rx_stalls[k];
+            total_tx_bytes  += core_tx_bytes [k];
+            total_tx_frames += core_tx_frames[k];
             total_tx_stalls += core_tx_stalls[k];
         }
 
         printf("total    %12ld  %12ld  %12ld  %12ld                 %12ld   %12ld\n", total_rx_bytes, total_tx_bytes, total_rx_frames, total_tx_frames, total_rx_stalls, total_tx_stalls);
 
-        total_rx_bytes = 0;
-        total_tx_bytes = 0;
+        total_rx_bytes  = 0;
         total_rx_frames = 0;
+        total_rx_drops  = 0;
+        total_tx_bytes  = 0;
         total_tx_frames = 0;
-        total_rx_drops = 0;
 
         for (int k=0; k<if_count; k++)
         {
             printf("if   %2d  %12ld  %12ld  %12ld  %12ld  %12ld   %12ld   %12ld   %12ld\n", k, if_rx_bytes[k], if_tx_bytes[k], if_rx_frames[k], if_tx_frames[k], if_rx_drops[k], if_rx_stalls[k], if_tx_stalls[k], if_sched_drop[k]);
-            total_if_rx_bytes[k] += if_rx_bytes[k];
-            total_if_tx_bytes[k] += if_tx_bytes[k];
-            total_if_rx_frames[k] += if_rx_frames[k];
-            total_if_tx_frames[k] += if_tx_frames[k];
-            total_if_rx_drops[k] += if_rx_drops[k];
+            total_if_rx_bytes  [k] += if_rx_bytes  [k];
+            total_if_rx_frames [k] += if_rx_frames [k];
+            total_if_rx_drops  [k] += if_rx_drops  [k];
+            total_if_tx_bytes  [k] += if_tx_bytes  [k];
+            total_if_tx_frames [k] += if_tx_frames [k];
             total_if_sched_drop[k] += if_sched_drop[k];
-            total_rx_bytes += if_rx_bytes[k];
-            total_tx_bytes += if_tx_bytes[k];
+            total_rx_bytes  += if_rx_bytes [k];
             total_rx_frames += if_rx_frames[k];
-            total_tx_frames += if_tx_frames[k];
             total_rx_stalls += if_rx_stalls[k];
+            total_rx_drops  += (if_rx_drops[k]+if_sched_drop[k]);
+            total_tx_bytes  += if_tx_bytes [k];
+            total_tx_frames += if_tx_frames[k];
             total_tx_stalls += if_tx_stalls[k];
-            total_rx_drops += (if_rx_drops[k]+if_sched_drop[k]);
         }
 
         updates++;
@@ -499,28 +498,28 @@ int main(int argc, char *argv[])
     for (int k=0; k<core_count; k++)
     {
         printf("core %2d  %12ld  %12ld  %12ld  %12ld\n", k, total_core_rx_bytes[k], total_core_tx_bytes[k], total_core_rx_frames[k], total_core_tx_frames[k]);
-        total_rx_bytes += total_core_rx_bytes[k];
-        total_tx_bytes += total_core_tx_bytes[k];
+        total_rx_bytes  += total_core_rx_bytes [k];
         total_rx_frames += total_core_rx_frames[k];
+        total_tx_bytes  += total_core_tx_bytes [k];
         total_tx_frames += total_core_tx_frames[k];
     }
 
     printf("total    %12ld  %12ld %12ld   %12ld\n", total_rx_bytes, total_tx_bytes, total_rx_frames, total_tx_frames);
 
-    total_rx_bytes = 0;
-    total_tx_bytes = 0;
+    total_rx_bytes  = 0;
     total_rx_frames = 0;
+    total_rx_drops  = 0;
+    total_tx_bytes  = 0;
     total_tx_frames = 0;
-    total_rx_drops = 0;
 
     for (int k=0; k<if_count; k++)
     {
         printf("if   %2d  %12ld  %12ld  %12ld  %12ld  %12ld  %12ld\n", k, total_if_rx_bytes[k], total_if_tx_bytes[k], total_if_rx_frames[k], total_if_tx_frames[k], total_if_rx_drops[k], total_if_sched_drop[k]);
-        total_rx_bytes += total_if_rx_bytes[k];
-        total_tx_bytes += total_if_tx_bytes[k];
+        total_rx_bytes  += total_if_rx_bytes [k];
         total_rx_frames += total_if_rx_frames[k];
+        total_rx_drops  += (total_if_rx_drops[k]+total_if_sched_drop[k]);
+        total_tx_bytes  += total_if_tx_bytes [k];
         total_tx_frames += total_if_tx_frames[k];
-        total_rx_drops += (total_if_rx_drops[k]+total_if_sched_drop[k]);
     }
 
     printf("total    %12ld  %12ld  %12ld  %12ld  %12ld\n", total_rx_bytes, total_tx_bytes, total_rx_frames, total_tx_frames, total_rx_drops);
@@ -531,36 +530,36 @@ int main(int argc, char *argv[])
     printf("\n");
     printf("             RX bytes      TX bytes     RX frames     TX frames      RX drops\n");
 
-    total_rx_bytes = 0;
-    total_tx_bytes = 0;
+    total_rx_bytes  = 0;
     total_rx_frames = 0;
+    total_tx_bytes  = 0;
     total_tx_frames = 0;
 
     for (int k=0; k<core_count; k++)
     {
         printf("core %2d  %12ld  %12ld  %12ld  %12ld\n", k, total_core_rx_bytes[k]/updates, total_core_tx_bytes[k]/updates, total_core_rx_frames[k]/updates, total_core_tx_frames[k]/updates);
-        total_rx_bytes += total_core_rx_bytes[k];
-        total_tx_bytes += total_core_tx_bytes[k];
+        total_rx_bytes  += total_core_rx_bytes [k];
         total_rx_frames += total_core_rx_frames[k];
+        total_tx_bytes  += total_core_tx_bytes [k];
         total_tx_frames += total_core_tx_frames[k];
     }
 
     printf("total    %12ld  %12ld  %12ld  %12ld\n", total_rx_bytes/updates, total_tx_bytes/updates, total_rx_frames/updates, total_tx_frames/updates);
 
-    total_rx_bytes = 0;
-    total_tx_bytes = 0;
+    total_rx_bytes  = 0;
     total_rx_frames = 0;
+    total_rx_drops  = 0;
+    total_tx_bytes  = 0;
     total_tx_frames = 0;
-    total_rx_drops = 0;
 
     for (int k=0; k<if_count; k++)
     {
         printf("if   %2d  %12ld  %12ld  %12ld  %12ld %12ld %12ld\n", k, total_if_rx_bytes[k]/updates, total_if_tx_bytes[k]/updates, total_if_rx_frames[k]/updates, total_if_tx_frames[k]/updates, total_if_rx_drops[k]/updates, total_if_sched_drop[k]/updates);
-        total_rx_bytes += total_if_rx_bytes[k];
-        total_tx_bytes += total_if_tx_bytes[k];
+        total_rx_bytes  += total_if_rx_bytes [k];
         total_rx_frames += total_if_rx_frames[k];
+        total_tx_bytes  += total_if_tx_bytes [k];
+        total_rx_drops  += total_if_rx_drops [k]+total_if_sched_drop[k];
         total_tx_frames += total_if_tx_frames[k];
-        total_rx_drops += total_if_rx_drops[k]+total_if_sched_drop[k];
     }
 
     printf("total    %12ld  %12ld  %12ld  %12ld %12ld\n", total_rx_bytes/updates, total_tx_bytes/updates, total_rx_frames/updates, total_tx_frames/updates, total_rx_drops/updates);

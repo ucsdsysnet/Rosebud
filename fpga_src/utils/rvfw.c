@@ -193,7 +193,7 @@ int main(int argc, char *argv[])
             uint32_t core_rx_frames_raw = core_rd_cmd(dev, k, 1);
             int bytes = 0;
             int frames = 0;
-            write_to_core(dev, i_segment, (1<<25), ins_len, k);
+            block_write(dev, i_segment, (1<<25), ins_len, k);
 
             usleep(10000);
             // Making sure instruction memory is loaded
@@ -280,7 +280,7 @@ int main(int argc, char *argv[])
                     uint32_t core_rx_frames_raw = core_rd_cmd(dev, k, 1);
                     int bytes = 0;
                     int frames = 0;
-                    write_to_core(dev, d_segment, (int)strtol(addr, NULL, 0), data_len, k);
+                    block_write(dev, d_segment, (int)strtol(addr, NULL, 0), data_len, k);
 
                     usleep(10000);
                     while (1){
@@ -302,9 +302,9 @@ int main(int argc, char *argv[])
         if (test_pcie){
             // Host Write and Readback test
 
-            write_to_core(dev, i_segment, 0x1000100, ins_len, 4);
+            block_write(dev, i_segment, 0x1000100, ins_len, 4);
             usleep(1000);
-            read_from_core(dev, r_segment, 0x1000100, ins_len, 4);
+            block_read(dev, r_segment, 0x1000100, ins_len, 4);
             usleep(1000);
 
             printf("Write Buffer:\n");
@@ -354,7 +354,7 @@ int main(int argc, char *argv[])
         printf("core RX enable readback %08x\n",  read_receive_cores(dev));
 
         printf("Enabling interfaces ...\n");
-        set_enable_interfaces(dev, (1<<MAX_IF_COUNT)-1);
+        set_enable_interfaces(dev, (1<<MAX_ETH_IF_COUNT)-1);
 
         printf("Done!\n");
 

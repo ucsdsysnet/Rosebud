@@ -34,7 +34,7 @@ either expressed or implied, of The Regents of the University of California.
 #include "gousheh.h"
 
 // We need to break the data into 16KB segments
-void write_to_core(struct mqnic *dev, char* data, unsigned int addr, size_t len, int core_num) {
+void block_write(struct mqnic *dev, char* data, unsigned int addr, size_t len, int core_num) {
     struct mqnic_ioctl_block_write ctl;
     int left = len;
 
@@ -60,7 +60,7 @@ void write_to_core(struct mqnic *dev, char* data, unsigned int addr, size_t len,
 }
 
 // We need to break the data into 16KB segments
-void read_from_core(struct mqnic *dev, char* data, unsigned int addr, size_t len, int core_num) {
+void block_read(struct mqnic *dev, char* data, unsigned int addr, size_t len, int core_num) {
     struct mqnic_ioctl_block_write ctl;
     int left = len;
 
@@ -91,7 +91,7 @@ void write_cmd(struct mqnic *dev, uint32_t addr, uint32_t data){
     mqnic_reg_write32(dev->regs, 0x000404, data);
     mqnic_reg_write32(dev->regs, 0x000404, data);
     usleep(10);
-    mqnic_reg_write32(dev->regs, 0x000408, (1<<31)|addr);
+    mqnic_reg_write32(dev->regs, 0x000408, (1<<29)|addr);
     return;
 }
 
@@ -105,59 +105,70 @@ uint32_t read_cmd(struct mqnic *dev, uint32_t addr){
 
 
 void core_wr_cmd(struct mqnic *dev, uint32_t core, uint32_t reg, uint32_t data){
-    write_cmd(dev, SYS_ZONE | SYS_CORE | core<<CORE_REG_WIDTH | reg, data);
+    write_cmd(dev, SYS_CORE_ZONE |  core << REG_WIDTH | reg, data);
 }
 
 uint32_t core_rd_cmd(struct mqnic *dev, uint32_t core, uint32_t reg){
-    return read_cmd(dev, SYS_ZONE | SYS_CORE | core<<CORE_REG_WIDTH | reg);
-}
-
-uint32_t interface_rd_cmd(struct mqnic *dev, uint32_t interface, uint32_t direction, uint32_t reg){
-    return read_cmd(dev, SYS_ZONE | SYS_INT | interface<<(INT_REG_WIDTH+1) | direction<<INT_DIR_BIT | reg);
-}
-
-void set_receive_cores(struct mqnic *dev, uint32_t onehot){
-    write_cmd(dev, SCHED_ZONE | SCHED_CORE_RECV, onehot);
-}
-
-void set_enable_cores(struct mqnic *dev, uint32_t onehot){
-    write_cmd(dev, SCHED_ZONE | SCHED_CORE_EN, onehot);
-}
-
-void release_core_slots(struct mqnic *dev, uint32_t onehot){
-    write_cmd(dev, SCHED_ZONE | SCHED_CORE_FLUSH, onehot);
+    return read_cmd(dev, SYS_CORE_ZONE | core << REG_WIDTH | reg);
 }
 
 void set_enable_interfaces(struct mqnic *dev, uint32_t onehot){
-    write_cmd(dev, SCHED_ZONE | SCHED_INT_EN, onehot);
-}
-
-void release_interface_desc(struct mqnic *dev, uint32_t onehot){
-    write_cmd(dev, SCHED_ZONE | SCHED_INT_DROP_DESC, onehot);
-}
-
-uint32_t read_receive_cores(struct mqnic *dev){
-    return read_cmd(dev, SCHED_ZONE | SCHED_CORE_RECV);
-}
-
-uint32_t read_enable_cores(struct mqnic *dev){
-    return read_cmd(dev, SCHED_ZONE | SCHED_CORE_EN);
+    write_cmd(dev, SYS_INT_ZONE | INT_RX_EN, onehot);
 }
 
 uint32_t read_enable_interfaces(struct mqnic *dev){
-    return read_cmd(dev, SCHED_ZONE | SCHED_INT_EN);
+    return read_cmd(dev, SYS_INT_ZONE | INT_RX_EN);
+}
+
+uint32_t read_rx_fifo_lines(struct mqnic *dev, uint32_t interface){
+    return read_cmd(dev, SYS_INT_ZONE | interface << REG_WIDTH | INT_RX_FIFO_LINES);
+}
+
+uint32_t interface_stat_rd (struct mqnic *dev, uint32_t interface, uint32_t direction, uint32_t reg){
+    if (direction) //TX 
+        return read_cmd(dev, SYS_INT_ZONE | interface << REG_WIDTH | INT_TX_STAT | reg);
+    else
+        return read_cmd(dev, SYS_INT_ZONE | interface << REG_WIDTH | INT_RX_STAT | reg);
+}
+
+void set_enable_cores(struct mqnic *dev, uint32_t onehot){
+    write_cmd(dev, SCHED_CORE_ZONE | SCHED_CORE_EN, onehot);
+}
+
+uint32_t read_enable_cores(struct mqnic *dev){
+    return read_cmd(dev, SCHED_CORE_ZONE | SCHED_CORE_EN);
+}
+
+void set_receive_cores(struct mqnic *dev, uint32_t onehot){
+    write_cmd(dev, SCHED_CORE_ZONE | SCHED_CORE_RECV, onehot);
+}
+
+uint32_t read_receive_cores(struct mqnic *dev){
+    return read_cmd(dev, SCHED_CORE_ZONE | SCHED_CORE_RECV);
+}
+
+void release_core_slots(struct mqnic *dev, uint32_t onehot){
+    write_cmd(dev, SCHED_CORE_ZONE | SCHED_CORE_FLUSH, onehot);
 }
 
 uint32_t read_core_slots(struct mqnic *dev, uint32_t core){
-    return read_cmd(dev, SCHED_ZONE | SCHED_CORE_SLOT | core);
+    return read_cmd(dev, SCHED_CORE_ZONE | core << REG_WIDTH | SCHED_CORE_SLOT);
 }
 
+void release_interface_desc(struct mqnic *dev, uint32_t onehot){
+    write_cmd(dev, SCHED_INT_ZONE | SCHED_INT_DROP_DESC, onehot);
+}
+    
 uint32_t read_interface_desc(struct mqnic *dev, uint32_t interface){
-    return read_cmd(dev, SCHED_ZONE | SCHED_INT_DESC | interface);
+    return read_cmd(dev, SCHED_INT_ZONE | interface << REG_WIDTH | SCHED_INT_DESC);
 }
 
 uint32_t read_interface_drops(struct mqnic *dev, uint32_t interface){
-    return read_cmd(dev, SCHED_ZONE | SCHED_INT_DROP_CNT | interface);
+    return read_cmd(dev, SCHED_INT_ZONE | interface << REG_WIDTH | SCHED_INT_DROP_CNT);
+}
+
+void set_interface_rx_threshold(struct mqnic *dev, uint32_t limit){
+    write_cmd(dev, SCHED_INT_ZONE | SCHED_INT_DROP_LMT, limit);
 }
 
 
@@ -170,12 +181,12 @@ void evict_core(struct mqnic *dev, uint32_t core){
 }
 
 void print_scheduler_status(struct mqnic *dev){
-    printf("recv_cores %d, enable_cores %d, enable interfaces %d\n",
-            read_receive_cores(dev), read_enable_cores(dev), read_enable_interfaces(dev));
+    printf("recv_cores %d, enable_cores %d \n",
+            read_receive_cores(dev), read_enable_cores(dev));
 
-    for (int i=0; i< MAX_IF_COUNT; i++)
+    for (int i=0; i< MAX_ETH_IF_COUNT; i++)
         printf("interface %d has reserved a desc from core %d in the schecduler\n",
-                i, read_interface_desc (dev, i) >> 5);
+                i, (read_interface_desc (dev, i) >> 8) & 0xFF);
 
     for (int i=0; i< MAX_CORE_COUNT; i++)
         printf("Core %d has %d slots in the scheduer.\n",
@@ -190,15 +201,15 @@ void reset_all_cores(struct mqnic *dev, int evict){
 
     if (evict==1)
         for (int i=0; i< MAX_CORE_COUNT; i++)
-            if (core_rd_cmd(dev, i, 9) !=0)
-                evict_core(dev,i);
+            if ((core_rd_cmd(dev, i, 0xA) !=0) || (core_rd_cmd(dev, i, 0xB) !=0))
+                evict_core(dev, i);
 
     // Wait for the on the fly packets
     usleep(10000);
 
     printf("Flushing scheduler...\n");
 
-    release_interface_desc(dev, (1<<MAX_IF_COUNT)-1);
+    release_interface_desc(dev, (1<<MAX_ETH_IF_COUNT)-1);
     release_core_slots(dev, (1<<MAX_CORE_COUNT)-1);
     usleep(100);
 
@@ -220,7 +231,7 @@ void reset_single_core(struct mqnic *dev, uint32_t core, uint32_t num_slots, int
 
     if (evict==1)
         // Check if there is any active slots in the core
-        if (core_rd_cmd(dev, core, 9) !=0)
+        if ((core_rd_cmd(dev, core, 0xA) !=0) || (core_rd_cmd(dev, core, 0xB) !=0))
             evict_core(dev,core);
     usleep(10000);
 
@@ -240,7 +251,7 @@ void reset_single_core(struct mqnic *dev, uint32_t core, uint32_t num_slots, int
             uint32_t desc = read_interface_desc(dev,0);
             int descs_released = 0;
             if (desc!=0xFEFEFEFE){ // There is desc read back
-                for (int i=0; i< MAX_IF_COUNT; i++){
+                for (int i=0; i< MAX_ETH_IF_COUNT; i++){
                     desc = read_interface_desc(dev,i);
                     if ((((desc>>8) & 0xFF) == core) && (((desc>>16) & 0xFF) == 1)){
                         printf("Dropping scheduler desc on interface %d for core %d.\n",i,core);

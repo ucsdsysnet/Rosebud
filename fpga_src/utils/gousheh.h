@@ -39,56 +39,71 @@ either expressed or implied, of The Regents of the University of California.
 
 #include "mqnic.h"
 
-#define MAX_CORE_COUNT 16
-#define MAX_IF_COUNT   3
-#define SLOT_TAG_WIDTH 5
+#define MAX_CORE_COUNT   16
+#define MAX_ETH_IF_COUNT 3
+#define MAX_TOT_IF_COUNT 5
 
-#define SYS_ZONE            (0<<30)
-#define SCHED_ZONE          (1<<30)
 
-#define SYS_CORE            (0<<29)
-#define SYS_INT             (1<<29) // RD_ONLY
+#define REG_WIDTH 4
 
-#define SCHED_CORE_RECV     (0<<27)
-#define SCHED_CORE_EN       (1<<27)
-#define SCHED_CORE_SLOT     (2<<27) // RD_ONLY
-#define SCHED_CORE_FLUSH    (3<<27) // WR_ONLY
+#define SYS_CORE_ZONE       (0 << 30)
+#define SYS_INT_ZONE        (1 << 30)
+#define SCHED_CORE_ZONE     (2 << 30)
+#define SCHED_INT_ZONE      (3 << 30)
 
-#define SCHED_INT_DESC      (4<<27) // RD_ONLY
-#define SCHED_INT_EN        (5<<27)
-#define SCHED_INT_RX_LINES  (6<<27) // RD_ONLY
-#define SCHED_INT_DROP_LMT  (6<<27) // WR_ONLY
-#define SCHED_INT_DROP_DESC (7<<27) // WR_ONLY, RR SCHED
-#define SCHED_INT_DROP_CNT  (7<<27) // RD_ONLY, HASH SCHED
+// INTERFACE REGISTER ADDRESSES, FIXED
+#define INT_RX_EN           0
+#define INT_RX_FIFO_LINES   4  // RD_ONLY
+#define INT_RX_STAT         8  // RD_ONLY, 4 addresses
+#define INT_TX_STAT         12 // RD_ONLY, 4 addresses
 
-#define CORE_REG_WIDTH      4
-#define INT_REG_WIDTH       2
-#define INT_DIR_BIT         (INT_REG_WIDTH+1-1)
+// REGISTERS CHOSEN FOR CURRENT SCHEDULER
+#define SCHED_CORE_EN       0
+#define SCHED_CORE_RECV     1
+#define SCHED_CORE_FLUSH    2 // WR_ONLY
+#define SCHED_CORE_SLOT     3 // RD_ONLY
 
-void write_to_core(struct mqnic *dev, char* data, unsigned int addr, size_t len, int core_num);
-void read_from_core(struct mqnic *dev, char* data, unsigned int addr, size_t len, int core_num);
-void write_cmd(struct mqnic *dev, uint32_t addr, uint32_t data);
-uint32_t read_cmd(struct mqnic *dev, uint32_t addr);
+#define SCHED_INT_DESC      0 // RD_ONLY, RR SCHED
+#define SCHED_INT_DROP_DESC 1 // WR_ONLY, RR SCHED
+#define SCHED_INT_DROP_CNT  2 // RD_ONLY, HASH SCHED
+#define SCHED_INT_DROP_LMT  3 // WR_ONLY
 
-void core_wr_cmd(struct mqnic *dev, uint32_t core, uint32_t reg, uint32_t data);
+// DMA operations
+void block_write(struct mqnic *dev, char* data, unsigned int addr, size_t len, int core_num);
+void block_read (struct mqnic *dev, char* data, unsigned int addr, size_t len, int core_num);
+
+// Commands
+void     write_cmd(struct mqnic *dev, uint32_t addr, uint32_t data);
+uint32_t read_cmd (struct mqnic *dev, uint32_t addr);
+
+// Between the host and the cores
+void     core_wr_cmd(struct mqnic *dev, uint32_t core, uint32_t reg, uint32_t data);
 uint32_t core_rd_cmd(struct mqnic *dev, uint32_t core, uint32_t reg);
-uint32_t interface_rd_cmd(struct mqnic *dev, uint32_t interface, uint32_t direction, uint32_t reg);
 
-void set_receive_cores(struct mqnic *dev, uint32_t onehot);
-void set_enable_cores(struct mqnic *dev, uint32_t onehot);
-void release_core_slots(struct mqnic *dev, uint32_t onehot);
-void set_enable_interfaces(struct mqnic *dev, uint32_t onehot);
-void release_interface_desc(struct mqnic *dev, uint32_t onehot);
-
-uint32_t read_receive_cores(struct mqnic *dev);
-uint32_t read_enable_cores(struct mqnic *dev);
+// Between the host and the interfaces
+void     set_enable_interfaces (struct mqnic *dev, uint32_t onehot);
 uint32_t read_enable_interfaces(struct mqnic *dev);
-uint32_t read_core_slots(struct mqnic *dev, uint32_t core);
-uint32_t read_interface_desc(struct mqnic *dev, uint32_t interface);
+
+uint32_t read_rx_fifo_lines(struct mqnic *dev, uint32_t interface);
+uint32_t interface_stat_rd (struct mqnic *dev, uint32_t interface, uint32_t direction, uint32_t reg);
+
+// Between the host and the scheduler
+void     set_enable_cores  (struct mqnic *dev, uint32_t onehot);
+uint32_t read_enable_cores (struct mqnic *dev);
+void     set_receive_cores (struct mqnic *dev, uint32_t onehot);
+uint32_t read_receive_cores(struct mqnic *dev);
+
+uint32_t read_core_slots     (struct mqnic *dev, uint32_t core);
+uint32_t read_interface_desc (struct mqnic *dev, uint32_t interface);
 uint32_t read_interface_drops(struct mqnic *dev, uint32_t interface);
 
-void evict_core(struct mqnic *dev, uint32_t core);
+void release_core_slots    (struct mqnic *dev, uint32_t onehot);
+void release_interface_desc(struct mqnic *dev, uint32_t onehot);
+
+void set_interface_rx_threshold(struct mqnic *dev, uint32_t limit);
+
+// Scheduler status and evict and reset functions
 void print_scheduler_status(struct mqnic *dev);
+void evict_core(struct mqnic *dev, uint32_t core);
 void reset_all_cores(struct mqnic *dev, int evict);
 void reset_single_core(struct mqnic *dev, uint32_t core, uint32_t num_slots, int evict);
-
