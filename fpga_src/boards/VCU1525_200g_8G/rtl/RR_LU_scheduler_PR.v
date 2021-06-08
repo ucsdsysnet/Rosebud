@@ -19,7 +19,7 @@ module scheduler_PR (
   // DATA lines to/from cores
   output wire [3*512-1:0] data_m_axis_tdata,
   output wire [3*64-1:0]  data_m_axis_tkeep,
-  output wire [3*9-1:0]   data_m_axis_tdest,
+  output wire [3*8-1:0]   data_m_axis_tdest, // 9 for 32 SLOTs
   output wire [3*3-1:0]   data_m_axis_tuser,
   output wire [3-1:0]     data_m_axis_tvalid,
   input  wire [3-1:0]     data_m_axis_tready,
@@ -27,7 +27,7 @@ module scheduler_PR (
 
   input  wire [3*512-1:0] data_s_axis_tdata,
   input  wire [3*64-1:0]  data_s_axis_tkeep,
-  input  wire [3*9-1:0]   data_s_axis_tuser,
+  input  wire [3*8-1:0]   data_s_axis_tuser, // 9 for 32 SLOTs
   input  wire [3-1:0]     data_s_axis_tvalid,
   output wire [3-1:0]     data_s_axis_tready,
   input  wire [3-1:0]     data_s_axis_tlast,
@@ -53,7 +53,7 @@ module scheduler_PR (
   parameter IF_COUNT        = 3;
   parameter PORT_COUNT      = 5;
   parameter CORE_COUNT      = 8;
-  parameter SLOT_COUNT      = 32;
+  parameter SLOT_COUNT      = 16;
   parameter DATA_WIDTH      = 512;
   parameter CTRL_WIDTH      = 32+4;
   parameter LOOPBACK_PORT   = 3;
@@ -822,7 +822,8 @@ module scheduler_PR (
     .clk(clk),
     .rst(rst_r),
 
-    .drop(rx_almost_full & ~{IF_COUNT{max_valid}}), // There is no free core
+    // .drop(rx_almost_full & ~{IF_COUNT{max_valid}}), // There is no free core
+    .drop(0), // There is a bug, for now disabling it.
     .drop_count(drop_count),
 
     .s_axis_tvalid(rx_axis_tvalid_r & port_not_stall),
