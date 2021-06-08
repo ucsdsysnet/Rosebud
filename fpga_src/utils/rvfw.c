@@ -358,7 +358,7 @@ int main(int argc, char *argv[])
         printf("Enabling interfaces ...\n");
 
         // Disable in scheduler early drops
-        set_interface_rx_threshold(dev, RX_FIFO_LINES);
+        set_interface_rx_threshold(dev, RX_FIFO_LINES+1);
         set_enable_interfaces(dev, (1<<MAX_ETH_IF_COUNT)-1);
 
         printf("Done!\n");

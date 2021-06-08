@@ -209,7 +209,7 @@ void reset_all_cores(struct mqnic *dev, int evict){
     if (evict==1)
         for (int i=0; i< MAX_CORE_COUNT; i++)
             if (core_rd_cmd(dev, i, 0xA) !=0){
-                // printf("Core %d has slots stuck: %X\n", i, core_rd_cmd(dev, i, 0xA));
+                printf("Core %d has slots stuck: %X\n", i, core_rd_cmd(dev, i, 0xA));
                 evict_core(dev, i);
             }
 
