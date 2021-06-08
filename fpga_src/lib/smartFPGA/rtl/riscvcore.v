@@ -121,14 +121,14 @@ VexRiscv core (
                       pmem_access_err),
       .dBus_rsp_data(dmem_read_data),
 
-      .timerInterrupt(timer_interrupt     && int_mask[0]),
+      .timerInterrupt(timer_interrupt && int_mask[0]),
       .externalInterrupt(core_interrupt),
       .softwareInterrupt(1'b0)
 );
 
 // Conversion from core dmem_byte_count to normal byte mask
 assign dmem_wr_strb = ((!mem_wen) || (!dmem_v)) ? 5'h0 :
-								     	 (dmem_byte_count == 2'd0) ? (5'h01 << dmem_addr[1:0]) :
+                        (dmem_byte_count == 2'd0) ? (5'h01 << dmem_addr[1:0]) :
                        (dmem_byte_count == 2'd1) ? (5'h03 << dmem_addr[1:0]) :
                        5'h0f;
 
@@ -226,11 +226,11 @@ always @ (posedge clk) begin
 
         // Non-byte writable values
         case (io_addr)
-            BC_MSG_MASK_REG:  bc_mask_reg <= mem_wr_data[DMEM_ADDR_WIDTH-1:0];
-            BC_MSG_EQUAL_REG: bc_equal_reg <= mem_wr_data[DMEM_ADDR_WIDTH-1:0];
-            BC_MSG_FIFO_EN:   bc_msg_fifo_en <= mem_wr_data[0];
+            BC_MSG_MASK_REG:  bc_mask_reg      <= mem_wr_data[DMEM_ADDR_WIDTH-1:0];
+            BC_MSG_EQUAL_REG: bc_equal_reg     <= mem_wr_data[DMEM_ADDR_WIDTH-1:0];
+            BC_MSG_FIFO_EN:   bc_msg_fifo_en   <= mem_wr_data[0];
             // it's both type and strb
-            SEND_DESC_TYPE:   out_desc_type_r <= mem_wr_data[3:0];
+            SEND_DESC_TYPE:   out_desc_type_r  <= mem_wr_data[3:0];
             MASK_WR:          int_mask         <= mem_wr_data[15:0];
             READY_TO_EVICT:   ready_to_evict_r <= mem_wr_data[0];
             default: begin end
@@ -533,7 +533,7 @@ always @ (posedge clk)
         pmem_access_err <= 1'b0;
         io_access_err   <= 1'b0;
         bc_int_fifo_err <= 1'b0;
-		end else begin
+    end else begin
         // These errors are registered, not asserted from outside and wait for ack
         imem_access_err <= !(interrupt_ack && mem_wr_data[16]) && (imem_access_err ||
                            (imem_ren_r && (imem_addr_r >= IMEM_SIZE)));

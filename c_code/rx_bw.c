@@ -11,7 +11,7 @@ int main(void){
   volatile int k;
 
   write_timer_interval(0x00000200);
-  set_masks(0x1F); //enable just errors 
+  set_masks(0x30); // Enable only Evict + Poke
 
   // Do this at the beginnig, so scheduler can fill the slots while 
   // initializing other things.

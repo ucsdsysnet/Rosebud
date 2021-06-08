@@ -11,8 +11,7 @@ int main(void){
   // initializing other things.
   init_hdr_slots(16, 0x804000, 128);
   init_slots(16, 0x000000, 16384);
-  set_masks(0x00);
-
+  set_masks(0x30); // Enable only Evict + Poke
 
   if (id<8){
     while (1){

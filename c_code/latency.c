@@ -80,7 +80,7 @@ int main(void){
   write_timer_interval(0x17D7840);
   if (INTR_BASED==1)
     if ((core_id()&0x1)!=0)
-      set_masks(0x04); //enable only timer
+      set_masks(0x31); // Enable only timer (+ Evict & Poke)
 
   if ((core_id()&0x1)==0){
   // if ((core_id())>=8){

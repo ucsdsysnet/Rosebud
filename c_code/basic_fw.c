@@ -8,7 +8,7 @@ int main(void){
   // initializing other things.
   init_hdr_slots(16, 0x804000, 128);
   init_slots(16, 0x000000, 16384);
-  set_masks(0x00);
+  set_masks(0x30); // Enable only Evict + Poke
 
   DEBUG_OUT_L = 0x12345678;
   DEBUG_OUT_H = 0xABCDEFAB;
