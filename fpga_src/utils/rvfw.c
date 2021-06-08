@@ -122,6 +122,8 @@ int main(int argc, char *argv[])
         return -1;
     }
 
+    // set_enable_interfaces(dev, 0);
+
     core_rx_enable &= core_enable;
 
     printf("FW ID: 0x%08x\n", dev->fw_id);
@@ -354,6 +356,9 @@ int main(int argc, char *argv[])
         printf("core RX enable readback %08x\n",  read_receive_cores(dev));
 
         printf("Enabling interfaces ...\n");
+
+        // Disable in scheduler early drops
+        set_interface_rx_threshold(dev, RX_FIFO_LINES);
         set_enable_interfaces(dev, (1<<MAX_ETH_IF_COUNT)-1);
 
         printf("Done!\n");

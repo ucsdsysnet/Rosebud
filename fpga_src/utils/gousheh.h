@@ -42,7 +42,8 @@ either expressed or implied, of The Regents of the University of California.
 #define MAX_CORE_COUNT   16
 #define MAX_ETH_IF_COUNT 3
 #define MAX_TOT_IF_COUNT 5
-
+#define SLOTS            16
+#define RX_FIFO_LINES    1<<12
 
 #define REG_WIDTH 4
 

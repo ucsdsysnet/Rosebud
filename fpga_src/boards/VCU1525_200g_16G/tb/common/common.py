@@ -491,8 +491,7 @@ class TB(object):
         for i in range(0, self.core_count):
             if (evict):
                 # Check if there is any active slots in the core or wrapper
-                if (((await self.core_rd_cmd(i, 0xA))!=0) or 
-                    ((await self.core_rd_cmd(i, 0xB))!=0)):
+                if ((await self.core_rd_cmd(i, 0xA))!=0):
                     await self.evict_core(i)
             self.log.info("Assert reset on core %d", i)
             await self.core_wr_cmd(i, 0xF, 1)
@@ -504,8 +503,7 @@ class TB(object):
         # Assert eviction and wait for the core
         if (evict):
             # Check if there is any active slots in the core or wrapper
-            if (((await self.core_rd_cmd(core, 0xA))!=0) or 
-                ((await self.core_rd_cmd(core, 0xB))!=0)):
+            if ((await self.core_rd_cmd(core, 0xA))!=0):
                 await self.evict_core(core)
 
         await Timer(100, 'ns')

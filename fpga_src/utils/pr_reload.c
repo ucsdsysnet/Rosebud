@@ -37,10 +37,12 @@ either expressed or implied, of The Regents of the University of California.
 #include <string.h>
 #include <sys/ioctl.h>
 #include <getopt.h>
+#include <time.h>
 
 #include "mqnic.h"
 #include "gousheh.h"
 #include "mcap_lib.h"
+#include "timespec.h"
 
 static void usage(char *name)
 {
@@ -55,8 +57,13 @@ static void usage(char *name)
         name);
 }
 
+unsigned long long timespec_to_ns(struct timespec ts)
+{
+    return (ts.tv_sec*1000000000) + ts.tv_nsec;
+}
+
 char * get_pcie_path(char *device){
-		// determine sysfs path of PCIe device
+    // determine sysfs path of PCIe device
     // first, try to find via miscdevice
     char *ptr;
     char path[PATH_MAX+32];
@@ -106,7 +113,7 @@ int main(int argc, char *argv[])
 
     char *device = NULL;
     struct mqnic *dev;
-		struct mcap_dev *mdev;
+    struct mcap_dev *mdev;
 
     char *instr_bin = NULL;
     char *data_map = NULL;
@@ -119,6 +126,8 @@ int main(int argc, char *argv[])
 
     uint32_t core_enable = 0xffffffff;
     uint32_t core_rx_enable = 0xffffffff;
+
+    unsigned long long pr_time = 0;
 
     name = strrchr(argv[0], '/');
     name = name ? 1+name : argv[0];
@@ -183,8 +192,6 @@ int main(int argc, char *argv[])
     printf("Board version: %d.%d\n", dev->board_ver >> 16, dev->board_ver & 0xffff);
 
     int core_count = MAX_CORE_COUNT;
-    int test_pcie = 0;
-
     int segment_size = 512*1024;
 
     if (action_write)
@@ -237,14 +244,23 @@ int main(int argc, char *argv[])
             }
         }
 
+        for (int o=0; o<20; o++){
         for (int k=0; k<core_count; k++)
         {
             printf("Putting core %d into reset.\n", k);
-            reset_single_core(dev, k, 16, 1);
+            reset_single_core(dev, k, SLOTS, 1);
+
+            struct timespec start_time, end_time;
 
             char bitfile[100];
             snprintf(bitfile, sizeof(bitfile), "%s/fpga_pblock_%d_partial.bit", PR_bitfiles, k+1);
+            clock_gettime(CLOCK_MONOTONIC, &start_time);
             MCapConfigureFPGA(mdev, bitfile, EMCAP_CONFIG_FILE);
+            clock_gettime(CLOCK_MONOTONIC, &end_time);
+            pr_time += (timespec_to_ns(end_time)-timespec_to_ns(start_time));
+            // MCapReset(mdev);
+            // MCapModuleReset(mdev);
+            // MCapFullReset(mdev);
             usleep(10000);
 
             core_rd_cmd(dev, k, 0);
@@ -270,14 +286,14 @@ int main(int argc, char *argv[])
             }
 
             printf("Core %d instruction load complete.\n", k);
-            usleep(3000000);
+            usleep(10000);
 
             if (core_enable & (1 << k)){
                 core_wr_cmd(dev, k, 0xf, 0);
                 core_wr_cmd(dev, k, 0xf, 0);
             }
 
-            usleep(100000);
+            usleep(1000000);
     
             uint32_t cur = read_enable_cores(dev);
             set_enable_cores(dev, cur | (1 << k));
@@ -288,6 +304,9 @@ int main(int argc, char *argv[])
 
             printf("Core %d reloaded.\n", k);
         }
+        }
+
+        printf("Core %d reloaded.\n", (int)(pr_time/(16*20)));
 
         free(i_segment);
         free(d_segment);

@@ -97,6 +97,7 @@ void write_cmd(struct mqnic *dev, uint32_t addr, uint32_t data){
 
 uint32_t read_cmd(struct mqnic *dev, uint32_t addr){
     mqnic_reg_write32(dev->regs, 0x000408, addr);
+    mqnic_reg_write32(dev->regs, 0x000408, addr);
     usleep(10);
     mqnic_reg_read32(dev->regs, 0x000404); //dummy read
     usleep(10);
@@ -174,9 +175,15 @@ void set_interface_rx_threshold(struct mqnic *dev, uint32_t limit){
 
 void evict_core(struct mqnic *dev, uint32_t core){
     printf("Evicting core %d.\n", core);
+
+    // Take core out of reset if necessary
+    // if(core_rd_cmd(dev, core, 8) & (1<<17))
+    //     core_wr_cmd(dev, core, 0xF, 0);
+
+    // Send evict interrupt
     core_wr_cmd(dev, core, 0xD, 1);
     // Wait for ready_to_evict signal
-    while (!(core_rd_cmd(dev, core, 8) & (1<<16)));
+    while (((core_rd_cmd(dev, core, 8)>>16) & 1)==0);
     return;
 }
 
@@ -201,8 +208,10 @@ void reset_all_cores(struct mqnic *dev, int evict){
 
     if (evict==1)
         for (int i=0; i< MAX_CORE_COUNT; i++)
-            if ((core_rd_cmd(dev, i, 0xA) !=0) || (core_rd_cmd(dev, i, 0xB) !=0))
+            if (core_rd_cmd(dev, i, 0xA) !=0){
+                // printf("Core %d has slots stuck: %X\n", i, core_rd_cmd(dev, i, 0xA));
                 evict_core(dev, i);
+            }
 
     // Wait for the on the fly packets
     usleep(10000);
@@ -231,7 +240,7 @@ void reset_single_core(struct mqnic *dev, uint32_t core, uint32_t num_slots, int
 
     if (evict==1)
         // Check if there is any active slots in the core
-        if ((core_rd_cmd(dev, core, 0xA) !=0) || (core_rd_cmd(dev, core, 0xB) !=0))
+        if (core_rd_cmd(dev, core, 0xA) !=0)
             evict_core(dev,core);
     usleep(10000);
 
