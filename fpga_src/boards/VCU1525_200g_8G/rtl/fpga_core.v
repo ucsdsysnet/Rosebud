@@ -333,6 +333,9 @@ wire [IF_COUNT*AXIS_ETH_KEEP_WIDTH-1:0] port_rx_axis_tkeep_r;
 wire [IF_COUNT-1:0] port_rx_axis_tvalid_r;
 wire [IF_COUNT-1:0] port_rx_axis_tready_r;
 wire [IF_COUNT-1:0] port_rx_axis_tlast_r;
+wire [IF_COUNT-1:0] port_rx_axis_tvalid_n;
+wire [IF_COUNT-1:0] port_rx_axis_tready_n;
+wire [IF_COUNT-1:0] port_rx_axis_tlast_n;
 wire [IF_COUNT-1:0] port_rx_axis_overflow_r;
 wire [IF_COUNT-1:0] port_rx_axis_bad_frame_r;
 wire [IF_COUNT*RX_LINES_WIDTH-1:0] port_rx_axis_line_count_r;
@@ -396,7 +399,6 @@ wire [SCHED_PORT_COUNT*LVL1_DATA_WIDTH-1:0] rx_axis_tdata;
 wire [SCHED_PORT_COUNT*LVL1_STRB_WIDTH-1:0] rx_axis_tkeep;
 wire [SCHED_PORT_COUNT-1:0] rx_axis_tvalid, rx_axis_tready, rx_axis_tlast;
 
-wire [SCHED_PORT_COUNT-1:0] rx_axis_tvalid_n, rx_axis_tready_n, rx_axis_tlast_n;
 reg  [SCHED_PORT_COUNT-1:0] rx_int_enable;
 
 (* KEEP = "TRUE" *) reg  [IF_COUNT-1:0] rx_drop, rx_drop_r;
@@ -584,18 +586,18 @@ generate
 
             .s_axis_tdata(port_rx_axis_tdata_r[m*LVL1_DATA_WIDTH +: LVL1_DATA_WIDTH]),
             .s_axis_tkeep(port_rx_axis_tkeep_r[m*LVL1_STRB_WIDTH +: LVL1_STRB_WIDTH]),
-            .s_axis_tvalid(port_rx_axis_tvalid_r[m]),
-            .s_axis_tready(port_rx_axis_tready_r[m]),
-            .s_axis_tlast(port_rx_axis_tlast_r[m]),
+            .s_axis_tvalid(port_rx_axis_tvalid_n[m]),
+            .s_axis_tready(port_rx_axis_tready_n[m]),
+            .s_axis_tlast(port_rx_axis_tlast_n[m]),
             .s_axis_tid(8'd0),
             .s_axis_tdest(8'd0),
             .s_axis_tuser(1'b0),
 
             .m_axis_tdata(rx_axis_tdata[m*LVL1_DATA_WIDTH +: LVL1_DATA_WIDTH]),
             .m_axis_tkeep(rx_axis_tkeep[m*LVL1_STRB_WIDTH +: LVL1_STRB_WIDTH]),
-            .m_axis_tvalid(rx_axis_tvalid_n[m]),
-            .m_axis_tready(rx_axis_tready_n[m]),
-            .m_axis_tlast(rx_axis_tlast_n[m]),
+            .m_axis_tvalid(rx_axis_tvalid[m]),
+            .m_axis_tready(rx_axis_tready[m]),
+            .m_axis_tlast(rx_axis_tlast[m]),
             .m_axis_tid(),
             .m_axis_tdest(),
             .m_axis_tuser()
@@ -603,19 +605,22 @@ generate
 
     end
 
-    axis_stopper #(.PORT_COUNT(SCHED_PORT_COUNT)) int_stopper_inst (
+    axis_stopper #(
+      .PORT_COUNT(IF_COUNT),
+      .REG_FOR_EN(1)
+    ) int_stopper_inst (
       .clk(sys_clk),
       .rst(int_rst_r),
-    
-      .enable(rx_int_enable),
-    
-      .s_axis_tvalid(rx_axis_tvalid_n),
-      .s_axis_tlast(rx_axis_tlast_n),
-      .s_axis_tready(rx_axis_tready_n),
-    
-      .m_axis_tvalid(rx_axis_tvalid),
-      .m_axis_tlast(rx_axis_tlast),
-      .m_axis_tready(rx_axis_tready)
+
+      .enable(rx_int_enable[IF_COUNT-1:0]),
+
+      .s_axis_tvalid(port_rx_axis_tvalid_r),
+      .s_axis_tlast(port_rx_axis_tlast_r),
+      .s_axis_tready(port_rx_axis_tready_r),
+
+      .m_axis_tvalid(port_rx_axis_tvalid_n),
+      .m_axis_tlast(port_rx_axis_tlast_n),
+      .m_axis_tready(port_rx_axis_tready_n)
     );
 
     always @ (posedge sys_clk)
@@ -736,6 +741,8 @@ wire [V_PORT_COUNT_MIN1*LVL1_DATA_WIDTH-1:0] v_rx_axis_tdata;
 wire [V_PORT_COUNT_MIN1*LVL1_STRB_WIDTH-1:0] v_rx_axis_tkeep;
 wire [V_PORT_COUNT_MIN1-1:0] v_rx_axis_tvalid, v_rx_axis_tready,
                              v_rx_axis_tlast;
+wire [V_PORT_COUNT_MIN1-1:0] v_rx_axis_tvalid_n, v_rx_axis_tready_n,
+                             v_rx_axis_tlast_n;
 
 pcie_config # (
   .PCIE_ADDR_WIDTH(PCIE_ADDR_WIDTH),
@@ -849,7 +856,7 @@ wire                  host_to_ints_wr;
 wire                  host_to_cores_wr_r;
 wire                  host_to_ints_wr_r;
 // Assuming # of cores > # of ints
-wire [CORE_WIDTH-1:0] core_int_select_r; 
+wire [CORE_WIDTH-1:0] core_int_select_r;
 wire [3:0]            host_reg_r;
 wire [31:0]           host_cmd_wr_data_r;
 wire [1:0]            host_cmd_type;
@@ -945,9 +952,9 @@ end else begin: virtual_eth_connections
 
   assign rx_axis_tdata[IF_COUNT*LVL1_DATA_WIDTH +: V_PORT_COUNT*LVL1_DATA_WIDTH] = v_rx_axis_tdata;
   assign rx_axis_tkeep[IF_COUNT*LVL1_STRB_WIDTH +: V_PORT_COUNT*LVL1_STRB_WIDTH] = v_rx_axis_tkeep;
-  assign rx_axis_tvalid_n[IF_COUNT +: V_PORT_COUNT]                              = v_rx_axis_tvalid;
-  assign rx_axis_tlast_n[IF_COUNT +: V_PORT_COUNT]                               = v_rx_axis_tlast;
-  assign v_rx_axis_tready = rx_axis_tready_n[IF_COUNT +: V_PORT_COUNT];
+  assign rx_axis_tvalid[IF_COUNT +: V_PORT_COUNT]                                = v_rx_axis_tvalid_n;
+  assign rx_axis_tlast[IF_COUNT +: V_PORT_COUNT]                                 = v_rx_axis_tlast_n;
+  assign v_rx_axis_tready_n = rx_axis_tready[IF_COUNT +: V_PORT_COUNT];
 
   assign v_tx_axis_tdata  = tx_axis_tdata[IF_COUNT*LVL1_DATA_WIDTH +: V_PORT_COUNT*LVL1_DATA_WIDTH];
   assign v_tx_axis_tkeep  = tx_axis_tkeep[IF_COUNT*LVL1_STRB_WIDTH +: V_PORT_COUNT*LVL1_STRB_WIDTH];
@@ -955,6 +962,25 @@ end else begin: virtual_eth_connections
   assign v_tx_axis_tlast  = tx_axis_tlast[IF_COUNT +: V_PORT_COUNT];
   assign v_tx_axis_tuser  = {V_PORT_COUNT{1'b0}};
   assign tx_axis_tready[IF_COUNT +: V_PORT_COUNT] = v_tx_axis_tready;
+
+  axis_stopper #(
+    .PORT_COUNT(V_PORT_COUNT),
+    .REG_FOR_EN(1)
+  ) v_int_stopper_inst (
+    .clk(sys_clk),
+    .rst(int_rst_r),
+
+    .enable(rx_int_enable[IF_COUNT +: V_PORT_COUNT]),
+
+    .s_axis_tvalid(v_rx_axis_tvalid),
+    .s_axis_tlast(v_rx_axis_tlast),
+    .s_axis_tready(v_rx_axis_tready),
+
+    .m_axis_tvalid(v_rx_axis_tvalid_n),
+    .m_axis_tlast(v_rx_axis_tlast_n),
+    .m_axis_tready(v_rx_axis_tready_n)
+  );
+
 end
 
 (* keep_hierarchy = "soft" *)
@@ -1283,7 +1309,7 @@ assign sched_ctrl_m_axis_tready_n = (!host_to_cores_wr_r) && sched_ctrl_m_axis_t
 
 assign sched_ctrl_m_axis_tdata    =   host_to_cores_wr_r ? {host_reg_r, host_cmd_wr_data_r}
                                                          : sched_ctrl_m_axis_tdata_n;
-assign sched_ctrl_m_axis_tdest    =   host_to_cores_wr_r ? core_int_select_r 
+assign sched_ctrl_m_axis_tdest    =   host_to_cores_wr_r ? core_int_select_r
                                                          : sched_ctrl_m_axis_tdest_n;
 
 // Switches
