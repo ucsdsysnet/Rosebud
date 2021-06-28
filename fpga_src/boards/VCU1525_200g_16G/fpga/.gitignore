@@ -1,6 +1,7 @@
 *.log
 *.jou
 *.ltx
+*.pyc
 fpga*
 defines.v
 create_project.tcl 
