@@ -2,12 +2,12 @@ from module_names import *
 from util_extractor import *
 from math import ceil
 
-csv_file           = "parsed_utilization_16G.csv"
+csv_file           = "parsed_utilization_8G.csv"
 Gousheh_pblock_rep = "fpga_utilization_gousheh_IDS_RR.rpt"
 sched_pblock_rep   = "fpga_utilization_scheduler_IDS_RR.rpt"
 full_fpga_raw_rep  = "fpga_utilization_hierarchy_placed_raw.rpt"
 full_fpga_acc_rep  = "fpga_utilization_hierarchy_placed_IDS_RR.rpt"
-Gousheh_count      = 16
+Gousheh_count      = 8
 FPGA_tot_resources = [1182240, 2364480, 2160, 960, 6840]
 
 # LUTS, Registers, BRAM, URAM, DSP

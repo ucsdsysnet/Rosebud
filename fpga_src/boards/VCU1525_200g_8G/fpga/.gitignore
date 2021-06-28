@@ -1,7 +1,9 @@
 *.log
 *.jou
 *.ltx
+*.pyc
+*.csv
 fpga*
-create_project.tcl
 defines.v
+create_project.tcl
 hd_visual
