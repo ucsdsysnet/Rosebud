@@ -29,7 +29,10 @@ def calc (vals, tots):
   sel = [vals[0], vals[4], vals[5]+ceil(vals[6]*1.0/2), vals[7], vals[8]]
   res = [str(x) for x in vals]
   for i in range(len(tots)):
-    res.append(str(sel[i])+ " (" + "%.2f" % ((100.0*sel[i])/tots[i]) +")")
+    if (sel[i]==0):
+      res.append("0")
+    else:
+      res.append(str(sel[i])+ " (" + "%.2f" % ((100.0*sel[i])/tots[i]) +")")
   return res
 
 def calc_remain (vals, maxs, tots):
@@ -119,5 +122,7 @@ line = calc(rest, FPGA_tot_resources)
 printcsv(last_mod+"+, " + ", ".join(line))
 line = calc(avg, Gousheh_avg_resources)
 printcsv("Full" + ", " + ", ".join(line))
+line = calc_remain(avg, Gousheh_avg_resources, Gousheh_avg_resources)
+printcsv("Remaining" + ", " + ", ".join(line))
 
 out_file.close()
