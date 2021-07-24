@@ -4,12 +4,18 @@ from math import ceil
 def splitter (line):
   return [x for x in re.split("\||\s+|,",line) if x]
 
+def atoi(text):
+	return int(text) if text.isdigit() else text
+
+def natural_keys(text):
+	return [atoi(c) for c in re.split('(\d+)', text)]
+
 # extract total Gousheh resources
 # LUTS, Registers, BRAM, URAM, DSP
 def available (read_file):
 
   # vivado header per found line:
-  # Site Type | Parent | Child | Non-Assigned |  Used | Fixed | Available | Util%
+  # Site Type | Parent | Child | Non-Assigned |  Used | Fixed | Prohibited | Available | Util%
 
   avail = []
 
@@ -24,9 +30,9 @@ def available (read_file):
     while True:
       line = fh.readline()
       if line.startswith("| CLB LUTs"):
-        avail.append(int(splitter(line[10:])[5]))
+        avail.append(int(splitter(line[10:])[6]))
       elif line.startswith("| CLB Registers"):
-        avail.append(int(splitter(line[15:])[5]))
+        avail.append(int(splitter(line[15:])[6]))
         break
 
     while True:
@@ -37,11 +43,11 @@ def available (read_file):
     while True:
       line = fh.readline()
       if line.startswith("| Block RAM Tile" ):
-        avail.append(int(splitter(line[17:])[5]))
+        avail.append(int(splitter(line[17:])[6]))
       elif line.startswith("| URAM"):
-        avail.append(int(splitter(line[6:])[5]))
+        avail.append(int(splitter(line[6:])[6]))
       elif line.startswith("| DSPs"):
-        avail.append(int(splitter(line[6:])[5]))
+        avail.append(int(splitter(line[6:])[6]))
         break
   return avail
 
