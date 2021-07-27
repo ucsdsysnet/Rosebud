@@ -611,11 +611,11 @@ set_property IS_SOFT FALSE [get_pblocks User_Scheduler]
 
 # Corundum_pblock and Gousheh PCIe controller
 create_pblock Corundum_pblock
-add_cells_to_pblock [get_pblocks Corundum_pblock] [get_cells -quiet [list core_inst/host_cmd_rd_data_sync_reg core_inst/pcie_config_inst core_inst/pcie_controller_inst/pcie_cont_read_inst core_inst/pcie_controller_inst/pcie_cont_write_inst core_inst/pcie_controller_inst/virtual_ports.corundum_inst {core_inst/pcie_controller_inst/virtual_ports.mac_fifos.tx_rx_fifos[0].rx_pipeline_reg/pipe_reg[1].reg_inst} {core_inst/pcie_controller_inst/virtual_ports.mac_fifos.tx_rx_fifos[0].tx_pipeline_reg/pipe_reg[0].reg_inst}]]
+add_cells_to_pblock [get_pblocks Corundum_pblock] [get_cells -quiet [list core_inst/host_cmd_rd_data_sync_reg core_inst/pcie_config_inst core_inst/pcie_controller_inst/pcie_cont_read_inst core_inst/pcie_controller_inst/pcie_cont_write_inst core_inst/pcie_controller_inst/virtual_ports.corundum_inst {core_inst/pcie_controller_inst/virtual_ports.mac_fifos.tx_rx_fifos[0].tx_pipeline_reg}]]
 resize_pblock [get_pblocks Corundum_pblock] -add {SLICE_X109Y300:SLICE_X139Y569}
 resize_pblock [get_pblocks Corundum_pblock] -add {DSP48E2_X14Y120:DSP48E2_X15Y227}
 resize_pblock [get_pblocks Corundum_pblock] -add {IOB_X1Y260:IOB_X1Y493}
-resize_pblock [get_pblocks Corundum_pblock] -add {LAGUNA_X16Y300:LAGUNA_X19Y419}
+resize_pblock [get_pblocks Corundum_pblock] -add {LAGUNA_X16Y240:LAGUNA_X19Y419}
 resize_pblock [get_pblocks Corundum_pblock] -add {RAMB18_X8Y120:RAMB18_X9Y227}
 resize_pblock [get_pblocks Corundum_pblock] -add {RAMB36_X8Y60:RAMB36_X9Y113}
 resize_pblock [get_pblocks Corundum_pblock] -add {URAM288_X3Y80:URAM288_X3Y151}
