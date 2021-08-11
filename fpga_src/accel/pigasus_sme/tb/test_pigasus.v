@@ -11,7 +11,7 @@ module test_pigasus # (
   input  wire                    s_axis_tlast,
   output wire                    s_axis_tready,
 
-  output wire [15:0]             sme_output [8],
+  output wire [15:0]             sme_output [16],
   output wire                    sme_output_v
 );
 
@@ -41,12 +41,12 @@ module test_pigasus # (
     for (k=1;k<=BYTE_COUNT;k=k+1)
       s_axis_tdata_rev[(k-1)*8+:8] = s_axis_tdata[(BYTE_COUNT-k)*8+:8] | {8{~s_axis_tkeep[BYTE_COUNT-k]}};
 
-  wire [511:0] pigasus_data;
+  wire [255:0] pigasus_data;
   wire         pigasus_valid;
   wire         pigasus_ready;
   wire         pigasus_sop;
   wire         pigasus_eop;
-  wire [5:0]   pigasus_empty;
+  wire [4:0]   pigasus_empty;
 
   string_matcher pigasus (
     .clk(clk),
@@ -67,7 +67,7 @@ module test_pigasus # (
     .out_usr_empty(pigasus_empty)
   );
 
-  wire [511:0] pigasus_output;
+  wire [255:0] pigasus_output;
 
   port_group pg_inst (
     .clk(clk),
@@ -136,7 +136,7 @@ module test_pigasus # (
 
   genvar i;
   generate
-    for (i=0; i<8; i=i+1)
+    for (i=0; i<16; i=i+1)
       assign sme_output[i] = pigasus_output[i*16 +: 16];
   endgenerate
 

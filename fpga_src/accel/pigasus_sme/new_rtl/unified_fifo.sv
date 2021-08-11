@@ -79,7 +79,7 @@ endgenerate
       .INIT_ZERO(1)
     ) fifo_inst (
         .clk        (in_clk),
-        .rst        (in_rst),
+        .rst        (in_reset),
         .clear      (1'b0),
           
         .din        (in_data),

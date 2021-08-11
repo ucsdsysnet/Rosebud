@@ -1,5 +1,6 @@
 `timescale 1 ps / 1 ps
 `include "struct_s.sv"
+// `define DUMMY_PG
 
 module port_group (
     input   logic           clk,
@@ -13,23 +14,44 @@ module port_group (
     // In User data
     input   logic           in_usr_sop,
     input   logic           in_usr_eop,
-    input   logic [511:0]   in_usr_data,
-    input   logic [5:0]     in_usr_empty,
+    input   logic [255:0]   in_usr_data,
+    input   logic [4:0]     in_usr_empty,
     input   logic           in_usr_valid,
     output  logic           in_usr_ready,
 
     // Out User data
-    output  logic [511:0]   out_usr_data,
+    output  logic [255:0]   out_usr_data,
     output  logic           out_usr_valid,
     output  logic           out_usr_sop,
     output  logic           out_usr_eop,
-    output  logic [5:0]     out_usr_empty,
+    output  logic [4:0]     out_usr_empty,
     input   logic           out_usr_ready,
 
     //stats
     output  logic [31:0]    no_pg_rule_cnt,
     output  logic [31:0]    pg_rule_cnt
 );
+
+`ifdef DUMMY_PG
+    assign out_pkt_data  = in_pkt_data;
+    assign out_pkt_valid = in_pkt_valid;
+    assign out_pkt_sop   = in_pkt_sop;
+    assign out_pkt_eop   = in_pkt_eop;
+    assign out_pkt_empty = in_pkt_empty;
+    assign in_pkt_ready  = out_pkt_ready;
+    assign in_pkt_almost_full = out_pkt_almost_full;
+
+    assign out_meta_valid  = in_meta_valid;
+    assign out_meta_data   = in_meta_data;
+    assign in_meta_ready   = out_meta_ready;
+
+    assign out_usr_sop   = in_usr_sop;
+    assign out_usr_eop   = in_usr_eop;
+    assign out_usr_valid = in_usr_valid;
+    assign out_usr_data  = in_usr_data;
+    assign out_usr_empty = in_usr_empty;
+    assign in_usr_ready  = out_usr_ready;
+`else
 
 // This should be 1 bigger than the NUM_PIPE in rule_unit
 localparam NUM_PIPES = 16;
@@ -48,28 +70,13 @@ logic                   reg_rule_valid;
 logic                   rule_eop;
 logic                   reg_rule_eop;
 
-logic                                  rule_depacker_eop;
-logic [255:0] rule_depacker_data;
-logic                                  rule_depacker_valid;
-logic                                  rule_depacker_ready;
-logic [31:0]                           rule_depacker_csr_readdata;
-logic                                  rule_depacker_almost_full;
-logic [1:0]                            rule_depacker_cnt;
-
 logic                                  int_sop;
 logic                                  int_eop;
 logic [255:0] int_data;
 logic                                  int_valid;
 logic                                  int_ready;
-logic [31:0]                           int_csr_readdata;
 logic                                  int_almost_full;
 logic [1:0]                            int_cnt;
-
-logic                                  int_fifo_sop;
-logic                                  int_fifo_eop;
-logic [255:0] int_fifo_data;
-logic                                  int_fifo_valid;
-logic                                  int_fifo_ready;
 
 logic [RULE_AWIDTH-1:0] in_rule_data_0;
 logic [RULE_AWIDTH-1:0] out_rule_data_0;
@@ -167,7 +174,7 @@ logic [5:0]   rule_packer_fifo_empty;
 
 
 //Forward pkt data
-assign rule_depacker_ready = (state == RULE);
+assign in_usr_ready = (state == RULE);
 
 always @(posedge clk) begin
     if (rst) begin
@@ -190,25 +197,25 @@ always @(posedge clk) begin
                 end
             end
             RULE: begin
-                if (rule_depacker_valid) begin
-                    in_rule_data_0 <= rule_depacker_data[16*0+RULE_AWIDTH-1:16*0];
-                    in_rule_data_1 <= rule_depacker_data[16*1+RULE_AWIDTH-1:16*1];
-                    in_rule_data_2 <= rule_depacker_data[16*2+RULE_AWIDTH-1:16*2];
-                    in_rule_data_3 <= rule_depacker_data[16*3+RULE_AWIDTH-1:16*3];
-                    in_rule_data_4 <= rule_depacker_data[16*4+RULE_AWIDTH-1:16*4];
-                    in_rule_data_5 <= rule_depacker_data[16*5+RULE_AWIDTH-1:16*5];
-                    in_rule_data_6 <= rule_depacker_data[16*6+RULE_AWIDTH-1:16*6];
-                    in_rule_data_7 <= rule_depacker_data[16*7+RULE_AWIDTH-1:16*7];
-                    in_rule_data_8 <= rule_depacker_data[16*8+RULE_AWIDTH-1:16*8];
-                    in_rule_data_9 <= rule_depacker_data[16*9+RULE_AWIDTH-1:16*9];
-                    in_rule_data_10 <= rule_depacker_data[16*10+RULE_AWIDTH-1:16*10];
-                    in_rule_data_11 <= rule_depacker_data[16*11+RULE_AWIDTH-1:16*11];
-                    in_rule_data_12 <= rule_depacker_data[16*12+RULE_AWIDTH-1:16*12];
-                    in_rule_data_13 <= rule_depacker_data[16*13+RULE_AWIDTH-1:16*13];
-                    in_rule_data_14 <= rule_depacker_data[16*14+RULE_AWIDTH-1:16*14];
-                    in_rule_data_15 <= rule_depacker_data[16*15+RULE_AWIDTH-1:16*15];
+                if (in_usr_valid) begin
+                    in_rule_data_0 <= in_usr_data[16*0+RULE_AWIDTH-1:16*0];
+                    in_rule_data_1 <= in_usr_data[16*1+RULE_AWIDTH-1:16*1];
+                    in_rule_data_2 <= in_usr_data[16*2+RULE_AWIDTH-1:16*2];
+                    in_rule_data_3 <= in_usr_data[16*3+RULE_AWIDTH-1:16*3];
+                    in_rule_data_4 <= in_usr_data[16*4+RULE_AWIDTH-1:16*4];
+                    in_rule_data_5 <= in_usr_data[16*5+RULE_AWIDTH-1:16*5];
+                    in_rule_data_6 <= in_usr_data[16*6+RULE_AWIDTH-1:16*6];
+                    in_rule_data_7 <= in_usr_data[16*7+RULE_AWIDTH-1:16*7];
+                    in_rule_data_8 <= in_usr_data[16*8+RULE_AWIDTH-1:16*8];
+                    in_rule_data_9 <= in_usr_data[16*9+RULE_AWIDTH-1:16*9];
+                    in_rule_data_10 <= in_usr_data[16*10+RULE_AWIDTH-1:16*10];
+                    in_rule_data_11 <= in_usr_data[16*11+RULE_AWIDTH-1:16*11];
+                    in_rule_data_12 <= in_usr_data[16*12+RULE_AWIDTH-1:16*12];
+                    in_rule_data_13 <= in_usr_data[16*13+RULE_AWIDTH-1:16*13];
+                    in_rule_data_14 <= in_usr_data[16*14+RULE_AWIDTH-1:16*14];
+                    in_rule_data_15 <= in_usr_data[16*15+RULE_AWIDTH-1:16*15];
                     rule_valid <= 1;
-                    if (rule_depacker_eop) begin
+                    if (in_usr_eop) begin
                         state <= IDLE;
                         rule_eop <= 1;
                         in_meta_ready <= 1;
@@ -278,23 +285,6 @@ always @(posedge clk) begin
         end
     end
 end
-
-rule_depacker_512_256 rule_depacker_inst(
-    .clk            (clk),
-    .rst            (rst),
-    .in_rule_data   (in_usr_data),
-    .in_rule_valid  (in_usr_valid),
-    .in_rule_ready  (in_usr_ready),
-    .in_rule_sop    (in_usr_sop),
-    .in_rule_eop    (in_usr_eop),
-    .in_rule_empty  (in_usr_empty),
-    .out_rule_data  (rule_depacker_data),
-    .out_rule_valid (rule_depacker_valid),
-    .out_rule_ready (rule_depacker_ready),
-    .out_rule_sop   (),
-    .out_rule_eop   (rule_depacker_eop),
-    .out_rule_empty ()
-);
 
 hyper_pipe_rst #(
     .WIDTH (1),
@@ -630,7 +620,7 @@ rule2pg_table_14_15 (
     .clock     (clk)
 );
 
-//internal rule FIFO
+//rule FIFO
 unified_pkt_fifo  #(
     .FIFO_NAME        ("[port_group] rule_FIFO"),
     .MEM_TYPE         ("M20K"),
@@ -651,64 +641,17 @@ unified_pkt_fifo  #(
     .in_startofpacket  (int_sop),
     .in_endofpacket    (int_eop),
     .in_empty          (5'd0),
-    .out_data          (int_fifo_data),
-    .out_valid         (int_fifo_valid),
-    .out_ready         (int_fifo_ready),
-    .out_startofpacket (int_fifo_sop),
-    .out_endofpacket   (int_fifo_eop),
-    .out_empty         (),
-    .fill_level        (int_csr_readdata),
+    .out_data          (out_usr_data),
+    .out_valid         (out_usr_valid),
+    .out_ready         (out_usr_ready),
+    .out_startofpacket (out_usr_sop),
+    .out_endofpacket   (out_usr_eop),
+    .out_empty         (out_usr_empty),
+    .fill_level        (),
     .almost_full       (int_almost_full),
     .overflow          ()
 );
 
-rule_packer_256_512 rule_packer_inst(
-    .clk            (clk),
-    .rst            (rst),
-    .in_rule_data   (int_fifo_data),
-    .in_rule_valid  (int_fifo_valid),
-    .in_rule_ready  (int_fifo_ready),
-    .in_rule_sop    (int_fifo_sop),
-    .in_rule_eop    (int_fifo_eop),
-    .in_rule_empty  (5'd0),
-    .out_rule_data  (rule_packer_data),
-    .out_rule_valid (rule_packer_valid),
-    .out_rule_ready (rule_packer_ready),
-    .out_rule_sop   (rule_packer_sop),
-    .out_rule_eop   (rule_packer_eop),
-    .out_rule_empty (rule_packer_empty)
-);
-
-//512-bit wide rule FIFO
-unified_pkt_fifo  #(
-    .FIFO_NAME        ("[port_group] rule_packer_FIFO"),
-    .MEM_TYPE         ("M20K"),
-    .DUAL_CLOCK       (0),
-    .USE_ALMOST_FULL  (0),
-    .FULL_LEVEL       (400),
-    .SYMBOLS_PER_BEAT (64),
-    .BITS_PER_SYMBOL  (8),
-    .FIFO_DEPTH       (512)
-) rule_packer_fifo (
-    .in_clk            (clk),
-    .in_reset          (rst),
-    .out_clk           (),
-    .out_reset         (),
-    .in_data           (rule_packer_data),
-    .in_valid          (rule_packer_valid),
-    .in_ready          (rule_packer_ready),
-    .in_startofpacket  (rule_packer_sop),
-    .in_endofpacket    (rule_packer_eop),
-    .in_empty          (rule_packer_empty),
-    .out_data          (rule_packer_fifo_data),
-    .out_valid         (rule_packer_fifo_valid),
-    .out_ready         (rule_packer_fifo_ready),
-    .out_startofpacket (rule_packer_fifo_sop),
-    .out_endofpacket   (rule_packer_fifo_eop),
-    .out_empty         (rule_packer_fifo_empty),
-    .fill_level        (),
-    .almost_full       (),
-    .overflow          ()
-);
+`endif
 
 endmodule

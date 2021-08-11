@@ -38,13 +38,9 @@ VERILOG_SOURCES += $(RTL_DIR)/string_matcher.sv
 VERILOG_SOURCES += $(RTL_DIR)/port_unit.sv
 VERILOG_SOURCES += $(RTL_DIR)/rule_unit.sv
 VERILOG_SOURCES += $(RTL_DIR)/port_group.sv
-
 VERILOG_SOURCES += $(RTL_DIR)/pkt_almost_full.sv
 VERILOG_SOURCES += $(RTL_DIR)/pkt_data_shift.sv
 VERILOG_SOURCES += $(RTL_DIR)/reduction_2t1.sv
-VERILOG_SOURCES += $(RTL_DIR)/rule_depacker_512_256.sv
-VERILOG_SOURCES += $(RTL_DIR)/rule_packer_128_512.sv
-VERILOG_SOURCES += $(RTL_DIR)/rule_packer_256_512.sv
 VERILOG_SOURCES += $(RTL_DIR)/unified_fifo.sv
 VERILOG_SOURCES += $(RTL_DIR)/unified_pkt_fifo.sv
 

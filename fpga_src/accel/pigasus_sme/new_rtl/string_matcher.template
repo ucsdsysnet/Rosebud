@@ -9,12 +9,12 @@ module string_matcher (
     input  logic                 in_pkt_eop,
     input  logic [FP_EWIDTH-1:0] in_pkt_empty,
     output logic                 in_pkt_ready,
-    output logic [511:0]         out_usr_data,
+    output logic [{{context['last_layer_width']*context['bucket_size']*16-1}}:0]         out_usr_data,
     output logic                 out_usr_valid,
     output logic                 out_usr_sop,
     output logic                 out_usr_eop,
-    output logic [5:0]           out_usr_empty,
-    input  logic                 out_usr_ready
+    output logic [{{context['last_layer_width']+2}}:0]           out_usr_empty,
+    input                        out_usr_ready
 );
 
 logic [FP_DWIDTH-1:0]  piped_pkt_data;
