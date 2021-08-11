@@ -5,7 +5,7 @@ TOPLEVEL_LANG ?= verilog
 export COCOTB_REDUCED_LOG_FMT=1 
 
 CWD = .
-RTL_DIR = ../rtl
+RTL_DIR = ../new_rtl
 MYLIB_DIR = ../../../lib/smartFPGA/rtl
 AXIS_DIR = ../../../lib/axis/rtl
 
@@ -32,13 +32,21 @@ VERILOG_SOURCES += $(RTL_DIR)/mul_hash.sv
 VERILOG_SOURCES += $(RTL_DIR)/acc_hash.sv
 VERILOG_SOURCES += $(RTL_DIR)/rr_arbiter.sv
 VERILOG_SOURCES += $(RTL_DIR)/rr_arbiter_4.sv
-VERILOG_SOURCES += $(RTL_DIR)/data_shift.sv
 VERILOG_SOURCES += $(RTL_DIR)/hyper_pipe.sv
 VERILOG_SOURCES += $(RTL_DIR)/hyper_pipe_rst.sv
 VERILOG_SOURCES += $(RTL_DIR)/string_matcher.sv
 VERILOG_SOURCES += $(RTL_DIR)/port_unit.sv
 VERILOG_SOURCES += $(RTL_DIR)/rule_unit.sv
 VERILOG_SOURCES += $(RTL_DIR)/port_group.sv
+
+VERILOG_SOURCES += $(RTL_DIR)/pkt_almost_full.sv
+VERILOG_SOURCES += $(RTL_DIR)/pkt_data_shift.sv
+VERILOG_SOURCES += $(RTL_DIR)/reduction_2t1.sv
+VERILOG_SOURCES += $(RTL_DIR)/rule_depacker_512_256.sv
+VERILOG_SOURCES += $(RTL_DIR)/rule_packer_128_512.sv
+VERILOG_SOURCES += $(RTL_DIR)/rule_packer_256_512.sv
+VERILOG_SOURCES += $(RTL_DIR)/unified_fifo.sv
+VERILOG_SOURCES += $(RTL_DIR)/unified_pkt_fifo.sv
 
 COMPILE_ARGS  += -I ./struct_s.sv
 PLUSARGS+=-fst 
