@@ -23,7 +23,7 @@ logic                  piped_pkt_sop;
 logic                  piped_pkt_eop;
 logic [FP_EWIDTH-1:0]  piped_pkt_empty;
 logic [FP_DWIDTH-1:0]  piped_pkt_data_swap;
-logic                  piped_pkt_almost_full;
+logic                  piped_pkt_almost_full = 1'b0;
 
 //debug
 logic [31:0] in_pkt_cnt;
@@ -42,11 +42,6 @@ logic din_valid_{{i}}_{{j}};
 logic din_valid_{{i}}_{{j}}_r1;
 logic din_valid_{{i}}_{{j}}_r2;
 logic din_ready_{{i}}_{{j}};
-logic din_almost_full_{{i}}_{{j}};
-logic [31:0] din_csr_readdata_{{i}}_{{j}};
-rule_s_t back_data_{{i}}_{{j}};
-logic    back_valid_{{i}}_{{j}};
-logic    back_ready_{{i}}_{{j}};
 {% endfor %}
 {% endfor %}
 
@@ -55,15 +50,6 @@ logic out_new_pkt;
 {% for j in range(0,context['byte_size'])%}
 assign piped_pkt_data_swap[7+{{j}}*8:0+{{j}}*8] = piped_pkt_data[FP_DWIDTH-1-{{j}}*8:FP_DWIDTH-8-{{j}}*8];
 {% endfor %}
-
-//Insert retiming register for better timing
-always @ (posedge clk) begin
-    if(rst)begin
-        piped_pkt_almost_full <= 0;
-    end else begin
-        piped_pkt_almost_full <= {% for i in range(0,context['bucket_size'])%} {% for j in range(0,context['byte_size'])%} din_almost_full_{{i}}_{{j}} | {% endfor %} {% endfor %} 0;
-    end
-end
 
 //Debug
 always @ (posedge clk) begin
@@ -171,9 +157,9 @@ backend back(
     .rst                     (rst),
 {% for i in range(0,context['bucket_size']) %}
 {% for j in range(0,context['byte_size']) %}
-    .in_data_{{i}}_{{j}}     (back_data_{{i}}_{{j}}),
-    .in_valid_{{i}}_{{j}}    (back_valid_{{i}}_{{j}}),
-    .in_ready_{{i}}_{{j}}    (back_ready_{{i}}_{{j}}),
+    .in_data_{{i}}_{{j}}     (din_{{i}}_{{j}}_r2),
+    .in_valid_{{i}}_{{j}}    (din_valid_{{i}}_{{j}}_r2),
+    .in_ready_{{i}}_{{j}}    (din_ready_{{i}}_{{j}}),
 {% endfor %}
 {% endfor %}
     .out_usr_data            (out_usr_data),
@@ -183,36 +169,5 @@ backend back(
     .out_usr_empty           (out_usr_empty),
     .out_usr_ready           (out_usr_ready)
 );
-
-
-//Cross clock domain
-{% for i in range(0,context['bucket_size']) %}
-{% for j in range(0,context['byte_size']) %}
-unified_fifo  #(
-    .FIFO_NAME        ("[fast_pattern] dc_FIFO_{{i}}_{{j}}"),
-    .MEM_TYPE         ("MLAB"),
-    .DUAL_CLOCK       (0),
-    .USE_ALMOST_FULL  (1),
-    .FULL_LEVEL       (40),
-    .SYMBOLS_PER_BEAT (1),
-    .BITS_PER_SYMBOL  (RULE_S_WIDTH),
-    .FIFO_DEPTH       (128)
-) l1_dc_fifo_mlab_{{i}}_{{j}} (
-    .in_clk            (clk),
-    .in_reset          (rst),
-    .out_clk           (clk),
-    .out_reset         (rst),
-    .in_data           (din_{{i}}_{{j}}_r2),              
-    .in_valid          (din_valid_{{i}}_{{j}}_r2),             
-    .in_ready          (din_ready_{{i}}_{{j}}),             
-    .out_data          (back_data_{{i}}_{{j}}),              
-    .out_valid         (back_valid_{{i}}_{{j}}),             
-    .out_ready         (back_ready_{{i}}_{{j}}),             
-    .fill_level        (din_csr_readdata_{{i}}_{{j}}),
-    .almost_full       (din_almost_full_{{i}}_{{j}}),
-    .overflow          ()
-);
-{% endfor %}
-{% endfor %}
 
 endmodule
