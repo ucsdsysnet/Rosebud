@@ -34,9 +34,18 @@ add_files -norecurse {
   ../accel/pigasus_sme/rtl/rr_arbiter.sv
   ../accel/pigasus_sme/rtl/rr_arbiter_4.sv
   ../accel/pigasus_sme/rtl/hyper_pipe.sv
+  ../accel/pigasus_sme/rtl/hyper_pipe_rst.sv
   ../accel/pigasus_sme/rtl/string_matcher.sv
+  ../accel/pigasus_sme/rtl/port_unit.sv
+  ../accel/pigasus_sme/rtl/rule_unit.sv
+  ../accel/pigasus_sme/rtl/port_group.sv
+  ../accel/pigasus_sme/rtl/pkt_almost_full.sv
+  ../accel/pigasus_sme/rtl/pkt_data_shift.sv
+  ../accel/pigasus_sme/rtl/reduction_2t1.sv
+  ../accel/pigasus_sme/rtl/unified_fifo.sv
+  ../accel/pigasus_sme/rtl/unified_pkt_fifo.sv
   ../accel/pigasus_sme/rtl/struct_s.sv
-  ../accel/pigasus_sme/rtl/SME_wrapper.v
+  ../accel/pigasus_sme/rtl/SME_wrapper.sv
   ../accel/pigasus_sme/rtl/accel_wrap_pigasus.v
   ../accel/pigasus_sme/rtl/ip_match.v
   ../rtl/Gousheh_PR_pig.v
