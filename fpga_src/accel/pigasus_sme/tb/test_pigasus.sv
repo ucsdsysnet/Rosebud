@@ -43,12 +43,12 @@ module test_pigasus # (
     for (k=1;k<=BYTE_COUNT;k=k+1)
       s_axis_tdata_rev[(k-1)*8+:8] = s_axis_tdata[(BYTE_COUNT-k)*8+:8] | {8{~s_axis_tkeep[BYTE_COUNT-k]}};
 
-  wire [255:0] pigasus_data;
+  wire [127:0] pigasus_data;
   wire         pigasus_valid;
   wire         pigasus_ready;
   wire         pigasus_sop;
   wire         pigasus_eop;
-  wire [4:0]   pigasus_empty;
+  wire [3:0]   pigasus_empty;
 
   string_matcher pigasus (
     .clk(clk),
@@ -69,7 +69,7 @@ module test_pigasus # (
     .out_usr_empty(pigasus_empty)
   );
 
-  wire [255:0] concat_sme_output;
+  wire [127:0] concat_sme_output;
   metadata_t meta;
 
   initial begin
@@ -145,7 +145,7 @@ module test_pigasus # (
 
   genvar i;
   generate
-    for (i=0; i<16; i=i+1)
+    for (i=0; i<8; i=i+1)
       assign sme_output[i] = concat_sme_output[i*16 +: 16];
   endgenerate
 
@@ -153,7 +153,7 @@ module test_pigasus # (
   initial begin
     $dumpfile ("sim_build/sim_results.fst");
     $dumpvars (0,test_pigasus);
-    for (j=0; j<16; j=j+1)
+    for (j=0; j<8; j=j+1)
       $dumpvars (0,sme_output[j]);
     #1;
   end

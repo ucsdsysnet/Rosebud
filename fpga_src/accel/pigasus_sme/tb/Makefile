@@ -5,7 +5,7 @@ TOPLEVEL_LANG ?= verilog
 export COCOTB_REDUCED_LOG_FMT=1 
 
 CWD = .
-RTL_DIR = ../new_rtl
+RTL_DIR = ../new_rtl2
 MYLIB_DIR = ../../../lib/smartFPGA/rtl
 AXIS_DIR = ../../../lib/axis/rtl
 
