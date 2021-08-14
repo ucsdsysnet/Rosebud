@@ -1,6 +1,5 @@
 `timescale 1 ps / 1 ps
 `include "struct_s.sv"
-// `define DUMMY_PG
 
 module port_group (
     input   logic           clk,
@@ -31,27 +30,6 @@ module port_group (
     output  logic [31:0]    no_pg_rule_cnt,
     output  logic [31:0]    pg_rule_cnt
 );
-
-`ifdef DUMMY_PG
-    assign out_pkt_data  = in_pkt_data;
-    assign out_pkt_valid = in_pkt_valid;
-    assign out_pkt_sop   = in_pkt_sop;
-    assign out_pkt_eop   = in_pkt_eop;
-    assign out_pkt_empty = in_pkt_empty;
-    assign in_pkt_ready  = out_pkt_ready;
-    assign in_pkt_almost_full = out_pkt_almost_full;
-
-    assign out_meta_valid  = in_meta_valid;
-    assign out_meta_data   = in_meta_data;
-    assign in_meta_ready   = out_meta_ready;
-
-    assign out_usr_sop   = in_usr_sop;
-    assign out_usr_eop   = in_usr_eop;
-    assign out_usr_valid = in_usr_valid;
-    assign out_usr_data  = in_usr_data;
-    assign out_usr_empty = in_usr_empty;
-    assign in_usr_ready  = out_usr_ready;
-`else
 
 // This should be 1 bigger than the NUM_PIPE in rule_unit
 localparam NUM_PIPES = 16;
@@ -270,7 +248,5 @@ unified_pkt_fifo  #(
     .almost_full       (int_almost_full),
     .overflow          ()
 );
-
-`endif
 
 endmodule

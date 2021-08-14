@@ -1,3 +1,5 @@
+`include "struct_s.sv"
+
 module test_pigasus # (
   parameter BYTE_COUNT = 16
 ) (
@@ -67,7 +69,14 @@ module test_pigasus # (
     .out_usr_empty(pigasus_empty)
   );
 
-  wire [255:0] pigasus_output;
+  wire [255:0] concat_sme_output;
+  metadata_t meta;
+
+  initial begin
+    meta.tuple.sPort = 16'd1025;
+    meta.tuple.dPort = 16'd1024;
+    meta.prot        = PROT_TCP;
+  end
 
   port_group pg_inst (
     .clk(clk),
@@ -81,10 +90,10 @@ module test_pigasus # (
     .in_usr_ready(pigasus_ready),
 
     .in_meta_valid(1'b1),
-    .in_meta_data(252'd0),
+    .in_meta_data(meta),
     .in_meta_ready(),
 
-    .out_usr_data(pigasus_output),
+    .out_usr_data(concat_sme_output),
     .out_usr_valid(sme_output_v),
     .out_usr_ready(1'b1),
     .out_usr_sop(),
@@ -137,14 +146,14 @@ module test_pigasus # (
   genvar i;
   generate
     for (i=0; i<16; i=i+1)
-      assign sme_output[i] = pigasus_output[i*16 +: 16];
+      assign sme_output[i] = concat_sme_output[i*16 +: 16];
   endgenerate
 
   integer j;
   initial begin
     $dumpfile ("sim_build/sim_results.fst");
     $dumpvars (0,test_pigasus);
-    for (j=0; j<8; j=j+1)
+    for (j=0; j<16; j=j+1)
       $dumpvars (0,sme_output[j]);
     #1;
   end
