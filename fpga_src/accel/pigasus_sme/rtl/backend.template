@@ -214,7 +214,11 @@ rom_2port #(
     .DWIDTH(RID_WIDTH),
     .AWIDTH({{context['nbits'][i]}}),
     .MEM_SIZE({{context['mem_size'][i]}}),
+    {% if context['mem_size'][i] > 4096 %}
+    .INIT_FILE("")
+    {% else %}
     .INIT_FILE("./memory_init/hashtable{{i}}.mif")
+    {% endif %}
 )
 hashtable_inst_{{i}}_0(
     .q_a       (ht_q_{{i}}_0),    

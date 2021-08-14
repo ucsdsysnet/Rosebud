@@ -53,6 +53,7 @@ reg  [ACCEL_COUNT-1:0]     cmd_stop_reg;
 reg  [ACCEL_COUNT-1:0]     cmd_init_reg;
 reg  [ACCEL_COUNT-1:0]     release_match;
 reg  [63:0]                cmd_state_reg;
+reg  [18:0]                cmd_pig_reg;
 wire [ACCEL_COUNT-1:0]     accel_busy;
 reg  [DEST_WIDTH-1:0]      next_done_accel;
 
@@ -136,6 +137,9 @@ always @(posedge clk) begin
         // Move on to the next index
         6'h28: begin
           release_match[io_addr[9:6]] <= io_wr_data[0];
+        end
+        6'h2c: begin
+          cmd_pig_reg <= io_wr_data[18:0];
         end
         // can go to 6'h3c
       endcase
@@ -344,6 +348,10 @@ pigasus_sme_wrapper fast_pattern_sme_inst (
   .s_axis_tvalid(accel_tvalid),
   .s_axis_tlast(accel_tlast),
   .s_axis_tready(accel_tready),
+  
+  .wr_data(cmd_state_reg),
+  .wr_addr(cmd_pig_reg),
+  .wr_en(cmd_init_reg),
 
   .preamble_state(cmd_state_reg[63:0]),
   .reload(cmd_init_reg),

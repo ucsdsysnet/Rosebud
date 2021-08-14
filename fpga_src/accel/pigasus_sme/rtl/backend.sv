@@ -3365,7 +3365,7 @@ rom_2port #(
     .DWIDTH(RID_WIDTH),
     .AWIDTH(15),
     .MEM_SIZE(32768),
-    .INIT_FILE("./memory_init/hashtable0.mif")
+    .INIT_FILE("")
 )
 hashtable_inst_0_0(
     .q_a       (ht_q_0_0),    
@@ -3381,7 +3381,7 @@ rom_2port #(
     .DWIDTH(RID_WIDTH),
     .AWIDTH(15),
     .MEM_SIZE(32768),
-    .INIT_FILE("./memory_init/hashtable1.mif")
+    .INIT_FILE("")
 )
 hashtable_inst_1_0(
     .q_a       (ht_q_1_0),    

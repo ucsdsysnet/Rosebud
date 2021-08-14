@@ -5,13 +5,17 @@ module pigasus_sme_wrapper # (
 ) (
   input  wire            clk,
   input  wire            rst,
-  
+
   // AXI Stream input
   input  wire [BYTE_COUNT*8-1:0]       s_axis_tdata,
   input  wire [$clog2(BYTE_COUNT)-1:0] s_axis_tempty,
   input  wire                          s_axis_tvalid,
   input  wire                          s_axis_tlast,
   output wire                          s_axis_tready,
+
+  input  wire [63:0]     wr_data,
+  input  wire [18:0]     wr_addr,
+  input  wire            wr_en,
 
   // Preamble state (7B data and 1B len)
   input  wire [8*8-1:0]  preamble_state,
@@ -72,6 +76,10 @@ module pigasus_sme_wrapper # (
     .in_pkt_eop(s_axis_tlast),
     .in_pkt_ready(s_axis_tready),
 
+    .wr_data(wr_data),
+    .wr_addr(wr_addr),
+    .wr_en(wr_en),
+
     .out_usr_data(pigasus_data),
     .out_usr_valid(pigasus_valid),
     .out_usr_ready(pigasus_ready),
@@ -104,6 +112,10 @@ module pigasus_sme_wrapper # (
     .in_meta_data(meta),
     .in_meta_ready(),
 
+    .wr_data(wr_data[35:0]),
+    .wr_addr(wr_addr[12:0]),
+    .wr_en(wr_en && (wr_addr[18:17]==2'b11)),
+
     .out_usr_data(concat_sme_output),
     .out_usr_valid(sme_output_v),
     .out_usr_ready(1'b1),
@@ -122,7 +134,7 @@ module pigasus_sme_wrapper # (
 
   reg  [127:0] sme_output_r;
   reg  [7:0]   sme_output_r_v;
-  
+
   simple_fifo # (
     .ADDR_WIDTH(2),
     .DATA_WIDTH(128)

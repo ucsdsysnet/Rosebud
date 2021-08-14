@@ -174,7 +174,7 @@ rom_2port #(
 	.DWIDTH(64),
 	.AWIDTH(13),
 	.MEM_SIZE(8192),
-	.INIT_FILE("./memory_init/match_table.mif")
+	.INIT_FILE("") // ./memory_init/match_table.mif")
 )
 match_table_0 (
 	.q_a       (q0),    
@@ -190,7 +190,7 @@ rom_2port #(
 	.DWIDTH(64),
 	.AWIDTH(13),
 	.MEM_SIZE(8192),
-	.INIT_FILE("./memory_init/match_table.mif")
+	.INIT_FILE("") // ./memory_init/match_table.mif")
 )
 match_table_1 (
 	.q_a       (q2),    
@@ -206,7 +206,7 @@ rom_2port #(
 	.DWIDTH(64),
 	.AWIDTH(13),
 	.MEM_SIZE(8192),
-	.INIT_FILE("./memory_init/match_table.mif")
+	.INIT_FILE("") // ./memory_init/match_table.mif")
 )
 match_table_2 (
 	.q_a       (q4),    
@@ -222,7 +222,7 @@ rom_2port #(
 	.DWIDTH(64),
 	.AWIDTH(13),
 	.MEM_SIZE(8192),
-	.INIT_FILE("./memory_init/match_table.mif")
+	.INIT_FILE("") // ./memory_init/match_table.mif")
 )
 match_table_3 (
 	.q_a       (q6),    
@@ -238,7 +238,7 @@ rom_2port #(
 	.DWIDTH(64),
 	.AWIDTH(13),
 	.MEM_SIZE(8192),
-	.INIT_FILE("./memory_init/match_table.mif")
+	.INIT_FILE("") // ./memory_init/match_table.mif")
 )
 match_table_4 (
 	.q_a       (q8),    
@@ -254,7 +254,7 @@ rom_2port #(
 	.DWIDTH(64),
 	.AWIDTH(13),
 	.MEM_SIZE(8192),
-	.INIT_FILE("./memory_init/match_table.mif")
+	.INIT_FILE("") // ./memory_init/match_table.mif")
 )
 match_table_5 (
 	.q_a       (q10),    
@@ -270,7 +270,7 @@ rom_2port #(
 	.DWIDTH(64),
 	.AWIDTH(13),
 	.MEM_SIZE(8192),
-	.INIT_FILE("./memory_init/match_table.mif")
+	.INIT_FILE("") // ./memory_init/match_table.mif")
 )
 match_table_6 (
 	.q_a       (q12),    
@@ -286,7 +286,7 @@ rom_2port #(
 	.DWIDTH(64),
 	.AWIDTH(13),
 	.MEM_SIZE(8192),
-	.INIT_FILE("./memory_init/match_table.mif")
+	.INIT_FILE("") // ./memory_init/match_table.mif")
 )
 match_table_7 (
 	.q_a       (q14),    
