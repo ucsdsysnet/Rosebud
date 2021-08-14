@@ -8,6 +8,9 @@ module frontend (
     input  logic                 in_sop,
     input  logic                 in_eop,
     input  logic [FP_EWIDTH-1:0] in_empty,
+    input  logic [63:0]          wr_data,
+    input  logic [12:0]          wr_addr,
+    input  logic                 wr_en,
 {% for i in range(0,context['bucket_size'])%}
 {% for j in range(0,context['byte_size'])%}
     output logic [RID_WIDTH-1:0] hash_out_{{i}}_{{j}},
@@ -107,6 +110,9 @@ first_filter filter_inst(
     .in_sop     (in_sop),
     .in_eop     (in_eop),
     .in_empty   (in_empty),
+    .wr_data    (wr_data),
+    .wr_addr    (wr_addr),
+    .wr_en      (wr_en),
     .out_data   (filter_out),
     .out_valid  (filter_out_valid)
 );

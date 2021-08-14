@@ -7,6 +7,9 @@ module first_filter(
     input                        in_sop,
     input                        in_eop,
     input [FP_EWIDTH-1:0]        in_empty,
+    input [63:0]                 wr_data,
+    input [12:0]                 wr_addr,
+    input                        wr_en,
     output logic [FP_DWIDTH-1:0] out_data,
     output logic                 out_valid
 );
@@ -178,7 +181,10 @@ match_table_0 (
 	.q_b       (q1),    
 	.address_a (addr0),
 	.address_b (addr1),
-	.clock     (clk)   
+	.clock     (clk),
+  .wr_data   (wr_data),
+  .wr_addr   (wr_addr),
+  .wr_en     (wr_en)
 );
 rom_2port #(
 	.DWIDTH(64),
@@ -191,7 +197,10 @@ match_table_1 (
 	.q_b       (q3),    
 	.address_a (addr2),
 	.address_b (addr3),
-	.clock     (clk)   
+	.clock     (clk),
+  .wr_data   (wr_data),
+  .wr_addr   (wr_addr),
+  .wr_en     (wr_en)
 );
 rom_2port #(
 	.DWIDTH(64),
@@ -204,7 +213,10 @@ match_table_2 (
 	.q_b       (q5),    
 	.address_a (addr4),
 	.address_b (addr5),
-	.clock     (clk)   
+	.clock     (clk),
+  .wr_data   (wr_data),
+  .wr_addr   (wr_addr),
+  .wr_en     (wr_en)
 );
 rom_2port #(
 	.DWIDTH(64),
@@ -217,7 +229,10 @@ match_table_3 (
 	.q_b       (q7),    
 	.address_a (addr6),
 	.address_b (addr7),
-	.clock     (clk)   
+	.clock     (clk),
+  .wr_data   (wr_data),
+  .wr_addr   (wr_addr),
+  .wr_en     (wr_en)
 );
 rom_2port #(
 	.DWIDTH(64),
@@ -230,7 +245,10 @@ match_table_4 (
 	.q_b       (q9),    
 	.address_a (addr8),
 	.address_b (addr9),
-	.clock     (clk)   
+	.clock     (clk),
+  .wr_data   (wr_data),
+  .wr_addr   (wr_addr),
+  .wr_en     (wr_en)
 );
 rom_2port #(
 	.DWIDTH(64),
@@ -243,7 +261,10 @@ match_table_5 (
 	.q_b       (q11),    
 	.address_a (addr10),
 	.address_b (addr11),
-	.clock     (clk)   
+	.clock     (clk),
+  .wr_data   (wr_data),
+  .wr_addr   (wr_addr),
+  .wr_en     (wr_en)
 );
 rom_2port #(
 	.DWIDTH(64),
@@ -256,7 +277,10 @@ match_table_6 (
 	.q_b       (q13),    
 	.address_a (addr12),
 	.address_b (addr13),
-	.clock     (clk)   
+	.clock     (clk),
+  .wr_data   (wr_data),
+  .wr_addr   (wr_addr),
+  .wr_en     (wr_en)
 );
 rom_2port #(
 	.DWIDTH(64),
@@ -269,7 +293,10 @@ match_table_7 (
 	.q_b       (q15),    
 	.address_a (addr14),
 	.address_b (addr15),
-	.clock     (clk)   
+	.clock     (clk),
+  .wr_data   (wr_data),
+  .wr_addr   (wr_addr),
+  .wr_en     (wr_en)
 );
 
 endmodule

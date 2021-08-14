@@ -387,6 +387,9 @@ module backend(
     input rule_s_t       in_data_7_15,
     input                in_valid_7_15,
     output logic         in_ready_7_15,
+    input  logic [15:0]  wr_data,
+    input  logic [17:0]  wr_addr,
+    input  logic         wr_en,
     output logic [127:0] out_usr_data,
     output logic         out_usr_valid,
     output logic         out_usr_sop,
@@ -3369,7 +3372,10 @@ hashtable_inst_0_0(
     .q_b       (),    
     .address_a (ht_addr_0_0[15-1:0]),
     .address_b (),
-    .clock     (clk)   
+    .clock     (clk),
+    .wr_data   (wr_data),
+    .wr_addr   (ht_addr_0_0[15-1:0]),
+    .wr_en     (wr_en && (wr_addr[17:15]==3'd0))
 );
 rom_2port #(
     .DWIDTH(RID_WIDTH),
@@ -3382,7 +3388,10 @@ hashtable_inst_1_0(
     .q_b       (),    
     .address_a (ht_addr_1_0[15-1:0]),
     .address_b (),
-    .clock     (clk)   
+    .clock     (clk),
+    .wr_data   (wr_data),
+    .wr_addr   (ht_addr_1_0[15-1:0]),
+    .wr_en     (wr_en && (wr_addr[17:15]==3'd1))
 );
 rom_2port #(
     .DWIDTH(RID_WIDTH),
@@ -3395,7 +3404,10 @@ hashtable_inst_2_0(
     .q_b       (),    
     .address_a (ht_addr_2_0[12-1:0]),
     .address_b (),
-    .clock     (clk)   
+    .clock     (clk),
+    .wr_data   (wr_data),
+    .wr_addr   (ht_addr_2_0[12-1:0]),
+    .wr_en     (wr_en && (wr_addr[17:15]==3'd2))
 );
 rom_2port #(
     .DWIDTH(RID_WIDTH),
@@ -3408,7 +3420,10 @@ hashtable_inst_3_0(
     .q_b       (),    
     .address_a (ht_addr_3_0[12-1:0]),
     .address_b (),
-    .clock     (clk)   
+    .clock     (clk),
+    .wr_data   (wr_data),
+    .wr_addr   (ht_addr_3_0[12-1:0]),
+    .wr_en     (wr_en && (wr_addr[17:15]==3'd3))
 );
 rom_2port #(
     .DWIDTH(RID_WIDTH),
@@ -3421,7 +3436,10 @@ hashtable_inst_4_0(
     .q_b       (),    
     .address_a (ht_addr_4_0[11-1:0]),
     .address_b (),
-    .clock     (clk)   
+    .clock     (clk),
+    .wr_data   (wr_data),
+    .wr_addr   (ht_addr_4_0[11-1:0]),
+    .wr_en     (wr_en && (wr_addr[17:15]==3'd4))
 );
 rom_2port #(
     .DWIDTH(RID_WIDTH),
@@ -3434,7 +3452,10 @@ hashtable_inst_5_0(
     .q_b       (),    
     .address_a (ht_addr_5_0[12-1:0]),
     .address_b (),
-    .clock     (clk)   
+    .clock     (clk),
+    .wr_data   (wr_data),
+    .wr_addr   (ht_addr_5_0[12-1:0]),
+    .wr_en     (wr_en && (wr_addr[17:15]==3'd5))
 );
 rom_2port #(
     .DWIDTH(RID_WIDTH),
@@ -3447,7 +3468,10 @@ hashtable_inst_6_0(
     .q_b       (),    
     .address_a (ht_addr_6_0[10-1:0]),
     .address_b (),
-    .clock     (clk)   
+    .clock     (clk),
+    .wr_data   (wr_data),
+    .wr_addr   (ht_addr_6_0[10-1:0]),
+    .wr_en     (wr_en && (wr_addr[17:15]==3'd6))
 );
 rom_2port #(
     .DWIDTH(RID_WIDTH),
@@ -3460,7 +3484,10 @@ hashtable_inst_7_0(
     .q_b       (),    
     .address_a (ht_addr_7_0[8-1:0]),
     .address_b (),
-    .clock     (clk)   
+    .clock     (clk),
+    .wr_data   (wr_data),
+    .wr_addr   (ht_addr_7_0[8-1:0]),
+    .wr_en     (wr_en && (wr_addr[17:15]==3'd7))
 );
 
 //rule FIFO

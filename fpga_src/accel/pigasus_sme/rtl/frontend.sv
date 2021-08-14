@@ -8,6 +8,9 @@ module frontend (
     input  logic                 in_sop,
     input  logic                 in_eop,
     input  logic [FP_EWIDTH-1:0] in_empty,
+    input  logic [63:0]          wr_data,
+    input  logic [12:0]          wr_addr,
+    input  logic                 wr_en,
     output logic [RID_WIDTH-1:0] hash_out_0_0,
     output logic                 hash_out_valid_filter_0_0,
     output logic [RID_WIDTH-1:0] hash_out_0_1,
@@ -1042,6 +1045,9 @@ first_filter filter_inst(
     .in_sop     (in_sop),
     .in_eop     (in_eop),
     .in_empty   (in_empty),
+    .wr_data    (wr_data),
+    .wr_addr    (wr_addr),
+    .wr_en      (wr_en),
     .out_data   (filter_out),
     .out_valid  (filter_out_valid)
 );

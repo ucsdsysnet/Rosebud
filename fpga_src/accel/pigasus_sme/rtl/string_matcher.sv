@@ -8,6 +8,9 @@ module string_matcher (
     input  logic                 in_pkt_sop,
     input  logic                 in_pkt_eop,
     input  logic [FP_EWIDTH-1:0] in_pkt_empty,
+    input  logic [63:0]          wr_data,
+    input  logic [18:0]          wr_addr,
+    input  logic                 wr_en,
     output logic                 in_pkt_ready,
     output logic [127:0]         out_usr_data,
     output logic                 out_usr_valid,
@@ -2928,6 +2931,9 @@ frontend front(
     .in_sop          (piped_pkt_sop),
     .in_eop          (piped_pkt_eop),
     .in_empty        (piped_pkt_empty),
+    .wr_data         (wr_data),
+    .wr_addr         (wr_addr[12:0]),
+    .wr_en           (wr_en && (wr_addr[18:17]==2'b10)),
     .out_new_pkt     (out_new_pkt)
 );
 //RuleID reduction logic
@@ -3318,6 +3324,9 @@ backend back(
     .in_data_7_15     (din_7_15_r2),
     .in_valid_7_15    (din_valid_7_15_r2),
     .in_ready_7_15    (din_ready_7_15),
+    .wr_data                 (wr_data[15:0]),
+    .wr_addr                 (wr_addr[17:0]),
+    .wr_en                   (wr_en && (wr_addr[18]==1'b0)),
     .out_usr_data            (out_usr_data),
     .out_usr_valid           (out_usr_valid),
     .out_usr_sop             (out_usr_sop),

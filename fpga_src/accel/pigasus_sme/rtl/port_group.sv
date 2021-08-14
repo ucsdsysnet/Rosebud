@@ -17,6 +17,11 @@ module port_group (
     input   logic [3:0]     in_usr_empty,
     input   logic           in_usr_valid,
     output  logic           in_usr_ready,
+    
+    // Memory write port
+    input  logic [RULE_PG_WIDTH-1:0] wr_data,
+    input  logic [RULE_AWIDTH-1:0]   wr_addr,
+    input  logic                     wr_en,
 
     // Out User data
     output  logic [127:0]   out_usr_data,
@@ -344,7 +349,10 @@ rule2pg_table_0_1 (
     .q_b       (rule_pg_data_1),
     .address_a (rule_pg_addr_0),
     .address_b (rule_pg_addr_1),
-    .clock     (clk)
+    .clock     (clk),
+    .wr_data   (wr_data),
+    .wr_addr   (wr_addr),
+    .wr_en     (wr_en)
 );
 rom_2port #(
     .DWIDTH(RULE_PG_WIDTH),
@@ -357,7 +365,10 @@ rule2pg_table_2_3 (
     .q_b       (rule_pg_data_3),
     .address_a (rule_pg_addr_2),
     .address_b (rule_pg_addr_3),
-    .clock     (clk)
+    .clock     (clk),
+    .wr_data   (wr_data),
+    .wr_addr   (wr_addr),
+    .wr_en     (wr_en)
 );
 rom_2port #(
     .DWIDTH(RULE_PG_WIDTH),
@@ -370,7 +381,10 @@ rule2pg_table_4_5 (
     .q_b       (rule_pg_data_5),
     .address_a (rule_pg_addr_4),
     .address_b (rule_pg_addr_5),
-    .clock     (clk)
+    .clock     (clk),
+    .wr_data   (wr_data),
+    .wr_addr   (wr_addr),
+    .wr_en     (wr_en)
 );
 rom_2port #(
     .DWIDTH(RULE_PG_WIDTH),
@@ -383,7 +397,10 @@ rule2pg_table_6_7 (
     .q_b       (rule_pg_data_7),
     .address_a (rule_pg_addr_6),
     .address_b (rule_pg_addr_7),
-    .clock     (clk)
+    .clock     (clk),
+    .wr_data   (wr_data),
+    .wr_addr   (wr_addr),
+    .wr_en     (wr_en)
 );
 
 //rule FIFO

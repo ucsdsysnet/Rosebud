@@ -7,6 +7,9 @@ module first_filter(
     input                        in_sop,
     input                        in_eop,
     input [FP_EWIDTH-1:0]        in_empty,
+    input [63:0]                 wr_data,
+    input [12:0]                 wr_addr,
+    input                        wr_en,
     output logic [FP_DWIDTH-1:0] out_data,
     output logic                 out_valid
 );
@@ -118,7 +121,10 @@ match_table_{{i}} (
 	.q_b       (q{{2*i+1}}),    
 	.address_a (addr{{2*i}}),
 	.address_b (addr{{2*i+1}}),
-	.clock     (clk)   
+	.clock     (clk),
+  .wr_data   (wr_data),
+  .wr_addr   (wr_addr),
+  .wr_en     (wr_en)
 );
 {% endfor %}
 

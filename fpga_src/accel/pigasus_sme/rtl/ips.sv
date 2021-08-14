@@ -10,16 +10,31 @@ module rom_2port #(
   input  wire [AWIDTH-1:0] address_b,
   
   output reg  [DWIDTH-1:0] q_a,
-  output reg  [DWIDTH-1:0] q_b
+  output reg  [DWIDTH-1:0] q_b,
+
+  input  wire [AWIDTH-1:0] wr_addr,
+  input  wire [DWIDTH-1:0] wr_data,
+  input  wire              wr_en
 );
 
   reg [DWIDTH-1:0] mem [0:(1<<AWIDTH)-1];
   reg [AWIDTH-1:0] address_a_r;
   reg [AWIDTH-1:0] address_b_r;
-  
+
+  reg [AWIDTH-1:0] wr_addr_r;
+  reg [DWIDTH-1:0] wr_data_r;
+  reg              wr_en_r;
+ 
   always @ (posedge clock) begin
+    // Input register
     address_a_r <= address_a;
     address_b_r <= address_b;
+    wr_addr_r   <= wr_addr;
+    wr_data_r   <= wr_data;
+    wr_en_r     <= wr_en;
+    
+    if (wr_en_r)
+      mem[wr_addr_r] <= wr_data_r;
 
     q_a <= mem[address_a_r];
     q_b <= mem[address_b_r];

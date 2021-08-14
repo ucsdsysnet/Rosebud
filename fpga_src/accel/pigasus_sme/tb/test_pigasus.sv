@@ -50,6 +50,10 @@ module test_pigasus # (
   wire         pigasus_eop;
   wire [3:0]   pigasus_empty;
 
+  wire [63:0]  wr_data;
+  wire [18:0]  wr_addr;
+  wire         wr_en;
+
   string_matcher pigasus (
     .clk(clk),
     .rst(rst),
@@ -60,6 +64,10 @@ module test_pigasus # (
     .in_pkt_sop(sop),
     .in_pkt_eop(s_axis_tlast),
     .in_pkt_ready(s_axis_tready),
+
+    .wr_data(wr_data),
+    .wr_addr(wr_addr),
+    .wr_en(wr_en),
 
     .out_usr_data(pigasus_data),
     .out_usr_valid(pigasus_valid),
@@ -92,6 +100,10 @@ module test_pigasus # (
     .in_meta_valid(1'b1),
     .in_meta_data(meta),
     .in_meta_ready(),
+    
+    .wr_data(wr_data[35:0]),
+    .wr_addr(wr_addr[12:0]),
+    .wr_en(wr_en && (wr_addr[18:17]==2'b11)),
 
     .out_usr_data(concat_sme_output),
     .out_usr_valid(sme_output_v),

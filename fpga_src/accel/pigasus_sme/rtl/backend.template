@@ -10,6 +10,9 @@ module backend(
     output logic         in_ready_{{i}}_{{j}},
 {% endfor %}
 {% endfor %}
+    input  logic [15:0]  wr_data,
+    input  logic [17:0]  wr_addr,
+    input  logic         wr_en,
     output logic [{{context['last_layer_width']*context['bucket_size']*16-1}}:0] out_usr_data,
     output logic         out_usr_valid,
     output logic         out_usr_sop,
@@ -218,7 +221,10 @@ hashtable_inst_{{i}}_0(
     .q_b       (),    
     .address_a (ht_addr_{{i}}_0[{{context['nbits'][i]}}-1:0]),
     .address_b (),
-    .clock     (clk)   
+    .clock     (clk),
+    .wr_data   (wr_data),
+    .wr_addr   (ht_addr_{{i}}_0[{{context['nbits'][i]}}-1:0]),
+    .wr_en     (wr_en && (wr_addr[17:15]==3'd{{i}}))
 );
 {% elif context['last_layer_width']==2 %}
 rom_2port #(
@@ -232,7 +238,10 @@ hashtable_inst_{{i}}_0(
     .q_b       (ht_q_{{i}}_1),    
     .address_a (ht_addr_{{i}}_0[{{context['nbits'][i]}}-1:0]),
     .address_b (ht_addr_{{i}}_1[{{context['nbits'][i]}}-1:0]),
-    .clock     (clk)   
+    .clock     (clk),
+    .wr_data   (wr_data),
+    .wr_addr   (wr_addr[14:0]),
+    .wr_en     (wr_en && (wr_addr[17:15]==3'd{{i}}))
 );
 {% else %}
 rom_2port #(
@@ -246,7 +255,10 @@ hashtable_inst_{{i}}_0(
     .q_b       (ht_q_{{i}}_1),    
     .address_a (ht_addr_{{i}}_0[{{context['nbits'][i]}}-1:0]),
     .address_b (ht_addr_{{i}}_1[{{context['nbits'][i]}}-1:0]),
-    .clock     (clk)   
+    .clock     (clk),
+    .wr_data   (wr_data),
+    .wr_addr   (wr_addr[14:0]),
+    .wr_en     (wr_en && (wr_addr[17:15]==3'd{{i}}))
 );
 rom_2port #(
     .DWIDTH(RID_WIDTH),
@@ -259,7 +271,10 @@ hashtable_inst_{{i}}_1(
     .q_b       (ht_q_{{i}}_3),    
     .address_a (ht_addr_{{i}}_2[{{context['nbits'][i]}}-1:0]),
     .address_b (ht_addr_{{i}}_3[{{context['nbits'][i]}}-1:0]),
-    .clock     (clk)   
+    .clock     (clk),
+    .wr_data   (),
+    .wr_addr   (),
+    .wr_en     (1'b0)
 );
 {% endif %}
 {% endfor %}
