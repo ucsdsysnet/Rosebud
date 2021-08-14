@@ -142,7 +142,6 @@ module test_pigasus # (
   ///////////////////////////////////////////////
   ////////////// Generating Waveform ////////////
   ///////////////////////////////////////////////
-
   genvar i;
   generate
     for (i=0; i<8; i=i+1)
@@ -157,5 +156,11 @@ module test_pigasus # (
       $dumpvars (0,sme_output[j]);
     #1;
   end
+
+  integer m;
+  always @ (posedge clk)
+    for (m=0; m<8; m=m+1)
+      if ((sme_output[m]!=0) && (sme_output_v))
+        $display("Match on ouput %0d, value %h", m, sme_output[m]);
 
 endmodule
