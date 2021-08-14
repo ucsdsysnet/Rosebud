@@ -51,7 +51,7 @@ reg                        cmd_valid_reg;
 reg  [DEST_WIDTH-1:0]      cmd_accel_reg;
 reg  [ACCEL_COUNT-1:0]     cmd_stop_reg;
 reg  [ACCEL_COUNT-1:0]     cmd_init_reg;
-reg  [ACCEL_COUNT-1:0]     release_index;
+reg  [ACCEL_COUNT-1:0]     release_match;
 reg  [63:0]                cmd_state_reg;
 wire [ACCEL_COUNT-1:0]     accel_busy;
 reg  [DEST_WIDTH-1:0]      next_done_accel;
@@ -87,7 +87,7 @@ always @(posedge clk) begin
   cmd_valid_reg <= 'b0;
   cmd_stop_reg  <= {ACCEL_COUNT{1'b0}};
   cmd_init_reg  <= {ACCEL_COUNT{1'b0}};
-  release_index <= {ACCEL_COUNT{1'b0}};
+  release_match <= {ACCEL_COUNT{1'b0}};
 
   ip_addr_valid_reg   <= 1'b0;
   read_data_valid_reg <= 1'b0;
@@ -135,7 +135,7 @@ always @(posedge clk) begin
 
         // Move on to the next index
         6'h28: begin
-          release_index[io_addr[9:6]] <= io_wr_data[0];
+          release_match[io_addr[9:6]] <= io_wr_data[0];
         end
         // can go to 6'h3c
       endcase
@@ -333,15 +333,13 @@ wire [15:0] match_index;
 wire [7:0]  match_valid_stat;
 wire [7:0]  match_error_stat;
 
-wire [4-1:0] temp_tempty = 4'hf-accel_tuser;
-
-wire [4:0] accel_tempty = (temp_tempty == 0) ? 5'd0 : {1'b1,temp_tempty};
+wire [4-1:0] accel_tempty = 4'hf-accel_tuser;
 
 pigasus_sme_wrapper fast_pattern_sme_inst (
   .clk(clk),
   .rst(rst),
 
-  .s_axis_tdata({accel_tdata,accel_tdata}),
+  .s_axis_tdata(accel_tdata),
   .s_axis_tempty(accel_tempty),
   .s_axis_tvalid(accel_tvalid),
   .s_axis_tlast(accel_tlast),
@@ -350,8 +348,8 @@ pigasus_sme_wrapper fast_pattern_sme_inst (
   .preamble_state(cmd_state_reg[63:0]),
   .reload(cmd_init_reg),
 
-  .match_index(match_index),
-  .next_index(release_index),
+  .match_rule_ID(match_index),
+  .match_release(release_match),
   .match_valid(match_valid),
 
   .last_bytes_state(accel_state),
@@ -391,20 +389,5 @@ ip_match ip_match_inst (
   .match(ip_match),
   .done(ip_done)
 );
-
-// module port_checker (
-//   input  wire clk,
-//   input  wire rst,
-//
-//   input  wire [15:0] src_port,
-//   input  wire [15:0] dst_port,
-//   input  wire        tcp,
-//   input  wire [12:0] in_rule_data,
-//   input  wire        start,
-//
-//   output reg  [12:0] out_rule_data,
-//   output reg         out_rule_match,
-//   output reg         out_rule_valid
-// );
 
 endmodule

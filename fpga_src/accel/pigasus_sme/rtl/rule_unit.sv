@@ -1,4 +1,6 @@
-`include "./struct_s.sv"
+`include "struct_s.sv"
+`timescale 1 ps / 1 ps
+
 module rule_unit(
     input   logic                   clk,
     input   logic                   rst,

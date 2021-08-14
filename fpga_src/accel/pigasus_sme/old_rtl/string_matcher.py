@@ -8,34 +8,9 @@ from copy import deepcopy
 from math import log2
 from math import ceil
 
-def get_byte_size():
-    byte_size = 0
-    f = open("struct_s.sv")
-    for line in f:
-        if("FP_DWIDTH" in line):
-            byte_string = line.split("=")[1]
-            byte_string = byte_string.split(";")[0]
-            byte_size = int(byte_string) >> 3
-            break
-    return byte_size
-
-def get_pg_rules():
-    pg_rules = 0
-    f = open("struct_s.sv")
-    for line in f:
-        if("PG_RULES" in line):
-            pg_rules_string = line.split("=")[1]
-            pg_rules_string = pg_rules_string.split(";")[0]
-            pg_rules = int(pg_rules_string)
-            break
-    return pg_rules
-
-#Main function
-
 context = {}
-byte_size = get_byte_size()
-half_byte_size = byte_size >> 1
-#Does not change for now
+byte_size = 32
+half_byte_size = int(byte_size/2)
 bucket_size = 8
 byte_pos = []
 bucket = []
@@ -44,16 +19,8 @@ andmsk = []
 mem_size = []
 bm_size = []
 arb_size = 8
-
-
-pg_rules = get_pg_rules()
-last_layer_width = pg_rules//bucket_size
-layer = int(log2(byte_size//last_layer_width))
-layer_list = []
-layer_list_half = []
 #this is 2^5 = 32
 fifo_depth = 5 
-
 
 nbits.append(15)
 nbits.append(15)
@@ -84,10 +51,6 @@ for i in range(0,byte_size):
 for i in range(0,bucket_size):
     bucket.append(i)
 
-for i in range(0,layer):
-    layer_list.append(byte_size>>i)
-    layer_list_half.append(byte_size>>(i+1))
-
 
 context['byte_pos'] = byte_pos
 context['bucket'] = bucket
@@ -100,15 +63,6 @@ context['mem_size'] = mem_size
 context['bm_size'] = bm_size
 context['arb_size'] = arb_size
 context['fifo_depth'] = fifo_depth
-context['shiftor_num'] = byte_size >> 3
-context['layer'] = layer
-context['layer_list'] = layer_list
-context['layer_list_half'] = layer_list_half
-context['last_layer_width'] = last_layer_width
-#print (layer)
-#print (layer_list)
-#print (layer_list_half)
-#print (last_layer_width)
 ########################################################
 env = Environment(loader=FileSystemLoader('./'), trim_blocks=True, lstrip_blocks=True)
 template = env.get_template('first_filter.template')
@@ -119,6 +73,8 @@ rendered_file = template.render(context=context)
 # Write output file
 with open('first_filter.sv', 'w') as outFile:
     outFile.write(rendered_file)
+
+
 
 ########################################################
 env = Environment(loader=FileSystemLoader('./'), trim_blocks=True, lstrip_blocks=True)
@@ -143,6 +99,18 @@ rendered_file = template.render(context=context)
 with open('frontend.sv', 'w') as outFile:
     outFile.write(rendered_file)
 
+
+########################################################
+#env = Environment(loader=FileSystemLoader('./'), trim_blocks=True, lstrip_blocks=True)
+#template = env.get_template('arbiter.template')
+#
+## Render the template for the output file.
+#rendered_file = template.render(context=context)
+#
+## Write output file
+#with open('arbiter.v', 'w') as outFile:
+#    outFile.write(rendered_file)
+
 ########################################################
 env = Environment(loader=FileSystemLoader('./'), trim_blocks=True, lstrip_blocks=True)
 template = env.get_template('backend.template')
@@ -165,4 +133,16 @@ rendered_file = template.render(context=context)
 # Write output file
 with open('string_matcher.sv', 'w') as outFile:
     outFile.write(rendered_file)
+
+
+########################################################
+#env = Environment(loader=FileSystemLoader('./'), trim_blocks=True, lstrip_blocks=True)
+#template = env.get_template('tb.template')
+#
+## Render the template for the output file.
+#rendered_file = template.render(context=context)
+#
+## Write output file
+#with open('tb.v', 'w') as outFile:
+#    outFile.write(rendered_file)
 

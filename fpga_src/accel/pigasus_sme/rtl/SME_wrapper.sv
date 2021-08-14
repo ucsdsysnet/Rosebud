@@ -1,21 +1,25 @@
-module pigasus_sme_wrapper (
+`include "struct_s.sv"
+
+module pigasus_sme_wrapper # (
+  parameter BYTE_COUNT = 16
+) (
   input  wire            clk,
   input  wire            rst,
-
+  
   // AXI Stream input
-  input  wire [32*8-1:0] s_axis_tdata,
-  input  wire [5-1:0]    s_axis_tempty,
-  input  wire            s_axis_tvalid,
-  input  wire            s_axis_tlast,
-  output wire            s_axis_tready,
+  input  wire [BYTE_COUNT*8-1:0]       s_axis_tdata,
+  input  wire [$clog2(BYTE_COUNT)-1:0] s_axis_tempty,
+  input  wire                          s_axis_tvalid,
+  input  wire                          s_axis_tlast,
+  output wire                          s_axis_tready,
 
   // Preamble state (7B data and 1B len)
   input  wire [8*8-1:0]  preamble_state,
   input  wire            reload,
 
   // Match output
-  input  wire            next_index,
-  output reg  [15:0]     match_index,
+  input  wire            match_release,
+  output reg  [15:0]     match_rule_ID,
   output reg             match_valid,
 
   // Last bytes (7B data and 1B len)
@@ -29,6 +33,8 @@ module pigasus_sme_wrapper (
   //////////   Selecting input data   ///////////
   ///////////////////////////////////////////////
 
+  // TODO: add pkt_data_mover
+
   reg valid_r;
   always @ (posedge clk)
     if(rst)
@@ -36,62 +42,87 @@ module pigasus_sme_wrapper (
     else
       valid_r <= s_axis_tvalid;
 
-  wire sop = s_axis_tvalid & !valid_r;
+  wire s_axis_tsop = s_axis_tvalid & !valid_r;
 
-  // wire [255:0]  muxed_data;
-  // wire [4:0]    muxed_empty;
-  // wire          muxed_last;
-  // wire          muxed_valid;
-  // wire          sme_ready;
-  // reg           preamble_valid;
-
-  // assign muxed_data    = preamble_valid ? {8'hff, preamble_state[63:8]}
-  //                                       : s_axis_tdata;
-  // assign muxed_strb    = preamble_valid ? 8'hff : s_axis_tkeep;
-  // assign muxed_empty   = preamble_valid ? 5'd24 : {2'b11, s_axis_tempty};
-  // assign muxed_last    = preamble_valid ? 1'b0  : s_axis_tlast;
-  // assign s_axis_tready = preamble_valid ? 1'b0  : sme_ready;
-
-  // // One cycle preamble when engine is initialized
-  // always @ (posedge clk)
-  //   if (rst)
-  //     preamble_valid <= 1'b0;
-  //   else if (reload)
-  //     preamble_valid <= preamble_state[0];
-  //   else if (preamble_valid && sme_ready)
-  //     preamble_valid <= 1'b0;
+  reg [BYTE_COUNT*8-1:0] s_axis_tdata_rev;
+  integer i;
+  always @ (*)
+    for (i=1;i<=BYTE_COUNT;i=i+1)
+      s_axis_tdata_rev[(i-1)*8+:8] = s_axis_tdata[(BYTE_COUNT-i)*8+:8];
+      // {8{~s_axis_tkeep[BYTE_COUNT-i]}};
 
   ///////////////////////////////////////////////
   ////////// Check for fast patterns ////////////
   ///////////////////////////////////////////////
-  wire [127:0] sme_output;
-  wire         sme_output_v;
+  wire [127:0] pigasus_data;
+  wire         pigasus_valid;
+  wire         pigasus_ready;
+  wire         pigasus_sop;
+  wire         pigasus_eop;
+  wire [3:0]   pigasus_empty;
 
+  string_matcher pigasus (
+    .clk(clk),
+    .rst(rst),
+
+    .in_pkt_data(s_axis_tdata_rev),
+    .in_pkt_empty(s_axis_tempty),
+    .in_pkt_valid(s_axis_tvalid),
+    .in_pkt_sop(s_axis_tsop),
+    .in_pkt_eop(s_axis_tlast),
+    .in_pkt_ready(s_axis_tready),
+
+    .out_usr_data(pigasus_data),
+    .out_usr_valid(pigasus_valid),
+    .out_usr_ready(pigasus_ready),
+    .out_usr_sop(pigasus_sop),
+    .out_usr_eop(pigasus_eop),
+    .out_usr_empty(pigasus_empty)
+  );
+
+  wire [127:0] concat_sme_output;
+  metadata_t meta;
+
+  initial begin
+    meta.tuple.sPort = 16'd1025;
+    meta.tuple.dPort = 16'd1024;
+    meta.prot        = PROT_TCP;
+  end
+
+  port_group pg_inst (
+    .clk(clk),
+    .rst(rst),
+
+    .in_usr_sop(pigasus_sop),
+    .in_usr_eop(pigasus_eop),
+    .in_usr_data(pigasus_data),
+    .in_usr_empty(pigasus_empty),
+    .in_usr_valid(pigasus_valid),
+    .in_usr_ready(pigasus_ready),
+
+    .in_meta_valid(1'b1),
+    .in_meta_data(meta),
+    .in_meta_ready(),
+
+    .out_usr_data(concat_sme_output),
+    .out_usr_valid(sme_output_v),
+    .out_usr_ready(1'b1),
+    .out_usr_sop(),
+    .out_usr_eop(),
+    .out_usr_empty(),
+
+    .no_pg_rule_cnt(),
+    .pg_rule_cnt()
+  );
+
+  // FIFO
   wire [127:0] sme_output_f;
   wire         sme_output_f_v;
   wire         sme_output_f_ready;
 
   reg  [127:0] sme_output_r;
   reg  [7:0]   sme_output_r_v;
-
-  string_matcher pigasus (
-    .clk(clk),
-    .rst(rst),
-
-    .in_data(s_axis_tdata),
-    .in_empty(s_axis_tempty),
-    .in_valid(s_axis_tvalid),
-    .in_sop(sop),
-    .in_eop(s_axis_tlast),
-    .in_ready(s_axis_tready),
-
-    .out_data(sme_output),
-    .out_valid(sme_output_v),
-
-    .out_almost_full(1'b0),
-    .out_last()
-  );
-
+  
   simple_fifo # (
     .ADDR_WIDTH(2),
     .DATA_WIDTH(128)
@@ -101,7 +132,7 @@ module pigasus_sme_wrapper (
     .clear(reload),
 
     .din_valid(sme_output_v),
-    .din(sme_output),
+    .din(concat_sme_output),
     .din_ready(),
 
     .dout_valid(sme_output_f_v),
@@ -141,7 +172,7 @@ module pigasus_sme_wrapper (
 
   always @ (posedge clk) begin
     selected_match_r <= selected_match;
-    match_index      <= selected_match_index;
+    match_rule_ID    <= selected_match_index;
 
     match_valid      <= |(sme_output_r_v & match_mask);
     match_valid_stat <= sme_output_r_v & match_mask;
@@ -155,7 +186,7 @@ module pigasus_sme_wrapper (
   always @ (posedge clk) begin
     if (rst || reload)
       match_mask <= 8'hFF;
-    else if (next_index)
+    else if (match_release)
       match_mask <= match_mask & ~selected_match_r;
   end
 

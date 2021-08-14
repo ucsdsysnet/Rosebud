@@ -1,33 +1,27 @@
 `include "struct_s.sv"
-module hashtable_top(clk,
+module hashtable_top(
+    input clk,
 {% for i in range(0,context['bucket_size'])%}
 {% for j in range(0,context['byte_size'])%}
-	dout_{{i}}_{{j}},dout_valid_{{i}}_{{j}},
+	output logic [RID_WIDTH-1:0] dout_{{i}}_{{j}},
+    output logic dout_valid_{{i}}_{{j}},
 {% endfor %}
 {% endfor %}
-    din,din_valid
+    input [FP_DWIDTH-1:0] din,
+    input din_valid
 );
 
-input clk;
-input [255:0] din;
-input din_valid;
 {% for i in range(0,context['bucket_size'])%}
 {% for j in range(0,context['byte_size'])%}
-output wire [RID_WIDTH-1:0] dout_{{i}}_{{j}};
-output wire dout_valid_{{i}}_{{j}};
+logic [{{context['nbits'][i]}}-1:0] addr_{{i}}_{{j}};
+logic din_valid_{{i}}_{{j}};
+logic addr_valid_{{i}}_{{j}};
 {% endfor %}
 {% endfor %}
 
-{% for i in range(0,context['bucket_size'])%}
-{% for j in range(0,context['byte_size'])%}
-reg  [{{context['nbits'][i]}}-1:0] addr_{{i}}_{{j}};
-wire din_valid_{{i}}_{{j}};
-wire addr_valid_{{i}}_{{j}};
-{% endfor %}
-{% endfor %}
+logic [63:0] din_reg;
+logic din_valid_reg;
 
-reg [63:0] din_reg;
-reg din_valid_reg;
 
 // Doing all necessary multiplies per input byte
 wire [({{context['byte_size']}}+7)*8-1:0] padded_din;
@@ -107,9 +101,7 @@ assign din_valid_7_{{j}} = din_valid;
 
 
 always @ (posedge clk) begin
-    //din_reg <= din[127:64];
-    din_reg <= din[255:192];
-    // din_reg <= din[63:0];
+    din_reg <= din[FP_DWIDTH-1:FP_DWIDTH-64];
     din_valid_reg <= din_valid;
 end
 
@@ -127,8 +119,8 @@ hyper_pipe #(.NUM_PIPES(12)) addr_valid_{{i}}_{{j}}_pipe (
 {% for i in range(0,context['bucket_size'])%}
 {% for j in range(0,context['byte_size'])%}
 acc_hash # (
-	.ANDMSK({{context['andmsk'][i]}}),
-	.NBITS({{context['nbits'][i]}})
+    .ANDMSK({{context['andmsk'][i]}}),
+    .NBITS({{context['nbits'][i]}})
 ) addr_{{i}}_{{j}}_calc (
   .clk(clk), .p(addr_{{i}}_{{j}}),
   .a0b0(din_{{j}}_ab0), .a0b1(din_{{j}}_ab1), .a0b2(din_{{j}}_ab2), .a0b3(din_{{j}}_ab3),
@@ -144,6 +136,7 @@ acc_hash # (
 {% endfor %}
 {% endfor %}
 
+
 {% for i in range(0,context['bucket_size'])%}
 {% for j in range(0,context['half_byte_size'])%}
 
@@ -155,10 +148,10 @@ hashtable #(
 )
 hashtable_{{i}}_{{j}} (
 	.clk (clk),
-	.addr0 (addr_{{i}}_{{2*j}}),
-	.addr0_valid (addr_valid_{{i}}_{{2*j}}),
-	.addr1 (addr_{{i}}_{{2*j+1}}),
-	.addr1_valid (addr_valid_{{i}}_{{2*j+1}}),
+    .addr0 (addr_{{i}}_{{2*j}}),
+    .addr0_valid (addr_valid_{{i}}_{{2*j}}),
+    .addr1 (addr_{{i}}_{{2*j+1}}),
+    .addr1_valid (addr_valid_{{i}}_{{2*j+1}}),
 	.dout0 (dout_{{i}}_{{2*j}}),
 	.dout0_valid (dout_valid_{{i}}_{{2*j}}),
 	.dout1 (dout_{{i}}_{{2*j+1}}),
