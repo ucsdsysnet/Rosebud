@@ -19,9 +19,9 @@ module port_group (
     output  logic           in_usr_ready,
     
     // Memory write port
-    input  logic [RULE_PG_WIDTH-1:0] wr_data,
-    input  logic [RULE_AWIDTH-1:0]   wr_addr,
-    input  logic                     wr_en,
+    input  logic [2*RULE_PG_WIDTH-1:0] wr_data,
+    input  logic [RULE_AWIDTH-1:0]     wr_addr,
+    input  logic                       wr_en,
 
     // Out User data
     output  logic [127:0]   out_usr_data,
@@ -338,69 +338,81 @@ rule_unit rule_unit_7 (
     .rule_pg_data   (rule_pg_data_7)
 );
 
-ram_1rw1r #(
+uram_2rw_reg #(
     .DWIDTH(RULE_PG_WIDTH),
     .AWIDTH(RULE_AWIDTH),
+    .LWIDTH(2*RULE_PG_WIDTH),
     .MEM_SIZE(RULE_DEPTH)
 )
 rule2pg_table_0_1 (
-    .q_a       (rule_pg_data_0),
-    .q_b       (rule_pg_data_1),
-    .address_a (wr_en ? wr_addr : rule_pg_addr_0),
-    .address_b (rule_pg_addr_1),
     .clock     (clk),
-    .wr_data_a (wr_data),
-    .wr_en_a   (wr_en),
     .en_a      (1'b1),
-    .en_b      (1'b1)
+    .wr_en_a   (wr_en),
+    .address_a (wr_en ? wr_addr : rule_pg_addr_0),
+    .wr_data_a (wr_data),
+    .q_a       (rule_pg_data_0),
+    .en_b      (1'b1),
+    .wr_en_b   (1'b0),
+    .address_b (rule_pg_addr_1),
+    .wr_data_b ({2*RULE_PG_WIDTH{1'b0}}),
+    .q_b       (rule_pg_data_1)
 );
-ram_1rw1r #(
+uram_2rw_reg #(
     .DWIDTH(RULE_PG_WIDTH),
     .AWIDTH(RULE_AWIDTH),
+    .LWIDTH(2*RULE_PG_WIDTH),
     .MEM_SIZE(RULE_DEPTH)
 )
 rule2pg_table_2_3 (
-    .q_a       (rule_pg_data_2),
-    .q_b       (rule_pg_data_3),
-    .address_a (wr_en ? wr_addr : rule_pg_addr_2),
-    .address_b (rule_pg_addr_3),
     .clock     (clk),
-    .wr_data_a (wr_data),
-    .wr_en_a   (wr_en),
     .en_a      (1'b1),
-    .en_b      (1'b1)
+    .wr_en_a   (wr_en),
+    .address_a (wr_en ? wr_addr : rule_pg_addr_2),
+    .wr_data_a (wr_data),
+    .q_a       (rule_pg_data_2),
+    .en_b      (1'b1),
+    .wr_en_b   (1'b0),
+    .address_b (rule_pg_addr_3),
+    .wr_data_b ({2*RULE_PG_WIDTH{1'b0}}),
+    .q_b       (rule_pg_data_3)
 );
-ram_1rw1r #(
+uram_2rw_reg #(
     .DWIDTH(RULE_PG_WIDTH),
     .AWIDTH(RULE_AWIDTH),
+    .LWIDTH(2*RULE_PG_WIDTH),
     .MEM_SIZE(RULE_DEPTH)
 )
 rule2pg_table_4_5 (
-    .q_a       (rule_pg_data_4),
-    .q_b       (rule_pg_data_5),
-    .address_a (wr_en ? wr_addr : rule_pg_addr_4),
-    .address_b (rule_pg_addr_5),
     .clock     (clk),
-    .wr_data_a (wr_data),
-    .wr_en_a   (wr_en),
     .en_a      (1'b1),
-    .en_b      (1'b1)
+    .wr_en_a   (wr_en),
+    .address_a (wr_en ? wr_addr : rule_pg_addr_4),
+    .wr_data_a (wr_data),
+    .q_a       (rule_pg_data_4),
+    .en_b      (1'b1),
+    .wr_en_b   (1'b0),
+    .address_b (rule_pg_addr_5),
+    .wr_data_b ({2*RULE_PG_WIDTH{1'b0}}),
+    .q_b       (rule_pg_data_5)
 );
-ram_1rw1r #(
+uram_2rw_reg #(
     .DWIDTH(RULE_PG_WIDTH),
     .AWIDTH(RULE_AWIDTH),
+    .LWIDTH(2*RULE_PG_WIDTH),
     .MEM_SIZE(RULE_DEPTH)
 )
 rule2pg_table_6_7 (
-    .q_a       (rule_pg_data_6),
-    .q_b       (rule_pg_data_7),
-    .address_a (wr_en ? wr_addr : rule_pg_addr_6),
-    .address_b (rule_pg_addr_7),
     .clock     (clk),
-    .wr_data_a (wr_data),
-    .wr_en_a   (wr_en),
     .en_a      (1'b1),
-    .en_b      (1'b1)
+    .wr_en_a   (wr_en),
+    .address_a (wr_en ? wr_addr : rule_pg_addr_6),
+    .wr_data_a (wr_data),
+    .q_a       (rule_pg_data_6),
+    .en_b      (1'b1),
+    .wr_en_b   (1'b0),
+    .address_b (rule_pg_addr_7),
+    .wr_data_b ({2*RULE_PG_WIDTH{1'b0}}),
+    .q_b       (rule_pg_data_7)
 );
 
 //rule FIFO

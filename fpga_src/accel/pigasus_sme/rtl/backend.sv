@@ -387,7 +387,7 @@ module backend(
     input rule_s_t       in_data_7_15,
     input                in_valid_7_15,
     output logic         in_ready_7_15,
-    input  logic [15:0]  wr_data,
+    input  logic [63:0]  wr_data,
     input  logic [17:0]  wr_addr,
     input  logic         wr_en,
     output logic [127:0] out_usr_data,
@@ -3361,37 +3361,43 @@ end
     );
 
 
-ram_1rw1r #(
+uram_2rw_reg #(
     .DWIDTH(RID_WIDTH),
     .AWIDTH(15),
+    .LWIDTH(4*RID_WIDTH),
     .MEM_SIZE(32768)
 )
 hashtable_inst_0_0(
-    .q_a       (),    
-    .q_b       (ht_q_0_0),    
-    .address_a (wr_addr[15-1:0]),
-    .address_b (ht_addr_0_0[15-1:0]),
     .clock     (clk),
-    .wr_data_a (wr_data),
-    .wr_en_a   (wr_en && (wr_addr[17:15]==3'd0)),
     .en_a      (1'b1),
-    .en_b      (1'b1)
+    .wr_en_a   (wr_en && (wr_addr[17:15]==3'd0)),
+    .address_a (wr_addr[15-1:0]),
+    .wr_data_a (wr_data),
+    .q_a       (),    
+    .en_b      (1'b1),
+    .wr_en_b   (1'b0),
+    .address_b (ht_addr_0_0[15-1:0]),
+    .wr_data_b (wr_data),
+    .q_b       (ht_q_0_0)
 );
-ram_1rw1r #(
+uram_2rw_reg #(
     .DWIDTH(RID_WIDTH),
     .AWIDTH(15),
+    .LWIDTH(4*RID_WIDTH),
     .MEM_SIZE(32768)
 )
 hashtable_inst_1_0(
-    .q_a       (),    
-    .q_b       (ht_q_1_0),    
-    .address_a (wr_addr[15-1:0]),
-    .address_b (ht_addr_1_0[15-1:0]),
     .clock     (clk),
-    .wr_data_a (wr_data),
-    .wr_en_a   (wr_en && (wr_addr[17:15]==3'd1)),
     .en_a      (1'b1),
-    .en_b      (1'b1)
+    .wr_en_a   (wr_en && (wr_addr[17:15]==3'd1)),
+    .address_a (wr_addr[15-1:0]),
+    .wr_data_a (wr_data),
+    .q_a       (),    
+    .en_b      (1'b1),
+    .wr_en_b   (1'b0),
+    .address_b (ht_addr_1_0[15-1:0]),
+    .wr_data_b (wr_data),
+    .q_b       (ht_q_1_0)
 );
 rom_2port #(
     .DWIDTH(RID_WIDTH),

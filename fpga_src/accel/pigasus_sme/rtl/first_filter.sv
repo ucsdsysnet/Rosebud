@@ -170,133 +170,149 @@ always @ (posedge clk) begin
     end
 end
 
-ram_1rw1r #(
+uram_2rw_reg #(
 	.DWIDTH(64),
 	.AWIDTH(13),
 	.MEM_SIZE(8192)
 )
 match_table_0 (
-	.q_a       (q0),    
-	.q_b       (q1),    
-	.address_a (wr_en ? wr_addr : addr0),
-	.address_b (addr1),
 	.clock     (clk),
-  .wr_data_a (wr_data),
-  .wr_en_a   (wr_en),
   .en_a      (1'b1),
-  .en_b      (1'b1)
+  .wr_en_a   (wr_en),
+	.address_a (wr_en ? wr_addr : addr0),
+  .wr_data_a (wr_data),
+	.q_a       (q0),    
+  .en_b      (1'b1),
+  .wr_en_b   (1'b0),
+	.address_b (addr1),
+  .wr_data_b (64'd0),
+	.q_b       (q1)
 );
-ram_1rw1r #(
+uram_2rw_reg #(
 	.DWIDTH(64),
 	.AWIDTH(13),
 	.MEM_SIZE(8192)
 )
 match_table_1 (
-	.q_a       (q2),    
-	.q_b       (q3),    
-	.address_a (wr_en ? wr_addr : addr2),
-	.address_b (addr3),
 	.clock     (clk),
-  .wr_data_a (wr_data),
-  .wr_en_a   (wr_en),
   .en_a      (1'b1),
-  .en_b      (1'b1)
+  .wr_en_a   (wr_en),
+	.address_a (wr_en ? wr_addr : addr2),
+  .wr_data_a (wr_data),
+	.q_a       (q2),    
+  .en_b      (1'b1),
+  .wr_en_b   (1'b0),
+	.address_b (addr3),
+  .wr_data_b (64'd0),
+	.q_b       (q3)
 );
-ram_1rw1r #(
+uram_2rw_reg #(
 	.DWIDTH(64),
 	.AWIDTH(13),
 	.MEM_SIZE(8192)
 )
 match_table_2 (
-	.q_a       (q4),    
-	.q_b       (q5),    
-	.address_a (wr_en ? wr_addr : addr4),
-	.address_b (addr5),
 	.clock     (clk),
-  .wr_data_a (wr_data),
-  .wr_en_a   (wr_en),
   .en_a      (1'b1),
-  .en_b      (1'b1)
+  .wr_en_a   (wr_en),
+	.address_a (wr_en ? wr_addr : addr4),
+  .wr_data_a (wr_data),
+	.q_a       (q4),    
+  .en_b      (1'b1),
+  .wr_en_b   (1'b0),
+	.address_b (addr5),
+  .wr_data_b (64'd0),
+	.q_b       (q5)
 );
-ram_1rw1r #(
+uram_2rw_reg #(
 	.DWIDTH(64),
 	.AWIDTH(13),
 	.MEM_SIZE(8192)
 )
 match_table_3 (
-	.q_a       (q6),    
-	.q_b       (q7),    
-	.address_a (wr_en ? wr_addr : addr6),
-	.address_b (addr7),
 	.clock     (clk),
-  .wr_data_a (wr_data),
-  .wr_en_a   (wr_en),
   .en_a      (1'b1),
-  .en_b      (1'b1)
+  .wr_en_a   (wr_en),
+	.address_a (wr_en ? wr_addr : addr6),
+  .wr_data_a (wr_data),
+	.q_a       (q6),    
+  .en_b      (1'b1),
+  .wr_en_b   (1'b0),
+	.address_b (addr7),
+  .wr_data_b (64'd0),
+	.q_b       (q7)
 );
-ram_1rw1r #(
+uram_2rw_reg #(
 	.DWIDTH(64),
 	.AWIDTH(13),
 	.MEM_SIZE(8192)
 )
 match_table_4 (
-	.q_a       (q8),    
-	.q_b       (q9),    
-	.address_a (wr_en ? wr_addr : addr8),
-	.address_b (addr9),
 	.clock     (clk),
-  .wr_data_a (wr_data),
-  .wr_en_a   (wr_en),
   .en_a      (1'b1),
-  .en_b      (1'b1)
+  .wr_en_a   (wr_en),
+	.address_a (wr_en ? wr_addr : addr8),
+  .wr_data_a (wr_data),
+	.q_a       (q8),    
+  .en_b      (1'b1),
+  .wr_en_b   (1'b0),
+	.address_b (addr9),
+  .wr_data_b (64'd0),
+	.q_b       (q9)
 );
-ram_1rw1r #(
+uram_2rw_reg #(
 	.DWIDTH(64),
 	.AWIDTH(13),
 	.MEM_SIZE(8192)
 )
 match_table_5 (
-	.q_a       (q10),    
-	.q_b       (q11),    
-	.address_a (wr_en ? wr_addr : addr10),
-	.address_b (addr11),
 	.clock     (clk),
-  .wr_data_a (wr_data),
-  .wr_en_a   (wr_en),
   .en_a      (1'b1),
-  .en_b      (1'b1)
+  .wr_en_a   (wr_en),
+	.address_a (wr_en ? wr_addr : addr10),
+  .wr_data_a (wr_data),
+	.q_a       (q10),    
+  .en_b      (1'b1),
+  .wr_en_b   (1'b0),
+	.address_b (addr11),
+  .wr_data_b (64'd0),
+	.q_b       (q11)
 );
-ram_1rw1r #(
+uram_2rw_reg #(
 	.DWIDTH(64),
 	.AWIDTH(13),
 	.MEM_SIZE(8192)
 )
 match_table_6 (
-	.q_a       (q12),    
-	.q_b       (q13),    
-	.address_a (wr_en ? wr_addr : addr12),
-	.address_b (addr13),
 	.clock     (clk),
-  .wr_data_a (wr_data),
-  .wr_en_a   (wr_en),
   .en_a      (1'b1),
-  .en_b      (1'b1)
+  .wr_en_a   (wr_en),
+	.address_a (wr_en ? wr_addr : addr12),
+  .wr_data_a (wr_data),
+	.q_a       (q12),    
+  .en_b      (1'b1),
+  .wr_en_b   (1'b0),
+	.address_b (addr13),
+  .wr_data_b (64'd0),
+	.q_b       (q13)
 );
-ram_1rw1r #(
+uram_2rw_reg #(
 	.DWIDTH(64),
 	.AWIDTH(13),
 	.MEM_SIZE(8192)
 )
 match_table_7 (
-	.q_a       (q14),    
-	.q_b       (q15),    
-	.address_a (wr_en ? wr_addr : addr14),
-	.address_b (addr15),
 	.clock     (clk),
-  .wr_data_a (wr_data),
-  .wr_en_a   (wr_en),
   .en_a      (1'b1),
-  .en_b      (1'b1)
+  .wr_en_a   (wr_en),
+	.address_a (wr_en ? wr_addr : addr14),
+  .wr_data_a (wr_data),
+	.q_a       (q14),    
+  .en_b      (1'b1),
+  .wr_en_b   (1'b0),
+	.address_b (addr15),
+  .wr_data_b (64'd0),
+	.q_b       (q15)
 );
 
 endmodule

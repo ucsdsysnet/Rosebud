@@ -168,7 +168,7 @@ backend back(
     .in_ready_{{i}}_{{j}}    (din_ready_{{i}}_{{j}}),
 {% endfor %}
 {% endfor %}
-    .wr_data                 (wr_data[15:0]),
+    .wr_data                 (wr_data),
     .wr_addr                 (wr_addr[17:0]),
     .wr_en                   (wr_en && (wr_addr[18]==1'b0)),
     .out_usr_data            (out_usr_data),
