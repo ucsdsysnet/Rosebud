@@ -207,11 +207,10 @@ rule_unit rule_unit_{{i}} (
 {% endfor %}
 
 {% for i in range(0,context['half_pg_rules']) %}
-rom_2port #(
+ram_1rw1r #(
     .DWIDTH(RULE_PG_WIDTH),
     .AWIDTH(RULE_AWIDTH),
-    .MEM_SIZE(RULE_DEPTH),
-    .INIT_FILE("") // ./memory_init/rule_2_pg.mif")
+    .MEM_SIZE(RULE_DEPTH)
 )
 rule2pg_table_{{2*i}}_{{2*i+1}} (
     .q_a       (rule_pg_data_{{2*i}}),

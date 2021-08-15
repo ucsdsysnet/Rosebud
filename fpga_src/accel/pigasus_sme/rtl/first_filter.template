@@ -110,11 +110,10 @@ always @ (posedge clk) begin
 end
 
 {% for i in range(0,context['half_byte_size'])%}
-rom_2port #(
+ram_1rw1r #(
 	.DWIDTH(64),
 	.AWIDTH(13),
-	.MEM_SIZE(8192),
-	.INIT_FILE("") // ./memory_init/match_table.mif")
+	.MEM_SIZE(8192)
 )
 match_table_{{i}} (
 	.q_a       (q{{2*i}}),    

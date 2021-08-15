@@ -210,37 +210,17 @@ end
 
 {% for i in range(0,context['bucket_size'])%}
 {% if context['last_layer_width']==1 %}
-rom_2port #(
+{% if context['mem_size'][i] > 4096 %}
+ram_1rw1r #(
     .DWIDTH(RID_WIDTH),
     .AWIDTH({{context['nbits'][i]}}),
-    .MEM_SIZE({{context['mem_size'][i]}}),
-    {% if context['mem_size'][i] > 4096 %}
-    .INIT_FILE("")
-    {% else %}
-    .INIT_FILE("./memory_init/hashtable{{i}}.mif")
-    {% endif %}
+    .MEM_SIZE({{context['mem_size'][i]}})
 )
 hashtable_inst_{{i}}_0(
     .q_a       (),    
     .q_b       (ht_q_{{i}}_0),    
     .address_a (wr_addr[{{context['nbits'][i]}}-1:0]),
     .address_b (ht_addr_{{i}}_0[{{context['nbits'][i]}}-1:0]),
-    .clock     (clk),
-    .wr_data_a (wr_data),
-    .wr_en_a   (wr_en && (wr_addr[17:15]==3'd{{i}}))
-);
-{% elif context['last_layer_width']==2 %}
-rom_2port #(
-    .DWIDTH(RID_WIDTH),
-    .AWIDTH({{context['nbits'][i]}}),
-    .MEM_SIZE({{context['mem_size'][i]}}),
-    .INIT_FILE("./memory_init/hashtable{{i}}.mif")
-)
-hashtable_inst_{{i}}_0(
-    .q_a       (ht_q_{{i}}_0),    
-    .q_b       (ht_q_{{i}}_1),    
-    .address_a (wr_en ? wr_addr[14:0] : wr_ht_addr_{{i}}_0[{{context['nbits'][i]}}-1:0]),
-    .address_b (ht_addr_{{i}}_1[{{context['nbits'][i]}}-1:0]),
     .clock     (clk),
     .wr_data_a (wr_data),
     .wr_en_a   (wr_en && (wr_addr[17:15]==3'd{{i}}))
@@ -254,12 +234,39 @@ rom_2port #(
 )
 hashtable_inst_{{i}}_0(
     .q_a       (ht_q_{{i}}_0),    
+    .q_b       (),    
+    .address_a (ht_addr_{{i}}_0[{{context['nbits'][i]}}-1:0]),
+    .address_b (),
+    .clock     (clk)
+);
+{% endif %}
+{% elif context['last_layer_width']==2 %}
+rom_2port #(
+    .DWIDTH(RID_WIDTH),
+    .AWIDTH({{context['nbits'][i]}}),
+    .MEM_SIZE({{context['mem_size'][i]}}),
+    .INIT_FILE("./memory_init/hashtable{{i}}.mif")
+)
+hashtable_inst_{{i}}_0(
+    .q_a       (ht_q_{{i}}_0),    
     .q_b       (ht_q_{{i}}_1),    
-    .address_a (wr_en ? wr_addr[14:0] : wr_ht_addr_{{i}}_0[{{context['nbits'][i]}}-1:0]),
+    .address_a (ht_addr_{{i}}_0[{{context['nbits'][i]}}-1:0]),
     .address_b (ht_addr_{{i}}_1[{{context['nbits'][i]}}-1:0]),
-    .clock     (clk),
-    .wr_data_a (wr_data),
-    .wr_en_a   (wr_en && (wr_addr[17:15]==3'd{{i}}))
+    .clock     (clk)
+);
+{% else %}
+rom_2port #(
+    .DWIDTH(RID_WIDTH),
+    .AWIDTH({{context['nbits'][i]}}),
+    .MEM_SIZE({{context['mem_size'][i]}}),
+    .INIT_FILE("./memory_init/hashtable{{i}}.mif")
+)
+hashtable_inst_{{i}}_0(
+    .q_a       (ht_q_{{i}}_0),    
+    .q_b       (ht_q_{{i}}_1),    
+    .address_a (ht_addr_{{i}}_0[{{context['nbits'][i]}}-1:0]),
+    .address_b (ht_addr_{{i}}_1[{{context['nbits'][i]}}-1:0]),
+    .clock     (clk)
 );
 rom_2port #(
     .DWIDTH(RID_WIDTH),
@@ -272,9 +279,7 @@ hashtable_inst_{{i}}_1(
     .q_b       (ht_q_{{i}}_3),    
     .address_a (ht_addr_{{i}}_2[{{context['nbits'][i]}}-1:0]),
     .address_b (ht_addr_{{i}}_3[{{context['nbits'][i]}}-1:0]),
-    .clock     (clk),
-    .wr_data_a (),
-    .wr_en_a   (1'b0)
+    .clock     (clk)
 );
 {% endif %}
 {% endfor %}

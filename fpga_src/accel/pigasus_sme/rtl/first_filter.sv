@@ -170,11 +170,10 @@ always @ (posedge clk) begin
     end
 end
 
-rom_2port #(
+ram_1rw1r #(
 	.DWIDTH(64),
 	.AWIDTH(13),
-	.MEM_SIZE(8192),
-	.INIT_FILE("") // ./memory_init/match_table.mif")
+	.MEM_SIZE(8192)
 )
 match_table_0 (
 	.q_a       (q0),    
@@ -185,11 +184,10 @@ match_table_0 (
   .wr_data_a (wr_data),
   .wr_en_a   (wr_en)
 );
-rom_2port #(
+ram_1rw1r #(
 	.DWIDTH(64),
 	.AWIDTH(13),
-	.MEM_SIZE(8192),
-	.INIT_FILE("") // ./memory_init/match_table.mif")
+	.MEM_SIZE(8192)
 )
 match_table_1 (
 	.q_a       (q2),    
@@ -200,11 +198,10 @@ match_table_1 (
   .wr_data_a (wr_data),
   .wr_en_a   (wr_en)
 );
-rom_2port #(
+ram_1rw1r #(
 	.DWIDTH(64),
 	.AWIDTH(13),
-	.MEM_SIZE(8192),
-	.INIT_FILE("") // ./memory_init/match_table.mif")
+	.MEM_SIZE(8192)
 )
 match_table_2 (
 	.q_a       (q4),    
@@ -215,11 +212,10 @@ match_table_2 (
   .wr_data_a (wr_data),
   .wr_en_a   (wr_en)
 );
-rom_2port #(
+ram_1rw1r #(
 	.DWIDTH(64),
 	.AWIDTH(13),
-	.MEM_SIZE(8192),
-	.INIT_FILE("") // ./memory_init/match_table.mif")
+	.MEM_SIZE(8192)
 )
 match_table_3 (
 	.q_a       (q6),    
@@ -230,11 +226,10 @@ match_table_3 (
   .wr_data_a (wr_data),
   .wr_en_a   (wr_en)
 );
-rom_2port #(
+ram_1rw1r #(
 	.DWIDTH(64),
 	.AWIDTH(13),
-	.MEM_SIZE(8192),
-	.INIT_FILE("") // ./memory_init/match_table.mif")
+	.MEM_SIZE(8192)
 )
 match_table_4 (
 	.q_a       (q8),    
@@ -245,11 +240,10 @@ match_table_4 (
   .wr_data_a (wr_data),
   .wr_en_a   (wr_en)
 );
-rom_2port #(
+ram_1rw1r #(
 	.DWIDTH(64),
 	.AWIDTH(13),
-	.MEM_SIZE(8192),
-	.INIT_FILE("") // ./memory_init/match_table.mif")
+	.MEM_SIZE(8192)
 )
 match_table_5 (
 	.q_a       (q10),    
@@ -260,11 +254,10 @@ match_table_5 (
   .wr_data_a (wr_data),
   .wr_en_a   (wr_en)
 );
-rom_2port #(
+ram_1rw1r #(
 	.DWIDTH(64),
 	.AWIDTH(13),
-	.MEM_SIZE(8192),
-	.INIT_FILE("") // ./memory_init/match_table.mif")
+	.MEM_SIZE(8192)
 )
 match_table_6 (
 	.q_a       (q12),    
@@ -275,11 +268,10 @@ match_table_6 (
   .wr_data_a (wr_data),
   .wr_en_a   (wr_en)
 );
-rom_2port #(
+ram_1rw1r #(
 	.DWIDTH(64),
 	.AWIDTH(13),
-	.MEM_SIZE(8192),
-	.INIT_FILE("") // ./memory_init/match_table.mif")
+	.MEM_SIZE(8192)
 )
 match_table_7 (
 	.q_a       (q14),    

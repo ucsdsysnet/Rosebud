@@ -10,10 +10,42 @@ module rom_2port #(
   input  wire [AWIDTH-1:0] address_b,
   
   output reg  [DWIDTH-1:0] q_a,
-  output reg  [DWIDTH-1:0] q_b,
+  output reg  [DWIDTH-1:0] q_b
+);
 
+  reg [DWIDTH-1:0] mem [0:(1<<AWIDTH)-1];
+  reg [AWIDTH-1:0] address_a_r;
+  reg [AWIDTH-1:0] address_b_r;
+
+  always @ (posedge clock) begin
+    address_a_r <= address_a;
+    address_b_r <= address_b;
+    
+    q_a <= mem[address_a_r];
+    q_b <= mem[address_b_r];
+  end
+
+  initial begin
+    if (INIT_FILE!="")
+      $readmemh(INIT_FILE, mem);
+  end
+
+endmodule
+
+module ram_1rw1r #(
+	parameter DWIDTH    = 8,
+	parameter AWIDTH    = 8,
+	parameter MEM_SIZE  = (2**AWIDTH)
+) (
+
+  input  wire              clock,
+  input  wire [AWIDTH-1:0] address_a,
   input  wire [DWIDTH-1:0] wr_data_a,
-  input  wire              wr_en_a
+  input  wire              wr_en_a,
+  output reg  [DWIDTH-1:0] q_a,
+
+  input  wire [AWIDTH-1:0] address_b,
+  output reg  [DWIDTH-1:0] q_b
 );
 
   reg [DWIDTH-1:0] mem [0:(1<<AWIDTH)-1];
@@ -36,11 +68,6 @@ module rom_2port #(
       q_a <= mem[address_a_r];
       q_b <= mem[address_b_r];
     end
-  end
-
-  initial begin
-    if (INIT_FILE!="")
-      $readmemh(INIT_FILE, mem);
   end
 
 endmodule

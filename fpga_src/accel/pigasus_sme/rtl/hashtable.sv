@@ -81,9 +81,7 @@ rom_2port_inst (
 	.q_b       (q1),    
 	.address_a (bm_addr0),
 	.address_b (bm_addr1),
-	.clock     (clk),
-  .wr_data_a (),
-  .wr_en_a   (1'b0)
+	.clock     (clk)
 );
 
 endmodule

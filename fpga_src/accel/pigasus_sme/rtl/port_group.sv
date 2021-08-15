@@ -338,11 +338,10 @@ rule_unit rule_unit_7 (
     .rule_pg_data   (rule_pg_data_7)
 );
 
-rom_2port #(
+ram_1rw1r #(
     .DWIDTH(RULE_PG_WIDTH),
     .AWIDTH(RULE_AWIDTH),
-    .MEM_SIZE(RULE_DEPTH),
-    .INIT_FILE("") // ./memory_init/rule_2_pg.mif")
+    .MEM_SIZE(RULE_DEPTH)
 )
 rule2pg_table_0_1 (
     .q_a       (rule_pg_data_0),
@@ -353,11 +352,10 @@ rule2pg_table_0_1 (
     .wr_data_a (wr_data),
     .wr_en_a   (wr_en)
 );
-rom_2port #(
+ram_1rw1r #(
     .DWIDTH(RULE_PG_WIDTH),
     .AWIDTH(RULE_AWIDTH),
-    .MEM_SIZE(RULE_DEPTH),
-    .INIT_FILE("") // ./memory_init/rule_2_pg.mif")
+    .MEM_SIZE(RULE_DEPTH)
 )
 rule2pg_table_2_3 (
     .q_a       (rule_pg_data_2),
@@ -368,11 +366,10 @@ rule2pg_table_2_3 (
     .wr_data_a (wr_data),
     .wr_en_a   (wr_en)
 );
-rom_2port #(
+ram_1rw1r #(
     .DWIDTH(RULE_PG_WIDTH),
     .AWIDTH(RULE_AWIDTH),
-    .MEM_SIZE(RULE_DEPTH),
-    .INIT_FILE("") // ./memory_init/rule_2_pg.mif")
+    .MEM_SIZE(RULE_DEPTH)
 )
 rule2pg_table_4_5 (
     .q_a       (rule_pg_data_4),
@@ -383,11 +380,10 @@ rule2pg_table_4_5 (
     .wr_data_a (wr_data),
     .wr_en_a   (wr_en)
 );
-rom_2port #(
+ram_1rw1r #(
     .DWIDTH(RULE_PG_WIDTH),
     .AWIDTH(RULE_AWIDTH),
-    .MEM_SIZE(RULE_DEPTH),
-    .INIT_FILE("") // ./memory_init/rule_2_pg.mif")
+    .MEM_SIZE(RULE_DEPTH)
 )
 rule2pg_table_6_7 (
     .q_a       (rule_pg_data_6),
