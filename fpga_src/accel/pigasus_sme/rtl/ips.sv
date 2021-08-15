@@ -8,7 +8,7 @@ module rom_2port #(
   input  wire              clock,
   input  wire [AWIDTH-1:0] address_a,
   input  wire [AWIDTH-1:0] address_b,
-  
+
   output reg  [DWIDTH-1:0] q_a,
   output reg  [DWIDTH-1:0] q_b
 );
@@ -20,7 +20,7 @@ module rom_2port #(
   always @ (posedge clock) begin
     address_a_r <= address_a;
     address_b_r <= address_b;
-    
+
     q_a <= mem[address_a_r];
     q_b <= mem[address_b_r];
   end
@@ -41,34 +41,44 @@ module ram_1rw1r #(
   input  wire              clock,
   input  wire [AWIDTH-1:0] address_a,
   input  wire [DWIDTH-1:0] wr_data_a,
+  input  wire              en_a,
   input  wire              wr_en_a,
   output reg  [DWIDTH-1:0] q_a,
 
+  input  wire              en_b,
   input  wire [AWIDTH-1:0] address_b,
   output reg  [DWIDTH-1:0] q_b
 );
 
+  (* ram_style = "ultra" *)
   reg [DWIDTH-1:0] mem [0:(1<<AWIDTH)-1];
   reg [AWIDTH-1:0] address_a_r;
   reg [AWIDTH-1:0] address_b_r;
 
   reg [DWIDTH-1:0] wr_data_r;
   reg              wr_en_r;
- 
+
+  // Input register
   always @ (posedge clock) begin
-    // Input register
     address_a_r <= address_a;
     address_b_r <= address_b;
     wr_data_r   <= wr_data_a;
     wr_en_r     <= wr_en_a;
-    
-    if (wr_en_r)
-      mem[address_a_r] <= wr_data_r;
-    else begin
-      q_a <= mem[address_a_r];
-      q_b <= mem[address_b_r];
-    end
   end
+
+  always @ (posedge clock)
+    if (en_a)
+      if (wr_en_r)
+        mem[address_a_r] <= wr_data_r;
+
+  always @ (posedge clock)
+    if (en_a)
+      if (!wr_en_r)
+        q_a <= mem[address_a_r];
+
+  always @ (posedge clock)
+    if (en_b)
+        q_b <= mem[address_b_r];
 
 endmodule
 
@@ -82,13 +92,13 @@ module rom_2port_noreg #(
   input  wire              clock,
   input  wire [AWIDTH-1:0] address_a,
   input  wire [AWIDTH-1:0] address_b,
-  
+
   output reg  [DWIDTH-1:0] q_a,
   output reg  [DWIDTH-1:0] q_b
 );
 
   reg [DWIDTH-1:0] mem [0:(1<<AWIDTH)-1];
-  
+
   always @ (posedge clock) begin
     q_a <= mem[address_a];
     q_b <= mem[address_b];
@@ -115,7 +125,7 @@ module rom_1port_mlab #(
 
   reg [DWIDTH-1:0] mem [0:(1<<AWIDTH)-1];
   reg [AWIDTH-1:0] address_r;
-  
+
   always @ (posedge clock) begin
     address_r <= address;
     q <= mem[address_r];

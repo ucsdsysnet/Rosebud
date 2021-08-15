@@ -223,7 +223,9 @@ hashtable_inst_{{i}}_0(
     .address_b (ht_addr_{{i}}_0[{{context['nbits'][i]}}-1:0]),
     .clock     (clk),
     .wr_data_a (wr_data),
-    .wr_en_a   (wr_en && (wr_addr[17:15]==3'd{{i}}))
+    .wr_en_a   (wr_en && (wr_addr[17:15]==3'd{{i}})),
+    .en_a      (1'b1),
+    .en_b      (1'b1)
 );
 {% else %}
 rom_2port #(

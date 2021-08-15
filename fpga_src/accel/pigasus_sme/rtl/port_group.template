@@ -219,7 +219,9 @@ rule2pg_table_{{2*i}}_{{2*i+1}} (
     .address_b (rule_pg_addr_{{2*i+1}}),
     .clock     (clk),
     .wr_data_a (wr_data),
-    .wr_en_a   (wr_en)
+    .wr_en_a   (wr_en),
+    .en_a      (1'b1),
+    .en_b      (1'b1)
 );
 {% endfor %}
 

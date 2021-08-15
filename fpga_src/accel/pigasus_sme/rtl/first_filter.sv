@@ -182,7 +182,9 @@ match_table_0 (
 	.address_b (addr1),
 	.clock     (clk),
   .wr_data_a (wr_data),
-  .wr_en_a   (wr_en)
+  .wr_en_a   (wr_en),
+  .en_a      (1'b1),
+  .en_b      (1'b1)
 );
 ram_1rw1r #(
 	.DWIDTH(64),
@@ -196,7 +198,9 @@ match_table_1 (
 	.address_b (addr3),
 	.clock     (clk),
   .wr_data_a (wr_data),
-  .wr_en_a   (wr_en)
+  .wr_en_a   (wr_en),
+  .en_a      (1'b1),
+  .en_b      (1'b1)
 );
 ram_1rw1r #(
 	.DWIDTH(64),
@@ -210,7 +214,9 @@ match_table_2 (
 	.address_b (addr5),
 	.clock     (clk),
   .wr_data_a (wr_data),
-  .wr_en_a   (wr_en)
+  .wr_en_a   (wr_en),
+  .en_a      (1'b1),
+  .en_b      (1'b1)
 );
 ram_1rw1r #(
 	.DWIDTH(64),
@@ -224,7 +230,9 @@ match_table_3 (
 	.address_b (addr7),
 	.clock     (clk),
   .wr_data_a (wr_data),
-  .wr_en_a   (wr_en)
+  .wr_en_a   (wr_en),
+  .en_a      (1'b1),
+  .en_b      (1'b1)
 );
 ram_1rw1r #(
 	.DWIDTH(64),
@@ -238,7 +246,9 @@ match_table_4 (
 	.address_b (addr9),
 	.clock     (clk),
   .wr_data_a (wr_data),
-  .wr_en_a   (wr_en)
+  .wr_en_a   (wr_en),
+  .en_a      (1'b1),
+  .en_b      (1'b1)
 );
 ram_1rw1r #(
 	.DWIDTH(64),
@@ -252,7 +262,9 @@ match_table_5 (
 	.address_b (addr11),
 	.clock     (clk),
   .wr_data_a (wr_data),
-  .wr_en_a   (wr_en)
+  .wr_en_a   (wr_en),
+  .en_a      (1'b1),
+  .en_b      (1'b1)
 );
 ram_1rw1r #(
 	.DWIDTH(64),
@@ -266,7 +278,9 @@ match_table_6 (
 	.address_b (addr13),
 	.clock     (clk),
   .wr_data_a (wr_data),
-  .wr_en_a   (wr_en)
+  .wr_en_a   (wr_en),
+  .en_a      (1'b1),
+  .en_b      (1'b1)
 );
 ram_1rw1r #(
 	.DWIDTH(64),
@@ -280,7 +294,9 @@ match_table_7 (
 	.address_b (addr15),
 	.clock     (clk),
   .wr_data_a (wr_data),
-  .wr_en_a   (wr_en)
+  .wr_en_a   (wr_en),
+  .en_a      (1'b1),
+  .en_b      (1'b1)
 );
 
 endmodule

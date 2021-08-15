@@ -350,7 +350,9 @@ rule2pg_table_0_1 (
     .address_b (rule_pg_addr_1),
     .clock     (clk),
     .wr_data_a (wr_data),
-    .wr_en_a   (wr_en)
+    .wr_en_a   (wr_en),
+    .en_a      (1'b1),
+    .en_b      (1'b1)
 );
 ram_1rw1r #(
     .DWIDTH(RULE_PG_WIDTH),
@@ -364,7 +366,9 @@ rule2pg_table_2_3 (
     .address_b (rule_pg_addr_3),
     .clock     (clk),
     .wr_data_a (wr_data),
-    .wr_en_a   (wr_en)
+    .wr_en_a   (wr_en),
+    .en_a      (1'b1),
+    .en_b      (1'b1)
 );
 ram_1rw1r #(
     .DWIDTH(RULE_PG_WIDTH),
@@ -378,7 +382,9 @@ rule2pg_table_4_5 (
     .address_b (rule_pg_addr_5),
     .clock     (clk),
     .wr_data_a (wr_data),
-    .wr_en_a   (wr_en)
+    .wr_en_a   (wr_en),
+    .en_a      (1'b1),
+    .en_b      (1'b1)
 );
 ram_1rw1r #(
     .DWIDTH(RULE_PG_WIDTH),
@@ -392,7 +398,9 @@ rule2pg_table_6_7 (
     .address_b (rule_pg_addr_7),
     .clock     (clk),
     .wr_data_a (wr_data),
-    .wr_en_a   (wr_en)
+    .wr_en_a   (wr_en),
+    .en_a      (1'b1),
+    .en_b      (1'b1)
 );
 
 //rule FIFO

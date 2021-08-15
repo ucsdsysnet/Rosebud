@@ -3373,7 +3373,9 @@ hashtable_inst_0_0(
     .address_b (ht_addr_0_0[15-1:0]),
     .clock     (clk),
     .wr_data_a (wr_data),
-    .wr_en_a   (wr_en && (wr_addr[17:15]==3'd0))
+    .wr_en_a   (wr_en && (wr_addr[17:15]==3'd0)),
+    .en_a      (1'b1),
+    .en_b      (1'b1)
 );
 ram_1rw1r #(
     .DWIDTH(RID_WIDTH),
@@ -3387,7 +3389,9 @@ hashtable_inst_1_0(
     .address_b (ht_addr_1_0[15-1:0]),
     .clock     (clk),
     .wr_data_a (wr_data),
-    .wr_en_a   (wr_en && (wr_addr[17:15]==3'd1))
+    .wr_en_a   (wr_en && (wr_addr[17:15]==3'd1)),
+    .en_a      (1'b1),
+    .en_b      (1'b1)
 );
 rom_2port #(
     .DWIDTH(RID_WIDTH),
