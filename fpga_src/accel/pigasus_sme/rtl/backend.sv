@@ -3368,14 +3368,13 @@ rom_2port #(
     .INIT_FILE("")
 )
 hashtable_inst_0_0(
-    .q_a       (ht_q_0_0),    
-    .q_b       (),    
-    .address_a (ht_addr_0_0[15-1:0]),
-    .address_b (),
+    .q_a       (),    
+    .q_b       (ht_q_0_0),    
+    .address_a (wr_addr[15-1:0]),
+    .address_b (ht_addr_0_0[15-1:0]),
     .clock     (clk),
-    .wr_data   (wr_data),
-    .wr_addr   (ht_addr_0_0[15-1:0]),
-    .wr_en     (wr_en && (wr_addr[17:15]==3'd0))
+    .wr_data_a (wr_data),
+    .wr_en_a   (wr_en && (wr_addr[17:15]==3'd0))
 );
 rom_2port #(
     .DWIDTH(RID_WIDTH),
@@ -3384,14 +3383,13 @@ rom_2port #(
     .INIT_FILE("")
 )
 hashtable_inst_1_0(
-    .q_a       (ht_q_1_0),    
-    .q_b       (),    
-    .address_a (ht_addr_1_0[15-1:0]),
-    .address_b (),
+    .q_a       (),    
+    .q_b       (ht_q_1_0),    
+    .address_a (wr_addr[15-1:0]),
+    .address_b (ht_addr_1_0[15-1:0]),
     .clock     (clk),
-    .wr_data   (wr_data),
-    .wr_addr   (ht_addr_1_0[15-1:0]),
-    .wr_en     (wr_en && (wr_addr[17:15]==3'd1))
+    .wr_data_a (wr_data),
+    .wr_en_a   (wr_en && (wr_addr[17:15]==3'd1))
 );
 rom_2port #(
     .DWIDTH(RID_WIDTH),
@@ -3400,14 +3398,13 @@ rom_2port #(
     .INIT_FILE("./memory_init/hashtable2.mif")
 )
 hashtable_inst_2_0(
-    .q_a       (ht_q_2_0),    
-    .q_b       (),    
-    .address_a (ht_addr_2_0[12-1:0]),
-    .address_b (),
+    .q_a       (),    
+    .q_b       (ht_q_2_0),    
+    .address_a (wr_addr[12-1:0]),
+    .address_b (ht_addr_2_0[12-1:0]),
     .clock     (clk),
-    .wr_data   (wr_data),
-    .wr_addr   (ht_addr_2_0[12-1:0]),
-    .wr_en     (wr_en && (wr_addr[17:15]==3'd2))
+    .wr_data_a (wr_data),
+    .wr_en_a   (wr_en && (wr_addr[17:15]==3'd2))
 );
 rom_2port #(
     .DWIDTH(RID_WIDTH),
@@ -3416,14 +3413,13 @@ rom_2port #(
     .INIT_FILE("./memory_init/hashtable3.mif")
 )
 hashtable_inst_3_0(
-    .q_a       (ht_q_3_0),    
-    .q_b       (),    
-    .address_a (ht_addr_3_0[12-1:0]),
-    .address_b (),
+    .q_a       (),    
+    .q_b       (ht_q_3_0),    
+    .address_a (wr_addr[12-1:0]),
+    .address_b (ht_addr_3_0[12-1:0]),
     .clock     (clk),
-    .wr_data   (wr_data),
-    .wr_addr   (ht_addr_3_0[12-1:0]),
-    .wr_en     (wr_en && (wr_addr[17:15]==3'd3))
+    .wr_data_a (wr_data),
+    .wr_en_a   (wr_en && (wr_addr[17:15]==3'd3))
 );
 rom_2port #(
     .DWIDTH(RID_WIDTH),
@@ -3432,14 +3428,13 @@ rom_2port #(
     .INIT_FILE("./memory_init/hashtable4.mif")
 )
 hashtable_inst_4_0(
-    .q_a       (ht_q_4_0),    
-    .q_b       (),    
-    .address_a (ht_addr_4_0[11-1:0]),
-    .address_b (),
+    .q_a       (),    
+    .q_b       (ht_q_4_0),    
+    .address_a (wr_addr[11-1:0]),
+    .address_b (ht_addr_4_0[11-1:0]),
     .clock     (clk),
-    .wr_data   (wr_data),
-    .wr_addr   (ht_addr_4_0[11-1:0]),
-    .wr_en     (wr_en && (wr_addr[17:15]==3'd4))
+    .wr_data_a (wr_data),
+    .wr_en_a   (wr_en && (wr_addr[17:15]==3'd4))
 );
 rom_2port #(
     .DWIDTH(RID_WIDTH),
@@ -3448,14 +3443,13 @@ rom_2port #(
     .INIT_FILE("./memory_init/hashtable5.mif")
 )
 hashtable_inst_5_0(
-    .q_a       (ht_q_5_0),    
-    .q_b       (),    
-    .address_a (ht_addr_5_0[12-1:0]),
-    .address_b (),
+    .q_a       (),    
+    .q_b       (ht_q_5_0),    
+    .address_a (wr_addr[12-1:0]),
+    .address_b (ht_addr_5_0[12-1:0]),
     .clock     (clk),
-    .wr_data   (wr_data),
-    .wr_addr   (ht_addr_5_0[12-1:0]),
-    .wr_en     (wr_en && (wr_addr[17:15]==3'd5))
+    .wr_data_a (wr_data),
+    .wr_en_a   (wr_en && (wr_addr[17:15]==3'd5))
 );
 rom_2port #(
     .DWIDTH(RID_WIDTH),
@@ -3464,14 +3458,13 @@ rom_2port #(
     .INIT_FILE("./memory_init/hashtable6.mif")
 )
 hashtable_inst_6_0(
-    .q_a       (ht_q_6_0),    
-    .q_b       (),    
-    .address_a (ht_addr_6_0[10-1:0]),
-    .address_b (),
+    .q_a       (),    
+    .q_b       (ht_q_6_0),    
+    .address_a (wr_addr[10-1:0]),
+    .address_b (ht_addr_6_0[10-1:0]),
     .clock     (clk),
-    .wr_data   (wr_data),
-    .wr_addr   (ht_addr_6_0[10-1:0]),
-    .wr_en     (wr_en && (wr_addr[17:15]==3'd6))
+    .wr_data_a (wr_data),
+    .wr_en_a   (wr_en && (wr_addr[17:15]==3'd6))
 );
 rom_2port #(
     .DWIDTH(RID_WIDTH),
@@ -3480,14 +3473,13 @@ rom_2port #(
     .INIT_FILE("./memory_init/hashtable7.mif")
 )
 hashtable_inst_7_0(
-    .q_a       (ht_q_7_0),    
-    .q_b       (),    
-    .address_a (ht_addr_7_0[8-1:0]),
-    .address_b (),
+    .q_a       (),    
+    .q_b       (ht_q_7_0),    
+    .address_a (wr_addr[8-1:0]),
+    .address_b (ht_addr_7_0[8-1:0]),
     .clock     (clk),
-    .wr_data   (wr_data),
-    .wr_addr   (ht_addr_7_0[8-1:0]),
-    .wr_en     (wr_en && (wr_addr[17:15]==3'd7))
+    .wr_data_a (wr_data),
+    .wr_en_a   (wr_en && (wr_addr[17:15]==3'd7))
 );
 
 //rule FIFO

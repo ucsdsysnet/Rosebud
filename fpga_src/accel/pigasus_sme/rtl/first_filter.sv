@@ -179,12 +179,11 @@ rom_2port #(
 match_table_0 (
 	.q_a       (q0),    
 	.q_b       (q1),    
-	.address_a (addr0),
+	.address_a (wr_en ? wr_addr : addr0),
 	.address_b (addr1),
 	.clock     (clk),
-  .wr_data   (wr_data),
-  .wr_addr   (wr_addr),
-  .wr_en     (wr_en)
+  .wr_data_a (wr_data),
+  .wr_en_a   (wr_en)
 );
 rom_2port #(
 	.DWIDTH(64),
@@ -195,12 +194,11 @@ rom_2port #(
 match_table_1 (
 	.q_a       (q2),    
 	.q_b       (q3),    
-	.address_a (addr2),
+	.address_a (wr_en ? wr_addr : addr2),
 	.address_b (addr3),
 	.clock     (clk),
-  .wr_data   (wr_data),
-  .wr_addr   (wr_addr),
-  .wr_en     (wr_en)
+  .wr_data_a (wr_data),
+  .wr_en_a   (wr_en)
 );
 rom_2port #(
 	.DWIDTH(64),
@@ -211,12 +209,11 @@ rom_2port #(
 match_table_2 (
 	.q_a       (q4),    
 	.q_b       (q5),    
-	.address_a (addr4),
+	.address_a (wr_en ? wr_addr : addr4),
 	.address_b (addr5),
 	.clock     (clk),
-  .wr_data   (wr_data),
-  .wr_addr   (wr_addr),
-  .wr_en     (wr_en)
+  .wr_data_a (wr_data),
+  .wr_en_a   (wr_en)
 );
 rom_2port #(
 	.DWIDTH(64),
@@ -227,12 +224,11 @@ rom_2port #(
 match_table_3 (
 	.q_a       (q6),    
 	.q_b       (q7),    
-	.address_a (addr6),
+	.address_a (wr_en ? wr_addr : addr6),
 	.address_b (addr7),
 	.clock     (clk),
-  .wr_data   (wr_data),
-  .wr_addr   (wr_addr),
-  .wr_en     (wr_en)
+  .wr_data_a (wr_data),
+  .wr_en_a   (wr_en)
 );
 rom_2port #(
 	.DWIDTH(64),
@@ -243,12 +239,11 @@ rom_2port #(
 match_table_4 (
 	.q_a       (q8),    
 	.q_b       (q9),    
-	.address_a (addr8),
+	.address_a (wr_en ? wr_addr : addr8),
 	.address_b (addr9),
 	.clock     (clk),
-  .wr_data   (wr_data),
-  .wr_addr   (wr_addr),
-  .wr_en     (wr_en)
+  .wr_data_a (wr_data),
+  .wr_en_a   (wr_en)
 );
 rom_2port #(
 	.DWIDTH(64),
@@ -259,12 +254,11 @@ rom_2port #(
 match_table_5 (
 	.q_a       (q10),    
 	.q_b       (q11),    
-	.address_a (addr10),
+	.address_a (wr_en ? wr_addr : addr10),
 	.address_b (addr11),
 	.clock     (clk),
-  .wr_data   (wr_data),
-  .wr_addr   (wr_addr),
-  .wr_en     (wr_en)
+  .wr_data_a (wr_data),
+  .wr_en_a   (wr_en)
 );
 rom_2port #(
 	.DWIDTH(64),
@@ -275,12 +269,11 @@ rom_2port #(
 match_table_6 (
 	.q_a       (q12),    
 	.q_b       (q13),    
-	.address_a (addr12),
+	.address_a (wr_en ? wr_addr : addr12),
 	.address_b (addr13),
 	.clock     (clk),
-  .wr_data   (wr_data),
-  .wr_addr   (wr_addr),
-  .wr_en     (wr_en)
+  .wr_data_a (wr_data),
+  .wr_en_a   (wr_en)
 );
 rom_2port #(
 	.DWIDTH(64),
@@ -291,12 +284,11 @@ rom_2port #(
 match_table_7 (
 	.q_a       (q14),    
 	.q_b       (q15),    
-	.address_a (addr14),
+	.address_a (wr_en ? wr_addr : addr14),
 	.address_b (addr15),
 	.clock     (clk),
-  .wr_data   (wr_data),
-  .wr_addr   (wr_addr),
-  .wr_en     (wr_en)
+  .wr_data_a (wr_data),
+  .wr_en_a   (wr_en)
 );
 
 endmodule

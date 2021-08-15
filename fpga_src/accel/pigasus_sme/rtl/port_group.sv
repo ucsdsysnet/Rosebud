@@ -347,12 +347,11 @@ rom_2port #(
 rule2pg_table_0_1 (
     .q_a       (rule_pg_data_0),
     .q_b       (rule_pg_data_1),
-    .address_a (rule_pg_addr_0),
+    .address_a (wr_en ? wr_addr : rule_pg_addr_0),
     .address_b (rule_pg_addr_1),
     .clock     (clk),
-    .wr_data   (wr_data),
-    .wr_addr   (wr_addr),
-    .wr_en     (wr_en)
+    .wr_data_a (wr_data),
+    .wr_en_a   (wr_en)
 );
 rom_2port #(
     .DWIDTH(RULE_PG_WIDTH),
@@ -363,12 +362,11 @@ rom_2port #(
 rule2pg_table_2_3 (
     .q_a       (rule_pg_data_2),
     .q_b       (rule_pg_data_3),
-    .address_a (rule_pg_addr_2),
+    .address_a (wr_en ? wr_addr : rule_pg_addr_2),
     .address_b (rule_pg_addr_3),
     .clock     (clk),
-    .wr_data   (wr_data),
-    .wr_addr   (wr_addr),
-    .wr_en     (wr_en)
+    .wr_data_a (wr_data),
+    .wr_en_a   (wr_en)
 );
 rom_2port #(
     .DWIDTH(RULE_PG_WIDTH),
@@ -379,12 +377,11 @@ rom_2port #(
 rule2pg_table_4_5 (
     .q_a       (rule_pg_data_4),
     .q_b       (rule_pg_data_5),
-    .address_a (rule_pg_addr_4),
+    .address_a (wr_en ? wr_addr : rule_pg_addr_4),
     .address_b (rule_pg_addr_5),
     .clock     (clk),
-    .wr_data   (wr_data),
-    .wr_addr   (wr_addr),
-    .wr_en     (wr_en)
+    .wr_data_a (wr_data),
+    .wr_en_a   (wr_en)
 );
 rom_2port #(
     .DWIDTH(RULE_PG_WIDTH),
@@ -395,12 +392,11 @@ rom_2port #(
 rule2pg_table_6_7 (
     .q_a       (rule_pg_data_6),
     .q_b       (rule_pg_data_7),
-    .address_a (rule_pg_addr_6),
+    .address_a (wr_en ? wr_addr : rule_pg_addr_6),
     .address_b (rule_pg_addr_7),
     .clock     (clk),
-    .wr_data   (wr_data),
-    .wr_addr   (wr_addr),
-    .wr_en     (wr_en)
+    .wr_data_a (wr_data),
+    .wr_en_a   (wr_en)
 );
 
 //rule FIFO

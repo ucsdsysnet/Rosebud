@@ -216,12 +216,11 @@ rom_2port #(
 rule2pg_table_{{2*i}}_{{2*i+1}} (
     .q_a       (rule_pg_data_{{2*i}}),
     .q_b       (rule_pg_data_{{2*i+1}}),
-    .address_a (rule_pg_addr_{{2*i}}),
+    .address_a (wr_en ? wr_addr : rule_pg_addr_{{2*i}}),
     .address_b (rule_pg_addr_{{2*i+1}}),
     .clock     (clk),
-    .wr_data   (wr_data),
-    .wr_addr   (wr_addr),
-    .wr_en     (wr_en)
+    .wr_data_a (wr_data),
+    .wr_en_a   (wr_en)
 );
 {% endfor %}
 
