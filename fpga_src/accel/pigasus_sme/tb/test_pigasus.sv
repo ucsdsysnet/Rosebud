@@ -54,6 +54,8 @@ module test_pigasus # (
   wire [18:0]  wr_addr;
   wire         wr_en;
 
+  assign wr_en = 1'b0;
+
   string_matcher pigasus (
     .clk(clk),
     .rst(rst),
@@ -162,6 +164,37 @@ module test_pigasus # (
 
   integer j;
   initial begin
+    $readmemh("./memory_init/match_table.mif", 
+              pigasus.front.filter_inst.match_table_0.mem);
+    $readmemh("./memory_init/match_table.mif", 
+              pigasus.front.filter_inst.match_table_1.mem);
+    $readmemh("./memory_init/match_table.mif", 
+              pigasus.front.filter_inst.match_table_2.mem);
+    $readmemh("./memory_init/match_table.mif", 
+              pigasus.front.filter_inst.match_table_3.mem);
+    $readmemh("./memory_init/match_table.mif", 
+              pigasus.front.filter_inst.match_table_4.mem);
+    $readmemh("./memory_init/match_table.mif", 
+              pigasus.front.filter_inst.match_table_5.mem);
+    $readmemh("./memory_init/match_table.mif", 
+              pigasus.front.filter_inst.match_table_6.mem);
+    $readmemh("./memory_init/match_table.mif", 
+              pigasus.front.filter_inst.match_table_7.mem);
+
+    $readmemh("./memory_init/rule_2_pg_packed.mif",
+              pg_inst.rule2pg_table_0_1.mem);
+    $readmemh("./memory_init/rule_2_pg_packed.mif",
+              pg_inst.rule2pg_table_2_3.mem);
+    $readmemh("./memory_init/rule_2_pg_packed.mif",
+              pg_inst.rule2pg_table_4_5.mem);
+    $readmemh("./memory_init/rule_2_pg_packed.mif",
+              pg_inst.rule2pg_table_6_7.mem);
+
+    $readmemh("./memory_init/hashtable0_packed.mif", 
+              pigasus.back.hashtable_inst_0_0.mem);
+    $readmemh("./memory_init/hashtable1_packed.mif", 
+              pigasus.back.hashtable_inst_1_0.mem);
+
     $dumpfile ("sim_build/sim_results.fst");
     $dumpvars (0,test_pigasus);
     for (j=0; j<8; j=j+1)

@@ -343,6 +343,7 @@ uram_2rw_reg #(
     .AWIDTH(RULE_AWIDTH),
     .LWIDTH(2*RULE_PG_WIDTH),
     .MEM_SIZE(RULE_DEPTH)
+    // .INIT_FILE("./memory_init/rule_2_pg.mif")
 )
 rule2pg_table_0_1 (
     .clock     (clk),
@@ -362,6 +363,7 @@ uram_2rw_reg #(
     .AWIDTH(RULE_AWIDTH),
     .LWIDTH(2*RULE_PG_WIDTH),
     .MEM_SIZE(RULE_DEPTH)
+    // .INIT_FILE("./memory_init/rule_2_pg.mif")
 )
 rule2pg_table_2_3 (
     .clock     (clk),
@@ -381,6 +383,7 @@ uram_2rw_reg #(
     .AWIDTH(RULE_AWIDTH),
     .LWIDTH(2*RULE_PG_WIDTH),
     .MEM_SIZE(RULE_DEPTH)
+    // .INIT_FILE("./memory_init/rule_2_pg.mif")
 )
 rule2pg_table_4_5 (
     .clock     (clk),
@@ -400,6 +403,7 @@ uram_2rw_reg #(
     .AWIDTH(RULE_AWIDTH),
     .LWIDTH(2*RULE_PG_WIDTH),
     .MEM_SIZE(RULE_DEPTH)
+    // .INIT_FILE("./memory_init/rule_2_pg.mif")
 )
 rule2pg_table_6_7 (
     .clock     (clk),

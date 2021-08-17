@@ -45,13 +45,13 @@ module uram_2rw_reg #(
   input  wire [AWIDTH-1:0] address_a,
   input  wire [LWIDTH-1:0] wr_data_a,
   input  wire              wr_en_a,
-  output reg  [DWIDTH-1:0] q_a,
+  output wire [DWIDTH-1:0] q_a,
 
   input  wire              en_b,
   input  wire [AWIDTH-1:0] address_b,
   input  wire [LWIDTH-1:0] wr_data_b,
   input  wire              wr_en_b,
-  output reg  [DWIDTH-1:0] q_b
+  output wire [DWIDTH-1:0] q_b
 );
 
   localparam DEPTH = (LWIDTH==DWIDTH) ? AWIDTH : 
@@ -66,13 +66,13 @@ module uram_2rw_reg #(
   reg              wr_en_a_r;
   reg [AWIDTH-1:0] address_a_r;
   reg [LWIDTH-1:0] wr_data_a_r;
-  reg [DWIDTH-1:0] q_a_r;
+  reg [LWIDTH-1:0] q_a_r;
 
   reg              en_b_r;
   reg              wr_en_b_r;
   reg [AWIDTH-1:0] address_b_r;
   reg [LWIDTH-1:0] wr_data_b_r;
-  reg [DWIDTH-1:0] q_b_r;
+  reg [LWIDTH-1:0] q_b_r;
 
   // Input register
   always @ (posedge clock) begin

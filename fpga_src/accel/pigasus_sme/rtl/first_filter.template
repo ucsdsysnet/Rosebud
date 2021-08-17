@@ -114,6 +114,7 @@ uram_2rw_reg #(
 	.DWIDTH(64),
 	.AWIDTH(13),
 	.MEM_SIZE(8192)
+	// .INIT_FILE("./memory_init/match_table.mif")
 )
 match_table_{{i}} (
 	.clock     (clk),

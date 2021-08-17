@@ -174,6 +174,7 @@ uram_2rw_reg #(
 	.DWIDTH(64),
 	.AWIDTH(13),
 	.MEM_SIZE(8192)
+	// .INIT_FILE("./memory_init/match_table.mif")
 )
 match_table_0 (
 	.clock     (clk),
@@ -192,6 +193,7 @@ uram_2rw_reg #(
 	.DWIDTH(64),
 	.AWIDTH(13),
 	.MEM_SIZE(8192)
+	// .INIT_FILE("./memory_init/match_table.mif")
 )
 match_table_1 (
 	.clock     (clk),
@@ -210,6 +212,7 @@ uram_2rw_reg #(
 	.DWIDTH(64),
 	.AWIDTH(13),
 	.MEM_SIZE(8192)
+	// .INIT_FILE("./memory_init/match_table.mif")
 )
 match_table_2 (
 	.clock     (clk),
@@ -228,6 +231,7 @@ uram_2rw_reg #(
 	.DWIDTH(64),
 	.AWIDTH(13),
 	.MEM_SIZE(8192)
+	// .INIT_FILE("./memory_init/match_table.mif")
 )
 match_table_3 (
 	.clock     (clk),
@@ -246,6 +250,7 @@ uram_2rw_reg #(
 	.DWIDTH(64),
 	.AWIDTH(13),
 	.MEM_SIZE(8192)
+	// .INIT_FILE("./memory_init/match_table.mif")
 )
 match_table_4 (
 	.clock     (clk),
@@ -264,6 +269,7 @@ uram_2rw_reg #(
 	.DWIDTH(64),
 	.AWIDTH(13),
 	.MEM_SIZE(8192)
+	// .INIT_FILE("./memory_init/match_table.mif")
 )
 match_table_5 (
 	.clock     (clk),
@@ -282,6 +288,7 @@ uram_2rw_reg #(
 	.DWIDTH(64),
 	.AWIDTH(13),
 	.MEM_SIZE(8192)
+	// .INIT_FILE("./memory_init/match_table.mif")
 )
 match_table_6 (
 	.clock     (clk),
@@ -300,6 +307,7 @@ uram_2rw_reg #(
 	.DWIDTH(64),
 	.AWIDTH(13),
 	.MEM_SIZE(8192)
+	// .INIT_FILE("./memory_init/match_table.mif")
 )
 match_table_7 (
 	.clock     (clk),

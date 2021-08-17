@@ -3366,6 +3366,7 @@ uram_2rw_reg #(
     .AWIDTH(15),
     .LWIDTH(4*RID_WIDTH),
     .MEM_SIZE(32768)
+    // .INIT_FILE("./memory_init/hashtable0.mif")
 )
 hashtable_inst_0_0(
     .clock     (clk),
@@ -3385,6 +3386,7 @@ uram_2rw_reg #(
     .AWIDTH(15),
     .LWIDTH(4*RID_WIDTH),
     .MEM_SIZE(32768)
+    // .INIT_FILE("./memory_init/hashtable1.mif")
 )
 hashtable_inst_1_0(
     .clock     (clk),

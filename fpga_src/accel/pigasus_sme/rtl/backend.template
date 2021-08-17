@@ -216,6 +216,7 @@ uram_2rw_reg #(
     .AWIDTH({{context['nbits'][i]}}),
     .LWIDTH(4*RID_WIDTH),
     .MEM_SIZE({{context['mem_size'][i]}})
+    // .INIT_FILE("./memory_init/hashtable{{i}}.mif")
 )
 hashtable_inst_{{i}}_0(
     .clock     (clk),
