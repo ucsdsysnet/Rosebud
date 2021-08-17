@@ -233,94 +233,97 @@ set_false_path -to [get_ports {i2c_sda i2c_scl}]
 # Gousheh PBlocks, PR
 create_pblock Gousheh_1
 add_cells_to_pblock [get_pblocks Gousheh_1] [get_cells -quiet [list {core_inst/riscv_cores[0].pr_wrapper}]]
-resize_pblock [get_pblocks Gousheh_1] -add {SLICE_X13Y0:SLICE_X79Y119}
-resize_pblock [get_pblocks Gousheh_1] -add {DSP48E2_X1Y0:DSP48E2_X8Y47}
+resize_pblock [get_pblocks Gousheh_1] -add {SLICE_X13Y0:SLICE_X83Y119}
+resize_pblock [get_pblocks Gousheh_1] -add {DSP48E2_X1Y0:DSP48E2_X9Y47}
 resize_pblock [get_pblocks Gousheh_1] -add {IOB_X0Y0:IOB_X0Y103}
 resize_pblock [get_pblocks Gousheh_1] -add {LAGUNA_X2Y0:LAGUNA_X11Y119}
-resize_pblock [get_pblocks Gousheh_1] -add {RAMB18_X1Y0:RAMB18_X4Y47}
-resize_pblock [get_pblocks Gousheh_1] -add {RAMB36_X1Y0:RAMB36_X4Y23}
+resize_pblock [get_pblocks Gousheh_1] -add {RAMB18_X1Y0:RAMB18_X5Y47}
+resize_pblock [get_pblocks Gousheh_1] -add {RAMB36_X1Y0:RAMB36_X5Y23}
 resize_pblock [get_pblocks Gousheh_1] -add {URAM288_X0Y0:URAM288_X1Y31}
-set_property HD.PARTPIN_RANGE {SLICE_X13Y105:SLICE_X79Y119} [get_pins -regexp {core_inst/riscv_cores\[0\].pr_wrapper/(?!clk).*}]
+set_property HD.PARTPIN_RANGE {SLICE_X13Y105:SLICE_X83Y119} [get_pins -regexp {core_inst/riscv_cores\[0\].pr_wrapper/(?!clk).*}]
 set_property SNAPPING_MODE ON [get_pblocks Gousheh_1]
 set_property IS_SOFT FALSE [get_pblocks Gousheh_1]
 create_pblock Gousheh_2
 add_cells_to_pblock [get_pblocks Gousheh_2] [get_cells -quiet [list {core_inst/riscv_cores[1].pr_wrapper}]]
-resize_pblock [get_pblocks Gousheh_2] -add {SLICE_X88Y0:SLICE_X155Y119}
-resize_pblock [get_pblocks Gousheh_2] -add {DSP48E2_X11Y0:DSP48E2_X17Y47}
+resize_pblock [get_pblocks Gousheh_2] -add {SLICE_X86Y0:SLICE_X155Y119}
+resize_pblock [get_pblocks Gousheh_2] -add {DSP48E2_X10Y0:DSP48E2_X17Y47}
 resize_pblock [get_pblocks Gousheh_2] -add {IOB_X1Y0:IOB_X1Y103}
 resize_pblock [get_pblocks Gousheh_2] -add {LAGUNA_X12Y0:LAGUNA_X21Y119}
-resize_pblock [get_pblocks Gousheh_2] -add {RAMB18_X7Y0:RAMB18_X10Y47}
-resize_pblock [get_pblocks Gousheh_2] -add {RAMB36_X7Y0:RAMB36_X10Y23}
+resize_pblock [get_pblocks Gousheh_2] -add {RAMB18_X6Y0:RAMB18_X10Y47}
+resize_pblock [get_pblocks Gousheh_2] -add {RAMB36_X6Y0:RAMB36_X10Y23}
 resize_pblock [get_pblocks Gousheh_2] -add {URAM288_X2Y0:URAM288_X3Y31}
-set_property HD.PARTPIN_RANGE {SLICE_X88Y105:SLICE_X155Y119} [get_pins -regexp {core_inst/riscv_cores\[1\].pr_wrapper/(?!clk).*}]
+set_property HD.PARTPIN_RANGE {SLICE_X86Y105:SLICE_X155Y119} [get_pins -regexp {core_inst/riscv_cores\[1\].pr_wrapper/(?!clk).*}]
 set_property SNAPPING_MODE ON [get_pblocks Gousheh_2]
 set_property IS_SOFT FALSE [get_pblocks Gousheh_2]
 create_pblock Gousheh_3
 add_cells_to_pblock [get_pblocks Gousheh_3] [get_cells -quiet [list {core_inst/riscv_cores[2].pr_wrapper}]]
-resize_pblock [get_pblocks Gousheh_3] -add {SLICE_X13Y150:SLICE_X79Y269}
-resize_pblock [get_pblocks Gousheh_3] -add {DSP48E2_X1Y60:DSP48E2_X8Y107}
+resize_pblock [get_pblocks Gousheh_3] -add {SLICE_X13Y150:SLICE_X83Y269}
+resize_pblock [get_pblocks Gousheh_3] -add {DSP48E2_X1Y60:DSP48E2_X9Y107}
 resize_pblock [get_pblocks Gousheh_3] -add {IOB_X0Y130:IOB_X0Y233}
-resize_pblock [get_pblocks Gousheh_3] -add {RAMB18_X1Y60:RAMB18_X4Y107}
-resize_pblock [get_pblocks Gousheh_3] -add {RAMB36_X1Y30:RAMB36_X4Y53}
+resize_pblock [get_pblocks Gousheh_3] -add {RAMB18_X1Y60:RAMB18_X5Y107}
+resize_pblock [get_pblocks Gousheh_3] -add {RAMB36_X1Y30:RAMB36_X5Y53}
 resize_pblock [get_pblocks Gousheh_3] -add {URAM288_X0Y40:URAM288_X1Y71}
-set_property HD.PARTPIN_RANGE {SLICE_X13Y255:SLICE_X18Y269 SLICE_X21Y255:SLICE_X32Y269 SLICE_X35Y255:SLICE_X46Y269 SLICE_X49Y255:SLICE_X54Y269 SLICE_X56Y255:SLICE_X61Y269 SLICE_X64Y255:SLICE_X77Y269} [get_pins -regexp {core_inst/riscv_cores\[2\].pr_wrapper/(?!clk).*}]
+set_property HD.PARTPIN_RANGE {SLICE_X13Y255:SLICE_X18Y269 SLICE_X21Y255:SLICE_X32Y269 SLICE_X35Y255:SLICE_X46Y269 SLICE_X49Y255:SLICE_X54Y269 SLICE_X56Y255:SLICE_X61Y269 SLICE_X64Y255:SLICE_X77Y269 SLICE_X80Y255:SLICE_X83Y269} [get_pins -regexp {core_inst/riscv_cores\[2\].pr_wrapper/(?!clk).*}]
 set_property SNAPPING_MODE ON [get_pblocks Gousheh_3]
 set_property IS_SOFT FALSE [get_pblocks Gousheh_3]
 create_pblock Gousheh_4
 add_cells_to_pblock [get_pblocks Gousheh_4] [get_cells -quiet [list {core_inst/riscv_cores[3].pr_wrapper}]]
-resize_pblock [get_pblocks Gousheh_4] -add {SLICE_X88Y150:SLICE_X155Y269}
-resize_pblock [get_pblocks Gousheh_4] -add {DSP48E2_X11Y60:DSP48E2_X17Y107}
+resize_pblock [get_pblocks Gousheh_4] -add {SLICE_X86Y150:SLICE_X155Y269}
+resize_pblock [get_pblocks Gousheh_4] -add {DSP48E2_X10Y60:DSP48E2_X17Y107}
 resize_pblock [get_pblocks Gousheh_4] -add {IOB_X1Y130:IOB_X1Y233}
-resize_pblock [get_pblocks Gousheh_4] -add {RAMB18_X7Y60:RAMB18_X10Y107}
-resize_pblock [get_pblocks Gousheh_4] -add {RAMB36_X7Y30:RAMB36_X10Y53}
+resize_pblock [get_pblocks Gousheh_4] -add {RAMB18_X6Y60:RAMB18_X10Y107}
+resize_pblock [get_pblocks Gousheh_4] -add {RAMB36_X6Y30:RAMB36_X10Y53}
 resize_pblock [get_pblocks Gousheh_4] -add {URAM288_X2Y40:URAM288_X3Y71}
-set_property HD.PARTPIN_RANGE {SLICE_X88Y255:SLICE_X89Y269 SLICE_X92Y255:SLICE_X103Y269 SLICE_X106Y255:SLICE_X111Y269 SLICE_X113Y255:SLICE_X118Y269 SLICE_X121Y255:SLICE_X134Y269 SLICE_X137Y255:SLICE_X149Y269 SLICE_X152Y255:SLICE_X155Y269} [get_pins -regexp {core_inst/riscv_cores\[3\].pr_wrapper/(?!clk).*}]
+set_property HD.PARTPIN_RANGE {SLICE_X86Y255:SLICE_X89Y269 SLICE_X92Y255:SLICE_X103Y269 SLICE_X106Y255:SLICE_X111Y269 SLICE_X113Y255:SLICE_X118Y269 SLICE_X121Y255:SLICE_X134Y269 SLICE_X137Y255:SLICE_X149Y269 SLICE_X152Y255:SLICE_X155Y269} [get_pins -regexp {core_inst/riscv_cores\[3\].pr_wrapper/(?!clk).*}]
 set_property SNAPPING_MODE ON [get_pblocks Gousheh_4]
 set_property IS_SOFT FALSE [get_pblocks Gousheh_4]
 create_pblock Gousheh_5
 add_cells_to_pblock [get_pblocks Gousheh_5] [get_cells -quiet [list {core_inst/riscv_cores[4].pr_wrapper}]]
-resize_pblock [get_pblocks Gousheh_5] -add {SLICE_X21Y630:SLICE_X83Y749}
-resize_pblock [get_pblocks Gousheh_5] -add {DSP48E2_X2Y252:DSP48E2_X9Y299}
+resize_pblock [get_pblocks Gousheh_5] -add {SLICE_X22Y630:SLICE_X89Y749}
+resize_pblock [get_pblocks Gousheh_5] -add {DSP48E2_X3Y252:DSP48E2_X10Y299}
 resize_pblock [get_pblocks Gousheh_5] -add {IOB_X0Y546:IOB_X0Y649}
-resize_pblock [get_pblocks Gousheh_5] -add {RAMB18_X2Y252:RAMB18_X5Y299}
-resize_pblock [get_pblocks Gousheh_5] -add {RAMB36_X2Y126:RAMB36_X5Y149}
+resize_pblock [get_pblocks Gousheh_5] -add {RAMB18_X2Y252:RAMB18_X6Y299}
+resize_pblock [get_pblocks Gousheh_5] -add {RAMB36_X2Y126:RAMB36_X6Y149}
 resize_pblock [get_pblocks Gousheh_5] -add {URAM288_X0Y168:URAM288_X1Y199}
-set_property HD.PARTPIN_RANGE {SLICE_X21Y630:SLICE_X32Y644 SLICE_X35Y630:SLICE_X46Y644 SLICE_X49Y630:SLICE_X54Y644 SLICE_X56Y630:SLICE_X61Y644 SLICE_X64Y630:SLICE_X77Y644 SLICE_X80Y630:SLICE_X82Y644} [get_pins -regexp {core_inst/riscv_cores\[4\].pr_wrapper/(?!clk).*}]
+set_property HD.PARTPIN_RANGE {SLICE_X22Y630:SLICE_X32Y644 SLICE_X35Y630:SLICE_X46Y644 SLICE_X49Y630:SLICE_X54Y644 SLICE_X56Y630:SLICE_X61Y644 SLICE_X64Y630:SLICE_X77Y644 SLICE_X80Y630:SLICE_X89Y644} [get_pins -regexp {core_inst/riscv_cores\[4\].pr_wrapper/(?!clk).*}]
 set_property SNAPPING_MODE ON [get_pblocks Gousheh_5]
 set_property IS_SOFT FALSE [get_pblocks Gousheh_5]
 create_pblock Gousheh_6
 add_cells_to_pblock [get_pblocks Gousheh_6] [get_cells -quiet [list {core_inst/riscv_cores[5].pr_wrapper}]]
-resize_pblock [get_pblocks Gousheh_6] -add {SLICE_X88Y630:SLICE_X155Y749}
+resize_pblock [get_pblocks Gousheh_6] -add {SLICE_X92Y630:SLICE_X160Y749}
+resize_pblock [get_pblocks Gousheh_6] -add {CFGIO_SITE_X0Y2:CFGIO_SITE_X0Y2}
+resize_pblock [get_pblocks Gousheh_6] -add {CONFIG_SITE_X0Y2:CONFIG_SITE_X0Y2}
 resize_pblock [get_pblocks Gousheh_6] -add {DSP48E2_X11Y252:DSP48E2_X17Y299}
 resize_pblock [get_pblocks Gousheh_6] -add {IOB_X1Y546:IOB_X1Y649}
-resize_pblock [get_pblocks Gousheh_6] -add {RAMB18_X7Y252:RAMB18_X10Y299}
-resize_pblock [get_pblocks Gousheh_6] -add {RAMB36_X7Y126:RAMB36_X10Y149}
+resize_pblock [get_pblocks Gousheh_6] -add {RAMB18_X7Y252:RAMB18_X11Y299}
+resize_pblock [get_pblocks Gousheh_6] -add {RAMB36_X7Y126:RAMB36_X11Y149}
 resize_pblock [get_pblocks Gousheh_6] -add {URAM288_X2Y168:URAM288_X3Y199}
-set_property HD.PARTPIN_RANGE {SLICE_X88Y630:SLICE_X89Y644 SLICE_X92Y630:SLICE_X103Y644 SLICE_X106Y630:SLICE_X111Y644 SLICE_X113Y630:SLICE_X118Y644 SLICE_X121Y630:SLICE_X134Y644 SLICE_X137Y630:SLICE_X149Y644 SLICE_X152Y630:SLICE_X154Y644} [get_pins -regexp {core_inst/riscv_cores\[5\].pr_wrapper/(?!clk).*}]
+set_property HD.PARTPIN_RANGE {SLICE_X92Y630:SLICE_X103Y644 SLICE_X106Y630:SLICE_X111Y644 SLICE_X113Y630:SLICE_X118Y644 SLICE_X121Y630:SLICE_X134Y644 SLICE_X137Y630:SLICE_X149Y644 SLICE_X152Y630:SLICE_X155Y644 SLICE_X158Y630:SLICE_X160Y644} [get_pins -regexp {core_inst/riscv_cores\[5\].pr_wrapper/(?!clk).*}]
 set_property SNAPPING_MODE ON [get_pblocks Gousheh_6]
 set_property IS_SOFT FALSE [get_pblocks Gousheh_6]
 create_pblock Gousheh_7
 add_cells_to_pblock [get_pblocks Gousheh_7] [get_cells -quiet [list {core_inst/riscv_cores[6].pr_wrapper}]]
-resize_pblock [get_pblocks Gousheh_7] -add {SLICE_X21Y780:SLICE_X83Y899}
-resize_pblock [get_pblocks Gousheh_7] -add {DSP48E2_X2Y312:DSP48E2_X9Y359}
+resize_pblock [get_pblocks Gousheh_7] -add {SLICE_X22Y780:SLICE_X89Y899}
+resize_pblock [get_pblocks Gousheh_7] -add {DSP48E2_X3Y312:DSP48E2_X10Y359}
 resize_pblock [get_pblocks Gousheh_7] -add {IOB_X0Y676:IOB_X0Y779}
 resize_pblock [get_pblocks Gousheh_7] -add {LAGUNA_X4Y600:LAGUNA_X11Y719}
-resize_pblock [get_pblocks Gousheh_7] -add {RAMB18_X2Y312:RAMB18_X5Y359}
-resize_pblock [get_pblocks Gousheh_7] -add {RAMB36_X2Y156:RAMB36_X5Y179}
+resize_pblock [get_pblocks Gousheh_7] -add {RAMB18_X2Y312:RAMB18_X6Y359}
+resize_pblock [get_pblocks Gousheh_7] -add {RAMB36_X2Y156:RAMB36_X6Y179}
 resize_pblock [get_pblocks Gousheh_7] -add {URAM288_X0Y208:URAM288_X1Y239}
-set_property HD.PARTPIN_RANGE {SLICE_X21Y780:SLICE_X82Y794} [get_pins -regexp {core_inst/riscv_cores\[6\].pr_wrapper/(?!clk).*}]
+set_property HD.PARTPIN_RANGE {SLICE_X22Y780:SLICE_X89Y794} [get_pins -regexp {core_inst/riscv_cores\[6\].pr_wrapper/(?!clk).*}]
 set_property SNAPPING_MODE ON [get_pblocks Gousheh_7]
 set_property IS_SOFT FALSE [get_pblocks Gousheh_7]
 create_pblock Gousheh_8
 add_cells_to_pblock [get_pblocks Gousheh_8] [get_cells -quiet [list {core_inst/riscv_cores[7].pr_wrapper}]]
-resize_pblock [get_pblocks Gousheh_8] -add {SLICE_X88Y780:SLICE_X155Y899}
+resize_pblock [get_pblocks Gousheh_8] -add {SLICE_X92Y780:SLICE_X160Y899}
 resize_pblock [get_pblocks Gousheh_8] -add {DSP48E2_X11Y312:DSP48E2_X17Y359}
+resize_pblock [get_pblocks Gousheh_8] -add {ILKNE4_X1Y7:ILKNE4_X1Y8}
 resize_pblock [get_pblocks Gousheh_8] -add {IOB_X1Y676:IOB_X1Y779}
-resize_pblock [get_pblocks Gousheh_8] -add {LAGUNA_X12Y600:LAGUNA_X21Y719}
-resize_pblock [get_pblocks Gousheh_8] -add {RAMB18_X7Y312:RAMB18_X10Y359}
-resize_pblock [get_pblocks Gousheh_8] -add {RAMB36_X7Y156:RAMB36_X10Y179}
+resize_pblock [get_pblocks Gousheh_8] -add {LAGUNA_X14Y600:LAGUNA_X21Y719}
+resize_pblock [get_pblocks Gousheh_8] -add {RAMB18_X7Y312:RAMB18_X11Y359}
+resize_pblock [get_pblocks Gousheh_8] -add {RAMB36_X7Y156:RAMB36_X11Y179}
 resize_pblock [get_pblocks Gousheh_8] -add {URAM288_X2Y208:URAM288_X3Y239}
-set_property HD.PARTPIN_RANGE {SLICE_X88Y780:SLICE_X154Y794} [get_pins -regexp {core_inst/riscv_cores\[7\].pr_wrapper/(?!clk).*}]
+set_property HD.PARTPIN_RANGE {SLICE_X92Y780:SLICE_X160Y794} [get_pins -regexp {core_inst/riscv_cores\[7\].pr_wrapper/(?!clk).*}]
 set_property SNAPPING_MODE ON [get_pblocks Gousheh_8]
 set_property IS_SOFT FALSE [get_pblocks Gousheh_8]
 
@@ -328,67 +331,67 @@ set_property IS_SOFT FALSE [get_pblocks Gousheh_8]
 # Wrapper PBlocks
 create_pblock Wrapper_1
 add_cells_to_pblock [get_pblocks Wrapper_1] [get_cells -quiet [list {core_inst/riscv_cores[0].core_wrapper} \
-  core_inst/data_in_sw/grow.axis_switch_2lvl_grow_inst/output_registers[0].output_register/slr_dest_0/srl_fifo_0]]
-resize_pblock [get_pblocks Wrapper_1] -add {SLICE_X13Y120:SLICE_X79Y134}
-resize_pblock [get_pblocks Wrapper_1] -add {DSP48E2_X1Y48:DSP48E2_X8Y53}
-resize_pblock [get_pblocks Wrapper_1] -add {RAMB18_X1Y48:RAMB18_X4Y53}
-resize_pblock [get_pblocks Wrapper_1] -add {RAMB36_X1Y24:RAMB36_X4Y26}
+  {core_inst/data_in_sw/grow.axis_switch_2lvl_grow_inst/output_registers[0].output_register/slr_dest_0/srl_fifo_0}]]
+resize_pblock [get_pblocks Wrapper_1] -add {SLICE_X13Y120:SLICE_X83Y134}
+resize_pblock [get_pblocks Wrapper_1] -add {DSP48E2_X1Y48:DSP48E2_X9Y53}
+resize_pblock [get_pblocks Wrapper_1] -add {RAMB18_X1Y48:RAMB18_X5Y53}
+resize_pblock [get_pblocks Wrapper_1] -add {RAMB36_X1Y24:RAMB36_X5Y26}
 set_property IS_SOFT TRUE [get_pblocks Wrapper_1]
 create_pblock Wrapper_2
 add_cells_to_pblock [get_pblocks Wrapper_2] [get_cells -quiet [list {core_inst/riscv_cores[1].core_wrapper} \
-  core_inst/data_in_sw/grow.axis_switch_2lvl_grow_inst/output_registers[1].output_register/slr_dest_0/srl_fifo_0]]
-resize_pblock [get_pblocks Wrapper_2] -add {SLICE_X88Y120:SLICE_X155Y134}
-resize_pblock [get_pblocks Wrapper_2] -add {DSP48E2_X11Y48:DSP48E2_X17Y53}
-resize_pblock [get_pblocks Wrapper_2] -add {RAMB18_X7Y48:RAMB18_X10Y53}
-resize_pblock [get_pblocks Wrapper_2] -add {RAMB36_X7Y24:RAMB36_X10Y26}
+  {core_inst/data_in_sw/grow.axis_switch_2lvl_grow_inst/output_registers[1].output_register/slr_dest_0/srl_fifo_0}]]
+resize_pblock [get_pblocks Wrapper_2] -add {SLICE_X86Y120:SLICE_X155Y134}
+resize_pblock [get_pblocks Wrapper_2] -add {DSP48E2_X10Y48:DSP48E2_X17Y53}
+resize_pblock [get_pblocks Wrapper_2] -add {RAMB18_X6Y48:RAMB18_X10Y53}
+resize_pblock [get_pblocks Wrapper_2] -add {RAMB36_X6Y24:RAMB36_X10Y26}
 set_property IS_SOFT TRUE [get_pblocks Wrapper_2]
 create_pblock Wrapper_3
 add_cells_to_pblock [get_pblocks Wrapper_3] [get_cells -quiet [list {core_inst/riscv_cores[2].core_wrapper} \
-  core_inst/data_in_sw/grow.axis_switch_2lvl_grow_inst/output_registers[2].output_register/slr_dest_0/srl_fifo_0]]
-resize_pblock [get_pblocks Wrapper_3] -add {SLICE_X13Y270:SLICE_X79Y284}
-resize_pblock [get_pblocks Wrapper_3] -add {DSP48E2_X1Y108:DSP48E2_X8Y113}
-resize_pblock [get_pblocks Wrapper_3] -add {RAMB18_X1Y108:RAMB18_X4Y113}
-resize_pblock [get_pblocks Wrapper_3] -add {RAMB36_X1Y54:RAMB36_X4Y56}
+  {core_inst/data_in_sw/grow.axis_switch_2lvl_grow_inst/output_registers[2].output_register/slr_dest_0/srl_fifo_0}]]
+resize_pblock [get_pblocks Wrapper_3] -add {SLICE_X13Y270:SLICE_X83Y284}
+resize_pblock [get_pblocks Wrapper_3] -add {DSP48E2_X1Y108:DSP48E2_X9Y113}
+resize_pblock [get_pblocks Wrapper_3] -add {RAMB18_X1Y108:RAMB18_X5Y113}
+resize_pblock [get_pblocks Wrapper_3] -add {RAMB36_X1Y54:RAMB36_X5Y56}
 set_property IS_SOFT TRUE [get_pblocks Wrapper_3]
 create_pblock Wrapper_4
 add_cells_to_pblock [get_pblocks Wrapper_4] [get_cells -quiet [list {core_inst/riscv_cores[3].core_wrapper} \
-  core_inst/data_in_sw/grow.axis_switch_2lvl_grow_inst/output_registers[3].output_register/slr_dest_0/srl_fifo_0]]
-resize_pblock [get_pblocks Wrapper_4] -add {SLICE_X88Y270:SLICE_X155Y284}
-resize_pblock [get_pblocks Wrapper_4] -add {DSP48E2_X11Y108:DSP48E2_X17Y113}
-resize_pblock [get_pblocks Wrapper_4] -add {RAMB18_X7Y108:RAMB18_X10Y113}
-resize_pblock [get_pblocks Wrapper_4] -add {RAMB36_X7Y54:RAMB36_X10Y56}
+  {core_inst/data_in_sw/grow.axis_switch_2lvl_grow_inst/output_registers[3].output_register/slr_dest_0/srl_fifo_0}]]
+resize_pblock [get_pblocks Wrapper_4] -add {SLICE_X86Y270:SLICE_X155Y284}
+resize_pblock [get_pblocks Wrapper_4] -add {DSP48E2_X10Y108:DSP48E2_X17Y113}
+resize_pblock [get_pblocks Wrapper_4] -add {RAMB18_X6Y108:RAMB18_X10Y113}
+resize_pblock [get_pblocks Wrapper_4] -add {RAMB36_X6Y54:RAMB36_X10Y56}
 set_property IS_SOFT TRUE [get_pblocks Wrapper_4]
 create_pblock Wrapper_5
 add_cells_to_pblock [get_pblocks Wrapper_5] [get_cells -quiet [list {core_inst/riscv_cores[4].core_wrapper} \
-  core_inst/data_in_sw/grow.axis_switch_2lvl_grow_inst/output_registers[4].output_register/slr_dest_0/srl_fifo_0]]
-resize_pblock [get_pblocks Wrapper_5] -add {SLICE_X21Y615:SLICE_X82Y629}
-resize_pblock [get_pblocks Wrapper_5] -add {DSP48E2_X2Y246:DSP48E2_X9Y251}
-resize_pblock [get_pblocks Wrapper_5] -add {RAMB18_X2Y246:RAMB18_X4Y251}
-resize_pblock [get_pblocks Wrapper_5] -add {RAMB36_X2Y123:RAMB36_X4Y125}
+  {core_inst/data_in_sw/grow.axis_switch_2lvl_grow_inst/output_registers[4].output_register/slr_dest_0/srl_fifo_0}]]
+resize_pblock [get_pblocks Wrapper_5] -add {SLICE_X22Y615:SLICE_X89Y629}
+resize_pblock [get_pblocks Wrapper_5] -add {DSP48E2_X3Y246:DSP48E2_X10Y251}
+resize_pblock [get_pblocks Wrapper_5] -add {RAMB18_X2Y246:RAMB18_X6Y251}
+resize_pblock [get_pblocks Wrapper_5] -add {RAMB36_X2Y123:RAMB36_X6Y125}
 set_property IS_SOFT TRUE [get_pblocks Wrapper_5]
 create_pblock Wrapper_6
 add_cells_to_pblock [get_pblocks Wrapper_6] [get_cells -quiet [list {core_inst/riscv_cores[5].core_wrapper} \
-  core_inst/data_in_sw/grow.axis_switch_2lvl_grow_inst/output_registers[5].output_register/slr_dest_0/srl_fifo_0]]
-resize_pblock [get_pblocks Wrapper_6] -add {SLICE_X88Y615:SLICE_X154Y629}
+  {core_inst/data_in_sw/grow.axis_switch_2lvl_grow_inst/output_registers[5].output_register/slr_dest_0/srl_fifo_0}]]
+resize_pblock [get_pblocks Wrapper_6] -add {SLICE_X92Y615:SLICE_X160Y629}
 resize_pblock [get_pblocks Wrapper_6] -add {DSP48E2_X11Y246:DSP48E2_X17Y251}
-resize_pblock [get_pblocks Wrapper_6] -add {RAMB18_X7Y246:RAMB18_X9Y251}
-resize_pblock [get_pblocks Wrapper_6] -add {RAMB36_X7Y123:RAMB36_X9Y125}
+resize_pblock [get_pblocks Wrapper_6] -add {RAMB18_X7Y246:RAMB18_X11Y251}
+resize_pblock [get_pblocks Wrapper_6] -add {RAMB36_X7Y123:RAMB36_X11Y125}
 set_property IS_SOFT TRUE [get_pblocks Wrapper_6]
 create_pblock Wrapper_7
 add_cells_to_pblock [get_pblocks Wrapper_7] [get_cells -quiet [list {core_inst/riscv_cores[6].core_wrapper} \
-  core_inst/data_in_sw/grow.axis_switch_2lvl_grow_inst/output_registers[6].output_register/slr_dest_0/srl_fifo_0]]
-resize_pblock [get_pblocks Wrapper_7] -add {SLICE_X21Y765:SLICE_X83Y779}
-resize_pblock [get_pblocks Wrapper_7] -add {DSP48E2_X2Y306:DSP48E2_X9Y311}
-resize_pblock [get_pblocks Wrapper_7] -add {RAMB18_X2Y306:RAMB18_X5Y311}
-resize_pblock [get_pblocks Wrapper_7] -add {RAMB36_X2Y153:RAMB36_X5Y155}
+  {core_inst/data_in_sw/grow.axis_switch_2lvl_grow_inst/output_registers[6].output_register/slr_dest_0/srl_fifo_0}]]
+resize_pblock [get_pblocks Wrapper_7] -add {SLICE_X22Y765:SLICE_X89Y779}
+resize_pblock [get_pblocks Wrapper_7] -add {DSP48E2_X3Y306:DSP48E2_X10Y311}
+resize_pblock [get_pblocks Wrapper_7] -add {RAMB18_X2Y306:RAMB18_X6Y311}
+resize_pblock [get_pblocks Wrapper_7] -add {RAMB36_X2Y153:RAMB36_X6Y155}
 set_property IS_SOFT TRUE [get_pblocks Wrapper_7]
 create_pblock Wrapper_8
 add_cells_to_pblock [get_pblocks Wrapper_8] [get_cells -quiet [list {core_inst/riscv_cores[7].core_wrapper} \
-  core_inst/data_in_sw/grow.axis_switch_2lvl_grow_inst/output_registers[7].output_register/slr_dest_0/srl_fifo_0]]
-resize_pblock [get_pblocks Wrapper_8] -add {SLICE_X88Y765:SLICE_X154Y779}
+  {core_inst/data_in_sw/grow.axis_switch_2lvl_grow_inst/output_registers[7].output_register/slr_dest_0/srl_fifo_0}]]
+resize_pblock [get_pblocks Wrapper_8] -add {SLICE_X92Y765:SLICE_X160Y779}
 resize_pblock [get_pblocks Wrapper_8] -add {DSP48E2_X11Y306:DSP48E2_X17Y311}
-resize_pblock [get_pblocks Wrapper_8] -add {RAMB18_X7Y306:RAMB18_X9Y311}
-resize_pblock [get_pblocks Wrapper_8] -add {RAMB36_X7Y153:RAMB36_X9Y155}
+resize_pblock [get_pblocks Wrapper_8] -add {RAMB18_X7Y306:RAMB18_X11Y311}
+resize_pblock [get_pblocks Wrapper_8] -add {RAMB36_X7Y153:RAMB36_X11Y155}
 set_property IS_SOFT TRUE [get_pblocks Wrapper_8]
 
 # CMAC PBlock
@@ -401,8 +404,8 @@ resize_pblock [get_pblocks MAC_n_FIFOs] -add {ILKNE4_X0Y6:ILKNE4_X0Y6}
 resize_pblock [get_pblocks MAC_n_FIFOs] -add {PCIE40E4_X0Y5:PCIE40E4_X0Y5}
 resize_pblock [get_pblocks MAC_n_FIFOs] -add {RAMB18_X0Y246:RAMB18_X1Y359}
 resize_pblock [get_pblocks MAC_n_FIFOs] -add {RAMB36_X0Y123:RAMB36_X1Y179}
-set_property EXCLUDE_PLACEMENT 1 [get_pblocks MAC_n_FIFOs]
-set_property IS_SOFT FALSE [get_pblocks MAC_n_FIFOs]
+set_property IS_SOFT TRUE [get_pblocks MAC_n_FIFOs]
+# set_property EXCLUDE_PLACEMENT 1 [get_pblocks MAC_n_FIFOs]
 
 # Center PBlock for first level switches, loopback module, and stat readers
 create_pblock Switch_n_MSGs
@@ -430,19 +433,19 @@ set_property IS_SOFT TRUE [get_pblocks Switch_n_MSGs]
 
 # Rest of SLR crossing registers location
 create_pblock SLR2_edge
-add_cells_to_pblock [get_pblocks SLR2_edge] [get_cells -quiet -regexp [list \
+add_cells_to_pblock [get_pblocks SLR2_edge] [get_cells -quiet -regexp { \
     {core_inst/data_in_sw/grow.axis_switch_2lvl_grow_inst/output_registers\[[4-7]\].output_register/slr_dest_0/laguna_s_payload_d_reg\[.*\]} \
     {core_inst/data_out_sw/shrink.axis_switch_2lvl_shrink_inst/input_registers\[[4-7]\].input_register/slr_source_0/laguna_m_payload_i_reg\[.*\]} \
     {core_inst/MAC_async_FIFO\[.*\].mac_rx_pipeline/slr_source_0/laguna_m_payload_i_reg\[.*\]} \
-    {core_inst/MAC_async_FIFO\[.*\].mac_tx_pipeline/slr_dest_0/laguna_s_payload_d_reg\[.*\]}]]
+    {core_inst/MAC_async_FIFO\[.*\].mac_tx_pipeline/slr_dest_0/laguna_s_payload_d_reg\[.*\]}}]
 resize_pblock [get_pblocks SLR2_edge] -add {LAGUNA_X0Y480:LAGUNA_X23Y599}
 set_property EXCLUDE_PLACEMENT 1 [get_pblocks SLR2_edge]
 set_property IS_SOFT FALSE [get_pblocks SLR2_edge]
 
 create_pblock SLR0_edge
-add_cells_to_pblock [get_pblocks SLR0_edge] [get_cells -quiet -regexp [list \
+add_cells_to_pblock [get_pblocks SLR0_edge] [get_cells -quiet -regexp { \
     {core_inst/data_in_sw/grow.axis_switch_2lvl_grow_inst/output_registers\[[0-3]\].output_register/slr_dest_0/laguna_s_payload_d_reg\[.*\]} \
-    {core_inst/data_out_sw/shrink.axis_switch_2lvl_shrink_inst/input_registers\[[0-3]\].input_register/slr_source_0/laguna_m_payload_i_reg\[.*\]}]]
+    {core_inst/data_out_sw/shrink.axis_switch_2lvl_shrink_inst/input_registers\[[0-3]\].input_register/slr_source_0/laguna_m_payload_i_reg\[.*\]}}]
 resize_pblock [get_pblocks SLR0_edge] -add {LAGUNA_X0Y120:LAGUNA_X23Y239}
 set_property EXCLUDE_PLACEMENT 1 [get_pblocks SLR0_edge]
 set_property IS_SOFT FALSE [get_pblocks SLR0_edge]
@@ -475,23 +478,19 @@ set_property IS_SOFT FALSE [get_pblocks User_Scheduler]
 # PCIe IP and PCIe DMA modules
 create_pblock PCIe_pblock
 add_cells_to_pblock [get_pblocks PCIe_pblock] [get_cells -quiet [list core_inst/pcie_controller_inst/cq_reg core_inst/pcie_controller_inst/dma_if_pcie_us_inst core_inst/pcie_controller_inst/pcie_us_axil_master_inst core_inst/pcie_controller_inst/rc_reg core_inst/pcie_controller_inst/status_error_cor_pm_inst core_inst/pcie_controller_inst/status_error_uncor_pm_inst core_inst/pcie_controller_inst/virtual_ports.dma_if_mux_inst pcie4_uscale_plus_inst pcie_us_cfg_inst pcie_us_msi_inst]]
-resize_pblock [get_pblocks PCIe_pblock] -add {SLICE_X109Y300:SLICE_X139Y569}
-resize_pblock [get_pblocks PCIe_pblock] -add {DSP48E2_X14Y120:DSP48E2_X15Y227}
+resize_pblock [get_pblocks PCIe_pblock] -add {SLICE_X109Y300:SLICE_X168Y569}
+resize_pblock [get_pblocks PCIe_pblock] -add {DSP48E2_X14Y120:DSP48E2_X18Y227}
+resize_pblock [get_pblocks PCIe_pblock] -add {ILKNE4_X1Y4:ILKNE4_X1Y4}
 resize_pblock [get_pblocks PCIe_pblock] -add {IOB_X1Y260:IOB_X1Y493}
-resize_pblock [get_pblocks PCIe_pblock] -add {LAGUNA_X16Y300:LAGUNA_X19Y419}
-resize_pblock [get_pblocks PCIe_pblock] -add {RAMB18_X8Y120:RAMB18_X9Y227}
-resize_pblock [get_pblocks PCIe_pblock] -add {RAMB36_X8Y60:RAMB36_X9Y113}
+resize_pblock [get_pblocks PCIe_pblock] -add {LAGUNA_X20Y240:LAGUNA_X23Y419 LAGUNA_X16Y300:LAGUNA_X19Y419}
+resize_pblock [get_pblocks PCIe_pblock] -add {PCIE40E4_X1Y2:PCIE40E4_X1Y2}
+resize_pblock [get_pblocks PCIe_pblock] -add {RAMB18_X8Y120:RAMB18_X11Y227}
+resize_pblock [get_pblocks PCIe_pblock] -add {RAMB36_X8Y60:RAMB36_X11Y113}
+resize_pblock [get_pblocks PCIe_pblock] -add {SYSMONE4_X0Y1:SYSMONE4_X0Y1}
 resize_pblock [get_pblocks PCIe_pblock] -add {URAM288_X3Y80:URAM288_X3Y151}
+set_property IS_SOFT FALSE [get_pblocks PCIe_pblock]
 # set_property IS_SOFT TRUE [get_pblocks Corundum_pblock]
 
-resize_pblock [get_pblocks PCIe_pblock] -add {SLICE_X140Y300:SLICE_X168Y569}
-resize_pblock [get_pblocks PCIe_pblock] -add {DSP48E2_X16Y120:DSP48E2_X18Y227}
-resize_pblock [get_pblocks PCIe_pblock] -add {ILKNE4_X1Y4:ILKNE4_X1Y4}
-resize_pblock [get_pblocks PCIe_pblock] -add {LAGUNA_X20Y240:LAGUNA_X23Y419}
-resize_pblock [get_pblocks PCIe_pblock] -add {PCIE40E4_X1Y2:PCIE40E4_X1Y2}
-resize_pblock [get_pblocks PCIe_pblock] -add {RAMB18_X10Y120:RAMB18_X11Y227}
-resize_pblock [get_pblocks PCIe_pblock] -add {RAMB36_X10Y60:RAMB36_X11Y113}
-resize_pblock [get_pblocks PCIe_pblock] -add {SYSMONE4_X0Y1:SYSMONE4_X0Y1}
 # set_property EXCLUDE_PLACEMENT 1 [get_pblocks PCIe_pblock]
-set_property IS_SOFT False [get_pblocks PCIe_pblock]
+
 
