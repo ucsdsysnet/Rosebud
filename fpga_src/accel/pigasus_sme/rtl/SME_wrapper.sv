@@ -37,8 +37,6 @@ module pigasus_sme_wrapper # (
   //////////   Selecting input data   ///////////
   ///////////////////////////////////////////////
 
-  // TODO: add pkt_data_mover
-
   reg valid_r;
   always @ (posedge clk)
     if(rst)

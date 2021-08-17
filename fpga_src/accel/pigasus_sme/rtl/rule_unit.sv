@@ -15,7 +15,7 @@ module rule_unit(
     input   rule_pg_t               rule_pg_data
 );
 
-localparam NUM_PIPES = 15;
+localparam NUM_PIPES = 16;
 
 // Stats
 `ifdef DEBUG
@@ -27,15 +27,24 @@ logic [15:0] error_cnt;
 logic                   tcp_r1;
 logic                   tcp_r2;
 logic                   tcp_r3;
+logic                   tcp_r4;
 logic [15:0]            src_port_r1;
 logic [15:0]            src_port_r2;
 logic [15:0]            src_port_r3;
+logic [15:0]            src_port_r4;
 logic [15:0]            dst_port_r1;
 logic [15:0]            dst_port_r2;
 logic [15:0]            dst_port_r3;
+logic [15:0]            dst_port_r4;
 logic [RULE_AWIDTH-1:0] reg_rule_data;
 logic                   rule_rd;
 logic                   rule_pg_valid;
+
+logic [PG_AWIDTH-1:0]   in_pg_0_n;
+logic [PG_AWIDTH-1:0]   in_pg_1_n;
+logic [PG_AWIDTH-1:0]   in_pg_2_n;
+logic [PG_AWIDTH-1:0]   in_pg_3_n;
+logic                   in_pg_valid_n;
 
 logic [PG_AWIDTH-1:0]   in_pg_0;
 logic [PG_AWIDTH-1:0]   in_pg_1;
@@ -127,19 +136,32 @@ always @(posedge clk) begin
         dst_port_r2     <= dst_port_r1;
 
         // CYCLE 3
-        // Assign each port group
-        // pg = 0 is treated as invalid pg
+        // Register URAM outputs
         tcp_r3          <= tcp_r2;
         src_port_r3     <= src_port_r2;
         dst_port_r3     <= dst_port_r2;
-        in_pg_0         <= rule_pg_data.pg0 - 1;
-        in_pg_1         <= rule_pg_data.pg1 - 1;
-        in_pg_2         <= rule_pg_data.pg2 - 1;
-        in_pg_3         <= rule_pg_data.pg3 - 1;
-        in_pg_valid_0   <= rule_pg_valid & (rule_pg_data.pg0 != 0);
-        in_pg_valid_1   <= rule_pg_valid & (rule_pg_data.pg1 != 0);
-        in_pg_valid_2   <= rule_pg_valid & (rule_pg_data.pg2 != 0);
-        in_pg_valid_3   <= rule_pg_valid & (rule_pg_data.pg3 != 0);
+
+        in_pg_0_n       <= rule_pg_data.pg0;
+        in_pg_1_n       <= rule_pg_data.pg1;
+        in_pg_2_n       <= rule_pg_data.pg2;
+        in_pg_3_n       <= rule_pg_data.pg3;
+        in_pg_valid_n   <= rule_pg_valid;
+
+        // CYCLE 4
+        // Assign each port group
+        // pg = 0 is treated as invalid pg
+        tcp_r4          <= tcp_r3;
+        src_port_r4     <= src_port_r3;
+        dst_port_r4     <= dst_port_r3;
+
+        in_pg_0         <= in_pg_0_n - 1;
+        in_pg_1         <= in_pg_1_n - 1;
+        in_pg_2         <= in_pg_2_n - 1;
+        in_pg_3         <= in_pg_3_n - 1;
+        in_pg_valid_0   <= in_pg_valid_n & (in_pg_0_n != 0);
+        in_pg_valid_1   <= in_pg_valid_n & (in_pg_1_n != 0);
+        in_pg_valid_2   <= in_pg_valid_n & (in_pg_2_n != 0);
+        in_pg_valid_3   <= in_pg_valid_n & (in_pg_3_n != 0);
     end
 end
 
@@ -192,9 +214,9 @@ port_unit pg_0 (
     .rst           (rst),
     .in_pg         (in_pg_0),
     .in_pg_valid   (in_pg_valid_0),
-    .src_port      (src_port_r3),
-    .dst_port      (dst_port_r3),
-    .tcp           (tcp_r3),
+    .src_port      (src_port_r4),
+    .dst_port      (dst_port_r4),
+    .tcp           (tcp_r4),
     .pg_entry_addr (pg_entry_addr_0),
     .pg_entry_data (pg_entry_data_0),
     .single_addr   (single_addr_0),
@@ -214,9 +236,9 @@ port_unit pg_1 (
     .rst           (rst),
     .in_pg         (in_pg_1),
     .in_pg_valid   (in_pg_valid_1),
-    .src_port      (src_port_r3),
-    .dst_port      (dst_port_r3),
-    .tcp           (tcp_r3),
+    .src_port      (src_port_r4),
+    .dst_port      (dst_port_r4),
+    .tcp           (tcp_r4),
     .pg_entry_addr (pg_entry_addr_1),
     .pg_entry_data (pg_entry_data_1),
     .single_addr   (single_addr_1),
@@ -236,9 +258,9 @@ port_unit pg_2 (
     .rst           (rst),
     .in_pg         (in_pg_2),
     .in_pg_valid   (in_pg_valid_2),
-    .src_port      (src_port_r3),
-    .dst_port      (dst_port_r3),
-    .tcp           (tcp_r3),
+    .src_port      (src_port_r4),
+    .dst_port      (dst_port_r4),
+    .tcp           (tcp_r4),
     .pg_entry_addr (pg_entry_addr_2),
     .pg_entry_data (pg_entry_data_2),
     .single_addr   (single_addr_2),
@@ -258,9 +280,9 @@ port_unit pg_3 (
     .rst           (rst),
     .in_pg         (in_pg_3),
     .in_pg_valid   (in_pg_valid_3),
-    .src_port      (src_port_r3),
-    .dst_port      (dst_port_r3),
-    .tcp           (tcp_r3),
+    .src_port      (src_port_r4),
+    .dst_port      (dst_port_r4),
+    .tcp           (tcp_r4),
     .pg_entry_addr (pg_entry_addr_3),
     .pg_entry_data (pg_entry_data_3),
     .single_addr   (single_addr_3),

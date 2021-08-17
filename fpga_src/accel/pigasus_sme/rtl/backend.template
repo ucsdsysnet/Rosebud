@@ -77,7 +77,7 @@ logic         rule_packer_ready;
 
 logic [63:0]  wr_data_r;
 logic [17:0]  wr_addr_r;
-logic         wr_en_r;
+logic [{{context['bucket_size']-1}}:0]  wr_en_r;
 
 //Assign layer 0 input
 {% for i in range(0,context['bucket_size']) %}
@@ -175,10 +175,13 @@ end
 always @(posedge clk) begin
     wr_data_r <= wr_data;
     wr_addr_r <= wr_addr;
-    wr_en_r   <= wr_en;
 
-    if (rst) 
-      wr_en_r <= 1'b0;
+{% for i in range(0,context['bucket_size'])%}
+    wr_en_r[{{i}}] <= wr_en && (wr_addr_r[17:15]==3'd{{i}});
+{% endfor %}
+
+    if (rst)
+        wr_en_r <= {{context['bucket_size']}}'d0;
 end
 
 {% for i in range(0,context['bucket_size']) %}
@@ -233,7 +236,7 @@ uram_2rw_reg #(
 hashtable_inst_{{i}}_0(
     .clock     (clk),
     .en_a      (1'b1),
-    .wr_en_a   (wr_en_r && (wr_addr_r[17:15]==3'd{{i}})),
+    .wr_en_a   (wr_en_r[{{i}}]),
     .address_a (wr_addr_r[{{context['nbits'][i]}}-1:0]),
     .wr_data_a (wr_data_r),
     .q_a       (),    

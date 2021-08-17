@@ -37,7 +37,7 @@ module port_group (
 );
 
 // This should be 1 bigger than the NUM_PIPE in rule_unit
-localparam NUM_PIPES = 16;
+localparam NUM_PIPES = 17;
 
 typedef enum {
     IDLE,

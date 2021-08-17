@@ -1189,6 +1189,11 @@ logic din_ready_7_15;
 
 logic out_new_pkt;
 
+logic [63:0] wr_data_r;
+logic [17:0] wr_addr_r;
+logic        wr_en_front_r;
+logic        wr_en_back_r;
+
 assign piped_pkt_data_swap[7+0*8:0+0*8] = piped_pkt_data[FP_DWIDTH-1-0*8:FP_DWIDTH-8-0*8];
 assign piped_pkt_data_swap[7+1*8:0+1*8] = piped_pkt_data[FP_DWIDTH-1-1*8:FP_DWIDTH-8-1*8];
 assign piped_pkt_data_swap[7+2*8:0+2*8] = piped_pkt_data[FP_DWIDTH-1-2*8:FP_DWIDTH-8-2*8];
@@ -2643,6 +2648,18 @@ always@(posedge clk)begin
     din_7_15_r2 <= din_7_15_r1;
 end
 
+always @(posedge clk) begin
+    wr_data_r     <= wr_data;
+    wr_addr_r     <= wr_addr[17:0];
+    wr_en_front_r <= wr_en && (wr_addr[18:17]==2'b10);
+    wr_en_back_r  <= wr_en && (wr_addr[18]==1'b0);
+
+    if (rst) begin
+      wr_en_front_r <= 1'b0;
+      wr_en_back_r  <= 1'b0;
+    end
+end
+
 //Instantiation
 pkt_almost_full #(
     .DWIDTH(FP_DWIDTH),
@@ -2931,9 +2948,9 @@ frontend front(
     .in_sop          (piped_pkt_sop),
     .in_eop          (piped_pkt_eop),
     .in_empty        (piped_pkt_empty),
-    .wr_data         (wr_data),
-    .wr_addr         (wr_addr[12:0]),
-    .wr_en           (wr_en && (wr_addr[18:17]==2'b10)),
+    .wr_data         (wr_data_r),
+    .wr_addr         (wr_addr_r[12:0]),
+    .wr_en           (wr_en_front_r),
     .out_new_pkt     (out_new_pkt)
 );
 //RuleID reduction logic
@@ -3324,9 +3341,9 @@ backend back(
     .in_data_7_15     (din_7_15_r2),
     .in_valid_7_15    (din_valid_7_15_r2),
     .in_ready_7_15    (din_ready_7_15),
-    .wr_data                 (wr_data),
-    .wr_addr                 (wr_addr[17:0]),
-    .wr_en                   (wr_en && (wr_addr[18]==1'b0)),
+    .wr_data                 (wr_data_r),
+    .wr_addr                 (wr_addr_r[17:0]),
+    .wr_en                   (wr_en_back_r),
     .out_usr_data            (out_usr_data),
     .out_usr_valid           (out_usr_valid),
     .out_usr_sop             (out_usr_sop),
