@@ -1225,6 +1225,9 @@ logic         rule_packer_eop;
 logic [5:0]   rule_packer_empty;
 logic         rule_packer_ready;
 
+logic [63:0]  wr_data_r;
+logic [17:0]  wr_addr_r;
+logic         wr_en_r;
 
 //Assign layer 0 input
 assign data_0_0_0 = in_data_0_0;
@@ -1797,6 +1800,15 @@ always @(posedge clk)begin
             end
         end
     end
+end
+
+always @(posedge clk) begin
+    wr_data_r <= wr_data;
+    wr_addr_r <= wr_addr;
+    wr_en_r   <= wr_en;
+
+    if (rst) 
+      wr_en_r <= 1'b0;
 end
 
     reduction_2t1 reduction_unit_0_0_0 (
@@ -3371,14 +3383,14 @@ uram_2rw_reg #(
 hashtable_inst_0_0(
     .clock     (clk),
     .en_a      (1'b1),
-    .wr_en_a   (wr_en && (wr_addr[17:15]==3'd0)),
-    .address_a (wr_addr[15-1:0]),
-    .wr_data_a (wr_data),
+    .wr_en_a   (wr_en_r && (wr_addr_r[17:15]==3'd0)),
+    .address_a (wr_addr_r[15-1:0]),
+    .wr_data_a (wr_data_r),
     .q_a       (),    
     .en_b      (1'b1),
     .wr_en_b   (1'b0),
     .address_b (ht_addr_0_0[15-1:0]),
-    .wr_data_b (wr_data),
+    .wr_data_b ({(4*RID_WIDTH){1'b0}}),
     .q_b       (ht_q_0_0)
 );
 uram_2rw_reg #(
@@ -3391,14 +3403,14 @@ uram_2rw_reg #(
 hashtable_inst_1_0(
     .clock     (clk),
     .en_a      (1'b1),
-    .wr_en_a   (wr_en && (wr_addr[17:15]==3'd1)),
-    .address_a (wr_addr[15-1:0]),
-    .wr_data_a (wr_data),
+    .wr_en_a   (wr_en_r && (wr_addr_r[17:15]==3'd1)),
+    .address_a (wr_addr_r[15-1:0]),
+    .wr_data_a (wr_data_r),
     .q_a       (),    
     .en_b      (1'b1),
     .wr_en_b   (1'b0),
     .address_b (ht_addr_1_0[15-1:0]),
-    .wr_data_b (wr_data),
+    .wr_data_b ({(4*RID_WIDTH){1'b0}}),
     .q_b       (ht_q_1_0)
 );
 rom_2port #(

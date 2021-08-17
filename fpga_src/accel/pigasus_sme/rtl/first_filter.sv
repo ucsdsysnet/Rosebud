@@ -83,6 +83,10 @@ logic last_r;
 logic last_r1;
 logic [FP_DWIDTH-1:0] mask;
 logic [8:0] shift;
+    
+logic [63:0] wr_data_r;
+logic [12:0] wr_addr_r;
+logic        wr_en_r;
 
 assign addr0 = in_reg[0*8+12:0*8];
 assign addr1 = in_reg[1*8+12:1*8];
@@ -170,6 +174,15 @@ always @ (posedge clk) begin
     end
 end
 
+always @(posedge clk) begin
+    wr_data_r <= wr_data;
+    wr_addr_r <= wr_addr;
+    wr_en_r   <= wr_en;
+
+    if (rst) 
+      wr_en_r <= 1'b0;
+end
+
 uram_2rw_reg #(
 	.DWIDTH(64),
 	.AWIDTH(13),
@@ -179,9 +192,9 @@ uram_2rw_reg #(
 match_table_0 (
 	.clock     (clk),
   .en_a      (1'b1),
-  .wr_en_a   (wr_en),
-	.address_a (wr_en ? wr_addr : addr0),
-  .wr_data_a (wr_data),
+  .wr_en_a   (wr_en_r),
+	.address_a (wr_en_r ? wr_addr_r : addr0),
+  .wr_data_a (wr_data_r),
 	.q_a       (q0),    
   .en_b      (1'b1),
   .wr_en_b   (1'b0),
@@ -198,9 +211,9 @@ uram_2rw_reg #(
 match_table_1 (
 	.clock     (clk),
   .en_a      (1'b1),
-  .wr_en_a   (wr_en),
-	.address_a (wr_en ? wr_addr : addr2),
-  .wr_data_a (wr_data),
+  .wr_en_a   (wr_en_r),
+	.address_a (wr_en_r ? wr_addr_r : addr2),
+  .wr_data_a (wr_data_r),
 	.q_a       (q2),    
   .en_b      (1'b1),
   .wr_en_b   (1'b0),
@@ -217,9 +230,9 @@ uram_2rw_reg #(
 match_table_2 (
 	.clock     (clk),
   .en_a      (1'b1),
-  .wr_en_a   (wr_en),
-	.address_a (wr_en ? wr_addr : addr4),
-  .wr_data_a (wr_data),
+  .wr_en_a   (wr_en_r),
+	.address_a (wr_en_r ? wr_addr_r : addr4),
+  .wr_data_a (wr_data_r),
 	.q_a       (q4),    
   .en_b      (1'b1),
   .wr_en_b   (1'b0),
@@ -236,9 +249,9 @@ uram_2rw_reg #(
 match_table_3 (
 	.clock     (clk),
   .en_a      (1'b1),
-  .wr_en_a   (wr_en),
-	.address_a (wr_en ? wr_addr : addr6),
-  .wr_data_a (wr_data),
+  .wr_en_a   (wr_en_r),
+	.address_a (wr_en_r ? wr_addr_r : addr6),
+  .wr_data_a (wr_data_r),
 	.q_a       (q6),    
   .en_b      (1'b1),
   .wr_en_b   (1'b0),
@@ -255,9 +268,9 @@ uram_2rw_reg #(
 match_table_4 (
 	.clock     (clk),
   .en_a      (1'b1),
-  .wr_en_a   (wr_en),
-	.address_a (wr_en ? wr_addr : addr8),
-  .wr_data_a (wr_data),
+  .wr_en_a   (wr_en_r),
+	.address_a (wr_en_r ? wr_addr_r : addr8),
+  .wr_data_a (wr_data_r),
 	.q_a       (q8),    
   .en_b      (1'b1),
   .wr_en_b   (1'b0),
@@ -274,9 +287,9 @@ uram_2rw_reg #(
 match_table_5 (
 	.clock     (clk),
   .en_a      (1'b1),
-  .wr_en_a   (wr_en),
-	.address_a (wr_en ? wr_addr : addr10),
-  .wr_data_a (wr_data),
+  .wr_en_a   (wr_en_r),
+	.address_a (wr_en_r ? wr_addr_r : addr10),
+  .wr_data_a (wr_data_r),
 	.q_a       (q10),    
   .en_b      (1'b1),
   .wr_en_b   (1'b0),
@@ -293,9 +306,9 @@ uram_2rw_reg #(
 match_table_6 (
 	.clock     (clk),
   .en_a      (1'b1),
-  .wr_en_a   (wr_en),
-	.address_a (wr_en ? wr_addr : addr12),
-  .wr_data_a (wr_data),
+  .wr_en_a   (wr_en_r),
+	.address_a (wr_en_r ? wr_addr_r : addr12),
+  .wr_data_a (wr_data_r),
 	.q_a       (q12),    
   .en_b      (1'b1),
   .wr_en_b   (1'b0),
@@ -312,9 +325,9 @@ uram_2rw_reg #(
 match_table_7 (
 	.clock     (clk),
   .en_a      (1'b1),
-  .wr_en_a   (wr_en),
-	.address_a (wr_en ? wr_addr : addr14),
-  .wr_data_a (wr_data),
+  .wr_en_a   (wr_en_r),
+	.address_a (wr_en_r ? wr_addr_r : addr14),
+  .wr_data_a (wr_data_r),
 	.q_a       (q14),    
   .en_b      (1'b1),
   .wr_en_b   (1'b0),

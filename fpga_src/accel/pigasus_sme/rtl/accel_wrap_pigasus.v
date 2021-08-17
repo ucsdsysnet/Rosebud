@@ -385,17 +385,20 @@ always @ (posedge clk) begin
   end
 end
 
-// CND IP check accelerator
-// ip_match and ip_done keep their value until new valid is asserted
-// It needs byte swap due to network packets endian
-ip_match ip_match_inst (
-  .clk(clk),
-  .rst(rst),
-  .addr({ip_addr_reg[7:0], ip_addr_reg[15:8],
-         ip_addr_reg[23:16], ip_addr_reg[31:24]}),
-  .valid(ip_addr_valid_reg),
-  .match(ip_match),
-  .done(ip_done)
-);
+// // CND IP check accelerator
+// // ip_match and ip_done keep their value until new valid is asserted
+// // It needs byte swap due to network packets endian
+// ip_match ip_match_inst (
+//   .clk(clk),
+//   .rst(rst),
+//   .addr({ip_addr_reg[7:0], ip_addr_reg[15:8],
+//          ip_addr_reg[23:16], ip_addr_reg[31:24]}),
+//   .valid(ip_addr_valid_reg),
+//   .match(ip_match),
+//   .done(ip_done)
+// );
+
+assign ip_done = 1'b0;
+assign ip_match = 1'b0;
 
 endmodule

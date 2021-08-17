@@ -115,6 +115,9 @@ logic         rule_packer_fifo_valid;
 logic         rule_packer_fifo_ready;
 logic [5:0]   rule_packer_fifo_empty;
 
+logic [2*RULE_PG_WIDTH-1:0] wr_data_r;
+logic [RULE_AWIDTH-1:0]     wr_addr_r;
+logic                       wr_en_r;
 
 //Forward pkt data
 assign in_usr_ready = (state == RULE);
@@ -211,6 +214,15 @@ always @(posedge clk) begin
             pg_rule_cnt <= pg_rule_cnt + 1;
         end
     end
+end
+    
+always @(posedge clk) begin
+    wr_data_r <= wr_data;
+    wr_addr_r <= wr_addr;
+    wr_en_r   <= wr_en;
+
+    if (rst) 
+      wr_en_r <= 1'b0;
 end
 
 hyper_pipe_rst #(
@@ -348,9 +360,9 @@ uram_2rw_reg #(
 rule2pg_table_0_1 (
     .clock     (clk),
     .en_a      (1'b1),
-    .wr_en_a   (wr_en),
-    .address_a (wr_en ? wr_addr : rule_pg_addr_0),
-    .wr_data_a (wr_data),
+    .wr_en_a   (wr_en_r),
+    .address_a (wr_en_r ? wr_addr_r : rule_pg_addr_0),
+    .wr_data_a (wr_data_r),
     .q_a       (rule_pg_data_0),
     .en_b      (1'b1),
     .wr_en_b   (1'b0),
@@ -368,9 +380,9 @@ uram_2rw_reg #(
 rule2pg_table_2_3 (
     .clock     (clk),
     .en_a      (1'b1),
-    .wr_en_a   (wr_en),
-    .address_a (wr_en ? wr_addr : rule_pg_addr_2),
-    .wr_data_a (wr_data),
+    .wr_en_a   (wr_en_r),
+    .address_a (wr_en_r ? wr_addr_r : rule_pg_addr_2),
+    .wr_data_a (wr_data_r),
     .q_a       (rule_pg_data_2),
     .en_b      (1'b1),
     .wr_en_b   (1'b0),
@@ -388,9 +400,9 @@ uram_2rw_reg #(
 rule2pg_table_4_5 (
     .clock     (clk),
     .en_a      (1'b1),
-    .wr_en_a   (wr_en),
-    .address_a (wr_en ? wr_addr : rule_pg_addr_4),
-    .wr_data_a (wr_data),
+    .wr_en_a   (wr_en_r),
+    .address_a (wr_en_r ? wr_addr_r : rule_pg_addr_4),
+    .wr_data_a (wr_data_r),
     .q_a       (rule_pg_data_4),
     .en_b      (1'b1),
     .wr_en_b   (1'b0),
@@ -408,9 +420,9 @@ uram_2rw_reg #(
 rule2pg_table_6_7 (
     .clock     (clk),
     .en_a      (1'b1),
-    .wr_en_a   (wr_en),
-    .address_a (wr_en ? wr_addr : rule_pg_addr_6),
-    .wr_data_a (wr_data),
+    .wr_en_a   (wr_en_r),
+    .address_a (wr_en_r ? wr_addr_r : rule_pg_addr_6),
+    .wr_data_a (wr_data_r),
     .q_a       (rule_pg_data_6),
     .en_b      (1'b1),
     .wr_en_b   (1'b0),
