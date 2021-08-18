@@ -15,7 +15,7 @@ TOPLEVEL = $(MODULE)
 
 # COMPILE_ARGS += -P $(TOPLEVEL).MSK_BYTES=2
 
-VERILOG_SOURCES  = ./$(MODULE).sv
+VERILOG_SOURCES  = ./$(MODULE).v
 
 VERILOG_SOURCES += $(AXIS_DIR)/axis_async_fifo.v
 VERILOG_SOURCES += $(AXIS_DIR)/arbiter.v
@@ -39,7 +39,6 @@ VERILOG_SOURCES += $(RTL_DIR)/port_unit.sv
 VERILOG_SOURCES += $(RTL_DIR)/rule_unit.sv
 VERILOG_SOURCES += $(RTL_DIR)/port_group.sv
 VERILOG_SOURCES += $(RTL_DIR)/pkt_almost_full.sv
-VERILOG_SOURCES += $(RTL_DIR)/pkt_data_shift.sv
 VERILOG_SOURCES += $(RTL_DIR)/reduction_2t1.sv
 VERILOG_SOURCES += $(RTL_DIR)/unified_fifo.sv
 VERILOG_SOURCES += $(RTL_DIR)/unified_pkt_fifo.sv

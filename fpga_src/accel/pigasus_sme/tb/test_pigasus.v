@@ -1,5 +1,3 @@
-`include "struct_s.sv"
-
 module test_pigasus # (
   parameter BYTE_COUNT = 16
 ) (
@@ -80,13 +78,6 @@ module test_pigasus # (
   );
 
   wire [127:0] concat_sme_output;
-  metadata_t meta;
-
-  initial begin
-    meta.tuple.sPort = 16'd1025;
-    meta.tuple.dPort = 16'd1024;
-    meta.prot        = PROT_TCP;
-  end
 
   port_group pg_inst (
     .clk(clk),
@@ -100,7 +91,9 @@ module test_pigasus # (
     .in_usr_ready(pigasus_ready),
 
     .in_meta_valid(1'b1),
-    .in_meta_data(meta),
+    .src_port(16'd1025),
+    .dst_port(16'd1024),
+    .is_tcp(1'b1),
     .in_meta_ready(),
     
     .wr_data(wr_data[71:0]),

@@ -7,7 +7,9 @@ module port_group (
 
     // In Meta data
     input   logic           in_meta_valid,
-    input   metadata_t      in_meta_data,
+    input   logic [15:0]    src_port,
+    input   logic [15:0]    dst_port,
+    input   logic           is_tcp,
     output  logic           in_meta_ready,
 
     // In User data
@@ -46,8 +48,8 @@ typedef enum {
 state_t state;
 
 logic                   tcp;
-logic [15:0]            src_port;
-logic [15:0]            dst_port;
+logic [15:0]            src_port_r;
+logic [15:0]            dst_port_r;
 logic                   rule_valid;
 logic                   reg_rule_valid;
 logic                   rule_eop;
@@ -137,9 +139,9 @@ always @(posedge clk) begin
                 in_meta_ready <= 0;
                 if (in_meta_valid & !in_meta_ready & !int_almost_full) begin
                     state <= RULE;
-                    src_port <= in_meta_data.tuple.sPort;
-                    dst_port <= in_meta_data.tuple.dPort;
-                    tcp <= (in_meta_data.prot == PROT_TCP);
+                    src_port_r <= src_port;
+                    dst_port_r <= dst_port;
+                    tcp <= is_tcp;
                 end
             end
             RULE: begin
@@ -248,8 +250,8 @@ hyper_pipe_rst #(
 rule_unit rule_unit_0 (
     .clk            (clk),
     .rst            (rst),
-    .src_port       (src_port),
-    .dst_port       (dst_port),
+    .src_port       (src_port_r),
+    .dst_port       (dst_port_r),
     .tcp            (tcp),
     .in_rule_data   (in_rule_data_0),
     .in_rule_valid  (rule_valid),
@@ -261,8 +263,8 @@ rule_unit rule_unit_0 (
 rule_unit rule_unit_1 (
     .clk            (clk),
     .rst            (rst),
-    .src_port       (src_port),
-    .dst_port       (dst_port),
+    .src_port       (src_port_r),
+    .dst_port       (dst_port_r),
     .tcp            (tcp),
     .in_rule_data   (in_rule_data_1),
     .in_rule_valid  (rule_valid),
@@ -274,8 +276,8 @@ rule_unit rule_unit_1 (
 rule_unit rule_unit_2 (
     .clk            (clk),
     .rst            (rst),
-    .src_port       (src_port),
-    .dst_port       (dst_port),
+    .src_port       (src_port_r),
+    .dst_port       (dst_port_r),
     .tcp            (tcp),
     .in_rule_data   (in_rule_data_2),
     .in_rule_valid  (rule_valid),
@@ -287,8 +289,8 @@ rule_unit rule_unit_2 (
 rule_unit rule_unit_3 (
     .clk            (clk),
     .rst            (rst),
-    .src_port       (src_port),
-    .dst_port       (dst_port),
+    .src_port       (src_port_r),
+    .dst_port       (dst_port_r),
     .tcp            (tcp),
     .in_rule_data   (in_rule_data_3),
     .in_rule_valid  (rule_valid),
@@ -300,8 +302,8 @@ rule_unit rule_unit_3 (
 rule_unit rule_unit_4 (
     .clk            (clk),
     .rst            (rst),
-    .src_port       (src_port),
-    .dst_port       (dst_port),
+    .src_port       (src_port_r),
+    .dst_port       (dst_port_r),
     .tcp            (tcp),
     .in_rule_data   (in_rule_data_4),
     .in_rule_valid  (rule_valid),
@@ -313,8 +315,8 @@ rule_unit rule_unit_4 (
 rule_unit rule_unit_5 (
     .clk            (clk),
     .rst            (rst),
-    .src_port       (src_port),
-    .dst_port       (dst_port),
+    .src_port       (src_port_r),
+    .dst_port       (dst_port_r),
     .tcp            (tcp),
     .in_rule_data   (in_rule_data_5),
     .in_rule_valid  (rule_valid),
@@ -326,8 +328,8 @@ rule_unit rule_unit_5 (
 rule_unit rule_unit_6 (
     .clk            (clk),
     .rst            (rst),
-    .src_port       (src_port),
-    .dst_port       (dst_port),
+    .src_port       (src_port_r),
+    .dst_port       (dst_port_r),
     .tcp            (tcp),
     .in_rule_data   (in_rule_data_6),
     .in_rule_valid  (rule_valid),
@@ -339,8 +341,8 @@ rule_unit rule_unit_6 (
 rule_unit rule_unit_7 (
     .clk            (clk),
     .rst            (rst),
-    .src_port       (src_port),
-    .dst_port       (dst_port),
+    .src_port       (src_port_r),
+    .dst_port       (dst_port_r),
     .tcp            (tcp),
     .in_rule_data   (in_rule_data_7),
     .in_rule_valid  (rule_valid),
