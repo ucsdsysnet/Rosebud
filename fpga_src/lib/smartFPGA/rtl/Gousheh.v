@@ -1,17 +1,20 @@
 module Gousheh # (
-  parameter DATA_WIDTH     = 128,
-  parameter STRB_WIDTH     = (DATA_WIDTH/8),
-  parameter IMEM_SIZE      = 65536,
-  parameter PMEM_SIZE      = 1048576,
-  parameter DMEM_SIZE      = 32768,
-  parameter BC_REGION_SIZE = 4048,
-  parameter BC_START_ADDR  = 32'h00800000+DMEM_SIZE-BC_REGION_SIZE,
-  parameter MSG_ADDR_WIDTH = $clog2(BC_REGION_SIZE)-2,
-  parameter MSG_WIDTH      = 32+4+MSG_ADDR_WIDTH,
-  parameter SLOW_M_B_LINES = 4096,
-  parameter FAST_M_B_LINES = 1024,
-  parameter CORE_ID_WIDTH  = 4,
-  parameter SLOT_COUNT     = 16
+  parameter DATA_WIDTH      = 128,
+  parameter STRB_WIDTH      = (DATA_WIDTH/8),
+  parameter IMEM_SIZE       = 65536,
+  parameter PMEM_SIZE       = 1048576,
+  parameter DMEM_SIZE       = 32768,
+  parameter BC_REGION_SIZE  = 4048,
+  parameter BC_START_ADDR   = 32'h00800000+DMEM_SIZE-BC_REGION_SIZE,
+  parameter MSG_ADDR_WIDTH  = $clog2(BC_REGION_SIZE)-2,
+  parameter MSG_WIDTH       = 32+4+MSG_ADDR_WIDTH,
+  parameter ACC_ROM_EN      = 0,
+  parameter AROM_ADDR_WIDTH = 1,
+  parameter AROM_DATA_WIDTH = 1,
+  parameter SLOW_M_B_LINES  = 4096,
+  parameter FAST_M_B_LINES  = 1024,
+  parameter CORE_ID_WIDTH   = 4,
+  parameter SLOT_COUNT      = 16
 ) (
   input  wire                     clk,
   input  wire                     rst,
@@ -331,10 +334,16 @@ wire [ACC_MEM_BLOCKS*ACC_ADDR_WIDTH-1:0] acc_addr_b2;
 wire [ACC_MEM_BLOCKS*DATA_WIDTH-1:0]     acc_wr_data_b2;
 wire [ACC_MEM_BLOCKS*DATA_WIDTH-1:0]     acc_rd_data_b2;
 
+wire [AROM_ADDR_WIDTH-1:0]               acc_rom_wr_addr;
+wire [AROM_DATA_WIDTH-1:0]               acc_rom_wr_data;
+wire                                     acc_rom_wr_en;
+
 accel_wrap #(
   .DATA_WIDTH(DATA_WIDTH),
   .STRB_WIDTH(STRB_WIDTH),
   .PMEM_ADDR_WIDTH(PMEM_ADDR_WIDTH),
+  .AROM_ADDR_WIDTH(AROM_ADDR_WIDTH),
+  .AROM_DATA_WIDTH(AROM_DATA_WIDTH),
   .SLOW_M_B_LINES(SLOW_M_B_LINES),
   .ACC_ADDR_WIDTH(ACC_ADDR_WIDTH),
   .PMEM_SEL_BITS(PMEM_SEL_BITS),
@@ -350,6 +359,10 @@ accel_wrap #(
   .io_wr_data(core_mem_wr_data),
   .io_rd_data(core_exio_rd_data),
   .io_rd_valid(core_exio_rd_valid),
+
+  .acc_rom_wr_addr(acc_rom_wr_addr),
+  .acc_rom_wr_data(acc_rom_wr_data),
+  .acc_rom_wr_en(acc_rom_wr_en),
 
   .acc_en_b1(acc_en_b1),
   .acc_wen_b1(acc_wen_b1),
@@ -376,6 +389,9 @@ mem_sys # (
   .IMEM_SIZE(IMEM_SIZE),
   .PMEM_SIZE(PMEM_SIZE),
   .DMEM_SIZE(DMEM_SIZE),
+  .ACC_ROM_EN(ACC_ROM_EN),
+  .AROM_ADDR_WIDTH(AROM_ADDR_WIDTH),
+  .AROM_DATA_WIDTH(AROM_DATA_WIDTH),
   .BC_REGION_SIZE(BC_REGION_SIZE),
   .BC_START_ADDR(BC_START_ADDR),
   .MSG_WIDTH(MSG_WIDTH),
@@ -419,6 +435,10 @@ mem_sys # (
 
   .bc_msg_in(bc_msg_in),
   .bc_msg_in_valid(bc_msg_in_valid),
+
+  .acc_rom_wr_addr(acc_rom_wr_addr),
+  .acc_rom_wr_data(acc_rom_wr_data),
+  .acc_rom_wr_en(acc_rom_wr_en),
 
   .acc_en_b1(acc_en_b1),
   .acc_wen_b1(acc_wen_b1),

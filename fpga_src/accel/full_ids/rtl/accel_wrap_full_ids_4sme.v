@@ -5,6 +5,8 @@ module accel_wrap #(
   parameter DATA_WIDTH      = 128,
   parameter STRB_WIDTH      = (DATA_WIDTH/8),
   parameter PMEM_ADDR_WIDTH = 8,
+  parameter AROM_ADDR_WIDTH = 1,
+  parameter AROM_DATA_WIDTH = 1,
   parameter SLOW_M_B_LINES  = 4096,
   parameter ACC_ADDR_WIDTH  = $clog2(SLOW_M_B_LINES),
   parameter PMEM_SEL_BITS   = PMEM_ADDR_WIDTH-$clog2(STRB_WIDTH)
@@ -21,6 +23,10 @@ module accel_wrap #(
   input  wire [IO_DATA_WIDTH-1:0]                 io_wr_data,
   output wire [IO_DATA_WIDTH-1:0]                 io_rd_data,
   output wire                                     io_rd_valid,
+
+  input  wire [AROM_ADDR_WIDTH-1:0]               acc_rom_wr_addr,
+  input  wire [AROM_DATA_WIDTH-1:0]               acc_rom_wr_data,
+  input  wire                                     acc_rom_wr_en,
 
   output wire [ACC_MEM_BLOCKS-1:0]                acc_en_b1,
   output wire [ACC_MEM_BLOCKS*STRB_WIDTH-1:0]     acc_wen_b1,
@@ -465,7 +471,7 @@ generate
       .s_axis_tdata(accel_tdata_r[n*8 +: 64]),
       .s_axis_tkeep(accel_tkeep_r[n +: 8]),
       .s_axis_tvalid(accel_tvalid_r[n]),
-      
+
       .match_index(match_index),
       .next_index(release_index[n]),
       .match_valid(match_valid[n]),
@@ -487,7 +493,7 @@ generate
     assign match_indexes[n*32+:32] = {22'd0, match_index};
     assign sme_match    [n]        = |match_valid_stat;
     assign sme_error    [n]        = |match_error_stat;
-  
+
   end
 
 endgenerate

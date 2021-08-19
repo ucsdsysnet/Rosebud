@@ -5,6 +5,8 @@ module accel_wrap #(
   parameter DATA_WIDTH      = 128,
   parameter STRB_WIDTH      = (DATA_WIDTH/8),
   parameter PMEM_ADDR_WIDTH = 8,
+  parameter AROM_ADDR_WIDTH = 1,
+  parameter AROM_DATA_WIDTH = 1,
   parameter SLOW_M_B_LINES  = 4096,
   parameter ACC_ADDR_WIDTH  = $clog2(SLOW_M_B_LINES),
   parameter PMEM_SEL_BITS   = PMEM_ADDR_WIDTH-$clog2(STRB_WIDTH)
@@ -21,6 +23,10 @@ module accel_wrap #(
   input  wire [IO_DATA_WIDTH-1:0]                 io_wr_data,
   output wire [IO_DATA_WIDTH-1:0]                 io_rd_data,
   output wire                                     io_rd_valid,
+
+  input  wire [AROM_ADDR_WIDTH-1:0]               acc_rom_wr_addr,
+  input  wire [AROM_DATA_WIDTH-1:0]               acc_rom_wr_data,
+  input  wire                                     acc_rom_wr_en,
 
   output wire [ACC_MEM_BLOCKS-1:0]                acc_en_b1,
   output wire [ACC_MEM_BLOCKS*STRB_WIDTH-1:0]     acc_wen_b1,
@@ -112,9 +118,9 @@ hash_acc #(
   .hash_data_len(hash_data_len_reg),
   .hash_data_valid(hash_data_valid_reg),
   .hash_clear(hash_clear_reg),
-  
+
   .hash_key(320'h6d5a56da255b0ec24167253d43a38fb0d0ca2bcbae7b30b477cb2da38030f20c6a42b73bbeac01fa),
-  
+
   .hash_out(hash_out)
 );
 

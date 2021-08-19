@@ -10,6 +10,9 @@ module mem_sys # (
   parameter IMEM_ADDR_WIDTH = $clog2(IMEM_SIZE),
   parameter MSG_WIDTH       = 32+4+$clog2(BC_REGION_SIZE)-2,
   parameter BC_START_ADDR   = 32'h00800000+DMEM_SIZE-BC_REGION_SIZE,
+  parameter ACC_ROM_EN      = 0,
+  parameter AROM_ADDR_WIDTH = 1,
+  parameter AROM_DATA_WIDTH = 1,
   parameter SLOW_M_B_LINES  = 4096,
   parameter FAST_M_B_LINES  = 1024,
   parameter ACC_ADDR_WIDTH  = $clog2(SLOW_M_B_LINES),
@@ -54,6 +57,10 @@ module mem_sys # (
 
   input  wire [MSG_WIDTH-1:0]                     bc_msg_in,
   input  wire                                     bc_msg_in_valid,
+
+  output wire [AROM_ADDR_WIDTH-1:0]               acc_rom_wr_addr,
+  output wire [AROM_DATA_WIDTH-1:0]               acc_rom_wr_data,
+  output wire                                     acc_rom_wr_en,
 
   input  wire [ACC_MEM_BLOCKS-1:0]                acc_en_b1,
   input  wire [ACC_MEM_BLOCKS*STRB_WIDTH-1:0]     acc_wen_b1,
@@ -173,20 +180,22 @@ module mem_sys # (
   wire dmem_rd_addr = ~dma_cmd_rd_addr[25] && ~dma_cmd_rd_addr[24];
   wire pmem_wr_addr = ~dma_cmd_wr_addr[25] && dma_cmd_wr_addr[24];
   wire pmem_rd_addr = ~dma_cmd_rd_addr[25] && dma_cmd_rd_addr[24];
-  wire imem_addr    =  dma_cmd_wr_addr[25];
+  wire imem_addr    =  dma_cmd_wr_addr[25] && ~dma_cmd_wr_addr[24];
+  wire arom_addr    =  dma_cmd_wr_addr[25] && dma_cmd_wr_addr[24];
 
   wire dma_dmem_wr_en = (dmem_wr_addr && dma_cmd_wr_en) || dma_cmd_hdr_wr_en;
   wire dma_dmem_rd_en =  dmem_rd_addr && dma_cmd_rd_en;
   wire dma_pmem_wr_en =  pmem_wr_addr && dma_cmd_wr_en;
   wire dma_pmem_rd_en =  pmem_rd_addr && dma_cmd_rd_en;
   wire dma_imem_wr_en =  imem_addr    && dma_cmd_wr_en;
+  wire dma_arom_wr_en =  arom_addr    && dma_cmd_wr_en;
 
-  wire dma_imem_wr_fifo_full,
+  wire dma_imem_wr_fifo_full, dma_arom_wr_fifo_full,
        dma_dmem_wr_fifo_full, dma_dmem_rd_fifo_full,
        dma_pmem_wr_fifo_full, dma_pmem_rd_fifo_full,
        dma_dmem_rd_resp_fifo_full, dma_pmem_rd_resp_fifo_full;
 
-  assign mem_fifo_fulls = {1'b0,
+  assign mem_fifo_fulls = {dma_arom_wr_fifo_full,
                            dma_dmem_rd_resp_fifo_full,
                            dma_dmem_rd_fifo_full,
                            dma_dmem_wr_fifo_full,
@@ -219,6 +228,34 @@ module mem_sys # (
 
     .full(dma_imem_wr_fifo_full)
   );
+
+  generate
+    if (ACC_ROM_EN) begin: acc_ROM_fifo
+      simple_fifo # (
+        .ADDR_WIDTH(2),
+        .DATA_WIDTH(AROM_DATA_WIDTH+AROM_ADDR_WIDTH)
+      ) dma_arom_wr_fifo (
+        .clk(clk),
+        .rst(rst),
+        .clear(1'b0),
+
+        .din_valid(dma_arom_wr_en),
+        .din({dma_cmd_wr_addr[AROM_ADDR_WIDTH-1:0],
+              dma_cmd_wr_data[AROM_DATA_WIDTH-1:0]}),
+        .din_ready(), // Accelerator ROMs always accept
+
+        .dout_valid(acc_rom_wr_en),
+        .dout({acc_rom_wr_addr, acc_rom_wr_data}),
+        .dout_ready(1'b1),
+
+        .full(dma_arom_wr_fifo_full)
+      );
+    end else begin
+      assign acc_rom_wr_en   = 1'b0;
+      assign acc_rom_wr_addr = {AROM_ADDR_WIDTH{1'b0}};
+      assign acc_rom_wr_data = {AROM_DATA_WIDTH{1'b0}};
+    end
+  endgenerate
 
   wire [DMEM_ADDR_WIDTH-1:0] dma_dmem_cmd_wr_addr;
   wire [DATA_WIDTH-1:0]      dma_dmem_cmd_wr_data;

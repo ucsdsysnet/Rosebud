@@ -182,8 +182,6 @@ module fpga_core #
     output wire                               qsfp1_lpmode
 );
 
-`define PR_ENABLE
-
 parameter CORE_COUNT        = 16;
 
 parameter IF_COUNT          = 2;
@@ -239,17 +237,10 @@ parameter SLOT_COUNT      = 16;
 parameter SLOT_WIDTH      = $clog2(SLOT_COUNT+1);
 parameter TAG_WIDTH       = (SLOT_WIDTH>5)? SLOT_WIDTH:5;
 
-parameter IMEM_SIZE       = 65536;
-parameter PMEM_SIZE       = 1048576;
-parameter DMEM_SIZE       = 32768;
-parameter BC_REGION_SIZE  = 8192;
-parameter SLOW_M_B_LINES  = 4096;
-parameter FAST_M_B_LINES  = 1024;
-
 parameter LVL2_DATA_WIDTH = 128;
 parameter LVL2_STRB_WIDTH = LVL2_DATA_WIDTH/8;
 parameter ID_TAG_WIDTH    = CORE_WIDTH+TAG_WIDTH;
-parameter BC_START_ADDR   = 32'h00800000+DMEM_SIZE-BC_REGION_SIZE;
+parameter BC_REGION_SIZE  = 8192;
 parameter CORE_MSG_WIDTH  = 32+4+$clog2(BC_REGION_SIZE)-2;
 
 parameter RECV_DESC_DEPTH = SLOT_COUNT;
@@ -1233,75 +1224,58 @@ wire                  sched_ctrl_s_axis_tvalid;
 wire                  sched_ctrl_s_axis_tready;
 wire [CORE_WIDTH-1:0] sched_ctrl_s_axis_tuser;
 
-`ifndef PR_ENABLE
-  scheduler # (
-    .PORT_COUNT(PORT_COUNT),
-    .IF_COUNT(SCHED_PORT_COUNT),
-    .CORE_COUNT(CORE_COUNT),
-    .SLOT_COUNT(SLOT_COUNT),
-    .DATA_WIDTH(LVL1_DATA_WIDTH),
-    .CTRL_WIDTH(CTRL_WIDTH),
-    .CLUSTER_COUNT(CLUSTER_COUNT),
-    .LOOPBACK_PORT(FIRST_LB_PORT),
-    .LOOPBACK_COUNT(LB_PORT_COUNT),
-    .DATA_REG_TYPE(2),
-    .CTRL_REG_TYPE(2)
-  ) scheduler_inst (
-`else
-  scheduler_PR # (
-  ) scheduler_PR_inst (
-`endif
-    .clk(sys_clk),
-    .rst(sys_rst_r),
+scheduler_PR scheduler_PR_inst (
+  .clk(sys_clk),
+  .rst(sys_rst_r),
 
-    // Data line to/from Eth interfaces
-    .tx_axis_tdata(tx_axis_tdata),
-    .tx_axis_tkeep(tx_axis_tkeep),
-    .tx_axis_tvalid(tx_axis_tvalid),
-    .tx_axis_tready(tx_axis_tready),
-    .tx_axis_tlast(tx_axis_tlast),
+  // Data line to/from Eth interfaces
+  .tx_axis_tdata(tx_axis_tdata),
+  .tx_axis_tkeep(tx_axis_tkeep),
+  .tx_axis_tvalid(tx_axis_tvalid),
+  .tx_axis_tready(tx_axis_tready),
+  .tx_axis_tlast(tx_axis_tlast),
 
-    .rx_axis_tdata(rx_axis_tdata),
-    .rx_axis_tkeep(rx_axis_tkeep),
-    .rx_axis_tvalid(rx_axis_tvalid),
-    .rx_axis_tready(rx_axis_tready),
-    .rx_axis_tlast(rx_axis_tlast),
+  .rx_axis_tdata(rx_axis_tdata),
+  .rx_axis_tkeep(rx_axis_tkeep),
+  .rx_axis_tvalid(rx_axis_tvalid),
+  .rx_axis_tready(rx_axis_tready),
+  .rx_axis_tlast(rx_axis_tlast),
 
-    .rx_axis_line_count({{V_PORT_COUNT*RX_LINES_WIDTH{1'b0}}, rx_line_count_r}),
+  .rx_axis_line_count({{V_PORT_COUNT*RX_LINES_WIDTH{1'b0}}, rx_line_count_r}),
 
-    // DATA lines to/from cores
-    .data_m_axis_tdata(sched_rx_axis_tdata),
-    .data_m_axis_tkeep(sched_rx_axis_tkeep),
-    .data_m_axis_tdest(sched_rx_axis_tdest),
-    .data_m_axis_tuser(sched_rx_axis_tuser),
-    .data_m_axis_tvalid(sched_rx_axis_tvalid),
-    .data_m_axis_tready(sched_rx_axis_tready),
-    .data_m_axis_tlast(sched_rx_axis_tlast),
+  // DATA lines to/from cores
+  .data_m_axis_tdata(sched_rx_axis_tdata),
+  .data_m_axis_tkeep(sched_rx_axis_tkeep),
+  .data_m_axis_tdest(sched_rx_axis_tdest),
+  .data_m_axis_tuser(sched_rx_axis_tuser),
+  .data_m_axis_tvalid(sched_rx_axis_tvalid),
+  .data_m_axis_tready(sched_rx_axis_tready),
+  .data_m_axis_tlast(sched_rx_axis_tlast),
 
-    .data_s_axis_tdata(sched_tx_axis_tdata),
-    .data_s_axis_tkeep(sched_tx_axis_tkeep),
-    .data_s_axis_tuser(sched_tx_axis_tuser),
-    .data_s_axis_tvalid(sched_tx_axis_tvalid),
-    .data_s_axis_tready(sched_tx_axis_tready),
-    .data_s_axis_tlast(sched_tx_axis_tlast),
+  .data_s_axis_tdata(sched_tx_axis_tdata),
+  .data_s_axis_tkeep(sched_tx_axis_tkeep),
+  .data_s_axis_tuser(sched_tx_axis_tuser),
+  .data_s_axis_tvalid(sched_tx_axis_tvalid),
+  .data_s_axis_tready(sched_tx_axis_tready),
+  .data_s_axis_tlast(sched_tx_axis_tlast),
 
-    // Control lines to/from cores
-    .ctrl_m_axis_tdata(sched_ctrl_m_axis_tdata_n),
-    .ctrl_m_axis_tvalid(sched_ctrl_m_axis_tvalid_n),
-    .ctrl_m_axis_tready(sched_ctrl_m_axis_tready_n),
-    .ctrl_m_axis_tdest(sched_ctrl_m_axis_tdest_n),
+  // Control lines to/from cores
+  .ctrl_m_axis_tdata(sched_ctrl_m_axis_tdata_n),
+  .ctrl_m_axis_tvalid(sched_ctrl_m_axis_tvalid_n),
+  .ctrl_m_axis_tready(sched_ctrl_m_axis_tready_n),
+  .ctrl_m_axis_tdest(sched_ctrl_m_axis_tdest_n),
 
-    .ctrl_s_axis_tdata(sched_ctrl_s_axis_tdata),
-    .ctrl_s_axis_tvalid(sched_ctrl_s_axis_tvalid),
-    .ctrl_s_axis_tready(sched_ctrl_s_axis_tready),
-    .ctrl_s_axis_tuser(sched_ctrl_s_axis_tuser),
+  .ctrl_s_axis_tdata(sched_ctrl_s_axis_tdata),
+  .ctrl_s_axis_tvalid(sched_ctrl_s_axis_tvalid),
+  .ctrl_s_axis_tready(sched_ctrl_s_axis_tready),
+  .ctrl_s_axis_tuser(sched_ctrl_s_axis_tuser),
 
-    // Host wr/rd commands
-    .host_cmd         (host_cmd),
-    .host_cmd_wr_data (host_cmd_wr_data),
-    .host_cmd_rd_data (host_rd_sched_data),
-    .host_cmd_valid   (host_cmd_valid)
-  );
+  // Host wr/rd commands
+  .host_cmd         (host_cmd),
+  .host_cmd_wr_data (host_cmd_wr_data),
+  .host_cmd_rd_data (host_rd_sched_data),
+  .host_cmd_valid   (host_cmd_valid)
+);
 
 // MUX between host commands and scheduler requests
 assign sched_ctrl_m_axis_tvalid   =   host_to_cores_wr_r  || sched_ctrl_m_axis_tvalid_n;
@@ -2003,24 +1977,7 @@ generate
             .core_status_addr(core_status_addr)
         );
 
-    `ifndef PR_ENABLE
-        Gousheh # (
-            .DATA_WIDTH(LVL2_DATA_WIDTH),
-            .STRB_WIDTH(LVL2_STRB_WIDTH),
-            .IMEM_SIZE(IMEM_SIZE),
-            .PMEM_SIZE(PMEM_SIZE),
-            .DMEM_SIZE(DMEM_SIZE),
-            .SLOW_M_B_LINES(SLOW_M_B_LINES),
-            .FAST_M_B_LINES(FAST_M_B_LINES),
-            .BC_REGION_SIZE(BC_REGION_SIZE),
-            .BC_START_ADDR(BC_START_ADDR),
-            .MSG_WIDTH(CORE_MSG_WIDTH),
-            .CORE_ID_WIDTH(CORE_WIDTH)
-        ) Gousheh_inst (
-    `else
-        Gousheh_PR # (
-        ) pr_wrapper (
-    `endif
+        Gousheh_PR pr_wrapper (
             .clk(core_clk),
             .rst(block_reset[i]),
             .core_reset(core_reset),
