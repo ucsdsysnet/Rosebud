@@ -1,40 +1,46 @@
 `include "struct_s.sv"
 
 module pigasus_sme_wrapper # (
-  parameter BYTE_COUNT = 16
+  parameter BYTE_COUNT = 16,
+  parameter STRB_COUNT = $clog2(BYTE_COUNT)
 ) (
-  input  wire            clk,
-  input  wire            rst,
+  input  wire                    clk,
+  input  wire                    rst,
 
   // AXI Stream input
-  input  wire [BYTE_COUNT*8-1:0]       s_axis_tdata,
-  input  wire [$clog2(BYTE_COUNT)-1:0] s_axis_tempty,
-  input  wire                          s_axis_tvalid,
-  input  wire                          s_axis_tlast,
-  output wire                          s_axis_tready,
+  input  wire [BYTE_COUNT*8-1:0] s_axis_tdata,
+  input  wire [STRB_COUNT-1:0]   s_axis_tempty,
+  input  wire                    s_axis_tvalid,
+  input  wire                    s_axis_tlast,
+  output wire                    s_axis_tready,
 
-  input  wire [71:0]     wr_data,
-  input  wire [18:0]     wr_addr,
-  input  wire            wr_en,
+  input  wire [71:0]             wr_data,
+  input  wire [18:0]             wr_addr,
+  input  wire                    wr_en,
 
-  // Preamble state (7B data and 1B len)
-  input  wire [8*8-1:0]  preamble_state,
-  input  wire            reload,
+  // Metadata
+  input  wire [55:0]             preamble,
+  input  wire [15:0]             src_port,
+  input  wire [15:0]             dst_port,
+  input  wire                    is_tcp,
+  input  wire                    has_preamble,
+  input  wire                    meta_valid,
+  output wire                    meta_ready,
 
   // Match output
-  input  wire            match_release,
-  output reg  [15:0]     match_rule_ID,
-  output reg             match_valid,
+  input  wire                    match_release,
+  output wire [15:0]             match_rule_ID,
+  output reg                     match_valid,
 
   // Last bytes (7B data and 1B len)
-  output wire [8*8-1:0]  last_bytes_state,
+  output reg [55:0]              last_7,
 
   // merged state
-  output reg  [7:0]      match_valid_stat
+  output reg  [7:0]              match_valid_stat
 );
 
   ///////////////////////////////////////////////
-  //////////   Selecting input data   ///////////
+  //////////   Adjusting input data   ///////////
   ///////////////////////////////////////////////
 
   reg valid_r;
@@ -44,14 +50,75 @@ module pigasus_sme_wrapper # (
     else
       valid_r <= s_axis_tvalid;
 
-  wire s_axis_tsop = s_axis_tvalid & !valid_r;
+  wire s_axis_tfirst = s_axis_tvalid & !valid_r;
 
+  // TODO: should test if real run also needs it
   reg [BYTE_COUNT*8-1:0] s_axis_tdata_rev;
   integer i;
   always @ (*)
     for (i=1;i<=BYTE_COUNT;i=i+1)
       s_axis_tdata_rev[(i-1)*8+:8] = s_axis_tdata[(BYTE_COUNT-i)*8+:8];
-      // {8{~s_axis_tkeep[BYTE_COUNT-i]}};
+
+  // Latching of LSB 7 bytes and state for extra cycle if necessary
+  reg [55:0]            rest_7;
+  reg [STRB_COUNT-1:0]  rem_empty;
+  wire                  has_extra;
+  reg                   has_extra_r;
+
+  assign has_extra = s_axis_tlast && has_preamble && (s_axis_tempty < 7);
+
+  always @ (posedge clk) begin
+    rest_7      <= s_axis_tdata_rev[55:0];
+    has_extra_r <= has_extra | (has_extra_r && !s_axis_tready);
+    rem_empty   <= (BYTE_COUNT-7) + s_axis_tempty[2:0];
+
+    if (rst)
+      has_extra_r <= 1'b0;
+  end
+
+  // Add the preamble if necessary
+  reg  [BYTE_COUNT*8-1:0] in_pkt_data;
+  wire [STRB_COUNT-1:0]   in_pkt_empty;
+  wire                    in_pkt_valid;
+  wire                    in_pkt_sop;
+  wire                    in_pkt_eop;
+  wire                    in_pkt_ready;
+
+  assign in_pkt_eop    = has_extra ? 1'b0 : (s_axis_tlast | has_extra_r);
+  assign in_pkt_valid  = s_axis_tvalid | has_extra_r;
+  assign in_pkt_sop    = s_axis_tfirst;
+  assign in_pkt_empty  = (!has_preamble) ? s_axis_tempty :
+                             has_extra_r ? rem_empty :
+                     (s_axis_tempty > 7) ? (s_axis_tempty-7) :
+                                           {STRB_COUNT{1'b0}};
+
+  assign s_axis_tready = in_pkt_ready;
+
+  // Note that if there are non_valid bytes at LSB, first_filter masks the empty
+  // bytes, so tempty takes care of them, even in case of EOP and empty>=7
+  always @ (*)
+    if (has_preamble) begin
+      if (s_axis_tfirst)
+        in_pkt_data = {preamble, s_axis_tdata_rev[8*BYTE_COUNT-1:56]};
+      else if (!has_extra_r)
+        in_pkt_data = {rest_7,   s_axis_tdata_rev[8*BYTE_COUNT-1:56]};
+      else
+        in_pkt_data = {rest_7,   {8*(BYTE_COUNT-7){1'b1}}};
+    end else begin
+        in_pkt_data = s_axis_tdata_rev;
+    end
+
+  // Save last 7 bytes. Use 0xFF for fillers so preamble is padded
+  always @ (posedge clk)
+    if (s_axis_tlast && s_axis_tvalid)
+      if (s_axis_tfirst) begin
+        if (has_preamble)
+          last_7 <= {preamble, s_axis_tdata_rev}   >> (8*s_axis_tempty);
+        else
+          last_7 <= {{56{1'b1}}, s_axis_tdata_rev} >> (8*s_axis_tempty);
+      end else begin
+          last_7 <= {rest_7, s_axis_tdata_rev}     >> (8*s_axis_tempty);
+      end
 
   ///////////////////////////////////////////////
   ////////// Check for fast patterns ////////////
@@ -67,12 +134,12 @@ module pigasus_sme_wrapper # (
     .clk(clk),
     .rst(rst),
 
-    .in_pkt_data(s_axis_tdata_rev),
-    .in_pkt_empty(s_axis_tempty),
-    .in_pkt_valid(s_axis_tvalid),
-    .in_pkt_sop(s_axis_tsop),
-    .in_pkt_eop(s_axis_tlast),
-    .in_pkt_ready(s_axis_tready),
+    .in_pkt_data(in_pkt_data),
+    .in_pkt_empty(in_pkt_empty),
+    .in_pkt_valid(in_pkt_valid),
+    .in_pkt_sop(in_pkt_sop),
+    .in_pkt_eop(in_pkt_eop),
+    .in_pkt_ready(in_pkt_ready),
 
     .wr_data(wr_data[63:0]),
     .wr_addr(wr_addr),
@@ -87,13 +154,6 @@ module pigasus_sme_wrapper # (
   );
 
   wire [127:0] concat_sme_output;
-  metadata_t meta;
-
-  initial begin
-    meta.tuple.sPort = 16'd1025;
-    meta.tuple.dPort = 16'd1024;
-    meta.prot        = PROT_TCP;
-  end
 
   port_group pg_inst (
     .clk(clk),
@@ -106,9 +166,11 @@ module pigasus_sme_wrapper # (
     .in_usr_valid(pigasus_valid),
     .in_usr_ready(pigasus_ready),
 
-    .in_meta_valid(1'b1),
-    .in_meta_data(meta),
-    .in_meta_ready(),
+    .in_meta_valid(meta_valid),
+    .src_port(src_port),
+    .dst_port(dst_port),
+    .is_tcp(is_tcp),
+    .in_meta_ready(meta_ready),
 
     .wr_data(wr_data[71:0]),
     .wr_addr(wr_addr[12:0]),
@@ -125,112 +187,51 @@ module pigasus_sme_wrapper # (
     .pg_rule_cnt()
   );
 
-  // FIFO
-  wire [127:0] sme_output_f;
-  wire         sme_output_f_v;
-  wire         sme_output_f_ready;
+  // FIFOs, assuming no overflow for now
+  wire [12:0] sme_output_f [8];
+  wire [7:0]  sme_output_f_v;
+  wire [7:0]  sme_output_f_ready;
 
-  reg  [127:0] sme_output_r;
-  reg  [7:0]   sme_output_r_v;
+  genvar m;
+  generate
+    for (m=0;m<8;m=m+1) begin: match_fifos
+      simple_fifo # (
+        .ADDR_WIDTH(2),
+        .DATA_WIDTH(13)
+      ) match_fifo (
+        .clk(clk),
+        .rst(rst),
+        .clear(1'b0),
 
-  simple_fifo # (
-    .ADDR_WIDTH(2),
-    .DATA_WIDTH(128)
-  ) accel_fifo (
-    .clk(clk),
-    .rst(rst),
-    .clear(reload),
+        .din_valid(sme_output_v &&
+            (concat_sme_output[m*16+:13]!=13'd0)),
+        .din(concat_sme_output[m*16+:13]),
+        .din_ready(),
 
-    .din_valid(sme_output_v),
-    .din(concat_sme_output),
-    .din_ready(),
+        .dout_valid(sme_output_f_v[m]),
+        .dout(sme_output_f[m]),
+        .dout_ready(sme_output_f_ready[m])
+      );
+    end
+  endgenerate
 
-    .dout_valid(sme_output_f_v),
-    .dout(sme_output_f),
-    .dout_ready(sme_output_f_ready)
+  wire [2:0] selected_fifo;
+  wire [7:0] ack;
+
+  arbiter # (.PORTS(8), .TYPE("PRIORITY")) match_arb (
+    .clk (clk),
+    .rst (rst),
+
+    .request      (sme_output_f_v & ~sme_output_f_ready),
+    .acknowledge  (8'd0),
+
+    .grant        (ack),
+    .grant_valid  (match_valid),
+    .grant_encoded(selected_fifo)
   );
 
-  integer m;
-  always @ (posedge clk) begin
-    if (sme_output_f_v & sme_output_f_ready) begin
-      sme_output_r <= sme_output_f;
-      for (m=0;m<8;m=m+1)
-        sme_output_r_v <= (sme_output_f[m*16+:16]==0) ? 1'b0 : 1'b1;
-    end
-    if (rst)
-        sme_output_r_v <= 8'd0;
-  end
-
-  assign sme_output_f_ready = !(|sme_output_r_v);
-
-  reg [7:0]  selected_match;
-  reg [7:0]  selected_match_r;
-  reg [15:0] selected_match_index;
-  reg [7:0]  match_mask;
-
-  integer k;
-  always @ (*) begin
-    selected_match       = 8'd1;
-    selected_match_index = sme_output_r[0*16+:16];
-
-    for (k=7;k>=0;k=k-1)
-      if (sme_output_r_v[k] & match_mask[k]) begin
-        selected_match       = 8'd1 << k;
-        selected_match_index = sme_output_r[k*16+:16];
-      end
-  end
-
-  always @ (posedge clk) begin
-    selected_match_r <= selected_match;
-    match_rule_ID    <= selected_match_index;
-
-    match_valid      <= |(sme_output_r_v & match_mask);
-    match_valid_stat <= sme_output_r_v & match_mask;
-
-    if (rst) begin
-      match_valid      <= 1'b0;
-      match_valid_stat <= 8'd0;
-    end
-  end
-
-  always @ (posedge clk) begin
-    if (rst || reload)
-      match_mask <= 8'hFF;
-    else if (match_release)
-      match_mask <= match_mask & ~selected_match_r;
-  end
-
-  // ///////////////////////////////////////////////
-  // ////////// Keeping last bytes logic ///////////
-  // ///////////////////////////////////////////////
-  // reg [63:0] last_chunk1;
-  // reg [63:0] last_chunk2;
-  // reg [2:0]  last_chunk_shift;
-  // reg        last_chunk_valid;
-  //
-  // reg [3:0] one_count;
-  // integer l;
-  // always @ (*) begin
-  //   one_count = 8;
-  //   for (l=7; l>=0; l=l-1)
-  //     if (!s_axis_tkeep[l])
-  //       one_count = one_count-1;
-  // end
-
-  // always @ (posedge clk) begin
-  //   if (s_axis_tvalid && s_axis_tready) begin
-  //     last_chunk2      <= last_chunk1;
-  //     last_chunk1      <= s_axis_tdata;
-  //     last_chunk_shift <= one_count;
-  //     if (s_axis_tlast)
-  //       last_chunk_valid <= 1'b1;
-  //   end
-  //   if (reload | rst)
-  //     last_chunk_valid <= 1'b0;
-  // end
-  //
-  // wire [63:0] full_chunk = {last_chunk1, last_chunk2} >> last_chunk_shift;
-
-  assign last_bytes_state = 64'hffff_ffff_ffff_ffff; // {full_chunk[55:0], 7'd0, last_chunk_valid};
+  assign sme_output_f_ready = ack & {8{match_release}};
+  assign match_rule_ID      = {3'd0, sme_output_f[selected_fifo]};
+  assign match_valid_stat   = sme_output_f_v;
 
 endmodule

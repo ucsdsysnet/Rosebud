@@ -9,7 +9,8 @@ RTL_DIR = ../rtl
 MYLIB_DIR = ../../../lib/smartFPGA/rtl
 AXIS_DIR = ../../../lib/axis/rtl
 
-MODULE = test_pigasus
+MODULE = test_SME
+# MODULE = test_pigasus
 # MODULE = test_mul_hash
 TOPLEVEL = $(MODULE)
 
@@ -42,6 +43,7 @@ VERILOG_SOURCES += $(RTL_DIR)/pkt_almost_full.sv
 VERILOG_SOURCES += $(RTL_DIR)/reduction_2t1.sv
 VERILOG_SOURCES += $(RTL_DIR)/unified_fifo.sv
 VERILOG_SOURCES += $(RTL_DIR)/unified_pkt_fifo.sv
+VERILOG_SOURCES += $(RTL_DIR)/SME_wrapper.sv
 
 COMPILE_ARGS  += -I ./struct_s.sv
 PLUSARGS+=-fst 
