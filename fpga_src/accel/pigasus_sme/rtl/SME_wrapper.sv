@@ -18,12 +18,10 @@ module pigasus_sme_wrapper # (
   input  wire [18:0]             wr_addr,
   input  wire                    wr_en,
 
-  // Metadata
-  input  wire [55:0]             preamble,
+  // Metadata state in
+  input  wire [63:0]             preamble_state_in,
   input  wire [15:0]             src_port,
   input  wire [15:0]             dst_port,
-  input  wire                    is_tcp,
-  input  wire                    has_preamble,
   input  wire                    meta_valid,
   output wire                    meta_ready,
 
@@ -32,8 +30,8 @@ module pigasus_sme_wrapper # (
   output wire [15:0]             match_rule_ID,
   output reg                     match_valid,
 
-  // Last bytes (7B data and 1B len)
-  output reg [55:0]              last_7,
+  // Metadata state out
+  output reg [63:0]              preamble_state_out,
 
   // merged state
   output reg  [7:0]              match_valid_stat
@@ -42,6 +40,15 @@ module pigasus_sme_wrapper # (
   ///////////////////////////////////////////////
   //////////   Adjusting input data   ///////////
   ///////////////////////////////////////////////
+
+  // Metadata state, 56 bits preamble, 1 bit is_tcp,
+  // 3 bits zero, 1 bit has_preamble, 3 bits zero.
+  // For the first packet RISCV would set the tcp bit
+  // and output of this wrapper would fill the has_preamble
+  // for next packets
+  wire [55:0] preamble     = preamble_state_in[55:0];
+  wire        is_tcp       = preamble_state_in[56];
+  wire        has_preamble = preamble_state_in[60];
 
   reg valid_r;
   always @ (posedge clk)
@@ -109,6 +116,7 @@ module pigasus_sme_wrapper # (
     end
 
   // Save last 7 bytes. Use 0xFF for fillers so preamble is padded
+  reg [55:0] last_7;
   always @ (posedge clk)
     if (s_axis_tlast && s_axis_tvalid)
       if (s_axis_tfirst) begin
@@ -119,6 +127,10 @@ module pigasus_sme_wrapper # (
       end else begin
           last_7 <= {rest_7, s_axis_tdata_rev}     >> (8*s_axis_tempty);
       end
+
+  // If it's not TCP, no need for preamble. But if it is TCP, output
+  // would have the has_preamble set
+  assign preamble_state_out = {3'd0, is_tcp, 3'd0, is_tcp, last_7};
 
   ///////////////////////////////////////////////
   ////////// Check for fast patterns ////////////

@@ -14,7 +14,7 @@ module test_SME # (
   output wire [15:0]             sme_output,
   output wire                    sme_output_v,
   output wire [7:0]              match_valid_stat,
-  output wire [55:0]             last_7
+  output wire [63:0]             state_out
 );
   // Generate empty signal, accel_dma_rd_sp provides it in accel wrap
   reg [$clog2(BYTE_COUNT)-1:0] s_axis_tempty;
@@ -51,11 +51,9 @@ module test_SME # (
     .wr_en(wr_en),
 
     // Metadata
-    .preamble(56'hFEFEFE_FEFEFEFE),
+    .preamble_state_in(64'h11FEFEFE_FEFEFEFE),
     .src_port(16'd1025),
     .dst_port(16'd1024),
-    .is_tcp(1'b1),
-    .has_preamble(1'b1),
     .meta_valid(1'b1),
     .meta_ready(),
 
@@ -64,7 +62,7 @@ module test_SME # (
     .match_rule_ID(sme_output),
     .match_valid(sme_output_v),
     .match_valid_stat(match_valid_stat),
-    .last_7(last_7)
+    .preamble_state_out(state_out)
   );
 
   ///////////////////////////////////////////////

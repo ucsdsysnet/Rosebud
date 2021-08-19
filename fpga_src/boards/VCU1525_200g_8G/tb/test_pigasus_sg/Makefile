@@ -16,7 +16,7 @@ SMARTFPGA = $(CWD)/../../lib/smartFPGA/rtl
 AXIS_LIB = $(CWD)/../../lib/axis/rtl
 
 VERILOG_SOURCES  = $(CWD)/test_gousheh.v
-VERILOG_SOURCES += $(RTL_DIR)/Gousheh_PR_w_accel.v
+VERILOG_SOURCES += $(RTL_DIR)/Gousheh_PR_pig.v
 
 VERILOG_SOURCES += $(SMARTFPGA)/simple_fifo.v
 VERILOG_SOURCES += $(SMARTFPGA)/core_mems.v
@@ -47,10 +47,16 @@ VERILOG_SOURCES += $(ACC_DIR)/rr_arbiter.sv
 VERILOG_SOURCES += $(ACC_DIR)/rr_arbiter_4.sv
 VERILOG_SOURCES += $(ACC_DIR)/string_matcher.sv
 VERILOG_SOURCES += $(ACC_DIR)/hyper_pipe.sv
-# VERILOG_SOURCES += $(ACC_DIR)/port_unit.sv
-# VERILOG_SOURCES += $(ACC_DIR)/rule_unit.sv
+VERILOG_SOURCES += $(ACC_DIR)/hyper_pipe_rst.sv
+VERILOG_SOURCES += $(ACC_DIR)/port_unit.sv
+VERILOG_SOURCES += $(ACC_DIR)/port_group.sv
+VERILOG_SOURCES += $(ACC_DIR)/rule_unit.sv
+VERILOG_SOURCES += $(ACC_DIR)/pkt_almost_full.sv
+VERILOG_SOURCES += $(ACC_DIR)/reduction_2t1.sv
+VERILOG_SOURCES += $(ACC_DIR)/unified_fifo.sv
+VERILOG_SOURCES += $(ACC_DIR)/unified_pkt_fifo.sv
 VERILOG_SOURCES += $(ACC_DIR)/struct_s.sv
-VERILOG_SOURCES += $(ACC_DIR)/SME_wrapper.v
+VERILOG_SOURCES += $(ACC_DIR)/SME_wrapper.sv
 VERILOG_SOURCES += $(ACC_DIR)/accel_wrap_pigasus.v
 VERILOG_SOURCES += $(ACC_DIR)/ip_match.v
 

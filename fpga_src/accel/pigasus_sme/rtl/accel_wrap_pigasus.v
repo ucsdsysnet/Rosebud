@@ -58,9 +58,8 @@ reg  [DEST_WIDTH-1:0]      cmd_accel_reg;
 reg  [ACCEL_COUNT-1:0]     cmd_stop_reg;
 reg  [ACCEL_COUNT-1:0]     cmd_init_reg;
 reg  [ACCEL_COUNT-1:0]     release_match;
-reg  [63:0]                cmd_state_reg;
-reg  [31:0]                cmd_pig_reg;
-reg  [31:0]                cmd_pig_reg2;
+reg  [63:0]                cmd_preamble_reg;
+reg  [31:0]                cmd_port_reg;
 wire [ACCEL_COUNT-1:0]     accel_busy;
 reg  [DEST_WIDTH-1:0]      next_done_accel;
 
@@ -132,10 +131,10 @@ always @(posedge clk) begin
         end
         // update SME input (preamble bytes)
         6'h10: begin
-          cmd_state_reg[31:0] <= io_wr_data;
+          cmd_preamble_reg[31:0] <= io_wr_data;
         end
         6'h14: begin
-          cmd_state_reg[63:32] <= io_wr_data;
+          cmd_preamble_reg[63:32] <= io_wr_data;
         end
 
         // 6'h18 to 6'h24 are used for other reads,
@@ -146,10 +145,7 @@ always @(posedge clk) begin
           release_match[io_addr[9:6]] <= io_wr_data[0];
         end
         6'h2c: begin
-          cmd_pig_reg <= io_wr_data;
-        end
-        6'h30: begin
-          cmd_pig_reg2 <= io_wr_data;
+          cmd_port_reg <= io_wr_data;
         end
         // can go to 6'h3c
       endcase
@@ -227,12 +223,12 @@ always @(posedge clk) begin
                                  || status_match[io_addr[9:6]]);
         end
 
-        // cmd_state_reg readback
+        // cmd_preamble_reg readback
         6'h10: begin
-          read_data_reg <= cmd_state_reg[63:32];
+          read_data_reg <= cmd_preamble_reg[63:32];
         end
         6'h14: begin
-          read_data_reg <= cmd_state_reg[31:0];
+          read_data_reg <= cmd_preamble_reg[31:0];
         end
 
         // Accel output state
@@ -246,6 +242,11 @@ always @(posedge clk) begin
         // Accel match index
         6'h20: begin
           read_data_reg <= match_indexes[(io_addr[9:6]*32)+:32];
+        end
+
+        // cmd_port_reg readback
+        6'h2c: begin
+          read_data_reg <= cmd_port_reg[63:32];
         end
         // can go to 6'h3c
       endcase
@@ -359,23 +360,21 @@ pigasus_sme_wrapper fast_pattern_sme_inst (
   .s_axis_tlast(accel_tlast),
   .s_axis_tready(accel_tready),
 
-  .wr_data({cmd_pig_reg[7:0],cmd_state_reg}),
-  .wr_addr(cmd_pig_reg[26:8]),
-  .wr_en(cmd_init_reg),
+  .wr_data(acc_rom_wr_data),
+  .wr_addr(acc_rom_wr_addr),
+  .wr_en(acc_rom_wr_en),
 
-  .preamble(cmd_state_reg[55:0]),
-  .src_port(cmd_pig_reg2[15:0]),
-  .dst_port(cmd_pig_reg2[31:16]),
-  .is_tcp(cmd_pig_reg[27]),
-  .has_preamble(cmd_pig_reg[28]),
-  .meta_valid(cmd_pig_reg[29]),
+  .preamble_state_in(cmd_preamble_reg),
+  .src_port(cmd_port_reg[15:0]),
+  .dst_port(cmd_port_reg[31:16]),
+  .meta_valid(1'b1),
   .meta_ready(),
 
   .match_rule_ID(match_index),
   .match_release(release_match),
   .match_valid(match_valid),
 
-  .last_7(accel_state),
+  .preamble_state_out(accel_state),
   .match_valid_stat(match_valid_stat)
 );
 
