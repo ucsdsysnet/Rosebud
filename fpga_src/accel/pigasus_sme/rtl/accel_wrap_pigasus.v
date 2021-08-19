@@ -54,6 +54,7 @@ reg  [ACCEL_COUNT-1:0]     cmd_init_reg;
 reg  [ACCEL_COUNT-1:0]     release_match;
 reg  [63:0]                cmd_state_reg;
 reg  [31:0]                cmd_pig_reg;
+reg  [31:0]                cmd_pig_reg2;
 wire [ACCEL_COUNT-1:0]     accel_busy;
 reg  [DEST_WIDTH-1:0]      next_done_accel;
 
@@ -140,6 +141,9 @@ always @(posedge clk) begin
         end
         6'h2c: begin
           cmd_pig_reg <= io_wr_data;
+        end
+        6'h30: begin
+          cmd_pig_reg2 <= io_wr_data;
         end
         // can go to 6'h3c
       endcase
@@ -348,19 +352,24 @@ pigasus_sme_wrapper fast_pattern_sme_inst (
   .s_axis_tvalid(accel_tvalid),
   .s_axis_tlast(accel_tlast),
   .s_axis_tready(accel_tready),
-  
+
   .wr_data({cmd_pig_reg[7:0],cmd_state_reg}),
   .wr_addr(cmd_pig_reg[26:8]),
   .wr_en(cmd_init_reg),
 
-  .preamble_state(cmd_state_reg[63:0]),
-  .reload(cmd_init_reg),
+  .preamble(cmd_state_reg[55:0]),
+  .src_port(cmd_pig_reg2[15:0]),
+  .dst_port(cmd_pig_reg2[31:16]),
+  .is_tcp(cmd_pig_reg[27]),
+  .has_preamble(cmd_pig_reg[28]),
+  .meta_valid(cmd_pig_reg[29]),
+  .meta_ready(),
 
   .match_rule_ID(match_index),
   .match_release(release_match),
   .match_valid(match_valid),
 
-  .last_bytes_state(accel_state),
+  .last_7(accel_state),
   .match_valid_stat(match_valid_stat)
 );
 
