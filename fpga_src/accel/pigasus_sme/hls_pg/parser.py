@@ -125,7 +125,7 @@ if __name__ == "__main__":
       else:
         dst_port_cond = list_cond_gen("dst_port", [int(x) for x in dst_port.split(",")])
 
-      rule_cond = "( (sel_rule=="+str(rule_ID)+") && "+tcp_cond+" && "+src_port_cond+" && "+dst_port_cond+" )"
+      rule_cond = "( (rule_ID_in=="+str(rule_ID)+") && "+tcp_cond+" && "+src_port_cond+" && "+dst_port_cond+" )"
       rule_conds.append(rule_cond)
 
       rules[rule_ID] = [src_port, dst_port, is_tcp]
@@ -133,13 +133,27 @@ if __name__ == "__main__":
   with open("final_mapping.txt","w") as f:
     f.write(json.dumps(rules))
 
-  with open("c_code.txt","w") as f:
-    f.write("if ( "+rule_conds[0]+" || \n")
+  with open("port_group.cc","w") as f:
+    f.write("#include \"ap_int.h\"\n")
+    f.write("\n")
+    f.write("bool port_group(bool is_tcp, ap_uint<16> src_port, ap_uint<16> dst_port, ap_uint<13> rule_ID_in) {\n")
+    f.write("  #pragma HLS INTERFACE mode=ap_none port=src_port\n")
+    f.write("  #pragma HLS INTERFACE mode=ap_none port=dst_port\n")
+    f.write("  #pragma HLS INTERFACE mode=ap_none port=is_tcp\n")
+    f.write("  #pragma HLS INTERFACE mode=ap_none port=rule_ID_in\n")
+    f.write("  #pragma HLS INTERFACE ap_ctrl_none port=return\n")
+    f.write("\n")
+    f.write("  #pragma HLS PIPELINE II=1\n")
+    f.write("\n")
+
+    f.write("  if ( "+rule_conds[0]+" || \n")
     for r in rule_conds[1:-1]:
       f.write("    "+r+" || \n")
     f.write("    "+rule_conds[-1]+" ) {\n")
-    f.write("        match=1;\n")
-    f.write("} else {\n")
-    f.write("        match=0;\n")
+    f.write("        return true;\n")
+    f.write("  } else {\n")
+    f.write("        return false;\n")
+    f.write("  }\n")
+    f.write("\n")
     f.write("}\n")
 

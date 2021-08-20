@@ -249,7 +249,7 @@ always @(posedge clk) begin
 
         // cmd_port_reg readback
         6'h2c: begin
-          read_data_reg <= cmd_port_reg[63:32];
+          read_data_reg <= cmd_port_reg;
         end
         6'h30: begin
           read_data_reg <= {23'd0, accel_state_valid, accel_slot};
