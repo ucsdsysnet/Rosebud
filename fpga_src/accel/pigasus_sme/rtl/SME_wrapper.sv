@@ -28,10 +28,12 @@ module pigasus_sme_wrapper # (
   // Match output
   input  wire                    match_release,
   output wire [15:0]             match_rule_ID,
-  output reg                     match_valid,
+  output wire                    match_valid,
+  output wire                    match_last,
 
   // Metadata state out
-  output reg [63:0]              preamble_state_out,
+  output wire [63:0]             preamble_state_out,
+  output reg                     state_out_valid,
 
   // merged state
   output reg  [7:0]              match_valid_stat
@@ -131,6 +133,11 @@ module pigasus_sme_wrapper # (
   // If it's not TCP, no need for preamble. But if it is TCP, output
   // would have the has_preamble set
   assign preamble_state_out = {3'd0, is_tcp, 3'd0, is_tcp, last_7};
+  always @ (posedge clk)
+    if (rst)
+      state_out_valid <= 1'b0;
+    else
+      state_out_valid <= s_axis_tlast && s_axis_tvalid && s_axis_tready;
 
   ///////////////////////////////////////////////
   ////////// Check for fast patterns ////////////
@@ -165,7 +172,10 @@ module pigasus_sme_wrapper # (
     .out_usr_empty(pigasus_empty)
   );
 
-  wire [127:0] concat_sme_output;
+  wire [127:0] sme_output;
+  wire         sme_output_valid;
+  wire         sme_output_ready;
+  wire         sme_output_eop;
 
   port_group pg_inst (
     .clk(clk),
@@ -188,62 +198,82 @@ module pigasus_sme_wrapper # (
     .wr_addr(wr_addr[12:0]),
     .wr_en(wr_en && (wr_addr[18:17]==2'b11)),
 
-    .out_usr_data(concat_sme_output),
+    .out_usr_data(sme_output),
     .out_usr_valid(sme_output_v),
-    .out_usr_ready(1'b1),
+    .out_usr_ready(sme_output_ready),
     .out_usr_sop(),
-    .out_usr_eop(),
+    .out_usr_eop(sme_output_eop),
     .out_usr_empty(),
 
     .no_pg_rule_cnt(),
     .pg_rule_cnt()
   );
 
-  // FIFOs, assuming no overflow for now
-  wire [12:0] sme_output_f [8];
-  wire [7:0]  sme_output_f_v;
-  wire [7:0]  sme_output_f_ready;
+  // FIFO
+  wire [127:0] sme_output_f;
+  wire         sme_output_f_v;
+  wire         sme_output_f_ready;
+  wire         sme_output_f_eop;
 
-  genvar m;
-  generate
-    for (m=0;m<8;m=m+1) begin: match_fifos
-      simple_fifo # (
-        .ADDR_WIDTH(2),
-        .DATA_WIDTH(13)
-      ) match_fifo (
-        .clk(clk),
-        .rst(rst),
-        .clear(1'b0),
+  simple_fifo # (
+    .ADDR_WIDTH(2),
+    .DATA_WIDTH(128+1)
+  ) accel_fifo (
+    .clk(clk),
+    .rst(rst),
+    .clear(1'b0),
 
-        .din_valid(sme_output_v &&
-            (concat_sme_output[m*16+:13]!=13'd0)),
-        .din(concat_sme_output[m*16+:13]),
-        .din_ready(),
+    .din_valid(sme_output_v),
+    .din({sme_output_eop, sme_output}),
+    .din_ready(sme_output_ready),
 
-        .dout_valid(sme_output_f_v[m]),
-        .dout(sme_output_f[m]),
-        .dout_ready(sme_output_f_ready[m])
-      );
+    .dout_valid(sme_output_f_v),
+    .dout({sme_output_f_eop, sme_output_f}),
+    .dout_ready(sme_output_f_ready)
+  );
+
+  reg  [127:0] sme_output_r;
+  reg  [7:0]   sme_output_r_v;
+  reg          sme_output_r_eop;
+  reg          match_last_r;
+  wire [2:0]   selected_match;
+  wire [7:0]   ack;
+  integer m;
+
+  // Register one FIFO output
+  always @ (posedge clk) begin
+    if (sme_output_f_v & sme_output_f_ready) begin
+      sme_output_r     <= sme_output_f;
+      sme_output_r_eop <= sme_output_f_eop;
+      for (m=0; m<8; m=m+1)
+        sme_output_r_v[m] <= (sme_output_f[m*16+:16]!=0);
+    end else if (match_valid && match_release) begin
+      sme_output_r_v <= sme_output_r_v & (~ack);
+    end else if (sme_output_f_ready) begin
+      sme_output_r_eop <= 1'b0;
     end
-  endgenerate
 
-  wire [2:0] selected_fifo;
-  wire [7:0] ack;
+    match_last_r <= sme_output_r_eop && sme_output_f_ready;
+
+    if (rst)
+        sme_output_r_v <= 8'd0;
+  end
 
   arbiter # (.PORTS(8), .TYPE("PRIORITY")) match_arb (
     .clk (clk),
     .rst (rst),
 
-    .request      (sme_output_f_v & ~sme_output_f_ready),
+    .request      (sme_output_r_v & ~ack),
     .acknowledge  (8'd0),
 
     .grant        (ack),
     .grant_valid  (match_valid),
-    .grant_encoded(selected_fifo)
+    .grant_encoded(selected_match)
   );
 
-  assign sme_output_f_ready = ack & {8{match_release}};
-  assign match_rule_ID      = {3'd0, sme_output_f[selected_fifo]};
-  assign match_valid_stat   = sme_output_f_v;
+  assign sme_output_f_ready = (sme_output_r_v == 8'd0);
+  assign match_rule_ID      = sme_output_r[selected_match*16 +: 16];
+  assign match_valid_stat   = sme_output_r_v;
+  assign match_last         = match_last_r;
 
 endmodule

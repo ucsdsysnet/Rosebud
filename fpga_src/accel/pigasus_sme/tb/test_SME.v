@@ -32,6 +32,38 @@ module test_SME # (
 
   assign wr_en = 1'b0;
 
+  wire [63:0] preamble_state;
+  wire [15:0] src_port, dst_port;
+  wire        meta_data_valid, meta_data_ready;
+
+  // Insert 100 metadata into FIFO
+  reg [6:0] cnt;
+  always @ (posedge clk)
+    if (rst)
+      cnt <= 7'd0;
+    else if (cnt<7'd127)
+      cnt <= cnt + 7'd1;
+
+  wire push = cnt < 7'd100;
+
+  simple_fifo # (
+    .ADDR_WIDTH(7),
+    .DATA_WIDTH(64+32)
+  ) meta_data_fifo (
+    .clk(clk),
+    .rst(rst),
+    .clear(1'b0),
+
+    .din_valid(push),
+    .din({64'h11FEFEFE_FEFEFEFE,
+          16'd1025, 16'd1024}),
+    .din_ready(),
+
+    .dout_valid(meta_data_valid),
+    .dout({preamble_state, src_port, dst_port}),
+    .dout_ready(meta_data_ready)
+  );
+
   pigasus_sme_wrapper # (
     .BYTE_COUNT(BYTE_COUNT),
     .STRB_COUNT($clog2(BYTE_COUNT))
@@ -51,16 +83,17 @@ module test_SME # (
     .wr_en(wr_en),
 
     // Metadata
-    .preamble_state_in(64'h11FEFEFE_FEFEFEFE),
-    .src_port(16'd1025),
-    .dst_port(16'd1024),
-    .meta_valid(1'b1),
-    .meta_ready(),
+    .preamble_state_in(preamble_state),
+    .src_port(src_port),
+    .dst_port(dst_port),
+    .meta_valid(meta_data_valid),
+    .meta_ready(meta_data_ready),
 
     // Match output
     .match_release(1'b1),
     .match_rule_ID(sme_output),
     .match_valid(sme_output_v),
+    .match_last(),
     .match_valid_stat(match_valid_stat),
     .preamble_state_out(state_out)
   );
@@ -108,7 +141,7 @@ module test_SME # (
   integer m;
   always @ (posedge clk)
     for (m=0; m<8; m=m+1)
-      if (dut.sme_output_f_v[m] && dut.sme_output_f_ready[m])
-        $display("Match on ouput %0d, value %h", m, dut.sme_output_f[m]);
+      if (dut.sme_output_r_v[m] && dut.ack[m])
+        $display("Match on ouput %0d, value %h", m, dut.sme_output_r[m*16+:16]);
 
 endmodule
