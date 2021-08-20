@@ -60,18 +60,21 @@ reg  [ACCEL_COUNT-1:0]     cmd_init_reg;
 reg  [ACCEL_COUNT-1:0]     release_match;
 reg  [63:0]                cmd_preamble_reg;
 reg  [31:0]                cmd_port_reg;
+reg  [7:0]                 cmd_slot_reg;
 wire [ACCEL_COUNT-1:0]     accel_busy;
-reg  [DEST_WIDTH-1:0]      next_done_accel;
 
 reg  [ACCEL_COUNT-1:0]     status_match;
 reg  [ACCEL_COUNT-1:0]     status_done;
 wire [ACCEL_COUNT-1:0]     masked_done;
 reg  [ACCEL_COUNT*8-1:0]   match_1hot;
-wire [ACCEL_COUNT*32-1:0]  match_indexes;
+wire [ACCEL_COUNT*32-1:0]  match_rule_ID;
 wire [ACCEL_COUNT-1:0]     match_valid;
 reg  [ACCEL_COUNT-1:0]     done_err;
 wire [ACCEL_COUNT-1:0]     desc_error;
 wire [ACCEL_COUNT*64-1:0]  accel_state;
+wire [ACCEL_COUNT*8-1:0]   accel_slot;
+
+wire                       accel_state_valid;
 
 reg [31:0]  ip_addr_reg = 0;
 reg         ip_addr_valid_reg = 0;
@@ -147,6 +150,9 @@ always @(posedge clk) begin
         6'h2c: begin
           cmd_port_reg <= io_wr_data;
         end
+        6'h30: begin
+          cmd_slot_reg <= io_wr_data[7:0];
+        end
         // can go to 6'h3c
       endcase
     end
@@ -187,9 +193,6 @@ always @(posedge clk) begin
         end
         6'h1c: begin
           read_data_reg <= masked_done;
-        end
-        6'h20: begin
-          read_data_reg <= next_done_accel;
         end
         // can go to 6'h3c
       endcase
@@ -241,12 +244,15 @@ always @(posedge clk) begin
 
         // Accel match index
         6'h20: begin
-          read_data_reg <= match_indexes[(io_addr[9:6]*32)+:32];
+          read_data_reg <= match_rule_ID[(io_addr[9:6]*32)+:32];
         end
 
         // cmd_port_reg readback
         6'h2c: begin
           read_data_reg <= cmd_port_reg[63:32];
+        end
+        6'h30: begin
+          read_data_reg <= {23'd0, accel_state_valid, accel_slot};
         end
         // can go to 6'h3c
       endcase
@@ -350,6 +356,50 @@ wire [7:0]  match_error_stat;
 
 wire [4-1:0] accel_tempty = 4'hf-accel_tuser;
 
+wire [63:0] preamble_state;
+wire [15:0] src_port, dst_port;
+wire        meta_data_valid, meta_data_ready;
+
+simple_fifo # (
+  .ADDR_WIDTH(2),
+  .DATA_WIDTH(64+32)
+) meta_data_fifo (
+  .clk(clk),
+  .rst(rst),
+  .clear(1'b0),
+
+  .din_valid(cmd_valid_reg),
+  .din({cmd_preamble_reg, cmd_port_reg}),
+  .din_ready(),
+
+  .dout_valid(meta_data_valid),
+  .dout({preamble_state, src_port, dst_port}),
+  .dout_ready(meta_data_ready)
+);
+
+wire [7:0]  meta_slot;
+wire        meta_slot_valid, meta_slot_ready;
+wire [63:0] state_out;
+wire        state_out_valid;
+wire        match_last;
+
+simple_fifo # (
+  .ADDR_WIDTH(2),
+  .DATA_WIDTH(8)
+) cmd_slot_fifo (
+  .clk(clk),
+  .rst(rst),
+  .clear(1'b0),
+
+  .din_valid(cmd_valid_reg),
+  .din(cmd_slot_reg),
+  .din_ready(),
+
+  .dout_valid(meta_slot_valid),
+  .dout(meta_slot),
+  .dout_ready(state_out_valid)
+);
+
 pigasus_sme_wrapper fast_pattern_sme_inst (
   .clk(clk),
   .rst(rst),
@@ -364,18 +414,37 @@ pigasus_sme_wrapper fast_pattern_sme_inst (
   .wr_addr(acc_rom_wr_addr),
   .wr_en(acc_rom_wr_en),
 
-  .preamble_state_in(cmd_preamble_reg),
-  .src_port(cmd_port_reg[15:0]),
-  .dst_port(cmd_port_reg[31:16]),
-  .meta_valid(1'b1),
-  .meta_ready(),
+  .preamble_state_in(preamble_state),
+  .src_port(src_port),
+  .dst_port(dst_port),
+  .meta_valid(meta_data_valid),
+  .meta_ready(meta_data_ready),
 
   .match_rule_ID(match_index),
   .match_release(release_match),
   .match_valid(match_valid),
+  .match_last(match_last),
 
-  .preamble_state_out(accel_state),
+  .preamble_state_out(state_out),
+  .state_out_valid(state_out_valid),
   .match_valid_stat(match_valid_stat)
+);
+
+simple_fifo # (
+  .ADDR_WIDTH(2),
+  .DATA_WIDTH(64+8)
+) state_out_fifo (
+  .clk(clk),
+  .rst(rst),
+  .clear(1'b0),
+
+  .din_valid(state_out_valid),
+  .din({state_out, meta_slot}),
+  .din_ready(),
+
+  .dout_valid(accel_state_valid),
+  .dout({accel_state, accel_slot}),
+  .dout_ready(match_last)
 );
 
 always @ (posedge clk)
@@ -385,7 +454,7 @@ always @ (posedge clk)
     match_1hot <= match_1hot | match_valid_stat;
   end
 
-assign match_indexes = {16'd0, match_index};
+assign match_rule_ID = {16'd0, match_index};
 assign sme_match     = |match_valid_stat;
 
 always @ (posedge clk) begin
@@ -399,20 +468,17 @@ always @ (posedge clk) begin
   end
 end
 
-// // CND IP check accelerator
-// // ip_match and ip_done keep their value until new valid is asserted
-// // It needs byte swap due to network packets endian
-// ip_match ip_match_inst (
-//   .clk(clk),
-//   .rst(rst),
-//   .addr({ip_addr_reg[7:0], ip_addr_reg[15:8],
-//          ip_addr_reg[23:16], ip_addr_reg[31:24]}),
-//   .valid(ip_addr_valid_reg),
-//   .match(ip_match),
-//   .done(ip_done)
-// );
-
-assign ip_done = 1'b0;
-assign ip_match = 1'b0;
+// CND IP check accelerator
+// ip_match and ip_done keep their value until new valid is asserted
+// It needs byte swap due to network packets endian
+ip_match ip_match_inst (
+  .clk(clk),
+  .rst(rst),
+  .addr({ip_addr_reg[7:0], ip_addr_reg[15:8],
+         ip_addr_reg[23:16], ip_addr_reg[31:24]}),
+  .valid(ip_addr_valid_reg),
+  .match(ip_match),
+  .done(ip_done)
+);
 
 endmodule
