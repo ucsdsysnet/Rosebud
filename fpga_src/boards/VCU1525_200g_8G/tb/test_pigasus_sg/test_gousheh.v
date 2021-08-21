@@ -176,7 +176,7 @@ Gousheh_wrapper #(
     .DATA_S_REG_TYPE(2),
     .DATA_M_REG_TYPE(2),
     .DRAM_M_REG_TYPE(2)
-) UUT (
+) Gousheh_wrapper_inst (
     .clk(clk),
     .rst(rst),
 
@@ -282,7 +282,7 @@ Gousheh_wrapper #(
     .core_status_addr(core_status_addr)
 );
 
-Gousheh_PR pr_wrapper (
+Gousheh_PR UUT (
     .clk(clk),
     .rst(rst),
     .core_reset(core_reset),

@@ -22,7 +22,7 @@ module port_group (
     
     // Memory write port
     input  logic [2*RULE_PG_WIDTH-1:0] wr_data,
-    input  logic [RULE_AWIDTH-1:0]     wr_addr,
+    input  logic [RULE_AWIDTH-2:0]     wr_addr,
     input  logic                       wr_en,
 
     // Out User data
@@ -98,7 +98,7 @@ logic         rule_packer_fifo_ready;
 logic [5:0]   rule_packer_fifo_empty;
 
 logic [2*RULE_PG_WIDTH-1:0] wr_data_r;
-logic [RULE_AWIDTH-1:0]     wr_addr_r;
+logic [RULE_AWIDTH-2:0]     wr_addr_r;
 logic                       wr_en_r;
 
 //Forward pkt data
@@ -283,7 +283,7 @@ rule2pg_table_0_1 (
     .clock     (clk),
     .en_a      (1'b1),
     .wr_en_a   (wr_en_r),
-    .address_a (wr_en_r ? wr_addr_r : rule_pg_addr_0),
+    .address_a (wr_en_r ? {wr_addr_r, 1'b0} : rule_pg_addr_0),
     .wr_data_a (wr_data_r),
     .q_a       (rule_pg_data_0),
     .en_b      (1'b1),
@@ -303,7 +303,7 @@ rule2pg_table_2_3 (
     .clock     (clk),
     .en_a      (1'b1),
     .wr_en_a   (wr_en_r),
-    .address_a (wr_en_r ? wr_addr_r : rule_pg_addr_2),
+    .address_a (wr_en_r ? {wr_addr_r, 1'b0} : rule_pg_addr_2),
     .wr_data_a (wr_data_r),
     .q_a       (rule_pg_data_2),
     .en_b      (1'b1),

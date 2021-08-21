@@ -26,11 +26,9 @@ module test_SME # (
         s_axis_tempty = s_axis_tempty+1;
   end
 
-  wire [71:0]  wr_data;
-  wire [16:0]  wr_addr;
-  wire         wr_en;
-
-  assign wr_en = 1'b0;
+  wire [71:0]  wr_data = 72'd0;
+  wire [16:0]  wr_addr = 17'd0;
+  wire         wr_en   = 1'b0;
 
   wire [63:0] preamble_state;
   wire [15:0] src_port, dst_port;

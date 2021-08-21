@@ -221,7 +221,7 @@ module pigasus_sme_wrapper # (
     .in_meta_ready(meta_ready),
 
     .wr_data(wr_data[71:0]),
-    .wr_addr(wr_addr[12:0]),
+    .wr_addr(wr_addr[11:0]),
     .wr_en(wr_en && (wr_addr[16:15]==2'b11)),
 
     .out_usr_data(sme_output),

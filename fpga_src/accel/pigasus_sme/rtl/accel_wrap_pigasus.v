@@ -352,7 +352,7 @@ endgenerate
 wire [ACCEL_COUNT-1:0] sme_match;
 
 wire [15:0] match_index;
-wire [7:0]  match_valid_stat;
+wire [3:0]  match_valid_stat;
 wire [7:0]  match_error_stat;
 
 wire [4-1:0] accel_tempty = 4'hf-accel_tuser;

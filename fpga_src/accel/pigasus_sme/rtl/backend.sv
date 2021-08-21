@@ -1226,7 +1226,7 @@ logic [5:0]   rule_packer_empty;
 logic         rule_packer_ready;
 
 logic [63:0]  wr_data_r;
-logic [15:0]  wr_addr_r;
+logic [12:0]  wr_addr_r;
 logic [7:0]  wr_en_r;
 
 //Assign layer 0 input
@@ -1804,7 +1804,7 @@ end
 
 always @(posedge clk) begin
     wr_data_r <= wr_data;
-    wr_addr_r <= wr_addr;
+    wr_addr_r <= wr_addr[12:0];
 
     wr_en_r[0] <= wr_en && (wr_addr[15:13]==3'd0);
     wr_en_r[1] <= wr_en && (wr_addr[15:13]==3'd1);
