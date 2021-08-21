@@ -11,7 +11,8 @@ module accel_wrap #(
   parameter ACC_ADDR_WIDTH  = $clog2(SLOW_M_B_LINES),
   parameter PMEM_SEL_BITS   = PMEM_ADDR_WIDTH-$clog2(STRB_WIDTH)
                               -1-$clog2(SLOW_M_B_LINES),
-  parameter ACC_MEM_BLOCKS  = 2**PMEM_SEL_BITS
+  parameter ACC_MEM_BLOCKS  = 2**PMEM_SEL_BITS,
+  parameter SLOT_COUNT      = 16
 ) (
   input  wire                                     clk,
   input  wire                                     rst,
