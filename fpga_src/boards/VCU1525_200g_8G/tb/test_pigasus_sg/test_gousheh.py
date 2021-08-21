@@ -101,10 +101,8 @@ payload = bytes([0]+[x % 256 for x in range(SIZE_0[0]-1)])
 test_pkt = eth / ip / tcp / payload
 PACKETS.append(test_pkt)
 
-PCAP         = None
-# PCAP         = os.path.abspath(os.path.join(os.path.dirname(__file__),
-#     '../../accel/full_ids/python/ids_test.pcap'))
-
+PCAP = os.path.abspath(os.path.join(os.path.dirname(__file__),
+      '../../accel/pigasus_sme/tb/m10_100.pcap'))
 
 PACKETS_0 = []
 
