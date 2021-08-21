@@ -350,7 +350,7 @@ accel_wrap #(
   .ACC_MEM_BLOCKS(ACC_MEM_BLOCKS)
 ) accel_wrap_inst (
   .clk(clk),
-  .rst(core_reset),
+  .rst(rst),
 
   .io_en(core_exio_en),
   .io_wen(core_mem_wen),

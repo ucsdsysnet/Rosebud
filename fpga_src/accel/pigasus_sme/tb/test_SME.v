@@ -27,7 +27,7 @@ module test_SME # (
   end
 
   wire [71:0]  wr_data;
-  wire [18:0]  wr_addr;
+  wire [16:0]  wr_addr;
   wire         wr_en;
 
   assign wr_en = 1'b0;

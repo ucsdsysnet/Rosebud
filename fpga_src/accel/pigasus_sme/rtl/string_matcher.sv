@@ -9,7 +9,7 @@ module string_matcher (
     input  logic                 in_pkt_eop,
     input  logic [FP_EWIDTH-1:0] in_pkt_empty,
     input  logic [63:0]          wr_data,
-    input  logic [18:0]          wr_addr,
+    input  logic [16:0]          wr_addr,
     input  logic                 wr_en,
     output logic                 in_pkt_ready,
     output logic [127:0]         out_usr_data,
@@ -1190,7 +1190,7 @@ logic din_ready_7_15;
 logic out_new_pkt;
 
 logic [63:0] wr_data_r;
-logic [17:0] wr_addr_r;
+logic [15:0] wr_addr_r;
 logic        wr_en_front_r;
 logic        wr_en_back_r;
 
@@ -2650,9 +2650,9 @@ end
 
 always @(posedge clk) begin
     wr_data_r     <= wr_data;
-    wr_addr_r     <= wr_addr[17:0];
-    wr_en_front_r <= wr_en && (wr_addr[18:17]==2'b10);
-    wr_en_back_r  <= wr_en && (wr_addr[18]==1'b0);
+    wr_addr_r     <= wr_addr[15:0];
+    wr_en_front_r <= wr_en && (wr_addr[16:15]==2'b10);
+    wr_en_back_r  <= wr_en && (wr_addr[16]==1'b0);
 
     if (rst) begin
       wr_en_front_r <= 1'b0;
@@ -3342,7 +3342,7 @@ backend back(
     .in_valid_7_15    (din_valid_7_15_r2),
     .in_ready_7_15    (din_ready_7_15),
     .wr_data                 (wr_data_r),
-    .wr_addr                 (wr_addr_r[17:0]),
+    .wr_addr                 (wr_addr_r[15:0]),
     .wr_en                   (wr_en_back_r),
     .out_usr_data            (out_usr_data),
     .out_usr_valid           (out_usr_valid),

@@ -15,7 +15,7 @@ module pigasus_sme_wrapper # (
   output wire                    s_axis_tready,
 
   input  wire [71:0]             wr_data,
-  input  wire [18:0]             wr_addr,
+  input  wire [16:0]             wr_addr,
   input  wire                    wr_en,
 
   // Metadata state in
@@ -196,7 +196,7 @@ module pigasus_sme_wrapper # (
 
     .wr_data(wr_data[71:0]),
     .wr_addr(wr_addr[12:0]),
-    .wr_en(wr_en && (wr_addr[18:17]==2'b11)),
+    .wr_en(wr_en && (wr_addr[16:15]==2'b11)),
 
     .out_usr_data(sme_output),
     .out_usr_valid(sme_output_v),

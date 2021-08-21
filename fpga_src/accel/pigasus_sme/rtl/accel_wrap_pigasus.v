@@ -5,7 +5,7 @@ module accel_wrap #(
   parameter DATA_WIDTH      = 128,
   parameter STRB_WIDTH      = (DATA_WIDTH/8),
   parameter PMEM_ADDR_WIDTH = 8,
-  parameter AROM_ADDR_WIDTH = 19,
+  parameter AROM_ADDR_WIDTH = 21,
   parameter AROM_DATA_WIDTH = 72,
   parameter SLOW_M_B_LINES  = 4096,
   parameter ACC_ADDR_WIDTH  = $clog2(SLOW_M_B_LINES),
@@ -286,7 +286,7 @@ end
 
 // DMA engine for single block of the packet memory
 localparam BLOCK_ADDR_WIDTH =PMEM_ADDR_WIDTH-PMEM_SEL_BITS;
-localparam ATTACHED_CNT = 2;
+localparam ATTACHED_CNT = 2; //1 for 8 SLOTS, 2 -> 16, 4 -> 32
 localparam ATTACHED = ACC_MEM_BLOCKS-ATTACHED_CNT;
 localparam USER_WIDTH = $clog2(DATA_WIDTH/8);
 
@@ -411,7 +411,7 @@ pigasus_sme_wrapper fast_pattern_sme_inst (
   .s_axis_tready(accel_tready),
 
   .wr_data(acc_rom_wr_data),
-  .wr_addr(acc_rom_wr_addr),
+  .wr_addr(acc_rom_wr_addr[AROM_ADDR_WIDTH-1:4]),
   .wr_en(acc_rom_wr_en),
 
   .preamble_state_in(preamble_state),

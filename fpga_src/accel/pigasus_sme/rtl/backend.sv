@@ -388,7 +388,7 @@ module backend(
     input                in_valid_7_15,
     output logic         in_ready_7_15,
     input  logic [63:0]  wr_data,
-    input  logic [17:0]  wr_addr,
+    input  logic [15:0]  wr_addr,
     input  logic         wr_en,
     output logic [127:0] out_usr_data,
     output logic         out_usr_valid,
@@ -1226,7 +1226,7 @@ logic [5:0]   rule_packer_empty;
 logic         rule_packer_ready;
 
 logic [63:0]  wr_data_r;
-logic [17:0]  wr_addr_r;
+logic [15:0]  wr_addr_r;
 logic [7:0]  wr_en_r;
 
 //Assign layer 0 input
@@ -1806,14 +1806,14 @@ always @(posedge clk) begin
     wr_data_r <= wr_data;
     wr_addr_r <= wr_addr;
 
-    wr_en_r[0] <= wr_en && (wr_addr_r[17:15]==3'd0);
-    wr_en_r[1] <= wr_en && (wr_addr_r[17:15]==3'd1);
-    wr_en_r[2] <= wr_en && (wr_addr_r[17:15]==3'd2);
-    wr_en_r[3] <= wr_en && (wr_addr_r[17:15]==3'd3);
-    wr_en_r[4] <= wr_en && (wr_addr_r[17:15]==3'd4);
-    wr_en_r[5] <= wr_en && (wr_addr_r[17:15]==3'd5);
-    wr_en_r[6] <= wr_en && (wr_addr_r[17:15]==3'd6);
-    wr_en_r[7] <= wr_en && (wr_addr_r[17:15]==3'd7);
+    wr_en_r[0] <= wr_en && (wr_addr[15:13]==3'd0);
+    wr_en_r[1] <= wr_en && (wr_addr[15:13]==3'd1);
+    wr_en_r[2] <= wr_en && (wr_addr[15:13]==3'd2);
+    wr_en_r[3] <= wr_en && (wr_addr[15:13]==3'd3);
+    wr_en_r[4] <= wr_en && (wr_addr[15:13]==3'd4);
+    wr_en_r[5] <= wr_en && (wr_addr[15:13]==3'd5);
+    wr_en_r[6] <= wr_en && (wr_addr[15:13]==3'd6);
+    wr_en_r[7] <= wr_en && (wr_addr[15:13]==3'd7);
 
     if (rst)
         wr_en_r <= 8'd0;
@@ -3392,7 +3392,7 @@ hashtable_inst_0_0(
     .clock     (clk),
     .en_a      (1'b1),
     .wr_en_a   (wr_en_r[0]),
-    .address_a (wr_addr_r[15-1:0]),
+    .address_a ({wr_addr_r[13-1:0],2'd0}),
     .wr_data_a (wr_data_r),
     .q_a       (),    
     .en_b      (1'b1),
@@ -3412,7 +3412,7 @@ hashtable_inst_1_0(
     .clock     (clk),
     .en_a      (1'b1),
     .wr_en_a   (wr_en_r[1]),
-    .address_a (wr_addr_r[15-1:0]),
+    .address_a ({wr_addr_r[13-1:0],2'd0}),
     .wr_data_a (wr_data_r),
     .q_a       (),    
     .en_b      (1'b1),
