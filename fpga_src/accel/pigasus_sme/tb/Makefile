@@ -43,6 +43,7 @@ VERILOG_SOURCES += $(RTL_DIR)/pkt_almost_full.sv
 VERILOG_SOURCES += $(RTL_DIR)/reduction_2t1.sv
 VERILOG_SOURCES += $(RTL_DIR)/unified_fifo.sv
 VERILOG_SOURCES += $(RTL_DIR)/unified_pkt_fifo.sv
+VERILOG_SOURCES += $(RTL_DIR)/rule_depacker_128_64.sv
 VERILOG_SOURCES += $(RTL_DIR)/SME_wrapper.sv
 
 COMPILE_ARGS  += -I ./struct_s.sv

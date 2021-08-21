@@ -13,7 +13,7 @@ module test_SME # (
 
   output wire [15:0]             sme_output,
   output wire                    sme_output_v,
-  output wire [7:0]              match_valid_stat,
+  output wire [3:0]              match_valid_stat,
   output wire [63:0]             state_out
 );
   // Generate empty signal, accel_dma_rd_sp provides it in accel wrap
@@ -123,10 +123,10 @@ module test_SME # (
               dut.pg_inst.rule2pg_table_0_1.mem);
     $readmemh("./memory_init/rule_2_pg_packed.mif",
               dut.pg_inst.rule2pg_table_2_3.mem);
-    $readmemh("./memory_init/rule_2_pg_packed.mif",
-              dut.pg_inst.rule2pg_table_4_5.mem);
-    $readmemh("./memory_init/rule_2_pg_packed.mif",
-              dut.pg_inst.rule2pg_table_6_7.mem);
+    // $readmemh("./memory_init/rule_2_pg_packed.mif",
+    //           dut.pg_inst.rule2pg_table_4_5.mem);
+    // $readmemh("./memory_init/rule_2_pg_packed.mif",
+    //           dut.pg_inst.rule2pg_table_6_7.mem);
 
     $readmemh("./memory_init/hashtable0_packed.mif",
               dut.pigasus.back.hashtable_inst_0_0.mem);
@@ -140,7 +140,7 @@ module test_SME # (
 
   integer m;
   always @ (posedge clk)
-    for (m=0; m<8; m=m+1)
+    for (m=0; m<4; m=m+1)
       if (dut.sme_output_r_v[m] && dut.ack[m])
         $display("Match on ouput %0d, value %h", m, dut.sme_output_r[m*16+:16]);
 

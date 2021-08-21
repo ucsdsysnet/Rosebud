@@ -43,6 +43,7 @@ add_files -norecurse {
   ../accel/pigasus_sme/rtl/reduction_2t1.sv
   ../accel/pigasus_sme/rtl/unified_fifo.sv
   ../accel/pigasus_sme/rtl/unified_pkt_fifo.sv
+  ../accel/pigasus_sme/rtl/rule_depacker_128_64.sv
   ../accel/pigasus_sme/rtl/struct_s.sv
   ../accel/pigasus_sme/rtl/SME_wrapper.sv
   ../accel/pigasus_sme/rtl/accel_wrap_pigasus.v

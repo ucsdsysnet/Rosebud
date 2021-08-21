@@ -24,7 +24,7 @@ def get_pg_rules():
 context = {}
 
 bucket_size = 8
-pg_rules = get_pg_rules()
+pg_rules = get_pg_rules()//2
 last_layer_width = pg_rules//bucket_size
 half_pg_rules = pg_rules>>1
 

@@ -36,7 +36,7 @@ module pigasus_sme_wrapper # (
   output reg                     state_out_valid,
 
   // merged state
-  output reg  [3:0]              match_valid_stat
+  output reg  [7:0]              match_valid_stat
 );
 
   ///////////////////////////////////////////////
@@ -171,34 +171,8 @@ module pigasus_sme_wrapper # (
     .out_usr_eop(pigasus_eop),
     .out_usr_empty(pigasus_empty)
   );
-  
-  wire [63:0] pigasus_data_r;
-  wire        pigasus_valid_r;
-  wire        pigasus_ready_r;
-  wire        pigasus_sop_r;
-  wire        pigasus_eop_r;
-  wire [2:0]  pigasus_empty_r;
-  
-  rule_depacker_128_64 rule_depacker_inst (
-    .clk(clk),
-    .rst(rst),
 
-    .in_rule_sop(pigasus_sop),
-    .in_rule_eop(pigasus_eop),
-    .in_rule_data(pigasus_data),
-    .in_rule_empty(pigasus_empty),
-    .in_rule_valid(pigasus_valid),
-    .in_rule_ready(pigasus_ready),
-
-    .out_rule_data(pigasus_data_r),
-    .out_rule_valid(pigasus_valid_r),
-    .out_rule_ready(pigasus_ready_r),
-    .out_rule_sop(pigasus_sop_r),
-    .out_rule_eop(pigasus_eop_r),
-    .out_rule_empty(pigasus_empty_r)
-);
-
-  wire [63:0]  sme_output;
+  wire [127:0] sme_output;
   wire         sme_output_valid;
   wire         sme_output_ready;
   wire         sme_output_eop;
@@ -207,12 +181,12 @@ module pigasus_sme_wrapper # (
     .clk(clk),
     .rst(rst),
 
-    .in_usr_sop(pigasus_sop_r),
-    .in_usr_eop(pigasus_eop_r),
-    .in_usr_data(pigasus_data_r),
-    .in_usr_empty(pigasus_empty_r),
-    .in_usr_valid(pigasus_valid_r),
-    .in_usr_ready(pigasus_ready_r),
+    .in_usr_sop(pigasus_sop),
+    .in_usr_eop(pigasus_eop),
+    .in_usr_data(pigasus_data),
+    .in_usr_empty(pigasus_empty),
+    .in_usr_valid(pigasus_valid),
+    .in_usr_ready(pigasus_ready),
 
     .in_meta_valid(meta_valid),
     .src_port(src_port),
@@ -236,14 +210,14 @@ module pigasus_sme_wrapper # (
   );
 
   // FIFO
-  wire [63:0] sme_output_f;
-  wire        sme_output_f_v;
-  wire        sme_output_f_ready;
-  wire        sme_output_f_eop;
+  wire [127:0] sme_output_f;
+  wire         sme_output_f_v;
+  wire         sme_output_f_ready;
+  wire         sme_output_f_eop;
 
   simple_fifo # (
     .ADDR_WIDTH(2),
-    .DATA_WIDTH(64+1)
+    .DATA_WIDTH(128+1)
   ) accel_fifo (
     .clk(clk),
     .rst(rst),
@@ -258,12 +232,12 @@ module pigasus_sme_wrapper # (
     .dout_ready(sme_output_f_ready)
   );
 
-  reg  [63:0] sme_output_r;
-  reg  [3:0]  sme_output_r_v;
-  reg         sme_output_r_eop;
-  reg         match_last_r;
-  wire [1:0]  selected_match;
-  wire [3:0]  ack;
+  reg  [127:0] sme_output_r;
+  reg  [7:0]   sme_output_r_v;
+  reg          sme_output_r_eop;
+  reg          match_last_r;
+  wire [2:0]   selected_match;
+  wire [7:0]   ack;
   integer m;
 
   // Register one FIFO output
@@ -271,7 +245,7 @@ module pigasus_sme_wrapper # (
     if (sme_output_f_v & sme_output_f_ready) begin
       sme_output_r     <= sme_output_f;
       sme_output_r_eop <= sme_output_f_eop;
-      for (m=0; m<4; m=m+1)
+      for (m=0; m<8; m=m+1)
         sme_output_r_v[m] <= (sme_output_f[m*16+:16]!=0);
     end else if (match_valid && match_release) begin
       sme_output_r_v <= sme_output_r_v & (~ack);
@@ -282,22 +256,22 @@ module pigasus_sme_wrapper # (
     match_last_r <= sme_output_r_eop && sme_output_f_ready;
 
     if (rst)
-        sme_output_r_v <= 4'd0;
+        sme_output_r_v <= 8'd0;
   end
 
-  arbiter # (.PORTS(4), .TYPE("PRIORITY")) match_arb (
+  arbiter # (.PORTS(8), .TYPE("PRIORITY")) match_arb (
     .clk (clk),
     .rst (rst),
 
     .request      (sme_output_r_v & ~ack),
-    .acknowledge  (4'd0),
+    .acknowledge  (8'd0),
 
     .grant        (ack),
     .grant_valid  (match_valid),
     .grant_encoded(selected_match)
   );
 
-  assign sme_output_f_ready = (sme_output_r_v == 4'd0);
+  assign sme_output_f_ready = (sme_output_r_v == 8'd0);
   assign match_rule_ID      = sme_output_r[selected_match*16 +: 16];
   assign match_valid_stat   = sme_output_r_v;
   assign match_last         = match_last_r;
