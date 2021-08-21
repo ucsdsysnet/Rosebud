@@ -347,7 +347,8 @@ accel_wrap #(
   .SLOW_M_B_LINES(SLOW_M_B_LINES),
   .ACC_ADDR_WIDTH(ACC_ADDR_WIDTH),
   .PMEM_SEL_BITS(PMEM_SEL_BITS),
-  .ACC_MEM_BLOCKS(ACC_MEM_BLOCKS)
+  .ACC_MEM_BLOCKS(ACC_MEM_BLOCKS),
+  .SLOT_COUNT(SLOT_COUNT)
 ) accel_wrap_inst (
   .clk(clk),
   .rst(rst),
