@@ -40,7 +40,6 @@ add_files -norecurse {
   ../accel/pigasus_sme/rtl/rule_unit.sv
   ../accel/pigasus_sme/rtl/port_group.sv
   ../accel/pigasus_sme/rtl/pkt_almost_full.sv
-  ../accel/pigasus_sme/rtl/pkt_data_shift.sv
   ../accel/pigasus_sme/rtl/reduction_2t1.sv
   ../accel/pigasus_sme/rtl/unified_fifo.sv
   ../accel/pigasus_sme/rtl/unified_pkt_fifo.sv
