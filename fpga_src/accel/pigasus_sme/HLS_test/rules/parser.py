@@ -6,11 +6,73 @@ def list_cond_gen (term, ports):
   if (len(ports)==1):
     return "("+term+"=="+str(ports[0])+")"
   else:
-    res = "( ("+term+"=="+str(ports[0])+") || "
+    res = "(("+term+"=="+str(ports[0])+") || "
     for r in ports[1:-1]:
       res += "("+term+"=="+str(r)+") || "
-    res+= "("+term+"=="+str(ports[-1])+") )"
+    res+= "("+term+"=="+str(ports[-1])+"))"
     return res
+
+def port_parser (term, query):
+  has_http = False
+  if ("$HTTP_PORTS," in query):
+    query = query.replace("$HTTP_PORTS,", "")
+    has_http = True
+  if (",$HTTP_PORTS" in query):
+    query = query.replace(",$HTTP_PORTS", "")
+    has_http = True
+  if (query.startswith("[")):
+    query = query[1:-1]
+
+  if (query=="$HTTP_PORTS"):
+    return term+"_is_http"
+  elif (query=="$FILE_DATA_PORTS"):
+    return term+"_is_file_data"
+  elif (query=="$FTP_PORTS"):
+    return term+"_is_ftp"
+  elif (query=="$ORACLE_PORTS"):
+    return "("+term+">=1024)"
+  elif (":" in query):
+    if (query[-1]==":"):
+      ports = [int(x) for x in query[:-1].split(",")]
+      if (len(ports)==1):
+        if (has_http):
+          return "("+term+"_is_http || ("+term+">="+str(ports[0])+"))"
+        else:
+          return "("+term+">="+str(ports[0])+")"
+      else:
+        if (has_http):
+          return "("+term+"_is_http || "+list_cond_gen(term, ports[:-1])[1:-1]+" || ("+term+">="+str(ports[-1])+"))"
+        else:
+          return list_cond_gen(term, ports[:-1])[:-1]+"|| ("+term+">="+str(ports[-1])+"))"
+    else:
+      ports = query.split(",")
+      if (len(ports)==1):
+        [low, high] = ports[0].split(":")
+        if (has_http):
+          return "("+term+"_is_http || (("+term+">="+low+") && ("+term+"<="+high+")))"
+        else:
+          return "(("+term+">="+low+") && ("+term+"<="+high+"))"
+      elif (len(ports)==2):
+        if (has_http):
+          print("case not supported")
+          return "false"
+        elif (":" in ports[0]):
+          [low, high] = ports[0].split(":")
+          return "( (("+term+">="+low+") && ("+term+"<="+high+")) || ("+term+"=="+ports[1]+") )"
+        else:
+          [low, high] = ports[1].split(":")
+          return "( (("+term+">="+low+") && ("+term+"<="+high+")) || ("+term+"=="+ports[0]+") )"
+      else:
+        print("case not supported")
+        return "false"
+
+  elif (query=="any"):
+    return "true"
+  else:
+    if (has_http):
+      return "("+term+"_is_http || "+list_cond_gen(term, [int(x) for x in query.split(",")])[1:]
+    else:
+      return list_cond_gen(term, [int(x) for x in query.split(",")])
 
 if __name__ == "__main__":
 
@@ -21,32 +83,6 @@ if __name__ == "__main__":
   for line in open("rule_list","r"):
     id_map[int(line)] = i
     i += 1
-
-  # print("bool src_is_http, dst_is_http;\n")
-  #
-  # print("if "+list_cond_gen("src_port", HTTP_PORTS)+"{")
-  # print("  src_is_http=true;")
-  # print("} else {")
-  # print("  src_is_http=false;")
-  # print("}\n")
-  #
-  # print("if "+list_cond_gen("dst_port", HTTP_PORTS)+"{")
-  # print("  dst_is_http=true;")
-  # print("} else {")
-  # print("  dst_is_http=false;")
-  # print("}\n")
-
-  src_mixed_http_rules = []
-  src_http_rules = []
-  src_single_rules = []
-  src_range_rules = []
-  src_list_rules = []
-
-  dst_mixed_http_rules = []
-  dst_http_rules = []
-  dst_single_rules = []
-  dst_range_rules = []
-  dst_list_rules = []
 
   for line in open("extracted.txt","r"):
     rule = line.split()
@@ -63,139 +99,33 @@ if __name__ == "__main__":
 
       # if (rule[4] == "<>"):
 
-      if (("$HTTP_PORTS" in src_port) and (src_port!="$HTTP_PORTS")):
-        src_port = src_port.replace("$HTTP_PORTS", str(HTTP_PORTS)[1:-1])
-        src_mixed_http_rules.append(rule_ID)
-      if (src_port.startswith("[")):
-        src_port = src_port[1:-1]
-
-      if (("$HTTP_PORTS" in dst_port) and (dst_port!="$HTTP_PORTS")):
-        dst_port = dst_port.replace("$HTTP_PORTS", str(HTTP_PORTS)[1:-1])
-        dst_mixed_http_rules.append(rule_ID)
-      if (dst_port.startswith("[")):
-        dst_port = dst_port[1:-1]
-
-      if (src_port=="$HTTP_PORTS"):
-        src_port_cond=list_cond_gen("src_port", HTTP_PORTS)
-        src_http_rules.append(rule_ID)
-      elif (src_port=="$FILE_DATA_PORTS"):
-        src_port_cond=list_cond_gen("src_port", HTTP_PORTS+[110,143])
-        src_mixed_http_rules.append(rule_ID)
-      elif (src_port=="$FTP_PORTS"):
-        src_port_cond=list_cond_gen("src_port", [21,2100,3535])
-        src_list_rules.append(rule_ID)
-      elif (src_port=="$ORACLE_PORTS"):
-        src_port_cond="(src_port>=1024)"
-        src_range_rules.append(rule_ID)
-      elif (":" in src_port):
-        src_range_rules.append(rule_ID)
-        if (src_port[-1]==":"):
-          ports = [int(x) for x in src_port[:-1].split(",")]
-          if (len(ports)==1):
-            src_port_cond = "(src_port>="+str(ports[0])+")"
-          else:
-            src_port_cond = list_cond_gen("src_port", ports[:-1])[:-1]+"|| (src_port>="+str(ports[-1])+") )"
-            if (not rule_ID in src_mixed_http_rules):
-              src_list_rules.append(rule_ID)
-        else:
-          ports = src_port.split(",")
-          if (len(ports)==1):
-            [low, high] = ports[0].split(":")
-            src_port_cond = "( (src_port>="+low+") && (src_port<="+high+") )"
-          else: #limited implementation
-            if (not rule_ID in src_mixed_http_rules):
-              src_list_rules.append(rule_ID)
-            if (":" in ports[0]):
-              [low, high] = ports[0].split(":")
-              src_port_cond = "( ((src_port>="+low+") && (src_port<="+high+")) || (src_port=="+ports[1]+") )"
-            else:
-              [low, high] = ports[1].split(":")
-              src_port_cond = "( ((src_port>="+low+") && (src_port<="+high+")) || (src_port=="+ports[0]+") )"
-        # print(src_port_cond)
-      elif (src_port=="any"):
-        src_port_cond = "true"
-      else:
-        src_port_cond = list_cond_gen("src_port", [int(x) for x in src_port.split(",")])
-        if (len(src_port.split(","))==1):
-          src_single_rules.append(rule_ID)
-        else:
-          if (not rule_ID in src_mixed_http_rules):
-            src_list_rules.append(rule_ID)
-
-      if (dst_port=="$HTTP_PORTS"):
-        dst_port_cond=list_cond_gen("dst_port", HTTP_PORTS)
-        dst_http_rules.append(rule_ID)
-      elif (dst_port=="$FILE_DATA_PORTS"):
-        dst_port_cond=list_cond_gen("dst_port", HTTP_PORTS+[110,143])
-        dst_mixed_http_rules.append(rule_ID)
-      elif (dst_port=="$FTP_PORTS"):
-        dst_port_cond=list_cond_gen("dst_port", [21,2100,3535])
-        dst_list_rules.append(rule_ID)
-      elif (dst_port=="$ORACLE_PORTS"):
-        dst_port_cond="(dst_port>=1024)"
-        dst_range_rules.append(rule_ID)
-      elif (":" in dst_port):
-        dst_range_rules.append(rule_ID)
-        if (dst_port[-1]==":"):
-          ports = [int(x) for x in dst_port[:-1].split(",")]
-          if (len(ports)==1):
-            dst_port_cond = "(dst_port>="+str(ports[0])+")"
-          else:
-            dst_port_cond = list_cond_gen("dst_port", ports[:-1])[:-1]+"|| (dst_port>="+str(ports[-1])+") )"
-            if (not rule_ID in dst_mixed_http_rules):
-              dst_list_rules.append(rule_ID)
-        else:
-          ports = dst_port.split(",")
-          if (len(ports)==1):
-            [low, high] = ports[0].split(":")
-            dst_port_cond = "( (dst_port>="+low+") && (dst_port<="+high+") )"
-          else: #limited implementation
-            if (not rule_ID in dst_mixed_http_rules):
-              dst_list_rules.append(rule_ID)
-            if (":" in ports[0]):
-              [low, high] = ports[0].split(":")
-              dst_port_cond = "( ((dst_port>="+low+") && (dst_port<="+high+")) || (dst_port=="+ports[1]+") )"
-            else:
-              [low, high] = ports[1].split(":")
-              dst_port_cond = "( ((dst_port>="+low+") && (dst_port<="+high+")) || (dst_port=="+ports[0]+") )"
-        # print(dst_port_cond)
-      elif (dst_port=="any"):
-        dst_port_cond = "true"
-      else:
-        dst_port_cond = list_cond_gen("dst_port", [int(x) for x in dst_port.split(",")])
-        if (len(dst_port.split(","))==1):
-          dst_single_rules.append(rule_ID)
-        else:
-          if (not rule_ID in dst_mixed_http_rules):
-            dst_list_rules.append(rule_ID)
-
+      src_port_cond = port_parser("src_port", src_port)
+      dst_port_cond = port_parser("dst_port", dst_port)
       rule_cond = "( (rule_ID_in=="+str(rule_ID)+") && "+tcp_cond+" && "+src_port_cond+" && "+dst_port_cond+" )"
       rule_conds.append(rule_cond)
 
       rules[rule_ID] = [src_port, dst_port, is_tcp]
 
-  print("len src http, mixed_http, single, range, list: ", len(src_http_rules),  len(src_mixed_http_rules),
-                                    len(src_single_rules), len(src_range_rules), len(src_list_rules))
-  print("min src http, mixed_http, single, range, list: ", min(src_http_rules),  min(src_mixed_http_rules),
-                                    min(src_single_rules), min(src_range_rules), min(src_list_rules))
-  print("max src http, mixed_http, single, range, list: ", max(src_http_rules),  max(src_mixed_http_rules),
-                                    max(src_single_rules), max(src_range_rules), max(src_list_rules))
-  print()
-
-  print("len dst http, mixed_http, single, range, list: ", len(dst_http_rules),  len(dst_mixed_http_rules),
-                                    len(dst_single_rules), len(dst_range_rules), len(dst_list_rules))
-  print("min dst http, mixed_http, single, range, list: ", min(dst_http_rules),  min(dst_mixed_http_rules),
-                                    min(dst_single_rules), min(dst_range_rules), min(dst_list_rules))
-  print("max dst http, mixed_http, single, range, list: ", max(dst_http_rules),  max(dst_mixed_http_rules),
-                                    max(dst_single_rules), max(dst_range_rules), max(dst_list_rules))
-
-
   with open("final_mapping.txt","w") as f:
     f.write(json.dumps(rules))
 
-  with open("port_group.cc","w") as f:
+  with open("../is_http.cc","w") as f:
     f.write("#include \"ap_int.h\"\n")
     f.write("\n")
+    f.write("bool is_http(ap_uint<16> port){\n")
+    f.write("  if "+list_cond_gen("port", HTTP_PORTS)+"{\n")
+    f.write("    return true;\n")
+    f.write("  } else {\n")
+    f.write("    return false;\n")
+    f.write("  }\n\n")
+    f.write("}")
+
+  with open("../port_group.cc","w") as f:
+    f.write("#include \"ap_int.h\"\n")
+    f.write("\n")
+    f.write("bool is_http(ap_uint<16> port);\n")
+    f.write("\n")
+
     f.write("bool port_group(bool is_tcp, ap_uint<16> src_port, ap_uint<16> dst_port, ap_uint<13> rule_ID_in) {\n")
     f.write("  #pragma HLS INTERFACE mode=ap_none port=src_port\n")
     f.write("  #pragma HLS INTERFACE mode=ap_none port=dst_port\n")
@@ -204,6 +134,14 @@ if __name__ == "__main__":
     f.write("  #pragma HLS INTERFACE ap_ctrl_none port=return\n")
     f.write("\n")
     f.write("  #pragma HLS PIPELINE II=1\n")
+    f.write("\n")
+    f.write("  // Common ports\n")
+    f.write("  bool src_port_is_http = is_http(src_port);\n")
+    f.write("  bool dst_port_is_http = is_http(dst_port);\n")
+    f.write("  bool src_port_is_file_data = is_http(src_port) || (src_port==110) || (src_port==143);\n")
+    f.write("  bool dst_port_is_file_data = is_http(dst_port) || (dst_port==110) || (dst_port==143);\n")
+    f.write("  // bool src_port_is_ftp = (src_port==21) || (src_port==2100) || (src_port==3535);\n")
+    f.write("  bool dst_port_is_ftp = (dst_port==21) || (dst_port==2100) || (dst_port==3535);\n")
     f.write("\n")
 
     for r in rule_conds:

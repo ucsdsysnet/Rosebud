@@ -7,6 +7,7 @@ open_project -reset port_group_tcl
 
 set_top port_group
 add_files port_group.cc
+add_files is_http.cc
 
 open_solution -reset "solution1" -flow_target vivado
 set_part {xcvu9p-fsgd2104-2L-e}
