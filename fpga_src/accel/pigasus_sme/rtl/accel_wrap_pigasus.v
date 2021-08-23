@@ -75,8 +75,8 @@ reg         dst_ip_valid_reg = 0;
 reg         read_data_stall_reg;
 
 wire       dos_attack     = 1'b0;
-wire [2:0] in_attack      = 3'd0;
-wire       in_attack_done = 1'b0;
+wire [2:0] from_attack      = 3'd0;
+wire       from_attack_done = 1'b0;
 
 reg [IO_DATA_WIDTH-1:0] read_data_reg;
 reg read_data_valid_reg;
@@ -173,17 +173,18 @@ always @(posedge clk) begin
             read_data_valid_reg <=  ip_done;
             read_data_stall_reg <= !ip_done;
           end else if (io_addr[3:2]==2'b10) begin
-            read_data_reg <= {8'd0, 7'd0, in_attack[2],
-                              7'd0, in_attack[1], 7'd0, in_attack[0]};
-            read_data_valid_reg <=  in_attack_done;
-            read_data_stall_reg <= !in_attack_done;
+            read_data_reg <= {8'd0, 7'd0, from_attack[2],
+                              7'd0, from_attack[1], 7'd0, from_attack[0]};
+            read_data_valid_reg <=  from_attack_done;
+            read_data_stall_reg <= !from_attack_done;
           end else if (io_addr[3:2]==2'b11) begin
             read_data_reg <= {31'd0, dos_attack};
           end
         end
 
         2'b11: begin
-          read_data_reg <= {dma_desc_err, dma_done_err, dma_done, dma_busy};
+          read_data_reg <= {7'd0, dma_desc_err, 7'd0, dma_done_err,
+                            7'd0, dma_done,     7'd0, dma_busy};
         end
       endcase
 
@@ -197,10 +198,10 @@ always @(posedge clk) begin
 
         // DMA len and address readback
         6'h04: begin
-          read_data_reg <= cmd_len_reg[io_addr[9:6]];
+          read_data_reg <= cmd_len_reg;
         end
         6'h08: begin
-          read_data_reg <= cmd_addr_reg[io_addr[9:6]];
+          read_data_reg <= cmd_addr_reg;
         end
         // cmd_port_reg readback
         6'h0c: begin
@@ -232,9 +233,9 @@ always @(posedge clk) begin
   // core keeps the address in case of stall, there are total 2 cases
   if (read_data_stall_reg) begin
     if (io_addr[3]) begin
-      read_data_reg <= {8'd0, 7'd0, in_attack[2],
-                        7'd0, in_attack[1], 7'd0, in_attack[0]};
-      read_data_stall_reg <= !in_attack_done;
+      read_data_reg <= {8'd0, 7'd0, from_attack[2],
+                        7'd0, from_attack[1], 7'd0, from_attack[0]};
+      read_data_stall_reg <= !from_attack_done;
     end else begin
       read_data_valid_reg <=  ip_done;
       read_data_stall_reg <= !ip_done;
@@ -250,6 +251,9 @@ always @(posedge clk) begin
 
     read_data_stall_reg <= 1'b0;
     read_data_valid_reg <= 1'b0;
+
+    // Initial state of preamble
+    cmd_preamble_reg[63:56] <= 1'b0;
   end
 end
 
@@ -345,7 +349,7 @@ simple_fifo # (
   .clear(1'b0),
 
   .din_valid(cmd_valid_reg),
-  .din({cmd_preamble_reg, cmd_port_reg}),
+  .din({cmd_preamble_reg, cmd_port_reg}), // port might need byte swapping
   .din_ready(),
 
   .dout_valid(meta_data_valid),

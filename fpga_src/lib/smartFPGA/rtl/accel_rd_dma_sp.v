@@ -133,9 +133,7 @@ generate
       if (rst)
         req_r <= 1'b0;
       else
-        // if req_rd_v is asserted, last request was ignored
-        req_r <= req_rd_v ? (act_mem_v & accel_fifo_ready) :
-                            (act_mem_v & accel_fifo_ready & ~req_r);
+        req_r <= act_mem_v & accel_fifo_ready;
 
     assign act_ack     = req_r;
     assign act_arb_v   = req_r;
