@@ -47,39 +47,36 @@ module accel_wrap #(
 
 assign error = 1'b0;
 
-localparam ACCEL_COUNT = 1;
-localparam DEST_WIDTH  = $clog2(ACCEL_COUNT);
-
 localparam LEN_WIDTH = 14;
+reg   dma_done;
+wire  dma_busy;
+reg   dma_done_err;
+wire  dma_desc_err;
 
 reg  [PMEM_ADDR_WIDTH-1:0] cmd_addr_reg;
 reg  [LEN_WIDTH-1:0]       cmd_len_reg;
 reg                        cmd_valid_reg;
-reg  [DEST_WIDTH-1:0]      cmd_accel_reg;
-reg  [ACCEL_COUNT-1:0]     cmd_stop_reg;
-reg  [ACCEL_COUNT-1:0]     cmd_init_reg;
-reg  [ACCEL_COUNT-1:0]     release_match;
+reg                        cmd_stop_reg;
+reg                        match_release;
 reg  [63:0]                cmd_preamble_reg;
 reg  [31:0]                cmd_port_reg;
 reg  [7:0]                 cmd_slot_reg;
-wire [ACCEL_COUNT-1:0]     accel_busy;
 
-reg  [ACCEL_COUNT-1:0]     status_match;
-reg  [ACCEL_COUNT-1:0]     status_done;
-wire [ACCEL_COUNT-1:0]     masked_done;
-reg  [ACCEL_COUNT*8-1:0]   match_1hot;
-wire [ACCEL_COUNT*32-1:0]  match_rule_ID;
-wire [ACCEL_COUNT-1:0]     match_valid;
-reg  [ACCEL_COUNT-1:0]     done_err;
-wire [ACCEL_COUNT-1:0]     desc_error;
-wire [ACCEL_COUNT*64-1:0]  accel_state;
-wire [ACCEL_COUNT*8-1:0]   accel_slot;
+wire         match_valid;
+wire [15:0]  match_rule_ID;
+wire [63:0]  accel_state;
+wire [7:0]   accel_slot;
+wire         accel_state_valid;
 
-wire                       accel_state_valid;
-
-reg [31:0]  ip_addr_reg = 0;
-reg         ip_addr_valid_reg = 0;
+reg [31:0]  src_ip_reg = 0;
+reg [31:0]  dst_ip_reg = 0;
+reg         src_ip_valid_reg = 0;
+reg         dst_ip_valid_reg = 0;
 reg         read_data_stall_reg;
+
+wire       dos_attack     = 1'b0;
+wire [2:0] in_attack      = 3'd0;
+wire       in_attack_done = 1'b0;
 
 reg [IO_DATA_WIDTH-1:0] read_data_reg;
 reg read_data_valid_reg;
@@ -88,126 +85,114 @@ assign io_rd_data = read_data_reg;
 assign io_rd_valid = read_data_valid_reg;
 
 always @(posedge clk) begin
-  done_err <= done_err | (status_done & accel_busy);
-  if (rst) begin
-    done_err <= {ACCEL_COUNT{1'b0}};
-  end
-end
+  cmd_valid_reg <= 1'b0;
+  cmd_stop_reg  <= 1'b0;
+  match_release <= 1'b0;
 
-always @(posedge clk) begin
-  cmd_valid_reg <= 'b0;
-  cmd_stop_reg  <= {ACCEL_COUNT{1'b0}};
-  cmd_init_reg  <= {ACCEL_COUNT{1'b0}};
-  release_match <= {ACCEL_COUNT{1'b0}};
-
-  ip_addr_valid_reg   <= 1'b0;
+  src_ip_valid_reg   <= 1'b0;
+  dst_ip_valid_reg   <= 1'b0;
   read_data_valid_reg <= 1'b0;
 
   // Memory mapped I/O writes
   if (io_en && io_wen) begin
-    // <1xxx xxxx xxxx> for CDN accel
-    if (io_addr[11]) begin
-      ip_addr_reg <= io_wr_data;
-      ip_addr_valid_reg <= 1'b1;
+    // <1xx xxxx> for IP write for CDN and DoS accels
+    if (io_addr[6]) begin
+      if(io_addr[5:4]==2'b00) begin // CDN+DoS
+        src_ip_reg       <= io_wr_data;
+        src_ip_valid_reg <= 1'b1;
+      end else if(io_addr[5:4]==2'b01) begin // DoS
+        dst_ip_reg       <= io_wr_data;
+        dst_ip_valid_reg <= 1'b1;
+      end
+      // 2'b10 and 2'b11 used in read port
 
-    // <01xx xxxx xxxx> for SME aggregated SME accels
-
-    // <00xx xxxx xxxx> for individual SME accels
-    end else if (!io_addr[10]) begin
-      // 4 MSB for selecting SME IP, next 4 for selecting command (and two LSB=0)
-      case ({io_addr[5:2], 2'b00})
-        // set destination SMR IP, and set bit in cmd_stop and cmd_init for that IP
-        6'h00: begin
+    // <0 xxxx> for Pigasus IPS
+    end else if (!io_addr[5]) begin
+      case ({io_addr[4:2], 2'b00})
+        // Pigasus control register, to start, stop and release the output
+        5'h00: begin
           if (io_strb[0]) begin
             cmd_valid_reg <= io_wr_data[0];
-            cmd_accel_reg <= io_addr[9:6];
-            cmd_stop_reg [io_addr[9:6]] <= cmd_stop_reg [io_addr[9:6]] || io_wr_data[4];
-            cmd_init_reg [io_addr[9:6]] <= cmd_init_reg [io_addr[9:6]] || io_wr_data[0];
+            match_release <= io_wr_data[1];
+            cmd_stop_reg  <= io_wr_data[2];
           end
         end
-        // Update DMA len
-        6'h04: begin
+        // DMA request len
+
+        5'h04: begin
           cmd_len_reg <= io_wr_data;
         end
-        // update DMA start addr
-        6'h08: begin
+        // DMA request start addr
+        5'h08: begin
           cmd_addr_reg <= io_wr_data;
         end
-        // update SME input (preamble bytes)
-        6'h10: begin
+        // Packet header ports
+        5'h0c: begin
+          if (io_strb[1] && io_strb[0])
+            cmd_port_reg[15:0] <= io_wr_data[15:0];
+          if (io_strb[3] && io_strb[2])
+            cmd_port_reg[31:16] <= io_wr_data[31:16];
+        end
+
+        // SME input (preamble bytes and state)
+        5'h10: begin
           cmd_preamble_reg[31:0] <= io_wr_data;
         end
-        6'h14: begin
+        5'h14: begin
           cmd_preamble_reg[63:32] <= io_wr_data;
         end
 
-        // 6'h18 to 6'h24 are used for other reads,
-        // avoiding conflict for read back
-
-        // Move on to the next index
-        6'h28: begin
-          release_match[io_addr[9:6]] <= io_wr_data[0];
-        end
-        6'h2c: begin
-          cmd_port_reg <= io_wr_data;
-        end
-        6'h30: begin
+        // Slot meta data
+        5'h18: begin
           cmd_slot_reg <= io_wr_data[7:0];
         end
-        // can go to 6'h3c
+        // 5'h1c reserved to avoid read conflict
       endcase
     end
   end
 
   // Memory mapped I/O reads
-  // There are 2 cases of read stall, for CND or
-  // individual accel status readback
+  // There are 2 cases of read stall, for CDN or DoS
   if (io_en && !io_wen) begin
     read_data_reg <= 0;
     read_data_valid_reg <= 1'b1;
-    // <1xxx xxxx xxxx> for CDN accel
-    if (io_addr[11]) begin
-      read_data_reg       <=  ip_match;
-      read_data_valid_reg <=  ip_done;
-      read_data_stall_reg <= !ip_done;
 
-    // <01xx xxxx xxxx> for SME aggregated SME acceles (stat registers)
-    end else if (io_addr[10]) begin
-      case ({io_addr[5:2], 2'b00})
-        6'h00: begin
-          read_data_reg <= status_done|status_match;
+    // <1xx xxxx> for IP write for CDN and DoS accels + DMA stat
+    if (io_addr[6]) begin
+      case(io_addr[5:4])
+        2'b00: begin // CDN+DoS
+          read_data_reg <= src_ip_reg;
         end
-        6'h04: begin
-          read_data_reg <= status_done;
+        2'b01: begin // DoS
+          read_data_reg <= dst_ip_reg;
         end
-        6'h08: begin
-          read_data_reg <= status_match;
+
+        2'b10: begin
+          if (io_addr[3:2]==2'b00) begin
+            read_data_reg       <=  ip_match;
+            read_data_valid_reg <=  ip_done;
+            read_data_stall_reg <= !ip_done;
+          end else if (io_addr[3:2]==2'b10) begin
+            read_data_reg <= {8'd0, 7'd0, in_attack[2],
+                              7'd0, in_attack[1], 7'd0, in_attack[0]};
+            read_data_valid_reg <=  in_attack_done;
+            read_data_stall_reg <= !in_attack_done;
+          end else if (io_addr[3:2]==2'b11) begin
+            read_data_reg <= {31'd0, dos_attack};
+          end
         end
-        6'h0c: begin
-          read_data_reg <= accel_busy;
+
+        2'b11: begin
+          read_data_reg <= {dma_desc_err, dma_done_err, dma_done, dma_busy};
         end
-        6'h10: begin
-          read_data_reg <= desc_error;
-        end
-        6'h14: begin
-          read_data_reg <= done_err;
-        end
-        6'h1c: begin
-          read_data_reg <= masked_done;
-        end
-        // can go to 6'h3c
       endcase
 
-    // <00xx xxxx xxxx> for individual SME accels
-    // (registers readback, individual accelerator stat)
-    end else if (!io_addr[10]) begin
-      case ({io_addr[5:2], 2'b00})
+    // <0 xxxx> for Pigasus IPS
+    end else if (!io_addr[5]) begin
+      case ({io_addr[4:2], 2'b00})
+        // Match status
         6'h00: begin
-          read_data_reg[0]  <= 1'b0; // cmd_valid_reg[io_addr[6:4]];
-          read_data_reg[1]  <= accel_busy[io_addr[9:6]];
-          read_data_reg[8]  <= status_done[io_addr[9:6]];
-          read_data_reg[9]  <= status_match[io_addr[9:6]];
-          read_data_reg[16] <= match_valid[io_addr[9:6]];
+          read_data_reg[0]  <= match_valid;
         end
 
         // DMA len and address readback
@@ -217,69 +202,52 @@ always @(posedge clk) begin
         6'h08: begin
           read_data_reg <= cmd_addr_reg[io_addr[9:6]];
         end
-
-        // onehot representation for match/error/done
+        // cmd_port_reg readback
         6'h0c: begin
-          read_data_reg <= {24'd0, match_1hot[io_addr[9:6]*8+:8]};
-          read_data_valid_reg <=   (status_done [io_addr[9:6]]
-                                 || status_match[io_addr[9:6]]);
-          read_data_stall_reg <= ! (status_done [io_addr[9:6]]
-                                 || status_match[io_addr[9:6]]);
+          read_data_reg <= cmd_port_reg;
         end
 
         // cmd_preamble_reg readback
         6'h10: begin
-          read_data_reg <= cmd_preamble_reg[63:32];
+          read_data_reg <= accel_state[31:0];
         end
         6'h14: begin
-          read_data_reg <= cmd_preamble_reg[31:0];
+          read_data_reg <= accel_state[63:32];
         end
 
-        // Accel output state
+        // Slot meta data and if it's valid
         6'h18: begin
-          read_data_reg <= accel_state[(io_addr[9:6]*64)+:32];
-        end
-        6'h1C: begin
-          read_data_reg <= accel_state[(io_addr[9:6]*64+32)+:32];
-        end
-
-        // Accel match index
-        6'h20: begin
-          read_data_reg <= match_rule_ID[(io_addr[9:6]*32)+:32];
-        end
-
-        // cmd_port_reg readback
-        6'h2c: begin
-          read_data_reg <= cmd_port_reg;
-        end
-        6'h30: begin
           read_data_reg <= {23'd0, accel_state_valid, accel_slot};
         end
-        // can go to 6'h3c
+
+        // Accel match rule ID
+        6'h1c: begin
+          read_data_reg <= {16'd0, match_rule_ID};
+        end
+
       endcase
     end
   end
 
-  // core keeps the address in case of stall
+  // core keeps the address in case of stall, there are total 2 cases
   if (read_data_stall_reg) begin
-    if (io_addr[11]) begin
+    if (io_addr[3]) begin
+      read_data_reg <= {8'd0, 7'd0, in_attack[2],
+                        7'd0, in_attack[1], 7'd0, in_attack[0]};
+      read_data_stall_reg <= !in_attack_done;
+    end else begin
       read_data_valid_reg <=  ip_done;
       read_data_stall_reg <= !ip_done;
-
-    end else begin // There is only 1 remaining stall case
-      read_data_valid_reg <=   (status_done [io_addr[9:6]]
-                             || status_match[io_addr[9:6]]);
-      read_data_stall_reg <= ! (status_done [io_addr[9:6]]
-                             || status_match[io_addr[9:6]]);
     end
   end
 
   if (rst) begin
-    cmd_valid_reg <= 1'b0;
-    cmd_init_reg  <= {ACCEL_COUNT{1'b0}};
-    cmd_stop_reg  <= {ACCEL_COUNT{1'b0}};
+    cmd_valid_reg       <= 1'b0;
+    cmd_stop_reg        <= 1'b0;
+    match_release       <= 1'b0;
+    src_ip_valid_reg    <= 1'b0;
+    dst_ip_valid_reg    <= 1'b0;
 
-    ip_addr_valid_reg   <= 1'b0;
     read_data_stall_reg <= 1'b0;
     read_data_valid_reg <= 1'b0;
   end
@@ -291,18 +259,18 @@ localparam ATTACHED_CNT = SLOT_COUNT/8;
 localparam ATTACHED = ACC_MEM_BLOCKS-ATTACHED_CNT;
 localparam USER_WIDTH = $clog2(DATA_WIDTH/8);
 
-wire [ACCEL_COUNT*DATA_WIDTH-1:0] accel_tdata;
-wire [ACCEL_COUNT*USER_WIDTH-1:0] accel_tuser;
-wire [ACCEL_COUNT-1:0]            accel_tlast;
-wire [ACCEL_COUNT-1:0]            accel_tvalid;
-wire [ACCEL_COUNT-1:0]            accel_tready;
+wire [DATA_WIDTH-1:0] accel_tdata;
+wire [USER_WIDTH-1:0] accel_tuser;
+wire                  accel_tlast;
+wire                  accel_tvalid;
+wire                  accel_tready;
 
 accel_rd_dma_sp # (
   .DATA_WIDTH(DATA_WIDTH),
   .KEEP_WIDTH(DATA_WIDTH/8),
   .ADDR_WIDTH(BLOCK_ADDR_WIDTH+1),
-  .ACCEL_COUNT(ACCEL_COUNT),
-  .DEST_WIDTH(DEST_WIDTH),
+  .ACCEL_COUNT(1),
+  .DEST_WIDTH(1),
   .LEN_WIDTH(LEN_WIDTH),
   .MEM_LINES(SLOW_M_B_LINES),
   .FIFO_LINES(32)
@@ -310,13 +278,13 @@ accel_rd_dma_sp # (
   .clk(clk),
   .rst(rst),
 
-  .desc_accel_id(cmd_accel_reg),
+  .desc_accel_id(1'b0),
   .desc_addr(cmd_addr_reg[BLOCK_ADDR_WIDTH+1-1:0]),
   .desc_len(cmd_len_reg),
   .desc_valid(cmd_valid_reg),
-  .desc_error(desc_error),
+  .desc_error(dma_desc_err),
 
-  .accel_busy(accel_busy),
+  .accel_busy(dma_busy),
   .accel_stop(cmd_stop_reg),
 
   .mem_b1_rd_addr(acc_addr_b1[ATTACHED*ACC_ADDR_WIDTH +: ATTACHED_CNT*ACC_ADDR_WIDTH]),
@@ -348,11 +316,18 @@ generate
   end
 endgenerate
 
-// Pigasus accelerator
-wire [ACCEL_COUNT-1:0] sme_match;
+always @ (posedge clk) begin
+  dma_done     <= (dma_done  | (accel_tvalid & accel_tlast) | cmd_stop_reg);
+  dma_done_err <= dma_done_err | (dma_done & dma_busy);
 
+  if (rst) begin
+    dma_done     <= 1'b0;
+    dma_done_err <= 1'b0;
+  end
+end
+
+// Pigasus accelerator
 wire [15:0] match_index;
-wire [3:0]  match_valid_stat;
 wire [7:0]  match_error_stat;
 
 wire [4-1:0] accel_tempty = 4'hf-accel_tuser;
@@ -421,14 +396,14 @@ pigasus_sme_wrapper fast_pattern_sme_inst (
   .meta_valid(meta_data_valid),
   .meta_ready(meta_data_ready),
 
-  .match_rule_ID(match_index),
-  .match_release(release_match),
+  .match_rule_ID(match_rule_ID),
+  .match_release(match_release),
   .match_valid(match_valid),
   .match_last(match_last),
 
   .preamble_state_out(state_out),
   .state_out_valid(state_out_valid),
-  .match_valid_stat(match_valid_stat)
+  .match_valid_stat()
 );
 
 simple_fifo # (
@@ -448,36 +423,15 @@ simple_fifo # (
   .dout_ready(match_last)
 );
 
-always @ (posedge clk)
-  if (cmd_init_reg | rst) begin
-    match_1hot <= 0;
-  end else begin
-    match_1hot <= match_1hot | match_valid_stat;
-  end
-
-assign match_rule_ID = {16'd0, match_index};
-assign sme_match     = |match_valid_stat;
-
-always @ (posedge clk) begin
-  status_match <= (status_match | sme_match) & (~cmd_init_reg);
-  status_done  <= (status_done  | (accel_tvalid & accel_tlast) | cmd_stop_reg)
-                  & (~cmd_init_reg);
-
-  if (rst) begin
-    status_match <= {ACCEL_COUNT{1'b0}};
-    status_done  <= {ACCEL_COUNT{1'b0}};
-  end
-end
-
 // CND IP check accelerator
 // ip_match and ip_done keep their value until new valid is asserted
 // It needs byte swap due to network packets endian
 ip_match ip_match_inst (
   .clk(clk),
   .rst(rst),
-  .addr({ip_addr_reg[7:0], ip_addr_reg[15:8],
-         ip_addr_reg[23:16], ip_addr_reg[31:24]}),
-  .valid(ip_addr_valid_reg),
+  .addr({src_ip_reg[7:0], src_ip_reg[15:8],
+         src_ip_reg[23:16], src_ip_reg[31:24]}),
+  .valid(src_ip_valid_reg),
   .match(ip_match),
   .done(ip_done)
 );

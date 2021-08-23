@@ -125,19 +125,39 @@ assign {act_rd_addr, act_rd_count, act_rd_final_ptr, act_rd_offset} = act_mem[ac
 // ** Arbiter among active memory entries ** //
 wire [ACCEL_COUNT-1:0] accel_fifo_ready;
 
-arbiter # (.PORTS(ACCEL_COUNT), .TYPE("ROUND_ROBIN")) act_arbiter (
-  .clk (clk),
-  .rst (rst),
+generate
+  if (ACCEL_COUNT==1) begin: single_accel
 
-  // if req_rd_v is asserted, last request was ignored
-  .request      (req_rd_v ? (act_mem_v & accel_fifo_ready) :
-                            (act_mem_v & accel_fifo_ready & ~act_ack)),
-  .acknowledge  ({ACCEL_COUNT{1'b0}}),
+    reg req_r;
+    always @ (posedge clk)
+      if (rst)
+        req_r <= 1'b0;
+      else
+        // if req_rd_v is asserted, last request was ignored
+        req_r <= req_rd_v ? (act_mem_v & accel_fifo_ready) :
+                            (act_mem_v & accel_fifo_ready & ~req_r);
 
-  .grant        (act_ack),
-  .grant_valid  (act_arb_v),
-  .grant_encoded(act_arb_enc)
-);
+    assign act_ack     = req_r;
+    assign act_arb_v   = req_r;
+    assign act_arb_enc = 1'b0;
+
+  end else begin: arbiter
+
+    arbiter # (.PORTS(ACCEL_COUNT), .TYPE("ROUND_ROBIN")) act_arbiter (
+      .clk (clk),
+      .rst (rst),
+
+      // if req_rd_v is asserted, last request was ignored
+      .request      (req_rd_v ? (act_mem_v & accel_fifo_ready) :
+                                (act_mem_v & accel_fifo_ready & ~act_ack)),
+      .acknowledge  ({ACCEL_COUNT{1'b0}}),
+
+      .grant        (act_ack),
+      .grant_valid  (act_arb_v),
+      .grant_encoded(act_arb_enc)
+    );
+  end
+endgenerate
 
 // Send request to memory, with an input register
 reg [MASK_BITS-1:0]    mem_rd_offset, mem_rd_ptr;
