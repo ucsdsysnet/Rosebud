@@ -1,7 +1,7 @@
 #include "core.h"
 #include "packet_headers.h"
 
-#if 0
+#if 1
 #define PROFILE_A(x) do {DEBUG_OUT_L = (x);} while (0)
 #define PROFILE_B(x) do {DEBUG_OUT_H = (x);} while (0)
 #else
@@ -74,6 +74,7 @@ struct flow {
   } sme_state;
 };
 
+// Slot contexts
 struct slot_context {
   int index;
   struct Desc desc;
@@ -114,9 +115,13 @@ static inline void slot_rx_packet(struct slot_context *slot)
   unsigned int packet_length = slot->desc.len;
   unsigned int payload_length;
 
+  PROFILE_B(0x00010000);
+
   // check eth type
+  PROFILE_B(0xF0010000 | slot->eth_hdr->type);
   if (slot->eth_hdr->type == bswap_16(0x0800))
   {
+    PROFILE_B(0x00010001);
     // IPv4 packet
     slot->l3_header.ipv4_hdr = (struct ipv4_header*)(slot->header+payload_offset);
 
@@ -128,6 +133,7 @@ static inline void slot_rx_packet(struct slot_context *slot)
     if ((ch & 0xF0) != 0x40)
     {
       // invalid version, drop it
+      PROFILE_B(0x00010009);
       goto drop;
     }
 
@@ -143,10 +149,12 @@ static inline void slot_rx_packet(struct slot_context *slot)
       goto drop;
     }
 
+    PROFILE_B(0x00010002);
     // check protocol
     switch (slot->l3_header.ipv4_hdr->protocol)
     {
       case 0x06: // TCP
+        PROFILE_B(0xF0010000 | slot->l4_header.tcp_hdr->dest_port);
         // header size from flags field
         ch = ((char *)slot->l4_header.tcp_hdr)[12];
         payload_offset += (ch & 0xF0) >> 2;
@@ -165,11 +173,14 @@ static inline void slot_rx_packet(struct slot_context *slot)
         ACC_PIG_PORTS = 1025*65536 + 1024;
         // ACC_PIG_SRC_PORT = slot->l4_header.udp_hdr->src_port;
         // ACC_PIG_DST_PORT = slot->l4_header.udp_hdr->dest_port;
-        ACC_PIG_STATE = 0x11FEFEFEFEFEFEFE;
+        // ACC_PIG_STATE = (unsigned long long )0x11FEFEFEFEFEFEFE;
+        ACC_PIG_STATE_L = 0xFEFEFEFE;
+        ACC_PIG_STATE_H = 0x11FEFEFE;
         ACC_PIG_SLOT  = slot->index;
         ACC_PIG_CTRL  = 1;
 
       case 0x11: // UDP
+        PROFILE_B(0x00010006);
         payload_offset += UDP_HEADER_SIZE;
 
         if (payload_offset >= packet_length)
@@ -214,6 +225,9 @@ int main(void)
 {
   struct slot_context *slot;
 
+  DEBUG_OUT_L = 0;
+  DEBUG_OUT_H = 0;
+
   // set slot configuration parameters
   slot_count       = PMEM_SEG_COUNT;
   slot_size        = PMEM_SEG_SIZE;
@@ -229,14 +243,15 @@ int main(void)
   // Do this at the beginning, so scheduler can fill the slots while
   // initializing other things.
   init_hdr_slots(slot_count, header_slot_base, header_slot_size);
-  init_slots(slot_count, PKT_OFFSET, slot_size);
+  init_slots(slot_count, PKTS_START+PKT_OFFSET, slot_size);
+  set_masks(0xD0); //enable evict
 
   // init slot context structures
   for (int i = 0; i < slot_count; i++)
   {
     context[i].index = i;
     context[i].desc.tag = i+1;
-    context[i].desc.data = (unsigned char *)(PMEM_BASE + PKT_OFFSET + i*slot_size);
+    context[i].desc.data = (unsigned char *)(PMEM_BASE + PKTS_START + PKT_OFFSET + i*slot_size);
     context[i].packet = (unsigned char *)(PMEM_BASE + PKTS_START + PKT_OFFSET + i*slot_size);
     context[i].header = (unsigned char *)(header_slot_base + PKT_OFFSET + i*header_slot_size);
     context[i].eth_hdr = (struct eth_header*)(context[i].header + DATA_OFFSET);
@@ -252,13 +267,16 @@ int main(void)
     flow->hash = 0;
   }
 
+  PROFILE_A(0x00000005);
+
   while (1)
   {
     // check for new packets
     if (in_pkt_ready())
     {
       struct Desc desc;
-      int index;
+
+      PROFILE_A(0x00010001);
 
       // read descriptor
       read_in_pkt(&desc);
@@ -269,12 +287,15 @@ int main(void)
       // copy descriptor into context
       slot->desc = desc;
 
+      PROFILE_A(0x00010002);
       // handle packet
       // if (ACC_DOS_ATTACK)
       //   slot_rx_packet_dos(slot);
       // else
       slot_rx_packet(slot);
     }
+
+    PROFILE_A(0x00020000);
 
     if (ACC_PIG_MATCH) {
       slot = &context[ACC_PIG_SLOT];
