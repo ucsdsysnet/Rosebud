@@ -22,7 +22,7 @@ add_files -norecurse {
   ../lib/smartFPGA/rtl/mem_sys.v
   ../lib/smartFPGA/rtl/Gousheh.v
   ../lib/smartFPGA/rtl/Gousheh_controller.v
-  ../lib/smartFPGA/rtl/accel_rd_dma_sp.v
+  ../lib/smartFPGA/rtl/single_accel_rd_dma.v
   ../accel/pigasus_sme/rtl/backend.sv
   ../accel/pigasus_sme/rtl/first_filter.sv
   ../accel/pigasus_sme/rtl/frontend.sv
@@ -43,6 +43,7 @@ add_files -norecurse {
   ../accel/pigasus_sme/rtl/reduction_2t1.sv
   ../accel/pigasus_sme/rtl/unified_fifo.sv
   ../accel/pigasus_sme/rtl/unified_pkt_fifo.sv
+  ../accel/pigasus_sme/rtl/rule_depacker_128_64.sv
   ../accel/pigasus_sme/rtl/struct_s.sv
   ../accel/pigasus_sme/rtl/SME_wrapper.sv
   ../accel/pigasus_sme/rtl/accel_wrap_pigasus.v

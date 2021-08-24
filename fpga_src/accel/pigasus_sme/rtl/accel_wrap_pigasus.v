@@ -49,9 +49,9 @@ assign error = 1'b0;
 
 localparam LEN_WIDTH = 14;
 reg   dma_done;
-wire  dma_busy;
+wire  dma_ready;
 reg   dma_done_err;
-wire  dma_desc_err;
+wire  dma_desc_err = 1'b0;
 
 reg  [PMEM_ADDR_WIDTH-1:0] cmd_addr_reg;
 reg  [LEN_WIDTH-1:0]       cmd_len_reg;
@@ -183,8 +183,8 @@ always @(posedge clk) begin
         end
 
         2'b11: begin
-          read_data_reg <= {7'd0, dma_desc_err, 7'd0, dma_done_err,
-                            7'd0, dma_done,     7'd0, dma_busy};
+          read_data_reg <= {8'd0, 7'd0, dma_done_err,
+                            7'd0, dma_done, 7'd0, dma_ready};
         end
       endcase
 
@@ -269,12 +269,31 @@ wire                  accel_tlast;
 wire                  accel_tvalid;
 wire                  accel_tready;
 
-accel_rd_dma_sp # (
+wire [BLOCK_ADDR_WIDTH+1-1:0] cmd_addr_reg_f;
+wire [LEN_WIDTH-1:0]          cmd_len_reg_f;
+wire                          cmd_valid_reg_f;
+
+simple_fifo # (
+  .ADDR_WIDTH(4),
+  .DATA_WIDTH(LEN_WIDTH+BLOCK_ADDR_WIDTH+1)
+) desc_fifo (
+  .clk(clk),
+  .rst(rst),
+  .clear(1'b0),
+
+  .din_valid(cmd_valid_reg),
+  .din({cmd_addr_reg[BLOCK_ADDR_WIDTH+1-1:0], cmd_len_reg}),
+  .din_ready(),
+
+  .dout_valid(cmd_valid_reg_f),
+  .dout({cmd_addr_reg_f, cmd_len_reg_f}),
+  .dout_ready(dma_ready)
+);
+
+single_accel_rd_dma # (
   .DATA_WIDTH(DATA_WIDTH),
   .KEEP_WIDTH(DATA_WIDTH/8),
   .ADDR_WIDTH(BLOCK_ADDR_WIDTH+1),
-  .ACCEL_COUNT(1),
-  .DEST_WIDTH(1),
   .LEN_WIDTH(LEN_WIDTH),
   .MEM_LINES(SLOW_M_B_LINES),
   .FIFO_LINES(32)
@@ -282,13 +301,10 @@ accel_rd_dma_sp # (
   .clk(clk),
   .rst(rst),
 
-  .desc_accel_id(1'b0),
-  .desc_addr(cmd_addr_reg[BLOCK_ADDR_WIDTH+1-1:0]),
-  .desc_len(cmd_len_reg),
-  .desc_valid(cmd_valid_reg),
-  .desc_error(dma_desc_err),
-
-  .accel_busy(dma_busy),
+  .desc_addr(cmd_addr_reg_f),
+  .desc_len(cmd_len_reg_f),
+  .desc_valid(cmd_valid_reg_f),
+  .desc_ready(dma_ready),
   .accel_stop(cmd_stop_reg),
 
   .mem_b1_rd_addr(acc_addr_b1[ATTACHED*ACC_ADDR_WIDTH +: ATTACHED_CNT*ACC_ADDR_WIDTH]),
@@ -322,7 +338,7 @@ endgenerate
 
 always @ (posedge clk) begin
   dma_done     <= (dma_done  | (accel_tvalid & accel_tlast) | cmd_stop_reg);
-  dma_done_err <= dma_done_err | (dma_done & dma_busy);
+  dma_done_err <= dma_done_err | (dma_done & !dma_ready);
 
   if (rst) begin
     dma_done     <= 1'b0;

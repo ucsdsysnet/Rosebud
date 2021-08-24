@@ -32,7 +32,7 @@ VERILOG_SOURCES += $(SMARTFPGA)/simple_sync_sig.v
 VERILOG_SOURCES += $(SMARTFPGA)/axis_stat.v
 VERILOG_SOURCES += $(SMARTFPGA)/header.v
 VERILOG_SOURCES += $(SMARTFPGA)/axis_fifo.v
-VERILOG_SOURCES += $(SMARTFPGA)/accel_rd_dma_sp.v
+VERILOG_SOURCES += $(SMARTFPGA)/single_accel_rd_dma.v
 VERILOG_SOURCES += $(SMARTFPGA)/spaced_2lvl_penc.v
 
 VERILOG_SOURCES += $(ACC_DIR)/backend.sv

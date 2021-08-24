@@ -22,7 +22,7 @@ add_files -norecurse {
   ../lib/smartFPGA/rtl/mem_sys.v
   ../lib/smartFPGA/rtl/Gousheh.v
   ../lib/smartFPGA/rtl/Gousheh_controller.v
-  ../lib/smartFPGA/rtl/accel_rd_dma_sp.v
+  ../lib/smartFPGA/rtl/single_accel_rd_dma.v
   ../accel/pigasus_sme/rtl/backend.sv
   ../accel/pigasus_sme/rtl/first_filter.sv
   ../accel/pigasus_sme/rtl/frontend.sv
