@@ -30,38 +30,38 @@ def port_parser (term, query):
   elif (query=="$FTP_PORTS"):
     return term+"_is_ftp"
   elif (query=="$ORACLE_PORTS"):
-    return "("+term+">=1024)"
+    return "(req."+term+">=1024)"
   elif (":" in query):
     if (query[-1]==":"):
       ports = [int(x) for x in query[:-1].split(",")]
       if (len(ports)==1):
         if (has_http):
-          return "("+term+"_is_http || ("+term+">="+str(ports[0])+"))"
+          return "("+term+"_is_http || (req."+term+">="+str(ports[0])+"))"
         else:
-          return "("+term+">="+str(ports[0])+")"
+          return "(req."+term+">="+str(ports[0])+")"
       else:
         if (has_http):
-          return "("+term+"_is_http || "+list_cond_gen(term, ports[:-1])[1:-1]+" || ("+term+">="+str(ports[-1])+"))"
+          return "("+term+"_is_http || "+list_cond_gen("req."+term, ports[:-1])[1:-1]+" || (req."+term+">="+str(ports[-1])+"))"
         else:
-          return list_cond_gen(term, ports[:-1])[:-1]+"|| ("+term+">="+str(ports[-1])+"))"
+          return list_cond_gen("req."+term, ports[:-1])[:-1]+"|| (req."+term+">="+str(ports[-1])+"))"
     else:
       ports = query.split(",")
       if (len(ports)==1):
         [low, high] = ports[0].split(":")
         if (has_http):
-          return "("+term+"_is_http || (("+term+">="+low+") && ("+term+"<="+high+")))"
+          return "("+term+"_is_http || ((req."+term+">="+low+") && (req."+term+"<="+high+")))"
         else:
-          return "(("+term+">="+low+") && ("+term+"<="+high+"))"
+          return "((req."+term+">="+low+") && (req."+term+"<="+high+"))"
       elif (len(ports)==2):
         if (has_http):
-          print("case not supported")
+          print("case not supported", term, query)
           return "false"
         elif (":" in ports[0]):
           [low, high] = ports[0].split(":")
-          return "( (("+term+">="+low+") && ("+term+"<="+high+")) || ("+term+"=="+ports[1]+") )"
+          return "( ((req."+term+">="+low+") && (req."+term+"<="+high+")) || (req."+term+"=="+ports[1]+") )"
         else:
           [low, high] = ports[1].split(":")
-          return "( (("+term+">="+low+") && ("+term+"<="+high+")) || ("+term+"=="+ports[0]+") )"
+          return "( ((req."+term+">="+low+") && (req."+term+"<="+high+")) || (req."+term+"=="+ports[0]+") )"
       else:
         print("case not supported")
         return "false"
@@ -70,9 +70,9 @@ def port_parser (term, query):
     return "true"
   else:
     if (has_http):
-      return "("+term+"_is_http || "+list_cond_gen(term, [int(x) for x in query.split(",")])[1:]
+      return "("+term+"_is_http || "+list_cond_gen("req."+term, [int(x) for x in query.split(",")])[1:]
     else:
-      return list_cond_gen(term, [int(x) for x in query.split(",")])
+      return list_cond_gen("req."+term, [int(x) for x in query.split(",")])
 
 if __name__ == "__main__":
 
@@ -91,17 +91,17 @@ if __name__ == "__main__":
       src_port = rule[3]
       dst_port = rule[6]
       if (rule[1]=="tcp"):
-        tcp_cond = "(is_tcp)"
+        tcp_cond = "(req.is_tcp)"
         is_tcp = True
       else:
-        tcp_cond = "(!is_tcp)"
+        tcp_cond = "(!req.is_tcp)"
         is_tcp = False
 
       # if (rule[4] == "<>"):
 
       src_port_cond = port_parser("src_port", src_port)
       dst_port_cond = port_parser("dst_port", dst_port)
-      rule_cond = "( (rule_ID_in=="+str(rule_ID)+") && "+tcp_cond+" && "+src_port_cond+" && "+dst_port_cond+" )"
+      rule_cond = "( (req.rule_ID_in=="+str(rule_ID)+") && "+tcp_cond+" && "+src_port_cond+" && "+dst_port_cond+" )"
       rule_conds.append(rule_cond)
 
       rules[rule_ID] = [src_port, dst_port, is_tcp]
@@ -109,39 +109,30 @@ if __name__ == "__main__":
   with open("final_mapping.txt","w") as f:
     f.write(json.dumps(rules))
 
-  with open("../is_http.cc","w") as f:
-    f.write("#include \"ap_int.h\"\n")
-    f.write("\n")
-    f.write("bool is_http(ap_uint<16> port){\n")
-    f.write("  if "+list_cond_gen("port", HTTP_PORTS)+"{\n")
-    f.write("    return true;\n")
-    f.write("  } else {\n")
-    f.write("    return false;\n")
-    f.write("  }\n\n")
-    f.write("}")
-
   with open("../port_group.cc","w") as f:
     f.write("#include \"ap_int.h\"\n")
     f.write("\n")
+    f.write("typedef struct {\n")
+    f.write("  ap_uint<16> src_port;\n")
+    f.write("  ap_uint<16> dst_port;\n")
+    f.write("  ap_uint<13> rule_ID_in;\n")
+    f.write("  bool        is_tcp;\n")
+    f.write("} request;\n")
+    f.write("\n")
     f.write("bool is_http(ap_uint<16> port);\n")
     f.write("\n")
-
-    f.write("bool port_group(bool is_tcp, ap_uint<16> src_port, ap_uint<16> dst_port, ap_uint<13> rule_ID_in) {\n")
-    f.write("  #pragma HLS INTERFACE mode=ap_none port=src_port\n")
-    f.write("  #pragma HLS INTERFACE mode=ap_none port=dst_port\n")
-    f.write("  #pragma HLS INTERFACE mode=ap_none port=is_tcp\n")
-    f.write("  #pragma HLS INTERFACE mode=ap_none port=rule_ID_in\n")
+    f.write("bool port_group(request req) {\n")
+    f.write("  #pragma HLS INTERFACE ap_vld register port=req\n")
     f.write("  #pragma HLS INTERFACE ap_ctrl_none port=return\n")
-    f.write("\n")
     f.write("  #pragma HLS PIPELINE II=1\n")
     f.write("\n")
     f.write("  // Common ports\n")
-    f.write("  bool src_port_is_http = is_http(src_port);\n")
-    f.write("  bool dst_port_is_http = is_http(dst_port);\n")
-    f.write("  bool src_port_is_file_data = is_http(src_port) || (src_port==110) || (src_port==143);\n")
-    f.write("  bool dst_port_is_file_data = is_http(dst_port) || (dst_port==110) || (dst_port==143);\n")
-    f.write("  // bool src_port_is_ftp = (src_port==21) || (src_port==2100) || (src_port==3535);\n")
-    f.write("  bool dst_port_is_ftp = (dst_port==21) || (dst_port==2100) || (dst_port==3535);\n")
+    f.write("  bool src_port_is_http      = is_http(req.src_port);\n")
+    f.write("  bool dst_port_is_http      = is_http(req.dst_port);\n")
+    f.write("  bool src_port_is_file_data = is_http(req.src_port) || (req.src_port==110) || (req.src_port==143);\n")
+    f.write("  bool dst_port_is_file_data = is_http(req.dst_port) || (req.dst_port==110) || (req.dst_port==143);\n")
+    f.write("  // bool req.src_port_is_ftp = (req.src_port==21) || (req.src_port==2100) || (req.src_port==3535);\n")
+    f.write("  bool dst_port_is_ftp = (req.dst_port==21) || (req.dst_port==2100) || (req.dst_port==3535);\n")
     f.write("\n")
 
     for r in rule_conds:
@@ -150,3 +141,11 @@ if __name__ == "__main__":
     f.write("  return false;\n")
     f.write("}\n")
 
+    f.write("\n")
+    f.write("bool is_http(ap_uint<16> port){\n")
+    f.write("  if "+list_cond_gen("port", HTTP_PORTS)+"{\n")
+    f.write("    return true;\n")
+    f.write("  } else {\n")
+    f.write("    return false;\n")
+    f.write("  }\n\n")
+    f.write("}")
