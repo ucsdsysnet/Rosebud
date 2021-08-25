@@ -274,7 +274,7 @@ wire [LEN_WIDTH-1:0]          cmd_len_reg_f;
 wire                          cmd_valid_reg_f;
 
 simple_fifo # (
-  .ADDR_WIDTH(4),
+  .ADDR_WIDTH($clog2(SLOT_COUNT)),
   .DATA_WIDTH(LEN_WIDTH+BLOCK_ADDR_WIDTH+1)
 ) desc_fifo (
   .clk(clk),
@@ -296,7 +296,7 @@ single_accel_rd_dma # (
   .ADDR_WIDTH(BLOCK_ADDR_WIDTH+1),
   .LEN_WIDTH(LEN_WIDTH),
   .MEM_LINES(SLOW_M_B_LINES),
-  .FIFO_LINES(32)
+  .FIFO_LINES(8)
 ) accel_dma_engine (
   .clk(clk),
   .rst(rst),

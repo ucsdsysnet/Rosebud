@@ -46,27 +46,20 @@ localparam SAFE_MEM_SEL_BITS = (MEM_SEL_BITS > 0) ? MEM_SEL_BITS : 1;
 
 reg accel_stop_r;
 
-reg [MASK_BITS-1:0]       req_rd_offset;
-reg [MASK_BITS-1:0]       req_rd_final_ptr;
-reg [LINE_ADDR_WIDTH-1:0] req_rd_addr;
-reg [LINE_CNT_WIDTH-1:0]  req_rd_count;
-reg                       req_rd_v;
+wire [MASK_BITS-1:0]       req_rd_offset;
+wire [MASK_BITS-1:0]       req_rd_final_ptr;
+wire [LINE_ADDR_WIDTH-1:0] req_rd_addr;
+wire [LINE_CNT_WIDTH-1:0]  req_rd_count;
+wire [MASK_BITS-1:0]       remainder_bytes;
 
-wire [MASK_BITS-1:0] remainder_bytes = desc_len [MASK_BITS-1:0];
+assign remainder_bytes  = desc_len [MASK_BITS-1:0];
+assign req_rd_addr      = desc_addr[ADDR_WIDTH-1:MASK_BITS];
+assign req_rd_offset    = desc_addr[MASK_BITS-1:0];
+assign req_rd_count     = (remainder_bytes == 0) ? desc_len [LEN_WIDTH-1:MASK_BITS] :
+                                                   desc_len [LEN_WIDTH-1:MASK_BITS]+1;
+assign req_rd_final_ptr = remainder_bytes - 1; // 0 becomes all 1s
 
-always @ (posedge clk) begin
-  req_rd_addr      <= desc_addr[ADDR_WIDTH-1:MASK_BITS];
-  req_rd_offset    <= desc_addr[MASK_BITS-1:0];
-  req_rd_count     <= (remainder_bytes == 0) ? desc_len [LEN_WIDTH-1:MASK_BITS] :
-                                               desc_len [LEN_WIDTH-1:MASK_BITS]+1;
-  req_rd_final_ptr <= remainder_bytes - 1; // 0 becomes all 1s
-  req_rd_v         <= desc_valid && desc_ready;
-
-  if (rst)
-    req_rd_v <= 1'b0;
-end
-
-// *** Active DMAs memory *** //
+// Register to keep current state
 localparam DESC_MEM_WIDTH = LINE_ADDR_WIDTH+LINE_CNT_WIDTH+MASK_BITS+MASK_BITS;
 (* ram_style = "distributed" *) reg [DESC_MEM_WIDTH-1:0] act_mem;
 reg act_mem_v;
@@ -80,18 +73,23 @@ wire [MASK_BITS-1:0]       act_rd_offset;
 wire [LINE_ADDR_WIDTH-1:0] act_rd_addr_n  = act_rd_addr  + 1;
 wire [LINE_CNT_WIDTH-1:0]  act_rd_count_n = act_rd_count - 1;
 
+// ** stall if fifo is not ready ** //
+wire accel_fifo_ready;
+
 always @ (posedge clk)
-  if (req_rd_v)
+  if (desc_valid && desc_ready)
     act_mem <= {req_rd_addr, req_rd_count,
                 req_rd_final_ptr, req_rd_offset};
   else if (act_mem_v && accel_fifo_ready)
     act_mem <= {act_rd_addr_n, act_rd_count_n,
                 act_rd_final_ptr, act_rd_offset};
 
+assign {act_rd_addr, act_rd_count, act_rd_final_ptr, act_rd_offset} = act_mem;
+
 always @ (posedge clk) begin
-  if (req_rd_v)
+  if (desc_valid && desc_ready)
     act_mem_v <= !accel_stop_r;
-  else if (act_rd_count==1)
+  else if (act_rd_count==1 && accel_fifo_ready) //!
     act_mem_v <= 1'b0;
   else
     act_mem_v <= act_mem_v && !accel_stop_r;
@@ -100,12 +98,7 @@ always @ (posedge clk) begin
     act_mem_v <= 1'b0;
 end
 
-assign desc_ready = !act_mem_v;
-
-assign {act_rd_addr, act_rd_count, act_rd_final_ptr, act_rd_offset} = act_mem;
-
-// ** stall if fifo is not ready ** //
-wire accel_fifo_ready;
+assign desc_ready = !act_mem_v || (act_rd_count==1 && accel_fifo_ready);
 
 // Send request to memory, with an input register
 reg [MASK_BITS-1:0]    mem_rd_offset, mem_rd_ptr;
@@ -258,11 +251,12 @@ always @ (posedge clk) begin
   if (accel_stop_r)
     counter <= 0;
   else if (m_axis_tvalid && m_axis_tready) begin
-    if (!act_mem_v)
+    if (!(act_mem_v && accel_fifo_ready))
       counter <= counter - 1;
     // else, both asserted, no change
   end else if (act_mem_v && accel_fifo_ready)
     counter <= counter + 1;
+    // else, none asserted, no change
 
   if (rst)
     counter <= 0;
