@@ -29,14 +29,11 @@ module pigasus_sme_wrapper # (
   input  wire                    match_release,
   output wire [15:0]             match_rule_ID,
   output wire                    match_valid,
-  output wire                    match_last,
+  output wire                    match_meta_release,
 
   // Metadata state out
   output wire [63:0]             preamble_state_out,
-  output reg                     state_out_valid,
-
-  // merged state
-  output reg  [3:0]              match_valid_stat
+  output reg                     state_out_valid
 );
 
   ///////////////////////////////////////////////
@@ -171,14 +168,14 @@ module pigasus_sme_wrapper # (
     .out_usr_eop(pigasus_eop),
     .out_usr_empty(pigasus_empty)
   );
-  
+
   wire [63:0] pigasus_data_r;
   wire        pigasus_valid_r;
   wire        pigasus_ready_r;
   wire        pigasus_sop_r;
   wire        pigasus_eop_r;
   wire [2:0]  pigasus_empty_r;
-  
+
   rule_depacker_128_64 rule_depacker_inst (
     .clk(clk),
     .rst(rst),
@@ -264,6 +261,7 @@ module pigasus_sme_wrapper # (
   reg         match_last_r;
   wire [1:0]  selected_match;
   wire [3:0]  ack;
+  wire        arb_valid;
   integer m;
 
   // Register one FIFO output
@@ -273,16 +271,20 @@ module pigasus_sme_wrapper # (
       sme_output_r_eop <= sme_output_f_eop;
       for (m=0; m<4; m=m+1)
         sme_output_r_v[m] <= (sme_output_f[m*16+:16]!=0);
-    end else if (match_valid && match_release) begin
+    end else if (arb_valid && match_release) begin
       sme_output_r_v <= sme_output_r_v & (~ack);
     end else if (sme_output_f_ready) begin
       sme_output_r_eop <= 1'b0;
     end
 
-    match_last_r <= sme_output_r_eop && sme_output_f_ready;
+    match_last_r <= sme_output_r_eop && (sme_output_r_v == 4'd0) &&
+                    !(match_last_r && match_release);
 
-    if (rst)
-        sme_output_r_v <= 4'd0;
+    if (rst) begin
+        sme_output_r_v   <= 4'd0;
+        match_last_r     <= 1'b0;
+        sme_output_r_eop <= 1'b0;
+    end
   end
 
   arbiter # (.PORTS(4), .TYPE("PRIORITY")) match_arb (
@@ -293,13 +295,15 @@ module pigasus_sme_wrapper # (
     .acknowledge  (4'd0),
 
     .grant        (ack),
-    .grant_valid  (match_valid),
+    .grant_valid  (arb_valid),
     .grant_encoded(selected_match)
   );
 
-  assign sme_output_f_ready = (sme_output_r_v == 4'd0);
-  assign match_rule_ID      = sme_output_r[selected_match*16 +: 16];
-  assign match_valid_stat   = sme_output_r_v;
-  assign match_last         = match_last_r;
+  assign match_valid        = arb_valid || match_last_r;
+  assign sme_output_f_ready = (sme_output_r_v == 4'd0) &&
+                              (!sme_output_r_eop || (match_last_r && match_release));
+  assign match_rule_ID      = match_last_r ? 16'd0 :
+                              sme_output_r[selected_match*16 +: 16];
+  assign match_meta_release = match_last_r && match_release;
 
 endmodule

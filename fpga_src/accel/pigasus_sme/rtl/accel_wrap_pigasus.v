@@ -257,18 +257,8 @@ always @(posedge clk) begin
   end
 end
 
-// DMA engine for single block of the packet memory
-localparam BLOCK_ADDR_WIDTH =PMEM_ADDR_WIDTH-PMEM_SEL_BITS;
-localparam ATTACHED_CNT = SLOT_COUNT/8;
-localparam ATTACHED = ACC_MEM_BLOCKS-ATTACHED_CNT;
-localparam USER_WIDTH = $clog2(DATA_WIDTH/8);
-
-wire [DATA_WIDTH-1:0] accel_tdata;
-wire [USER_WIDTH-1:0] accel_tuser;
-wire                  accel_tlast;
-wire                  accel_tvalid;
-wire                  accel_tready;
-
+// Register Pigasus data in separate FIFOs to feed the
+// 3 accelerators in the proper time
 wire [BLOCK_ADDR_WIDTH+1-1:0] cmd_addr_reg_f;
 wire [LEN_WIDTH-1:0]          cmd_len_reg_f;
 wire                          cmd_valid_reg_f;
@@ -289,6 +279,61 @@ simple_fifo # (
   .dout({cmd_addr_reg_f, cmd_len_reg_f}),
   .dout_ready(dma_ready)
 );
+
+wire        meta_data_valid, meta_data_ready;
+wire [63:0] preamble_state;
+wire [15:0] src_port, dst_port;
+
+simple_fifo # (
+  .ADDR_WIDTH($clog2(SLOT_COUNT)),
+  .DATA_WIDTH(64+32)
+) meta_data_fifo (
+  .clk(clk),
+  .rst(rst),
+  .clear(1'b0),
+
+  .din_valid(cmd_valid_reg),
+  .din({cmd_preamble_reg, cmd_port_reg}), // port might need byte swapping
+  .din_ready(),
+
+  .dout_valid(meta_data_valid),
+  .dout({preamble_state, src_port, dst_port}),
+  .dout_ready(meta_data_ready)
+);
+
+wire [7:0]  meta_slot;
+wire        meta_slot_valid, meta_slot_ready;
+// meta data is moved to next FIFO when state_out is ready
+wire        state_out_valid;
+
+simple_fifo # (
+  .ADDR_WIDTH($clog2(SLOT_COUNT)),
+  .DATA_WIDTH(8)
+) cmd_slot_fifo (
+  .clk(clk),
+  .rst(rst),
+  .clear(1'b0),
+
+  .din_valid(cmd_valid_reg),
+  .din(cmd_slot_reg),
+  .din_ready(),
+
+  .dout_valid(meta_slot_valid),
+  .dout(meta_slot),
+  .dout_ready(state_out_valid)
+);
+
+// DMA engine for single block of the packet memory
+localparam BLOCK_ADDR_WIDTH =PMEM_ADDR_WIDTH-PMEM_SEL_BITS;
+localparam ATTACHED_CNT = SLOT_COUNT/8;
+localparam ATTACHED = ACC_MEM_BLOCKS-ATTACHED_CNT;
+localparam USER_WIDTH = $clog2(DATA_WIDTH/8);
+
+wire [DATA_WIDTH-1:0] accel_tdata;
+wire [USER_WIDTH-1:0] accel_tuser;
+wire                  accel_tlast;
+wire                  accel_tvalid;
+wire                  accel_tready;
 
 single_accel_rd_dma # (
   .DATA_WIDTH(DATA_WIDTH),
@@ -350,51 +395,10 @@ end
 wire [15:0] match_index;
 wire [7:0]  match_error_stat;
 
-wire [4-1:0] accel_tempty = 4'hf-accel_tuser;
-
-wire [63:0] preamble_state;
-wire [15:0] src_port, dst_port;
-wire        meta_data_valid, meta_data_ready;
-
-simple_fifo # (
-  .ADDR_WIDTH(2),
-  .DATA_WIDTH(64+32)
-) meta_data_fifo (
-  .clk(clk),
-  .rst(rst),
-  .clear(1'b0),
-
-  .din_valid(cmd_valid_reg),
-  .din({cmd_preamble_reg, cmd_port_reg}), // port might need byte swapping
-  .din_ready(),
-
-  .dout_valid(meta_data_valid),
-  .dout({preamble_state, src_port, dst_port}),
-  .dout_ready(meta_data_ready)
-);
-
-wire [7:0]  meta_slot;
-wire        meta_slot_valid, meta_slot_ready;
 wire [63:0] state_out;
-wire        state_out_valid;
-wire        match_last;
+wire        match_meta_release;
 
-simple_fifo # (
-  .ADDR_WIDTH(2),
-  .DATA_WIDTH(8)
-) cmd_slot_fifo (
-  .clk(clk),
-  .rst(rst),
-  .clear(1'b0),
-
-  .din_valid(cmd_valid_reg),
-  .din(cmd_slot_reg),
-  .din_ready(),
-
-  .dout_valid(meta_slot_valid),
-  .dout(meta_slot),
-  .dout_ready(state_out_valid)
-);
+wire [4-1:0] accel_tempty = 4'hf-accel_tuser;
 
 pigasus_sme_wrapper fast_pattern_sme_inst (
   .clk(clk),
@@ -419,15 +423,15 @@ pigasus_sme_wrapper fast_pattern_sme_inst (
   .match_rule_ID(match_rule_ID),
   .match_release(match_release),
   .match_valid(match_valid),
-  .match_last(match_last),
+  .match_meta_release(match_meta_release),
 
   .preamble_state_out(state_out),
-  .state_out_valid(state_out_valid),
-  .match_valid_stat()
+  .state_out_valid(state_out_valid)
 );
 
+// FIFO for output state
 simple_fifo # (
-  .ADDR_WIDTH(2),
+  .ADDR_WIDTH($clog2(SLOT_COUNT)),
   .DATA_WIDTH(64+8)
 ) state_out_fifo (
   .clk(clk),
@@ -440,7 +444,7 @@ simple_fifo # (
 
   .dout_valid(accel_state_valid),
   .dout({accel_state, accel_slot}),
-  .dout_ready(match_last)
+  .dout_ready(match_meta_release)
 );
 
 // CND IP check accelerator

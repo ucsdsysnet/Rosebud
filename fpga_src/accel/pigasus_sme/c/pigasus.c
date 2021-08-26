@@ -209,16 +209,18 @@ drop:
 }
 
 static inline void slot_match(struct slot_context *slot){
-  PROFILE_A(ACC_PIG_RULE_ID);
+  short rule_id = ACC_PIG_RULE_ID;
+  PROFILE_A(rule_id);
   // Save ACC_PIG_STATE to flow table if not already saved!
 
-  // release match
-  ACC_PIG_CTRL = 2;
+  // If it's end of packet drop it for now
+  if (rule_id==0){
+    slot->desc.len = 0;
+    pkt_send(&slot->desc);
+  }
 
-  // For now dropping, should figure last match somehow before doing
-  // BUG: there might be no match, and slot getting stuck!
-  slot->desc.len = 0;
-  pkt_send(&slot->desc);
+  // release the match/EoP
+  ACC_PIG_CTRL = 2;
 }
 
 int main(void)

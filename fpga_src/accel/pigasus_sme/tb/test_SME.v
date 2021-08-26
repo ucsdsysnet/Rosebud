@@ -13,7 +13,6 @@ module test_SME # (
 
   output wire [15:0]             sme_output,
   output wire                    sme_output_v,
-  output wire [3:0]              match_valid_stat,
   output wire [63:0]             state_out
 );
   // Generate empty signal, accel_dma_rd_sp provides it in accel wrap
@@ -91,8 +90,7 @@ module test_SME # (
     .match_release(1'b1),
     .match_rule_ID(sme_output),
     .match_valid(sme_output_v),
-    .match_last(),
-    .match_valid_stat(match_valid_stat),
+    .match_meta_release(),
     .preamble_state_out(state_out)
   );
 
