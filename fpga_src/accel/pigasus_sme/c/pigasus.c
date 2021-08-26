@@ -45,7 +45,7 @@
 #define ACC_PIG_SRC_PORT (*((volatile unsigned short     *)(IO_EXT_BASE + 0x0c))) //!
 #define ACC_PIG_DST_PORT (*((volatile unsigned short     *)(IO_EXT_BASE + 0x0e))) //!
 #define ACC_PIG_SLOT     (*((volatile unsigned char      *)(IO_EXT_BASE + 0x18)))
-#define ACC_PIG_RULE_ID  (*((volatile unsigned short     *)(IO_EXT_BASE + 0x1c)))
+#define ACC_PIG_RULE_ID  (*((volatile unsigned int       *)(IO_EXT_BASE + 0x1c)))
 
 #define ACC_SRC_IP       (*((volatile unsigned int       *)(IO_EXT_BASE + 0x40)))
 #define ACC_DST_IP       (*((volatile unsigned int       *)(IO_EXT_BASE + 0x50)))
@@ -213,7 +213,7 @@ drop:
 }
 
 static inline void slot_match(struct slot_context *slot){
-  short rule_id = ACC_PIG_RULE_ID;
+  unsigned int rule_id = ACC_PIG_RULE_ID;
   PROFILE_A(rule_id);
   // Save ACC_PIG_STATE to flow table if not already saved!
 

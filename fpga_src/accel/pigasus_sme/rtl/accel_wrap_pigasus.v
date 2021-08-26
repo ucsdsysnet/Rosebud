@@ -65,7 +65,8 @@ reg  [31:0]                cmd_port_reg;
 reg  [7:0]                 cmd_slot_reg;
 
 wire         match_valid;
-wire [15:0]  match_rule_ID;
+wire         match_last;
+wire [31:0]  match_rules_ID;
 wire [63:0]  accel_state;
 wire [7:0]   accel_slot;
 wire         accel_state_valid;
@@ -225,7 +226,7 @@ always @(posedge clk) begin
 
         // Accel match rule ID
         6'h1c: begin
-          read_data_reg <= {16'd0, match_rule_ID};
+          read_data_reg <= match_rules_ID;
         end
 
       endcase
@@ -303,11 +304,6 @@ simple_fifo # (
   .dout_ready(meta_data_ready)
 );
 
-wire [7:0]  meta_slot;
-wire        meta_slot_valid, meta_slot_ready;
-// meta data is moved to next FIFO when state_out is ready
-wire        state_out_valid;
-
 simple_fifo # (
   .ADDR_WIDTH($clog2(SLOT_COUNT)),
   .DATA_WIDTH(8)
@@ -321,8 +317,8 @@ simple_fifo # (
   .din_ready(),
 
   .dout_valid(meta_slot_valid),
-  .dout(meta_slot),
-  .dout_ready(state_out_valid)
+  .dout(accel_slot),
+  .dout_ready(match_release && match_last)
 );
 
 // DMA engine for single block of the packet memory
@@ -393,12 +389,8 @@ always @ (posedge clk) begin
 end
 
 // Pigasus accelerator
-wire [15:0] match_index;
-wire [7:0]  match_error_stat;
-
 wire [63:0] state_out;
-wire        match_meta_release;
-
+wire        state_out_valid;
 wire [4-1:0] accel_tempty = 4'hf-accel_tuser;
 
 pigasus_sme_wrapper fast_pattern_sme_inst (
@@ -421,10 +413,10 @@ pigasus_sme_wrapper fast_pattern_sme_inst (
   .meta_valid(meta_data_valid),
   .meta_ready(meta_data_ready),
 
-  .match_rule_ID(match_rule_ID),
-  .match_release(match_release),
+  .match_rules_ID(match_rules_ID),
+  .match_last(match_last),
   .match_valid(match_valid),
-  .match_meta_release(match_meta_release),
+  .match_release(match_release),
 
   .preamble_state_out(state_out),
   .state_out_valid(state_out_valid)
@@ -433,19 +425,19 @@ pigasus_sme_wrapper fast_pattern_sme_inst (
 // FIFO for output state
 simple_fifo # (
   .ADDR_WIDTH($clog2(SLOT_COUNT)),
-  .DATA_WIDTH(64+8)
+  .DATA_WIDTH(64)
 ) state_out_fifo (
   .clk(clk),
   .rst(rst),
   .clear(1'b0),
 
   .din_valid(state_out_valid),
-  .din({state_out, meta_slot}),
+  .din(state_out),
   .din_ready(),
 
   .dout_valid(accel_state_valid),
-  .dout({accel_state, accel_slot}),
-  .dout_ready(match_meta_release)
+  .dout(accel_state),
+  .dout_ready(match_release && match_last)
 );
 
 // CND IP check accelerator

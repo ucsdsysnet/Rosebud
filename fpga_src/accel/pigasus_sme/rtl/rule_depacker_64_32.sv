@@ -1,19 +1,19 @@
 `include "struct_s.sv"
-module rule_depacker_128_64 (
+module rule_depacker_64_32 (
     input   logic           clk,
     input   logic           rst,
     input   logic           in_rule_sop,
     input   logic           in_rule_eop,
-    input   logic [3:0]     in_rule_empty,
+    input   logic [2:0]     in_rule_empty,
     input   logic           in_rule_valid,
-    input   logic [127:0]   in_rule_data,
+    input   logic [63:0]    in_rule_data,
     output  logic           in_rule_ready,
 
     output  logic           out_rule_sop,
     output  logic           out_rule_eop,
     output  logic           out_rule_valid,
-    output  logic [63:0]    out_rule_data,
-    output  logic [2:0]     out_rule_empty,
+    output  logic [31:0]    out_rule_data,
+    output  logic [1:0]     out_rule_empty,
     input   logic           out_rule_ready
 );
 
@@ -24,12 +24,12 @@ typedef enum{
 } state_t;
 state_t state;
 
-logic [127:0]   latch;
+logic [63:0]    latch;
 logic           int_rule_sop;
 logic           int_rule_eop;
 logic           int_rule_valid;
-logic [63:0]    int_rule_data;
-logic [2:0]     int_rule_empty;
+logic [31:0]    int_rule_data;
+logic [1:0]     int_rule_empty;
 logic           int_rule_ready;
 logic           int_rule_almost_full;
 
@@ -63,15 +63,15 @@ always @(posedge clk) begin
             MIDDLE:begin
                 case(int_cnt)
                     1'b0:begin
-                        if(latch[63:0]!=0)begin
+                        if(latch[31:0]!=0)begin
                             int_rule_valid <= 1'b1;
-                            int_rule_data <= latch[63:0];
+                            int_rule_data <= latch[31:0];
                         end
                     end
                     1'b1:begin
-                        if(latch[127:64]!=0)begin
+                        if(latch[63:32]!=0)begin
                             int_rule_valid <= 1'b1;
-                            int_rule_data <= latch[127:64];
+                            int_rule_data <= latch[63:32];
                         end
                         state <= IDLE;
                     end
@@ -90,11 +90,11 @@ always @(posedge clk) begin
 end
 
 unified_pkt_fifo  #(
-    .FIFO_NAME        ("[rule_depacker_64] rule_FIFO"),
+    .FIFO_NAME        ("[rule_depacker_32] rule_FIFO"),
     .MEM_TYPE         ("M20K"),
     .DUAL_CLOCK       (0),
-    .FULL_LEVEL       (24),
-    .SYMBOLS_PER_BEAT (8),
+    .FULL_LEVEL       (12),
+    .SYMBOLS_PER_BEAT (4),
     .BITS_PER_SYMBOL  (8),
     .FIFO_DEPTH       (16)
 ) rule_fifo (
@@ -118,6 +118,5 @@ unified_pkt_fifo  #(
     .almost_full       (int_rule_almost_full),
     .overflow          ()
 );
-
 
 endmodule

@@ -56,6 +56,7 @@ VERILOG_SOURCES += $(ACC_DIR)/reduction_2t1.sv
 VERILOG_SOURCES += $(ACC_DIR)/unified_fifo.sv
 VERILOG_SOURCES += $(ACC_DIR)/unified_pkt_fifo.sv
 VERILOG_SOURCES += $(ACC_DIR)/rule_depacker_128_64.sv
+VERILOG_SOURCES += $(ACC_DIR)/rule_depacker_64_32.sv
 VERILOG_SOURCES += $(ACC_DIR)/struct_s.sv
 VERILOG_SOURCES += $(ACC_DIR)/SME_wrapper.sv
 VERILOG_SOURCES += $(ACC_DIR)/accel_wrap_pigasus.v

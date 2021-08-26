@@ -26,10 +26,10 @@ module pigasus_sme_wrapper # (
   output wire                    meta_ready,
 
   // Match output
-  input  wire                    match_release,
-  output wire [15:0]             match_rule_ID,
+  output wire [31:0]             match_rules_ID,
+  output wire                    match_last,
   output wire                    match_valid,
-  output wire                    match_meta_release,
+  input  wire                    match_release,
 
   // Metadata state out
   output wire [63:0]             preamble_state_out,
@@ -180,7 +180,7 @@ module pigasus_sme_wrapper # (
   wire        pigasus_eop_r;
   wire [2:0]  pigasus_empty_r;
 
-  rule_depacker_128_64 rule_depacker_inst (
+  rule_depacker_128_64 rule_depacker1_inst (
     .clk(clk),
     .rst(rst),
 
@@ -197,7 +197,7 @@ module pigasus_sme_wrapper # (
     .out_rule_sop(pigasus_sop_r),
     .out_rule_eop(pigasus_eop_r),
     .out_rule_empty(pigasus_empty_r)
-);
+  );
 
   wire [63:0]  sme_output;
   wire         sme_output_valid;
@@ -236,78 +236,23 @@ module pigasus_sme_wrapper # (
     .pg_rule_cnt()
   );
 
-  // FIFO
-  wire [63:0] sme_output_f;
-  wire        sme_output_f_v;
-  wire        sme_output_f_ready;
-  wire        sme_output_f_eop;
-
-  simple_fifo # (
-    .ADDR_WIDTH(2),
-    .DATA_WIDTH(64+1)
-  ) accel_fifo (
+  rule_depacker_64_32 rule_depacker2_inst (
     .clk(clk),
     .rst(rst),
-    .clear(1'b0),
 
-    .din_valid(sme_output_v),
-    .din({sme_output_eop, sme_output}),
-    .din_ready(sme_output_ready),
+    .in_rule_sop(1'b0),
+    .in_rule_eop(sme_output_eop),
+    .in_rule_empty(3'd0),
+    .in_rule_valid(sme_output_v),
+    .in_rule_data(sme_output),
+    .in_rule_ready(sme_output_ready),
 
-    .dout_valid(sme_output_f_v),
-    .dout({sme_output_f_eop, sme_output_f}),
-    .dout_ready(sme_output_f_ready)
+    .out_rule_sop(),
+    .out_rule_eop(match_last),
+    .out_rule_valid(match_valid),
+    .out_rule_data(match_rules_ID),
+    .out_rule_empty(),
+    .out_rule_ready(match_release)
   );
-
-  reg  [63:0] sme_output_r;
-  reg  [3:0]  sme_output_r_v;
-  reg         sme_output_r_eop;
-  reg         match_last_r;
-  wire [1:0]  selected_match;
-  wire [3:0]  ack;
-  wire        arb_valid;
-  integer m;
-
-  // Register one FIFO output
-  always @ (posedge clk) begin
-    if (sme_output_f_v & sme_output_f_ready) begin
-      sme_output_r     <= sme_output_f;
-      sme_output_r_eop <= sme_output_f_eop;
-      for (m=0; m<4; m=m+1)
-        sme_output_r_v[m] <= (sme_output_f[m*16+:16]!=0);
-    end else if (arb_valid && match_release) begin
-      sme_output_r_v <= sme_output_r_v & (~ack);
-    end else if (sme_output_f_ready) begin
-      sme_output_r_eop <= 1'b0;
-    end
-
-    match_last_r <= sme_output_r_eop && (sme_output_r_v == 4'd0) &&
-                    !(match_last_r && match_release);
-
-    if (rst) begin
-        sme_output_r_v   <= 4'd0;
-        match_last_r     <= 1'b0;
-        sme_output_r_eop <= 1'b0;
-    end
-  end
-
-  arbiter # (.PORTS(4), .TYPE("PRIORITY")) match_arb (
-    .clk (clk),
-    .rst (rst),
-
-    .request      (sme_output_r_v & ~(ack & {4{match_release}})),
-    .acknowledge  (4'd0),
-
-    .grant        (ack),
-    .grant_valid  (arb_valid),
-    .grant_encoded(selected_match)
-  );
-
-  assign match_valid        = arb_valid || match_last_r;
-  assign sme_output_f_ready = (sme_output_r_v == 4'd0) &&
-                              (!sme_output_r_eop || (match_last_r && match_release));
-  assign match_rule_ID      = match_last_r ? 16'd0 :
-                              sme_output_r[selected_match*16 +: 16];
-  assign match_meta_release = match_last_r && match_release;
 
 endmodule

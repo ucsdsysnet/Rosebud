@@ -11,7 +11,7 @@ module test_SME # (
   input  wire                    s_axis_tlast,
   output wire                    s_axis_tready,
 
-  output wire [15:0]             sme_output,
+  output wire [31:0]             sme_output,
   output wire                    sme_output_v,
   output wire [63:0]             state_out
 );
@@ -88,9 +88,9 @@ module test_SME # (
 
     // Match output
     .match_release(1'b1),
-    .match_rule_ID(sme_output),
+    .match_rules_ID(sme_output),
     .match_valid(sme_output_v),
-    .match_meta_release(),
+    .match_last(),
     .preamble_state_out(state_out)
   );
 
@@ -136,8 +136,8 @@ module test_SME # (
 
   integer m;
   always @ (posedge clk)
-    for (m=0; m<4; m=m+1)
-      if (dut.sme_output_r_v[m] && dut.ack[m])
-        $display("Match on ouput %0d, value %h", m, dut.sme_output_r[m*16+:16]);
+    for (m=0; m<2; m=m+1)
+      if ((sme_output[m*16 +: 16]!=0) && sme_output_v)
+        $display("Match on ouput %0d, value %h", m, sme_output[m*16+:16]);
 
 endmodule
