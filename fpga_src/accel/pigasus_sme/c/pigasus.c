@@ -179,6 +179,8 @@ static inline void slot_rx_packet(struct slot_context *slot)
         ACC_PIG_SLOT  = slot->index;
         ACC_PIG_CTRL  = 1;
 
+        return;
+
       case 0x11: // UDP
         PROFILE_B(0x00010006);
         payload_offset += UDP_HEADER_SIZE;
@@ -200,6 +202,8 @@ static inline void slot_rx_packet(struct slot_context *slot)
         ACC_PIG_STATE = 0;
         ACC_PIG_SLOT  = slot->index;
         ACC_PIG_CTRL  = 1;
+
+        return;
     }
   }
 
@@ -221,6 +225,7 @@ static inline void slot_match(struct slot_context *slot){
 
   // release the match/EoP
   ACC_PIG_CTRL = 2;
+
 }
 
 int main(void)
@@ -231,8 +236,8 @@ int main(void)
   DEBUG_OUT_H = 0;
 
   // set slot configuration parameters
-  slot_count       = PMEM_SEG_COUNT;
-  slot_size        = PMEM_SEG_SIZE;
+  slot_count       = 16;
+  slot_size        = 16*1024;
   header_slot_base = DMEM_BASE + (DMEM_SIZE >> 1);
   header_slot_size = 128;
 

@@ -70,13 +70,18 @@ module pigasus_sme_wrapper # (
   reg [STRB_COUNT-1:0]  rem_empty;
   wire                  has_extra;
   reg                   has_extra_r;
+  wire                  in_pkt_ready;
 
   assign has_extra = s_axis_tlast && has_preamble && (s_axis_tempty < 7);
 
   always @ (posedge clk) begin
     rest_7      <= s_axis_tdata_rev[55:0];
-    has_extra_r <= has_extra | (has_extra_r && !s_axis_tready);
     rem_empty   <= (BYTE_COUNT-7) + s_axis_tempty[2:0];
+
+    if (s_axis_tvalid && s_axis_tready && has_extra)
+      has_extra_r <= 1'b1;
+    else if (has_extra_r && in_pkt_ready)
+      has_extra_r <= 1'b0;
 
     if (rst)
       has_extra_r <= 1'b0;
@@ -88,7 +93,6 @@ module pigasus_sme_wrapper # (
   wire                    in_pkt_valid;
   wire                    in_pkt_sop;
   wire                    in_pkt_eop;
-  wire                    in_pkt_ready;
 
   assign in_pkt_eop    = has_extra ? 1'b0 : (s_axis_tlast | has_extra_r);
   assign in_pkt_valid  = s_axis_tvalid | has_extra_r;
@@ -291,7 +295,7 @@ module pigasus_sme_wrapper # (
     .clk (clk),
     .rst (rst),
 
-    .request      (sme_output_r_v & ~ack),
+    .request      (sme_output_r_v & ~(ack & {4{match_release}})),
     .acknowledge  (4'd0),
 
     .grant        (ack),

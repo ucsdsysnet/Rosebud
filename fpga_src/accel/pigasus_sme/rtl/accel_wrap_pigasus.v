@@ -48,6 +48,8 @@ module accel_wrap #(
 assign error = 1'b0;
 
 localparam LEN_WIDTH = 14;
+localparam BLOCK_ADDR_WIDTH =PMEM_ADDR_WIDTH-PMEM_SEL_BITS;
+
 reg   dma_done;
 wire  dma_ready;
 reg   dma_done_err;
@@ -324,7 +326,6 @@ simple_fifo # (
 );
 
 // DMA engine for single block of the packet memory
-localparam BLOCK_ADDR_WIDTH =PMEM_ADDR_WIDTH-PMEM_SEL_BITS;
 localparam ATTACHED_CNT = SLOT_COUNT/8;
 localparam ATTACHED = ACC_MEM_BLOCKS-ATTACHED_CNT;
 localparam USER_WIDTH = $clog2(DATA_WIDTH/8);
