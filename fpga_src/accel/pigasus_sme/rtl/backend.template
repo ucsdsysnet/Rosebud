@@ -311,10 +311,10 @@ unified_pkt_fifo  #(
     .MEM_TYPE         ("M20K"),
     .DUAL_CLOCK       (0),
     .USE_ALMOST_FULL  (1),
-    .FULL_LEVEL       (450),
+    .FULL_LEVEL       (100),
     .SYMBOLS_PER_BEAT ({{context['last_layer_width']*context['bucket_size']*2}}),
     .BITS_PER_SYMBOL  (8),
-    .FIFO_DEPTH       (512)
+    .FIFO_DEPTH       (128)
 ) rule_fifo (
     .in_clk            (clk),
     .in_reset          (rst),

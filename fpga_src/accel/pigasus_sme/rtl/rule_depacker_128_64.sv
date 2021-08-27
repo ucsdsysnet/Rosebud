@@ -93,7 +93,7 @@ unified_pkt_fifo  #(
     .FIFO_NAME        ("[rule_depacker_64] rule_FIFO"),
     .MEM_TYPE         ("M20K"),
     .DUAL_CLOCK       (0),
-    .FULL_LEVEL       (24),
+    .FULL_LEVEL       (12),
     .SYMBOLS_PER_BEAT (8),
     .BITS_PER_SYMBOL  (8),
     .FIFO_DEPTH       (16)
