@@ -93,10 +93,10 @@ unified_pkt_fifo  #(
     .FIFO_NAME        ("[rule_depacker_32] rule_FIFO"),
     .MEM_TYPE         ("M20K"),
     .DUAL_CLOCK       (0),
-    .FULL_LEVEL       (12),
+    .FULL_LEVEL       (48),
     .SYMBOLS_PER_BEAT (4),
     .BITS_PER_SYMBOL  (8),
-    .FIFO_DEPTH       (16)
+    .FIFO_DEPTH       (64)
 ) rule_fifo (
     .in_clk            (clk),
     .in_reset          (rst),

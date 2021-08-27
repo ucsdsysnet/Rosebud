@@ -319,10 +319,10 @@ unified_pkt_fifo  #(
     .MEM_TYPE         ("M20K"),
     .DUAL_CLOCK       (0),
     .USE_ALMOST_FULL  (1),
-    .FULL_LEVEL       (100),
+    .FULL_LEVEL       (48),
     .SYMBOLS_PER_BEAT (8),
     .BITS_PER_SYMBOL  (8),
-    .FIFO_DEPTH       (128)
+    .FIFO_DEPTH       (64)
 ) rule_fifo (
     .in_clk            (clk),
     .in_reset          (rst),
