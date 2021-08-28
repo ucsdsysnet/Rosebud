@@ -2,7 +2,7 @@ import string
 import time
 import sys
 import random
-from Bio import trie
+from pytrie import SortedStringTrie as trie
 import json
 
 # number of address bits
@@ -20,7 +20,7 @@ rng = random.SystemRandom()
 
 init_routing_table = []
 routing_table = []
-routing_trie = trie.trie()
+routing_trie = trie()
 AS2port = {}
 out_prefix += '_'+str(port_count)+'_ports'
 prefix_dist = {}
@@ -37,7 +37,7 @@ def dict_sort (d):
 #############################################################
 def covered_prefix (table, index):
 	prefix = table[index][0]
-	index +=1 
+	index +=1
 	y = 0.0
 	while (index<len(table) and table[index][0].startswith(prefix)):
 		y += 1.0/(2**(len(table[index][0])-len(prefix)))
@@ -50,9 +50,11 @@ def covered_prefix (table, index):
 with open(inp_file) as routes:
 	reader = routes.read().splitlines()
 	for line in reader:
-		row = line.replace('/',' ').split(' ')
-		prefix = string.join([bin(int(x))[2:].zfill(8) for x in row[0].split('.')],sep='')[0:int(row[1])]
-		if AS2port.has_key(row[2]):
+		if (":" in line): # No support for ipv6
+			continue
+		row = line.replace('/',' ').split(' ') + ['1'] ### JUST FOR THIS GENERATOR
+		prefix = ''.join([bin(int(x))[2:].zfill(8) for x in row[0].split('.')])[0:int(row[1])]
+		if row[2] in AS2port:
 			port = AS2port[row[2]]
 			AS2prefix_dist [row[2]] += 1
 		else:
@@ -62,7 +64,7 @@ with open(inp_file) as routes:
 		init_routing_table += [(prefix,port)]
 
 load_time = time.time()
-print "load time:\t\t", 1000*(load_time-start_time), "ms"
+print ("load time:\t\t", 1000*(load_time-start_time), "ms")
 
 init_routing_table.sort()
 
@@ -72,13 +74,13 @@ for i in range(len(init_routing_table)):
 	routing_table.append((init_routing_table[i][0],init_routing_table[i][1]))
 	routing_trie[init_routing_table[i][0]] = init_routing_table[i][1]
 	port = init_routing_table[i][1]
-	if port_dist.has_key(port):
+	if port in port_dist:
 		port_dist[port] += 1
 	else:
 		port_dist[port]  = 1
-	
+
 	length = len(init_routing_table[i][0])
-	if prefix_dist.has_key(length):
+	if length in prefix_dist:
 		prefix_dist[length] += 1
 	else:
 		prefix_dist[length]  = 1
@@ -87,7 +89,7 @@ for i in range(len(init_routing_table)):
 
 for x in AS2port:
 	y = AS2port[x]
-	if AS2port_dist.has_key(y):
+	if y in AS2port_dist:
 		AS2port_dist[y] += 1
 	else:
 		AS2port_dist[y]  = 1
@@ -98,20 +100,20 @@ print ('AS to port dist:', dict_sort(AS2port_dist),'\n')
 print ('AS to prefix dist:', dict_sort(AS2prefix_dist),'\n')
 
 prune_time = time.time()
-print "sort and prune time:\t", 1000*(prune_time-load_time), "ms"
+print ("sort and prune time:\t", 1000*(prune_time-load_time), "ms")
 
 with open(out_prefix+'_sorted_prefixes.json', 'w') as f:
 	json.dump(routing_table, f, ensure_ascii=False)
 f.close()
-with open(out_prefix+'_routing_trie.bin','wb') as f:
-	trie.save(f, routing_trie)
+with open(out_prefix+'_routing_trie.json','w') as f:
+	json.dump(routing_trie.items(), f, ensure_ascii=False)
 f.close()
 with open(out_prefix+'_AS2port.json', 'w') as f:
 	json.dump(AS2port, f, ensure_ascii=False)
 f.close()
 
 save_time = time.time()
-print "save time:\t\t", 1000*(save_time - prune_time), "ms"
-print 
-print "There were", drops, "drops and new length of table is", len(routing_table)
+print ("save time:\t\t", 1000*(save_time - prune_time), "ms")
+print ()
+print ("There were", drops, "drops and new length of table is", len(routing_table))
 

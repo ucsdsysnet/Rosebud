@@ -3,7 +3,6 @@ To get latest google CDN IPs:
 curl https://www.gstatic.com/ipranges/cloud.json | jq '.prefixes[] | .ipv4Prefix // .ipv6Prefix' -r |sort -r
 
 Python files are simplified from another project, do the following to use them:
-- add value 1 to each line of the generated CDN IPs. Also remove IPv6 entries.
 - run prefix_parser.py
 - [optional] run data_analyzer.py to see ip distribution, for example to see longest prefix is /24.
 - run ip_match_generator.py to generate the verilog files

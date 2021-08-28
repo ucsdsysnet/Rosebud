@@ -18,26 +18,25 @@ with open(inp_file, 'r') as f:
 	prefix_table = [(str(x),int(y)) for (x,y) in json.load(f)]
 f.close()
 
-prefix_table = sorted(prefix_table, key=lambda x: -len(x[0]))
+prefix_table = sorted(prefix_table, key=lambda x: len(x[0]), reverse=True)
 
 MSB_dict= {}
 first_lvl = []
 for (x,y) in prefix_table:
 	k = x[0:first_lvl_len]
-	if MSB_dict.has_key(k):
+	if k in MSB_dict:
 		if (len(x)!=first_lvl_len):
 			MSB_dict[k].append((x[first_lvl_len:],y))
 	else:
 		if (len(x)==first_lvl_len):
 			# since list is sorted based on number of wildcards
 			first_lvl.append((x,y))
-		else: 
+		else:
 			MSB_dict[k] = [(x[first_lvl_len:],y)]
-	
 
 with open("ip_match.v","w") as f:
 
-  for k in MSB_dict:
+  for k in sorted(MSB_dict):
   		f.write('module table_'+k+'(input clk, input rst, input ['+str(max_prefix_len-first_lvl_len-1)+':0] addr, output reg match);\n')
   		f.write('  always@(posedge clk) begin\n')
   		# f.write('  always@(addr) begin\n')
@@ -59,13 +58,13 @@ with open("ip_match.v","w") as f:
   f.write('  reg        valid_r;\n')
   f.write('  reg        match_n;\n')
   f.write('\n')
-  for k in MSB_dict:
+  for k in sorted(MSB_dict):
     f.write('  wire out_'+k+';\n')
     f.write('  table_'+k+' m_'+k+' (.clk(clk), .rst(rst), .addr(addr['+str(32-first_lvl_len-1)+':'+str(32-max_prefix_len)+']), .match(out_'+k+'));\n')
   f.write('\n')
   f.write('  always@(*)\n')
   f.write('    case (addr_r[31:'+str(32-first_lvl_len)+'])\n')
-  for k in MSB_dict:
+  for k in sorted(MSB_dict):
     f.write('      '+str(first_lvl_len)+'\'b'+k+': '+'match_n = out_'+k+';\n')
   for (x,y) in first_lvl:
     f.write('      '+str(first_lvl_len)+'\'b'+x+': '+'match_n = 1\'b'+str(y)+';\n')
@@ -87,5 +86,5 @@ with open("ip_match.v","w") as f:
   f.write('endmodule\n')
 f.close()
 
-print MSB_dict.keys()
-print len(MSB_dict.keys())
+print ([x for x in sorted(MSB_dict.keys())])
+print (len(MSB_dict.keys()))
