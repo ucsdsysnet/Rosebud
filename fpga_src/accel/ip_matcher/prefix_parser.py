@@ -10,9 +10,11 @@ address_bits = 32
 # total number of ports, considered ports starting from 1
 port_count = 2
 # name of input file
-inp_file = "Google_ips.txt"
+# inp_file = "Google_ips.txt"
+inp_file = "firewall.txt"
 # common string in output file
-out_prefix = "google"
+# out_prefix = "google"
+out_prefix = "firewall"
 
 start_time = time.time()
 

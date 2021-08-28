@@ -5,7 +5,9 @@ import itertools
 import copy
 import sys
 
-inp_file = 'google_2_ports_sorted_prefixes.json'
+# name = 'google'
+name = 'firewall'
+inp_file = name + '_2_ports_sorted_prefixes.json'
 
 def possible_MSBs (table, bits):
 	prefix = {}
@@ -33,8 +35,8 @@ print ("# of possible first 24 bits for after /24:" , len(possible_MSBs(more_tha
 print ("# of possible first 10 bits in after /24:",len(possible_MSBs(more_than_24,10).keys()))
 print ("# of possible first 8 bits for prefixes before /25", len(possible_MSBs(less_than_25,8).keys()))
 
-with open("prefix_dist", 'w') as f:
-	f.write('Bits Occupancy\r\n')
+with open(name+'_prefix_dist.txt', 'w') as f:
+	f.write('Bits Occupancy\n')
 	for i in range (1,33):
 		print ("# of possible first",str(i),"bits:", len(possible_MSBs(prefix_table,i).keys()),"/",2**i)
 		f.write(str(i)+' '+str(len(possible_MSBs(prefix_table,i).keys())*1.0/(2**i))+'\n')
