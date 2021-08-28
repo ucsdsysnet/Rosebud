@@ -36,7 +36,7 @@ def splitter (prefixes, offset):
 def table_writer (MSB_dict, fp, prefix):
   for k in sorted(MSB_dict):
     addr_len = max([len(x) for x in MSB_dict[k]])
-    fp.write('module table_'+prefix+'_'+k+'(input clk, input rst, input ['+str(addr_len-1)+':0] addr, output reg match);\n')
+    fp.write('module table_'+prefix+k+'(input clk, input rst, input ['+str(addr_len-1)+':0] addr, output reg match);\n')
     fp.write('  always@(posedge clk) begin\n')
     fp.write('    casex (addr)\n')
     for x in MSB_dict[k]:
@@ -62,9 +62,12 @@ fill = ['']
 for i in range (1, max_prefix_len):
   fill.append(i*'?')
 
+# lprefix = 'lvl1_'
+lprefix = ''
+
 with open('../rtl/'+mod_name+'.v',"w") as f:
 
-  table_writer (MSB_dict, f, 'lvl1')
+  table_writer (MSB_dict, f, lprefix)
 
   f.write('module '+mod_name+'(input wire clk, input wire rst, input wire [31:0] addr,\n')
   f.write('                input wire valid, output reg match, output reg done);\n')
@@ -75,7 +78,7 @@ with open('../rtl/'+mod_name+'.v',"w") as f:
   for k in sorted(MSB_dict):
     max_len = max([len(x) for x in MSB_dict[k]])
     f.write('  wire out_'+k+';\n')
-    f.write('  table_lvl1_'+k+' m_lvl1_'+k+' (.clk(clk), .rst(rst), .addr(addr['+str(32-first_lvl_len-1)+':'+str(32-first_lvl_len-max_len+0)+']), .match(out_'+k+'));\n')
+    f.write('  table_'+lprefix+k+' m_'+lprefix+k+' (.clk(clk), .rst(rst), .addr(addr['+str(32-first_lvl_len-1)+':'+str(32-first_lvl_len-max_len+0)+']), .match(out_'+k+'));\n')
   f.write('\n')
   f.write('  always@(*)\n')
   f.write('    case (addr_r[31:'+str(32-first_lvl_len)+'])\n')

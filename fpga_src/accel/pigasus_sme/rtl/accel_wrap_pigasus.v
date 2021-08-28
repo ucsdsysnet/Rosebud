@@ -81,6 +81,8 @@ wire       dos_attack     = 1'b0;
 wire [2:0] from_attack      = 3'd0;
 wire       from_attack_done = 1'b0;
 
+wire ip_match, ip_done;
+
 reg [IO_DATA_WIDTH-1:0] read_data_reg;
 reg read_data_valid_reg;
 
