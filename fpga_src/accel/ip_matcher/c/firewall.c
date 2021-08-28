@@ -29,9 +29,11 @@
 
 // Accel wrapper registers mapping
 #define ACC_SRC_IP   (*((volatile unsigned int  *)(IO_EXT_BASE + 0x00)))
-#define ACC_FW_MATCH (*((volatile unsigned char *)(IO_EXT_BASE + 0x01)))
+#define ACC_FW_MATCH (*((volatile unsigned char *)(IO_EXT_BASE + 0x04)))
 
+// Slot contexts
 struct slot_context {
+  int index;
   struct Desc desc;
   unsigned char *packet;
   unsigned char *header;
@@ -70,8 +72,9 @@ static inline void slot_rx_packet(struct slot_context *slot)
       goto drop;
     } else {
       PROFILE_B(0x0001cccc);
-      slot->desc.len ^= 1;
+      slot->desc.port ^= 1;
       pkt_send(&slot->desc);
+      return;
     }
   }
 
@@ -108,6 +111,7 @@ int main(void)
   // init slot context structures
   for (int i = 0; i < slot_count; i++)
   {
+    context[i].index = i;
     context[i].desc.tag = i+1;
     context[i].desc.data = (unsigned char *)(PMEM_BASE + PKTS_START + PKT_OFFSET + i*slot_size);
     context[i].packet = (unsigned char *)(PMEM_BASE + PKTS_START + PKT_OFFSET + i*slot_size);
@@ -128,10 +132,10 @@ int main(void)
 
       // read descriptor
       read_in_pkt(&desc);
-      
+
       // compute index
       slot = &context[desc.tag-1];
-      
+
       // copy descriptor into context
       slot->desc = desc;
 

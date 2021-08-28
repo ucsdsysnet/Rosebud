@@ -93,13 +93,14 @@ always @(posedge clk) begin
       read_data_reg <= src_ip_reg;
     end else begin
       read_data_reg       <=  fw_match;
-      read_data_valid_reg <=  fw_valid;
-      read_data_stall_reg <= !fw_valid;
+      read_data_valid_reg <=  fw_valid && (!src_ip_valid_reg);
+      read_data_stall_reg <= (!fw_valid) || src_ip_valid_reg;
     end
   end
 
   // core keeps the address in case of stall, there is only 1 accel
   if (read_data_stall_reg) begin
+    read_data_reg       <=  fw_match;
     read_data_valid_reg <=  fw_valid;
     read_data_stall_reg <= !fw_valid;
   end

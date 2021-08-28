@@ -11,7 +11,7 @@ MODULE=test_$(DUT)
 TOPLEVEL=$(MODULE)
 
 RTL_DIR = $(CWD)/../../rtl
-ACC_DIR = $(CWD)/../../accel/full_ids/rtl
+ACC_DIR = $(CWD)/../../accel/ip_matcher/rtl
 SMARTFPGA = $(CWD)/../../lib/smartFPGA/rtl
 AXIS_LIB = $(CWD)/../../lib/axis/rtl
 
@@ -35,20 +35,8 @@ VERILOG_SOURCES += $(SMARTFPGA)/axis_fifo.v
 VERILOG_SOURCES += $(SMARTFPGA)/accel_rd_dma_sp.v
 VERILOG_SOURCES += $(SMARTFPGA)/spaced_2lvl_penc.v
 
-VERILOG_SOURCES += $(ACC_DIR)/accel_wrap_full_ids.v
-VERILOG_SOURCES += $(ACC_DIR)/sme/udp_sme.v
-VERILOG_SOURCES += $(ACC_DIR)/sme/tcp_sme.v
-VERILOG_SOURCES += $(ACC_DIR)/sme/http_sme.v
-VERILOG_SOURCES += $(ACC_DIR)/fixed_sme/fixed_loc_sme_8.v
-VERILOG_SOURCES += $(ACC_DIR)/ip_match/ip_match.v
-
-# For new SME
-# VERILOG_SOURCES += $(ACC_DIR)/accel_wrap_full_ids_4sme.v
-# VERILOG_SOURCES += $(ACC_DIR)/SME_wrapper.v
-# VERILOG_SOURCES += $(ACC_DIR)/FSME_wrapper.v
-# VERILOG_SOURCES += $(ACC_DIR)/new_sme/fast_pattern_sme.v
-# VERILOG_SOURCES += $(ACC_DIR)/new_fixed_sme/fixed_loc_sme_8.v
-# VERILOG_SOURCES += $(ACC_DIR)/ip_match/ip_match.v
+VERILOG_SOURCES += $(ACC_DIR)/accel_wrap_firewall.v
+VERILOG_SOURCES += $(ACC_DIR)/firewall.v
 
 VERILOG_SOURCES += $(AXIS_LIB)/arbiter.v
 VERILOG_SOURCES += $(AXIS_LIB)/priority_encoder.v
@@ -56,7 +44,6 @@ VERILOG_SOURCES += $(AXIS_LIB)/sync_reset.v
 VERILOG_SOURCES += $(AXIS_LIB)/axis_register.v
 VERILOG_SOURCES += $(AXIS_LIB)/axis_pipeline_register.v
 
-COMPILE_ARGS  = -I $(ACC_DIR)/struct_s.sv
 PLUSARGS+=-fst
 INC_DIR=$(ICARUS_INC_DIR)
 

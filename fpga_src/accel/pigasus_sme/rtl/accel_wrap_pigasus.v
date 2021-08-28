@@ -175,8 +175,8 @@ always @(posedge clk) begin
         2'b10: begin
           if (io_addr[3:2]==2'b00) begin
             read_data_reg       <=  ip_match;
-            read_data_valid_reg <=  ip_done;
-            read_data_stall_reg <= !ip_done;
+            read_data_valid_reg <=  ip_done && (!src_ip_valid_reg);
+            read_data_stall_reg <= (!ip_done) || src_ip_valid_reg;
           end else if (io_addr[3:2]==2'b10) begin
             read_data_reg <= {8'd0, 7'd0, from_attack[2],
                               7'd0, from_attack[1], 7'd0, from_attack[0]};
@@ -240,8 +240,10 @@ always @(posedge clk) begin
     if (io_addr[3]) begin
       read_data_reg <= {8'd0, 7'd0, from_attack[2],
                         7'd0, from_attack[1], 7'd0, from_attack[0]};
+      read_data_valid_reg <=  from_attack_done;
       read_data_stall_reg <= !from_attack_done;
     end else begin
+      read_data_reg       <=  ip_match;
       read_data_valid_reg <=  ip_done;
       read_data_stall_reg <= !ip_done;
     end
