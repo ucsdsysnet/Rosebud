@@ -43,6 +43,7 @@ from scapy.layers.inet import IP, UDP, TCP
 from scapy.utils import PcapReader
 
 from elftools.elf.elffile import ELFFile
+from elftools.elf.constants import P_FLAGS
 from collections import deque
 from random import randrange
 
@@ -217,13 +218,21 @@ class TB(object):
 
         cocotb.fork(self.scheduler())
 
+    async def section_write(self, seg, addr, name, verbose=False):
+        self.log.info("%s segment size: %d", name, len(seg))
+        if (len(seg)>0):
+            self.log.info("Write %s memory", name)
+            if (verbose):
+                self.log.debug("%s", hexdump_str(seg))
+            addr_hdr = (addr<<32).to_bytes(8, 'little')
+            frame = AxiStreamFrame(tdata=addr_hdr+seg, tuser=self.dram_port, tdest=0)
+            await self.data_ch_source.send(frame)
+            await self.data_ch_source.wait()
+
     async def load_firmware(self, file):
         self.log.info("Load firmware")
 
         self.log.info("Firmware file: '%s'", file)
-
-        ins_seg = b''
-        data_seg = b''
 
         # Put core in reset
         await self.ctrl_ch_source.send([0xf00000001])
@@ -231,28 +240,14 @@ class TB(object):
         # Load instruction and data memories
         with open(file, "rb") as f:
             elf = ELFFile(f)
-            ins_seg = elf.get_section_by_name('.text').data()
-            data_seg = elf.get_section_by_name('.data').data()
-
-        self.log.info("Instruction segment size: %d", len(ins_seg))
-        if len(ins_seg) > 0:
-            self.log.debug("%s", hexdump_str(ins_seg))
-            self.log.info("Write instruction memory")
-            addr_hdr = (0x0200000000000000).to_bytes(8, 'little')
-            ins_frame = AxiStreamFrame(tdata=addr_hdr+ins_seg, tuser=self.dram_port, tdest=0)
-            await self.data_ch_source.send(ins_frame)
-            await self.data_ch_source.wait()
-
-        self.log.info("Data segment size: %d", len(data_seg))
-        if len(data_seg) > 0:
-            self.log.debug("%s", hexdump_str(data_seg))
-            self.log.info("Write data memory")
-            addr_hdr = (0x0000000000000000).to_bytes(8, 'little')
-            data_frame = AxiStreamFrame(tdata=addr_hdr+data_seg, tuser=self.dram_port, tdest=0)
-            await self.data_ch_source.send(data_frame)
-            await self.data_ch_source.wait()
-
-        # TODO: add pmem write
+            for section in elf.iter_sections():
+                if (section.header['sh_type']=='SHT_PROGBITS'):
+                    if (section.header['sh_flags']==(P_FLAGS.PF_R | P_FLAGS.PF_W)):
+                        await self.section_write(section.data(), section.header['sh_addr'], "Instruction", True)
+                    elif (section.header['sh_flags']==(P_FLAGS.PF_X | P_FLAGS.PF_W)):
+                        await self.section_write(section.data(), section.header['sh_addr'], "Data", True)
+                    elif (section.header['sh_flags']==(P_FLAGS.PF_X)):
+                        await self.section_write(section.data(), section.header['sh_addr'], section.name[1:])
 
         await Timer(100, 'ns')
         await self.ctrl_ch_source.send([0xf00000000])

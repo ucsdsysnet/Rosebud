@@ -392,6 +392,11 @@ class TB(object):
             length = len(data)
         length = min(length, len(data))
 
+        # TODO: break into 16K chunks
+        if (length > 16384):
+            self.log.info("ERROR, Block write has to be split into 16KB chunks.")
+            length = 16384
+
         self.log.info("Block write %d bytes to 0x%08x", len(data), dest)
 
         self.mem_data[0:len(data)] = data
@@ -409,6 +414,7 @@ class TB(object):
         if length <= 0:
             return
 
+        # TODO: break into 16K chunks
         self.log.info("Block read %d bytes from 0x%08x", length, src)
 
         await self.rc.mem_write_dword(self.dev_pf0_bar0+0x000460, (self.mem_base) & 0xffffffff)
@@ -439,7 +445,7 @@ class TB(object):
         return await self.read_cmd(SYS_INT_ZONE | interface << REG_WIDTH | INT_RX_FIFO_LINES)
 
     async def interface_stat_rd(self, interface, direction, reg):
-        if (direction): #TX 
+        if (direction): #TX
             return await self.read_cmd(SYS_INT_ZONE | interface << REG_WIDTH | INT_TX_STAT | reg)
         else:
             return await self.read_cmd(SYS_INT_ZONE | interface << REG_WIDTH | INT_RX_STAT | reg)
@@ -558,15 +564,18 @@ class TB(object):
 
         ins_seg = b''
         data_seg = b''
+        rom_segs = {}
 
         with open(file, "rb") as f:
             elf = ELFFile(f)
-            for k in range(elf.num_segments()):
-                seg = elf.get_segment(k)
-                if seg['p_flags'] & P_FLAGS.PF_X:
-                    ins_seg = seg.data()
-                else:
-                    data_seg = seg.data()
+            for section in elf.iter_sections():
+                if (section.header['sh_type']=='SHT_PROGBITS'):
+                    if (section.header['sh_flags']==(P_FLAGS.PF_R | P_FLAGS.PF_W)):
+                        ins_seg = section.data()
+                    elif (section.header['sh_flags']==(P_FLAGS.PF_X | P_FLAGS.PF_W)):
+                        data_seg = section.data()
+                    elif (section.header['sh_flags']==(P_FLAGS.PF_X)):
+                        rom_segs[section.name[1:]] = (section.header['sh_addr'],section.data())
 
         self.log.info("Instruction segment size: %d", len(ins_seg))
         if len(ins_seg) > 0:
@@ -575,6 +584,11 @@ class TB(object):
         self.log.info("Data segment size: %d", len(data_seg))
         if len(data_seg) > 0:
             self.log.debug("%s", hexdump_str(data_seg))
+
+        self.log.info("Number of ROMs: %d", len(rom_segs))
+        if len(rom_segs) > 0:
+            for rom in rom_segs:
+                self.log.debug("ROM %s size: %d", rom, len(rom_segs[rom][1]))
 
         self.log.info("Enable DMA")
         await self.rc.mem_write_dword(self.dev_pf0_bar0+0x000400, 1)
@@ -598,6 +612,19 @@ class TB(object):
             if len(data_seg) > 0:
                 self.log.info("Load data memory")
                 await self.block_write(data_seg, (i << 26)+(1 << 23))
+
+                # Wait for the core to receive the data memory block
+                while (await self.core_rd_cmd(i, 1))==frames_in:
+                    pass
+
+            if len(rom_segs) > 0:
+                for rom in rom_segs:
+                    self.log.info("Load rom %s", rom)
+                    await self.block_write(rom_segs[rom][1], (i << 26)+rom_segs[rom][0])
+
+                    # Wait for the core to receive the ROM block
+                    while (await self.core_rd_cmd(i, 1))==frames_in:
+                        pass
 
             self.log.info("Done")
 

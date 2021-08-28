@@ -64,10 +64,10 @@ vivado: $(FPGA_TOP).xpr
 
 tmpclean:
 	-rm -rf *.log *.jou *.cache *.hw *.ip_user_files *.runs *.xpr *.html *.xml *.sim *.srcs *.str .Xil defines.v rev *.rpt hd_visual fpga.hbs
-	-rm -rf create_project.tcl
+	-rm -rf create_project.tcl __pycache__
 
 clean: tmpclean
-	-rm -rf *.bit program.tcl generate_mcs.tcl *.mcs *.prm flash.tcl
+	-rm -rf *.bit program.tcl generate_mcs.tcl *.mcs *.prm flash.tcl fpga.gen
 
 distclean: clean
 	-rm -rf rev

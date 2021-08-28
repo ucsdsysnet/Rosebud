@@ -34,7 +34,6 @@ either expressed or implied, of The Regents of the University of California.
 // Language: Verilog 2001
 
 `timescale 1ns / 1ps
-`define PR_ENABLE
 
 /*
  * Testbench for fpga_core
@@ -177,7 +176,7 @@ Gousheh_wrapper #(
     .DATA_S_REG_TYPE(2),
     .DATA_M_REG_TYPE(2),
     .DRAM_M_REG_TYPE(2)
-) UUT (
+) Gousheh_wrapper_inst (
     .clk(clk),
     .rst(rst),
 
@@ -283,23 +282,7 @@ Gousheh_wrapper #(
     .core_status_addr(core_status_addr)
 );
 
-`ifndef PR_ENABLE
-Gousheh # (
-    .DATA_WIDTH(DATA_WIDTH),
-    .STRB_WIDTH(STRB_WIDTH),
-    .IMEM_SIZE(IMEM_SIZE),
-    .PMEM_SIZE(PMEM_SIZE),
-    .DMEM_SIZE(DMEM_SIZE),
-    .SLOW_M_B_LINES(SLOW_M_B_LINES),
-    .FAST_M_B_LINES(FAST_M_B_LINES),
-    .BC_REGION_SIZE(BC_REGION_SIZE),
-    .BC_START_ADDR(BC_START_ADDR),
-    .MSG_WIDTH(CORE_MSG_WIDTH),
-    .CORE_ID_WIDTH(CORE_WIDTH)
-) Gousheh_inst (
-`else
-Gousheh_PR pr_wrapper (
-`endif
+Gousheh_PR UUT (
     .clk(clk),
     .rst(rst),
     .core_reset(core_reset),
@@ -347,5 +330,3 @@ initial begin
 end
 
 endmodule
-
-
