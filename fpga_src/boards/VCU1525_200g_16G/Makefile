@@ -28,6 +28,9 @@ program:
 IDS_RR_1:
 	cd fpga && vivado -nojournal -nolog -mode batch -source run_IDS_RR.tcl 2>&1 | tee IDS_RR.log
 
+FW_RR_1:
+	cd fpga && vivado -nojournal -nolog -mode batch -source run_FW_RR.tcl 2>&1 | tee FW_RR.log
+
 IDS_Hash_2:
 	cd fpga && vivado -nojournal -nolog -mode batch -source run_IDS_Hash_inc.tcl 2>&1 | tee IDS_Hash.log
 

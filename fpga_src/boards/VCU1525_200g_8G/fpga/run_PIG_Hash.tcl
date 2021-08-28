@@ -66,7 +66,7 @@ create_pr_configuration -name PIG_HASH_config -partitions [list \
   core_inst/scheduler_PR_inst:scheduler_Hash]
 
 if {[llength [get_runs "impl_PIG_HASH"]]!=0} then {delete_run impl_PIG_HASH}
-create_run impl_PIG_HASH -parent_run impl_1 -flow {Vivado Implementation 2020} -pr_config PIG_HASH_config
+create_run impl_PIG_HASH -parent_run impl_1 -flow {Vivado Implementation 2021} -pr_config PIG_HASH_config
 set_property strategy Performance_ExtraTimingOpt [get_runs impl_PIG_HASH]
 set_property STEPS.POST_ROUTE_PHYS_OPT_DESIGN.IS_ENABLED true [get_runs impl_PIG_HASH]
 set_property STEPS.POST_ROUTE_PHYS_OPT_DESIGN.ARGS.DIRECTIVE Explore [get_runs impl_PIG_HASH]
