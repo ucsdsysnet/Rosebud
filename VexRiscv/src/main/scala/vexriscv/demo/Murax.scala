@@ -157,8 +157,8 @@ case class Murax(config : MuraxConfig) extends Component{
 
   val io = new Bundle {
     //Clocks / reset
-    val asyncReset = in Bool
-    val mainClk = in Bool
+    val asyncReset = in Bool()
+    val mainClk = in Bool()
 
     //Main components IO
     val jtag = slave(Jtag())
@@ -483,3 +483,12 @@ object Murax_arty{
     SpinalVerilog(Murax(MuraxConfig.default(false).copy(coreFrequency = 100 MHz,onChipRamSize = 32 kB, onChipRamHexFile = hex)))
   }
 }
+
+
+object MuraxAsicBlackBox extends App{
+  println("Warning this soc do not has any rom to boot on.")
+  val config = SpinalConfig()
+  config.addStandardMemBlackboxing(blackboxAll)
+  config.generateVerilog(Murax(MuraxConfig.default()))
+}
+

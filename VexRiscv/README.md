@@ -7,9 +7,9 @@
 - [CPU generation](#cpu-generation)
 - [Regression tests](#regression-tests)
 - [Interactive debug of the simulated CPU via GDB OpenOCD and Verilator](#interactive-debug-of-the-simulated-cpu-via-gdb-openocd-and-verilator)
-- [Using Eclipse to run and debug the software](#using-Eclipse-to-run-and-debug-the-software)
-  * [By using gnu-mcu-eclipse](#by-using-gnu-mcu-eclipse)
-  * [By using Zylin plugin (old)](#by-using-zylin-plugin-old)
+- [Using Eclipse to run and debug the software](#using-eclipse-to-run-and-debug-the-software)
+  - [By using gnu-mcu-eclipse](#by-using-gnu-mcu-eclipse)
+  - [By using Zylin plugin (old)](#by-using-zylin-plugin-old)
 - [Briey SoC](#briey-soc)
 - [Murax SoC](#murax-soc)
 - [Running Linux](#running-linux)
@@ -19,7 +19,35 @@
 - [Adding a new CSR via the plugin system](#adding-a-new-csr-via-the-plugin-system)
 - [CPU clock and resets](#cpu-clock-and-resets)
 - [VexRiscv Architecture](#vexriscv-architecture)
-  * [Plugins](#plugins)
+  - [FPU](#fpu)
+  - [Plugins](#plugins)
+    - [IBusSimplePlugin](#ibussimpleplugin)
+    - [IBusCachedPlugin](#ibuscachedplugin)
+    - [DecoderSimplePlugin](#decodersimpleplugin)
+    - [RegFilePlugin](#regfileplugin)
+    - [HazardSimplePlugin](#hazardsimpleplugin)
+    - [SrcPlugin](#srcplugin)
+    - [IntAluPlugin](#intaluplugin)
+    - [LightShifterPlugin](#lightshifterplugin)
+    - [FullBarrelShifterPlugin](#fullbarrelshifterplugin)
+    - [BranchPlugin](#branchplugin)
+      - [Prediction NONE](#prediction-none)
+      - [Prediction STATIC](#prediction-static)
+      - [Prediction DYNAMIC](#prediction-dynamic)
+      - [Prediction DYNAMIC_TARGET](#prediction-dynamic_target)
+    - [DBusSimplePlugin](#dbussimpleplugin)
+    - [DBusCachedPlugin](#dbuscachedplugin)
+    - [MulPlugin](#mulplugin)
+    - [DivPlugin](#divplugin)
+    - [MulDivIterativePlugin](#muldiviterativeplugin)
+    - [CsrPlugin](#csrplugin)
+    - [StaticMemoryTranslatorPlugin](#staticmemorytranslatorplugin)
+    - [MmuPlugin](#mmuplugin)
+    - [PmpPlugin](#pmpplugin)
+    - [DebugPlugin](#debugplugin)
+    - [YamlPlugin](#yamlplugin)
+    - [FpuPlugin](#fpuplugin)
+    - [AesPlugin](#aesplugin)
 
 
 
@@ -27,12 +55,13 @@
 
 This repository hosts a RISC-V implementation written in SpinalHDL. Here are some specs :
 
-- RV32I[M][C][A] instruction set (Atomic only inside a single core)
+- RV32I[M][A][F[D]][C] instruction set
 - Pipelined from 2 to 5+ stages ([Fetch*X], Decode, Execute, [Memory], [WriteBack])
 - 1.44 DMIPS/Mhz --no-inline when nearly all features are enabled (1.57 DMIPS/Mhz when the divider lookup table is enabled)
 - Optimized for FPGA, does not use any vendor specific IP block / primitive
 - AXI4, Avalon, wishbone ready
 - Optional MUL/DIV extensions
+- Optional F32/F64 FPU (require data cache for now)
 - Optional instruction and data caches
 - Optional hardware refilled MMU
 - Optional debug extension allowing Eclipse debugging via a GDB >> openOCD >> JTAG connection
@@ -140,8 +169,9 @@ sudo update-alternatives --config java
 sudo update-alternatives --config javac
 
 # Install SBT - https://www.scala-sbt.org/
-echo "deb https://dl.bintray.com/sbt/debian /" | sudo tee -a /etc/apt/sources.list.d/sbt.list
-sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv 2EE0EA64E40A89B84B2DF73499E82A75642AC823
+echo "deb https://repo.scala-sbt.org/scalasbt/debian all main" | sudo tee /etc/apt/sources.list.d/sbt.list
+echo "deb https://repo.scala-sbt.org/scalasbt/debian /" | sudo tee /etc/apt/sources.list.d/sbt_old.list
+curl -sL "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x2EE0EA64E40A89B84B2DF73499E82A75642AC823" | sudo apt-key add
 sudo apt-get update
 sudo apt-get install sbt
 
@@ -152,7 +182,7 @@ unsetenv VERILATOR_ROOT  # For csh; ignore error if on bash
 unset VERILATOR_ROOT  # For bash
 cd verilator
 git pull        # Make sure we're up-to-date
-git checkout v3.916
+git checkout v4.040
 autoconf        # Create ./configure script
 ./configure
 make
@@ -270,6 +300,7 @@ To create a new debug configuration:
 You can use the Eclipse + Zylin embedded CDT plugin to do it (http://opensource.zylin.com/embeddedcdt.html). Tested with Helios Service Release 2 (http://www.Eclipse.org/downloads/download.php?file=/technology/epp/downloads/release/helios/SR2/Eclipse-cpp-helios-SR2-linux-gtk-x86_64.tar.gz) and the corresponding zylin plugin.
 
 To following commands will download Eclipse and install the plugin.
+
 ```sh
 wget http://www.eclipse.org/downloads/download.php?file=/technology/epp/downloads/release/helios/SR2/eclipse-cpp-helios-SR2-linux-gtk-x86_64.tar.gz
 tar -xvzf download.php?file=%2Ftechnology%2Fepp%2Fdownloads%2Frelease%2Fhelios%2FSR2%2Feclipse-cpp-helios-SR2-linux-gtk-x86_64.tar.gz
@@ -280,6 +311,10 @@ cd eclipse
 See https://drive.google.com/drive/folders/1NseNHH05B6lmIXqQFVwK8xRjWE4ydeG-?usp=sharing to import a makefile project and create a debug configuration.
 
 Note that sometimes Eclipse needs to be restarted in order to be able to place new breakpoints.
+
+If you want to get more information about how all this JTAG / GDB stuff work, you can find great blog about it here : 
+
+<https://tomverbeure.github.io/2021/07/18/VexRiscv-OpenOCD-and-Traps.html>
 
 ## Briey SoC
 As a demonstration, a SoC named Briey is implemented in `src/main/scala/vexriscv/demo/Briey.scala`. This SoC is very similar to
@@ -668,6 +703,53 @@ via the VexRiscv implementation:
 If you generate the CPU without any plugin, it will only contain the definition of the 5 pipeline stages and their basic arbitration, but nothing else,
 and everything else, including the program counter is added into the CPU via plugins.
 
+### FPU
+
+Features : 
+
+- Support IEEE 754 float and optionaly double
+- Implement Subnormal (few cycles lost in case of subnormal load/store)
+- Implement exceptions flags
+- The FPU can be shared between multiple CPU
+- Can be integrated inside or outside the CPU via the FpuPlugin
+- Fully pipelined, can produce one result per cycle for most operations (add,sub, mul, fma, load, store), as long there is no inter-dependancies
+- Implement multiplication using multiple sub multiplication operations in parallel ("FPGA friendly")
+- Division done with radix 4 (2 bits per cycle)
+- Square root done with radix 2 (1 bit per cycle)
+- Currently only compatible with the DBusCachedPlugin for load and store
+- 64 bits Load and store can be done in one cycle via the DBusCachedPlugin (even if VexRiscv is RV32)
+
+Accuracy, roundings (RNE, RTZ, RDN, RUP, RMM) and compliance: 
+
+- Fully implemented excepted in the cases specified bellow
+- In FMA, the result of the multiplication is rounded before the addition (keep mantissa width + 2 bits)
+- A very special corner case of underflow flag do not follow IEEE 754 (rounding from subnormal to normal number)
+- Very specific, but SGNJ instruction will not mutate the value from/to F32/F64 (no NaN-boxing mutation)
+ 
+ There is a diagram of the FPU design and its CPU integration : 
+ 
+ ![fpuDesign](assets/fpuDesign.png?raw=true "")
+ 
+ The FPU can be parametrized with FpuParameter data structure : 
+ 
+ | Parameters | type | description |
+ | ------ | ----------- | ------ |
+ | withDouble   | Boolean | Enable 64 bits floating point (32 bits always enabled) |
+ | asyncRegFile   | Boolean | Implement the register file using combinatorial reads (instead of syncronous reads) |
+ | mulWidthA   | Boolean | Specify the width of the left operand of multiplication blocks |
+ | mulWidthB   | Boolean | Same than above but the the right operand |
+
+Synthesis results of the FPU itself, without the CPU integration, on the fast speed grade : 
+
+```
+Fpu 32 bits ->
+  Artix 7 relaxed -> 135 Mhz 1786 LUT 1778 FF 
+  Artix 7 FMax    -> 205 Mhz 2101 LUT 1778 FF 
+Fpu 64/32 bits ->
+  Artix 7 relaxed -> 101 Mhz 3336 LUT 3033 FF 
+  Artix 7 FMax    -> 165 Mhz 3728 LUT 3175 FF 
+```
+
 ### Plugins
 
 This chapter describes the currently implemented plugins.
@@ -692,6 +774,7 @@ This chapter describes the currently implemented plugins.
 - [MemoryTranslatorPlugin](#memorytranslatorplugin)
 - [DebugPlugin](#debugplugin)
 - [YamlPlugin](#yamlplugin)
+- [FpuPlugin](#fpuplugin)
 
 
 #### IBusSimplePlugin
@@ -1022,10 +1105,19 @@ stage before jumping to mtvec.
 
 Static memory translator plugin which allows to specify which range of the memory addresses is I/O mapped and shouldn't be cached.
 
+| Parameters | type | description |
+| ------ | ----------- | ------ |
+| ioRange   | UInt => Bool | Function reference which eat an address and return true if the address should be uncached. ex : ioRange= _(31 downto 28) === 0xF => all 0xFXXXXXXX will be uncached|
+
+
 #### MmuPlugin
 
 Hardware refilled MMU implementation. Allows other plugins such as DBusCachedPlugin/IBusCachedPlugin to instanciate memory address translation ports. Each port has a small dedicated
 fully associative TLB cache which is refilled automaticaly via a dbus access sharing.
+
+#### PmpPlugin
+
+This is a physical memory protection (PMP) plugin which conforms to the latest RISC-V privilege specification. PMP is configured by writing two special CSRs: `pmpcfg#` and `pmpaddr#`. The former contains the permissions and addressing modes for four protection regions, and the latter contains the encoded start address for a single region. Since the actual region bounds must be computed from the values written to these registers, writing them takes a few CPU cylces. This delay is necessary in order to centralize all of the decoding logic into a single component. Otherwise, it would have to be duplicated for each region, even though the decoding operation happens only when PMP is reprogrammed (e.g., on some context switches).
 
 #### DebugPlugin
 
@@ -1091,3 +1183,23 @@ The OpenOCD port is here: <https://github.com/SpinalHDL/openocd_riscv>
 This plugin offers a service to other plugins to generate a useful Yaml file describing the CPU configuration. It contains, for instance, the sequence of instructions required
 to flush the data cache (information used by openocd).
 
+
+#### FpuPlugin
+
+Allow the integration of a internal or a external FPU into VexRiscv (See the FPU chapter)
+
+| Parameters | type | description |
+| ------ | ----------- | ------ |
+| externalFpu   | Boolean | When false the FPU is instanciated in Vex, else the plugin has a `port` interface to which you can connect an external FPU |
+| p   | FpuParameter | Parameter with which the connected FPU will be created |
+
+#### AesPlugin
+
+This plugin allow to accelerate AES encryption/decryption by using an internal ROM to solve SBOX and permutations, allowing in practice to execute one AES round in about 21 cycles.
+
+For more documentation, check src/main/scala/vexriscv/plugin/AesPlugin.scala, a software C driver can be found here : <https://github.com/SpinalHDL/SaxonSoc/blob/dev-0.3/software/standalone/driver/aes_custom.h>
+
+It was also ported on libressl via the following patch :
+<https://github.com/SpinalHDL/buildroot-spinal-saxon/blob/main/patches/libressl/0000-vexriscv-aes.patch>
+
+Speed up of 4 was observed in libressl running in linux. <https://github.com/SpinalHDL/SaxonSoc/pull/53#issuecomment-730133020>
