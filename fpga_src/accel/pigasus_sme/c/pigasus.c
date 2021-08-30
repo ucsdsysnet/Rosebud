@@ -92,7 +92,7 @@ struct slot_context {
 
   unsigned int payload_offset;
   struct flow *flow;
-  unsigned int state;
+  unsigned int match_count;
 };
 
 // #define FLOW_TABLE_SIZE 32768
@@ -218,9 +218,15 @@ static inline void slot_match(struct slot_context *slot){
   // Save ACC_PIG_STATE to flow table if not already saved!
 
   // If it's end of packet drop it for now
-  if (rule_id==0){
-    slot->desc.len = 0;
+  if (rule_id!=0){
+    slot->match_count ++;
+  } else { // EoP
+    if (slot->match_count==0)
+      slot->desc.len = 0;
+    else
+      slot->desc.port = 2;
     pkt_send(&slot->desc);
+    slot->match_count = 0;
   }
 
   // release the match/EoP
@@ -262,6 +268,7 @@ int main(void)
     context[i].packet = (unsigned char *)(PMEM_BASE + PKTS_START + PKT_OFFSET + i*slot_size);
     context[i].header = (unsigned char *)(header_slot_base + PKT_OFFSET + i*header_slot_size);
     context[i].eth_hdr = (struct eth_header*)(context[i].header + DATA_OFFSET);
+    context[i].match_count = 0;
   }
 
   // init flow table
@@ -296,9 +303,6 @@ int main(void)
 
       PROFILE_A(0x00010002);
       // handle packet
-      // if (ACC_DOS_ATTACK)
-      //   slot_rx_packet_dos(slot);
-      // else
       slot_rx_packet(slot);
     }
 

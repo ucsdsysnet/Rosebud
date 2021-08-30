@@ -46,6 +46,9 @@ HTTP_PORTS=[36,80,81,82,83,84,85,86,87,88,89,90,311,383,555,591,593,631,801,808,
 
 r = random.Random(521)
 
+min_port_val = 1024
+max_port_val = 49151
+
 def parse_content_string(s):
     """
     Parse content string and convert to byte string
@@ -185,20 +188,20 @@ def port_gen (query):
   elif (query=="$FTP_PORTS"):
     return r.choice([21, 2100, 3535])
   elif (query=="$ORACLE_PORTS"):
-    return random.randint(1024, 65535)
+    return random.randint(1024, max_port_val)
   elif (":" in query):
     if (query[-1]==":"):
       ports = [int(x) for x in query[:-1].split(",")]
       if (len(ports)==1):
         if (has_http):
-          return r.choice(list(range(ports[0],65535)) + HTTP_PORTS)
+          return r.choice(list(range(ports[0],max_port_val)) + HTTP_PORTS)
         else:
-          return random.randint(ports[0], 65535)
+          return random.randint(ports[0], max_port_val)
       else:
         if (has_http):
-          return r.choice(ports[:-1]+HTTP_PORTS+list(range(ports[-1], 65535)))
+          return r.choice(ports[:-1]+HTTP_PORTS+list(range(ports[-1], max_port_val)))
         else:
-          return r.choice(ports[:-1]+list(range(ports[-1], 65535)))
+          return r.choice(ports[:-1]+list(range(ports[-1], max_port_val)))
     else:
       ports = query.split(",")
       if (len(ports)==1):
@@ -222,7 +225,7 @@ def port_gen (query):
         return -1
 
   elif (query=="any"):
-    return random.randint(0, 65535)
+    return random.randint(min_port_val, max_port_val)
   else:
     ports = [int(x) for x in query.split(",")]
     if (has_http):
@@ -255,27 +258,29 @@ def main():
     for fn in args.rules_file:
         with open(fn, 'r') as f:
             for w in f.read().splitlines():
-                pattern, header, sid, unknown = fast_pattern_extractor(w)
-                hdr = header.split()
-                prot     = hdr[1]
+                if (len(w.strip()) != 0):
+                    pattern, header, sid, unknown = fast_pattern_extractor(w)
+                    hdr = header.split()
+                    prot     = hdr[1]
 
-                if (sid in id_map or not args.selected_file):
-                    if (unknown or not (prot=="tcp" or prot=="udp")):
-                        dropped += 1
-                    else:
-                        rule_count += 1
-                        b = parse_content_string(pattern)
-                        if not b:
-                            if w:
-                                print ("ERROR: No patterns found for", w,'\n')
-                            continue
-                        if max_length:
-                            b = b[:max_length]
-                            pattern=truncate_content(pattern,max_length)
+                    if (sid in id_map or not args.selected_file):
+                        if (unknown or not (prot=="tcp" or prot=="udp")):
+                            dropped += 1
+                        else:
+                            rule_count += 1
+                            b = parse_content_string(pattern)
+                            if not b:
+                                if w:
+                                    print ("ERROR: No patterns found for", w,'\n')
+                                continue
+                            if max_length:
+                                b = b[:max_length]
+                                pattern=truncate_content(pattern,max_length)
 
-                        src_port = port_gen(hdr[3])
-                        dst_port = port_gen(hdr[6])
-                        match_list.append((b, prot, src_port, dst_port))
+                            src_port = port_gen(hdr[3])
+                            dst_port = port_gen(hdr[6])
+                            match_list.append((b, prot, src_port, dst_port))
+                            # print (w, b, prot, src_port, dst_port)
 
     print ("Dropped rules: %d, Total filtered rules: %d" %(dropped, rule_count))
 
