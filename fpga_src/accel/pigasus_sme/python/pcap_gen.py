@@ -281,7 +281,7 @@ def main():
 
                             src_port = port_gen(hdr[3])
                             dst_port = port_gen(hdr[6])
-                            match_list.append((b, prot, src_port, dst_port))
+                            match_list.append((b, prot, src_port, dst_port, id_map[sid]))
                             # print (w, b, prot, src_port, dst_port)
 
     print ("Dropped rules: %d, Total filtered rules: %d" %(dropped, rule_count))
@@ -333,15 +333,15 @@ def main():
         else:
             pcap_count += 1
 
-        payload, prot, sport, dport = rule
-        sumf.write("Writing "+prot+" packet from port "+str(sport)+" to port "+str(dport)+" with pattern "+str(payload)+" in paylod.\n")
+        payload, prot, sport, dport, rule_id = rule
+        sumf.write("Writing "+prot+" packet from port "+str(sport)+" to port "+str(dport)+" with pattern "+str(payload)+" in paylod (rule id "+str(rule_id)+").\n")
         if (prot=='udp'):
             udp = UDP(sport=sport, dport=dport)
-            payload += bytes([x % 256 for x in range(r.randint(64, 500)-len(payload))])
+            payload += bytes([0xFF for x in range(r.randint(64, 500)-len(payload))])
             pcap.write(eth / ip / udp / payload)
         else: #tcp
             tcp = TCP(sport=sport, dport=dport)
-            payload += bytes([x % 256 for x in range(r.randint(64, 500)-len(payload))])
+            payload += bytes([0xFF for x in range(r.randint(64, 500)-len(payload))])
             pcap.write(eth / ip / tcp / payload)
 
     pcap.close()

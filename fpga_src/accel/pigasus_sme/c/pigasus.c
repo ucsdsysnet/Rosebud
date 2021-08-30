@@ -42,8 +42,8 @@
 #define ACC_PIG_STATE_L  (*((volatile unsigned int       *)(IO_EXT_BASE + 0x10)))
 #define ACC_PIG_STATE_H  (*((volatile unsigned int       *)(IO_EXT_BASE + 0x14)))
 #define ACC_PIG_PORTS    (*((volatile unsigned int       *)(IO_EXT_BASE + 0x0c)))
-#define ACC_PIG_SRC_PORT (*((volatile unsigned short     *)(IO_EXT_BASE + 0x0c))) //!
-#define ACC_PIG_DST_PORT (*((volatile unsigned short     *)(IO_EXT_BASE + 0x0e))) //!
+#define ACC_PIG_SRC_PORT (*((volatile unsigned short     *)(IO_EXT_BASE + 0x0c)))
+#define ACC_PIG_DST_PORT (*((volatile unsigned short     *)(IO_EXT_BASE + 0x0e)))
 #define ACC_PIG_SLOT     (*((volatile unsigned char      *)(IO_EXT_BASE + 0x18)))
 #define ACC_PIG_RULE_ID  (*((volatile unsigned int       *)(IO_EXT_BASE + 0x1c)))
 
@@ -170,12 +170,13 @@ static inline void slot_rx_packet(struct slot_context *slot)
 
         ACC_DMA_ADDR  = (unsigned int)(slot->desc.data)+slot->payload_offset;
         ACC_DMA_LEN   = slot->desc.len-slot->payload_offset;
-        ACC_PIG_PORTS = 1025*65536 + 1024;
-        // ACC_PIG_SRC_PORT = slot->l4_header.udp_hdr->src_port;
-        // ACC_PIG_DST_PORT = slot->l4_header.udp_hdr->dest_port;
+        // TCP header starts with both ports, src first
+        ACC_PIG_PORTS = * (unsigned int *) slot->l4_header.tcp_hdr;
+        // ACC_PIG_SRC_PORT = slot->l4_header.tcp_hdr->src_port;
+        // ACC_PIG_DST_PORT = slot->l4_header.tcp_hdr->dest_port;
         // ACC_PIG_STATE = (unsigned long long )0x11FEFEFEFEFEFEFE;
-        ACC_PIG_STATE_L = 0xFEFEFEFE;
-        ACC_PIG_STATE_H = 0x11FEFEFE;
+        ACC_PIG_STATE_L = 0xFFFFFFFF;
+        ACC_PIG_STATE_H = 0x11FFFFFF;
         ACC_PIG_SLOT  = slot->index;
         ACC_PIG_CTRL  = 1;
 
@@ -196,7 +197,8 @@ static inline void slot_rx_packet(struct slot_context *slot)
 
         ACC_DMA_ADDR  = (unsigned int)(slot->desc.data)+slot->payload_offset;
         ACC_DMA_LEN   = slot->desc.len-slot->payload_offset;
-        ACC_PIG_PORTS = 1025*65536 + 1024;
+        // UDP header starts with both ports, src first
+        ACC_PIG_PORTS = * (unsigned int *) slot->l4_header.udp_hdr;
         // ACC_PIG_SRC_PORT = slot->l4_header.udp_hdr->src_port;
         // ACC_PIG_DST_PORT = slot->l4_header.udp_hdr->dest_port;
         ACC_PIG_STATE = 0;
@@ -217,7 +219,8 @@ static inline void slot_match(struct slot_context *slot){
   PROFILE_A(rule_id);
   // Save ACC_PIG_STATE to flow table if not already saved!
 
-  // If it's end of packet drop it for now
+  // Add while loop to drain the FIFO
+
   if (rule_id!=0){
     slot->match_count ++;
   } else { // EoP

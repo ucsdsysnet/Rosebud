@@ -216,8 +216,8 @@ module pigasus_sme_wrapper # (
     .in_usr_ready(pigasus_ready_r),
 
     .in_meta_valid(meta_valid),
-    .src_port(src_port),
-    .dst_port(dst_port),
+    .src_port({src_port[7:0], src_port[15:8]}),
+    .dst_port({dst_port[7:0], dst_port[15:8]}),
     .is_tcp(is_tcp),
     .in_meta_ready(meta_ready),
 

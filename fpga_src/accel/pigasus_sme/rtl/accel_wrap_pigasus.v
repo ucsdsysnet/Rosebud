@@ -304,7 +304,7 @@ simple_fifo # (
   .din_ready(),
 
   .dout_valid(meta_data_valid),
-  .dout({preamble_state, src_port, dst_port}),
+  .dout({preamble_state, dst_port, src_port}),
   .dout_ready(meta_data_ready)
 );
 
