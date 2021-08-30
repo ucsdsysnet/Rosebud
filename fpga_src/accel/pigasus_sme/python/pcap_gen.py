@@ -237,9 +237,11 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--rules_file', type=str, default=[], action='append', help="Rules file")
     parser.add_argument('--selected_file', type=str, default=None, help="Selected Rules file")
-    parser.add_argument('--headers_file', type=str, default=None, help="Headers file")
+    parser.add_argument('--summary_file', type=str, default="attack.txt", help="Summary file")
     parser.add_argument('--output_pcap', type=str, default='attack.pcap', help="Pcap output file name")
     parser.add_argument('--max_length', type=int, default=8, help="Max rule length")
+    parser.add_argument('--pcap_limit', type=int, default=0, help="Max PCAP rules")
+    parser.add_argument('--test_packets', type=bool, default=False, help="Add non-matching test packets")
     args = parser.parse_args()
 
     max_length = args.max_length
@@ -284,37 +286,66 @@ def main():
 
     print ("Dropped rules: %d, Total filtered rules: %d" %(dropped, rule_count))
 
-    with PcapWriter(open(args.output_pcap, 'wb'), sync=True) as pcap:
-        eth = Ether(src='5A:51:52:53:54:55', dst='DA:D1:D2:D3:D4:D5')
-        ip = IP(src='192.168.1.100', dst='192.168.1.101')
+    sumf =  open(args.summary_file, 'w')
+    pcap = PcapWriter(open(args.output_pcap, 'wb'), sync=True)
 
-        # test packets that shouldn't match any rules
+    eth = Ether(src='5A:51:52:53:54:55', dst='DA:D1:D2:D3:D4:D5')
+    ip = IP(src='192.168.1.100', dst='192.168.1.101')
+
+    if (args.test_packets):
+        print ("Adding 4 test packets that shouldn't match any rules")
+
+        sumf.write("Writing udp packet from port 1234 to port 5678 with no pattern in paylod.\n")
         udp = UDP(sport=1234, dport=5678)
         payload = bytes([x % 256 for x in range(256)])
         pcap.write(eth / ip / udp / payload)
 
+        sumf.write("Writing tcp packet from port 1234 to port 5678 with no pattern in paylod.\n")
         tcp = TCP(sport=1234, dport=5678)
         payload = bytes([x % 256 for x in range(256)])
         pcap.write(eth / ip / tcp / payload)
 
+        sumf.write("Writing tcp packet from port 12345 to port 80 with no pattern in paylod.\n")
         tcp = TCP(sport=12345, dport=80)
         payload = bytes([x % 256 for x in range(256)])
         pcap.write(eth / ip / tcp / payload)
 
+        sumf.write("Writing tcp packet from port 54321 to port 80 with no pattern in paylod.\n")
         tcp = TCP(sport=54321, dport=80)
         payload = bytes([x % 256 for x in range(256)])
         pcap.write(eth / ip / tcp / payload)
 
-        for rule in match_list:
-          payload, port, sport, dport = rule
-          if (port=='udp'):
-              udp = UDP(sport=sport, dport=dport)
-              payload += bytes([x % 256 for x in range(r.randint(64, 500)-len(payload))])
-              pcap.write(eth / ip / udp / payload)
-          else: #tcp
-              tcp = TCP(sport=sport, dport=dport)
-              payload += bytes([x % 256 for x in range(r.randint(64, 500)-len(payload))])
-              pcap.write(eth / ip / tcp / payload)
+        if (args.pcap_limit!=0):
+            if (args.pcap_limit>4):
+                pcap_limit = args.pcap_limit - 4
+            else:
+                print ("Error, not enough pcap rules for test packets.")
+                pcap_limit = 1
+        else:
+            pcap_limit = 0
+    else:
+        pcap_limit = args.pcap_limit
+
+    pcap_count = 0
+    for rule in match_list:
+        if ((pcap_limit!=0) and (pcap_count == pcap_limit)):
+            break
+        else:
+            pcap_count += 1
+
+        payload, prot, sport, dport = rule
+        sumf.write("Writing "+prot+" packet from port "+str(sport)+" to port "+str(dport)+" with pattern "+str(payload)+" in paylod.\n")
+        if (prot=='udp'):
+            udp = UDP(sport=sport, dport=dport)
+            payload += bytes([x % 256 for x in range(r.randint(64, 500)-len(payload))])
+            pcap.write(eth / ip / udp / payload)
+        else: #tcp
+            tcp = TCP(sport=sport, dport=dport)
+            payload += bytes([x % 256 for x in range(r.randint(64, 500)-len(payload))])
+            pcap.write(eth / ip / tcp / payload)
+
+    pcap.close()
+    sumf.close()
 
 if __name__ == "__main__":
     main()
