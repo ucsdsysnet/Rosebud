@@ -78,33 +78,6 @@ def parse_content_string(s):
 
     return bytes(b)
 
-
-def truncate_content(content, limit):
-  count = 0
-  byte_mode = 0
-  for i in range(len(content)):
-    if (content[i]=='|'):
-      if (byte_mode==0):
-        byte_mode = 1
-      else:
-        count += 1
-        byte_mode = 0
-    else:
-      if (byte_mode==0):
-        count += 1
-      else:
-        if (content[i]==' '):
-          count += 1
-
-    if (count==limit):
-      if (byte_mode==0):
-        return content[:i+1]
-      else:
-        return (content[:i]+'|')
-
-  return content
-
-
 def fast_pattern_extractor (line):
   if (len(line.strip()) == 0):
     return "", ""
@@ -118,6 +91,7 @@ def fast_pattern_extractor (line):
     options = rule['options']
     header  = rule['header']
 
+    # idstools doesn't always find sid by itself!
     sid = re.findall("sid:[0-9]+;", line)
     sid = int(re.findall("[0-9]+", sid[0])[0])
 
@@ -160,10 +134,6 @@ def fast_pattern_extractor (line):
             unknown_flag = False
             fast_pattern = value[:]
             pattern_len = cont_len
-
-      # Doesn't find it properly
-      # elif opt['name'] == 'sid':
-      #   sid = int(opt['value'])
 
     # if unknown_flag:
     #   print ("WARNING: used", fast_pattern, "for", line,'\n')
@@ -239,12 +209,10 @@ def main():
     parser.add_argument('--selected_file', type=str, default=None, help="Selected Rules file")
     parser.add_argument('--summary_file', type=str, default="attack.txt", help="Summary file")
     parser.add_argument('--output_pcap', type=str, default='attack.pcap', help="Pcap output file name")
-    parser.add_argument('--max_length', type=int, default=8, help="Max rule length")
     parser.add_argument('--pcap_limit', type=int, default=0, help="Max PCAP rules")
     parser.add_argument('--test_packets', type=bool, default=False, help="Add non-matching test packets")
     args = parser.parse_args()
 
-    max_length = args.max_length
     match_list = []
 
     id_map = {}
@@ -275,9 +243,6 @@ def main():
                                 if w:
                                     print ("ERROR: No patterns found for", w,'\n')
                                 continue
-                            if max_length:
-                                b = b[:max_length]
-                                pattern=truncate_content(pattern,max_length)
 
                             src_port = port_gen(hdr[3])
                             dst_port = port_gen(hdr[6])
@@ -337,11 +302,11 @@ def main():
         sumf.write("Writing "+prot+" packet from port "+str(sport)+" to port "+str(dport)+" with pattern "+str(payload)+" in paylod (rule id "+str(rule_id)+").\n")
         if (prot=='udp'):
             udp = UDP(sport=sport, dport=dport)
-            payload += bytes([0xFF for x in range(r.randint(64, 500)-len(payload))])
+            payload += bytes([0xFF for x in range(max(1,r.randint(64, 500)-len(payload)))])
             pcap.write(eth / ip / udp / payload)
         else: #tcp
             tcp = TCP(sport=sport, dport=dport)
-            payload += bytes([0xFF for x in range(r.randint(64, 500)-len(payload))])
+            payload += bytes([0xFF for x in range(max(1,r.randint(64, 500)-len(payload)))])
             pcap.write(eth / ip / tcp / payload)
 
     pcap.close()

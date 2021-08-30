@@ -64,22 +64,16 @@ reg  [63:0]                cmd_preamble_reg;
 reg  [31:0]                cmd_port_reg;
 reg  [7:0]                 cmd_slot_reg;
 
-wire         match_valid;
-wire         match_last;
-wire [31:0]  match_rules_ID;
-wire [63:0]  accel_state;
-wire [7:0]   accel_slot;
-wire         accel_state_valid;
-
-reg [31:0]  src_ip_reg = 0;
-reg [31:0]  dst_ip_reg = 0;
+reg  [31:0] src_ip_reg = 0;
 reg         src_ip_valid_reg = 0;
-reg         dst_ip_valid_reg = 0;
 reg         read_data_stall_reg;
 
-wire       dos_attack     = 1'b0;
-wire [2:0] from_attack      = 3'd0;
-wire       from_attack_done = 1'b0;
+wire        match_valid;
+wire        match_last;
+wire [31:0] match_rules_ID;
+wire [63:0] accel_state;
+wire [7:0]  accel_slot;
+wire        accel_state_valid;
 
 wire ip_match, ip_done;
 
@@ -95,19 +89,15 @@ always @(posedge clk) begin
   match_release <= 1'b0;
 
   src_ip_valid_reg   <= 1'b0;
-  dst_ip_valid_reg   <= 1'b0;
   read_data_valid_reg <= 1'b0;
 
   // Memory mapped I/O writes
   if (io_en && io_wen) begin
-    // <1xx xxxx> for IP write for CDN and DoS accels
+    // <1xx xxxx> for IP write for CDN
     if (io_addr[6]) begin
-      if(io_addr[5:4]==2'b00) begin // CDN+DoS
+      if(io_addr[5:4]==2'b00) begin // CDN
         src_ip_reg       <= io_wr_data;
         src_ip_valid_reg <= 1'b1;
-      end else if(io_addr[5:4]==2'b01) begin // DoS
-        dst_ip_reg       <= io_wr_data;
-        dst_ip_valid_reg <= 1'b1;
       end
       // 2'b10 and 2'b11 used in read port
 
@@ -165,11 +155,8 @@ always @(posedge clk) begin
     // <1xx xxxx> for IP write for CDN and DoS accels + DMA stat
     if (io_addr[6]) begin
       case(io_addr[5:4])
-        2'b00: begin // CDN+DoS
+        2'b00: begin // CDN
           read_data_reg <= src_ip_reg;
-        end
-        2'b01: begin // DoS
-          read_data_reg <= dst_ip_reg;
         end
 
         2'b10: begin
@@ -177,13 +164,6 @@ always @(posedge clk) begin
             read_data_reg       <=  ip_match;
             read_data_valid_reg <=  ip_done && (!src_ip_valid_reg);
             read_data_stall_reg <= (!ip_done) || src_ip_valid_reg;
-          end else if (io_addr[3:2]==2'b10) begin
-            read_data_reg <= {8'd0, 7'd0, from_attack[2],
-                              7'd0, from_attack[1], 7'd0, from_attack[0]};
-            read_data_valid_reg <=  from_attack_done;
-            read_data_stall_reg <= !from_attack_done;
-          end else if (io_addr[3:2]==2'b11) begin
-            read_data_reg <= {31'd0, dos_attack};
           end
         end
 
@@ -198,7 +178,9 @@ always @(posedge clk) begin
       case ({io_addr[4:2], 2'b00})
         // Match status
         6'h00: begin
-          read_data_reg[0]  <= match_valid;
+          read_data_reg[0]    <=  match_valid;
+          read_data_valid_reg <= !match_release;
+          read_data_stall_reg <=  match_release;
         end
 
         // DMA len and address readback
@@ -237,15 +219,14 @@ always @(posedge clk) begin
 
   // core keeps the address in case of stall, there are total 2 cases
   if (read_data_stall_reg) begin
-    if (io_addr[3]) begin
-      read_data_reg <= {8'd0, 7'd0, from_attack[2],
-                        7'd0, from_attack[1], 7'd0, from_attack[0]};
-      read_data_valid_reg <=  from_attack_done;
-      read_data_stall_reg <= !from_attack_done;
-    end else begin
+    if (io_addr[6]) begin
       read_data_reg       <=  ip_match;
       read_data_valid_reg <=  ip_done;
       read_data_stall_reg <= !ip_done;
+    end else begin // we are just avoiding same cycle release and valid
+      read_data_reg[0]    <=  match_valid;
+      read_data_valid_reg <=  1'b1;
+      read_data_stall_reg <=  1'b0;
     end
   end
 
@@ -254,7 +235,6 @@ always @(posedge clk) begin
     cmd_stop_reg        <= 1'b0;
     match_release       <= 1'b0;
     src_ip_valid_reg    <= 1'b0;
-    dst_ip_valid_reg    <= 1'b0;
 
     read_data_stall_reg <= 1'b0;
     read_data_valid_reg <= 1'b0;

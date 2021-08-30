@@ -215,25 +215,35 @@ drop:
 }
 
 static inline void slot_match(struct slot_context *slot){
-  unsigned int rule_id = ACC_PIG_RULE_ID;
+  unsigned int rule_id;
   PROFILE_A(rule_id);
   // Save ACC_PIG_STATE to flow table if not already saved!
 
-  // Add while loop to drain the FIFO
 
-  if (rule_id!=0){
-    slot->match_count ++;
-  } else { // EoP
-    if (slot->match_count==0)
-      slot->desc.len = 0;
+  while (1){ // To drain output FIFO
+
+    rule_id = ACC_PIG_RULE_ID;
+    // release the match/EoP
+    ACC_PIG_CTRL = 2;
+
+    if (rule_id!=0){
+      slot->match_count ++;
+    } else { // EoP
+
+      if (slot->match_count==0)
+        slot->desc.len = 0;
+      else
+        slot->desc.port = 2;
+
+      pkt_send(&slot->desc);
+      slot->match_count = 0;
+    }
+
+    if (ACC_PIG_MATCH)
+      slot = &context[ACC_PIG_SLOT];
     else
-      slot->desc.port = 2;
-    pkt_send(&slot->desc);
-    slot->match_count = 0;
+      break;
   }
-
-  // release the match/EoP
-  ACC_PIG_CTRL = 2;
 
 }
 
