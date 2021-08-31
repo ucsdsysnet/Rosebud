@@ -689,6 +689,8 @@ module mem_sys # (
   reg  [DATA_WIDTH-1:0] dma_pmem_rd_data;
   reg  [DATA_WIDTH-1:0] core_pmem_rd_data;
   wire [DATA_WIDTH-1:0] dma_dmem_rd_data;
+  reg                   core_pmem_rd_b1_r;
+  reg                   dma_pmem_rd_bank_rr;
   reg                   dma_dmem_rd_bank_r;
 
   if (PMEM_SEL_BITS>0) begin
@@ -725,14 +727,12 @@ module mem_sys # (
   reg dma_pmem_rd_gnt_rrr;
   reg dma_dmem_rd_gnt_r;
   reg dma_pmem_rd_bank_r;
-  reg dma_pmem_rd_bank_rr;
 
   reg core_dmem_bank_r;
   reg core_pmem_rd_r;
   reg core_dmem_rd_r;
   reg core_pmem_rd_rr;
   reg core_pmem_rd_rrr;
-  reg core_pmem_rd_b1_r;
 
   always @(posedge clk)
     if(rst) begin
