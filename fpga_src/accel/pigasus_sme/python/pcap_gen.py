@@ -76,7 +76,7 @@ def parse_content_string(s):
             b.extend(s[offset:].encode('utf-8'))
             break
 
-    return bytes(b)
+    return bytes(str(b)[12:-2].encode('utf-8').upper())
 
 def fast_pattern_extractor (line):
   if (len(line.strip()) == 0):
