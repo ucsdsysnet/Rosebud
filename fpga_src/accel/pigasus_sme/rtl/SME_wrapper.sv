@@ -72,7 +72,8 @@ module pigasus_sme_wrapper # (
   reg                   has_extra_r;
   wire                  in_pkt_ready;
 
-  assign has_extra = s_axis_tlast && has_preamble && (s_axis_tempty < 7);
+  assign has_extra = s_axis_tvalid && s_axis_tlast &&
+                     has_preamble && (s_axis_tempty < 7);
 
   always @ (posedge clk) begin
     rest_7      <= s_axis_tdata_rev[55:0];
