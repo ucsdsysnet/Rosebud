@@ -11,6 +11,11 @@ module test_SME # (
   input  wire                    s_axis_tlast,
   output wire                    s_axis_tready,
 
+  input  wire                    meta_valid,
+  input  wire                    is_tcp,
+  input  wire [15:0]             src_port,
+  input  wire [15:0]             dst_port,
+
   output wire [31:0]             sme_output,
   output wire                    sme_output_v,
   output wire [63:0]             state_out
@@ -30,34 +35,24 @@ module test_SME # (
   wire         wr_en   = 1'b0;
 
   wire [63:0] preamble_state;
-  wire [15:0] src_port, dst_port;
+  wire [15:0] src_port_f, dst_port_f;
   wire        meta_data_valid, meta_data_ready;
 
-  // Insert 100 metadata into FIFO
-  reg [6:0] cnt;
-  always @ (posedge clk)
-    if (rst)
-      cnt <= 7'd0;
-    else if (cnt<7'd127)
-      cnt <= cnt + 7'd1;
-
-  wire push = cnt < 7'd100;
-
   simple_fifo # (
-    .ADDR_WIDTH(7),
+    .ADDR_WIDTH(10),
     .DATA_WIDTH(64+32)
   ) meta_data_fifo (
     .clk(clk),
     .rst(rst),
     .clear(1'b0),
 
-    .din_valid(push),
-    .din({64'h11FEFEFE_FEFEFEFE,
-          16'd1025, 16'd1024}),
+    .din_valid(meta_valid),
+    .din({7'd0, is_tcp, 56'hFFFFFF_FFFFFFFF,
+          src_port, dst_port}),
     .din_ready(),
 
     .dout_valid(meta_data_valid),
-    .dout({preamble_state, src_port, dst_port}),
+    .dout({preamble_state, src_port_f, dst_port_f}),
     .dout_ready(meta_data_ready)
   );
 
@@ -81,8 +76,8 @@ module test_SME # (
 
     // Metadata
     .preamble_state_in(preamble_state),
-    .src_port(src_port),
-    .dst_port(dst_port),
+    .src_port({src_port_f[7:0], src_port_f[15:8]}),
+    .dst_port({dst_port_f[7:0], dst_port_f[15:8]}),
     .meta_valid(meta_data_valid),
     .meta_ready(meta_data_ready),
 
@@ -119,10 +114,6 @@ module test_SME # (
               dut.pg_inst.rule2pg_table_0_1.mem);
     $readmemh("./memory_init/rule_2_pg_packed.mif",
               dut.pg_inst.rule2pg_table_2_3.mem);
-    // $readmemh("./memory_init/rule_2_pg_packed.mif",
-    //           dut.pg_inst.rule2pg_table_4_5.mem);
-    // $readmemh("./memory_init/rule_2_pg_packed.mif",
-    //           dut.pg_inst.rule2pg_table_6_7.mem);
 
     $readmemh("./memory_init/hashtable0_packed.mif",
               dut.pigasus.back.hashtable_inst_0_0.mem);

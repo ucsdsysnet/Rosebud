@@ -60,14 +60,17 @@ from cocotbext.axi.utils import hexdump_str
 scapy.config.conf.noenum.add(TCP.sport, TCP.dport, UDP.sport, UDP.dport)
 
 PCAP         = os.path.abspath(os.path.join(os.path.dirname(__file__),
-                'm10_100.pcap'))
+                '../python/attack.pcap'))
+                # 'm10_100.pcap'))
 
-PACKETS_0 = []
+PACKETS = []
 
 with PcapReader(open(PCAP, 'rb')) as pcap:
     for pkt in pcap:
-        PACKETS_0.append(pkt[Raw].load)
-        # print (pkt[TCP].sport, pkt[TCP].dport)
+        if TCP in pkt:
+          PACKETS.append((pkt[Raw].load, 1, pkt[TCP].sport, pkt[TCP].dport))
+        elif UDP in pkt:
+          PACKETS.append((pkt[Raw].load, 0, pkt[UDP].sport, pkt[UDP].dport))
 
 @cocotb.test()
 async def run_test_pigasus(dut):
@@ -77,6 +80,7 @@ async def run_test_pigasus(dut):
     data_ch_source = AxiStreamSource(AxiStreamBus.from_prefix(dut, "s_axis"),  dut.clk, dut.rst)
     data_ch_source.log.setLevel("WARNING")
 
+    dut.meta_valid <= 0
     dut.rst <= 0
     await RisingEdge(dut.clk)
     await RisingEdge(dut.clk)
@@ -91,9 +95,15 @@ async def run_test_pigasus(dut):
     await RisingEdge(dut.clk)
     await RisingEdge(dut.clk)
 
-    for pkt in PACKETS_0:
+    for pkt in PACKETS:
         await RisingEdge(dut.clk)
-        await data_ch_source.send(pkt)
+        dut.is_tcp     <= pkt[1]
+        dut.src_port   <= pkt[2]
+        dut.dst_port   <= pkt[3]
+        dut.meta_valid <= 1
+        await RisingEdge(dut.clk)
+        dut.meta_valid <= 0
+        await data_ch_source.send(pkt[0])
         await data_ch_source.wait()
 
     await Timer(1000)

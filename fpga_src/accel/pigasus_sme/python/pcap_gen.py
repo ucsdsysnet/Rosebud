@@ -207,13 +207,16 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--rules_file', type=str, default=[], action='append', help="Rules file")
     parser.add_argument('--selected_file', type=str, default=None, help="Selected Rules file")
-    parser.add_argument('--summary_file', type=str, default="attack.txt", help="Summary file")
+    parser.add_argument('--summary_file', type=str, default="attack_summary.txt", help="Summary file")
+    parser.add_argument('--details_file', type=str, default="attack_details.txt", help="Details file")
     parser.add_argument('--output_pcap', type=str, default='attack.pcap', help="Pcap output file name")
     parser.add_argument('--pcap_limit', type=int, default=0, help="Max PCAP rules")
     parser.add_argument('--test_packets', type=bool, default=False, help="Add non-matching test packets")
     args = parser.parse_args()
 
-    match_list = []
+    sumf =  open(args.summary_file, 'w')
+    detf =  open(args.details_file, 'w')
+    pcap = PcapWriter(open(args.output_pcap, 'wb'), sync=True)
 
     id_map = {}
     i = 1;
@@ -222,8 +225,21 @@ def main():
             id_map[int(line)] = i
             i += 1
 
+    if (args.test_packets):
+        if (args.pcap_limit!=0):
+            if (args.pcap_limit>4):
+                pcap_limit = args.pcap_limit - 4
+            else:
+                print ("Error, not enough pcap rules for test packets.")
+                pcap_limit = 1
+        else:
+            pcap_limit = 0
+    else:
+        pcap_limit = args.pcap_limit
+
     rule_count = 0
     dropped = 0
+    match_list = []
 
     for fn in args.rules_file:
         with open(fn, 'r') as f:
@@ -246,13 +262,18 @@ def main():
 
                             src_port = port_gen(hdr[3])
                             dst_port = port_gen(hdr[6])
-                            match_list.append((b, prot, src_port, dst_port, id_map[sid]))
-                            # print (w, b, prot, src_port, dst_port)
+                            match_list.append((b, prot, src_port, dst_port))
+
+                            if (rule_count <= pcap_limit) or (pcap_limit == 0):
+                                detf.write("Extracted pattern: "+str(b)+", protocol: "+prot+ \
+                                           ", src_port: "+str(src_port)+", dst_port: "+str(dst_port)+ \
+                                            ", rule ID: "+str(id_map[sid])+", Original rule:\n"+w+"\n\n")
+
+                                sumf.write("Writing "+prot+" packet from port "+str(src_port)+ \
+                                           " to port "+str(dst_port)+" with pattern "+str(b)+ \
+                                           " in paylod (rule id "+str(id_map[sid])+").\n")
 
     print ("Dropped rules: %d, Total filtered rules: %d" %(dropped, rule_count))
-
-    sumf =  open(args.summary_file, 'w')
-    pcap = PcapWriter(open(args.output_pcap, 'wb'), sync=True)
 
     eth = Ether(src='5A:51:52:53:54:55', dst='DA:D1:D2:D3:D4:D5')
     ip = IP(src='192.168.1.100', dst='192.168.1.101')
@@ -280,16 +301,6 @@ def main():
         payload = bytes([x % 256 for x in range(256)])
         pcap.write(eth / ip / tcp / payload)
 
-        if (args.pcap_limit!=0):
-            if (args.pcap_limit>4):
-                pcap_limit = args.pcap_limit - 4
-            else:
-                print ("Error, not enough pcap rules for test packets.")
-                pcap_limit = 1
-        else:
-            pcap_limit = 0
-    else:
-        pcap_limit = args.pcap_limit
 
     pcap_count = 0
     for rule in match_list:
@@ -298,8 +309,7 @@ def main():
         else:
             pcap_count += 1
 
-        payload, prot, sport, dport, rule_id = rule
-        sumf.write("Writing "+prot+" packet from port "+str(sport)+" to port "+str(dport)+" with pattern "+str(payload)+" in paylod (rule id "+str(rule_id)+").\n")
+        payload, prot, sport, dport = rule
         if (prot=='udp'):
             udp = UDP(sport=sport, dport=dport)
             payload += bytes([0xFF for x in range(max(1,r.randint(64, 500)-len(payload)))])
@@ -310,6 +320,7 @@ def main():
             pcap.write(eth / ip / tcp / payload)
 
     pcap.close()
+    detf.close()
     sumf.close()
 
 if __name__ == "__main__":
