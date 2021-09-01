@@ -62,7 +62,6 @@ scapy.config.conf.noenum.add(TCP.sport, TCP.dport, UDP.sport, UDP.dport)
 
 FIRMWARE = os.path.abspath(os.path.join(os.path.dirname(__file__),
     '..', '..', 'accel', 'ip_matcher', 'c', 'firewall.elf'))
-  # '..', '..', '..', '..', '..', 'c_code', 'basic_fw.elf'))
 
 SEND_COUNT_0 = 100
 SIZE_0 = [66-54, 1500-54, 66-54, 66-54, 1500-54, 1500-54, 66-54]
@@ -74,38 +73,8 @@ FLOW_HASH = False
 
 PACKETS = []
 
-eth = Ether(src='5A:51:52:53:54:55', dst='DA:D1:D2:D3:D4:D5')
-ip = IP(src='192.168.1.100', dst='192.168.1.101')
-udp = UDP(sport=1234, dport=5678)
-payload = bytes([0]+[x % 256 for x in range(SIZE_0[0]-1)])
-test_pkt = eth / ip / udp / payload
-PACKETS.append(test_pkt)
-
-eth = Ether(src='5A:51:52:53:54:55', dst='DA:D1:D2:D3:D4:D5')
-ip = IP(src='207.183.96.100', dst='192.168.1.101')
-tcp = TCP(sport=1234, dport=5678)
-payload = bytes([0]+[x % 256 for x in range(SIZE_0[0]-1)])
-test_pkt = eth / ip / tcp / payload
-PACKETS.append(test_pkt)
-
-eth = Ether(src='5A:51:52:53:54:55', dst='DA:D1:D2:D3:D4:D5')
-ip = IP(src='86.55.42.193', dst='192.168.1.101')
-tcp = TCP(sport=12345, dport=80)
-payload = bytes([0]+[x % 256 for x in range(SIZE_0[0]-1)])
-test_pkt = eth / ip / tcp / payload
-PACKETS.append(test_pkt)
-
-eth = Ether(src='5A:51:52:53:54:55', dst='DA:D1:D2:D3:D4:D5')
-ip = IP(src='163.47.19.255', dst='192.168.1.101')
-tcp = TCP(sport=54321, dport=80)
-payload = bytes([0]+[x % 256 for x in range(SIZE_0[0]-1)])
-test_pkt = eth / ip / tcp / payload
-PACKETS.append(test_pkt)
-
-PCAP         = None
-# PCAP         = os.path.abspath(os.path.join(os.path.dirname(__file__),
-#     '../../accel/full_ids/python/ids_test.pcap'))
-
+PCAP = os.path.abspath(os.path.join(os.path.dirname(__file__),
+        '../../accel/ip_matcher/python/firewall_test.pcap'))
 
 PACKETS_0 = []
 
