@@ -308,13 +308,13 @@ simple_fifo # (
 // DMA engine for single block of the packet memory
 localparam ATTACHED_CNT = SLOT_COUNT/8;
 localparam ATTACHED = ACC_MEM_BLOCKS-ATTACHED_CNT;
-localparam USER_WIDTH = $clog2(DATA_WIDTH/8);
+localparam EMPTY_WIDTH = $clog2(DATA_WIDTH/8);
 
-wire [DATA_WIDTH-1:0] accel_tdata;
-wire [USER_WIDTH-1:0] accel_tuser;
-wire                  accel_tlast;
-wire                  accel_tvalid;
-wire                  accel_tready;
+wire [DATA_WIDTH-1:0]  accel_tdata;
+wire [EMPTY_WIDTH-1:0] accel_tempty;
+wire                   accel_tlast;
+wire                   accel_tvalid;
+wire                   accel_tready;
 
 single_accel_rd_dma # (
   .DATA_WIDTH(DATA_WIDTH),
@@ -342,7 +342,7 @@ single_accel_rd_dma # (
   .mem_b2_rd_data(acc_rd_data_b2[ATTACHED*DATA_WIDTH +: ATTACHED_CNT*DATA_WIDTH]),
 
   .m_axis_tdata(accel_tdata),
-  .m_axis_tuser(accel_tuser),
+  .m_axis_tempty(accel_tempty),
   .m_axis_tlast(accel_tlast),
   .m_axis_tvalid(accel_tvalid),
   .m_axis_tready(accel_tready)
@@ -375,7 +375,6 @@ end
 // Pigasus accelerator
 wire [63:0] state_out;
 wire        state_out_valid;
-wire [4-1:0] accel_tempty = 4'hf-accel_tuser;
 
 pigasus_sme_wrapper fast_pattern_sme_inst (
   .clk(clk),

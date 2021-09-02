@@ -69,19 +69,15 @@ module pigasus_sme_wrapper # (
   // Latching of LSB 7 bytes and state for extra cycle if necessary
   reg [55:0]            rest_7;
   reg [STRB_COUNT-1:0]  rem_empty;
-  wire                  has_extra;
   reg                   has_extra_r;
   wire                  in_pkt_ready;
-
-  assign has_extra = s_axis_tvalid && s_axis_tlast &&
-                     has_preamble && (s_axis_tempty < 7) &&
-                     (!has_extra_r);
 
   always @ (posedge clk) begin
     rest_7      <= s_axis_tdata_rev[55:0];
     rem_empty   <= (BYTE_COUNT-7) + s_axis_tempty[2:0];
 
-    if (s_axis_tvalid && s_axis_tready && has_extra)
+    if (s_axis_tvalid && s_axis_tlast && s_axis_tready &&
+        has_preamble && (s_axis_tempty < 7))
       has_extra_r <= 1'b1;
     else if (has_extra_r && in_pkt_ready)
       has_extra_r <= 1'b0;
@@ -97,9 +93,10 @@ module pigasus_sme_wrapper # (
   wire                    in_pkt_sop;
   wire                    in_pkt_eop;
 
-  assign in_pkt_eop    = has_extra ? 1'b0 : (s_axis_tlast | has_extra_r);
-  assign in_pkt_valid  = s_axis_tvalid | has_extra_r;
-  assign in_pkt_sop    = s_axis_tfirst && s_axis_tvalid && !has_extra_r;
+  assign in_pkt_eop    = has_extra_r || (s_axis_tlast &&
+                      !(has_preamble && (s_axis_tempty < 7)));
+  assign in_pkt_valid  = s_axis_tvalid || has_extra_r;
+  assign in_pkt_sop    = s_axis_tfirst && !has_extra_r;
   assign in_pkt_empty  = (!has_preamble) ? s_axis_tempty :
                              has_extra_r ? rem_empty :
                      (s_axis_tempty > 7) ? (s_axis_tempty-7) :

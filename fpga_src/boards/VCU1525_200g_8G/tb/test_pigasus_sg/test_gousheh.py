@@ -61,7 +61,7 @@ from cocotbext.axi.utils import hexdump_str
 scapy.config.conf.noenum.add(TCP.sport, TCP.dport, UDP.sport, UDP.dport)
 
 FIRMWARE = os.path.abspath(os.path.join(os.path.dirname(__file__),
-    '..', '..', 'accel', 'pigasus_sme', 'c', 'pigasus.elf'))
+    '..', '..', 'accel', 'pigasus_sme', 'c', 'pigasus2.elf'))
 
 SEND_COUNT_0 = 1024
 SIZE_0 = [66-54, 1500-54, 66-54, 66-54, 1500-54, 1500-54, 66-54]

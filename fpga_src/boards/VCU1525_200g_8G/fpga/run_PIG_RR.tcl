@@ -40,14 +40,14 @@ add_files -norecurse {
   ../accel/pigasus_sme/rtl/rule_unit.sv
   ../accel/pigasus_sme/rtl/port_group.sv
   ../accel/pigasus_sme/rtl/pkt_almost_full.sv
-  ../accel/pigasus_sme/rtl/reduction_2t1.sv
+  ../accel/pigasus_sme/rtl/reduction_2t1_2.sv
   ../accel/pigasus_sme/rtl/unified_fifo.sv
   ../accel/pigasus_sme/rtl/unified_pkt_fifo.sv
   ../accel/pigasus_sme/rtl/rule_depacker_64_32.sv
   ../accel/pigasus_sme/rtl/rule_depacker_128_64.sv
   ../accel/pigasus_sme/rtl/struct_s.sv
   ../accel/pigasus_sme/rtl/SME_wrapper.sv
-  ../accel/pigasus_sme/rtl/accel_wrap_pigasus.v
+  ../accel/pigasus_sme/rtl/accel_wrap_pigasus2.v
   ../accel/pigasus_sme/rtl/ip_match.v
   ../rtl/Gousheh_PR_pig.v
 } -of_objects [get_reconfig_modules Gousheh_PIG]

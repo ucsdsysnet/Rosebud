@@ -32,7 +32,7 @@ module single_accel_rd_dma # (
 
   // Read data output
   output wire [DATA_WIDTH-1:0]                m_axis_tdata,
-  output wire [MASK_BITS-1:0]                 m_axis_tuser,
+  output wire [MASK_BITS-1:0]                 m_axis_tempty,
   output wire                                 m_axis_tlast,
   output wire                                 m_axis_tvalid,
   input  wire                                 m_axis_tready
@@ -47,17 +47,18 @@ localparam SAFE_MEM_SEL_BITS = (MEM_SEL_BITS > 0) ? MEM_SEL_BITS : 1;
 reg accel_stop_r;
 
 wire [MASK_BITS-1:0]       req_rd_offset;
-wire [MASK_BITS-1:0]       req_rd_final_ptr;
+wire [MASK_BITS-1:0]       req_rd_final_empty;
 wire [LINE_ADDR_WIDTH-1:0] req_rd_addr;
 wire [LINE_CNT_WIDTH-1:0]  req_rd_count;
 wire [MASK_BITS-1:0]       remainder_bytes;
 
-assign remainder_bytes  = desc_len [MASK_BITS-1:0];
-assign req_rd_addr      = desc_addr[ADDR_WIDTH-1:MASK_BITS];
-assign req_rd_offset    = desc_addr[MASK_BITS-1:0];
-assign req_rd_count     = (remainder_bytes == 0) ? desc_len [LEN_WIDTH-1:MASK_BITS] :
-                                                   desc_len [LEN_WIDTH-1:MASK_BITS]+1;
-assign req_rd_final_ptr = remainder_bytes - 1; // 0 becomes all 1s
+assign remainder_bytes    = desc_len [MASK_BITS-1:0];
+assign req_rd_addr        = desc_addr[ADDR_WIDTH-1:MASK_BITS];
+assign req_rd_offset      = desc_addr[MASK_BITS-1:0];
+assign req_rd_count       = (remainder_bytes == 0) ? desc_len [LEN_WIDTH-1:MASK_BITS] :
+                                                     desc_len [LEN_WIDTH-1:MASK_BITS]+1;
+assign req_rd_final_empty = (remainder_bytes == 0) ? {MASK_BITS{1'b0}} :
+                                                      KEEP_WIDTH - remainder_bytes;
 
 // Register to keep current state
 localparam DESC_MEM_WIDTH = LINE_ADDR_WIDTH+LINE_CNT_WIDTH+MASK_BITS+MASK_BITS;
@@ -66,7 +67,7 @@ reg act_mem_v;
 
 wire [LINE_ADDR_WIDTH-1:0] act_rd_addr;
 wire [LINE_CNT_WIDTH-1:0]  act_rd_count;
-wire [MASK_BITS-1:0]       act_rd_final_ptr;
+wire [MASK_BITS-1:0]       act_rd_final_empty;
 wire [MASK_BITS-1:0]       act_rd_offset;
 
 // MSB trim for next address and count
@@ -79,12 +80,12 @@ wire accel_fifo_ready;
 always @ (posedge clk)
   if (desc_valid && desc_ready)
     act_mem <= {req_rd_addr, req_rd_count,
-                req_rd_final_ptr, req_rd_offset};
+                req_rd_final_empty, req_rd_offset};
   else if (act_mem_v && accel_fifo_ready)
     act_mem <= {act_rd_addr_n, act_rd_count_n,
-                act_rd_final_ptr, act_rd_offset};
+                act_rd_final_empty, act_rd_offset};
 
-assign {act_rd_addr, act_rd_count, act_rd_final_ptr, act_rd_offset} = act_mem;
+assign {act_rd_addr, act_rd_count, act_rd_final_empty, act_rd_offset} = act_mem;
 
 always @ (posedge clk) begin
   if (desc_valid && desc_ready)
@@ -101,13 +102,13 @@ end
 assign desc_ready = !act_mem_v || (act_rd_count==1 && accel_fifo_ready);
 
 // Send request to memory, with an input register
-reg [MASK_BITS-1:0]    mem_rd_offset, mem_rd_ptr;
-reg                    mem_rd_last, mem_rd_bank, mem_rd_valid;
+reg [MASK_BITS-1:0] mem_rd_offset, mem_rd_empty;
+reg                 mem_rd_last, mem_rd_bank, mem_rd_valid;
 
-wire   act_rd_last = (act_rd_count == 1);
+wire                  act_rd_last = (act_rd_count == 1);
 
-wire [MASK_BITS-1:0] act_rd_ptr = act_rd_last ?
-                                  act_rd_final_ptr : {MASK_BITS{1'b1}};
+wire [MASK_BITS-1:0] act_rd_empty = act_rd_last ? act_rd_final_empty :
+                                                  {MASK_BITS{1'b1}};
 
 wire [LINE_ADDR_WIDTH-1:0] mem_rd_addr   = act_rd_addr;
 wire [LINE_ADDR_WIDTH-1:0] mem_rd_addr_n = act_rd_addr_n;
@@ -129,7 +130,7 @@ wire [SAFE_MEM_SEL_BITS-1:0] mem_b2_sel = mem_rd_addr[0] ?
 
 integer j;
 always @ (posedge clk) begin
-  mem_rd_ptr       <= act_rd_ptr;
+  mem_rd_empty       <= act_rd_empty;
   mem_rd_offset    <= act_rd_offset;
   mem_rd_last      <= act_rd_last;
 
@@ -213,7 +214,7 @@ end
 reg                  mem_rd_last_r, mem_rd_last_rr, mem_rd_last_rrr;
 reg                  mem_rd_bank_r, mem_rd_bank_rr;
 reg [MASK_BITS-1:0]  mem_rd_offset_r, mem_rd_offset_rr;
-reg [MASK_BITS-1:0]  mem_rd_ptr_r, mem_rd_ptr_rr, mem_rd_ptr_rrr;
+reg [MASK_BITS-1:0]  mem_rd_empty_r, mem_rd_empty_rr, mem_rd_empty_rrr;
 
 always @ (posedge clk) begin
   mem_rd_last_r    <= mem_rd_last;
@@ -223,9 +224,9 @@ always @ (posedge clk) begin
   mem_rd_offset_rr <= mem_rd_offset_r;
   mem_rd_bank_r    <= mem_rd_bank;
   mem_rd_bank_rr   <= mem_rd_bank_r;
-  mem_rd_ptr_r     <= mem_rd_ptr;
-  mem_rd_ptr_rr    <= mem_rd_ptr_r;
-  mem_rd_ptr_rrr   <= mem_rd_ptr_rr;
+  mem_rd_empty_r   <= mem_rd_empty;
+  mem_rd_empty_rr  <= mem_rd_empty_r;
+  mem_rd_empty_rrr <= mem_rd_empty_rr;
 end
 
 reg [DATA_WIDTH-1:0] mem_rd_data_rrr;
@@ -274,85 +275,12 @@ simple_fifo # (
   .clear(accel_stop_r),
 
   .din_valid(mem_rd_valid_rrr),
-  .din({mem_rd_last_rrr, mem_rd_ptr_rrr, mem_rd_data_rrr}),
+  .din({mem_rd_last_rrr, mem_rd_empty_rrr, mem_rd_data_rrr}),
   .din_ready(),
 
   .dout_valid(m_axis_tvalid),
-  .dout({m_axis_tlast, m_axis_tuser[0+:MASK_BITS],
-         m_axis_tdata[0+:DATA_WIDTH]}),
+  .dout({m_axis_tlast, m_axis_tempty, m_axis_tdata}),
   .dout_ready(m_axis_tready)
 );
-
-endmodule
-
-module accel_width_conv # (
-  parameter DATA_IN_WIDTH  = 128,
-  parameter DATA_OUT_WIDTH = 8,
-  parameter STRB_OUT_WIDTH = DATA_OUT_WIDTH/8,
-  // TUSER is offset of last valid byte
-  parameter USER_WIDTH     = $clog2(DATA_IN_WIDTH/8)
-) (
-  input  wire                      clk,
-  input  wire                      rst,
-
-  // Read data input
-  input  wire [DATA_IN_WIDTH-1:0]  s_axis_tdata,
-  input  wire [USER_WIDTH-1:0]     s_axis_tuser,
-  input  wire                      s_axis_tlast,
-  input  wire                      s_axis_tvalid,
-  output wire                      s_axis_tready,
-
-  // Read data output
-  output reg  [DATA_OUT_WIDTH-1:0] m_axis_tdata,
-  output reg  [STRB_OUT_WIDTH-1:0] m_axis_tkeep,
-  output reg                       m_axis_tlast,
-  output reg                       m_axis_tvalid,
-  input  wire                      m_axis_tready
-);
-
-    localparam SKIP_BITS = $clog2(DATA_OUT_WIDTH/8);
-    localparam PTR_WIDTH = USER_WIDTH-SKIP_BITS;
-
-    reg  [PTR_WIDTH-1:0]      rd_ptr;
-    wire [STRB_OUT_WIDTH-1:0] strobe;
-
-    // Detecting last chunk and setting strobe
-    wire last_chunk = (rd_ptr==s_axis_tuser[USER_WIDTH-1:SKIP_BITS]);
-    if (SKIP_BITS==0)
-      assign strobe = 1'b1;
-    else
-      assign strobe = ~({{STRB_OUT_WIDTH-1{1'b1}},1'b0} << s_axis_tuser[SKIP_BITS-1:0]);
-
-    // out_ready works with accel always asserting tready or
-    // accepting tvalid in same cycle
-    wire out_ready  = !m_axis_tvalid || m_axis_tready;
-    assign s_axis_tready = out_ready && last_chunk;
-
-    always @ (posedge clk) begin
-      // Since data is coming from a FIFO, tvalid drop without
-      // tready assertion means there was a stop signal and
-      // rd_ptr needs to be reset. In normal mode and no
-      // tvalid it keeps the rd_ptr to be zero.
-      if (!s_axis_tvalid)
-        rd_ptr <= {PTR_WIDTH{1'b0}};
-      else if (out_ready) begin
-        if (last_chunk)
-          rd_ptr <= {PTR_WIDTH{1'b0}};
-        else
-          rd_ptr <= rd_ptr + 1;
-      end
-
-      if (rst)
-        rd_ptr <= {PTR_WIDTH{1'b0}};
-    end
-
-    // Register the outputs
-    always @ (posedge clk) begin
-      m_axis_tdata   <= s_axis_tdata[rd_ptr*DATA_OUT_WIDTH+:DATA_OUT_WIDTH];
-      m_axis_tkeep   <= (s_axis_tlast && last_chunk) ?
-                         strobe : {STRB_OUT_WIDTH{1'b1}};
-      m_axis_tlast   <= s_axis_tlast && last_chunk;
-      m_axis_tvalid  <= s_axis_tvalid;
-    end
 
 endmodule

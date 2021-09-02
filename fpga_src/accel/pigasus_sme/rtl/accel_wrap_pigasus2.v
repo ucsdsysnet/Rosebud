@@ -355,50 +355,81 @@ simple_fifo # (
 );
 
 // Burst read for first blocks of the packet memory
+reg [ACC_ADDR_WIDTH-1:0] flow_table_addr_r;
+// reg [HASH_SEL_BITS-1:0]  flow_table_block_r,  flow_table_block_rr,  flow_table_block_rrr;
+// reg                      flow_table_bank_r,   flow_table_bank_rr,   flow_table_bank_rrr;
+reg                      flow_rd_valid_reg_r, flow_rd_valid_reg_rr, flow_rd_valid_reg_rrr;
+
+always @ (posedge clk) begin
+  // 1 cycle read req pipe, 1 cycle memory read,
+  // 1 cycle result pipe register in mem_sys, 1 cycle block select
+  flow_rd_valid_reg_r   <= flow_rd_valid_reg;
+  flow_rd_valid_reg_rr  <= flow_rd_valid_reg_r;
+  flow_rd_valid_reg_rrr <= flow_rd_valid_reg_rr;
+
+  // flow_table_bank_r     <= flow_table_bank;
+  // flow_table_bank_rr    <= flow_table_bank_r;
+  // flow_table_bank_rrr   <= flow_table_bank_rr;
+  //
+  // flow_table_block_r    <= flow_table_block;
+  // flow_table_block_rr   <= flow_table_block_r;
+  // flow_table_block_rrr  <= flow_table_block_rr;
+
+  // We only need 1 register for read address
+  flow_table_addr_r     <= flow_table_addr;
+
+  // Last valid keeps it's state until a new rd request arrives
+  flow_rd_ready <= flow_rd_valid_reg_rrr ||
+                   (flow_rd_ready && !flow_rd_valid_reg);
+
+  if (flow_rd_valid_reg_rrr)
+    flow_table_rd_data <= flow_table_bank ? {flow_mem_data_b1, flow_mem_data_b2}:
+                                            {flow_mem_data_b2, flow_mem_data_b1};
+    // flow_table_rd_data <= flow_table_bank_rrr ? {flow_mem_data_b1, flow_mem_data_b2}:
+    //                                             {flow_mem_data_b2, flow_mem_data_b1};
+  if (rst) begin // Using register for all due to resources
+    flow_rd_valid_reg_r   <= 1'b0;
+    flow_rd_valid_reg_rr  <= 1'b0;
+    flow_rd_valid_reg_rrr <= 1'b0;
+    // flow_table_bank_r     <= 1'b0;
+    // flow_table_bank_rr    <= 1'b0;
+    // flow_table_bank_rrr   <= 1'b0;
+    // flow_table_block_r    <= {HASH_SEL_BITS{1'b0}};
+    // flow_table_block_rr   <= {HASH_SEL_BITS{1'b0}};
+    // flow_table_block_rrr  <= {HASH_SEL_BITS{1'b0}};
+    flow_rd_ready         <= 1'b0;
+  end
+
+end
+
 genvar j;
 generate
   for (j=0; j< HASH_TABLE_BLOCKS; j = j + 1) begin: hash_table_ens
-    assign acc_en_b1[j] = flow_rd_valid_reg;
-    assign acc_en_b2[j] = flow_rd_valid_reg;
+    assign acc_en_b1[j] = flow_rd_valid_reg_r;
+    assign acc_en_b2[j] = flow_rd_valid_reg_r;
     assign acc_wen_b1[j*STRB_WIDTH +: STRB_WIDTH] = {STRB_WIDTH{1'b0}};
     assign acc_wen_b2[j*STRB_WIDTH +: STRB_WIDTH] = {STRB_WIDTH{1'b0}};
-    assign acc_addr_b1[j*ACC_ADDR_WIDTH +: ACC_ADDR_WIDTH] = flow_table_addr[ACC_ADDR_WIDTH-1:0];
-    assign acc_addr_b2[j*ACC_ADDR_WIDTH +: ACC_ADDR_WIDTH] = flow_table_addr[ACC_ADDR_WIDTH-1:0];
+    assign acc_addr_b1[j*ACC_ADDR_WIDTH +: ACC_ADDR_WIDTH] = flow_table_addr_r;
+    assign acc_addr_b2[j*ACC_ADDR_WIDTH +: ACC_ADDR_WIDTH] = flow_table_addr_r;
   end
 endgenerate
 
 wire [DATA_WIDTH-1:0] flow_mem_data_b1 = acc_rd_data_b1[flow_table_block*DATA_WIDTH +: DATA_WIDTH];
 wire [DATA_WIDTH-1:0] flow_mem_data_b2 = acc_rd_data_b2[flow_table_block*DATA_WIDTH +: DATA_WIDTH];
-
-reg flow_rd_valid_reg_r, flow_rd_valid_reg_rr;
-
-always @ (posedge clk) begin
-  // 1 cycle memory read, 1 cycle pipe register in mem_sys, 1 cycle block select
-  flow_rd_valid_reg_r   <= flow_rd_valid_reg;
-  flow_rd_valid_reg_rr  <= flow_rd_valid_reg_r;
-
-  // Last valid keeps it's state until a new rd request arrives
-  flow_rd_ready <= flow_rd_valid_reg_rr ||
-                   (flow_rd_ready && !flow_rd_valid_reg);
-
-  if (flow_rd_valid_reg_rr)
-    flow_table_rd_data <= flow_table_bank ? {flow_mem_data_b1, flow_mem_data_b2}:
-                                            {flow_mem_data_b2, flow_mem_data_b1};
-  if (rst)
-    flow_rd_ready <= 1'b0;
-end
+// wire [DATA_WIDTH-1:0] flow_mem_data_b1 = acc_rd_data_b1[flow_table_block_rrr*DATA_WIDTH +: DATA_WIDTH];
+// wire [DATA_WIDTH-1:0] flow_mem_data_b2 = acc_rd_data_b2[flow_table_block_rrr*DATA_WIDTH +: DATA_WIDTH];
 
 
 // DMA engine for last blocks of the packet memory
 localparam ATTACHED_CNT = SLOT_COUNT/8;
 localparam ATTACHED = ACC_MEM_BLOCKS-ATTACHED_CNT;
-localparam USER_WIDTH = $clog2(DATA_WIDTH/8);
+localparam EMPTY_WIDTH = $clog2(DATA_WIDTH/8);
 
-wire [DATA_WIDTH-1:0] accel_tdata;
-wire [USER_WIDTH-1:0] accel_tuser;
-wire                  accel_tlast;
-wire                  accel_tvalid;
-wire                  accel_tready;
+wire [DATA_WIDTH-1:0]  accel_tdata;
+wire [EMPTY_WIDTH-1:0] accel_tempty;
+wire                   accel_tlast;
+wire                   accel_tvalid;
+wire                   accel_tready;
 
 single_accel_rd_dma # (
   .DATA_WIDTH(DATA_WIDTH),
@@ -426,7 +457,7 @@ single_accel_rd_dma # (
   .mem_b2_rd_data(acc_rd_data_b2[ATTACHED*DATA_WIDTH +: ATTACHED_CNT*DATA_WIDTH]),
 
   .m_axis_tdata(accel_tdata),
-  .m_axis_tuser(accel_tuser),
+  .m_axis_tempty(accel_tempty),
   .m_axis_tlast(accel_tlast),
   .m_axis_tvalid(accel_tvalid),
   .m_axis_tready(accel_tready)
@@ -459,7 +490,6 @@ end
 // Pigasus accelerator
 wire [63:0] state_out;
 wire        state_out_valid;
-wire [4-1:0] accel_tempty = 4'hf-accel_tuser;
 
 pigasus_sme_wrapper fast_pattern_sme_inst (
   .clk(clk),
