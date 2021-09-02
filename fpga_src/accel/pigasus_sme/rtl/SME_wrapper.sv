@@ -49,14 +49,15 @@ module pigasus_sme_wrapper # (
   wire        is_tcp       = preamble_state_in[56];
   wire        has_preamble = preamble_state_in[60];
 
-  reg valid_r;
+  reg s_axis_tfirst;
   always @ (posedge clk)
     if(rst)
-      valid_r <= 1'b0;
+      s_axis_tfirst <= 1'b1;
     else
-      valid_r <= s_axis_tvalid;
-
-  wire s_axis_tfirst = s_axis_tvalid & !valid_r;
+      s_axis_tfirst <= ( s_axis_tfirst || (!s_axis_tvalid) ||
+                        (s_axis_tvalid && s_axis_tready && s_axis_tlast) ) &&
+                      !(s_axis_tvalid && s_axis_tready &&
+                        s_axis_tfirst && !s_axis_tlast);
 
   // TODO: should test if real run also needs it
   reg [BYTE_COUNT*8-1:0] s_axis_tdata_rev;
@@ -73,7 +74,8 @@ module pigasus_sme_wrapper # (
   wire                  in_pkt_ready;
 
   assign has_extra = s_axis_tvalid && s_axis_tlast &&
-                     has_preamble && (s_axis_tempty < 7);
+                     has_preamble && (s_axis_tempty < 7) &&
+                     (!has_extra_r);
 
   always @ (posedge clk) begin
     rest_7      <= s_axis_tdata_rev[55:0];
@@ -97,24 +99,24 @@ module pigasus_sme_wrapper # (
 
   assign in_pkt_eop    = has_extra ? 1'b0 : (s_axis_tlast | has_extra_r);
   assign in_pkt_valid  = s_axis_tvalid | has_extra_r;
-  assign in_pkt_sop    = s_axis_tfirst;
+  assign in_pkt_sop    = s_axis_tfirst && s_axis_tvalid && !has_extra_r;
   assign in_pkt_empty  = (!has_preamble) ? s_axis_tempty :
                              has_extra_r ? rem_empty :
                      (s_axis_tempty > 7) ? (s_axis_tempty-7) :
                                            {STRB_COUNT{1'b0}};
 
-  assign s_axis_tready = in_pkt_ready;
+  assign s_axis_tready = in_pkt_ready && !has_extra_r;
 
   // Note that if there are non_valid bytes at LSB, first_filter masks the empty
   // bytes, so tempty takes care of them, even in case of EOP and empty>=7
   always @ (*)
     if (has_preamble) begin
-      if (s_axis_tfirst)
-        in_pkt_data = {preamble, s_axis_tdata_rev[8*BYTE_COUNT-1:56]};
-      else if (!has_extra_r)
-        in_pkt_data = {rest_7,   s_axis_tdata_rev[8*BYTE_COUNT-1:56]};
-      else
+      if (has_extra_r)
         in_pkt_data = {rest_7,   {8*(BYTE_COUNT-7){1'b1}}};
+      else if (s_axis_tfirst) // if it's not valid not important
+        in_pkt_data = {preamble, s_axis_tdata_rev[8*BYTE_COUNT-1:56]};
+      else
+        in_pkt_data = {rest_7,   s_axis_tdata_rev[8*BYTE_COUNT-1:56]};
     end else begin
         in_pkt_data = s_axis_tdata_rev;
     end

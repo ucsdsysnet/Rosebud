@@ -104,7 +104,7 @@ async def run_test_pigasus(dut):
         await RisingEdge(dut.clk)
         dut.meta_valid <= 0
         await data_ch_source.send(pkt[0])
-        await data_ch_source.wait()
+        # await data_ch_source.wait()
 
     await Timer(1000)
     await RisingEdge(dut.clk)

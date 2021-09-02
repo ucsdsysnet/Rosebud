@@ -47,7 +47,7 @@ module test_SME # (
     .clear(1'b0),
 
     .din_valid(meta_valid),
-    .din({7'd0, is_tcp, 56'hFFFFFF_FFFFFFFF,
+    .din({4'd1, 3'd0, is_tcp, 56'hFFFFFF_FFFFFFFF,
           src_port, dst_port}),
     .din_ready(),
 

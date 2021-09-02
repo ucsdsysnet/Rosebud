@@ -288,17 +288,17 @@ def main():
 
         sumf.write("Writing tcp packet from port 1234 to port 5678 with no pattern in paylod.\n")
         tcp = TCP(sport=1234, dport=5678)
-        payload = bytes([x % 256 for x in range(256)])
+        payload = bytes([x % 256 for x in range(172)])
         pcap.write(eth / ip / tcp / payload)
 
         sumf.write("Writing tcp packet from port 12345 to port 80 with no pattern in paylod.\n")
         tcp = TCP(sport=12345, dport=80)
-        payload = bytes([x % 256 for x in range(256)])
+        payload = bytes([x % 256 for x in range(4)])
         pcap.write(eth / ip / tcp / payload)
 
         sumf.write("Writing tcp packet from port 54321 to port 80 with no pattern in paylod.\n")
         tcp = TCP(sport=54321, dport=80)
-        payload = bytes([x % 256 for x in range(256)])
+        payload = bytes([x % 256 for x in range(15)])
         pcap.write(eth / ip / tcp / payload)
 
 
