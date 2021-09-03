@@ -33,6 +33,7 @@ module single_accel_rd_dma # (
   // Read data output
   output wire [DATA_WIDTH-1:0]                m_axis_tdata,
   output wire [MASK_BITS-1:0]                 m_axis_tempty,
+  output wire                                 m_axis_tfirst,
   output wire                                 m_axis_tlast,
   output wire                                 m_axis_tvalid,
   input  wire                                 m_axis_tready
@@ -61,7 +62,7 @@ assign req_rd_final_empty = (remainder_bytes == 0) ? {MASK_BITS{1'b0}} :
                                                       KEEP_WIDTH - remainder_bytes;
 
 // Register to keep current state
-localparam DESC_MEM_WIDTH = LINE_ADDR_WIDTH+LINE_CNT_WIDTH+MASK_BITS+MASK_BITS;
+localparam DESC_MEM_WIDTH = LINE_ADDR_WIDTH+LINE_CNT_WIDTH+MASK_BITS+MASK_BITS+1;
 (* ram_style = "distributed" *) reg [DESC_MEM_WIDTH-1:0] act_mem;
 reg act_mem_v;
 
@@ -69,6 +70,7 @@ wire [LINE_ADDR_WIDTH-1:0] act_rd_addr;
 wire [LINE_CNT_WIDTH-1:0]  act_rd_count;
 wire [MASK_BITS-1:0]       act_rd_final_empty;
 wire [MASK_BITS-1:0]       act_rd_offset;
+wire                       act_rd_first;
 
 // MSB trim for next address and count
 wire [LINE_ADDR_WIDTH-1:0] act_rd_addr_n  = act_rd_addr  + 1;
@@ -79,13 +81,14 @@ wire accel_fifo_ready;
 
 always @ (posedge clk)
   if (desc_valid && desc_ready)
-    act_mem <= {req_rd_addr, req_rd_count,
+    act_mem <= {1'b1, req_rd_addr, req_rd_count,
                 req_rd_final_empty, req_rd_offset};
   else if (act_mem_v && accel_fifo_ready)
-    act_mem <= {act_rd_addr_n, act_rd_count_n,
+    act_mem <= {1'b0, act_rd_addr_n, act_rd_count_n,
                 act_rd_final_empty, act_rd_offset};
 
-assign {act_rd_addr, act_rd_count, act_rd_final_empty, act_rd_offset} = act_mem;
+assign {act_rd_first, act_rd_addr, act_rd_count,
+              act_rd_final_empty, act_rd_offset} = act_mem;
 
 always @ (posedge clk) begin
   if (desc_valid && desc_ready)
@@ -103,7 +106,7 @@ assign desc_ready = !act_mem_v || (act_rd_count==1 && accel_fifo_ready);
 
 // Send request to memory, with an input register
 reg [MASK_BITS-1:0] mem_rd_offset, mem_rd_empty;
-reg                 mem_rd_last, mem_rd_bank, mem_rd_valid;
+reg                 mem_rd_last, mem_rd_first, mem_rd_bank, mem_rd_valid;
 
 wire                  act_rd_last = (act_rd_count == 1);
 
@@ -130,9 +133,10 @@ wire [SAFE_MEM_SEL_BITS-1:0] mem_b2_sel = mem_rd_addr[0] ?
 
 integer j;
 always @ (posedge clk) begin
-  mem_rd_empty       <= act_rd_empty;
+  mem_rd_empty     <= act_rd_empty;
   mem_rd_offset    <= act_rd_offset;
   mem_rd_last      <= act_rd_last;
+  mem_rd_first     <= act_rd_first;
 
   mem_rd_bank      <= mem_rd_addr[0];
   mem_rd_valid     <= act_mem_v && accel_fifo_ready;
@@ -211,15 +215,19 @@ always @ (posedge clk) begin
 end
 
 // Accompanying metadata
-reg                  mem_rd_last_r, mem_rd_last_rr, mem_rd_last_rrr;
-reg                  mem_rd_bank_r, mem_rd_bank_rr;
+reg                  mem_rd_last_r,   mem_rd_last_rr,  mem_rd_last_rrr;
+reg                  mem_rd_first_r,  mem_rd_first_rr, mem_rd_first_rrr;
+reg                  mem_rd_bank_r,   mem_rd_bank_rr;
 reg [MASK_BITS-1:0]  mem_rd_offset_r, mem_rd_offset_rr;
-reg [MASK_BITS-1:0]  mem_rd_empty_r, mem_rd_empty_rr, mem_rd_empty_rrr;
+reg [MASK_BITS-1:0]  mem_rd_empty_r,  mem_rd_empty_rr, mem_rd_empty_rrr;
 
 always @ (posedge clk) begin
   mem_rd_last_r    <= mem_rd_last;
   mem_rd_last_rr   <= mem_rd_last_r;
   mem_rd_last_rrr  <= mem_rd_last_rr;
+  mem_rd_first_r   <= mem_rd_first;
+  mem_rd_first_rr  <= mem_rd_first_r;
+  mem_rd_first_rrr <= mem_rd_first_rr;
   mem_rd_offset_r  <= mem_rd_offset;
   mem_rd_offset_rr <= mem_rd_offset_r;
   mem_rd_bank_r    <= mem_rd_bank;
@@ -268,18 +276,18 @@ assign accel_fifo_ready = (counter < FIFO_LINES);
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(FIFO_LINES)),
-  .DATA_WIDTH(1+MASK_BITS+DATA_WIDTH)
+  .DATA_WIDTH(2+MASK_BITS+DATA_WIDTH)
 ) accel_fifo (
   .clk(clk),
   .rst(rst),
   .clear(accel_stop_r),
 
   .din_valid(mem_rd_valid_rrr),
-  .din({mem_rd_last_rrr, mem_rd_empty_rrr, mem_rd_data_rrr}),
+  .din({mem_rd_first_rrr, mem_rd_last_rrr, mem_rd_empty_rrr, mem_rd_data_rrr}),
   .din_ready(),
 
   .dout_valid(m_axis_tvalid),
-  .dout({m_axis_tlast, m_axis_tempty, m_axis_tdata}),
+  .dout({m_axis_tfirst, m_axis_tlast, m_axis_tempty, m_axis_tdata}),
   .dout_ready(m_axis_tready)
 );
 

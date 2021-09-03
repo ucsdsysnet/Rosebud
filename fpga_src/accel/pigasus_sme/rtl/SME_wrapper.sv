@@ -11,6 +11,7 @@ module pigasus_sme_wrapper # (
   input  wire [BYTE_COUNT*8-1:0] s_axis_tdata,
   input  wire [STRB_COUNT-1:0]   s_axis_tempty,
   input  wire                    s_axis_tvalid,
+  input  wire                    s_axis_tfirst,
   input  wire                    s_axis_tlast,
   output wire                    s_axis_tready,
 
@@ -48,16 +49,6 @@ module pigasus_sme_wrapper # (
   wire [55:0] preamble     = preamble_state_in[55:0];
   wire        is_tcp       = preamble_state_in[56];
   wire        has_preamble = preamble_state_in[60];
-
-  reg s_axis_tfirst;
-  always @ (posedge clk)
-    if(rst)
-      s_axis_tfirst <= 1'b1;
-    else
-      s_axis_tfirst <= ( s_axis_tfirst || (!s_axis_tvalid) ||
-                        (s_axis_tvalid && s_axis_tready && s_axis_tlast) ) &&
-                      !(s_axis_tvalid && s_axis_tready &&
-                        s_axis_tfirst && !s_axis_tlast);
 
   // TODO: should test if real run also needs it
   reg [BYTE_COUNT*8-1:0] s_axis_tdata_rev;
@@ -110,7 +101,7 @@ module pigasus_sme_wrapper # (
     if (has_preamble) begin
       if (has_extra_r)
         in_pkt_data = {rest_7,   {8*(BYTE_COUNT-7){1'b1}}};
-      else if (s_axis_tfirst) // if it's not valid not important
+      else if (s_axis_tfirst)
         in_pkt_data = {preamble, s_axis_tdata_rev[8*BYTE_COUNT-1:56]};
       else
         in_pkt_data = {rest_7,   s_axis_tdata_rev[8*BYTE_COUNT-1:56]};

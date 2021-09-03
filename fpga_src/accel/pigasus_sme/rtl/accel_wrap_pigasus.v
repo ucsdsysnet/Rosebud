@@ -48,7 +48,10 @@ module accel_wrap #(
 assign error = 1'b0;
 
 localparam LEN_WIDTH = 14;
-localparam BLOCK_ADDR_WIDTH =PMEM_ADDR_WIDTH-PMEM_SEL_BITS;
+localparam BLOCK_ADDR_WIDTH = PMEM_ADDR_WIDTH-PMEM_SEL_BITS;
+
+localparam HASH_TABLE_BLOCKS = 4;
+localparam HASH_SEL_BITS     = $clog2(HASH_TABLE_BLOCKS);
 
 reg   dma_done;
 wire  dma_ready;
@@ -64,8 +67,14 @@ reg  [63:0]                cmd_preamble_reg;
 reg  [31:0]                cmd_port_reg;
 reg  [7:0]                 cmd_slot_reg;
 
-reg  [31:0] src_ip_reg = 0;
-reg         src_ip_valid_reg = 0;
+reg  [ACC_ADDR_WIDTH-1:0]  flow_table_addr;
+reg  [HASH_SEL_BITS-1:0]   flow_table_block;
+reg                        flow_table_bank;
+reg  [2*DATA_WIDTH-1:0]    flow_table_rd_data;
+reg                        flow_table_32B_rd;
+reg                        flow_rd_valid_reg;
+reg                        flow_rd_ready;
+
 reg         read_data_stall_reg;
 
 wire        match_valid;
@@ -75,7 +84,9 @@ wire [63:0] accel_state;
 wire [7:0]  accel_slot;
 wire        accel_state_valid;
 
-wire ip_match, ip_done;
+// reg  [31:0] src_ip_reg;
+// reg         src_ip_valid_reg;
+// wire ip_match, ip_done;
 
 reg [IO_DATA_WIDTH-1:0] read_data_reg;
 reg read_data_valid_reg;
@@ -88,21 +99,45 @@ always @(posedge clk) begin
   cmd_stop_reg  <= 1'b0;
   match_release <= 1'b0;
 
-  src_ip_valid_reg   <= 1'b0;
+  // src_ip_valid_reg    <= 1'b0;
   read_data_valid_reg <= 1'b0;
+  flow_rd_valid_reg   <= 1'b0;
 
   // Memory mapped I/O writes
   if (io_en && io_wen) begin
-    // <1xx xxxx> for IP write for CDN
-    if (io_addr[6]) begin
-      if(io_addr[5:4]==2'b00) begin // CDN
-        src_ip_reg       <= io_wr_data;
-        src_ip_valid_reg <= 1'b1;
-      end
-      // 2'b10 and 2'b11 used in read port
+    // <11x xxxx> for IP write for CDN and Hash READ
+    if (io_addr[6:5]==2'b11) begin
+      case({io_addr[4:2], 2'b00})
 
-    // <0 xxxx> for Pigasus IPS
-    end else if (!io_addr[5]) begin
+        // Burst read from hash table
+        5'h00: begin
+          flow_rd_valid_reg <= 1'b1;
+          if (flow_table_32B_rd) begin
+            flow_table_addr <= io_wr_data[ACC_ADDR_WIDTH-1:0];
+            flow_table_block<= io_wr_data[ACC_ADDR_WIDTH +: HASH_SEL_BITS];
+            flow_table_bank <= 1'b0;
+          end else begin
+            flow_table_addr <= io_wr_data[ACC_ADDR_WIDTH:1];
+            flow_table_block<= io_wr_data[ACC_ADDR_WIDTH+1 +: HASH_SEL_BITS];
+            flow_table_bank <= io_wr_data[0];
+          end
+        end
+        // set hash table reads to be 16B or 32B
+        5'h04: begin
+          if (io_strb[0])
+            flow_table_32B_rd <= io_wr_data[0];
+        end
+
+        // 5'h10: begin //CDN
+        //   src_ip_reg       <= io_wr_data;
+        //   src_ip_valid_reg <= 1'b1;
+        // end
+
+        // 5'h14 and 5'h18 are used in read
+      endcase
+
+    // <0xx xxxx> for Pigasus IPS, only half used
+    end else if (!io_addr[6]) begin
       case ({io_addr[4:2], 2'b00})
         // Pigasus control register, to start, stop and release the output
         5'h00: begin
@@ -112,8 +147,8 @@ always @(posedge clk) begin
             cmd_stop_reg  <= io_wr_data[2];
           end
         end
-        // DMA request len
 
+        // DMA request len
         5'h04: begin
           cmd_len_reg <= io_wr_data;
         end
@@ -147,34 +182,42 @@ always @(posedge clk) begin
   end
 
   // Memory mapped I/O reads
-  // There are 2 cases of read stall, for CDN or DoS
   if (io_en && !io_wen) begin
     read_data_reg <= 0;
     read_data_valid_reg <= 1'b1;
 
-    // <1xx xxxx> for IP write for CDN and DoS accels + DMA stat
-    if (io_addr[6]) begin
-      case(io_addr[5:4])
-        2'b00: begin // CDN
-          read_data_reg <= src_ip_reg;
+    // <11x xxxx> for IP write for CDN and Hash READ
+    if (io_addr[6:5]==2'b11) begin
+      case({io_addr[4:2], 2'b00})
+
+        5'h04: begin
+          read_data_reg <= {31'd0, flow_table_32B_rd};
         end
 
-        2'b10: begin
-          if (io_addr[3:2]==2'b00) begin
-            read_data_reg       <=  ip_match;
-            read_data_valid_reg <=  ip_done && (!src_ip_valid_reg);
-            read_data_stall_reg <= (!ip_done) || src_ip_valid_reg;
-          end
-        end
+        // // CDN
+        // 5'h10: begin
+        //   read_data_reg <= src_ip_reg;
+        // end
+        // 5'h14: begin
+        //   read_data_reg       <=   ip_match;
+        //   read_data_valid_reg <=   ip_done  && (!src_ip_valid_reg);
+        //   read_data_stall_reg <= (!ip_done) ||   src_ip_valid_reg;
+        // end
 
-        2'b11: begin
+        5'h18: begin
           read_data_reg <= {8'd0, 7'd0, dma_done_err,
-                            7'd0, dma_done, 7'd0, dma_ready};
+                            7'd0, dma_done, 7'd0, !dma_ready};
         end
       endcase
 
-    // <0 xxxx> for Pigasus IPS
-    end else if (!io_addr[5]) begin
+    // <10x xxxx> for reading the burst value
+    end else if (io_addr[6:5]==2'b10) begin
+      read_data_reg       <=   flow_table_rd_data[io_addr[4:2]*32 +: 32];
+      read_data_valid_reg <=   flow_rd_ready  && (!flow_rd_valid_reg);
+      read_data_stall_reg <= (!flow_rd_ready) ||   flow_rd_valid_reg;
+
+    // <0xx xxxx> for Pigasus IPS
+    end else if (!io_addr[6]) begin
       case ({io_addr[4:2], 2'b00})
         // Match status
         6'h00: begin
@@ -217,28 +260,36 @@ always @(posedge clk) begin
     end
   end
 
-  // core keeps the address in case of stall, there are total 2 cases
+  // core keeps the address in case of stall, there are total 3 cases
   if (read_data_stall_reg) begin
-    if (io_addr[6]) begin
-      read_data_reg       <=  ip_match;
-      read_data_valid_reg <=  ip_done;
-      read_data_stall_reg <= !ip_done;
-    end else begin // we are just avoiding same cycle release and valid
+    if (!io_addr[6]) begin // we are just avoiding same cycle release and valid
       read_data_reg[0]    <=  match_valid;
       read_data_valid_reg <=  1'b1;
       read_data_stall_reg <=  1'b0;
+    // end else if (!io_addr[5]) begin
+    end else begin
+      read_data_reg       <=  flow_table_rd_data[io_addr[4:2]*32 +: 32];
+      read_data_valid_reg <=  flow_rd_ready;
+      read_data_stall_reg <= !flow_rd_ready;
     end
+    // end else begin
+    //   read_data_reg       <=  ip_match;
+    //   read_data_valid_reg <=  ip_done;
+    //   read_data_stall_reg <= !ip_done;
+    // end
   end
 
   if (rst) begin
     cmd_valid_reg       <= 1'b0;
     cmd_stop_reg        <= 1'b0;
     match_release       <= 1'b0;
-    src_ip_valid_reg    <= 1'b0;
+    // src_ip_valid_reg    <= 1'b0;
+    flow_rd_valid_reg   <= 1'b0;
 
     read_data_stall_reg <= 1'b0;
     read_data_valid_reg <= 1'b0;
 
+    flow_table_32B_rd   <= 1'b0;
     // Initial state of preamble
     cmd_preamble_reg[63:56] <= 1'b0;
   end
@@ -305,13 +356,76 @@ simple_fifo # (
   .dout_ready(match_release && match_last)
 );
 
-// DMA engine for single block of the packet memory
+// Burst read for first blocks of the packet memory
+reg [ACC_ADDR_WIDTH-1:0] flow_table_addr_r;
+reg [HASH_SEL_BITS-1:0]  flow_table_block_r,  flow_table_block_rr,  flow_table_block_rrr;
+reg                      flow_table_bank_r,   flow_table_bank_rr,   flow_table_bank_rrr;
+reg                      flow_rd_valid_reg_r, flow_rd_valid_reg_rr, flow_rd_valid_reg_rrr;
+
+always @ (posedge clk) begin
+  // 1 cycle read req pipe, 1 cycle memory read,
+  // 1 cycle result pipe register in mem_sys, 1 cycle block select
+  flow_rd_valid_reg_r   <= flow_rd_valid_reg;
+  flow_rd_valid_reg_rr  <= flow_rd_valid_reg_r;
+  flow_rd_valid_reg_rrr <= flow_rd_valid_reg_rr;
+
+  flow_table_bank_r     <= flow_table_bank;
+  flow_table_bank_rr    <= flow_table_bank_r;
+  flow_table_bank_rrr   <= flow_table_bank_rr;
+
+  flow_table_block_r    <= flow_table_block;
+  flow_table_block_rr   <= flow_table_block_r;
+  flow_table_block_rrr  <= flow_table_block_rr;
+
+  // We only need 1 register for read address
+  flow_table_addr_r     <= flow_table_addr;
+
+  // Last valid keeps it's state until a new rd request arrives
+  flow_rd_ready <= flow_rd_valid_reg_rrr ||
+                   (flow_rd_ready && !flow_rd_valid_reg);
+
+  if (flow_rd_valid_reg_rrr)
+    flow_table_rd_data <= flow_table_bank_rrr ? {flow_mem_data_b1, flow_mem_data_b2}:
+                                                {flow_mem_data_b2, flow_mem_data_b1};
+  if (rst) begin // Using register for all due to resources
+    flow_rd_valid_reg_r   <= 1'b0;
+    flow_rd_valid_reg_rr  <= 1'b0;
+    flow_rd_valid_reg_rrr <= 1'b0;
+    // flow_table_bank_r     <= 1'b0;
+    // flow_table_bank_rr    <= 1'b0;
+    // flow_table_bank_rrr   <= 1'b0;
+    // flow_table_block_r    <= {HASH_SEL_BITS{1'b0}};
+    // flow_table_block_rr   <= {HASH_SEL_BITS{1'b0}};
+    // flow_table_block_rrr  <= {HASH_SEL_BITS{1'b0}};
+    flow_rd_ready         <= 1'b0;
+  end
+
+end
+
+genvar j;
+generate
+  for (j=0; j< HASH_TABLE_BLOCKS; j = j + 1) begin: hash_table_ens
+    assign acc_en_b1[j] = flow_rd_valid_reg_r;
+    assign acc_en_b2[j] = flow_rd_valid_reg_r;
+    assign acc_wen_b1[j*STRB_WIDTH +: STRB_WIDTH] = {STRB_WIDTH{1'b0}};
+    assign acc_wen_b2[j*STRB_WIDTH +: STRB_WIDTH] = {STRB_WIDTH{1'b0}};
+    assign acc_addr_b1[j*ACC_ADDR_WIDTH +: ACC_ADDR_WIDTH] = flow_table_addr_r;
+    assign acc_addr_b2[j*ACC_ADDR_WIDTH +: ACC_ADDR_WIDTH] = flow_table_addr_r;
+  end
+endgenerate
+
+wire [DATA_WIDTH-1:0] flow_mem_data_b1 = acc_rd_data_b1[flow_table_block_rrr*DATA_WIDTH +: DATA_WIDTH];
+wire [DATA_WIDTH-1:0] flow_mem_data_b2 = acc_rd_data_b2[flow_table_block_rrr*DATA_WIDTH +: DATA_WIDTH];
+
+
+// DMA engine for last blocks of the packet memory
 localparam ATTACHED_CNT = SLOT_COUNT/8;
 localparam ATTACHED = ACC_MEM_BLOCKS-ATTACHED_CNT;
 localparam EMPTY_WIDTH = $clog2(DATA_WIDTH/8);
 
 wire [DATA_WIDTH-1:0]  accel_tdata;
 wire [EMPTY_WIDTH-1:0] accel_tempty;
+wire                   accel_tfirst;
 wire                   accel_tlast;
 wire                   accel_tvalid;
 wire                   accel_tready;
@@ -343,6 +457,7 @@ single_accel_rd_dma # (
 
   .m_axis_tdata(accel_tdata),
   .m_axis_tempty(accel_tempty),
+  .m_axis_tfirst(accel_tfirst),
   .m_axis_tlast(accel_tlast),
   .m_axis_tvalid(accel_tvalid),
   .m_axis_tready(accel_tready)
@@ -354,7 +469,7 @@ assign acc_wen_b2[ATTACHED*STRB_WIDTH +: ATTACHED_CNT*STRB_WIDTH] = {ATTACHED_CN
 genvar i;
 
 generate
-  for (i = 0; i < (ACC_MEM_BLOCKS-ATTACHED_CNT); i = i + 1) begin: other_mem_ens
+  for (i = HASH_TABLE_BLOCKS; i < (ACC_MEM_BLOCKS-ATTACHED_CNT); i = i + 1) begin: other_mem_ens
     assign acc_en_b1[i]  = 1'b0;
     assign acc_en_b2[i]  = 1'b0;
     assign acc_wen_b1[i*STRB_WIDTH +: STRB_WIDTH] = {STRB_WIDTH{1'b0}};
@@ -383,6 +498,7 @@ pigasus_sme_wrapper fast_pattern_sme_inst (
   .s_axis_tdata(accel_tdata),
   .s_axis_tempty(accel_tempty),
   .s_axis_tvalid(accel_tvalid),
+  .s_axis_tfirst(accel_tfirst),
   .s_axis_tlast(accel_tlast),
   .s_axis_tready(accel_tready),
 
@@ -423,17 +539,17 @@ simple_fifo # (
   .dout_ready(match_release && match_last)
 );
 
-// CND IP check accelerator
-// ip_match and ip_done keep their value until new valid is asserted
-// It needs byte swap due to network packets endian
-ip_match ip_match_inst (
-  .clk(clk),
-  .rst(rst),
-  .addr({src_ip_reg[7:0], src_ip_reg[15:8],
-         src_ip_reg[23:16], src_ip_reg[31:24]}),
-  .valid(src_ip_valid_reg),
-  .match(ip_match),
-  .done(ip_done)
-);
+// // CND IP check accelerator
+// // ip_match and ip_done keep their value until new valid is asserted
+// // It needs byte swap due to network packets endian
+// ip_match ip_match_inst (
+//   .clk(clk),
+//   .rst(rst),
+//   .addr({src_ip_reg[7:0], src_ip_reg[15:8],
+//          src_ip_reg[23:16], src_ip_reg[31:24]}),
+//   .valid(src_ip_valid_reg),
+//   .match(ip_match),
+//   .done(ip_done)
+// );
 
 endmodule
