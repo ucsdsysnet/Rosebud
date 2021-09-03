@@ -63,7 +63,9 @@ PCAP         = os.path.abspath(os.path.join(os.path.dirname(__file__),
                 '../python/attack.pcap'))
                 # 'm10_100.pcap'))
 
-PACKETS = []
+SPARSE_PKTS = False
+PREAMBLE    = True
+PACKETS     = []
 
 with PcapReader(open(PCAP, 'rb')) as pcap:
     for pkt in pcap:
@@ -79,6 +81,13 @@ async def run_test_pigasus(dut):
 
     data_ch_source = AxiStreamSource(AxiStreamBus.from_prefix(dut, "s_axis"),  dut.clk, dut.rst)
     data_ch_source.log.setLevel("WARNING")
+
+    if (PREAMBLE):
+      dut.has_preamble <= 1
+    else:
+      dut.has_preamble <= 0
+
+    dut.preamble <= 0xFEFEFEFEFEFEFE
 
     dut.meta_valid <= 0
     dut.rst <= 0
@@ -104,7 +113,12 @@ async def run_test_pigasus(dut):
         await RisingEdge(dut.clk)
         dut.meta_valid <= 0
         await data_ch_source.send(pkt[0])
-        # await data_ch_source.wait()
+        if (SPARSE_PKTS):
+          await data_ch_source.wait()
+
+    if (not SPARSE_PKTS):
+      for pkt in PACKETS:
+        await data_ch_source.wait()
 
     await Timer(1000)
     await RisingEdge(dut.clk)

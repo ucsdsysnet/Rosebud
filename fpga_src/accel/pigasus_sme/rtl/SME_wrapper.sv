@@ -37,9 +37,45 @@ module pigasus_sme_wrapper # (
   output reg                     state_out_valid
 );
 
-  ///////////////////////////////////////////////
-  //////////   Adjusting input data   ///////////
-  ///////////////////////////////////////////////
+  //////////////////////////////////////////////////////////////////////////
+  //////////////////////   Preprocessing input data   //////////////////////
+  //////////////////////////////////////////////////////////////////////////
+
+  reg [BYTE_COUNT*8-1:0] s_axis_tdata_rev_r;
+  reg [STRB_COUNT-1:0]   s_axis_tempty_r;
+  reg                    s_axis_tvalid_r;
+  reg                    s_axis_tfirst_r;
+  reg                    s_axis_tlast_r;
+  reg [STRB_COUNT-1:0]   empty_minus_7;
+  reg                    empty_less_than_7;
+  integer i;
+
+  always @ (posedge clk) begin
+    s_axis_tvalid_r <= (s_axis_tvalid   && s_axis_tready) ||
+                       (s_axis_tvalid_r && !s_axis_tready);
+
+    // Ready is asserted based on the registerred input data,
+    // so when extra_r or pigasus ready do not accept the incoming
+    // data, proper SoP is already in the registerred data, just
+    // not used for 1 or 2 cycles based on extra_r state;
+    if (s_axis_tvalid && s_axis_tready) begin
+      s_axis_tempty_r   <= s_axis_tempty;
+      s_axis_tfirst_r   <= s_axis_tfirst;
+      s_axis_tlast_r    <= s_axis_tlast;
+      empty_less_than_7 <= (s_axis_tempty < 7);
+
+      // If more than 7 overflows and becomes empty-7
+      // If less than 7, becomes the extra cycle tempty
+      empty_minus_7   <= (BYTE_COUNT-7) + s_axis_tempty;
+
+      // Byte swap the input data
+      for (i=1;i<=BYTE_COUNT;i=i+1)
+        s_axis_tdata_rev_r[(i-1)*8+:8] <= s_axis_tdata[(BYTE_COUNT-i)*8+:8];
+    end
+
+    if (rst)
+      s_axis_tvalid_r <= 1'b0;
+  end
 
   // Metadata state, 56 bits preamble, 1 bit is_tcp,
   // 3 bits zero, 1 bit has_preamble, 3 bits zero.
@@ -50,76 +86,84 @@ module pigasus_sme_wrapper # (
   wire        is_tcp       = preamble_state_in[56];
   wire        has_preamble = preamble_state_in[60];
 
-  // TODO: should test if real run also needs it
-  reg [BYTE_COUNT*8-1:0] s_axis_tdata_rev;
-  integer i;
-  always @ (*)
-    for (i=1;i<=BYTE_COUNT;i=i+1)
-      s_axis_tdata_rev[(i-1)*8+:8] = s_axis_tdata[(BYTE_COUNT-i)*8+:8];
 
-  // Latching of LSB 7 bytes and state for extra cycle if necessary
+  //////////////////////////////////////////////////////////////////////////
+  /////// Latching of LSB 7 bytes and check if extra cycle is needed ///////
+  //////////////////////////////////////////////////////////////////////////
+
   reg [55:0]            rest_7;
   reg [STRB_COUNT-1:0]  rem_empty;
-  reg                   has_extra_r;
+  reg                   extra_cycle;
   wire                  in_pkt_ready;
 
   always @ (posedge clk) begin
-    rest_7      <= s_axis_tdata_rev[55:0];
-    rem_empty   <= (BYTE_COUNT-7) + s_axis_tempty[2:0];
+    if (s_axis_tvalid_r && in_pkt_ready) begin
+      rest_7    <= s_axis_tdata_rev_r[55:0];
+      rem_empty <= empty_minus_7;
+    end
 
-    if (s_axis_tvalid && s_axis_tlast && s_axis_tready &&
-        has_preamble && (s_axis_tempty < 7))
-      has_extra_r <= 1'b1;
-    else if (has_extra_r && in_pkt_ready)
-      has_extra_r <= 1'b0;
+    if (s_axis_tvalid_r && s_axis_tlast_r && in_pkt_ready &&
+        has_preamble && empty_less_than_7)
+      extra_cycle <= 1'b1;
+    else if (extra_cycle && in_pkt_ready)
+      extra_cycle <= 1'b0;
 
     if (rst)
-      has_extra_r <= 1'b0;
+      extra_cycle <= 1'b0;
   end
 
-  // Add the preamble if necessary
+
+  //////////////////////////////////////////////////////////////////////////
+  ///////////////////   Add the preamble if necessary   ////////////////////
+  //////////////////////////////////////////////////////////////////////////
+
   reg  [BYTE_COUNT*8-1:0] in_pkt_data;
   wire [STRB_COUNT-1:0]   in_pkt_empty;
   wire                    in_pkt_valid;
   wire                    in_pkt_sop;
   wire                    in_pkt_eop;
 
-  assign in_pkt_eop    = has_extra_r || (s_axis_tlast &&
-                      !(has_preamble && (s_axis_tempty < 7)));
-  assign in_pkt_valid  = s_axis_tvalid || has_extra_r;
-  assign in_pkt_sop    = s_axis_tfirst && !has_extra_r;
-  assign in_pkt_empty  = (!has_preamble) ? s_axis_tempty :
-                             has_extra_r ? rem_empty :
-                     (s_axis_tempty > 7) ? (s_axis_tempty-7) :
-                                           {STRB_COUNT{1'b0}};
+  assign in_pkt_eop    = extra_cycle || (s_axis_tlast_r &&
+                      !(has_preamble && empty_less_than_7));
+  assign in_pkt_valid  = s_axis_tvalid_r ||  extra_cycle;
+  assign in_pkt_sop    = s_axis_tfirst_r && !extra_cycle;
+  assign in_pkt_empty  = (!has_preamble) ? s_axis_tempty_r :
+                             extra_cycle ? rem_empty :
+                       empty_less_than_7 ? {STRB_COUNT{1'b0}} :
+                                           empty_minus_7;
 
-  assign s_axis_tready = in_pkt_ready && !has_extra_r;
+  assign s_axis_tready = in_pkt_ready && !extra_cycle;
 
   // Note that if there are non_valid bytes at LSB, first_filter masks the empty
   // bytes, so tempty takes care of them, even in case of EOP and empty>=7
   always @ (*)
     if (has_preamble) begin
-      if (has_extra_r)
+      if (extra_cycle)
         in_pkt_data = {rest_7,   {8*(BYTE_COUNT-7){1'b1}}};
-      else if (s_axis_tfirst)
-        in_pkt_data = {preamble, s_axis_tdata_rev[8*BYTE_COUNT-1:56]};
+      else if (s_axis_tfirst_r)
+        in_pkt_data = {preamble, s_axis_tdata_rev_r[8*BYTE_COUNT-1:56]};
       else
-        in_pkt_data = {rest_7,   s_axis_tdata_rev[8*BYTE_COUNT-1:56]};
+        in_pkt_data = {rest_7,   s_axis_tdata_rev_r[8*BYTE_COUNT-1:56]};
     end else begin
-        in_pkt_data = s_axis_tdata_rev;
+        in_pkt_data = s_axis_tdata_rev_r;
     end
+
+
+  //////////////////////////////////////////////////////////////////////////
+  //////////////////////   processing output state   ///////////////////////
+  //////////////////////////////////////////////////////////////////////////
 
   // Save last 7 bytes. Use 0xFF for fillers so preamble is padded
   reg [55:0] last_7;
   always @ (posedge clk)
-    if (s_axis_tlast && s_axis_tvalid)
-      if (s_axis_tfirst) begin
+    if (s_axis_tlast_r && s_axis_tvalid_r)
+      if (s_axis_tfirst_r) begin
         if (has_preamble)
-          last_7 <= {preamble, s_axis_tdata_rev}   >> (8*s_axis_tempty);
+          last_7 <= {preamble, s_axis_tdata_rev_r}   >> (8*s_axis_tempty_r);
         else
-          last_7 <= {{56{1'b1}}, s_axis_tdata_rev} >> (8*s_axis_tempty);
+          last_7 <= {{56{1'b1}}, s_axis_tdata_rev_r} >> (8*s_axis_tempty_r);
       end else begin
-          last_7 <= {rest_7, s_axis_tdata_rev}     >> (8*s_axis_tempty);
+          last_7 <= {rest_7, s_axis_tdata_rev_r}     >> (8*s_axis_tempty_r);
       end
 
   // If it's not TCP, no need for preamble. But if it is TCP, output
@@ -130,11 +174,13 @@ module pigasus_sme_wrapper # (
     if (rst)
       state_out_valid <= 1'b0;
     else
-      state_out_valid <= s_axis_tlast && s_axis_tvalid && s_axis_tready;
+      state_out_valid <= s_axis_tlast_r && s_axis_tvalid_r && s_axis_tready;
 
-  ///////////////////////////////////////////////
-  ////////// Check for fast patterns ////////////
-  ///////////////////////////////////////////////
+
+  //////////////////////////////////////////////////////////////////////////
+  ////////////   Pigasus fast pattern matcher and port group   /////////////
+  //////////////////////////////////////////////////////////////////////////
+
   wire [127:0] pigasus_data;
   wire         pigasus_valid;
   wire         pigasus_ready;

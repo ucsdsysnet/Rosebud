@@ -111,7 +111,7 @@ reg                 mem_rd_last, mem_rd_first, mem_rd_bank, mem_rd_valid;
 wire                  act_rd_last = (act_rd_count == 1);
 
 wire [MASK_BITS-1:0] act_rd_empty = act_rd_last ? act_rd_final_empty :
-                                                  {MASK_BITS{1'b1}};
+                                                  {MASK_BITS{1'b0}};
 
 wire [LINE_ADDR_WIDTH-1:0] mem_rd_addr   = act_rd_addr;
 wire [LINE_ADDR_WIDTH-1:0] mem_rd_addr_n = act_rd_addr_n;

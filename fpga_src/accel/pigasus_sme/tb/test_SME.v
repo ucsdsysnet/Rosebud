@@ -12,9 +12,11 @@ module test_SME # (
   output wire                    s_axis_tready,
 
   input  wire                    meta_valid,
+  input  wire                    has_preamble,
   input  wire                    is_tcp,
   input  wire [15:0]             src_port,
   input  wire [15:0]             dst_port,
+  input  wire [55:0]             preamble,
 
   output wire [31:0]             sme_output,
   output wire                    sme_output_v,
@@ -28,6 +30,15 @@ module test_SME # (
     for (l=BYTE_COUNT-1; l>=0; l=l-1)
       if (!s_axis_tkeep[l])
         s_axis_tempty = s_axis_tempty+1;
+  end
+
+  reg s_axis_tfirst;
+
+  always @ (posedge clk) begin
+    s_axis_tfirst <= (s_axis_tfirst || !s_axis_tvalid || (s_axis_tvalid && s_axis_tready && s_axis_tlast))
+                    && ! (s_axis_tvalid && s_axis_tready && !s_axis_tlast);
+
+    if (rst) s_axis_tfirst <= 1'b0;
   end
 
   wire [71:0]  wr_data = 72'd0;
@@ -47,7 +58,7 @@ module test_SME # (
     .clear(1'b0),
 
     .din_valid(meta_valid),
-    .din({4'd1, 3'd0, is_tcp, 56'hFFFFFF_FFFFFFFF,
+    .din({3'd0, has_preamble, 3'd0, is_tcp, preamble,
           src_port, dst_port}),
     .din_ready(),
 
@@ -67,6 +78,7 @@ module test_SME # (
     .s_axis_tdata (s_axis_tdata),
     .s_axis_tempty(s_axis_tempty),
     .s_axis_tvalid(s_axis_tvalid),
+    .s_axis_tfirst(s_axis_tfirst),
     .s_axis_tlast (s_axis_tlast),
     .s_axis_tready(s_axis_tready),
 
