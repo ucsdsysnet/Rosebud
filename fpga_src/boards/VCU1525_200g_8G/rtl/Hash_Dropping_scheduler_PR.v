@@ -61,7 +61,7 @@ module scheduler_PR (
   parameter DATA_REG_TYPE   = 2;
   parameter CTRL_REG_TYPE   = 2;
   parameter DATA_FIFO_DEPTH = 4096;
-  parameter HASH_SEL_OFFSET = 0;
+  parameter HASH_SEL_OFFSET = 14;
   parameter RX_LINES_WIDTH  = 13;
 
   parameter SLOT_WIDTH      = $clog2(SLOT_COUNT+1);

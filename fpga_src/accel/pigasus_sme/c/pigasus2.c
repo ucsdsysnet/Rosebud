@@ -19,7 +19,7 @@
 // maximum number of slots (number of context objects)
 #define MAX_CTX_COUNT 16
 
-// #define HASH_SCHED
+#define HASH_SCHED
 
 // packet start offset
 // DWORD align Ethernet payload
@@ -63,9 +63,6 @@ struct flow {
 #define HASH_LOOKUP      (*((volatile unsigned short     *)(IO_EXT_BASE + 0x60)))
 #define HASH_BLOCK_32B   (*((volatile unsigned char      *)(IO_EXT_BASE + 0x64)))
 
-#define ACC_SRC_IP       (*((volatile unsigned int       *)(IO_EXT_BASE + 0x70)))
-#define ACC_CDN_MATCH    (*((volatile unsigned char      *)(IO_EXT_BASE + 0x74)))
-
 #define ACC_DMA_LEN      (*((volatile unsigned int       *)(IO_EXT_BASE + 0x04)))
 #define ACC_DMA_ADDR     (*((volatile unsigned int       *)(IO_EXT_BASE + 0x08)))
 #define ACC_DMA_STAT     (*((volatile unsigned int       *)(IO_EXT_BASE + 0x78)))
@@ -78,6 +75,10 @@ struct slot_context {
   int index;
   struct Desc desc;
   unsigned char *packet;
+  unsigned short *hash_L;
+  unsigned short *hash_H;
+  unsigned short flow_id;
+  unsigned short flow_tag;
   unsigned char *header;
 
   struct eth_header *eth_hdr;
@@ -104,6 +105,24 @@ unsigned int slot_size;
 unsigned int header_slot_base;
 unsigned int header_slot_size;
 
+static inline void process_flow_rd (struct slot_context *slot){
+  DEBUG_OUT_L = FLOW_TABLE_ENTRY -> tag;
+  DEBUG_OUT_L = FLOW_TABLE_ENTRY -> seq_num;
+  DEBUG_OUT_H = FLOW_TABLE_ENTRY -> ts;
+  DEBUG_OUT_H = FLOW_TABLE_ENTRY -> state.state_8[7];
+  DEBUG_OUT   = FLOW_TABLE_ENTRY -> state.state_64;
+}
+
+static inline void process_flow_wr (struct slot_context *slot){
+  struct flow * flow_wr = (struct flow *) (PMEM_BASE) + (slot->flow_id);
+
+  flow_wr -> tag = 0xDEAD;
+  flow_wr -> ts = 0x4598;
+  flow_wr -> seq_num = 0x55;
+  flow_wr -> state.state_8[7] = 0x99;
+}
+
+
 static inline void slot_rx_packet(struct slot_context *slot)
 {
   char ch;
@@ -112,6 +131,10 @@ static inline void slot_rx_packet(struct slot_context *slot)
   unsigned int payload_length;
 
   PROFILE_B(0x00010000);
+  slot->flow_id  = (*(slot->hash_H)) >> 1;
+  HASH_LOOKUP = slot->flow_id;
+  // slot->flow_tag = ((*(slot->hash_H)) & 0x1) | ((*(slot->hash_L)) & 0xFFFFFFF0);
+  slot->flow_tag = *(slot->hash_L);
 
   // check eth type
   PROFILE_B(0xF0010000 | slot->eth_hdr->type);
@@ -120,9 +143,6 @@ static inline void slot_rx_packet(struct slot_context *slot)
     PROFILE_B(0x00010001);
     // IPv4 packet
     slot->l3_header.ipv4_hdr = (struct ipv4_header*)(slot->header+payload_offset);
-
-    // start CDN IP check
-    ACC_SRC_IP = slot->l3_header.ipv4_hdr->src_ip;
 
     // check version
     ch = slot->l3_header.ipv4_hdr->version_ihl;
@@ -136,14 +156,6 @@ static inline void slot_rx_packet(struct slot_context *slot)
     // header size from IHL
     payload_offset += (ch & 0xf) << 2;
     slot->l4_header.tcp_hdr = (struct tcp_header*)(slot->header+payload_offset);
-
-    // check IP
-    if (ACC_CDN_MATCH)
-    {
-      // it's a match, drop it
-      PROFILE_B(0x0001000a);
-      goto drop;
-    }
 
     PROFILE_B(0x00010002);
     // check protocol
@@ -159,10 +171,10 @@ static inline void slot_rx_packet(struct slot_context *slot)
           // no payload
           goto drop;
 
+        process_flow_rd(slot);
+
         payload_length = packet_length - payload_offset;
         slot->payload_offset = payload_offset;
-
-        // TODO: flow hash processing
 
         ACC_DMA_ADDR  = (unsigned int)(slot->desc.data)+slot->payload_offset;
         ACC_DMA_LEN   = slot->desc.len-slot->payload_offset;
@@ -188,8 +200,6 @@ static inline void slot_rx_packet(struct slot_context *slot)
 
         payload_length = packet_length - payload_offset;
         slot->payload_offset = payload_offset;
-
-        slot->flow = 0;
 
         ACC_DMA_ADDR  = (unsigned int)(slot->desc.data)+slot->payload_offset;
         ACC_DMA_LEN   = slot->desc.len-slot->payload_offset;
@@ -226,6 +236,12 @@ static inline void slot_match(struct slot_context *slot){
       slot->match_count ++;
     } else { // EoP
 
+      if (DATA_OFFSET) {
+        // apply offset
+        slot->desc.data = slot->packet + DATA_OFFSET;
+        slot->desc.len = slot->desc.len - DATA_OFFSET;
+      }
+
       if (slot->match_count==0)
         slot->desc.len = 0;
       else
@@ -233,6 +249,7 @@ static inline void slot_match(struct slot_context *slot){
 
       pkt_send(&slot->desc);
       slot->match_count = 0;
+      process_flow_wr (slot);
     }
 
     if (ACC_PIG_MATCH)
@@ -241,23 +258,6 @@ static inline void slot_match(struct slot_context *slot){
       break;
   }
 
-}
-
-static inline void process_flow_rd (struct slot_context *slot){
-  DEBUG_OUT_L = FLOW_TABLE_ENTRY -> tag;
-  DEBUG_OUT_L = FLOW_TABLE_ENTRY -> seq_num;
-  DEBUG_OUT_H = FLOW_TABLE_ENTRY -> ts;
-  DEBUG_OUT_H = FLOW_TABLE_ENTRY -> state.state_8[7];
-  DEBUG_OUT   = FLOW_TABLE_ENTRY -> state.state_64;
-}
-
-static inline void process_flow_wr (unsigned short flow_entry){
-  struct flow * flow_wr = (struct flow *) (PMEM_BASE) + flow_entry;
-
-  flow_wr -> tag = 0xDEAD;
-  flow_wr -> ts = 0x4598;
-  flow_wr -> seq_num = 0x55;
-  flow_wr -> state.state_8[7] = 0x99;
 }
 
 int main(void)
@@ -288,22 +288,18 @@ int main(void)
   // init slot context structures
   for (int i = 0; i < slot_count; i++)
   {
-    context[i].index = i;
-    context[i].desc.tag = i+1;
+    context[i].index     = i;
+    context[i].desc.tag  = i+1;
     context[i].desc.data = (unsigned char *)(PMEM_BASE + PKTS_START + PKT_OFFSET + i*slot_size);
-    context[i].packet = (unsigned char *)(PMEM_BASE + PKTS_START + PKT_OFFSET + i*slot_size);
-    context[i].header = (unsigned char *)(header_slot_base + PKT_OFFSET + i*header_slot_size);
-    context[i].eth_hdr = (struct eth_header*)(context[i].header + DATA_OFFSET);
+    context[i].packet    = (unsigned char *)(PMEM_BASE + PKTS_START + PKT_OFFSET + i*slot_size);
+    context[i].header    = (unsigned char *)(header_slot_base + PKT_OFFSET + i*header_slot_size);
+    context[i].hash_L    = (unsigned short *)(context[i].header);
+    context[i].hash_H    = (unsigned short *)(context[i].header+2);
+    context[i].eth_hdr   = (struct eth_header*)(context[i].header + DATA_OFFSET);
     context[i].match_count = 0;
   }
 
   PROFILE_A(0x00000005);
-
-  process_flow_wr (0x6000+0x535);
-  asm volatile("" ::: "memory");
-  HASH_LOOKUP = 0x6000+0x535;
-  asm volatile("" ::: "memory");
-  process_flow_rd(slot);
 
   while (1)
   {

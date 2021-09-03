@@ -1,4 +1,4 @@
-NAME=pigasus
+NAME=pigasus2
 
 # CPU options
 ARCH = rv32i
