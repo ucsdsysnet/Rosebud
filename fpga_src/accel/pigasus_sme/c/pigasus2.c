@@ -35,6 +35,18 @@
   #define DATA_OFFSET 0
 #endif
 
+// flows
+struct flow {
+  unsigned short tag;
+  unsigned short ts;
+  unsigned int   seq_num;
+  union {
+    volatile unsigned long long state_64;
+    volatile unsigned int       states_32[2];
+    volatile unsigned char      state_8[8];
+  } state;
+};
+
 // Accel wrapper registers mapping
 #define ACC_PIG_CTRL     (*((volatile unsigned char      *)(IO_EXT_BASE + 0x00)))
 #define ACC_PIG_MATCH    (*((volatile unsigned char      *)(IO_EXT_BASE + 0x00)))
@@ -47,7 +59,7 @@
 #define ACC_PIG_SLOT     (*((volatile unsigned char      *)(IO_EXT_BASE + 0x18)))
 #define ACC_PIG_RULE_ID  (*((volatile unsigned int       *)(IO_EXT_BASE + 0x1c)))
 
-#define HASH_TABLE       (*((volatile unsigned char      *)(IO_EXT_BASE + 0x40)))
+#define FLOW_TABLE_ENTRY   ((volatile struct flow        *)(IO_EXT_BASE + 0x40))
 #define HASH_LOOKUP      (*((volatile unsigned short     *)(IO_EXT_BASE + 0x60)))
 #define HASH_BLOCK_32B   (*((volatile unsigned char      *)(IO_EXT_BASE + 0x64)))
 
@@ -60,16 +72,6 @@
 #define ACC_DMA_BUSY     (*((volatile unsigned char      *)(IO_EXT_BASE + 0x78)))
 #define ACC_DMA_DONE     (*((volatile unsigned char      *)(IO_EXT_BASE + 0x79)))
 #define ACC_DMA_DONE_ERR (*((volatile unsigned char      *)(IO_EXT_BASE + 0x7a)))
-
-// flows
-struct flow {
-  unsigned int hash;
-  unsigned int state;
-  union {
-    volatile unsigned long long state_64;
-    volatile unsigned int       states_32[2];
-  } sme_state;
-};
 
 // Slot contexts
 struct slot_context {
@@ -94,9 +96,6 @@ struct slot_context {
 
 // #define FLOW_TABLE_SIZE 32768
 #define FLOW_TABLE_SIZE 1024
-
-unsigned char *flow_table;
-
 
 struct slot_context context[MAX_CTX_COUNT];
 
@@ -244,6 +243,23 @@ static inline void slot_match(struct slot_context *slot){
 
 }
 
+static inline void process_flow_rd (struct slot_context *slot){
+  DEBUG_OUT_L = FLOW_TABLE_ENTRY -> tag;
+  DEBUG_OUT_L = FLOW_TABLE_ENTRY -> seq_num;
+  DEBUG_OUT_H = FLOW_TABLE_ENTRY -> ts;
+  DEBUG_OUT_H = FLOW_TABLE_ENTRY -> state.state_8[7];
+  DEBUG_OUT   = FLOW_TABLE_ENTRY -> state.state_64;
+}
+
+static inline void process_flow_wr (unsigned short flow_entry){
+  struct flow * flow_wr = (struct flow *) (PMEM_BASE) + flow_entry;
+
+  flow_wr -> tag = 0xDEAD;
+  flow_wr -> ts = 0x4598;
+  flow_wr -> seq_num = 0x55;
+  flow_wr -> state.state_8[7] = 0x99;
+}
+
 int main(void)
 {
   struct slot_context *slot;
@@ -281,25 +297,13 @@ int main(void)
     context[i].match_count = 0;
   }
 
-  // init flow table
-  flow_table = (unsigned char *)PMEM_BASE;
-
-  for (int i = 0; i < FLOW_TABLE_SIZE; i++)
-  {
-    struct flow* flow = (struct flow *)(flow_table + (i << 4));
-
-    flow->hash = 0;
-  }
-
   PROFILE_A(0x00000005);
 
-  HASH_BLOCK_32B = 0;
-  HASH_LOOKUP = 0x535;
-	asm volatile("" ::: "memory");
-  DEBUG_OUT_L = * (((unsigned int *) &HASH_TABLE) + 0);
-  DEBUG_OUT_H = * (((unsigned int *) &HASH_TABLE) + 1);
-  DEBUG_OUT_L = * (((unsigned int *) &HASH_TABLE) + 2);
-  DEBUG_OUT_H = * (((unsigned int *) &HASH_TABLE) + 3);
+  process_flow_wr (0x6000+0x535);
+  asm volatile("" ::: "memory");
+  HASH_LOOKUP = 0x6000+0x535;
+  asm volatile("" ::: "memory");
+  process_flow_rd(slot);
 
   while (1)
   {
