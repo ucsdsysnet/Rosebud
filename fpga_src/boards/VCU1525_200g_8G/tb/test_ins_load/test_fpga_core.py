@@ -76,17 +76,17 @@ PRINT_PKTS   = True
 PACKETS = []
 
 eth = Ether(src='5A:51:52:53:54:55', dst='DA:D1:D2:D3:D4:D5')
-# ip = IP(src='192.168.1.100', dst='192.168.1.101')
-# udp = UDP(sport=1234, dport=5678)
+ip = IP(src='192.168.1.100', dst='192.168.1.101')
+udp = UDP(sport=1234, dport=5678)
 payload = bytes([0]+[0]+[x % 256 for x in range(SIZE_0-2)])
-test_pkt = eth / payload
+test_pkt = eth / ip/ udp / payload
 PACKETS.append(test_pkt)
 
 eth = Ether(src='DA:D1:D2:D3:D4:D5', dst='5A:51:52:53:54:55')
-# ip = IP(src='192.168.1.100', dst='192.168.1.101')
-# tcp = TCP(sport=1234, dport=5678)
+ip = IP(src='192.168.1.102', dst='192.168.1.101')
+tcp = TCP(sport=1234, dport=5678)
 payload = bytes([0]+[0]+[x % 256 for x in range(SIZE_1-2)])
-test_pkt = eth / payload
+test_pkt = eth / ip / tcp / payload
 PACKETS.append(test_pkt)
 
 

@@ -283,8 +283,9 @@ module scheduler_PR (
       );
 
       // integrate hash_type?
+      wire [31:0] sel_hash = rx_hash_f[q*32 +: 32];
       assign masked_hash[q*CORE_ID_WIDTH +: CORE_ID_WIDTH] =
-                 rx_hash_f[(q*32)+HASH_SEL_OFFSET +: CORE_ID_WIDTH];
+                sel_hash[HASH_SEL_OFFSET +: CORE_ID_WIDTH];
 
       /// *** DATA FIFO WHILE WAITING FOR HASH AND DESC ALLOCATION *** ///
 
