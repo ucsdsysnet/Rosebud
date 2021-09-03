@@ -74,12 +74,13 @@ struct flow {
 struct slot_context {
   int index;
   struct Desc desc;
-  unsigned char *packet;
+  unsigned char  *packet;
+  unsigned char  *eop;
   unsigned short *hash_L;
   unsigned short *hash_H;
   unsigned short flow_id;
   unsigned short flow_tag;
-  unsigned char *header;
+  unsigned char  *header;
 
   struct eth_header *eth_hdr;
   union {
@@ -93,7 +94,7 @@ struct slot_context {
   unsigned int payload_offset;
   struct flow *flow;
   unsigned int match_count;
-  unsigned char state;
+  unsigned char send2host;
 };
 
 // #define FLOW_TABLE_SIZE 32768
@@ -106,16 +107,6 @@ unsigned int slot_size;
 unsigned int header_slot_base;
 unsigned int header_slot_size;
 
-static inline void process_flow_wr (struct slot_context *slot){
-  struct flow * flow_wr = (struct flow *) (PMEM_BASE) + (slot->flow_id);
-
-  flow_wr -> tag = 0xDEAD;
-  flow_wr -> ts = 0x4598;
-  flow_wr -> seq_num = 0x55;
-  flow_wr -> state.state_8[7] = 0x99;
-}
-
-
 static inline void slot_rx_packet(struct slot_context *slot)
 {
   char ch;
@@ -125,6 +116,8 @@ static inline void slot_rx_packet(struct slot_context *slot)
   unsigned short cur_time, last_time;
   unsigned int   last_seq_num, cur_seq_num;
   unsigned char  state;
+  struct flow * flow_wr;
+
   int            tag_match, time_out;
 
   PROFILE_B(0x00010000);
@@ -174,6 +167,9 @@ static inline void slot_rx_packet(struct slot_context *slot)
         // Clean entry
         if (state==0){
           ACC_PIG_STATE_H = 0x01FFFFFF;
+          slot->send2host = 0;
+          flow_wr = (struct flow *) (PMEM_BASE) + (slot->flow_id);
+          flow_wr -> tag = FLOW_TABLE_ENTRY->tag;
           goto process_tcp;
         }
 
@@ -194,10 +190,11 @@ static inline void slot_rx_packet(struct slot_context *slot)
         // tag colission, send to host
         if (!tag_match){
           // apply offset
-          slot->desc.data = slot->packet + DATA_OFFSET;
-          slot->desc.len = slot->desc.len - DATA_OFFSET;
+          slot->desc.data = slot->packet   + DATA_OFFSET;
+          slot->desc.len  = slot->desc.len - DATA_OFFSET;
           slot->desc.port = 2;
           pkt_send(&slot->desc);
+          slot->send2host = 1; //!
           return;
         }
 
@@ -225,6 +222,7 @@ process_tcp:
         ACC_PIG_PORTS = * (unsigned int *) slot->l4_header.tcp_hdr; // both ports
         ACC_PIG_SLOT  = slot->index;
         ACC_PIG_CTRL  = 1;
+        slot -> eop   = slot->packet + slot->desc.len;
         return;
 
       case 0x11: // UDP
@@ -244,6 +242,7 @@ process_tcp:
         ACC_PIG_STATE = 0;
         ACC_PIG_SLOT  = slot->index;
         ACC_PIG_CTRL  = 1;
+        slot -> eop   = slot->packet + slot->desc.len;
         return;
     }
   }
@@ -255,9 +254,9 @@ drop:
 
 static inline void slot_match(struct slot_context *slot){
   unsigned int rule_id;
-  PROFILE_A(rule_id);
-  // Save ACC_PIG_STATE to flow table if not already saved!
+  struct flow * flow_wr;
 
+  PROFILE_A(rule_id);
 
   while (1){ // To drain output FIFO
 
@@ -266,21 +265,34 @@ static inline void slot_match(struct slot_context *slot){
     ACC_PIG_CTRL = 2;
 
     if (rule_id!=0){
+      // Add rule IDs to the end of the packet
+      * slot->eop = rule_id;
+      slot->eop += 4;
+      slot->desc.len += 4;
       slot->match_count ++;
     } else { // EoP
 
       // apply offset
-      slot->desc.data = slot->packet + DATA_OFFSET;
-      slot->desc.len = slot->desc.len - DATA_OFFSET;
+      slot->desc.data = slot->packet   + DATA_OFFSET;
+      slot->desc.len  = slot->desc.len - DATA_OFFSET;
 
-      if (slot->match_count==0)
+      flow_wr->state.state_64 = ACC_PIG_STATE;
+
+      // TODO: state update might not be complete
+      if ((slot->match_count==0) && (!slot->send2host))
         slot->desc.len = 0;
-      else
+      else{
+        flow_wr->state.state_8[7] = (ACC_PIG_STATE_H>>24) | 0x80;
+        slot->send2host = 1;
         slot->desc.port = 2;
+      }
 
       pkt_send(&slot->desc);
       slot->match_count = 0;
-      // process_flow_wr (slot);
+
+      flow_wr          = (struct flow *) (PMEM_BASE) + (slot->flow_id);
+      flow_wr->ts      = TIMER_32_H && 0x0000FFFF;
+      flow_wr->seq_num = slot->l4_header.tcp_hdr->seq;
     }
 
     if (ACC_PIG_MATCH)

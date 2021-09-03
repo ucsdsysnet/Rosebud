@@ -133,7 +133,8 @@ module pigasus_sme_wrapper # (
 
   // If it's not TCP, no need for preamble. But if it is TCP, output
   // would have the has_preamble set
-  assign preamble_state_out = {3'd0, is_tcp, 3'd0, is_tcp, last_7};
+  assign preamble_state_out = {preamble_state_in[63:61], is_tcp,
+                               preamble_state_in[59:57], is_tcp, last_7};
   always @ (posedge clk)
     if (rst)
       state_out_valid <= 1'b0;
