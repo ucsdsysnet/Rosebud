@@ -93,6 +93,7 @@ struct slot_context {
   unsigned int payload_offset;
   struct flow *flow;
   unsigned int match_count;
+  unsigned char state;
 };
 
 // #define FLOW_TABLE_SIZE 32768
@@ -104,14 +105,6 @@ unsigned int slot_count;
 unsigned int slot_size;
 unsigned int header_slot_base;
 unsigned int header_slot_size;
-
-static inline void process_flow_rd (struct slot_context *slot){
-  DEBUG_OUT_L = FLOW_TABLE_ENTRY -> tag;
-  DEBUG_OUT_L = FLOW_TABLE_ENTRY -> seq_num;
-  DEBUG_OUT_H = FLOW_TABLE_ENTRY -> ts;
-  DEBUG_OUT_H = FLOW_TABLE_ENTRY -> state.state_8[7];
-  DEBUG_OUT   = FLOW_TABLE_ENTRY -> state.state_64;
-}
 
 static inline void process_flow_wr (struct slot_context *slot){
   struct flow * flow_wr = (struct flow *) (PMEM_BASE) + (slot->flow_id);
@@ -126,9 +119,13 @@ static inline void process_flow_wr (struct slot_context *slot){
 static inline void slot_rx_packet(struct slot_context *slot)
 {
   char ch;
-  unsigned int payload_offset = ETH_HEADER_SIZE + DATA_OFFSET;
-  unsigned int packet_length = slot->desc.len;
-  unsigned int payload_length;
+  unsigned int   payload_offset = ETH_HEADER_SIZE + DATA_OFFSET;
+  unsigned int   packet_length = slot->desc.len;
+  unsigned int   payload_length;
+  unsigned short cur_time, last_time;
+  unsigned int   last_seq_num, cur_seq_num;
+  unsigned char  state;
+  int            tag_match, time_out;
 
   PROFILE_B(0x00010000);
   slot->flow_id  = (*(slot->hash_H)) >> 1;
@@ -171,23 +168,63 @@ static inline void slot_rx_packet(struct slot_context *slot)
           // no payload
           goto drop;
 
-        process_flow_rd(slot);
+        PROFILE_B(0xDEAD0001);
+        state = FLOW_TABLE_ENTRY->state.state_8[7];
 
+        // Clean entry
+        if (state==0){
+          ACC_PIG_STATE_H = 0x01FFFFFF;
+          goto process_tcp;
+        }
+
+        PROFILE_B(0xDEAD0002);
+
+        cur_time  = TIMER_32_H && 0x0000FFFF;
+        last_time = FLOW_TABLE_ENTRY->ts;
+
+        // TCP time out
+        time_out  = ((cur_time < last_time) || ((cur_time - last_time) > 4));
+        tag_match = (slot->flow_tag == FLOW_TABLE_ENTRY->tag);
+
+        if (time_out && tag_match)
+          goto drop;
+
+        PROFILE_B(0xDEAD0003);
+
+        // tag colission, send to host
+        if (!tag_match){
+          // apply offset
+          slot->desc.data = slot->packet + DATA_OFFSET;
+          slot->desc.len = slot->desc.len - DATA_OFFSET;
+          slot->desc.port = 2;
+          pkt_send(&slot->desc);
+          return;
+        }
+
+        PROFILE_B(0xDEAD0004);
+
+        last_seq_num = FLOW_TABLE_ENTRY->seq_num;
+        cur_seq_num  = slot->l4_header.tcp_hdr->seq;
+
+        if (cur_seq_num == (last_seq_num + 1))
+          ACC_PIG_STATE = FLOW_TABLE_ENTRY -> state.state_64;
+          // goto process;
+        else if ((cur_seq_num > (last_seq_num + 4)) ||
+                 (cur_seq_num <= last_seq_num ))
+          goto drop;
+        else
+          return; // TODO: implement reorder list, for now just accumulate!
+
+        PROFILE_B(0xDEAD0005);
+process_tcp:
+        PROFILE_B(0xBEEFBEEF);
         payload_length = packet_length - payload_offset;
         slot->payload_offset = payload_offset;
-
         ACC_DMA_ADDR  = (unsigned int)(slot->desc.data)+slot->payload_offset;
         ACC_DMA_LEN   = slot->desc.len-slot->payload_offset;
-        // TCP header starts with both ports, src first
-        ACC_PIG_PORTS = * (unsigned int *) slot->l4_header.tcp_hdr;
-        // ACC_PIG_SRC_PORT = slot->l4_header.tcp_hdr->src_port;
-        // ACC_PIG_DST_PORT = slot->l4_header.tcp_hdr->dest_port;
-        // ACC_PIG_STATE = (unsigned long long )0x11FEFEFEFEFEFEFE;
-        ACC_PIG_STATE_L = 0xFFFFFFFF;
-        ACC_PIG_STATE_H = 0x11FFFFFF;
+        ACC_PIG_PORTS = * (unsigned int *) slot->l4_header.tcp_hdr; // both ports
         ACC_PIG_SLOT  = slot->index;
         ACC_PIG_CTRL  = 1;
-
         return;
 
       case 0x11: // UDP
@@ -203,14 +240,10 @@ static inline void slot_rx_packet(struct slot_context *slot)
 
         ACC_DMA_ADDR  = (unsigned int)(slot->desc.data)+slot->payload_offset;
         ACC_DMA_LEN   = slot->desc.len-slot->payload_offset;
-        // UDP header starts with both ports, src first
-        ACC_PIG_PORTS = * (unsigned int *) slot->l4_header.udp_hdr;
-        // ACC_PIG_SRC_PORT = slot->l4_header.udp_hdr->src_port;
-        // ACC_PIG_DST_PORT = slot->l4_header.udp_hdr->dest_port;
+        ACC_PIG_PORTS = * (unsigned int *) slot->l4_header.udp_hdr; // both ports
         ACC_PIG_STATE = 0;
         ACC_PIG_SLOT  = slot->index;
         ACC_PIG_CTRL  = 1;
-
         return;
     }
   }
@@ -236,11 +269,9 @@ static inline void slot_match(struct slot_context *slot){
       slot->match_count ++;
     } else { // EoP
 
-      if (DATA_OFFSET) {
-        // apply offset
-        slot->desc.data = slot->packet + DATA_OFFSET;
-        slot->desc.len = slot->desc.len - DATA_OFFSET;
-      }
+      // apply offset
+      slot->desc.data = slot->packet + DATA_OFFSET;
+      slot->desc.len = slot->desc.len - DATA_OFFSET;
 
       if (slot->match_count==0)
         slot->desc.len = 0;
@@ -249,7 +280,7 @@ static inline void slot_match(struct slot_context *slot){
 
       pkt_send(&slot->desc);
       slot->match_count = 0;
-      process_flow_wr (slot);
+      // process_flow_wr (slot);
     }
 
     if (ACC_PIG_MATCH)
