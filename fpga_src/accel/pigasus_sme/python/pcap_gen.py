@@ -39,7 +39,7 @@ import random
 from idstools.rule import parse
 
 from scapy.layers.l2 import Ether
-from scapy.layers.inet import IP, UDP, TCP
+from scapy.layers.inet import IP, UDP, TCP, fragment
 from scapy.utils import PcapWriter
 
 HTTP_PORTS=[36,80,81,82,83,84,85,86,87,88,89,90,311,383,555,591,593,631,801,808,818,901,972,1158,1220,1414,1533,1741,1812,1830,1942,2231,2301,2381,2578,2809,2980,3029,3037,3057,3128,3443,3702,4000,4343,4848,5000,5117,5250,5450,5600,5814,6080,6173,6988,7000,7001,7005,7071,7144,7145,7510,7770,7777,7778,7779,8000,8001,8008,8014,8015,8020,8028,8040,8080,8081,8082,8085,8088,8090,8118,8123,8180,8181,8182,8222,8243,8280,8300,8333,8344,8400,8443,8500,8509,8787,8800,8888,8899,8983,9000,9002,9060,9080,9090,9091,9111,9290,9443,9447,9710,9788,9999,10000,11371,12601,13014,15489,19980,29991,33300,34412,34443,34444,40007,41080,44449,50000,50002,51423,53331,55252,55555,56712]
@@ -262,7 +262,7 @@ def main():
 
                             src_port = port_gen(hdr[3])
                             dst_port = port_gen(hdr[6])
-                            match_list.append((b, prot, src_port, dst_port))
+                            match_list.append((b, prot, src_port, dst_port, random.randrange(0,2**32)))
 
                             if (rule_count <= pcap_limit) or (pcap_limit == 0):
                                 detf.write("Extracted pattern: "+str(b)+", protocol: "+prot+ \
@@ -287,37 +287,79 @@ def main():
         pcap.write(eth / ip / udp / payload)
 
         sumf.write("Writing tcp packet from port 1234 to port 5678 with no pattern in paylod.\n")
-        tcp = TCP(sport=1234, dport=5678)
+        tcp = TCP(sport=1234, dport=5678, flags="S", seq=random.randrange(0,2**32))
         payload = bytes([x % 256 for x in range(172)])
         pcap.write(eth / ip / tcp / payload)
 
         sumf.write("Writing tcp packet from port 12345 to port 80 with no pattern in paylod.\n")
-        tcp = TCP(sport=12345, dport=80)
+        tcp = TCP(sport=12345, dport=80, flags = "S")
         payload = bytes([x % 256 for x in range(4)])
         pcap.write(eth / ip / tcp / payload)
 
         sumf.write("Writing tcp packet from port 54321 to port 80 with no pattern in paylod.\n")
-        tcp = TCP(sport=54321, dport=80)
+        tcp = TCP(sport=54321, dport=80, flags = "F")
         payload = bytes([x % 256 for x in range(15)])
         pcap.write(eth / ip / tcp / payload)
 
 
     pcap_count = 0
-    for rule in match_list:
+    tcp_count = 0
+    for i in range(len(match_list)):
         if ((pcap_limit!=0) and (pcap_count == pcap_limit)):
             break
         else:
             pcap_count += 1
 
-        payload, prot, sport, dport = rule
+        payload, prot, sport, dport, seq_num = match_list[i]
+        pkt_len = max(r.randint(64, 500), len(payload)+1)
         if (prot=='udp'):
             udp = UDP(sport=sport, dport=dport)
-            payload += bytes([0xFF for x in range(max(1,r.randint(64, 500)-len(payload)))])
+            payload += bytes([0xFF for x in range(pkt_len-len(payload))])
             pcap.write(eth / ip / udp / payload)
         else: #tcp
-            tcp = TCP(sport=sport, dport=dport)
-            payload += bytes([0xFF for x in range(max(1,r.randint(64, 500)-len(payload)))])
+            tcp = TCP(sport=sport, dport=dport, seq=seq_num, flags="S")
+            payload += bytes([0xFA for x in range(pkt_len-len(payload))])
             pcap.write(eth / ip / tcp / payload)
+            tcp_count += 1
+            match_list[i] = (payload, prot, sport, dport, seq_num+pkt_len)
+
+
+    for k in range(3):
+        rep_count = 0
+        for i in range(len(match_list)):
+            if (rep_count == tcp_count):
+                break
+            else:
+                rep_count += 1
+
+            payload, prot, sport, dport, seq_num = match_list[i]
+            pkt_len = max(r.randint(64, 500), len(payload)+1)
+
+            if (prot=='udp'):
+                continue
+            else: #tcp
+                tcp = TCP(sport=sport, dport=dport, seq=seq_num+1, flags="PA")
+                payload += bytes([0xBB+k for x in range(pkt_len-len(payload))])
+                pcap.write(eth / ip / tcp / payload)
+                match_list[i] = (payload, prot, sport, dport, seq_num+pkt_len)
+
+    rep_count = 0
+    for i in range(len(match_list)):
+        if (rep_count == tcp_count):
+            break
+        else:
+            rep_count += 1
+
+        payload, prot, sport, dport, seq_num = match_list[i]
+        pkt_len = max(r.randint(64, 500), len(payload)+1)
+
+        if (prot=='udp'):
+            continue
+        else: #tcp
+            tcp = TCP(sport=sport, dport=dport, seq=seq_num+1, flags="F")
+            payload += bytes([0xFF for x in range(pkt_len-len(payload))])
+            pcap.write(eth / ip / tcp / payload)
+            match_list[i] = (payload, prot, sport, dport, seq_num+pkt_len)
 
     pcap.close()
     detf.close()
