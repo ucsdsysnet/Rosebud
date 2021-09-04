@@ -264,13 +264,12 @@ module scheduler_PR (
         .m_axis_hash_valid(rx_hash_valid[q])
       );
 
-      simple_fifo # (
-        .ADDR_WIDTH($clog2(HASH_FIFO_DEPTH)),
+      simple_sync_fifo # (
+        .DEPTH(HASH_FIFO_DEPTH),
         .DATA_WIDTH(32+4)
       ) rx_hash_fifo (
         .clk(clk),
         .rst(rst_r),
-        .clear(1'b0),
 
         .din_valid(rx_hash_valid[q]),
         .din({rx_hash_type[q*4 +: 4], rx_hash[q*32 +: 32]}),
@@ -329,13 +328,12 @@ module scheduler_PR (
 
       /// *** FIFO FOR HASH AND ALLOCATED DESC, WAITING TO BE SENT OUT *** ///
 
-      simple_fifo # (
-        .ADDR_WIDTH($clog2(HASH_FIFO_DEPTH)),
+      simple_sync_fifo # (
+        .DEPTH(HASH_FIFO_DEPTH),
         .DATA_WIDTH(HASH_N_DESC)
       ) rx_hash_n_desc_fifo (
         .clk(clk),
         .rst(rst_r),
-        .clear(1'b0),
 
         .din_valid(hash_n_dest_in_v[q]),
         .din(hash_n_dest_in[q*HASH_N_DESC +: HASH_N_DESC]),
@@ -563,7 +561,7 @@ module scheduler_PR (
     .din_ready(pkt_done_ready),
 
     .dout_valid(pkt_done_valid),
-    .dout({pkt_done_src,pkt_done_desc}),
+    .dout({pkt_done_src, pkt_done_desc}),
     .dout_ready(loopback_ready)
   );
 

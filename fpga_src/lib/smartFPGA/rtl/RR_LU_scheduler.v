@@ -1,5 +1,5 @@
 module simple_scheduler # (
-  parameter INTERFACE_COUNT = 2,
+  parameter IF_COUNT        = 2,
   parameter PORT_COUNT      = 4,
   parameter CORE_COUNT      = 16,
   parameter SLOT_COUNT      = 8,
@@ -7,108 +7,94 @@ module simple_scheduler # (
   parameter CTRL_WIDTH      = 32+4,
   parameter LOOPBACK_PORT   = 2,
   parameter LOOPBACK_COUNT  = 2,
-  parameter ENABLE_ILA      = 0,
   parameter DATA_REG_TYPE   = 0,
   parameter CTRL_REG_TYPE   = 0,
 
   parameter SLOT_WIDTH      = $clog2(SLOT_COUNT+1),
   parameter CORE_ID_WIDTH   = $clog2(CORE_COUNT),
-  parameter INTERFACE_WIDTH = $clog2(INTERFACE_COUNT),
+  parameter INTERFACE_WIDTH = $clog2(IF_COUNT),
   parameter PORT_WIDTH      = $clog2(PORT_COUNT),
   parameter TAG_WIDTH       = (SLOT_WIDTH>5)? SLOT_WIDTH:5,
   parameter ID_TAG_WIDTH    = CORE_ID_WIDTH+TAG_WIDTH,
   parameter STRB_WIDTH      = DATA_WIDTH/8,
-  parameter CLUSTER_COUNT   = CORE_COUNT
+  parameter CLUSTER_COUNT   = CORE_COUNT,
+  parameter RX_LINES_WIDTH  = 13
 ) (
-  input                                           clk,
-  input                                           rst,
+  input                                     clk,
+  input                                     rst,
 
   // Data line to/from Eth interfaces
-  input  wire [INTERFACE_COUNT*DATA_WIDTH-1:0]    rx_axis_tdata,
-  input  wire [INTERFACE_COUNT*STRB_WIDTH-1:0]    rx_axis_tkeep,
-  input  wire [INTERFACE_COUNT-1:0]               rx_axis_tvalid,
-  output wire [INTERFACE_COUNT-1:0]               rx_axis_tready,
-  input  wire [INTERFACE_COUNT-1:0]               rx_axis_tlast,
-  input  wire [INTERFACE_COUNT-1:0]               rx_axis_almost_full,
+  input  wire [IF_COUNT*DATA_WIDTH-1:0]     rx_axis_tdata,
+  input  wire [IF_COUNT*STRB_WIDTH-1:0]     rx_axis_tkeep,
+  input  wire [IF_COUNT-1:0]                rx_axis_tvalid,
+  output wire [IF_COUNT-1:0]                rx_axis_tready,
+  input  wire [IF_COUNT-1:0]                rx_axis_tlast,
+  input  wire [IF_COUNT*RX_LINES_WIDTH-1:0] rx_axis_line_count,
 
-  output wire [INTERFACE_COUNT*DATA_WIDTH-1:0]    tx_axis_tdata,
-  output wire [INTERFACE_COUNT*STRB_WIDTH-1:0]    tx_axis_tkeep,
-  output wire [INTERFACE_COUNT-1:0]               tx_axis_tvalid,
-  input  wire [INTERFACE_COUNT-1:0]               tx_axis_tready,
-  output wire [INTERFACE_COUNT-1:0]               tx_axis_tlast,
+  output wire [IF_COUNT*DATA_WIDTH-1:0]     tx_axis_tdata,
+  output wire [IF_COUNT*STRB_WIDTH-1:0]     tx_axis_tkeep,
+  output wire [IF_COUNT-1:0]                tx_axis_tvalid,
+  input  wire [IF_COUNT-1:0]                tx_axis_tready,
+  output wire [IF_COUNT-1:0]                tx_axis_tlast,
 
   // DATA lines to/from cores
-  output wire [INTERFACE_COUNT*DATA_WIDTH-1:0]    data_m_axis_tdata,
-  output wire [INTERFACE_COUNT*STRB_WIDTH-1:0]    data_m_axis_tkeep,
-  output wire [INTERFACE_COUNT*ID_TAG_WIDTH-1:0]  data_m_axis_tdest,
-  output wire [INTERFACE_COUNT*PORT_WIDTH-1:0]    data_m_axis_tuser,
-  output wire [INTERFACE_COUNT-1:0]               data_m_axis_tvalid,
-  input  wire [INTERFACE_COUNT-1:0]               data_m_axis_tready,
-  output wire [INTERFACE_COUNT-1:0]               data_m_axis_tlast,
+  output wire [IF_COUNT*DATA_WIDTH-1:0]     data_m_axis_tdata,
+  output wire [IF_COUNT*STRB_WIDTH-1:0]     data_m_axis_tkeep,
+  output wire [IF_COUNT*ID_TAG_WIDTH-1:0]   data_m_axis_tdest,
+  output wire [IF_COUNT*PORT_WIDTH-1:0]     data_m_axis_tuser,
+  output wire [IF_COUNT-1:0]                data_m_axis_tvalid,
+  input  wire [IF_COUNT-1:0]                data_m_axis_tready,
+  output wire [IF_COUNT-1:0]                data_m_axis_tlast,
 
-  input  wire [INTERFACE_COUNT*DATA_WIDTH-1:0]    data_s_axis_tdata,
-  input  wire [INTERFACE_COUNT*STRB_WIDTH-1:0]    data_s_axis_tkeep,
-  input  wire [INTERFACE_COUNT*ID_TAG_WIDTH-1:0]  data_s_axis_tuser,
-  input  wire [INTERFACE_COUNT-1:0]               data_s_axis_tvalid,
-  output wire [INTERFACE_COUNT-1:0]               data_s_axis_tready,
-  input  wire [INTERFACE_COUNT-1:0]               data_s_axis_tlast,
+  input  wire [IF_COUNT*DATA_WIDTH-1:0]     data_s_axis_tdata,
+  input  wire [IF_COUNT*STRB_WIDTH-1:0]     data_s_axis_tkeep,
+  input  wire [IF_COUNT*ID_TAG_WIDTH-1:0]   data_s_axis_tuser,
+  input  wire [IF_COUNT-1:0]                data_s_axis_tvalid,
+  output wire [IF_COUNT-1:0]                data_s_axis_tready,
+  input  wire [IF_COUNT-1:0]                data_s_axis_tlast,
 
   // Control lines to/from cores
-  output wire [CTRL_WIDTH-1:0]               ctrl_m_axis_tdata,
-  output wire                                ctrl_m_axis_tvalid,
-  input  wire                                ctrl_m_axis_tready,
-  output wire [CORE_ID_WIDTH-1:0]            ctrl_m_axis_tdest,
+  output wire [CTRL_WIDTH-1:0]              ctrl_m_axis_tdata,
+  output wire                               ctrl_m_axis_tvalid,
+  input  wire                               ctrl_m_axis_tready,
+  output wire [CORE_ID_WIDTH-1:0]           ctrl_m_axis_tdest,
 
-  input  wire [CTRL_WIDTH-1:0]               ctrl_s_axis_tdata,
-  input  wire                                ctrl_s_axis_tvalid,
-  output wire                                ctrl_s_axis_tready,
-  input  wire [CORE_ID_WIDTH-1:0]            ctrl_s_axis_tuser,
+  input  wire [CTRL_WIDTH-1:0]              ctrl_s_axis_tdata,
+  input  wire                               ctrl_s_axis_tvalid,
+  output wire                               ctrl_s_axis_tready,
+  input  wire [CORE_ID_WIDTH-1:0]           ctrl_s_axis_tuser,
 
   // Cores reset
-  input  wire [3:0]                          host_cmd,
-  input  wire [CORE_ID_WIDTH-1:0]            host_cmd_dest,
-  input  wire [31:0]                         host_cmd_data,
-  input  wire                                host_cmd_valid,
-  output wire                                host_cmd_ready,
-
-  input  wire [CORE_COUNT-1:0]               income_cores,
-  input  wire [CORE_COUNT-1:0]               cores_to_be_reset,
-
-  input  wire [CORE_ID_WIDTH-1:0]            stat_read_core,
-  output reg  [SLOT_WIDTH-1:0]               slot_count,
-  input  wire [INTERFACE_WIDTH-1:0]          stat_read_interface,
-  output reg  [31:0]                         stat_interface_data,
-
-  input  wire                                trig_in,
-  output wire                                trig_in_ack,
-  output wire                                trig_out,
-  input  wire                                trig_out_ack
+  input  wire [3:0]                         host_cmd,
+  input  wire [31:0]                        host_cmd_wr_data,
+  output reg  [31:0]                        host_cmd_rd_data,
+  input  wire                               host_cmd_valid
 );
 
   // Register inputs and outputs
-  wire [INTERFACE_COUNT*DATA_WIDTH-1:0]   data_m_axis_tdata_n;
-  wire [INTERFACE_COUNT*STRB_WIDTH-1:0]   data_m_axis_tkeep_n;
-  wire [INTERFACE_COUNT*ID_TAG_WIDTH-1:0] data_m_axis_tdest_n;
-  wire [INTERFACE_COUNT*PORT_WIDTH-1:0]   data_m_axis_tuser_n;
-  wire [INTERFACE_COUNT-1:0]              data_m_axis_tvalid_n;
-  wire [INTERFACE_COUNT-1:0]              data_m_axis_tready_n;
-  wire [INTERFACE_COUNT-1:0]              data_m_axis_tlast_n;
+  wire [IF_COUNT*DATA_WIDTH-1:0]   data_m_axis_tdata_n;
+  wire [IF_COUNT*STRB_WIDTH-1:0]   data_m_axis_tkeep_n;
+  wire [IF_COUNT*ID_TAG_WIDTH-1:0] data_m_axis_tdest_n;
+  wire [IF_COUNT*PORT_WIDTH-1:0]   data_m_axis_tuser_n;
+  wire [IF_COUNT-1:0]              data_m_axis_tvalid_n;
+  wire [IF_COUNT-1:0]              data_m_axis_tready_n;
+  wire [IF_COUNT-1:0]              data_m_axis_tlast_n;
 
-  wire [INTERFACE_COUNT*DATA_WIDTH-1:0]   rx_axis_tdata_r;
-  wire [INTERFACE_COUNT*STRB_WIDTH-1:0]   rx_axis_tkeep_r;
-  wire [INTERFACE_COUNT-1:0]              rx_axis_tvalid_r;
-  wire [INTERFACE_COUNT-1:0]              rx_axis_tready_r;
-  wire [INTERFACE_COUNT-1:0]              rx_axis_tlast_r;
+  wire [IF_COUNT*DATA_WIDTH-1:0]   rx_axis_tdata_r;
+  wire [IF_COUNT*STRB_WIDTH-1:0]   rx_axis_tkeep_r;
+  wire [IF_COUNT-1:0]              rx_axis_tvalid_r;
+  wire [IF_COUNT-1:0]              rx_axis_tready_r;
+  wire [IF_COUNT-1:0]              rx_axis_tlast_r;
 
-  wire [CTRL_WIDTH-1:0]    ctrl_s_axis_tdata_r;
-  wire                     ctrl_s_axis_tvalid_r;
-  wire                     ctrl_s_axis_tready_r;
-  wire [CORE_ID_WIDTH-1:0] ctrl_s_axis_tuser_r;
+  wire [CTRL_WIDTH-1:0]            ctrl_s_axis_tdata_r;
+  wire                             ctrl_s_axis_tvalid_r;
+  wire                             ctrl_s_axis_tready_r;
+  wire [CORE_ID_WIDTH-1:0]         ctrl_s_axis_tuser_r;
 
-  wire [CTRL_WIDTH-1:0]    ctrl_m_axis_tdata_n;
-  wire                     ctrl_m_axis_tvalid_n;
-  wire                     ctrl_m_axis_tready_n;
-  wire [CORE_ID_WIDTH-1:0] ctrl_m_axis_tdest_n;
+  wire [CTRL_WIDTH-1:0]            ctrl_m_axis_tdata_n;
+  wire                             ctrl_m_axis_tvalid_n;
+  wire                             ctrl_m_axis_tready_n;
+  wire [CORE_ID_WIDTH-1:0]         ctrl_m_axis_tdest_n;
 
   wire rst_r;
   sync_reset sync_rst_inst (
@@ -119,7 +105,7 @@ module simple_scheduler # (
 
   genvar q;
   generate
-    for (q=0; q<INTERFACE_COUNT; q=q+1) begin: int_regs
+    for (q=0; q<IF_COUNT; q=q+1) begin: int_regs
 
       axis_pipeline_register # (
         .DATA_WIDTH(DATA_WIDTH),
@@ -226,6 +212,8 @@ module simple_scheduler # (
     end
   endgenerate
 
+  /// *** CTRL PATH REGISTERS FOR BETTER TIMING *** ///
+
   axis_register # (
     .DATA_WIDTH(CTRL_WIDTH),
     .KEEP_ENABLE(0),
@@ -292,35 +280,87 @@ module simple_scheduler # (
     .m_axis_tuser ()
   );
 
-  reg [3:0]                 host_cmd_r;
-  reg [CORE_ID_WIDTH-1:0]   host_cmd_dest_r;
-  reg [31:0]                host_cmd_data_r;
-  reg                       host_cmd_valid_r;
-  reg [CORE_COUNT-1:0]      income_cores_r;
-  reg [CORE_COUNT-1:0]      cores_to_be_reset_r;
+  reg [31:0]                host_cmd_r;
+  reg [31:0]                host_cmd_wr_data_r;
+  reg                       host_to_sched_wr_r;
+  reg                       host_to_int_not_core;
+  reg [CORE_COUNT-1:0]      income_cores;
+  reg [CORE_COUNT-1:0]      enabled_cores;
+  reg [CORE_COUNT-1:0]      slots_flush;
   reg [CORE_ID_WIDTH-1:0]   stat_read_core_r;
   reg [INTERFACE_WIDTH-1:0] stat_read_interface_r;
-  reg [SLOT_WIDTH-1:0]      slot_count_n;
-  reg [31:0]                stat_interface_data_n;
+  reg [31:0]                host_cmd_rd_data_n;
+  reg [IF_COUNT-1:0]        rx_almost_full;
+  reg [IF_COUNT-1:0]        release_desc;
+  reg [3:0]                 host_cmd_reg;
 
+  reg [IF_COUNT*RX_LINES_WIDTH-1:0] rx_line_count_r;
+  reg [RX_LINES_WIDTH-1:0]          drop_limit;
+
+  // host cmd bit 31 high means wr. bit 30 low means command for cores
   always @ (posedge clk) begin
     host_cmd_r            <= host_cmd;
-    host_cmd_dest_r       <= host_cmd_dest;
-    host_cmd_data_r       <= host_cmd_data;
-    host_cmd_valid_r      <= host_cmd_valid;
-    income_cores_r        <= income_cores;
-    cores_to_be_reset_r   <= cores_to_be_reset;
-    stat_read_core_r      <= stat_read_core;
-    stat_read_interface_r <= stat_read_interface;
-    slot_count            <= slot_count_n;
-    stat_interface_data   <= stat_interface_data_n;
+    host_cmd_wr_data_r    <= host_cmd_wr_data;
+    host_to_sched_wr_r    <= host_cmd_valid && host_cmd[31] && host_cmd[29];
+    host_to_int_not_core  <= host_cmd[30];
+    stat_read_core_r      <= host_cmd[CORE_ID_WIDTH+4-1:4];
+    stat_read_interface_r <= host_cmd[INTERFACE_WIDTH+4-1:4];
+    host_cmd_reg          <= host_cmd[3:0];
+    host_cmd_rd_data      <= host_cmd_rd_data_n;
+    rx_line_count_r       <= rx_axis_line_count;
+
+    if (host_to_sched_wr_r)
+      case ({host_to_int_not_core, host_cmd_reg})
+        // CORES
+        5'h00: begin
+          // A core to be reset cannot be an incoming core.
+          income_cores  <= income_cores & host_cmd_wr_data_r[CORE_COUNT-1:0];
+          enabled_cores <= host_cmd_wr_data_r[CORE_COUNT-1:0];
+        end
+        5'h01: begin
+          income_cores  <= host_cmd_wr_data_r[CORE_COUNT-1:0] & enabled_cores;
+        end
+        5'h02: begin
+          slots_flush   <= host_cmd_wr_data_r[CORE_COUNT-1:0];
+        end
+        // INTS
+        5'h12: begin
+          release_desc  <= host_cmd_wr_data_r[IF_COUNT-1:0];
+        end
+        5'h13: begin
+          drop_limit    <= host_cmd_wr_data_r[RX_LINES_WIDTH-1:0];
+        end
+
+        default: begin //for one-cycle signals
+          release_desc <= {IF_COUNT{1'b0}};
+          slots_flush  <= {CORE_COUNT{1'b0}};
+        end
+      endcase
+    else begin // for one-cycle signals
+          release_desc <= {IF_COUNT{1'b0}};
+          slots_flush  <= {CORE_COUNT{1'b0}};
+    end
+
     if (rst_r) begin
-      host_cmd_valid_r    <= 1'b0;
-      income_cores_r      <= {CORE_COUNT{1'b0}};
-      cores_to_be_reset_r <= {CORE_COUNT{1'b0}};
+      host_to_sched_wr_r <= 1'b0;
+      income_cores       <= {CORE_COUNT{1'b0}};
+      enabled_cores      <= {CORE_COUNT{1'b0}};
+      release_desc       <= {IF_COUNT{1'b0}};
+      slots_flush        <= {CORE_COUNT{1'b0}};
+      drop_limit         <= RX_LINES_WIDTH > 4 ?
+                            {4'd7, {(RX_LINES_WIDTH-4){1'b0}}}:
+                            {1'b1, {(RX_LINES_WIDTH-1){1'b0}}};
     end
   end
-  assign host_cmd_ready     = 1'b1;
+
+  integer l;
+  always @ (posedge clk) begin
+    for (l=0;l<IF_COUNT;l=l+1)
+      rx_almost_full[l] <=
+          (rx_line_count_r[l*RX_LINES_WIDTH +: RX_LINES_WIDTH] >= drop_limit);
+    if (rst_r)
+      rx_almost_full    <= {IF_COUNT{1'b0}};
+  end
 
   // Separate incoming ctrl messages
   parameter MSG_TYPE_WIDTH = 4;
@@ -380,7 +420,7 @@ module simple_scheduler # (
         .dout_valid(pkt_to_core_valid[m]),
         .dout(pkt_to_core_req[m*(DESC_WIDTH+CORE_ID_WIDTH) +:
                                 (DESC_WIDTH+CORE_ID_WIDTH)]),
-        .dout_ready(arb_to_core_ready[m] && rx_desc_slot_v[m] && !cores_to_be_reset_r[m])
+        .dout_ready(arb_to_core_ready[m] && rx_desc_slot_v[m] && enabled_cores[m])
       );
     end
   endgenerate
@@ -406,7 +446,7 @@ module simple_scheduler # (
 
     .s_axis_tdata(pkt_to_core_req),
     .s_axis_tkeep(),
-    .s_axis_tvalid(pkt_to_core_valid & rx_desc_slot_v & ~cores_to_be_reset_r),
+    .s_axis_tvalid(pkt_to_core_valid & rx_desc_slot_v & enabled_cores),
     .s_axis_tready(arb_to_core_ready),
     .s_axis_tlast({CORE_COUNT{1'b1}}),
     .s_axis_tid(),
@@ -452,7 +492,8 @@ module simple_scheduler # (
   generate
     for (i=0;i<CORE_COUNT;i=i+1) begin
       assign rx_desc_slot_pop[i]    = (rx_desc_pop && (selected_rx_core==i)) ||
-                                      (pkt_to_core_valid[i] && arb_to_core_ready[i] && (~cores_to_be_reset_r[i]));
+                                      (pkt_to_core_valid[i] && arb_to_core_ready[i] && enabled_cores[i]);
+
       // Register valid for better timing closure
       always @ (posedge clk)
         if (rst_r) begin
@@ -468,7 +509,7 @@ module simple_scheduler # (
         .SLOT_WIDTH(SLOT_WIDTH)
       ) rx_desc_keeper (
         .clk(clk),
-        .rst(rst_r),
+        .rst(rst_r|slots_flush[i]),
 
         .init_slots(input_slot),
         .init_valid(init_slot_v[i]),
@@ -487,7 +528,7 @@ module simple_scheduler # (
     end
   endgenerate
 
-  // Assing looback port
+  // Assigning looback port
   wire [CORE_ID_WIDTH-1:0] loopback_port;
 
   if (LOOPBACK_COUNT==1)
@@ -585,13 +626,10 @@ module simple_scheduler # (
 
   assign ctrl_out_ready = (!ctrl_out_valid_r) || ctrl_out_ready_r;
 
-  // Arbiter between host cmd and scheduler messages
-  assign ctrl_m_axis_tdata_n  = host_cmd_valid_r ? {host_cmd_r, host_cmd_data_r}
-                                             : ctrl_out_desc_r;
-  assign ctrl_m_axis_tvalid_n = host_cmd_valid_r || ctrl_out_valid_r;
-  assign ctrl_m_axis_tdest_n  = host_cmd_valid_r ? host_cmd_dest_r : ctrl_out_dest_r;
-
-  assign ctrl_out_ready_r   = (!host_cmd_valid_r) && ctrl_m_axis_tready_n;
+  assign ctrl_m_axis_tdata_n  = ctrl_out_desc_r;
+  assign ctrl_m_axis_tvalid_n = ctrl_out_valid_r;
+  assign ctrl_m_axis_tdest_n  = ctrl_out_dest_r;
+  assign ctrl_out_ready_r     = ctrl_m_axis_tready_n;
 
   // Selecting the core with most available slots
   // Since slots start from 1, SLOT WIDTH is already 1 bit extra
@@ -601,7 +639,7 @@ module simple_scheduler # (
 
   wire [CLUSTER_COUNT-1:0] cluster_max_valid;
   wire [CLUSTER_CORE_WIDTH-1:0] selected_cluster_core [0:CLUSTER_COUNT-1];
-  wire [CORE_COUNT-1:0] masks = income_cores_r & ~(pkt_to_core_valid & arb_to_core_ready);
+  wire [CORE_COUNT-1:0] masks = income_cores & ~(pkt_to_core_valid & arb_to_core_ready);
 
   genvar k;
   generate
@@ -649,20 +687,20 @@ module simple_scheduler # (
 
   // Adding tdest and tuser to input data from eth, dest based on
   // rx_desc_fifo and stamp the incoming port
-  wire [INTERFACE_COUNT-1:0] selected_port;
+  wire [IF_COUNT-1:0] selected_port;
   wire [INTERFACE_WIDTH-1:0] selected_port_enc;
 
-  reg  [INTERFACE_COUNT*ID_TAG_WIDTH-1:0] dest;
-  reg  [INTERFACE_COUNT*ID_TAG_WIDTH-1:0] dest_r;
-  reg  [INTERFACE_COUNT*ID_TAG_WIDTH-1:0] dest_rr;
+  reg  [IF_COUNT*ID_TAG_WIDTH-1:0] dest;
+  reg  [IF_COUNT*ID_TAG_WIDTH-1:0] dest_r;
+  reg  [IF_COUNT*ID_TAG_WIDTH-1:0] dest_rr;
 
-  assign rx_desc_pop                           = selected_port_v && max_valid;
-  wire [INTERFACE_COUNT-1:0] port_desc_avail   = {INTERFACE_COUNT{rx_desc_pop}} & selected_port;
-  wire [INTERFACE_COUNT-1:0] port_valid        = rx_axis_tvalid_r & rx_axis_tready_r;
-  wire [INTERFACE_COUNT-1:0] sending_last_word = port_valid & rx_axis_tlast_r;
+  assign rx_desc_pop                    = selected_port_v && max_valid;
+  wire [IF_COUNT-1:0] port_desc_avail   = {IF_COUNT{rx_desc_pop}} & selected_port;
+  wire [IF_COUNT-1:0] port_valid        = rx_axis_tvalid_r & rx_axis_tready_r;
+  wire [IF_COUNT-1:0] sending_last_word = port_valid & rx_axis_tlast_r;
 
   // State machine per port
-  reg [1:0] port_state [0:INTERFACE_COUNT-1];
+  reg [1:0] port_state [0:IF_COUNT-1];
   localparam STALL = 2'b00; // Don't accept until getting a desc
   localparam FIRST = 2'b01; // Ready to get new packet
   localparam WAIT  = 2'b10; // Accept while waiting for new desc
@@ -670,25 +708,37 @@ module simple_scheduler # (
 
   integer n;
   always @ (posedge clk)
-      for (n=0; n<INTERFACE_COUNT; n=n+1)
+      for (n=0; n<IF_COUNT; n=n+1)
           if (rst_r) begin
-              port_state[n] <= STALL;
+              port_state[n]     <= STALL;
           end else begin
               case (port_state[n])
                   STALL: if (port_desc_avail[n])
-                            port_state[n] <= FIRST;
+                             port_state[n] <= FIRST;
                   FIRST: if (sending_last_word[n])
-                            port_state[n] <= STALL;
+                             port_state[n] <= STALL;
                          else if (port_valid[n])
-                            port_state[n] <= WAIT;
+                             port_state[n] <= WAIT;
+                         // 2 previous ifs already used the desc
+                         else if (release_desc[n])
+                             port_state[n] <= STALL;
+                         // Since the specific core is disabled,
+                         // it cannot get desc from the same core
                   WAIT:  if (port_desc_avail[n] && sending_last_word[n])
-                            port_state[n] <= FIRST;
+                             port_state[n] <= FIRST;
                          else if (port_desc_avail[n])
-                            port_state[n] <= MID;
+                             port_state[n] <= MID;
                          else if (sending_last_word[n])
-                            port_state[n] <= STALL;
-                  MID:   if (sending_last_word[n])
-                            port_state[n] <= FIRST;
+                             port_state[n] <= STALL;
+                  MID:   if (sending_last_word[n]) begin
+                             if (release_desc[n])
+                                 port_state[n] <= STALL;
+                             else
+                                 port_state[n] <= FIRST;
+                         // Don't use the reserved desc
+                         end else if (release_desc[n]) begin
+                                 port_state[n] <= WAIT;
+                         end
               endcase
               // When a packet starts latch the tdest
               if ((port_state[n] == FIRST) && port_valid[n])
@@ -701,10 +751,10 @@ module simple_scheduler # (
 
   // Desc request and port ready
   integer p;
-  reg [INTERFACE_COUNT-1:0] desc_req;
-  reg [INTERFACE_COUNT-1:0] port_not_stall;
+  reg [IF_COUNT-1:0] desc_req;
+  reg [IF_COUNT-1:0] port_not_stall;
   always @ (*)
-      for (p=0; p<INTERFACE_COUNT; p=p+1) begin
+      for (p=0; p<IF_COUNT; p=p+1) begin
           // When a packet starts we ask for new desc, or if we are in stall or wait.
           // If request in FIRST is responded during WAIT it would be cancedlled by !selected_port
           desc_req[p] = !(selected_port[p]) && ((port_state[p]==STALL) || (port_state[p]==WAIT) ||
@@ -716,7 +766,7 @@ module simple_scheduler # (
 
   // arbiter among ports for desc request
   arbiter # (
-    .PORTS(INTERFACE_COUNT),
+    .PORTS(IF_COUNT),
     .TYPE("ROUND_ROBIN"),
     .LSB_PRIORITY("HIGH")
   ) port_selector (
@@ -724,7 +774,7 @@ module simple_scheduler # (
     .rst(rst_r),
 
     .request(desc_req),
-    .acknowledge({INTERFACE_COUNT{1'b0}}),
+    .acknowledge({IF_COUNT{1'b0}}),
 
     .grant(selected_port),
     .grant_valid(selected_port_v),
@@ -734,119 +784,58 @@ module simple_scheduler # (
   // Load the new desc
   wire [ID_TAG_WIDTH-1:0] rx_desc_data = {selected_rx_core, {(TAG_WIDTH-SLOT_WIDTH){1'b0}},
                                           rx_desc_slot[selected_rx_core*SLOT_WIDTH +: SLOT_WIDTH]};
+  wire [IF_COUNT*32-1:0]  drop_count;
 
   always @ (posedge clk)
     if (rx_desc_pop)
       dest_r[selected_port_enc*ID_TAG_WIDTH +: ID_TAG_WIDTH] <= rx_desc_data;
 
-  always @ (posedge clk) begin
-    slot_count_n          <= rx_desc_count[stat_read_core_r * SLOT_WIDTH +: SLOT_WIDTH];
-    stat_interface_data_n <= {{(32-ID_TAG_WIDTH){1'b0}},
-                             dest_r[stat_read_interface_r * ID_TAG_WIDTH +: ID_TAG_WIDTH]};
-  end
+  always @ (posedge clk)
+    case ({host_to_int_not_core, host_cmd_reg})
+      // CORES
+      5'h00:   host_cmd_rd_data_n <= enabled_cores;
+      5'h01:   host_cmd_rd_data_n <= income_cores;
+      5'h03:   host_cmd_rd_data_n <= rx_desc_count[stat_read_core_r * SLOT_WIDTH +: SLOT_WIDTH];
+      // INTS
+      5'h10:   host_cmd_rd_data_n <= {14'd0, port_state[stat_read_interface_r],
+                                  {(8-CORE_ID_WIDTH){1'b0}},
+                                  dest_r[(stat_read_interface_r * ID_TAG_WIDTH) + TAG_WIDTH +: CORE_ID_WIDTH],
+                                  {(8-TAG_WIDTH){1'b0}},
+                                  dest_r[stat_read_interface_r * ID_TAG_WIDTH +: TAG_WIDTH]};
+      5'h12:   host_cmd_rd_data_n <= drop_count[stat_read_interface_r*32 +: 32];
+      default: host_cmd_rd_data_n <= 32'hFEFEFEFE;
+    endcase
 
   genvar j;
   generate
-    for (j=0; j<INTERFACE_COUNT;j=j+1)
+    for (j=0; j<IF_COUNT;j=j+1)
       assign data_m_axis_tuser_n[j*PORT_WIDTH +: PORT_WIDTH] = j;
   endgenerate
 
-  assign data_m_axis_tdata_n  = rx_axis_tdata_r;
-  assign data_m_axis_tkeep_n  = rx_axis_tkeep_r;
-  assign data_m_axis_tvalid_n = rx_axis_tvalid_r & port_not_stall;
-  assign data_m_axis_tlast_n  = rx_axis_tlast_r;
-  assign data_m_axis_tdest_n  = dest;
-  assign rx_axis_tready_r     = data_m_axis_tready_n & port_not_stall;
+  axis_dropper # (
+    .PORT_COUNT(IF_COUNT),
+    .REG_FOR_DROP(1),
+    .SAME_CYCLE_DROP(0),
+    .DROP_CNT_WIDTH(32)
+  ) rx_dropper (
+    .clk(clk),
+    .rst(rst_r),
 
-if (ENABLE_ILA) begin
-  wire trig_out_1, trig_out_2;
-  wire ack_1, ack_2;
-  reg [CORE_COUNT*SLOT_WIDTH-1:0] rx_desc_count_r;
-  reg [INTERFACE_COUNT-1:0] desc_req_r;
-  reg max_valid_r, rx_desc_pop_r;
-  reg [ID_TAG_WIDTH-1:0] rx_desc_data_r;
+    // .drop(rx_almost_full & ~{IF_COUNT{max_valid}}), // There is no free core
+    .drop(0), // There is a bug, for now disabling it.
+    .drop_count(drop_count),
 
-  always @ (posedge clk) begin
-    rx_desc_count_r <= rx_desc_count;
-    desc_req_r      <= desc_req;
-    max_valid_r     <= max_valid;
-    rx_desc_pop_r   <= rx_desc_pop;
-    rx_desc_data_r  <= rx_desc_data;
-  end
+    .s_axis_tvalid(rx_axis_tvalid_r & port_not_stall),
+    .s_axis_tlast(rx_axis_tlast_r),
+    .s_axis_tready(rx_axis_tready_r),
 
-  reg [15:0] rx_count_0, rx_count_1, tx_count_0, tx_count_1;
-  always @ (posedge clk)
-    if (rst_r) begin
-        rx_count_0 <= 16'd0;
-        rx_count_1 <= 16'd0;
-        tx_count_0 <= 16'd0;
-        tx_count_1 <= 16'd0;
-    end else begin
-      if (rx_axis_tlast_r[0] && rx_axis_tvalid_r[0])
-        rx_count_0 <= 16'd0;
-      else if (rx_axis_tvalid_r[0])
-        rx_count_0 <= rx_count_0 + 16'd1;
-
-      if (rx_axis_tlast_r[1] && rx_axis_tvalid_r[1])
-        rx_count_1 <= 16'd0;
-      else if (rx_axis_tvalid_r[1])
-        rx_count_1 <= rx_count_1 + 16'd1;
-
-      if (tx_axis_tlast[0] && tx_axis_tvalid[0])
-        tx_count_0 <= 16'd0;
-      else if (tx_axis_tvalid[0])
-        tx_count_0 <= tx_count_0 + 16'd1;
-
-      if (tx_axis_tlast[1] && tx_axis_tvalid[1])
-        tx_count_1 <= 16'd0;
-      else if (tx_axis_tvalid[1])
-        tx_count_1 <= tx_count_1 + 16'd1;
-    end
-
-  ila_4x64 debugger1 (
-    .clk    (clk),
-
-    .trig_out(trig_out),
-    .trig_out_ack(trig_out_ack),
-    .trig_in (trig_in),
-    .trig_in_ack(trig_in_ack),
-
-    .probe0 ({
-       sending_last_word,
-       data_m_axis_tdest_n,
-       rst_r,
-       data_m_axis_tuser_n,
-       ctrl_m_axis_tdest_n,
-       ctrl_s_axis_tuser_r,
-       ctrl_m_axis_tvalid_n,
-       ctrl_m_axis_tready_n,
-       ctrl_s_axis_tvalid_r,
-       ctrl_s_axis_tready_r,
-       slot_insert_err,
-       msg_type,
-       rx_axis_tvalid_r,
-       max_valid_r,
-       rx_desc_pop_r,
-       desc_req_r,
-       // rx_axis_tready_r,
-       // rx_axis_tkeep_r,
-       rx_axis_tlast_r,
-       rx_desc_data_r
-     }),
-
-    .probe1 ({
-       ctrl_m_axis_tdata_n[31:0],
-       ctrl_s_axis_tdata_r[31:0]}),
-
-    .probe2 (rx_desc_count_r),
-
-    .probe3 ({rx_desc_slot_v, rx_desc_slot_pop,
-              cores_to_be_reset_r, income_cores_r})
+    .m_axis_tvalid(data_m_axis_tvalid_n),
+    .m_axis_tlast(data_m_axis_tlast_n),
+    .m_axis_tready(data_m_axis_tready_n & port_not_stall)
   );
 
-end else begin
-  assign trig_in_ack = 1'b0;
-  assign trig_out    = 1'b0;
-end
+  assign data_m_axis_tdata_n  = rx_axis_tdata_r;
+  assign data_m_axis_tkeep_n  = rx_axis_tkeep_r;
+  assign data_m_axis_tdest_n  = dest;
 
 endmodule
