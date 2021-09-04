@@ -47,7 +47,7 @@ add_files -norecurse {
   ../accel/pigasus_sme/rtl/rule_depacker_128_64.sv
   ../accel/pigasus_sme/rtl/struct_s.sv
   ../accel/pigasus_sme/rtl/SME_wrapper.sv
-  ../accel/pigasus_sme/rtl/accel_wrap_pigasus2.v
+  ../accel/pigasus_sme/rtl/accel_wrap_pigasus.v
   ../accel/pigasus_sme/rtl/ip_match.v
   ../rtl/Gousheh_PR_pig.v
 } -of_objects [get_reconfig_modules Gousheh_PIG]
@@ -70,6 +70,8 @@ create_run impl_PIG_HASH -parent_run impl_1 -flow {Vivado Implementation 2021} -
 set_property strategy Performance_ExtraTimingOpt [get_runs impl_PIG_HASH]
 set_property STEPS.POST_ROUTE_PHYS_OPT_DESIGN.IS_ENABLED true [get_runs impl_PIG_HASH]
 set_property STEPS.POST_ROUTE_PHYS_OPT_DESIGN.ARGS.DIRECTIVE Explore [get_runs impl_PIG_HASH]
+set_property -name {STEPS.OPT_DESIGN.ARGS.MORE OPTIONS} -value {-retarget -propconst -sweep -bufg_opt -shift_register_opt -resynth_remap} -objects [get_runs impl_PIG_HASH]
+# set_property -name {STEPS.OPT_DESIGN.ARGS.MORE OPTIONS} -value {-retarget -propconst -sweep -bufg_opt -shift_register_opt  -aggressive_remap -resynth_remap -srl_remap_modes {{max_depth_srl_to_ffs 4}}} -objects [get_runs impl_PIG_HASH]
 # set_property STEPS.PLACE_DESIGN.ARGS.DIRECTIVE Explore [get_runs impl_PIG_HASH]
 # set_property AUTO_INCREMENTAL_CHECKPOINT 1 [get_runs impl_PIG_HASH]
 
