@@ -138,9 +138,15 @@ module test_SME # (
   end
 
   integer m;
+  reg [31:0] pkt_counter = 1;
+
   always @ (posedge clk)
-    for (m=0; m<2; m=m+1)
-      if ((sme_output[m*16 +: 16]!=0) && sme_output_v)
-        $display("Match on ouput %0d, value %h", m, sme_output[m*16+:16]);
+    if (sme_output_v)
+      if (sme_output==0)
+        pkt_counter <= pkt_counter + 1;
+      else
+        for (m=0; m<2; m=m+1)
+          if (sme_output[m*16 +: 16]!=0)
+            $display("Match on ouput %0d, value %h, in packet %0d", m, sme_output[m*16+:16], pkt_counter);
 
 endmodule

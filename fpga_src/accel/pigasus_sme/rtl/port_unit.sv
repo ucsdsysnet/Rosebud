@@ -299,7 +299,7 @@ assign list_bm_match = (list_bm[0] | list_bm[1] | list_bm[2] | list_bm[3] |
 
 hyper_pipe #(
     .WIDTH (1),
-    .NUM_PIPES(4)
+    .NUM_PIPES(3)
 ) hp_tcp (
     .clk(clk),
     .din(tcp),
@@ -308,7 +308,7 @@ hyper_pipe #(
 
 hyper_pipe #(
     .WIDTH (16),
-    .NUM_PIPES(4)
+    .NUM_PIPES(3)
 ) hp_src_port (
     .clk(clk),
     .din(src_port),
@@ -317,7 +317,7 @@ hyper_pipe #(
 
 hyper_pipe #(
     .WIDTH (16),
-    .NUM_PIPES(6)
+    .NUM_PIPES(5)
 ) hp_dst_port (
     .clk(clk),
     .din(dst_port),
