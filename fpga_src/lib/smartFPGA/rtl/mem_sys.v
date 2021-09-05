@@ -18,7 +18,8 @@ module mem_sys # (
   parameter ACC_ADDR_WIDTH  = $clog2(SLOW_M_B_LINES),
   parameter PMEM_SEL_BITS   = PMEM_ADDR_WIDTH-$clog2(STRB_WIDTH)
                               -1-$clog2(SLOW_M_B_LINES),
-  parameter ACC_MEM_BLOCKS  = 2**PMEM_SEL_BITS
+  parameter ACC_MEM_BLOCKS  = 2**PMEM_SEL_BITS,
+  parameter ADD_PMEM_RD_REG = (ACC_MEM_BLOCKS>8) ? 1:0
 ) (
   input  wire                                     clk,
   input  wire                                     rst,
@@ -613,6 +614,10 @@ module mem_sys # (
 
   wire [ACC_MEM_BLOCKS*DATA_WIDTH-1:0] pmem_rd_data_b1;
   wire [ACC_MEM_BLOCKS*DATA_WIDTH-1:0] pmem_rd_data_b2;
+  reg  [ACC_MEM_BLOCKS*DATA_WIDTH-1:0] pmem_rd_data_b1_r;
+  reg  [ACC_MEM_BLOCKS*DATA_WIDTH-1:0] pmem_rd_data_b2_r;
+  wire [ACC_MEM_BLOCKS*DATA_WIDTH-1:0] pmem_rd_data_b1_fin;
+  wire [ACC_MEM_BLOCKS*DATA_WIDTH-1:0] pmem_rd_data_b2_fin;
 
   wire [ACC_MEM_BLOCKS*DATA_WIDTH-1:0] acc_rd_data_b1_n;
   wire [ACC_MEM_BLOCKS*DATA_WIDTH-1:0] acc_rd_data_b2_n;
@@ -672,8 +677,11 @@ module mem_sys # (
   end
   endgenerate
 
-  // register PMEM output, 3rd cycle of PMEM latency for accelerators
+  // register PMEM output, 3rd cycle of PMEM latency
   always @ (posedge clk) begin
+    pmem_rd_data_b1_r <= pmem_rd_data_b1;
+    pmem_rd_data_b2_r <= pmem_rd_data_b2;
+
     acc_rd_data_b1    <= acc_rd_data_b1_n;
     acc_rd_data_b2    <= acc_rd_data_b2_n;
   end
@@ -685,36 +693,47 @@ module mem_sys # (
   // Also remembering memory block for pmem dmem and register the output reads
   reg  [PMEM_SEL_BITS_MIN1-1:0] pmem_rd_sel_b1_r;
   reg  [PMEM_SEL_BITS_MIN1-1:0] pmem_rd_sel_b2_r;
+  reg  [PMEM_SEL_BITS_MIN1-1:0] pmem_rd_sel_b1_rr;
+  reg  [PMEM_SEL_BITS_MIN1-1:0] pmem_rd_sel_b2_rr;
+  wire [PMEM_SEL_BITS_MIN1-1:0] pmem_rd_sel_b1_fin;
+  wire [PMEM_SEL_BITS_MIN1-1:0] pmem_rd_sel_b2_fin;
 
   reg  [DATA_WIDTH-1:0] dma_pmem_rd_data;
   reg  [DATA_WIDTH-1:0] core_pmem_rd_data;
   wire [DATA_WIDTH-1:0] dma_dmem_rd_data;
-  reg                   core_pmem_rd_b1_r;
-  reg                   dma_pmem_rd_bank_rr;
+  wire                  dma_pmem_rd_bank_fin;
+  wire                  core_pmem_rd_b1_fin;
   reg                   dma_dmem_rd_bank_r;
+
+  assign pmem_rd_sel_b1_fin  = ADD_PMEM_RD_REG ? pmem_rd_sel_b1_rr : pmem_rd_sel_b1_r;
+  assign pmem_rd_sel_b2_fin  = ADD_PMEM_RD_REG ? pmem_rd_sel_b2_rr : pmem_rd_sel_b2_r;
+  assign pmem_rd_data_b1_fin = ADD_PMEM_RD_REG ? pmem_rd_data_b1_r : pmem_rd_data_b1;
+  assign pmem_rd_data_b2_fin = ADD_PMEM_RD_REG ? pmem_rd_data_b2_r : pmem_rd_data_b2;
 
   if (PMEM_SEL_BITS>0) begin
 
     always @ (posedge clk) begin
       pmem_rd_sel_b1_r  <= pmem_rd_sel_b1;
       pmem_rd_sel_b2_r  <= pmem_rd_sel_b2;
+      pmem_rd_sel_b1_rr <= pmem_rd_sel_b1_r;
+      pmem_rd_sel_b2_rr <= pmem_rd_sel_b2_r;
     end
 
     // 4th cycle of PMEM latency
     always @ (posedge clk) begin
-      core_pmem_rd_data <= core_pmem_rd_b1_r   ? pmem_rd_data_b1[pmem_rd_sel_b1_r*DATA_WIDTH +: DATA_WIDTH]
-                                               : pmem_rd_data_b2[pmem_rd_sel_b2_r*DATA_WIDTH +: DATA_WIDTH];
-      dma_pmem_rd_data  <= dma_pmem_rd_bank_rr ? pmem_rd_data_b2[pmem_rd_sel_b2_r*DATA_WIDTH +: DATA_WIDTH]
-                                               : pmem_rd_data_b1[pmem_rd_sel_b1_r*DATA_WIDTH +: DATA_WIDTH];
+      core_pmem_rd_data <= core_pmem_rd_b1_fin  ? pmem_rd_data_b1_fin[pmem_rd_sel_b1_fin*DATA_WIDTH +: DATA_WIDTH]
+                                                : pmem_rd_data_b2_fin[pmem_rd_sel_b2_fin*DATA_WIDTH +: DATA_WIDTH];
+      dma_pmem_rd_data  <= dma_pmem_rd_bank_fin ? pmem_rd_data_b2_fin[pmem_rd_sel_b2_fin*DATA_WIDTH +: DATA_WIDTH]
+                                                : pmem_rd_data_b1_fin[pmem_rd_sel_b1_fin*DATA_WIDTH +: DATA_WIDTH];
     end
 
   end else begin
 
     always @ (posedge clk) begin
-      core_pmem_rd_data <= core_pmem_rd_b1_r   ? pmem_rd_data_b1
-                                               : pmem_rd_data_b2;
-      dma_pmem_rd_data  <= dma_pmem_rd_bank_rr ? pmem_rd_data_b2
-                                               : pmem_rd_data_b1;
+      core_pmem_rd_data <= core_pmem_rd_b1_fin  ? pmem_rd_data_b1_fin
+                                                : pmem_rd_data_b2_fin;
+      dma_pmem_rd_data  <= dma_pmem_rd_bank_fin ? pmem_rd_data_b2_fin
+                                                : pmem_rd_data_b1_fin;
     end
   end
 
@@ -722,25 +741,35 @@ module mem_sys # (
                                                : dma_dmem_rd_data_b1;
 
   // Saving valid and bank of read requests to direct them back for response
-  reg dma_pmem_rd_gnt_r;
-  reg dma_pmem_rd_gnt_rr;
-  reg dma_pmem_rd_gnt_rrr;
-  reg dma_dmem_rd_gnt_r;
-  reg dma_pmem_rd_bank_r;
+  reg  dma_pmem_rd_gnt_r;
+  reg  dma_pmem_rd_gnt_rr;
+  reg  dma_pmem_rd_gnt_rrr;
+  reg  dma_pmem_rd_gnt_rrrr;
+  reg  dma_dmem_rd_gnt_r;
+  wire dma_pmem_rd_gnt_fin;
+  reg  dma_pmem_rd_bank_r;
+  reg  dma_pmem_rd_bank_rr;
+  reg  dma_pmem_rd_bank_rrr;
 
-  reg core_dmem_bank_r;
-  reg core_pmem_rd_r;
-  reg core_dmem_rd_r;
-  reg core_pmem_rd_rr;
-  reg core_pmem_rd_rrr;
+  reg  core_dmem_bank_r;
+  reg  core_pmem_rd_r;
+  reg  core_dmem_rd_r;
+  reg  core_pmem_rd_rr;
+  reg  core_pmem_rd_rrr;
+  reg  core_pmem_rd_rrrr;
+  wire core_pmem_rd_fin;
+  reg  core_pmem_rd_b1_r;
+  reg  core_pmem_rd_b1_rr;
 
   always @(posedge clk)
     if(rst) begin
       dma_pmem_rd_gnt_r    <= 1'b0;
       dma_pmem_rd_gnt_rr   <= 1'b0;
       dma_pmem_rd_gnt_rrr  <= 1'b0;
+      dma_pmem_rd_gnt_rrrr <= 1'b0;
       dma_dmem_rd_gnt_r    <= 1'b0;
       dma_pmem_rd_bank_rr  <= 1'b0;
+      dma_pmem_rd_bank_rrr <= 1'b0;
       dma_dmem_rd_bank_r   <= 1'b0;
 
       core_dmem_bank_r     <= 1'b0;
@@ -748,14 +777,18 @@ module mem_sys # (
       core_dmem_rd_r       <= 1'b0;
       core_pmem_rd_rr      <= 1'b0;
       core_pmem_rd_rrr     <= 1'b0;
+      core_pmem_rd_rrrr    <= 1'b0;
       core_pmem_rd_b1_r    <= 1'b0;
+      core_pmem_rd_b1_rr   <= 1'b0;
     end else begin
       dma_pmem_rd_gnt_r    <= dma_pmem_rd_b1_gnt || dma_pmem_rd_b2_gnt;
       dma_pmem_rd_gnt_rr   <= dma_pmem_rd_gnt_r;
       dma_pmem_rd_gnt_rrr  <= dma_pmem_rd_gnt_rr;
+      dma_pmem_rd_gnt_rrrr <= dma_pmem_rd_gnt_rrr;
       dma_dmem_rd_gnt_r    <= dma_dmem_rd_b1_gnt || dma_dmem_rd_b2_gnt;
       dma_pmem_rd_bank_r   <= dma_pmem_rd_b2_gnt;
       dma_pmem_rd_bank_rr  <= dma_pmem_rd_bank_r;
+      dma_pmem_rd_bank_rrr <= dma_pmem_rd_bank_rr;
       dma_dmem_rd_bank_r   <= dma_dmem_rd_b2_gnt;
 
       core_dmem_bank_r     <= core_dmem_addr[LINE_ADDR_BITS];
@@ -763,8 +796,15 @@ module mem_sys # (
       core_pmem_rd_r       <= core_pmem_en && !core_dmem_wen;
       core_pmem_rd_rr      <= core_pmem_rd_r;
       core_pmem_rd_rrr     <= core_pmem_rd_rr;
+      core_pmem_rd_rrrr    <= core_pmem_rd_rrr;
       core_pmem_rd_b1_r    <= core_pmem_rd_b1;
+      core_pmem_rd_b1_rr   <= core_pmem_rd_b1_r;
     end
+
+  assign core_pmem_rd_b1_fin  = ADD_PMEM_RD_REG ? core_pmem_rd_b1_rr   : core_pmem_rd_b1_r;
+  assign dma_pmem_rd_bank_fin = ADD_PMEM_RD_REG ? dma_pmem_rd_bank_rrr : dma_pmem_rd_bank_rr;
+  assign core_pmem_rd_fin     = ADD_PMEM_RD_REG ? core_pmem_rd_rrrr    : core_pmem_rd_rrr;
+  assign dma_pmem_rd_gnt_fin  = ADD_PMEM_RD_REG ? dma_pmem_rd_gnt_rrrr : dma_pmem_rd_gnt_rrr;
 
   ////////////////////////////////////////////////////////////////////
   ///////////////// SELECTING READ RESPONSE DATA /////////////////////
@@ -807,7 +847,7 @@ module mem_sys # (
     .rst(rst),
     .clear(1'b0),
 
-    .din_valid(dma_pmem_rd_gnt_rrr),
+    .din_valid(dma_pmem_rd_gnt_fin),
     .din(dma_pmem_rd_data),
     .din_ready(),
     // never gets full since if not readyed a bubble is
@@ -821,12 +861,12 @@ module mem_sys # (
   );
 
   // Selecting output data based on state
-  assign core_dmem_rd_data_w = core_pmem_rd_rrr    ? core_pmem_rd_data :
+  assign core_dmem_rd_data_w = core_pmem_rd_fin    ? core_pmem_rd_data :
                                core_dmem_bank_r    ? core_dmem_rd_data_b2 : core_dmem_rd_data_b1;
   assign dma_rd_resp_data    = dma_pmem_fifo_valid ? dma_pmem_fifo_rd_data : dma_dmem_fifo_rd_data;
 
   // Asserting valids
-  assign core_dmem_rd_valid = core_pmem_rd_rrr    || core_dmem_rd_r;
+  assign core_dmem_rd_valid = core_pmem_rd_fin    || core_dmem_rd_r;
   assign dma_rd_resp_valid  = dma_pmem_fifo_valid || dma_dmem_fifo_valid;
 
   // DMA request ready responses

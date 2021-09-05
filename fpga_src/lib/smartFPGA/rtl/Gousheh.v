@@ -14,7 +14,8 @@ module Gousheh # (
   parameter SLOW_M_B_LINES  = 4096,
   parameter FAST_M_B_LINES  = 1024,
   parameter CORE_ID_WIDTH   = 4,
-  parameter SLOT_COUNT      = 16
+  parameter SLOT_COUNT      = 16,
+  parameter ADD_PMEM_RD_REG = 0
 ) (
   input  wire                     clk,
   input  wire                     rst,
@@ -397,7 +398,8 @@ mem_sys # (
   .BC_START_ADDR(BC_START_ADDR),
   .MSG_WIDTH(MSG_WIDTH),
   .SLOW_M_B_LINES(SLOW_M_B_LINES),
-  .FAST_M_B_LINES(FAST_M_B_LINES)
+  .FAST_M_B_LINES(FAST_M_B_LINES),
+  .ADD_PMEM_RD_REG(ADD_PMEM_RD_REG)
 ) memories (
   .clk(clk),
   .rst(rst),

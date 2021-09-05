@@ -49,22 +49,23 @@ module Gousheh_PR (
 );
 
 // Parameters that should match the wrapper and are used in ports
-parameter DATA_WIDTH     = 128;
-parameter STRB_WIDTH     = (DATA_WIDTH/8);
-parameter IMEM_SIZE      = 65536/2;
-parameter PMEM_SIZE      = 1048576;
-parameter DMEM_SIZE      = 32768;
-parameter SLOW_M_B_LINES = 4096;
-parameter FAST_M_B_LINES = 1024;
-parameter ACC_ROM_EN     = 0;
-parameter BC_REGION_SIZE = 8192;
-parameter BC_START_ADDR  = 32'h01000000+PMEM_SIZE-BC_REGION_SIZE;
-parameter MSG_WIDTH      = 32+4+$clog2(BC_REGION_SIZE)-2;
-parameter CORE_ID_WIDTH  = 4;
-parameter SLOT_COUNT     = 16;
+parameter DATA_WIDTH      = 128;
+parameter STRB_WIDTH      = (DATA_WIDTH/8);
+parameter IMEM_SIZE       = 65536/2;
+parameter PMEM_SIZE       = 1048576;
+parameter DMEM_SIZE       = 32768;
+parameter SLOW_M_B_LINES  = 4096;
+parameter FAST_M_B_LINES  = 1024;
+parameter ACC_ROM_EN      = 0;
+parameter BC_REGION_SIZE  = 8192;
+parameter BC_START_ADDR   = 32'h01000000+PMEM_SIZE-BC_REGION_SIZE;
+parameter MSG_WIDTH       = 32+4+$clog2(BC_REGION_SIZE)-2;
+parameter CORE_ID_WIDTH   = 4;
+parameter SLOT_COUNT      = 16;
 
-parameter REG_TYPE       = 2;
-parameter REG_LENGTH     = 1;
+parameter REG_TYPE        = 2;
+parameter REG_LENGTH      = 1;
+parameter ADD_PMEM_RD_REG = 0;
 
 ///////////////////////////////////////////////////////////////////////////////
 /////////////////// Register input and outputs ////////////////////////////////
@@ -260,7 +261,8 @@ Gousheh # (
     .BC_START_ADDR(BC_START_ADDR),
     .MSG_WIDTH(MSG_WIDTH),
     .CORE_ID_WIDTH(CORE_ID_WIDTH),
-    .SLOT_COUNT(SLOT_COUNT)
+    .SLOT_COUNT(SLOT_COUNT),
+    .ADD_PMEM_RD_REG(ADD_PMEM_RD_REG)
 ) Gousheh_inst (
     .clk(clk),
     .rst(rst_r),

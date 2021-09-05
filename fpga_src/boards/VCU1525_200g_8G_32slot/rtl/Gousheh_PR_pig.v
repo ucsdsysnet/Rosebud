@@ -67,6 +67,7 @@ parameter SLOT_COUNT      = 32;
 
 parameter REG_TYPE        = 2;
 parameter REG_LENGTH      = 1;
+parameter ADD_PMEM_RD_REG = 0;
 
 ///////////////////////////////////////////////////////////////////////////////
 /////////////////// Register input and outputs ////////////////////////////////
@@ -264,7 +265,8 @@ Gousheh # (
     .BC_START_ADDR(BC_START_ADDR),
     .MSG_WIDTH(MSG_WIDTH),
     .CORE_ID_WIDTH(CORE_ID_WIDTH),
-    .SLOT_COUNT(SLOT_COUNT)
+    .SLOT_COUNT(SLOT_COUNT),
+    .ADD_PMEM_RD_REG(ADD_PMEM_RD_REG)
 ) Gousheh_inst (
     .clk(clk),
     .rst(rst_r),
