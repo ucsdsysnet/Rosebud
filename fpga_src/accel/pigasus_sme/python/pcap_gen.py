@@ -333,13 +333,13 @@ def main():
                 rep_count += 1
 
             payload, prot, sport, dport, seq_num = match_list[i]
-            pkt_len = max(r.randint(64, 500), len(payload)+1)
+            pkt_len = r.randint(64, 500)
 
             if (prot=='udp'):
                 continue
             else: #tcp
                 tcp = TCP(sport=sport, dport=dport, seq=seq_num+1, flags="PA")
-                payload += bytes([0xBB+k for x in range(pkt_len-len(payload))])
+                payload = bytes([r.randint(0,255) for x in range(pkt_len)])
                 pcap.write(eth / ip / tcp / payload)
                 match_list[i] = (payload, prot, sport, dport, seq_num+pkt_len)
 
