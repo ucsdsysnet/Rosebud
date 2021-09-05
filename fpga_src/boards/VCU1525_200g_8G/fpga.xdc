@@ -404,8 +404,8 @@ resize_pblock [get_pblocks MAC_n_FIFOs] -add {ILKNE4_X0Y6:ILKNE4_X0Y6}
 resize_pblock [get_pblocks MAC_n_FIFOs] -add {PCIE40E4_X0Y5:PCIE40E4_X0Y5}
 resize_pblock [get_pblocks MAC_n_FIFOs] -add {RAMB18_X0Y246:RAMB18_X1Y359}
 resize_pblock [get_pblocks MAC_n_FIFOs] -add {RAMB36_X0Y123:RAMB36_X1Y179}
-set_property IS_SOFT TRUE [get_pblocks MAC_n_FIFOs]
-# set_property EXCLUDE_PLACEMENT 1 [get_pblocks MAC_n_FIFOs]
+set_property IS_SOFT FALSE [get_pblocks MAC_n_FIFOs]
+set_property EXCLUDE_PLACEMENT 1 [get_pblocks MAC_n_FIFOs]
 
 # Center PBlock for first level switches, loopback module, and stat readers
 create_pblock Switch_n_MSGs
