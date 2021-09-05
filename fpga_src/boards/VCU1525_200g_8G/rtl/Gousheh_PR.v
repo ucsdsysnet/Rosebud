@@ -52,7 +52,7 @@ module Gousheh_PR (
 parameter DATA_WIDTH     = 128;
 parameter STRB_WIDTH     = (DATA_WIDTH/8);
 parameter IMEM_SIZE      = 65536;
-parameter PMEM_SIZE      = 1048576*2;
+parameter PMEM_SIZE      = 1048576;
 parameter DMEM_SIZE      = 32768;
 parameter SLOW_M_B_LINES = 4096;
 parameter FAST_M_B_LINES = 1024;

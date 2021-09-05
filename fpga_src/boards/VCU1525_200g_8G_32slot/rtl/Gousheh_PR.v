@@ -52,10 +52,11 @@ module Gousheh_PR (
 parameter DATA_WIDTH     = 128;
 parameter STRB_WIDTH     = (DATA_WIDTH/8);
 parameter IMEM_SIZE      = 65536;
-parameter PMEM_SIZE      = 1048576*2;
+parameter PMEM_SIZE      = 1048576;
 parameter DMEM_SIZE      = 32768;
 parameter SLOW_M_B_LINES = 4096;
 parameter FAST_M_B_LINES = 1024;
+parameter ACC_ROM_EN     = 0;
 parameter BC_REGION_SIZE = 8192;
 parameter BC_START_ADDR  = 32'h01000000+PMEM_SIZE-BC_REGION_SIZE;
 parameter MSG_WIDTH      = 32+4+$clog2(BC_REGION_SIZE)-2;
@@ -254,6 +255,7 @@ Gousheh # (
     .DMEM_SIZE(DMEM_SIZE),
     .SLOW_M_B_LINES(SLOW_M_B_LINES),
     .FAST_M_B_LINES(FAST_M_B_LINES),
+    .ACC_ROM_EN(ACC_ROM_EN),
     .BC_REGION_SIZE(BC_REGION_SIZE),
     .BC_START_ADDR(BC_START_ADDR),
     .MSG_WIDTH(MSG_WIDTH),
