@@ -83,6 +83,7 @@ wire        core_exio_en;
 wire        core_mem_wen;
 wire        core_mem_ready;
 wire [3:0]  core_mem_strb;
+wire [1:0]  core_mem_swap;
 wire [24:0] core_mem_addr;
 wire [31:0] core_mem_wr_data;
 wire [31:0] core_mem_rd_data;
@@ -171,6 +172,7 @@ riscvcore #(
   .exio_en(core_exio_en),
   .mem_wen(core_mem_wen),
   .mem_ready(core_mem_ready),
+  .mem_swap(core_mem_swap),
   .mem_strb(core_mem_strb),
   .mem_addr(core_mem_addr),
   .mem_wr_data(core_mem_wr_data),
@@ -426,6 +428,7 @@ mem_sys # (
   .core_pmem_en(core_pmem_en),
   .core_dmem_wen(core_mem_wen),
   .core_dmem_strb(core_mem_strb),
+  .core_dmem_swap(core_mem_swap),
   .core_dmem_addr(core_mem_addr),
   .core_dmem_wr_data(core_mem_wr_data),
   .core_dmem_rd_data(core_dmem_rd_data),

@@ -16,6 +16,7 @@ module riscvcore #(
     output                       mem_wen,
     input                        mem_ready,
     output [3:0]                 mem_strb,
+    output [1:0]                 mem_swap,
     output [24:0]                mem_addr,
     output [31:0]                mem_wr_data,
     input  [31:0]                mem_rd_data,
@@ -138,6 +139,7 @@ wire external_io = dmem_addr[24:22]==3'b001;
 wire data_mem    = dmem_addr[24:23]==2'b01;
 wire packet_mem  = dmem_addr[24]   ==1'b1;
 
+assign mem_swap  = dmem_addr[27:26];
 assign dmem_en   = dmem_v && data_mem;
 assign pmem_en   = dmem_v && packet_mem;
 assign exio_en   = dmem_v && external_io;
