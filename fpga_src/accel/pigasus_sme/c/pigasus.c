@@ -18,7 +18,7 @@
 
 // maximum number of slots (number of context objects)
 #define MAX_CTX_COUNT 16
-
+#define REORDER_LIMIT 8
 #define HASH_SCHED
 
 // packet start offset
@@ -71,6 +71,7 @@ struct flow {
 #define ACC_DMA_DONE_ERR (*((volatile unsigned char      *)(IO_EXT_BASE + 0x7a)))
 
 unsigned int reorder_slots_1hot;
+unsigned int reorder_slot_count;
 // unsigned int pkt_num;
 
 // Slot contexts
@@ -157,7 +158,8 @@ static inline void slot_rx_packet(struct slot_context *slot)
     // header size from IHL
     payload_offset += (ch & 0xf) << 2;
     slot->l4_header.tcp_hdr = (struct tcp_header*)(slot->header+payload_offset);
-    slot->l4_header_swapped.tcp_hdr = (struct tcp_header*)(slot->header+payload_offset + 0x08000000);
+    slot->l4_header_swapped.tcp_hdr = 
+                 (struct tcp_header*)(slot->header+payload_offset + 0x08000000);
 
     // check protocol
     switch (slot->l3_header.ipv4_hdr->protocol)
@@ -223,16 +225,21 @@ static inline void slot_rx_packet(struct slot_context *slot)
           // PROFILE_A(cur_seq_num);
           // PROFILE_A(slot->flow.exp_seq);
           goto drop;
-        } else { // Save the remaining slot info and raise the reorder flag
+        } else if (reorder_slot_count <= REORDER_LIMIT){ 
+          // Save the remaining slot info and raise the reorder flag
           PROFILE_B(0xBEEF0006);
           slot->payload_addr   = (unsigned int)(slot->desc.data)+payload_offset;
           slot->payload_length = packet_length - payload_offset;
           slot->eop            = slot->packet + slot->desc.len;
           slot->is_tcp         = 1;
 
+          reorder_slot_count ++;
           reorder_slots_1hot |= slot->set_mask;
           PROFILE_B(0xFEEB0000 | reorder_slots_1hot);
           return;
+        } else {
+          PROFILE_B(0xBEEF0007);
+          goto drop;
         }
 
 process_tcp:
@@ -369,6 +376,7 @@ static inline void process_reorder(struct slot_context *slot)
     ACC_PIG_SLOT  = slot->index;
     ACC_PIG_CTRL  = 1;
     reorder_slots_1hot &= slot->rst_mask;
+    reorder_slot_count --;
     return;
   }
 
@@ -426,7 +434,8 @@ int main(void)
   }
 
   reorder_slots_1hot = 0;
-  init_left_mask = (1<<slot_count) - 1;
+  reorder_slot_count = 0;
+  init_left_mask     = (1<<slot_count) - 1;
   // pkt_num = 0;
 
   PROFILE_A(0x00000005);
