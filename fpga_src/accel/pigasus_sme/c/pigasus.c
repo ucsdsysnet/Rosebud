@@ -283,78 +283,67 @@ static inline void slot_match(struct slot_context *slot){
   unsigned int rule_id;
   struct flow * flow_wr;
 
-  // PROFILE_A(rule_id);
-
   PROFILE_B(0xDEAD6666);
+  rule_id = ACC_PIG_RULE_ID;
+  asm volatile("" ::: "memory");
 
-  while (1){ // To drain output FIFO
+  if (rule_id!=0){
+    ACC_PIG_CTRL = 2; // release the match
+    // Add rule IDs to the end of the packet
+    * slot->eop = rule_id;
+    slot->eop += 4;
+    slot->desc.len += 4;
+    slot->match_cnt ++;
+    PROFILE_B(0xDEAD0001);
+  } else { // EoP
 
-    rule_id = ACC_PIG_RULE_ID;
+    // pkt_num ++;
+    PROFILE_B(0xDEAD0002);
 
-    if (rule_id!=0){
-      ACC_PIG_CTRL = 2; // release the match
-      // Add rule IDs to the end of the packet
-      * slot->eop = rule_id;
-      slot->eop += 4;
-      slot->desc.len += 4;
-      slot->match_cnt ++;
-      PROFILE_B(0xDEAD0001);
-    } else { // EoP
+    // Remove hash from the beginning
+    slot->desc.data = slot->packet   + DATA_OFFSET;
+    slot->desc.len  = slot->desc.len - DATA_OFFSET;
 
-      // pkt_num ++;
-      PROFILE_B(0xDEAD0002);
-
-      // Remove hash from the beginning
-      slot->desc.data = slot->packet   + DATA_OFFSET;
-      slot->desc.len  = slot->desc.len - DATA_OFFSET;
-
-      // Decide what to do with the packet
-      if ((slot->flow.state.state_8[7]>0x80) || (slot->match_cnt!=0)){
-        slot->desc.port = 2;
-        PROFILE_B(0xDEAD0003);
-        // PROFILE_A(0xDDDD0000|pkt_num);
-      } else {// IDS: drop, IPS: forward
-        slot->desc.len = 0;
-        PROFILE_B(0xDEAD0004);
-        // slot->desc.port ^= 0x1;
-      }
-
-      if (slot->is_tcp){
-        PROFILE_B(0xDEAD0005);
-        // Update state in the flow table
-        flow_wr = (struct flow *) (PMEM_BASE) + (slot->flow_id);
-
-        if (slot->l4_header.tcp_hdr->flags & bswap_16(0x0001)) { // FIN
-          flow_wr->state.state_8[7]  = 0;
-          PROFILE_B(0xDEAD0006);
-        } else if (slot->match_cnt!=0) {
-          flow_wr->state.state_32[1] = ACC_PIG_STATE_H | 0x80000000;
-          flow_wr->state.state_32[0] = ACC_PIG_STATE_L;
-          PROFILE_B(0xDEAD0007);
-        } else {
-          flow_wr->state.state_64    = ACC_PIG_STATE;
-          PROFILE_B(0xDEAD0008);
-        }
-
-        if (slot->l4_header.tcp_hdr->flags & bswap_16(0x0002)) // SYN
-          flow_wr->exp_seq = slot->l4_header_swapped.tcp_hdr->seq + slot->payload_length+1;
-        else
-          flow_wr->exp_seq = slot->l4_header_swapped.tcp_hdr->seq + slot->payload_length;
-
-        flow_wr->ts = TIMER_32_H && 0x0000FFFF;
-      }
-
-      asm volatile("" ::: "memory");
-      pkt_send(&slot->desc);
-      slot->match_cnt = 0; // Done with current packet
-      ACC_PIG_CTRL    = 2; // release the EoP
+    // Decide what to do with the packet
+    if ((slot->flow.state.state_8[7]>0x80) || (slot->match_cnt!=0)){
+      slot->desc.port = 2;
+      PROFILE_B(0xDEAD0003);
+      // PROFILE_A(0xDDDD0000|pkt_num);
+    } else {// IDS: drop, IPS: forward
+      slot->desc.len = 0;
+      PROFILE_B(0xDEAD0004);
+      // slot->desc.port ^= 0x1;
     }
 
-    if (ACC_PIG_MATCH) {
-      PROFILE_B(0xDEADDEAD);
-      slot = &context[ACC_PIG_SLOT];
-    } else
-      break;
+    if (slot->is_tcp){
+      PROFILE_B(0xDEAD0005);
+      // Update state in the flow table
+      flow_wr = (struct flow *) (PMEM_BASE) + (slot->flow_id);
+
+      if (slot->l4_header.tcp_hdr->flags & bswap_16(0x0001)) { // FIN
+        flow_wr->state.state_8[7]  = 0;
+        PROFILE_B(0xDEAD0006);
+      } else if (slot->match_cnt!=0) {
+        flow_wr->state.state_32[1] = ACC_PIG_STATE_H | 0x80000000;
+        flow_wr->state.state_32[0] = ACC_PIG_STATE_L;
+        PROFILE_B(0xDEAD0007);
+      } else {
+        flow_wr->state.state_64    = ACC_PIG_STATE;
+        PROFILE_B(0xDEAD0008);
+      }
+
+      if (slot->l4_header.tcp_hdr->flags & bswap_16(0x0002)) // SYN
+        flow_wr->exp_seq = slot->l4_header_swapped.tcp_hdr->seq + slot->payload_length+1;
+      else
+        flow_wr->exp_seq = slot->l4_header_swapped.tcp_hdr->seq + slot->payload_length;
+
+      flow_wr->ts = TIMER_32_H && 0x0000FFFF;
+    }
+
+    ACC_PIG_CTRL    = 2; // release the EoP
+    asm volatile("" ::: "memory");
+    slot->match_cnt = 0; // Done with current packet
+    pkt_send(&slot->desc);
   }
 
 }
@@ -454,7 +443,7 @@ int main(void)
       slot_rx_packet(slot);
     }
 
-    if (ACC_PIG_MATCH) {
+    while (ACC_PIG_MATCH) { // To drain output FIFO
       // PROFILE_A(0x00010003);
       slot = &context[ACC_PIG_SLOT];
       slot_match(slot);
