@@ -186,7 +186,7 @@ static inline void slot_rx_packet(struct slot_context *slot)
           goto process_tcp;
         }
 
-        cur_time      = TIMER_32_H && 0x0000FFFF;
+        cur_time      = TIMER_16_HL;
         slot->flow.ts = FLOW_TABLE_ENTRY->ts;
 
         // TCP time out
@@ -336,7 +336,7 @@ static inline void slot_match(struct slot_context *slot){
       else
         flow_wr->exp_seq = slot->l4_header_swapped.tcp_hdr->seq + slot->payload_length;
 
-      flow_wr->ts = TIMER_32_H && 0x0000FFFF;
+      flow_wr->ts = TIMER_16_HL;
     }
 
     ACC_PIG_CTRL    = 2; // release the EoP
@@ -349,24 +349,22 @@ static inline void slot_match(struct slot_context *slot){
 
 static inline void process_reorder(struct slot_context *slot)
 {
-  unsigned short cur_time;
+  unsigned short cur_time, test;
 
   PROFILE_B(0xDCDC0000 | slot->index);
 
+  asm volatile("" ::: "memory");
   HASH_LOOKUP        = slot->flow_id;
   asm volatile("" ::: "memory");
-  cur_time           = TIMER_32_H && 0x0000FFFF;
-
-  // Filling the gap in case it goes through
-  ACC_DMA_ADDR  = slot->payload_addr;
-  ACC_DMA_LEN   = slot->payload_length;
-  ACC_PIG_PORTS = * (unsigned int *) slot->l4_header.tcp_hdr; // both ports
-
+  cur_time           = TIMER_16_HL;
   asm volatile("" ::: "memory");
   slot->flow.exp_seq = FLOW_TABLE_ENTRY->exp_seq;
 
   if (slot->l4_header_swapped.tcp_hdr->seq == slot->flow.exp_seq){
     PROFILE_B(0xBEEF0101);
+    ACC_DMA_ADDR  = slot->payload_addr;
+    ACC_DMA_LEN   = slot->payload_length;
+    ACC_PIG_PORTS = * (unsigned int *) slot->l4_header.tcp_hdr; // both ports
     ACC_PIG_STATE = FLOW_TABLE_ENTRY->state.state_64;
     ACC_PIG_SLOT  = slot->index;
     ACC_PIG_CTRL  = 1;
