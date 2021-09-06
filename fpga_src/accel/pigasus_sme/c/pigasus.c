@@ -71,6 +71,7 @@ struct flow {
 #define ACC_DMA_DONE_ERR (*((volatile unsigned char      *)(IO_EXT_BASE + 0x7a)))
 
 unsigned int reorder_slots_1hot;
+// unsigned int pkt_num;
 
 // Slot contexts
 struct slot_context {
@@ -131,9 +132,11 @@ static inline void slot_rx_packet(struct slot_context *slot)
   struct   flow  *flow_wr;
   int            tag_match, time_out; // Actually bool
 
-  PROFILE_B(0x00010000);
+  PROFILE_B(0x00010005);
+
   slot->flow_id  = (*(slot->hash_H)) >> 1;
   HASH_LOOKUP    = slot->flow_id;
+  asm volatile("" ::: "memory");
   slot->flow.tag = *(slot->hash_L);
 
   // check eth type
@@ -156,18 +159,20 @@ static inline void slot_rx_packet(struct slot_context *slot)
     slot->l4_header.tcp_hdr = (struct tcp_header*)(slot->header+payload_offset);
     slot->l4_header_swapped.tcp_hdr = (struct tcp_header*)(slot->header+payload_offset + 0x08000000);
 
-    PROFILE_B(0x00010002);
     // check protocol
     switch (slot->l3_header.ipv4_hdr->protocol)
     {
       case 0x06: // TCP
+        PROFILE_B(0x00010007);
         // header size from flags field
         ch = ((char *)slot->l4_header.tcp_hdr)[12];
         payload_offset += (ch & 0xF0) >> 2;
 
-        if (payload_offset >= packet_length)
+        if (payload_offset >= packet_length){
           // no payload
+          PROFILE_B(0x00010002);
           goto drop;
+        }
 
         slot->flow.state.state_32[1] = FLOW_TABLE_ENTRY->state.state_32[1];
 
@@ -193,7 +198,7 @@ static inline void slot_rx_packet(struct slot_context *slot)
           goto drop;
         }
 
-        // tag colission, send to host
+        // tag collision, send to host
         if (!tag_match){
           // apply offset
           PROFILE_B(0xBEEF0003);
@@ -207,6 +212,7 @@ static inline void slot_rx_packet(struct slot_context *slot)
         slot->flow.exp_seq = FLOW_TABLE_ENTRY->exp_seq;
         cur_seq_num        = slot->l4_header_swapped.tcp_hdr->seq;
 
+
         if (cur_seq_num == slot->flow.exp_seq){
           ACC_PIG_STATE = FLOW_TABLE_ENTRY->state.state_64;
           PROFILE_B(0xBEEF0004);
@@ -214,6 +220,8 @@ static inline void slot_rx_packet(struct slot_context *slot)
         } else if ((cur_seq_num > (slot->flow.exp_seq + 30000)) || //assuming 3 jumbo
                  (cur_seq_num <  slot->flow.exp_seq )) {
           PROFILE_B(0xBEEF0005);
+          // PROFILE_A(cur_seq_num);
+          // PROFILE_A(slot->flow.exp_seq);
           goto drop;
         } else { // Save the remaining slot info and raise the reorder flag
           PROFILE_B(0xBEEF0006);
@@ -275,7 +283,7 @@ static inline void slot_match(struct slot_context *slot){
   unsigned int rule_id;
   struct flow * flow_wr;
 
-  PROFILE_A(rule_id);
+  // PROFILE_A(rule_id);
 
   PROFILE_B(0xDEAD6666);
 
@@ -293,30 +301,28 @@ static inline void slot_match(struct slot_context *slot){
       PROFILE_B(0xDEAD0001);
     } else { // EoP
 
+      // pkt_num ++;
       PROFILE_B(0xDEAD0002);
 
       // Remove hash from the beginning
       slot->desc.data = slot->packet   + DATA_OFFSET;
       slot->desc.len  = slot->desc.len - DATA_OFFSET;
 
-      // Send packet
+      // Decide what to do with the packet
       if ((slot->flow.state.state_8[7]>0x80) || (slot->match_cnt!=0)){
         slot->desc.port = 2;
         PROFILE_B(0xDEAD0003);
+        // PROFILE_A(0xDDDD0000|pkt_num);
       } else {// IDS: drop, IPS: forward
         slot->desc.len = 0;
         PROFILE_B(0xDEAD0004);
         // slot->desc.port ^= 0x1;
       }
-      // It might take a little to be done done, but couple cycles and desc
-      // cannot circle back in time
-      pkt_send(&slot->desc);
 
       if (slot->is_tcp){
         PROFILE_B(0xDEAD0005);
         // Update state in the flow table
         flow_wr = (struct flow *) (PMEM_BASE) + (slot->flow_id);
-        // PROFILE_B(0xCCCC0000| slot->l4_header.tcp_hdr->flags);
 
         if (slot->l4_header.tcp_hdr->flags & bswap_16(0x0001)) { // FIN
           flow_wr->state.state_8[7]  = 0;
@@ -330,19 +336,18 @@ static inline void slot_match(struct slot_context *slot){
           PROFILE_B(0xDEAD0008);
         }
 
-        ACC_PIG_CTRL = 2; // release the EoP and state
-
         if (slot->l4_header.tcp_hdr->flags & bswap_16(0x0002)) // SYN
           flow_wr->exp_seq = slot->l4_header_swapped.tcp_hdr->seq + slot->payload_length+1;
         else
           flow_wr->exp_seq = slot->l4_header_swapped.tcp_hdr->seq + slot->payload_length;
 
         flow_wr->ts = TIMER_32_H && 0x0000FFFF;
-      } else {
-        ACC_PIG_CTRL = 2; // release the EoP
       }
 
+      asm volatile("" ::: "memory");
+      pkt_send(&slot->desc);
       slot->match_cnt = 0; // Done with current packet
+      ACC_PIG_CTRL    = 2; // release the EoP
     }
 
     if (ACC_PIG_MATCH) {
@@ -422,8 +427,9 @@ int main(void)
     context[i].rst_mask  = ~(0x1 << i);
   }
   reorder_slots_1hot = 0;
+  // pkt_num = 0;
 
-  PROFILE_A(0x00000005);
+  // PROFILE_A(0x00000005);
 
   while (1)
   {
@@ -432,7 +438,7 @@ int main(void)
     {
       struct Desc desc;
 
-      PROFILE_A(0x00010001);
+      // PROFILE_A(0x00010001);
 
       // read descriptor
       read_in_pkt(&desc);
@@ -443,17 +449,18 @@ int main(void)
       // copy descriptor into context
       slot->desc = desc;
 
-      PROFILE_A(0x00010002);
+      // PROFILE_A(0x00010002);
       // handle packet
       slot_rx_packet(slot);
     }
 
-    PROFILE_A(0x00020000);
-
     if (ACC_PIG_MATCH) {
+      // PROFILE_A(0x00010003);
       slot = &context[ACC_PIG_SLOT];
       slot_match(slot);
     }
+
+    // PROFILE_A(0x00010004);
 
     // TODO: improve with while (reorder_slots_1hot) and mask
     if (reorder_slots_1hot)
