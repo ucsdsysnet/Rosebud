@@ -384,6 +384,9 @@ static inline void process_reorder(struct slot_context *slot)
 int main(void)
 {
   struct slot_context *slot;
+  unsigned int reorder_mask;
+  unsigned int reorder_left_mask;
+  unsigned int init_left_mask;
 
   DEBUG_OUT_L = 0;
   DEBUG_OUT_H = 0;
@@ -421,7 +424,9 @@ int main(void)
     context[i].set_mask  =   0x1 << i;
     context[i].rst_mask  = ~(0x1 << i);
   }
+
   reorder_slots_1hot = 0;
+  init_left_mask = (1<<slot_count) - 1;
   // pkt_num = 0;
 
   PROFILE_A(0x00000005);
@@ -456,11 +461,19 @@ int main(void)
 
     PROFILE_A(0x00010004);
 
-    // TODO: improve with while (reorder_slots_1hot) and mask
-    if (reorder_slots_1hot)
-      for (int i = 0; i < slot_count; i++)
-        if (reorder_slots_1hot & (1 << i))
+    if (reorder_slots_1hot) {
+      reorder_left_mask = init_left_mask;
+      reorder_mask      = 1;
+      for (int i = 0; i < slot_count; i++){
+        if (reorder_slots_1hot & reorder_mask)
           process_reorder(&context[i]);
+
+        reorder_mask      = reorder_mask      << 1;
+        reorder_left_mask = reorder_left_mask << 1;
+        if (!(reorder_slots_1hot & reorder_left_mask))
+          break;
+      }
+    }
   }
 
   return 1;

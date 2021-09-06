@@ -65,7 +65,7 @@ FIRMWARE = os.path.abspath(os.path.join(os.path.dirname(__file__),
 
 SEND_COUNT_0 = 1024
 SIZE_0 = [66-54, 1500-54, 66-54, 66-54, 1500-54, 1500-54, 66-54]
-WAIT_TIME = 40000
+WAIT_TIME = 50000
 MAX_PKT_SPACING = 3
 CHECK_PKT = True
 PRINT_RX_PKT = False
