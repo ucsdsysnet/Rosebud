@@ -1,7 +1,7 @@
 #include "core.h"
 #include "packet_headers.h"
 
-#if 1
+#if 0
 #define PROFILE_A(x) do {DEBUG_OUT_L = (x);} while (0)
 #define PROFILE_B(x) do {DEBUG_OUT_H = (x);} while (0)
 #else
@@ -232,7 +232,6 @@ static inline void slot_rx_packet(struct slot_context *slot)
 
           reorder_slots_1hot |= slot->set_mask;
           PROFILE_B(0xFEEB0000 | reorder_slots_1hot);
-          slot->flow.state.state_32[0] = FLOW_TABLE_ENTRY->state.state_32[0];
           return;
         }
 
@@ -350,27 +349,36 @@ static inline void slot_match(struct slot_context *slot){
 
 static inline void process_reorder(struct slot_context *slot)
 {
-  unsigned short cur_time = TIMER_32_H && 0x0000FFFF;
+  unsigned short cur_time;
 
   PROFILE_B(0xDCDC0000 | slot->index);
-  // TCP time out
-  if ((cur_time < slot->flow.ts) || ((cur_time - slot->flow.ts) > 4)){
-    PROFILE_B(0xBEEF0100);
-    slot->desc.len = 0;
-    pkt_send(&slot->desc);
-    return;
-  }
+
+  HASH_LOOKUP        = slot->flow_id;
+  asm volatile("" ::: "memory");
+  cur_time           = TIMER_32_H && 0x0000FFFF;
+
+  // Filling the gap in case it goes through
+  ACC_DMA_ADDR  = slot->payload_addr;
+  ACC_DMA_LEN   = slot->payload_length;
+  ACC_PIG_PORTS = * (unsigned int *) slot->l4_header.tcp_hdr; // both ports
+
+  asm volatile("" ::: "memory");
+  slot->flow.exp_seq = FLOW_TABLE_ENTRY->exp_seq;
 
   if (slot->l4_header_swapped.tcp_hdr->seq == slot->flow.exp_seq){
     PROFILE_B(0xBEEF0101);
-    ACC_PIG_STATE = slot->flow.state.state_64;
-    ACC_DMA_ADDR  = slot->payload_addr;
-    ACC_DMA_LEN   = slot->payload_length;
-    ACC_PIG_PORTS = * (unsigned int *) slot->l4_header.tcp_hdr; // both ports
+    ACC_PIG_STATE = FLOW_TABLE_ENTRY->state.state_64;
     ACC_PIG_SLOT  = slot->index;
     ACC_PIG_CTRL  = 1;
     reorder_slots_1hot &= slot->rst_mask;
     return;
+  }
+
+  // TCP time out (from packet arrival, no need to check FLOW_TABLE_ENTRY->ts)
+  if ((cur_time < slot->flow.ts) || ((cur_time - slot->flow.ts) > 4)){
+    PROFILE_B(0xBEEF0100);
+    slot->desc.len = 0;
+    pkt_send(&slot->desc);
   }
 
 }
@@ -418,7 +426,7 @@ int main(void)
   reorder_slots_1hot = 0;
   // pkt_num = 0;
 
-  // PROFILE_A(0x00000005);
+  PROFILE_A(0x00000005);
 
   while (1)
   {
@@ -427,7 +435,7 @@ int main(void)
     {
       struct Desc desc;
 
-      // PROFILE_A(0x00010001);
+      PROFILE_A(0x00010001);
 
       // read descriptor
       read_in_pkt(&desc);
@@ -438,18 +446,17 @@ int main(void)
       // copy descriptor into context
       slot->desc = desc;
 
-      // PROFILE_A(0x00010002);
+      PROFILE_A(0x00010002);
       // handle packet
       slot_rx_packet(slot);
     }
 
     while (ACC_PIG_MATCH) { // To drain output FIFO
-      // PROFILE_A(0x00010003);
-      slot = &context[ACC_PIG_SLOT];
-      slot_match(slot);
+      PROFILE_A(0x00010003);
+      slot_match(&context[ACC_PIG_SLOT]);
     }
 
-    // PROFILE_A(0x00010004);
+    PROFILE_A(0x00010004);
 
     // TODO: improve with while (reorder_slots_1hot) and mask
     if (reorder_slots_1hot)
