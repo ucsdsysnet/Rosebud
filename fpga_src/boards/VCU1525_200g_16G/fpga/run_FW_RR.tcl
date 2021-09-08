@@ -19,7 +19,7 @@ add_files -norecurse {
   ../lib/smartFPGA/rtl/simple_sync_sig.v
   ../lib/smartFPGA/rtl/riscvcore.v
   ../lib/smartFPGA/rtl/simple_fifo.v
-  ../lib/smartFPGA/rtl/mem_sys.v
+  ../lib/smartFPGA/rtl/mem_sys2.v
   ../lib/smartFPGA/rtl/Gousheh.v
   ../lib/smartFPGA/rtl/Gousheh_controller.v
   ../accel/ip_matcher/rtl/firewall.v
@@ -53,6 +53,7 @@ create_run impl_FW_RR -parent_run impl_1 -flow {Vivado Implementation 2021} -pr_
 set_property strategy Performance_ExtraTimingOpt [get_runs impl_FW_RR]
 set_property STEPS.POST_ROUTE_PHYS_OPT_DESIGN.IS_ENABLED true [get_runs impl_FW_RR]
 set_property STEPS.POST_ROUTE_PHYS_OPT_DESIGN.ARGS.DIRECTIVE Explore [get_runs impl_FW_RR]
+set_property -name {STEPS.OPT_DESIGN.ARGS.MORE OPTIONS} -value {-retarget -propconst -sweep -bufg_opt -shift_register_opt -aggressive_remap} -objects [get_runs impl_FW_RR]
 # set_property STEPS.PLACE_DESIGN.ARGS.DIRECTIVE Explore [get_runs impl_FW_RR]
 set_property AUTO_INCREMENTAL_CHECKPOINT 1 [get_runs impl_FW_RR]
 

@@ -28,6 +28,7 @@ set_property STEPS.POST_ROUTE_PHYS_OPT_DESIGN.IS_ENABLED true [get_runs impl_1]
 set_property STEPS.POST_ROUTE_PHYS_OPT_DESIGN.ARGS.DIRECTIVE Explore [get_runs impl_1]
 # add_files -fileset utils_1 -norecurse force_phys_opt.tcl
 # set_property STEPS.PHYS_OPT_DESIGN.TCL.POST [get_files force_phys_opt.tcl -of [get_fileset utils_1]] [get_runs impl_1]
+set_property -name {STEPS.OPT_DESIGN.ARGS.MORE OPTIONS} -value {-retarget -propconst -sweep -bufg_opt -shift_register_opt -aggressive_remap} -objects [get_runs impl_1]
 set_property STEPS.PLACE_DESIGN.ARGS.DIRECTIVE SSI_SpreadSLLs [get_runs impl_1]
 set_property -name {STEPS.PLACE_DESIGN.ARGS.MORE OPTIONS} -value -verbose -objects [get_runs impl_1]
 
