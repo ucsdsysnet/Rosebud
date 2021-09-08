@@ -67,7 +67,7 @@ parameter SLOT_COUNT      = 32;
 
 parameter REG_TYPE        = 2;
 parameter REG_LENGTH      = 1;
-parameter ADD_PMEM_RD_REG = 0;
+parameter ADD_PMEM_RD_REG = 1;
 
 ///////////////////////////////////////////////////////////////////////////////
 /////////////////// Register input and outputs ////////////////////////////////
