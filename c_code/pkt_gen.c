@@ -151,6 +151,7 @@ struct segment pkt_headers[] = {
   SEG(http_hdr)
 };
 
+char pattern0[10240] = {[0 ... 10239] = 0xFF}; // For Pigasus not to match
 char pattern1[] = "page.php?id=%27%3B%20SELECT%20%2A%20FROM%20users%3B%20--";
 char pattern2[] = "page.php?id=%27%3B%20DELETE%20FROM%20prod_data%3B%20--";
 char pattern3[] = "GET AAAAAAAA HTTP/1.1";
@@ -158,8 +159,8 @@ char pattern4[] = "GET / HTTP/1.1\r\n\r\n\r\n";
 char pattern5[] = "HTTP/1.0\r\nAccept: */*\r\nAccept-Language: ";
 
 struct segment pkt_payloads[] = {
-  SEG(pattern1),
-  SEG(pattern2),
+  SEG(pattern0),
+  SEG(pattern0),
   // SEG(pattern3),
   // SEG(pattern4),
   // SEG(pattern5)

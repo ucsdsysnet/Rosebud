@@ -17,7 +17,7 @@
    ((x & 0x0000ff00) <<  8) | ((x & 0x000000ff) << 24))
 
 // maximum number of slots (number of context objects)
-#define MAX_CTX_COUNT 16
+#define MAX_CTX_COUNT 32
 #define REORDER_LIMIT 8
 #define HASH_SCHED
 
@@ -27,7 +27,7 @@
 #define PKT_OFFSET 10
 // PMEM in 8 blocks of 128 KB
 // accelerators only connected to upper 2 blocks
-#define PKTS_START (6*128*1024)
+#define PKTS_START ((8-(MAX_CTX_COUNT/8))*128*1024)
 
 #ifdef HASH_SCHED
   #define DATA_OFFSET 4
@@ -112,9 +112,6 @@ struct slot_context {
   unsigned short flow_id;
   int            is_tcp;
 };
-
-// #define FLOW_TABLE_SIZE 32768
-#define FLOW_TABLE_SIZE 1024
 
 struct slot_context context[MAX_CTX_COUNT];
 
@@ -404,7 +401,7 @@ int main(void)
   DEBUG_OUT_H = 0;
 
   // set slot configuration parameters
-  slot_count       = 16;
+  slot_count       = 32;
   slot_size        = 16*1024;
   header_slot_base = DMEM_BASE + (DMEM_SIZE >> 1);
   header_slot_size = 128;
