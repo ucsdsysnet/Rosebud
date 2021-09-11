@@ -34,6 +34,9 @@ PIG_Hash_1:
 IDS_RR_2:
 	cd fpga && vivado -nojournal -nolog -mode batch -source run_IDS_RR_inc.tcl 2>&1 | tee IDS_RR.log
 
+PIG_RR_2:
+	cd fpga && vivado -nojournal -nolog -mode batch -source run_PIG_RR_inc.tcl 2>&1 | tee PIG_RR.log
+
 IDS_RR_direct:
 	cd fpga && vivado -nojournal -nolog -mode batch -source run_IDS_RR_direct.tcl 2>&1 | tee IDS_RR_direct.log
 
