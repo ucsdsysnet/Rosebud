@@ -56,7 +56,7 @@
 #define RECV_DESC_RELEASE (*((volatile unsigned char *)     (IO_INT_BASE + 0x002C)))
 #define DRAM_FLAG_RST     (*((volatile unsigned char *)     (IO_INT_BASE + 0x0030)))
 #define UPDATE_SLOT       (*((volatile unsigned char *)     (IO_INT_BASE + 0x0034)))
-#define MASK_WRITE        (*((volatile unsigned char *)     (IO_INT_BASE + 0x0038)))
+#define MASK_WRITE        (*((volatile unsigned short *)    (IO_INT_BASE + 0x0038)))
 #define INTERRUPT_ACK     (*((volatile unsigned int  *)     (IO_INT_BASE + 0x003C)))
 #define DEBUG_OUT         (*((volatile unsigned long long *)(IO_INT_BASE + 0x0040)))
 #define DEBUG_OUT_L       (*((volatile unsigned int *)      (IO_INT_BASE + 0x0040)))
@@ -66,6 +66,7 @@
 #define BC_MSG_FIFO_EN    (*((volatile unsigned char *)     (IO_INT_BASE + 0x0050)))
 #define BC_MSG_RELEASE    (*((volatile unsigned char *)     (IO_INT_BASE + 0x0054)))
 #define DESC_OVERRIDE     (*((volatile struct   Desc*)      (IO_INT_BASE + 0x0058)))
+#define SCHED_TAG_LEN     (*((volatile unsigned short *)    (IO_INT_BASE + 0x0060)))
 
 #define STATUS_RD                                           (IO_INT_BASE + 0x008C)
 #define IN_PKT_READY      (*((volatile unsigned char *)     (IO_INT_BASE + 0x008C))==1)
@@ -203,6 +204,10 @@ static inline void dram_flag_reset(const unsigned char num) {
 
 static inline void set_masks(const unsigned short masks) {
 	MASK_WRITE = masks;
+}
+
+static inline void set_sched_offset(const unsigned short offset) {
+	SCHED_TAG_LEN = offset;
 }
 
 static inline void pkt_done_msg(const struct Desc* output_desc) {
