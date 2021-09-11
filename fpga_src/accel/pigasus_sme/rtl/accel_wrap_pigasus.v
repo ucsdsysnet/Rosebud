@@ -47,8 +47,12 @@ module accel_wrap #(
 
 assign error = 1'b0;
 
-localparam LEN_WIDTH = 14;
+localparam LEN_WIDTH        = 14;
 localparam BLOCK_ADDR_WIDTH = PMEM_ADDR_WIDTH-PMEM_SEL_BITS;
+localparam ATTACHED_CNT     = SLOT_COUNT/8;
+localparam DMA_ADDR_WIDTH   = BLOCK_ADDR_WIDTH+$clog2(ATTACHED_CNT);
+localparam ATTACHED         = ACC_MEM_BLOCKS-ATTACHED_CNT;
+localparam EMPTY_WIDTH      = $clog2(DATA_WIDTH/8);
 
 localparam HASH_TABLE_BLOCKS = 4;
 localparam HASH_SEL_BITS     = $clog2(HASH_TABLE_BLOCKS);
@@ -297,20 +301,20 @@ end
 
 // Register Pigasus data in separate FIFOs to feed the
 // 3 accelerators in the proper time
-wire [BLOCK_ADDR_WIDTH+1-1:0] cmd_addr_reg_f;
-wire [LEN_WIDTH-1:0]          cmd_len_reg_f;
-wire                          cmd_valid_reg_f;
+wire [DMA_ADDR_WIDTH-1:0] cmd_addr_reg_f;
+wire [LEN_WIDTH-1:0]      cmd_len_reg_f;
+wire                      cmd_valid_reg_f;
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(SLOT_COUNT)),
-  .DATA_WIDTH(LEN_WIDTH+BLOCK_ADDR_WIDTH+1)
+  .DATA_WIDTH(LEN_WIDTH+DMA_ADDR_WIDTH)
 ) desc_fifo (
   .clk(clk),
   .rst(rst),
   .clear(1'b0),
 
   .din_valid(cmd_valid_reg),
-  .din({cmd_addr_reg[BLOCK_ADDR_WIDTH+1-1:0], cmd_len_reg}),
+  .din({cmd_addr_reg[DMA_ADDR_WIDTH-1:0], cmd_len_reg}),
   .din_ready(),
 
   .dout_valid(cmd_valid_reg_f),
@@ -419,10 +423,6 @@ wire [DATA_WIDTH-1:0] flow_mem_data_b2 = acc_rd_data_b2[flow_table_block_rrr*DAT
 
 
 // DMA engine for last blocks of the packet memory
-localparam ATTACHED_CNT = SLOT_COUNT/8;
-localparam ATTACHED = ACC_MEM_BLOCKS-ATTACHED_CNT;
-localparam EMPTY_WIDTH = $clog2(DATA_WIDTH/8);
-
 wire [DATA_WIDTH-1:0]  accel_tdata;
 wire [EMPTY_WIDTH-1:0] accel_tempty;
 wire                   accel_tfirst;
@@ -433,7 +433,7 @@ wire                   accel_tready;
 single_accel_rd_dma # (
   .DATA_WIDTH(DATA_WIDTH),
   .KEEP_WIDTH(DATA_WIDTH/8),
-  .ADDR_WIDTH(BLOCK_ADDR_WIDTH+1),
+  .ADDR_WIDTH(DMA_ADDR_WIDTH),
   .LEN_WIDTH(LEN_WIDTH),
   .MEM_LINES(SLOW_M_B_LINES),
   .FIFO_LINES(8)
