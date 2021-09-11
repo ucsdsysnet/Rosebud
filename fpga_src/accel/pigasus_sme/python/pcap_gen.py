@@ -49,6 +49,9 @@ r = random.Random(521)
 min_port_val = 1024
 max_port_val = 49151
 
+def random_ip():
+  return str(r.randint(0,255))+"."+str(r.randint(0,255))+"."+str(r.randint(0,255))+"."+str(r.randint(0,255))
+
 def parse_content_string(s):
     """
     Parse content string and convert to byte string
@@ -267,7 +270,8 @@ def main():
 
                             src_port = port_gen(hdr[3])
                             dst_port = port_gen(hdr[6])
-                            match_list.append((b, prot, src_port, dst_port, random.randrange(0,2**32)))
+                            ip = IP(src=random_ip(), dst=random_ip())
+                            match_list.append((b, prot, src_port, dst_port, random.randrange(0,2**32), ip))
 
                             if (rule_count <= pcap_limit) or (pcap_limit == 0):
                                 detf.write("Extracted pattern: "+str(b)+", protocol: "+prot+ \
@@ -281,10 +285,10 @@ def main():
     print ("Dropped rules: %d, Total filtered rules: %d" %(dropped, rule_count))
 
     eth = Ether(src='5A:51:52:53:54:55', dst='DA:D1:D2:D3:D4:D5')
-    ip = IP(src='192.168.1.100', dst='192.168.1.101')
 
     if (args.test_packets):
         print ("Adding 4 test packets that shouldn't match any rules")
+        ip = IP(src='192.168.1.100', dst='192.168.1.101')
 
         sumf.write("Writing udp packet from port 1234 to port 5678 with no pattern in paylod.\n")
         udp = UDP(sport=1234, dport=5678)
@@ -319,8 +323,9 @@ def main():
         else:
             pcap_count += 1
 
-        payload, prot, sport, dport, seq_num = match_list[i]
+        payload, prot, sport, dport, seq_num, ip = match_list[i]
         pkt_len = max(r.randint(64, 500), len(payload)+1)
+
         if (prot=='udp'):
             udp = UDP(sport=sport, dport=dport)
             payload += bytes([0xFF for x in range(pkt_len-len(payload))])
@@ -332,7 +337,7 @@ def main():
             pcaps.append(eth / ip / tcp / payload)
             tcp_count += 1
             syn_count += 1
-            match_list[i] = (payload, prot, sport, dport, seq_num+pkt_len)
+            match_list[i] = (payload, prot, sport, dport, seq_num+pkt_len, ip)
 
 
     for k in range(3):
@@ -343,7 +348,7 @@ def main():
             else:
                 rep_count += 1
 
-            payload, prot, sport, dport, seq_num = match_list[i]
+            payload, prot, sport, dport, seq_num, ip = match_list[i]
             pkt_len = r.randint(64, 500)
 
             if (prot=='udp'):
@@ -352,7 +357,7 @@ def main():
                 tcp = TCP(sport=sport, dport=dport, seq=seq_num+1, flags="PA")
                 payload = bytes([r.randint(0,255) for x in range(pkt_len)])
                 pcaps.append(eth / ip / tcp / payload)
-                match_list[i] = (payload, prot, sport, dport, seq_num+pkt_len)
+                match_list[i] = (payload, prot, sport, dport, seq_num+pkt_len, ip)
 
     rep_count = 0
     for i in range(len(match_list)):
@@ -361,7 +366,7 @@ def main():
         else:
             rep_count += 1
 
-        payload, prot, sport, dport, seq_num = match_list[i]
+        payload, prot, sport, dport, seq_num, ip = match_list[i]
         pkt_len = max(r.randint(64, 500), len(payload)+1)
 
         if (prot=='udp'):
@@ -370,7 +375,7 @@ def main():
             tcp = TCP(sport=sport, dport=dport, seq=seq_num+1, flags="F")
             payload += bytes([0xFF for x in range(pkt_len-len(payload))])
             pcaps.append(eth / ip / tcp / payload)
-            match_list[i] = (payload, prot, sport, dport, seq_num+pkt_len)
+            match_list[i] = (payload, prot, sport, dport, seq_num+pkt_len, ip)
 
     for i in range (args.pkt_swaps):
       random_swap (pcaps, udp_count+syn_count) # 0 to mess up SYN packets too

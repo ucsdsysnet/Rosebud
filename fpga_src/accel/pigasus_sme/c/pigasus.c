@@ -416,7 +416,7 @@ int main(void)
   // initializing other things.
   init_hdr_slots(slot_count, header_slot_base, header_slot_size);
   init_slots(slot_count, PKTS_START+PKT_OFFSET, slot_size);
-  set_masks(0xD0); //enable evict
+  set_masks(0x30); // Enable only Evict + Poke
 
   // init slot context structures
   for (int i = 0; i < slot_count; i++)
