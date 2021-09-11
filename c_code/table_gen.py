@@ -20,3 +20,8 @@ data = (1024*1024)*[0]
 with open('empty_pmem.bin', 'wb') as f:
     f.write(bytes(data))
 f.close()
+
+data = (512*1024)*[0]
+with open('empty_half_pmem.bin', 'wb') as f:
+    f.write(bytes(data))
+f.close()

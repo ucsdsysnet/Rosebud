@@ -191,16 +191,20 @@ static inline void slot_rx_packet(struct slot_context *slot)
         cur_time      = TIMER_16_HL;
         slot->flow.ts = FLOW_TABLE_ENTRY->ts;
 
-        // TCP time out
+        // TCP time out. If it's not a tag match the previous flow has finished,
+        // if it's a tag match it's same flow resend or there was a problem,
+        // consider this to be first of new set of packet. Both cases like clean entry
         time_out  = ((cur_time < slot->flow.ts) || ((cur_time - slot->flow.ts) > 4));
-        tag_match = (slot->flow.tag == FLOW_TABLE_ENTRY->tag);
-
-        if (time_out && tag_match){
+        if (time_out){
           PROFILE_B(0xBEEF0002);
-          goto drop;
+          ACC_PIG_STATE_H = 0x01FFFFFF;
+          flow_wr = (struct flow *) (PMEM_BASE) + (slot->flow_id);
+          flow_wr->tag = slot->flow.tag;
+          goto process_tcp;
         }
 
         // tag collision, send to host
+        tag_match = (slot->flow.tag == FLOW_TABLE_ENTRY->tag);
         if (!tag_match){
           // apply offset
           PROFILE_B(0xBEEF0003);

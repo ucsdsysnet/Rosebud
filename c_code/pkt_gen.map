@@ -1,3 +1,3 @@
 empty_dmem.bin 0x00800000
 empty_pmem.bin 0x01000000
-pkt_gen_changing_port_data.bin 0x00800000
+pkt_gen_data.bin 0x00800000
