@@ -52,7 +52,8 @@ parameter BAR0_APERTURE = 24;
 parameter AXIS_ETH_DATA_WIDTH = 512;
 parameter AXIS_ETH_KEEP_WIDTH = AXIS_ETH_DATA_WIDTH/8;
 
-parameter TB_LOG = 0;
+parameter TB_LOG    = 0;
+parameter INIT_ROMS = 0;
 
 reg pcie_clk;
 reg pcie_rst;
@@ -236,11 +237,14 @@ fpga_core #(
     .qsfp1_lpmode()
 );
   
-integer f;
+integer i, f;
 initial begin
   if (TB_LOG) begin
     f = $fopen("ctrl_log.txt","w"); 
     $timeformat(-9, 0, "ns", 8);
+  end
+  if (INIT_ROMS) begin
+    `include "init_roms.v"
   end
   $dumpfile ("sim_build/test_fpga_core.fst");
   $dumpvars (0,test_fpga_core);
