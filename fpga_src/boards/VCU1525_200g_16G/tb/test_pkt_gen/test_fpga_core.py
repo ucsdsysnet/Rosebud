@@ -62,11 +62,11 @@ except ImportError:
 
 
 PRINT_PKTS = True
-WAIT_TIME  = 100
+WAIT_TIME  = 100000
 
 FIRMWARE = os.path.abspath(os.path.join(os.path.dirname(__file__),
-    '..', '..', '..', '..', '..', 'c_code', 'basic_pkt_gen.elf'))
-  # '..', '..', '..', '..', '..', 'c_code', 'pkt_gen.elf'))
+  # '..', '..', '..', '..', '..', 'c_code', 'basic_pkt_gen.elf'))
+  '..', '..', '..', '..', '..', 'c_code', 'pkt_gen.elf'))
 
 
 @cocotb.test()

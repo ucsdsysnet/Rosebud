@@ -69,9 +69,9 @@ SEND_COUNT_0 = 50
 SEND_COUNT_1 = 50
 SIZE_0       = 512 - 14
 SIZE_1       = 512 - 14
-CHECK_PKT    = True
+CHECK_PKT    = False
 PRINT_RX_PKT = False
-WAIT_TIME = 50000
+WAIT_TIME = 5000000
 
 FIRMWARE = os.path.abspath(os.path.join(os.path.dirname(__file__),
     '..', '..', 'accel', 'pigasus_sme', 'c', 'pigasus.elf'))
@@ -134,19 +134,20 @@ async def run_test_ins_load(dut):
     await tb.set_enable_interfaces(0xffff)
     await Timer(100, 'ns')
 
-    tb.log.info("Init corundum driver")
-    await tb.driver.init_dev(tb.dev.functions[0].pcie_id)
-    await tb.driver.interfaces[0].open()
+    if (CHECK_PKT):
+        tb.log.info("Init corundum driver")
+        await tb.driver.init_dev(tb.dev.functions[0].pcie_id)
+        await tb.driver.interfaces[0].open()
 
-    # enable queues
-    tb.log.info("Enable queues")
-    await tb.rc.mem_write_dword(tb.driver.interfaces[0].ports[0].hw_addr+mqnic.MQNIC_PORT_REG_SCHED_ENABLE, 0x00000001)
-    # for k in range(tb.driver.interfaces[0].tx_queue_count):
-    #     await tb.rc.mem_write_dword(tb.driver.interfaces[0].ports[0].schedulers[0].hw_addr+4*k, 0x00000003)
+        # enable queues
+        tb.log.info("Enable queues")
+        await tb.rc.mem_write_dword(tb.driver.interfaces[0].ports[0].hw_addr+mqnic.MQNIC_PORT_REG_SCHED_ENABLE, 0x00000001)
+        # for k in range(tb.driver.interfaces[0].tx_queue_count):
+        #     await tb.rc.mem_write_dword(tb.driver.interfaces[0].ports[0].schedulers[0].hw_addr+4*k, 0x00000003)
 
-    # wait for all writes to complete
-    await tb.rc.mem_read(tb.driver.hw_addr, 4)
-    tb.log.info("Corundum init complete")
+        # wait for all writes to complete
+        await tb.rc.mem_read(tb.driver.hw_addr, 4)
+        tb.log.info("Corundum init complete")
 
     tb.log.info("Send data from LAN")
     tb.qsfp0_source.log.setLevel("WARNING")
@@ -163,26 +164,27 @@ async def run_test_ins_load(dut):
     for i in range(0, len(PACKETS_0),2):
         frame = PACKETS_0[i].build()
         await tb.qsfp0_source.send(frame)
-        await tb.qsfp0_source.wait()
         pkts_set.append(frame)
 
     for i in range(1, len(PACKETS_0),2):
         frame = PACKETS_0[i].build()
         await tb.qsfp1_source.send(frame)
-        await tb.qsfp1_source.wait()
         pkts_set.append(frame)
 
 
-    while (tb.driver.interfaces[0].pkt_rx_queue):
-        rx_frame = await tb.driver.interfaces[0].recv().tdata
-        tb.log.info("packet number from port 0: %d", j)
-        if PRINT_RX_PKT:
-            tb.log.debug("%s", hexdump_str(rx_frame))
-        if (CHECK_PKT):
+    if (CHECK_PKT):
+        while (tb.driver.interfaces[0].pkt_rx_queue):
+            rx_frame = await tb.driver.interfaces[0].recv().tdata
+            tb.log.info("packet number from port 0: %d", j)
+            if PRINT_RX_PKT:
+                tb.log.debug("%s", hexdump_str(rx_frame))
             if (rx_frame in pkts_set):
                 pkts_set.remove(rx_frame)
             else:
                 tb.log.debug("corupted pkt, \n%s", hexdump_str(rx_frame))
+
+    await tb.qsfp0_source.wait()
+    await tb.qsfp1_source.wait()
 
     await Timer(WAIT_TIME, 'ns')
 

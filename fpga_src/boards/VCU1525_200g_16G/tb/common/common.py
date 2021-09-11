@@ -332,6 +332,10 @@ class TB(object):
         self.int_count      = int(dut.UUT.IF_COUNT.value)
         self.tag_width      = int(dut.UUT.TAG_WIDTH.value)
         self.slot_count     = int(dut.UUT.SLOT_COUNT.value)
+        if (int(dut.INIT_ROMS.value)==1):
+          self.init_roms    = False
+        else:
+          self.init_roms    = True
 
     async def init(self):
 
@@ -392,39 +396,63 @@ class TB(object):
             length = len(data)
         length = min(length, len(data))
 
-        # TODO: break into 16K chunks
-        if (length > 16384):
-            self.log.info("ERROR, Block write has to be split into 16KB chunks.")
-            length = 16384
+        left = length
+        data_offset = 0
+        addr = dest
+        send_len = length
 
-        self.log.info("Block write %d bytes to 0x%08x", len(data), dest)
+        self.mem_data[0:len(data)] = data;
 
-        self.mem_data[0:len(data)] = data
+        while (left>0):
+            if (left < 16384):
+                send_len = left
+            else:
+                send_len = 16384
 
-        await self.rc.mem_write_dword(self.dev_pf0_bar0+0x000440, (self.mem_base) & 0xffffffff)
-        await self.rc.mem_write_dword(self.dev_pf0_bar0+0x000444, (self.mem_base >> 32) & 0xffffffff)
-        await self.rc.mem_write_dword(self.dev_pf0_bar0+0x000448, dest)
-        await self.rc.mem_write_dword(self.dev_pf0_bar0+0x000450, length)
-        await self.rc.mem_write_dword(self.dev_pf0_bar0+0x000454, 0xAA)
+            self.log.info("Block write %d bytes to 0x%08x", send_len, addr)
 
-        while await self.rc.mem_read_dword(self.dev_pf0_bar0+0x000458) != 0xAA:
-            pass
+            await self.rc.mem_write_dword(self.dev_pf0_bar0+0x000440,  (self.mem_base+data_offset) & 0xffffffff)
+            await self.rc.mem_write_dword(self.dev_pf0_bar0+0x000444, ((self.mem_base+data_offset) >> 32) & 0xffffffff)
+            await self.rc.mem_write_dword(self.dev_pf0_bar0+0x000448, addr)
+            await self.rc.mem_write_dword(self.dev_pf0_bar0+0x000450, send_len)
+            await self.rc.mem_write_dword(self.dev_pf0_bar0+0x000454, 0xAA)
+
+            while await self.rc.mem_read_dword(self.dev_pf0_bar0+0x000458) != 0xAA:
+                pass
+
+            left        -= 16384
+            addr        += 16384
+            data_offset += 16384
 
     async def block_read(self, src, length):
         if length <= 0:
             return
 
-        # TODO: break into 16K chunks
-        self.log.info("Block read %d bytes from 0x%08x", length, src)
+        left = length
+        data_offset = 0
+        addr = src
+        recv_len = length
 
-        await self.rc.mem_write_dword(self.dev_pf0_bar0+0x000460, (self.mem_base) & 0xffffffff)
-        await self.rc.mem_write_dword(self.dev_pf0_bar0+0x000464, (self.mem_base >> 32) & 0xffffffff)
-        await self.rc.mem_write_dword(self.dev_pf0_bar0+0x000468, src)
-        await self.rc.mem_write_dword(self.dev_pf0_bar0+0x000470, length)
-        await self.rc.mem_write_dword(self.dev_pf0_bar0+0x000474, 0x55)
+        while (left>0):
+            if (left < 16384):
+                recv_len = left
+            else:
+                recv_len = 16384
 
-        while await self.rc.mem_read_dword(self.dev_pf0_bar0+0x000478) != 0x55:
-            pass
+            self.log.info("Block read %d bytes from 0x%08x", recv_len, addr)
+
+            await self.rc.mem_write_dword(self.dev_pf0_bar0+0x000460,  (self.mem_base+data_offset) & 0xffffffff)
+            await self.rc.mem_write_dword(self.dev_pf0_bar0+0x000464, ((self.mem_base+data_offset) >> 32) & 0xffffffff)
+            await self.rc.mem_write_dword(self.dev_pf0_bar0+0x000468, addr)
+            await self.rc.mem_write_dword(self.dev_pf0_bar0+0x000470, recv_len)
+            await self.rc.mem_write_dword(self.dev_pf0_bar0+0x000474, 0x55)
+
+            while await self.rc.mem_read_dword(self.dev_pf0_bar0+0x000478) != 0x55:
+                pass
+
+            left        -= 16384
+            addr        += 16384
+            data_offset += 16384
 
         return self.mem_data[0:length]
 
@@ -590,6 +618,9 @@ class TB(object):
             for rom in rom_segs:
                 self.log.debug("ROM %s size: %d", rom, len(rom_segs[rom][1]))
 
+        if (not self.init_roms):
+            self.log.debug("(ROMs are initialized in Verilog.)")
+
         self.log.info("Enable DMA")
         await self.rc.mem_write_dword(self.dev_pf0_bar0+0x000400, 1)
 
@@ -617,7 +648,7 @@ class TB(object):
                 while (await self.core_rd_cmd(i, 1))==frames_in:
                     pass
 
-            if len(rom_segs) > 0:
+            if ((len(rom_segs) > 0) and self.init_roms):
                 for rom in rom_segs:
                     self.log.info("Load rom %s", rom)
                     await self.block_write(rom_segs[rom][1], (i << 26)+rom_segs[rom][0])
