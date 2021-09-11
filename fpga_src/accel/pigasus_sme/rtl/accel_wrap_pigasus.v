@@ -366,6 +366,9 @@ reg [HASH_SEL_BITS-1:0]  flow_table_block_r,  flow_table_block_rr,  flow_table_b
 reg                      flow_table_bank_r,   flow_table_bank_rr,   flow_table_bank_rrr;
 reg                      flow_rd_valid_reg_r, flow_rd_valid_reg_rr, flow_rd_valid_reg_rrr;
 
+wire [DATA_WIDTH-1:0] flow_mem_data_b1 = acc_rd_data_b1[flow_table_block_rrr*DATA_WIDTH +: DATA_WIDTH];
+wire [DATA_WIDTH-1:0] flow_mem_data_b2 = acc_rd_data_b2[flow_table_block_rrr*DATA_WIDTH +: DATA_WIDTH];
+
 always @ (posedge clk) begin
   // 1 cycle read req pipe, 1 cycle memory read,
   // 1 cycle result pipe register in mem_sys, 1 cycle block select
@@ -417,9 +420,6 @@ generate
     assign acc_addr_b2[j*ACC_ADDR_WIDTH +: ACC_ADDR_WIDTH] = flow_table_addr_r;
   end
 endgenerate
-
-wire [DATA_WIDTH-1:0] flow_mem_data_b1 = acc_rd_data_b1[flow_table_block_rrr*DATA_WIDTH +: DATA_WIDTH];
-wire [DATA_WIDTH-1:0] flow_mem_data_b2 = acc_rd_data_b2[flow_table_block_rrr*DATA_WIDTH +: DATA_WIDTH];
 
 
 // DMA engine for last blocks of the packet memory
