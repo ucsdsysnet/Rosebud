@@ -17,16 +17,13 @@ int main(void){
   init_slots(16, 0x000000, 16384);
   set_masks(0x30); // Enable only Evict + Poke
 
+  set_sched_offset(DATA_OFFSET);
   DEBUG_OUT_L = 0x12345678;
   DEBUG_OUT_H = 0xABCDEFAB;
 
   while (1){
     if (in_pkt_ready()){
       SEND_DESC = RECV_DESC;
-      if (DATA_OFFSET) {
-        SEND_DESC.len  = RECV_DESC.len  - 4;
-        SEND_DESC.data = RECV_DESC.data + 4;
-      }
       asm volatile("" ::: "memory");
       RECV_DESC_RELEASE = 1;
       asm volatile("" ::: "memory");

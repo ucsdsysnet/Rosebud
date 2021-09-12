@@ -86,10 +86,18 @@
 // WITH EXCEPTION OF PACKET_INT/DRAM_DATA_INT/BC_MSG_INT WHICH DONT HAVE ACK
 
 struct Desc {
-	unsigned short len;
-	unsigned char  tag;
-	unsigned char  port;
-	unsigned char* data;
+	union {
+      unsigned int desc_low;
+    struct {
+      unsigned short len;
+	    unsigned char  tag;
+    	unsigned char  port;
+    };
+  };
+  union {
+      unsigned int desc_high;
+	    unsigned char* data;
+  };
 };
 
 // Reads
