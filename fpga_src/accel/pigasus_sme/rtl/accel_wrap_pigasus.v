@@ -295,7 +295,7 @@ always @(posedge clk) begin
 
     flow_table_32B_rd   <= 1'b0;
     // Initial state of preamble
-    cmd_preamble_reg[63:56] <= 1'b0;
+    cmd_preamble_reg[63:56] <= 8'd0;
   end
 end
 
