@@ -159,15 +159,16 @@ static inline void slot_rx_packet(struct slot_context *slot)
     {
       case 0x06: // TCP
         PROFILE_B(0x00010007);
-        // header size from flags field
-        ch = ((char *)slot->l4_header.tcp_hdr)[12];
-        payload_offset += (ch & 0xF0) >> 2;
+        // // header size from flags field
+        // ch = ((char *)slot->l4_header.tcp_hdr)[12];
+        // payload_offset += (ch & 0xF0) >> 2;
+        payload_offset += TCP_HEADER_SIZE;
 
-        if (payload_offset >= packet_length){
-          // no payload
-          PROFILE_B(0x00010002);
-          goto drop;
-        }
+        // if (payload_offset >= packet_length){
+        //   // no payload
+        //   PROFILE_B(0x00010002);
+        //   goto drop;
+        // }
 
         slot->flow.state.state_32[1] = FLOW_TABLE_ENTRY->state.state_32[1];
 
@@ -257,9 +258,9 @@ process_tcp:
         PROFILE_B(0x00010006);
         payload_offset += UDP_HEADER_SIZE;
 
-        if (payload_offset >= packet_length)
-          // no payload
-          goto drop;
+        // if (payload_offset >= packet_length)
+        //   // no payload
+        //   goto drop;
 
         slot->payload_addr   = (unsigned int)(slot->desc.data)+payload_offset;
         slot->payload_length = packet_length - payload_offset;

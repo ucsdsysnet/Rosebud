@@ -149,7 +149,6 @@ static inline void slot_rx_packet(struct slot_context *slot)
         ACC_PIG_STATE_H = 0x01FFFFFF;
         ACC_PIG_STATE_L = 0xFFFFFFFF;
         ACC_PIG_SLOT  = slot->index;
-        asm volatile("" ::: "memory");
         ACC_PIG_CTRL  = 1;
         slot->eop     = slot->packet + slot->desc.len;
 
@@ -168,7 +167,6 @@ static inline void slot_rx_packet(struct slot_context *slot)
         ACC_PIG_PORTS = * (unsigned int *) slot->l4_header.udp_hdr; // both ports
         ACC_PIG_STATE = 0;
         ACC_PIG_SLOT  = slot->index;
-        asm volatile("" ::: "memory");
         ACC_PIG_CTRL  = 1;
         slot -> eop   = slot->packet + slot->desc.len;
 
@@ -203,9 +201,9 @@ static inline void slot_match(struct slot_context *slot){
       // pkt_num ++;
       PROFILE_B(0xDEAD0002);
 
-      // Remove hash from the beginning
-      slot->desc.data = slot->packet   + DATA_OFFSET;
-      slot->desc.len  = slot->desc.len - DATA_OFFSET;
+      // // Remove hash from the beginning
+      // slot->desc.data = slot->packet   + DATA_OFFSET;
+      // slot->desc.len  = slot->desc.len - DATA_OFFSET;
 
       // Decide what to do with the packet
       if (slot->match_cnt!=0){
@@ -299,6 +297,7 @@ int main(void)
 
       // copy descriptor into context. We only don't know the len
       slot->desc.len = RECV_DESC.len;
+      // slot->desc = RECV_DESC;
       asm volatile("" ::: "memory");
       RECV_DESC_RELEASE = 1;
 

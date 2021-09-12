@@ -25,7 +25,7 @@ ASRC = startup.S
 # ASRC += ...
 
 # optimization level
-OPT = 2
+OPT = 3
 
 # Extra directories for include files
 EXTRAINCDIRS =
