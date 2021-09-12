@@ -40,6 +40,8 @@ either expressed or implied, of The Regents of the University of California.
  */
 module test_gousheh;
 
+parameter INIT_ROMS        = 1;
+
 parameter DATA_WIDTH       = 128;
 parameter CTRL_WIDTH       = 32+4; //DON'T CHANGE
 parameter DRAM_WIDTH       = 32;   //DON'T CHANGE
@@ -326,6 +328,9 @@ Gousheh_PR UUT (
 initial begin
   $dumpfile ("sim_build/test_gousheh.fst");
   $dumpvars (0,test_gousheh);
+  if (INIT_ROMS) begin
+    `include "init_roms.v"
+  end
   #1;
 end
 

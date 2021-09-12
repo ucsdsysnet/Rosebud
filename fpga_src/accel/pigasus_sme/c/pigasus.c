@@ -430,13 +430,16 @@ int main(void)
     context[i].hash_H    = (unsigned short *)(context[i].header+2);
     context[i].eth_hdr   = (struct eth_header*)(context[i].header + DATA_OFFSET);
     context[i].match_cnt = 0;
-    context[i].set_mask  =   0x1 << i;
-    context[i].rst_mask  = ~(0x1 << i);
+    context[i].set_mask  =   0x1L << i;
+    context[i].rst_mask  = ~(0x1L << i);
   }
 
   reorder_slots_1hot = 0;
   reorder_slot_count = 0;
-  init_left_mask     = (1<<slot_count) - 1;
+  if (slot_count==32)
+    init_left_mask = ~0x0;
+  else
+    init_left_mask = (1<<slot_count) - 1;
   // pkt_num = 0;
 
   PROFILE_A(0x00000005);

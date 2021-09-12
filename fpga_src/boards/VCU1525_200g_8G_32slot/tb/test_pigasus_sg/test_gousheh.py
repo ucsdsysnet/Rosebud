@@ -65,8 +65,8 @@ FIRMWARE = os.path.abspath(os.path.join(os.path.dirname(__file__),
 
 SEND_COUNT_0 = 1024
 SIZE_0 = [66-54, 1500-54, 66-54, 66-54, 1500-54, 1500-54, 66-54]
-WAIT_TIME = 50000
-MAX_PKT_SPACING = 3
+WAIT_TIME = 80000
+MAX_PKT_SPACING = 0
 CHECK_PKT = True
 PRINT_RX_PKT = False
 FLOW_HASH = True
@@ -170,6 +170,11 @@ class TB(object):
         self.loopback_port = 3
         self.dram_port     = int(dut.DRAM_PORT.value)
         self.tag_width     = int(dut.TAG_WIDTH.value)
+        if (int(dut.INIT_ROMS.value)==1):
+          self.init_roms    = False
+        else:
+          self.init_roms    = True
+
 
         self.log = SimLog("cocotb.tb")
         self.log.setLevel(logging.DEBUG)
@@ -235,6 +240,9 @@ class TB(object):
         # Put core in reset
         await self.ctrl_ch_source.send([0xf00000001])
 
+        if (not self.init_roms):
+            self.log.debug("(ROMs are initialized in Verilog.)")
+
         # Load instruction and data memories
         with open(file, "rb") as f:
             elf = ELFFile(f)
@@ -244,7 +252,7 @@ class TB(object):
                         await self.section_write(section.data(), section.header['sh_addr'], "Instruction", True)
                     elif (section.header['sh_flags']==(P_FLAGS.PF_X | P_FLAGS.PF_W)):
                         await self.section_write(section.data(), section.header['sh_addr'], "Data", True)
-                    elif (section.header['sh_flags']==(P_FLAGS.PF_X)):
+                    elif ((section.header['sh_flags']==(P_FLAGS.PF_X)) and self.init_roms):
                         await self.section_write(section.data(), section.header['sh_addr'], section.name[1:])
 
         await Timer(100, 'ns')
@@ -274,7 +282,8 @@ class TB(object):
                 pkt = self.send_q.popleft()
                 slot = self.slots.pop()
                 pkt.tdest = slot
-                await ClockCycles(self.dut.clk, randrange(MAX_PKT_SPACING))
+                if (MAX_PKT_SPACING > 0):
+                  await ClockCycles(self.dut.clk, randrange(MAX_PKT_SPACING))
                 await self.data_ch_source.send(pkt)
                 self.sent_pkts += 1
                 self.log.debug("Used slot %d for an incoming packet from port %d", slot, pkt.tuser)
