@@ -3,9 +3,13 @@
 
 #if 0
 #define PROFILE_A(x) do {DEBUG_OUT_L = (x);} while (0)
-#define PROFILE_B(x) do {DEBUG_OUT_H = (x);} while (0)
 #else
 #define PROFILE_A(x) do {} while (0)
+#endif
+
+#if 0
+#define PROFILE_B(x) do {DEBUG_OUT_H = (x);} while (0)
+#else
 #define PROFILE_B(x) do {} while (0)
 #endif
 
@@ -110,18 +114,17 @@ struct slot_context {
 
 struct slot_context context[MAX_CTX_COUNT];
 
+unsigned int pkt_num;
 unsigned int slot_count;
-unsigned int slot_size;
 unsigned int header_slot_base;
-unsigned int header_slot_size;
+
+const unsigned int slot_size        = 16*1024;
+const unsigned int header_slot_size = 128;
 
 static inline void slot_rx_packet(struct slot_context *slot)
 {
-  char ch;
-  unsigned int   payload_offset = ETH_HEADER_SIZE + IPV4_HEADER_SIZE;
+  unsigned int   payload_offset;
   unsigned int   packet_length  = slot->desc.len;
-
-  PROFILE_B(0x00010005);
 
   // check eth type
   if (slot->eth_hdr->type == bswap_16(0x0800))
@@ -133,42 +136,29 @@ static inline void slot_rx_packet(struct slot_context *slot)
     {
       case 0x06: // TCP
         PROFILE_B(0x00010007);
-        payload_offset += TCP_HEADER_SIZE;
-
-        // ch = ((char *)slot->l4_header.tcp_hdr)[12];
-        // payload_offset += (ch & 0xF0) >> 2;
-
-        // // no payload
-        // if (payload_offset >= packet_length)
-        //   goto drop;
+        payload_offset = ETH_HEADER_SIZE + IPV4_HEADER_SIZE + TCP_HEADER_SIZE;
 
         ACC_DMA_ADDR  = (unsigned int)(slot->desc.data)+payload_offset;
         ACC_DMA_LEN   = packet_length - payload_offset;
         ACC_PIG_PORTS = * (unsigned int *) slot->l4_header.tcp_hdr; // both ports
         ACC_PIG_STATE_H = 0x01FFFFFF;
-        ACC_PIG_STATE_L = 0xFFFFFFFF;
+        // ACC_PIG_STATE_L = 0xFFFFFFFF;
         ACC_PIG_SLOT  = slot->index;
         ACC_PIG_CTRL  = 1;
         slot->eop     = slot->desc.data + slot->desc.len;
-
         return;
 
       case 0x11: // UDP
         PROFILE_B(0x00010006);
-        payload_offset += UDP_HEADER_SIZE;
-
-        // // no payload
-        // if (payload_offset >= packet_length)
-        //   goto drop;
+        payload_offset = ETH_HEADER_SIZE + IPV4_HEADER_SIZE + UDP_HEADER_SIZE;
 
         ACC_DMA_ADDR  = (unsigned int)(slot->desc.data)+payload_offset;
         ACC_DMA_LEN   = packet_length - payload_offset;
         ACC_PIG_PORTS = * (unsigned int *) slot->l4_header.udp_hdr; // both ports
-        ACC_PIG_STATE = 0;
+        ACC_PIG_STATE_H = 0;
         ACC_PIG_SLOT  = slot->index;
         ACC_PIG_CTRL  = 1;
         slot -> eop   = slot->desc.data + slot->desc.len;
-
         return;
     }
   }
@@ -198,18 +188,20 @@ static inline void slot_match(struct slot_context *slot){
     } else { // EoP
 
       // pkt_num ++;
+      // PROFILE_A(pkt_num);
       PROFILE_B(0xDEAD0002);
 
       // Decide what to do with the packet
       if (slot->match_cnt!=0){
         slot->desc.port = 2;
         PROFILE_B(0xDEAD0003);
-        // PROFILE_A(0xDDDD0000|pkt_num);
-      } else {// IDS: drop, IPS: forward
-        slot->desc.len = 0;
-        PROFILE_B(0xDEAD0004);
-        // slot->desc.port ^= 0x1;
       }
+
+      // else {// No else: bounce
+      //   // slot->desc.len = 0; // IDS
+      //   // slot->desc.port ^= 0x1; // IPS forward
+      //   PROFILE_B(0xDEAD0004);
+      // }
 
       ACC_PIG_CTRL    = 2; // release the EoP
       asm volatile("" ::: "memory");
@@ -238,9 +230,7 @@ int main(void)
 
   // set slot configuration parameters
   slot_count       = 32;
-  slot_size        = 16*1024;
   header_slot_base = DMEM_BASE + (DMEM_SIZE >> 1);
-  header_slot_size = 128;
 
   if (slot_count > MAX_SLOT_COUNT)
     slot_count = MAX_SLOT_COUNT;
@@ -278,15 +268,11 @@ int main(void)
   ACC_PIG_STATE_L = 0xFFFFFFFF;
   // pkt_num = 0;
 
-  PROFILE_A(0x00000005);
-
   while (1)
   {
     // check for new packets
     if (in_pkt_ready())
     {
-      PROFILE_A(0x00010001);
-
       // compute index
       slot = &context[RECV_DESC.tag-1];
 
@@ -300,7 +286,6 @@ int main(void)
     }
 
     if (ACC_PIG_MATCH) {
-      PROFILE_A(0x00010003);
       slot_match(&context[ACC_PIG_SLOT]);
     }
 

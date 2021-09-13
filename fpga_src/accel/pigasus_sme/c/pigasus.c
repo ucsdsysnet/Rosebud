@@ -3,9 +3,13 @@
 
 #if 0
 #define PROFILE_A(x) do {DEBUG_OUT_L = (x);} while (0)
-#define PROFILE_B(x) do {DEBUG_OUT_H = (x);} while (0)
 #else
 #define PROFILE_A(x) do {} while (0)
+#endif
+
+#if 0
+#define PROFILE_B(x) do {DEBUG_OUT_H = (x);} while (0)
+#else
 #define PROFILE_B(x) do {} while (0)
 #endif
 
@@ -114,10 +118,12 @@ struct slot_context {
 
 struct slot_context context[MAX_CTX_COUNT];
 
+unsigned int pkt_num;
 unsigned int slot_count;
-unsigned int slot_size;
 unsigned int header_slot_base;
-unsigned int header_slot_size;
+
+const unsigned int slot_size        = 16*1024;
+const unsigned int header_slot_size = 128;
 
 static inline void slot_rx_packet(struct slot_context *slot)
 {
@@ -309,9 +315,9 @@ static inline void slot_match(struct slot_context *slot){
         PROFILE_B(0xDEAD0003);
         // PROFILE_A(0xDDDD0000|pkt_num);
       } else {// IDS: drop, IPS: forward
-        slot->desc.len = 0;
+        // slot->desc.len = 0;
         PROFILE_B(0xDEAD0004);
-        // slot->desc.port ^= 0x1;
+        slot->desc.port ^= 0x1;
       }
 
       if (slot->is_tcp){
@@ -400,9 +406,7 @@ int main(void)
 
   // set slot configuration parameters
   slot_count       = 32;
-  slot_size        = 16*1024;
   header_slot_base = DMEM_BASE + (DMEM_SIZE >> 1);
-  header_slot_size = 128;
 
   if (slot_count > MAX_SLOT_COUNT)
     slot_count = MAX_SLOT_COUNT;
@@ -448,15 +452,11 @@ int main(void)
     init_left_mask = (1<<slot_count) - 1;
   // pkt_num = 0;
 
-  PROFILE_A(0x00000005);
-
   while (1)
   {
     // check for new packets
     if (in_pkt_ready())
     {
-      PROFILE_A(0x00010001);
-
       // compute index
       slot = &context[RECV_DESC.tag-1];
 
@@ -470,11 +470,8 @@ int main(void)
     }
 
     if (ACC_PIG_MATCH) {
-      PROFILE_A(0x00010003);
       slot_match(&context[ACC_PIG_SLOT]);
     }
-
-    PROFILE_A(0x00010004);
 
     if (reorder_slots_1hot) {
       reorder_left_mask = init_left_mask;

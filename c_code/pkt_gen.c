@@ -12,8 +12,8 @@
   (((x & 0xff000000) >> 24) | ((x & 0x00ff0000) >>  8) | \
    ((x & 0x0000ff00) <<  8) | ((x & 0x000000ff) << 24))
 
-#define HASH_SCHED
-#define FORWARD 1
+// #define HASH_SCHED
+#define FORWARD 0
 
 // packet start offset
 // DWORD align Ethernet payload
@@ -33,11 +33,7 @@ char *pkt_data[16];
 // unsigned int pkt_len[16] = {128, 1024, 128, 1500, 256, 1024, 512, 1500, 1024, 1500, 256, 1500, 512, 1500, 1500, 1500};
 // unsigned int pkt_len[16] = {60, 60, 60, 100, 128, 200, 256, 512, 1024, 1024, 1024, 1500, 1500, 1500, 1500, 1500};
 // unsigned int pkt_len[16] = {60, 256, 1024, 1514, 1514, 1514, 1514, 1514, 1514, 1514, 1514, 1514, 1514, 1514, 1514, 1514};
-// unsigned int pkt_len[16] = {[0 ... 15] = 60};
-// unsigned int pkt_len[16] = {[0 ... 15] = 1500};
 unsigned int pkt_len[16] = {[0 ... 15] = 1514};
-// unsigned int pkt_len[16] = {[0 ... 15] = 9000};
-// unsigned int pkt_len[16] = {[0 ... 15] = 1300};
 char *rand_array;
 
 struct __attribute__((__packed__)) udp_packet_header {
@@ -70,7 +66,7 @@ struct udp_packet_header udp_hdr = {
     .dscp_ecn = 0,
     .total_length = bswap_16(1500-ETH_HEADER_SIZE),
     .id = bswap_16(0),
-    .flags_fragment_offset = bswap_16(0x0001), //FIN
+    .flags_fragment_offset = bswap_16(0),
     .ttl = 64,
     .protocol = 0x11,
     .hdr_sum = bswap_16(0),
@@ -96,7 +92,7 @@ struct tcp_packet_header tcp_hdr = {
     .dscp_ecn = 0,
     .total_length = bswap_16(1500-ETH_HEADER_SIZE),
     .id = bswap_16(0),
-    .flags_fragment_offset = bswap_16(0),
+    .flags_fragment_offset = bswap_16(0x0001), // FIN
     .ttl = 64,
     .protocol = 0x06,
     .hdr_sum = bswap_16(0),
@@ -174,11 +170,11 @@ unsigned int header_slot_size;
 struct Desc packet;
 struct Desc recv_pkt;
 
-void basic_memcpy(char *dest, char *src, int n) 
-{ 
-  for (int i=0; i<n; i++) 
-    dest[i] = src[i]; 
-} 
+void basic_memcpy(char *dest, char *src, int n)
+{
+  for (int i=0; i<n; i++)
+    dest[i] = src[i];
+}
 
 
 void init_packets()
@@ -189,17 +185,77 @@ void init_packets()
 
   int hdr_index = 0;
   int data_index = 0;
-  struct segment hdr_seg;
   struct segment data_seg;
   pcg32_random_t rng;
 
+  pcg32_srandom_r(&rng, 12345u, core_id());
+
   for (i=0; i<ARRAY_SIZE(pkt_data); i++){
-    hdr_seg = pkt_headers[hdr_index];
+    struct tcp_packet_header temp_tcp_hdr = {
+      .eth = {
+        .dest_mac = "\xFF\xFF\xFF\xFF\xFF\xFF",
+        .src_mac = "\xCD\xCD\xCD\xCD\xCD\xCD",
+        .type = bswap_16(0x0800)
+      },
+      .ip = {
+        .version_ihl = 0x45,
+        .dscp_ecn = 0,
+        .total_length = bswap_16(1500-ETH_HEADER_SIZE),
+        .id = bswap_16(0),
+        .flags_fragment_offset = bswap_16(0x0),
+        .ttl = 64,
+        .protocol = 0x06,
+        .hdr_sum = bswap_16(0),
+        .src_ip =  pcg32_boundedrand_r(&rng, 1<<32 - 1),
+        .dest_ip =  pcg32_boundedrand_r(&rng, 1<<32 - 1),
+      },
+      .tcp = {
+        .src_port = pcg32_boundedrand_r(&rng, 1<<16),
+        .dest_port = pcg32_boundedrand_r(&rng, 1<<16),
+        .seq = bswap_32(0),
+        .ack = bswap_32(0),
+        .flags = bswap_16(0x5001), //FIN
+        .window = bswap_16(0),
+        .checksum = bswap_16(0),
+        .urgent_ptr = bswap_16(0)
+      }
+    };
+    struct udp_packet_header temp_udp_hdr = {
+      .eth = {
+        .dest_mac = "\xFF\xFF\xFF\xFF\xFF\xFF",
+        .src_mac = "\xCD\xCD\xCD\xCD\xCD\xCD",
+        .type = bswap_16(0x0800)
+      },
+      .ip = {
+        .version_ihl = 0x45,
+        .dscp_ecn = 0,
+        .total_length = bswap_16(1500-ETH_HEADER_SIZE),
+        .id = bswap_16(0),
+        .flags_fragment_offset = bswap_16(0),
+        .ttl = 64,
+        .protocol = 0x11,
+        .hdr_sum = bswap_16(0),
+        .src_ip =  pcg32_boundedrand_r(&rng, 1<<32 - 1),
+        .dest_ip =  pcg32_boundedrand_r(&rng, 1<<32 - 1),
+      },
+      .udp = {
+        .src_port = pcg32_boundedrand_r(&rng, 1<<16),
+        .dest_port = pcg32_boundedrand_r(&rng, 1<<16),
+        .length = bswap_16(1500-ETH_HEADER_SIZE-IPV4_HEADER_SIZE),
+        .checksum = bswap_16(0)
+      }
+    };
+
     data_seg = pkt_payloads[data_index];
 
-    basic_memcpy(ptr, hdr_seg.data, hdr_seg.len);
-    basic_memcpy(ptr+hdr_seg.len, data_seg.data, data_seg.len);
-    
+    if (i%2==0) {
+      basic_memcpy(ptr, (char*)&temp_tcp_hdr, sizeof(temp_tcp_hdr));
+      basic_memcpy(ptr+sizeof(temp_tcp_hdr), data_seg.data, data_seg.len);
+    } else {
+      basic_memcpy(ptr, (char*)&temp_udp_hdr, sizeof(temp_udp_hdr));
+      basic_memcpy(ptr+sizeof(temp_udp_hdr), data_seg.data, data_seg.len);
+    }
+
     // LSB of source IP is core ID
     ptr[29] = core_id();
 
@@ -217,7 +273,6 @@ void init_packets()
   // precompute random array for packet sizes
   rand_array = ptr;
 
-  pcg32_srandom_r(&rng, 12345u, core_id());
 
   for (i = 0; i < 10240; i++)
   {
@@ -236,7 +291,7 @@ int main(void){
   header_slot_base = DMEM_BASE + (DMEM_SIZE >> 1);
   header_slot_size = 128;
 
-  // Do this at the beginning, so scheduler can fill the slots while 
+  // Do this at the beginning, so scheduler can fill the slots while
   // initializing other things.
   init_hdr_slots(slot_count, header_slot_base, header_slot_size);
   init_slots(slot_count, PKTS_START+PKT_OFFSET, slot_size);
@@ -253,8 +308,10 @@ int main(void){
     fw_port = 0;
   }
 
+  // packet.len = 1000;
+
   while (1){
-    for (i=0; i<10240; i += 2) {
+    for (i=0; i<10240; i+=2) {
       pkt_num = rand_array[i];
       len_num = rand_array[i+1];
       pkt_data[pkt_num][35]++; // change source port
@@ -264,8 +321,8 @@ int main(void){
 
       if (FORWARD) {
         // forward packet
-			  if (in_pkt_ready()){
-			    read_in_pkt(&recv_pkt);
+        if (in_pkt_ready()){
+          read_in_pkt(&recv_pkt);
           if (recv_pkt.port == 2) {
             // packet from host, send to network
             recv_pkt.port = fw_port;
@@ -278,7 +335,7 @@ int main(void){
           pkt_send(&recv_pkt);
         }
       }
-    } 
+    }
   }
 
   return 1;
