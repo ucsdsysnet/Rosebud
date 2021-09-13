@@ -33,35 +33,11 @@ unsigned int header_slot_base;
 const unsigned int slot_size        = 16*1024;
 const unsigned int header_slot_size = 128;
 
-static inline void slot_rx_packet(struct Desc* desc)
-{
-  unsigned short eth_type = *((unsigned short *) (desc->data + 12));
-  unsigned int   src_ip   = *((unsigned int   *) (desc->data + 14 + 12));
-
-  // check eth type
-  if (eth_type == bswap_16(0x0800))
-  {
-    // start Firewall IP check
-    ACC_SRC_IP = src_ip;
-    if (ACC_FW_MATCH)
-    {
-      goto drop;
-    }
-    else
-    {
-      // desc->port ^= 1;
-      pkt_send(desc);
-      return;
-    }
-  }
-
-drop: //Non IPV4 or in firewall list
-  desc->len = 0;
-  pkt_send(desc);
-}
-
 int main(void)
 {
+  unsigned short eth_type;
+  unsigned int   src_ip;
+
   DEBUG_OUT_L = 0;
   DEBUG_OUT_H = 0;
 
@@ -83,10 +59,27 @@ int main(void)
     // check for new packets
     if (in_pkt_ready())
     {
-      struct Desc desc;
-      // read descriptor
-      read_in_pkt(&desc);
-      slot_rx_packet(&desc);
+      eth_type = *((unsigned short *) (RECV_DESC.data + 12));
+      src_ip   = *((unsigned int   *) (RECV_DESC.data + 14 + 12));
+      SEND_DESC = RECV_DESC;
+      asm volatile("" ::: "memory");
+      RECV_DESC_RELEASE = 1;
+
+      // check eth type
+      if (eth_type == bswap_16(0x0800))
+      {
+        // start Firewall IP check
+        ACC_SRC_IP = src_ip;
+        if (ACC_FW_MATCH)
+          SEND_DESC.len = 0;
+        // else
+        //   desc->port ^= 1;
+      } else {
+          SEND_DESC.len = 0;
+      }
+
+      asm volatile("" ::: "memory");
+      SEND_DESC_TYPE = 0;
     }
   }
 
