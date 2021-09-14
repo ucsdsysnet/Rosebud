@@ -1,0 +1,6 @@
+rom_bins/empty_dmem.bin 0x00800000
+rom_bins/empty_half_pmem.bin 0x01000000
+rom_bins/match_table.bin 0x03100000
+rom_bins/rule_2_pg_packed.bin 0x03180000
+rom_bins/hashtable0_packed.bin 0x03000000
+rom_bins/hashtable1_packed.bin 0x03020000

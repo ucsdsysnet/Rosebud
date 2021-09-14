@@ -13,7 +13,7 @@
    ((x & 0x0000ff00) <<  8) | ((x & 0x000000ff) << 24))
 
 // #define HASH_SCHED
-#define FORWARD 0
+#define FORWARD 1
 
 // packet start offset
 // DWORD align Ethernet payload
@@ -296,6 +296,7 @@ int main(void){
   init_hdr_slots(slot_count, header_slot_base, header_slot_size);
   init_slots(slot_count, PKTS_START+PKT_OFFSET, slot_size);
   set_masks(0x30); // Enable only Evict + Poke
+  set_sched_offset(DATA_OFFSET);
 
   init_packets();
 
@@ -308,7 +309,9 @@ int main(void){
     fw_port = 0;
   }
 
+  // If trying to send single type of packets
   // packet.len = 1000;
+  // packet.data = pkt_data[0];
 
   while (1){
     for (i=0; i<10240; i+=2) {
@@ -321,17 +324,17 @@ int main(void){
 
       if (FORWARD) {
         // forward packet
-        if (in_pkt_ready()){
+        while (in_pkt_ready()){
           read_in_pkt(&recv_pkt);
           if (recv_pkt.port == 2) {
             // packet from host, send to network
             recv_pkt.port = fw_port;
           } else {
             // packet from network, send to host
-            recv_pkt.port = 2;
+            // recv_pkt.port = 2;
+            // drop packets from network
+            recv_pkt.len = 0;
           }
-          if (DATA_OFFSET)
-            recv_pkt.data += DATA_OFFSET;
           pkt_send(&recv_pkt);
         }
       }

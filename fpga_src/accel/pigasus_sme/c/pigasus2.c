@@ -223,8 +223,7 @@ int main(void)
       slot = &context[RECV_DESC.tag];
 
       // copy descriptor into context, we already know the data pointer
-      // slot->desc.desc_low = RECV_DESC.desc_low;
-      slot->desc = RECV_DESC;
+      slot->desc.desc_low = RECV_DESC.desc_low;
       asm volatile("" ::: "memory");
       RECV_DESC_RELEASE = 1;
 
