@@ -41,7 +41,7 @@ CINCS =
 
 # Compiler flags
 COMMON_FLAGS = $(CDEFS) $(CINCS)
-COMMON_FLAGS += -O$(OPT) -flto -mbranch-cost=3
+COMMON_FLAGS += -O$(OPT) -mbranch-cost=3 -Wpadded
 # COMMON_FLAGS += -funsigned-char -funsigned-bitfields -fpack-struct -fshort-enums
 # COMMON_FLAGS += -ffunction-sections -fdata-sections
 # COMMON_FLAGS += -Wall
