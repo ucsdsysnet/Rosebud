@@ -65,7 +65,7 @@ FIRMWARE = os.path.abspath(os.path.join(os.path.dirname(__file__),
 
 SEND_COUNT_0 = 1024
 SIZE_0 = [66-54, 1500-54, 66-54, 66-54, 1500-54, 1500-54, 66-54]
-WAIT_TIME = 80000
+WAIT_TIME = 50000
 MAX_PKT_SPACING = 0
 CHECK_PKT = True
 PRINT_RX_PKT = False
@@ -182,8 +182,8 @@ class TB(object):
         self.slots = []
         self.send_q = deque()
         self.recv_q = deque()
-        self.sent_pkts = 0
-        self.recvd_pkts = 0
+        self.sent_pkts  = [0]*(self.dram_port+1)
+        self.recvd_pkts = [0]*(self.dram_port+1)
 
         sys_clk = cocotb.fork(Clock(dut.clk, 4, units="ns").start())
 
@@ -285,7 +285,7 @@ class TB(object):
                 if (MAX_PKT_SPACING > 0):
                   await ClockCycles(self.dut.clk, randrange(MAX_PKT_SPACING))
                 await self.data_ch_source.send(pkt)
-                self.sent_pkts += 1
+                self.sent_pkts[pkt.tuser] += 1
                 self.log.debug("Used slot %d for an incoming packet from port %d", slot, pkt.tuser)
             else:
                 await RisingEdge(self.dut.clk)
@@ -297,7 +297,7 @@ class TB(object):
             if PRINT_RX_PKT:
                 self.log.debug("%s", repr(Ether(frame.tdata)))
             self.recv_q.append(frame)
-            self.recvd_pkts += 1
+            self.recvd_pkts[frame.tdest] += 1
 
     async def scheduler(self):
         cocotb.fork(self.send_manager())
@@ -342,7 +342,7 @@ async def run_test_gousheh(dut):
         tb.send_pkt(frame)
         pkts_set.append(frame)
 
-    while (tb.sent_pkts < len(PACKETS_0)):
+    while (sum(tb.sent_pkts) < len(PACKETS_0)):
         if (CHECK_PKT):
             if (tb.recv_q):
                 frame = bytes(tb.recv_q.popleft().tdata)
@@ -353,6 +353,8 @@ async def run_test_gousheh(dut):
         await RisingEdge(dut.clk)
 
     await Timer(WAIT_TIME, 'ns')
-    tb.log.debug("%d slots in scheduler, %d packets sent, %d packets received.", len(tb.slots), tb.sent_pkts, tb.recvd_pkts)
+    tb.log.debug("%d slots in scheduler, %d packets sent, %d packets received.", len(tb.slots), sum(tb.sent_pkts), sum(tb.recvd_pkts))
+    tb.log.debug("packets sent per port:     "+str(tb.sent_pkts));
+    tb.log.debug("packets received per port: "+str(tb.recvd_pkts));
 
     await RisingEdge(dut.clk)
