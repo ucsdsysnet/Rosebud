@@ -143,7 +143,7 @@ static inline void slot_match(struct slot_context *slot){
 
     if (rule_id!=0){
       ACC_PIG_CTRL = 2; // release the match
-      // asm volatile("" ::: "memory");
+      asm volatile("" ::: "memory");
       // Add rule IDs to the end of the packet
       slot->eop     = slot->desc.data + slot->desc.len;
       * slot->eop = rule_id;

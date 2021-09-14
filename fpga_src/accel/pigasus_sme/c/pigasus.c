@@ -80,14 +80,27 @@ unsigned int reorder_slot_count;
 
 // Slot contexts
 struct slot_context {
-  int index;
+  // Flow metadata
+  struct   flow  flow;
+  unsigned short flow_id;
+  unsigned short flow_tag;
+
   struct Desc desc;
+  int index;
+  int is_tcp;
 
   // Pointers
   unsigned char  *eop;
+  unsigned char  *header;
   unsigned short *hash_L;
   unsigned short *hash_H;
-  unsigned char  *header;
+
+  // Packet metadata
+  unsigned int payload_addr;
+  unsigned int payload_length;
+  unsigned int match_cnt;
+  unsigned int set_mask;
+  unsigned int rst_mask;
 
   struct eth_header *eth_hdr;
   union {
@@ -103,20 +116,9 @@ struct slot_context {
     struct udp_header *udp_hdr;
   } l4_header_swapped;
 
-  // Packet metadata
-  unsigned int payload_addr;
-  unsigned int payload_length;
-  unsigned int match_cnt;
-  unsigned int set_mask;
-  unsigned int rst_mask;
-
-  // Flow metadata
-  struct   flow  flow;
-  unsigned short flow_id;
-  int            is_tcp;
 };
 
-struct slot_context context[MAX_CTX_COUNT+1];
+struct slot_context context[MAX_CTX_COUNT];
 
 unsigned int pkt_num;
 unsigned int slot_count;
@@ -160,122 +162,122 @@ static inline void slot_rx_packet(struct slot_context *slot)
     // payload_offset += (ch & 0xf) << 2;
 
     // check protocol
-    switch (slot->l3_header.ipv4_hdr->protocol)
+    if (slot->l3_header.ipv4_hdr->protocol==0x6) // TCP
     {
-      case 0x06: // TCP
-        PROFILE_B(0x00010007);
-        // // header size from flags field
-        // ch = ((char *)slot->l4_header.tcp_hdr)[12];
-        // payload_offset += (ch & 0xF0) >> 2;
-        payload_offset += TCP_HEADER_SIZE;
+      PROFILE_B(0x00010007);
+      // // header size from flags field
+      // ch = ((char *)slot->l4_header.tcp_hdr)[12];
+      // payload_offset += (ch & 0xF0) >> 2;
+      payload_offset += TCP_HEADER_SIZE;
 
-        // if (payload_offset >= packet_length){
-        //   // no payload
-        //   PROFILE_B(0x00010002);
-        //   goto drop;
-        // }
+      // if (payload_offset >= packet_length){
+      //   // no payload
+      //   PROFILE_B(0x00010002);
+      //   goto drop;
+      // }
 
-        slot->flow.state.state_32[1] = FLOW_TABLE_ENTRY->state.state_32[1];
+      slot->flow.state.state_32[1] = FLOW_TABLE_ENTRY->state.state_32[1];
 
-        // Clean entry
-        if (slot->flow.state.state_8[7]==0){
-          // Hardware would set the has_preamble bit, no need to change state
-          PROFILE_B(0xBEEF0001);
-          ACC_PIG_STATE_H = 0x01FFFFFF;
-          flow_wr = (struct flow *) (PMEM_BASE) + (slot->flow_id);
-          flow_wr->tag = slot->flow.tag;
-          goto process_tcp;
-        }
+      // Clean entry
+      if (slot->flow.state.state_8[7]==0){
+        // Hardware would set the has_preamble bit, no need to change state
+        PROFILE_B(0xBEEF0001);
+        ACC_PIG_STATE_H = 0x01FFFFFF;
+        flow_wr = (struct flow *) (PMEM_BASE) + (slot->flow_id);
+        flow_wr->tag = slot->flow.tag;
+        goto process_tcp;
+      }
 
-        cur_time      = TIMER_16_HL;
-        slot->flow.ts = FLOW_TABLE_ENTRY->ts;
+      cur_time      = TIMER_16_HL;
+      slot->flow.ts = FLOW_TABLE_ENTRY->ts;
 
-        // TCP time out. If it's not a tag match the previous flow has finished,
-        // if it's a tag match it's same flow resend or there was a problem,
-        // consider this to be first of new set of packet. Both cases like clean entry
-        time_out  = ((cur_time < slot->flow.ts) || ((cur_time - slot->flow.ts) > 4));
-        if (time_out){
-          PROFILE_B(0xBEEF0002);
-          ACC_PIG_STATE_H = 0x01FFFFFF;
-          flow_wr = (struct flow *) (PMEM_BASE) + (slot->flow_id);
-          flow_wr->tag = slot->flow.tag;
-          goto process_tcp;
-        }
+      // TCP time out. If it's not a tag match the previous flow has finished,
+      // if it's a tag match it's same flow resend or there was a problem,
+      // consider this to be first of new set of packet. Both cases like clean entry
+      time_out  = ((cur_time < slot->flow.ts) || ((cur_time - slot->flow.ts) > 4));
+      if (time_out){
+        PROFILE_B(0xBEEF0002);
+        ACC_PIG_STATE_H = 0x01FFFFFF;
+        flow_wr = (struct flow *) (PMEM_BASE) + (slot->flow_id);
+        flow_wr->tag = slot->flow.tag;
+        goto process_tcp;
+      }
 
-        // tag collision, send to host
-        tag_match = (slot->flow.tag == FLOW_TABLE_ENTRY->tag);
-        if (!tag_match){
-          // apply offset
-          PROFILE_B(0xBEEF0003);
-          slot->desc.port = 2;
-          pkt_send(&slot->desc);
-          return;
-        }
+      // tag collision, send to host
+      tag_match = (slot->flow.tag == FLOW_TABLE_ENTRY->tag);
+      if (!tag_match){
+        // apply offset
+        PROFILE_B(0xBEEF0003);
+        slot->desc.port = 2;
+        pkt_send(&slot->desc);
+        return;
+      }
 
-        slot->flow.exp_seq = FLOW_TABLE_ENTRY->exp_seq;
-        cur_seq_num        = slot->l4_header_swapped.tcp_hdr->seq;
+      slot->flow.exp_seq = FLOW_TABLE_ENTRY->exp_seq;
+      cur_seq_num        = slot->l4_header_swapped.tcp_hdr->seq;
 
 
-        if (cur_seq_num == slot->flow.exp_seq){
-          ACC_PIG_STATE = FLOW_TABLE_ENTRY->state.state_64;
-          PROFILE_B(0xBEEF0004);
-          // goto process_tcp;
-        } else if ((cur_seq_num > (slot->flow.exp_seq + 30000)) || //assuming 3 jumbo
-                 (cur_seq_num <  slot->flow.exp_seq )) {
-          PROFILE_B(0xBEEF0005);
-          // PROFILE_A(cur_seq_num);
-          // PROFILE_A(slot->flow.exp_seq);
-          goto drop;
-        } else if (reorder_slot_count <= REORDER_LIMIT){
-          // Save the remaining slot info and raise the reorder flag
-          PROFILE_B(0xBEEF0006);
-          slot->payload_addr   = (unsigned int)(slot->desc.data)+payload_offset;
-          slot->payload_length = packet_length - payload_offset;
-          slot->eop            = slot->desc.data + slot->desc.len;
-          slot->is_tcp         = 1;
+      if (cur_seq_num == slot->flow.exp_seq){
+        ACC_PIG_STATE = FLOW_TABLE_ENTRY->state.state_64;
+        PROFILE_B(0xBEEF0004);
+        // goto process_tcp;
+      } else if ((cur_seq_num > (slot->flow.exp_seq + 30000)) || //assuming 3 jumbo
+               (cur_seq_num <  slot->flow.exp_seq )) {
+        PROFILE_B(0xBEEF0005);
+        // PROFILE_A(cur_seq_num);
+        // PROFILE_A(slot->flow.exp_seq);
+        goto drop;
+      } else if (reorder_slot_count <= REORDER_LIMIT){
+        // Save the remaining slot info and raise the reorder flag
+        PROFILE_B(0xBEEF0006);
+        slot->payload_addr   = (unsigned int)(slot->desc.data)+payload_offset;
+        slot->payload_length = packet_length - payload_offset;
+        slot->eop            = slot->desc.data + slot->desc.len;
+        slot->is_tcp         = 1;
 
-          reorder_slot_count ++;
-          reorder_slots_1hot |= slot->set_mask;
-          PROFILE_B(0xFEEB0000 | reorder_slots_1hot);
-          return;
-        } else {
-          PROFILE_B(0xBEEF0007);
-          goto drop;
-        }
+        reorder_slot_count ++;
+        reorder_slots_1hot |= slot->set_mask;
+        PROFILE_B(0xFEEB0000 | reorder_slots_1hot);
+        return;
+      } else {
+        PROFILE_B(0xBEEF0007);
+        goto drop;
+      }
 
 process_tcp:
-        slot->payload_addr   = (unsigned int)(slot->desc.data)+payload_offset;
-        slot->payload_length = packet_length - payload_offset;
+      slot->payload_addr   = (unsigned int)(slot->desc.data)+payload_offset;
+      slot->payload_length = packet_length - payload_offset;
 
-        ACC_DMA_ADDR  = slot->payload_addr;
-        ACC_DMA_LEN   = slot->payload_length;
-        ACC_PIG_PORTS = * (unsigned int *) slot->l4_header.tcp_hdr; // both ports
-        ACC_PIG_SLOT  = slot->index;
-        ACC_PIG_CTRL  = 1;
+      ACC_DMA_ADDR  = slot->payload_addr;
+      ACC_DMA_LEN   = slot->payload_length;
+      ACC_PIG_PORTS = * (unsigned int *) slot->l4_header.tcp_hdr; // both ports
+      ACC_PIG_SLOT  = slot->index;
+      ACC_PIG_CTRL  = 1;
 
-        slot->is_tcp  = 1;
-        return;
+      slot->is_tcp  = 1;
+      return;
+    }
+    else // UDP
+    {
+      PROFILE_B(0x00010006);
+      payload_offset += UDP_HEADER_SIZE;
 
-      case 0x11: // UDP
-        PROFILE_B(0x00010006);
-        payload_offset += UDP_HEADER_SIZE;
+      // if (payload_offset >= packet_length)
+      //   // no payload
+      //   goto drop;
 
-        // if (payload_offset >= packet_length)
-        //   // no payload
-        //   goto drop;
+      slot->payload_addr   = (unsigned int)(slot->desc.data)+payload_offset;
+      slot->payload_length = packet_length - payload_offset;
 
-        slot->payload_addr   = (unsigned int)(slot->desc.data)+payload_offset;
-        slot->payload_length = packet_length - payload_offset;
+      ACC_DMA_ADDR  = slot->payload_addr;
+      ACC_DMA_LEN   = slot->payload_length;
+      ACC_PIG_PORTS = * (unsigned int *) slot->l4_header.udp_hdr; // both ports
+      ACC_PIG_STATE = 0;
+      ACC_PIG_SLOT  = slot->index;
+      ACC_PIG_CTRL  = 1;
 
-        ACC_DMA_ADDR  = slot->payload_addr;
-        ACC_DMA_LEN   = slot->payload_length;
-        ACC_PIG_PORTS = * (unsigned int *) slot->l4_header.udp_hdr; // both ports
-        ACC_PIG_STATE = 0;
-        ACC_PIG_SLOT  = slot->index;
-        ACC_PIG_CTRL  = 1;
-
-        slot->is_tcp  = 0;
-        return;
+      slot->is_tcp  = 0;
+      return;
     }
   }
 
@@ -295,7 +297,7 @@ static inline void slot_match(struct slot_context *slot){
 
     if (rule_id!=0){
       ACC_PIG_CTRL = 2; // release the match
-      // asm volatile("" ::: "memory");
+      asm volatile("" ::: "memory");
       // Add rule IDs to the end of the packet
       slot->eop     = slot->desc.data + slot->desc.len;
       * slot->eop = rule_id;
@@ -422,18 +424,18 @@ int main(void)
   set_sched_offset(DATA_OFFSET);
 
   // init slot context structures
-  for (int i = 1; i <= slot_count; i++)
+  for (int i = 0; i < slot_count; i++)
   {
     context[i].index     = i;
-    context[i].desc.tag  = i;
-    context[i].desc.data = (unsigned char *)(PMEM_BASE + PKTS_START + PKT_OFFSET + DATA_OFFSET + (i-1)*slot_size);
-    context[i].header    = (unsigned char *)(header_slot_base + PKT_OFFSET + DATA_OFFSET + (i-1)*header_slot_size);
-    context[i].hash_L    = (unsigned short *)(header_slot_base + PKT_OFFSET + (i-1)*header_slot_size);
-    context[i].hash_H    = (unsigned short *)(header_slot_base + PKT_OFFSET + (i-1)*header_slot_size + 2);
+    context[i].desc.tag  = i+1;
+    context[i].desc.data = (unsigned char *)(PMEM_BASE + PKTS_START + PKT_OFFSET + DATA_OFFSET + i*slot_size);
+    context[i].header    = (unsigned char *)(header_slot_base + PKT_OFFSET + DATA_OFFSET + i*header_slot_size);
+    context[i].hash_L    = (unsigned short *)(header_slot_base + PKT_OFFSET + i*header_slot_size);
+    context[i].hash_H    = (unsigned short *)(header_slot_base + PKT_OFFSET + i*header_slot_size + 2);
     context[i].eth_hdr   = (struct eth_header*)(context[i].header);
     context[i].match_cnt = 0;
-    context[i].set_mask  =   0x1L << (i-1);
-    context[i].rst_mask  = ~(0x1L << (i-1));
+    context[i].set_mask  =   0x1L << i;
+    context[i].rst_mask  = ~(0x1L << i);
 
     // We only process IPv4
     context[i].l3_header.ipv4_hdr        = (struct ipv4_header*)(context[i].header +
@@ -458,7 +460,7 @@ int main(void)
     if (in_pkt_ready())
     {
       // compute index
-      slot = &context[RECV_DESC.tag];
+      slot = &context[RECV_DESC.tag-1];
 
       // copy descriptor into context, we already know the data pointer
       slot->desc.desc_low = RECV_DESC.desc_low;

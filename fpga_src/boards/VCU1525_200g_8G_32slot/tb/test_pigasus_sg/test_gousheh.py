@@ -65,7 +65,7 @@ FIRMWARE = os.path.abspath(os.path.join(os.path.dirname(__file__),
 
 SEND_COUNT_0 = 1024
 SIZE_0 = [66-54, 1500-54, 66-54, 66-54, 1500-54, 1500-54, 66-54]
-WAIT_TIME = 50000
+WAIT_TIME = 80000 # for reoder, without reoder code 30000 is enough
 MAX_PKT_SPACING = 0
 CHECK_PKT = True
 PRINT_RX_PKT = False
@@ -102,8 +102,8 @@ test_pkt = eth / ip / tcp / payload
 PACKETS.append(test_pkt)
 
 PCAP = os.path.abspath(os.path.join(os.path.dirname(__file__),
-      '../../accel/pigasus_sme/python/attack.pcap'))
-      # '../../accel/pigasus_sme/tb/m10_100.pcap'))
+         '../../accel/pigasus_sme/python/attack_test.pcap'))
+       # '../../accel/pigasus_sme/python/attack.pcap'))
 
 PACKETS_0 = []
 
@@ -118,7 +118,8 @@ else:
     pkt_ind = 0
     for i in range(0, SEND_COUNT_0):
         frame = PACKETS[pkt_ind].copy()
-        frame[Raw].load = bytes([i % 256] + [x % 256 for x in range(SIZE_0[randrange(len(SIZE_0))]-1)])
+        # frame[Raw].load = bytes([i % 256] + [x % 256 for x in range(SIZE_0[randrange(len(SIZE_0))]-1)])
+        frame[Raw].load = bytes(0xFF for x in range(SIZE_0[randrange(len(SIZE_0))]))
         PACKETS_0.append(frame)
 
         pkt_ind = (pkt_ind+1) % len(PACKETS)
