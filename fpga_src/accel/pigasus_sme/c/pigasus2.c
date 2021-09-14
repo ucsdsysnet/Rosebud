@@ -39,18 +39,6 @@
   #define DATA_OFFSET 0
 #endif
 
-// flows
-struct flow {
-  unsigned short tag;
-  unsigned short ts;
-  unsigned int   exp_seq;
-  union {
-    volatile unsigned long long state_64;
-    volatile unsigned int       state_32[2];
-    volatile unsigned char      state_8[8];
-  } state;
-};
-
 // Accel wrapper registers mapping
 #define ACC_PIG_CTRL     (*((volatile unsigned char      *)(IO_EXT_BASE + 0x00)))
 #define ACC_PIG_MATCH    (*((volatile unsigned char      *)(IO_EXT_BASE + 0x00)))
@@ -63,7 +51,6 @@ struct flow {
 #define ACC_PIG_SLOT     (*((volatile unsigned char      *)(IO_EXT_BASE + 0x18)))
 #define ACC_PIG_RULE_ID  (*((volatile unsigned int       *)(IO_EXT_BASE + 0x1c)))
 
-#define FLOW_TABLE_ENTRY   ((volatile struct flow        *)(IO_EXT_BASE + 0x40))
 #define HASH_LOOKUP      (*((volatile unsigned short     *)(IO_EXT_BASE + 0x60)))
 #define HASH_BLOCK_32B   (*((volatile unsigned char      *)(IO_EXT_BASE + 0x64)))
 
@@ -76,13 +63,11 @@ struct flow {
 
 // Slot contexts
 struct slot_context {
-  int index;
   struct Desc desc;
+  int index;
 
   // Pointers
   unsigned char  *eop;
-  unsigned short *hash_L;
-  unsigned short *hash_H;
   unsigned char  *header;
 
   struct eth_header *eth_hdr;
@@ -93,23 +78,6 @@ struct slot_context {
     struct tcp_header *tcp_hdr;
     struct udp_header *udp_hdr;
   } l4_header;
-
-  union {
-    struct tcp_header *tcp_hdr;
-    struct udp_header *udp_hdr;
-  } l4_header_swapped;
-
-  // Packet metadata
-  unsigned int payload_addr;
-  unsigned int payload_length;
-  unsigned int match_cnt;
-  unsigned int set_mask;
-  unsigned int rst_mask;
-
-  // Flow metadata
-  struct   flow  flow;
-  unsigned short flow_id;
-  int            is_tcp;
 };
 
 struct slot_context context[MAX_CTX_COUNT+1];
@@ -180,7 +148,6 @@ static inline void slot_match(struct slot_context *slot){
       slot->eop     = slot->desc.data + slot->desc.len;
       * slot->eop = rule_id;
       slot->desc.len += 4;
-      // slot->match_cnt ++;
       slot->desc.port = 2;
       PROFILE_B(0xDEAD0001);
     } else { // EoP
@@ -236,12 +203,7 @@ int main(void)
     context[i].desc.tag  = i;
     context[i].desc.data = (unsigned char *)(PMEM_BASE + PKTS_START + PKT_OFFSET + DATA_OFFSET + (i-1)*slot_size);
     context[i].header    = (unsigned char *)(header_slot_base + PKT_OFFSET + DATA_OFFSET + (i-1)*header_slot_size);
-    context[i].hash_L    = (unsigned short *)(header_slot_base + PKT_OFFSET + (i-1)*header_slot_size);
-    context[i].hash_H    = (unsigned short *)(header_slot_base + PKT_OFFSET + (i-1)*header_slot_size + 2);
     context[i].eth_hdr   = (struct eth_header*)(context[i].header);
-    context[i].match_cnt = 0;
-    context[i].set_mask  =   0x1L << (i-1);
-    context[i].rst_mask  = ~(0x1L << (i-1));
 
     context[i].l3_header.ipv4_hdr = (struct ipv4_header*)(context[i].header +
                                      ETH_HEADER_SIZE);
@@ -261,12 +223,12 @@ int main(void)
       slot = &context[RECV_DESC.tag];
 
       // copy descriptor into context, we already know the data pointer
-      slot->desc.desc_low = RECV_DESC.desc_low;
+      // slot->desc.desc_low = RECV_DESC.desc_low;
+      slot->desc = RECV_DESC;
       asm volatile("" ::: "memory");
       RECV_DESC_RELEASE = 1;
 
       // handle packet
-      // slot->match_cnt = 0;
       slot_rx_packet(slot);
     }
 
