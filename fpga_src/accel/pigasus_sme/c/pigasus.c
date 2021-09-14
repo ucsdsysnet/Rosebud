@@ -116,7 +116,7 @@ struct slot_context {
   int            is_tcp;
 };
 
-struct slot_context context[MAX_CTX_COUNT];
+struct slot_context context[MAX_CTX_COUNT+1];
 
 unsigned int pkt_num;
 unsigned int slot_count;
@@ -246,7 +246,6 @@ static inline void slot_rx_packet(struct slot_context *slot)
 process_tcp:
         slot->payload_addr   = (unsigned int)(slot->desc.data)+payload_offset;
         slot->payload_length = packet_length - payload_offset;
-        slot->eop            = slot->desc.data + slot->desc.len;
 
         ACC_DMA_ADDR  = slot->payload_addr;
         ACC_DMA_LEN   = slot->payload_length;
@@ -274,7 +273,6 @@ process_tcp:
         ACC_PIG_STATE = 0;
         ACC_PIG_SLOT  = slot->index;
         ACC_PIG_CTRL  = 1;
-        slot -> eop   = slot->desc.data + slot->desc.len;
 
         slot->is_tcp  = 0;
         return;
@@ -297,12 +295,13 @@ static inline void slot_match(struct slot_context *slot){
 
     if (rule_id!=0){
       ACC_PIG_CTRL = 2; // release the match
-      asm volatile("" ::: "memory");
+      // asm volatile("" ::: "memory");
       // Add rule IDs to the end of the packet
+      slot->eop     = slot->desc.data + slot->desc.len;
       * slot->eop = rule_id;
-      slot->eop += 4;
       slot->desc.len += 4;
       slot->match_cnt ++;
+      slot->desc.port = 2;
       PROFILE_B(0xDEAD0001);
     } else { // EoP
 
@@ -310,15 +309,17 @@ static inline void slot_match(struct slot_context *slot){
       PROFILE_B(0xDEAD0002);
 
       // Decide what to do with the packet
-      if ((slot->flow.state.state_8[7]>0x80) || (slot->match_cnt!=0)){
-        slot->desc.port = 2;
+      if (slot->flow.state.state_8[7]>0x80){
         PROFILE_B(0xDEAD0003);
         // PROFILE_A(0xDDDD0000|pkt_num);
-      } else {// IDS: drop, IPS: forward
-        // slot->desc.len = 0;
-        PROFILE_B(0xDEAD0004);
-        slot->desc.port ^= 0x1;
+        slot->desc.port = 2;
       }
+
+      // else if (match_cnt ==0) {// IDS: drop, IPS: forward
+      //   // slot->desc.len = 0;
+      //   PROFILE_B(0xDEAD0004);
+      //   slot->desc.port ^= 0x1;
+      // }
 
       if (slot->is_tcp){
         PROFILE_B(0xDEAD0005);
@@ -347,7 +348,6 @@ static inline void slot_match(struct slot_context *slot){
 
       ACC_PIG_CTRL    = 2; // release the EoP
       asm volatile("" ::: "memory");
-      slot->match_cnt = 0; // Done with current packet
       pkt_send(&slot->desc);
       return; // Go back to main loop when done with a packet
     }
@@ -422,18 +422,18 @@ int main(void)
   set_sched_offset(DATA_OFFSET);
 
   // init slot context structures
-  for (int i = 0; i < slot_count; i++)
+  for (int i = 1; i <= slot_count; i++)
   {
     context[i].index     = i;
-    context[i].desc.tag  = i+1;
-    context[i].desc.data = (unsigned char *)(PMEM_BASE + PKTS_START + PKT_OFFSET + DATA_OFFSET + i*slot_size);
-    context[i].header    = (unsigned char *)(header_slot_base + PKT_OFFSET + DATA_OFFSET + i*header_slot_size);
-    context[i].hash_L    = (unsigned short *)(header_slot_base + PKT_OFFSET + i*header_slot_size);
-    context[i].hash_H    = (unsigned short *)(header_slot_base + PKT_OFFSET + i*header_slot_size + 2);
+    context[i].desc.tag  = i;
+    context[i].desc.data = (unsigned char *)(PMEM_BASE + PKTS_START + PKT_OFFSET + DATA_OFFSET + (i-1)*slot_size);
+    context[i].header    = (unsigned char *)(header_slot_base + PKT_OFFSET + DATA_OFFSET + (i-1)*header_slot_size);
+    context[i].hash_L    = (unsigned short *)(header_slot_base + PKT_OFFSET + (i-1)*header_slot_size);
+    context[i].hash_H    = (unsigned short *)(header_slot_base + PKT_OFFSET + (i-1)*header_slot_size + 2);
     context[i].eth_hdr   = (struct eth_header*)(context[i].header);
     context[i].match_cnt = 0;
-    context[i].set_mask  =   0x1L << i;
-    context[i].rst_mask  = ~(0x1L << i);
+    context[i].set_mask  =   0x1L << (i-1);
+    context[i].rst_mask  = ~(0x1L << (i-1));
 
     // We only process IPv4
     context[i].l3_header.ipv4_hdr        = (struct ipv4_header*)(context[i].header +
@@ -458,7 +458,7 @@ int main(void)
     if (in_pkt_ready())
     {
       // compute index
-      slot = &context[RECV_DESC.tag-1];
+      slot = &context[RECV_DESC.tag];
 
       // copy descriptor into context, we already know the data pointer
       slot->desc.desc_low = RECV_DESC.desc_low;
@@ -466,6 +466,7 @@ int main(void)
       RECV_DESC_RELEASE = 1;
 
       // handle packet
+      slot->match_cnt = 0;
       slot_rx_packet(slot);
     }
 

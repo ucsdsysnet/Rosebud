@@ -1,8 +1,8 @@
 TEST=basic_fw
 SIZE=9000
-PREFIX=/usr/local
-BINDIR=$(DESTDIR)$(PREFIX)/bin
-INS_BIN_FILE=../../c_code/$(TEST)_ins.bin
+DEST_DIR=../../c_code/
+# DEST_DIR=../accel/ip_matcher/c/
+INS_BIN_FILE=$(DEST_DIR)/$(TEST)_ins.bin
 DATA_MAP_FILE=$(INS_BIN_FILE:%_ins.bin=%.map)
 OUT_FILE=$(TEST)_$(SIZE).csv
 DEV=mqnic0
@@ -17,9 +17,6 @@ else
 endif
 
 DMAP=0
-
-PREFIX = /usr/local
-BINDIR = $(DESTDIR)$(PREFIX)/bin
 
 CC = gcc
 CFLAGS = -O3 -Wall -I../driver/mqnic -I./mcap
@@ -52,10 +49,6 @@ rvfw: rvfw.o mqnic.o gousheh.o
 pr_reload: pr_reload.o mqnic.o gousheh.o $(MCAPLIB)
 	$(CC) $(ALL_CFLAGS) $^ $(MCAPLIB) -ludev -lpci -lz -o $@
 
-install:
-	install -d $(BINDIR)
-	install -m 0755 $(BIN) $(BINDIR)
-
 clean:
 	$(MAKE) -C mcap clean
 	rm -f $(BIN)
@@ -67,7 +60,7 @@ clean:
 .PHONY: all install clean
 
 do:
-	make -C ../../c_code/ NAME=$(TEST)
+	make -C $(DEST_DIR) NAME=$(TEST)
 	sudo ./rvfw -d /dev/$(DEV) -i $(INS_BIN_FILE) $(DMAP_FLAG) -e $(ENABLE) -r $(RECV)
 	sudo ./perf -d /dev/$(DEV) -o $(OUT_FILE) -g $(DEBUG)
 
@@ -79,3 +72,8 @@ pr_test:
 
 reset:
 	sudo sh -c "lspci -d 1234:1001 | cut -d ' ' -f 1 | xargs -L 1 ./pcie_hot_reset.sh"
+
+reset0:
+	sudo ./pcie_hot_reset.sh 81:00.0
+reset1:
+	sudo ./pcie_hot_reset.sh 01:00.0
