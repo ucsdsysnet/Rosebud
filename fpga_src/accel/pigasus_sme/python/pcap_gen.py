@@ -210,6 +210,11 @@ def random_swap(pkts, min_index):
     ind1, ind2 = random.sample(range(min_index,len(pkts)), 2)
     pkts[ind1], pkts[ind2] = pkts[ind2], pkts[ind1]
 
+def make_ooo(pkts, min_index, min_dist):
+    ind1 = random.randrange(min_index, len(pkts)-min_dist)
+    ind2 = random.randrange(ind1+min_dist, len(pkts))
+    pkts.insert(ind2,pkts.pop(ind1))
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--rules_file', type=str, default=[], action='append', help="Rules file")
@@ -218,7 +223,7 @@ def main():
     parser.add_argument('--details_file', type=str, default="attack_details.txt", help="Details file")
     parser.add_argument('--output_pcap', type=str, default='attack.pcap', help="Pcap output file name")
     parser.add_argument('--pcap_limit', type=int, default=0, help="Max PCAP rules")
-    parser.add_argument('--pkt_swaps', type=int, default=0, help="Number of packet swaps")
+    parser.add_argument('--ooo_pkts', type=int, default=0, help="Number of packet to get OOO")
     parser.add_argument('--test_packets', type=bool, default=False, help="Add non-matching test packets")
     args = parser.parse_args()
 
@@ -377,8 +382,8 @@ def main():
             pcaps.append(eth / ip / tcp / payload)
             match_list[i] = (payload, prot, sport, dport, seq_num+pkt_len, ip)
 
-    for i in range (args.pkt_swaps):
-      random_swap (pcaps, udp_count+syn_count) # 0 to mess up SYN packets too
+    for i in range (args.ooo_pkts):
+      make_ooo(pcaps, udp_count+syn_count, syn_count+1)
 
     for pkt in pcaps:
       pcap.write(pkt)
