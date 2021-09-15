@@ -57,33 +57,32 @@ Gushehs = [
 "     riscv_cores\[6\]\.pr_wrapper",
 "     riscv_cores\[7\]\.pr_wrapper"]
 
-PR_regs = [
-"       \(riscv_cores\[0\]\.pr_wrapper\) ",
-"       \(riscv_cores\[1\]\.pr_wrapper\) ",
-"       \(riscv_cores\[2\]\.pr_wrapper\) ",
-"       \(riscv_cores\[3\]\.pr_wrapper\) ",
-"       \(riscv_cores\[4\]\.pr_wrapper\) ",
-"       \(riscv_cores\[5\]\.pr_wrapper\) ",
-"       \(riscv_cores\[6\]\.pr_wrapper\) ",
-"       \(riscv_cores\[7\]\.pr_wrapper\) ",
-"       bc_msg_in_reg",
-"       bc_msg_out_reg",
-"       dma_rd_reg",
-"       dma_rd_resp_reg",
-"       dma_wr_reg",
-"       in_desc_reg",
-"       out_desc_reg"]
-
 Scheduler_module = ["     scheduler"]
 
 
 mem_modules = ["         memories"]
 riscv_modules = ["         core"]
-gousheh_cont = ["         Gousheh_controller_inst"]
-acc_manager =   ["           \(accel_wrap_inst\)",
+acc_manager =   ["         Gousheh_controller_inst",
+                 "           \(accel_wrap_inst\)",
                  "           meta_data_fifo ",
                  "           state_out_fifo ",
                  "           cmd_slot_fifo ",
-                 "           desc_fifo "]
-acc_dma =   ["           accel_dma_engine "]
+                 "           desc_fifo ",
+                 "           accel_dma_engine ",
+                 "       \(riscv_cores\[0\]\.pr_wrapper\) ",
+                 "       \(riscv_cores\[1\]\.pr_wrapper\) ",
+                 "       \(riscv_cores\[2\]\.pr_wrapper\) ",
+                 "       \(riscv_cores\[3\]\.pr_wrapper\) ",
+                 "       \(riscv_cores\[4\]\.pr_wrapper\) ",
+                 "       \(riscv_cores\[5\]\.pr_wrapper\) ",
+                 "       \(riscv_cores\[6\]\.pr_wrapper\) ",
+                 "       \(riscv_cores\[7\]\.pr_wrapper\) ",
+                 "       bc_msg_in_reg",
+                 "       bc_msg_out_reg",
+                 "       dma_rd_reg",
+                 "       dma_rd_resp_reg",
+                 "       dma_wr_reg",
+                 "       in_desc_reg",
+                 "       out_desc_reg"]
+
 pigasus =   ["           fast_pattern_sme_inst"]

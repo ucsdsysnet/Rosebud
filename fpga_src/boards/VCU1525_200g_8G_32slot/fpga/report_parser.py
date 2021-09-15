@@ -58,11 +58,8 @@ Dastgah_mods = {"Gousheh": (Gushehs, Gousheh_count),
 
 Gousheh_mods = {"mem modules": (mem_modules, Gousheh_count),
                 "riscv": (riscv_modules, Gousheh_count),
-                "Accel manager": (acc_manager, Gousheh_count),
-                "Accel DMA": (acc_dma, Gousheh_count),
                 "Pigasus": (pigasus, Gousheh_count),
-                "Gousheh cont": (gousheh_cont, Gousheh_count),
-                "PR Regs": (PR_regs, Gousheh_count)}
+                "Accel manager": (acc_manager, Gousheh_count)}
 
 # CSV header
 printcsv("Module, LUT, Logic, LUTRAM, SRL, Register, RAMB36, RAMB18, \
