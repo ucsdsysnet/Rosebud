@@ -210,9 +210,9 @@ def random_swap(pkts, min_index):
     ind1, ind2 = random.sample(range(min_index,len(pkts)), 2)
     pkts[ind1], pkts[ind2] = pkts[ind2], pkts[ind1]
 
-def make_ooo(pkts, min_index, min_dist):
-    ind1 = random.randrange(min_index, len(pkts)-min_dist)
-    ind2 = random.randrange(ind1+min_dist, len(pkts))
+def make_ooo(pkts, min_index, min_dist, max_dist):
+    ind1 = random.randrange(min_index, len(pkts)-max_dist)
+    ind2 = random.randrange(ind1+min_dist, ind1+max_dist)
     pkts.insert(ind2,pkts.pop(ind1))
 
 def main():
@@ -224,6 +224,8 @@ def main():
     parser.add_argument('--output_pcap', type=str, default='attack.pcap', help="Pcap output file name")
     parser.add_argument('--pcap_limit', type=int, default=0, help="Max PCAP rules")
     parser.add_argument('--ooo_pkts', type=int, default=0, help="Number of packet to get OOO")
+    parser.add_argument('--min_pkt_size', type=int, default=64, help="Minimum packet size")
+    parser.add_argument('--max_pkt_size', type=int, default=500, help="Maximum packet size")
     parser.add_argument('--test_packets', type=bool, default=False, help="Add non-matching test packets")
     args = parser.parse_args()
 
@@ -253,6 +255,8 @@ def main():
     rule_count = 0
     dropped = 0
     match_list = []
+    min_size = args.min_pkt_size
+    max_size = args.max_pkt_size
 
     for fn in args.rules_file:
         with open(fn, 'r') as f:
@@ -329,7 +333,7 @@ def main():
             pcap_count += 1
 
         payload, prot, sport, dport, seq_num, ip = match_list[i]
-        pkt_len = max(r.randint(64, 500), len(payload)+1)
+        pkt_len = max(r.randint(min_size, max_size), len(payload)+1)
 
         if (prot=='udp'):
             udp = UDP(sport=sport, dport=dport)
@@ -342,48 +346,23 @@ def main():
             pcaps.append(eth / ip / tcp / payload)
             tcp_count += 1
             syn_count += 1
-            match_list[i] = (payload, prot, sport, dport, seq_num+pkt_len, ip)
+            seq_num = seq_num + pkt_len + 1
 
-
-    for k in range(3):
-        rep_count = 0
-        for i in range(len(match_list)):
-            if (rep_count == tcp_count):
-                break
-            else:
-                rep_count += 1
-
-            payload, prot, sport, dport, seq_num, ip = match_list[i]
-            pkt_len = r.randint(64, 500)
-
-            if (prot=='udp'):
-                continue
-            else: #tcp
-                tcp = TCP(sport=sport, dport=dport, seq=seq_num+1, flags="PA")
+            for k in range(3):
+                pkt_len = r.randint(min_size, max_size)
+                tcp = TCP(sport=sport, dport=dport, seq=seq_num, flags="PA")
                 payload = bytes([r.randint(0,255) for x in range(pkt_len)])
                 pcaps.append(eth / ip / tcp / payload)
-                match_list[i] = (payload, prot, sport, dport, seq_num+pkt_len, ip)
+                seq_num += pkt_len
 
-    rep_count = 0
-    for i in range(len(match_list)):
-        if (rep_count == tcp_count):
-            break
-        else:
-            rep_count += 1
-
-        payload, prot, sport, dport, seq_num, ip = match_list[i]
-        pkt_len = max(r.randint(64, 500), len(payload)+1)
-
-        if (prot=='udp'):
-            continue
-        else: #tcp
-            tcp = TCP(sport=sport, dport=dport, seq=seq_num+1, flags="F")
+            pkt_len = max(r.randint(min_size, max_size), len(payload)+1)
+            tcp = TCP(sport=sport, dport=dport, seq=seq_num, flags="F")
             payload += bytes([0xFF for x in range(pkt_len-len(payload))])
             pcaps.append(eth / ip / tcp / payload)
-            match_list[i] = (payload, prot, sport, dport, seq_num+pkt_len, ip)
+            seq_num += pkt_len
 
     for i in range (args.ooo_pkts):
-      make_ooo(pcaps, udp_count+syn_count, syn_count+1)
+      make_ooo(pcaps, udp_count+syn_count, 6, 100)
 
     for pkt in pcaps:
       pcap.write(pkt)
