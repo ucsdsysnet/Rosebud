@@ -22,7 +22,7 @@
 
 // maximum number of slots (number of context objects)
 #define MAX_CTX_COUNT 32
-#define REORDER_LIMIT 8
+#define REORDER_LIMIT 16
 #define HASH_SCHED
 
 // packet start offset
@@ -76,6 +76,7 @@ struct flow {
 
 unsigned int reorder_slots_1hot;
 unsigned int reorder_slot_count;
+unsigned int reorder_slot;
 // unsigned int pkt_num;
 
 // Slot contexts
@@ -83,7 +84,7 @@ struct slot_context {
   // Flow metadata
   struct   flow  flow;
   unsigned short flow_id;
-  unsigned short flow_tag;
+  unsigned short reorder_ts;
 
   struct Desc desc;
   int index;
@@ -234,6 +235,7 @@ static inline void slot_rx_packet(struct slot_context *slot)
         slot->payload_length = packet_length - payload_offset;
         slot->eop            = slot->desc.data + slot->desc.len;
         slot->is_tcp         = 1;
+        slot->reorder_ts     = TIMER_16_LH;
 
         reorder_slot_count ++;
         reorder_slots_1hot |= slot->set_mask;
@@ -370,7 +372,7 @@ static inline void process_reorder(struct slot_context *slot)
   asm volatile("" ::: "memory");
   HASH_LOOKUP        = slot->flow_id;
   asm volatile("" ::: "memory");
-  cur_time           = TIMER_16_HL;
+  cur_time           = TIMER_16_LH;
   asm volatile("" ::: "memory");
   slot->flow.exp_seq = FLOW_TABLE_ENTRY->exp_seq;
 
@@ -388,10 +390,12 @@ static inline void process_reorder(struct slot_context *slot)
   }
 
   // TCP time out (from packet arrival, no need to check FLOW_TABLE_ENTRY->ts)
-  if ((cur_time < slot->flow.ts) || ((cur_time - slot->flow.ts) > 4)){
+  if ((cur_time < slot->reorder_ts) || ((cur_time - slot->reorder_ts) > 3000)){ // 0.78s
     PROFILE_B(0xBEEF0100);
     slot->desc.len = 0;
     pkt_send(&slot->desc);
+    reorder_slots_1hot &= slot->rst_mask;
+    reorder_slot_count --;
   }
 
 }
@@ -453,6 +457,9 @@ int main(void)
   else
     init_left_mask = (1<<slot_count) - 1;
   // pkt_num = 0;
+  reorder_left_mask = init_left_mask;
+  reorder_mask      = 1;
+  reorder_slot      = 0;
 
   while (1)
   {
@@ -477,16 +484,17 @@ int main(void)
     }
 
     if (reorder_slots_1hot) {
-      reorder_left_mask = init_left_mask;
-      reorder_mask      = 1;
-      for (int i = 0; i < slot_count; i++){
-        if (reorder_slots_1hot & reorder_mask)
-          process_reorder(&context[i]);
+      if (reorder_slots_1hot & reorder_mask)
+        process_reorder(&context[reorder_slot]);
 
-        reorder_mask      = reorder_mask      << 1;
-        reorder_left_mask = reorder_left_mask << 1;
-        if (!(reorder_slots_1hot & reorder_left_mask))
-          break;
+      reorder_mask      = reorder_mask      << 1;
+      reorder_left_mask = reorder_left_mask << 1;
+      reorder_slot++;
+
+      if (reorder_slot==slot_count){
+        reorder_slot      = 0;
+        reorder_left_mask = init_left_mask;
+        reorder_mask      = 1;
       }
     }
   }
