@@ -1,37 +1,8 @@
 #include "core.h"
 
-#if 1
-#define PROFILE_A(x) do {DEBUG_OUT_L = (x);} while (0)
-#define PROFILE_B(x) do {DEBUG_OUT_H = (x);} while (0)
-#else
-#define PROFILE_A(x) do {} while (0)
-#define PROFILE_B(x) do {} while (0)
-#endif
-
-#define bswap_16(x) \
-  (((x & 0xff00) >> 8) | ((x & 0x00ff) << 8))
-
-#define bswap_32(x) \
-  (((x & 0xff000000) >> 24) | ((x & 0x00ff0000) >>  8) | \
-   ((x & 0x0000ff00) <<  8) | ((x & 0x000000ff) << 24))
-
-// packet start offset
-// DWORD align Ethernet payload
-// provide space for header modifications
-#define PKT_OFFSET 10
-// PMEM in 8 blocks of 128 KB
-// accelerators only connected to upper 2 blocks
-#define PKTS_START (6*128*1024)
-
 // Accel wrapper registers mapping
 #define ACC_SRC_IP   (*((volatile unsigned int  *)(IO_EXT_BASE + 0x00)))
 #define ACC_FW_MATCH (*((volatile unsigned char *)(IO_EXT_BASE + 0x04)))
-
-unsigned int slot_count;
-unsigned int header_slot_base;
-
-const unsigned int slot_size        = 16*1024;
-const unsigned int header_slot_size = 128;
 
 static inline void slot_rx_packet(struct Desc* desc)
 {
@@ -49,7 +20,7 @@ static inline void slot_rx_packet(struct Desc* desc)
     }
     else
     {
-      // desc->port ^= 1;
+      desc->port ^= 1;
       pkt_send(desc);
       return;
     }
@@ -62,21 +33,12 @@ drop: //Non IPV4 or in firewall list
 
 int main(void)
 {
-  DEBUG_OUT_L = 0;
-  DEBUG_OUT_H = 0;
+  // Initializing scheduler and wrapper
+  init_hdr_slots(16, 0x804000, 128);
+  init_slots(16, 0x000000, 16384);
 
-  // set slot configuration parameters
-  slot_count       = 16;
-  header_slot_base = DMEM_BASE + (DMEM_SIZE >> 1);
-
-  if (slot_count > MAX_SLOT_COUNT)
-    slot_count = MAX_SLOT_COUNT;
-
-  // Do this at the beginning, so scheduler can fill the slots while
-  // initializing other things.
-  init_hdr_slots(slot_count, header_slot_base, header_slot_size);
-  init_slots(slot_count, PKTS_START+PKT_OFFSET, slot_size);
-	set_masks(0x30); // Enable only Evict + Poke
+  // Enable only Evict and Poke Interrupts
+	set_masks(0x30);
 
   while (1)
   {
