@@ -155,7 +155,7 @@ wire                      bc_msg_in_valid;
 wire [31:0]               wrapper_status_data;
 wire [2:0]                wrapper_status_addr;
 wire [31:0]               core_status_data;
-wire [1:0]                core_status_addr;
+wire [2:0]                core_status_addr;
 
 Gousheh_wrapper #(
     .DATA_WIDTH(DATA_WIDTH),

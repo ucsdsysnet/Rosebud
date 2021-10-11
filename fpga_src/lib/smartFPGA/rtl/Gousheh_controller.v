@@ -76,11 +76,14 @@ module Gousheh_controller # (
 
   // --------- Gousheh STATUS CHANNEL CONTROL ----------- //
   output wire [31:0]                core_status_data,
-  output wire [1:0]                 core_status_addr,
+  output wire [2:0]                 core_status_addr,
 
   input  wire [31:0]                slot_wr_data,
   input  wire                       slot_wr_valid,
   output                            slot_wr_ready,
+
+  input  wire [15:0]                sched_tag_len,
+  input  wire                       tag_len_wr_valid,
 
   input  wire [63:0]                debug_out,
   input  wire                       debug_out_l_valid,
@@ -216,15 +219,19 @@ end
 ///////////////////////////////////////////////////////////////////////////
 /////////////////////// STATUS CHANNEL TO WRAPPER /////////////////////////
 ///////////////////////////////////////////////////////////////////////////
-assign core_status_addr = slot_wr_valid     ? 2'd1 :
-                          debug_out_l_valid ? 2'd2 :
-                          debug_out_h_valid ? 2'd3 :
-                          2'd0;
+assign core_status_addr = slot_wr_valid     ? 3'd1 :
+                          tag_len_wr_valid  ? 3'd4 :
+                          debug_out_l_valid ? 3'd2 :
+                          debug_out_h_valid ? 3'd3 :
+                                              3'd0 ;
+
 assign core_status_data = slot_wr_valid     ? slot_wr_data :
+                          tag_len_wr_valid  ? {16'd0, sched_tag_len} :
                           debug_out_l_valid ? debug_out[31:0] :
                           debug_out_h_valid ? debug_out[63:32] :
                           {14'd0, core_reset, ready_to_evict,
                           mem_fifo_fulls, core_errors};
+
 assign slot_wr_ready    = 1'b1;
 
 endmodule

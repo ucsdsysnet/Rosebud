@@ -61,6 +61,8 @@ module riscvcore #(
     output [31:0]                slot_wr_data,
     output                       slot_wr_valid,
     input                        slot_wr_ready,
+    output [15:0]                sched_tag_len,
+    output                       tag_len_wr_valid,
     output [63:0]                debug_out,
     output                       debug_out_l_valid,
     output                       debug_out_h_valid,
@@ -188,7 +190,7 @@ localparam SCHED_TAG_LEN    = 6'b011000;
 reg [63:0] dram_wr_addr_r;
 reg [31:0] timer_step_r;
 reg [63:0] debug_register;
-reg [15:0] sched_tag_len;
+reg [15:0] sched_tag_len_r;
 
 reg [63:0] out_desc_data_r;
 reg [3:0]  out_desc_type_r;
@@ -237,7 +239,7 @@ always @ (posedge clk) begin
             SEND_DESC_TYPE:   out_desc_type_r  <= mem_wr_data[3:0];
             MASK_WR:          int_mask         <= mem_wr_data[15:0];
             READY_TO_EVICT:   ready_to_evict_r <= mem_wr_data[0];
-            SCHED_TAG_LEN:    sched_tag_len    <= mem_wr_data[15:0];
+            SCHED_TAG_LEN:    sched_tag_len_r  <= mem_wr_data[15:0];
             default: begin end
         endcase
     end
@@ -247,7 +249,7 @@ always @ (posedge clk) begin
       int_mask         <= 16'hFFF0;
       ready_to_evict_r <= 1'b0;
       bc_msg_fifo_en   <= 1'b0;
-      sched_tag_len    <= 16'd0;
+      sched_tag_len_r  <= 16'd0;
     end
 end
 
@@ -283,6 +285,8 @@ end
 
 assign slot_wr_valid      = io_write && (io_addr==SLOT_LUT_STRB) && mem_wr_data[0];
 assign slot_wr_data       = slot_info_data_r;
+assign tag_len_wr_valid   = io_write && (io_addr==SCHED_TAG_LEN);
+assign sched_tag_len      = sched_tag_len_r;
 
 assign debug_out          = debug_register;
 assign debug_out_l_valid  = debug_reg_wr_l_r;
@@ -384,14 +388,11 @@ wire [31:0] int_flags = {12'd0, io_access_err, pmem_access_err,
                          dram_recv_any, in_desc_valid, timer_interrupt};
                          // & {16'hFFFF, int_mask};
 
-wire [31:0] in_desc_addr_adj = in_desc[63:32] + sched_tag_len;
-wire [15:0] in_desc_len_adj  = in_desc[15:0]  - sched_tag_len;
-
 always @ (posedge clk)
     if (io_read)
         case (io_addr)
-            RD_DESC_ADDR_L:   if (in_desc_valid) io_read_data <= {in_desc[31:16], in_desc_len_adj};
-            RD_DESC_ADDR_H:   if (in_desc_valid) io_read_data <= in_desc_addr_adj;
+            RD_DESC_ADDR_L:   if (in_desc_valid) io_read_data <= in_desc[31:0];
+            RD_DESC_ADDR_H:   if (in_desc_valid) io_read_data <= in_desc[63:32];
             RD_D_FLAGS_ADDR:  io_read_data <= dram_recv_flag;
             RD_STAT_ADDR:     io_read_data <= {7'd0,core_msg_ready, 7'd0,slot_wr_ready,
                                                7'd0,out_desc_ready, 7'd0,in_desc_valid};

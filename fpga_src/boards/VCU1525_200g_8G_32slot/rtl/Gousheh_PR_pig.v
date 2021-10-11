@@ -45,7 +45,7 @@ module Gousheh_PR (
 
   // Status channel from core
   output reg  [31:0]  core_status_data,
-  output reg  [1:0]   core_status_addr
+  output reg  [2:0]   core_status_addr
 );
 
 // Parameters that should match the wrapper and are used in ports
@@ -238,7 +238,7 @@ simple_pipe_reg # (
 reg  [31:0] wrapper_status_data_r;
 reg  [2:0]  wrapper_status_addr_r;
 wire [31:0]  core_status_data_n;
-wire [1:0]   core_status_addr_n;
+wire [2:0]   core_status_addr_n;
 
 always @ (posedge clk) begin
   wrapper_status_data_r <= wrapper_status_data;

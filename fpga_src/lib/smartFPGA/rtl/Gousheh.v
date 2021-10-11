@@ -63,7 +63,7 @@ module Gousheh # (
 
   // Status channel from core
   output wire [31:0]              core_status_data,
-  output wire [1:0]               core_status_addr
+  output wire [2:0]               core_status_addr
 );
 
 // Internal paramaters
@@ -129,6 +129,9 @@ wire        inv_desc_int_ack;
 wire [31:0] slot_wr_data;
 wire        slot_wr_valid;
 wire        slot_wr_ready;
+
+wire [15:0] sched_tag_len;
+wire        tag_len_wr_valid;
 
 wire [63:0] debug_out;
 wire        debug_out_l_valid;
@@ -212,6 +215,8 @@ riscvcore #(
   .slot_wr_data(slot_wr_data),
   .slot_wr_valid(slot_wr_valid),
   .slot_wr_ready(slot_wr_ready),
+  .sched_tag_len(sched_tag_len),
+  .tag_len_wr_valid(tag_len_wr_valid),
   .debug_out(debug_out),
   .debug_out_l_valid(debug_out_l_valid),
   .debug_out_h_valid(debug_out_h_valid),
@@ -314,6 +319,8 @@ Gousheh_controller # (
   .slot_wr_data     (slot_wr_data),
   .slot_wr_valid    (slot_wr_valid),
   .slot_wr_ready    (slot_wr_ready),
+  .sched_tag_len    (sched_tag_len),
+  .tag_len_wr_valid (tag_len_wr_valid),
   .debug_out        (debug_out),
   .debug_out_l_valid(debug_out_l_valid),
   .debug_out_h_valid(debug_out_h_valid),

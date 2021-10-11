@@ -149,7 +149,7 @@ module Gousheh_wrapper # (
 
     // Status channel from core
     input  wire [31:0]              core_status_data,
-    input  wire [1:0]               core_status_addr
+    input  wire [2:0]               core_status_addr
 );
 
 wire rst_r;
@@ -267,23 +267,28 @@ wire                  slot_for_hdr  = core_status_data[31]; // && !core_status_d
 wire [24:0]           slot_wr_addr = {~core_status_data[31], core_status_data[23:0]};
 
 reg [31:0] core_stat_reg, core_debug_l, core_debug_h;
+reg [15:0] sched_tag_len;
 
 always @ (posedge clk) begin
   case (core_status_addr)
-    2'b00: core_stat_reg <= core_status_data;
-    2'b01:
+    3'd0: core_stat_reg <= core_status_data;
+    3'd1:
       if (slot_for_hdr)
         slot_hdr_addr_msb_lut[slot_wr_ptr] <= slot_wr_addr[24:HDR_ADDR_BITS];
       //else if (slot_for_desc)
       //  slot_desc_addr_lut[slot_wr_ptr]    <= slot_wr_addr[23:0];
       else
         slot_addr_lut        [slot_wr_ptr] <= slot_wr_addr;
-    2'b10: core_debug_l <= core_status_data;
-    2'b11: core_debug_h <= core_status_data;
+    3'd2: core_debug_l  <= core_status_data;
+    3'd3: core_debug_h  <= core_status_data;
+    3'd4: sched_tag_len <= core_status_data[15:0];
+    default: begin end
   endcase
 
-  if (rst_r)
+  if (rst_r) begin
     core_stat_reg <= 32'd0;
+    sched_tag_len <= 16'd0;
+  end
 end
 
 /////////////////////////////////////////////////////////////////////
@@ -1326,14 +1331,17 @@ always @ (posedge clk) begin
   end
 end
 
-// One pipeline register to handle in_desc drop
+// One pipeline register to handle in_desc drop and apply offset
 reg         in_desc_valid_r;
 reg  [63:0] in_desc_r;
+
+wire [31:0] in_desc_addr_adj = in_desc_n[63:32] + sched_tag_len;
+wire [15:0] in_desc_len_adj  = in_desc_n[15:0]  - sched_tag_len;
 
 always @ (posedge clk) begin
   if (in_desc_valid_n && in_desc_ready_n) begin
     in_desc_valid_r <= 1'b1;
-    in_desc_r       <= in_desc_n;
+    in_desc_r       <= {in_desc_addr_adj, in_desc_n[31:16], in_desc_len_adj};
   end else if (in_desc_taken || in_desc_drop) begin
     in_desc_valid_r <= 1'b0;
   end

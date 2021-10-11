@@ -1849,7 +1849,7 @@ generate
         wire [2:0]                 wrapper_status_addr;
 
         wire [31:0]                core_status_data;
-        wire [1:0]                 core_status_addr;
+        wire [2:0]                 core_status_addr;
 
         // (* keep_hierarchy = "soft" *)
         Gousheh_wrapper #(
