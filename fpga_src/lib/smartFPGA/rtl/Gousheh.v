@@ -83,7 +83,7 @@ wire        core_exio_en;
 wire        core_mem_wen;
 wire        core_mem_ready;
 wire [3:0]  core_mem_strb;
-wire [1:0]  core_mem_swap;
+wire        core_mem_swap;
 wire [24:0] core_mem_addr;
 wire [31:0] core_mem_wr_data;
 wire [31:0] core_mem_rd_data;

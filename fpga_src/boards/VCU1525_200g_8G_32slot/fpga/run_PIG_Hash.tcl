@@ -19,7 +19,7 @@ add_files -norecurse {
   ../lib/smartFPGA/rtl/simple_sync_sig.v
   ../lib/smartFPGA/rtl/riscvcore.v
   ../lib/smartFPGA/rtl/simple_fifo.v
-  ../lib/smartFPGA/rtl/mem_sys2.v
+  ../lib/smartFPGA/rtl/mem_sys.v
   ../lib/smartFPGA/rtl/Gousheh.v
   ../lib/smartFPGA/rtl/Gousheh_controller.v
   ../lib/smartFPGA/rtl/single_accel_rd_dma.v

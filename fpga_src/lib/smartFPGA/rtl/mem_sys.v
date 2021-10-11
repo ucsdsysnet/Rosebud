@@ -46,7 +46,7 @@ module mem_sys # (
   input  wire                                     core_pmem_en,
   input  wire                                     core_dmem_wen,
   input  wire [3:0]                               core_dmem_strb,
-  input  wire [1:0]                               core_dmem_swap,
+  input  wire                                     core_dmem_swap,
   input  wire [24:0]                              core_dmem_addr,
   input  wire [31:0]                              core_dmem_wr_data,
   output wire [31:0]                              core_dmem_rd_data,
@@ -92,7 +92,7 @@ module mem_sys # (
   wire [DATA_WIDTH-1:0] core_imem_rd_data_w;
 
   // 2'b0X: no swap, 2'b10: 4B swap, 2'b11: 2B swap
-  reg  [1:0]  core_dmem_latched_swap;
+  reg  core_dmem_latched_swap;
   always @ (posedge clk)
     if (core_dmem_en || core_pmem_en)
       core_dmem_latched_swap <= core_dmem_swap;
@@ -103,18 +103,11 @@ module mem_sys # (
                              core_dmem_rd_data_w[23:16],
                              core_dmem_rd_data_w[31:24]};
 
-    wire [31:0] half_swap = {core_dmem_rd_data_w[23:16],
-                             core_dmem_rd_data_w[31:24],
-                             core_dmem_rd_data_w[7:0],
-                             core_dmem_rd_data_w[15:8]};
-
     assign core_imem_rd_data   = core_imem_rd_data_w;
     assign core_dmem_strb_w    = core_dmem_strb;
     assign core_dmem_wr_data_w = core_dmem_wr_data;
-    assign core_dmem_rd_data   = !core_dmem_latched_swap[1] ?
-                                        core_dmem_rd_data_w :
-                                  core_dmem_latched_swap[0] ?
-                                       half_swap : full_swap;
+    assign core_dmem_rd_data   = !core_dmem_latched_swap ?
+                                  core_dmem_rd_data_w : full_swap;
   end else begin: mem_width_convert
     localparam REMAINED_BYTES = STRB_WIDTH-4;
     localparam REMAINED_BITS  = 8*REMAINED_BYTES;
@@ -128,11 +121,6 @@ module mem_sys # (
                              core_dmem_rd_data_shifted[15:8],
                              core_dmem_rd_data_shifted[23:16],
                              core_dmem_rd_data_shifted[31:24]};
-
-    wire [31:0] half_swap = {core_dmem_rd_data_shifted[23:16],
-                             core_dmem_rd_data_shifted[31:24],
-                             core_dmem_rd_data_shifted[7:0],
-                             core_dmem_rd_data_shifted[15:8]};
 
     // Core does not change the address before receiving the data
     always @ (posedge clk)
@@ -148,10 +136,8 @@ module mem_sys # (
 
     assign core_dmem_rd_data_shifted = core_dmem_rd_data_w >> {core_dmem_latched_addr, 5'd0};
 
-    assign core_dmem_rd_data         = !core_dmem_latched_swap[1] ?
-                                        core_dmem_rd_data_shifted[31:0] :
-                                        core_dmem_latched_swap[0] ?
-                                        half_swap : full_swap;
+    assign core_dmem_rd_data         = !core_dmem_latched_swap ?
+                                        core_dmem_rd_data_shifted[31:0] : full_swap;
 
     assign core_dmem_strb_w          = {{REMAINED_BYTES{1'b0}}, core_dmem_strb}
                                        << {core_dmem_addr[LINE_ADDR_BITS-1:2], 2'd0};
