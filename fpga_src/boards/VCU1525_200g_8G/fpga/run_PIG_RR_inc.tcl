@@ -65,6 +65,8 @@ set_property IS_ENABLED false [get_report_config -of_object [get_runs impl_PIG_R
 
 reset_run impl_PIG_RR
 launch_runs impl_PIG_RR -jobs 12
+exec sh -c "sed -i '/Gousheh_PR.dcp/d' fpga.runs/impl_PIG_RR/fpga.tcl"
+exec sh -c "sed -i '/fpga_postroute_physopt_bb.dcp/ r Gousheh_dcps.tcl' fpga.runs/impl_PIG_RR/fpga.tcl"
 wait_on_run impl_PIG_RR
 
 open_run impl_PIG_RR
