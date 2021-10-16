@@ -65,7 +65,7 @@ parameter SLOT_COUNT      = 32;
 
 parameter REG_TYPE        = 2;
 parameter REG_LENGTH      = 1;
-parameter ADD_PMEM_RD_REG = 1;
+parameter ADD_PMEM_RD_REG = 0;
 
 ///////////////////////////////////////////////////////////////////////////////
 /////////////////// Register input and outputs ////////////////////////////////
@@ -254,9 +254,9 @@ Gousheh # (
     .IMEM_SIZE(IMEM_SIZE),
     .PMEM_SIZE(PMEM_SIZE),
     .DMEM_SIZE(DMEM_SIZE),
+    .ACC_ROM_EN(ACC_ROM_EN),
     .SLOW_M_B_LINES(SLOW_M_B_LINES),
     .FAST_M_B_LINES(FAST_M_B_LINES),
-    .ACC_ROM_EN(ACC_ROM_EN),
     .BC_REGION_SIZE(BC_REGION_SIZE),
     .BC_START_ADDR(BC_START_ADDR),
     .MSG_WIDTH(MSG_WIDTH),

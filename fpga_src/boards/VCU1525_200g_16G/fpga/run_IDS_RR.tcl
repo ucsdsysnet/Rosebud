@@ -9,8 +9,8 @@ if {[llength [get_reconfig_modules Gousheh_IDS]]!=0} then {
 create_reconfig_module -name Gousheh_IDS -partition_def [get_partition_defs pr_riscv] -top Gousheh_PR
 
 add_files -norecurse {
-  ../lib/eth/lib/axis/rtl/arbiter.v 
-  ../lib/eth/lib/axis/rtl/priority_encoder.v 
+  ../lib/eth/lib/axis/rtl/arbiter.v
+  ../lib/eth/lib/axis/rtl/priority_encoder.v
   ../lib/smartFPGA/rtl/core_mems.v
   ../lib/smartFPGA/rtl/axis_fifo.v
   ../lib/smartFPGA/rtl/VexRiscv.v
@@ -30,8 +30,9 @@ add_files -norecurse {
   ../accel/full_ids/rtl/ip_match/ip_match.v
   ../accel/full_ids/rtl/accel_wrap_full_ids.v
   ../rtl/Gousheh_PR_w_accel.v
+  ../lib/smartFPGA/syn/vivado/simple_sync_sig.tcl
 } -of_objects [get_reconfig_modules Gousheh_IDS]
-  
+
 if {[llength [get_pr_configurations IDS_RR_config]]!=0} then {
   delete_pr_configurations IDS_RR_config}
 create_pr_configuration -name IDS_RR_config -partitions [list \
@@ -58,6 +59,7 @@ create_run impl_IDS_RR -parent_run impl_1 -flow {Vivado Implementation 2021} -pr
 set_property strategy Performance_ExtraTimingOpt [get_runs impl_IDS_RR]
 set_property STEPS.POST_ROUTE_PHYS_OPT_DESIGN.IS_ENABLED true [get_runs impl_IDS_RR]
 set_property STEPS.POST_ROUTE_PHYS_OPT_DESIGN.ARGS.DIRECTIVE Explore [get_runs impl_IDS_RR]
+set_property -name {STEPS.OPT_DESIGN.ARGS.MORE OPTIONS} -value {-retarget -propconst -sweep -bufg_opt -shift_register_opt -aggressive_remap} -objects [get_runs impl_IDS_RR]
 # set_property STEPS.PLACE_DESIGN.ARGS.DIRECTIVE Explore [get_runs impl_IDS_RR]
 set_property AUTO_INCREMENTAL_CHECKPOINT 1 [get_runs impl_IDS_RR]
 
@@ -65,16 +67,8 @@ update_compile_order -fileset Gousheh_IDS
 update_compile_order -fileset sources_1
 
 reset_run Gousheh_IDS_synth_1
-launch_runs Gousheh_IDS_synth_1
+launch_runs Gousheh_IDS_synth_1 -jobs 12
 wait_on_run Gousheh_IDS_synth_1
-
-create_fileset -quiet IDS_RR_utils
-add_files -fileset IDS_RR_utils -norecurse ../lib/axis/syn/vivado/sync_reset.tcl
-add_files -fileset IDS_RR_utils -norecurse ../lib/smartFPGA/syn/vivado/simple_sync_sig.tcl
-set_property STEPS.OPT_DESIGN.TCL.PRE [ get_files ../lib/axis/syn/vivado/sync_reset.tcl -of [get_fileset IDS_RR_utils] ] [get_runs impl_IDS_RR]
-set_property STEPS.OPT_DESIGN.TCL.PRE [ get_files ../lib/smartFPGA/syn/vivado/simple_sync_sig.tcl -of [get_fileset IDS_RR_utils] ] [get_runs impl_IDS_RR]
-set_property STEPS.ROUTE_DESIGN.TCL.PRE [ get_files ../lib/axis/syn/vivado/sync_reset.tcl -of [get_fileset IDS_RR_utils] ] [get_runs impl_IDS_RR]
-set_property STEPS.ROUTE_DESIGN.TCL.PRE [ get_files ../lib/smartFPGA/syn/vivado/simple_sync_sig.tcl -of [get_fileset IDS_RR_utils] ] [get_runs impl_IDS_RR]
 
 set_property IS_ENABLED false [get_report_config -of_object [get_runs impl_IDS_RR] impl_IDS_RR_route_report_drc_0]
 set_property IS_ENABLED false [get_report_config -of_object [get_runs impl_IDS_RR] impl_IDS_RR_route_report_power_0]

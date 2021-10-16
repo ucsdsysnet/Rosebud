@@ -9,7 +9,7 @@ if {[llength [get_reconfig_modules scheduler_RR]]!=0} then {
 create_reconfig_module -name scheduler_RR -partition_def [get_partition_defs pr_scheduler] -top scheduler_PR
 
 add_files -norecurse {
-  ../lib/eth/lib/axis/rtl/arbiter.v 
+  ../lib/eth/lib/axis/rtl/arbiter.v
   ../lib/eth/lib/axis/rtl/axis_arb_mux.v
   ../lib/eth/lib/axis/rtl/axis_register.v
   ../lib/eth/lib/axis/rtl/axis_pipeline_register.v
@@ -24,6 +24,7 @@ add_files -norecurse {
   ../lib/smartFPGA/rtl/slot_keeper.v
   ../lib/smartFPGA/rtl/max_finder_tree.v
   ../rtl/RR_LU_scheduler_PR.v
+  ../lib/axis/syn/vivado/sync_reset.tcl
 } -of_objects [get_reconfig_modules scheduler_RR]
 
 if {[llength [get_pr_configurations PIG_RR_config]]!=0} then {
@@ -46,7 +47,6 @@ set_property STEPS.POST_ROUTE_PHYS_OPT_DESIGN.IS_ENABLED true [get_runs impl_PIG
 set_property STEPS.POST_ROUTE_PHYS_OPT_DESIGN.ARGS.DIRECTIVE Explore [get_runs impl_PIG_RR]
 set_property -name {STEPS.OPT_DESIGN.ARGS.MORE OPTIONS} -value {-retarget -propconst -sweep -bufg_opt -shift_register_opt -aggressive_remap} -objects [get_runs impl_PIG_RR]
 # set_property STEPS.PLACE_DESIGN.ARGS.DIRECTIVE Explore [get_runs impl_PIG_RR]
-# set_property AUTO_INCREMENTAL_CHECKPOINT 1 [get_runs impl_PIG_RR]
 
 update_compile_order -fileset scheduler_RR
 update_compile_order -fileset sources_1
@@ -55,17 +55,9 @@ reset_run scheduler_RR_synth_1
 launch_runs scheduler_RR_synth_1 -jobs 12
 wait_on_run scheduler_RR_synth_1
 
-create_fileset -quiet PIG_RR_utils
-add_files -fileset PIG_RR_utils -norecurse ../lib/axis/syn/vivado/sync_reset.tcl
-add_files -fileset PIG_RR_utils -norecurse ../lib/smartFPGA/syn/vivado/simple_sync_sig.tcl
-
-# add_files -fileset PIG_RR_utils -norecurse fpga.runs/impl_PIG_RR/fpga_postroute_physopt.dcp
-# set_property incremental_checkpoint fpga.runs/impl_PIG_RR/fpga_postroute_physopt.dcp [get_runs impl_PIG_RR]
-
-set_property STEPS.OPT_DESIGN.TCL.PRE [ get_files ../lib/axis/syn/vivado/sync_reset.tcl -of [get_fileset PIG_RR_utils] ] [get_runs impl_PIG_RR]
-set_property STEPS.OPT_DESIGN.TCL.PRE [ get_files ../lib/smartFPGA/syn/vivado/simple_sync_sig.tcl -of [get_fileset PIG_RR_utils] ] [get_runs impl_PIG_RR]
-set_property STEPS.ROUTE_DESIGN.TCL.PRE [ get_files ../lib/axis/syn/vivado/sync_reset.tcl -of [get_fileset PIG_RR_utils] ] [get_runs impl_PIG_RR]
-set_property STEPS.ROUTE_DESIGN.TCL.PRE [ get_files ../lib/smartFPGA/syn/vivado/simple_sync_sig.tcl -of [get_fileset PIG_RR_utils] ] [get_runs impl_PIG_RR]
+# add_files -fileset utils_1 -norecurse fpga.runs/impl_PIG_HASH/fpga_postroute_physopt.dcp
+# set_property incremental_checkpoint fpga.runs/impl_PIG_HASH/fpga_postroute_physopt.dcp [get_runs impl_PIG_RR]
+# set_property incremental_checkpoint.directive TimingClosure [get_runs impl_PIG_RR]
 
 set_property IS_ENABLED false [get_report_config -of_object [get_runs impl_PIG_RR] impl_PIG_RR_route_report_drc_0]
 set_property IS_ENABLED false [get_report_config -of_object [get_runs impl_PIG_RR] impl_PIG_RR_route_report_power_0]

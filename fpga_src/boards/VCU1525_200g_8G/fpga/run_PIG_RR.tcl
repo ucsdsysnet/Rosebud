@@ -9,8 +9,8 @@ if {[llength [get_reconfig_modules Gousheh_PIG]]!=0} then {
 create_reconfig_module -name Gousheh_PIG -partition_def [get_partition_defs pr_riscv] -top Gousheh_PR
 
 add_files -norecurse {
-  ../lib/eth/lib/axis/rtl/arbiter.v 
-  ../lib/eth/lib/axis/rtl/priority_encoder.v 
+  ../lib/eth/lib/axis/rtl/arbiter.v
+  ../lib/eth/lib/axis/rtl/priority_encoder.v
   ../lib/smartFPGA/rtl/core_mems.v
   ../lib/smartFPGA/rtl/axis_fifo.v
   ../lib/smartFPGA/rtl/VexRiscv.v
@@ -50,8 +50,9 @@ add_files -norecurse {
   ../accel/pigasus_sme/rtl/accel_wrap_pigasus.v
   ../accel/pigasus_sme/rtl/ip_match.v
   ../rtl/Gousheh_PR_pig.v
+  ../lib/smartFPGA/syn/vivado/simple_sync_sig.tcl
 } -of_objects [get_reconfig_modules Gousheh_PIG]
-  
+
 if {[llength [get_pr_configurations PIG_RR_config]]!=0} then {
   delete_pr_configurations PIG_RR_config}
 create_pr_configuration -name PIG_RR_config -partitions [list \
@@ -72,7 +73,7 @@ set_property STEPS.POST_ROUTE_PHYS_OPT_DESIGN.IS_ENABLED true [get_runs impl_PIG
 set_property STEPS.POST_ROUTE_PHYS_OPT_DESIGN.ARGS.DIRECTIVE Explore [get_runs impl_PIG_RR]
 set_property -name {STEPS.OPT_DESIGN.ARGS.MORE OPTIONS} -value {-retarget -propconst -sweep -bufg_opt -shift_register_opt -aggressive_remap} -objects [get_runs impl_PIG_RR]
 # set_property STEPS.PLACE_DESIGN.ARGS.DIRECTIVE Explore [get_runs impl_PIG_RR]
-# set_property AUTO_INCREMENTAL_CHECKPOINT 1 [get_runs impl_PIG_RR]
+set_property AUTO_INCREMENTAL_CHECKPOINT 1 [get_runs impl_PIG_RR]
 
 update_compile_order -fileset Gousheh_PIG
 update_compile_order -fileset sources_1
@@ -80,18 +81,6 @@ update_compile_order -fileset sources_1
 reset_run Gousheh_PIG_synth_1
 launch_runs Gousheh_PIG_synth_1 -jobs 12
 wait_on_run Gousheh_PIG_synth_1
-
-create_fileset -quiet PIG_RR_utils
-add_files -fileset PIG_RR_utils -norecurse ../lib/axis/syn/vivado/sync_reset.tcl
-add_files -fileset PIG_RR_utils -norecurse ../lib/smartFPGA/syn/vivado/simple_sync_sig.tcl
-
-# add_files -fileset PIG_RR_utils -norecurse fpga.runs/impl_IDS_RR/fpga_postroute_physopt.dcp
-# set_property incremental_checkpoint fpga.runs/impl_IDS_RR/fpga_postroute_physopt.dcp [get_runs impl_PIG_RR]
-
-set_property STEPS.OPT_DESIGN.TCL.PRE [ get_files ../lib/axis/syn/vivado/sync_reset.tcl -of [get_fileset PIG_RR_utils] ] [get_runs impl_PIG_RR]
-set_property STEPS.OPT_DESIGN.TCL.PRE [ get_files ../lib/smartFPGA/syn/vivado/simple_sync_sig.tcl -of [get_fileset PIG_RR_utils] ] [get_runs impl_PIG_RR]
-set_property STEPS.ROUTE_DESIGN.TCL.PRE [ get_files ../lib/axis/syn/vivado/sync_reset.tcl -of [get_fileset PIG_RR_utils] ] [get_runs impl_PIG_RR]
-set_property STEPS.ROUTE_DESIGN.TCL.PRE [ get_files ../lib/smartFPGA/syn/vivado/simple_sync_sig.tcl -of [get_fileset PIG_RR_utils] ] [get_runs impl_PIG_RR]
 
 set_property IS_ENABLED false [get_report_config -of_object [get_runs impl_PIG_RR] impl_PIG_RR_route_report_drc_0]
 set_property IS_ENABLED false [get_report_config -of_object [get_runs impl_PIG_RR] impl_PIG_RR_route_report_power_0]

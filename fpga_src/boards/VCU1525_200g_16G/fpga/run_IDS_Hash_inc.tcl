@@ -9,7 +9,7 @@ if {[llength [get_reconfig_modules scheduler_Hash]]!=0} then {
 create_reconfig_module -name scheduler_Hash -partition_def [get_partition_defs pr_scheduler] -top scheduler_PR
 
 add_files -norecurse {
-  ../lib/eth/lib/axis/rtl/arbiter.v 
+  ../lib/eth/lib/axis/rtl/arbiter.v
   ../lib/eth/lib/axis/rtl/axis_arb_mux.v
   ../lib/eth/lib/axis/rtl/axis_register.v
   ../lib/eth/lib/axis/rtl/axis_pipeline_register.v
@@ -22,6 +22,7 @@ add_files -norecurse {
   ../lib/smartFPGA/rtl/header.v
   ../lib/smartFPGA/rtl/slot_keeper.v
   ../rtl/Hash_Dropping_scheduler_PR.v
+  ../lib/axis/syn/vivado/sync_reset.tcl
 } -of_objects [get_reconfig_modules scheduler_Hash]
 
 if {[llength [get_pr_configurations IDS_Hash_config]]!=0} then {
@@ -50,26 +51,20 @@ create_run impl_IDS_Hash -parent_run impl_1 -flow {Vivado Implementation 2021} -
 set_property strategy Performance_ExtraTimingOpt [get_runs impl_IDS_Hash]
 set_property STEPS.POST_ROUTE_PHYS_OPT_DESIGN.IS_ENABLED true [get_runs impl_IDS_Hash]
 set_property STEPS.POST_ROUTE_PHYS_OPT_DESIGN.ARGS.DIRECTIVE Explore [get_runs impl_IDS_Hash]
+set_property -name {STEPS.OPT_DESIGN.ARGS.MORE OPTIONS} -value {-retarget -propconst -sweep -bufg_opt -shift_register_opt -aggressive_remap} -objects [get_runs impl_IDS_Hash]
 # set_property STEPS.PLACE_DESIGN.ARGS.DIRECTIVE Explore [get_runs impl_IDS_Hash]
 
 update_compile_order -fileset scheduler_Hash
 update_compile_order -fileset sources_1
 
 reset_run scheduler_Hash_synth_1
-launch_runs scheduler_Hash_synth_1
+launch_runs scheduler_Hash_synth_1 -jobs 12
 wait_on_run scheduler_Hash_synth_1
 
-create_fileset -quiet IDS_Hash_utils
-add_files -fileset IDS_Hash_utils -norecurse ../lib/axis/syn/vivado/sync_reset.tcl
-add_files -fileset IDS_Hash_utils -norecurse ../lib/smartFPGA/syn/vivado/simple_sync_sig.tcl
 
-# add_files -fileset IDS_Hash_utils -norecurse fpga.runs/impl_IDS_Hash/fpga_postroute_physopt.dcp
-# set_property incremental_checkpoint fpga.runs/impl_IDS_Hash/fpga_postroute_physopt.dcp [get_runs impl_IDS_Hash]
-
-set_property STEPS.OPT_DESIGN.TCL.PRE [ get_files ../lib/axis/syn/vivado/sync_reset.tcl -of [get_fileset IDS_Hash_utils] ] [get_runs impl_IDS_Hash]
-set_property STEPS.OPT_DESIGN.TCL.PRE [ get_files ../lib/smartFPGA/syn/vivado/simple_sync_sig.tcl -of [get_fileset IDS_Hash_utils] ] [get_runs impl_IDS_Hash]
-set_property STEPS.ROUTE_DESIGN.TCL.PRE [ get_files ../lib/axis/syn/vivado/sync_reset.tcl -of [get_fileset IDS_Hash_utils] ] [get_runs impl_IDS_Hash]
-set_property STEPS.ROUTE_DESIGN.TCL.PRE [ get_files ../lib/smartFPGA/syn/vivado/simple_sync_sig.tcl -of [get_fileset IDS_Hash_utils] ] [get_runs impl_IDS_Hash]
+add_files -fileset utils_1 -norecurse fpga.runs/impl_IDS_RR/fpga_postroute_physopt.dcp
+set_property incremental_checkpoint fpga.runs/impl_IDS_RR/fpga_postroute_physopt.dcp [get_runs impl_IDS_Hash]
+set_property incremental_checkpoint.directive TimingClosure [get_runs impl_IDS_Hash]
 
 set_property IS_ENABLED false [get_report_config -of_object [get_runs impl_IDS_Hash] impl_IDS_Hash_route_report_drc_0]
 set_property IS_ENABLED false [get_report_config -of_object [get_runs impl_IDS_Hash] impl_IDS_Hash_route_report_power_0]
