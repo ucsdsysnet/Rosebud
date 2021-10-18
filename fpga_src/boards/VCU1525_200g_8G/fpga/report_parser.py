@@ -81,7 +81,10 @@ last_tot = []
 last_mod = ""
 
 for mod in Dastgah_mods:
-  (avg, tot, _, _) = extract(full_fpga_raw_rep, Dastgah_mods[mod][0], Dastgah_mods[mod][1])
+  if (mod == "Scheduler"):
+    (avg, tot, _, _) = extract(full_fpga_acc_rep, Dastgah_mods[mod][0], Dastgah_mods[mod][1])
+  else:
+    (avg, tot, _, _) = extract(full_fpga_raw_rep, Dastgah_mods[mod][0], Dastgah_mods[mod][1])
   line = calc(avg, FPGA_tot_resources)
   acc_util = [a + b for a, b in zip(acc_util, tot)]
   printcsv(mod + ", " + ", ".join(line))
