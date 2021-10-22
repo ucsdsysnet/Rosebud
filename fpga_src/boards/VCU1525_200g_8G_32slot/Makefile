@@ -28,14 +28,17 @@ program:
 IDS_Hash_1:
 	cd fpga && vivado -nojournal -nolog -mode batch -source run_IDS_Hash.tcl 2>&1 | tee IDS_Hash.log
 
-PIG_Hash_1:
-	cd fpga && vivado -nojournal -nolog -mode batch -source run_PIG_Hash.tcl 2>&1 | tee PIG_Hash.log
-
 IDS_RR_2:
 	cd fpga && vivado -nojournal -nolog -mode batch -source run_IDS_RR_inc.tcl 2>&1 | tee IDS_RR.log
 
-PIG_RR_2:
-	cd fpga && vivado -nojournal -nolog -mode batch -source run_PIG_RR_inc.tcl 2>&1 | tee PIG_RR.log
+PIG_Hash_1:
+	cd fpga && vivado -nojournal -nolog -mode batch -source run_PIG_Hash.tcl 2>&1 | tee PIG_Hash.log
+
+PIG_base_2:
+	cd fpga && vivado -nojournal -nolog -mode batch -source run_base_RR.tcl 2>&1 | tee base_RR.log
+
+PIG_RR_3:
+	cd fpga && vivado -nojournal -nolog -mode batch -source run_PIG_RR_merge.tcl 2>&1 | tee PIG_RR.log
 
 IDS_RR_direct:
 	cd fpga && vivado -nojournal -nolog -mode batch -source run_IDS_RR_direct.tcl 2>&1 | tee IDS_RR_direct.log

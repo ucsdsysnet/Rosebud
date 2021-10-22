@@ -55,9 +55,9 @@ reset_run scheduler_RR_synth_1
 launch_runs scheduler_RR_synth_1 -jobs 12
 wait_on_run scheduler_RR_synth_1
 
-# add_files -fileset utils_1 -norecurse fpga.runs/impl_PIG_HASH/fpga_postroute_physopt.dcp
-# set_property incremental_checkpoint fpga.runs/impl_PIG_HASH/fpga_postroute_physopt.dcp [get_runs impl_PIG_RR]
-# set_property incremental_checkpoint.directive TimingClosure [get_runs impl_PIG_RR]
+add_files -fileset utils_1 -norecurse fpga.runs/impl_PIG_HASH/fpga_postroute_physopt.dcp
+set_property incremental_checkpoint fpga.runs/impl_PIG_HASH/fpga_postroute_physopt.dcp [get_runs impl_PIG_RR]
+set_property incremental_checkpoint.directive TimingClosure [get_runs impl_PIG_RR]
 
 set_property IS_ENABLED false [get_report_config -of_object [get_runs impl_PIG_RR] impl_PIG_RR_route_report_drc_0]
 set_property IS_ENABLED false [get_report_config -of_object [get_runs impl_PIG_RR] impl_PIG_RR_route_report_power_0]
