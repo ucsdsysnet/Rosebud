@@ -12,7 +12,7 @@ TOPLEVEL=$(MODULE)
 
 RTL_DIR = $(CWD)/../../rtl
 ACC_DIR = $(CWD)/../../accel/ip_matcher/rtl
-SMARTFPGA = $(CWD)/../../lib/smartFPGA/rtl
+SMARTFPGA = $(CWD)/../../lib/Shire/rtl
 AXIS_LIB = $(CWD)/../../lib/axis/rtl
 
 VERILOG_SOURCES  = $(CWD)/test_gousheh.v

@@ -12,7 +12,7 @@ TOPLEVEL=$(MODULE)
 
 RTL_DIR = $(CWD)/../../rtl
 ACC_DIR = $(CWD)/../../accel/pigasus_sme/rtl
-SMARTFPGA = $(CWD)/../../lib/smartFPGA/rtl
+SMARTFPGA = $(CWD)/../../lib/Shire/rtl
 AXIS_LIB = $(CWD)/../../lib/axis/rtl
 
 VERILOG_SOURCES  = $(CWD)/test_gousheh.v
@@ -75,7 +75,7 @@ INC_DIR=$(ICARUS_INC_DIR)
 include $(shell cocotb-config --makefiles)/Makefile.sim
 
 compile:
-	make -C ../../../../../c_code/ NAME=basic_fw
+	make -C ../../../../../riscv_code/ NAME=basic_fw
 
 clean::
 	@rm -rf *.xml __pycache__

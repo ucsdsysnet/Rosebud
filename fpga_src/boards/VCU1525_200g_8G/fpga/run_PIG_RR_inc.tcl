@@ -1,3 +1,23 @@
+# Copyright (c) 2019-2021 Moein Khazraee
+# 
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+# 
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+# 
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
+
 open_project fpga.xpr
 
 update_compile_order -fileset sources_1
@@ -16,13 +36,13 @@ add_files -norecurse {
   ../lib/eth/lib/axis/rtl/priority_encoder.v
   ../lib/eth/lib/axis/rtl/sync_reset.v
   ../lib/corundum/rtl/rx_hash.v
-  ../lib/smartFPGA/rtl/axis_fifo.v
-  ../lib/smartFPGA/rtl/simple_arbiter.v
-  ../lib/smartFPGA/rtl/simple_fifo.v
-  ../lib/smartFPGA/rtl/header.v
-  ../lib/smartFPGA/rtl/axis_dropper.v
-  ../lib/smartFPGA/rtl/slot_keeper.v
-  ../lib/smartFPGA/rtl/max_finder_tree.v
+  ../lib/Shire/rtl/axis_fifo.v
+  ../lib/Shire/rtl/simple_arbiter.v
+  ../lib/Shire/rtl/simple_fifo.v
+  ../lib/Shire/rtl/header.v
+  ../lib/Shire/rtl/axis_dropper.v
+  ../lib/Shire/rtl/slot_keeper.v
+  ../lib/Shire/rtl/max_finder_tree.v
   ../rtl/RR_LU_scheduler_PR.v
   ../lib/axis/syn/vivado/sync_reset.tcl
 } -of_objects [get_reconfig_modules scheduler_RR]

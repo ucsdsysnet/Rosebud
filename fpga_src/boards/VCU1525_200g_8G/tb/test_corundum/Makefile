@@ -14,7 +14,7 @@ TOPLEVEL=$(MODULE)
 COMPILE_ARGS += -P $(TOPLEVEL).TB_LOG=0
 
 RTL_DIR = $(CWD)/../../rtl
-SMARTFPGA = $(CWD)/../../lib/smartFPGA/rtl
+SMARTFPGA = $(CWD)/../../lib/Shire/rtl
 AXIS_LIB = $(CWD)/../../lib/axis/rtl
 AXI_LIB = $(CWD)/../../lib/axi/rtl
 ETH_LIB = $(CWD)/../../lib/eth/rtl
@@ -113,7 +113,7 @@ INC_DIR=$(ICARUS_INC_DIR)
 include $(shell cocotb-config --makefiles)/Makefile.sim
 
 compile:
-	make -C ../../../../../c_code/ NAME=basic_corundum_fw
+	make -C ../../../../../riscv_code/ NAME=basic_corundum_fw
 
 clean::
 	@rm -rf *.xml __pycache__

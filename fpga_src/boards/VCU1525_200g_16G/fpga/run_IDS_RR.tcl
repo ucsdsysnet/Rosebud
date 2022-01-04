@@ -1,3 +1,23 @@
+# Copyright (c) 2019-2021 Moein Khazraee
+# 
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+# 
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+# 
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
+
 open_project fpga.xpr
 
 update_compile_order -fileset sources_1
@@ -11,18 +31,18 @@ create_reconfig_module -name Gousheh_IDS -partition_def [get_partition_defs pr_r
 add_files -norecurse {
   ../lib/eth/lib/axis/rtl/arbiter.v
   ../lib/eth/lib/axis/rtl/priority_encoder.v
-  ../lib/smartFPGA/rtl/core_mems.v
-  ../lib/smartFPGA/rtl/axis_fifo.v
-  ../lib/smartFPGA/rtl/VexRiscv.v
+  ../lib/Shire/rtl/core_mems.v
+  ../lib/Shire/rtl/axis_fifo.v
+  ../lib/Shire/rtl/VexRiscv.v
   ../lib/eth/lib/axis/rtl/axis_register.v
   ../lib/eth/lib/axis/rtl/axis_pipeline_register.v
-  ../lib/smartFPGA/rtl/simple_sync_sig.v
-  ../lib/smartFPGA/rtl/riscvcore.v
-  ../lib/smartFPGA/rtl/simple_fifo.v
-  ../lib/smartFPGA/rtl/mem_sys.v
-  ../lib/smartFPGA/rtl/Gousheh.v
-  ../lib/smartFPGA/rtl/Gousheh_controller.v
-  ../lib/smartFPGA/rtl/accel_rd_dma_sp.v
+  ../lib/Shire/rtl/simple_sync_sig.v
+  ../lib/Shire/rtl/riscvcore.v
+  ../lib/Shire/rtl/simple_fifo.v
+  ../lib/Shire/rtl/mem_sys.v
+  ../lib/Shire/rtl/Gousheh.v
+  ../lib/Shire/rtl/Gousheh_controller.v
+  ../lib/Shire/rtl/accel_rd_dma_sp.v
   ../accel/full_ids/rtl/sme/tcp_sme.v
   ../accel/full_ids/rtl/sme/udp_sme.v
   ../accel/full_ids/rtl/sme/http_sme.v
@@ -30,7 +50,7 @@ add_files -norecurse {
   ../accel/full_ids/rtl/ip_match/ip_match.v
   ../accel/full_ids/rtl/accel_wrap_full_ids.v
   ../rtl/Gousheh_PR_w_accel.v
-  ../lib/smartFPGA/syn/vivado/simple_sync_sig.tcl
+  ../lib/Shire/syn/vivado/simple_sync_sig.tcl
 } -of_objects [get_reconfig_modules Gousheh_IDS]
 
 if {[llength [get_pr_configurations IDS_RR_config]]!=0} then {
