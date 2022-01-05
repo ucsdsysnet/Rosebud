@@ -110,7 +110,7 @@ module Gousheh_controller # (
 
   input  wire [31:0]                slot_wr_data,
   input  wire                       slot_wr_valid,
-  output                            slot_wr_ready,
+  output wire                       slot_wr_ready,
 
   input  wire [15:0]                sched_tag_len,
   input  wire                       tag_len_wr_valid,

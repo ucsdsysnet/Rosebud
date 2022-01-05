@@ -349,7 +349,11 @@ simple_fifo # (
 
   .dout_valid(cmd_valid_reg_f),
   .dout({cmd_addr_reg_f, cmd_len_reg_f}),
-  .dout_ready(dma_ready)
+  .dout_ready(dma_ready),
+
+  .item_count(),
+  .full(),
+  .empty()
 );
 
 wire        meta_data_valid, meta_data_ready;
@@ -370,7 +374,11 @@ simple_fifo # (
 
   .dout_valid(meta_data_valid),
   .dout({preamble_state, dst_port, src_port}),
-  .dout_ready(meta_data_ready)
+  .dout_ready(meta_data_ready),
+
+  .item_count(),
+  .full(),
+  .empty()
 );
 
 simple_fifo # (
@@ -385,9 +393,13 @@ simple_fifo # (
   .din(cmd_slot_reg),
   .din_ready(),
 
-  .dout_valid(meta_slot_valid),
+  .dout_valid(),
   .dout(accel_slot),
-  .dout_ready(match_release && match_last)
+  .dout_ready(match_release && match_last),
+
+  .item_count(),
+  .full(),
+  .empty()
 );
 
 // Burst read for first blocks of the packet memory
@@ -566,7 +578,11 @@ simple_fifo # (
 
   .dout_valid(accel_state_valid),
   .dout(accel_state),
-  .dout_ready(match_release && match_last)
+  .dout_ready(match_release && match_last),
+
+  .item_count(),
+  .full(),
+  .empty()
 );
 
 // // CND IP check accelerator

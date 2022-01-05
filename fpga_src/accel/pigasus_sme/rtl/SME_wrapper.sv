@@ -294,7 +294,7 @@ module pigasus_sme_wrapper # (
     .wr_en(wr_en && (wr_addr[16:15]==2'b11)),
 
     .out_usr_data(sme_output),
-    .out_usr_valid(sme_output_v),
+    .out_usr_valid(sme_output_valid),
     .out_usr_ready(sme_output_ready),
     .out_usr_sop(),
     .out_usr_eop(sme_output_eop),
@@ -311,7 +311,7 @@ module pigasus_sme_wrapper # (
     .in_rule_sop(1'b0),
     .in_rule_eop(sme_output_eop),
     .in_rule_empty(3'd0),
-    .in_rule_valid(sme_output_v),
+    .in_rule_valid(sme_output_valid),
     .in_rule_data(sme_output),
     .in_rule_ready(sme_output_ready),
 

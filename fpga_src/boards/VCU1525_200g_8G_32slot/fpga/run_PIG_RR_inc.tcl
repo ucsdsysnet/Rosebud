@@ -29,14 +29,14 @@ if {[llength [get_reconfig_modules scheduler_RR]]!=0} then {
 create_reconfig_module -name scheduler_RR -partition_def [get_partition_defs pr_scheduler] -top scheduler_PR
 
 add_files -norecurse {
-  ../lib/eth/lib/axis/rtl/arbiter.v
-  ../lib/eth/lib/axis/rtl/axis_arb_mux.v
-  ../lib/eth/lib/axis/rtl/axis_register.v
-  ../lib/eth/lib/axis/rtl/axis_pipeline_register.v
-  ../lib/eth/lib/axis/rtl/priority_encoder.v
-  ../lib/eth/lib/axis/rtl/sync_reset.v
+  ../lib/axis/rtl/arbiter.v
+  ../lib/axis/rtl/axis_arb_mux.v
+  ../lib/axis/rtl/axis_register.v
+  ../lib/axis/rtl/axis_pipeline_register.v
+  ../lib/axis/rtl/priority_encoder.v
+  ../lib/axis/rtl/sync_reset.v
+  ../lib/axis/rtl/axis_fifo.v
   ../lib/corundum/rtl/rx_hash.v
-  ../lib/Shire/rtl/axis_fifo.v
   ../lib/Shire/rtl/simple_arbiter.v
   ../lib/Shire/rtl/simple_fifo.v
   ../lib/Shire/rtl/header.v

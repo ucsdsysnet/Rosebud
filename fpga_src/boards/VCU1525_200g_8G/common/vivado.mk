@@ -1,11 +1,11 @@
 ###################################################################
-# 
+#
 # Xilinx Vivado FPGA Makefile
-# 
+#
 # Copyright (c) 2016 Alex Forencich
-# 
+#
 ###################################################################
-# 
+#
 # Parameters:
 # FPGA_TOP - Top module name
 # FPGA_FAMILY - FPGA family (e.g. VirtexUltrascale)
@@ -14,9 +14,9 @@
 # INC_FILES - space-separated list of include files
 # XDC_FILES - space-separated list of timing constraint files
 # XCI_FILES - space-separated list of IP XCI files
-# 
+#
 # Example:
-# 
+#
 # FPGA_TOP = fpga
 # FPGA_FAMILY = VirtexUltrascale
 # FPGA_DEVICE = xcvu095-ffva2104-2-e
@@ -24,7 +24,7 @@
 # XDC_FILES = fpga.xdc
 # XCI_FILES = ip/pcspma.xci
 # include ../common/vivado.mk
-# 
+#
 ###################################################################
 
 # phony targets
@@ -86,6 +86,14 @@ distclean: clean
 	echo "add_files -fileset constrs_1 {$(XDC_FILES_REL)}" >> create_project.tcl
 	for x in $(XCI_FILES_REL); do echo "import_ip $$x" >> create_project.tcl; done
 	for x in $(IP_TCL_FILES_REL); do echo "source $$x" >> create_project.tcl; done
+	echo "# unused license critical warning " >> create_project.tcl
+	echo "set_msg_config -id {Vivado 12-1790} -new_severity {INFO}" >> create_project.tcl
+	echo "# Design linking license warning" >> create_project.tcl
+	echo "set_msg_config -id {IP_Flow 19-650} -new_severity {INFO}" >> create_project.tcl
+	echo "# PARTPIN warning for constant nets" >> create_project.tcl
+	echo "set_msg_config -id {Vivado 12-4385} -new_severity {INFO}" >> create_project.tcl
+	echo "# Local parameter warning" >> create_project.tcl
+	echo "set_msg_config -id {Synth 8-2507} -new_severity {INFO}" >> create_project.tcl
 	echo "exit" >> create_project.tcl
 	vivado -nojournal -nolog -mode batch -source create_project.tcl
 

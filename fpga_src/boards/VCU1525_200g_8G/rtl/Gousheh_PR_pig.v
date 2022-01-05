@@ -30,7 +30,7 @@ THE SOFTWARE.
 
 module Gousheh_PR (
   input  wire         clk,
-  input               rst,
+  input  wire         rst,
   input  wire         core_reset,
 
   // DMA interface

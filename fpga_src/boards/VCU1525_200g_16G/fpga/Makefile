@@ -38,14 +38,14 @@ SYN_FILES += lib/Shire/rtl/pcie_controller.v
 SYN_FILES += lib/Shire/rtl/pcie_cont_read.v
 SYN_FILES += lib/Shire/rtl/pcie_cont_write.v
 SYN_FILES += lib/Shire/rtl/corundum.v
-SYN_FILES += lib/Shire/rtl/axis_fifo.v
+SYN_FILES += lib/Shire/rtl/axis_fifo_w_count.v
 SYN_FILES += lib/Shire/rtl/axis_stopper.v
 SYN_FILES += lib/Shire/rtl/axis_dropper.v
 
 # SYN_FILES += lib/axis/rtl/axis_switch.v
 SYN_FILES += lib/axis/rtl/axis_arb_mux.v
 SYN_FILES += lib/axis/rtl/sync_reset.v
-# SYN_FILES += lib/axis/rtl/axis_fifo.v
+SYN_FILES += lib/axis/rtl/axis_fifo.v
 SYN_FILES += lib/axis/rtl/axis_fifo_adapter.v
 SYN_FILES += lib/axis/rtl/axis_register.v
 SYN_FILES += lib/axis/rtl/axis_pipeline_register.v

@@ -272,8 +272,8 @@ assign ctrl_s_axis_tready = ctrl_s_fifo_ready;
 /////////////////////////////////////////////////////////////////////
 
 // Internal lookup table for slot addresses
-parameter HDR_ADDR_BITS = $clog2(MAX_PKT_HDR_SIZE);
-parameter HDR_MSB_WIDTH = 24-HDR_ADDR_BITS;
+localparam HDR_ADDR_BITS = $clog2(MAX_PKT_HDR_SIZE);
+localparam HDR_MSB_WIDTH = 24-HDR_ADDR_BITS;
 
 reg [24:0]              slot_addr_lut         [1:SLOT_COUNT];
 reg [HDR_MSB_WIDTH-1:0] slot_hdr_addr_msb_lut [1:SLOT_COUNT];
@@ -751,7 +751,11 @@ simple_fifo # (
 
   .dout_valid(in_desc_valid_n),
   .dout(in_desc_n),
-  .dout_ready(in_desc_ready_n)
+  .dout_ready(in_desc_ready_n),
+
+  .item_count(),
+  .full(),
+  .empty()
 );
 
 wire       recv_dram_tag_fifo_ready = 1'b1;
@@ -825,7 +829,9 @@ simple_fifo # (
   .dout(core_data_wr_desc_f),
   .dout_ready(core_data_wr_ready_f),
 
-  .item_count(send_data_items)
+  .item_count(send_data_items),
+  .full(),
+  .empty()
 );
 
 // A desc FIFO for msgs to scheduler
@@ -848,7 +854,11 @@ simple_fifo # (
 
   .dout_valid(core_ctrl_wr_valid_f),
   .dout(core_ctrl_wr_desc_f),
-  .dout_ready(core_ctrl_wr_ready_f)
+  .dout_ready(core_ctrl_wr_ready_f),
+
+  .item_count(),
+  .full(),
+  .empty()
 );
 
 // A register to look up the send adddress based on slot
@@ -883,7 +893,9 @@ simple_fifo # (
   .dout(core_dram_wr_desc_f),
   .dout_ready(core_dram_wr_ready_f),
 
-  .item_count(dram_send_items)
+  .item_count(dram_send_items),
+  .full(),
+  .empty()
 );
 
 // A desc FIFO for dram read msgs
@@ -908,7 +920,9 @@ simple_fifo # (
   .dout(core_dram_rd_desc_f),
   .dout_ready(core_dram_rd_ready_f),
 
-  .item_count(dram_req_items)
+  .item_count(dram_req_items),
+  .full(),
+  .empty()
 );
 
 // For 2 cycle DRAM messages, we check the FIFO in the first cycle,
@@ -951,7 +965,11 @@ simple_fifo # (
 
   .dout_valid(ctrl_in_valid),
   .dout(ctrl_in_desc),
-  .dout_ready(ctrl_in_ready)
+  .dout_ready(ctrl_in_ready),
+
+  .item_count(),
+  .full(),
+  .empty()
 );
 
 /////////////////////////////////////////////////////////////////////
@@ -985,7 +1003,11 @@ simple_fifo # (
 
   .dout_valid(pkt_sent_valid_f),
   .dout(pkt_sent_desc_f),
-  .dout_ready(pkt_sent_ready_f)
+  .dout_ready(pkt_sent_ready_f),
+
+  .item_count(),
+  .full(),
+  .empty()
 );
 
 /////////////////////////////////////////////////////////////////////
@@ -1011,7 +1033,11 @@ simple_fifo # (
 
   .dout_valid(dram_in_valid),
   .dout(dram_in_desc),
-  .dout_ready(dram_in_ready)
+  .dout_ready(dram_in_ready),
+
+  .item_count(),
+  .full(),
+  .empty()
 );
 
 /////////////////////////////////////////////////////////////////////
@@ -1257,7 +1283,9 @@ simple_fifo # (
   .dout(core_msg_out),
   .dout_ready(core_msg_out_ready),
 
-  .item_count(core_msg_items)
+  .item_count(core_msg_items),
+  .full(),
+  .empty()
 );
 
 ///////////////////////////////////////////////////////////////////////////

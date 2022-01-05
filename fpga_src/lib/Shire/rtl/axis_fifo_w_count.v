@@ -32,7 +32,7 @@ THE SOFTWARE.
 /*
  * AXI4-Stream FIFO
  */
-module axis_fifo #
+module axis_fifo_w_count #
 (
     // FIFO depth in words
     // KEEP_WIDTH words per cycle if KEEP_ENABLE set

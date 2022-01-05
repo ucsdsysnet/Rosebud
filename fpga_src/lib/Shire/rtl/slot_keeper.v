@@ -32,22 +32,22 @@ module slot_keeper # (
   parameter SLOT_COUNT = 8,
   parameter SLOT_WIDTH = $clog2(SLOT_COUNT+1)
 )(
-  input                   clk,
-  input                   rst,
+  input  wire                  clk,
+  input  wire                  rst,
 
-  input [SLOT_WIDTH-1:0]  init_slots,
-  input                   init_valid,
+  input  wire [SLOT_WIDTH-1:0] init_slots,
+  input  wire                  init_valid,
 
-  input  [SLOT_WIDTH-1:0] slot_in,
-  input                		slot_in_valid,
+  input  wire [SLOT_WIDTH-1:0] slot_in,
+  input  wire                  slot_in_valid,
 
-  output [SLOT_WIDTH-1:0] slot_out,
-  output               		slot_out_valid,
-  input                		slot_out_pop,
+  output wire [SLOT_WIDTH-1:0] slot_out,
+  output wire                  slot_out_valid,
+  input  wire                  slot_out_pop,
 
-  output [SLOT_WIDTH-1:0] slot_count,
+  output wire [SLOT_WIDTH-1:0] slot_count,
   // enq_err is asserted 2 cycles later after the wrong slot enq
-  output                  enq_err
+  output wire                  enq_err
 );
 
   wire enque = slot_in_valid && (slot_in!=0);
@@ -96,7 +96,7 @@ module slot_keeper # (
   reg [SLOT_WIDTH:0] slot_count_r;
   reg                valid_r;
   always @ (posedge clk)
-  	if (rst) begin
+    if (rst) begin
       slot_count_r <= {SLOT_WIDTH{1'b0}};
       valid_r      <= 1'b0;
     end else begin

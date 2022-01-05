@@ -59,7 +59,7 @@ max_finder_tree_pow_of_2 # (
   .DATA_WIDTH(DATA_WIDTH),
   .ADDR_WIDTH(ADDR_WIDTH)
 ) max_finder (
-  .values({{PADDING*DATA_WIDTH{1'b0}},masked_values}),
+  .values({{PADDING*DATA_WIDTH{1'b0}}, masked_values}),
   .max_val(max_val),
   .max_ptr(max_ptr)
 );
@@ -147,10 +147,9 @@ endmodule
 module greater_than #(
   parameter DATA_WIDTH=8
 )(
-  input [DATA_WIDTH-1:0] inp_A,
-  input [DATA_WIDTH-1:0] inp_B,
-
-  output result
+  input  wire [DATA_WIDTH-1:0] inp_A,
+  input  wire [DATA_WIDTH-1:0] inp_B,
+  output wire                  result
 );
     assign result = (inp_A>inp_B);
 

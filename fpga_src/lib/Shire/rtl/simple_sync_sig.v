@@ -32,10 +32,10 @@ module simple_sync_sig # (
   parameter RST_VAL = 1'b0,
   parameter WIDTH   = 1
 ) (
-  input  dst_clk,
-  input  dst_rst,
-  input  [WIDTH-1:0] in,
-  output [WIDTH-1:0] out
+  input  wire dst_clk,
+  input  wire dst_rst,
+  input  wire [WIDTH-1:0] in,
+  output wire [WIDTH-1:0] out
 );
 
 (* KEEP = "TRUE" *) reg [WIDTH-1:0] sync_reg_1;

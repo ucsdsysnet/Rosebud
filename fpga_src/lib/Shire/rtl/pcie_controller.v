@@ -541,7 +541,7 @@ localparam CORE_DESC_STRB_WIDTH = CORE_DESC_WIDTH/8;
 wire [CORE_DESC_WIDTH-1:0] cores_ctrl_s_axis_tdata_r;
 wire                       cores_ctrl_s_axis_tvalid_r;
 wire                       cores_ctrl_s_axis_tready_r;
-wire                       cores_ctrl_s_axis_last_r;
+wire                       cores_ctrl_s_axis_tlast_r;
 wire [CORE_WIDTH-1:0]      cores_ctrl_s_axis_tuser_r;
 
 wire [127:0]               cores_ctrl_s_tdata;

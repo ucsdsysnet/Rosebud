@@ -513,7 +513,7 @@ generate
             .m_status_good_frame()
         );
 
-        axis_fifo #(
+        axis_fifo_w_count #(
             .DEPTH(RX_FIFO_DEPTH),
             .DATA_WIDTH(AXIS_ETH_DATA_WIDTH),
             .KEEP_ENABLE(AXIS_ETH_KEEP_WIDTH > 1),

@@ -359,7 +359,7 @@ ibufds_gte4_pcie_mgt_refclk_inst (
 wire [AXIS_PCIE_DATA_WIDTH-1:0]    axis_rq_tdata;
 wire [AXIS_PCIE_KEEP_WIDTH-1:0]    axis_rq_tkeep;
 wire                               axis_rq_tlast;
-wire                               axis_rq_tready;
+wire [3:0]                         axis_rq_tready;
 wire [AXIS_PCIE_RQ_USER_WIDTH-1:0] axis_rq_tuser;
 wire                               axis_rq_tvalid;
 
@@ -380,7 +380,7 @@ wire                               axis_cq_tvalid;
 wire [AXIS_PCIE_DATA_WIDTH-1:0]    axis_cc_tdata;
 wire [AXIS_PCIE_KEEP_WIDTH-1:0]    axis_cc_tkeep;
 wire                               axis_cc_tlast;
-wire                               axis_cc_tready;
+wire [3:0]                         axis_cc_tready;
 wire [AXIS_PCIE_CC_USER_WIDTH-1:0] axis_cc_tuser;
 wire                               axis_cc_tvalid;
 
@@ -392,7 +392,7 @@ wire                               pcie_rq_seq_num_vld1;
 wire [3:0] pcie_tfc_nph_av;
 wire [3:0] pcie_tfc_npd_av;
 
-wire [2:0] cfg_max_payload;
+wire [1:0] cfg_max_payload;
 wire [2:0] cfg_max_read_req;
 
 wire [9:0]  cfg_mgmt_addr;
@@ -541,7 +541,7 @@ pcie4_uscale_plus_inst (
     .cfg_fc_sel(cfg_fc_sel),
 
     .cfg_dsn(64'd0),
-    // .cfg_bus_number(),
+    .cfg_bus_number(),
     .cfg_power_state_change_ack(1'b1),
     .cfg_power_state_change_interrupt(),
 
@@ -562,17 +562,17 @@ pcie4_uscale_plus_inst (
     .cfg_interrupt_msi_mmenable(cfg_interrupt_msi_mmenable),
     .cfg_interrupt_msi_mask_update(cfg_interrupt_msi_mask_update),
     .cfg_interrupt_msi_data(cfg_interrupt_msi_data),
-    .cfg_interrupt_msi_select(cfg_interrupt_msi_select),
+    .cfg_interrupt_msi_select(cfg_interrupt_msi_select[1:0]),
     .cfg_interrupt_msi_int(cfg_interrupt_msi_int),
     .cfg_interrupt_msi_pending_status(cfg_interrupt_msi_pending_status),
     .cfg_interrupt_msi_pending_status_data_enable(cfg_interrupt_msi_pending_status_data_enable),
-    .cfg_interrupt_msi_pending_status_function_num(cfg_interrupt_msi_pending_status_function_num),
+    .cfg_interrupt_msi_pending_status_function_num(cfg_interrupt_msi_pending_status_function_num[1:0]),
     .cfg_interrupt_msi_sent(cfg_interrupt_msi_sent),
     .cfg_interrupt_msi_fail(cfg_interrupt_msi_fail),
     .cfg_interrupt_msi_attr(cfg_interrupt_msi_attr),
     .cfg_interrupt_msi_tph_present(cfg_interrupt_msi_tph_present),
     .cfg_interrupt_msi_tph_type(cfg_interrupt_msi_tph_type),
-    .cfg_interrupt_msi_tph_st_tag(cfg_interrupt_msi_tph_st_tag),
+    .cfg_interrupt_msi_tph_st_tag(cfg_interrupt_msi_tph_st_tag[7:0]),
     .cfg_interrupt_msi_function_number(cfg_interrupt_msi_function_number),
 
     .cfg_pm_aspm_l1_entry_reject(1'b0),
@@ -1368,7 +1368,7 @@ fpga_core #(
     .m_axis_rq_tdata(axis_rq_tdata),
     .m_axis_rq_tkeep(axis_rq_tkeep),
     .m_axis_rq_tlast(axis_rq_tlast),
-    .m_axis_rq_tready(axis_rq_tready),
+    .m_axis_rq_tready(axis_rq_tready[0]),
     .m_axis_rq_tuser(axis_rq_tuser),
     .m_axis_rq_tvalid(axis_rq_tvalid),
 
@@ -1389,7 +1389,7 @@ fpga_core #(
     .m_axis_cc_tdata(axis_cc_tdata),
     .m_axis_cc_tkeep(axis_cc_tkeep),
     .m_axis_cc_tlast(axis_cc_tlast),
-    .m_axis_cc_tready(axis_cc_tready),
+    .m_axis_cc_tready(axis_cc_tready[0]),
     .m_axis_cc_tuser(axis_cc_tuser),
     .m_axis_cc_tvalid(axis_cc_tvalid),
 
@@ -1402,7 +1402,7 @@ fpga_core #(
     .pcie_tx_fc_ph_av(pcie_tx_fc_ph_av),
     .pcie_tx_fc_pd_av(pcie_tx_fc_pd_av),
 
-    .cfg_max_payload(cfg_max_payload),
+    .cfg_max_payload({1'b0, cfg_max_payload}),
     .cfg_max_read_req(cfg_max_read_req),
     .ext_tag_enable(ext_tag_enable),
     .msi_irq(msi_irq),

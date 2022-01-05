@@ -405,8 +405,8 @@ module axis_simple_sw_shrink # (
     wire select_m_clk = SEPARATE_CLOCKS ? m_clk : s_clk;
     wire select_m_rst = SEPARATE_CLOCKS ? m_rst : s_rst;
 
-    parameter S_PER_CLUSTER     = S_COUNT/CLUSTER_COUNT;
-    parameter STAGE_FIFO_ENABLE = (STAGE_FIFO_DEPTH>0);
+    localparam S_PER_CLUSTER     = S_COUNT/CLUSTER_COUNT;
+    localparam STAGE_FIFO_ENABLE = (STAGE_FIFO_DEPTH>0);
 
     wire [S_COUNT*S_DATA_WIDTH-1:0] s_axis_tdata_r;
     wire [S_COUNT*S_KEEP_WIDTH-1:0] s_axis_tkeep_r;
@@ -876,8 +876,8 @@ module axis_simple_arb_2lvl # (
       .out(rst_r)
     );
 
-    parameter S_PER_CLUSTER     = S_COUNT/CLUSTER_COUNT;
-    parameter STAGE_FIFO_ENABLE = (STAGE_FIFO_DEPTH>0);
+    localparam S_PER_CLUSTER     = S_COUNT/CLUSTER_COUNT;
+    localparam STAGE_FIFO_ENABLE = (STAGE_FIFO_DEPTH>0);
 
     wire [S_COUNT*DATA_WIDTH-1:0] s_axis_tdata_r;
     wire [S_COUNT-1:0]            s_axis_tvalid_r;
@@ -1011,7 +1011,11 @@ module axis_simple_arb_2lvl # (
                       .dout_valid(int_axis_tvalid_f[j]),
                       .dout({int_axis_tdata_f[j*DATA_WIDTH +: DATA_WIDTH],
                             int_axis_tuser_f[j*USER_WIDTH +: USER_WIDTH]}),
-                      .dout_ready(int_axis_tready_f[j])
+                      .dout_ready(int_axis_tready_f[j]),
+
+                      .item_count(),
+                      .full(),
+                      .empty()
                     );
 
                 end else begin: no_fifo
@@ -1165,7 +1169,7 @@ module axis_ram_sw_shrink # (
     wire select_m_clk = SEPARATE_CLOCKS ? m_clk : s_clk;
     wire select_m_rst = SEPARATE_CLOCKS ? m_rst : s_rst;
 
-    parameter S_PER_CLUSTER = S_COUNT/CLUSTER_COUNT;
+    localparam S_PER_CLUSTER = S_COUNT/CLUSTER_COUNT;
 
     wire [S_COUNT*S_DATA_WIDTH-1:0] s_axis_tdata_r;
     wire [S_COUNT*S_KEEP_WIDTH-1:0] s_axis_tkeep_r;
@@ -1588,9 +1592,9 @@ module axis_simple_sw_grow # (
     wire select_m_clk = SEPARATE_CLOCKS ? m_clk : s_clk;
     wire select_m_rst = SEPARATE_CLOCKS ? m_rst : s_rst;
 
-    parameter M_PER_CLUSTER     = M_COUNT/CLUSTER_COUNT;
-    parameter INT_DEST_WIDTH    = S_DEST_WIDTH-$clog2(CLUSTER_COUNT);
-    parameter STAGE_FIFO_ENABLE = (STAGE_FIFO_DEPTH>0);
+    localparam M_PER_CLUSTER     = M_COUNT/CLUSTER_COUNT;
+    localparam INT_DEST_WIDTH    = S_DEST_WIDTH-$clog2(CLUSTER_COUNT);
+    localparam STAGE_FIFO_ENABLE = (STAGE_FIFO_DEPTH>0);
 
     // Level 1
     wire [CLUSTER_COUNT*S_DATA_WIDTH-1:0] int_axis_tdata;
@@ -1894,9 +1898,9 @@ module axis_ram_sw_grow # (
     wire select_m_clk = SEPARATE_CLOCKS ? m_clk : s_clk;
     wire select_m_rst = SEPARATE_CLOCKS ? m_rst : s_rst;
 
-    parameter M_PER_CLUSTER     = M_COUNT/CLUSTER_COUNT;
-    parameter INT_DEST_WIDTH    = S_DEST_WIDTH-$clog2(CLUSTER_COUNT);
-    parameter STAGE_FIFO_ENABLE = (STAGE_FIFO_DEPTH>0);
+    localparam M_PER_CLUSTER     = M_COUNT/CLUSTER_COUNT;
+    localparam INT_DEST_WIDTH    = S_DEST_WIDTH-$clog2(CLUSTER_COUNT);
+    localparam STAGE_FIFO_ENABLE = (STAGE_FIFO_DEPTH>0);
 
     // Level 1
     wire [CLUSTER_COUNT*S_DATA_WIDTH-1:0] int_axis_tdata;

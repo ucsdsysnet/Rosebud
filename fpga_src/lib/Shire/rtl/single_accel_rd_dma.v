@@ -318,7 +318,11 @@ simple_fifo # (
 
   .dout_valid(m_axis_tvalid),
   .dout({m_axis_tfirst, m_axis_tlast, m_axis_tempty, m_axis_tdata}),
-  .dout_ready(m_axis_tready)
+  .dout_ready(m_axis_tready),
+
+  .item_count(),
+  .full(),
+  .empty()
 );
 
 endmodule

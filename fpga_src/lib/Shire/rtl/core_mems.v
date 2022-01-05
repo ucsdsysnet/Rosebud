@@ -33,16 +33,16 @@ module mem_1r1w # (
   parameter ADDR_WIDTH     = 11,
   parameter LINE_SIZE      = 8*BYTES_PER_LINE
 )(
-  input                       clka,
-  input                       ena,
-  input  [BYTES_PER_LINE-1:0] wea,
-  input  [ADDR_WIDTH-1:0]     addra,
-  input  [LINE_SIZE-1 :0]     dina,
+  input  wire                      clka,
+  input  wire                      ena,
+  input  wire [BYTES_PER_LINE-1:0] wea,
+  input  wire [ADDR_WIDTH-1:0]     addra,
+  input  wire [LINE_SIZE-1 :0]     dina,
 
-  input                       clkb,
-  input                       enb,
-  input  [ADDR_WIDTH-1:0]     addrb,
-  output [LINE_SIZE-1 :0]     doutb
+  input  wire                      clkb,
+  input  wire                      enb,
+  input  wire [ADDR_WIDTH-1:0]     addrb,
+  output wire [LINE_SIZE-1 :0]     doutb
 );
 
 (* ram_style = "block" *)
@@ -69,21 +69,21 @@ module mem_2rw_bram # (
   parameter ADDR_WIDTH     = 13,
   parameter LINE_SIZE      = 8*BYTES_PER_LINE
 )(
-  input                       clka,
-  input                       ena,
-  input                       rena,
-  input  [BYTES_PER_LINE-1:0] wena,
-  input  [ADDR_WIDTH-1    :0] addra,
-  input  [LINE_SIZE-1     :0] dina,
-  output [LINE_SIZE-1     :0] douta,
+  input  wire                      clka,
+  input  wire                      ena,
+  input  wire                      rena,
+  input  wire [BYTES_PER_LINE-1:0] wena,
+  input  wire [ADDR_WIDTH-1    :0] addra,
+  input  wire [LINE_SIZE-1     :0] dina,
+  output wire [LINE_SIZE-1     :0] douta,
 
-  input                       clkb,
-  input                       enb,
-  input                       renb,
-  input  [BYTES_PER_LINE-1:0] wenb,
-  input  [ADDR_WIDTH-1    :0] addrb,
-  input  [LINE_SIZE-1     :0] dinb,
-  output [LINE_SIZE-1     :0] doutb
+  input  wire                      clkb,
+  input  wire                      enb,
+  input  wire                      renb,
+  input  wire [BYTES_PER_LINE-1:0] wenb,
+  input  wire [ADDR_WIDTH-1    :0] addrb,
+  input  wire [LINE_SIZE-1     :0] dinb,
+  output wire [LINE_SIZE-1     :0] doutb
 );
 
 (* ram_style = "block" *)
@@ -135,16 +135,16 @@ module mem_1r1w_uram_pipelined # (
   parameter LINE_SIZE      = 8*BYTES_PER_LINE,
   parameter RAM_PIPELINE   = 2
 )(
-  input                       clk,
-  input                       rst,
+  input  wire                      clk,
+  input  wire                      rst,
 
-  input                       ena,
-  input  [ADDR_WIDTH-1:0]     addra,
-  input  [LINE_SIZE-1 :0]     dina,
+  input  wire                      ena,
+  input  wire [ADDR_WIDTH-1:0]     addra,
+  input  wire [LINE_SIZE-1 :0]     dina,
 
-  input                       enb,
-  input  [ADDR_WIDTH-1:0]     addrb,
-  output [LINE_SIZE-1 :0]     doutb
+  input  wire                      enb,
+  input  wire [ADDR_WIDTH-1:0]     addrb,
+  output wire [LINE_SIZE-1 :0]     doutb
 );
 
 (* ram_style = "ultra" *)
@@ -185,19 +185,19 @@ module mem_2rw_uram # (
   parameter ADDR_WIDTH     = 13,
   parameter LINE_SIZE      = 8*BYTES_PER_LINE
 )(
-  input                       clk,
+  input  wire                      clk,
 
-  input                       ena,
-  input  [BYTES_PER_LINE-1:0] wena,
-  input  [ADDR_WIDTH-1    :0] addra,
-  input  [LINE_SIZE-1     :0] dina,
-  output [LINE_SIZE-1     :0] douta,
+  input  wire                      ena,
+  input  wire [BYTES_PER_LINE-1:0] wena,
+  input  wire [ADDR_WIDTH-1    :0] addra,
+  input  wire [LINE_SIZE-1     :0] dina,
+  output wire [LINE_SIZE-1     :0] douta,
 
-  input                       enb,
-  input  [BYTES_PER_LINE-1:0] wenb,
-  input  [ADDR_WIDTH-1    :0] addrb,
-  input  [LINE_SIZE-1     :0] dinb,
-  output [LINE_SIZE-1     :0] doutb
+  input  wire                      enb,
+  input  wire [BYTES_PER_LINE-1:0] wenb,
+  input  wire [ADDR_WIDTH-1    :0] addrb,
+  input  wire [LINE_SIZE-1     :0] dinb,
+  output wire [LINE_SIZE-1     :0] doutb
 );
 
 (* ram_style = "ultra" *)

@@ -29,13 +29,13 @@ if {[llength [get_reconfig_modules Gousheh_PIG]]!=0} then {
 create_reconfig_module -name Gousheh_PIG -partition_def [get_partition_defs pr_riscv] -top Gousheh_PR
 
 add_files -norecurse {
-  ../lib/eth/lib/axis/rtl/arbiter.v
-  ../lib/eth/lib/axis/rtl/priority_encoder.v
+  ../lib/axis/rtl/arbiter.v
+  ../lib/axis/rtl/priority_encoder.v
+  ../lib/axis/rtl/axis_fifo.v
+  ../lib/axis/rtl/axis_register.v
+  ../lib/axis/rtl/axis_pipeline_register.v
   ../lib/Shire/rtl/core_mems.v
-  ../lib/Shire/rtl/axis_fifo.v
   ../lib/Shire/rtl/VexRiscv.v
-  ../lib/eth/lib/axis/rtl/axis_register.v
-  ../lib/eth/lib/axis/rtl/axis_pipeline_register.v
   ../lib/Shire/rtl/simple_sync_sig.v
   ../lib/Shire/rtl/riscvcore.v
   ../lib/Shire/rtl/simple_fifo.v

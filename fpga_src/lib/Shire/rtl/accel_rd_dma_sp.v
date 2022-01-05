@@ -398,7 +398,11 @@ generate
       .dout_valid(m_axis_tvalid[i]),
       .dout({m_axis_tlast[i], m_axis_tuser[i*MASK_BITS+:MASK_BITS],
              m_axis_tdata[i*DATA_WIDTH+:DATA_WIDTH]}),
-      .dout_ready(m_axis_tready[i])
+      .dout_ready(m_axis_tready[i]),
+
+      .item_count(),
+      .full(),
+      .empty()
     );
 
   end

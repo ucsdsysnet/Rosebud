@@ -199,47 +199,47 @@ module corundum #
 );
 
 // Queue manager parameters (interface)
-parameter EVENT_QUEUE_OP_TABLE_SIZE = 32;
-parameter TX_QUEUE_OP_TABLE_SIZE = 32;
-parameter RX_QUEUE_OP_TABLE_SIZE = 32;
-parameter TX_CPL_QUEUE_OP_TABLE_SIZE = TX_QUEUE_OP_TABLE_SIZE;
-parameter RX_CPL_QUEUE_OP_TABLE_SIZE = RX_QUEUE_OP_TABLE_SIZE;
-parameter TX_QUEUE_INDEX_WIDTH = 8;
-parameter RX_QUEUE_INDEX_WIDTH = 8;
-parameter TX_CPL_QUEUE_INDEX_WIDTH = TX_QUEUE_INDEX_WIDTH;
-parameter RX_CPL_QUEUE_INDEX_WIDTH = RX_QUEUE_INDEX_WIDTH;
-parameter EVENT_QUEUE_PIPELINE = 3;
-parameter TX_QUEUE_PIPELINE = 3;
-parameter RX_QUEUE_PIPELINE = 3;
-parameter TX_CPL_QUEUE_PIPELINE = TX_QUEUE_PIPELINE;
-parameter RX_CPL_QUEUE_PIPELINE = RX_QUEUE_PIPELINE;
+localparam EVENT_QUEUE_OP_TABLE_SIZE = 32;
+localparam TX_QUEUE_OP_TABLE_SIZE = 32;
+localparam RX_QUEUE_OP_TABLE_SIZE = 32;
+localparam TX_CPL_QUEUE_OP_TABLE_SIZE = TX_QUEUE_OP_TABLE_SIZE;
+localparam RX_CPL_QUEUE_OP_TABLE_SIZE = RX_QUEUE_OP_TABLE_SIZE;
+localparam TX_QUEUE_INDEX_WIDTH = 8;
+localparam RX_QUEUE_INDEX_WIDTH = 8;
+localparam TX_CPL_QUEUE_INDEX_WIDTH = TX_QUEUE_INDEX_WIDTH;
+localparam RX_CPL_QUEUE_INDEX_WIDTH = RX_QUEUE_INDEX_WIDTH;
+localparam EVENT_QUEUE_PIPELINE = 3;
+localparam TX_QUEUE_PIPELINE = 3;
+localparam RX_QUEUE_PIPELINE = 3;
+localparam TX_CPL_QUEUE_PIPELINE = TX_QUEUE_PIPELINE;
+localparam RX_CPL_QUEUE_PIPELINE = RX_QUEUE_PIPELINE;
 
 // TX and RX engine parameters (port)
-parameter TX_DESC_TABLE_SIZE = 32;
-parameter TX_PKT_TABLE_SIZE  = 32;
-parameter RX_DESC_TABLE_SIZE = 32;
-parameter RX_PKT_TABLE_SIZE  = 32;
+localparam TX_DESC_TABLE_SIZE = 32;
+localparam TX_PKT_TABLE_SIZE  = 32;
+localparam RX_DESC_TABLE_SIZE = 32;
+localparam RX_PKT_TABLE_SIZE  = 32;
 
 // Scheduler parameters (port)
-parameter TX_SCHEDULER = "RR";
-parameter TX_SCHEDULER_OP_TABLE_SIZE = TX_DESC_TABLE_SIZE;
-parameter TX_SCHEDULER_PIPELINE = TX_QUEUE_PIPELINE;
-parameter TDMA_INDEX_WIDTH = 6;
+localparam TX_SCHEDULER = "RR";
+localparam TX_SCHEDULER_OP_TABLE_SIZE = TX_DESC_TABLE_SIZE;
+localparam TX_SCHEDULER_PIPELINE = TX_QUEUE_PIPELINE;
+localparam TDMA_INDEX_WIDTH = 6;
 
 // Interface parameters (port)
-parameter TX_CHECKSUM_ENABLE = 1;
-parameter RX_RSS_ENABLE = 1;
-parameter RX_HASH_ENABLE = 1;
-parameter RX_CHECKSUM_ENABLE = 1;
-parameter ENABLE_PADDING = 1;
-parameter ENABLE_DIC = 1;
-parameter MIN_FRAME_LENGTH = 64;
-parameter MAX_TX_SIZE = 16384; // 2048;
-parameter MAX_RX_SIZE = 16384; // 2048;
+localparam TX_CHECKSUM_ENABLE = 1;
+localparam RX_RSS_ENABLE = 1;
+localparam RX_HASH_ENABLE = 1;
+localparam RX_CHECKSUM_ENABLE = 1;
+localparam ENABLE_PADDING = 1;
+localparam ENABLE_DIC = 1;
+localparam MIN_FRAME_LENGTH = 64;
+localparam MAX_TX_SIZE = 16384; // 2048;
+localparam MAX_RX_SIZE = 16384; // 2048;
 
 // PCIe DMA parameters
-parameter TX_RAM_SIZE = TX_PKT_TABLE_SIZE*MAX_TX_SIZE;
-parameter RX_RAM_SIZE = RX_PKT_TABLE_SIZE*MAX_RX_SIZE;
+localparam TX_RAM_SIZE = TX_PKT_TABLE_SIZE*MAX_TX_SIZE;
+localparam RX_RAM_SIZE = RX_PKT_TABLE_SIZE*MAX_RX_SIZE;
 
 // parameter sizing helpers
 function [31:0] w_32(input [31:0] val);
@@ -394,7 +394,7 @@ axil_ctrl_interconnect_inst (
 );
 
 // DMA connections
-parameter IF_PCIE_DMA_TAG_WIDTH = PCIE_DMA_TAG_WIDTH-$clog2(IF_COUNT);
+localparam IF_PCIE_DMA_TAG_WIDTH = PCIE_DMA_TAG_WIDTH-$clog2(IF_COUNT);
 
 wire [IF_COUNT*PCIE_ADDR_WIDTH-1:0]        if_pcie_ctrl_dma_read_desc_pcie_addr;
 wire [IF_COUNT*IF_RAM_SEL_WIDTH-1:0]       if_pcie_ctrl_dma_read_desc_ram_sel;

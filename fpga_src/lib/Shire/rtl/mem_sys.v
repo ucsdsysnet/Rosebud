@@ -278,7 +278,9 @@ module mem_sys # (
     .dout({dma_imem_wr_addr, dma_imem_wr_strb, dma_imem_wr_data}),
     .dout_ready(1'b1),
 
-    .full(dma_imem_wr_fifo_full)
+    .full(dma_imem_wr_fifo_full),
+    .item_count(),
+    .empty()
   );
 
   generate
@@ -300,7 +302,9 @@ module mem_sys # (
         .dout({acc_rom_wr_addr, acc_rom_wr_data}),
         .dout_ready(1'b1),
 
-        .full(dma_arom_wr_fifo_full)
+        .full(dma_arom_wr_fifo_full),
+        .item_count(),
+        .empty()
       );
     end else begin
       assign acc_rom_wr_en   = 1'b0;
@@ -340,7 +344,9 @@ module mem_sys # (
     .dout({dma_dmem_cmd_wr_addr, dma_dmem_cmd_wr_strb, dma_dmem_cmd_wr_data}),
     .dout_ready(dma_dmem_wr_b1_gnt || dma_dmem_wr_b2_gnt),
 
-    .full(dma_dmem_wr_fifo_full)
+    .full(dma_dmem_wr_fifo_full),
+    .item_count(),
+    .empty()
   );
 
   wire [PMEM_ADDR_WIDTH-1:0] dma_pmem_cmd_wr_addr;
@@ -370,7 +376,9 @@ module mem_sys # (
     .dout({dma_pmem_cmd_wr_addr, dma_pmem_cmd_wr_strb, dma_pmem_cmd_wr_data}),
     .dout_ready(dma_pmem_wr_b1_gnt || dma_pmem_wr_b2_gnt),
 
-    .full(dma_pmem_wr_fifo_full)
+    .full(dma_pmem_wr_fifo_full),
+    .item_count(),
+    .empty()
   );
 
   wire [DMEM_ADDR_WIDTH-1:0] dma_dmem_cmd_rd_addr;
@@ -396,7 +404,9 @@ module mem_sys # (
     .dout(dma_dmem_cmd_rd_addr),
     .dout_ready(dma_dmem_rd_b1_gnt || dma_dmem_rd_b2_gnt),
 
-    .full(dma_dmem_rd_fifo_full)
+    .full(dma_dmem_rd_fifo_full),
+    .item_count(),
+    .empty()
   );
 
   wire [PMEM_ADDR_WIDTH-1:0] dma_pmem_cmd_rd_addr;
@@ -422,7 +432,9 @@ module mem_sys # (
     .dout(dma_pmem_cmd_rd_addr),
     .dout_ready(dma_pmem_rd_b1_gnt || dma_pmem_rd_b2_gnt),
 
-    .full(dma_pmem_rd_fifo_full)
+    .full(dma_pmem_rd_fifo_full),
+    .item_count(),
+    .empty()
   );
 
   //////////////////////////////////////////////////////////////////
@@ -658,7 +670,7 @@ module mem_sys # (
   );
 
   // Two or more cycles response PMEM, potentially URAM
-  parameter PMEM_SEL_BITS_MIN1 = PMEM_SEL_BITS>0 ? PMEM_SEL_BITS : 1;
+  localparam PMEM_SEL_BITS_MIN1 = PMEM_SEL_BITS>0 ? PMEM_SEL_BITS : 1;
 
   wire [PMEM_SEL_BITS_MIN1-1:0]   pmem_rd_sel_b1;
   wire [PMEM_SEL_BITS_MIN1-1:0]   pmem_rd_sel_b2;
@@ -887,7 +899,9 @@ module mem_sys # (
     // but since priority is to pmem mem it should be checked
     .dout_ready(dma_rd_resp_ready && !dma_pmem_fifo_valid),
 
-    .full(dma_dmem_rd_resp_fifo_full)
+    .full(dma_dmem_rd_resp_fifo_full),
+    .item_count(),
+    .empty()
   );
 
   simple_fifo # (
@@ -908,7 +922,9 @@ module mem_sys # (
     .dout(dma_pmem_fifo_rd_data),
     .dout_ready(dma_rd_resp_ready), // && !dma_dmem_fifo_valid)
 
-    .full(dma_pmem_rd_resp_fifo_full)
+    .full(dma_pmem_rd_resp_fifo_full),
+    .item_count(),
+    .empty()
   );
 
   // Selecting output data based on state

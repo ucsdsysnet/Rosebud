@@ -29,8 +29,8 @@ THE SOFTWARE.
 `default_nettype none
 
 module scheduler_PR (
-  input                   clk,
-  input                   rst,
+  input  wire             clk,
+  input  wire             rst,
 
   // Data line to/from Eth interfaces
   input  wire [3*512-1:0] rx_axis_tdata,
@@ -429,7 +429,11 @@ module scheduler_PR (
 
     .dout_valid(pkt_done_valid),
     .dout({pkt_done_src,pkt_done_desc}),
-    .dout_ready(loopback_ready)
+    .dout_ready(loopback_ready),
+
+    .item_count(),
+    .full(),
+    .empty()
   );
 
   genvar m;
@@ -451,7 +455,11 @@ module scheduler_PR (
         .dout_valid(pkt_to_core_valid[m]),
         .dout(pkt_to_core_req[m*(DESC_WIDTH+CORE_ID_WIDTH) +:
                                 (DESC_WIDTH+CORE_ID_WIDTH)]),
-        .dout_ready(arb_to_core_ready[m] && rx_desc_slot_v[m] && enabled_cores[m])
+        .dout_ready(arb_to_core_ready[m] && rx_desc_slot_v[m] && enabled_cores[m]),
+
+        .item_count(),
+        .full(),
+        .empty()
       );
     end
   endgenerate
