@@ -12,28 +12,27 @@ TOPLEVEL=$(MODULE)
 
 RTL_DIR = $(CWD)/../../rtl
 ACC_DIR = $(CWD)/../../accel/pigasus_sme/rtl
-SMARTFPGA = $(CWD)/../../lib/Shire/rtl
+SHIRE = $(CWD)/../../lib/Shire/rtl
 AXIS_LIB = $(CWD)/../../lib/axis/rtl
 
 VERILOG_SOURCES  = $(CWD)/test_gousheh.v
 VERILOG_SOURCES += $(RTL_DIR)/Gousheh_PR_pig.v
 
-VERILOG_SOURCES += $(SMARTFPGA)/simple_fifo.v
-VERILOG_SOURCES += $(SMARTFPGA)/core_mems.v
-VERILOG_SOURCES += $(SMARTFPGA)/axis_dma.v
-VERILOG_SOURCES += $(SMARTFPGA)/VexRiscv.v
-VERILOG_SOURCES += $(SMARTFPGA)/riscvcore.v
-VERILOG_SOURCES += $(SMARTFPGA)/Gousheh.v
-VERILOG_SOURCES += $(SMARTFPGA)/Gousheh_controller.v
-VERILOG_SOURCES += $(SMARTFPGA)/Gousheh_wrapper.v
-VERILOG_SOURCES += $(SMARTFPGA)/mem_sys2.v
-VERILOG_SOURCES += $(SMARTFPGA)/simple_arbiter.v
-VERILOG_SOURCES += $(SMARTFPGA)/simple_sync_sig.v
-VERILOG_SOURCES += $(SMARTFPGA)/axis_stat.v
-VERILOG_SOURCES += $(SMARTFPGA)/header.v
-VERILOG_SOURCES += $(SMARTFPGA)/axis_fifo.v
-VERILOG_SOURCES += $(SMARTFPGA)/single_accel_rd_dma.v
-VERILOG_SOURCES += $(SMARTFPGA)/spaced_2lvl_penc.v
+VERILOG_SOURCES += $(SHIRE)/simple_fifo.v
+VERILOG_SOURCES += $(SHIRE)/core_mems.v
+VERILOG_SOURCES += $(SHIRE)/axis_dma.v
+VERILOG_SOURCES += $(SHIRE)/VexRiscv.v
+VERILOG_SOURCES += $(SHIRE)/riscvcore.v
+VERILOG_SOURCES += $(SHIRE)/Gousheh.v
+VERILOG_SOURCES += $(SHIRE)/Gousheh_controller.v
+VERILOG_SOURCES += $(SHIRE)/Gousheh_wrapper.v
+VERILOG_SOURCES += $(SHIRE)/mem_sys2.v
+VERILOG_SOURCES += $(SHIRE)/simple_arbiter.v
+VERILOG_SOURCES += $(SHIRE)/simple_sync_sig.v
+VERILOG_SOURCES += $(SHIRE)/axis_stat.v
+VERILOG_SOURCES += $(SHIRE)/header.v
+VERILOG_SOURCES += $(SHIRE)/single_accel_rd_dma.v
+VERILOG_SOURCES += $(SHIRE)/spaced_2lvl_penc.v
 
 VERILOG_SOURCES += $(ACC_DIR)/backend.sv
 VERILOG_SOURCES += $(ACC_DIR)/first_filter.sv
@@ -62,6 +61,7 @@ VERILOG_SOURCES += $(ACC_DIR)/SME_wrapper.sv
 VERILOG_SOURCES += $(ACC_DIR)/accel_wrap_pigasus.v
 VERILOG_SOURCES += $(ACC_DIR)/ip_match.v
 
+VERILOG_SOURCES += $(AXIS_LIB)/axis_fifo.v
 VERILOG_SOURCES += $(AXIS_LIB)/arbiter.v
 VERILOG_SOURCES += $(AXIS_LIB)/priority_encoder.v
 VERILOG_SOURCES += $(AXIS_LIB)/sync_reset.v
