@@ -1,35 +1,11 @@
-#!/bin/bash
-
-# Git subtree manager
-# Alex Forencich <alex@alexforencich.com>
-# This script facilitates easy management of subtrees
-# included in larger repositories as this script can
-# be included in the repository itself.
-
-# Settings
-# uncomment to use --squash
-#squash="yes"
-# Remote repository
-repo="git@github.com:alexforencich/verilog-axi.git"
-# Remote name
-remote="axi"
-# Subdirectory to store code in
-# (relative to repo root or to script location)
-#subdir="axi"
 rel_subdir="axi"
-# Remote branch
+repo="git@github.com:alexforencich/verilog-axi.git"
+remote="axi"
 branch="master"
-# Backport branch name (only used for pushing)
-backportbranch="${remote}backport"
-# Add commit message
-addmsg="added ${remote} as a subproject"
-# Merge commit message
-mergemsg="merged changes in ${remote}"
-
-# Usage
-# add - adds subtree
-# pull - default, pulls from remote
-# push - pushes to remote
+libname="AXI"
+seldir=""
+rmlist=".test_durations README.md tox.ini .gitignore .github"
+commit="9c4012f58d2b16d83b57463377014cf1785a6573"
 
 # determine repo absolute path
 if [ -n "$rel_subdir" ]; then
@@ -54,65 +30,29 @@ if [ -n "$rel_subdir" ]; then
     subdir="$(git-absolute-path .)/$rel_subdir"
 fi
 
-squashflag=""
-
 cd $(git rev-parse --show-toplevel)
 
-if [ $squash ]; then
-    squashflag="--squash"
+git remote add -f $remote $repo
+git checkout -b staging-branch $remote/$branch
+if [ ! -z "$commit" ]; then
+  git checkout $commit
 fi
-
-action="pull"
-
+if [ ! -z "$seldir" ]; then
+  git subtree split -P $seldir -b staging-branch2
+  git checkout staging-branch2
+else
+  git branch staging-branch2
+  git checkout staging-branch2
+fi
+if [ ! -z "$rmlist" ]; then
+  git rm -rf $rmlist
+  git commit -m "Prune as a lib."
+fi
+git checkout master
 if [ ! -d "$subdir" ]; then
-    action="add"
+  git subtree add -P "$subdir" --squash staging-branch2 -m "Add $libname lib"
+else
+  git subtree merge -P "$subdir" --squash staging-branch2 -m "Merge for updating the $libname lib"
 fi
-
-if [ -n "$1" ]; then
-    action="$1"
-fi
-
-# array contains value
-# usage: contains array value
-function contains() {
-    local n=$#
-    local value=${!n}
-    for ((i=1;i < $n;i++)) {
-        if [ "${!i}" == "${value}" ]; then
-            echo "y"
-            return 0
-        fi
-    }
-    echo "n"
-    return 1
-}
-
-case "$action" in
-  add)
-    if [ $(contains $(git remote) "$remote") != "y" ]; then
-      git remote add "$remote" "$repo"
-    fi
-    git fetch "$remote"
-    git subtree add -P "$subdir" $squashflag -m "$addmsg" "$remote/$branch"
-    ;;
-  pull)
-    if [ $(contains $(git remote) "$remote") != "y" ]; then
-      git remote add "$remote" "$repo"
-    fi
-    git fetch "$remote"
-    git subtree merge -P "$subdir" $squashflag -m "$mergemsg" "$remote/$branch"
-    ;;
-  push)
-    if [ $(contains $(git remote) "$remote") != "y" ]; then
-      git remote add "$remote" "$repo"
-    fi
-    git subtree split -P "$subdir" -b "$backportbranch"
-    git push "$remote" "$backportbranch:$branch"
-    ;;
-  *)
-    echo "Error: unknown action!"
-    exit 1
-esac
-
-exit 0
-
+git branch -D staging-branch staging-branch2
+git remote rm $remote

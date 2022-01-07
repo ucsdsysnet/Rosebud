@@ -1,4 +1,11 @@
 rel_subdir="corundum"
+repo="https://github.com/ucsdsysnet/corundum.git"
+remote="corundumrepo"
+branch="master"
+libname="Corundum"
+seldir="fpga/common"
+rmlist="lib"
+commit="0916fb6686c0784872e3c78c921092a8f6517a20"
 
 # determine repo absolute path
 if [ -n "$rel_subdir" ]; then
@@ -25,14 +32,27 @@ fi
 
 cd $(git rev-parse --show-toplevel)
 
-git remote add -f corundumrepo https://github.com/ucsdsysnet/corundum.git
-git checkout -b staging-branch corundumrepo/master
-git subtree split -P fpga/common -b corundumlib
+git remote add -f $remote $repo
+git checkout -b staging-branch $remote/$branch
+if [ ! -z "$commit" ]; then
+  git checkout $commit
+fi
+if [ ! -z "$seldir" ]; then
+  git subtree split -P $seldir -b staging-branch2
+  git checkout staging-branch2
+else
+  git branch staging-branch2
+  git checkout staging-branch2
+fi
+if [ ! -z "$rmlist" ]; then
+  git rm -rf $rmlist
+  git commit -m "Prune as a lib."
+fi
 git checkout master
 if [ ! -d "$subdir" ]; then
-  git subtree add -P "$subdir" --squash corundumlib
+  git subtree add -P "$subdir" --squash staging-branch2 -m "Add $libname lib"
 else
-  git subtree merge -P "$subdir" --squash corundumlib
+  git subtree merge -P "$subdir" --squash staging-branch2 -m "Merge for updating the $libname lib"
 fi
-git branch -D staging-branch corundumlib
-git remote rm corundumrepo
+git branch -D staging-branch staging-branch2
+git remote rm $remote

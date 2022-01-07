@@ -1,11 +1,11 @@
-rel_subdir="pcie"
-repo="git@github.com:alexforencich/verilog-pcie.git"
-remote="pcie"
+rel_subdir="axis"
+repo="git@github.com:alexforencich/verilog-axis.git"
+remote="axis"
 branch="master"
-libname="PCIe"
+libname="AXIS"
 seldir=""
-rmlist=".test_durations README.md tox.ini .gitignore .github example scripts dma_block.svg README"
-commit="5f90e39e59b3bf5e9fd154f52ce8480746b6afb2"
+rmlist=".test_durations README.md tox.ini .gitignore .github README"
+commit="e9f772331281b4aa45e83a72200652a0438eec12"
 
 # determine repo absolute path
 if [ -n "$rel_subdir" ]; then
