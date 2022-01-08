@@ -418,14 +418,14 @@ if (SEPARATE_CLOCKS) begin
     .DEPTH(CMD_FIFO_DEPTH),
     .DATA_WIDTH(32)
   ) host_cmd_async_fifo (
-    .async_rst(sys_rst_r),
-
     .din_clk(pcie_clk),
+    .din_rst(pcie_rst),
     .din_valid(host_cmd_valid_r),
     .din(host_cmd_r),
     .din_ready(host_cmd_ready_r),
 
     .dout_clk(sys_clk),
+    .dout_rst(sys_rst_r),
     .dout_valid(host_cmd_valid),
     .dout(host_cmd),
     .dout_ready(1'b1)

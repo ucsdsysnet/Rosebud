@@ -35,11 +35,13 @@ module simple_async_fifo # (
   input  wire                  async_rst,
 
   input  wire                  din_clk,
+  input  wire                  din_rst,
   input  wire                  din_valid,
   input  wire [DATA_WIDTH-1:0] din,
   output wire                  din_ready,
 
   input  wire                  dout_clk,
+  input  wire                  dout_rst,
   output wire                  dout_valid,
   output wire [DATA_WIDTH-1:0] dout,
   input  wire                  dout_ready
@@ -56,9 +58,8 @@ module simple_async_fifo # (
     .USER_ENABLE(0),
     .FRAME_FIFO(0)
   ) async_fifo_inst (
-    .async_rst(async_rst),
-
     .s_clk(din_clk),
+    .s_rst(din_rst),
     .s_axis_tdata(din),
     .s_axis_tkeep(1'b0),
     .s_axis_tvalid(din_valid),
@@ -69,6 +70,7 @@ module simple_async_fifo # (
     .s_axis_tuser(1'b0),
 
     .m_clk(dout_clk),
+    .m_rst(dout_rst),
     .m_axis_tdata(dout),
     .m_axis_tkeep(),
     .m_axis_tvalid(dout_valid),

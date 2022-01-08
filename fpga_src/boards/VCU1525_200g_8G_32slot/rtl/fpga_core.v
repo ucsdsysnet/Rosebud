@@ -439,10 +439,9 @@ generate
             .DROP_BAD_FRAME(1),
             .DROP_WHEN_FULL(0)
         ) mac_tx_async_fifo_inst (
-            // Common reset
-            .async_rst(int_rst_r | port_tx_rst[m]),
             // AXI input
             .s_clk(sys_clk),
+            .s_rst(int_rst_r),
             .s_axis_tdata(port_tx_axis_tdata_n[m*LVL1_DATA_WIDTH +: LVL1_DATA_WIDTH]),
             .s_axis_tkeep(port_tx_axis_tkeep_n[m*LVL1_STRB_WIDTH +: LVL1_STRB_WIDTH]),
             .s_axis_tvalid(port_tx_axis_tvalid_n[m]),
@@ -453,6 +452,7 @@ generate
             .s_axis_tuser(1'b0),
             // AXI output
             .m_clk(port_tx_clk[m]),
+            .m_rst(port_tx_rst[m]),
             .m_axis_tdata(port_tx_axis_tdata[m*AXIS_ETH_DATA_WIDTH +: AXIS_ETH_DATA_WIDTH]),
             .m_axis_tkeep(port_tx_axis_tkeep[m*AXIS_ETH_KEEP_WIDTH +: AXIS_ETH_KEEP_WIDTH]),
             .m_axis_tvalid(port_tx_axis_tvalid[m]),
@@ -482,10 +482,9 @@ generate
             .PIPELINE_OUTPUT(2),
             .FRAME_FIFO(0)
         ) mac_rx_async_fifo_inst (
-            // Common reset
-            .async_rst(port_rx_rst[m] | int_rst_r),
             // AXI input
             .s_clk(port_rx_clk[m]),
+            .s_rst(port_rx_rst[m]),
             .s_axis_tdata(port_rx_axis_tdata[m*AXIS_ETH_DATA_WIDTH +: AXIS_ETH_DATA_WIDTH]),
             .s_axis_tkeep(port_rx_axis_tkeep[m*AXIS_ETH_KEEP_WIDTH +: AXIS_ETH_KEEP_WIDTH]),
             .s_axis_tvalid(port_rx_axis_tvalid[m]),
@@ -496,6 +495,7 @@ generate
             .s_axis_tuser(1'b0),
             // AXI output
             .m_clk(sys_clk),
+            .m_rst(int_rst_r),
             .m_axis_tdata(port_rx_axis_tdata_f[m*AXIS_ETH_DATA_WIDTH +: AXIS_ETH_DATA_WIDTH]),
             .m_axis_tkeep(port_rx_axis_tkeep_f[m*AXIS_ETH_KEEP_WIDTH +: AXIS_ETH_KEEP_WIDTH]),
             .m_axis_tvalid(port_rx_axis_tvalid_f[m]),
