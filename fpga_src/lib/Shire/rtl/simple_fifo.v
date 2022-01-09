@@ -32,8 +32,6 @@ module simple_async_fifo # (
   parameter DEPTH      = 32,
   parameter DATA_WIDTH = 64
 )(
-  input  wire                  async_rst,
-
   input  wire                  din_clk,
   input  wire                  din_rst,
   input  wire                  din_valid,

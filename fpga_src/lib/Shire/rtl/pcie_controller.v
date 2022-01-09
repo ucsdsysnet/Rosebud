@@ -462,9 +462,8 @@ end else begin: cores_data_async_fifos
         .PIPELINE_OUTPUT(2),
         .FRAME_FIFO(0)
     ) cores_tx_axis_data_async_fifo (
-        .async_rst(sys_rst_r),
-
         .s_clk(sys_clk),
+        .s_rst(sys_rst_r),
         .s_axis_tdata (cores_tx_axis_tdata),
         .s_axis_tkeep (cores_tx_axis_tkeep),
         .s_axis_tvalid(cores_tx_axis_tvalid),
@@ -475,6 +474,7 @@ end else begin: cores_data_async_fifos
         .s_axis_tuser (cores_tx_axis_tuser),
 
         .m_clk(pcie_clk),
+        .m_rst(pcie_rst),
         .m_axis_tdata (cores_tx_tdata),
         .m_axis_tkeep (cores_tx_tkeep),
         .m_axis_tvalid(cores_tx_tvalid),
@@ -504,9 +504,8 @@ end else begin: cores_data_async_fifos
         .PIPELINE_OUTPUT(2),
         .FRAME_FIFO(0)
     ) cores_rx_axis_data_async_fifo (
-        .async_rst(sys_rst_r),
-
         .s_clk(pcie_clk),
+        .s_rst(pcie_rst),
         .s_axis_tdata (cores_rx_tdata),
         .s_axis_tkeep (cores_rx_tkeep),
         .s_axis_tvalid(cores_rx_tvalid),
@@ -517,6 +516,7 @@ end else begin: cores_data_async_fifos
         .s_axis_tuser (1'b0),
 
         .m_clk(sys_clk),
+        .m_rst(sys_rst_r),
         .m_axis_tdata (cores_rx_axis_tdata),
         .m_axis_tkeep (cores_rx_axis_tkeep),
         .m_axis_tvalid(cores_rx_axis_tvalid),

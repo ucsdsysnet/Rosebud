@@ -116,7 +116,7 @@ module riscvcore #(
   output wire                       inv_desc_int_ack,
   input  wire [4:0]                 recv_dram_tag,
   input  wire                       recv_dram_tag_valid
-);
+  );
 
   // Core to memory signals
   wire [31:0] dmem_read_data;
@@ -130,6 +130,7 @@ module riscvcore #(
   reg        io_access_err, pmem_access_err;
   reg        timer_interrupt;
   reg        io_ren_r;
+  wire       io_wr_ready;
   reg core_interrupt;
 
   VexRiscv core (
@@ -325,7 +326,7 @@ module riscvcore #(
   assign out_desc           = {out_desc_type_r, out_desc_data_r[59:0]};
   assign out_desc_valid     = out_desc_v_r;
   assign out_desc_dram_addr = dram_wr_addr_r;
-  wire   io_wr_ready        = !(send_out_desc || update_desc) || //Non blocking writes
+  assign io_wr_ready        = !(send_out_desc || update_desc) || //Non blocking writes
                                (update_desc && !out_desc_v_r) || out_desc_ready;
   assign in_desc_taken      = io_write && (io_addr==RD_DESC_STRB) && mem_wr_data[0];
 

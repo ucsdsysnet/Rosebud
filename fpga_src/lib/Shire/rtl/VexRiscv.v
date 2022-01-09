@@ -3497,5 +3497,3 @@ module StreamFifoLowLatency (
 
 
 endmodule
-
-`resetall

@@ -94,6 +94,8 @@ distclean: clean
 	echo "set_msg_config -id {Vivado 12-4385} -new_severity {INFO}" >> create_project.tcl
 	echo "# Local parameter warning" >> create_project.tcl
 	echo "set_msg_config -id {Synth 8-2507} -new_severity {INFO}" >> create_project.tcl
+	echo "# Zero replication warning" >> create_project.tcl
+	echo "set_msg_config -id {Synth 8-693} -new_severity {INFO}" >> create_project.tcl
 	echo "exit" >> create_project.tcl
 	vivado -nojournal -nolog -mode batch -source create_project.tcl
 
