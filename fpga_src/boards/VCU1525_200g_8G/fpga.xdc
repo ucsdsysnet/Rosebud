@@ -468,10 +468,18 @@ resize_pblock [get_pblocks User_Scheduler] -add {PCIE40E4_X0Y3:PCIE40E4_X0Y3}
 resize_pblock [get_pblocks User_Scheduler] -add {RAMB18_X0Y144:RAMB18_X4Y215}
 resize_pblock [get_pblocks User_Scheduler] -add {RAMB36_X0Y72:RAMB36_X4Y107}
 resize_pblock [get_pblocks User_Scheduler] -add {URAM288_X0Y96:URAM288_X1Y143}
-set_property HD.PARTPIN_RANGE {SLICE_X75Y360:SLICE_X79Y539} [get_pins [list core_inst/scheduler_PR_inst/data_s* core_inst/scheduler_PR_inst/ctrl* core_inst/scheduler_PR_inst/host_cmd* core_inst/scheduler_PR_inst/rst]]
+set_property HD.PARTPIN_RANGE {SLICE_X75Y360:SLICE_X79Y534} [get_pins [list core_inst/scheduler_PR_inst/data_s* core_inst/scheduler_PR_inst/ctrl* core_inst/scheduler_PR_inst/host_cmd* core_inst/scheduler_PR_inst/rst]]
 set_property HD.PARTPIN_RANGE {SLICE_X0Y535:SLICE_X50Y539} [get_pins core_inst/scheduler_PR_inst/tx_axis*]
 set_property HD.PARTPIN_RANGE {SLICE_X0Y535:SLICE_X50Y539} [get_pins core_inst/scheduler_PR_inst/rx_axis*]
 set_property HD.PARTPIN_RANGE {SLICE_X0Y360:SLICE_X75Y364} [get_pins core_inst/scheduler_PR_inst/data_m*]
+
+set_property HD.PARTPIN_RANGE {SLICE_X51Y535:SLICE_X79Y539} [get_pins -regexp {core_inst/scheduler_PR_inst/rx_axis_tdata\[(102[4-9]|10[3-9][0-9]|1[1-4][0-9][0-9]|15[0-2][0-9]|153[0-5])\]}]
+set_property HD.PARTPIN_RANGE {SLICE_X51Y535:SLICE_X79Y539} [get_pins -regexp {core_inst/scheduler_PR_inst/tx_axis_tdata\[(102[4-9]|10[3-9][0-9]|1[1-4][0-9][0-9]|15[0-2][0-9]|153[0-5])\]}]
+set_property HD.PARTPIN_RANGE {SLICE_X51Y535:SLICE_X79Y539} [get_pins -regexp {core_inst/scheduler_PR_inst/rx_axis_tkeep\[(12[89]|1[3-8][0-9]|19[01])\]}]
+set_property HD.PARTPIN_RANGE {SLICE_X51Y535:SLICE_X79Y539} [get_pins -regexp {core_inst/scheduler_PR_inst/tx_axis_tkeep\[(12[89]|1[3-8][0-9]|19[01])\]}]
+set_property HD.PARTPIN_RANGE {SLICE_X51Y535:SLICE_X79Y539} [get_pins {core_inst/scheduler_PR_inst/rx_axis_tvalid[2] core_inst/scheduler_PR_inst/rx_axis_tready[2] core_inst/scheduler_PR_inst/rx_axis_tlast[2]}]
+set_property HD.PARTPIN_RANGE {SLICE_X51Y535:SLICE_X79Y539} [get_pins {core_inst/scheduler_PR_inst/tx_axis_tvalid[2] core_inst/scheduler_PR_inst/tx_axis_tready[2] core_inst/scheduler_PR_inst/tx_axis_tlast[2]}]
+
 set_property SNAPPING_MODE ON [get_pblocks User_Scheduler]
 set_property IS_SOFT FALSE [get_pblocks User_Scheduler]
 

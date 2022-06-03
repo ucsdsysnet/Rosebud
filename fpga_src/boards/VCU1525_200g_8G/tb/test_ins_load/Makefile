@@ -25,8 +25,8 @@ VERILOG_SOURCES += $(CWD)/../common/FDCE.v
 
 VERILOG_SOURCES += $(RTL_DIR)/fpga_core.v
 VERILOG_SOURCES += $(RTL_DIR)/Gousheh_PR.v
-# VERILOG_SOURCES += $(RTL_DIR)/RR_LU_scheduler_PR.v
-VERILOG_SOURCES += $(RTL_DIR)/Hash_Dropping_scheduler_PR.v
+VERILOG_SOURCES += $(RTL_DIR)/RR_LU_scheduler_PR.v
+# VERILOG_SOURCES += $(RTL_DIR)/Hash_Dropping_scheduler_PR.v
 VERILOG_SOURCES += $(RTL_DIR)/pcie_config.v
 
 VERILOG_SOURCES += $(SHIRE)/simple_fifo.v

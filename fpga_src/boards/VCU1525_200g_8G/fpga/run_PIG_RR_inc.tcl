@@ -35,10 +35,10 @@ add_files -norecurse {
   ../lib/axis/rtl/axis_pipeline_register.v
   ../lib/axis/rtl/priority_encoder.v
   ../lib/axis/rtl/sync_reset.v
-  ../lib/axis/rtl/simple_fifo.v
   ../lib/axis/rtl/axis_fifo.v
   ../lib/corundum/rtl/rx_hash.v
   ../lib/Shire/rtl/simple_arbiter.v
+  ../lib/Shire/rtl/simple_fifo.v
   ../lib/Shire/rtl/header.v
   ../lib/Shire/rtl/axis_dropper.v
   ../lib/Shire/rtl/slot_keeper.v
