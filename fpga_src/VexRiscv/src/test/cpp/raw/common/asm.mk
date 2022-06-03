@@ -18,9 +18,6 @@ endif
 ifeq ($(COMPRESSED),yes)
 	MARCH := $(MARCH)c
 endif
-ifeq ($(FLOATING),yes)
-	MARCH := $(MARCH)fd
-endif
 
 CFLAGS += -march=$(MARCH)  -mabi=$(MABI)
 LDFLAGS += -march=$(MARCH)  -mabi=$(MABI)

@@ -11,27 +11,20 @@ import spinal.lib.bus.wishbone.{Wishbone, WishboneConfig, WishboneToBmb, Wishbon
 import spinal.lib.com.jtag.{Jtag, JtagInstructionDebuggerGenerator, JtagTapInstructionCtrl}
 import spinal.lib.com.jtag.sim.JtagTcp
 import spinal.lib.com.jtag.xilinx.Bscane2BmbMasterGenerator
-import spinal.lib.generator._
-import spinal.core.fiber._
-import spinal.idslplugin.PostInitCallback
+import spinal.lib.generator.Handle
 import spinal.lib.misc.plic.PlicMapping
 import spinal.lib.system.debugger.SystemDebuggerConfig
 import vexriscv.ip.{DataCacheAck, DataCacheConfig, DataCacheMemBus, InstructionCache, InstructionCacheConfig}
-import vexriscv.plugin._
+import vexriscv.plugin.{BranchPlugin, CsrAccess, CsrPlugin, CsrPluginConfig, DBusCachedPlugin, DBusSimplePlugin, DYNAMIC_TARGET, DebugPlugin, DecoderSimplePlugin, FullBarrelShifterPlugin, HazardSimplePlugin, IBusCachedPlugin, IBusSimplePlugin, IntAluPlugin, MmuPlugin, MmuPortConfig, MulDivIterativePlugin, MulPlugin, RegFilePlugin, STATIC, SrcPlugin, StaticMemoryTranslatorPlugin, YamlPlugin}
 import vexriscv.{Riscv, VexRiscv, VexRiscvBmbGenerator, VexRiscvConfig, plugin}
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 import spinal.lib.generator._
-import vexriscv.ip.fpu.FpuParameter
 
-case class VexRiscvSmpClusterParameter(cpuConfigs : Seq[VexRiscvConfig],
-                                       withExclusiveAndInvalidation : Boolean,
-                                       forcePeripheralWidth : Boolean = true,
-                                       outOfOrderDecoder : Boolean = true,
-                                       fpu : Boolean = false)
+case class VexRiscvSmpClusterParameter(cpuConfigs : Seq[VexRiscvConfig], withExclusiveAndInvalidation : Boolean, forcePeripheralWidth : Boolean = true, outOfOrderDecoder : Boolean = true)
 
-class VexRiscvSmpClusterBase(p : VexRiscvSmpClusterParameter) extends Area with PostInitCallback{
+class VexRiscvSmpClusterBase(p : VexRiscvSmpClusterParameter) extends Generator{
   val cpuCount = p.cpuConfigs.size
 
   val debugCd = ClockDomainResetGenerator()
@@ -42,19 +35,14 @@ class VexRiscvSmpClusterBase(p : VexRiscvSmpClusterParameter) extends Area with 
   systemCd.holdDuration.load(63)
   systemCd.setInput(debugCd)
 
-
-  systemCd.outputClockDomain.push()
-  override def postInitCallback(): VexRiscvSmpClusterBase.this.type = {
-    systemCd.outputClockDomain.pop()
-    this
-  }
+  this.onClockDomain(systemCd.outputClockDomain)
 
   implicit val interconnect = BmbInterconnectGenerator()
 
-  val debugBridge = debugCd.outputClockDomain on JtagInstructionDebuggerGenerator()
+  val debugBridge = JtagInstructionDebuggerGenerator() onClockDomain(debugCd.outputClockDomain)
   debugBridge.jtagClockDomain.load(ClockDomain.external("jtag", withReset = false))
 
-  val debugPort = Handle(debugBridge.logic.jtagBridge.io.ctrl.toIo)
+  val debugPort = debugBridge.produceIo(debugBridge.logic.jtagBridge.io.ctrl)
 
   val dBusCoherent = BmbBridgeGenerator()
   val dBusNonCoherent = BmbBridgeGenerator()
@@ -80,7 +68,7 @@ class VexRiscvSmpClusterBase(p : VexRiscvSmpClusterParameter) extends Area with 
       cpu.dBus -> List(dBusCoherent.bmb)
     )
     cpu.enableDebugBmb(
-      debugCd = debugCd.outputClockDomain,
+      debugCd = debugCd,
       resetCd = systemCd,
       mapping = SizeMapping(cpuId*0x1000, 0x1000)
     )
@@ -91,7 +79,7 @@ class VexRiscvSmpClusterBase(p : VexRiscvSmpClusterParameter) extends Area with 
 
 class VexRiscvSmpClusterWithPeripherals(p : VexRiscvSmpClusterParameter) extends VexRiscvSmpClusterBase(p) {
   val peripheralBridge = BmbToWishboneGenerator(DefaultMapping)
-  val peripheral = Handle(peripheralBridge.logic.io.output.toIo)
+  val peripheral = peripheralBridge.produceIo(peripheralBridge.logic.io.output)
   if(p.forcePeripheralWidth) interconnect.slaves(peripheralBridge.bmb).forceAccessSourceDataWidth(32)
 
   val plic = BmbPlicGenerator()(interconnect = null)
@@ -137,8 +125,8 @@ class VexRiscvSmpClusterWithPeripherals(p : VexRiscvSmpClusterParameter) extends
   }
   val clintWishbone = clintWishboneBridge.produceIo(clintWishboneBridge.logic.bridge.io.input)
 
-  val interrupts = in Bits(32 bits)
-  for(i <- 1 to 31) yield plic.addInterrupt(interrupts(i), i)
+  val interrupts = add task (in Bits(32 bits))
+  for(i <- 1 to 31) yield plic.addInterrupt(interrupts.derivate(_.apply(i)), i)
 
   for ((core, cpuId) <- cores.zipWithIndex) {
     core.cpu.setTimerInterrupt(clint.timerInterrupt(cpuId))
@@ -165,61 +153,19 @@ object VexRiscvSmpClusterGen {
                      resetVector : Long = 0x80000000l,
                      iBusWidth : Int = 128,
                      dBusWidth : Int = 64,
-                     loadStoreWidth : Int = 32,
                      coherency : Boolean = true,
-                     atomic : Boolean = true,
                      iCacheSize : Int = 8192,
                      dCacheSize : Int = 8192,
                      iCacheWays : Int = 2,
                      dCacheWays : Int = 2,
                      iBusRelax : Boolean = false,
-                     injectorStage : Boolean = false,
                      earlyBranch : Boolean = false,
                      dBusCmdMasterPipe : Boolean = false,
                      withMmu : Boolean = true,
-                     withSupervisor : Boolean = true,
-                     withFloat : Boolean = false,
-                     withDouble : Boolean = false,
-                     externalFpu : Boolean = true,
-                     simHalt : Boolean = false,
-                     decoderIsolationBench : Boolean = false,
-                     decoderStupid : Boolean = false,
-                     regfileRead : RegFileReadKind = plugin.ASYNC,
-                     rvc : Boolean = false,
-                     iTlbSize : Int = 4,
-                     dTlbSize : Int = 4,
-                     prediction : BranchPrediction = vexriscv.plugin.NONE
+                     withSupervisor : Boolean = true
                     ) = {
     assert(iCacheSize/iCacheWays <= 4096, "Instruction cache ways can't be bigger than 4096 bytes")
     assert(dCacheSize/dCacheWays <= 4096, "Data cache ways can't be bigger than 4096 bytes")
-    assert(!(withDouble && !withFloat))
-
-    val csrConfig = if(withSupervisor){
-      CsrPluginConfig.openSbi(mhartid = hartId, misa = Riscv.misaToInt(s"ima${if(withFloat) "f" else ""}${if(withDouble) "d" else ""}s")).copy(utimeAccess = CsrAccess.READ_ONLY)
-    } else {
-      CsrPluginConfig(
-        catchIllegalAccess = true,
-        mvendorid      = null,
-        marchid        = null,
-        mimpid         = null,
-        mhartid        = 0,
-        misaExtensionsInit = 0,
-        misaAccess     = CsrAccess.NONE,
-        mtvecAccess    = CsrAccess.READ_WRITE,
-        mtvecInit      = null,
-        mepcAccess     = CsrAccess.READ_WRITE,
-        mscratchGen    = false,
-        mcauseAccess   = CsrAccess.READ_ONLY,
-        mbadaddrAccess = CsrAccess.READ_ONLY,
-        mcycleAccess   = CsrAccess.NONE,
-        minstretAccess = CsrAccess.NONE,
-        ecallGen       = true,
-        ebreakGen      = true,
-        wfiGenAsWait   = false,
-        wfiGenAsNop    = true,
-        ucycleAccess   = CsrAccess.NONE
-      )
-    }
     val config = VexRiscvConfig(
       plugins = List(
         if(withMmu)new MmuPlugin(
@@ -230,11 +176,11 @@ object VexRiscvSmpClusterGen {
         //Uncomment the whole IBusCachedPlugin and comment IBusSimplePlugin if you want cached iBus config
         new IBusCachedPlugin(
           resetVector = resetVector,
-          compressedGen = rvc,
-          prediction = prediction,
+          compressedGen = false,
+          prediction = vexriscv.plugin.NONE,
           historyRamSizeLog2 = 9,
           relaxPredictorAddress = true,
-          injectorStage = injectorStage,
+          injectorStage = false,
           relaxedPcCalculation = iBusRelax,
           config = InstructionCacheConfig(
             cacheSize = iCacheSize,
@@ -251,7 +197,7 @@ object VexRiscvSmpClusterGen {
             reducedBankWidth = true
           ),
           memoryTranslatorPortConfig = MmuPortConfig(
-            portTlbSize = iTlbSize,
+            portTlbSize = 4,
             latency = 1,
             earlyRequireMmuLockup = true,
             earlyCacheHits = true
@@ -267,31 +213,30 @@ object VexRiscvSmpClusterGen {
             bytePerLine       = 64,
             wayCount          = dCacheWays,
             addressWidth      = 32,
-            cpuDataWidth      = loadStoreWidth,
+            cpuDataWidth      = 32,
             memDataWidth      = dBusWidth,
             catchAccessError  = true,
             catchIllegal      = true,
             catchUnaligned    = true,
-            withLrSc = atomic,
-            withAmo = atomic,
-            withExclusive = atomic,
+            withLrSc = true,
+            withAmo = true,
+            withExclusive = coherency,
             withInvalidate = coherency,
-            withWriteAggregation = dBusWidth > 32
+            aggregationWidth = if(dBusWidth == 32) 0 else log2Up(dBusWidth/8)
+            //          )
           ),
           memoryTranslatorPortConfig = MmuPortConfig(
-            portTlbSize = dTlbSize,
+            portTlbSize = 4,
             latency = 1,
             earlyRequireMmuLockup = true,
             earlyCacheHits = true
           )
         ),
         new DecoderSimplePlugin(
-          catchIllegalInstruction = true,
-          decoderIsolationBench = decoderIsolationBench,
-          stupidDecoder = decoderStupid
+          catchIllegalInstruction = true
         ),
         new RegFilePlugin(
-          regFileReadyKind = regfileRead,
+          regFileReadyKind = plugin.ASYNC,
           zeroBoot = false,
           x0Init = true
         ),
@@ -317,7 +262,7 @@ object VexRiscvSmpClusterGen {
           mulUnrollFactor = 32,
           divUnrollFactor = 1
         ),
-        new CsrPlugin(csrConfig),
+        new CsrPlugin(CsrPluginConfig.openSbi(mhartid = hartId, misa = Riscv.misaToInt("imas")).copy(utimeAccess = CsrAccess.READ_ONLY)),
         new BranchPlugin(
           earlyBranch = earlyBranch,
           catchAddressMisaligned = true,
@@ -325,12 +270,6 @@ object VexRiscvSmpClusterGen {
         ),
         new YamlPlugin(s"cpu$hartId.yaml")
       )
-    )
-
-    if(withFloat) config.plugins += new FpuPlugin(
-      externalFpu = externalFpu,
-      simHalt = simHalt,
-      p = FpuParameter(withDouble = withDouble)
     )
     config
   }

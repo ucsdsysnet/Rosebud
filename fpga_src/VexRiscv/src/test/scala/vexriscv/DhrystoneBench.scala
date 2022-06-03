@@ -2,13 +2,13 @@ package vexriscv
 
 import java.io.File
 
-import org.scalatest.funsuite.AnyFunSuite
+import org.scalatest.FunSuite
 import spinal.core.SpinalVerilog
 import vexriscv.demo._
 
 import scala.sys.process._
 
-class DhrystoneBench extends AnyFunSuite {
+class DhrystoneBench extends FunSuite {
   def doCmd(cmd: String): String = {
     val stdOut = new StringBuilder()
     class Logger extends ProcessLogger {
@@ -156,6 +156,7 @@ class DhrystoneBench extends AnyFunSuite {
     gen = LinuxGen.main(Array.fill[String](0)("")),
     testCmd = "make clean run IBUS=CACHED DBUS=CACHED DEBUG_PLUGIN=STD DHRYSTONE=yes SUPERVISOR=yes MMU=no CSR=yes CSR_SKIP_TEST=yes  COMPRESSED=no MUL=yes DIV=yes LRSC=yes AMO=yes REDO=10 TRACE=no COREMARK=yes LINUX_REGRESSION=no"
   )
+//  //make run  IBUS=CACHED DBUS=CACHED DEBUG_PLUGIN=STD DHRYSTONE=yess SUPERVISOR=yes CSR=yes COMPRESSED=no MUL=yes DIV=yes LRSC=yes AMO=yes REDO=1 TRACE=no LINUX_REGRESSION=yes SEED=42
 
 
   test("final_report") {

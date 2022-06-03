@@ -19,15 +19,8 @@ class MulDivIterativePlugin(genMul : Boolean = true,
                             mulUnrollFactor : Int = 1,
                             divUnrollFactor : Int = 1,
                             dhrystoneOpt : Boolean = false,
-                            customMul : (UInt, UInt, Stage, VexRiscv) => Area = null) extends Plugin[VexRiscv] with VexRiscvRegressionArg {
+                            customMul : (UInt, UInt, Stage, VexRiscv) => Area = null) extends Plugin[VexRiscv]{
   import MulDivIterativePlugin._
-
-  override def getVexRiscvRegressionArgs(): Seq[String] = {
-    var args = List[String]()
-    if(genMul) args :+= "MUL=yes"
-    if(genDiv) args :+= "DIV=yes"
-    args
-  }
 
   override def setup(pipeline: VexRiscv): Unit = {
     import Riscv._

@@ -44,7 +44,7 @@ object GenForGousheh extends App{
           executeInsertion = true
         ),
         new FullBarrelShifterPlugin(
-          earlyInjection = true
+          earlyInjection = false
         ),
         new HazardSimplePlugin(
           bypassExecute           = true,
