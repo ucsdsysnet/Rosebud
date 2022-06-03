@@ -307,9 +307,10 @@ module mem_sys # (
         .empty()
       );
     end else begin
-      assign acc_rom_wr_en   = 1'b0;
-      assign acc_rom_wr_addr = {AROM_ADDR_WIDTH{1'b0}};
-      assign acc_rom_wr_data = {AROM_DATA_WIDTH{1'b0}};
+      assign acc_rom_wr_en         = 1'b0;
+      assign acc_rom_wr_addr       = {AROM_ADDR_WIDTH{1'b0}};
+      assign acc_rom_wr_data       = {AROM_DATA_WIDTH{1'b0}};
+      assign dma_arom_wr_fifo_full = 1'b0;
     end
   endgenerate
 

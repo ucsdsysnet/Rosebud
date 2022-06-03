@@ -825,6 +825,23 @@ pcie_config # (
   .msi_irq            (msi_irq)
 );
 
+// Latch host command
+reg                   host_cmd_valid_r;
+reg [31:0]            host_cmd_data_r;
+reg [31:0]            host_cmd_r;
+
+always @ (posedge sys_clk) begin
+  if (sys_rst)
+    host_cmd_valid_r <= 1'b0;
+  else
+    host_cmd_valid_r <= host_cmd_valid;
+
+  if (host_cmd_valid) begin
+    host_cmd_r      <= host_cmd;
+    host_cmd_data_r <= host_cmd_wr_data;
+  end
+end
+
 // Host command read from stat readers and mux with scheduler read
 reg  [31:0] core_stat_data_muxed;
 wire [31:0] core_stat_data_muxed_r;
@@ -845,15 +862,15 @@ wire [3:0]            host_reg_r;
 wire [31:0]           host_cmd_wr_data_r;
 wire [1:0]            host_cmd_type;
 
-assign host_to_cores_wr = host_cmd_valid && (host_cmd[31:30]==2'b00) && host_cmd[29];
-assign host_to_ints_wr  = host_cmd_valid && (host_cmd[31:30]==2'b01) && host_cmd[29];
+assign host_to_cores_wr = host_cmd_valid_r && (host_cmd_r[31:30]==2'b00) && host_cmd_r[29];
+assign host_to_ints_wr  = host_cmd_valid_r && (host_cmd_r[31:30]==2'b01) && host_cmd_r[29];
 
 if (SEPARATE_CLOCKS) begin
   simple_sync_sig # (.RST_VAL(1'b0),.WIDTH(1+1+2+CORE_WIDTH+4+32)) host_cmd_sync_reg (
     .dst_clk(core_clk),
     .dst_rst(core_rst_r),
-    .in({host_to_cores_wr, host_to_ints_wr, host_cmd[31:30],
-         host_cmd[CORE_WIDTH+4-1:4], host_cmd[3:0], host_cmd_wr_data}),
+    .in({host_to_cores_wr, host_to_ints_wr, host_cmd_r[31:30],
+         host_cmd_r[CORE_WIDTH+4-1:4], host_cmd_r[3:0], host_cmd_data_r}),
     .out({host_to_cores_wr_r, host_to_ints_wr_r, host_cmd_type,
           core_int_select_r, host_reg_r, host_cmd_wr_data_r})
   );
@@ -866,24 +883,16 @@ if (SEPARATE_CLOCKS) begin
     .out({core_stat_data_muxed_r,   host_rd_sched_data_r,
           interface_in_stat_data_r, interface_out_stat_data_r})
   );
-end else begin //syncers as pipe registers to help with the timing
-  simple_sync_sig # (.RST_VAL(1'b0),.WIDTH(1+1+2+CORE_WIDTH+4+32)) host_cmd_sync_reg (
-    .dst_clk(pcie_clk),
-    .dst_rst(pcie_rst),
-    .in({host_to_cores_wr, host_to_ints_wr, host_cmd[31:30],
-         host_cmd[CORE_WIDTH+4-1:4], host_cmd[3:0], host_cmd_wr_data}),
-    .out({host_to_cores_wr_r, host_to_ints_wr_r, host_cmd_type,
-          core_int_select_r, host_reg_r, host_cmd_wr_data_r})
-  );
+end else begin
+  assign {host_to_cores_wr_r, host_to_ints_wr_r, host_cmd_type,
+          core_int_select_r, host_reg_r, host_cmd_wr_data_r} =
+         {host_to_cores_wr, host_to_ints_wr, host_cmd_r[31:30],
+          host_cmd_r[CORE_WIDTH+4-1:4], host_cmd_r[3:0], host_cmd_data_r};
 
-  simple_sync_sig # (.RST_VAL(1'b0),.WIDTH(4*32)) host_cmd_rd_data_sync_reg (
-    .dst_clk(pcie_clk),
-    .dst_rst(pcie_rst),
-    .in ({core_stat_data_muxed,     host_rd_sched_data,
-          interface_in_stat_data,   interface_out_stat_data}),
-    .out({core_stat_data_muxed_r,   host_rd_sched_data_r,
-          interface_in_stat_data_r, interface_out_stat_data_r})
-  );
+  assign {core_stat_data_muxed_r,   host_rd_sched_data_r,
+          interface_in_stat_data_r, interface_out_stat_data_r} =
+         {core_stat_data_muxed,     host_rd_sched_data,
+          interface_in_stat_data,   interface_out_stat_data};
 end
 
 // Only interface write
