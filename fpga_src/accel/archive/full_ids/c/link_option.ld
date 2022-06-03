@@ -1,1 +1,1 @@
-../../../../c_code/link_option.ld
+../../../../riscv_code/link_option.ld

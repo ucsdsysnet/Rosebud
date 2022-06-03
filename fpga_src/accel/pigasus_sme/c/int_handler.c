@@ -1,1 +1,1 @@
-../../../../c_code/int_handler.c
+../../../../riscv_code/int_handler.c

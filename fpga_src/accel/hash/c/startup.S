@@ -1,1 +1,1 @@
-../../../../c_code/startup.S
+../../../../riscv_code/startup.S
