@@ -44,8 +44,8 @@ module pcie_config # (
   parameter BOARD_VER               = {16'd0, 16'd1},
   parameter FPGA_ID                 = 32'h3823093
 ) (
-  input  wire                           pcie_clk,
-  input  wire                           pcie_rst,
+  input  wire                           clk,
+  input  wire                           rst,
 
   // AXI lite
   input  wire [AXIL_ADDR_WIDTH-1:0]     axil_ctrl_awaddr,
@@ -163,8 +163,8 @@ reg qsfp1_lpmode_rr;
 assign qsfp0_modsell = 1'b0;
 assign qsfp1_modsell = 1'b0;
 
-always @(posedge pcie_clk) begin
-    if (pcie_rst) begin
+always @(posedge clk) begin
+    if (rst) begin
         axil_ctrl_awready          <= 1'b0;
         axil_ctrl_wready           <= 1'b0;
         axil_ctrl_bvalid           <= 1'b0;
@@ -324,8 +324,8 @@ always @(posedge pcie_clk) begin
 end
 
 // One level register before i2c and flash input/outputs for better timing
-always @(posedge pcie_clk)
-    if (pcie_rst) begin
+always @(posedge clk)
+    if (rst) begin
         qsfp0_lpmode     <= 1'b0;
         qsfp1_lpmode     <= 1'b0;
         qsfp0_resetl     <= 1'b1;

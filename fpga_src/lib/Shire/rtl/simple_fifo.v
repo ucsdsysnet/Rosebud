@@ -28,66 +28,6 @@ THE SOFTWARE.
 `timescale 1ns / 1ps
 `default_nettype none
 
-module simple_async_fifo # (
-  parameter DEPTH      = 32,
-  parameter DATA_WIDTH = 64
-)(
-  input  wire                  din_clk,
-  input  wire                  din_rst,
-  input  wire                  din_valid,
-  input  wire [DATA_WIDTH-1:0] din,
-  output wire                  din_ready,
-
-  input  wire                  dout_clk,
-  input  wire                  dout_rst,
-  output wire                  dout_valid,
-  output wire [DATA_WIDTH-1:0] dout,
-  input  wire                  dout_ready
-);
-
-  axis_async_fifo # (
-    .DEPTH(DEPTH),
-    .DATA_WIDTH(DATA_WIDTH),
-    .KEEP_ENABLE(0),
-    .KEEP_WIDTH(1),
-    .LAST_ENABLE(0),
-    .ID_ENABLE(0),
-    .DEST_ENABLE(0),
-    .USER_ENABLE(0),
-    .FRAME_FIFO(0)
-  ) async_fifo_inst (
-    .s_clk(din_clk),
-    .s_rst(din_rst),
-    .s_axis_tdata(din),
-    .s_axis_tkeep(1'b0),
-    .s_axis_tvalid(din_valid),
-    .s_axis_tready(din_ready),
-    .s_axis_tlast(1'b1),
-    .s_axis_tid(8'd0),
-    .s_axis_tdest(8'd0),
-    .s_axis_tuser(1'b0),
-
-    .m_clk(dout_clk),
-    .m_rst(dout_rst),
-    .m_axis_tdata(dout),
-    .m_axis_tkeep(),
-    .m_axis_tvalid(dout_valid),
-    .m_axis_tready(dout_ready),
-    .m_axis_tlast(),
-    .m_axis_tid(),
-    .m_axis_tdest(),
-    .m_axis_tuser(),
-
-    .s_status_overflow(),
-    .s_status_bad_frame(),
-    .s_status_good_frame(),
-    .m_status_overflow(),
-    .m_status_bad_frame(),
-    .m_status_good_frame()
-  );
-
-endmodule
-
 module simple_sync_fifo # (
   parameter DEPTH      = 32,
   parameter DATA_WIDTH = 64
@@ -113,7 +53,7 @@ module simple_sync_fifo # (
     .ID_ENABLE(0),
     .DEST_ENABLE(0),
     .USER_ENABLE(0),
-    .PIPELINE_OUTPUT(1),
+    .PIPELINE_OUTPUT(2),
     .FRAME_FIFO(0)
   ) sync_fifo_inst (
     .clk(clk),

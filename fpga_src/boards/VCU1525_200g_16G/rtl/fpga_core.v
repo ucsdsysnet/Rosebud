@@ -745,8 +745,8 @@ pcie_config # (
   .BOARD_VER(BOARD_VER),
   .FPGA_ID(FPGA_ID)
 ) pcie_config_inst (
-  .pcie_clk(pcie_clk),
-  .pcie_rst(pcie_rst),
+  .clk(pcie_clk),
+  .rst(pcie_rst),
 
   // AXI lite
   .axil_ctrl_awaddr(axil_ctrl_awaddr),
@@ -822,32 +822,99 @@ pcie_config # (
 );
 
 // Clock crossing for host cmd and latching the output
-wire [31:0] host_cmd_n;
-wire [31:0] host_cmd_wr_data_n;
-wire        host_cmd_valid_n;
+wire [31:0] host_cmd_f;
+wire [31:0] host_cmd_wr_data_f;
+wire        host_cmd_valid_f;
+
+reg  [31:0] host_cmd_n;
+reg  [31:0] host_cmd_wr_data_n;
+reg         host_cmd_valid_n;
 reg  [31:0] host_cmd_rd_data_n;
+reg         host_to_cores_wr_n;
+reg         host_to_ints_wr_n;
 
-reg  [31:0] host_cmd_r;
-reg  [31:0] host_cmd_wr_data_r;
-reg         host_cmd_valid_r;
-reg         host_to_cores_wr_r;
-reg         host_to_ints_wr_r;
+wire [31:0] host_cmd_r;
+wire [31:0] host_cmd_wr_data_r;
+wire        host_cmd_valid_r;
+wire [31:0] host_cmd_rd_data_r;
+wire        host_to_cores_wr_r;
+wire        host_to_ints_wr_r;
 
-simple_async_fifo # (
-  .DEPTH(4),
-  .DATA_WIDTH(64)
+axis_async_fifo # (
+  .DEPTH(2),
+  .DATA_WIDTH(64),
+  .KEEP_ENABLE(0),
+  .KEEP_WIDTH(1),
+  .LAST_ENABLE(0),
+  .ID_ENABLE(0),
+  .DEST_ENABLE(0),
+  .USER_ENABLE(0),
+  .FRAME_FIFO(0),
+  .PIPELINE_OUTPUT(2)
 ) host_cmd_async_fifo (
-  .din_clk(pcie_clk),
-  .din_rst(pcie_rst),
-  .din_valid(host_cmd_valid),
-  .din({host_cmd_wr_data, host_cmd}),
-  .din_ready(host_cmd_ready),
+  .s_clk(pcie_clk),
+  .s_rst(pcie_rst),
+  .s_axis_tdata({host_cmd_wr_data, host_cmd}),
+  .s_axis_tkeep(1'b0),
+  .s_axis_tvalid(host_cmd_valid),
+  .s_axis_tready(host_cmd_ready),
+  .s_axis_tlast(1'b1),
+  .s_axis_tid(8'd0),
+  .s_axis_tdest(8'd0),
+  .s_axis_tuser(1'b0),
 
-  .dout_clk(sys_clk),
-  .dout_rst(sys_rst_r),
-  .dout_valid(host_cmd_valid_n),
-  .dout({host_cmd_wr_data_n, host_cmd_n}),
-  .dout_ready(1'b1)
+  .m_clk(sys_clk),
+  .m_rst(sys_rst_r),
+  .m_axis_tdata({host_cmd_wr_data_f, host_cmd_f}),
+  .m_axis_tkeep(),
+  .m_axis_tvalid(host_cmd_valid_f),
+  .m_axis_tready(1'b1),
+  .m_axis_tlast(),
+  .m_axis_tid(),
+  .m_axis_tdest(),
+  .m_axis_tuser(),
+
+  .s_status_overflow(),
+  .s_status_bad_frame(),
+  .s_status_good_frame(),
+  .m_status_overflow(),
+  .m_status_bad_frame(),
+  .m_status_good_frame()
+);
+
+always @ (posedge sys_clk) begin
+  if (sys_rst_r) begin
+    host_cmd_valid_n   <= 1'b0;
+    host_to_cores_wr_n <= 1'b0;
+    host_to_ints_wr_n  <= 1'b0;
+  end else begin
+    host_cmd_valid_n   <= host_cmd_valid_f;
+    host_to_cores_wr_n <= host_cmd_valid_f &&
+                         (host_cmd_f[31:30]==2'b00) && host_cmd_f[29];
+    host_to_ints_wr_n  <= host_cmd_valid_f &&
+                         (host_cmd_f[31:30]==2'b01) && host_cmd_f[29];
+  end
+
+  if (host_cmd_valid_f) begin
+    host_cmd_n         <= host_cmd_f;
+    host_cmd_wr_data_n <= host_cmd_wr_data_f;
+  end
+
+end
+
+sync_signal #(.WIDTH(32+32+3), .N(4)) host_cmd_wr_pipe_reg (
+  .clk(sys_clk),
+  .in( {host_cmd_wr_data_n, host_cmd_n, host_cmd_valid_n,
+        host_to_cores_wr_n, host_to_ints_wr_n}),
+  .out({host_cmd_wr_data_r, host_cmd_r, host_cmd_valid_r,
+        host_to_cores_wr_r, host_to_ints_wr_r})
+);
+
+// Clock crossing and pipe register for host readback
+sync_signal #(.WIDTH(32), .N(4)) host_cmd_rd_pipe_reg (
+  .clk(sys_clk),
+  .in(host_cmd_rd_data_n),
+  .out(host_cmd_rd_data_r)
 );
 
 simple_sync_sig # (
@@ -856,29 +923,9 @@ simple_sync_sig # (
 ) host_cmd_rd_data_syncer (
   .dst_clk(pcie_clk),
   .dst_rst(pcie_rst),
-  .in(host_cmd_rd_data_n),
+  .in(host_cmd_rd_data_r),
   .out(host_cmd_rd_data)
 );
-
-always @ (posedge sys_clk) begin
-  if (sys_rst_r) begin
-    host_cmd_valid_r   <= 1'b0;
-    host_to_cores_wr_r <= 1'b0;
-    host_to_ints_wr_r  <= 1'b0;
-  end else begin
-    host_cmd_valid_r   <= host_cmd_valid_n;
-    host_to_cores_wr_r <= host_cmd_valid_n &&
-                         (host_cmd_n[31:30]==2'b00) && host_cmd_n[29];
-    host_to_ints_wr_r  <= host_cmd_valid_n &&
-                         (host_cmd_n[31:30]==2'b01) && host_cmd_n[29];
-  end
-
-  if (host_cmd_valid_n) begin
-    host_cmd_r         <= host_cmd_n;
-    host_cmd_wr_data_r <= host_cmd_wr_data_n;
-  end
-
-end
 
 // Splitting the host cmd and going to core clk domain
 wire [1:0]            host_cmd_type     = host_cmd_r[31:30];
@@ -1277,10 +1324,10 @@ scheduler_PR scheduler_PR_inst (
   .ctrl_s_axis_tuser(sched_ctrl_s_axis_tuser),
 
   // Host wr/rd commands
-  .host_cmd         (host_cmd),
-  .host_cmd_wr_data (host_cmd_wr_data),
+  .host_cmd         (host_cmd_r),
+  .host_cmd_wr_data (host_cmd_wr_data_r),
   .host_cmd_rd_data (host_rd_sched_data),
-  .host_cmd_valid   (host_cmd_valid)
+  .host_cmd_valid   (host_cmd_valid_r)
 );
 
 // MUX between host commands and scheduler requests

@@ -27,6 +27,7 @@ VERILOG_SOURCES += $(RTL_DIR)/fpga_core.v
 VERILOG_SOURCES += $(RTL_DIR)/Gousheh_PR.v
 VERILOG_SOURCES += $(RTL_DIR)/RR_LU_scheduler_PR.v
 VERILOG_SOURCES += $(RTL_DIR)/pcie_config.v
+VERILOG_SOURCES += $(RTL_DIR)/sync_signal.v
 
 VERILOG_SOURCES += $(SHIRE)/simple_fifo.v
 VERILOG_SOURCES += $(SHIRE)/max_finder_tree.v
