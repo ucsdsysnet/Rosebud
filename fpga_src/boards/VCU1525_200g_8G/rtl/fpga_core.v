@@ -666,8 +666,9 @@ wire [CORE_WIDTH-1:0]      dram_ctrl_s_axis_tdest;
 // pcie_config connections
 wire [31:0]                host_cmd;
 wire [31:0]                host_cmd_wr_data;
-reg  [31:0]                host_cmd_rd_data;
+wire [31:0]                host_cmd_rd_data;
 wire                       host_cmd_valid;
+wire                       host_cmd_ready;
 
 wire                       pcie_dma_enable;
 wire [31:0]                vif_irq;
@@ -736,20 +737,14 @@ pcie_config # (
   .AXIL_DATA_WIDTH(AXIL_DATA_WIDTH),
   .AXIL_STRB_WIDTH(AXIL_STRB_WIDTH),
   .AXIL_ADDR_WIDTH(AXIL_ADDR_WIDTH),
-  .CORE_COUNT(CORE_COUNT),
-  .ID_TAG_WIDTH(ID_TAG_WIDTH),
-  .INTERFACE_WIDTH(PORT_WIDTH),
   .IF_COUNT(V_IF_COUNT),
   .PORTS_PER_IF(PORTS_PER_V_IF),
   .FW_ID(FW_ID),
   .FW_VER(FW_VER),
   .BOARD_ID(BOARD_ID),
   .BOARD_VER(BOARD_VER),
-  .FPGA_ID(FPGA_ID),
-  .SEPARATE_CLOCKS(SEPARATE_CLOCKS)
+  .FPGA_ID(FPGA_ID)
 ) pcie_config_inst (
-  .sys_clk(sys_clk),
-  .sys_rst(sys_rst_r),
   .pcie_clk(pcie_clk),
   .pcie_rst(pcie_rst),
 
@@ -818,6 +813,7 @@ pcie_config # (
   .host_cmd_wr_data(host_cmd_wr_data),
   .host_cmd_rd_data(host_cmd_rd_data),
   .host_cmd_valid  (host_cmd_valid),
+  .host_cmd_ready  (host_cmd_ready),
 
   .pcie_dma_enable    (pcie_dma_enable),
   .corundum_loopback  (),
@@ -825,112 +821,120 @@ pcie_config # (
   .msi_irq            (msi_irq)
 );
 
-// Latch host command
-reg                   host_cmd_valid_r;
-reg [31:0]            host_cmd_data_r;
-reg [31:0]            host_cmd_r;
+// Clock crossing for host cmd and latching the output
+wire [31:0] host_cmd_n;
+wire [31:0] host_cmd_wr_data_n;
+wire        host_cmd_valid_n;
+reg  [31:0] host_cmd_rd_data_n;
+
+reg  [31:0] host_cmd_r;
+reg  [31:0] host_cmd_wr_data_r;
+reg         host_cmd_valid_r;
+reg         host_to_cores_wr_r;
+reg         host_to_ints_wr_r;
+
+simple_async_fifo # (
+  .DEPTH(4),
+  .DATA_WIDTH(64)
+) host_cmd_async_fifo (
+  .din_clk(pcie_clk),
+  .din_rst(pcie_rst),
+  .din_valid(host_cmd_valid),
+  .din({host_cmd_wr_data, host_cmd}),
+  .din_ready(host_cmd_ready),
+
+  .dout_clk(sys_clk),
+  .dout_rst(sys_rst_r),
+  .dout_valid(host_cmd_valid_n),
+  .dout({host_cmd_wr_data_n, host_cmd_n}),
+  .dout_ready(1'b1)
+);
+
+simple_sync_sig # (
+  .RST_VAL(1'b0),
+  .WIDTH(32)
+) host_cmd_rd_data_syncer (
+  .dst_clk(pcie_clk),
+  .dst_rst(pcie_rst),
+  .in(host_cmd_rd_data_n),
+  .out(host_cmd_rd_data)
+);
 
 always @ (posedge sys_clk) begin
-  if (sys_rst)
-    host_cmd_valid_r <= 1'b0;
-  else
-    host_cmd_valid_r <= host_cmd_valid;
-
-  if (host_cmd_valid) begin
-    host_cmd_r      <= host_cmd;
-    host_cmd_data_r <= host_cmd_wr_data;
+  if (sys_rst_r) begin
+    host_cmd_valid_r   <= 1'b0;
+    host_to_cores_wr_r <= 1'b0;
+    host_to_ints_wr_r  <= 1'b0;
+  end else begin
+    host_cmd_valid_r   <= host_cmd_valid_n;
+    host_to_cores_wr_r <= host_cmd_valid_n &&
+                         (host_cmd_n[31:30]==2'b00) && host_cmd_n[29];
+    host_to_ints_wr_r  <= host_cmd_valid_n &&
+                         (host_cmd_n[31:30]==2'b01) && host_cmd_n[29];
   end
+
+  if (host_cmd_valid_n) begin
+    host_cmd_r         <= host_cmd_n;
+    host_cmd_wr_data_r <= host_cmd_wr_data_n;
+  end
+
 end
 
-// Host command read from stat readers and mux with scheduler read
-reg  [31:0] core_stat_data_muxed;
-wire [31:0] core_stat_data_muxed_r;
-wire [31:0] interface_in_stat_data;
-wire [31:0] interface_out_stat_data;
-wire [31:0] interface_in_stat_data_r;
-wire [31:0] interface_out_stat_data_r;
-wire [31:0] host_rd_sched_data;
-wire [31:0] host_rd_sched_data_r;
+// Splitting the host cmd and going to core clk domain
+wire [1:0]            host_cmd_type     = host_cmd_r[31:30];
+wire [CORE_WIDTH-1:0] host_core_select1 = host_cmd_r[CORE_WIDTH+4-1:4];
+wire [PORT_WIDTH-1:0] interface_sel     = host_cmd_r[PORT_WIDTH+4-1:4];
+wire [3:0]            host_reg_sel      = host_cmd_r[3:0];
+wire [1:0]            interface_reg_sel = host_cmd_r[1:0];
 
-wire                  host_to_cores_wr;
-wire                  host_to_ints_wr;
-wire                  host_to_cores_wr_r;
-wire                  host_to_ints_wr_r;
-// Assuming # of cores > # of ints
-wire [CORE_WIDTH-1:0] core_int_select_r;
-wire [3:0]            host_reg_r;
-wire [31:0]           host_cmd_wr_data_r;
-wire [1:0]            host_cmd_type;
+wire [CORE_WIDTH-1:0] host_core_select2;
+wire [3:0]            host_reg_core;
 
-assign host_to_cores_wr = host_cmd_valid_r && (host_cmd_r[31:30]==2'b00) && host_cmd_r[29];
-assign host_to_ints_wr  = host_cmd_valid_r && (host_cmd_r[31:30]==2'b01) && host_cmd_r[29];
+simple_sync_sig # (.RST_VAL(1'b0),.WIDTH(CORE_WIDTH+4)) host_to_core_sync_reg (
+  .dst_clk(core_clk),
+  .dst_rst(core_rst_r),
+  .in({host_cmd_r[CORE_WIDTH+4-1:4], host_cmd_r[3:0]}),
+  .out({host_core_select2, host_reg_core})
+);
 
-if (SEPARATE_CLOCKS) begin
-  simple_sync_sig # (.RST_VAL(1'b0),.WIDTH(1+1+2+CORE_WIDTH+4+32)) host_cmd_sync_reg (
-    .dst_clk(core_clk),
-    .dst_rst(core_rst_r),
-    .in({host_to_cores_wr, host_to_ints_wr, host_cmd_r[31:30],
-         host_cmd_r[CORE_WIDTH+4-1:4], host_cmd_r[3:0], host_cmd_data_r}),
-    .out({host_to_cores_wr_r, host_to_ints_wr_r, host_cmd_type,
-          core_int_select_r, host_reg_r, host_cmd_wr_data_r})
-  );
 
-  simple_sync_sig # (.RST_VAL(1'b0),.WIDTH(4*32)) host_cmd_rd_data_sync_reg (
-    .dst_clk(sys_clk),
-    .dst_rst(stat_rst_r),
-    .in ({core_stat_data_muxed,     host_rd_sched_data,
-          interface_in_stat_data,   interface_out_stat_data}),
-    .out({core_stat_data_muxed_r,   host_rd_sched_data_r,
-          interface_in_stat_data_r, interface_out_stat_data_r})
-  );
-end else begin
-  assign {host_to_cores_wr_r, host_to_ints_wr_r, host_cmd_type,
-          core_int_select_r, host_reg_r, host_cmd_wr_data_r} =
-         {host_to_cores_wr, host_to_ints_wr, host_cmd_r[31:30],
-          host_cmd_r[CORE_WIDTH+4-1:4], host_cmd_r[3:0], host_cmd_data_r};
-
-  assign {core_stat_data_muxed_r,   host_rd_sched_data_r,
-          interface_in_stat_data_r, interface_out_stat_data_r} =
-         {core_stat_data_muxed,     host_rd_sched_data,
-          interface_in_stat_data,   interface_out_stat_data};
-end
-
-// Only interface write
+// Interface has only one type of write
 always @ (posedge sys_clk)
   if (sys_rst_r)
     rx_int_enable <= {SCHED_PORT_COUNT{1'b1}};
   else if (host_to_ints_wr_r)
     rx_int_enable <= host_cmd_wr_data_r[SCHED_PORT_COUNT-1:0];
 
-wire [1:0]            interface_reg_sel;
-wire                  interface_dir;
-wire [PORT_WIDTH-1:0] interface_sel;
-// Selecting between interface reads
-assign interface_reg_sel = host_reg_r[1:0];
-assign interface_sel     = core_int_select_r[PORT_WIDTH-1:0];
-
 reg [RX_LINES_WIDTH-1:0] rx_line_muxed;
 always @ (posedge sys_clk)
   rx_line_muxed <= rx_line_count_r[interface_sel*RX_LINES_WIDTH +: RX_LINES_WIDTH];
 
+// Host command read from stat readers and mux with scheduler read
+wire [31:0] interface_in_stat_data;
+wire [31:0] interface_out_stat_data;
+wire [31:0] host_rd_sched_data;
 reg  [31:0] int_stat_data_muxed;
+
 always @ (*) begin
-  casex (host_reg_r)
+  casex (host_reg_sel)
     4'b0000: int_stat_data_muxed = {{(32-SCHED_PORT_COUNT){1'b0}}, rx_int_enable};
     4'b0100: int_stat_data_muxed = {{(32-RX_LINES_WIDTH){1'b0}}, rx_line_muxed};
-    4'b10??: int_stat_data_muxed = interface_in_stat_data_r;
-    4'b11??: int_stat_data_muxed = interface_out_stat_data_r;
+    4'b10??: int_stat_data_muxed = interface_in_stat_data;
+    4'b11??: int_stat_data_muxed = interface_out_stat_data;
     default: int_stat_data_muxed = 32'hFEFEFEFE;
   endcase
 end
 
 // Selecting between read data to the host
+wire [31:0] core_stat_data_muxed;
+
 always @ (posedge sys_clk)
   casex (host_cmd_type)
-    2'b00: host_cmd_rd_data <= core_stat_data_muxed_r;
-    2'b01: host_cmd_rd_data <= int_stat_data_muxed;
-    2'b1?: host_cmd_rd_data <= host_rd_sched_data_r;
+    2'b00: host_cmd_rd_data_n <= core_stat_data_muxed;
+    2'b01: host_cmd_rd_data_n <= int_stat_data_muxed;
+    2'b1?: host_cmd_rd_data_n <= host_rd_sched_data;
   endcase
+
 
 if (V_PORT_COUNT==0) begin: no_veth
 
@@ -1283,9 +1287,9 @@ scheduler_PR scheduler_PR_inst (
 assign sched_ctrl_m_axis_tvalid   =   host_to_cores_wr_r  || sched_ctrl_m_axis_tvalid_n;
 assign sched_ctrl_m_axis_tready_n = (!host_to_cores_wr_r) && sched_ctrl_m_axis_tready;
 
-assign sched_ctrl_m_axis_tdata    =   host_to_cores_wr_r ? {host_reg_r, host_cmd_wr_data_r}
+assign sched_ctrl_m_axis_tdata    =   host_to_cores_wr_r ? {host_reg_sel, host_cmd_wr_data_r}
                                                          : sched_ctrl_m_axis_tdata_n;
-assign sched_ctrl_m_axis_tdest    =   host_to_cores_wr_r ? core_int_select_r
+assign sched_ctrl_m_axis_tdest    =   host_to_cores_wr_r ? host_core_select1
                                                          : sched_ctrl_m_axis_tdest_n;
 
 // Switches
@@ -1773,7 +1777,7 @@ wire [CORE_COUNT*32-1:0] core_stat_data;
 reg [BC_MSG_CLUSTERS*32-1:0] core_stat_data_rr;
 
 always @ (posedge core_clk) begin
-  core_select_r    <= {core_int_select_r, host_reg_r};
+  core_select_r    <= {host_core_select2, host_reg_core};
   core_select_rr   <= {BC_MSG_CLUSTERS{core_select_r[LAST_SEL_BITS-1:0]}};
   core_stat_data_r <= core_stat_data;
 end
@@ -1800,14 +1804,25 @@ generate
   end
 endgenerate
 
+reg  [31:0] core_stat_data_muxed_n;
+
 if (BC_MSG_CLUSTERS == 1) begin: single_cluster
   always @ (posedge core_clk)
-    core_stat_data_muxed <= core_stat_data_rr;
+    core_stat_data_muxed_n <= core_stat_data_rr;
 end else begin: cluster_stat_sel
   always @ (posedge core_clk)
-    core_stat_data_muxed <=
+    core_stat_data_muxed_n <=
       core_stat_data_rr[core_select_r[CORE_WIDTH+4-1:LAST_SEL_BITS]*32  +: 32];
 end
+
+// Core stat clock crossing or extra pipe registesr
+simple_sync_sig # (.RST_VAL(1'b0),.WIDTH(32)) core_stat_data_sync_reg (
+  .dst_clk(sys_clk),
+  .dst_rst(sys_rst_r),
+  .in (core_stat_data_muxed_n),
+  .out(core_stat_data_muxed)
+);
+
 
 // Instantiating riscv core wrappers
 genvar i;

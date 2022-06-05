@@ -37,7 +37,7 @@ parameter AXIS_PCIE_RC_USER_WIDTH = 161;
 parameter AXIS_PCIE_RQ_USER_WIDTH = 137;
 parameter AXIS_PCIE_CQ_USER_WIDTH = 183;
 parameter AXIS_PCIE_CC_USER_WIDTH = 81;
-parameter RQ_SEQ_NUM_WIDTH        = 6; 
+parameter RQ_SEQ_NUM_WIDTH        = 6;
 parameter BAR0_APERTURE = 24;
 parameter AXIS_ETH_DATA_WIDTH = 512;
 parameter AXIS_ETH_KEEP_WIDTH = AXIS_ETH_DATA_WIDTH/8;
@@ -226,11 +226,11 @@ fpga_core #(
     .qsfp1_intl(),
     .qsfp1_lpmode()
 );
-  
+
 integer i, f;
 initial begin
   if (TB_LOG) begin
-    f = $fopen("ctrl_log.txt","w"); 
+    f = $fopen("ctrl_log.txt","w");
     $timeformat(-9, 0, "ns", 8);
   end
   if (INIT_ROMS) begin
@@ -242,12 +242,12 @@ initial begin
 end
 
 if (TB_LOG) begin
-  
+
   wire [3:0] ctrl_s_type      = UUT.scheduler.ctrl_s_axis_tdata[35:32];
   wire [3:0] ctrl_s_dest_core = UUT.scheduler.ctrl_s_axis_tdata[27:24];
   wire [3:0] ctrl_s_src_slot  = UUT.scheduler.ctrl_s_axis_tdata[19:16];
   wire [3:0] ctrl_s_src_core  = UUT.scheduler.ctrl_s_axis_tuser;
-  
+
   always @ (posedge UUT.scheduler.clk) begin
     if (UUT.scheduler.ctrl_s_axis_tvalid && UUT.scheduler.ctrl_s_axis_tready)
       case (ctrl_s_type)

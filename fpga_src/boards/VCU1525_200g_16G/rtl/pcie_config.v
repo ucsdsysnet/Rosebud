@@ -36,22 +36,14 @@ module pcie_config # (
   parameter AXIL_DATA_WIDTH         = 32,
   parameter AXIL_STRB_WIDTH         = (AXIL_DATA_WIDTH/8),
   parameter AXIL_ADDR_WIDTH         = 32,
-  parameter CORE_COUNT              = 16,
-  parameter CORE_WIDTH              = $clog2(CORE_COUNT),
-  parameter ID_TAG_WIDTH            = 9,
-  parameter INTERFACE_WIDTH         = 4,
   parameter IF_COUNT                = 2,
   parameter PORTS_PER_IF            = 1,
   parameter FW_ID                   = 32'd0,
   parameter FW_VER                  = {16'd0, 16'd1},
   parameter BOARD_ID                = {16'h1ce4, 16'h0003},
   parameter BOARD_VER               = {16'd0, 16'd1},
-  parameter FPGA_ID                 = 32'h3823093,
-  parameter CMD_FIFO_DEPTH          = 4,
-  parameter SEPARATE_CLOCKS         = 1
+  parameter FPGA_ID                 = 32'h3823093
 ) (
-  input  wire                           sys_clk,
-  input  wire                           sys_rst,
   input  wire                           pcie_clk,
   input  wire                           pcie_rst,
 
@@ -116,10 +108,11 @@ module pcie_config # (
   output reg                            qsfp1_lpmode,
 
   // Host commands
-  output wire [31:0]                    host_cmd,
-  output wire                           host_cmd_valid,
-  output wire [31:0]                    host_cmd_wr_data,
+  output reg  [31:0]                    host_cmd,
+  output reg  [31:0]                    host_cmd_wr_data,
   input  wire [31:0]                    host_cmd_rd_data,
+  output reg                            host_cmd_valid,
+  input  wire                           host_cmd_ready,
 
   // PCIe DMA enable and interrupts
   output reg                            pcie_dma_enable,
@@ -131,13 +124,6 @@ module pcie_config # (
 // Interface and port count, and address space allocation. If corundum is used.
 parameter IF_AXIL_ADDR_WIDTH  = AXIL_ADDR_WIDTH-$clog2(IF_COUNT);
 parameter AXIL_CSR_ADDR_WIDTH = IF_AXIL_ADDR_WIDTH-5-$clog2((PORTS_PER_IF+3)/8);
-
-// Registers set by AXIL
-reg  [31:0]                 host_cmd_r;
-reg  [31:0]                 host_cmd_wr_data_r;
-reg                         host_cmd_valid_r;
-wire                        host_cmd_ready_r;
-wire [31:0]                 host_cmd_rd_data_r;
 
 // State registers for readback
 reg [HOST_DMA_TAG_WIDTH-1:0]  host_dma_read_status_tags;
@@ -187,7 +173,7 @@ always @(posedge pcie_clk) begin
 
         host_dma_read_desc_valid   <= 1'b0;
         host_dma_write_desc_valid  <= 1'b0;
-        host_cmd_valid_r           <= 1'b0;
+        host_cmd_valid             <= 1'b0;
         host_dma_read_status_tags  <= {HOST_DMA_TAG_WIDTH{1'b0}};
         host_dma_write_status_tags <= {HOST_DMA_TAG_WIDTH{1'b0}};
         pcie_dma_enable            <= 1'b1;
@@ -210,7 +196,7 @@ always @(posedge pcie_clk) begin
 
         host_dma_read_desc_valid  <= host_dma_read_desc_valid && !host_dma_read_desc_ready;
         host_dma_write_desc_valid <= host_dma_write_desc_valid && !host_dma_write_desc_ready;
-        host_cmd_valid_r          <= host_cmd_valid_r && !host_cmd_ready_r;
+        host_cmd_valid            <= host_cmd_valid && !host_cmd_ready;
 
         if (axil_ctrl_awvalid && axil_ctrl_wvalid && !axil_ctrl_bvalid) begin
             // write operation
@@ -242,11 +228,11 @@ always @(posedge pcie_clk) begin
                 end
 
                 // Cores control
-                16'h0400: pcie_dma_enable    <= axil_ctrl_wdata[0];
-                16'h0404: host_cmd_wr_data_r <= axil_ctrl_wdata;
+                16'h0400: pcie_dma_enable  <= axil_ctrl_wdata[0];
+                16'h0404: host_cmd_wr_data <= axil_ctrl_wdata;
                 16'h0408: begin
-                    host_cmd_r       <= axil_ctrl_wdata;
-                    host_cmd_valid_r <= 1'b1;
+                    host_cmd       <= axil_ctrl_wdata;
+                    host_cmd_valid <= 1'b1;
                 end
 
                 // DMA request
@@ -311,7 +297,7 @@ always @(posedge pcie_clk) begin
 
                 // Cores control and DMA request response
                 16'h0400: axil_ctrl_rdata <= pcie_dma_enable;
-                16'h0404: axil_ctrl_rdata <= host_cmd_rd_data_r;
+                16'h0404: axil_ctrl_rdata <= host_cmd_rd_data;
                 16'h0458: axil_ctrl_rdata <= host_dma_read_status_tags;
                 16'h0478: axil_ctrl_rdata <= host_dma_write_status_tags;
                 16'h0480: axil_ctrl_rdata <= corundum_loopback;
@@ -403,90 +389,6 @@ always @(posedge pcie_clk)
 
 // assign msi_irq[0] = host_dma_read_desc_status_valid || host_dma_write_desc_status_valid;
 assign msi_irq = if_msi_irq;
-
-if (SEPARATE_CLOCKS) begin
-
-  wire sys_rst_r;
-  sync_reset sync_rst_inst (
-    .clk(sys_clk),
-    .rst(sys_rst),
-    .out(sys_rst_r)
-  );
-
-  // Time domain crossing
-  simple_async_fifo # (
-    .DEPTH(CMD_FIFO_DEPTH),
-    .DATA_WIDTH(32)
-  ) host_cmd_async_fifo (
-    .din_clk(pcie_clk),
-    .din_rst(pcie_rst),
-    .din_valid(host_cmd_valid_r),
-    .din(host_cmd_r),
-    .din_ready(host_cmd_ready_r),
-
-    .dout_clk(sys_clk),
-    .dout_rst(sys_rst_r),
-    .dout_valid(host_cmd_valid),
-    .dout(host_cmd),
-    .dout_ready(1'b1)
-  );
-
-  simple_sync_sig # (
-    .RST_VAL(1'b0),
-    .WIDTH(32)
-  ) host_cmd_wr_data_syncer (
-    .dst_clk(sys_clk),
-    .dst_rst(sys_rst_r),
-    .in(host_cmd_wr_data_r),
-    .out(host_cmd_wr_data)
-  );
-
-  simple_sync_sig # (
-    .RST_VAL(1'b0),
-    .WIDTH(32)
-  ) host_cmd_rd_data_syncer (
-    .dst_clk(pcie_clk),
-    .dst_rst(pcie_rst),
-    .in(host_cmd_rd_data),
-    .out(host_cmd_rd_data_r)
-  );
-end else begin
-  simple_sync_fifo # (
-    .DEPTH(CMD_FIFO_DEPTH),
-    .DATA_WIDTH(32)
-  ) host_cmd_sync_fifo (
-    .clk(pcie_clk),
-    .rst(pcie_rst),
-
-    .din_valid(host_cmd_valid_r),
-    .din(host_cmd_r),
-    .din_ready(host_cmd_ready_r),
-
-    .dout_valid(host_cmd_valid),
-    .dout(host_cmd),
-    .dout_ready(1'b1)
-  );
-
-  simple_sync_sig # (
-    .RST_VAL(1'b0),
-    .WIDTH(32)
-  ) host_cmd_wr_data_syncer (
-    .dst_clk(pcie_clk),
-    .dst_rst(pcie_rst),
-    .in(host_cmd_wr_data_r),
-    .out(host_cmd_wr_data)
-  );
-
-  simple_sync_sig # (
-    .RST_VAL(1'b0),
-    .WIDTH(32)
-  ) host_cmd_rd_data_syncer (
-    .dst_clk(pcie_clk),
-    .dst_rst(pcie_rst),
-    .in (host_cmd_rd_data),
-    .out(host_cmd_rd_data_r)
-  );
-end
 
 endmodule
 
