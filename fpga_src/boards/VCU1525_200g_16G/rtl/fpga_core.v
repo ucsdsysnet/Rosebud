@@ -902,7 +902,7 @@ always @ (posedge sys_clk) begin
 
 end
 
-sync_signal #(.WIDTH(32+32+3), .N(4)) host_cmd_wr_pipe_reg (
+sync_signal #(.WIDTH(32+32+3), .N(2)) host_cmd_wr_pipe_reg (
   .clk(sys_clk),
   .in( {host_cmd_wr_data_n, host_cmd_n, host_cmd_valid_n,
         host_to_cores_wr_n, host_to_ints_wr_n}),
@@ -911,7 +911,7 @@ sync_signal #(.WIDTH(32+32+3), .N(4)) host_cmd_wr_pipe_reg (
 );
 
 // Clock crossing and pipe register for host readback
-sync_signal #(.WIDTH(32), .N(4)) host_cmd_rd_pipe_reg (
+sync_signal #(.WIDTH(32), .N(2)) host_cmd_rd_pipe_reg (
   .clk(sys_clk),
   .in(host_cmd_rd_data_n),
   .out(host_cmd_rd_data_r)

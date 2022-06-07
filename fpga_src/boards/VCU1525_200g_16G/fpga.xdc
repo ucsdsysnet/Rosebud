@@ -545,8 +545,7 @@ resize_pblock [get_pblocks MAC_n_FIFOs] -add {ILKNE4_X0Y6:ILKNE4_X0Y6}
 resize_pblock [get_pblocks MAC_n_FIFOs] -add {PCIE40E4_X0Y5:PCIE40E4_X0Y5}
 resize_pblock [get_pblocks MAC_n_FIFOs] -add {RAMB18_X0Y246:RAMB18_X1Y359}
 resize_pblock [get_pblocks MAC_n_FIFOs] -add {RAMB36_X0Y123:RAMB36_X1Y179}
-set_property IS_SOFT FALSE [get_pblocks MAC_n_FIFOs]
-# set_property EXCLUDE_PLACEMENT 1 [get_pblocks MAC_n_FIFOs]
+set_property IS_SOFT TRUE [get_pblocks MAC_n_FIFOs]
 
 # Center PBlock for first level switches, loopback module, and stat readers
 create_pblock Switch_n_MSGs
@@ -609,10 +608,6 @@ set_property HD.PARTPIN_RANGE {SLICE_X0Y535:SLICE_X50Y539} [get_pins [list core_
 set_property SNAPPING_MODE ON [get_pblocks User_Scheduler]
 set_property IS_SOFT FALSE [get_pblocks User_Scheduler]
 
-# Corundum_pblock and Gousheh PCIe controller
-# create_pblock Corundum_pblock
-# add_cells_to_pblock [get_pblocks Corundum_pblock] [get_cells -quiet [list core_inst/host_cmd_rd_data_sync_reg core_inst/pcie_config_inst core_inst/pcie_controller_inst/pcie_cont_read_inst core_inst/pcie_controller_inst/pcie_cont_write_inst core_inst/pcie_controller_inst/virtual_ports.corundum_inst]]
-
 # PCIe IP and PCIe DMA modules
 create_pblock PCIe_pblock
 add_cells_to_pblock [get_pblocks PCIe_pblock] [get_cells -quiet [list core_inst/pcie_controller_inst/cq_reg core_inst/pcie_controller_inst/dma_if_pcie_us_inst core_inst/pcie_controller_inst/pcie_us_axil_master_inst core_inst/pcie_controller_inst/rc_reg core_inst/pcie_controller_inst/status_error_cor_pm_inst core_inst/pcie_controller_inst/status_error_uncor_pm_inst core_inst/pcie_controller_inst/virtual_ports.dma_if_mux_inst pcie4_uscale_plus_inst pcie_us_cfg_inst pcie_us_msi_inst]]
@@ -627,8 +622,5 @@ resize_pblock [get_pblocks PCIe_pblock] -add {RAMB36_X8Y60:RAMB36_X11Y113}
 resize_pblock [get_pblocks PCIe_pblock] -add {SYSMONE4_X0Y1:SYSMONE4_X0Y1}
 resize_pblock [get_pblocks PCIe_pblock] -add {URAM288_X3Y80:URAM288_X3Y151}
 set_property IS_SOFT FALSE [get_pblocks PCIe_pblock]
-# set_property IS_SOFT TRUE [get_pblocks Corundum_pblock]
-
-# set_property EXCLUDE_PLACEMENT 1 [get_pblocks PCIe_pblock]
 
 
