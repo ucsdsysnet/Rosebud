@@ -513,22 +513,15 @@ generate
             .m_status_good_frame()
         );
 
-        axis_fifo_w_count #(
-            .DEPTH(RX_FIFO_DEPTH),
-            .DATA_WIDTH(AXIS_ETH_DATA_WIDTH),
-            .KEEP_ENABLE(AXIS_ETH_KEEP_WIDTH > 1),
-            .KEEP_WIDTH(AXIS_ETH_KEEP_WIDTH),
+        axis_slr_crossing_register # (
+            .DATA_WIDTH(LVL1_DATA_WIDTH),
+            .KEEP_ENABLE(LVL1_STRB_WIDTH > 1),
+            .KEEP_WIDTH(LVL1_STRB_WIDTH),
             .LAST_ENABLE(1),
             .ID_ENABLE(0),
             .DEST_ENABLE(0),
-            .USER_ENABLE(0),
-            .PIPELINE_OUTPUT(2),
-            .FRAME_FIFO(1),
-            .USER_BAD_FRAME_VALUE(1'b1),
-            .USER_BAD_FRAME_MASK(1'b1),
-            .DROP_BAD_FRAME(1),
-            .DROP_WHEN_FULL(1)
-        ) mac_rx_fifo_inst (
+            .USER_ENABLE(0)
+        ) mac_rx_pipeline (
             .clk(sys_clk),
             .rst(int_rst_r),
 
@@ -548,23 +541,25 @@ generate
             .m_axis_tlast(port_rx_axis_tlast_r[m]),
             .m_axis_tid(),
             .m_axis_tdest(),
-            .m_axis_tuser(),
-
-            .status_overflow(port_rx_axis_overflow_r[m]),
-            .status_bad_frame(port_rx_axis_bad_frame_r[m]),
-            .status_good_frame(),
-            .status_line_count(port_rx_axis_line_count_r[m*RX_LINES_WIDTH +: RX_LINES_WIDTH])
+            .m_axis_tuser()
         );
 
-        axis_slr_crossing_register # (
-            .DATA_WIDTH(LVL1_DATA_WIDTH),
-            .KEEP_ENABLE(LVL1_STRB_WIDTH > 1),
-            .KEEP_WIDTH(LVL1_STRB_WIDTH),
+        axis_fifo_w_count #(
+            .DEPTH(RX_FIFO_DEPTH),
+            .DATA_WIDTH(AXIS_ETH_DATA_WIDTH),
+            .KEEP_ENABLE(AXIS_ETH_KEEP_WIDTH > 1),
+            .KEEP_WIDTH(AXIS_ETH_KEEP_WIDTH),
             .LAST_ENABLE(1),
             .ID_ENABLE(0),
             .DEST_ENABLE(0),
-            .USER_ENABLE(0)
-        ) mac_rx_pipeline (
+            .USER_ENABLE(0),
+            .PIPELINE_OUTPUT(2),
+            .FRAME_FIFO(1),
+            .USER_BAD_FRAME_VALUE(1'b1),
+            .USER_BAD_FRAME_MASK(1'b1),
+            .DROP_BAD_FRAME(1),
+            .DROP_WHEN_FULL(1)
+        ) mac_rx_fifo_inst (
             .clk(sys_clk),
             .rst(int_rst_r),
 
@@ -584,7 +579,12 @@ generate
             .m_axis_tlast(rx_axis_tlast[m]),
             .m_axis_tid(),
             .m_axis_tdest(),
-            .m_axis_tuser()
+            .m_axis_tuser(),
+
+            .status_overflow(port_rx_axis_overflow_r[m]),
+            .status_bad_frame(port_rx_axis_bad_frame_r[m]),
+            .status_good_frame(),
+            .status_line_count(port_rx_axis_line_count_r[m*RX_LINES_WIDTH +: RX_LINES_WIDTH])
         );
 
     end
@@ -619,12 +619,11 @@ generate
         end
 
     // Sync reg to help with the timing
-    simple_sync_sig # (
-      .RST_VAL(1'b0),
-      .WIDTH(IF_COUNT*RX_LINES_WIDTH)
+    sync_signal #(
+      .WIDTH(IF_COUNT*RX_LINES_WIDTH),
+      .N(3)
     ) rx_line_count_sync_reg (
-      .dst_clk(sys_clk),
-      .dst_rst(sys_rst),
+      .clk(sys_clk),
       .in(rx_line_count),
       .out(rx_line_count_r)
     );
