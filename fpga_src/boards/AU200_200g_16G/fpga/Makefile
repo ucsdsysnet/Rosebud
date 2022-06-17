@@ -27,6 +27,7 @@ SYN_FILES += lib/Shire/rtl/stat_reader.v
 SYN_FILES += lib/Shire/rtl/mem_sys.v
 SYN_FILES += lib/Shire/rtl/Gousheh_controller.v
 SYN_FILES += lib/Shire/rtl/Gousheh_wrapper.v
+SYN_FILES += lib/Shire/rtl/pipe_reg.v
 SYN_FILES += lib/Shire/rtl/simple_sync_sig.v
 SYN_FILES += lib/Shire/rtl/simple_axis_switch.v
 SYN_FILES += lib/Shire/rtl/axis_ram_switch.v

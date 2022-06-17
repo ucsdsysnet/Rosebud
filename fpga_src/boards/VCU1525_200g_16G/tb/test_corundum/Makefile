@@ -42,6 +42,7 @@ VERILOG_SOURCES += $(SHIRE)/Gousheh_controller.v
 VERILOG_SOURCES += $(SHIRE)/Gousheh_wrapper.v
 VERILOG_SOURCES += $(SHIRE)/mem_sys.v
 VERILOG_SOURCES += $(SHIRE)/simple_arbiter.v
+VERILOG_SOURCES += $(SHIRE)/pipe_reg.v
 VERILOG_SOURCES += $(SHIRE)/simple_sync_sig.v
 VERILOG_SOURCES += $(SHIRE)/simple_axis_switch.v
 VERILOG_SOURCES += $(SHIRE)/axis_ram_switch.v
