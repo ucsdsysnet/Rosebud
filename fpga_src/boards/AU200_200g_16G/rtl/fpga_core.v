@@ -624,7 +624,6 @@ generate
       .N(3)
     ) rx_line_count_sync_reg (
       .clk(sys_clk),
-      .rst(sys_rst_r),
       .in(rx_line_count),
       .out(rx_line_count_r)
     );
@@ -904,7 +903,6 @@ end
 
 pipe_reg #(.WIDTH(32+32+3), .N(4)) host_cmd_wr_pipe_reg (
   .clk(sys_clk),
-  .rst(sys_rst_r),
   .in( {host_cmd_wr_data_n, host_cmd_n, host_cmd_valid_n,
         host_to_cores_wr_n, host_to_ints_wr_n}),
   .out({host_cmd_wr_data_r, host_cmd_r, host_cmd_valid_r,
@@ -914,7 +912,6 @@ pipe_reg #(.WIDTH(32+32+3), .N(4)) host_cmd_wr_pipe_reg (
 // Clock crossing and pipe register for host readback
 pipe_reg #(.WIDTH(32), .N(4)) host_cmd_rd_pipe_reg (
   .clk(sys_clk),
-  .rst(sys_rst_r),
   .in(host_cmd_rd_data_n),
   .out(host_cmd_rd_data_r)
 );

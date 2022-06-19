@@ -36,32 +36,25 @@ module pipe_reg #(
     parameter WIDTH=1, // width of the input and output signals
     parameter N=2 // depth of synchronizer
 )(
-    input wire clk,
-    input wire rst,
+    input  wire             clk,
 
-    input wire [WIDTH-1:0] in,
+    input  wire [WIDTH-1:0] in,
     output wire [WIDTH-1:0] out
 );
 
-reg [WIDTH-1:0] sync_reg [N-1:0];
+ (* srl_style="register", keep="true", shreg_extract="no" *)
+ reg [WIDTH-1:0] sync_reg [N-1:0];
 
-/*
- * The synchronized output is the last register in the pipeline.
- */
-assign out = sync_reg[N-1];
+  integer i;
 
-integer i, k;
-
-always @(posedge clk) begin
+  always @(posedge clk) begin
     sync_reg[0] <= in;
 
-    for (k = 1; k < N; k = k + 1)
-        sync_reg[k] <= sync_reg[k-1];
+    for (i = 1; i < N; i = i + 1)
+      sync_reg[i] <= sync_reg[i-1];
+  end
 
-    if (rst)
-        for (i = 0; i < N; i = i + 1) 
-            sync_reg[i] <= {WIDTH{1'b0}};
-end
+  assign out = sync_reg[N-1];
 
 endmodule
 
