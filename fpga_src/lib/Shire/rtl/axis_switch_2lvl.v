@@ -1183,7 +1183,7 @@ module axis_ram_sw_shrink # (
     genvar k;
     generate
       for (k=0; k<S_COUNT; k=k+1) begin: input_registers
-        axis_slr_crossing_register # (
+        axis_slr_register # (
               .DATA_WIDTH(S_DATA_WIDTH),
               .KEEP_ENABLE(S_KEEP_ENABLE),
               .KEEP_WIDTH(S_KEEP_WIDTH),
@@ -2125,7 +2125,7 @@ module axis_ram_sw_grow # (
     genvar k;
     generate
       for (k=0; k<M_COUNT; k=k+1) begin: output_registers
-        axis_slr_crossing_register # (
+        axis_slr_register # (
               .DATA_WIDTH(M_DATA_WIDTH),
               .KEEP_ENABLE(M_KEEP_ENABLE),
               .KEEP_WIDTH(M_KEEP_WIDTH),

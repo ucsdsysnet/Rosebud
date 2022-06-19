@@ -392,7 +392,7 @@ reg  [SCHED_PORT_COUNT-1:0] rx_int_enable;
 genvar m;
 generate
     for (m=0;m<IF_COUNT;m=m+1) begin: MAC_async_FIFO
-        axis_slr_crossing_register # (
+        axis_slr_register # (
             .DATA_WIDTH(LVL1_DATA_WIDTH),
             .KEEP_ENABLE(LVL1_STRB_WIDTH > 1),
             .KEEP_WIDTH(LVL1_STRB_WIDTH),
@@ -513,7 +513,7 @@ generate
             .m_status_good_frame()
         );
 
-        axis_slr_crossing_register # (
+        axis_slr_register # (
             .DATA_WIDTH(LVL1_DATA_WIDTH),
             .KEEP_ENABLE(LVL1_STRB_WIDTH > 1),
             .KEEP_WIDTH(LVL1_STRB_WIDTH),
