@@ -22,7 +22,6 @@ PCIE_LIB = $(CWD)/../../lib/pcie/rtl
 CORUNDUM_LIB = $(CWD)/../../lib/corundum/rtl
 
 VERILOG_SOURCES  = $(CWD)/../common/$(TOPLEVEL).v
-VERILOG_SOURCES += $(CWD)/../common/FDCE.v
 
 VERILOG_SOURCES += $(RTL_DIR)/fpga_core.v
 VERILOG_SOURCES += $(RTL_DIR)/Gousheh_PR.v
