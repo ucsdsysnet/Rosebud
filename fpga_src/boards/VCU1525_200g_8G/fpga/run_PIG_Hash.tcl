@@ -92,7 +92,7 @@ set_property strategy Performance_ExtraTimingOpt [get_runs impl_PIG_HASH]
 set_property STEPS.POST_ROUTE_PHYS_OPT_DESIGN.IS_ENABLED true [get_runs impl_PIG_HASH]
 set_property STEPS.POST_ROUTE_PHYS_OPT_DESIGN.ARGS.DIRECTIVE Explore [get_runs impl_PIG_HASH]
 set_property -name {STEPS.OPT_DESIGN.ARGS.MORE OPTIONS} -value {-retarget -propconst -sweep -bufg_opt -shift_register_opt -aggressive_remap} -objects [get_runs impl_PIG_HASH]
-# set_property STEPS.PLACE_DESIGN.ARGS.DIRECTIVE Explore [get_runs impl_PIG_HASH]
+set_property STEPS.PLACE_DESIGN.ARGS.DIRECTIVE Explore [get_runs impl_PIG_HASH]
 set_property AUTO_INCREMENTAL_CHECKPOINT 1 [get_runs impl_PIG_HASH]
 
 update_compile_order -fileset Gousheh_PIG
