@@ -1,30 +1,19 @@
-# Targets
-TARGETS:=
-
 # Subdirectories
 SUBDIRS = fpga
 SUBDIRS_CLEAN = $(patsubst %,%.clean,$(SUBDIRS))
 
 # Rules
 .PHONY: all
-all: $(SUBDIRS) $(TARGETS)
-
-.PHONY: $(SUBDIRS)
-$(SUBDIRS):
-	cd $@ && $(MAKE)
-
-.PHONY: $(SUBDIRS_CLEAN)
-$(SUBDIRS_CLEAN):
-	cd $(@:.clean=) && $(MAKE) clean
+all: base_0 FW_RR_1
 
 .PHONY: clean
-clean: $(SUBDIRS_CLEAN)
-	-rm -rf $(TARGETS) vivado* fpga/hd_visual
+clean:
+	rm -rf vivado* *.txt
+	make -C fpga clean
 
-program:
-	#djtgcfg prog -d Atlys --index 0 --file fpga/fpga.bit
+base_0:
+	make -C fpga 2>&1 | tee fpga/run.log
 
-# Runs after main run in order
 FW_RR_1:
 	cd fpga && vivado -nojournal -nolog -mode batch -source run_FW_RR.tcl 2>&1 | tee FW_RR.log
 
