@@ -37,35 +37,52 @@ sudo make install
 ## Building FPGA image:
 The method to generate the image is to go to fpga_src/boards/ and there go the directory with desired number of Reconfigurable packet processors (RSUs). In current implementation, we want 256 packets to be stored in slots as buffer, so we have 16 slots for 16 RSU, and 32 slots for 8 RSU variant. In each of these directories, there are separate make rules for base design and then swapping PR regions with the desired accelerator.
 
-To make the base image, meaning static regions alongside RPUs with no accelerator, do:
-
-```make 2>&1 | tee fpga/run.log```
-
-The default load balancer is round robin for 16 RSU designs, and hash-based load balancer for 8 RSU designs. (currently 16 RSU design is used for firewall and there is no difference between RSUs, the 8 RSU design is used for intrusion detection and we need flow state). If any different load balancer is desired, you can change/add it under the rtl directory (e.g., fpga_src/boards/VCU1525_200g_16G/rtl) and simply replace the load balancer verilog file in the Makefile. For example, change *SYN_FILES += rtl/RR_LU_scheduler_PR.v* in fpga_src/boards/VCU1525_200g_16G/fpga. 
-
-* Unfortunately, top level Verilog file for a reconfigurable module cannot be parametrized in Vivado. Therefore, the load balancer examples are placed in the rtl directory per board. If you want to add a new load balancer, you can follow the suit of putting the parameters right after the module declaration, so only the ports require updates, or use macros.
-
-Now to generate updated RSUs or load balancer you can use other rules in the Makefile. For the VCU1525_200g_16G/ AU200_200g_16G there is only the RSUs with firewall IP, which can be built by:
-
-```make FW_RR_1```
-
-Which would simply run the fpga/run_FW_RR.tcl script. Similarly in VCU1525_200g_8G there are 
+For example, if in fpga_src/boards/VCU1525_200g_8G you do ```make``` it would first build the base image, and then do the Partioanl Reconfiguration (PR) runs in this order:
 ```
+make base_0
 make PIG_Hash_1
 make PIG_base_2
 make PIG_RR_3
 ```
-The numbers at the end indicate the order. PIG_Hash_1 would add Pigasus string matching accelerator to the RSUs. *PIG_base_2* would only update the load balancer to be round robin without changing the RSUs from the base design. And the PIG_RR_3 would merge the first two, meaning taking the RSUs from *PIG_Hash_1* and load balancer from *PIG_base_2*. 
+The numbers at the end indicate the order. The Makefile rules run some tcl scripts underneath located in the fpga directory. *base_0* is the base image with static regions, PIG_Hash_1 (<ins>run_PIG_Hash.tcl</ins>) would add Pigasus string matching accelerator to the RSUs. *PIG_base_2* (run_base_RR.tcl) would only update the load balancer to be round robin without changing the RSUs from the base design. And the PIG_RR_3 (run_PIG_RR_merge.tcl) would merge the first two, meaning taking the RSUs from *PIG_Hash_1* and load balancer from *PIG_base_2*. 
 
-* We can go directly from base to using round robin load balancer and RSUs with Pigasus, but it takes longer and might fail as it might get to challenging for the heuristic algorithms. Actually, fpga/run_PIG_RR.tcl does this, but during development sometimes it met timing and sometimes it did not. 
-
-* Vivado does not support use of child runs (PR runs) in another child run, only you can reuse the PR modules from the parent run (here the base run with static regions). We figured a way around it, fpga/run_PIG_RR_merge.tcl picks the RSUs from *PIG_Hash_1* run and the load balancer from *PIG_base_2* run. 
-
-* If we want to only change one PR run relative to another child, things get more complicated. Using some hacky method that within the run changes some file contents, fpga/run_PIG_RR_inc.tcl can use RSUs from *PIG_Hash_1* and then build the round robin load balancer and attach them. That being said, having an extra child with only the load balancer changed and then merging them is faster and not hacky, and hence that script is just as archive. 
+Similalry VCU1525_200g_16G/ AU200_200g_16G there is only the RSUs with firewall IP, and doing ```make``` would run the following rules:
+```
+make base_0
+make FW_RR_1
+```
+*FW_RR_1* runs the <ins>run_FW_RR.tcl</ins>.
 
 Note that in any of these directories you can remove all the generated files using 
 ```make clean```
 Which is generally useful to avoid undesired reuse of files by Vivado and can cause inconsistent results.
+
+* ```make base_0``` runs tcl scripts in the fpga directory for the base design. <ins>create_project.tcl</ins> generates the project and adds the required files. Then <ins>run_synth.tcl</ins> defines the reonfigurable regions, and runs the synthesize process. Next <ins>run_impl_1.tcl</ins> performs the place and route process. Finally <ins>fpga/generate_bit.tcl</ins> generates the full FPGA image.
+
+* <ins>add_wrapper_rect.tcl</ins> and <ins>hide_rect.tcl</ins> are used for visualization of the pblock for figures. <ins>generate_reports.tcl</ins> generates reports for resource utilization for the PR runs. <ins>force_phys_opt.tcl</ins> is rarely used when Vivado thinks the design does not need any optimization and skips them, and eventually fails. This script forces Vivado to run the optimizations anyways.
+
+* We can go directly from base to using round robin load balancer and RSUs with Pigasus, but it takes longer and might fail as it might get to challenging for the heuristic algorithms. As an example, <ins>run_PIG_RR.tcl</ins> uses this method, but during development iterations sometimes it met timing and sometimes it failed. 
+
+* Vivado does not support use of child runs (PR runs) in another child run, only you can reuse the PR modules from the parent run (here the base run with static regions).If it is only merging the PR regions from the child runs, we can use the non-project mode and add an in_memory project to get around this issue. For example, <ins>run_PIG_RR_merge.tcl</ins> does this and picks the RSUs from *PIG_Hash_1* run and the load balancer from *PIG_base_2* run. However, if we want to only change some of the PR runs relative to another child run, and let the place and route run, things get more complicated. Using some hacky method that within the run changes some file contents from Linux shell, <ins>run_PIG_RR_inc.tcl</ins> can use RSUs from *PIG_Hash_1* and then build the round robin load balancer and attach them. That being said, using an extra child with only the load balancer changed and then merging them is faster and not hacky, and hence that script is just as archive. 
+
+## Adding accelerators:
+Some example accelerators can be found in fpga_src/accel:
+*	<ins>pigasus_sme</ins>: Ported Pigasus string matcher accelerator
+*	<ins>hash</ins>: a hash accelerator for TCP/UDP headers
+*	<ins>ip_matcher</ins>: from-scratch firewall accelerator 
+*	The <ins>archive</ins> directory has our older accelerators such as string matcher based on Aho–Corasick algorithm.
+
+Note that each of these directories have the rtl for the Verilog code, c for the program code, tb for simulations, and python if there are some scripts to generate the Verilog code. 
+
+To connect any accelerator to a RSU, you can use the Verilog interface provided in the accelerator wrapper, for example fpga_src/accel/ip_matcher/rtl/accel_wrap_firewall.v, and simply instantiate your accelerators and set the register MMIO.
+
+To synthesize and then place and route them for FPGA, you can use the tcl scripts in fpga_src/boards/*/fpga as examples and replace the accelerator files. As mentioned above, there are example on how to only change the RSUs, how to change the load balancer, how to change all the PR regions together, how to merge results of these runs, or even how to reuse another PR run in the next one.
+
+## Changing the load balancer
+
+The default load balancer is round robin for 16 RSU designs, and hash-based load balancer for 8 RSU designs. (currently 16 RSU design is used for firewall and there is no difference between RSUs, the 8 RSU design is used for intrusion detection and we need flow state). If any different load balancer is desired, you can change/add it under the rtl directory (e.g., fpga_src/boards/VCU1525_200g_16G/rtl) and simply replace the load balancer Verilog file in the <ins>create_project.tcl</ins> script. For example, change *../rtl/RR_LU_scheduler_PR.v * in fpga_src/boards/VCU1525_200g_16G/fpga/create_project.tcl. 
+
+* Unfortunately, top level Verilog file for a reconfigurable module cannot be parametrized in Vivado. Therefore, the load balancer examples are placed in the rtl directory per board. If you want to add a new load balancer, you can follow the suit of putting the parameters right after the module declaration, so only the ports require updates, or use macros.
 
 ## Programing FPGA and loading the driver:
 There is a micro-usb header on the supported cards, that provides the JTAG interface for programming the bitfile. You can fire up a Vivado and make sure the connection is good to go and select the top bitfile for programming. Another method is to use the host_utils/runtime/loadbit.sh, based on the devices ID. After programming the FPGA, a restart is required for the PCIe IP to properly be recognized. 
@@ -125,17 +142,6 @@ File to load RISCV programs and example C code to monitor the state are in host-
 The Makefile can used to run other tests, and it gets parameters for how many cores to be enabled and programmed (*ENABLE*), and how many cores to receive packets (*RECV*). *ENABLE* and *RECV* are in one-hot representation. *DEBUG* sets which debug register to be monitored, *DEV* sets the desired card (e.g., if more than one is used), and *TEST* sets the program to be loaded. *OUT_FILE* sets the name of output csv log file. As an example and to run our tests, ```make do``` runs the scripts in order: compile the program, firmware load, and start the monitoring process. Finally, The *run_latency* script is used for our latency measurement which uses tcpdump and runs the code for different packet sizes.
 
 You can do Make do for the the default code, which is a forwarder between the two ports, so if you feed the ports from the 100G NICs, you should see bytes/packets in the output.
-
-## Adding accelerators:
-Some example accelerators can be found in fpga_src/accel:
-*	<ins>pigasus_sme</ins>: Ported Pigasus string matcher accelerator
-*	<ins>hash</ins>: a hash accelerator for TCP/UDP headers
-*	<ins>ip_matcher</ins>: from-scratch firewall accelerator 
-*	The <ins>archive</ins> directory has our older accelerators such as string matcher based on Aho–Corasick algorithm.
-
-Note that each of these directories have the rtl for the Verilog code, c for the program code, tb for simulations, and python if there are some scripts to generate the Verilog code. 
-
-To connect any accelerator to a RSU, you can use the Verilog interface provided in the accelerator wrapper, for example fpga_src/accel/ip_matcher/rtl/accel_wrap_firewall.v, and simply instantiate your accelerators and set the register MMIO.
 
 ## Customizing RISCV:
 The generated RISCV Verilog code is placed at fpga_src/lib/Shire/rtl/VexRiscv.v. If you want to configure it differently, go to fpga_src/VexRiscv and do make edit to open the tailored configuration file. After updating the configuration file, doing make in fpga_src/VexRiscv  builds the riscv, and doing make copy copies it to the proper place (fpga_src/lib/Shire/rtl/VexRiscv.v). 
