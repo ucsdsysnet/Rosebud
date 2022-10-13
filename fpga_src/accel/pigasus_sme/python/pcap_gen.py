@@ -215,6 +215,7 @@ def main():
     parser.add_argument('--selected_file', type=str, default=None, help="Selected Rules file")
     parser.add_argument('--summary_file', type=str, default="attack_summary.txt", help="Summary file")
     parser.add_argument('--details_file', type=str, default="attack_details.txt", help="Details file")
+    parser.add_argument('--trimmed_file', type=str, default="trimmed_rules.txt", help="Trimmed ruleset file")
     parser.add_argument('--output_pcap', type=str, default='attack.pcap', help="Pcap output file name")
     parser.add_argument('--pcap_limit', type=int, default=0, help="Max PCAP rules")
     parser.add_argument('--ooo_pkts', type=int, default=0, help="Number of packet to get OOO")
@@ -223,9 +224,10 @@ def main():
     parser.add_argument('--test_packets', type=bool, default=False, help="Add non-matching test packets")
     args = parser.parse_args()
 
-    sumf =  open(args.summary_file, 'w')
-    detf =  open(args.details_file, 'w')
-    pcap = PcapWriter(open(args.output_pcap, 'wb'), sync=True)
+    sumf  =  open(args.summary_file, 'w')
+    detf  =  open(args.details_file, 'w')
+    trimf =  open(args.trimmed_file, 'w')
+    pcap  = PcapWriter(open(args.output_pcap, 'wb'), sync=True)
 
     id_map = {}
     i = 1;
@@ -261,6 +263,7 @@ def main():
                     prot     = hdr[1]
 
                     if (sid in id_map or not args.selected_file):
+                        trimf.write(w+"\n");
                         if (unknown or not (prot=="tcp" or prot=="udp")):
                             dropped += 1
                         else:
@@ -364,6 +367,7 @@ def main():
     pcap.close()
     detf.close()
     sumf.close()
+    trimf.close()
 
 if __name__ == "__main__":
     main()
