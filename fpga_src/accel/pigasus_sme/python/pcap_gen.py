@@ -222,6 +222,7 @@ def main():
     parser.add_argument('--min_pkt_size', type=int, default=64, help="Minimum packet size")
     parser.add_argument('--max_pkt_size', type=int, default=500, help="Maximum packet size")
     parser.add_argument('--test_packets', type=bool, default=False, help="Add non-matching test packets")
+    parser.add_argument('--norm_packets', type=bool, default=False, help="Add non-matching test packets")
     args = parser.parse_args()
 
     sumf  =  open(args.summary_file, 'w')
@@ -276,7 +277,7 @@ def main():
 
                             src_port = port_gen(hdr[3])
                             dst_port = port_gen(hdr[6])
-                            ip = IP(src=random_ip(), dst=random_ip())
+                            ip = IP(src=random_ip(), dst='192.168.1.101') # dst=random_ip())
                             match_list.append((b, prot, src_port, dst_port, random.randrange(0,2**32), ip))
 
                             if (rule_count <= pcap_limit) or (pcap_limit == 0):
@@ -357,6 +358,35 @@ def main():
             payload += bytes([0xFF for x in range(pkt_len-len(payload))])
             pcaps.append(eth / ip / tcp / payload)
             seq_num += pkt_len
+
+        if (args.norm_packets):
+            for k in range(5):
+                ip = IP(src='192.168.1.100', dst='192.168.1.101')
+
+                pkt_len = r.randint(min_size, max_size)
+                sumf.write("Writing udp packet from port 1234 to port 5678 with no pattern in paylod.\n")
+                udp = UDP(sport=1234, dport=5678)
+                payload = bytes([x % 256 for x in range(pkt_len)])
+                pcaps.append(eth / ip / udp / payload)
+
+                pkt_len = r.randint(min_size, max_size)
+                sumf.write("Writing tcp packet from port 1234 to port 5678 with no pattern in paylod.\n")
+                tcp = TCP(sport=1234, dport=5678, flags="S", seq=random.randrange(0,2**32))
+                payload = bytes([x % 256 for x in range(pkt_len)])
+                pcaps.append(eth / ip / tcp / payload)
+
+                pkt_len = r.randint(min_size, max_size)
+                sumf.write("Writing tcp packet from port 12345 to port 80 with no pattern in paylod.\n")
+                tcp = TCP(sport=12345, dport=80, flags = "S")
+                payload = bytes([x % 256 for x in range(pkt_len)])
+                pcaps.append(eth / ip / tcp / payload)
+
+                pkt_len = r.randint(min_size, max_size)
+                sumf.write("Writing tcp packet from port 54321 to port 80 with no pattern in paylod.\n")
+                tcp = TCP(sport=54321, dport=80, flags = "F")
+                payload = bytes([x % 256 for x in range(pkt_len)])
+                pcaps.append(eth / ip / tcp / payload)
+
 
     for i in range (args.ooo_pkts):
       make_ooo(pcaps, udp_count+syn_count, 6, 100)
