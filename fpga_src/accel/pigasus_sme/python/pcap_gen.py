@@ -360,8 +360,8 @@ def main():
             seq_num += pkt_len
 
         if (args.norm_packets):
-            for k in range(5):
-                ip = IP(src='192.168.1.100', dst='192.168.1.101')
+            for k in range(10):
+                ip = IP(src=random_ip(), dst='192.168.1.101')
 
                 pkt_len = r.randint(min_size, max_size)
                 sumf.write("Writing udp packet from port 1234 to port 5678 with no pattern in paylod.\n")

@@ -4,11 +4,12 @@ import re
 fn   = "trimmed_rules.txt"
 trim = "new_trim.txt"
 
-# to_remove = ['reference', 'dce_iface', 'dsize', 'metadata', 'sid', 'byte_extract', 'byte_math', 'base64_data', 'rev', 'dce_opnum', 'ssl_state', 'detection_filter', 'pcre', 'dce_stub_data', 'flags', 'ssl_version', 'isdataat', 'content', 'byte_test', 'bufferlen', 'classtype', 'pkt_data', 'byte_jump', 'base64_decode', 'msg', 'stream_size']
 to_remove = ['byte_extract', 'isdataat', 'byte_test', 'byte_jump', 'byte_math',
              'pcre', 'dsize', 'bufferlen', 'stream_size',
              'base64_data', 'base64_decode', 'dce_opnum', 'dce_stub_data',
-             'ssl_state', 'detection_filter','flags', 'ssl_version']
+             'ssl_state', 'detection_filter','flags', 'ssl_version'
+             # 'msg', 'classtype', 'metadata', 'reference', 'pkt_data', 'rev', 'content'
+             ]
 
 def extract_all_options():
     opset = set()
@@ -20,7 +21,7 @@ def extract_all_options():
               opset.add(op['name'])
     return opset
 
-def remove_not_fast(rule, rm_flags):
+def remove_not_fast(rule, rm_all_flags, ext_flags=[]):
     select = []
     count = 0
     cont_rules = []
@@ -32,11 +33,14 @@ def remove_not_fast(rule, rm_flags):
             if opt['value'].startswith("!"):
                 continue
             value = re.findall('"([^"]*)"', opt['value'])[0]
-            cont_rules.append((opt,value))
             flags = opt['value'][len(value)+3:]
+            if (rm_all_flags):
+                opt['value']='"'+value+'",fast_pattern' # remove flags
+            else:
+                for f in ext_flags:
+                    opt['value'] = opt['value'].replace(","+f,"")
+            cont_rules.append((opt,value))
             if "fast_pattern" in flags:
-                for f in rm_flags:
-                    opt['value']=opt['value'].replace(f+",","")
                 select.append(opt)
                 count += 1
                 if len(value)<8:
@@ -68,7 +72,10 @@ def main():
                 rule = parse(line)
                 for r in to_remove:
                     rule = remove_option(rule, r)
-                rule,not_short = remove_not_fast(rule, ["within codeSize", "within obj_len"])
+                rule,not_short = remove_not_fast(rule, False,
+                        ["within codeSize", "within obj_len",
+                         "within rowLength", "within filename_offset",
+                         "within exifLen","distance size"])
 
                 # if not_short:
                 trimf.write(rule.format()+"\n");
