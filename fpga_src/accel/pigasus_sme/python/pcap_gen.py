@@ -218,7 +218,7 @@ def main():
     parser.add_argument('--trimmed_file', type=str, default="trimmed_rules.txt", help="Trimmed ruleset file")
     parser.add_argument('--output_pcap', type=str, default='attack.pcap', help="Pcap output file name")
     parser.add_argument('--pcap_limit', type=int, default=0, help="Max PCAP rules")
-    parser.add_argument('--ooo_pkts', type=int, default=0, help="Number of packet to get OOO")
+    parser.add_argument('--ooo_pkts', type=float, default=0.0, help="Percent of packet to get OOO")
     parser.add_argument('--min_pkt_size', type=int, default=64, help="Minimum packet size")
     parser.add_argument('--max_pkt_size', type=int, default=500, help="Maximum packet size")
     parser.add_argument('--test_packets', type=bool, default=False, help="Add non-matching test packets")
@@ -387,8 +387,7 @@ def main():
                 payload = bytes([x % 256 for x in range(pkt_len)])
                 pcaps.append(eth / ip / tcp / payload)
 
-
-    for i in range (args.ooo_pkts):
+    for i in range (int(args.ooo_pkts*len(pcaps)//100.0)):
       make_ooo(pcaps, udp_count+syn_count, 6, 100)
 
     for pkt in pcaps:
