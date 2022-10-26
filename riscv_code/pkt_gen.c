@@ -28,12 +28,10 @@
   #define DATA_OFFSET 0
 #endif
 
+#define PKT_SIZE 1500
+
 char *pkt_data[16];
-// unsigned int pkt_len[16] = {128, 1024, 128, 1500, 256, 1024, 512, 1500, 1024, 1500, 256, 2048, 512, 4096, 1500, 9000};
-// unsigned int pkt_len[16] = {128, 1024, 128, 1500, 256, 1024, 512, 1500, 1024, 1500, 256, 1500, 512, 1500, 1500, 1500};
-// unsigned int pkt_len[16] = {60, 60, 60, 100, 128, 200, 256, 512, 1024, 1024, 1024, 1500, 1500, 1500, 1500, 1500};
-// unsigned int pkt_len[16] = {60, 256, 1024, 1514, 1514, 1514, 1514, 1514, 1514, 1514, 1514, 1514, 1514, 1514, 1514, 1514};
-unsigned int pkt_len[16] = {[0 ... 15] = 1514};
+unsigned int pkt_len[16] = {[0 ... 15] = PKT_SIZE};
 char *rand_array;
 
 struct __attribute__((__packed__)) udp_packet_header {
@@ -64,7 +62,7 @@ struct udp_packet_header udp_hdr = {
   .ip = {
     .version_ihl = 0x45,
     .dscp_ecn = 0,
-    .total_length = bswap_16(1500-ETH_HEADER_SIZE),
+    .total_length = bswap_16(PKT_SIZE-ETH_HEADER_SIZE),
     .id = bswap_16(0),
     .flags_fragment_offset = bswap_16(0),
     .ttl = 64,
@@ -76,7 +74,7 @@ struct udp_packet_header udp_hdr = {
   .udp = {
     .src_port = bswap_16(0xAAAA),
     .dest_port = bswap_16(0xBBBB),
-    .length = bswap_16(1500-ETH_HEADER_SIZE-IPV4_HEADER_SIZE),
+    .length = bswap_16(PKT_SIZE-ETH_HEADER_SIZE-IPV4_HEADER_SIZE),
     .checksum = bswap_16(0)
   }
 };
@@ -90,7 +88,7 @@ struct tcp_packet_header tcp_hdr = {
   .ip = {
     .version_ihl = 0x45,
     .dscp_ecn = 0,
-    .total_length = bswap_16(1500-ETH_HEADER_SIZE),
+    .total_length = bswap_16(PKT_SIZE-ETH_HEADER_SIZE),
     .id = bswap_16(0),
     .flags_fragment_offset = bswap_16(0x0001), // FIN
     .ttl = 64,
@@ -120,7 +118,7 @@ struct tcp_packet_header http_hdr = {
   .ip = {
     .version_ihl = 0x45,
     .dscp_ecn = 0,
-    .total_length = bswap_16(1500-ETH_HEADER_SIZE),
+    .total_length = bswap_16(PKT_SIZE-ETH_HEADER_SIZE),
     .id = bswap_16(0),
     .flags_fragment_offset = bswap_16(0),
     .ttl = 64,
@@ -200,7 +198,7 @@ void init_packets()
       .ip = {
         .version_ihl = 0x45,
         .dscp_ecn = 0,
-        .total_length = bswap_16(1500-ETH_HEADER_SIZE),
+        .total_length = bswap_16(PKT_SIZE-ETH_HEADER_SIZE),
         .id = bswap_16(0),
         .flags_fragment_offset = bswap_16(0x0),
         .ttl = 64,
@@ -229,7 +227,7 @@ void init_packets()
       .ip = {
         .version_ihl = 0x45,
         .dscp_ecn = 0,
-        .total_length = bswap_16(1500-ETH_HEADER_SIZE),
+        .total_length = bswap_16(PKT_SIZE-ETH_HEADER_SIZE),
         .id = bswap_16(0),
         .flags_fragment_offset = bswap_16(0),
         .ttl = 64,
@@ -241,7 +239,7 @@ void init_packets()
       .udp = {
         .src_port = pcg32_boundedrand_r(&rng, 1<<16),
         .dest_port = pcg32_boundedrand_r(&rng, 1<<16),
-        .length = bswap_16(1500-ETH_HEADER_SIZE-IPV4_HEADER_SIZE),
+        .length = bswap_16(PKT_SIZE-ETH_HEADER_SIZE-IPV4_HEADER_SIZE),
         .checksum = bswap_16(0)
       }
     };

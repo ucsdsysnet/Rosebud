@@ -72,10 +72,10 @@ def main():
                 rule = parse(line)
                 for r in to_remove:
                     rule = remove_option(rule, r)
-                rule,not_short = remove_not_fast(rule, False,
-                        ["within codeSize", "within obj_len",
-                         "within rowLength", "within filename_offset",
-                         "within exifLen","distance size"])
+                rule,not_short = remove_not_fast(rule, True) # False,
+                        # ["within codeSize", "within obj_len",
+                        #  "within rowLength", "within filename_offset",
+                        #  "within exifLen","distance size"])
 
                 # if not_short:
                 trimf.write(rule.format()+"\n");

@@ -6,3 +6,5 @@ mqnic.ko
 mqnic.mod
 mqnic.mod.c
 .tmp_versions
+.cache.mk
+*.o.ur-safe
