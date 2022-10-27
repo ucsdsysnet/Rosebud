@@ -258,20 +258,6 @@ static int mqnic_pci_probe(struct pci_dev *pdev, const struct pci_device_id *ent
         goto fail_i2c;
     }
 
-    // Read MAC from EEPROM
-    if (mqnic->eeprom_i2c_client)
-    {
-        ret = i2c_smbus_read_i2c_block_data(mqnic->eeprom_i2c_client, 0x00, 6, mqnic->base_mac);
-        if (ret < 0)
-        {
-            dev_warn(dev, "Failed to read MAC from EEPROM");
-        }
-    }
-    else
-    {
-        dev_warn(dev, "Failed to read MAC from EEPROM; no EEPROM I2C client registered");
-    }
-
     // Enable bus mastering for DMA
     pci_set_master(pdev);
 
@@ -288,7 +274,7 @@ static int mqnic_pci_probe(struct pci_dev *pdev, const struct pci_device_id *ent
     for (k = 0; k < mqnic->if_count; k++)
     {
         dev_info(dev, "Creating interface %d", k);
-        ret = mqnic_init_netdev(mqnic, k, mqnic->hw_addr + k*mqnic->if_stride);
+        ret = mqnic_create_netdev(mqnic, &mqnic->ndev[k], k, mqnic->hw_addr + k * mqnic->if_stride);
         if (ret)
         {
             dev_err(dev, "Failed to create net_device");
@@ -329,7 +315,7 @@ fail_init_netdev:
     {
         if (mqnic->ndev[k])
         {
-            mqnic_destroy_netdev(mqnic->ndev[k]);
+            mqnic_destroy_netdev(&mqnic->ndev[k]);
         }
     }
     mqnic_unregister_phc(mqnic);
@@ -372,7 +358,7 @@ static void mqnic_pci_remove(struct pci_dev *pdev)
     {
         if (mqnic->ndev[k])
         {
-            mqnic_destroy_netdev(mqnic->ndev[k]);
+            mqnic_destroy_netdev(&mqnic->ndev[k]);
         }
     }
 

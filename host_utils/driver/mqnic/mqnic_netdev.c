@@ -33,13 +33,15 @@ either expressed or implied, of The Regents of the University of California.
 
 #include "mqnic.h"
 
+#include <linux/version.h>
+
 static int mqnic_start_port(struct net_device *ndev)
 {
     struct mqnic_priv *priv = netdev_priv(ndev);
     struct mqnic_dev *mdev = priv->mdev;
     int k;
 
-    dev_info(mdev->dev, "mqnic_start_port on port %d", priv->port);
+    dev_info(mdev->dev, "%s on port %d", __func__, priv->port);
 
     // set up event queues
     for (k = 0; k < priv->event_queue_count; k++)
@@ -121,7 +123,7 @@ static int mqnic_stop_port(struct net_device *ndev)
     struct mqnic_dev *mdev = priv->mdev;
     int k;
 
-    dev_info(mdev->dev, "mqnic_stop_port on port %d", priv->port);
+    dev_info(mdev->dev, "%s on port %d", __func__, priv->port);
 
     netif_tx_lock_bh(ndev);
 //    if (detach)
@@ -398,10 +400,15 @@ static const struct net_device_ops mqnic_netdev_ops = {
     .ndo_get_stats64        = mqnic_get_stats64,
     .ndo_validate_addr      = eth_validate_addr,
     .ndo_change_mtu         = mqnic_change_mtu,
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 15, 0)
+    .ndo_eth_ioctl = mqnic_ioctl,
+#else
     .ndo_do_ioctl           = mqnic_ioctl,
+#endif
 };
 
-int mqnic_init_netdev(struct mqnic_dev *mdev, int port, u8 __iomem *hw_addr)
+int mqnic_create_netdev(struct mqnic_dev *mdev, struct net_device **ndev_ptr,
+                int port, u8 __iomem *hw_addr)
 {
     struct device *dev = mdev->dev;
     struct net_device *ndev;
@@ -486,16 +493,25 @@ int mqnic_init_netdev(struct mqnic_dev *mdev, int port, u8 __iomem *hw_addr)
 
     // set MAC
     ndev->addr_len = ETH_ALEN;
-    memcpy(ndev->dev_addr, mdev->base_mac, ETH_ALEN);
 
-    if (!is_valid_ether_addr(ndev->dev_addr))
+    if (port >= mdev->mac_count)
     {
-        dev_warn(dev, "Bad MAC in EEPROM; using random MAC");
+        dev_warn(dev, "Exhausted permanent MAC addresses; using random MAC");
         eth_hw_addr_random(ndev);
     }
     else
     {
-        ndev->dev_addr[ETH_ALEN-1] += port;
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 15, 0)
+        eth_hw_addr_set(ndev, mdev->mac_list[port]);
+#else
+        memcpy(ndev->dev_addr, mdev->mac_list[port], ETH_ALEN);
+#endif
+
+        if (!is_valid_ether_addr(ndev->dev_addr))
+        {
+            dev_warn(dev, "Invalid MAC address in list; using random MAC");
+            eth_hw_addr_random(ndev);
+        }
     }
 
     priv->hwts_config.flags = 0;
@@ -610,19 +626,19 @@ int mqnic_init_netdev(struct mqnic_dev *mdev, int port, u8 __iomem *hw_addr)
 
     priv->registered = 1;
 
-    mdev->ndev[port] = ndev;
+    *ndev_ptr = ndev;
 
     return 0;
 
 fail:
-    mqnic_destroy_netdev(ndev);
+    mqnic_destroy_netdev(ndev_ptr);
     return ret;
 }
 
-void mqnic_destroy_netdev(struct net_device *ndev)
+void mqnic_destroy_netdev(struct net_device **ndev_ptr)
 {
+    struct net_device *ndev = *ndev_ptr;
     struct mqnic_priv *priv = netdev_priv(ndev);
-    struct mqnic_dev *mdev = priv->mdev;
     int k;
 
     if (priv->registered)
@@ -630,7 +646,7 @@ void mqnic_destroy_netdev(struct net_device *ndev)
         unregister_netdev(ndev);
     }
 
-    mdev->ndev[priv->port] = NULL;
+    *ndev_ptr = NULL;
 
     // free rings
     for (k = 0; k < ARRAY_SIZE(priv->event_ring); k++)

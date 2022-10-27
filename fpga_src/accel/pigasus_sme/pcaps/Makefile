@@ -3,6 +3,7 @@ MAX_RATE_64   = 1454
 MAX_RATE_128  = 1684
 MAX_RATE_256  = 1829
 MAX_RATE_512  = 1910
+MAX_RATE_800  = 1942
 MAX_RATE_1024 = 1954
 MAX_RATE_1500 = 1968
 MAX_RATE_2048 = 1977
@@ -11,7 +12,7 @@ MAX_RATE_9000 = 1995
 
 SIZE = 1024
 RATE = $(MAX_RATE_$(SIZE))
-INT  = enp1s0
+INT  = eth0
 MTU  = 4096
 safe:
 	sudo tcpreplay -i $(INT) -K --mbps $(RATE) --loop 1000000 safe_pcap_no_ooo_$(SIZE).pcap
@@ -27,5 +28,5 @@ attack_ooo:
 
 set_mtu:
 	sudo ip link set $(INT) down
-	sudo ip link set dev enp1s0 mtu $(MTU)
+	sudo ip link set dev $(INT) mtu $(MTU)
 	sudo ip link set $(INT) up

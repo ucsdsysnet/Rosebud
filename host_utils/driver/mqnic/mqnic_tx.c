@@ -175,13 +175,13 @@ void mqnic_free_tx_desc(struct mqnic_priv *priv, struct mqnic_ring *ring, int in
 
     prefetchw(&skb->users);
 
-    dma_unmap_single(priv->dev, dma_unmap_addr(tx_info, dma_addr), dma_unmap_len(tx_info, len), PCI_DMA_TODEVICE);
+    dma_unmap_single(priv->dev, dma_unmap_addr(tx_info, dma_addr), dma_unmap_len(tx_info, len), DMA_TO_DEVICE);
     dma_unmap_addr_set(tx_info, dma_addr, 0);
 
     // unmap frags
     for (i = 0; i < tx_info->frag_count; i++)
     {
-        dma_unmap_page(priv->dev, tx_info->frags[i].dma_addr, tx_info->frags[i].len, PCI_DMA_TODEVICE);
+        dma_unmap_page(priv->dev, tx_info->frags[i].dma_addr, tx_info->frags[i].len, DMA_TO_DEVICE);
     }
 
     napi_consume_skb(skb, napi_budget);
@@ -376,7 +376,7 @@ static bool mqnic_map_skb(struct mqnic_priv *priv, struct mqnic_ring *ring, stru
 
     // map skb
     len = skb_headlen(skb);
-    dma_addr = dma_map_single(priv->dev, skb->data, len, PCI_DMA_TODEVICE);
+    dma_addr = dma_map_single(priv->dev, skb->data, len, DMA_TO_DEVICE);
 
     if (unlikely(dma_mapping_error(priv->dev, dma_addr)))
     {
@@ -400,7 +400,7 @@ map_error:
     // unmap frags
     for (i = 0; i < tx_info->frag_count; i++)
     {
-        dma_unmap_page(priv->dev, tx_info->frags[i].dma_addr, tx_info->frags[i].len, PCI_DMA_TODEVICE);
+        dma_unmap_page(priv->dev, tx_info->frags[i].dma_addr, tx_info->frags[i].len, DMA_TO_DEVICE);
     }
 
     // update tx_info

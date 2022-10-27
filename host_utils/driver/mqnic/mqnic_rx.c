@@ -172,7 +172,7 @@ void mqnic_free_rx_desc(struct mqnic_priv *priv, struct mqnic_ring *ring, int in
     struct mqnic_rx_info *rx_info = &ring->rx_info[index];
     struct page *page = rx_info->page;
 
-    dma_unmap_page(priv->dev, dma_unmap_addr(rx_info, dma_addr), dma_unmap_len(rx_info, len), PCI_DMA_FROMDEVICE);
+    dma_unmap_page(priv->dev, dma_unmap_addr(rx_info, dma_addr), dma_unmap_len(rx_info, len), DMA_FROM_DEVICE);
     rx_info->dma_addr = 0;
     __free_pages(page, rx_info->page_order);
     rx_info->page = NULL;
@@ -221,7 +221,7 @@ int mqnic_prepare_rx_desc(struct mqnic_priv *priv, struct mqnic_ring *ring, int 
     }
 
     // map page
-    dma_addr = dma_map_page(priv->dev, page, 0, len, PCI_DMA_FROMDEVICE);
+    dma_addr = dma_map_page(priv->dev, page, 0, len, DMA_FROM_DEVICE);
 
     if (unlikely(dma_mapping_error(priv->dev, dma_addr)))
     {
@@ -330,12 +330,12 @@ int mqnic_process_rx_cq(struct net_device *ndev, struct mqnic_cq_ring *cq_ring, 
         }
 
         // unmap
-        dma_unmap_page(priv->dev, dma_unmap_addr(rx_info, dma_addr), dma_unmap_len(rx_info, len), PCI_DMA_FROMDEVICE);
+        dma_unmap_page(priv->dev, dma_unmap_addr(rx_info, dma_addr), dma_unmap_len(rx_info, len), DMA_FROM_DEVICE);
         rx_info->dma_addr = 0;
 
         len = min_t(u32, le16_to_cpu(cpl->len), rx_info->len);
 
-        dma_sync_single_range_for_cpu(priv->dev, rx_info->dma_addr, rx_info->page_offset, rx_info->len, PCI_DMA_FROMDEVICE);
+        dma_sync_single_range_for_cpu(priv->dev, rx_info->dma_addr, rx_info->page_offset, rx_info->len, DMA_FROM_DEVICE);
 
         __skb_fill_page_desc(skb, 0, page, rx_info->page_offset, len);
         rx_info->page = NULL;
