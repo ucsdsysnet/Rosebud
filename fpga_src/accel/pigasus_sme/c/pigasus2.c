@@ -39,6 +39,8 @@
   #define DATA_OFFSET 0
 #endif
 
+#define mem_align(x) (((unsigned int)x+3) & 0xFFFFFFFC)
+
 // Accel wrapper registers mapping
 #define ACC_PIG_CTRL     (*((volatile unsigned char      *)(IO_EXT_BASE + 0x00)))
 #define ACC_PIG_MATCH    (*((volatile unsigned char      *)(IO_EXT_BASE + 0x00)))
@@ -145,9 +147,9 @@ static inline void slot_match(struct slot_context *slot){
       ACC_PIG_CTRL = 2; // release the match
       asm volatile("" ::: "memory");
       // Add rule IDs to the end of the packet
-      slot->eop     = slot->desc.data + slot->desc.len;
-      * slot->eop = rule_id;
-      slot->desc.len += 4;
+      slot->eop = (unsigned char *) mem_align(slot->desc.data + slot->desc.len);
+      * (unsigned int *) slot->eop = rule_id;
+      slot->desc.len = (unsigned int) slot->eop - (unsigned int) slot->desc.data + 4;
       slot->desc.port = 2;
       PROFILE_B(0xDEAD0001);
     } else { // EoP

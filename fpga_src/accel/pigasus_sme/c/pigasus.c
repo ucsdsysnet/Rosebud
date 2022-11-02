@@ -39,6 +39,8 @@
   #define DATA_OFFSET 0
 #endif
 
+#define mem_align(x) (((unsigned int)x+3) & 0xFFFFFFFC)
+
 // flows
 struct flow {
   unsigned short tag;
@@ -233,7 +235,6 @@ static inline void slot_rx_packet(struct slot_context *slot)
         PROFILE_B(0xBEEF0006);
         slot->payload_addr   = (unsigned int)(slot->desc.data)+payload_offset;
         slot->payload_length = packet_length - payload_offset;
-        slot->eop            = slot->desc.data + slot->desc.len;
         slot->is_tcp         = 1;
         slot->reorder_ts     = TIMER_16_LH;
 
@@ -301,9 +302,9 @@ static inline void slot_match(struct slot_context *slot){
       ACC_PIG_CTRL = 2; // release the match
       asm volatile("" ::: "memory");
       // Add rule IDs to the end of the packet
-      slot->eop     = slot->desc.data + slot->desc.len;
-      * slot->eop = rule_id;
-      slot->desc.len += 4;
+      slot->eop = (unsigned char *) mem_align(slot->desc.data + slot->desc.len);
+      * (unsigned int *) slot->eop = rule_id;
+      slot->desc.len = (unsigned int) slot->eop - (unsigned int) slot->desc.data + 4;
       slot->match_cnt ++;
       slot->desc.port = 2;
       PROFILE_B(0xDEAD0001);
@@ -425,6 +426,7 @@ int main(void)
   init_hdr_slots(slot_count, header_slot_base, header_slot_size);
   init_slots(slot_count, PKTS_START+PKT_OFFSET, slot_size);
   set_masks(0x30); // Enable only Evict + Poke
+  set_sched_offset(DATA_OFFSET);
   set_sched_offset(DATA_OFFSET);
 
   // init slot context structures
