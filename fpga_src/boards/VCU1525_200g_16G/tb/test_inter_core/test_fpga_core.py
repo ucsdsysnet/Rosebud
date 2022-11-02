@@ -54,8 +54,8 @@ except ImportError:
 
 SEND_COUNT_0 = 50
 SEND_COUNT_1 = 50
-SIZE_0       = 512 - 14
-SIZE_1       = 512 - 14
+SIZE_0       = 512
+SIZE_1       = 512
 CHECK_PKT    = True
 TEST_DEBUG   = True
 PRINT_PKTS   = False
@@ -65,7 +65,7 @@ PACKETS = []
 eth = Ether(src='5A:51:52:53:54:55', dst='DA:D1:D2:D3:D4:D5')
 # ip = IP(src='192.168.1.100', dst='192.168.1.101')
 # udp = UDP(sport=1234, dport=5678)
-payload = bytes([0]+[0]+[x % 256 for x in range(SIZE_0-2)])
+payload = bytes([0]+[0]+[x % 256 for x in range(SIZE_0-2-14)])
 test_pkt = eth / payload
 PACKETS.append(test_pkt)
 
@@ -102,7 +102,6 @@ async def run_test_inter_core(dut):
     pkt_ind = 0
     for i in range(0, SEND_COUNT_0):
         frame = PACKETS[pkt_ind].copy()
-        # frame[Raw].load = bytes([i % 256] + [x % 256 for x in range(max(0, SIZE_0[i % len(SIZE_0)]-1-len(PATTERNS[pat_ind])))])
         await tb.qsfp0_source.send(frame.build())
 
     lengths = []

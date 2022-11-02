@@ -50,27 +50,6 @@ except ImportError:
         del sys.path[0]
 
 
-# SEND_COUNT_0 = 6 # 5000
-# SEND_COUNT_1 = 6 # 5000
-# SEND_COUNT_0 = 256
-# SEND_COUNT_1 = 256
-SEND_COUNT_0 = 1024
-SEND_COUNT_1 = 1024
-# SIZE_0       = [64, 128, 256, 512, 1024, 2048, 4096, 9000, 9000, 2048, 4096, 1024, 1500, 256, 128, 1024]
-# SIZE_1       = [64, 128, 256, 512, 1024, 2048, 4096, 9000, 9000, 2048, 4096, 1024, 1500, 256, 128, 1024]
-# SIZE_0       = [64, 128, 256, 512, 1024, 2048, 2048, 1024, 1500, 256, 128, 1024]
-# SIZE_1       = [64, 128, 256, 512, 1024, 2048, 2048, 1024, 1500, 256, 128, 1024]
-SIZE_0       = [64, 128, 256, 512, 1024, 1024, 1500, 256, 128, 1024]
-SIZE_1       = [64, 128, 256, 512, 1024, 1024, 1500, 256, 128, 1024]
-CHECK_PKT    = False
-DROP_RATE    = 1  #0.66
-TEST_PCIE    = False
-PRINT_PKTS   = True
-
-
-PACKETS = []
-
-
 FIRMWARE = os.path.abspath(os.path.join(os.path.dirname(__file__),
     '..', '..', '..', '..', '..', 'riscv_code', 'basic_corundum_fw.elf'))
 

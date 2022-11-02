@@ -51,31 +51,25 @@ except ImportError:
     finally:
         del sys.path[0]
 
-
-SEND_COUNT_0 = 50
-SEND_COUNT_1 = 50
-SIZE_0       = 512
-SIZE_1       = 512
-CHECK_PKT    = True
-TEST_DEBUG   = True
-PRINT_PKTS   = False
+SEND_COUNT = 128
+SIZE       = 1024
+CHECK_PKT  = False
+PRINT_PKTS = True
 
 PACKETS = []
 
-eth = Ether(src='5A:51:52:53:54:55', dst='DA:D1:D2:D3:D4:D5')
-# ip = IP(src='192.168.1.100', dst='192.168.1.101')
-# udp = UDP(sport=1234, dport=5678)
-payload = bytes([0]+[0]+[x % 256 for x in range(SIZE_0-2-14)])
-test_pkt = eth / payload
+eth = Ether(src='DA:D1:D2:D3:D4:D5', dst='5A:51:52:53:54:55')
+ip = IP(src='192.168.1.100', dst='192.168.1.101')
+tcp = TCP(sport=1234, dport=5678)
+payload = bytes(0xFF for x in range(SIZE-54))
+test_pkt = eth / ip / tcp / payload
 PACKETS.append(test_pkt)
 
-
 FIRMWARE = os.path.abspath(os.path.join(os.path.dirname(__file__),
-    '..', '..', '..', '..', '..', 'riscv_code', 'inter_core.elf'))
-
+    '..', '..', 'accel', 'pigasus_sme', 'c', 'pigasus2.elf'))
 
 @cocotb.test()
-async def run_test_inter_core(dut):
+async def run_test_ins_load(dut):
 
     tb = TB(dut)
 
@@ -87,11 +81,10 @@ async def run_test_inter_core(dut):
 
     tb.log.info("Set core enable mask")
     await tb.set_enable_cores(0xffff)
-    await tb.set_receive_cores(0x00ff)
+    await tb.set_receive_cores(0xffff)
     await tb.set_enable_interfaces(0xffff)
     await Timer(100, 'ns')
 
-    tb.log.info("Send data from LAN")
     tb.qsfp0_source.log.setLevel("WARNING")
     tb.qsfp1_source.log.setLevel("WARNING")
     tb.qsfp0_sink.log.setLevel("WARNING")
@@ -99,23 +92,28 @@ async def run_test_inter_core(dut):
     tb.host_if_tx_mon.log.setLevel("WARNING")
     tb.host_if_rx_mon.log.setLevel("WARNING")
 
-    pkt_ind = 0
-    for i in range(0, SEND_COUNT_0):
-        frame = PACKETS[pkt_ind].copy()
-        await tb.qsfp0_source.send(frame.build())
+    frame = PACKETS[0].copy()
+    frame = frame.build()
+    for i in range(0, SEND_COUNT):
+        await tb.qsfp0_source.send(frame)
+        await tb.qsfp1_source.send(frame)
 
-    lengths = []
+    # passed packets are sent to the same port
+    for j in range(0, SEND_COUNT):
+        rx_frame = await tb.qsfp0_sink.recv()
+        tb.log.info("packet number from port 0: %d", j)
+        if PRINT_PKTS:
+            tb.log.debug("%s", hexdump_str(bytes(rx_frame)))
+        if (CHECK_PKT):
+            assert Ether(rx_frame.tdata).build() == frame
 
-    for j in range(0, SEND_COUNT_0):
+    for j in range(0, SEND_COUNT):
         rx_frame = await tb.qsfp1_sink.recv()
         tb.log.info("packet number from port 1: %d", j)
         if PRINT_PKTS:
             tb.log.debug("%s", hexdump_str(bytes(rx_frame)))
         if (CHECK_PKT):
-            assert Ether(rx_frame.tdata).build() == PACKETS[0].build()
-            # assert rx_frame.tdata[0:14] == PACKETS[1].payload[0:14]
-            # assert rx_frame.tdata[15:]  == PACKETS[1].payload[15:]
-        lengths.append(len(rx_frame.tdata)-8)
+            assert Ether(rx_frame.tdata).build() == frame
 
     await tb.qsfp0_source.wait()
     await tb.qsfp1_source.wait()
@@ -137,14 +135,6 @@ async def run_test_inter_core(dut):
 
         tb.log.info("Core %d stat read, slots: , bytes_in, byte_out, frames_in, frames_out", k)
         tb.log.info("%d, %d, %d, %d, %d", slots, bytes_in, bytes_out, frames_in, frames_out)
-
-        if (TEST_DEBUG):
-            debug_l   = await tb.core_rd_cmd(k, 6)
-            await Timer(100, 'ns')
-            debug_h  = await tb.core_rd_cmd(k, 7)
-            await Timer(100, 'ns')
-            tb.log.info("Core %d debug_h, debug_l", k)
-            tb.log.info("%08x, %08x", debug_h, debug_l)
 
     for k in range(0, 3):
         bytes_in   = await tb.interface_stat_rd(k, 0, 0)

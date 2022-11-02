@@ -68,7 +68,7 @@ VERILOG_SOURCES += $(AXIS_LIB)/sync_reset.v
 VERILOG_SOURCES += $(AXIS_LIB)/axis_register.v
 VERILOG_SOURCES += $(AXIS_LIB)/axis_pipeline_register.v
 
-COMPILE_ARGS  = -I $(ACC_DIR)/struct_s.sv
+COMPILE_ARGS  += -I $(ACC_DIR)/struct_s.sv
 PLUSARGS+=-fst
 INC_DIR=$(ICARUS_INC_DIR)
 

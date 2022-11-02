@@ -55,7 +55,7 @@ FIRMWARE = os.path.abspath(os.path.join(os.path.dirname(__file__),
     '..', '..', 'accel', 'ip_matcher', 'c', 'firewall.elf'))
 
 SEND_COUNT_0 = 100
-SIZE_0 = [66-54, 1500-54, 66-54, 66-54, 1500-54, 1500-54, 66-54]
+SIZES = [64, 1500, 64, 64, 1500, 1500, 64]
 WAIT_TIME = 5000
 MAX_PKT_SPACING = 3
 CHECK_PKT = True
@@ -64,8 +64,37 @@ FLOW_HASH = False
 
 PACKETS = []
 
+eth = Ether(src='5A:51:52:53:54:55', dst='DA:D1:D2:D3:D4:D5')
+ip = IP(src='192.168.1.100', dst='192.168.1.101')
+udp = UDP(sport=1234, dport=5678)
+payload = bytes([0]+[x % 256 for x in range(SIZES[0]-1-42)])
+test_pkt = eth / ip / udp / payload
+PACKETS.append(test_pkt)
+
+eth = Ether(src='5A:51:52:53:54:55', dst='DA:D1:D2:D3:D4:D5')
+ip = IP(src='192.168.1.100', dst='192.168.1.101')
+tcp = TCP(sport=1234, dport=5678)
+payload = bytes([0]+[x % 256 for x in range(SIZES[0]-1-54)])
+test_pkt = eth / ip / tcp / payload
+PACKETS.append(test_pkt)
+
+eth = Ether(src='5A:51:52:53:54:55', dst='DA:D1:D2:D3:D4:D5')
+ip = IP(src='192.168.1.100', dst='192.168.1.101')
+tcp = TCP(sport=12345, dport=80)
+payload = bytes([0]+[x % 256 for x in range(SIZES[0]-1-54)])
+test_pkt = eth / ip / tcp / payload
+PACKETS.append(test_pkt)
+
+eth = Ether(src='5A:51:52:53:54:55', dst='DA:D1:D2:D3:D4:D5')
+ip = IP(src='192.168.1.100', dst='192.168.1.101')
+tcp = TCP(sport=54321, dport=80)
+payload = bytes([0]+[x % 256 for x in range(SIZES[0]-1-54)])
+test_pkt = eth / ip / tcp / payload
+PACKETS.append(test_pkt)
+
 PCAP = os.path.abspath(os.path.join(os.path.dirname(__file__),
         '../../accel/ip_matcher/python/firewall_test.pcap'))
+
 
 PACKETS_0 = []
 
@@ -80,9 +109,12 @@ else:
     pkt_ind = 0
     for i in range(0, SEND_COUNT_0):
         frame = PACKETS[pkt_ind].copy()
-        frame[Raw].load = bytes([i % 256] + [x % 256 for x in range(SIZE_0[randrange(len(SIZE_0))]-1)])
+        if TCP in frame:
+            frame[Raw].load = bytes([i % 256] + [x % 256 for x in range(SIZES[randrange(len(SIZES))]-1-54)])
+        else: # UDP
+            frame[Raw].load = bytes([i % 256] + [x % 256 for x in range(SIZES[randrange(len(SIZES))]-1-42)])
+
         PACKETS_0.append(frame)
-        # print(frame[IP].src)
 
         pkt_ind = (pkt_ind+1) % len(PACKETS)
 
@@ -237,7 +269,8 @@ class TB(object):
                 pkt = self.send_q.popleft()
                 slot = self.slots.pop()
                 pkt.tdest = slot
-                await ClockCycles(self.dut.clk, randrange(MAX_PKT_SPACING))
+                if (MAX_PKT_SPACING > 0):
+                  await ClockCycles(self.dut.clk, randrange(MAX_PKT_SPACING))
                 await self.data_ch_source.send(pkt)
                 self.sent_pkts += 1
                 self.log.debug("Used slot %d for an incoming packet from port %d", slot, pkt.tuser)

@@ -55,7 +55,7 @@ FIRMWARE = os.path.abspath(os.path.join(os.path.dirname(__file__),
     '..', '..', 'accel', 'pigasus_sme', 'c', 'pigasus.elf'))
 
 SEND_COUNT_0 = 1024
-SIZE_0 = [66-54, 1500-54, 66-54, 66-54, 1500-54, 1500-54, 66-54]
+SIZES = [64 , 1500, 64, 64, 1501, 1502, 66]
 WAIT_TIME = 80000 # for reoder, without reoder code 30000 is enough
 MAX_PKT_SPACING = 0
 CHECK_PKT = True
@@ -67,31 +67,32 @@ PACKETS = []
 eth = Ether(src='5A:51:52:53:54:55', dst='DA:D1:D2:D3:D4:D5')
 ip = IP(src='192.168.1.100', dst='192.168.1.101')
 udp = UDP(sport=1234, dport=5678)
-payload = bytes([0]+[x % 256 for x in range(SIZE_0[0]-1)])
+payload = bytes([0]+[x % 256 for x in range(SIZES[0]-1-42)])
 test_pkt = eth / ip / udp / payload
 PACKETS.append(test_pkt)
 
 eth = Ether(src='5A:51:52:53:54:55', dst='DA:D1:D2:D3:D4:D5')
 ip = IP(src='192.168.1.100', dst='192.168.1.101')
 tcp = TCP(sport=1234, dport=5678)
-payload = bytes([0]+[x % 256 for x in range(SIZE_0[0]-1)])
+payload = bytes([0]+[x % 256 for x in range(SIZES[0]-1-54)])
 test_pkt = eth / ip / tcp / payload
 PACKETS.append(test_pkt)
 
 eth = Ether(src='5A:51:52:53:54:55', dst='DA:D1:D2:D3:D4:D5')
 ip = IP(src='192.168.1.100', dst='192.168.1.101')
 tcp = TCP(sport=12345, dport=80)
-payload = bytes([0]+[x % 256 for x in range(SIZE_0[0]-1)])
+payload = bytes([0]+[x % 256 for x in range(SIZES[0]-1-54)])
 test_pkt = eth / ip / tcp / payload
 PACKETS.append(test_pkt)
 
 eth = Ether(src='5A:51:52:53:54:55', dst='DA:D1:D2:D3:D4:D5')
 ip = IP(src='192.168.1.100', dst='192.168.1.101')
 tcp = TCP(sport=54321, dport=80)
-payload = bytes([0]+[x % 256 for x in range(SIZE_0[0]-1)])
+payload = bytes([0]+[x % 256 for x in range(SIZES[0]-1-54)])
 test_pkt = eth / ip / tcp / payload
 PACKETS.append(test_pkt)
 
+# PCAP = None
 PCAP = os.path.abspath(os.path.join(os.path.dirname(__file__),
          '../../accel/pigasus_sme/python/attack_test.pcap'))
        # '../../accel/pigasus_sme/python/attack.pcap'))
@@ -109,8 +110,13 @@ else:
     pkt_ind = 0
     for i in range(0, SEND_COUNT_0):
         frame = PACKETS[pkt_ind].copy()
-        # frame[Raw].load = bytes([i % 256] + [x % 256 for x in range(SIZE_0[randrange(len(SIZE_0))]-1)])
-        frame[Raw].load = bytes(0xFF for x in range(SIZE_0[randrange(len(SIZE_0))]))
+        if TCP in frame:
+            # frame[Raw].load = bytes([i % 256] + [x % 256 for x in range(SIZES[randrange(len(SIZES))]-1-54)])
+            frame[Raw].load = bytes(0xFF for x in range(SIZES[randrange(len(SIZES))]-54))
+        else: # UDP
+            # frame[Raw].load = bytes([i % 256] + [x % 256 for x in range(SIZES[randrange(len(SIZES))]-1-42)])
+            frame[Raw].load = bytes(0xFF for x in range(SIZES[randrange(len(SIZES))]-42))
+
         PACKETS_0.append(frame)
 
         pkt_ind = (pkt_ind+1) % len(PACKETS)
@@ -341,7 +347,7 @@ async def run_test_gousheh(dut):
                 if (frame in pkts_set):
                     pkts_set.remove(frame)
                 else:
-                    tb.log.debug("corupted pkt, \n%s", hexdump_str(frame))
+                    tb.log.debug("Modified pkt, \n%s", hexdump_str(frame))
         await RisingEdge(dut.clk)
 
     await Timer(WAIT_TIME, 'ns')

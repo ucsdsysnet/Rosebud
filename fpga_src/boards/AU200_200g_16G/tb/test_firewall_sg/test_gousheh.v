@@ -63,6 +63,8 @@ parameter HDR_START_ADDR   = 22'h104000;
 parameter MAX_PKT_HDR_SIZE = 128;
 
 // Testbench signals
+reg                       clk;
+reg                       rst;
 reg  [DATA_WIDTH-1:0]     data_s_axis_tdata;
 reg  [STRB_WIDTH-1:0]     data_s_axis_tkeep;
 reg                       data_s_axis_tvalid;
