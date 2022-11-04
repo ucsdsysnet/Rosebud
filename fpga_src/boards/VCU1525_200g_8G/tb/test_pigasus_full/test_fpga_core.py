@@ -26,6 +26,7 @@ THE SOFTWARE.
 import os
 import sys
 
+import scapy.config
 from scapy.packet import Raw
 from scapy.layers.l2 import Ether
 from scapy.layers.inet import IP, UDP, TCP
@@ -38,6 +39,9 @@ from cocotb.clock import Clock
 from cocotb.triggers import RisingEdge, Timer, ClockCycles
 
 from cocotbext.axi.utils import hexdump_str
+
+# print actual port numbers
+scapy.config.conf.noenum.add(TCP.sport, TCP.dport, UDP.sport, UDP.dport)
 
 try:
     import mqnic
@@ -53,7 +57,7 @@ except ImportError:
 
 SEND_COUNT = 128
 SIZE       = 1024
-CHECK_PKT  = False
+CHECK_PKT  = True
 PRINT_PKTS = True
 
 PACKETS = []
@@ -83,7 +87,7 @@ async def run_test_ins_load(dut):
     await tb.set_enable_cores(0xffff)
     await tb.set_receive_cores(0xffff)
     await tb.set_enable_interfaces(0xffff)
-    await Timer(100, 'ns')
+    await Timer(500, 'ns')
 
     tb.qsfp0_source.log.setLevel("WARNING")
     tb.qsfp1_source.log.setLevel("WARNING")
@@ -92,11 +96,13 @@ async def run_test_ins_load(dut):
     tb.host_if_tx_mon.log.setLevel("WARNING")
     tb.host_if_rx_mon.log.setLevel("WARNING")
 
-    frame = PACKETS[0].copy()
-    frame = frame.build()
     for i in range(0, SEND_COUNT):
-        await tb.qsfp0_source.send(frame)
-        await tb.qsfp1_source.send(frame)
+        frame = PACKETS[0].copy()
+        await tb.qsfp0_source.send(frame.build())
+
+    for i in range(0, SEND_COUNT):
+        frame = PACKETS[0].copy()
+        await tb.qsfp1_source.send(frame.build())
 
     # passed packets are sent to the same port
     for j in range(0, SEND_COUNT):
@@ -105,7 +111,7 @@ async def run_test_ins_load(dut):
         if PRINT_PKTS:
             tb.log.debug("%s", hexdump_str(bytes(rx_frame)))
         if (CHECK_PKT):
-            assert Ether(rx_frame.tdata).build() == frame
+            assert Ether(rx_frame.tdata).build() == PACKETS[0].build()
 
     for j in range(0, SEND_COUNT):
         rx_frame = await tb.qsfp1_sink.recv()
@@ -113,7 +119,7 @@ async def run_test_ins_load(dut):
         if PRINT_PKTS:
             tb.log.debug("%s", hexdump_str(bytes(rx_frame)))
         if (CHECK_PKT):
-            assert Ether(rx_frame.tdata).build() == frame
+            assert Ether(rx_frame.tdata).build() == PACKETS[0].build()
 
     await tb.qsfp0_source.wait()
     await tb.qsfp1_source.wait()
