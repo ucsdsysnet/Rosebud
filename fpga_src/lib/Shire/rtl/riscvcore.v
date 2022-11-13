@@ -290,23 +290,29 @@ module riscvcore #(
   wire send_out_desc  = io_write &&  (io_addr==SEND_DESC_TYPE);
   wire dram_flag_rst  = io_write &&  (io_addr==DRAM_FLAG_RST);
   wire interrupt_ack  = io_write &&  (io_addr==INTERRUPT_ACK);
+  wire slot_wr_v      = io_write &&  (io_addr==SLOT_LUT_STRB) && mem_wr_data[0];
   wire debug_reg_wr_l = io_write &&  (io_addr==DEBUG_REG_ADDR_L);
   wire debug_reg_wr_h = io_write &&  (io_addr==DEBUG_REG_ADDR_H);
+  wire tag_len_wr_v   = io_write &&  (io_addr==SCHED_TAG_LEN);
   wire update_desc    = io_write && ((io_addr==SEND_DESC_ADDR_L) ||
                                      (io_addr==SEND_DESC_ADDR_H) ||
                                      (io_addr==WR_DRAM_ADDR_L)   ||
                                      (io_addr==WR_DRAM_ADDR_H));
 
-  reg debug_reg_wr_l_r, debug_reg_wr_h_r;
+  reg debug_reg_wr_l_r, debug_reg_wr_h_r, tag_len_wr_v_r, slot_wr_v_r;
 
   always @ (posedge clk) begin
     if (rst) begin
       out_desc_v_r     <= 1'b0;
+      slot_wr_v_r      <= 1'b0;
       debug_reg_wr_l_r <= 1'b0;
       debug_reg_wr_h_r <= 1'b0;
+      tag_len_wr_v_r   <= 1'b0;
     end else begin
       debug_reg_wr_l_r <= debug_reg_wr_l;
       debug_reg_wr_h_r <= debug_reg_wr_h;
+      slot_wr_v_r      <= slot_wr_v;
+      tag_len_wr_v_r   <= tag_len_wr_v;
       if (send_out_desc)
         out_desc_v_r <= 1'b1;
       if (out_desc_v_r && out_desc_ready)
@@ -314,9 +320,9 @@ module riscvcore #(
     end
   end
 
-  assign slot_wr_valid      = io_write && (io_addr==SLOT_LUT_STRB) && mem_wr_data[0];
+  assign slot_wr_valid      = slot_wr_v_r;
   assign slot_wr_data       = slot_info_data_r;
-  assign tag_len_wr_valid   = io_write && (io_addr==SCHED_TAG_LEN);
+  assign tag_len_wr_valid   = tag_len_wr_v_r;
   assign sched_tag_len      = sched_tag_len_r;
 
   assign debug_out          = debug_register;

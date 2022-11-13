@@ -621,7 +621,7 @@ generate
     // Sync reg to help with the timing
     pipe_reg #(
       .WIDTH(IF_COUNT*RX_LINES_WIDTH),
-      .N(2)
+      .N(1)
     ) rx_line_count_sync_reg (
       .clk(sys_clk),
       .in(rx_line_count),

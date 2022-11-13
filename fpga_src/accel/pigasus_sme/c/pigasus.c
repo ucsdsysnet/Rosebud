@@ -427,7 +427,6 @@ int main(void)
   init_slots(slot_count, PKTS_START+PKT_OFFSET, slot_size);
   set_masks(0x30); // Enable only Evict + Poke
   set_sched_offset(DATA_OFFSET);
-  set_sched_offset(DATA_OFFSET);
 
   // init slot context structures
   for (int i = 0; i < slot_count; i++)

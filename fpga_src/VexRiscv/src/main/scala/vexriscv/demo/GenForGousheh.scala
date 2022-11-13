@@ -23,7 +23,8 @@ object GenForGousheh extends App{
           prediction = NONE, // STATIC, // DYNAMIC_TARGET, // NONE,
           catchAccessFault = false,
           compressedGen = false,
-          busLatencyMin = 1
+          busLatencyMin = 1,
+          injectorStage = true
         ),
         new DBusSimplePlugin(
           catchAddressMisaligned = true,
