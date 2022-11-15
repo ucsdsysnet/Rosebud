@@ -6,6 +6,14 @@ More information can be found in our paper: https://arxiv.org/abs/2201.08978
 
 ## Prerequisites:
 To build FPGA images we used Vivado 2021.1\*. Also, we need licenses for pcie_ultra_plus and CMAC hard IPs.
+
+To load the image on the FPGA you need drivers, which need some supporting packages. For example in Ubuntu:
+```
+sudo apt-get install libtinfo5
+cd <Vivado Install Dir>/data/xicom/cable_drivers/lin64/install_script/install_drivers/
+sudo ./install_drivers
+```
+
 To compile programs for riscv, we use riscv-gcc. For Arch linux you can use pacman, for Ubuntu:
 ```
 sudo apt-get install autoconf automake autotools-dev curl python3 libmpc-dev libmpfr-dev libgmp-dev gawk build-essential bison flex texinfo gperf libtool patchutils bc zlib1g-dev libexpat-dev
@@ -85,7 +93,14 @@ The default load balancer is round robin for 16 RSU designs, and hash-based load
 * Unfortunately, top level Verilog file for a reconfigurable module cannot be parametrized in Vivado. Therefore, the load balancer examples are placed in the rtl directory per board. If you want to add a new load balancer, you can follow the suit of putting the parameters right after the module declaration, so only the ports require updates, or use macros.
 
 ## Programing FPGA and loading the driver:
-There is a micro-usb header on the supported cards, that provides the JTAG interface for programming the bitfile. You can fire up a Vivado and make sure the connection is good to go and select the top bitfile for programming. Another method is to use the host_utils/runtime/loadbit.sh, based on the devices ID. After programming the FPGA, a restart is required for the PCIe IP to properly be recognized. 
+There is a micro-usb header on the supported cards, that provides the JTAG interface for programming the bitfile. You can fire up a Vivado and make sure the connection is good to go and select the top bitfile for programming. Another method is to use the host_utils/runtime/loadbit.sh, to get the list of devices, program them and get their status either by target_index or the target ID:
+```
+./loadbit.sh list 
+./loadbit.sh prog RR_accel_1_8.bit --target_index=0
+./loadbit.sh status --target "*06xx" 
+```
+
+After programming the FPGA, a restart is required for the PCIe IP to properly be recognized. 
 
 Shire also provides a driver to be able to talk to the card, where it can be seen as a normal NIC and all the future communications, even reconfiguration of RSUs, are done over PCIe which is much faster than JTAG. We use the corundum module to provide the NIC interface. Note that the corundum hardware used is older than the current version available in the corundum repo, and the newer driver is not compatible. We added some ioctl memory ranges to directly access RCU memory to Corundum’s driver.
 
@@ -97,7 +112,7 @@ Then you can load the driver with
 
 ```sudo insmod mqnic.ko```
 
-Now we need to reset the PCIe card to let the driver be properly loaded. To do so run the pcie_hot_reset.sh from host_utils/runtime based on the proper device ID. For example:
+Now we need to reset the PCIe card to let the driver be properly loaded. To do so run the pcie_hot_reset.sh from host_utils/runtime based on the device PCIe address, found in ```lspci``` output. For example:
 
 ```sudo ./pcie_hot_reset.sh 81:00.0```
 
