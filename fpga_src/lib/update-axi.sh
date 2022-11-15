@@ -5,7 +5,7 @@ branch="master"
 libname="AXI"
 seldir=""
 rmlist=".test_durations README.md tox.ini .gitignore .github"
-commit="9c4012f58d2b16d83b57463377014cf1785a6573"
+# commit="9c4012f58d2b16d83b57463377014cf1785a6573"
 
 # determine repo absolute path
 if [ -n "$rel_subdir" ]; then

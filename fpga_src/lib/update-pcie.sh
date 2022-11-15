@@ -5,7 +5,7 @@ branch="master"
 libname="PCIe"
 seldir=""
 rmlist=".test_durations README.md tox.ini .gitignore .github example scripts dma_block.svg README"
-commit="5f90e39e59b3bf5e9fd154f52ce8480746b6afb2"
+# commit="5f90e39e59b3bf5e9fd154f52ce8480746b6afb2"
 
 # determine repo absolute path
 if [ -n "$rel_subdir" ]; then
