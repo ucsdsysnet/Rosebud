@@ -487,7 +487,7 @@ if (IF_COUNT > 1) begin
         .S_TAG_WIDTH(IF_PCIE_DMA_TAG_WIDTH),
         .M_TAG_WIDTH(PCIE_DMA_TAG_WIDTH),
         .ARB_TYPE("ROUND_ROBIN"),
-        .LSB_PRIORITY("HIGH")
+        .LSB_HIGH_PRIORITY(1)
     )
     dma_if_mux_ctrl_inst (
         .clk(pcie_clk),
@@ -613,7 +613,7 @@ if (IF_COUNT > 1) begin
         .S_TAG_WIDTH(IF_PCIE_DMA_TAG_WIDTH),
         .M_TAG_WIDTH(PCIE_DMA_TAG_WIDTH),
         .ARB_TYPE("ROUND_ROBIN"),
-        .LSB_PRIORITY("HIGH")
+        .LSB_HIGH_PRIORITY(1)
     )
     dma_if_mux_data_inst (
         .clk(pcie_clk),

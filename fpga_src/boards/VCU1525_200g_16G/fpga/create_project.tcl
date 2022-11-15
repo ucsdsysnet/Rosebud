@@ -59,6 +59,9 @@ add_files -fileset sources_1 -norecurse {
   ../lib/pcie/rtl/dma_if_pcie_us.v
   ../lib/pcie/rtl/dma_if_pcie_us_rd.v
   ../lib/pcie/rtl/dma_if_pcie_us_wr.v
+  ../lib/pcie/rtl/dma_if_desc_mux.v
+  ../lib/pcie/rtl/dma_ram_demux_wr.v
+  ../lib/pcie/rtl/dma_ram_demux_rd.v
   ../lib/pcie/rtl/dma_if_mux.v
   ../lib/pcie/rtl/dma_if_mux_rd.v
   ../lib/pcie/rtl/dma_if_mux_wr.v

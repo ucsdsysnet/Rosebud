@@ -171,7 +171,7 @@ generate
 
   end else begin: arbiter
 
-    arbiter # (.PORTS(ACCEL_COUNT), .TYPE("ROUND_ROBIN")) act_arbiter (
+    arbiter # (.PORTS(ACCEL_COUNT), .ARB_TYPE_ROUND_ROBIN(1)) act_arbiter (
       .clk (clk),
       .rst (rst),
 

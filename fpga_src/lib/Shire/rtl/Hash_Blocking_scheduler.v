@@ -604,7 +604,7 @@ module simple_scheduler # (
     .DEST_ENABLE(0),
     .USER_ENABLE(1),
     .USER_WIDTH(SLOT_WIDTH),
-    .ARB_TYPE("ROUND_ROBIN")
+    .ARB_TYPE_ROUND_ROBIN(1)
   ) pkt_to_core_arbiter
   (
     .clk(clk),
@@ -836,7 +836,7 @@ module simple_scheduler # (
   assign desc_req = rx_hash_valid_f & ~selected_port_r & hash_n_dest_in_ready;
 
   // Same cycle arbiter, with memory of last result
-  simple_arbiter # (.PORTS(INTERFACE_COUNT),.TYPE("ROUND_ROBIN")) port_selector (
+  simple_arbiter # (.PORTS(INTERFACE_COUNT),.ARB_TYPE_ROUND_ROBIN(1)) port_selector (
     .clk(clk),
     .rst(rst_r),
 

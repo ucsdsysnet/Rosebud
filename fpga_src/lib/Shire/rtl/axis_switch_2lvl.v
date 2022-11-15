@@ -71,10 +71,10 @@ module axis_switch_2lvl # (
     // Output interface register type
     // 0 to bypass, 1 for simple buffer, 2 for skid buffer
     parameter M_REG_TYPE = 2,
-    // arbitration type: "PRIORITY" or "ROUND_ROBIN"
-    parameter ARB_TYPE = "ROUND_ROBIN",
-    // LSB priority: "LOW", "HIGH"
-    parameter LSB_PRIORITY = "HIGH",
+    // select round robin arbitration
+    parameter ARB_TYPE_ROUND_ROBIN = 1,
+    // LSB priority selection
+    parameter ARB_LSB_HIGH_PRIORITY = 1,
     // Number of second stage switches
     parameter CLUSTER_COUNT = 4,
     // To use stage FIFO
@@ -86,7 +86,7 @@ module axis_switch_2lvl # (
     parameter FRAME_FIFO = 0,
     parameter SEPARATE_CLOCKS = 0,
     parameter USE_SIMPLE_SW = 1,
-    parameter PIPELINE_OUTPUT = 2
+    parameter RAM_PIPELINE = 2
 ) (
     /*
      * AXI Stream inputs
@@ -141,31 +141,31 @@ sync_reset sync_m_rst_inst (
 if (S_COUNT >= M_COUNT) begin: shrink
     if ((S_DATA_WIDTH==M_DATA_WIDTH)||(S_COUNT==CLUSTER_COUNT)||USE_SIMPLE_SW) begin
         axis_simple_sw_shrink # (
-            .S_COUNT         (S_COUNT),
-            .M_COUNT         (M_COUNT),
-            .S_DATA_WIDTH    (S_DATA_WIDTH),
-            .S_KEEP_ENABLE   (S_KEEP_ENABLE),
-            .S_KEEP_WIDTH    (S_KEEP_WIDTH),
-            .S_DEST_ENABLE   (S_DEST_ENABLE),
-            .S_DEST_WIDTH    (S_DEST_WIDTH),
-            .M_DATA_WIDTH    (M_DATA_WIDTH),
-            .M_KEEP_ENABLE   (M_KEEP_ENABLE),
-            .M_KEEP_WIDTH    (M_KEEP_WIDTH),
-            .M_DEST_ENABLE   (M_DEST_ENABLE),
-            .M_DEST_WIDTH    (M_DEST_WIDTH),
-            .ID_ENABLE       (ID_ENABLE),
-            .ID_WIDTH        (ID_WIDTH),
-            .USER_ENABLE     (USER_ENABLE),
-            .USER_WIDTH      (USER_WIDTH),
-            .S_REG_TYPE      (S_REG_TYPE),
-            .M_REG_TYPE      (M_REG_TYPE),
-            .ARB_TYPE        (ARB_TYPE),
-            .LSB_PRIORITY    (LSB_PRIORITY),
-            .CLUSTER_COUNT   (CLUSTER_COUNT),
-            .STAGE_FIFO_DEPTH(STAGE_FIFO_DEPTH),
-            .PIPELINE_OUTPUT (PIPELINE_OUTPUT),
-            .FRAME_FIFO      (FRAME_FIFO),
-            .SEPARATE_CLOCKS (SEPARATE_CLOCKS)
+            .S_COUNT              (S_COUNT),
+            .M_COUNT              (M_COUNT),
+            .S_DATA_WIDTH         (S_DATA_WIDTH),
+            .S_KEEP_ENABLE        (S_KEEP_ENABLE),
+            .S_KEEP_WIDTH         (S_KEEP_WIDTH),
+            .S_DEST_ENABLE        (S_DEST_ENABLE),
+            .S_DEST_WIDTH         (S_DEST_WIDTH),
+            .M_DATA_WIDTH         (M_DATA_WIDTH),
+            .M_KEEP_ENABLE        (M_KEEP_ENABLE),
+            .M_KEEP_WIDTH         (M_KEEP_WIDTH),
+            .M_DEST_ENABLE        (M_DEST_ENABLE),
+            .M_DEST_WIDTH         (M_DEST_WIDTH),
+            .ID_ENABLE            (ID_ENABLE),
+            .ID_WIDTH             (ID_WIDTH),
+            .USER_ENABLE          (USER_ENABLE),
+            .USER_WIDTH           (USER_WIDTH),
+            .S_REG_TYPE           (S_REG_TYPE),
+            .M_REG_TYPE           (M_REG_TYPE),
+            .ARB_TYPE_ROUND_ROBIN (ARB_TYPE_ROUND_ROBIN),
+            .ARB_LSB_HIGH_PRIORITY(ARB_LSB_HIGH_PRIORITY),
+            .CLUSTER_COUNT        (CLUSTER_COUNT),
+            .STAGE_FIFO_DEPTH     (STAGE_FIFO_DEPTH),
+            .RAM_PIPELINE         (RAM_PIPELINE),
+            .FRAME_FIFO           (FRAME_FIFO),
+            .SEPARATE_CLOCKS      (SEPARATE_CLOCKS)
         ) axis_switch_2lvl_shrink_inst (
             .s_clk        (s_clk),
             .s_rst        (s_rst_r),
@@ -191,31 +191,31 @@ if (S_COUNT >= M_COUNT) begin: shrink
         );
     end else begin
         axis_ram_sw_shrink # (
-            .S_COUNT         (S_COUNT),
-            .M_COUNT         (M_COUNT),
-            .S_DATA_WIDTH    (S_DATA_WIDTH),
-            .S_KEEP_ENABLE   (S_KEEP_ENABLE),
-            .S_KEEP_WIDTH    (S_KEEP_WIDTH),
-            .S_DEST_ENABLE   (S_DEST_ENABLE),
-            .S_DEST_WIDTH    (S_DEST_WIDTH),
-            .M_DATA_WIDTH    (M_DATA_WIDTH),
-            .M_KEEP_ENABLE   (M_KEEP_ENABLE),
-            .M_KEEP_WIDTH    (M_KEEP_WIDTH),
-            .M_DEST_ENABLE   (M_DEST_ENABLE),
-            .M_DEST_WIDTH    (M_DEST_WIDTH),
-            .ID_ENABLE       (ID_ENABLE),
-            .ID_WIDTH        (ID_WIDTH),
-            .USER_ENABLE     (USER_ENABLE),
-            .USER_WIDTH      (USER_WIDTH),
-            .S_REG_TYPE      (S_REG_TYPE),
-            .M_REG_TYPE      (M_REG_TYPE),
-            .ARB_TYPE        (ARB_TYPE),
-            .LSB_PRIORITY    (LSB_PRIORITY),
-            .CLUSTER_COUNT   (CLUSTER_COUNT),
-            .STAGE_FIFO_DEPTH(STAGE_FIFO_DEPTH),
-            .PIPELINE_OUTPUT (PIPELINE_OUTPUT),
-            .FRAME_FIFO      (FRAME_FIFO),
-            .SEPARATE_CLOCKS (SEPARATE_CLOCKS)
+            .S_COUNT              (S_COUNT),
+            .M_COUNT              (M_COUNT),
+            .S_DATA_WIDTH         (S_DATA_WIDTH),
+            .S_KEEP_ENABLE        (S_KEEP_ENABLE),
+            .S_KEEP_WIDTH         (S_KEEP_WIDTH),
+            .S_DEST_ENABLE        (S_DEST_ENABLE),
+            .S_DEST_WIDTH         (S_DEST_WIDTH),
+            .M_DATA_WIDTH         (M_DATA_WIDTH),
+            .M_KEEP_ENABLE        (M_KEEP_ENABLE),
+            .M_KEEP_WIDTH         (M_KEEP_WIDTH),
+            .M_DEST_ENABLE        (M_DEST_ENABLE),
+            .M_DEST_WIDTH         (M_DEST_WIDTH),
+            .ID_ENABLE            (ID_ENABLE),
+            .ID_WIDTH             (ID_WIDTH),
+            .USER_ENABLE          (USER_ENABLE),
+            .USER_WIDTH           (USER_WIDTH),
+            .S_REG_TYPE           (S_REG_TYPE),
+            .M_REG_TYPE           (M_REG_TYPE),
+            .ARB_TYPE_ROUND_ROBIN (ARB_TYPE_ROUND_ROBIN),
+            .ARB_LSB_HIGH_PRIORITY(ARB_LSB_HIGH_PRIORITY),
+            .CLUSTER_COUNT        (CLUSTER_COUNT),
+            .STAGE_FIFO_DEPTH     (STAGE_FIFO_DEPTH),
+            .RAM_PIPELINE         (RAM_PIPELINE),
+            .FRAME_FIFO           (FRAME_FIFO),
+            .SEPARATE_CLOCKS      (SEPARATE_CLOCKS)
         ) axis_switch_2lvl_shrink_inst (
             .s_clk        (s_clk),
             .s_rst        (s_rst_r),
@@ -243,31 +243,31 @@ if (S_COUNT >= M_COUNT) begin: shrink
 end else begin: grow
     if ((S_DATA_WIDTH==M_DATA_WIDTH)||(M_COUNT==CLUSTER_COUNT)||USE_SIMPLE_SW) begin
         axis_simple_sw_grow # (
-            .S_COUNT         (S_COUNT),
-            .M_COUNT         (M_COUNT),
-            .S_DATA_WIDTH    (S_DATA_WIDTH),
-            .S_KEEP_ENABLE   (S_KEEP_ENABLE),
-            .S_KEEP_WIDTH    (S_KEEP_WIDTH),
-            .S_DEST_ENABLE   (S_DEST_ENABLE),
-            .S_DEST_WIDTH    (S_DEST_WIDTH),
-            .M_DATA_WIDTH    (M_DATA_WIDTH),
-            .M_KEEP_ENABLE   (M_KEEP_ENABLE),
-            .M_KEEP_WIDTH    (M_KEEP_WIDTH),
-            .M_DEST_ENABLE   (M_DEST_ENABLE),
-            .M_DEST_WIDTH    (M_DEST_WIDTH),
-            .ID_ENABLE       (ID_ENABLE),
-            .ID_WIDTH        (ID_WIDTH),
-            .USER_ENABLE     (USER_ENABLE),
-            .USER_WIDTH      (USER_WIDTH),
-            .S_REG_TYPE      (S_REG_TYPE),
-            .M_REG_TYPE      (M_REG_TYPE),
-            .ARB_TYPE        (ARB_TYPE),
-            .LSB_PRIORITY    (LSB_PRIORITY),
-            .CLUSTER_COUNT   (CLUSTER_COUNT),
-            .STAGE_FIFO_DEPTH(STAGE_FIFO_DEPTH),
-            .PIPELINE_OUTPUT (PIPELINE_OUTPUT),
-            .FRAME_FIFO      (FRAME_FIFO),
-            .SEPARATE_CLOCKS (SEPARATE_CLOCKS)
+            .S_COUNT              (S_COUNT),
+            .M_COUNT              (M_COUNT),
+            .S_DATA_WIDTH         (S_DATA_WIDTH),
+            .S_KEEP_ENABLE        (S_KEEP_ENABLE),
+            .S_KEEP_WIDTH         (S_KEEP_WIDTH),
+            .S_DEST_ENABLE        (S_DEST_ENABLE),
+            .S_DEST_WIDTH         (S_DEST_WIDTH),
+            .M_DATA_WIDTH         (M_DATA_WIDTH),
+            .M_KEEP_ENABLE        (M_KEEP_ENABLE),
+            .M_KEEP_WIDTH         (M_KEEP_WIDTH),
+            .M_DEST_ENABLE        (M_DEST_ENABLE),
+            .M_DEST_WIDTH         (M_DEST_WIDTH),
+            .ID_ENABLE            (ID_ENABLE),
+            .ID_WIDTH             (ID_WIDTH),
+            .USER_ENABLE          (USER_ENABLE),
+            .USER_WIDTH           (USER_WIDTH),
+            .S_REG_TYPE           (S_REG_TYPE),
+            .M_REG_TYPE           (M_REG_TYPE),
+            .ARB_TYPE_ROUND_ROBIN (ARB_TYPE_ROUND_ROBIN),
+            .ARB_LSB_HIGH_PRIORITY(ARB_LSB_HIGH_PRIORITY),
+            .CLUSTER_COUNT        (CLUSTER_COUNT),
+            .STAGE_FIFO_DEPTH     (STAGE_FIFO_DEPTH),
+            .RAM_PIPELINE         (RAM_PIPELINE),
+            .FRAME_FIFO           (FRAME_FIFO),
+            .SEPARATE_CLOCKS      (SEPARATE_CLOCKS)
         ) axis_switch_2lvl_grow_inst (
             .s_clk        (s_clk),
             .s_rst        (s_rst_r),
@@ -293,31 +293,31 @@ end else begin: grow
         );
     end else begin
         axis_ram_sw_grow # (
-            .S_COUNT         (S_COUNT),
-            .M_COUNT         (M_COUNT),
-            .S_DATA_WIDTH    (S_DATA_WIDTH),
-            .S_KEEP_ENABLE   (S_KEEP_ENABLE),
-            .S_KEEP_WIDTH    (S_KEEP_WIDTH),
-            .S_DEST_ENABLE   (S_DEST_ENABLE),
-            .S_DEST_WIDTH    (S_DEST_WIDTH),
-            .M_DATA_WIDTH    (M_DATA_WIDTH),
-            .M_KEEP_ENABLE   (M_KEEP_ENABLE),
-            .M_KEEP_WIDTH    (M_KEEP_WIDTH),
-            .M_DEST_ENABLE   (M_DEST_ENABLE),
-            .M_DEST_WIDTH    (M_DEST_WIDTH),
-            .ID_ENABLE       (ID_ENABLE),
-            .ID_WIDTH        (ID_WIDTH),
-            .USER_ENABLE     (USER_ENABLE),
-            .USER_WIDTH      (USER_WIDTH),
-            .S_REG_TYPE      (S_REG_TYPE),
-            .M_REG_TYPE      (M_REG_TYPE),
-            .ARB_TYPE        (ARB_TYPE),
-            .LSB_PRIORITY    (LSB_PRIORITY),
-            .CLUSTER_COUNT   (CLUSTER_COUNT),
-            .STAGE_FIFO_DEPTH(STAGE_FIFO_DEPTH),
-            .PIPELINE_OUTPUT (PIPELINE_OUTPUT),
-            .FRAME_FIFO      (FRAME_FIFO),
-            .SEPARATE_CLOCKS (SEPARATE_CLOCKS)
+            .S_COUNT              (S_COUNT),
+            .M_COUNT              (M_COUNT),
+            .S_DATA_WIDTH         (S_DATA_WIDTH),
+            .S_KEEP_ENABLE        (S_KEEP_ENABLE),
+            .S_KEEP_WIDTH         (S_KEEP_WIDTH),
+            .S_DEST_ENABLE        (S_DEST_ENABLE),
+            .S_DEST_WIDTH         (S_DEST_WIDTH),
+            .M_DATA_WIDTH         (M_DATA_WIDTH),
+            .M_KEEP_ENABLE        (M_KEEP_ENABLE),
+            .M_KEEP_WIDTH         (M_KEEP_WIDTH),
+            .M_DEST_ENABLE        (M_DEST_ENABLE),
+            .M_DEST_WIDTH         (M_DEST_WIDTH),
+            .ID_ENABLE            (ID_ENABLE),
+            .ID_WIDTH             (ID_WIDTH),
+            .USER_ENABLE          (USER_ENABLE),
+            .USER_WIDTH           (USER_WIDTH),
+            .S_REG_TYPE           (S_REG_TYPE),
+            .M_REG_TYPE           (M_REG_TYPE),
+            .ARB_TYPE_ROUND_ROBIN (ARB_TYPE_ROUND_ROBIN),
+            .ARB_LSB_HIGH_PRIORITY(ARB_LSB_HIGH_PRIORITY),
+            .CLUSTER_COUNT        (CLUSTER_COUNT),
+            .STAGE_FIFO_DEPTH     (STAGE_FIFO_DEPTH),
+            .RAM_PIPELINE         (RAM_PIPELINE),
+            .FRAME_FIFO           (FRAME_FIFO),
+            .SEPARATE_CLOCKS      (SEPARATE_CLOCKS)
         ) axis_switch_2lvl_grow_inst (
             .s_clk        (s_clk),
             .s_rst        (s_rst_r),
@@ -347,31 +347,31 @@ end
 endmodule
 
 module axis_simple_sw_shrink # (
-    parameter S_COUNT          = 4,
-    parameter M_COUNT          = 4,
-    parameter S_DATA_WIDTH     = 8,
-    parameter S_KEEP_ENABLE    = (S_DATA_WIDTH>8),
-    parameter S_KEEP_WIDTH     = S_KEEP_ENABLE ? (S_DATA_WIDTH/8) : 1,
-    parameter S_DEST_ENABLE    = (M_COUNT>1),
-    parameter S_DEST_WIDTH     = S_DEST_ENABLE ? $clog2(M_COUNT) : 1,
-    parameter M_DATA_WIDTH     = 8,
-    parameter M_KEEP_ENABLE    = (M_DATA_WIDTH>8),
-    parameter M_KEEP_WIDTH     = M_KEEP_ENABLE ? (M_DATA_WIDTH/8) : 1,
-    parameter M_DEST_ENABLE    = 0,
-    parameter M_DEST_WIDTH     = 1,
-    parameter ID_ENABLE        = 0,
-    parameter ID_WIDTH         = 1,
-    parameter USER_ENABLE      = 1,
-    parameter USER_WIDTH       = 1,
-    parameter S_REG_TYPE       = 2,
-    parameter M_REG_TYPE       = 2,
-    parameter ARB_TYPE         = "ROUND_ROBIN",
-    parameter LSB_PRIORITY     = "HIGH",
-    parameter CLUSTER_COUNT    = 4,
-    parameter STAGE_FIFO_DEPTH = 8192,
-    parameter PIPELINE_OUTPUT  = 2,
-    parameter FRAME_FIFO       = 0,
-    parameter SEPARATE_CLOCKS  = 0
+    parameter S_COUNT               = 4,
+    parameter M_COUNT               = 4,
+    parameter S_DATA_WIDTH          = 8,
+    parameter S_KEEP_ENABLE         = (S_DATA_WIDTH>8),
+    parameter S_KEEP_WIDTH          = S_KEEP_ENABLE ? (S_DATA_WIDTH/8) : 1,
+    parameter S_DEST_ENABLE         = (M_COUNT>1),
+    parameter S_DEST_WIDTH          = S_DEST_ENABLE ? $clog2(M_COUNT) : 1,
+    parameter M_DATA_WIDTH          = 8,
+    parameter M_KEEP_ENABLE         = (M_DATA_WIDTH>8),
+    parameter M_KEEP_WIDTH          = M_KEEP_ENABLE ? (M_DATA_WIDTH/8) : 1,
+    parameter M_DEST_ENABLE         = 0,
+    parameter M_DEST_WIDTH          = 1,
+    parameter ID_ENABLE             = 0,
+    parameter ID_WIDTH              = 1,
+    parameter USER_ENABLE           = 1,
+    parameter USER_WIDTH            = 1,
+    parameter S_REG_TYPE            = 2,
+    parameter M_REG_TYPE            = 2,
+    parameter ARB_TYPE_ROUND_ROBIN  = 1,
+    parameter ARB_LSB_HIGH_PRIORITY = 1,
+    parameter CLUSTER_COUNT         = 4,
+    parameter STAGE_FIFO_DEPTH      = 8192,
+    parameter RAM_PIPELINE          = 2,
+    parameter FRAME_FIFO            = 0,
+    parameter SEPARATE_CLOCKS       = 0
 ) (
     /*
      * AXI Stream inputs
@@ -513,9 +513,10 @@ module axis_simple_sw_shrink # (
                     .USER_ENABLE(USER_ENABLE),
                     .USER_WIDTH(USER_WIDTH),
                     .ID_ENABLE(ID_ENABLE),
-                    .ID_WIDTH(ID_WIDTH),
-                    .ARB_TYPE(ARB_TYPE),
-                    .LSB_PRIORITY(LSB_PRIORITY)
+                    .S_ID_WIDTH(ID_WIDTH),
+                    .M_ID_WIDTH(ID_WIDTH),
+                    .ARB_TYPE_ROUND_ROBIN(ARB_TYPE_ROUND_ROBIN),
+                    .ARB_LSB_HIGH_PRIORITY(ARB_LSB_HIGH_PRIORITY)
                 ) sw_lvl1 (
 
                     .clk(s_clk),
@@ -599,7 +600,7 @@ module axis_simple_sw_shrink # (
                             .USER_WIDTH(USER_WIDTH),
                             .ID_ENABLE(ID_ENABLE),
                             .ID_WIDTH(ID_WIDTH),
-                            .PIPELINE_OUTPUT(PIPELINE_OUTPUT),
+                            .RAM_PIPELINE(RAM_PIPELINE),
                             .FRAME_FIFO(FRAME_FIFO)
                         ) stage_fifo (
 
@@ -647,7 +648,7 @@ module axis_simple_sw_shrink # (
                             .USER_WIDTH(USER_WIDTH),
                             .ID_ENABLE(ID_ENABLE),
                             .ID_WIDTH(ID_WIDTH),
-                            .PIPELINE_OUTPUT(PIPELINE_OUTPUT),
+                            .RAM_PIPELINE(RAM_PIPELINE),
                             .FRAME_FIFO(FRAME_FIFO)
                         ) stage_fifo (
                             .clk(s_clk),
@@ -716,9 +717,10 @@ module axis_simple_sw_shrink # (
             .USER_ENABLE(USER_ENABLE),
             .USER_WIDTH(USER_WIDTH),
             .ID_ENABLE(ID_ENABLE),
-            .ID_WIDTH(ID_WIDTH),
-            .ARB_TYPE(ARB_TYPE),
-            .LSB_PRIORITY(LSB_PRIORITY)
+            .S_ID_WIDTH(ID_WIDTH),
+            .M_ID_WIDTH(ID_WIDTH),
+            .ARB_TYPE_ROUND_ROBIN(ARB_TYPE_ROUND_ROBIN),
+            .ARB_LSB_HIGH_PRIORITY(ARB_LSB_HIGH_PRIORITY)
         ) sw_lvl2
         (
             .clk(select_m_clk),
@@ -800,8 +802,8 @@ module axis_simple_sw_shrink # (
             .USER_WIDTH(USER_WIDTH),
             .ID_ENABLE(ID_ENABLE),
             .ID_WIDTH(ID_WIDTH),
-            .ARB_TYPE(ARB_TYPE),
-            .LSB_PRIORITY(LSB_PRIORITY),
+            .ARB_TYPE_ROUND_ROBIN(ARB_TYPE_ROUND_ROBIN),
+            .ARB_LSB_HIGH_PRIORITY(ARB_LSB_HIGH_PRIORITY),
             .S_REG_TYPE(2),
             .M_REG_TYPE(M_REG_TYPE)
         ) sw_lvl2
@@ -846,14 +848,14 @@ module axis_simple_sw_shrink # (
 endmodule
 
 module axis_simple_arb_2lvl # (
-    parameter S_COUNT          = 16,
-    parameter DATA_WIDTH       = 8,
-    parameter USER_ENABLE      = 1,
-    parameter USER_WIDTH       = 1,
-    parameter ARB_TYPE         = "ROUND_ROBIN",
-    parameter LSB_PRIORITY     = "HIGH",
-    parameter CLUSTER_COUNT    = 4,
-    parameter STAGE_FIFO_DEPTH = 64
+    parameter S_COUNT               = 16,
+    parameter DATA_WIDTH            = 8,
+    parameter USER_ENABLE           = 1,
+    parameter USER_WIDTH            = 1,
+    parameter ARB_TYPE_ROUND_ROBIN  = 1,
+    parameter ARB_LSB_HIGH_PRIORITY = 1,
+    parameter CLUSTER_COUNT         = 4,
+    parameter STAGE_FIFO_DEPTH      = 64
 ) (
     input  wire                          clk,
     input  wire                          rst,
@@ -960,8 +962,8 @@ module axis_simple_arb_2lvl # (
                     .USER_ENABLE(USER_ENABLE),
                     .USER_WIDTH(USER_WIDTH),
                     .ID_ENABLE(0),
-                    .ARB_TYPE(ARB_TYPE),
-                    .LSB_PRIORITY(LSB_PRIORITY)
+                    .ARB_TYPE_ROUND_ROBIN(ARB_TYPE_ROUND_ROBIN),
+                    .ARB_LSB_HIGH_PRIORITY(ARB_LSB_HIGH_PRIORITY)
                 ) arb_lvl1 (
 
                     .clk(clk),
@@ -1043,8 +1045,8 @@ module axis_simple_arb_2lvl # (
         .DEST_ENABLE(0),
         .USER_ENABLE(USER_ENABLE),
         .USER_WIDTH(USER_WIDTH),
-        .ARB_TYPE(ARB_TYPE),
-        .LSB_PRIORITY(LSB_PRIORITY)
+        .ARB_TYPE_ROUND_ROBIN(ARB_TYPE_ROUND_ROBIN),
+        .ARB_LSB_HIGH_PRIORITY(ARB_LSB_HIGH_PRIORITY)
     ) arb_lvl2
     (
         .clk(clk),
@@ -1111,31 +1113,31 @@ module axis_simple_arb_2lvl # (
 endmodule
 
 module axis_ram_sw_shrink # (
-    parameter S_COUNT          = 4,
-    parameter M_COUNT          = 4,
-    parameter S_DATA_WIDTH     = 8,
-    parameter S_KEEP_ENABLE    = (S_DATA_WIDTH>8),
-    parameter S_KEEP_WIDTH     = S_KEEP_ENABLE ? (S_DATA_WIDTH/8) : 1,
-    parameter S_DEST_ENABLE    = (M_COUNT>1),
-    parameter S_DEST_WIDTH     = S_DEST_ENABLE ? $clog2(M_COUNT) : 1,
-    parameter M_DATA_WIDTH     = 8,
-    parameter M_KEEP_ENABLE    = (M_DATA_WIDTH>8),
-    parameter M_KEEP_WIDTH     = M_KEEP_ENABLE ? (M_DATA_WIDTH/8) : 1,
-    parameter M_DEST_ENABLE    = 0,
-    parameter M_DEST_WIDTH     = 1,
-    parameter ID_ENABLE        = 0,
-    parameter ID_WIDTH         = 1,
-    parameter USER_ENABLE      = 1,
-    parameter USER_WIDTH       = 1,
-    parameter S_REG_TYPE       = 2,
-    parameter M_REG_TYPE       = 2,
-    parameter ARB_TYPE         = "ROUND_ROBIN",
-    parameter LSB_PRIORITY     = "HIGH",
-    parameter CLUSTER_COUNT    = 4,
-    parameter STAGE_FIFO_DEPTH = 8192,
-    parameter PIPELINE_OUTPUT  = 2,
-    parameter FRAME_FIFO       = 0,
-    parameter SEPARATE_CLOCKS  = 0
+    parameter S_COUNT               = 4,
+    parameter M_COUNT               = 4,
+    parameter S_DATA_WIDTH          = 8,
+    parameter S_KEEP_ENABLE         = (S_DATA_WIDTH>8),
+    parameter S_KEEP_WIDTH          = S_KEEP_ENABLE ? (S_DATA_WIDTH/8) : 1,
+    parameter S_DEST_ENABLE         = (M_COUNT>1),
+    parameter S_DEST_WIDTH          = S_DEST_ENABLE ? $clog2(M_COUNT) : 1,
+    parameter M_DATA_WIDTH          = 8,
+    parameter M_KEEP_ENABLE         = (M_DATA_WIDTH>8),
+    parameter M_KEEP_WIDTH          = M_KEEP_ENABLE ? (M_DATA_WIDTH/8) : 1,
+    parameter M_DEST_ENABLE         = 0,
+    parameter M_DEST_WIDTH          = 1,
+    parameter ID_ENABLE             = 0,
+    parameter ID_WIDTH              = 1,
+    parameter USER_ENABLE           = 1,
+    parameter USER_WIDTH            = 1,
+    parameter S_REG_TYPE            = 2,
+    parameter M_REG_TYPE            = 2,
+    parameter ARB_TYPE_ROUND_ROBIN  = 1,
+    parameter ARB_LSB_HIGH_PRIORITY = 1,
+    parameter CLUSTER_COUNT         = 4,
+    parameter STAGE_FIFO_DEPTH      = 8192,
+    parameter RAM_PIPELINE          = 2,
+    parameter FRAME_FIFO            = 0,
+    parameter SEPARATE_CLOCKS       = 0
 ) (
     /*
      * AXI Stream inputs
@@ -1257,9 +1259,9 @@ module axis_ram_sw_shrink # (
                 .USER_WIDTH(USER_WIDTH),
                 .ID_ENABLE(ID_ENABLE),
                 .ID_WIDTH(ID_WIDTH),
-                .ARB_TYPE(ARB_TYPE),
-                .LSB_PRIORITY(LSB_PRIORITY),
-                .RAM_PIPELINE(PIPELINE_OUTPUT)
+                .ARB_TYPE_ROUND_ROBIN(ARB_TYPE_ROUND_ROBIN),
+                .ARB_LSB_HIGH_PRIORITY(ARB_LSB_HIGH_PRIORITY),
+                .RAM_PIPELINE(RAM_PIPELINE)
             ) sw_lvl1 (
                 .clk(s_clk),
                 .rst(s_rst),
@@ -1308,7 +1310,7 @@ module axis_ram_sw_shrink # (
                     .USER_WIDTH(USER_WIDTH),
                     .ID_ENABLE(ID_ENABLE),
                     .ID_WIDTH(ID_WIDTH),
-                    .PIPELINE_OUTPUT(2),
+                    .RAM_PIPELINE(2),
                     .FRAME_FIFO(0)
                 ) async_fifo (
 
@@ -1406,9 +1408,10 @@ module axis_ram_sw_shrink # (
             .USER_ENABLE(USER_ENABLE),
             .USER_WIDTH(USER_WIDTH),
             .ID_ENABLE(ID_ENABLE),
-            .ID_WIDTH(ID_WIDTH),
-            .ARB_TYPE(ARB_TYPE),
-            .LSB_PRIORITY(LSB_PRIORITY)
+            .S_ID_WIDTH(ID_WIDTH),
+            .M_ID_WIDTH(ID_WIDTH),
+            .ARB_TYPE_ROUND_ROBIN(ARB_TYPE_ROUND_ROBIN),
+            .ARB_LSB_HIGH_PRIORITY(ARB_LSB_HIGH_PRIORITY)
         ) sw_lvl2
         (
             .clk(select_m_clk),
@@ -1489,8 +1492,8 @@ module axis_ram_sw_shrink # (
             .USER_WIDTH(USER_WIDTH),
             .ID_ENABLE(ID_ENABLE),
             .ID_WIDTH(ID_WIDTH),
-            .ARB_TYPE(ARB_TYPE),
-            .LSB_PRIORITY(LSB_PRIORITY),
+            .ARB_TYPE_ROUND_ROBIN(ARB_TYPE_ROUND_ROBIN),
+            .ARB_LSB_HIGH_PRIORITY(ARB_LSB_HIGH_PRIORITY),
             .S_REG_TYPE(0),
             .M_REG_TYPE(M_REG_TYPE)
         ) sw_lvl2
@@ -1535,31 +1538,31 @@ module axis_ram_sw_shrink # (
 endmodule
 
 module axis_simple_sw_grow # (
-    parameter S_COUNT          = 4,
-    parameter M_COUNT          = 4,
-    parameter S_DATA_WIDTH     = 8,
-    parameter S_KEEP_ENABLE    = (S_DATA_WIDTH>8),
-    parameter S_KEEP_WIDTH     = S_KEEP_ENABLE ? (S_DATA_WIDTH/8) : 1,
-    parameter S_DEST_ENABLE    = (M_COUNT>1), // redundant
-    parameter S_DEST_WIDTH     = S_DEST_ENABLE ? $clog2(M_COUNT) : 1,
-    parameter M_DATA_WIDTH     = 8,
-    parameter M_KEEP_ENABLE    = (M_DATA_WIDTH>8),
-    parameter M_KEEP_WIDTH     = M_KEEP_ENABLE ? (M_DATA_WIDTH/8) : 1,
-    parameter M_DEST_ENABLE    = 0,
-    parameter M_DEST_WIDTH     = 1,
-    parameter ID_ENABLE        = 0,
-    parameter ID_WIDTH         = 1,
-    parameter USER_ENABLE      = 1,
-    parameter USER_WIDTH       = 1,
-    parameter S_REG_TYPE       = 2,
-    parameter M_REG_TYPE       = 2,
-    parameter ARB_TYPE         = "ROUND_ROBIN",
-    parameter LSB_PRIORITY     = "HIGH",
-    parameter CLUSTER_COUNT    = 4,
-    parameter STAGE_FIFO_DEPTH = 8192,
-    parameter PIPELINE_OUTPUT  = 2,
-    parameter FRAME_FIFO       = 0,
-    parameter SEPARATE_CLOCKS  = 0
+    parameter S_COUNT               = 4,
+    parameter M_COUNT               = 4,
+    parameter S_DATA_WIDTH          = 8,
+    parameter S_KEEP_ENABLE         = (S_DATA_WIDTH>8),
+    parameter S_KEEP_WIDTH          = S_KEEP_ENABLE ? (S_DATA_WIDTH/8) : 1,
+    parameter S_DEST_ENABLE         = (M_COUNT>1), // redundant
+    parameter S_DEST_WIDTH          = S_DEST_ENABLE ? $clog2(M_COUNT) : 1,
+    parameter M_DATA_WIDTH          = 8,
+    parameter M_KEEP_ENABLE         = (M_DATA_WIDTH>8),
+    parameter M_KEEP_WIDTH          = M_KEEP_ENABLE ? (M_DATA_WIDTH/8) : 1,
+    parameter M_DEST_ENABLE         = 0,
+    parameter M_DEST_WIDTH          = 1,
+    parameter ID_ENABLE             = 0,
+    parameter ID_WIDTH              = 1,
+    parameter USER_ENABLE           = 1,
+    parameter USER_WIDTH            = 1,
+    parameter S_REG_TYPE            = 2,
+    parameter M_REG_TYPE            = 2,
+    parameter ARB_TYPE_ROUND_ROBIN  = 1,
+    parameter ARB_LSB_HIGH_PRIORITY = 1,
+    parameter CLUSTER_COUNT         = 4,
+    parameter STAGE_FIFO_DEPTH      = 8192,
+    parameter RAM_PIPELINE          = 2,
+    parameter FRAME_FIFO            = 0,
+    parameter SEPARATE_CLOCKS       = 0
 ) (
     /*
      * AXI Stream inputs
@@ -1619,8 +1622,8 @@ module axis_simple_sw_grow # (
         .USER_WIDTH(USER_WIDTH),
         .ID_ENABLE(ID_ENABLE),
         .ID_WIDTH(ID_WIDTH),
-        .ARB_TYPE(ARB_TYPE),
-        .LSB_PRIORITY(LSB_PRIORITY),
+        .ARB_TYPE_ROUND_ROBIN(ARB_TYPE_ROUND_ROBIN),
+        .ARB_LSB_HIGH_PRIORITY(ARB_LSB_HIGH_PRIORITY),
         .S_REG_TYPE(S_REG_TYPE),
         .M_REG_TYPE(M_REG_TYPE)
     ) sw_lvl1
@@ -1703,7 +1706,7 @@ module axis_simple_sw_grow # (
                             .USER_WIDTH(USER_WIDTH),
                             .ID_ENABLE(ID_ENABLE),
                             .ID_WIDTH(ID_WIDTH),
-                            .PIPELINE_OUTPUT(PIPELINE_OUTPUT),
+                            .RAM_PIPELINE(RAM_PIPELINE),
                             .FRAME_FIFO(FRAME_FIFO)
                         ) stage_fifo (
                             .s_clk(s_clk),
@@ -1750,7 +1753,7 @@ module axis_simple_sw_grow # (
                             .USER_WIDTH(USER_WIDTH),
                             .ID_ENABLE(ID_ENABLE),
                             .ID_WIDTH(ID_WIDTH),
-                            .PIPELINE_OUTPUT(PIPELINE_OUTPUT),
+                            .RAM_PIPELINE(RAM_PIPELINE),
                             .FRAME_FIFO(FRAME_FIFO)
                         ) stage_fifo (
                             .clk(s_clk),
@@ -1804,8 +1807,8 @@ module axis_simple_sw_grow # (
                     .ID_WIDTH(ID_WIDTH),
                     .S_REG_TYPE(S_REG_TYPE),
                     .M_REG_TYPE(M_REG_TYPE),
-                    .ARB_TYPE(ARB_TYPE),
-                    .LSB_PRIORITY(LSB_PRIORITY)
+                    .ARB_TYPE_ROUND_ROBIN(ARB_TYPE_ROUND_ROBIN),
+                    .ARB_LSB_HIGH_PRIORITY(ARB_LSB_HIGH_PRIORITY)
                 ) sw_lvl2
                 (
                     .clk(select_m_clk),
@@ -1841,31 +1844,31 @@ module axis_simple_sw_grow # (
 endmodule
 
 module axis_ram_sw_grow # (
-    parameter S_COUNT          = 4,
-    parameter M_COUNT          = 4,
-    parameter S_DATA_WIDTH     = 8,
-    parameter S_KEEP_ENABLE    = (S_DATA_WIDTH>8),
-    parameter S_KEEP_WIDTH     = S_KEEP_ENABLE ? (S_DATA_WIDTH/8) : 1,
-    parameter S_DEST_ENABLE    = (M_COUNT>1), // redundant
-    parameter S_DEST_WIDTH     = S_DEST_ENABLE ? $clog2(M_COUNT) : 1,
-    parameter M_DATA_WIDTH     = 8,
-    parameter M_KEEP_ENABLE    = (M_DATA_WIDTH>8),
-    parameter M_KEEP_WIDTH     = M_KEEP_ENABLE ? (M_DATA_WIDTH/8) : 1,
-    parameter M_DEST_ENABLE    = 0,
-    parameter M_DEST_WIDTH     = 1,
-    parameter ID_ENABLE        = 0,
-    parameter ID_WIDTH         = 1,
-    parameter USER_ENABLE      = 1,
-    parameter USER_WIDTH       = 1,
-    parameter S_REG_TYPE       = 2,
-    parameter M_REG_TYPE       = 2,
-    parameter ARB_TYPE         = "ROUND_ROBIN",
-    parameter LSB_PRIORITY     = "HIGH",
-    parameter CLUSTER_COUNT    = 4,
-    parameter STAGE_FIFO_DEPTH = 8192,
-    parameter PIPELINE_OUTPUT  = 2,
-    parameter FRAME_FIFO       = 0,
-    parameter SEPARATE_CLOCKS  = 0
+    parameter S_COUNT               = 4,
+    parameter M_COUNT               = 4,
+    parameter S_DATA_WIDTH          = 8,
+    parameter S_KEEP_ENABLE         = (S_DATA_WIDTH>8),
+    parameter S_KEEP_WIDTH          = S_KEEP_ENABLE ? (S_DATA_WIDTH/8) : 1,
+    parameter S_DEST_ENABLE         = (M_COUNT>1), // redundant
+    parameter S_DEST_WIDTH          = S_DEST_ENABLE ? $clog2(M_COUNT) : 1,
+    parameter M_DATA_WIDTH          = 8,
+    parameter M_KEEP_ENABLE         = (M_DATA_WIDTH>8),
+    parameter M_KEEP_WIDTH          = M_KEEP_ENABLE ? (M_DATA_WIDTH/8) : 1,
+    parameter M_DEST_ENABLE         = 0,
+    parameter M_DEST_WIDTH          = 1,
+    parameter ID_ENABLE             = 0,
+    parameter ID_WIDTH              = 1,
+    parameter USER_ENABLE           = 1,
+    parameter USER_WIDTH            = 1,
+    parameter S_REG_TYPE            = 2,
+    parameter M_REG_TYPE            = 2,
+    parameter ARB_TYPE_ROUND_ROBIN  = 1,
+    parameter ARB_LSB_HIGH_PRIORITY = 1,
+    parameter CLUSTER_COUNT         = 4,
+    parameter STAGE_FIFO_DEPTH      = 8192,
+    parameter RAM_PIPELINE          = 2,
+    parameter FRAME_FIFO            = 0,
+    parameter SEPARATE_CLOCKS       = 0
 ) (
     /*
      * AXI Stream inputs
@@ -1934,8 +1937,8 @@ module axis_ram_sw_grow # (
         .USER_WIDTH(USER_WIDTH),
         .ID_ENABLE(ID_ENABLE),
         .ID_WIDTH(ID_WIDTH),
-        .ARB_TYPE(ARB_TYPE),
-        .LSB_PRIORITY(LSB_PRIORITY),
+        .ARB_TYPE_ROUND_ROBIN(ARB_TYPE_ROUND_ROBIN),
+        .ARB_LSB_HIGH_PRIORITY(ARB_LSB_HIGH_PRIORITY),
         .S_REG_TYPE(S_REG_TYPE),
         .M_REG_TYPE(0)
     ) sw_lvl1
@@ -1998,7 +2001,7 @@ module axis_ram_sw_grow # (
                     .USER_WIDTH(USER_WIDTH),
                     .ID_ENABLE(ID_ENABLE),
                     .ID_WIDTH(ID_WIDTH),
-                    .PIPELINE_OUTPUT(2),
+                    .RAM_PIPELINE(2),
                     .FRAME_FIFO(0)
                 ) stage_fifo (
                     .s_clk(s_clk),
@@ -2085,9 +2088,9 @@ module axis_ram_sw_grow # (
                 .USER_WIDTH(USER_WIDTH),
                 .ID_ENABLE(ID_ENABLE),
                 .ID_WIDTH(ID_WIDTH),
-                .ARB_TYPE(ARB_TYPE),
-                .LSB_PRIORITY(LSB_PRIORITY),
-                .RAM_PIPELINE(PIPELINE_OUTPUT)
+                .ARB_TYPE_ROUND_ROBIN(ARB_TYPE_ROUND_ROBIN),
+                .ARB_LSB_HIGH_PRIORITY(ARB_LSB_HIGH_PRIORITY),
+                .RAM_PIPELINE(RAM_PIPELINE)
             ) sw_lvl2 (
                 .clk(select_m_clk),
                 .rst(select_m_rst),

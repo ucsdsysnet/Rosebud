@@ -432,7 +432,7 @@ generate
             .ID_ENABLE(0),
             .DEST_ENABLE(0),
             .USER_ENABLE(0),
-            .PIPELINE_OUTPUT(2),
+            .RAM_PIPELINE(2),
             .FRAME_FIFO(1),
             .USER_BAD_FRAME_VALUE(1'b1),
             .USER_BAD_FRAME_MASK(1'b1),
@@ -479,7 +479,7 @@ generate
             .ID_ENABLE(0),
             .DEST_ENABLE(0),
             .USER_ENABLE(0),
-            .PIPELINE_OUTPUT(2),
+            .RAM_PIPELINE(2),
             .FRAME_FIFO(0)
         ) mac_rx_async_fifo_inst (
             // AXI input
@@ -553,7 +553,7 @@ generate
             .ID_ENABLE(0),
             .DEST_ENABLE(0),
             .USER_ENABLE(0),
-            .PIPELINE_OUTPUT(2),
+            .RAM_PIPELINE(2),
             .FRAME_FIFO(1),
             .USER_BAD_FRAME_VALUE(1'b1),
             .USER_BAD_FRAME_MASK(1'b1),
@@ -849,7 +849,7 @@ axis_async_fifo # (
   .DEST_ENABLE(0),
   .USER_ENABLE(0),
   .FRAME_FIFO(0),
-  .PIPELINE_OUTPUT(2)
+  .RAM_PIPELINE(2)
 ) host_cmd_async_fifo (
   .s_clk(pcie_clk),
   .s_rst(pcie_rst),
@@ -1395,7 +1395,7 @@ axis_switch_2lvl # (
     .FRAME_FIFO      (0),
     .SEPARATE_CLOCKS (SEPARATE_CLOCKS),
     .USE_SIMPLE_SW   (0),
-    .PIPELINE_OUTPUT (SW_OUTPUT_PIPE)
+    .RAM_PIPELINE    (SW_OUTPUT_PIPE)
 ) data_in_sw (
     .s_clk(sys_clk),
     .s_rst(sys_rst_r),
@@ -1462,7 +1462,7 @@ axis_switch_2lvl # (
     .FRAME_FIFO      (1),
     .SEPARATE_CLOCKS (SEPARATE_CLOCKS),
     .USE_SIMPLE_SW   (0),
-    .PIPELINE_OUTPUT (SW_OUTPUT_PIPE)
+    .RAM_PIPELINE    (SW_OUTPUT_PIPE)
 ) data_out_sw (
     /*
      * AXI Stream inputs
@@ -1535,7 +1535,7 @@ axis_switch_2lvl # (
     .FRAME_FIFO      (0),
     .SEPARATE_CLOCKS (SEPARATE_CLOCKS),
     .USE_SIMPLE_SW   (1),
-    .PIPELINE_OUTPUT (1)
+    .RAM_PIPELINE    (1)
 ) ctrl_in_sw
 (
     /*
@@ -1608,7 +1608,7 @@ axis_switch_2lvl # (
     .FRAME_FIFO      (0),
     .SEPARATE_CLOCKS (SEPARATE_CLOCKS),
     .USE_SIMPLE_SW   (1),
-    .PIPELINE_OUTPUT (SW_OUTPUT_PIPE)
+    .RAM_PIPELINE    (SW_OUTPUT_PIPE)
 ) dram_ctrl_in_sw
 (
     /*
@@ -1658,7 +1658,7 @@ axis_switch_2lvl # (
     .FRAME_FIFO      (0),
     .SEPARATE_CLOCKS (SEPARATE_CLOCKS),
     .USE_SIMPLE_SW   (1),
-    .PIPELINE_OUTPUT (SW_OUTPUT_PIPE)
+    .RAM_PIPELINE    (SW_OUTPUT_PIPE)
 ) dram_ctrl_out_sw
 (
     /*

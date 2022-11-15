@@ -477,7 +477,7 @@ module scheduler_PR (
     .DEST_ENABLE(0),
     .USER_ENABLE(1),
     .USER_WIDTH(SLOT_WIDTH),
-    .ARB_TYPE("ROUND_ROBIN")
+    .ARB_TYPE_ROUND_ROBIN(1)
   ) pkt_to_core_arbiter
   (
     .clk(clk),
@@ -706,8 +706,8 @@ module scheduler_PR (
           wire [CLUSTER_WIDTH-1:0] selected_cluster;
           simple_arbiter # (
               .PORTS(CLUSTER_COUNT),
-              .TYPE("ROUND_ROBIN"),
-              .LSB_PRIORITY("HIGH")
+              .ARB_TYPE_ROUND_ROBIN(1),
+              .ARB_LSB_HIGH_PRIORITY(1)
           ) max_slot_arbiter (
               .clk(clk),
               .rst(rst_r),
@@ -806,8 +806,8 @@ module scheduler_PR (
   // arbiter among ports for desc request
   arbiter # (
     .PORTS(IF_COUNT),
-    .TYPE("ROUND_ROBIN"),
-    .LSB_PRIORITY("HIGH")
+    .ARB_TYPE_ROUND_ROBIN(1),
+    .ARB_LSB_HIGH_PRIORITY(1)
   ) port_selector (
     .clk(clk),
     .rst(rst_r),

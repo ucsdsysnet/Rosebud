@@ -381,7 +381,7 @@ if(CORE_REQ_PCIE_CLK) begin: cores_data_fifos
         .DEST_ENABLE(0),
         .USER_ENABLE(1),
         .USER_WIDTH(AXIS_TAG_WIDTH),
-        .PIPELINE_OUTPUT(2),
+        .RAM_PIPELINE(2),
         .FRAME_FIFO(0)
     ) cores_tx_axis_data_fifo (
         .clk(sys_clk),
@@ -419,7 +419,7 @@ if(CORE_REQ_PCIE_CLK) begin: cores_data_fifos
         .DEST_ENABLE(1),
         .DEST_WIDTH(AXIS_TAG_WIDTH),
         .USER_ENABLE(0),
-        .PIPELINE_OUTPUT(2),
+        .RAM_PIPELINE(2),
         .FRAME_FIFO(0)
     ) cores_rx_axis_data_fifo (
         .clk(sys_clk),
@@ -459,7 +459,7 @@ end else begin: cores_data_async_fifos
         .DEST_ENABLE(0),
         .USER_ENABLE(1),
         .USER_WIDTH(AXIS_TAG_WIDTH),
-        .PIPELINE_OUTPUT(2),
+        .RAM_PIPELINE(2),
         .FRAME_FIFO(0)
     ) cores_tx_axis_data_async_fifo (
         .s_clk(sys_clk),
@@ -501,7 +501,7 @@ end else begin: cores_data_async_fifos
         .DEST_ENABLE(1),
         .DEST_WIDTH(AXIS_TAG_WIDTH),
         .USER_ENABLE(0),
-        .PIPELINE_OUTPUT(2),
+        .RAM_PIPELINE(2),
         .FRAME_FIFO(0)
     ) cores_rx_axis_data_async_fifo (
         .s_clk(pcie_clk),
@@ -606,7 +606,7 @@ if(CORE_REQ_PCIE_CLK) begin: cores_ctrl_fifos
         .DEST_ENABLE(0),
         .USER_ENABLE(1),
         .USER_WIDTH(CORE_WIDTH),
-        .PIPELINE_OUTPUT(2),
+        .RAM_PIPELINE(2),
         .FRAME_FIFO(0)
     ) cores_ctrl_s_axis_fifo (
         .clk(sys_clk),
@@ -646,7 +646,7 @@ if(CORE_REQ_PCIE_CLK) begin: cores_ctrl_fifos
         .DEST_ENABLE(1),
         .DEST_WIDTH(CORE_WIDTH),
         .USER_ENABLE(0),
-        .PIPELINE_OUTPUT(2),
+        .RAM_PIPELINE(2),
         .FRAME_FIFO(0)
     ) cores_ctrl_m_axis_fifo (
         .clk(sys_clk),
@@ -1489,8 +1489,8 @@ generate
         .LEN_WIDTH(PCIE_DMA_LEN_WIDTH),
         .S_TAG_WIDTH(PCIE_DMA_TAG_WIDTH-2),
         .M_TAG_WIDTH(PCIE_DMA_TAG_WIDTH),
-        .ARB_TYPE("PRIORITY"),
-        .LSB_PRIORITY("HIGH")
+        .ARB_TYPE_ROUND_ROBIN(0),
+        .ARB_LSB_HIGH_PRIORITY(1)
     ) dma_if_mux_inst (
         .clk(pcie_clk),
         .rst(pcie_rst),

@@ -60,7 +60,7 @@ module axis_fifo_w_count #
     // tuser signal width
     parameter USER_WIDTH = 1,
     // number of output pipeline registers
-    parameter PIPELINE_OUTPUT = 2,
+    parameter RAM_PIPELINE = 2,
     // Frame FIFO mode - operate on frames instead of cycles
     // When set, m_axis_tvalid will not be deasserted within a frame
     // Requires LAST_ENABLE set
@@ -123,8 +123,8 @@ module axis_fifo_w_count #
 
 // check configuration
 initial begin
-    if (PIPELINE_OUTPUT < 1) begin
-        $error("Error: PIPELINE_OUTPUT must be at least 1 (instance %m)");
+    if (RAM_PIPELINE < 1) begin
+        $error("Error: RAM_PIPELINE must be at least 1 (instance %m)");
         $finish;
     end
 
@@ -172,8 +172,8 @@ reg mem_read_data_valid_reg = 1'b0;
 
 wire [WIDTH-1:0] s_axis;
 
-reg [WIDTH-1:0] m_axis_pipe_reg[PIPELINE_OUTPUT-1:0];
-reg [PIPELINE_OUTPUT-1:0] m_axis_tvalid_pipe_reg = 1'b0;
+reg [WIDTH-1:0] m_axis_pipe_reg[RAM_PIPELINE-1:0];
+reg [RAM_PIPELINE-1:0] m_axis_tvalid_pipe_reg = 1'b0;
 
 // full when first MSB different but rest same
 wire full = wr_ptr_reg == (rd_ptr_reg ^ {1'b1, {ADDR_WIDTH{1'b0}}});
@@ -213,14 +213,14 @@ generate
     if (USER_ENABLE) assign s_axis[USER_OFFSET +: USER_WIDTH] = s_axis_tuser;
 endgenerate
 
-assign m_axis_tvalid = m_axis_tvalid_pipe_reg[PIPELINE_OUTPUT-1];
+assign m_axis_tvalid = m_axis_tvalid_pipe_reg[RAM_PIPELINE-1];
 
-assign m_axis_tdata = m_axis_pipe_reg[PIPELINE_OUTPUT-1][DATA_WIDTH-1:0];
-assign m_axis_tkeep = KEEP_ENABLE ? m_axis_pipe_reg[PIPELINE_OUTPUT-1][KEEP_OFFSET +: KEEP_WIDTH] : {KEEP_WIDTH{1'b1}};
-assign m_axis_tlast = LAST_ENABLE ? m_axis_pipe_reg[PIPELINE_OUTPUT-1][LAST_OFFSET]               : 1'b1;
-assign m_axis_tid   = ID_ENABLE   ? m_axis_pipe_reg[PIPELINE_OUTPUT-1][ID_OFFSET   +: ID_WIDTH]   : {ID_WIDTH{1'b0}};
-assign m_axis_tdest = DEST_ENABLE ? m_axis_pipe_reg[PIPELINE_OUTPUT-1][DEST_OFFSET +: DEST_WIDTH] : {DEST_WIDTH{1'b0}};
-assign m_axis_tuser = USER_ENABLE ? m_axis_pipe_reg[PIPELINE_OUTPUT-1][USER_OFFSET +: USER_WIDTH] : {USER_WIDTH{1'b0}};
+assign m_axis_tdata = m_axis_pipe_reg[RAM_PIPELINE-1][DATA_WIDTH-1:0];
+assign m_axis_tkeep = KEEP_ENABLE ? m_axis_pipe_reg[RAM_PIPELINE-1][KEEP_OFFSET +: KEEP_WIDTH] : {KEEP_WIDTH{1'b1}};
+assign m_axis_tlast = LAST_ENABLE ? m_axis_pipe_reg[RAM_PIPELINE-1][LAST_OFFSET]               : 1'b1;
+assign m_axis_tid   = ID_ENABLE   ? m_axis_pipe_reg[RAM_PIPELINE-1][ID_OFFSET   +: ID_WIDTH]   : {ID_WIDTH{1'b0}};
+assign m_axis_tdest = DEST_ENABLE ? m_axis_pipe_reg[RAM_PIPELINE-1][DEST_OFFSET +: DEST_WIDTH] : {DEST_WIDTH{1'b0}};
+assign m_axis_tuser = USER_ENABLE ? m_axis_pipe_reg[RAM_PIPELINE-1][USER_OFFSET +: USER_WIDTH] : {USER_WIDTH{1'b0}};
 
 assign status_overflow = overflow_reg;
 assign status_bad_frame = bad_frame_reg;
@@ -291,10 +291,10 @@ integer j;
 always @(posedge clk) begin
     if (m_axis_tready) begin
         // output ready; invalidate stage
-        m_axis_tvalid_pipe_reg[PIPELINE_OUTPUT-1] <= 1'b0;
+        m_axis_tvalid_pipe_reg[RAM_PIPELINE-1] <= 1'b0;
     end
 
-    for (j = PIPELINE_OUTPUT-1; j > 0; j = j - 1) begin
+    for (j = RAM_PIPELINE-1; j > 0; j = j - 1) begin
         if (m_axis_tready || ((~m_axis_tvalid_pipe_reg) >> j)) begin
             // output ready or bubble in pipeline; transfer down pipeline
             m_axis_tvalid_pipe_reg[j] <= m_axis_tvalid_pipe_reg[j-1];
@@ -316,7 +316,7 @@ always @(posedge clk) begin
 
     if (rst) begin
         rd_ptr_reg <= {ADDR_WIDTH+1{1'b0}};
-        m_axis_tvalid_pipe_reg <= {PIPELINE_OUTPUT{1'b0}};
+        m_axis_tvalid_pipe_reg <= {RAM_PIPELINE{1'b0}};
     end
 end
 

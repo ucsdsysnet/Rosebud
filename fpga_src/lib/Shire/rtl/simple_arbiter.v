@@ -35,10 +35,10 @@ THE SOFTWARE.
 module simple_arbiter #
 (
     parameter PORTS = 4,
-    // arbitration type: "PRIORITY" or "ROUND_ROBIN"
-    parameter TYPE = "PRIORITY",
-    // LSB priority: "LOW", "HIGH"
-    parameter LSB_PRIORITY = "LOW"
+    // select round robin arbitration
+    parameter ARB_TYPE_ROUND_ROBIN = 0,
+    // LSB priority selection
+    parameter ARB_LSB_HIGH_PRIORITY = 0
 )
 (
     input  wire                     clk,
@@ -58,7 +58,7 @@ wire [PORTS-1:0] request_mask;
 
 priority_encoder #(
     .WIDTH(PORTS),
-    .LSB_PRIORITY(LSB_PRIORITY)
+    .LSB_HIGH_PRIORITY(ARB_LSB_HIGH_PRIORITY)
 )
 priority_encoder_inst (
     .input_unencoded(request),
@@ -74,7 +74,7 @@ wire [PORTS-1:0] masked_request_mask;
 
 priority_encoder #(
     .WIDTH(PORTS),
-    .LSB_PRIORITY(LSB_PRIORITY)
+    .LSB_HIGH_PRIORITY(ARB_LSB_HIGH_PRIORITY)
 )
 priority_encoder_masked (
     .input_unencoded(request & mask),
@@ -87,20 +87,20 @@ always @(posedge clk)
     if (rst) begin
         mask <= {PORTS{1'b0}};
     end else if (grant_valid && taken) begin
-        if (LSB_PRIORITY == "LOW")
-            mask <= {PORTS{1'b1}} >> (PORTS - grant_encoded);
-        else
+        if (ARB_LSB_HIGH_PRIORITY)
             mask <= {PORTS{1'b1}} << (grant_encoded + 1);
+        else
+            mask <= {PORTS{1'b1}} >> (PORTS - grant_encoded);
     end
 
-if (TYPE == "PRIORITY") begin
-    assign grant_valid   = request_valid;
-    assign grant         = request_mask;
-    assign grant_encoded = request_index;
-end else if (TYPE == "ROUND_ROBIN") begin
+if (ARB_TYPE_ROUND_ROBIN) begin
     assign grant_valid   = masked_request_valid ? masked_request_valid : request_valid;
     assign grant         = masked_request_valid ? masked_request_mask  : request_mask;
     assign grant_encoded = masked_request_valid ? masked_request_index : request_index;
+end else begin
+    assign grant_valid   = request_valid;
+    assign grant         = request_mask;
+    assign grant_encoded = request_index;
 end
 
 endmodule
