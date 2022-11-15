@@ -37,17 +37,8 @@ from cocotb.triggers import RisingEdge, Timer
 
 from cocotbext.axi.utils import hexdump_str
 
-try:
-    import mqnic
-    from common import TB
-except ImportError:
-    # attempt import from current directory
-    sys.path.insert(0, os.path.join(os.path.dirname(__file__)))
-    try:
-        import mqnic
-        from common import TB
-    finally:
-        del sys.path[0]
+from Shire_API import TB
+import mqnic
 
 
 FIRMWARE = os.path.abspath(os.path.join(os.path.dirname(__file__),

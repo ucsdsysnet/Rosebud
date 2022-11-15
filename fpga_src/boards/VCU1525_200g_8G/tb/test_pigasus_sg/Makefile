@@ -10,12 +10,15 @@ DUT=gousheh
 MODULE=test_$(DUT)
 TOPLEVEL=$(MODULE)
 
+COMPILE_ARGS += -P $(TOPLEVEL).SLOT_COUNT=32
+COMPILE_ARGS += -P $(TOPLEVEL).INIT_ROMS=1
+
 RTL_DIR = $(CWD)/../../rtl
 ACC_DIR = $(CWD)/../../accel/pigasus_sme/rtl
 SHIRE = $(CWD)/../../lib/Shire/rtl
 AXIS_LIB = $(CWD)/../../lib/axis/rtl
 
-VERILOG_SOURCES  = $(CWD)/test_gousheh.v
+VERILOG_SOURCES  = $(SHIRE)/../tb/common/test_gousheh.v
 VERILOG_SOURCES += $(RTL_DIR)/Gousheh_PR_pig.v
 
 VERILOG_SOURCES += $(SHIRE)/simple_fifo.v

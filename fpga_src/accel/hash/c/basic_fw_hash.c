@@ -28,7 +28,7 @@ unsigned int slot_size;
 unsigned int header_slot_base;
 unsigned int header_slot_size;
 
-inline void slot_rx_packet(struct slot_context *ctx)
+void slot_rx_packet(struct slot_context *ctx)
 {
   long int hash;
 

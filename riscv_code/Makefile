@@ -10,7 +10,7 @@ CROSS_COMPILE = riscv64-unknown-elf-
 # CROSS_COMPILE = riscv64-elf-
 
 # Preprocessor defines
-DEFINES = 
+DEFINES =
 
 # Target file name
 TARGET = $(NAME)
@@ -35,14 +35,14 @@ EXTRAINCDIRS =
 CSTANDARD = -std=gnu99
 
 # Place -D or -U options here
-CDEFS = 
+CDEFS =
 
 # Place -I options here
-CINCS = 
+CINCS =
 
 # Compiler flags
 COMMON_FLAGS = $(CDEFS) $(CINCS)
-COMMON_FLAGS += -O$(OPT) -flto -mbranch-cost=3
+COMMON_FLAGS += -O$(OPT) -mbranch-cost=3 -Wpadded
 # COMMON_FLAGS += -funsigned-char -funsigned-bitfields -fpack-struct -fshort-enums
 # COMMON_FLAGS += -ffunction-sections -fdata-sections
 # COMMON_FLAGS += -Wall
@@ -89,16 +89,18 @@ GENDEPFLAGS = -MD -MP -MF .dep/$(@F).d
 ALL_CFLAGS = -march=$(ARCH) -mabi=$(ABI) -I. $(CFLAGS) $(GENDEPFLAGS) $(DEFINES)
 ALL_CXXFLAGS = -march=$(ARCH) -mabi=$(ABI) -I. $(CXXFLAGS) $(GENDEPFLAGS) $(DEFINES)
 ALL_ASFLAGS = -march=$(ARCH) -mabi=$(ABI) -I. -x assembler-with-cpp $(ASFLAGS) $(DEFINES)
+ALL_ASMFLAGS = -march=$(ARCH) -mabi=$(ABI) -I. $(CFLAGS) $(DEFINES)
 
 
 # default make target
 all: clean build size
 
-build: elf bin lss sym
+build: elf bin lss asm sym
 
 elf: $(TARGET).elf
 bin: $(TARGET)_ins.bin $(TARGET)_data.bin
 lss: $(TARGET).lss
+asm: $(TARGET).asm
 sym: $(TARGET).sym
 
 
@@ -132,6 +134,13 @@ sym: $(TARGET).sym
 %.lss: %.elf
 	$(OBJDUMP) -h -S $< > $@
 
+# detailed assembly
+%.asm: %.c
+	$(CC) -S -fverbose-asm $(ALL_ASMFLAGS) $< -o $@
+
+%.asm: %.cpp
+	$(CC) -S -fverbose-asm $(ALL_ASMFLAGS) $< -o $@
+
 # symbol table
 %.sym: %.elf
 	$(NM) -n $< > $@
@@ -157,6 +166,7 @@ clean:
 	# $(REMOVE) $(TARGET).map
 	$(REMOVE) $(TARGET).sym
 	$(REMOVE) $(TARGET).lss
+	$(REMOVE) $(TARGET).asm
 	$(REMOVE) $(OBJ)
 	$(REMOVE) $(LST)
 	$(REMOVE) $(addsuffix .s,$(basename $(SRC)))
@@ -165,4 +175,4 @@ clean:
 
 -include $(shell mkdir .dep 2>/dev/null) $(wildcard .dep/*)
 
-.PHONY: all size build elf hex lss sym clean
+.PHONY: all size build elf hex lss asm sym clean

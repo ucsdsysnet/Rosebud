@@ -1,5 +1,8 @@
 #include "core.h"
 
+#define bswap_16(x) \
+  (((x & 0xff00) >> 8) | ((x & 0x00ff) << 8))
+
 // Accel wrapper registers mapping
 #define ACC_SRC_IP   (*((volatile unsigned int  *)(IO_EXT_BASE + 0x00)))
 #define ACC_FW_MATCH (*((volatile unsigned char *)(IO_EXT_BASE + 0x04)))
@@ -35,7 +38,7 @@ int main(void)
 {
   // Initializing scheduler and wrapper
   init_hdr_slots(16, 0x804000, 128);
-  init_slots(16, 0x000000, 16384);
+  init_slots(16, 0x0C000A, 16384);
 
   // Enable only Evict and Poke Interrupts
 	set_masks(0x30);

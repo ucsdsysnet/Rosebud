@@ -40,20 +40,12 @@ from cocotb.triggers import RisingEdge, Timer, ClockCycles
 
 from cocotbext.axi.utils import hexdump_str
 
+from Shire_API import TB
+import mqnic
+
 # print actual port numbers
 scapy.config.conf.noenum.add(TCP.sport, TCP.dport, UDP.sport, UDP.dport)
 
-try:
-    import mqnic
-    from common import TB
-except ImportError:
-    # attempt import from current directory
-    sys.path.insert(0, os.path.join(os.path.dirname(__file__)))
-    try:
-        import mqnic
-        from common import TB
-    finally:
-        del sys.path[0]
 
 SEND_COUNT = 128
 SIZE       = 1024
