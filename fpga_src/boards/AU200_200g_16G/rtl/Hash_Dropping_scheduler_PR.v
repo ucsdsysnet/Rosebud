@@ -327,7 +327,7 @@ module scheduler_PR (
           .ID_ENABLE(0),
           .DEST_ENABLE(0),
           .USER_ENABLE(0),
-          .PIPELINE_OUTPUT(2),
+          .RAM_PIPELINE(2),
           .FRAME_FIFO(0)
       ) rx_fifo_inst (
           .clk(clk),

@@ -53,7 +53,7 @@ module simple_sync_fifo # (
     .ID_ENABLE(0),
     .DEST_ENABLE(0),
     .USER_ENABLE(0),
-    .PIPELINE_OUTPUT(2),
+    .RAM_PIPELINE(2),
     .FRAME_FIFO(0)
   ) sync_fifo_inst (
     .clk(clk),

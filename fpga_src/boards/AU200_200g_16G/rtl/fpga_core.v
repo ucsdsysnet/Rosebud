@@ -201,6 +201,7 @@ parameter LVL2_DRAM_WIDTH  = 32; //DON'T CHANGE
 parameter RX_ASYNC_DEPTH   = 2048;
 parameter RX_FIFO_DEPTH    = 8*32768;
 parameter RX_LINES_WIDTH   = $clog2(RX_FIFO_DEPTH/AXIS_ETH_KEEP_WIDTH)+1;
+parameter RX_FIFO_PIPE     = 2;
 parameter TX_FIFO_DEPTH    = 32768;
 parameter RX_STG_F_DEPTH   = 8*32768;
 parameter TX_STG_F_DEPTH   = 2*32768;
@@ -209,7 +210,8 @@ parameter STG_F_DRAM_DEPTH = 2048;
 parameter V_MAC_FIFO_SIZE  = 1024;
 parameter CLUSTER_COUNT    = 4;
 parameter BC_MSG_CLUSTERS  = 4;
-parameter SW_OUTPUT_PIPE   = 2;
+parameter DATA_SW_PIPE     = 3;
+parameter DRAM_SW_PIPE     = 2;
 
 // PCIe parameters
 parameter PCIE_SLOT_COUNT     = 16;
@@ -218,7 +220,7 @@ parameter PCIE_RAM_ADDR_WIDTH = 32;
 parameter TX_RX_RAM_SIZE      = 2**15;
 parameter PCIE_DMA_LEN_WIDTH  = 16;
 parameter HOST_DMA_TAG_WIDTH  = 32;
-parameter RAM_PIPELINE        = 4;
+parameter RAM_PIPELINE        = 3;
 parameter AXIL_DATA_WIDTH     = 32;
 parameter AXIL_STRB_WIDTH     = (AXIL_DATA_WIDTH/8);
 parameter AXIL_ADDR_WIDTH     = BAR0_APERTURE;
@@ -553,7 +555,8 @@ generate
             .ID_ENABLE(0),
             .DEST_ENABLE(0),
             .USER_ENABLE(0),
-            .RAM_PIPELINE(2),
+            .RAM_PIPELINE(RX_FIFO_PIPE),
+            .OUTPUT_FIFO_ENABLE(1),
             .FRAME_FIFO(1),
             .USER_BAD_FRAME_VALUE(1'b1),
             .USER_BAD_FRAME_MASK(1'b1),
@@ -621,7 +624,7 @@ generate
     // Sync reg to help with the timing
     pipe_reg #(
       .WIDTH(IF_COUNT*RX_LINES_WIDTH),
-      .N(2)
+      .N(1)
     ) rx_line_count_sync_reg (
       .clk(sys_clk),
       .in(rx_line_count),
@@ -1395,7 +1398,7 @@ axis_switch_2lvl # (
     .FRAME_FIFO      (0),
     .SEPARATE_CLOCKS (SEPARATE_CLOCKS),
     .USE_SIMPLE_SW   (0),
-    .RAM_PIPELINE    (SW_OUTPUT_PIPE)
+    .RAM_PIPELINE    (DATA_SW_PIPE)
 ) data_in_sw (
     .s_clk(sys_clk),
     .s_rst(sys_rst_r),
@@ -1462,7 +1465,8 @@ axis_switch_2lvl # (
     .FRAME_FIFO      (1),
     .SEPARATE_CLOCKS (SEPARATE_CLOCKS),
     .USE_SIMPLE_SW   (0),
-    .RAM_PIPELINE    (SW_OUTPUT_PIPE)
+    // axis_ram_sw with single output needs one more
+    .RAM_PIPELINE    (DATA_SW_PIPE+1)
 ) data_out_sw (
     /*
      * AXI Stream inputs
@@ -1608,7 +1612,7 @@ axis_switch_2lvl # (
     .FRAME_FIFO      (0),
     .SEPARATE_CLOCKS (SEPARATE_CLOCKS),
     .USE_SIMPLE_SW   (1),
-    .RAM_PIPELINE    (SW_OUTPUT_PIPE)
+    .RAM_PIPELINE    (DRAM_SW_PIPE)
 ) dram_ctrl_in_sw
 (
     /*
@@ -1658,7 +1662,7 @@ axis_switch_2lvl # (
     .FRAME_FIFO      (0),
     .SEPARATE_CLOCKS (SEPARATE_CLOCKS),
     .USE_SIMPLE_SW   (1),
-    .RAM_PIPELINE    (SW_OUTPUT_PIPE)
+    .RAM_PIPELINE    (DRAM_SW_PIPE)
 ) dram_ctrl_out_sw
 (
     /*

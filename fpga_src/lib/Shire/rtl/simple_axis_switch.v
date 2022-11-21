@@ -64,7 +64,7 @@ module simple_axis_switch #
     // 0 to bypass, 1 for simple buffer, 2 for skid buffer
     parameter M_REG_TYPE = 2,
     // select round robin arbitration
-    parameter ARB_TYPE_ROUND_ROBIN = 0,
+    parameter ARB_TYPE_ROUND_ROBIN = 1,
     // LSB priority selection
     parameter ARB_LSB_HIGH_PRIORITY = 1
 )

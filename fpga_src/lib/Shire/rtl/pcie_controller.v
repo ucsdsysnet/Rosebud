@@ -1071,6 +1071,7 @@ dma_if_pcie_us_inst (
      * AXI read descriptor status output
      */
     .m_axis_read_desc_status_tag(pcie_dma_read_desc_status_tag),
+    .m_axis_read_desc_status_error(),
     .m_axis_read_desc_status_valid(pcie_dma_read_desc_status_valid),
 
     /*
@@ -1088,6 +1089,7 @@ dma_if_pcie_us_inst (
      * AXI write descriptor status output
      */
     .m_axis_write_desc_status_tag(pcie_dma_write_desc_status_tag),
+    .m_axis_write_desc_status_error(),
     .m_axis_write_desc_status_valid(pcie_dma_write_desc_status_valid),
 
     /*
@@ -1510,6 +1512,7 @@ generate
          * Read descriptor status input (from DMA interface)
          */
         .s_axis_read_desc_status_tag(pcie_dma_read_desc_status_tag),
+        .s_axis_read_desc_status_error(4'd0),
         .s_axis_read_desc_status_valid(pcie_dma_read_desc_status_valid),
 
         /*
@@ -1527,6 +1530,7 @@ generate
          * Read descriptor status output
          */
         .m_axis_read_desc_status_tag  ({pcie_data_dma_read_desc_status_tag,   cores_dma_read_desc_status_tag,   pcie_ctrl_dma_read_desc_status_tag}),
+        .m_axis_read_desc_status_error(),
         .m_axis_read_desc_status_valid({pcie_data_dma_read_desc_status_valid, cores_dma_read_desc_status_valid, pcie_ctrl_dma_read_desc_status_valid}),
 
         /*
@@ -1535,6 +1539,8 @@ generate
         .m_axis_write_desc_dma_addr(pcie_dma_write_desc_pcie_addr),
         .m_axis_write_desc_ram_sel(pcie_dma_write_desc_ram_sel),
         .m_axis_write_desc_ram_addr(pcie_dma_write_desc_ram_addr),
+        .m_axis_write_desc_imm(),
+        .m_axis_write_desc_imm_en(),
         .m_axis_write_desc_len(pcie_dma_write_desc_len),
         .m_axis_write_desc_tag(pcie_dma_write_desc_tag),
         .m_axis_write_desc_valid(pcie_dma_write_desc_valid),
@@ -1544,6 +1550,7 @@ generate
          * Write descriptor status input (from DMA interface)
          */
         .s_axis_write_desc_status_tag(pcie_dma_write_desc_status_tag),
+        .s_axis_write_desc_status_error(4'd0),
         .s_axis_write_desc_status_valid(pcie_dma_write_desc_status_valid),
 
         /*
@@ -1552,6 +1559,8 @@ generate
         .s_axis_write_desc_dma_addr({pcie_data_dma_write_desc_pcie_addr, cores_dma_write_desc_pcie_addr, pcie_ctrl_dma_write_desc_pcie_addr}),
         .s_axis_write_desc_ram_sel ({pcie_data_dma_write_desc_ram_sel,   cores_dma_write_desc_ram_sel,   pcie_ctrl_dma_write_desc_ram_sel}),
         .s_axis_write_desc_ram_addr({pcie_data_dma_write_desc_ram_addr,  cores_dma_write_desc_ram_addr,  pcie_ctrl_dma_write_desc_ram_addr}),
+        .s_axis_write_desc_imm     ({(3*32){1'b0}}),
+        .s_axis_write_desc_imm_en  (3'd0),
         .s_axis_write_desc_len     ({pcie_data_dma_write_desc_len,       cores_dma_write_desc_len,       pcie_ctrl_dma_write_desc_len}),
         .s_axis_write_desc_tag     ({pcie_data_dma_write_desc_tag,       cores_dma_write_desc_tag,       pcie_ctrl_dma_write_desc_tag}),
         .s_axis_write_desc_valid   ({pcie_data_dma_write_desc_valid,     cores_dma_write_desc_valid,     pcie_ctrl_dma_write_desc_valid}),
@@ -1561,6 +1570,7 @@ generate
          * Write descriptor status output
          */
         .m_axis_write_desc_status_tag  ({pcie_data_dma_write_desc_status_tag,   cores_dma_write_desc_status_tag,   pcie_ctrl_dma_write_desc_status_tag}),
+        .m_axis_write_desc_status_error(),
         .m_axis_write_desc_status_valid({pcie_data_dma_write_desc_status_valid, cores_dma_write_desc_status_valid, pcie_ctrl_dma_write_desc_status_valid}),
 
         /*

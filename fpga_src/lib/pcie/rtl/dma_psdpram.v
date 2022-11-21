@@ -97,6 +97,7 @@ generate
 
         integer i, j;
 
+        // synthesis translate_off
         initial begin
             // two nested loops for smaller number of iterations per loop
             // workaround for synthesizer complaints about large loop counts
@@ -110,6 +111,7 @@ generate
                 rd_resp_data_pipe_reg[i] = 0;
             end
         end
+        // synthesis translate_on
 
         always @(posedge clk) begin
             wr_done_reg <= 1'b0;
@@ -141,6 +143,7 @@ generate
                     rd_resp_valid_pipe_reg[j-1] <= 1'b0;
                 end
             end
+
 
             if (rd_cmd_valid[n] && rd_cmd_ready[n]) begin
                 rd_resp_valid_pipe_reg[0] <= 1'b1;

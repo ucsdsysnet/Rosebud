@@ -94,7 +94,7 @@ module axis_ram_switch #
     // M_COUNT concatenated fields of S_COUNT bits
     parameter M_CONNECT = {M_COUNT{{S_COUNT{1'b1}}}},
     // select round robin arbitration
-    parameter ARB_TYPE_ROUND_ROBIN = 0,
+    parameter ARB_TYPE_ROUND_ROBIN = 1,
     // LSB priority selection
     parameter ARB_LSB_HIGH_PRIORITY = 1,
     // RAM read data output pipeline stages
@@ -227,7 +227,8 @@ initial begin
 end
 
 // Shared RAM
-wire [DATA_WIDTH-1:0] mem_read_data;
+reg [DATA_WIDTH-1:0] mem[(2**RAM_ADDR_WIDTH)-1:0];
+reg [DATA_WIDTH-1:0] mem_read_data_reg[RAM_PIPELINE-1:0];
 reg [M_COUNT-1:0] mem_read_data_valid_reg[RAM_PIPELINE-1:0];
 
 wire [S_COUNT*DATA_WIDTH-1:0]     port_ram_wr_data;
@@ -241,21 +242,14 @@ wire [M_COUNT-1:0]                port_ram_rd_ack;
 wire [M_COUNT*DATA_WIDTH-1:0]     port_ram_rd_data;
 wire [M_COUNT-1:0]                port_ram_rd_data_valid;
 
-reg [RAM_ADDR_WIDTH-1:0] ram_rd_addr;
-reg [RAM_ADDR_WIDTH-1:0] ram_wr_addr;
-reg [DATA_WIDTH-1:0]     port_ram_wr_data_r;
-
-assign port_ram_rd_data = {M_COUNT{mem_read_data}};
+assign port_ram_rd_data = {M_COUNT{mem_read_data_reg[RAM_PIPELINE-1]}};
 assign port_ram_rd_data_valid = mem_read_data_valid_reg[RAM_PIPELINE-1];
 
 wire [CL_S_COUNT-1:0] ram_wr_sel;
 wire ram_wr_en;
-reg  ram_wr_en_r;
 
 wire [CL_M_COUNT-1:0] ram_rd_sel;
-reg  [CL_M_COUNT-1:0] ram_rd_sel_r;
 wire ram_rd_en;
-reg  ram_rd_en_r;
 
 generate
 
@@ -263,7 +257,7 @@ if (S_COUNT > 1) begin
 
     arbiter #(
         .PORTS(S_COUNT),
-        .ARB_TYPE_ROUND_ROBIN(ARB_TYPE_ROUND_ROBIN),
+        .ARB_TYPE_ROUND_ROBIN(1),
         .ARB_BLOCK(0),
         .ARB_LSB_HIGH_PRIORITY(1)
     )
@@ -288,12 +282,9 @@ end
 endgenerate
 
 always @(posedge clk) begin
-    ram_wr_addr <= port_ram_wr_addr[ram_wr_sel*RAM_ADDR_WIDTH +: RAM_ADDR_WIDTH];
-    port_ram_wr_data_r <= port_ram_wr_data[ram_wr_sel*DATA_WIDTH +: DATA_WIDTH];
-    ram_wr_en_r <= ram_wr_en;
-
-    if (rst)
-      ram_wr_en_r <= 1'b0;
+    if (ram_wr_en) begin
+        mem[port_ram_wr_addr[ram_wr_sel*RAM_ADDR_WIDTH +: RAM_ADDR_WIDTH]] <= port_ram_wr_data[ram_wr_sel*DATA_WIDTH +: DATA_WIDTH];
+    end
 end
 
 generate
@@ -302,7 +293,7 @@ if (M_COUNT > 1) begin
 
     arbiter #(
         .PORTS(M_COUNT),
-        .ARB_TYPE_ROUND_ROBIN(ARB_TYPE_ROUND_ROBIN),
+        .ARB_TYPE_ROUND_ROBIN(1),
         .ARB_BLOCK(0),
         .ARB_LSB_HIGH_PRIORITY(1)
     )
@@ -330,43 +321,25 @@ integer s;
 
 always @(posedge clk) begin
     mem_read_data_valid_reg[0] <= 0;
-    ram_rd_en_r <= ram_rd_en;
-    ram_rd_addr <= port_ram_rd_addr[ram_rd_sel*RAM_ADDR_WIDTH +: RAM_ADDR_WIDTH];
-    ram_rd_sel_r <= ram_rd_sel;
 
     for (s = RAM_PIPELINE-1; s > 0; s = s - 1) begin
+        mem_read_data_reg[s] <= mem_read_data_reg[s-1];
         mem_read_data_valid_reg[s] <= mem_read_data_valid_reg[s-1];
     end
 
-    if (ram_rd_en_r) begin
-        mem_read_data_valid_reg[0] <= 1 << ram_rd_sel_r;
+    mem_read_data_reg[0] <= mem[port_ram_rd_addr[ram_rd_sel*RAM_ADDR_WIDTH +: RAM_ADDR_WIDTH]];
+
+    if (ram_rd_en) begin
+        mem_read_data_valid_reg[0] <= 1 << ram_rd_sel;
     end
 
     if (rst) begin
-        ram_rd_en_r  <= 0;
-        ram_rd_sel_r <= 0;
+        mem_read_data_valid_reg[0] <= 0;
         for (s = 0; s < RAM_PIPELINE; s = s + 1) begin
             mem_read_data_valid_reg[s] <= 0;
         end
     end
 end
-
-mem_1r1w_uram_pipelined # (
-  .BYTES_PER_LINE(KEEP_WIDTH),
-  .ADDR_WIDTH(RAM_ADDR_WIDTH),
-  .RAM_PIPELINE(RAM_PIPELINE)
-) mem (
-  .clk(clk),
-  .rst(rst),
-
-  .ena(ram_wr_en_r),
-  .addra(ram_wr_addr),
-  .dina(port_ram_wr_data_r),
-
-  .enb(ram_rd_en_r),
-  .addrb(ram_rd_addr),
-  .doutb(mem_read_data)
-);
 
 // Interconnect
 wire [S_COUNT*RAM_ADDR_WIDTH-1:0] int_cmd_addr;
@@ -685,7 +658,7 @@ generate
                             cmd_table_start_addr_end = wr_ptr_cur_reg + 1;
                             cmd_table_start_len = len_reg;
                             cmd_table_start_select = select_reg;
-                            cmd_table_start_tkeep = S_KEEP_ENABLE ? port_axis_tkeep : 1'b1;
+                            cmd_table_start_tkeep = port_axis_tkeep;
                             cmd_table_start_tid = port_axis_tid;
                             cmd_table_start_tdest = port_axis_tdest;
                             cmd_table_start_tuser = port_axis_tuser;

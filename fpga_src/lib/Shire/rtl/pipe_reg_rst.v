@@ -1,6 +1,6 @@
 /*
 
-Copyright (c) 2019-2021 Moein Khazraee
+Copyright (c) 2019-2022 Moein Khazraee
 Copyright (c) 2014-2018 Alex Forencich
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -30,13 +30,15 @@ THE SOFTWARE.
 `default_nettype none
 
 /*
- * Simple pipeline of N registers without reset (but not using shift registers).
+ * Simple pipeline of N registers with reset.
  */
-module pipe_reg #(
+module pipe_reg_rst #(
     parameter WIDTH=1, // width of the input and output signals
-    parameter N=2 // depth of synchronizer
+    parameter N=2, // depth of synchronizer
+    parameter INIT=1'b0
 )(
     input  wire             clk,
+    input  wire             rst,
 
     input  wire [WIDTH-1:0] in,
     output wire [WIDTH-1:0] out
@@ -48,10 +50,16 @@ module pipe_reg #(
   integer i;
 
   always @(posedge clk) begin
-    sync_reg[0] <= in;
+    if (rst)
+      sync_reg[0] <= {WIDTH{INIT}};
+    else
+      sync_reg[0] <= in;
 
     for (i = 1; i < N; i = i + 1)
-      sync_reg[i] <= sync_reg[i-1];
+      if (rst)
+        sync_reg[i] <= sync_reg[i-1];
+      else
+        sync_reg[i] <= {WIDTH{INIT}};
   end
 
   assign out = sync_reg[N-1];
