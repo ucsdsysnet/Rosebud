@@ -29,7 +29,7 @@ THE SOFTWARE.
 #include <time.h>
 
 #include "mqnic.h"
-#include "gousheh.h"
+#include "rpu.h"
 #include "timespec.h"
 
 static volatile sig_atomic_t keep_running = 1;

@@ -1874,10 +1874,10 @@ simple_sync_sig # (.RST_VAL(1'b0),.WIDTH(32)) core_stat_data_sync_reg (
 );
 
 
-// Instantiating riscv core wrappers
+// Instantiating RPUs and their interconnect
 genvar i;
 generate
-    for (i=0; i<CORE_COUNT; i=i+1) begin: riscv_cores
+    for (i=0; i<CORE_COUNT; i=i+1) begin: rpus
         wire [CORE_WIDTH-1:0]      core_id = i;
         wire                       core_reset;
 
@@ -1912,14 +1912,14 @@ generate
         wire [CORE_MSG_WIDTH-1:0]  bc_msg_in;
         wire                       bc_msg_in_valid;
 
-        wire [31:0]                wrapper_status_data;
-        wire [2:0]                 wrapper_status_addr;
+        wire [31:0]                intercon_status_data;
+        wire [2:0]                 intercon_status_addr;
 
-        wire [31:0]                core_status_data;
-        wire [2:0]                 core_status_addr;
+        wire [31:0]                rpu_status_data;
+        wire [2:0]                 rpu_status_addr;
 
         // (* keep_hierarchy = "soft" *)
-        Gousheh_wrapper #(
+        rpu_intercon #(
             .DATA_WIDTH(LVL2_DATA_WIDTH),
             .SLOT_COUNT(SLOT_COUNT),
             .RECV_DESC_DEPTH(RECV_DESC_DEPTH),
@@ -1938,7 +1938,7 @@ generate
             .DATA_S_REG_TYPE(2),
             .DATA_M_REG_TYPE(2),
             .DRAM_M_REG_TYPE(2)
-        ) core_wrapper (
+        ) rpu_intercon_inst (
             .clk(core_clk),
             .rst(block_reset[i]),
 
@@ -2038,13 +2038,13 @@ generate
             .bc_msg_in_user(),
             .bc_msg_in_valid(bc_msg_in_valid),
 
-            .wrapper_status_data(wrapper_status_data),
-            .wrapper_status_addr(wrapper_status_addr),
-            .core_status_data(core_status_data),
-            .core_status_addr(core_status_addr)
+            .intercon_status_data(intercon_status_data),
+            .intercon_status_addr(intercon_status_addr),
+            .rpu_status_data(rpu_status_data),
+            .rpu_status_addr(rpu_status_addr)
         );
 
-        Gousheh_PR pr_wrapper (
+        rpu_PR rpu_PR_inst (
             .clk(core_clk),
             .rst(block_reset[i]),
             .core_reset(core_reset),
@@ -2079,10 +2079,10 @@ generate
             .bc_msg_in(bc_msg_in),
             .bc_msg_in_valid(bc_msg_in_valid),
 
-            .wrapper_status_data(wrapper_status_data),
-            .wrapper_status_addr(wrapper_status_addr),
-            .core_status_data(core_status_data),
-            .core_status_addr(core_status_addr)
+            .intercon_status_data(intercon_status_data),
+            .intercon_status_addr(intercon_status_addr),
+            .rpu_status_data(rpu_status_data),
+            .rpu_status_addr(rpu_status_addr)
         );
 
         assign dram_m_axis_tuser[CORE_WIDTH*i +: CORE_WIDTH]               = i;

@@ -76,7 +76,7 @@ module riscvcore #(
   input  wire [63:0]                debug_in,
   input  wire [63:0]                timer,
 
-  // Wrapper FIFO occupancy
+  // Interconnect FIFO occupancy
   input  wire [7:0]                 send_data_items,
   input  wire [7:0]                 dram_send_items,
   input  wire [7:0]                 dram_req_items,

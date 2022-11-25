@@ -50,14 +50,14 @@ add_files -norecurse {
 if {[llength [get_pr_configurations PIG_RR_config]]!=0} then {
   delete_pr_configurations PIG_RR_config}
 create_pr_configuration -name PIG_RR_config -partitions [list \
-  core_inst/riscv_cores[0].pr_wrapper:Gousheh_PIG \
-  core_inst/riscv_cores[1].pr_wrapper:Gousheh_PIG \
-  core_inst/riscv_cores[2].pr_wrapper:Gousheh_PIG \
-  core_inst/riscv_cores[3].pr_wrapper:Gousheh_PIG \
-  core_inst/riscv_cores[4].pr_wrapper:Gousheh_PIG \
-  core_inst/riscv_cores[5].pr_wrapper:Gousheh_PIG \
-  core_inst/riscv_cores[6].pr_wrapper:Gousheh_PIG \
-  core_inst/riscv_cores[7].pr_wrapper:Gousheh_PIG \
+  core_inst/rpus[0].rpu_PR_inst:RPU_PIG \
+  core_inst/rpus[1].rpu_PR_inst:RPU_PIG \
+  core_inst/rpus[2].rpu_PR_inst:RPU_PIG \
+  core_inst/rpus[3].rpu_PR_inst:RPU_PIG \
+  core_inst/rpus[4].rpu_PR_inst:RPU_PIG \
+  core_inst/rpus[5].rpu_PR_inst:RPU_PIG \
+  core_inst/rpus[6].rpu_PR_inst:RPU_PIG \
+  core_inst/rpus[7].rpu_PR_inst:RPU_PIG \
   core_inst/scheduler_PR_inst:scheduler_RR]
 
 if {[llength [get_runs "impl_PIG_RR"]]!=0} then {delete_run impl_PIG_RR}
@@ -85,8 +85,8 @@ set_property IS_ENABLED false [get_report_config -of_object [get_runs impl_PIG_R
 
 reset_run impl_PIG_RR
 launch_runs impl_PIG_RR -jobs 12
-exec sh -c "sed -i '/Gousheh_PR.dcp/d' fpga.runs/impl_PIG_RR/fpga.tcl"
-exec sh -c "sed -i '/fpga_postroute_physopt_bb.dcp/ r Gousheh_dcps.tcl' fpga.runs/impl_PIG_RR/fpga.tcl"
+exec sh -c "sed -i '/rpu_PR.dcp/d' fpga.runs/impl_PIG_RR/fpga.tcl"
+exec sh -c "sed -i '/fpga_postroute_physopt_bb.dcp/ r RPU_dcps.tcl' fpga.runs/impl_PIG_RR/fpga.tcl"
 wait_on_run impl_PIG_RR
 
 open_run impl_PIG_RR

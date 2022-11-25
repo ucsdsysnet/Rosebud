@@ -210,7 +210,7 @@ always @ (posedge pcie_clk) begin
 
   // Forwarding host write request to the corresponding core, and saving PCIe tag per core
   if (host_dma_write_desc_valid && host_dma_write_desc_ready) begin
-    // PORT field in descriptor gets overriden by core wrapper, and TAG field is 0
+    // PORT field in descriptor gets overriden by RPU interconnect, and TAG field is 0
     cores_ctrl_m_tdata_r                         <= 128'd0;
     cores_ctrl_m_tdata_r[127:64]                 <= host_dma_write_desc_pcie_addr;
     cores_ctrl_m_tdata_r[31+CORE_ADDR_WIDTH:32]  <= host_dma_write_desc_ram_addr[CORE_ADDR_WIDTH-1:0];

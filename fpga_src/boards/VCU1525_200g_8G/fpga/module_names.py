@@ -61,46 +61,46 @@ PCIe_modules = [
 "   pcie_us_cfg_inst",
 "   pcie_us_msi_inst"]
 
-Core_wrappers = [
-"     riscv_cores\[0\]\.core_wrapper",
-"     riscv_cores\[1\]\.core_wrapper",
-"     riscv_cores\[2\]\.core_wrapper",
-"     riscv_cores\[3\]\.core_wrapper",
-"     riscv_cores\[4\]\.core_wrapper",
-"     riscv_cores\[5\]\.core_wrapper",
-"     riscv_cores\[6\]\.core_wrapper",
-"     riscv_cores\[7\]\.core_wrapper"]
+Interconnects = [
+"     rpus\[0\]\.rpu_intercon_inst",
+"     rpus\[1\]\.rpu_intercon_inst",
+"     rpus\[2\]\.rpu_intercon_inst",
+"     rpus\[3\]\.rpu_intercon_inst",
+"     rpus\[4\]\.rpu_intercon_inst",
+"     rpus\[5\]\.rpu_intercon_inst",
+"     rpus\[6\]\.rpu_intercon_inst",
+"     rpus\[7\]\.rpu_intercon_inst"]
 
-Gushehs = [
-"     riscv_cores\[0\]\.pr_wrapper",
-"     riscv_cores\[1\]\.pr_wrapper",
-"     riscv_cores\[2\]\.pr_wrapper",
-"     riscv_cores\[3\]\.pr_wrapper",
-"     riscv_cores\[4\]\.pr_wrapper",
-"     riscv_cores\[5\]\.pr_wrapper",
-"     riscv_cores\[6\]\.pr_wrapper",
-"     riscv_cores\[7\]\.pr_wrapper"]
+RPUs = [
+"     rpus\[0\]\.rpu_PR_inst",
+"     rpus\[1\]\.rpu_PR_inst",
+"     rpus\[2\]\.rpu_PR_inst",
+"     rpus\[3\]\.rpu_PR_inst",
+"     rpus\[4\]\.rpu_PR_inst",
+"     rpus\[5\]\.rpu_PR_inst",
+"     rpus\[6\]\.rpu_PR_inst",
+"     rpus\[7\]\.rpu_PR_inst"]
 
 Scheduler_module = ["     scheduler"]
 
 
 mem_modules = ["         memories"]
 riscv_modules = ["         core"]
-acc_manager =   ["         Gousheh_controller_inst",
+acc_manager =   ["         rpu_controller_inst",
                  "           \(accel_wrap_inst\)",
                  "           meta_data_fifo ",
                  "           state_out_fifo ",
                  "           cmd_slot_fifo ",
                  "           desc_fifo ",
                  "           accel_dma_engine ",
-                 "       \(riscv_cores\[0\]\.pr_wrapper\) ",
-                 "       \(riscv_cores\[1\]\.pr_wrapper\) ",
-                 "       \(riscv_cores\[2\]\.pr_wrapper\) ",
-                 "       \(riscv_cores\[3\]\.pr_wrapper\) ",
-                 "       \(riscv_cores\[4\]\.pr_wrapper\) ",
-                 "       \(riscv_cores\[5\]\.pr_wrapper\) ",
-                 "       \(riscv_cores\[6\]\.pr_wrapper\) ",
-                 "       \(riscv_cores\[7\]\.pr_wrapper\) ",
+                 "       \(rpus\[0\]\.rpu_PR_inst\) ",
+                 "       \(rpus\[1\]\.rpu_PR_inst\) ",
+                 "       \(rpus\[2\]\.rpu_PR_inst\) ",
+                 "       \(rpus\[3\]\.rpu_PR_inst\) ",
+                 "       \(rpus\[4\]\.rpu_PR_inst\) ",
+                 "       \(rpus\[5\]\.rpu_PR_inst\) ",
+                 "       \(rpus\[6\]\.rpu_PR_inst\) ",
+                 "       \(rpus\[7\]\.rpu_PR_inst\) ",
                  "       bc_msg_in_reg",
                  "       bc_msg_out_reg",
                  "       dma_rd_reg",

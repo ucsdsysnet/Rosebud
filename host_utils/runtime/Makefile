@@ -37,16 +37,16 @@ $(MCAPLIB):
 %.o: %.c
 	$(CC) $(ALL_CFLAGS) -c -o $@ $<
 
-dump: dump.o mqnic.o gousheh.o
+dump: dump.o mqnic.o rpu.o
 	$(CC) $(ALL_CFLAGS) $^ -o $@
 
-perf: perf.o mqnic.o timespec.o gousheh.o
+perf: perf.o mqnic.o timespec.o rpu.o
 	$(CC) $(ALL_CFLAGS) $^ -o $@
 
-rvfw: rvfw.o mqnic.o gousheh.o
+rvfw: rvfw.o mqnic.o rpu.o
 	$(CC) $(ALL_CFLAGS) $^ -o $@
 
-pr_reload: pr_reload.o mqnic.o gousheh.o $(MCAPLIB)
+pr_reload: pr_reload.o mqnic.o rpu.o $(MCAPLIB)
 	$(CC) $(ALL_CFLAGS) $^ $(MCAPLIB) -ludev -lpci -lz -o $@
 
 clean:

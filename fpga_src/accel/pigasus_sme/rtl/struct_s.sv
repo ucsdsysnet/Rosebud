@@ -1,8 +1,3 @@
-
-
-
-
-
 `ifndef STRUCT_S
 `define STRUCT_S
 

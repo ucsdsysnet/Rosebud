@@ -36,7 +36,7 @@ drop: //Non IPV4 or in firewall list
 
 int main(void)
 {
-  // Initializing scheduler and wrapper
+  // Initializing scheduler and interconnect
   init_hdr_slots(16, 0x804000, 128);
   init_slots(16, 0x0C000A, 16384);
 

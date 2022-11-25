@@ -28,23 +28,23 @@ from math import ceil
 from glob import glob
 
 csv_file           = "parsed_utilization_16G.csv"
-Gousheh_pblock_pat = "fpga_utilization_Gousheh_*_FW_RR.rpt"
+RPU_pblock_pat = "fpga_utilization_RPU_*_FW_RR.rpt"
 sched_pblock_rep   = "fpga_utilization_scheduler_FW_RR.rpt"
 full_fpga_raw_rep  = "fpga_utilization_hierarchy_placed_raw.rpt"
 full_fpga_acc_rep  = "fpga_utilization_hierarchy_placed_FW_RR.rpt"
-Gousheh_count      = 16
+RPU_count      = 16
 FPGA_tot_resources = [1182240, 2364480, 2160, 960, 6840]
 
 # LUTS, Registers, BRAM, URAM, DSP
-Gousheh_pblock_rep = sorted(glob(Gousheh_pblock_pat), key=natural_keys)
-Gousheh_tot_resources = [available (x) for x in Gousheh_pblock_rep]
+RPU_pblock_rep = sorted(glob(RPU_pblock_pat), key=natural_keys)
+RPU_tot_resources = [available (x) for x in RPU_pblock_rep]
 Sched_tot_resources   = available (sched_pblock_rep)
-Gousheh_avg_resources = \
-    [ceil(sum(col)/float(len(col))) for col in zip(*Gousheh_tot_resources)]
+RPU_avg_resources = \
+    [ceil(sum(col)/float(len(col))) for col in zip(*RPU_tot_resources)]
 
 print ("Available Resources:")
 print ("Block       \tLUTS\tRegs\tBRAM\tURAM\tDSP")
-print ("Avg Gousheh:\t"+"\t".join([str(x) for x in Gousheh_avg_resources]))
+print ("Avg RPU:  \t"  +"\t".join([str(x) for x in RPU_avg_resources]))
 print ("Scheduler:\t"  +"\t".join([str(x) for x in Sched_tot_resources]))
 print ("Full FPGA:\t"  +"\t".join([str(x) for x in FPGA_tot_resources]))
 
@@ -73,40 +73,40 @@ def calc_remain (vals, maxs, tots):
 # Naming of Modules and number of them for averaging
 # Since a module could be set of different sub-modules we cannot
 # just use occurences
-Dastgah_mods = {"Gousheh": (Gushehs, Gousheh_count),
-                "Scheduler": (Scheduler_module, 1),
-                "Wrappers": (Core_wrappers, Gousheh_count),
-                "MAC": (MAC_modules, 1),
-                "PCIEe": (PCIe_modules, 1),
-                "Switch and Debug": (SW_n_stat_modules, 1)}
+Shire_mods = {"RPU": (RPUs, RPU_count),
+              "Scheduler": (Scheduler_module, 1),
+              "Interconnects": (Interconnects, RPU_count),
+              "MAC": (MAC_modules, 1),
+              "PCIEe": (PCIe_modules, 1),
+              "Switch and Debug": (SW_n_stat_modules, 1)}
 
-Gousheh_mods = {"mem modules": (mem_modules, Gousheh_count),
-                "riscv": (riscv_modules, Gousheh_count),
-                "Firewall": (firewall, Gousheh_count),
-                "Accel manager": (acc_manager, Gousheh_count)}
+RPU_mods   = {"mem modules": (mem_modules, RPU_count),
+              "riscv": (riscv_modules, RPU_count),
+              "Firewall": (firewall, RPU_count),
+              "Accel manager": (acc_manager, RPU_count)}
 
 # CSV header
 printcsv("Module, LUT, Logic, LUTRAM, SRL, Register, RAMB36, RAMB18, \
 URAM, DSP, LUTs (%), Registers(%), BRAMs(%), URAMs(%), DSPs(%)\n")
 
-printcsv ("Dastgah stats:")
+printcsv ("Shire stats:")
 
 acc_util = [0]*9
 last_avg = []
 last_tot = []
 last_mod = ""
 
-for mod in Dastgah_mods:
+for mod in Shire_mods:
   if (mod == "Scheduler"):
-    (avg, tot, _, _) = extract(full_fpga_acc_rep, Dastgah_mods[mod][0], Dastgah_mods[mod][1])
+    (avg, tot, _, _) = extract(full_fpga_acc_rep, Shire_mods[mod][0], Shire_mods[mod][1])
   else:
-    (avg, tot, _, _) = extract(full_fpga_raw_rep, Dastgah_mods[mod][0], Dastgah_mods[mod][1])
+    (avg, tot, _, _) = extract(full_fpga_raw_rep, Shire_mods[mod][0], Shire_mods[mod][1])
   line = calc(avg, FPGA_tot_resources)
   acc_util = [a + b for a, b in zip(acc_util, tot)]
   printcsv(mod + ", " + ", ".join(line))
-  if (mod == "Gousheh"):
-    line = calc_remain(avg, Gousheh_avg_resources, FPGA_tot_resources)
-    printcsv("Remaining Gousheh" + ", " + ", ".join(line))
+  if (mod == "RPU"):
+    line = calc_remain(avg, RPU_avg_resources, FPGA_tot_resources)
+    printcsv("Remaining RPU" + ", " + ", ".join(line))
   if (mod == "Scheduler"):
     line = calc_remain(tot, Sched_tot_resources, FPGA_tot_resources)
     printcsv("Remaining Scheduler" + ", " + ", ".join(line))
@@ -123,28 +123,28 @@ printcsv(last_mod+"+, " + ", ".join(line))
 line = calc(tot, FPGA_tot_resources)
 printcsv("Full" + ", " + ", ".join(line))
 
-printcsv ("\n\nGousheh with accelerator stats:")
+printcsv ("\n\nRPU with accelerator stats:")
 
 acc_util = [0]*9
-for mod in Gousheh_mods:
-  (avg, tot, _, _) = extract(full_fpga_acc_rep, Gousheh_mods[mod][0], Gousheh_mods[mod][1])
-  line = calc(avg, Gousheh_avg_resources)
+for mod in RPU_mods:
+  (avg, tot, _, _) = extract(full_fpga_acc_rep, RPU_mods[mod][0], RPU_mods[mod][1])
+  line = calc(avg, RPU_avg_resources)
   acc_util = [a + b for a, b in zip(acc_util, tot)]
   printcsv(mod + ", " + ", ".join(line))
   last_avg = avg
   last_mod = mod
 
-(avg, tot, _, _) = extract(full_fpga_acc_rep, Gushehs, Gousheh_count)
+(avg, tot, _, _) = extract(full_fpga_acc_rep, RPUs, RPU_count)
 rest = [b - a for a, b in zip(acc_util, tot)]
-rest = [ceil(x/Gousheh_count) for x in rest]
-line = calc(rest, Gousheh_avg_resources)
+rest = [ceil(x/RPU_count) for x in rest]
+line = calc(rest, RPU_avg_resources)
 printcsv("Rest" + ", " + ", ".join(line))
 rest = [a + b for a, b in zip(rest, last_avg)]
 line = calc(rest, FPGA_tot_resources)
 printcsv(last_mod+"+, " + ", ".join(line))
-line = calc(avg, Gousheh_avg_resources)
+line = calc(avg, RPU_avg_resources)
 printcsv("Full" + ", " + ", ".join(line))
-line = calc_remain(avg, Gousheh_avg_resources, Gousheh_avg_resources)
+line = calc_remain(avg, RPU_avg_resources, RPU_avg_resources)
 printcsv("Remaining" + ", " + ", ".join(line))
 
 out_file.close()

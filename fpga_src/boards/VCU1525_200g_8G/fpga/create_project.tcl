@@ -3,13 +3,13 @@ create_project -force -part xcvu9p-fsgd2104-2L-e fpga
 add_files -fileset sources_1 -norecurse {
   ../rtl/fpga.v
   ../rtl/fpga_core.v
-  ../rtl/Gousheh_PR.v
+  ../rtl/rpu_PR.v
   ../rtl/Hash_Dropping_scheduler_PR.v
   ../rtl/pcie_config.v
   ../rtl/debounce_switch.v
   ../rtl/sync_signal.v
   ../lib/Shire/rtl/riscvcore.v
-  ../lib/Shire/rtl/Gousheh.v
+  ../lib/Shire/rtl/rpu.v
   ../lib/Shire/rtl/accel_wrap.v
   ../lib/Shire/rtl/VexRiscv.v
   ../lib/Shire/rtl/core_mems.v
@@ -20,8 +20,8 @@ add_files -fileset sources_1 -norecurse {
   ../lib/Shire/rtl/axis_stat.v
   ../lib/Shire/rtl/stat_reader.v
   ../lib/Shire/rtl/mem_sys.v
-  ../lib/Shire/rtl/Gousheh_controller.v
-  ../lib/Shire/rtl/Gousheh_wrapper.v
+  ../lib/Shire/rtl/rpu_controller.v
+  ../lib/Shire/rtl/rpu_intercon.v
   ../lib/Shire/rtl/pipe_reg.v
   ../lib/Shire/rtl/simple_sync_sig.v
   ../lib/Shire/rtl/simple_axis_switch.v

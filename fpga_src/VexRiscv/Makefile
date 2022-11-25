@@ -1,8 +1,8 @@
 build:
-	sbt "runMain vexriscv.demo.GenForGousheh -feature"
+	sbt "runMain vexriscv.demo.GenForRPU -feature"
 
 edit:
-	vim src/main/scala/vexriscv/demo/GenForGousheh.scala
+	vim src/main/scala/vexriscv/demo/GenForRPU.scala
 
 copy:
 	cp VexRiscv.v ../lib/Shire/rtl/

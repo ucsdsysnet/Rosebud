@@ -24,9 +24,9 @@ update_compile_order -fileset sources_1
 set_property needs_refresh false [get_runs synth_1]
 set_property needs_refresh false [get_runs impl_1]
 
-if {[llength [get_reconfig_modules Gousheh_PIG]]!=0} then {
-  delete_reconfig_modules Gousheh_PIG}
-create_reconfig_module -name Gousheh_PIG -partition_def [get_partition_defs pr_riscv] -top Gousheh_PR
+if {[llength [get_reconfig_modules RPU_PIG]]!=0} then {
+  delete_reconfig_modules RPU_PIG}
+create_reconfig_module -name RPU_PIG -partition_def [get_partition_defs pr_riscv] -top rpu_PR
 
 add_files -norecurse {
   ../lib/axis/rtl/arbiter.v
@@ -40,8 +40,8 @@ add_files -norecurse {
   ../lib/Shire/rtl/riscvcore.v
   ../lib/Shire/rtl/simple_fifo.v
   ../lib/Shire/rtl/mem_sys.v
-  ../lib/Shire/rtl/Gousheh.v
-  ../lib/Shire/rtl/Gousheh_controller.v
+  ../lib/Shire/rtl/rpu.v
+  ../lib/Shire/rtl/rpu_controller.v
   ../lib/Shire/rtl/single_accel_rd_dma.v
   ../accel/pigasus_sme/rtl/backend.sv
   ../accel/pigasus_sme/rtl/first_filter.sv
@@ -69,21 +69,21 @@ add_files -norecurse {
   ../accel/pigasus_sme/rtl/SME_wrapper.sv
   ../accel/pigasus_sme/rtl/accel_wrap_pigasus.v
   ../accel/pigasus_sme/rtl/ip_match.v
-  ../rtl/Gousheh_PR_pig.v
+  ../rtl/rpu_PR_pig.v
   ../lib/Shire/syn/vivado/simple_sync_sig.tcl
-} -of_objects [get_reconfig_modules Gousheh_PIG]
+} -of_objects [get_reconfig_modules RPU_PIG]
 
 if {[llength [get_pr_configurations PIG_RR_config]]!=0} then {
   delete_pr_configurations PIG_RR_config}
 create_pr_configuration -name PIG_RR_config -partitions [list \
-  core_inst/riscv_cores[0].pr_wrapper:Gousheh_PIG \
-  core_inst/riscv_cores[1].pr_wrapper:Gousheh_PIG \
-  core_inst/riscv_cores[2].pr_wrapper:Gousheh_PIG \
-  core_inst/riscv_cores[3].pr_wrapper:Gousheh_PIG \
-  core_inst/riscv_cores[4].pr_wrapper:Gousheh_PIG \
-  core_inst/riscv_cores[5].pr_wrapper:Gousheh_PIG \
-  core_inst/riscv_cores[6].pr_wrapper:Gousheh_PIG \
-  core_inst/riscv_cores[7].pr_wrapper:Gousheh_PIG \
+  core_inst/rpus[0].rpu_PR_inst:RPU_PIG \
+  core_inst/rpus[1].rpu_PR_inst:RPU_PIG \
+  core_inst/rpus[2].rpu_PR_inst:RPU_PIG \
+  core_inst/rpus[3].rpu_PR_inst:RPU_PIG \
+  core_inst/rpus[4].rpu_PR_inst:RPU_PIG \
+  core_inst/rpus[5].rpu_PR_inst:RPU_PIG \
+  core_inst/rpus[6].rpu_PR_inst:RPU_PIG \
+  core_inst/rpus[7].rpu_PR_inst:RPU_PIG \
   core_inst/scheduler_PR_inst:scheduler_RR]
 
 if {[llength [get_runs "impl_PIG_RR"]]!=0} then {delete_run impl_PIG_RR}
@@ -95,12 +95,12 @@ set_property -name {STEPS.OPT_DESIGN.ARGS.MORE OPTIONS} -value {-retarget -propc
 # set_property STEPS.PLACE_DESIGN.ARGS.DIRECTIVE Explore [get_runs impl_PIG_RR]
 set_property AUTO_INCREMENTAL_CHECKPOINT 1 [get_runs impl_PIG_RR]
 
-update_compile_order -fileset Gousheh_PIG
+update_compile_order -fileset RPU_PIG
 update_compile_order -fileset sources_1
 
-reset_run Gousheh_PIG_synth_1
-launch_runs Gousheh_PIG_synth_1 -jobs 12
-wait_on_run Gousheh_PIG_synth_1
+reset_run RPU_PIG_synth_1
+launch_runs RPU_PIG_synth_1 -jobs 12
+wait_on_run RPU_PIG_synth_1
 
 set_property IS_ENABLED false [get_report_config -of_object [get_runs impl_PIG_RR] impl_PIG_RR_route_report_drc_0]
 set_property IS_ENABLED false [get_report_config -of_object [get_runs impl_PIG_RR] impl_PIG_RR_route_report_power_0]

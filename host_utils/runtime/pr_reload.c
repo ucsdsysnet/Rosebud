@@ -31,7 +31,7 @@ THE SOFTWARE.
 #include <time.h>
 
 #include "mqnic.h"
-#include "gousheh.h"
+#include "rpu.h"
 #include "mcap_lib.h"
 #include "timespec.h"
 

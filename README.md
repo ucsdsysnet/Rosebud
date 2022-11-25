@@ -67,7 +67,7 @@ Which is generally useful to avoid undesired reuse of files by Vivado and can ca
 
 * ```make base_0``` runs tcl scripts in the fpga directory for the base design. <ins>create_project.tcl</ins> generates the project and adds the required files. Then <ins>run_synth.tcl</ins> defines the reonfigurable regions, and runs the synthesize process. Next <ins>run_impl_1.tcl</ins> performs the place and route process. Finally <ins>fpga/generate_bit.tcl</ins> generates the full FPGA image.
 
-* <ins>add_wrapper_rect.tcl</ins> and <ins>hide_rect.tcl</ins> are used for visualization of the pblock for figures. <ins>generate_reports.tcl</ins> generates reports for resource utilization for the PR runs. <ins>force_phys_opt.tcl</ins> is rarely used when Vivado thinks the design does not need any optimization and skips them, and eventually fails. This script forces Vivado to run the optimizations anyways.
+* <ins>add_intercon_rect.tcl</ins> and <ins>hide_rect.tcl</ins> are used for visualization of the pblock for figures. <ins>generate_reports.tcl</ins> generates reports for resource utilization for the PR runs. <ins>force_phys_opt.tcl</ins> is rarely used when Vivado thinks the design does not need any optimization and skips them, and eventually fails. This script forces Vivado to run the optimizations anyways.
 
 * We can go directly from base to using round robin load balancer and RSUs with Pigasus, but it takes longer and might fail as it might get to challenging for the heuristic algorithms. As an example, <ins>run_PIG_RR.tcl</ins> uses this method, but during development iterations sometimes it met timing and sometimes it failed. 
 
@@ -124,7 +124,7 @@ If necessary to remove the driver, you can do so by:
 
 Files to compile a C program can be found in riscv_code directory:
 *	<ins>riscv_encoding.h</ins> has the defines for the VexRiscv. 
-*	<ins>core.h</ins> is the header file for functions to talk to the wrapper.
+*	<ins>core.h</ins> is the header file for functions to talk to the RPU interconnect.
 *	<ins>int_handler</ins> is a default interrupt handler if user does not want to specify their own. 
 *	<ins>startup.S</ins> has the required boot process for the core to initialize stack and prepare the interrupts, and jump to start of the code.
 *	<ins>link_option.ld</ins> provide the mapping of segments based on the Shire addressing. 
@@ -147,7 +147,7 @@ The other <ins>\*.c/\*.h</ins> files are used for the tests. The runtime scripts
 File to load RISCV programs and example C code to monitor the state are in host-utils/runtime. The main files are:
 *	<ins>mqnic.c/h</ins> talks to the corundum driver.
 *	<ins>rvfw.c/h</ins> is used to program memory of RPUs (similar to a firmware loader)
-*	<ins>gousheh.c/h</ins> has functions to talk to each RPU during runtime
+*	<ins>rpu.c/h</ins> has functions to talk to each RPU during runtime
 *	<ins>pr_reload.c</ins> has the functionality to use MCAP and reload a RPU. 
 *	<ins>timespec.c/h</ins> is for Linux’s timespec structure 
 *	<ins>Makefile</ins> generates the binaries for this files. (Just do Make)
@@ -168,7 +168,7 @@ The ultimate goal of Shire is to have these RISCV cores to be hard logic not to 
 ## Running simulations:
 Alongside the code for each  board, there is a simulation framework to be able to test the Verilog and C-code alongside each other. Scripts and examples for single RSU and full Shire tests are available. As an example, in fpga_src/boards/VCU1525_200g_16G/tb there are these directories:
 *	<ins>common</ins> has the top level test module for full Shire, as well as common.py which has the same functions as the functions that host can use to communicate with the FPGA (just in python instead of C).
-*	<ins>test_firewall_sg</ins> is a testbench for firewall accelerator that is integrated within an RSU, and the C-code can be tested. test_gousheh.v is the top level test module for single RSU, and test_gousheh.py is the python testbench. The testbench file loads the RSU memories, similar to the scripts in host_utils, and runs the desired tests.
+*	<ins>test_firewall_sg</ins> is a testbench for firewall accelerator that is integrated within an RSU, and the C-code can be tested. test_rpu.v is the top level test module for single RSU, and test_rpu.py is the python testbench. The testbench file loads the RSU memories, similar to the scripts in host_utils, and runs the desired tests.
 *	<ins>test_ins_load</ins> tests load of instruction memories, or communication to host DRAM, alongside a C-code that simply forwards the packets, as well as write and reads to DRAM.
 *	<ins>test_corundum</ins> test the functionality of corundum, alongside a C-code that simply forwards packets to the host.
 *	<ins>test_inter_core</ins> tests the intercore messaging system, <ins>test_latency</ins> tests the latency code, and <ins>test_pkt_gen</ins> tests the packet generation code.

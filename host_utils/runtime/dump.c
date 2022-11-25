@@ -27,7 +27,7 @@ THE SOFTWARE.
 #include <string.h>
 
 #include "mqnic.h"
-#include "gousheh.h"
+#include "rpu.h"
 
 static void usage(char *name)
 {

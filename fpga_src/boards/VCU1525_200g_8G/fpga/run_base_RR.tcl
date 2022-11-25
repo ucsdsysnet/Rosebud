@@ -50,14 +50,14 @@ add_files -norecurse {
 if {[llength [get_pr_configurations base_RR_config]]!=0} then {
   delete_pr_configurations base_RR_config}
 create_pr_configuration -name base_RR_config -partitions [list \
-  core_inst/riscv_cores[0].pr_wrapper:Gousheh_base \
-  core_inst/riscv_cores[1].pr_wrapper:Gousheh_base \
-  core_inst/riscv_cores[2].pr_wrapper:Gousheh_base \
-  core_inst/riscv_cores[3].pr_wrapper:Gousheh_base \
-  core_inst/riscv_cores[4].pr_wrapper:Gousheh_base \
-  core_inst/riscv_cores[5].pr_wrapper:Gousheh_base \
-  core_inst/riscv_cores[6].pr_wrapper:Gousheh_base \
-  core_inst/riscv_cores[7].pr_wrapper:Gousheh_base \
+  core_inst/rpus[0].rpu_PR_inst:RPU_base \
+  core_inst/rpus[1].rpu_PR_inst:RPU_base \
+  core_inst/rpus[2].rpu_PR_inst:RPU_base \
+  core_inst/rpus[3].rpu_PR_inst:RPU_base \
+  core_inst/rpus[4].rpu_PR_inst:RPU_base \
+  core_inst/rpus[5].rpu_PR_inst:RPU_base \
+  core_inst/rpus[6].rpu_PR_inst:RPU_base \
+  core_inst/rpus[7].rpu_PR_inst:RPU_base \
   core_inst/scheduler_PR_inst:scheduler_RR]
 
 if {[llength [get_runs "impl_base_RR"]]!=0} then {delete_run impl_base_RR}

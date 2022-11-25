@@ -24,22 +24,22 @@ set_property PR_FLOW 1 [current_project]
 
 if {[llength [get_pr_configurations config_1]]==0} then {
   create_pr_configuration -name config_1 -partitions [list \
-  core_inst/riscv_cores[0].pr_wrapper:Gousheh_base \
-  core_inst/riscv_cores[1].pr_wrapper:Gousheh_base \
-  core_inst/riscv_cores[2].pr_wrapper:Gousheh_base \
-  core_inst/riscv_cores[3].pr_wrapper:Gousheh_base \
-  core_inst/riscv_cores[4].pr_wrapper:Gousheh_base \
-  core_inst/riscv_cores[5].pr_wrapper:Gousheh_base \
-  core_inst/riscv_cores[6].pr_wrapper:Gousheh_base \
-  core_inst/riscv_cores[7].pr_wrapper:Gousheh_base \
-  core_inst/riscv_cores[8].pr_wrapper:Gousheh_base \
-  core_inst/riscv_cores[9].pr_wrapper:Gousheh_base \
-  core_inst/riscv_cores[10].pr_wrapper:Gousheh_base \
-  core_inst/riscv_cores[11].pr_wrapper:Gousheh_base \
-  core_inst/riscv_cores[12].pr_wrapper:Gousheh_base \
-  core_inst/riscv_cores[13].pr_wrapper:Gousheh_base \
-  core_inst/riscv_cores[14].pr_wrapper:Gousheh_base \
-  core_inst/riscv_cores[15].pr_wrapper:Gousheh_base \
+  core_inst/rpus[0].rpu_PR_inst:RPU_base \
+  core_inst/rpus[1].rpu_PR_inst:RPU_base \
+  core_inst/rpus[2].rpu_PR_inst:RPU_base \
+  core_inst/rpus[3].rpu_PR_inst:RPU_base \
+  core_inst/rpus[4].rpu_PR_inst:RPU_base \
+  core_inst/rpus[5].rpu_PR_inst:RPU_base \
+  core_inst/rpus[6].rpu_PR_inst:RPU_base \
+  core_inst/rpus[7].rpu_PR_inst:RPU_base \
+  core_inst/rpus[8].rpu_PR_inst:RPU_base \
+  core_inst/rpus[9].rpu_PR_inst:RPU_base \
+  core_inst/rpus[10].rpu_PR_inst:RPU_base \
+  core_inst/rpus[11].rpu_PR_inst:RPU_base \
+  core_inst/rpus[12].rpu_PR_inst:RPU_base \
+  core_inst/rpus[13].rpu_PR_inst:RPU_base \
+  core_inst/rpus[14].rpu_PR_inst:RPU_base \
+  core_inst/rpus[15].rpu_PR_inst:RPU_base \
   core_inst/scheduler_PR_inst:scheduler_RR]}
 
 set_property PR_CONFIGURATION config_1 [get_runs impl_1]

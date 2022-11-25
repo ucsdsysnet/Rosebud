@@ -15,7 +15,7 @@ void __attribute__((interrupt)) int_handler(void) {
       if (int_flag & 0x0020){
         interrupt_ack(0x0020);
 
-        // INFO: wrapper thinks slots in in_desc FIFO are in progress,
+        // INFO: RPU interconnect thinks slots in in_desc FIFO are in progress,
         // so first we emptied the incoming packets.
 
         // Drop all packets

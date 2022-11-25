@@ -1,0 +1,16 @@
+resize_pblock Intercon_1 -add_rect {94 783 176 807}
+resize_pblock Intercon_2 -add_rect {193 783 321 807}
+resize_pblock Intercon_3 -add_rect {337 783 470 807}
+resize_pblock Intercon_4 -add_rect {490 783 570 807}
+resize_pblock Intercon_5 -add_rect {94 628 176 652}
+resize_pblock Intercon_6 -add_rect {193 628 321 652}
+resize_pblock Intercon_7 -add_rect {337 628 470 652}
+resize_pblock Intercon_8 -add_rect {490 628 570 652}
+resize_pblock Intercon_9 -add_rect {116 280 192 304}
+resize_pblock Intercon_10 -add_rect {206 280 330 304}
+resize_pblock Intercon_11 -add_rect {346 280 474 304}
+resize_pblock Intercon_12 -add_rect {490 280 570 304}
+resize_pblock Intercon_13 -add_rect {116 125 192 149}
+resize_pblock Intercon_14 -add_rect {206 125 330 149}
+resize_pblock Intercon_15 -add_rect {346 125 474 149}
+resize_pblock Intercon_16 -add_rect {490 125 570 149}
