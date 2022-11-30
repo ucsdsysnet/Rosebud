@@ -178,7 +178,7 @@ void evict_core(struct mqnic *dev, uint32_t core){
     return;
 }
 
-void print_scheduler_status(struct mqnic *dev){
+void print_lb_status(struct mqnic *dev){
     printf("recv_cores %d, enable_cores %d \n",
             read_receive_cores(dev), read_enable_cores(dev));
 
@@ -193,7 +193,7 @@ void print_scheduler_status(struct mqnic *dev){
 }
 
 void reset_all_cores(struct mqnic *dev, int evict){
-    printf("Disabling cores in scheduler...\n");
+    printf("Disabling cores in LB...\n");
     set_enable_cores(dev, 0);
     set_receive_cores(dev,0);
 
@@ -207,7 +207,7 @@ void reset_all_cores(struct mqnic *dev, int evict){
     // Wait for the on the fly packets
     usleep(10000);
 
-    printf("Flushing scheduler...\n");
+    printf("Flushing LB...\n");
 
     release_interface_desc(dev, (1<<MAX_ETH_IF_COUNT)-1);
     release_core_slots(dev, (1<<MAX_CORE_COUNT)-1);
@@ -254,7 +254,7 @@ void reset_single_core(struct mqnic *dev, uint32_t core, uint32_t num_slots, int
                 for (int i=0; i< MAX_ETH_IF_COUNT; i++){
                     desc = read_interface_desc(dev,i);
                     if ((((desc>>8) & 0xFF) == core) && (((desc>>16) & 0xFF) == 1)){
-                        printf("Dropping scheduler desc on interface %d for core %d.\n",i,core);
+                        printf("Dropping LB desc on interface %d for core %d.\n",i,core);
                         // disable the interface, wait, check if still it's the same
                         // desc drop it, enable the interface back
                         cur = read_enable_interfaces(dev);
@@ -272,7 +272,7 @@ void reset_single_core(struct mqnic *dev, uint32_t core, uint32_t num_slots, int
             // Read the recovered slots again just in case
             slots = read_core_slots(dev,core);
 
-            // If all the slots were hung in scheduler proceed
+            // If all the slots were hung in LB proceed
             if ((slots+descs_released) == num_slots){
                 goto reset_ready;
             } else {

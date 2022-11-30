@@ -32,7 +32,7 @@ add_files -quiet fpga.runs/impl_PIG_HASH/core_inst_rpus_4_.rpu_PR_inst_RPU_PIG_p
 add_files -quiet fpga.runs/impl_PIG_HASH/core_inst_rpus_5_.rpu_PR_inst_RPU_PIG_post_routed.dcp
 add_files -quiet fpga.runs/impl_PIG_HASH/core_inst_rpus_6_.rpu_PR_inst_RPU_PIG_post_routed.dcp
 add_files -quiet fpga.runs/impl_PIG_HASH/core_inst_rpus_7_.rpu_PR_inst_RPU_PIG_post_routed.dcp
-add_files -quiet fpga.runs/impl_base_RR/core_inst_scheduler_PR_inst_scheduler_RR_post_routed.dcp
+add_files -quiet fpga.runs/impl_base_RR/core_inst_lb_PR_inst_LB_RR_post_routed.dcp
 
 set_property SCOPED_TO_CELLS {core_inst/rpus[0].rpu_PR_inst} [get_files fpga.runs/impl_PIG_HASH/core_inst_rpus_0_.rpu_PR_inst_RPU_PIG_post_routed.dcp]
 set_property SCOPED_TO_CELLS {core_inst/rpus[1].rpu_PR_inst} [get_files fpga.runs/impl_PIG_HASH/core_inst_rpus_1_.rpu_PR_inst_RPU_PIG_post_routed.dcp]
@@ -42,9 +42,9 @@ set_property SCOPED_TO_CELLS {core_inst/rpus[4].rpu_PR_inst} [get_files fpga.run
 set_property SCOPED_TO_CELLS {core_inst/rpus[5].rpu_PR_inst} [get_files fpga.runs/impl_PIG_HASH/core_inst_rpus_5_.rpu_PR_inst_RPU_PIG_post_routed.dcp]
 set_property SCOPED_TO_CELLS {core_inst/rpus[6].rpu_PR_inst} [get_files fpga.runs/impl_PIG_HASH/core_inst_rpus_6_.rpu_PR_inst_RPU_PIG_post_routed.dcp]
 set_property SCOPED_TO_CELLS {core_inst/rpus[7].rpu_PR_inst} [get_files fpga.runs/impl_PIG_HASH/core_inst_rpus_7_.rpu_PR_inst_RPU_PIG_post_routed.dcp]
-set_property SCOPED_TO_CELLS core_inst/scheduler_PR_inst [get_files fpga.runs/impl_base_RR/core_inst_scheduler_PR_inst_scheduler_RR_post_routed.dcp]
+set_property SCOPED_TO_CELLS core_inst/lb_PR_inst [get_files fpga.runs/impl_base_RR/core_inst_lb_PR_inst_LB_RR_post_routed.dcp]
   
-link_design -mode default -top fpga -part xcvu9p-fsgd2104-2L-e -reconfig_partitions {{core_inst/rpus[0].rpu_PR_inst} {core_inst/rpus[1].rpu_PR_inst} {core_inst/rpus[2].rpu_PR_inst} {core_inst/rpus[3].rpu_PR_inst} {core_inst/rpus[4].rpu_PR_inst} {core_inst/rpus[5].rpu_PR_inst} {core_inst/rpus[6].rpu_PR_inst} {core_inst/rpus[7].rpu_PR_inst} core_inst/scheduler_PR_inst}
+link_design -mode default -top fpga -part xcvu9p-fsgd2104-2L-e -reconfig_partitions {{core_inst/rpus[0].rpu_PR_inst} {core_inst/rpus[1].rpu_PR_inst} {core_inst/rpus[2].rpu_PR_inst} {core_inst/rpus[3].rpu_PR_inst} {core_inst/rpus[4].rpu_PR_inst} {core_inst/rpus[5].rpu_PR_inst} {core_inst/rpus[6].rpu_PR_inst} {core_inst/rpus[7].rpu_PR_inst} core_inst/lb_PR_inst}
 
 write_bitstream -no_partial_bitfile -force fpga.runs/impl_PIG_RR/fpga.bit
 

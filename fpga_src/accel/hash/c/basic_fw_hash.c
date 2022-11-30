@@ -79,7 +79,7 @@ int main(void)
   if (slot_count > MAX_CTX_COUNT)
     slot_count = MAX_CTX_COUNT;
 
-  // Do this at the beginning, so scheduler can fill the slots while
+  // Do this at the beginning, so LB can fill the slots while
   // initializing other things.
   init_hdr_slots(slot_count, header_slot_base, header_slot_size);
   init_slots(slot_count, PKT_OFFSET, slot_size);

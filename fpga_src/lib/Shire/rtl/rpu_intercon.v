@@ -834,7 +834,7 @@ simple_fifo # (
   .empty()
 );
 
-// A desc FIFO for msgs to scheduler
+// A desc FIFO for msgs to LB
 wire core_ctrl_wr_ready;
 
 wire core_ctrl_wr_valid_f, core_ctrl_wr_ready_f;
@@ -949,7 +949,7 @@ wire [ID_TAG_WIDTH+64:0] parsed_ctrl_desc = (ctrl_cmd==4'd1) ?
                ctrl_s_axis_tdata_r[31:16], ctrl_lp_send_len} :
               {1'b0,{(ID_TAG_WIDTH+7){1'b0}}, ctrl_send_addr,ctrl_s_axis_tdata_r[31:0]};
 
-// A desc FIFO for send data based on scheduler message
+// A desc FIFO for send data based on LB message
 
 simple_fifo # (
   .ADDR_WIDTH($clog2(RECV_DESC_DEPTH)),
@@ -1177,8 +1177,8 @@ axis_register # (
 /////////////////////////// ARBITERS ////////////////////////////////
 /////////////////////////////////////////////////////////////////////
 
-// Data out arbiter between core direct send data and scheduler message
-// Priority to messages from the scheduler
+// Data out arbiter between core direct send data and LB message
+// Priority to messages from the LB
 wire [63:0] send_pkt_desc;
 wire send_pkt_valid, send_pkt_ready;
 
@@ -1221,7 +1221,7 @@ assign send_pkt_ready  = send_pkt_valid && !dram_out_select && send_desc_ready &
 assign send_desc       = dram_out_select ? dram_wr_desc[63:0] : send_pkt_desc;
 assign send_desc_valid = dram_wr_valid || (send_pkt_valid && pkt_sent_ready);
 
-// CTRL out arbiter between packet sent and core message to scheduler
+// CTRL out arbiter between packet sent and core message to LB
 // Priority to releasing a desc
 wire [63:0] ctrl_out_data;
 wire ctrl_out_valid, ctrl_out_ready;

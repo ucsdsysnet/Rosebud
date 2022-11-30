@@ -84,7 +84,7 @@ create_pr_configuration -name PIG_HASH_config -partitions [list \
   core_inst/rpus[5].rpu_PR_inst:RPU_PIG \
   core_inst/rpus[6].rpu_PR_inst:RPU_PIG \
   core_inst/rpus[7].rpu_PR_inst:RPU_PIG \
-  core_inst/scheduler_PR_inst:scheduler_Hash]
+  core_inst/lb_PR_inst:LB_Hash]
 
 if {[llength [get_runs "impl_PIG_HASH"]]!=0} then {delete_run impl_PIG_HASH}
 create_run impl_PIG_HASH -parent_run impl_1 -flow {Vivado Implementation 2021} -pr_config PIG_HASH_config

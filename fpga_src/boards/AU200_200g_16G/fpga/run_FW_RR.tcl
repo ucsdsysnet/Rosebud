@@ -67,7 +67,7 @@ create_pr_configuration -name FW_RR_config -partitions [list \
   core_inst/rpus[13].rpu_PR_inst:RPU_FW \
   core_inst/rpus[14].rpu_PR_inst:RPU_FW \
   core_inst/rpus[15].rpu_PR_inst:RPU_FW \
-  core_inst/scheduler_PR_inst:scheduler_RR]
+  core_inst/lb_PR_inst:LB_RR]
 
 if {[llength [get_runs "impl_FW_RR"]]!=0} then {delete_run impl_FW_RR}
 create_run impl_FW_RR -parent_run impl_1 -flow {Vivado Implementation 2021} -pr_config FW_RR_config

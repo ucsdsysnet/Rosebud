@@ -29,7 +29,7 @@ from glob import glob
 
 csv_file           = "parsed_utilization_8G.csv"
 RPU_pblock_pat = "fpga_utilization_RPU_*_PIG_HASH.rpt"
-sched_pblock_rep   = "fpga_utilization_scheduler_PIG_HASH.rpt"
+sched_pblock_rep   = "fpga_utilization_LB_PIG_HASH.rpt"
 full_fpga_raw_rep  = "fpga_utilization_hierarchy_placed_raw.rpt"
 full_fpga_acc_rep  = "fpga_utilization_hierarchy_placed_PIG_HASH.rpt"
 RPU_count      = 8
@@ -45,7 +45,7 @@ RPU_avg_resources = \
 print ("Available Resources:")
 print ("Block       \tLUTS\tRegs\tBRAM\tURAM\tDSP")
 print ("Avg RPU:  \t"  +"\t".join([str(x) for x in RPU_avg_resources]))
-print ("Scheduler:\t"  +"\t".join([str(x) for x in Sched_tot_resources]))
+print ("LB:\t"  +"\t".join([str(x) for x in Sched_tot_resources]))
 print ("Full FPGA:\t"  +"\t".join([str(x) for x in FPGA_tot_resources]))
 
 out_file = open(csv_file, 'w')
@@ -74,7 +74,7 @@ def calc_remain (vals, maxs, tots):
 # Since a module could be set of different sub-modules we cannot
 # just use occurences
 Shire_mods = {"RPU": (RPUs, RPU_count),
-              "Scheduler": (Scheduler_module, 1),
+              "LB": (LB_module, 1),
               "Interconnects": (Interconnects, RPU_count),
               "MAC": (MAC_modules, 1),
               "PCIEe": (PCIe_modules, 1),
@@ -97,7 +97,7 @@ last_tot = []
 last_mod = ""
 
 for mod in Shire_mods:
-  if (mod == "Scheduler"):
+  if (mod == "LB"):
     (avg, tot, _, _) = extract(full_fpga_acc_rep, Shire_mods[mod][0], Shire_mods[mod][1])
   else:
     (avg, tot, _, _) = extract(full_fpga_raw_rep, Shire_mods[mod][0], Shire_mods[mod][1])
@@ -107,9 +107,9 @@ for mod in Shire_mods:
   if (mod == "RPU"):
     line = calc_remain(avg, RPU_avg_resources, FPGA_tot_resources)
     printcsv("Remaining RPU" + ", " + ", ".join(line))
-  if (mod == "Scheduler"):
+  if (mod == "LB"):
     line = calc_remain(tot, Sched_tot_resources, FPGA_tot_resources)
-    printcsv("Remaining Scheduler" + ", " + ", ".join(line))
+    printcsv("Remaining LB" + ", " + ", ".join(line))
   last_tot = tot
   last_mod = mod
 

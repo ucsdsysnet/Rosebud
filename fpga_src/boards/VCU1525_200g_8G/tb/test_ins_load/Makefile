@@ -24,14 +24,15 @@ VERILOG_SOURCES  = $(CWD)/../$(TOPLEVEL).v
 
 VERILOG_SOURCES += $(RTL_DIR)/fpga_core.v
 VERILOG_SOURCES += $(RTL_DIR)/rpu_PR.v
-VERILOG_SOURCES += $(RTL_DIR)/RR_LU_scheduler_PR.v
-# VERILOG_SOURCES += $(RTL_DIR)/Hash_Dropping_scheduler_PR.v
+VERILOG_SOURCES += $(RTL_DIR)/lb_rr_lu_PR.v
+# VERILOG_SOURCES += $(RTL_DIR)/lb_hash_dropping_PR.v
 VERILOG_SOURCES += $(RTL_DIR)/pcie_config.v
 VERILOG_SOURCES += $(RTL_DIR)/sync_signal.v
 
 VERILOG_SOURCES += $(SHIRE)/simple_fifo.v
 VERILOG_SOURCES += $(SHIRE)/max_finder_tree.v
 VERILOG_SOURCES += $(SHIRE)/slot_keeper.v
+VERILOG_SOURCES += $(SHIRE)/lb_controller.v
 VERILOG_SOURCES += $(SHIRE)/core_mems.v
 VERILOG_SOURCES += $(SHIRE)/axis_dma.v
 VERILOG_SOURCES += $(SHIRE)/VexRiscv.v
@@ -59,7 +60,6 @@ VERILOG_SOURCES += $(SHIRE)/corundum.v
 VERILOG_SOURCES += $(SHIRE)/axis_fifo_w_count.v
 VERILOG_SOURCES += $(SHIRE)/axis_stopper.v
 VERILOG_SOURCES += $(SHIRE)/axis_dropper.v
-
 
 VERILOG_SOURCES += $(AXIS_LIB)/arbiter.v
 VERILOG_SOURCES += $(AXIS_LIB)/priority_encoder.v

@@ -260,7 +260,7 @@ int main(int argc, char *argv[])
         if_tx_stalls_raw [k] = interface_stat_rd(dev, k, 1, 3);
         if_sched_drop_raw[k] = read_interface_drops(dev, k);
 
-        // When scheduler doesn't report drops
+        // When LB doesn't report drops
         if (if_sched_drop_raw[k]==0xFEFEFEFE) if_sched_drop_raw[k]=0;
     }
 
@@ -326,7 +326,7 @@ int main(int argc, char *argv[])
                 core_slots[k] = read_core_slots(dev, k);
 
                 if (extra_slot_count){
-                    printf("core %d has %ld slots in scheduler. ", k, core_slots[k]);
+                    printf("core %d has %ld slots in LB. ", k, core_slots[k]);
                 }
 
             }
@@ -363,7 +363,7 @@ int main(int argc, char *argv[])
                 if_tx_stalls_raw[k] = temp;
 
                 temp = read_interface_drops(dev, k);
-                // When scheduler doesn't drop reports
+                // When LB doesn't drop reports
                 if (temp==0xFEFEFEFE) temp=0;
                 if_sched_drop[k] += temp - if_sched_drop_raw[k];
                 if_sched_drop_raw[k] = temp;

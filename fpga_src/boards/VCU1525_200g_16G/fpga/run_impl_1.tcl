@@ -40,7 +40,7 @@ if {[llength [get_pr_configurations config_1]]==0} then {
   core_inst/rpus[13].rpu_PR_inst:RPU_base \
   core_inst/rpus[14].rpu_PR_inst:RPU_base \
   core_inst/rpus[15].rpu_PR_inst:RPU_base \
-  core_inst/scheduler_PR_inst:scheduler_RR]}
+  core_inst/lb_PR_inst:LB_RR]}
 
 set_property PR_CONFIGURATION config_1 [get_runs impl_1]
 set_property strategy Performance_ExtraTimingOpt [get_runs impl_1]

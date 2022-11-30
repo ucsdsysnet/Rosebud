@@ -69,7 +69,7 @@ create_pr_configuration -name Hash_RR_config -partitions [list \
   core_inst/rpus[13].rpu_PR_inst:RPU_Hash \
   core_inst/rpus[14].rpu_PR_inst:RPU_Hash \
   core_inst/rpus[15].rpu_PR_inst:RPU_Hash \
-  core_inst/scheduler_PR_inst:scheduler_RR]
+  core_inst/lb_PR_inst:LB_RR]
 
 if {[llength [get_runs "impl_Hash_RR"]]!=0} then {delete_run impl_Hash_RR}
 create_run impl_Hash_RR -parent_run impl_1 -flow {Vivado Implementation 2021} -pr_config Hash_RR_config

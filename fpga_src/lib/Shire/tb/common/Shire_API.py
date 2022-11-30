@@ -562,14 +562,14 @@ class TB(object):
                         await self.set_enable_interfaces(cur)
                 # Read the recovered slots again
                 slots = await self.read_core_slots(core)
-                # If all the slots were hung in scheduler proceed
+                # If all the slots were hung in LB, proceed
                 if ((slots+descs_released) == self.slot_count):
                     self.log.info("Assert reset on core %d", core)
                     await self.core_wr_cmd(core, 0xF, 1)
                     await self.release_core_slots(1 << core)
                 # If still missing slots, warn of stuck packet in a core
                 else:
-                    self.log.info("Assert reset on core %d which still has %d slot(s). (scheduler slots: %d, int slots:%d)",
+                    self.log.info("Assert reset on core %d which still has %d slot(s). (LB slots: %d, int slots:%d)",
                                   core, self.slot_count-(slots+descs_released), slots, descs_released)
                     await self.core_wr_cmd(core, 0xF, 1)
                     await Timer(100, 'ns')  # WAIT for on the fly slots in case

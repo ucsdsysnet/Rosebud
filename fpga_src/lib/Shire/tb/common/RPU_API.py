@@ -144,7 +144,7 @@ class TB(object):
         await RisingEdge(self.dut.clk)
         self.dut.rst.setimmediatevalue(0)
 
-        cocotb.fork(self.scheduler())
+        cocotb.fork(self.load_balancer())
 
     def set_flow_hash(self):
       self.FLOW_HASH = True
@@ -230,7 +230,7 @@ class TB(object):
             self.recv_q.append(frame)
             self.recvd_pkts[frame.tdest] += 1
 
-    async def scheduler(self):
+    async def load_balancer(self):
         cocotb.fork(self.send_manager())
         cocotb.fork(self.recv_manager())
         while True:
@@ -252,6 +252,6 @@ class TB(object):
                 frame.tdata[0] = (1 << 32) | (self.loopback_port << 24) | (msg_slot << 16) | (msg_dst << self.tag_width)
                 await self.ctrl_ch_source.send(frame)
             elif (msg_type == 3):
-                self.log.debug("Initialize scheduler with %d slots", msg_slot)
+                self.log.debug("Initialize LB with %d slots", msg_slot)
                 self.slots = list(range(1, msg_slot+1))
                 self.slots.sort(reverse=True)

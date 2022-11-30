@@ -27,7 +27,7 @@ report_utilization -force -hierarchical -hierarchical_percentage -file fpga_util
 foreach RPU [get_pblocks -regexp {RPU_([1-8])}] {
     report_utilization -force -pblocks $RPU -file fpga_utilization_${RPU}_raw.rpt
 }
-report_utilization -force -pblocks [get_pblocks User_Scheduler] -file fpga_utilization_scheduler_raw.rpt
+report_utilization -force -pblocks [get_pblocks User_LB] -file fpga_utilization_lb_raw.rpt
 
 write_bitstream -no_partial_bitfile -force fpga.runs/impl_1/fpga.bit
 exit

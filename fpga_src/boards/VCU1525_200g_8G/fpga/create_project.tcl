@@ -4,16 +4,18 @@ add_files -fileset sources_1 -norecurse {
   ../rtl/fpga.v
   ../rtl/fpga_core.v
   ../rtl/rpu_PR.v
-  ../rtl/Hash_Dropping_scheduler_PR.v
+  ../rtl/lb_hash_dropping_PR.v
   ../rtl/pcie_config.v
   ../rtl/debounce_switch.v
   ../rtl/sync_signal.v
+
   ../lib/Shire/rtl/riscvcore.v
   ../lib/Shire/rtl/rpu.v
   ../lib/Shire/rtl/accel_wrap.v
   ../lib/Shire/rtl/VexRiscv.v
   ../lib/Shire/rtl/core_mems.v
   ../lib/Shire/rtl/slot_keeper.v
+  ../lib/Shire/rtl/lb_controller.v
   ../lib/Shire/rtl/simple_fifo.v
   ../lib/Shire/rtl/simple_arbiter.v
   ../lib/Shire/rtl/axis_dma.v

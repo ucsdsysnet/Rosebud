@@ -151,7 +151,7 @@ async def run_test_RPU(dut):
         await RisingEdge(dut.clk)
 
     await Timer(WAIT_TIME, 'ns')
-    tb.log.debug("%d slots in scheduler, %d packets sent, %d packets received.", len(tb.slots), sum(tb.sent_pkts), sum(tb.recvd_pkts))
+    tb.log.debug("%d slots in LB, %d packets sent, %d packets received.", len(tb.slots), sum(tb.sent_pkts), sum(tb.recvd_pkts))
     tb.log.debug("packets sent per port:     "+str(tb.sent_pkts));
     tb.log.debug("packets received per port: "+str(tb.recvd_pkts));
 

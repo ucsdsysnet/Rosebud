@@ -593,24 +593,24 @@ resize_pblock [get_pblocks SLR0_edge] -add {LAGUNA_X0Y120:LAGUNA_X23Y239}
 set_property EXCLUDE_PLACEMENT 1 [get_pblocks SLR0_edge]
 set_property IS_SOFT FALSE [get_pblocks SLR0_edge]
 
-# Scheduler PBlock, PR
-create_pblock User_Scheduler
-add_cells_to_pblock [get_pblocks User_Scheduler] [get_cells -quiet [list core_inst/scheduler_PR_inst]]
-resize_pblock [get_pblocks User_Scheduler] -add {SLICE_X0Y360:SLICE_X54Y539}
-resize_pblock [get_pblocks User_Scheduler] -add {CMACE4_X0Y4:CMACE4_X0Y4}
-resize_pblock [get_pblocks User_Scheduler] -add {DSP48E2_X0Y144:DSP48E2_X7Y215}
-resize_pblock [get_pblocks User_Scheduler] -add {GTYE4_CHANNEL_X0Y24:GTYE4_CHANNEL_X0Y35}
-resize_pblock [get_pblocks User_Scheduler] -add {GTYE4_COMMON_X0Y6:GTYE4_COMMON_X0Y8}
-resize_pblock [get_pblocks User_Scheduler] -add {ILKNE4_X0Y3:ILKNE4_X0Y3}
-resize_pblock [get_pblocks User_Scheduler] -add {PCIE40E4_X0Y3:PCIE40E4_X0Y3}
-resize_pblock [get_pblocks User_Scheduler] -add {RAMB18_X0Y144:RAMB18_X3Y215}
-resize_pblock [get_pblocks User_Scheduler] -add {RAMB36_X0Y72:RAMB36_X3Y107}
-resize_pblock [get_pblocks User_Scheduler] -add {URAM288_X0Y96:URAM288_X0Y143}
-set_property HD.PARTPIN_RANGE {SLICE_X50Y360:SLICE_X54Y529} [get_pins [list core_inst/scheduler_PR_inst/data_s* core_inst/scheduler_PR_inst/rst core_inst/scheduler_PR_inst/ctrl* core_inst/scheduler_PR_inst/host_cmd*]]
-set_property HD.PARTPIN_RANGE {SLICE_X0Y530:SLICE_X54Y539} [get_pins [list core_inst/scheduler_PR_inst/rx_axis* core_inst/scheduler_PR_inst/tx_axis*]]
-set_property HD.PARTPIN_RANGE {SLICE_X0Y360:SLICE_X49Y364} [get_pins core_inst/scheduler_PR_inst/data_m*]
-set_property SNAPPING_MODE ON [get_pblocks User_Scheduler]
-set_property IS_SOFT FALSE [get_pblocks User_Scheduler]
+# Load balancer PBlock, PR
+create_pblock User_LB
+add_cells_to_pblock [get_pblocks User_LB] [get_cells -quiet [list core_inst/lb_PR_inst]]
+resize_pblock [get_pblocks User_LB] -add {SLICE_X0Y360:SLICE_X54Y539}
+resize_pblock [get_pblocks User_LB] -add {CMACE4_X0Y4:CMACE4_X0Y4}
+resize_pblock [get_pblocks User_LB] -add {DSP48E2_X0Y144:DSP48E2_X7Y215}
+resize_pblock [get_pblocks User_LB] -add {GTYE4_CHANNEL_X0Y24:GTYE4_CHANNEL_X0Y35}
+resize_pblock [get_pblocks User_LB] -add {GTYE4_COMMON_X0Y6:GTYE4_COMMON_X0Y8}
+resize_pblock [get_pblocks User_LB] -add {ILKNE4_X0Y3:ILKNE4_X0Y3}
+resize_pblock [get_pblocks User_LB] -add {PCIE40E4_X0Y3:PCIE40E4_X0Y3}
+resize_pblock [get_pblocks User_LB] -add {RAMB18_X0Y144:RAMB18_X3Y215}
+resize_pblock [get_pblocks User_LB] -add {RAMB36_X0Y72:RAMB36_X3Y107}
+resize_pblock [get_pblocks User_LB] -add {URAM288_X0Y96:URAM288_X0Y143}
+set_property HD.PARTPIN_RANGE {SLICE_X50Y360:SLICE_X54Y529} [get_pins [list core_inst/lb_PR_inst/data_s* core_inst/lb_PR_inst/rst core_inst/lb_PR_inst/ctrl* core_inst/lb_PR_inst/host_cmd*]]
+set_property HD.PARTPIN_RANGE {SLICE_X0Y530:SLICE_X54Y539} [get_pins [list core_inst/lb_PR_inst/rx_axis* core_inst/lb_PR_inst/tx_axis*]]
+set_property HD.PARTPIN_RANGE {SLICE_X0Y360:SLICE_X49Y364} [get_pins core_inst/lb_PR_inst/data_m*]
+set_property SNAPPING_MODE ON [get_pblocks User_LB]
+set_property IS_SOFT FALSE [get_pblocks User_LB]
 
 # PCIe IP and PCIe DMA modules
 create_pblock PCIe_pblock

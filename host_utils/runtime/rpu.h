@@ -79,7 +79,7 @@ uint32_t read_enable_interfaces(struct mqnic *dev);
 uint32_t read_rx_fifo_lines(struct mqnic *dev, uint32_t interface);
 uint32_t interface_stat_rd (struct mqnic *dev, uint32_t interface, uint32_t direction, uint32_t reg);
 
-// Between the host and the scheduler
+// Between the host and the LB
 void     set_enable_cores  (struct mqnic *dev, uint32_t onehot);
 uint32_t read_enable_cores (struct mqnic *dev);
 void     set_receive_cores (struct mqnic *dev, uint32_t onehot);
@@ -94,8 +94,8 @@ void release_interface_desc(struct mqnic *dev, uint32_t onehot);
 
 void set_interface_rx_threshold(struct mqnic *dev, uint32_t limit);
 
-// Scheduler status and evict and reset functions
-void print_scheduler_status(struct mqnic *dev);
+// Load balancer status and evict and reset functions
+void print_lb_status(struct mqnic *dev);
 void evict_core(struct mqnic *dev, uint32_t core);
 void reset_all_cores(struct mqnic *dev, int evict);
 void reset_single_core(struct mqnic *dev, uint32_t core, uint32_t num_slots, int evict);

@@ -958,7 +958,7 @@ reg [RX_LINES_WIDTH-1:0] rx_line_muxed;
 always @ (posedge sys_clk)
   rx_line_muxed <= rx_line_count_r[interface_sel*RX_LINES_WIDTH +: RX_LINES_WIDTH];
 
-// Host command read from stat readers and mux with scheduler read
+// Host command read from stat readers and mux with LB read
 wire [31:0] interface_in_stat_data;
 wire [31:0] interface_out_stat_data;
 wire [31:0] host_rd_sched_data;
@@ -1248,7 +1248,7 @@ loopback_msg_fifo # (
 );
 
 
-// Scheduler
+// Load Balancer
 wire [SCHED_PORT_COUNT*LVL1_DATA_WIDTH-1:0] sched_tx_axis_tdata;
 wire [SCHED_PORT_COUNT*LVL1_STRB_WIDTH-1:0] sched_tx_axis_tkeep;
 wire [SCHED_PORT_COUNT*ID_TAG_WIDTH-1:0]    sched_tx_axis_tuser;
@@ -1279,7 +1279,7 @@ wire                  sched_ctrl_s_axis_tvalid;
 wire                  sched_ctrl_s_axis_tready;
 wire [CORE_WIDTH-1:0] sched_ctrl_s_axis_tuser;
 
-scheduler_PR scheduler_PR_inst (
+lb_PR lb_PR_inst (
   .clk(sys_clk),
   .rst(sys_rst_r),
 
@@ -1332,7 +1332,7 @@ scheduler_PR scheduler_PR_inst (
   .host_cmd_valid   (host_cmd_valid_r)
 );
 
-// MUX between host commands and scheduler requests
+// MUX between host commands and LB requests
 assign sched_ctrl_m_axis_tvalid   =   host_to_cores_wr_r  || sched_ctrl_m_axis_tvalid_n;
 assign sched_ctrl_m_axis_tready_n = (!host_to_cores_wr_r) && sched_ctrl_m_axis_tready;
 

@@ -336,7 +336,7 @@ int main(int argc, char *argv[])
             printf("core %d status: %08x\n", k, core_rd_cmd(dev, k, 8));
         }
 
-        printf("Enabling cores in scheduler...\n");
+        printf("Enabling cores in LB...\n");
         printf("Core enable mask: 0x%08x\n", core_enable);
         set_enable_cores(dev, core_enable);
         unsigned int temp = read_enable_cores(dev);
@@ -348,7 +348,7 @@ int main(int argc, char *argv[])
 
         printf("Enabling interfaces ...\n");
 
-        // Disable in scheduler early drops
+        // Disable in LB early drops
         set_interface_rx_threshold(dev, RX_FIFO_LINES+1);
         set_enable_interfaces(dev, (1<<MAX_ETH_IF_COUNT)-1);
 

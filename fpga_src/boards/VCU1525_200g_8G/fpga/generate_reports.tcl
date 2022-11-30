@@ -25,5 +25,5 @@ report_utilization -force -hierarchical -hierarchical_percentage -file fpga_util
 foreach RPU [get_pblocks -regexp {RPU_([1-8])}] {
     report_utilization -force -pblocks $RPU -file fpga_utilization_${RPU}_PIG_HASH.rpt
 }
-report_utilization -force -pblocks [get_pblocks User_Scheduler] -file fpga_utilization_scheduler_PIG_HASH.rpt
+report_utilization -force -pblocks [get_pblocks User_LB] -file fpga_utilization_LB_PIG_HASH.rpt
 exit

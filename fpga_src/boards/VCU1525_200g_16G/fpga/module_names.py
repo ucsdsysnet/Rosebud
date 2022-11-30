@@ -97,7 +97,7 @@ RPUs = [
 "     rpus\[14\]\.rpu_PR_inst",
 "     rpus\[15\]\.rpu_PR_inst"]
 
-Scheduler_module = ["     scheduler"]
+LB_module = ["     lb_PR_inst"]
 
 
 mem_modules = ["         memories"]

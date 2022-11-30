@@ -4,7 +4,7 @@ add_files -fileset sources_1 -norecurse {
   ../rtl/fpga.v
   ../rtl/fpga_core.v
   ../rtl/rpu_PR.v
-  ../rtl/RR_LU_scheduler_PR.v
+  ../rtl/lb_rr_lu_PR.v
   ../rtl/pcie_config.v
   ../rtl/debounce_switch.v
   ../rtl/sync_signal.v
@@ -15,6 +15,7 @@ add_files -fileset sources_1 -norecurse {
   ../lib/Shire/rtl/VexRiscv.v
   ../lib/Shire/rtl/core_mems.v
   ../lib/Shire/rtl/slot_keeper.v
+  ../lib/Shire/rtl/lb_controller.v
   ../lib/Shire/rtl/max_finder_tree.v
   ../lib/Shire/rtl/simple_fifo.v
   ../lib/Shire/rtl/simple_arbiter.v
