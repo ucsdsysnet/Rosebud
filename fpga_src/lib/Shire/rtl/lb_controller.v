@@ -37,8 +37,7 @@ module lb_controller  # (
   parameter CORE_ID_WIDTH   = $clog2(CORE_COUNT),
   parameter SLOT_WIDTH      = $clog2(SLOT_COUNT+1),
   parameter TAG_WIDTH       = (SLOT_WIDTH>5)? SLOT_WIDTH:5,
-  parameter ID_TAG_WIDTH    = CORE_ID_WIDTH+TAG_WIDTH,
-  parameter CTRL_REG_TYPE   = 2
+  parameter ID_TAG_WIDTH    = CORE_ID_WIDTH+TAG_WIDTH
 ) (
   input  wire                             clk,
   input  wire                             rst,
@@ -69,89 +68,12 @@ module lb_controller  # (
   output wire [ID_TAG_WIDTH-1:0]          rx_desc_data
 );
 
-  /// *** CTRL PATH REGISTERS FOR BETTER TIMING *** ///
-  wire [CTRL_WIDTH-1:0]             ctrl_s_axis_tdata_r;
-  wire                              ctrl_s_axis_tvalid_r;
-  wire                              ctrl_s_axis_tready_r;
-  wire [CORE_ID_WIDTH-1:0]          ctrl_s_axis_tuser_r;
-
-  wire [CTRL_WIDTH-1:0]             ctrl_m_axis_tdata_n;
-  wire                              ctrl_m_axis_tvalid_n;
-  wire                              ctrl_m_axis_tready_n;
-  wire [CORE_ID_WIDTH-1:0]          ctrl_m_axis_tdest_n;
-
-  axis_register # (
-    .DATA_WIDTH(CTRL_WIDTH),
-    .KEEP_ENABLE(0),
-    .KEEP_WIDTH(1),
-    .LAST_ENABLE(0),
-    .ID_ENABLE(0),
-    .DEST_ENABLE(0),
-    .USER_ENABLE(1),
-    .USER_WIDTH(CORE_ID_WIDTH),
-    .REG_TYPE(CTRL_REG_TYPE)
-  ) ctrl_s_reg_inst (
-    .clk(clk),
-    .rst(rst),
-    // AXI input
-    .s_axis_tdata (ctrl_s_axis_tdata),
-    .s_axis_tkeep (1'b1),
-    .s_axis_tvalid(ctrl_s_axis_tvalid),
-    .s_axis_tready(ctrl_s_axis_tready),
-    .s_axis_tlast (1'b1),
-    .s_axis_tid   (8'd0),
-    .s_axis_tdest (8'd0),
-    .s_axis_tuser (ctrl_s_axis_tuser),
-    // AXI output
-    .m_axis_tdata (ctrl_s_axis_tdata_r),
-    .m_axis_tkeep (),
-    .m_axis_tvalid(ctrl_s_axis_tvalid_r),
-    .m_axis_tready(ctrl_s_axis_tready_r),
-    .m_axis_tlast (),
-    .m_axis_tid   (),
-    .m_axis_tdest (),
-    .m_axis_tuser (ctrl_s_axis_tuser_r)
-  );
-
-  axis_register # (
-    .DATA_WIDTH(CTRL_WIDTH),
-    .KEEP_ENABLE(0),
-    .KEEP_WIDTH(1),
-    .LAST_ENABLE(0),
-    .ID_ENABLE(0),
-    .DEST_ENABLE(1),
-    .DEST_WIDTH(CORE_ID_WIDTH),
-    .USER_ENABLE(0),
-    .REG_TYPE(CTRL_REG_TYPE)
-  ) ctrl_m_reg_inst (
-    .clk(clk),
-    .rst(rst),
-    // AXI input
-    .s_axis_tdata (ctrl_m_axis_tdata_n),
-    .s_axis_tkeep (1'b1),
-    .s_axis_tvalid(ctrl_m_axis_tvalid_n),
-    .s_axis_tready(ctrl_m_axis_tready_n),
-    .s_axis_tlast (1'b1),
-    .s_axis_tid   (8'd0),
-    .s_axis_tdest (ctrl_m_axis_tdest_n),
-    .s_axis_tuser (1'b0),
-    // AXI output
-    .m_axis_tdata (ctrl_m_axis_tdata),
-    .m_axis_tkeep (),
-    .m_axis_tvalid(ctrl_m_axis_tvalid),
-    .m_axis_tready(ctrl_m_axis_tready),
-    .m_axis_tlast (),
-    .m_axis_tid   (),
-    .m_axis_tdest (ctrl_m_axis_tdest),
-    .m_axis_tuser ()
-  );
-
   // Separate incoming ctrl messages
   parameter MSG_TYPE_WIDTH = 4;
   parameter DESC_WIDTH     = CTRL_WIDTH-MSG_TYPE_WIDTH;
 
   wire [MSG_TYPE_WIDTH-1:0] msg_type =
-                ctrl_s_axis_tdata_r[CTRL_WIDTH-1:CTRL_WIDTH-MSG_TYPE_WIDTH];
+                ctrl_s_axis_tdata[CTRL_WIDTH-1:CTRL_WIDTH-MSG_TYPE_WIDTH];
 
   wire [MSG_TYPE_WIDTH-1:0] send_out_msg = {(MSG_TYPE_WIDTH){1'b0}};
   wire [MSG_TYPE_WIDTH-1:0] loopback_msg = {{(MSG_TYPE_WIDTH-1){1'b0}},1'b1};
@@ -175,8 +97,8 @@ module lb_controller  # (
     .rst(rst),
     .clear(1'b0),
 
-    .din_valid(ctrl_s_axis_tvalid_r && (msg_type==1)),
-    .din({ctrl_s_axis_tuser_r,ctrl_s_axis_tdata_r[DESC_WIDTH-1:0]}),
+    .din_valid(ctrl_s_axis_tvalid && (msg_type==1)),
+    .din({ctrl_s_axis_tuser,ctrl_s_axis_tdata[DESC_WIDTH-1:0]}),
     .din_ready(pkt_done_ready),
 
     .dout_valid(pkt_done_valid),
@@ -191,7 +113,7 @@ module lb_controller  # (
   genvar m;
   generate
     for (m=0;m<CORE_COUNT;m=m+1) begin
-      wire [CORE_ID_WIDTH-1:0] dest_core = ctrl_s_axis_tdata_r[24+:CORE_ID_WIDTH];
+      wire [CORE_ID_WIDTH-1:0] dest_core = ctrl_s_axis_tdata[24+:CORE_ID_WIDTH];
       simple_fifo # (
         .ADDR_WIDTH($clog2(SLOT_COUNT)),
         .DATA_WIDTH(CORE_ID_WIDTH+DESC_WIDTH)
@@ -200,8 +122,8 @@ module lb_controller  # (
         .rst(rst),
         .clear(1'b0),
 
-        .din_valid(ctrl_s_axis_tvalid_r && (msg_type==2) && (dest_core==m)),
-        .din({ctrl_s_axis_tuser_r, ctrl_s_axis_tdata_r[DESC_WIDTH-1:0]}),
+        .din_valid(ctrl_s_axis_tvalid && (msg_type==2) && (dest_core==m)),
+        .din({ctrl_s_axis_tuser, ctrl_s_axis_tdata[DESC_WIDTH-1:0]}),
         .din_ready(pkt_to_core_ready[m]),
 
         .dout_valid(pkt_to_core_valid[m]),
@@ -254,9 +176,9 @@ module lb_controller  # (
     .m_axis_tuser(selected_pkt_to_core_dest_slot)
   );
 
-  assign ctrl_s_axis_tready_r = ((msg_type==0)   ||   (msg_type==3)) ||
-                                (pkt_done_ready    && (msg_type==1)) ||
-                                (pkt_to_core_ready && (msg_type==2)) ;
+  assign ctrl_s_axis_tready = ((msg_type==0)   ||   (msg_type==3)) ||
+                              (pkt_done_ready    && (msg_type==1)) ||
+                              (pkt_to_core_ready && (msg_type==2)) ;
 
   // Slot descriptor fifos, addressing msg type 0&3 requests
   wire [CORE_COUNT-1:0]            next_slot_pop;
@@ -266,7 +188,7 @@ module lb_controller  # (
   reg  [SLOT_WIDTH-1:0] input_slot;
 
   always @ (posedge clk)
-    input_slot <= ctrl_s_axis_tdata_r[16 +: SLOT_WIDTH];
+    input_slot <= ctrl_s_axis_tdata[16 +: SLOT_WIDTH];
 
   wire [CORE_COUNT-1:0] core_slot_err;
   reg  slot_insert_err;
@@ -289,8 +211,8 @@ module lb_controller  # (
           enq_slot_v[i]  <= 1'b0;
           init_slot_v[i] <= 1'b0;
         end else begin
-          enq_slot_v[i]  <= ctrl_s_axis_tvalid_r && (msg_type==0) && (ctrl_s_axis_tuser_r==i);
-          init_slot_v[i] <= ctrl_s_axis_tvalid_r && (msg_type==3) && (ctrl_s_axis_tuser_r==i);
+          enq_slot_v[i]  <= ctrl_s_axis_tvalid && (msg_type==0) && (ctrl_s_axis_tuser==i);
+          init_slot_v[i] <= ctrl_s_axis_tvalid && (msg_type==3) && (ctrl_s_axis_tuser==i);
         end
 
       slot_keeper # (
@@ -419,10 +341,10 @@ module lb_controller  # (
 
   assign ctrl_out_ready = (!ctrl_out_valid_r) || ctrl_out_ready_r;
 
-  assign ctrl_m_axis_tdata_n  = ctrl_out_desc_r;
-  assign ctrl_m_axis_tvalid_n = ctrl_out_valid_r;
-  assign ctrl_m_axis_tdest_n  = ctrl_out_dest_r;
-  assign ctrl_out_ready_r     = ctrl_m_axis_tready_n;
+  assign ctrl_m_axis_tdata  = ctrl_out_desc_r;
+  assign ctrl_m_axis_tvalid = ctrl_out_valid_r;
+  assign ctrl_m_axis_tdest  = ctrl_out_dest_r;
+  assign ctrl_out_ready_r   = ctrl_m_axis_tready;
 
 endmodule
 

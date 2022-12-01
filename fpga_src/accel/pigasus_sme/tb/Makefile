@@ -15,6 +15,7 @@ MODULE = test_SME
 TOPLEVEL = $(MODULE)
 
 # COMPILE_ARGS += -P $(TOPLEVEL).MSK_BYTES=2
+COMPILE_ARGS  += -I $(RTL_DIR)
 
 VERILOG_SOURCES  = ./$(MODULE).v
 
@@ -47,7 +48,6 @@ VERILOG_SOURCES += $(RTL_DIR)/rule_depacker_128_64.sv
 VERILOG_SOURCES += $(RTL_DIR)/rule_depacker_64_32.sv
 VERILOG_SOURCES += $(RTL_DIR)/SME_wrapper.sv
 
-COMPILE_ARGS  += -I ./struct_s.sv
 PLUSARGS+=-fst 
 INC_DIR=$(ICARUS_INC_DIR)
 

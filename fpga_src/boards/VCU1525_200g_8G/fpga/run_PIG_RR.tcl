@@ -65,13 +65,14 @@ add_files -norecurse {
   ../accel/pigasus_sme/rtl/unified_pkt_fifo.sv
   ../accel/pigasus_sme/rtl/rule_depacker_64_32.sv
   ../accel/pigasus_sme/rtl/rule_depacker_128_64.sv
-  ../accel/pigasus_sme/rtl/struct_s.sv
   ../accel/pigasus_sme/rtl/SME_wrapper.sv
   ../accel/pigasus_sme/rtl/accel_wrap_pigasus.v
   ../accel/pigasus_sme/rtl/ip_match.v
   ../rtl/rpu_PR_pig.v
   ../lib/Shire/syn/vivado/simple_sync_sig.tcl
 } -of_objects [get_reconfig_modules RPU_PIG]
+
+set_property include_dirs  "../accel/pigasus_sme/rtl/" [current_fileset]
 
 if {[llength [get_pr_configurations PIG_RR_config]]!=0} then {
   delete_pr_configurations PIG_RR_config}

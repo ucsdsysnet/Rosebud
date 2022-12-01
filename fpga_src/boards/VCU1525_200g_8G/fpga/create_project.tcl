@@ -88,6 +88,8 @@ add_files -fileset sources_1 -norecurse {
   ../lib/corundum/rtl/event_mux.v
 }
 
+set_property include_dirs  "../lib/Shire/rtl" [current_fileset]
+
 add_files -fileset constrs_1 {
 	../fpga.xdc
 	../lib/axis/syn/vivado/axis_async_fifo.tcl

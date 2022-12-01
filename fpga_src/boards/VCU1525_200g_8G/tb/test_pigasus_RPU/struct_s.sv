@@ -1,1 +1,0 @@
-../../accel/pigasus_sme/rtl/struct_s.sv

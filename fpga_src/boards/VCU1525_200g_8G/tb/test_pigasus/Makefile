@@ -11,9 +11,6 @@ DUT=fpga_core
 MODULE=test_$(DUT)
 TOPLEVEL=$(MODULE)
 
-COMPILE_ARGS += -P $(TOPLEVEL).TB_LOG=0
-COMPILE_ARGS += -P $(TOPLEVEL).INIT_ROMS=1
-
 RTL_DIR = $(CWD)/../../rtl
 ACC_DIR = $(CWD)/../../accel/pigasus_sme/rtl
 SHIRE = $(CWD)/../../lib/Shire/rtl
@@ -21,6 +18,11 @@ AXIS_LIB = $(CWD)/../../lib/axis/rtl
 AXI_LIB = $(CWD)/../../lib/axi/rtl
 PCIE_LIB = $(CWD)/../../lib/pcie/rtl
 CORUNDUM_LIB = $(CWD)/../../lib/corundum/rtl
+
+COMPILE_ARGS += -P $(TOPLEVEL).TB_LOG=0
+COMPILE_ARGS += -P $(TOPLEVEL).INIT_ROMS=1
+COMPILE_ARGS += -I $(SHIRE)
+COMPILE_ARGS += -I $(ACC_DIR)
 
 VERILOG_SOURCES  = $(CWD)/../$(TOPLEVEL).v
 
@@ -86,7 +88,6 @@ VERILOG_SOURCES += $(ACC_DIR)/unified_fifo.sv
 VERILOG_SOURCES += $(ACC_DIR)/unified_pkt_fifo.sv
 VERILOG_SOURCES += $(ACC_DIR)/rule_depacker_128_64.sv
 VERILOG_SOURCES += $(ACC_DIR)/rule_depacker_64_32.sv
-VERILOG_SOURCES += $(ACC_DIR)/struct_s.sv
 VERILOG_SOURCES += $(ACC_DIR)/SME_wrapper.sv
 VERILOG_SOURCES += $(ACC_DIR)/accel_wrap_pigasus.v
 VERILOG_SOURCES += $(ACC_DIR)/ip_match.v
@@ -140,7 +141,6 @@ VERILOG_SOURCES += $(CORUNDUM_LIB)/tx_scheduler_rr.v
 VERILOG_SOURCES += $(CORUNDUM_LIB)/tdma_scheduler.v
 VERILOG_SOURCES += $(CORUNDUM_LIB)/event_mux.v
 
-COMPILE_ARGS += -I $(ACC_DIR)/struct_s.sv
 PLUSARGS+=-fst
 INC_DIR=$(ICARUS_INC_DIR)
 

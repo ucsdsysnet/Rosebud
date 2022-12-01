@@ -11,14 +11,15 @@ DUT=fpga_core
 MODULE=test_$(DUT)
 TOPLEVEL=$(MODULE)
 
-COMPILE_ARGS += -P $(TOPLEVEL).TB_LOG=0
-
 RTL_DIR = $(CWD)/../../rtl
 SHIRE = $(CWD)/../../lib/Shire/rtl
 AXIS_LIB = $(CWD)/../../lib/axis/rtl
 AXI_LIB = $(CWD)/../../lib/axi/rtl
 PCIE_LIB = $(CWD)/../../lib/pcie/rtl
 CORUNDUM_LIB = $(CWD)/../../lib/corundum/rtl
+
+COMPILE_ARGS += -P $(TOPLEVEL).TB_LOG=0
+COMPILE_ARGS += -I $(SHIRE)
 
 VERILOG_SOURCES  = $(CWD)/../$(TOPLEVEL).v
 

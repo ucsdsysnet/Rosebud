@@ -10,13 +10,15 @@ DUT=rpu
 MODULE=test_$(DUT)
 TOPLEVEL=$(MODULE)
 
-COMPILE_ARGS += -P $(TOPLEVEL).SLOT_COUNT=32
-COMPILE_ARGS += -P $(TOPLEVEL).INIT_ROMS=1
-
 RTL_DIR = $(CWD)/../../rtl
 ACC_DIR = $(CWD)/../../accel/pigasus_sme/rtl
 SHIRE = $(CWD)/../../lib/Shire/rtl
 AXIS_LIB = $(CWD)/../../lib/axis/rtl
+
+COMPILE_ARGS += -P $(TOPLEVEL).SLOT_COUNT=32
+COMPILE_ARGS += -P $(TOPLEVEL).INIT_ROMS=1
+COMPILE_ARGS += -I $(SHIRE)
+COMPILE_ARGS += -I $(ACC_DIR)
 
 VERILOG_SOURCES  = $(SHIRE)/../tb/common/test_rpu.v
 VERILOG_SOURCES += $(RTL_DIR)/rpu_PR_pig.v
@@ -59,7 +61,6 @@ VERILOG_SOURCES += $(ACC_DIR)/unified_fifo.sv
 VERILOG_SOURCES += $(ACC_DIR)/unified_pkt_fifo.sv
 VERILOG_SOURCES += $(ACC_DIR)/rule_depacker_128_64.sv
 VERILOG_SOURCES += $(ACC_DIR)/rule_depacker_64_32.sv
-VERILOG_SOURCES += $(ACC_DIR)/struct_s.sv
 VERILOG_SOURCES += $(ACC_DIR)/SME_wrapper.sv
 VERILOG_SOURCES += $(ACC_DIR)/accel_wrap_pigasus.v
 VERILOG_SOURCES += $(ACC_DIR)/ip_match.v
@@ -71,7 +72,6 @@ VERILOG_SOURCES += $(AXIS_LIB)/sync_reset.v
 VERILOG_SOURCES += $(AXIS_LIB)/axis_register.v
 VERILOG_SOURCES += $(AXIS_LIB)/axis_pipeline_register.v
 
-COMPILE_ARGS  += -I $(ACC_DIR)/struct_s.sv
 PLUSARGS+=-fst
 INC_DIR=$(ICARUS_INC_DIR)
 

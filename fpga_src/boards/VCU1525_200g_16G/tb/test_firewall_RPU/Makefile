@@ -10,13 +10,14 @@ DUT=rpu
 MODULE=test_$(DUT)
 TOPLEVEL=$(MODULE)
 
-COMPILE_ARGS += -P $(TOPLEVEL).SLOT_COUNT=16
-COMPILE_ARGS += -P $(TOPLEVEL).INIT_ROMS=1
-
 RTL_DIR = $(CWD)/../../rtl
 ACC_DIR = $(CWD)/../../accel/ip_matcher/rtl
 SHIRE = $(CWD)/../../lib/Shire/rtl
 AXIS_LIB = $(CWD)/../../lib/axis/rtl
+
+COMPILE_ARGS += -P $(TOPLEVEL).SLOT_COUNT=16
+COMPILE_ARGS += -P $(TOPLEVEL).INIT_ROMS=1
+COMPILE_ARGS += -I $(SHIRE)
 
 VERILOG_SOURCES  = $(SHIRE)/../tb/common/test_rpu.v
 VERILOG_SOURCES += $(RTL_DIR)/rpu_PR_fw.v

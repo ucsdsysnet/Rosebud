@@ -88,35 +88,26 @@ module lb_PR (
   parameter CTRL_WIDTH      = 32+4;
   parameter LOOPBACK_PORT   = 3;
   parameter LOOPBACK_COUNT  = 1;
-  parameter DATA_REG_TYPE   = 2;
-  parameter CTRL_REG_TYPE   = 2;
   parameter CLUSTER_COUNT   = 4;
   parameter RX_LINES_WIDTH  = 13;
+
+  parameter DATA_S_RLEN     = 1;
+  parameter DATA_M_RLEN     = 2;
+  parameter RX_RLEN         = 2;
+  parameter TX_RLEN         = 1;
 
   parameter SLOT_WIDTH      = $clog2(SLOT_COUNT+1);
   parameter CORE_ID_WIDTH   = $clog2(CORE_COUNT);
   parameter INTERFACE_WIDTH = $clog2(IF_COUNT);
   parameter PORT_WIDTH      = $clog2(PORT_COUNT);
-  parameter TAG_WIDTH       = (SLOT_WIDTH>5)? SLOT_WIDTH:5;
+  parameter TAG_WIDTH       = (SLOT_WIDTH>5) ? SLOT_WIDTH : 5;
   parameter ID_TAG_WIDTH    = CORE_ID_WIDTH+TAG_WIDTH;
   parameter STRB_WIDTH      = DATA_WIDTH/8;
 
 
-  // Register inputs and outputs
-  wire [IF_COUNT*DATA_WIDTH-1:0]   data_m_axis_tdata_n;
-  wire [IF_COUNT*STRB_WIDTH-1:0]   data_m_axis_tkeep_n;
-  wire [IF_COUNT*ID_TAG_WIDTH-1:0] data_m_axis_tdest_n;
-  wire [IF_COUNT*PORT_WIDTH-1:0]   data_m_axis_tuser_n;
-  wire [IF_COUNT-1:0]              data_m_axis_tvalid_n;
-  wire [IF_COUNT-1:0]              data_m_axis_tready_n;
-  wire [IF_COUNT-1:0]              data_m_axis_tlast_n;
-
-  wire [IF_COUNT*DATA_WIDTH-1:0]   rx_axis_tdata_r;
-  wire [IF_COUNT*STRB_WIDTH-1:0]   rx_axis_tkeep_r;
-  wire [IF_COUNT-1:0]              rx_axis_tvalid_r;
-  wire [IF_COUNT-1:0]              rx_axis_tready_r;
-  wire [IF_COUNT-1:0]              rx_axis_tlast_r;
-
+  ///////////////////////////////////////////////////////////////////////////////
+  //////////////////////// Register input and outputs ///////////////////////////
+  ///////////////////////////////////////////////////////////////////////////////
   wire rst_r;
   sync_reset sync_rst_inst (
     .clk(clk),
@@ -124,118 +115,20 @@ module lb_PR (
     .out(rst_r)
   );
 
-  genvar q;
-  generate
-    for (q=0; q<IF_COUNT; q=q+1) begin: int_regs
+  // registers for crossing PR boundary
+  // _r for input signals after register, and _n for output signals before register
+  `include "lb_PR_regs.v"
 
-      /// *** INPUT AND OUTPUT DATA LINE REGISTERS FOR BETTER TIMING *** ///
+  // No action on TX side, just forwarding. Not using tuser from data_s either.
+  assign tx_axis_tdata_n      = data_s_axis_tdata_r;
+  assign tx_axis_tkeep_n      = data_s_axis_tkeep_r;
+  assign tx_axis_tvalid_n     = data_s_axis_tvalid_r;
+  assign tx_axis_tlast_n      = data_s_axis_tlast_r;
+  assign data_s_axis_tready_r = tx_axis_tready_n;
 
-      // A register before TX for better timing
-      axis_pipeline_register # (
-        .DATA_WIDTH(DATA_WIDTH),
-        .KEEP_ENABLE(1),
-        .KEEP_WIDTH(STRB_WIDTH),
-        .LAST_ENABLE(1),
-        .ID_ENABLE(0),
-        .DEST_ENABLE(0),
-        .USER_ENABLE(1),
-        .USER_WIDTH(ID_TAG_WIDTH),
-        .REG_TYPE(DATA_REG_TYPE),
-        .LENGTH(2)
-      ) data_s_reg_inst (
-        .clk(clk),
-        .rst(rst_r),
-        // AXI input
-        .s_axis_tdata (data_s_axis_tdata[q*DATA_WIDTH +: DATA_WIDTH]),
-        .s_axis_tkeep (data_s_axis_tkeep[q*STRB_WIDTH +: STRB_WIDTH]),
-        .s_axis_tvalid(data_s_axis_tvalid[q]),
-        .s_axis_tready(data_s_axis_tready[q]),
-        .s_axis_tlast (data_s_axis_tlast[q]),
-        .s_axis_tid   (8'd0),
-        .s_axis_tdest (8'd0),
-        .s_axis_tuser (data_s_axis_tuser[q*ID_TAG_WIDTH +: ID_TAG_WIDTH]),
-        // AXI output
-        .m_axis_tdata (tx_axis_tdata[q*DATA_WIDTH +: DATA_WIDTH]),
-        .m_axis_tkeep (tx_axis_tkeep[q*STRB_WIDTH +: STRB_WIDTH]),
-        .m_axis_tvalid(tx_axis_tvalid[q]),
-        .m_axis_tready(tx_axis_tready[q]),
-        .m_axis_tlast (tx_axis_tlast[q]),
-        .m_axis_tid   (),
-        .m_axis_tdest (),
-        .m_axis_tuser ()
-      );
-
-      axis_pipeline_register # (
-        .DATA_WIDTH(DATA_WIDTH),
-        .KEEP_ENABLE(1),
-        .KEEP_WIDTH(STRB_WIDTH),
-        .LAST_ENABLE(1),
-        .ID_ENABLE(0),
-        .DEST_ENABLE(1),
-        .DEST_WIDTH(ID_TAG_WIDTH),
-        .USER_ENABLE(1),
-        .USER_WIDTH(PORT_WIDTH),
-        .REG_TYPE(DATA_REG_TYPE),
-        .LENGTH(2)
-      ) data_m_reg_inst (
-        .clk(clk),
-        .rst(rst_r),
-        // AXI input
-        .s_axis_tdata (data_m_axis_tdata_n[q*DATA_WIDTH +: DATA_WIDTH]),
-        .s_axis_tkeep (data_m_axis_tkeep_n[q*STRB_WIDTH +: STRB_WIDTH]),
-        .s_axis_tvalid(data_m_axis_tvalid_n[q]),
-        .s_axis_tready(data_m_axis_tready_n[q]),
-        .s_axis_tlast (data_m_axis_tlast_n[q]),
-        .s_axis_tid   (8'd0),
-        .s_axis_tdest (data_m_axis_tdest_n[q*ID_TAG_WIDTH +: ID_TAG_WIDTH]),
-        .s_axis_tuser (data_m_axis_tuser_n[q*PORT_WIDTH +: PORT_WIDTH]),
-        // AXI output
-        .m_axis_tdata (data_m_axis_tdata[q*DATA_WIDTH +: DATA_WIDTH]),
-        .m_axis_tkeep (data_m_axis_tkeep[q*STRB_WIDTH +: STRB_WIDTH]),
-        .m_axis_tvalid(data_m_axis_tvalid[q]),
-        .m_axis_tready(data_m_axis_tready[q]),
-        .m_axis_tlast (data_m_axis_tlast[q]),
-        .m_axis_tid   (),
-        .m_axis_tdest (data_m_axis_tdest[q*ID_TAG_WIDTH +: ID_TAG_WIDTH]),
-        .m_axis_tuser (data_m_axis_tuser[q*PORT_WIDTH +: PORT_WIDTH])
-      );
-
-      axis_pipeline_register # (
-        .DATA_WIDTH(DATA_WIDTH),
-        .KEEP_ENABLE(1),
-        .KEEP_WIDTH(STRB_WIDTH),
-        .LAST_ENABLE(1),
-        .ID_ENABLE(0),
-        .DEST_ENABLE(0),
-        .USER_ENABLE(0),
-        .REG_TYPE(DATA_REG_TYPE),
-        .LENGTH(2)
-      ) rx_reg_inst (
-        .clk(clk),
-        .rst(rst_r),
-        // AXI input
-        .s_axis_tdata (rx_axis_tdata[q*DATA_WIDTH +: DATA_WIDTH]),
-        .s_axis_tkeep (rx_axis_tkeep[q*STRB_WIDTH +: STRB_WIDTH]),
-        .s_axis_tvalid(rx_axis_tvalid[q]),
-        .s_axis_tready(rx_axis_tready[q]),
-        .s_axis_tlast (rx_axis_tlast[q]),
-        .s_axis_tid   (8'd0),
-        .s_axis_tdest (8'd0),
-        .s_axis_tuser (1'b0),
-        // AXI output
-        .m_axis_tdata (rx_axis_tdata_r[q*DATA_WIDTH +: DATA_WIDTH]),
-        .m_axis_tkeep (rx_axis_tkeep_r[q*STRB_WIDTH +: STRB_WIDTH]),
-        .m_axis_tvalid(rx_axis_tvalid_r[q]),
-        .m_axis_tready(rx_axis_tready_r[q]),
-        .m_axis_tlast (rx_axis_tlast_r[q]),
-        .m_axis_tid   (),
-        .m_axis_tdest (),
-        .m_axis_tuser ()
-      );
-
-    end
-  endgenerate
-
+  ///////////////////////////////////////////////////////////////////////////////
+  ///////////////////////// Host command parsing ////////////////////////////////
+  ///////////////////////////////////////////////////////////////////////////////
   reg [31:0]                host_cmd_r;
   reg [31:0]                host_cmd_wr_data_r;
   reg                       host_to_sched_wr_r;
@@ -318,15 +211,39 @@ module lb_PR (
       rx_almost_full    <= {IF_COUNT{1'b0}};
   end
 
+  wire [CORE_COUNT*SLOT_WIDTH-1:0] slot_counts;
+  wire [CORE_COUNT-1:0]            slot_valids;
+  wire [CORE_COUNT-1:0]            slots_busy;
+
+  reg  [1:0] port_state [0:IF_COUNT-1];
+  reg  [IF_COUNT*ID_TAG_WIDTH-1:0] dest_r;
+  wire [IF_COUNT*32-1:0]  drop_count;
+
+  always @ (posedge clk)
+    case ({host_to_int_not_core, host_cmd_reg})
+      // CORES
+      5'h00:   host_cmd_rd_data_n <= enabled_cores;
+      5'h01:   host_cmd_rd_data_n <= income_cores;
+      5'h03:   host_cmd_rd_data_n <= slot_counts[stat_read_core_r * SLOT_WIDTH +: SLOT_WIDTH];
+      // INTS
+      5'h10:   host_cmd_rd_data_n <= {14'd0, port_state[stat_read_interface_r],
+                                  {(8-CORE_ID_WIDTH){1'b0}},
+                                  dest_r[(stat_read_interface_r * ID_TAG_WIDTH) + TAG_WIDTH +: CORE_ID_WIDTH],
+                                  {(8-TAG_WIDTH){1'b0}},
+                                  dest_r[stat_read_interface_r * ID_TAG_WIDTH +: TAG_WIDTH]};
+      5'h12:   host_cmd_rd_data_n <= drop_count[stat_read_interface_r*32 +: 32];
+      default: host_cmd_rd_data_n <= 32'hFEFEFEFE;
+    endcase
+
+  ///////////////////////////////////////////////////////////////////////////////
+  ///////////////////////// Load balancing policy ///////////////////////////////
+  ///////////////////////////////////////////////////////////////////////////////
+
   // Selecting the core with most available slots
   // Since slots start from 1, SLOT WIDTH is already 1 bit extra
   localparam CLUSTER_CORES      = CORE_COUNT/CLUSTER_COUNT;
   localparam CLUSTER_WIDTH      = $clog2(CLUSTER_COUNT);
   localparam CLUSTER_CORE_WIDTH = $clog2(CLUSTER_CORES);
-
-  wire [CORE_COUNT*SLOT_WIDTH-1:0] slot_counts;
-  wire [CORE_COUNT-1:0]            slot_valids;
-  wire [CORE_COUNT-1:0]            slots_busy;
 
   wire [CLUSTER_COUNT-1:0] cluster_max_valid;
   wire [CLUSTER_CORE_WIDTH-1:0] selected_cluster_core [0:CLUSTER_COUNT-1];
@@ -384,7 +301,6 @@ module lb_PR (
   wire [INTERFACE_WIDTH-1:0] selected_port_enc;
 
   reg  [IF_COUNT*ID_TAG_WIDTH-1:0] dest;
-  reg  [IF_COUNT*ID_TAG_WIDTH-1:0] dest_r;
   reg  [IF_COUNT*ID_TAG_WIDTH-1:0] dest_rr;
 
   assign rx_desc_pop                    = selected_port_v && max_valid;
@@ -393,7 +309,6 @@ module lb_PR (
   wire [IF_COUNT-1:0] sending_last_word = port_valid & rx_axis_tlast_r;
 
   // State machine per port
-  reg [1:0] port_state [0:IF_COUNT-1];
   localparam STALL = 2'b00; // Don't accept until getting a desc
   localparam FIRST = 2'b01; // Ready to get new packet
   localparam WAIT  = 2'b10; // Accept while waiting for new desc
@@ -476,27 +391,10 @@ module lb_PR (
 
   // Load the new desc
   wire [ID_TAG_WIDTH-1:0] rx_desc_data;
-  wire [IF_COUNT*32-1:0]  drop_count;
 
   always @ (posedge clk)
     if (rx_desc_pop)
       dest_r[selected_port_enc*ID_TAG_WIDTH +: ID_TAG_WIDTH] <= rx_desc_data;
-
-  always @ (posedge clk)
-    case ({host_to_int_not_core, host_cmd_reg})
-      // CORES
-      5'h00:   host_cmd_rd_data_n <= enabled_cores;
-      5'h01:   host_cmd_rd_data_n <= income_cores;
-      5'h03:   host_cmd_rd_data_n <= slot_counts[stat_read_core_r * SLOT_WIDTH +: SLOT_WIDTH];
-      // INTS
-      5'h10:   host_cmd_rd_data_n <= {14'd0, port_state[stat_read_interface_r],
-                                  {(8-CORE_ID_WIDTH){1'b0}},
-                                  dest_r[(stat_read_interface_r * ID_TAG_WIDTH) + TAG_WIDTH +: CORE_ID_WIDTH],
-                                  {(8-TAG_WIDTH){1'b0}},
-                                  dest_r[stat_read_interface_r * ID_TAG_WIDTH +: TAG_WIDTH]};
-      5'h12:   host_cmd_rd_data_n <= drop_count[stat_read_interface_r*32 +: 32];
-      default: host_cmd_rd_data_n <= 32'hFEFEFEFE;
-    endcase
 
   genvar j;
   generate
@@ -530,6 +428,9 @@ module lb_PR (
   assign data_m_axis_tkeep_n  = rx_axis_tkeep_r;
   assign data_m_axis_tdest_n  = dest;
 
+  ///////////////////////////////////////////////////////////////////////////////
+  ////////////////////////// Control channel handler ////////////////////////////
+  ///////////////////////////////////////////////////////////////////////////////
   lb_controller  # (
     .CORE_COUNT(CORE_COUNT),
     .SLOT_COUNT(SLOT_COUNT),
@@ -539,23 +440,22 @@ module lb_PR (
     .CORE_ID_WIDTH(CORE_ID_WIDTH),
     .SLOT_WIDTH(SLOT_WIDTH),
     .TAG_WIDTH(TAG_WIDTH),
-    .ID_TAG_WIDTH(ID_TAG_WIDTH),
-    .CTRL_REG_TYPE(CTRL_REG_TYPE)
+    .ID_TAG_WIDTH(ID_TAG_WIDTH)
   ) lb_controller_inst (
     .clk(clk),
     .rst(rst_r),
     // Control lines to/from cores
-    .ctrl_m_axis_tdata (ctrl_m_axis_tdata),
-    .ctrl_m_axis_tvalid(ctrl_m_axis_tvalid),
-    .ctrl_m_axis_tready(ctrl_m_axis_tready),
-    .ctrl_m_axis_tdest (ctrl_m_axis_tdest),
+    .ctrl_m_axis_tdata (ctrl_m_axis_tdata_n),
+    .ctrl_m_axis_tvalid(ctrl_m_axis_tvalid_n),
+    .ctrl_m_axis_tready(ctrl_m_axis_tready_n),
+    .ctrl_m_axis_tdest (ctrl_m_axis_tdest_n),
 
-    .ctrl_s_axis_tdata (ctrl_s_axis_tdata),
-    .ctrl_s_axis_tvalid(ctrl_s_axis_tvalid),
-    .ctrl_s_axis_tready(ctrl_s_axis_tready),
-    .ctrl_s_axis_tuser (ctrl_s_axis_tuser),
+    .ctrl_s_axis_tdata (ctrl_s_axis_tdata_r),
+    .ctrl_s_axis_tvalid(ctrl_s_axis_tvalid_r),
+    .ctrl_s_axis_tready(ctrl_s_axis_tready_r),
+    .ctrl_s_axis_tuser (ctrl_s_axis_tuser_r),
 
-    // Status readbacks
+    // Config registers
     .enabled_cores (enabled_cores),
     .slots_flush   (slots_flush),
 

@@ -88,37 +88,49 @@ module lb_PR (
   parameter CTRL_WIDTH      = 32+4;
   parameter LOOPBACK_PORT   = 3;
   parameter LOOPBACK_COUNT  = 1;
-  parameter DATA_REG_TYPE   = 2;
-  parameter CTRL_REG_TYPE   = 2;
   parameter DATA_FIFO_DEPTH = 4096;
   parameter HASH_SEL_OFFSET = 0;
   parameter RX_LINES_WIDTH  = 13;
+
+  parameter DATA_S_RLEN     = 1;
+  parameter DATA_M_RLEN     = 1;
+  parameter RX_RLEN         = 1;
+  parameter TX_RLEN         = 1;
 
   parameter SLOT_WIDTH      = $clog2(SLOT_COUNT+1);
   parameter CORE_ID_WIDTH   = $clog2(CORE_COUNT);
   parameter INTERFACE_WIDTH = $clog2(IF_COUNT);
   parameter PORT_WIDTH      = $clog2(PORT_COUNT);
-  parameter TAG_WIDTH       = (SLOT_WIDTH>5)? SLOT_WIDTH:5;
+  parameter TAG_WIDTH       = (SLOT_WIDTH>5) ? SLOT_WIDTH : 5;
   parameter ID_TAG_WIDTH    = CORE_ID_WIDTH+TAG_WIDTH;
   parameter STRB_WIDTH      = DATA_WIDTH/8;
   parameter HASH_FIFO_DEPTH = DATA_FIFO_DEPTH/64;
   parameter HASH_N_DESC     = 32+ID_TAG_WIDTH+1;
 
-  // Register inputs and outputs
-  wire [IF_COUNT*DATA_WIDTH-1:0]    data_m_axis_tdata_n;
-  wire [IF_COUNT*STRB_WIDTH-1:0]    data_m_axis_tkeep_n;
-  wire [IF_COUNT*ID_TAG_WIDTH-1:0]  data_m_axis_tdest_n;
-  wire [IF_COUNT*PORT_WIDTH-1:0]    data_m_axis_tuser_n;
-  wire [IF_COUNT-1:0]               data_m_axis_tvalid_n;
-  wire [IF_COUNT-1:0]               data_m_axis_tready_n;
-  wire [IF_COUNT-1:0]               data_m_axis_tlast_n;
+  ///////////////////////////////////////////////////////////////////////////////
+  //////////////////////// Register input and outputs ///////////////////////////
+  ///////////////////////////////////////////////////////////////////////////////
+  wire rst_r;
+  sync_reset sync_rst_inst (
+    .clk(clk),
+    .rst(rst),
+    .out(rst_r)
+  );
 
-  wire [IF_COUNT*DATA_WIDTH-1:0]    rx_axis_tdata_r;
-  wire [IF_COUNT*STRB_WIDTH-1:0]    rx_axis_tkeep_r;
-  wire [IF_COUNT-1:0]               rx_axis_tvalid_r;
-  wire [IF_COUNT-1:0]               rx_axis_tready_r;
-  wire [IF_COUNT-1:0]               rx_axis_tlast_r;
+  // registers for crossing PR boundary
+  // _r for input signals after register, and _n for output signals before register
+  `include "lb_PR_regs.v"
 
+  // No action on TX side, just forwarding. Not using tuser from data_s either.
+  assign tx_axis_tdata_n      = data_s_axis_tdata_r;
+  assign tx_axis_tkeep_n      = data_s_axis_tkeep_r;
+  assign tx_axis_tvalid_n     = data_s_axis_tvalid_r;
+  assign tx_axis_tlast_n      = data_s_axis_tlast_r;
+  assign data_s_axis_tready_r = tx_axis_tready_n;
+
+  ///////////////////////////////////////////////////////////////////////////////
+  //////////// Compute and append flow has, plus FIFOs for results //////////////
+  ///////////////////////////////////////////////////////////////////////////////
   wire [IF_COUNT*DATA_WIDTH-1:0]    rx_axis_tdata_f;
   wire [IF_COUNT*STRB_WIDTH-1:0]    rx_axis_tkeep_f;
   wire [IF_COUNT-1:0]               rx_axis_tvalid_f;
@@ -146,123 +158,10 @@ module lb_PR (
   wire [IF_COUNT-1:0]               drop_out;
   wire [IF_COUNT-1:0]               hash_n_dest_out_v;
   wire [IF_COUNT-1:0]               hash_n_dest_out_ready;
-  wire rst_r;
-  sync_reset sync_rst_inst (
-    .clk(clk),
-    .rst(rst),
-    .out(rst_r)
-  );
 
-  genvar q;
+  genvar p;
   generate
-    for (q=0; q<IF_COUNT; q=q+1) begin: int_regs_n_hash
-
-      /// *** INPUT AND OUTPUT DATA LINE REGISTERS FOR BETTER TIMING *** ///
-
-      // A register before TX for better timing
-      axis_pipeline_register # (
-        .DATA_WIDTH(DATA_WIDTH),
-        .KEEP_ENABLE(1),
-        .KEEP_WIDTH(STRB_WIDTH),
-        .LAST_ENABLE(1),
-        .ID_ENABLE(0),
-        .DEST_ENABLE(0),
-        .USER_ENABLE(1),
-        .USER_WIDTH(ID_TAG_WIDTH),
-        .REG_TYPE(DATA_REG_TYPE),
-        .LENGTH(2)
-      ) data_s_reg_inst (
-        .clk(clk),
-        .rst(rst_r),
-        // AXI input
-        .s_axis_tdata (data_s_axis_tdata[q*DATA_WIDTH +: DATA_WIDTH]),
-        .s_axis_tkeep (data_s_axis_tkeep[q*STRB_WIDTH +: STRB_WIDTH]),
-        .s_axis_tvalid(data_s_axis_tvalid[q]),
-        .s_axis_tready(data_s_axis_tready[q]),
-        .s_axis_tlast (data_s_axis_tlast[q]),
-        .s_axis_tid   (8'd0),
-        .s_axis_tdest (8'd0),
-        .s_axis_tuser (data_s_axis_tuser[q*ID_TAG_WIDTH +: ID_TAG_WIDTH]),
-        // AXI output
-        .m_axis_tdata (tx_axis_tdata[q*DATA_WIDTH +: DATA_WIDTH]),
-        .m_axis_tkeep (tx_axis_tkeep[q*STRB_WIDTH +: STRB_WIDTH]),
-        .m_axis_tvalid(tx_axis_tvalid[q]),
-        .m_axis_tready(tx_axis_tready[q]),
-        .m_axis_tlast (tx_axis_tlast[q]),
-        .m_axis_tid   (),
-        .m_axis_tdest (),
-        .m_axis_tuser ()
-      );
-
-      axis_pipeline_register # (
-        .DATA_WIDTH(DATA_WIDTH),
-        .KEEP_ENABLE(1),
-        .KEEP_WIDTH(STRB_WIDTH),
-        .LAST_ENABLE(1),
-        .ID_ENABLE(0),
-        .DEST_ENABLE(1),
-        .DEST_WIDTH(ID_TAG_WIDTH),
-        .USER_ENABLE(1),
-        .USER_WIDTH(PORT_WIDTH),
-        .REG_TYPE(DATA_REG_TYPE),
-        .LENGTH(1)
-      ) data_m_reg_inst (
-        .clk(clk),
-        .rst(rst_r),
-        // AXI input
-        .s_axis_tdata (data_m_axis_tdata_n[q*DATA_WIDTH +: DATA_WIDTH]),
-        .s_axis_tkeep (data_m_axis_tkeep_n[q*STRB_WIDTH +: STRB_WIDTH]),
-        .s_axis_tvalid(data_m_axis_tvalid_n[q]),
-        .s_axis_tready(data_m_axis_tready_n[q]),
-        .s_axis_tlast (data_m_axis_tlast_n[q]),
-        .s_axis_tid   (8'd0),
-        .s_axis_tdest (data_m_axis_tdest_n[q*ID_TAG_WIDTH +: ID_TAG_WIDTH]),
-        .s_axis_tuser (data_m_axis_tuser_n[q*PORT_WIDTH +: PORT_WIDTH]),
-        // AXI output
-        .m_axis_tdata (data_m_axis_tdata[q*DATA_WIDTH +: DATA_WIDTH]),
-        .m_axis_tkeep (data_m_axis_tkeep[q*STRB_WIDTH +: STRB_WIDTH]),
-        .m_axis_tvalid(data_m_axis_tvalid[q]),
-        .m_axis_tready(data_m_axis_tready[q]),
-        .m_axis_tlast (data_m_axis_tlast[q]),
-        .m_axis_tid   (),
-        .m_axis_tdest (data_m_axis_tdest[q*ID_TAG_WIDTH +: ID_TAG_WIDTH]),
-        .m_axis_tuser (data_m_axis_tuser[q*PORT_WIDTH +: PORT_WIDTH])
-      );
-
-      axis_pipeline_register # (
-        .DATA_WIDTH(DATA_WIDTH),
-        .KEEP_ENABLE(1),
-        .KEEP_WIDTH(STRB_WIDTH),
-        .LAST_ENABLE(1),
-        .ID_ENABLE(0),
-        .DEST_ENABLE(0),
-        .USER_ENABLE(0),
-        .REG_TYPE(DATA_REG_TYPE),
-        .LENGTH(1)
-      ) rx_reg_inst (
-        .clk(clk),
-        .rst(rst_r),
-        // AXI input
-        .s_axis_tdata (rx_axis_tdata[q*DATA_WIDTH +: DATA_WIDTH]),
-        .s_axis_tkeep (rx_axis_tkeep[q*STRB_WIDTH +: STRB_WIDTH]),
-        .s_axis_tvalid(rx_axis_tvalid[q]),
-        .s_axis_tready(rx_axis_tready[q]),
-        .s_axis_tlast (rx_axis_tlast[q]),
-        .s_axis_tid   (8'd0),
-        .s_axis_tdest (8'd0),
-        .s_axis_tuser (1'b0),
-        // AXI output
-        .m_axis_tdata (rx_axis_tdata_r[q*DATA_WIDTH +: DATA_WIDTH]),
-        .m_axis_tkeep (rx_axis_tkeep_r[q*STRB_WIDTH +: STRB_WIDTH]),
-        .m_axis_tvalid(rx_axis_tvalid_r[q]),
-        .m_axis_tready(rx_axis_tready_r[q]),
-        .m_axis_tlast (rx_axis_tlast_r[q]),
-        .m_axis_tid   (),
-        .m_axis_tdest (),
-        .m_axis_tuser ()
-      );
-
-      /// *** COMPUTE FLOW HASH AND A FIFO FOR RESULTS *** ///
+    for (p=0; p<IF_COUNT; p=p+1) begin: hash_for_ints
 
       rx_hash #(
         .DATA_WIDTH(DATA_WIDTH),
@@ -271,16 +170,16 @@ module lb_PR (
         .clk(clk),
         .rst(rst_r),
 
-        .s_axis_tdata (rx_axis_tdata_r[q*DATA_WIDTH +: DATA_WIDTH]),
-        .s_axis_tkeep (rx_axis_tkeep_r[q*STRB_WIDTH +: STRB_WIDTH]),
-        .s_axis_tvalid(rx_axis_tvalid_r[q] && rx_axis_tready_r[q]),
-        .s_axis_tlast (rx_axis_tlast_r[q]),
+        .s_axis_tdata (rx_axis_tdata_r[p*DATA_WIDTH +: DATA_WIDTH]),
+        .s_axis_tkeep (rx_axis_tkeep_r[p*STRB_WIDTH +: STRB_WIDTH]),
+        .s_axis_tvalid(rx_axis_tvalid_r[p] && rx_axis_tready_r[p]),
+        .s_axis_tlast (rx_axis_tlast_r[p]),
 
         .hash_key(320'h6d5a56da255b0ec24167253d43a38fb0d0ca2bcbae7b30b477cb2da38030f20c6a42b73bbeac01fa),
 
-        .m_axis_hash(rx_hash[q*32 +: 32]),
-        .m_axis_hash_type(rx_hash_type[q*4 +: 4]),
-        .m_axis_hash_valid(rx_hash_valid[q])
+        .m_axis_hash(rx_hash[p*32 +: 32]),
+        .m_axis_hash_type(rx_hash_type[p*4 +: 4]),
+        .m_axis_hash_valid(rx_hash_valid[p])
       );
 
       simple_sync_fifo # (
@@ -290,19 +189,19 @@ module lb_PR (
         .clk(clk),
         .rst(rst_r),
 
-        .din_valid(rx_hash_valid[q]),
-        .din({rx_hash_type[q*4 +: 4], rx_hash[q*32 +: 32]}),
-        .din_ready(), // rx_hash_ready[q]),
+        .din_valid(rx_hash_valid[p]),
+        .din({rx_hash_type[p*4 +: 4], rx_hash[p*32 +: 32]}),
+        .din_ready(), // rx_hash_ready[p]),
         // FIFO has more room than 64B packets in the data fifo
 
-        .dout_valid(rx_hash_valid_f[q]),
-        .dout({rx_hash_type_f[q*4 +: 4], rx_hash_f[q*32 +: 32]}),
-        .dout_ready(rx_hash_ready_f[q])
+        .dout_valid(rx_hash_valid_f[p]),
+        .dout({rx_hash_type_f[p*4 +: 4], rx_hash_f[p*32 +: 32]}),
+        .dout_ready(rx_hash_ready_f[p])
       );
 
       // integrate hash_type?
-      wire [31:0] sel_hash = rx_hash_f[q*32 +: 32];
-      assign masked_hash[q*CORE_ID_WIDTH +: CORE_ID_WIDTH] =
+      wire [31:0] sel_hash = rx_hash_f[p*32 +: 32];
+      assign masked_hash[p*CORE_ID_WIDTH +: CORE_ID_WIDTH] =
                 sel_hash[HASH_SEL_OFFSET +: CORE_ID_WIDTH];
 
       /// *** DATA FIFO WHILE WAITING FOR HASH AND DESC ALLOCATION *** ///
@@ -322,20 +221,20 @@ module lb_PR (
           .clk(clk),
           .rst(rst_r),
 
-          .s_axis_tdata (rx_axis_tdata_r[q*DATA_WIDTH +: DATA_WIDTH]),
-          .s_axis_tkeep (rx_axis_tkeep_r[q*STRB_WIDTH +: STRB_WIDTH]),
-          .s_axis_tvalid(rx_axis_tvalid_r[q]),
-          .s_axis_tready(rx_axis_tready_r[q]),
-          .s_axis_tlast (rx_axis_tlast_r[q]),
+          .s_axis_tdata (rx_axis_tdata_r[p*DATA_WIDTH +: DATA_WIDTH]),
+          .s_axis_tkeep (rx_axis_tkeep_r[p*STRB_WIDTH +: STRB_WIDTH]),
+          .s_axis_tvalid(rx_axis_tvalid_r[p]),
+          .s_axis_tready(rx_axis_tready_r[p]),
+          .s_axis_tlast (rx_axis_tlast_r[p]),
           .s_axis_tid   (8'd0),
           .s_axis_tdest (8'd0),
           .s_axis_tuser (1'b0),
 
-          .m_axis_tdata (rx_axis_tdata_f[q*DATA_WIDTH +: DATA_WIDTH]),
-          .m_axis_tkeep (rx_axis_tkeep_f[q*STRB_WIDTH +: STRB_WIDTH]),
-          .m_axis_tvalid(rx_axis_tvalid_f[q]),
-          .m_axis_tready(rx_axis_tready_f[q]),
-          .m_axis_tlast (rx_axis_tlast_f[q]),
+          .m_axis_tdata (rx_axis_tdata_f[p*DATA_WIDTH +: DATA_WIDTH]),
+          .m_axis_tkeep (rx_axis_tkeep_f[p*STRB_WIDTH +: STRB_WIDTH]),
+          .m_axis_tvalid(rx_axis_tvalid_f[p]),
+          .m_axis_tready(rx_axis_tready_f[p]),
+          .m_axis_tlast (rx_axis_tlast_f[p]),
           .m_axis_tid   (),
           .m_axis_tdest (),
           .m_axis_tuser (),
@@ -354,16 +253,16 @@ module lb_PR (
         .clk(clk),
         .rst(rst_r),
 
-        .din_valid(hash_n_dest_in_v[q]),
-        .din(hash_n_dest_in[q*HASH_N_DESC +: HASH_N_DESC]),
-        .din_ready(hash_n_dest_in_ready[q]),
+        .din_valid(hash_n_dest_in_v[p]),
+        .din(hash_n_dest_in[p*HASH_N_DESC +: HASH_N_DESC]),
+        .din_ready(hash_n_dest_in_ready[p]),
 
-        .dout_valid(hash_n_dest_out_v[q]),
-        .dout({drop_out[q], hash_out[q*32 +: 32], dest_out[q*ID_TAG_WIDTH +: ID_TAG_WIDTH]}),
-        .dout_ready(hash_n_dest_out_ready[q])
+        .dout_valid(hash_n_dest_out_v[p]),
+        .dout({drop_out[p], hash_out[p*32 +: 32], dest_out[p*ID_TAG_WIDTH +: ID_TAG_WIDTH]}),
+        .dout_ready(hash_n_dest_out_ready[p])
       );
 
-      wire [PORT_WIDTH-1:0] port_num = q;
+      wire [PORT_WIDTH-1:0] port_num = p;
 
       /// *** ATTACHING HASH AT THE BEGINNING OF THE PACKET *** ///
 
@@ -377,31 +276,34 @@ module lb_PR (
         .clk(clk),
         .rst(rst_r),
 
-        .s_axis_tdata (rx_axis_tdata_f[q*DATA_WIDTH +: DATA_WIDTH]),
-        .s_axis_tkeep (rx_axis_tkeep_f[q*STRB_WIDTH +: STRB_WIDTH]),
-        .s_axis_tdest (dest_out[q*ID_TAG_WIDTH +: ID_TAG_WIDTH]),
+        .s_axis_tdata (rx_axis_tdata_f[p*DATA_WIDTH +: DATA_WIDTH]),
+        .s_axis_tkeep (rx_axis_tkeep_f[p*STRB_WIDTH +: STRB_WIDTH]),
+        .s_axis_tdest (dest_out[p*ID_TAG_WIDTH +: ID_TAG_WIDTH]),
         .s_axis_tuser (port_num),
-        .s_axis_tlast (rx_axis_tlast_f[q]),
-        .s_axis_tvalid(rx_axis_tvalid_f[q]),
-        .s_axis_tready(rx_axis_tready_f[q]),
+        .s_axis_tlast (rx_axis_tlast_f[p]),
+        .s_axis_tvalid(rx_axis_tvalid_f[p]),
+        .s_axis_tready(rx_axis_tready_f[p]),
 
-        .header(hash_out[q*32 +: 32]),
-        .drop(drop_out[q]),
-        .header_valid(hash_n_dest_out_v[q]),
-        .header_ready(hash_n_dest_out_ready[q]),
+        .header(hash_out[p*32 +: 32]),
+        .drop(drop_out[p]),
+        .header_valid(hash_n_dest_out_v[p]),
+        .header_ready(hash_n_dest_out_ready[p]),
 
-        .m_axis_tdata(data_m_axis_tdata_n[q*DATA_WIDTH +: DATA_WIDTH]),
-        .m_axis_tkeep(data_m_axis_tkeep_n[q*STRB_WIDTH +: STRB_WIDTH]),
-        .m_axis_tdest(data_m_axis_tdest_n[q*ID_TAG_WIDTH +: ID_TAG_WIDTH]),
-        .m_axis_tuser(data_m_axis_tuser_n[q*PORT_WIDTH +: PORT_WIDTH]),
-        .m_axis_tlast(data_m_axis_tlast_n[q]),
-        .m_axis_tvalid(data_m_axis_tvalid_n[q]),
-        .m_axis_tready(data_m_axis_tready_n[q])
+        .m_axis_tdata(data_m_axis_tdata_n[p*DATA_WIDTH +: DATA_WIDTH]),
+        .m_axis_tkeep(data_m_axis_tkeep_n[p*STRB_WIDTH +: STRB_WIDTH]),
+        .m_axis_tdest(data_m_axis_tdest_n[p*ID_TAG_WIDTH +: ID_TAG_WIDTH]),
+        .m_axis_tuser(data_m_axis_tuser_n[p*PORT_WIDTH +: PORT_WIDTH]),
+        .m_axis_tlast(data_m_axis_tlast_n[p]),
+        .m_axis_tvalid(data_m_axis_tvalid_n[p]),
+        .m_axis_tready(data_m_axis_tready_n[p])
       );
 
     end
   endgenerate
 
+  ///////////////////////////////////////////////////////////////////////////////
+  ///////////////////////// Host command parsing ////////////////////////////////
+  ///////////////////////////////////////////////////////////////////////////////
   reg [31:0]                host_cmd_r;
   reg [31:0]                host_cmd_wr_data_r;
   reg                       host_to_sched_wr_r;
@@ -477,6 +379,37 @@ module lb_PR (
       rx_almost_full    <= {IF_COUNT{1'b0}};
   end
 
+  /// *** STATUS FOR HOST READBACK *** ///
+  reg [IF_COUNT*32-1:0] drop_count;
+
+  always @ (posedge clk) begin
+    if (rst_r)
+      drop_count <= {IF_COUNT*ID_TAG_WIDTH{1'b0}};
+    else if (selected_port_v_r && !slots_busy[rx_dest_core] &&
+             !rx_desc_avail[rx_dest_core] && rx_almost_full[selected_port_enc_r])
+      drop_count[selected_port_enc_r*32 +: 32] <=
+        drop_count[selected_port_enc_r*32 +: 32] + 1;
+  end
+
+  wire [CORE_COUNT*SLOT_WIDTH-1:0] slot_counts;
+  wire [CORE_COUNT-1:0]            slot_valids;
+  wire [CORE_COUNT-1:0]            slots_busy;
+
+  always @ (posedge clk)
+    case ({host_to_int_not_core, host_cmd_reg})
+      // CORES
+      5'h00:   host_cmd_rd_data_n <= enabled_cores;
+      5'h01:   host_cmd_rd_data_n <= income_cores;
+      5'h03:   host_cmd_rd_data_n <= slot_counts[stat_read_core_r * SLOT_WIDTH +: SLOT_WIDTH];
+      // INTS
+      5'h12:   host_cmd_rd_data_n <= drop_count[stat_read_interface_r*32 +: 32];
+      default: host_cmd_rd_data_n <= 32'hFEFEFEFE;
+    endcase
+
+  ///////////////////////////////////////////////////////////////////////////////
+  ///////////////////////// Load balancing policy ///////////////////////////////
+  ///////////////////////////////////////////////////////////////////////////////
+
   /// *** ARBITRATION AND DESC ALLOCATION FOR RX DATA *** ///
 
   // Arbiter among ports for desc request. The destination core based on hash
@@ -538,10 +471,6 @@ module lb_PR (
   wire [CORE_COUNT-1:0]    rx_desc_avail;
   wire [ID_TAG_WIDTH-1:0]  rx_desc_data;
   reg                      rx_desc_pop;
-  wire [CORE_COUNT-1:0]    slots_busy;
-
-  wire [CORE_COUNT*SLOT_WIDTH-1:0] slot_counts;
-  wire [CORE_COUNT-1:0]            slot_valids;
 
   assign rx_desc_avail = slot_valids & income_cores;
 
@@ -573,29 +502,9 @@ module lb_PR (
 
   end
 
-  /// *** STATUS FOR HOST READBACK *** ///
-  reg [IF_COUNT*32-1:0] drop_count;
-
-  always @ (posedge clk) begin
-    if (rst_r)
-      drop_count <= {IF_COUNT*ID_TAG_WIDTH{1'b0}};
-    else if (selected_port_v_r && !slots_busy[rx_dest_core] &&
-             !rx_desc_avail[rx_dest_core] && rx_almost_full[selected_port_enc_r])
-      drop_count[selected_port_enc_r*32 +: 32] <=
-        drop_count[selected_port_enc_r*32 +: 32] + 1;
-  end
-
-  always @ (posedge clk)
-    case ({host_to_int_not_core, host_cmd_reg})
-      // CORES
-      5'h00:   host_cmd_rd_data_n <= enabled_cores;
-      5'h01:   host_cmd_rd_data_n <= income_cores;
-      5'h03:   host_cmd_rd_data_n <= slot_counts[stat_read_core_r * SLOT_WIDTH +: SLOT_WIDTH];
-      // INTS
-      5'h12:   host_cmd_rd_data_n <= drop_count[stat_read_interface_r*32 +: 32];
-      default: host_cmd_rd_data_n <= 32'hFEFEFEFE;
-    endcase
-
+  ///////////////////////////////////////////////////////////////////////////////
+  ////////////////////////// Control channel handler ////////////////////////////
+  ///////////////////////////////////////////////////////////////////////////////
   lb_controller  # (
     .CORE_COUNT(CORE_COUNT),
     .SLOT_COUNT(SLOT_COUNT),
@@ -605,21 +514,20 @@ module lb_PR (
     .CORE_ID_WIDTH(CORE_ID_WIDTH),
     .SLOT_WIDTH(SLOT_WIDTH),
     .TAG_WIDTH(TAG_WIDTH),
-    .ID_TAG_WIDTH(ID_TAG_WIDTH),
-    .CTRL_REG_TYPE(CTRL_REG_TYPE)
+    .ID_TAG_WIDTH(ID_TAG_WIDTH)
   ) lb_controller_inst (
     .clk(clk),
     .rst(rst_r),
     // Control lines to/from cores
-    .ctrl_m_axis_tdata (ctrl_m_axis_tdata),
-    .ctrl_m_axis_tvalid(ctrl_m_axis_tvalid),
-    .ctrl_m_axis_tready(ctrl_m_axis_tready),
-    .ctrl_m_axis_tdest (ctrl_m_axis_tdest),
+    .ctrl_m_axis_tdata (ctrl_m_axis_tdata_n),
+    .ctrl_m_axis_tvalid(ctrl_m_axis_tvalid_n),
+    .ctrl_m_axis_tready(ctrl_m_axis_tready_n),
+    .ctrl_m_axis_tdest (ctrl_m_axis_tdest_n),
 
-    .ctrl_s_axis_tdata (ctrl_s_axis_tdata),
-    .ctrl_s_axis_tvalid(ctrl_s_axis_tvalid),
-    .ctrl_s_axis_tready(ctrl_s_axis_tready),
-    .ctrl_s_axis_tuser (ctrl_s_axis_tuser),
+    .ctrl_s_axis_tdata (ctrl_s_axis_tdata_r),
+    .ctrl_s_axis_tvalid(ctrl_s_axis_tvalid_r),
+    .ctrl_s_axis_tready(ctrl_s_axis_tready_r),
+    .ctrl_s_axis_tuser (ctrl_s_axis_tuser_r),
 
     // Config registers
     .enabled_cores (enabled_cores),
