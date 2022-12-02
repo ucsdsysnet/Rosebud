@@ -69,8 +69,8 @@ module lb_controller  # (
 );
 
   // Separate incoming ctrl messages
-  parameter MSG_TYPE_WIDTH = 4;
-  parameter DESC_WIDTH     = CTRL_WIDTH-MSG_TYPE_WIDTH;
+  localparam MSG_TYPE_WIDTH = 4;
+  localparam DESC_WIDTH     = CTRL_WIDTH-MSG_TYPE_WIDTH;
 
   wire [MSG_TYPE_WIDTH-1:0] msg_type =
                 ctrl_s_axis_tdata[CTRL_WIDTH-1:CTRL_WIDTH-MSG_TYPE_WIDTH];

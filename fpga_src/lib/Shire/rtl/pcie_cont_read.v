@@ -102,6 +102,8 @@ module pcie_cont_read # (
   output wire [SEG_COUNT-1:0]                dma_ram_wr_done
 );
 
+localparam TAG_WIDTH_DIFF = PCIE_DMA_TAG_WIDTH - PCIE_SLOT_WIDTH;
+
 // Internal wires
 reg  [PCIE_ADDR_WIDTH-1:0]    pcie_dma_read_desc_pcie_addr_r;
 reg  [RAM_ADDR_WIDTH-1:0]     pcie_dma_read_desc_ram_addr_r;
@@ -118,6 +120,7 @@ reg  [CORE_ADDR_WIDTH-1:0]    axis_read_desc_user_r;
 reg                           axis_read_desc_valid_r;
 wire                          axis_read_desc_ready_r;
 wire [PCIE_SLOT_WIDTH-1:0]    axis_read_desc_status_tag;
+wire [PCIE_DMA_TAG_WIDTH-1:0] axis_read_desc_status_tag_t;
 wire                          axis_read_desc_status_valid;
 
 reg  [HOST_DMA_TAG_WIDTH-1:0] host_dma_read_desc_status_tag_r;
@@ -337,7 +340,7 @@ dma_client_axis_source_inst (
      */
     .s_axis_read_desc_ram_addr(axis_read_desc_addr),
     .s_axis_read_desc_len     (axis_read_desc_len),
-    .s_axis_read_desc_tag     (axis_read_desc_tag),
+    .s_axis_read_desc_tag     ({{TAG_WIDTH_DIFF{1'b0}}, axis_read_desc_tag}),
     .s_axis_read_desc_id      (8'd0),
     .s_axis_read_desc_dest    (axis_read_desc_dest),
     .s_axis_read_desc_user    (axis_read_desc_user),
@@ -347,7 +350,7 @@ dma_client_axis_source_inst (
     /*
      * DMA read descriptor status output
      */
-    .m_axis_read_desc_status_tag  (axis_read_desc_status_tag),
+    .m_axis_read_desc_status_tag  (axis_read_desc_status_tag_t),
     .m_axis_read_desc_status_error(),
     .m_axis_read_desc_status_valid(axis_read_desc_status_valid),
 
@@ -378,6 +381,8 @@ dma_client_axis_source_inst (
      */
     .enable(dma_enable)
 );
+
+assign axis_read_desc_status_tag = axis_read_desc_status_tag_t[PCIE_SLOT_WIDTH-1:0];
 
 // Descriptor FIFO
 simple_fifo # (

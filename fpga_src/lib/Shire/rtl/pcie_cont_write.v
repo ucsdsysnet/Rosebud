@@ -102,6 +102,8 @@ module pcie_cont_write # (
   input  wire [SEG_COUNT-1:0]                dma_ram_rd_resp_ready
 );
 
+localparam TAG_WIDTH_DIFF = PCIE_DMA_TAG_WIDTH - PCIE_SLOT_WIDTH;
+
 // Removing PCIe address header
 wire [AXIS_DATA_WIDTH-1:0] axis_write_data_tdata;
 wire [AXIS_KEEP_WIDTH-1:0] axis_write_data_tkeep;
@@ -159,6 +161,7 @@ wire                          axis_write_desc_valid;
 wire                          axis_write_desc_ready;
 wire [PCIE_DMA_LEN_WIDTH-1:0] axis_write_desc_status_len;
 wire [PCIE_SLOT_WIDTH-1:0]    axis_write_desc_status_tag;
+wire [PCIE_DMA_TAG_WIDTH-1:0] axis_write_desc_status_tag_t;
 wire [AXIS_TAG_WIDTH-1:0]     axis_write_desc_status_user;
 wire                          axis_write_desc_status_valid;
 
@@ -347,7 +350,7 @@ dma_client_axis_sink_inst (
      */
     .s_axis_write_desc_ram_addr(axis_write_desc_addr),
     .s_axis_write_desc_len     (axis_write_desc_len),
-    .s_axis_write_desc_tag     (axis_write_desc_tag),
+    .s_axis_write_desc_tag     ({{TAG_WIDTH_DIFF{1'b0}}, axis_write_desc_tag}),
     .s_axis_write_desc_valid   (axis_write_desc_valid),
     .s_axis_write_desc_ready   (axis_write_desc_ready),
 
@@ -355,7 +358,7 @@ dma_client_axis_sink_inst (
      * DMA write descriptor status output
      */
     .m_axis_write_desc_status_len  (axis_write_desc_status_len),
-    .m_axis_write_desc_status_tag  (axis_write_desc_status_tag),
+    .m_axis_write_desc_status_tag  (axis_write_desc_status_tag_t),
     .m_axis_write_desc_status_id   (),
     .m_axis_write_desc_status_dest (),
     .m_axis_write_desc_status_user (axis_write_desc_status_user),
@@ -390,6 +393,8 @@ dma_client_axis_sink_inst (
     .enable(dma_enable),
     .abort(1'b0)
 );
+
+assign axis_write_desc_status_tag = axis_write_desc_status_tag_t[PCIE_SLOT_WIDTH-1:0];
 
 // Descriptor FIFO
 simple_fifo # (

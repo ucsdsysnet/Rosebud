@@ -319,7 +319,11 @@ module lb_hash_dropping # (
   end
 
   /// *** STATUS FOR HOST READBACK *** ///
-  reg [IF_COUNT*32-1:0] drop_count;
+  reg                        selected_port_v_r;
+  reg  [INTERFACE_WIDTH-1:0] selected_port_enc_r;
+  wire [CORE_COUNT-1:0]      desc_avail;
+
+  reg  [IF_COUNT*32-1:0]     drop_count;
 
   always @ (posedge clk) begin
     if (rst)
@@ -355,8 +359,6 @@ module lb_hash_dropping # (
 
   // arbiter results are saved for the next cycle
   reg  [IF_COUNT-1:0] selected_port_r;
-  reg  [INTERFACE_WIDTH-1:0] selected_port_enc_r;
-  reg  selected_port_v_r;
 
   always @ (posedge clk)
     if (rst) begin
@@ -402,7 +404,7 @@ module lb_hash_dropping # (
 
   // Checking for slot availability, collision with intercore desc request and
   // if core is allowed to receive packets from interfaces
-  wire [CORE_COUNT-1:0] desc_avail = slot_valids & income_cores;
+  assign desc_avail = slot_valids & income_cores;
 
   // MSB is to drop packet or not, followed by hash value and finally core desc
   // For now no intercore messages, so !desc_avail means desc was not available

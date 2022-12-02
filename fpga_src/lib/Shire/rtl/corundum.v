@@ -268,6 +268,7 @@ wire [IF_COUNT-1:0]                 axil_if_rvalid;
 wire [IF_COUNT-1:0]                 axil_if_rready;
 
 wire [IF_COUNT*AXIL_CSR_ADDR_WIDTH-1:0] axil_if_csr_awaddr;
+wire [IF_COUNT*IF_AXIL_ADDR_WIDTH-1:0]  axis_if_csr_awaddr_t;
 wire [IF_COUNT*3-1:0]                   axil_if_csr_awprot;
 wire [IF_COUNT-1:0]                     axil_if_csr_awvalid;
 wire [IF_COUNT-1:0]                     axil_if_csr_awready;
@@ -279,6 +280,7 @@ wire [IF_COUNT*2-1:0]                   axil_if_csr_bresp;
 wire [IF_COUNT-1:0]                     axil_if_csr_bvalid;
 wire [IF_COUNT-1:0]                     axil_if_csr_bready;
 wire [IF_COUNT*AXIL_CSR_ADDR_WIDTH-1:0] axil_if_csr_araddr;
+wire [IF_COUNT*IF_AXIL_ADDR_WIDTH-1:0]  axis_if_csr_araddr_t;
 wire [IF_COUNT*3-1:0]                   axil_if_csr_arprot;
 wire [IF_COUNT-1:0]                     axil_if_csr_arvalid;
 wire [IF_COUNT-1:0]                     axil_if_csr_arready;
@@ -994,7 +996,7 @@ generate
             /*
              * AXI-Lite master interface (passthrough for NIC control and status)
              */
-            .m_axil_csr_awaddr(axil_if_csr_awaddr[n*AXIL_CSR_ADDR_WIDTH +: AXIL_CSR_ADDR_WIDTH]),
+            .m_axil_csr_awaddr(axis_if_csr_awaddr_t[n*IF_AXIL_ADDR_WIDTH +: IF_AXIL_ADDR_WIDTH]),
             .m_axil_csr_awprot(axil_if_csr_awprot[n*3 +: 3]),
             .m_axil_csr_awvalid(axil_if_csr_awvalid[n]),
             .m_axil_csr_awready(axil_if_csr_awready[n]),
@@ -1005,7 +1007,7 @@ generate
             .m_axil_csr_bresp(axil_if_csr_bresp[n*2 +: 2]),
             .m_axil_csr_bvalid(axil_if_csr_bvalid[n]),
             .m_axil_csr_bready(axil_if_csr_bready[n]),
-            .m_axil_csr_araddr(axil_if_csr_araddr[n*AXIL_CSR_ADDR_WIDTH +: AXIL_CSR_ADDR_WIDTH]),
+            .m_axil_csr_araddr(axis_if_csr_araddr_t[n*IF_AXIL_ADDR_WIDTH +: IF_AXIL_ADDR_WIDTH]),
             .m_axil_csr_arprot(axil_if_csr_arprot[n*3 +: 3]),
             .m_axil_csr_arvalid(axil_if_csr_arvalid[n]),
             .m_axil_csr_arready(axil_if_csr_arready[n]),
@@ -1096,6 +1098,10 @@ generate
             .msi_irq(if_msi_irq[n*32 +: 32])
         );
 
+        assign axil_if_csr_awaddr[n*AXIL_CSR_ADDR_WIDTH +: AXIL_CSR_ADDR_WIDTH] =
+                   axis_if_csr_awaddr_t[n*IF_AXIL_ADDR_WIDTH +: AXIL_CSR_ADDR_WIDTH];
+        assign axil_if_csr_araddr[n*AXIL_CSR_ADDR_WIDTH +: AXIL_CSR_ADDR_WIDTH] =
+                   axis_if_csr_araddr_t[n*IF_AXIL_ADDR_WIDTH +: AXIL_CSR_ADDR_WIDTH];
     end
 
 endgenerate
