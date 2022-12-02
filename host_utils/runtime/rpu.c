@@ -82,7 +82,7 @@ void write_cmd(struct mqnic *dev, uint32_t addr, uint32_t data){
     mqnic_reg_write32(dev->regs, 0x000404, data);
     mqnic_reg_write32(dev->regs, 0x000404, data);
     usleep(10);
-    mqnic_reg_write32(dev->regs, 0x000408, (1<<29)|addr);
+    mqnic_reg_write32(dev->regs, 0x000408, (1<<31)|addr);
     return;
 }
 

@@ -38,10 +38,10 @@ THE SOFTWARE.
 
 #define REG_WIDTH 4
 
-#define SYS_CORE_ZONE       (0 << 30)
-#define SYS_INT_ZONE        (1 << 30)
-#define LB_CORE_ZONE     (2 << 30)
-#define LB_INT_ZONE      (3 << 30)
+#define SYS_CORE_ZONE    (0 << 29)
+#define SYS_INT_ZONE     (1 << 29)
+#define LB_CORE_ZONE     (2 << 29)
+#define LB_INT_ZONE      (3 << 29)
 
 // INTERFACE REGISTER ADDRESSES, FIXED
 #define INT_RX_EN           0

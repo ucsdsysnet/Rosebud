@@ -55,10 +55,10 @@ except ImportError:
 # FIXED SYSTEM WIDE
 REG_WIDTH = 4
 
-SYS_CORE_ZONE       = (0 << 30)
-SYS_INT_ZONE        = (1 << 30)
-LB_CORE_ZONE     = (2 << 30)
-LB_INT_ZONE      = (3 << 30)
+SYS_CORE_ZONE    = (0 << 29)
+SYS_INT_ZONE     = (1 << 29)
+LB_CORE_ZONE     = (2 << 29)
+LB_INT_ZONE      = (3 << 29)
 
 # INTERFACE REGISTER ADDRESSES, FIXED
 INT_RX_EN           = 0
@@ -371,7 +371,7 @@ class TB(object):
     # CMD operations
     async def write_cmd(self, addr, data):
         await self.rc.mem_write_dword(self.dev_pf0_bar0+0x000404, data)
-        await self.rc.mem_write_dword(self.dev_pf0_bar0+0x000408, (1 << 29) | addr)
+        await self.rc.mem_write_dword(self.dev_pf0_bar0+0x000408, (1 << 31) | addr)
 
     async def read_cmd(self, addr):
         await self.rc.mem_write_dword(self.dev_pf0_bar0+0x000408, addr)

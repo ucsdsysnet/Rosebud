@@ -102,24 +102,24 @@ struct Desc {
 
 // Reads
 
-static inline _Bool in_pkt_ready() { return IN_PKT_READY; }
-static inline _Bool update_slot_ready() { return UPDATE_SLOT_READY; }
-static inline _Bool core_msg_ready() { return CORE_MSG_READY; }
-static inline unsigned int core_id() { return CORE_ID; }
-static inline unsigned int dram_flags() { return DRAM_FLAGS; }
-static inline unsigned int active_slots() { return ACTIVE_SLOTS; }
-static inline unsigned short interrupt_flags() { return INTERRUPT_FLAGS; }
-static inline unsigned char error_flags() { return ERROR_FLAGS; }
-static inline unsigned short read_masks() { return MASK_READ; }
-static inline unsigned int read_timer_low() { return TIMER_32_L; }
-static inline unsigned int read_timer_high() { return TIMER_32_H; }
-static inline unsigned int read_bc_mask() { return RD_BC_MASK; }
-static inline unsigned int read_bc_equal() { return RD_BC_EQUAL; }
-static inline unsigned int recv_bc_msg_addr() { return RECV_BC_ADDR; }
-static inline unsigned char send_fifo_occ() { return SEND_FIFO_OCC; }
-static inline unsigned char dram_wr_fifo_occ() { return DRAM_WR_FIFO_OCC; }
-static inline unsigned char dram_rd_fifo_occ() { return DRAM_RD_FIFO_OCC; }
-static inline unsigned char core_msg_fifo_occ() { return BC_MSG_FIFO_OCC; }
+static inline _Bool          in_pkt_ready()      { return IN_PKT_READY;      }
+static inline _Bool          update_slot_ready() { return UPDATE_SLOT_READY; }
+static inline _Bool          core_msg_ready()    { return CORE_MSG_READY;    }
+static inline unsigned int   core_id()           { return CORE_ID;           }
+static inline unsigned int   dram_flags()        { return DRAM_FLAGS;        }
+static inline unsigned int   active_slots()      { return ACTIVE_SLOTS;      }
+static inline unsigned short interrupt_flags()   { return INTERRUPT_FLAGS;   }
+static inline unsigned char  error_flags()       { return ERROR_FLAGS;       }
+static inline unsigned short read_masks()        { return MASK_READ;         }
+static inline unsigned int   read_timer_low()    { return TIMER_32_L;        }
+static inline unsigned int   read_timer_high()   { return TIMER_32_H;        }
+static inline unsigned int   read_bc_mask()      { return RD_BC_MASK;        }
+static inline unsigned int   read_bc_equal()     { return RD_BC_EQUAL;       }
+static inline unsigned int   recv_bc_msg_addr()  { return RECV_BC_ADDR;      }
+static inline unsigned char  send_fifo_occ()     { return SEND_FIFO_OCC;     }
+static inline unsigned char  dram_wr_fifo_occ()  { return DRAM_WR_FIFO_OCC;  }
+static inline unsigned char  dram_rd_fifo_occ()  { return DRAM_RD_FIFO_OCC;  }
+static inline unsigned char  core_msg_fifo_occ() { return BC_MSG_FIFO_OCC;   }
 
 static inline void read_in_pkt (struct Desc* input_desc) {
 	*input_desc = RECV_DESC;

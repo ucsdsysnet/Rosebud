@@ -33,8 +33,8 @@ THE SOFTWARE.
  */
 module fpga_core #
 (
-    parameter AXIS_PCIE_DATA_WIDTH = 512,
-    parameter AXIS_PCIE_KEEP_WIDTH = (AXIS_PCIE_DATA_WIDTH/32),
+    parameter AXIS_PCIE_DATA_WIDTH    = 512,
+    parameter AXIS_PCIE_KEEP_WIDTH    = (AXIS_PCIE_DATA_WIDTH/32),
     parameter AXIS_PCIE_RC_USER_WIDTH = 161,
     parameter AXIS_PCIE_RQ_USER_WIDTH = 137,
     parameter AXIS_PCIE_CQ_USER_WIDTH = 183,
@@ -884,17 +884,19 @@ axis_async_fifo # (
   .m_status_good_frame()
 );
 
+// host_cmd bit 31 is WR/RD. bits 30:29 are target, 00 is for cores,
+// 01 is for interfaces, and 1* is for load balancer.
 always @ (posedge sys_clk) begin
   if (sys_rst_r) begin
     host_cmd_lb_wr_n   <= 1'b0;
     host_to_cores_wr_n <= 1'b0;
     host_to_ints_wr_n  <= 1'b0;
   end else begin
-    host_cmd_lb_wr_n   <= host_cmd_valid_f && host_cmd_f[31] && host_cmd_f[29];
+    host_cmd_lb_wr_n   <= host_cmd_valid_f && host_cmd_f[30] && host_cmd_f[31];
     host_to_cores_wr_n <= host_cmd_valid_f &&
-                         (host_cmd_f[31:30]==2'b00) && host_cmd_f[29];
+                         (host_cmd_f[30:29]==2'b00) && host_cmd_f[31];
     host_to_ints_wr_n  <= host_cmd_valid_f &&
-                         (host_cmd_f[31:30]==2'b01) && host_cmd_f[29];
+                         (host_cmd_f[30:29]==2'b01) && host_cmd_f[31];
   end
 
   if (host_cmd_valid_f) begin
@@ -930,7 +932,7 @@ simple_sync_sig # (
 );
 
 // Splitting the host cmd and going to core clk domain
-wire [1:0]            host_cmd_type     = host_cmd_r[31:30];
+wire [1:0]            host_cmd_type     = host_cmd_r[30:29];
 wire [CORE_WIDTH-1:0] host_core_select1 = host_cmd_r[CORE_WIDTH+4-1:4];
 wire [PORT_WIDTH-1:0] interface_sel     = host_cmd_r[PORT_WIDTH+4-1:4];
 wire [3:0]            host_reg_sel      = host_cmd_r[3:0];
@@ -1327,7 +1329,7 @@ lb_PR lb_PR_inst (
 
   // Host wr/rd commands
   .host_cmd         (host_cmd_r[28:0]),
-  .host_cmd_for_ints(host_cmd_r[30]),
+  .host_cmd_for_ints(host_cmd_r[29]),
   .host_cmd_wr_data (host_cmd_wr_data_r),
   .host_cmd_rd_data (host_rd_lb_data),
   .host_cmd_wr_en   (host_cmd_lb_wr_r)
