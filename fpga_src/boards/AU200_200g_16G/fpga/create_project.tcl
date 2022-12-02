@@ -16,6 +16,7 @@ add_files -fileset sources_1 -norecurse {
   ../lib/Shire/rtl/core_mems.v
   ../lib/Shire/rtl/slot_keeper.v
   ../lib/Shire/rtl/lb_controller.v
+  ../lib/Shire/rtl/lb_rr_lu.v
   ../lib/Shire/rtl/max_finder_tree.v
   ../lib/Shire/rtl/simple_fifo.v
   ../lib/Shire/rtl/simple_arbiter.v

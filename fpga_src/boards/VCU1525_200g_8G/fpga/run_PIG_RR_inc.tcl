@@ -42,6 +42,7 @@ add_files -norecurse {
   ../lib/Shire/rtl/header.v
   ../lib/Shire/rtl/axis_dropper.v
   ../lib/Shire/rtl/lb_controller.v
+  ../lib/Shire/rtl/lb_rr_lu.v
   ../lib/Shire/rtl/slot_keeper.v
   ../lib/Shire/rtl/max_finder_tree.v
   ../rtl/lb_rr_lu_PR.v

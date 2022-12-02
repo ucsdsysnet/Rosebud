@@ -830,14 +830,14 @@ wire        host_cmd_valid_f;
 
 reg  [31:0] host_cmd_n;
 reg  [31:0] host_cmd_wr_data_n;
-reg         host_cmd_valid_n;
+reg         host_cmd_lb_wr_n;
 reg  [31:0] host_cmd_rd_data_n;
 reg         host_to_cores_wr_n;
 reg         host_to_ints_wr_n;
 
 wire [31:0] host_cmd_r;
 wire [31:0] host_cmd_wr_data_r;
-wire        host_cmd_valid_r;
+wire        host_cmd_lb_wr_r;
 wire [31:0] host_cmd_rd_data_r;
 wire        host_to_cores_wr_r;
 wire        host_to_ints_wr_r;
@@ -886,11 +886,11 @@ axis_async_fifo # (
 
 always @ (posedge sys_clk) begin
   if (sys_rst_r) begin
-    host_cmd_valid_n   <= 1'b0;
+    host_cmd_lb_wr_n   <= 1'b0;
     host_to_cores_wr_n <= 1'b0;
     host_to_ints_wr_n  <= 1'b0;
   end else begin
-    host_cmd_valid_n   <= host_cmd_valid_f;
+    host_cmd_lb_wr_n   <= host_cmd_valid_f && host_cmd_f[31] && host_cmd_f[29];
     host_to_cores_wr_n <= host_cmd_valid_f &&
                          (host_cmd_f[31:30]==2'b00) && host_cmd_f[29];
     host_to_ints_wr_n  <= host_cmd_valid_f &&
@@ -906,9 +906,9 @@ end
 
 pipe_reg #(.WIDTH(32+32+3), .N(2)) host_cmd_wr_pipe_reg (
   .clk(sys_clk),
-  .in( {host_cmd_wr_data_n, host_cmd_n, host_cmd_valid_n,
+  .in( {host_cmd_wr_data_n, host_cmd_n, host_cmd_lb_wr_n,
         host_to_cores_wr_n, host_to_ints_wr_n}),
-  .out({host_cmd_wr_data_r, host_cmd_r, host_cmd_valid_r,
+  .out({host_cmd_wr_data_r, host_cmd_r, host_cmd_lb_wr_r,
         host_to_cores_wr_r, host_to_ints_wr_r})
 );
 
@@ -1326,10 +1326,11 @@ lb_PR lb_PR_inst (
   .ctrl_s_axis_tuser(sched_ctrl_s_axis_tuser),
 
   // Host wr/rd commands
-  .host_cmd         (host_cmd_r),
+  .host_cmd         (host_cmd_r[28:0]),
+  .host_cmd_for_ints(host_cmd_r[30]),
   .host_cmd_wr_data (host_cmd_wr_data_r),
   .host_cmd_rd_data (host_rd_sched_data),
-  .host_cmd_valid   (host_cmd_valid_r)
+  .host_cmd_wr_en   (host_cmd_lb_wr_r)
 );
 
 // MUX between host commands and LB requests

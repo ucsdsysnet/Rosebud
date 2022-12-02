@@ -73,11 +73,12 @@ module lb_PR (
   output wire             ctrl_s_axis_tready,
   input  wire [3-1:0]     ctrl_s_axis_tuser,
 
-  // Cores commands
-  input  wire [31:0]      host_cmd,
+  // Cores commands, bits 31 to 29 already used
+  input  wire [28:0]      host_cmd,
+  input  wire             host_cmd_for_ints,
   input  wire [31:0]      host_cmd_wr_data,
-  output reg  [31:0]      host_cmd_rd_data,
-  input  wire             host_cmd_valid
+  output wire [31:0]      host_cmd_rd_data,
+  input  wire             host_cmd_wr_en
 );
 
   parameter IF_COUNT        = 3;
@@ -127,310 +128,19 @@ module lb_PR (
   assign data_s_axis_tready_r = tx_axis_tready_n;
 
   ///////////////////////////////////////////////////////////////////////////////
-  ///////////////////////// Host command parsing ////////////////////////////////
+  ////////////////////////// Control channel handler ////////////////////////////
   ///////////////////////////////////////////////////////////////////////////////
-  reg [31:0]                host_cmd_r;
-  reg [31:0]                host_cmd_wr_data_r;
-  reg                       host_to_sched_wr_r;
-  reg                       host_to_int_not_core;
-  reg [CORE_COUNT-1:0]      income_cores;
-  reg [CORE_COUNT-1:0]      enabled_cores;
-  reg [CORE_COUNT-1:0]      slots_flush;
-  reg [CORE_ID_WIDTH-1:0]   stat_read_core_r;
-  reg [INTERFACE_WIDTH-1:0] stat_read_interface_r;
-  reg [31:0]                host_cmd_rd_data_n;
-  reg [IF_COUNT-1:0]        rx_almost_full;
-  reg [IF_COUNT-1:0]        release_desc;
-  reg [3:0]                 host_cmd_reg;
-
-  reg [IF_COUNT*RX_LINES_WIDTH-1:0] rx_line_count_r;
-  reg [RX_LINES_WIDTH-1:0]          drop_limit;
-
-  // host cmd bit 31 high means wr. bit 30 low means command for cores
-  always @ (posedge clk) begin
-    host_cmd_r            <= host_cmd;
-    host_cmd_wr_data_r    <= host_cmd_wr_data;
-    host_to_sched_wr_r    <= host_cmd_valid && host_cmd[31] && host_cmd[29];
-    host_to_int_not_core  <= host_cmd[30];
-    stat_read_core_r      <= host_cmd[CORE_ID_WIDTH+4-1:4];
-    stat_read_interface_r <= host_cmd[INTERFACE_WIDTH+4-1:4];
-    host_cmd_reg          <= host_cmd[3:0];
-    host_cmd_rd_data      <= host_cmd_rd_data_n;
-    rx_line_count_r       <= rx_axis_line_count;
-
-    if (host_to_sched_wr_r)
-      case ({host_to_int_not_core, host_cmd_reg})
-        // CORES
-        5'h00: begin
-          // A core to be reset cannot be an incoming core.
-          income_cores  <= income_cores & host_cmd_wr_data_r[CORE_COUNT-1:0];
-          enabled_cores <= host_cmd_wr_data_r[CORE_COUNT-1:0];
-        end
-        5'h01: begin
-          income_cores  <= host_cmd_wr_data_r[CORE_COUNT-1:0] & enabled_cores;
-        end
-        5'h02: begin
-          slots_flush   <= host_cmd_wr_data_r[CORE_COUNT-1:0];
-        end
-        // INTS
-        5'h12: begin
-          release_desc  <= host_cmd_wr_data_r[IF_COUNT-1:0];
-        end
-        5'h13: begin
-          drop_limit    <= host_cmd_wr_data_r[RX_LINES_WIDTH-1:0];
-        end
-
-        default: begin //for one-cycle signals
-          release_desc <= {IF_COUNT{1'b0}};
-          slots_flush  <= {CORE_COUNT{1'b0}};
-        end
-      endcase
-    else begin // for one-cycle signals
-          release_desc <= {IF_COUNT{1'b0}};
-          slots_flush  <= {CORE_COUNT{1'b0}};
-    end
-
-    if (rst_r) begin
-      host_to_sched_wr_r <= 1'b0;
-      income_cores       <= {CORE_COUNT{1'b0}};
-      enabled_cores      <= {CORE_COUNT{1'b0}};
-      release_desc       <= {IF_COUNT{1'b0}};
-      slots_flush        <= {CORE_COUNT{1'b0}};
-      drop_limit         <= RX_LINES_WIDTH > 4 ?
-                            {4'd7, {(RX_LINES_WIDTH-4){1'b0}}}:
-                            {1'b1, {(RX_LINES_WIDTH-1){1'b0}}};
-    end
-  end
-
-  integer l;
-  always @ (posedge clk) begin
-    for (l=0;l<IF_COUNT;l=l+1)
-      rx_almost_full[l] <=
-          (rx_line_count_r[l*RX_LINES_WIDTH +: RX_LINES_WIDTH] >= drop_limit);
-    if (rst_r)
-      rx_almost_full    <= {IF_COUNT{1'b0}};
-  end
+  wire [CORE_COUNT-1:0]            enabled_cores;
+  wire [CORE_COUNT-1:0]            slots_flush;
 
   wire [CORE_COUNT*SLOT_WIDTH-1:0] slot_counts;
   wire [CORE_COUNT-1:0]            slot_valids;
   wire [CORE_COUNT-1:0]            slots_busy;
 
-  reg  [1:0] port_state [0:IF_COUNT-1];
-  reg  [IF_COUNT*ID_TAG_WIDTH-1:0] dest_r;
-  wire [IF_COUNT*32-1:0]  drop_count;
+  wire [CORE_ID_WIDTH-1:0]         selected_core;
+  wire                             desc_pop;
+  wire [ID_TAG_WIDTH-1:0]          desc_data;
 
-  always @ (posedge clk)
-    case ({host_to_int_not_core, host_cmd_reg})
-      // CORES
-      5'h00:   host_cmd_rd_data_n <= enabled_cores;
-      5'h01:   host_cmd_rd_data_n <= income_cores;
-      5'h03:   host_cmd_rd_data_n <= slot_counts[stat_read_core_r * SLOT_WIDTH +: SLOT_WIDTH];
-      // INTS
-      5'h10:   host_cmd_rd_data_n <= {14'd0, port_state[stat_read_interface_r],
-                                  {(8-CORE_ID_WIDTH){1'b0}},
-                                  dest_r[(stat_read_interface_r * ID_TAG_WIDTH) + TAG_WIDTH +: CORE_ID_WIDTH],
-                                  {(8-TAG_WIDTH){1'b0}},
-                                  dest_r[stat_read_interface_r * ID_TAG_WIDTH +: TAG_WIDTH]};
-      5'h12:   host_cmd_rd_data_n <= drop_count[stat_read_interface_r*32 +: 32];
-      default: host_cmd_rd_data_n <= 32'hFEFEFEFE;
-    endcase
-
-  ///////////////////////////////////////////////////////////////////////////////
-  ///////////////////////// Load balancing policy ///////////////////////////////
-  ///////////////////////////////////////////////////////////////////////////////
-
-  // Selecting the core with most available slots
-  // Since slots start from 1, SLOT WIDTH is already 1 bit extra
-  localparam CLUSTER_CORES      = CORE_COUNT/CLUSTER_COUNT;
-  localparam CLUSTER_WIDTH      = $clog2(CLUSTER_COUNT);
-  localparam CLUSTER_CORE_WIDTH = $clog2(CLUSTER_CORES);
-
-  wire [CLUSTER_COUNT-1:0] cluster_max_valid;
-  wire [CLUSTER_CORE_WIDTH-1:0] selected_cluster_core [0:CLUSTER_COUNT-1];
-  wire [CORE_COUNT-1:0] masks = income_cores & ~slots_busy;
-
-  genvar k;
-  generate
-    for (k=0; k<CLUSTER_COUNT; k=k+1) begin
-      max_finder_tree # (
-        .PORT_COUNT(CLUSTER_CORES),
-        .DATA_WIDTH(SLOT_WIDTH)
-      ) core_selector (
-        .values(slot_counts[k*CLUSTER_CORES*SLOT_WIDTH +: CLUSTER_CORES*SLOT_WIDTH]),
-        .valids(masks[k*CLUSTER_CORES +: CLUSTER_CORES]),
-        .max_val(),
-        .max_ptr(selected_cluster_core[k]),
-        .max_valid(cluster_max_valid[k])
-      );
-    end
-  endgenerate
-
-  wire                     max_valid;
-  wire                     selected_port_v;
-  wire [CORE_ID_WIDTH-1:0] selected_rx_core;
-  wire                     rx_desc_pop;
-
-  generate
-      if (CLUSTER_COUNT==1)
-          assign selected_rx_core = {selected_cluster_core[0]};
-      else begin
-          wire [CLUSTER_WIDTH-1:0] selected_cluster;
-          simple_arbiter # (
-              .PORTS(CLUSTER_COUNT),
-              .ARB_TYPE_ROUND_ROBIN(1),
-              .ARB_LSB_HIGH_PRIORITY(1)
-          ) max_slot_arbiter (
-              .clk(clk),
-              .rst(rst_r),
-
-              .request(cluster_max_valid),
-              .taken(selected_port_v), // equal to rx_desc_pop
-
-              .grant(),
-              .grant_valid (max_valid),
-              .grant_encoded(selected_cluster)
-          );
-
-          assign selected_rx_core = {selected_cluster, selected_cluster_core[selected_cluster]};
-      end
-  endgenerate
-
-  // Adding tdest and tuser to input data from eth, dest based on
-  // rx_desc_fifo and stamp the incoming port
-  wire [IF_COUNT-1:0]        selected_port;
-  wire [INTERFACE_WIDTH-1:0] selected_port_enc;
-
-  reg  [IF_COUNT*ID_TAG_WIDTH-1:0] dest;
-  reg  [IF_COUNT*ID_TAG_WIDTH-1:0] dest_rr;
-
-  assign rx_desc_pop                    = selected_port_v && max_valid;
-  wire [IF_COUNT-1:0] port_desc_avail   = {IF_COUNT{rx_desc_pop}} & selected_port;
-  wire [IF_COUNT-1:0] port_valid        = rx_axis_tvalid_r & rx_axis_tready_r;
-  wire [IF_COUNT-1:0] sending_last_word = port_valid & rx_axis_tlast_r;
-
-  // State machine per port
-  localparam STALL = 2'b00; // Don't accept until getting a desc
-  localparam FIRST = 2'b01; // Ready to get new packet
-  localparam WAIT  = 2'b10; // Accept while waiting for new desc
-  localparam MID   = 2'b11; // Desc ready, wait for end of the packet
-
-  integer n;
-  always @ (posedge clk)
-      for (n=0; n<IF_COUNT; n=n+1)
-          if (rst_r) begin
-              port_state[n]     <= STALL;
-          end else begin
-              case (port_state[n])
-                  STALL: if (port_desc_avail[n])
-                             port_state[n] <= FIRST;
-                  FIRST: if (sending_last_word[n])
-                             port_state[n] <= STALL;
-                         else if (port_valid[n])
-                             port_state[n] <= WAIT;
-                         // 2 previous ifs already used the desc
-                         else if (release_desc[n])
-                             port_state[n] <= STALL;
-                         // Since the specific core is disabled,
-                         // it cannot get desc from the same core
-                  WAIT:  if (port_desc_avail[n] && sending_last_word[n])
-                             port_state[n] <= FIRST;
-                         else if (port_desc_avail[n])
-                             port_state[n] <= MID;
-                         else if (sending_last_word[n])
-                             port_state[n] <= STALL;
-                  MID:   if (sending_last_word[n]) begin
-                             if (release_desc[n])
-                                 port_state[n] <= STALL;
-                             else
-                                 port_state[n] <= FIRST;
-                         // Don't use the reserved desc
-                         end else if (release_desc[n]) begin
-                                 port_state[n] <= WAIT;
-                         end
-              endcase
-              // When a packet starts latch the tdest
-              if ((port_state[n] == FIRST) && port_valid[n])
-                  dest_rr[n*ID_TAG_WIDTH +: ID_TAG_WIDTH] <= dest_r[n*ID_TAG_WIDTH +: ID_TAG_WIDTH];
-          end
-
-  wire [1:0] state_0 = port_state[0];
-  wire [1:0] state_1 = port_state[1];
-  wire [1:0] state_2 = port_state[2];
-
-  // Desc request and port ready
-  integer p;
-  reg [IF_COUNT-1:0] desc_req;
-  reg [IF_COUNT-1:0] port_not_stall;
-  always @ (*)
-      for (p=0; p<IF_COUNT; p=p+1) begin
-          // When a packet starts we ask for new desc, or if we are in stall or wait.
-          // If request in FIRST is responded during WAIT it would be cancedlled by !selected_port
-          desc_req[p] = !(selected_port[p]) && ((port_state[p]==STALL) || (port_state[p]==WAIT) ||
-                          ((port_state[p]==FIRST) && port_valid[p]));
-          port_not_stall[p] = (port_state[p]!=STALL);
-          dest[p*ID_TAG_WIDTH +: ID_TAG_WIDTH] = (port_state[p]==FIRST) ?
-              dest_r[p*ID_TAG_WIDTH +: ID_TAG_WIDTH] : dest_rr[p*ID_TAG_WIDTH +: ID_TAG_WIDTH];
-      end
-
-  // arbiter among ports for desc request
-  arbiter # (
-    .PORTS(IF_COUNT),
-    .ARB_TYPE_ROUND_ROBIN(1),
-    .ARB_LSB_HIGH_PRIORITY(1)
-  ) port_selector (
-    .clk(clk),
-    .rst(rst_r),
-
-    .request(desc_req),
-    .acknowledge({IF_COUNT{1'b0}}),
-
-    .grant(selected_port),
-    .grant_valid(selected_port_v),
-    .grant_encoded(selected_port_enc)
-  );
-
-  // Load the new desc
-  wire [ID_TAG_WIDTH-1:0] rx_desc_data;
-
-  always @ (posedge clk)
-    if (rx_desc_pop)
-      dest_r[selected_port_enc*ID_TAG_WIDTH +: ID_TAG_WIDTH] <= rx_desc_data;
-
-  genvar j;
-  generate
-    for (j=0; j<IF_COUNT;j=j+1)
-      assign data_m_axis_tuser_n[j*PORT_WIDTH +: PORT_WIDTH] = j;
-  endgenerate
-
-  axis_dropper # (
-    .PORT_COUNT(IF_COUNT),
-    .REG_FOR_DROP(1),
-    .SAME_CYCLE_DROP(0),
-    .DROP_CNT_WIDTH(32)
-  ) rx_dropper (
-    .clk(clk),
-    .rst(rst_r),
-
-    // .drop(rx_almost_full & ~{IF_COUNT{max_valid}}), // There is no free core
-    .drop({IF_COUNT{1'b0}}), // There is a bug, for now disabling it.
-    .drop_count(drop_count),
-
-    .s_axis_tvalid(rx_axis_tvalid_r & port_not_stall),
-    .s_axis_tlast(rx_axis_tlast_r),
-    .s_axis_tready(rx_axis_tready_r),
-
-    .m_axis_tvalid(data_m_axis_tvalid_n),
-    .m_axis_tlast(data_m_axis_tlast_n),
-    .m_axis_tready(data_m_axis_tready_n & port_not_stall)
-  );
-
-  assign data_m_axis_tdata_n  = rx_axis_tdata_r;
-  assign data_m_axis_tkeep_n  = rx_axis_tkeep_r;
-  assign data_m_axis_tdest_n  = dest;
-
-  ///////////////////////////////////////////////////////////////////////////////
-  ////////////////////////// Control channel handler ////////////////////////////
-  ///////////////////////////////////////////////////////////////////////////////
   lb_controller  # (
     .CORE_COUNT(CORE_COUNT),
     .SLOT_COUNT(SLOT_COUNT),
@@ -465,9 +175,67 @@ module lb_PR (
     .slots_busy    (slots_busy),
 
     // Core select, and its pop signal assert and descriptor readback
-    .selected_core (selected_rx_core),
-    .rx_desc_pop   (rx_desc_pop),
-    .rx_desc_data  (rx_desc_data)
+    .selected_core (selected_core),
+    .desc_pop      (desc_pop),
+    .desc_data     (desc_data)
+  );
+
+  ///////////////////////////////////////////////////////////////////////////////
+  ///////////////////////////// RR load balancer ////////////////////////////////
+  ///////////////////////////////////////////////////////////////////////////////
+  lb_rr_lu # (
+    .IF_COUNT(IF_COUNT),
+    .PORT_COUNT(PORT_COUNT),
+    .CORE_COUNT(CORE_COUNT),
+    .SLOT_COUNT(SLOT_COUNT),
+    .DATA_WIDTH(DATA_WIDTH),
+    .RX_LINES_WIDTH(RX_LINES_WIDTH),
+    .CLUSTER_COUNT(CLUSTER_COUNT),
+    .SLOT_WIDTH(SLOT_WIDTH),
+    .CORE_ID_WIDTH(CORE_ID_WIDTH),
+    .INTERFACE_WIDTH(INTERFACE_WIDTH),
+    .PORT_WIDTH(PORT_WIDTH),
+    .TAG_WIDTH(TAG_WIDTH),
+    .ID_TAG_WIDTH(ID_TAG_WIDTH),
+    .STRB_WIDTH(STRB_WIDTH)
+  ) lb_policy_inst (
+    .clk(clk),
+    .rst(rst_r),
+
+    // Data input and output streams
+    .s_axis_tdata(rx_axis_tdata_r),
+    .s_axis_tkeep(rx_axis_tkeep_r),
+    .s_axis_tvalid(rx_axis_tvalid_r),
+    .s_axis_tready(rx_axis_tready_r),
+    .s_axis_tlast(rx_axis_tlast_r),
+    .s_axis_line_count(rx_axis_line_count_r),
+
+    .m_axis_tdata(data_m_axis_tdata_n),
+    .m_axis_tkeep(data_m_axis_tkeep_n),
+    .m_axis_tdest(data_m_axis_tdest_n),
+    .m_axis_tuser(data_m_axis_tuser_n),
+    .m_axis_tvalid(data_m_axis_tvalid_n),
+    .m_axis_tready(data_m_axis_tready_n),
+    .m_axis_tlast(data_m_axis_tlast_n),
+
+    // Host command interface
+    .host_cmd(host_cmd_r),
+    .host_cmd_wr_data(host_cmd_wr_data_r),
+    .host_cmd_rd_data(host_cmd_rd_data_n),
+    .host_cmd_wr_en(host_cmd_wr_en_r),
+    .host_cmd_for_ints(host_cmd_for_ints_r),
+
+    // Config registers outputs and slots status inputs
+    .enabled_cores(enabled_cores),
+    .slots_flush(slots_flush),
+    .slot_counts(slot_counts),
+    .slot_valids(slot_valids),
+    .slots_busy(slots_busy),
+
+    // Request and response to lb_controller
+    .selected_core(selected_core),
+    .desc_pop(desc_pop),
+    .desc_data(desc_data)
   );
 
 endmodule

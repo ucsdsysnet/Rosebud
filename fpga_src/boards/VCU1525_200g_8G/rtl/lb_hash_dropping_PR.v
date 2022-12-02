@@ -73,11 +73,12 @@ module lb_PR (
   output wire             ctrl_s_axis_tready,
   input  wire [3-1:0]     ctrl_s_axis_tuser,
 
-  // Cores commands
-  input  wire [31:0]      host_cmd,
+  // Cores commands, bits 31 to 29 already used
+  input  wire [28:0]      host_cmd,
+  input  wire             host_cmd_for_ints,
   input  wire [31:0]      host_cmd_wr_data,
-  output reg  [31:0]      host_cmd_rd_data,
-  input  wire             host_cmd_valid
+  output wire [31:0]      host_cmd_rd_data,
+  input  wire             host_cmd_wr_en
 );
 
   parameter IF_COUNT        = 3;
@@ -105,7 +106,6 @@ module lb_PR (
   parameter ID_TAG_WIDTH    = CORE_ID_WIDTH+TAG_WIDTH;
   parameter STRB_WIDTH      = DATA_WIDTH/8;
   parameter HASH_FIFO_DEPTH = DATA_FIFO_DEPTH/64;
-  parameter HASH_N_DESC     = 32+ID_TAG_WIDTH+1;
 
   ///////////////////////////////////////////////////////////////////////////////
   //////////////////////// Register input and outputs ///////////////////////////
@@ -129,382 +129,19 @@ module lb_PR (
   assign data_s_axis_tready_r = tx_axis_tready_n;
 
   ///////////////////////////////////////////////////////////////////////////////
-  //////////// Compute and append flow has, plus FIFOs for results //////////////
+  ////////////////////////// Control channel handler ////////////////////////////
   ///////////////////////////////////////////////////////////////////////////////
-  wire [IF_COUNT*DATA_WIDTH-1:0]    rx_axis_tdata_f;
-  wire [IF_COUNT*STRB_WIDTH-1:0]    rx_axis_tkeep_f;
-  wire [IF_COUNT-1:0]               rx_axis_tvalid_f;
-  wire [IF_COUNT-1:0]               rx_axis_tready_f;
-  wire [IF_COUNT-1:0]               rx_axis_tlast_f;
-
-  wire [IF_COUNT*32-1:0]            rx_hash;
-  wire [IF_COUNT*4-1:0]             rx_hash_type;
-  wire [IF_COUNT-1:0]               rx_hash_valid;
-  // wire [IF_COUNT-1:0]               rx_hash_ready;
-
-  wire [IF_COUNT*32-1:0]            rx_hash_f;
-  wire [IF_COUNT*4-1:0]             rx_hash_type_f;
-  wire [IF_COUNT-1:0]               rx_hash_valid_f;
-  reg  [IF_COUNT-1:0]               rx_hash_ready_f;
-
-  wire [IF_COUNT*CORE_ID_WIDTH-1:0] masked_hash;
-
-  wire [IF_COUNT*HASH_N_DESC-1:0]   hash_n_dest_in;
-  reg  [IF_COUNT-1:0]               hash_n_dest_in_v;
-  wire [IF_COUNT-1:0]               hash_n_dest_in_ready;
-
-  wire [IF_COUNT*32-1:0]            hash_out;
-  wire [IF_COUNT*ID_TAG_WIDTH-1:0]  dest_out;
-  wire [IF_COUNT-1:0]               drop_out;
-  wire [IF_COUNT-1:0]               hash_n_dest_out_v;
-  wire [IF_COUNT-1:0]               hash_n_dest_out_ready;
-
-  genvar p;
-  generate
-    for (p=0; p<IF_COUNT; p=p+1) begin: hash_for_ints
-
-      rx_hash #(
-        .DATA_WIDTH(DATA_WIDTH),
-        .KEEP_WIDTH(STRB_WIDTH)
-      ) rx_Toeplitz_hash (
-        .clk(clk),
-        .rst(rst_r),
-
-        .s_axis_tdata (rx_axis_tdata_r[p*DATA_WIDTH +: DATA_WIDTH]),
-        .s_axis_tkeep (rx_axis_tkeep_r[p*STRB_WIDTH +: STRB_WIDTH]),
-        .s_axis_tvalid(rx_axis_tvalid_r[p] && rx_axis_tready_r[p]),
-        .s_axis_tlast (rx_axis_tlast_r[p]),
-
-        .hash_key(320'h6d5a56da255b0ec24167253d43a38fb0d0ca2bcbae7b30b477cb2da38030f20c6a42b73bbeac01fa),
-
-        .m_axis_hash(rx_hash[p*32 +: 32]),
-        .m_axis_hash_type(rx_hash_type[p*4 +: 4]),
-        .m_axis_hash_valid(rx_hash_valid[p])
-      );
-
-      simple_sync_fifo # (
-        .DEPTH(HASH_FIFO_DEPTH),
-        .DATA_WIDTH(32+4)
-      ) rx_hash_fifo (
-        .clk(clk),
-        .rst(rst_r),
-
-        .din_valid(rx_hash_valid[p]),
-        .din({rx_hash_type[p*4 +: 4], rx_hash[p*32 +: 32]}),
-        .din_ready(), // rx_hash_ready[p]),
-        // FIFO has more room than 64B packets in the data fifo
-
-        .dout_valid(rx_hash_valid_f[p]),
-        .dout({rx_hash_type_f[p*4 +: 4], rx_hash_f[p*32 +: 32]}),
-        .dout_ready(rx_hash_ready_f[p])
-      );
-
-      // integrate hash_type?
-      wire [31:0] sel_hash = rx_hash_f[p*32 +: 32];
-      assign masked_hash[p*CORE_ID_WIDTH +: CORE_ID_WIDTH] =
-                sel_hash[HASH_SEL_OFFSET +: CORE_ID_WIDTH];
-
-      /// *** DATA FIFO WHILE WAITING FOR HASH AND DESC ALLOCATION *** ///
-
-      axis_fifo # (
-          .DEPTH(DATA_FIFO_DEPTH),
-          .DATA_WIDTH(DATA_WIDTH),
-          .KEEP_ENABLE(1),
-          .KEEP_WIDTH(STRB_WIDTH),
-          .LAST_ENABLE(1),
-          .ID_ENABLE(0),
-          .DEST_ENABLE(0),
-          .USER_ENABLE(0),
-          .RAM_PIPELINE(2),
-          .FRAME_FIFO(0)
-      ) rx_fifo_inst (
-          .clk(clk),
-          .rst(rst_r),
-
-          .s_axis_tdata (rx_axis_tdata_r[p*DATA_WIDTH +: DATA_WIDTH]),
-          .s_axis_tkeep (rx_axis_tkeep_r[p*STRB_WIDTH +: STRB_WIDTH]),
-          .s_axis_tvalid(rx_axis_tvalid_r[p]),
-          .s_axis_tready(rx_axis_tready_r[p]),
-          .s_axis_tlast (rx_axis_tlast_r[p]),
-          .s_axis_tid   (8'd0),
-          .s_axis_tdest (8'd0),
-          .s_axis_tuser (1'b0),
-
-          .m_axis_tdata (rx_axis_tdata_f[p*DATA_WIDTH +: DATA_WIDTH]),
-          .m_axis_tkeep (rx_axis_tkeep_f[p*STRB_WIDTH +: STRB_WIDTH]),
-          .m_axis_tvalid(rx_axis_tvalid_f[p]),
-          .m_axis_tready(rx_axis_tready_f[p]),
-          .m_axis_tlast (rx_axis_tlast_f[p]),
-          .m_axis_tid   (),
-          .m_axis_tdest (),
-          .m_axis_tuser (),
-
-          .status_overflow(),
-          .status_bad_frame(),
-          .status_good_frame()
-      );
-
-      /// *** FIFO FOR HASH AND ALLOCATED DESC, WAITING TO BE SENT OUT *** ///
-
-      simple_sync_fifo # (
-        .DEPTH(HASH_FIFO_DEPTH),
-        .DATA_WIDTH(HASH_N_DESC)
-      ) rx_hash_n_desc_fifo (
-        .clk(clk),
-        .rst(rst_r),
-
-        .din_valid(hash_n_dest_in_v[p]),
-        .din(hash_n_dest_in[p*HASH_N_DESC +: HASH_N_DESC]),
-        .din_ready(hash_n_dest_in_ready[p]),
-
-        .dout_valid(hash_n_dest_out_v[p]),
-        .dout({drop_out[p], hash_out[p*32 +: 32], dest_out[p*ID_TAG_WIDTH +: ID_TAG_WIDTH]}),
-        .dout_ready(hash_n_dest_out_ready[p])
-      );
-
-      wire [PORT_WIDTH-1:0] port_num = p;
-
-      /// *** ATTACHING HASH AT THE BEGINNING OF THE PACKET *** ///
-
-      header_adder_blocking # (
-        .DATA_WIDTH(DATA_WIDTH),
-        .STRB_WIDTH(DATA_WIDTH/8),
-        .HDR_WIDTH(32),
-        .DEST_WIDTH(ID_TAG_WIDTH),
-        .USER_WIDTH(PORT_WIDTH)
-      ) hash_adder (
-        .clk(clk),
-        .rst(rst_r),
-
-        .s_axis_tdata (rx_axis_tdata_f[p*DATA_WIDTH +: DATA_WIDTH]),
-        .s_axis_tkeep (rx_axis_tkeep_f[p*STRB_WIDTH +: STRB_WIDTH]),
-        .s_axis_tdest (dest_out[p*ID_TAG_WIDTH +: ID_TAG_WIDTH]),
-        .s_axis_tuser (port_num),
-        .s_axis_tlast (rx_axis_tlast_f[p]),
-        .s_axis_tvalid(rx_axis_tvalid_f[p]),
-        .s_axis_tready(rx_axis_tready_f[p]),
-
-        .header(hash_out[p*32 +: 32]),
-        .drop(drop_out[p]),
-        .header_valid(hash_n_dest_out_v[p]),
-        .header_ready(hash_n_dest_out_ready[p]),
-
-        .m_axis_tdata(data_m_axis_tdata_n[p*DATA_WIDTH +: DATA_WIDTH]),
-        .m_axis_tkeep(data_m_axis_tkeep_n[p*STRB_WIDTH +: STRB_WIDTH]),
-        .m_axis_tdest(data_m_axis_tdest_n[p*ID_TAG_WIDTH +: ID_TAG_WIDTH]),
-        .m_axis_tuser(data_m_axis_tuser_n[p*PORT_WIDTH +: PORT_WIDTH]),
-        .m_axis_tlast(data_m_axis_tlast_n[p]),
-        .m_axis_tvalid(data_m_axis_tvalid_n[p]),
-        .m_axis_tready(data_m_axis_tready_n[p])
-      );
-
-    end
-  endgenerate
-
-  ///////////////////////////////////////////////////////////////////////////////
-  ///////////////////////// Host command parsing ////////////////////////////////
-  ///////////////////////////////////////////////////////////////////////////////
-  reg [31:0]                host_cmd_r;
-  reg [31:0]                host_cmd_wr_data_r;
-  reg                       host_to_sched_wr_r;
-  reg                       host_to_int_not_core;
-  reg [CORE_COUNT-1:0]      income_cores;
-  reg [CORE_COUNT-1:0]      enabled_cores;
-  reg [CORE_COUNT-1:0]      slots_flush;
-  reg [CORE_ID_WIDTH-1:0]   stat_read_core_r;
-  reg [INTERFACE_WIDTH-1:0] stat_read_interface_r;
-  reg [31:0]                host_cmd_rd_data_n;
-  reg [IF_COUNT-1:0]        rx_almost_full;
-  reg [3:0]                 host_cmd_reg;
-
-  reg [IF_COUNT*RX_LINES_WIDTH-1:0] rx_line_count_r;
-  reg [RX_LINES_WIDTH-1:0]          drop_limit;
-
-  // host cmd bit 31 high means wr. bit 30 low means command for cores
-  always @ (posedge clk) begin
-    host_cmd_r            <= host_cmd;
-    host_cmd_wr_data_r    <= host_cmd_wr_data;
-    host_to_sched_wr_r    <= host_cmd_valid && host_cmd[31] && host_cmd[29];
-    host_to_int_not_core  <= host_cmd[30];
-    stat_read_core_r      <= host_cmd[CORE_ID_WIDTH+4-1:4];
-    stat_read_interface_r <= host_cmd[INTERFACE_WIDTH+4-1:4];
-    host_cmd_reg          <= host_cmd[3:0];
-    host_cmd_rd_data      <= host_cmd_rd_data_n;
-    rx_line_count_r       <= rx_axis_line_count;
-
-    if (host_to_sched_wr_r)
-      case ({host_to_int_not_core, host_cmd_reg})
-        // CORES
-        5'h00: begin
-          // A core to be reset cannot be an incoming core.
-          income_cores  <= income_cores & host_cmd_wr_data_r[CORE_COUNT-1:0];
-          enabled_cores <= host_cmd_wr_data_r[CORE_COUNT-1:0];
-        end
-        5'h01: begin
-          income_cores  <= host_cmd_wr_data_r[CORE_COUNT-1:0] & enabled_cores;
-        end
-        5'h02: begin
-          slots_flush   <= host_cmd_wr_data_r[CORE_COUNT-1:0];
-        end
-        // INTS
-        5'h13: begin
-          drop_limit    <= host_cmd_wr_data_r[RX_LINES_WIDTH-1:0];
-        end
-
-        default: begin //for one-cycle signals
-          slots_flush  <= {CORE_COUNT{1'b0}};
-        end
-      endcase
-    else begin // for one-cycle signals
-          slots_flush  <= {CORE_COUNT{1'b0}};
-    end
-
-    if (rst_r) begin
-      host_to_sched_wr_r <= 1'b0;
-      income_cores       <= {CORE_COUNT{1'b0}};
-      enabled_cores      <= {CORE_COUNT{1'b0}};
-      slots_flush        <= {CORE_COUNT{1'b0}};
-      drop_limit         <= RX_LINES_WIDTH > 4 ?
-                            {4'd7, {(RX_LINES_WIDTH-4){1'b0}}}:
-                            {1'b1, {(RX_LINES_WIDTH-1){1'b0}}};
-    end
-  end
-
-  integer l;
-  always @ (posedge clk) begin
-    for (l=0;l<IF_COUNT;l=l+1)
-      rx_almost_full[l] <=
-          (rx_line_count_r[l*RX_LINES_WIDTH +: RX_LINES_WIDTH] >= drop_limit);
-    if (rst_r)
-      rx_almost_full    <= {IF_COUNT{1'b0}};
-  end
-
-  /// *** STATUS FOR HOST READBACK *** ///
-  reg [IF_COUNT*32-1:0] drop_count;
-
-  always @ (posedge clk) begin
-    if (rst_r)
-      drop_count <= {IF_COUNT*ID_TAG_WIDTH{1'b0}};
-    else if (selected_port_v_r && !slots_busy[rx_dest_core] &&
-             !rx_desc_avail[rx_dest_core] && rx_almost_full[selected_port_enc_r])
-      drop_count[selected_port_enc_r*32 +: 32] <=
-        drop_count[selected_port_enc_r*32 +: 32] + 1;
-  end
+  wire [CORE_COUNT-1:0]            enabled_cores;
+  wire [CORE_COUNT-1:0]            slots_flush;
 
   wire [CORE_COUNT*SLOT_WIDTH-1:0] slot_counts;
   wire [CORE_COUNT-1:0]            slot_valids;
   wire [CORE_COUNT-1:0]            slots_busy;
 
-  always @ (posedge clk)
-    case ({host_to_int_not_core, host_cmd_reg})
-      // CORES
-      5'h00:   host_cmd_rd_data_n <= enabled_cores;
-      5'h01:   host_cmd_rd_data_n <= income_cores;
-      5'h03:   host_cmd_rd_data_n <= slot_counts[stat_read_core_r * SLOT_WIDTH +: SLOT_WIDTH];
-      // INTS
-      5'h12:   host_cmd_rd_data_n <= drop_count[stat_read_interface_r*32 +: 32];
-      default: host_cmd_rd_data_n <= 32'hFEFEFEFE;
-    endcase
+  wire [CORE_ID_WIDTH-1:0]         selected_core;
+  wire                             desc_pop;
+  wire [ID_TAG_WIDTH-1:0]          desc_data;
 
-  ///////////////////////////////////////////////////////////////////////////////
-  ///////////////////////// Load balancing policy ///////////////////////////////
-  ///////////////////////////////////////////////////////////////////////////////
-
-  /// *** ARBITRATION AND DESC ALLOCATION FOR RX DATA *** ///
-
-  // Arbiter among ports for desc request. The destination core based on hash
-  // is registered for next cycle.
-  wire [IF_COUNT-1:0] selected_port;
-  wire [INTERFACE_WIDTH-1:0] selected_port_enc;
-  wire selected_port_v;
-
-  // arbiter results are saved for the next cycle
-  reg  [IF_COUNT-1:0] selected_port_r;
-  reg  [INTERFACE_WIDTH-1:0] selected_port_enc_r;
-  reg  selected_port_v_r;
-
-  always @ (posedge clk)
-    if (rst_r) begin
-      selected_port_r     <= {IF_COUNT{1'b0}};
-      selected_port_enc_r <= {INTERFACE_WIDTH{1'b0}};
-      selected_port_v_r   <= 1'b0;
-    end else begin
-      selected_port_v_r   <= selected_port_v;
-      selected_port_enc_r <= selected_port_enc;
-      if (selected_port_v)
-        selected_port_r   <= selected_port;
-      else
-        selected_port_r   <= {IF_COUNT{1'b0}};
-    end
-
-  // we have to wait one cycle for desc availability check, so the same core
-  // should not be selected in consecutive cycles. An interface has data when
-  // the corresponding hash fifo is valid. Also if next fifo is full there
-  // should not be any requests.
-  wire [IF_COUNT-1:0] desc_req;
-  assign desc_req = rx_hash_valid_f & ~selected_port_r & hash_n_dest_in_ready;
-
-  // Same cycle arbiter, with memory of last result
-  simple_arbiter # (.PORTS(IF_COUNT),.ARB_TYPE_ROUND_ROBIN(1)) port_selector (
-    .clk(clk),
-    .rst(rst_r),
-
-    .request(desc_req),
-    .taken(1'b1), // We always use the results
-
-    .grant(selected_port),
-    .grant_valid(selected_port_v),
-    .grant_encoded(selected_port_enc)
-    );
-
-  // selecting the destination core based on the selected interface and
-  // corresponding masked hash
-  reg  [CORE_ID_WIDTH-1:0] rx_dest_core;
-  always @ (posedge clk)
-    if (rst_r)
-      rx_dest_core <= {CORE_ID_WIDTH{1'b0}};
-    else
-      rx_dest_core <= masked_hash[selected_port_enc*CORE_ID_WIDTH +: CORE_ID_WIDTH];
-
-  // Checking for slot availability, collision with intercore desc request and
-  // if core is allowed to receive packets from interfaces
-  wire [CORE_COUNT-1:0]    rx_desc_avail;
-  wire [ID_TAG_WIDTH-1:0]  rx_desc_data;
-  reg                      rx_desc_pop;
-
-  assign rx_desc_avail = slot_valids & income_cores;
-
-  // MSB is to drop packet or not, followed by hash value and finally core desc
-  // For now no intercore messages, so !rx_desc_avail means desc was not available
-  assign hash_n_dest_in = {IF_COUNT{!rx_desc_avail[rx_dest_core],
-                           rx_hash_f[selected_port_enc_r*32 +: 32], rx_desc_data}};
-
-  // if a port is selected and desired core is not being used for intercore messaging,
-  // pop the hash from the interface hash fifo, and push the hash
-  // and full descriptor with core number into interface hash_n_desc fifo.
-  // If core doesn't have descriptor available raise the drop bit and don't pop from
-  // core's desc fifo
-  always @ (*) begin
-    rx_desc_pop      = 1'b0;
-    rx_hash_ready_f  = {IF_COUNT{1'b0}};
-    hash_n_dest_in_v = {IF_COUNT{1'b0}};
-
-    if (selected_port_v_r && !slots_busy[rx_dest_core])
-      if (rx_desc_avail[rx_dest_core]) begin
-        rx_desc_pop      = 1'b1;
-        rx_hash_ready_f  = selected_port_r;
-        hash_n_dest_in_v = selected_port_r;
-
-      end else if (rx_almost_full[selected_port_enc_r]) begin
-        rx_hash_ready_f  = selected_port_r;
-        hash_n_dest_in_v = selected_port_r;
-      end
-
-  end
-
-  ///////////////////////////////////////////////////////////////////////////////
-  ////////////////////////// Control channel handler ////////////////////////////
-  ///////////////////////////////////////////////////////////////////////////////
   lb_controller  # (
     .CORE_COUNT(CORE_COUNT),
     .SLOT_COUNT(SLOT_COUNT),
@@ -539,9 +176,69 @@ module lb_PR (
     .slots_busy    (slots_busy),
 
     // Core select, and its pop signal assert and descriptor readback
-    .selected_core (rx_dest_core),
-    .rx_desc_pop   (rx_desc_pop),
-    .rx_desc_data  (rx_desc_data)
+    .selected_core (selected_core),
+    .desc_pop      (desc_pop),
+    .desc_data     (desc_data)
+  );
+
+  ///////////////////////////////////////////////////////////////////////////////
+  ///////////////////////// Hash-based load balancer ////////////////////////////
+  ///////////////////////////////////////////////////////////////////////////////
+  lb_hash_dropping # (
+    .IF_COUNT(IF_COUNT),
+    .PORT_COUNT(PORT_COUNT),
+    .CORE_COUNT(CORE_COUNT),
+    .SLOT_COUNT(SLOT_COUNT),
+    .DATA_WIDTH(DATA_WIDTH),
+    .RX_LINES_WIDTH(RX_LINES_WIDTH),
+    .DATA_FIFO_DEPTH(DATA_FIFO_DEPTH),
+    .HASH_SEL_OFFSET(HASH_SEL_OFFSET),
+    .SLOT_WIDTH(SLOT_WIDTH),
+    .CORE_ID_WIDTH(CORE_ID_WIDTH),
+    .INTERFACE_WIDTH(INTERFACE_WIDTH),
+    .PORT_WIDTH(PORT_WIDTH),
+    .TAG_WIDTH(TAG_WIDTH),
+    .ID_TAG_WIDTH(ID_TAG_WIDTH),
+    .STRB_WIDTH(STRB_WIDTH),
+    .HASH_FIFO_DEPTH(HASH_FIFO_DEPTH)
+  ) lb_policy_inst (
+    .clk(clk),
+    .rst(rst_r),
+
+    // Data input and output streams
+    .s_axis_tdata(rx_axis_tdata_r),
+    .s_axis_tkeep(rx_axis_tkeep_r),
+    .s_axis_tvalid(rx_axis_tvalid_r),
+    .s_axis_tready(rx_axis_tready_r),
+    .s_axis_tlast(rx_axis_tlast_r),
+    .s_axis_line_count(rx_axis_line_count_r),
+
+    .m_axis_tdata(data_m_axis_tdata_n),
+    .m_axis_tkeep(data_m_axis_tkeep_n),
+    .m_axis_tdest(data_m_axis_tdest_n),
+    .m_axis_tuser(data_m_axis_tuser_n),
+    .m_axis_tvalid(data_m_axis_tvalid_n),
+    .m_axis_tready(data_m_axis_tready_n),
+    .m_axis_tlast(data_m_axis_tlast_n),
+
+    // Host command interface
+    .host_cmd(host_cmd_r),
+    .host_cmd_wr_data(host_cmd_wr_data_r),
+    .host_cmd_rd_data(host_cmd_rd_data_n),
+    .host_cmd_wr_en(host_cmd_wr_en_r),
+    .host_cmd_for_ints(host_cmd_for_ints_r),
+
+    // Config registers outputs and slots status inputs
+    .enabled_cores(enabled_cores),
+    .slots_flush(slots_flush),
+    .slot_counts(slot_counts),
+    .slot_valids(slot_valids),
+    .slots_busy(slots_busy),
+
+    // Request and response to lb_controller
+    .selected_core(selected_core),
+    .desc_pop(desc_pop),
+    .desc_data(desc_data)
   );
 
 endmodule

@@ -64,8 +64,8 @@ module lb_controller  # (
 
   // Core select, and its pop signal assert and descriptor readback
   input  wire [CORE_ID_WIDTH-1:0]         selected_core,
-  input  wire                             rx_desc_pop,
-  output wire [ID_TAG_WIDTH-1:0]          rx_desc_data
+  input  wire                             desc_pop,
+  output wire [ID_TAG_WIDTH-1:0]          desc_data
 );
 
   // Separate incoming ctrl messages
@@ -202,7 +202,7 @@ module lb_controller  # (
   genvar i;
   generate
     for (i=0;i<CORE_COUNT;i=i+1) begin
-      assign next_slot_pop[i]    = (rx_desc_pop && (selected_core==i)) ||
+      assign next_slot_pop[i]    = (desc_pop && (selected_core==i)) ||
                                    (slots_busy [i] && enabled_cores[i]);
 
       // Register valid for better timing closure
@@ -240,8 +240,8 @@ module lb_controller  # (
   endgenerate
 
   // Load the new desc
-  assign rx_desc_data   = {selected_core, {(TAG_WIDTH-SLOT_WIDTH){1'b0}},
-                           next_slot[selected_core*SLOT_WIDTH +: SLOT_WIDTH]};
+  assign desc_data = {selected_core, {(TAG_WIDTH-SLOT_WIDTH){1'b0}},
+                      next_slot[selected_core*SLOT_WIDTH +: SLOT_WIDTH]};
 
   // Assigning looback port
   wire [CORE_ID_WIDTH-1:0] loopback_port;

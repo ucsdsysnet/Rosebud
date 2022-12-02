@@ -1,40 +1,41 @@
   // Register inputs and outputs
-  wire [IF_COUNT*DATA_WIDTH-1:0]   data_s_axis_tdata_r;
-  wire [IF_COUNT*STRB_WIDTH-1:0]   data_s_axis_tkeep_r;
-  wire [IF_COUNT*ID_TAG_WIDTH-1:0] data_s_axis_tuser_r;
-  wire [IF_COUNT-1:0]              data_s_axis_tvalid_r;
-  wire [IF_COUNT-1:0]              data_s_axis_tready_r;
-  wire [IF_COUNT-1:0]              data_s_axis_tlast_r;
+  wire [IF_COUNT*DATA_WIDTH-1:0]     data_s_axis_tdata_r;
+  wire [IF_COUNT*STRB_WIDTH-1:0]     data_s_axis_tkeep_r;
+  wire [IF_COUNT*ID_TAG_WIDTH-1:0]   data_s_axis_tuser_r;
+  wire [IF_COUNT-1:0]                data_s_axis_tvalid_r;
+  wire [IF_COUNT-1:0]                data_s_axis_tready_r;
+  wire [IF_COUNT-1:0]                data_s_axis_tlast_r;
 
-  wire [IF_COUNT*DATA_WIDTH-1:0]   data_m_axis_tdata_n;
-  wire [IF_COUNT*STRB_WIDTH-1:0]   data_m_axis_tkeep_n;
-  wire [IF_COUNT*ID_TAG_WIDTH-1:0] data_m_axis_tdest_n;
-  wire [IF_COUNT*PORT_WIDTH-1:0]   data_m_axis_tuser_n;
-  wire [IF_COUNT-1:0]              data_m_axis_tvalid_n;
-  wire [IF_COUNT-1:0]              data_m_axis_tready_n;
-  wire [IF_COUNT-1:0]              data_m_axis_tlast_n;
+  wire [IF_COUNT*DATA_WIDTH-1:0]     data_m_axis_tdata_n;
+  wire [IF_COUNT*STRB_WIDTH-1:0]     data_m_axis_tkeep_n;
+  wire [IF_COUNT*ID_TAG_WIDTH-1:0]   data_m_axis_tdest_n;
+  wire [IF_COUNT*PORT_WIDTH-1:0]     data_m_axis_tuser_n;
+  wire [IF_COUNT-1:0]                data_m_axis_tvalid_n;
+  wire [IF_COUNT-1:0]                data_m_axis_tready_n;
+  wire [IF_COUNT-1:0]                data_m_axis_tlast_n;
 
-  wire [IF_COUNT*DATA_WIDTH-1:0]   rx_axis_tdata_r;
-  wire [IF_COUNT*STRB_WIDTH-1:0]   rx_axis_tkeep_r;
-  wire [IF_COUNT-1:0]              rx_axis_tvalid_r;
-  wire [IF_COUNT-1:0]              rx_axis_tready_r;
-  wire [IF_COUNT-1:0]              rx_axis_tlast_r;
+  wire [IF_COUNT*DATA_WIDTH-1:0]     rx_axis_tdata_r;
+  wire [IF_COUNT*STRB_WIDTH-1:0]     rx_axis_tkeep_r;
+  wire [IF_COUNT-1:0]                rx_axis_tvalid_r;
+  wire [IF_COUNT-1:0]                rx_axis_tready_r;
+  wire [IF_COUNT-1:0]                rx_axis_tlast_r;
+  reg  [IF_COUNT*RX_LINES_WIDTH-1:0] rx_axis_line_count_r;
 
-  wire [IF_COUNT*DATA_WIDTH-1:0]   tx_axis_tdata_n;
-  wire [IF_COUNT*STRB_WIDTH-1:0]   tx_axis_tkeep_n;
-  wire [IF_COUNT-1:0]              tx_axis_tvalid_n;
-  wire [IF_COUNT-1:0]              tx_axis_tready_n;
-  wire [IF_COUNT-1:0]              tx_axis_tlast_n;
+  wire [IF_COUNT*DATA_WIDTH-1:0]     tx_axis_tdata_n;
+  wire [IF_COUNT*STRB_WIDTH-1:0]     tx_axis_tkeep_n;
+  wire [IF_COUNT-1:0]                tx_axis_tvalid_n;
+  wire [IF_COUNT-1:0]                tx_axis_tready_n;
+  wire [IF_COUNT-1:0]                tx_axis_tlast_n;
 
-  wire [CTRL_WIDTH-1:0]            ctrl_s_axis_tdata_r;
-  wire                             ctrl_s_axis_tvalid_r;
-  wire                             ctrl_s_axis_tready_r;
-  wire [CORE_ID_WIDTH-1:0]         ctrl_s_axis_tuser_r;
+  wire [CTRL_WIDTH-1:0]              ctrl_s_axis_tdata_r;
+  wire                               ctrl_s_axis_tvalid_r;
+  wire                               ctrl_s_axis_tready_r;
+  wire [CORE_ID_WIDTH-1:0]           ctrl_s_axis_tuser_r;
 
-  wire [CTRL_WIDTH-1:0]            ctrl_m_axis_tdata_n;
-  wire                             ctrl_m_axis_tvalid_n;
-  wire                             ctrl_m_axis_tready_n;
-  wire [CORE_ID_WIDTH-1:0]         ctrl_m_axis_tdest_n;
+  wire [CTRL_WIDTH-1:0]              ctrl_m_axis_tdata_n;
+  wire                               ctrl_m_axis_tvalid_n;
+  wire                               ctrl_m_axis_tready_n;
+  wire [CORE_ID_WIDTH-1:0]           ctrl_m_axis_tdest_n;
 
   genvar q;
   generate
@@ -246,4 +247,24 @@
     .m_axis_tuser ()
   );
 
+  reg  [28:0]               host_cmd_r;
+  reg                       host_cmd_for_ints_r;
+  reg  [31:0]               host_cmd_wr_data_r;
+  wire [31:0]               host_cmd_rd_data_n;
+  reg  [31:0]               host_cmd_rd_data_nr;
+  reg                       host_cmd_wr_en_r;
+
+  always @ (posedge clk) begin
+    rx_axis_line_count_r <= rx_axis_line_count;
+    host_cmd_r           <= host_cmd;
+    host_cmd_for_ints_r  <= host_cmd_for_ints;
+    host_cmd_wr_data_r   <= host_cmd_wr_data;
+    host_cmd_rd_data_nr  <= host_cmd_rd_data_n;
+    host_cmd_wr_en_r     <= host_cmd_wr_en;
+
+    if (rst)
+      host_cmd_wr_en_r <= 1'b0;
+  end
+
+  assign host_cmd_rd_data = host_cmd_rd_data_nr;
 
