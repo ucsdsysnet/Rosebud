@@ -190,7 +190,7 @@ sync_reset sync_rst_inst (
 );
 
 /////////////////////////////////////////////////////////////////////
-//////////////////// PARSING SCHEDULER COMMANDS /////////////////////
+////////////////// PARSING LOAD BALANCER COMMANDS ///////////////////
 /////////////////////////////////////////////////////////////////////
 reg  [35:0]           ctrl_s_axis_tdata_r;
 reg                   ctrl_s_axis_tvalid_r;
@@ -297,7 +297,7 @@ wire                  slot_for_hdr  = rpu_status_data[31]; // && !rpu_status_dat
 wire [24:0]           slot_wr_addr = {~rpu_status_data[31], rpu_status_data[23:0]};
 
 reg [31:0] core_stat_reg, core_debug_l, core_debug_h;
-reg [15:0] sched_tag_len;
+reg [15:0] lb_tag_len;
 
 always @ (posedge clk) begin
   case (rpu_status_addr)
@@ -311,13 +311,13 @@ always @ (posedge clk) begin
         slot_addr_lut        [slot_wr_ptr] <= slot_wr_addr;
     3'd2: core_debug_l  <= rpu_status_data;
     3'd3: core_debug_h  <= rpu_status_data;
-    3'd4: sched_tag_len <= rpu_status_data[15:0];
+    3'd4: lb_tag_len    <= rpu_status_data[15:0];
     default: begin end
   endcase
 
   if (rst_r) begin
     core_stat_reg <= 32'd0;
-    sched_tag_len <= 16'd0;
+    lb_tag_len    <= 16'd0;
   end
 end
 
@@ -1393,8 +1393,8 @@ end
 reg         in_desc_valid_r;
 reg  [63:0] in_desc_r;
 
-wire [31:0] in_desc_addr_adj = in_desc_n[63:32] + sched_tag_len;
-wire [15:0] in_desc_len_adj  = in_desc_n[15:0]  - sched_tag_len;
+wire [31:0] in_desc_addr_adj = in_desc_n[63:32] + lb_tag_len;
+wire [15:0] in_desc_len_adj  = in_desc_n[15:0]  - lb_tag_len;
 
 always @ (posedge clk) begin
   if (in_desc_valid_n && in_desc_ready_n) begin

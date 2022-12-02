@@ -12,7 +12,7 @@
   (((x & 0xff000000) >> 24) | ((x & 0x00ff0000) >>  8) | \
    ((x & 0x0000ff00) <<  8) | ((x & 0x000000ff) << 24))
 
-// #define HASH_SCHED
+// #define HASH_LB
 #define FORWARD 1
 
 // packet start offset
@@ -22,7 +22,7 @@
 // #define PKTS_START (6*128*1024)
 #define PKTS_START 0
 
-#ifdef HASH_SCHED
+#ifdef HASH_LB
   #define DATA_OFFSET 4
 #else
   #define DATA_OFFSET 0
@@ -289,12 +289,12 @@ int main(void){
   header_slot_base = DMEM_BASE + (DMEM_SIZE >> 1);
   header_slot_size = 128;
 
-  // Do this at the beginning, so scheduler can fill the slots while
+  // Do this at the beginning, so load balancer can fill the slots while
   // initializing other things.
   init_hdr_slots(slot_count, header_slot_base, header_slot_size);
   init_slots(slot_count, PKTS_START+PKT_OFFSET, slot_size);
   set_masks(0x30); // Enable only Evict + Poke
-  set_sched_offset(DATA_OFFSET);
+  set_lb_offset(DATA_OFFSET);
 
   init_packets();
 

@@ -23,7 +23,7 @@ VERILOG_SOURCES  = $(SHIRE)/../tb/common/test_rpu.v
 VERILOG_SOURCES += $(RTL_DIR)/rpu_PR_fw.v
 
 VERILOG_SOURCES += $(SHIRE)/simple_fifo.v
-VERILOG_SOURCES += $(SHIRE)/core_mems.v
+VERILOG_SOURCES += $(SHIRE)/mem_modules.v
 VERILOG_SOURCES += $(SHIRE)/axis_dma.v
 VERILOG_SOURCES += $(SHIRE)/VexRiscv.v
 VERILOG_SOURCES += $(SHIRE)/riscvcore.v

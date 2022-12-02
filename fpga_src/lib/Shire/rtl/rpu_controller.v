@@ -112,7 +112,7 @@ module rpu_controller # (
   input  wire                       slot_wr_valid,
   output wire                       slot_wr_ready,
 
-  input  wire [15:0]                sched_tag_len,
+  input  wire [15:0]                lb_tag_len,
   input  wire                       tag_len_wr_valid,
 
   input  wire [63:0]                debug_out,
@@ -256,7 +256,7 @@ assign rpu_status_addr = slot_wr_valid     ? 3'd1 :
                                               3'd0 ;
 
 assign rpu_status_data = slot_wr_valid     ? slot_wr_data :
-                         tag_len_wr_valid  ? {16'd0, sched_tag_len} :
+                         tag_len_wr_valid  ? {16'd0, lb_tag_len} :
                          debug_out_l_valid ? debug_out[31:0] :
                          debug_out_h_valid ? debug_out[63:32] :
                          {14'd0, core_reset, ready_to_evict,

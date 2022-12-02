@@ -9,7 +9,7 @@ int main(void){
   volatile unsigned int * test_pmem = (volatile unsigned int *) 0x1001000;
   int i;
 
-	// Do this at the beginnig, so scheduler can fill the slots while
+	// Do this at the beginnig, so load balancer can fill the slots while
 	// initializing other things.
 	init_hdr_slots(16, 0x804000, 128);
 	init_slots(16, 0x00000A, 16384);

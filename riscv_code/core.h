@@ -66,7 +66,7 @@
 #define BC_MSG_FIFO_EN    (*((volatile unsigned char *)     (IO_INT_BASE + 0x0050)))
 #define BC_MSG_RELEASE    (*((volatile unsigned char *)     (IO_INT_BASE + 0x0054)))
 #define DESC_OVERRIDE     (*((volatile struct   Desc*)      (IO_INT_BASE + 0x0058)))
-#define SCHED_TAG_LEN     (*((volatile unsigned short *)    (IO_INT_BASE + 0x0060)))
+#define LB_TAG_LEN        (*((volatile unsigned short *)    (IO_INT_BASE + 0x0060)))
 
 #define STATUS_RD                                           (IO_INT_BASE + 0x008C)
 #define IN_PKT_READY      (*((volatile unsigned char *)     (IO_INT_BASE + 0x008C))==1)
@@ -214,8 +214,8 @@ static inline void set_masks(const unsigned short masks) {
 	MASK_WRITE = masks;
 }
 
-static inline void set_sched_offset(const unsigned short offset) {
-	SCHED_TAG_LEN = offset;
+static inline void set_lb_offset(const unsigned short offset) {
+	LB_TAG_LEN = offset;
 }
 
 static inline void pkt_done_msg(const struct Desc* output_desc) {

@@ -28,24 +28,24 @@ from math import ceil
 from glob import glob
 
 csv_file           = "parsed_utilization_16G.csv"
-RPU_pblock_pat = "fpga_utilization_RPU_*_FW_RR.rpt"
-sched_pblock_rep   = "fpga_utilization_LB_FW_RR.rpt"
+RPU_pblock_pat     = "fpga_utilization_RPU_*_FW_RR.rpt"
+lb_pblock_rep      = "fpga_utilization_LB_FW_RR.rpt"
 full_fpga_raw_rep  = "fpga_utilization_hierarchy_placed_raw.rpt"
 full_fpga_acc_rep  = "fpga_utilization_hierarchy_placed_FW_RR.rpt"
-RPU_count      = 16
+RPU_count          = 16
 FPGA_tot_resources = [1182240, 2364480, 2160, 960, 6840]
 
 # LUTS, Registers, BRAM, URAM, DSP
-RPU_pblock_rep = sorted(glob(RPU_pblock_pat), key=natural_keys)
+RPU_pblock_rep    = sorted(glob(RPU_pblock_pat), key=natural_keys)
 RPU_tot_resources = [available (x) for x in RPU_pblock_rep]
-Sched_tot_resources   = available (sched_pblock_rep)
+LB_tot_resources  = available (lb_pblock_rep)
 RPU_avg_resources = \
     [ceil(sum(col)/float(len(col))) for col in zip(*RPU_tot_resources)]
 
 print ("Available Resources:")
 print ("Block       \tLUTS\tRegs\tBRAM\tURAM\tDSP")
 print ("Avg RPU:  \t"  +"\t".join([str(x) for x in RPU_avg_resources]))
-print ("LB:\t"  +"\t".join([str(x) for x in Sched_tot_resources]))
+print ("LB:\t"  +"\t".join([str(x) for x in LB_tot_resources]))
 print ("Full FPGA:\t"  +"\t".join([str(x) for x in FPGA_tot_resources]))
 
 out_file = open(csv_file, 'w')
@@ -108,7 +108,7 @@ for mod in Shire_mods:
     line = calc_remain(avg, RPU_avg_resources, FPGA_tot_resources)
     printcsv("Remaining RPU" + ", " + ", ".join(line))
   if (mod == "LB"):
-    line = calc_remain(tot, Sched_tot_resources, FPGA_tot_resources)
+    line = calc_remain(tot, LB_tot_resources, FPGA_tot_resources)
     printcsv("Remaining LB" + ", " + ", ".join(line))
   last_tot = tot
   last_mod = mod

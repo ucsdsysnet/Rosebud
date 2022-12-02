@@ -28,7 +28,7 @@
 // Maximum number of bytes to be checked by the fixed_sme engine
 #define MAX_FIXED_SME_RULE 20
 
-#define HASH_SCHED
+#define HASH_LB
 
 // packet start offset
 // DWORD align Ethernet payload
@@ -38,7 +38,7 @@
 // accelerators only connected to upper 2 blocks
 #define PKTS_START (6*128*1024)
 
-#ifdef HASH_SCHED
+#ifdef HASH_LB
   #define DATA_OFFSET 4
 #else
   #define DATA_OFFSET 0

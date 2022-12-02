@@ -91,7 +91,7 @@ module riscvcore #(
   output wire [31:0]                slot_wr_data,
   output wire                       slot_wr_valid,
   input  wire                       slot_wr_ready,
-  output wire [15:0]                sched_tag_len,
+  output wire [15:0]                lb_tag_len,
   output wire                       tag_len_wr_valid,
   output wire [63:0]                debug_out,
   output wire                       debug_out_l_valid,
@@ -216,12 +216,12 @@ module riscvcore #(
   localparam BC_MSG_RD_STRB   = 6'b010101;
   localparam REWR_DESC_ADDR_L = 6'b010110;
   localparam REWR_DESC_ADDR_H = 6'b010111;
-  localparam SCHED_TAG_LEN    = 6'b011000;
+  localparam LB_TAG_LEN       = 6'b011000;
 
   reg [63:0] dram_wr_addr_r;
   reg [31:0] timer_step_r;
   reg [63:0] debug_register;
-  reg [15:0] sched_tag_len_r;
+  reg [15:0] lb_tag_len_r;
 
   reg [63:0] out_desc_data_r;
   reg [3:0]  out_desc_type_r;
@@ -270,7 +270,7 @@ module riscvcore #(
         SEND_DESC_TYPE:   out_desc_type_r  <= mem_wr_data[3:0];
         MASK_WR:          int_mask         <= mem_wr_data[15:0];
         READY_TO_EVICT:   ready_to_evict_r <= mem_wr_data[0];
-        SCHED_TAG_LEN:    sched_tag_len_r  <= mem_wr_data[15:0];
+        LB_TAG_LEN:       lb_tag_len_r     <= mem_wr_data[15:0];
         default: begin end
       endcase
     end
@@ -280,7 +280,7 @@ module riscvcore #(
       int_mask         <= 16'hFFF0;
       ready_to_evict_r <= 1'b0;
       bc_msg_fifo_en   <= 1'b0;
-      sched_tag_len_r  <= 16'd0;
+      lb_tag_len_r     <= 16'd0;
     end
   end
 
@@ -293,7 +293,7 @@ module riscvcore #(
   wire slot_wr_v      = io_write &&  (io_addr==SLOT_LUT_STRB) && mem_wr_data[0];
   wire debug_reg_wr_l = io_write &&  (io_addr==DEBUG_REG_ADDR_L);
   wire debug_reg_wr_h = io_write &&  (io_addr==DEBUG_REG_ADDR_H);
-  wire tag_len_wr_v   = io_write &&  (io_addr==SCHED_TAG_LEN);
+  wire tag_len_wr_v   = io_write &&  (io_addr==LB_TAG_LEN);
   wire update_desc    = io_write && ((io_addr==SEND_DESC_ADDR_L) ||
                                      (io_addr==SEND_DESC_ADDR_H) ||
                                      (io_addr==WR_DRAM_ADDR_L)   ||
@@ -323,7 +323,7 @@ module riscvcore #(
   assign slot_wr_valid      = slot_wr_v_r;
   assign slot_wr_data       = slot_info_data_r;
   assign tag_len_wr_valid   = tag_len_wr_v_r;
-  assign sched_tag_len      = sched_tag_len_r;
+  assign lb_tag_len         = lb_tag_len_r;
 
   assign debug_out          = debug_register;
   assign debug_out_l_valid  = debug_reg_wr_l_r;

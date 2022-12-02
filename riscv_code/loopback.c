@@ -4,7 +4,7 @@ struct Desc packet;
 
 int main(void){
 
-	// Do this at the beginnig, so scheduler can fill the slots while 
+	// Do this at the beginnig, so load balancer can fill the slots while 
 	// initializing other things.
 	init_hdr_slots(8, 0x804000, 128);
 	init_slots(8, 0x00000A, 16384);

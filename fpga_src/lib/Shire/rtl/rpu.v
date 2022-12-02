@@ -160,7 +160,7 @@ wire [31:0] slot_wr_data;
 wire        slot_wr_valid;
 wire        slot_wr_ready;
 
-wire [15:0] sched_tag_len;
+wire [15:0] lb_tag_len;
 wire        tag_len_wr_valid;
 
 wire [63:0] debug_out;
@@ -245,7 +245,7 @@ riscvcore #(
   .slot_wr_data(slot_wr_data),
   .slot_wr_valid(slot_wr_valid),
   .slot_wr_ready(slot_wr_ready),
-  .sched_tag_len(sched_tag_len),
+  .lb_tag_len(lb_tag_len),
   .tag_len_wr_valid(tag_len_wr_valid),
   .debug_out(debug_out),
   .debug_out_l_valid(debug_out_l_valid),
@@ -344,12 +344,12 @@ rpu_controller # (
   .inv_desc_int_ack (inv_desc_int_ack),
 
   // ----------- RPU STATUS CHANNEL CONTROL ------------- //
-  .rpu_status_data (rpu_status_data),
-  .rpu_status_addr (rpu_status_addr),
+  .rpu_status_data  (rpu_status_data),
+  .rpu_status_addr  (rpu_status_addr),
   .slot_wr_data     (slot_wr_data),
   .slot_wr_valid    (slot_wr_valid),
   .slot_wr_ready    (slot_wr_ready),
-  .sched_tag_len    (sched_tag_len),
+  .lb_tag_len       (lb_tag_len),
   .tag_len_wr_valid (tag_len_wr_valid),
   .debug_out        (debug_out),
   .debug_out_l_valid(debug_out_l_valid),

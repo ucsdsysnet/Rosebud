@@ -124,43 +124,43 @@ uint32_t interface_stat_rd (struct mqnic *dev, uint32_t interface, uint32_t dire
 }
 
 void set_enable_cores(struct mqnic *dev, uint32_t onehot){
-    write_cmd(dev, SCHED_CORE_ZONE | SCHED_CORE_EN, onehot);
+    write_cmd(dev, LB_CORE_ZONE | LB_CORE_EN, onehot);
 }
 
 uint32_t read_enable_cores(struct mqnic *dev){
-    return read_cmd(dev, SCHED_CORE_ZONE | SCHED_CORE_EN);
+    return read_cmd(dev, LB_CORE_ZONE | LB_CORE_EN);
 }
 
 void set_receive_cores(struct mqnic *dev, uint32_t onehot){
-    write_cmd(dev, SCHED_CORE_ZONE | SCHED_CORE_RECV, onehot);
+    write_cmd(dev, LB_CORE_ZONE | LB_CORE_RECV, onehot);
 }
 
 uint32_t read_receive_cores(struct mqnic *dev){
-    return read_cmd(dev, SCHED_CORE_ZONE | SCHED_CORE_RECV);
+    return read_cmd(dev, LB_CORE_ZONE | LB_CORE_RECV);
 }
 
 void release_core_slots(struct mqnic *dev, uint32_t onehot){
-    write_cmd(dev, SCHED_CORE_ZONE | SCHED_CORE_FLUSH, onehot);
+    write_cmd(dev, LB_CORE_ZONE | LB_CORE_FLUSH, onehot);
 }
 
 uint32_t read_core_slots(struct mqnic *dev, uint32_t core){
-    return read_cmd(dev, SCHED_CORE_ZONE | core << REG_WIDTH | SCHED_CORE_SLOT);
+    return read_cmd(dev, LB_CORE_ZONE | core << REG_WIDTH | LB_CORE_SLOT);
 }
 
 void release_interface_desc(struct mqnic *dev, uint32_t onehot){
-    write_cmd(dev, SCHED_INT_ZONE | SCHED_INT_DROP_DESC, onehot);
+    write_cmd(dev, LB_INT_ZONE | LB_INT_DROP_DESC, onehot);
 }
     
 uint32_t read_interface_desc(struct mqnic *dev, uint32_t interface){
-    return read_cmd(dev, SCHED_INT_ZONE | interface << REG_WIDTH | SCHED_INT_DESC);
+    return read_cmd(dev, LB_INT_ZONE | interface << REG_WIDTH | LB_INT_DESC);
 }
 
 uint32_t read_interface_drops(struct mqnic *dev, uint32_t interface){
-    return read_cmd(dev, SCHED_INT_ZONE | interface << REG_WIDTH | SCHED_INT_DROP_CNT);
+    return read_cmd(dev, LB_INT_ZONE | interface << REG_WIDTH | LB_INT_DROP_CNT);
 }
 
 void set_interface_rx_threshold(struct mqnic *dev, uint32_t limit){
-    write_cmd(dev, SCHED_INT_ZONE | SCHED_INT_DROP_LMT, limit);
+    write_cmd(dev, LB_INT_ZONE | LB_INT_DROP_LMT, limit);
 }
 
 
@@ -187,7 +187,7 @@ void print_lb_status(struct mqnic *dev){
                 i, (read_interface_desc (dev, i) >> 8) & 0xFF);
 
     for (int i=0; i< MAX_CORE_COUNT; i++)
-        printf("Core %d has %d slots in the scheduer.\n",
+        printf("Core %d has %d slots in the load balancer.\n",
                 i, read_core_slots (dev, i));
     return;
 }

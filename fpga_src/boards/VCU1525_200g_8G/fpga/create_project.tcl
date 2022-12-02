@@ -13,7 +13,7 @@ add_files -fileset sources_1 -norecurse {
   ../lib/Shire/rtl/rpu.v
   ../lib/Shire/rtl/accel_wrap.v
   ../lib/Shire/rtl/VexRiscv.v
-  ../lib/Shire/rtl/core_mems.v
+  ../lib/Shire/rtl/mem_modules.v
   ../lib/Shire/rtl/slot_keeper.v
   ../lib/Shire/rtl/lb_controller.v
   ../lib/Shire/rtl/lb_hash_dropping.v

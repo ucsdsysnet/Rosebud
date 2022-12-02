@@ -34,7 +34,7 @@ add_files -norecurse {
   ../lib/axis/rtl/axis_fifo.v
   ../lib/axis/rtl/axis_register.v
   ../lib/axis/rtl/axis_pipeline_register.v
-  ../lib/Shire/rtl/core_mems.v
+  ../lib/Shire/rtl/mem_modules.v
   ../lib/Shire/rtl/VexRiscv.v
   ../lib/Shire/rtl/simple_sync_sig.v
   ../lib/Shire/rtl/riscvcore.v

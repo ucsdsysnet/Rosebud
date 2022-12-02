@@ -7,7 +7,7 @@ volatile int k;
 
 int main(void){
 
-  // Do this at the beginnig, so scheduler can fill the slots while
+  // Do this at the beginnig, so load balancer can fill the slots while
   // initializing other things.
   init_hdr_slots(16, 0x804000, 128);
   init_slots(16, 0x000000, 16384);

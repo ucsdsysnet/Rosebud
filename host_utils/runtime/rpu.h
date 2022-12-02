@@ -40,8 +40,8 @@ THE SOFTWARE.
 
 #define SYS_CORE_ZONE       (0 << 30)
 #define SYS_INT_ZONE        (1 << 30)
-#define SCHED_CORE_ZONE     (2 << 30)
-#define SCHED_INT_ZONE      (3 << 30)
+#define LB_CORE_ZONE     (2 << 30)
+#define LB_INT_ZONE      (3 << 30)
 
 // INTERFACE REGISTER ADDRESSES, FIXED
 #define INT_RX_EN           0
@@ -49,16 +49,16 @@ THE SOFTWARE.
 #define INT_RX_STAT         8  // RD_ONLY, 4 addresses
 #define INT_TX_STAT         12 // RD_ONLY, 4 addresses
 
-// REGISTERS CHOSEN FOR CURRENT SCHEDULER
-#define SCHED_CORE_EN       0
-#define SCHED_CORE_RECV     1
-#define SCHED_CORE_FLUSH    2 // WR_ONLY
-#define SCHED_CORE_SLOT     3 // RD_ONLY
+// REGISTERS CHOSEN FOR CURRENT LBULER
+#define LB_CORE_EN       0
+#define LB_CORE_RECV     1
+#define LB_CORE_FLUSH    2 // WR_ONLY
+#define LB_CORE_SLOT     3 // RD_ONLY
 
-#define SCHED_INT_DESC      0 // RD_ONLY, RR SCHED
-#define SCHED_INT_DROP_DESC 1 // WR_ONLY, RR SCHED
-#define SCHED_INT_DROP_CNT  2 // RD_ONLY, HASH SCHED
-#define SCHED_INT_DROP_LMT  3 // WR_ONLY
+#define LB_INT_DESC      0 // RD_ONLY, RR LB
+#define LB_INT_DROP_DESC 1 // WR_ONLY, RR LB
+#define LB_INT_DROP_CNT  2 // RD_ONLY, HASH LB
+#define LB_INT_DROP_LMT  3 // WR_ONLY
 
 // DMA operations
 void block_write(struct mqnic *dev, char* data, unsigned int addr, size_t len, int core_num);

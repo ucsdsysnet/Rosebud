@@ -23,7 +23,7 @@
 // maximum number of slots (number of context objects)
 #define MAX_CTX_COUNT 32
 #define REORDER_LIMIT 16
-#define HASH_SCHED
+#define HASH_LB
 
 // packet start offset
 // DWORD align Ethernet payload
@@ -33,7 +33,7 @@
 // accelerators only connected to upper 2 blocks
 #define PKTS_START ((8-(MAX_CTX_COUNT/8))*128*1024)
 
-#ifdef HASH_SCHED
+#ifdef HASH_LB
   #define DATA_OFFSET 4
 #else
   #define DATA_OFFSET 0
@@ -426,7 +426,7 @@ int main(void)
   init_hdr_slots(slot_count, header_slot_base, header_slot_size);
   init_slots(slot_count, PKTS_START+PKT_OFFSET, slot_size);
   set_masks(0x30); // Enable only Evict + Poke
-  set_sched_offset(DATA_OFFSET);
+  set_lb_offset(DATA_OFFSET);
 
   // init slot context structures
   for (int i = 0; i < slot_count; i++)

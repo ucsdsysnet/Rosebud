@@ -57,8 +57,8 @@ REG_WIDTH = 4
 
 SYS_CORE_ZONE       = (0 << 30)
 SYS_INT_ZONE        = (1 << 30)
-SCHED_CORE_ZONE     = (2 << 30)
-SCHED_INT_ZONE      = (3 << 30)
+LB_CORE_ZONE     = (2 << 30)
+LB_INT_ZONE      = (3 << 30)
 
 # INTERFACE REGISTER ADDRESSES, FIXED
 INT_RX_EN           = 0
@@ -66,16 +66,16 @@ INT_RX_FIFO_LINES   = 4  # RD_ONLY
 INT_RX_STAT         = 8  # RD_ONLY, 4 addresses
 INT_TX_STAT         = 12 # RD_ONLY, 4 addresses
 
-# REGISTERS CHOSEN FOR CURRENT SCHEDULER
-SCHED_CORE_EN       = 0
-SCHED_CORE_RECV     = 1
-SCHED_CORE_FLUSH    = 2 # WR_ONLY
-SCHED_CORE_SLOT     = 3 # RD_ONLY
+# REGISTERS CHOSEN FOR CURRENT LBULER
+LB_CORE_EN       = 0
+LB_CORE_RECV     = 1
+LB_CORE_FLUSH    = 2 # WR_ONLY
+LB_CORE_SLOT     = 3 # RD_ONLY
 
-SCHED_INT_DESC      = 0 # RD_ONLY, RR SCHED
-SCHED_INT_DROP_DESC = 1 # WR_ONLY, RR SCHED
-SCHED_INT_DROP_CNT  = 2 # RD_ONLY, HASH SCHED
-SCHED_INT_DROP_LMT  = 3 # WR_ONLY
+LB_INT_DESC      = 0 # RD_ONLY, RR LB
+LB_INT_DROP_DESC = 1 # WR_ONLY, RR LB
+LB_INT_DROP_CNT  = 2 # RD_ONLY, HASH LB
+LB_INT_DROP_LMT  = 3 # WR_ONLY
 
 
 class TB(object):
@@ -470,34 +470,34 @@ class TB(object):
             return await self.read_cmd(SYS_INT_ZONE | interface << REG_WIDTH | INT_RX_STAT | reg)
 
     async def set_enable_cores(self, onehot):
-        await self.write_cmd(SCHED_CORE_ZONE | SCHED_CORE_EN, onehot)
+        await self.write_cmd(LB_CORE_ZONE | LB_CORE_EN, onehot)
 
     async def set_receive_cores(self, onehot):
-        await self.write_cmd(SCHED_CORE_ZONE | SCHED_CORE_RECV, onehot)
+        await self.write_cmd(LB_CORE_ZONE | LB_CORE_RECV, onehot)
 
     async def release_core_slots(self, onehot):
-        await self.write_cmd(SCHED_CORE_ZONE | SCHED_CORE_FLUSH, onehot)
+        await self.write_cmd(LB_CORE_ZONE | LB_CORE_FLUSH, onehot)
 
     async def release_interfaces_desc(self, onehot):
-        await self.write_cmd(SCHED_INT_ZONE | SCHED_INT_DROP_DESC, onehot)
+        await self.write_cmd(LB_INT_ZONE | LB_INT_DROP_DESC, onehot)
 
     async def set_interfaces_rx_threshold(self, limit):
-        await self.write_cmd(SCHED_INT_ZONE | SCHED_INT_DROP_LMT, limit)
+        await self.write_cmd(LB_INT_ZONE | LB_INT_DROP_LMT, limit)
 
     async def read_enable_cores(self):
-        return await self.read_cmd(SCHED_CORE_ZONE | SCHED_CORE_EN)
+        return await self.read_cmd(LB_CORE_ZONE | LB_CORE_EN)
 
     async def read_recv_cores(self):
-        return await self.read_cmd(SCHED_CORE_ZONE | SCHED_CORE_RECV)
+        return await self.read_cmd(LB_CORE_ZONE | LB_CORE_RECV)
 
     async def read_core_slots(self, core):
-        return await self.read_cmd(SCHED_CORE_ZONE | core << REG_WIDTH | SCHED_CORE_SLOT)
+        return await self.read_cmd(LB_CORE_ZONE | core << REG_WIDTH | LB_CORE_SLOT)
 
     async def read_interface_desc(self, interface):
-        return await self.read_cmd(SCHED_INT_ZONE | interface << REG_WIDTH | SCHED_INT_DESC)
+        return await self.read_cmd(LB_INT_ZONE | interface << REG_WIDTH | LB_INT_DESC)
 
     async def read_interface_drops(self, interface):
-        return await self.read_cmd(SCHED_INT_ZONE | interface << REG_WIDTH | SCHED_INT_DROP_CNT)
+        return await self.read_cmd(LB_INT_ZONE | interface << REG_WIDTH | LB_INT_DROP_CNT)
 
     async def evict_core (self, core):
         self.log.info("Evicting core %d", core)
