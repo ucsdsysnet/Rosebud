@@ -45,7 +45,7 @@ sudo make install
 ## Building FPGA image:
 The method to generate the image is to go to fpga_src/boards/ and there go the directory with desired number of Reconfigurable packet processors (RSUs). In current implementation, we want 256 packets to be stored in slots as buffer, so we have 16 slots for 16 RSU, and 32 slots for 8 RSU variant. In each of these directories, there are separate make rules for base design and then swapping PR regions with the desired accelerator.
 
-For example, if in fpga_src/boards/VCU1525_200g_8G you do ```make``` it would first build the base image, and then do the Partioanl Reconfiguration (PR) runs in this order:
+For example, if in fpga_src/boards/VCU1525_200g_8RPU you do ```make``` it would first build the base image, and then do the Partioanl Reconfiguration (PR) runs in this order:
 ```
 make base_0
 make PIG_Hash_1
@@ -54,7 +54,7 @@ make PIG_RR_3
 ```
 The numbers at the end indicate the order. The Makefile rules run some tcl scripts underneath located in the fpga directory. *base_0* is the base image with static regions, PIG_Hash_1 (<ins>run_PIG_Hash.tcl</ins>) would add Pigasus string matching accelerator to the RSUs. *PIG_base_2* (run_base_RR.tcl) would only update the load balancer to be round robin without changing the RSUs from the base design. And the PIG_RR_3 (run_PIG_RR_merge.tcl) would merge the first two, meaning taking the RSUs from *PIG_Hash_1* and load balancer from *PIG_base_2*. 
 
-Similalry VCU1525_200g_16G/ AU200_200g_16G there is only the RSUs with firewall IP, and doing ```make``` would run the following rules:
+Similalry VCU1525_200g_16RPU/ AU200_200g_16RPU there is only the RSUs with firewall IP, and doing ```make``` would run the following rules:
 ```
 make base_0
 make FW_RR_1
@@ -88,7 +88,7 @@ To synthesize and then place and route them for FPGA, you can use the tcl script
 
 ## Changing the load balancer
 
-The default load balancer is round robin for 16 RSU designs, and hash-based load balancer for 8 RSU designs. (currently 16 RSU design is used for firewall and there is no difference between RSUs, the 8 RSU design is used for intrusion detection and we need flow state). If any different load balancer is desired, you can change/add it under the rtl directory (e.g., fpga_src/boards/VCU1525_200g_16G/rtl) and simply replace the load balancer Verilog file in the <ins>create_project.tcl</ins> script. For example, change *../rtl/RR_LU_scheduler_PR.v * in fpga_src/boards/VCU1525_200g_16G/fpga/create_project.tcl. 
+The default load balancer is round robin for 16 RSU designs, and hash-based load balancer for 8 RSU designs. (currently 16 RSU design is used for firewall and there is no difference between RSUs, the 8 RSU design is used for intrusion detection and we need flow state). If any different load balancer is desired, you can change/add it under the rtl directory (e.g., fpga_src/boards/VCU1525_200g_16RPU/rtl) and simply replace the load balancer Verilog file in the <ins>create_project.tcl</ins> script. For example, change *../rtl/RR_LU_scheduler_PR.v * in fpga_src/boards/VCU1525_200g_16RPU/fpga/create_project.tcl. 
 
 * Unfortunately, top level Verilog file for a reconfigurable module cannot be parametrized in Vivado. Therefore, the load balancer examples are placed in the rtl directory per board. If you want to add a new load balancer, you can follow the suit of putting the parameters right after the module declaration, so only the ports require updates, or use macros.
 
@@ -166,7 +166,7 @@ Note that the connection to memory are optimized to enable single cycle read, an
 The ultimate goal of Shire is to have these RISCV cores to be hard logic not to get into this challenge. Even though that limits adding new instructions, a more capable RISCV core with higher frequency, alongside accelerators that can be accessed within a same cycle can improve overall system performance even without the customized instructions.
 
 ## Running simulations:
-Alongside the code for each  board, there is a simulation framework to be able to test the Verilog and C-code alongside each other. Scripts and examples for single RSU and full Shire tests are available. As an example, in fpga_src/boards/VCU1525_200g_16G/tb there are these directories:
+Alongside the code for each  board, there is a simulation framework to be able to test the Verilog and C-code alongside each other. Scripts and examples for single RSU and full Shire tests are available. As an example, in fpga_src/boards/VCU1525_200g_16RPU/tb there are these directories:
 *	<ins>common</ins> has the top level test module for full Shire, as well as common.py which has the same functions as the functions that host can use to communicate with the FPGA (just in python instead of C).
 *	<ins>test_firewall_sg</ins> is a testbench for firewall accelerator that is integrated within an RSU, and the C-code can be tested. test_rpu.v is the top level test module for single RSU, and test_rpu.py is the python testbench. The testbench file loads the RSU memories, similar to the scripts in host_utils, and runs the desired tests.
 *	<ins>test_ins_load</ins> tests load of instruction memories, or communication to host DRAM, alongside a C-code that simply forwards the packets, as well as write and reads to DRAM.
