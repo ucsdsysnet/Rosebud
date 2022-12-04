@@ -186,10 +186,7 @@ parameter V_PORT_COUNT      = V_IF_COUNT * PORTS_PER_V_IF;
 parameter FIRST_LPBK_PORT   = IF_COUNT+V_PORT_COUNT+1-1;
 parameter LB_PORT_COUNT     = IF_COUNT+V_PORT_COUNT;
 parameter PORT_COUNT        = IF_COUNT+V_PORT_COUNT+LPBK_PORT_COUNT+1;
-
 parameter PORT_WIDTH        = $clog2(PORT_COUNT);
-parameter BYTE_COUNT_WIDTH  = 32;
-parameter FRAME_COUNT_WIDTH = 32;
 parameter MAX_PKT_HDR_SIZE  = 128;
 
 // MAC and switching system parameters
@@ -209,6 +206,7 @@ parameter STG_F_CTRL_DEPTH = 64; // TKEEP is not enabled, so 64 words
 parameter STG_F_DRAM_DEPTH = 2048;
 parameter V_MAC_FIFO_SIZE  = 1024;
 parameter CLUSTER_COUNT    = 2;
+parameter STAT_CLUSTERS    = 2;
 parameter BC_MSG_CLUSTERS  = 2;
 parameter DATA_SW_PIPE     = 3;
 parameter DRAM_SW_PIPE     = 2;
@@ -279,7 +277,7 @@ sync_reset sync_int_rst_inst (
 );
 
 // Unused outputs
-assign led   = 3'd0;
+assign led = 3'd0;
 
 // ETH interfaces renaming
 localparam QSFP0_IND = 0;
@@ -385,7 +383,7 @@ wire [LB_PORT_COUNT*LVL1_DATA_WIDTH-1:0] rx_axis_tdata;
 wire [LB_PORT_COUNT*LVL1_STRB_WIDTH-1:0] rx_axis_tkeep;
 wire [LB_PORT_COUNT-1:0] rx_axis_tvalid, rx_axis_tready, rx_axis_tlast;
 
-reg  [LB_PORT_COUNT-1:0] rx_int_enable;
+wire [LB_PORT_COUNT-1:0] rx_int_enable;
 
 (* KEEP = "TRUE" *) reg  [IF_COUNT-1:0] rx_drop, rx_drop_r;
 (* KEEP = "TRUE" *) reg  [IF_COUNT*RX_LINES_WIDTH-1:0] rx_line_count;
@@ -624,7 +622,7 @@ generate
     // Sync reg to help with the timing
     pipe_reg #(
       .WIDTH(IF_COUNT*RX_LINES_WIDTH),
-      .N(1)
+      .N(2)
     ) rx_line_count_sync_reg (
       .clk(sys_clk),
       .in(rx_line_count),
@@ -828,20 +826,6 @@ wire [31:0] host_cmd_f;
 wire [31:0] host_cmd_wr_data_f;
 wire        host_cmd_valid_f;
 
-reg  [31:0] host_cmd_n;
-reg  [31:0] host_cmd_wr_data_n;
-reg         host_cmd_lb_wr_n;
-reg  [31:0] host_cmd_rd_data_n;
-reg         host_to_cores_wr_n;
-reg         host_to_ints_wr_n;
-
-wire [31:0] host_cmd_r;
-wire [31:0] host_cmd_wr_data_r;
-wire        host_cmd_lb_wr_r;
-wire [31:0] host_cmd_rd_data_r;
-wire        host_to_cores_wr_r;
-wire        host_to_ints_wr_r;
-
 axis_async_fifo # (
   .DEPTH(2),
   .DATA_WIDTH(64),
@@ -884,107 +868,16 @@ axis_async_fifo # (
   .m_status_good_frame()
 );
 
-// host_cmd bit 31 is WR/RD. bits 30:29 are target, 00 is for cores,
-// 01 is for interfaces, and 1* is for load balancer.
-always @ (posedge sys_clk) begin
-  if (sys_rst_r) begin
-    host_cmd_lb_wr_n   <= 1'b0;
-    host_to_cores_wr_n <= 1'b0;
-    host_to_ints_wr_n  <= 1'b0;
-  end else begin
-    host_cmd_lb_wr_n   <= host_cmd_valid_f && host_cmd_f[30] && host_cmd_f[31];
-    host_to_cores_wr_n <= host_cmd_valid_f &&
-                         (host_cmd_f[30:29]==2'b00) && host_cmd_f[31];
-    host_to_ints_wr_n  <= host_cmd_valid_f &&
-                         (host_cmd_f[30:29]==2'b01) && host_cmd_f[31];
-  end
-
-  if (host_cmd_valid_f) begin
-    host_cmd_n         <= host_cmd_f;
-    host_cmd_wr_data_n <= host_cmd_wr_data_f;
-  end
-
-end
-
-pipe_reg #(.WIDTH(32+32+3), .N(2)) host_cmd_wr_pipe_reg (
-  .clk(sys_clk),
-  .in( {host_cmd_wr_data_n, host_cmd_n, host_cmd_lb_wr_n,
-        host_to_cores_wr_n, host_to_ints_wr_n}),
-  .out({host_cmd_wr_data_r, host_cmd_r, host_cmd_lb_wr_r,
-        host_to_cores_wr_r, host_to_ints_wr_r})
-);
-
-// Clock crossing and pipe register for host readback
-pipe_reg #(.WIDTH(32), .N(2)) host_cmd_rd_pipe_reg (
-  .clk(sys_clk),
-  .in(host_cmd_rd_data_n),
-  .out(host_cmd_rd_data_r)
-);
-
+wire [31:0] host_cmd_rd_data_n;
 simple_sync_sig # (
   .RST_VAL(1'b0),
   .WIDTH(32)
 ) host_cmd_rd_data_syncer (
   .dst_clk(pcie_clk),
   .dst_rst(pcie_rst),
-  .in(host_cmd_rd_data_r),
+  .in(host_cmd_rd_data_n),
   .out(host_cmd_rd_data)
 );
-
-// Splitting the host cmd and going to core clk domain
-wire [1:0]            host_cmd_type     = host_cmd_r[30:29];
-wire [CORE_WIDTH-1:0] host_core_select1 = host_cmd_r[CORE_WIDTH+4-1:4];
-wire [PORT_WIDTH-1:0] interface_sel     = host_cmd_r[PORT_WIDTH+4-1:4];
-wire [3:0]            host_reg_sel      = host_cmd_r[3:0];
-wire [1:0]            interface_reg_sel = host_cmd_r[1:0];
-
-wire [CORE_WIDTH-1:0] host_core_select2;
-wire [3:0]            host_reg_core;
-
-simple_sync_sig # (.RST_VAL(1'b0),.WIDTH(CORE_WIDTH+4)) host_to_core_sync_reg (
-  .dst_clk(core_clk),
-  .dst_rst(core_rst_r),
-  .in({host_cmd_r[CORE_WIDTH+4-1:4], host_cmd_r[3:0]}),
-  .out({host_core_select2, host_reg_core})
-);
-
-
-// Interface has only one type of write
-always @ (posedge sys_clk)
-  if (sys_rst_r)
-    rx_int_enable <= {LB_PORT_COUNT{1'b1}};
-  else if (host_to_ints_wr_r)
-    rx_int_enable <= host_cmd_wr_data_r[LB_PORT_COUNT-1:0];
-
-reg [RX_LINES_WIDTH-1:0] rx_line_muxed;
-always @ (posedge sys_clk)
-  rx_line_muxed <= rx_line_count_r[interface_sel*RX_LINES_WIDTH +: RX_LINES_WIDTH];
-
-// Host command read from stat readers and mux with LB read
-wire [31:0] interface_in_stat_data;
-wire [31:0] interface_out_stat_data;
-wire [31:0] host_rd_lb_data;
-reg  [31:0] int_stat_data_muxed;
-
-always @ (*) begin
-  casex (host_reg_sel)
-    4'b0000: int_stat_data_muxed = {{(32-LB_PORT_COUNT){1'b0}}, rx_int_enable};
-    4'b0100: int_stat_data_muxed = {{(32-RX_LINES_WIDTH){1'b0}}, rx_line_muxed};
-    4'b10??: int_stat_data_muxed = interface_in_stat_data;
-    4'b11??: int_stat_data_muxed = interface_out_stat_data;
-    default: int_stat_data_muxed = 32'hFEFEFEFE;
-  endcase
-end
-
-// Selecting between read data to the host
-wire [31:0] core_stat_data_muxed;
-
-always @ (posedge sys_clk)
-  casex (host_cmd_type)
-    2'b00: host_cmd_rd_data_n <= core_stat_data_muxed;
-    2'b01: host_cmd_rd_data_n <= int_stat_data_muxed;
-    2'b1?: host_cmd_rd_data_n <= host_rd_lb_data;
-  endcase
 
 
 if (V_PORT_COUNT==0) begin: no_veth
@@ -1328,21 +1221,12 @@ lb_PR lb_PR_inst (
   .ctrl_s_axis_tuser(lb_ctrl_s_axis_tuser),
 
   // Host wr/rd commands
-  .host_cmd         (host_cmd_r[28:0]),
-  .host_cmd_for_ints(host_cmd_r[29]),
-  .host_cmd_wr_data (host_cmd_wr_data_r),
-  .host_cmd_rd_data (host_rd_lb_data),
-  .host_cmd_wr_en   (host_cmd_lb_wr_r)
+  .host_cmd         (host_cmd_lb),
+  .host_cmd_for_ints(host_cmd_lb_for_ints),
+  .host_cmd_wr_data (host_cmd_ext_wr_data),
+  .host_cmd_rd_data (host_cmd_lb_rd_data),
+  .host_cmd_wr_en   (host_cmd_lb_valid)
 );
-
-// MUX between host commands and LB requests
-assign lb_ctrl_m_axis_tvalid   =   host_to_cores_wr_r  || lb_ctrl_m_axis_tvalid_n;
-assign lb_ctrl_m_axis_tready_n = (!host_to_cores_wr_r) && lb_ctrl_m_axis_tready;
-
-assign lb_ctrl_m_axis_tdata    =   host_to_cores_wr_r ? {host_reg_sel, host_cmd_wr_data_r}
-                                                         : lb_ctrl_m_axis_tdata_n;
-assign lb_ctrl_m_axis_tdest    =   host_to_cores_wr_r ? host_core_select1
-                                                         : lb_ctrl_m_axis_tdest_n;
 
 // Switches
 wire [CORE_COUNT*LVL2_DATA_WIDTH-1:0] data_s_axis_tdata;
@@ -1426,29 +1310,6 @@ axis_switch_2lvl # (
     .m_axis_tuser (data_s_axis_tuser)
 );
 
-stat_reader # (
-  .KEEP_WIDTH(LVL1_STRB_WIDTH),
-  .PORT_COUNT(PORT_COUNT),
-  .BYTE_COUNT_WIDTH(BYTE_COUNT_WIDTH),
-  .FRAME_COUNT_WIDTH(FRAME_COUNT_WIDTH),
-  .PORT_WIDTH(PORT_WIDTH),
-  .PORT_CLUSTERS(2)
-) interface_incoming_stat (
-  .clk(sys_clk),
-  .port_rst({PORT_COUNT{stat_rst_r}}),
-  .port_clear({PORT_COUNT{1'b0}}),
-
-  .monitor_axis_tkeep( {dram_rx_axis_tkeep, loopback_rx_axis_tkeep, lb_rx_axis_tkeep}),
-  .monitor_axis_tvalid({dram_rx_axis_tvalid,loopback_rx_axis_tvalid,lb_rx_axis_tvalid}),
-  .monitor_axis_tready({dram_rx_axis_tready,loopback_rx_axis_tready,lb_rx_axis_tready}),
-  .monitor_axis_tlast( {dram_rx_axis_tlast, loopback_rx_axis_tlast, lb_rx_axis_tlast}),
-  .monitor_drop_pulse({{(PORT_COUNT-IF_COUNT){1'b0}},rx_drop_r}),
-
-  .port_select(interface_sel),
-  .stat_addr(interface_reg_sel),
-  .stat_data(interface_in_stat_data)
-);
-
 axis_switch_2lvl # (
     .S_COUNT         (CORE_COUNT),
     .M_COUNT         (PORT_COUNT),
@@ -1501,29 +1362,6 @@ axis_switch_2lvl # (
 
 );
 
-stat_reader # (
-  .KEEP_WIDTH(LVL1_STRB_WIDTH),
-  .PORT_COUNT(PORT_COUNT),
-  .BYTE_COUNT_WIDTH(BYTE_COUNT_WIDTH),
-  .FRAME_COUNT_WIDTH(FRAME_COUNT_WIDTH),
-  .PORT_WIDTH(PORT_WIDTH),
-  .PORT_CLUSTERS(2)
-) interface_outgoing_stat (
-  .clk(sys_clk),
-  .port_rst({PORT_COUNT{stat_rst_r}}),
-  .port_clear({PORT_COUNT{1'b0}}),
-
-  .monitor_axis_tkeep( {dram_tx_axis_tkeep, loopback_tx_axis_tkeep, lb_tx_axis_tkeep}),
-  .monitor_axis_tvalid({dram_tx_axis_tvalid,loopback_tx_axis_tvalid,lb_tx_axis_tvalid}),
-  .monitor_axis_tready({dram_tx_axis_tready,loopback_tx_axis_tready,lb_tx_axis_tready}),
-  .monitor_axis_tlast( {dram_tx_axis_tlast, loopback_tx_axis_tlast, lb_tx_axis_tlast}),
-  .monitor_drop_pulse({PORT_COUNT{1'b0}}),
-
-  .port_select(interface_sel),
-  .stat_addr(interface_reg_sel),
-  .stat_data(interface_out_stat_data)
-);
-
 axis_switch_2lvl # (
     .S_COUNT         (1),
     .M_COUNT         (CORE_COUNT),
@@ -1543,8 +1381,7 @@ axis_switch_2lvl # (
     .SEPARATE_CLOCKS (SEPARATE_CLOCKS),
     .USE_SIMPLE_SW   (1),
     .RAM_PIPELINE    (1)
-) ctrl_in_sw
-(
+) ctrl_in_sw (
     /*
      * AXI Stream inputs
      */
@@ -1616,8 +1453,7 @@ axis_switch_2lvl # (
     .SEPARATE_CLOCKS (SEPARATE_CLOCKS),
     .USE_SIMPLE_SW   (1),
     .RAM_PIPELINE    (DRAM_SW_PIPE)
-) dram_ctrl_in_sw
-(
+) dram_ctrl_in_sw (
     /*
      * AXI Stream inputs
      */
@@ -1666,8 +1502,7 @@ axis_switch_2lvl # (
     .SEPARATE_CLOCKS (SEPARATE_CLOCKS),
     .USE_SIMPLE_SW   (1),
     .RAM_PIPELINE    (DRAM_SW_PIPE)
-) dram_ctrl_out_sw
-(
+) dram_ctrl_out_sw (
     /*
      * AXI Stream inputs
      */
@@ -1697,185 +1532,114 @@ axis_switch_2lvl # (
     .m_axis_tuser(dram_ctrl_m_axis_tuser)
 );
 
-// Core internal messaging
+// Host command parsing and stat read from interfaces and cores
+wire [28:0]              host_cmd_lb;
+wire                     host_cmd_lb_for_ints;
+wire [31:0]              host_cmd_lb_rd_data;
+wire                     host_cmd_lb_valid;
+
+wire                     host_cmd_rpus_valid;
+wire [3:0]               host_cmd_rpus_reg;
+wire [CORE_WIDTH-1:0]    host_cmd_rpus_dest;
+wire [31:0]              host_cmd_ext_wr_data;
+
+wire [CORE_COUNT*4-1:0]  rpu_stat_addr;
+wire [CORE_COUNT*32-1:0] rpu_stat_data;
+
+cmd_stat_sys # (
+  .CORE_COUNT(CORE_COUNT),
+  .PORT_COUNT(PORT_COUNT),
+  .LB_PORT_COUNT(LB_PORT_COUNT),
+  .KEEP_WIDTH(LVL1_STRB_WIDTH),
+  .BC_MSG_CLUSTERS(BC_MSG_CLUSTERS),
+  .STAT_CLUSTERS(STAT_CLUSTERS),
+  .RX_LINES_WIDTH(RX_LINES_WIDTH),
+  .CORE_WIDTH(CORE_WIDTH),
+  .PORT_WIDTH(PORT_WIDTH),
+  .CMD_PIPE_LEN(2)
+) cmd_stat_sys_inst (
+  .core_clk(core_clk),
+  .core_rst(core_rst_r),
+  .sys_clk (sys_clk),
+  .sys_rst (stat_rst_r),
+
+  // Host command and readback data
+  .host_cmd        (host_cmd_f),
+  .host_cmd_wr_data(host_cmd_wr_data_f),
+  .host_cmd_rd_data(host_cmd_rd_data_n),
+  .host_cmd_valid  (host_cmd_valid_f),
+
+  // Filtered host command for load balancer and rpus, and lb read back data
+  .host_cmd_lb         (host_cmd_lb),
+  .host_cmd_lb_for_ints(host_cmd_lb_for_ints),
+  .host_cmd_lb_rd_data (host_cmd_lb_rd_data),
+  .host_cmd_lb_valid   (host_cmd_lb_valid),
+
+  .host_cmd_rpus_valid (host_cmd_rpus_valid),
+  .host_cmd_rpus_reg   (host_cmd_rpus_reg),
+  .host_cmd_rpus_dest  (host_cmd_rpus_dest),
+  .host_cmd_ext_wr_data(host_cmd_ext_wr_data),
+
+  // Status inputs from interfaces and core, and enable output for interfaces
+  .rpu_stat_addr(rpu_stat_addr),
+  .rpu_stat_data(rpu_stat_data),
+  .rx_line_count({{(V_PORT_COUNT*RX_LINES_WIDTH){1'b0}}, rx_line_count_r}),
+  .rx_int_enable(rx_int_enable),
+
+  // RX and TX channels for monitorring
+  .rx_axis_tkeep ({dram_rx_axis_tkeep,  loopback_rx_axis_tkeep,  lb_rx_axis_tkeep}),
+  .rx_axis_tvalid({dram_rx_axis_tvalid, loopback_rx_axis_tvalid, lb_rx_axis_tvalid}),
+  .rx_axis_tready({dram_rx_axis_tready, loopback_rx_axis_tready, lb_rx_axis_tready}),
+  .rx_axis_tlast ({dram_rx_axis_tlast,  loopback_rx_axis_tlast,  lb_rx_axis_tlast}),
+  .rx_drop_pulse ({{(PORT_COUNT-IF_COUNT){1'b0}},rx_drop_r}),
+
+  .tx_axis_tkeep ({dram_tx_axis_tkeep,  loopback_tx_axis_tkeep,  lb_tx_axis_tkeep}),
+  .tx_axis_tvalid({dram_tx_axis_tvalid, loopback_tx_axis_tvalid, lb_tx_axis_tvalid}),
+  .tx_axis_tready({dram_tx_axis_tready, loopback_tx_axis_tready, lb_tx_axis_tready}),
+  .tx_axis_tlast ({dram_tx_axis_tlast,  loopback_tx_axis_tlast,  lb_tx_axis_tlast}),
+  .tx_drop_pulse ({PORT_COUNT{1'b0}})
+);
+
+// MUX between host commands and LB requests
+assign lb_ctrl_m_axis_tvalid   =   host_cmd_rpus_valid  || lb_ctrl_m_axis_tvalid_n;
+assign lb_ctrl_m_axis_tready_n = (!host_cmd_rpus_valid) && lb_ctrl_m_axis_tready;
+assign lb_ctrl_m_axis_tdata    =   host_cmd_rpus_valid   ?
+               {host_cmd_rpus_reg, host_cmd_ext_wr_data} : lb_ctrl_m_axis_tdata_n;
+assign lb_ctrl_m_axis_tdest    =   host_cmd_rpus_valid   ?
+                                   host_cmd_rpus_dest    : lb_ctrl_m_axis_tdest_n;
+
+// Broadcast messaging
 wire [CORE_COUNT*CORE_MSG_WIDTH-1:0] core_msg_out_data;
 wire [CORE_COUNT-1:0]                core_msg_out_valid;
 wire [CORE_COUNT-1:0]                core_msg_out_ready;
 
-// // Register core message outputs
-// wire [CORE_COUNT*CORE_MSG_WIDTH-1:0] core_msg_out_data_r;
-// wire [CORE_COUNT*CORE_WIDTH-1:0]     core_msg_out_user_r;
-// wire [CORE_COUNT-1:0]                core_msg_out_valid_r;
-// wire [CORE_COUNT-1:0]                core_msg_out_ready_r;
-//
-// genvar n;
-// generate
-//   for (n=0; n<CORE_COUNT; n=n+1) begin: bc_msg_out_regs
-//     axis_pipeline_register # (
-//       .DATA_WIDTH(CORE_MSG_WIDTH),
-//       .KEEP_ENABLE(0),
-//       .KEEP_WIDTH(1),
-//       .LAST_ENABLE(0),
-//       .DEST_ENABLE(0),
-//       .USER_ENABLE(1),
-//       .USER_WIDTH(CORE_WIDTH),
-//       .ID_ENABLE(0),
-//       .REG_TYPE(2),
-//       .LENGTH(1)
-//     ) bc_msg_out_register (
-//       .clk(core_clk),
-//       .rst(core_rst_r),
-//
-//       .s_axis_tdata(core_msg_out_data[n*CORE_MSG_WIDTH +: CORE_MSG_WIDTH]),
-//       .s_axis_tkeep(1'b0),
-//       .s_axis_tvalid(core_msg_out_valid[n]),
-//       .s_axis_tready(core_msg_out_ready[n]),
-//       .s_axis_tlast(1'b0),
-//       .s_axis_tid(8'd0),
-//       .s_axis_tdest(8'd0),
-//       .s_axis_tuser(ctrl_m_axis_tuser[n*CORE_WIDTH +: CORE_WIDTH]),
-//
-//       .m_axis_tdata(core_msg_out_data_r[n*CORE_MSG_WIDTH +: CORE_MSG_WIDTH]),
-//       .m_axis_tkeep(),
-//       .m_axis_tvalid(core_msg_out_valid_r[n]),
-//       .m_axis_tready(core_msg_out_ready_r[n]),
-//       .m_axis_tlast(),
-//       .m_axis_tid(),
-//       .m_axis_tdest(),
-//       .m_axis_tuser(core_msg_out_user_r[n*CORE_WIDTH +: CORE_WIDTH])
-//     );
-//   end
-// endgenerate
+wire [CORE_COUNT*CORE_MSG_WIDTH-1:0] core_msg_in_data;
+wire [CORE_COUNT*CORE_WIDTH-1:0]     core_msg_in_user;
+wire [CORE_COUNT-1:0]                core_msg_in_valid;
 
-// Merge the boradcast messages
-wire [CORE_MSG_WIDTH-1:0]            core_msg_merged_data;
-wire [CORE_WIDTH-1:0]                core_msg_merged_user;
-wire                                 core_msg_merged_valid;
-wire                                 core_msg_merged_ready;
+bc_msg_merger # (
+  .CORE_COUNT     (CORE_COUNT),
+  .BC_MSG_CLUSTERS(BC_MSG_CLUSTERS),
+  .BC_REGION_SIZE (BC_REGION_SIZE),
+  .CORE_WIDTH     (CORE_WIDTH),
+  .CORE_MSG_WIDTH (CORE_MSG_WIDTH),
+  .REG_TYPE       (0)
+) bc_msg_merger_inst (
+  .clk(core_clk),
+  .rst(core_rst_r),
 
-axis_simple_arb_2lvl # (
-    .S_COUNT         (CORE_COUNT),
-    .DATA_WIDTH      (CORE_MSG_WIDTH),
-    .USER_ENABLE     (1),
-    .USER_WIDTH      (CORE_WIDTH),
-    .CLUSTER_COUNT   (BC_MSG_CLUSTERS),
-    .STAGE_FIFO_DEPTH(16)
-) cores_to_broadcaster (
+  // Input from all RPUs
+  .s_axis_tdata (core_msg_out_data),
+  .s_axis_tuser (ctrl_m_axis_tuser), // It's fixed and the same
+  .s_axis_tvalid(core_msg_out_valid),
+  .s_axis_tready(core_msg_out_ready),
 
-    .clk(core_clk),
-    .rst(core_rst_r),
 
-    .s_axis_tdata(core_msg_out_data),
-    .s_axis_tvalid(core_msg_out_valid),
-    .s_axis_tready(core_msg_out_ready),
-    .s_axis_tuser(ctrl_m_axis_tuser),
-
-    .m_axis_tdata(core_msg_merged_data),
-    .m_axis_tvalid(core_msg_merged_valid),
-    .m_axis_tready(core_msg_merged_ready),
-    .m_axis_tuser(core_msg_merged_user)
+  // Merged output going to all RPUs, no ready as they will accept
+  .m_axis_tdata (core_msg_in_data),
+  .m_axis_tuser (core_msg_in_user),
+  .m_axis_tvalid(core_msg_in_valid)
 );
-
-(* KEEP = "TRUE" *) reg [BC_MSG_CLUSTERS*CORE_MSG_WIDTH-1:0] core_msg_merged_data_r;
-(* KEEP = "TRUE" *) reg [BC_MSG_CLUSTERS*CORE_WIDTH-1:0]     core_msg_merged_user_r;
-(* KEEP = "TRUE" *) reg [BC_MSG_CLUSTERS-1:0]                core_msg_merged_valid_r;
-
-always @ (posedge core_clk) begin
-    core_msg_merged_data_r  <= {BC_MSG_CLUSTERS{core_msg_merged_data}};
-    core_msg_merged_user_r  <= {BC_MSG_CLUSTERS{core_msg_merged_user}};
-    core_msg_merged_valid_r <= {BC_MSG_CLUSTERS{core_msg_merged_valid}};
-    if (core_rst_r)
-      core_msg_merged_valid_r <= {BC_MSG_CLUSTERS{1'b0}};
-end
-
-assign core_msg_merged_ready = 1'b1;
-
-// Broadcast the arbitted core messages.
-(* KEEP = "TRUE" *) reg [CORE_COUNT*CORE_MSG_WIDTH-1:0] core_msg_in_data;
-(* KEEP = "TRUE" *) reg [CORE_COUNT*CORE_WIDTH-1:0]     core_msg_in_user;
-(* KEEP = "TRUE" *) reg [CORE_COUNT-1:0]                core_msg_in_valid;
-
-localparam CORES_PER_CLUSTER = CORE_COUNT / BC_MSG_CLUSTERS;
-
-always @ (posedge core_clk) begin
-    core_msg_in_data  <= {CORES_PER_CLUSTER{core_msg_merged_data_r}};
-    core_msg_in_user  <= {CORES_PER_CLUSTER{core_msg_merged_user_r}};
-    core_msg_in_valid <= {CORES_PER_CLUSTER{core_msg_merged_valid_r}};
-    if (core_rst_r)
-        core_msg_in_valid <= {CORE_COUNT{1'b0}};
-end
-
-// Additional register level.
-(* KEEP = "TRUE" *) reg [CORE_COUNT*CORE_MSG_WIDTH-1:0] core_msg_in_data_r;
-(* KEEP = "TRUE" *) reg [CORE_COUNT*CORE_WIDTH-1:0]     core_msg_in_user_r;
-(* KEEP = "TRUE" *) reg [CORE_COUNT-1:0]                core_msg_in_valid_r;
-
-always @ (posedge core_clk) begin
-    core_msg_in_data_r  <= core_msg_in_data;
-    core_msg_in_user_r  <= core_msg_in_user;
-    core_msg_in_valid_r <= core_msg_in_valid;
-    if (core_rst_r)
-        core_msg_in_valid_r <= {CORE_COUNT{1'b0}};
-end
-
-// Selecting core for stat readback
-localparam LAST_SEL_BITS = CORE_WIDTH+4-$clog2(BC_MSG_CLUSTERS);
-
-(* KEEP = "TRUE" *) reg  [CORE_COUNT*4-1:0] core_stat_addr;
-wire [CORE_COUNT*32-1:0] core_stat_data;
-
-(* KEEP = "TRUE" *) reg [CORE_WIDTH+4-1:0] core_select_r;
-(* KEEP = "TRUE" *) reg [BC_MSG_CLUSTERS*LAST_SEL_BITS-1:0] core_select_rr;
-(* KEEP = "TRUE" *) reg [CORE_COUNT*32-1:0] core_stat_data_r;
-reg [BC_MSG_CLUSTERS*32-1:0] core_stat_data_rr;
-
-always @ (posedge core_clk) begin
-  core_select_r    <= {host_core_select2, host_reg_core};
-  core_select_rr   <= {BC_MSG_CLUSTERS{core_select_r[LAST_SEL_BITS-1:0]}};
-  core_stat_data_r <= core_stat_data;
-end
-
-genvar p;
-generate
-  for (p=0; p<BC_MSG_CLUSTERS; p=p+1) begin : in_cluster_stat_sel
-
-    wire [$clog2(CORES_PER_CLUSTER)-1:0] cluster_core_sel =
-      core_select_rr[p*LAST_SEL_BITS+4+:$clog2(CORES_PER_CLUSTER)];
-
-
-    wire [CORES_PER_CLUSTER*32-1:0]  cluster_stat_data =
-                        core_stat_data_r[p*CORES_PER_CLUSTER*32
-                                        +: CORES_PER_CLUSTER*32];
-    always @ (posedge core_clk) begin
-      core_stat_data_rr [p*32 +: 32] <=
-          cluster_stat_data [cluster_core_sel*32 +: 32];
-
-    core_stat_addr[p*CORES_PER_CLUSTER*4 +: 4*CORES_PER_CLUSTER] <=
-      {CORES_PER_CLUSTER{core_select_rr[p*LAST_SEL_BITS +: 4]}};
-    end
-
-  end
-endgenerate
-
-reg  [31:0] core_stat_data_muxed_n;
-
-if (BC_MSG_CLUSTERS == 1) begin: single_cluster
-  always @ (posedge core_clk)
-    core_stat_data_muxed_n <= core_stat_data_rr;
-end else begin: cluster_stat_sel
-  always @ (posedge core_clk)
-    core_stat_data_muxed_n <=
-      core_stat_data_rr[core_select_r[CORE_WIDTH+4-1:LAST_SEL_BITS]*32  +: 32];
-end
-
-// Core stat clock crossing or extra pipe registesr
-simple_sync_sig # (.RST_VAL(1'b0),.WIDTH(32)) core_stat_data_sync_reg (
-  .dst_clk(sys_clk),
-  .dst_rst(sys_rst_r),
-  .in (core_stat_data_muxed_n),
-  .out(core_stat_data_muxed)
-);
-
 
 // Instantiating RPUs and their interconnect
 genvar i;
@@ -1996,13 +1760,13 @@ generate
             .core_msg_out_ready(core_msg_out_ready[i]),
 
             // Core messages input
-            .core_msg_in(core_msg_in_data_r[CORE_MSG_WIDTH*i +: CORE_MSG_WIDTH]),
-            .core_msg_in_user(core_msg_in_user_r[CORE_WIDTH*i +: CORE_WIDTH]),
-            .core_msg_in_valid(core_msg_in_valid_r[i]),
+            .core_msg_in(core_msg_in_data[CORE_MSG_WIDTH*i +: CORE_MSG_WIDTH]),
+            .core_msg_in_user(core_msg_in_user[CORE_WIDTH*i +: CORE_WIDTH]),
+            .core_msg_in_valid(core_msg_in_valid[i]),
 
             // ---------- STATUS READBACK CHANNEL ---------- //
-            .stat_addr(core_stat_addr[4*i +: 4]),
-            .stat_data(core_stat_data[32*i +: 32]),
+            .stat_addr(rpu_stat_addr[4*i +: 4]),
+            .stat_data(rpu_stat_data[32*i +: 32]),
 
             // --------------------------------------------- //
             // ------- CONNECTION TO RISCV_BLOCK ----------- //

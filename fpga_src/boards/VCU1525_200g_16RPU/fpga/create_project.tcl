@@ -33,6 +33,8 @@ add_files -fileset sources_1 -norecurse {
   ../lib/Shire/rtl/axis_slr_register.v
   ../lib/Shire/rtl/axis_switch_2lvl.v
   ../lib/Shire/rtl/loopback_msg_fifo.v
+  ../lib/Shire/rtl//bc_msg_merger.v
+  ../lib/Shire/rtl//cmd_stat_sys.v
   ../lib/Shire/rtl/header.v
   ../lib/Shire/rtl/pcie_controller.v
   ../lib/Shire/rtl/pcie_cont_read.v
