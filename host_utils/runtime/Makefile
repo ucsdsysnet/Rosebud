@@ -1,10 +1,11 @@
 TEST=basic_fw
-SIZE=9000
+# TEST=pkt_gen
+PKT_SIZE=9000
 DEST_DIR=../../riscv_code/
 # DEST_DIR=../accel/ip_matcher/c/
 INS_BIN_FILE=$(DEST_DIR)/$(TEST)_ins.bin
 DATA_MAP_FILE=$(INS_BIN_FILE:%_ins.bin=%.map)
-OUT_FILE=$(TEST)_$(SIZE).csv
+OUT_FILE=$(TEST)_$(PKT_SIZE).csv
 DEV=mqnic0
 ENABLE=0xffff
 RECV=0xffff
@@ -60,7 +61,7 @@ clean:
 .PHONY: all install clean
 
 do:
-	make -C $(DEST_DIR) NAME=$(TEST)
+	make -C $(DEST_DIR) NAME=$(TEST) DEFINES="-DPKT_SIZE=$(PKT_SIZE)"
 	sudo ./rvfw -d /dev/$(DEV) -i $(INS_BIN_FILE) $(DMAP_FLAG) -e $(ENABLE) -r $(RECV)
 	sudo ./perf -d /dev/$(DEV) -o $(OUT_FILE) -g $(DEBUG)
 

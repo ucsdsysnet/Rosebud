@@ -9,8 +9,8 @@ unsigned int * wr_ptr;
 unsigned int count;
 unsigned int first_packet;
 
-#ifndef SIZE
-    #define SIZE 1024
+#ifndef PKT_SIZE
+    #define PKT_SIZE 1024
 #endif
 
 #ifndef CONGESTION
@@ -26,11 +26,11 @@ unsigned int first_packet;
 #ifndef SLOW_DOWN_RATE
     #if CONGESTION == 0
         #define SLOW_DOWN_RATE 0
-    #elif SIZE <= 128
+    #elif PKT_SIZE <= 128
         #define SLOW_DOWN_RATE 40
-    #elif SIZE <= 2048
+    #elif PKT_SIZE <= 2048
         #define SLOW_DOWN_RATE 20
-    #elif SIZE <= 4096
+    #elif PKT_SIZE <= 4096
         #define SLOW_DOWN_RATE 10
     #else
         #define SLOW_DOWN_RATE 5
@@ -60,7 +60,7 @@ int main(void){
     pkt_data[i] = (unsigned int *)(0x01000000+(i*16384));
   }
 
-  send_pkt.len = SIZE;
+  send_pkt.len = PKT_SIZE;
   send_pkt.tag = 0;
   // Half of the cores send, so one port is enough
   send_pkt.port = 0;

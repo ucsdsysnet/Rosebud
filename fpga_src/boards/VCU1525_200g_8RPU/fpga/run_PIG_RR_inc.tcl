@@ -49,6 +49,8 @@ add_files -norecurse {
   ../lib/axis/syn/vivado/sync_reset.tcl
 } -of_objects [get_reconfig_modules LB_RR]
 
+set_property include_dirs [list "../lib/Shire/rtl/"] [current_fileset]
+
 if {[llength [get_pr_configurations PIG_RR_config]]!=0} then {
   delete_pr_configurations PIG_RR_config}
 create_pr_configuration -name PIG_RR_config -partitions [list \

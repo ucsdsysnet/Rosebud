@@ -1,5 +1,9 @@
 #include "core.h"
 
+#ifndef PKT_SIZE
+  #define PKT_SIZE 1500
+#endif
+
 struct Desc packet;
 unsigned int * pkt_data[16];
 
@@ -21,7 +25,7 @@ int main(void){
   }
 
   pkt_num    = 0;
-  packet.len = 4096;
+  packet.len = PKT_SIZE;
   packet.tag = 0;
   if ((core_id()&0x4)!=0)
     packet.port = 1;

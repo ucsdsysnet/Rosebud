@@ -48,6 +48,8 @@ add_files -norecurse {
   ../lib/Shire/syn/vivado/simple_sync_sig.tcl
 } -of_objects [get_reconfig_modules RPU_FW]
 
+set_property include_dirs [list "../lib/Shire/rtl/"] [current_fileset]
+
 if {[llength [get_pr_configurations FW_RR_config]]!=0} then {
   delete_pr_configurations FW_RR_config}
 create_pr_configuration -name FW_RR_config -partitions [list \

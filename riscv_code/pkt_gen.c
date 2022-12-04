@@ -19,8 +19,10 @@
 // DWORD align Ethernet payload
 // provide space for header modifications
 #define PKT_OFFSET 10
-// #define PKTS_START (6*128*1024)
-#define PKTS_START 0
+#define IN_PKTS_START 0
+
+#define GEN_PKTS_START (PMEM_BASE+0x00040000)
+#define GEN_SLOT_SIZE 10*1024
 
 #ifdef HASH_LB
   #define DATA_OFFSET 4
@@ -28,7 +30,13 @@
   #define DATA_OFFSET 0
 #endif
 
-#define PKT_SIZE 1500
+#ifndef PKT_SIZE
+  #define PKT_SIZE 1500
+#endif
+
+#ifndef RND_ARR_SIZE
+  #define RND_ARR_SIZE 10240
+#endif
 
 char *pkt_data[16];
 unsigned int pkt_len[16] = {[0 ... 15] = PKT_SIZE};
@@ -145,7 +153,9 @@ struct segment pkt_headers[] = {
   SEG(http_hdr)
 };
 
-char pattern0[10240] = {[0 ... 10239] = 0xFF}; // For Pigasus not to match
+// GEN_SLOT_SIZE + TCP/UDP header becomes longer than GEN_SLOT_SIZE, but next slide overrides
+// the previous one anyways.
+char pattern0[GEN_SLOT_SIZE] = {[0 ... (GEN_SLOT_SIZE-1)] = 0xFF}; // For Pigasus not to match
 char pattern1[] = "page.php?id=%27%3B%20SELECT%20%2A%20FROM%20users%3B%20--";
 char pattern2[] = "page.php?id=%27%3B%20DELETE%20FROM%20prod_data%3B%20--";
 char pattern3[] = "GET AAAAAAAA HTTP/1.1";
@@ -179,7 +189,7 @@ void init_packets()
 {
   int i;
 
-  char *ptr = (char *)(0x01040000);
+  char *ptr = (char *)(GEN_PKTS_START);
 
   int hdr_index = 0;
   int data_index = 0;
@@ -258,7 +268,7 @@ void init_packets()
     ptr[29] = core_id();
 
     pkt_data[i] = ptr;
-    ptr += 10240;
+    ptr += GEN_SLOT_SIZE;
 
     hdr_index += 1;
     if (hdr_index >= ARRAY_SIZE(pkt_headers))
@@ -268,11 +278,12 @@ void init_packets()
       data_index = 0;
   }
 
-  // precompute random array for packet sizes
+  // precompute random array for packet sizes,
+  // putting the array after packets data
   rand_array = ptr;
 
 
-  for (i = 0; i < 10240; i++)
+  for (i = 0; i < RND_ARR_SIZE; i++)
   {
     rand_array[i] = pcg32_boundedrand_r(&rng, ARRAY_SIZE(pkt_len));
   }
@@ -285,14 +296,14 @@ int main(void){
 
   // set slot configuration parameters
   slot_count = 16;
-  slot_size = 10*1024;
+  slot_size  = 10*1024;
   header_slot_base = DMEM_BASE + (DMEM_SIZE >> 1);
   header_slot_size = 128;
 
   // Do this at the beginning, so load balancer can fill the slots while
   // initializing other things.
   init_hdr_slots(slot_count, header_slot_base, header_slot_size);
-  init_slots(slot_count, PKTS_START+PKT_OFFSET, slot_size);
+  init_slots(slot_count, IN_PKTS_START+PKT_OFFSET, slot_size);
   set_masks(0x30); // Enable only Evict + Poke
   set_lb_offset(DATA_OFFSET);
 
@@ -312,7 +323,7 @@ int main(void){
   // packet.data = pkt_data[0];
 
   while (1){
-    for (i=0; i<10240; i+=2) {
+    for (i=0; i<RND_ARR_SIZE; i+=2) {
       pkt_num = rand_array[i];
       len_num = rand_array[i+1];
       pkt_data[pkt_num][35]++; // change source port

@@ -118,7 +118,7 @@ INC_DIR=$(ICARUS_INC_DIR)
 include $(shell cocotb-config --makefiles)/Makefile.sim
 
 compile:
-	make -C ../../../../../riscv_code/ NAME=basic_corundum_fw
+	make -C ../../../../../riscv_code/ NAME=basic_corundum_tb
 
 clean::
 	@rm -rf *.xml __pycache__

@@ -1,11 +1,13 @@
 #include "core.h"
 
+#define HALF_CORE_COUNT (8/2)
+
 struct Desc packet;
 
 int main(void){
 
   int id=core_id();
-  int next_core=id+8;
+  int next_core=id+HALF_CORE_COUNT;
 
   // Do this at the beginnig, so load balancer can fill the slots while 
   // initializing other things.
@@ -13,7 +15,7 @@ int main(void){
   init_slots(16, 0x000000, 16384);
   set_masks(0x30); // Enable only Evict + Poke
 
-  if (id<8){
+  if (id<HALF_CORE_COUNT){
     while (1){
       if (in_pkt_ready()){
         read_in_pkt(&packet);

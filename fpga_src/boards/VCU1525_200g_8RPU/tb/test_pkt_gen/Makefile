@@ -120,7 +120,6 @@ include $(shell cocotb-config --makefiles)/Makefile.sim
 
 compile:
 	make -C ../../../../../riscv_code/ NAME=basic_pkt_gen
-	make -C ../../../../../riscv_code/ NAME=pkt_gen
 
 clean::
 	@rm -rf *.xml __pycache__

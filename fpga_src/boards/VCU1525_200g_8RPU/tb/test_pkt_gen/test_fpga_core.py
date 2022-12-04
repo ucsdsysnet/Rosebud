@@ -44,11 +44,10 @@ import mqnic
 
 
 PRINT_PKTS = True
-WAIT_TIME  = 100
+WAIT_TIME  = 10000
 
 FIRMWARE = os.path.abspath(os.path.join(os.path.dirname(__file__),
     '..', '..', '..', '..', '..', 'riscv_code', 'basic_pkt_gen.elf'))
-  # '..', '..', '..', '..', '..', 'riscv_code', 'pkt_gen.elf'))
 
 
 @cocotb.test()
@@ -72,8 +71,6 @@ async def run_test_pkt_gen(dut):
 
     await Timer(WAIT_TIME, 'ns')
         
-    await tb.reset_all_cores()
-
     tb.log.info("Read counters")
     for k in range(0, 8):
         slots      = await tb.read_core_slots(k)

@@ -42,7 +42,7 @@ import mqnic
 
 
 FIRMWARE = os.path.abspath(os.path.join(os.path.dirname(__file__),
-    '..', '..', '..', '..', '..', 'riscv_code', 'basic_corundum_fw.elf'))
+    '..', '..', '..', '..', '..', 'riscv_code', 'basic_corundum_tb.elf'))
 
 
 @cocotb.test()

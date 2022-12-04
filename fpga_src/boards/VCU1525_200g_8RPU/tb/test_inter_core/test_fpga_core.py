@@ -48,7 +48,7 @@ SEND_COUNT_1 = 50
 SIZE_0       = 512
 SIZE_1       = 512
 CHECK_PKT    = True
-TEST_DEBUG   = True
+TEST_DEBUG   = False
 PRINT_PKTS   = False
 
 PACKETS = []
@@ -80,7 +80,7 @@ async def run_test_inter_core(dut):
     await tb.set_enable_cores(0xffff)
     await tb.set_receive_cores(0x00ff)
     await tb.set_enable_interfaces(0xffff)
-    await Timer(100, 'ns')
+    await Timer(500, 'ns')
 
     tb.log.info("Send data from LAN")
     tb.qsfp0_source.log.setLevel("WARNING")

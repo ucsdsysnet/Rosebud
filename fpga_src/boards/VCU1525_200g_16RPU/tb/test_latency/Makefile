@@ -120,7 +120,7 @@ include $(shell cocotb-config --makefiles)/Makefile.sim
 
 compile:
 	make -C ../../../../../riscv_code/ NAME=latency
-	make -C ../../../../../riscv_code/ NAME=bc_test2
+	make -C ../../../../../riscv_code/ NAME=bc_all_to_all
 
 clean::
 	@rm -rf *.xml __pycache__
