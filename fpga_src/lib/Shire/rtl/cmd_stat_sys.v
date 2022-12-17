@@ -160,7 +160,7 @@ module cmd_stat_sys # (
   assign host_cmd_ext_wr_data = host_cmd_wr_data_r;
   assign host_cmd_rpus_valid  = host_to_cores_wr_r;
   assign host_cmd_rpus_dest   = host_cmd_r[CORE_WIDTH+4-1:4];
-  assign host_cmd_rpus_reg    = host_reg_sel;;
+  assign host_cmd_rpus_reg    = host_reg_sel;
 
   reg [RX_LINES_WIDTH-1:0] rx_line_muxed;
   always @ (posedge sys_clk)

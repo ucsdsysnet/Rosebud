@@ -123,7 +123,7 @@ module axis_fifo_w_count #
     output wire [ADDR_WIDTH:0]    status_line_count
 );
 
-parameter OUTPUT_FIFO_ADDR_WIDTH = RAM_PIPELINE < 2 ? 3 : $clog2(RAM_PIPELINE*2+7);
+localparam OUTPUT_FIFO_ADDR_WIDTH = RAM_PIPELINE < 2 ? 3 : $clog2(RAM_PIPELINE*2+7);
 
 // check configuration
 initial begin

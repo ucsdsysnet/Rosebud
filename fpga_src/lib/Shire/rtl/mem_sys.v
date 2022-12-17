@@ -515,7 +515,6 @@ module mem_sys # (
   reg  [DATA_WIDTH-1:0]      pmem_wr_data_b1;
 
   reg                        pmem_en_b2;
-  reg                        core_pmem_rd_b2;
   reg  [PMEM_ADDR_WIDTH-1:0] pmem_addr_b2;
   reg  [STRB_WIDTH-1:0]      pmem_wen_b2;
   reg  [DATA_WIDTH-1:0]      pmem_wr_data_b2;
@@ -570,7 +569,6 @@ module mem_sys # (
 
   always @ (posedge clk) begin
     pmem_en_b2      <= 1'b0;
-    core_pmem_rd_b2 <= 1'b0;
     pmem_addr_b2    <= core_dmem_addr[PMEM_ADDR_WIDTH-1:0];
     pmem_wen_b2     <= {STRB_WIDTH{1'b0}};
     pmem_wr_data_b2 <= core_dmem_wr_data_w;
@@ -578,7 +576,6 @@ module mem_sys # (
     if (core_dmem_addr[LINE_ADDR_BITS] && core_pmem_en) begin
       pmem_en_b2      <= 1'b1;
       pmem_wen_b2     <= core_dmem_strb_w;
-      core_pmem_rd_b2 <= !core_dmem_wen;
     end else if (dma_pmem_cmd_wr_addr[LINE_ADDR_BITS] && dma_pmem_wr_en_r) begin
       pmem_en_b2      <= 1'b1;
       pmem_addr_b2    <= dma_pmem_cmd_wr_addr;

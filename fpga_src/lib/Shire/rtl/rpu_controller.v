@@ -58,7 +58,7 @@ module rpu_controller # (
   // Monitor on in_desc
   input  wire [63:0]                in_desc_mon,
   input  wire                       in_desc_valid_mon,
-  output wire                       in_desc_taken_mon,
+  input  wire                       in_desc_taken_mon,
 
   // Width converter on out_desc
   input  wire [63:0]                core_desc_hdr,

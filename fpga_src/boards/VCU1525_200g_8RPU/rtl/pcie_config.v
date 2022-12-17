@@ -150,7 +150,6 @@ reg i2c_scl_o_rr;
 reg i2c_scl_t_rr;
 reg i2c_sda_i_rr;
 reg i2c_sda_o_rr;
-reg i2c_sda_t_rr;
 reg qsfp0_resetl_rr;
 reg qsfp0_modprsl_rr;
 reg qsfp0_intl_rr;
@@ -341,7 +340,6 @@ always @(posedge clk)
         i2c_scl_o_rr     <= 1'b1;
         i2c_scl_t_rr     <= 1'b1;
         i2c_sda_o_rr     <= 1'b1;
-        i2c_sda_t_rr     <= 1'b1;
 
         i2c_scl_i_rr     <= 1'b1;
         i2c_sda_i_rr     <= 1'b1;
@@ -371,7 +369,6 @@ always @(posedge clk)
         i2c_scl_o_rr     <= i2c_scl_o_r;
         i2c_scl_t_rr     <= i2c_scl_o_r;
         i2c_sda_o_rr     <= i2c_sda_o_r;
-        i2c_sda_t_rr     <= i2c_sda_o_r;
 
         i2c_scl_i_rr     <= i2c_scl_i_r;
         i2c_sda_i_rr     <= i2c_sda_i_r;

@@ -215,7 +215,7 @@ wire [3:0]  ctrl_cmd = ctrl_s_axis_tdata_r[35:32];
 reg core_reset_r;
 reg core_poke_r;
 reg core_evict_r;
-reg dupl_slot_int_r;
+reg in_desc_dupl_r;
 reg inv_slot_int_r;
 reg inv_desc_int_r;
 reg recv_dram_tag_v_r;
@@ -224,9 +224,9 @@ reg recv_dram_tag_v_r;
 reg [31:0] host_debug_l,   host_debug_h;
 reg        host_debug_l_v, host_debug_h_v;
 
-wire int_valid = core_poke_r     || core_evict_r   ||  //these 2 can be removed and reset based on SM
-                 dupl_slot_int_r || inv_slot_int_r ||
-                 inv_desc_int_r  || recv_dram_tag_v_r;
+wire int_valid = core_poke_r    || core_evict_r   ||  //these 2 can be removed and reset based on SM
+                 in_desc_dupl_r || inv_slot_int_r ||
+                 inv_desc_int_r || recv_dram_tag_v_r;
 
 always @ (posedge clk) begin
   core_poke_r  <= 1'b0;
@@ -335,7 +335,7 @@ localparam TIMER_L  = 2'b01;
 localparam TIMER_H  = 2'b10;
 localparam DEFAULT  = 2'b11;
 
-wire [31:0] ints_status = {10'd0, recv_dram_tag_v_r, dupl_slot_int_r,
+wire [31:0] ints_status = {10'd0, recv_dram_tag_v_r, in_desc_dupl_r,
                            inv_slot_int_r, inv_desc_int_r, core_poke_r,
                            core_evict_r, 11'd0, recv_dram_tag_r};
 
@@ -1338,21 +1338,19 @@ end
 /////////////////////////////////////////////////////////////////////
 ///////////////////////// ERROR CATCHING ////////////////////////////
 /////////////////////////////////////////////////////////////////////
-reg in_desc_drop;
 
 always @ (posedge clk) begin
   // Drop on the fly packet if slot is already in the interconnect
-  in_desc_drop    <= 1'b0;
+  // and interrupt the core
+  in_desc_dupl_r  <= 1'b0;
   // Single cycle interrupts to the core
-  dupl_slot_int_r <= 1'b0;
   inv_slot_int_r  <= 1'b0;
 
   if (in_desc_valid_n && in_desc_ready_n &&
                 (slots_to_send[in_desc_slot_n] ||
                  slots_in_prog[in_desc_slot_n])) begin
     override_in_slot_err [in_desc_slot_n] <= 1'b1;
-    in_desc_drop                          <= 1'b1;
-    dupl_slot_int_r                       <= 1'b1;
+    in_desc_dupl_r                        <= 1'b1;
   end
 
   if (done_w_slot_r && (out_desc_slot_r!=0) && !slots_in_prog[out_desc_slot_r]) begin
@@ -1370,9 +1368,8 @@ always @ (posedge clk) begin
     override_in_slot_err  <= {SLOT_COUNT{1'b0}};
     override_out_slot_err <= {SLOT_COUNT{1'b0}};
     invalid_out_slot_err  <= {SLOT_COUNT{1'b0}};
-    in_desc_drop          <= 1'b0;
+    in_desc_dupl_r        <= 1'b0;
     out_desc_err          <= 1'b0;
-    dupl_slot_int_r       <= 1'b0;
     inv_slot_int_r        <= 1'b0;
   end
 end
@@ -1400,7 +1397,7 @@ always @ (posedge clk) begin
   if (in_desc_valid_n && in_desc_ready_n) begin
     in_desc_valid_r <= 1'b1;
     in_desc_r       <= {in_desc_addr_adj, in_desc_n[31:16], in_desc_len_adj};
-  end else if (in_desc_taken || in_desc_drop) begin
+  end else if (in_desc_taken || in_desc_dupl_r) begin
     in_desc_valid_r <= 1'b0;
   end
 
@@ -1409,8 +1406,8 @@ always @ (posedge clk) begin
   end
 end
 
-assign in_desc_ready_n = in_desc_taken || in_desc_drop || !in_desc_valid_r;
-assign in_desc_valid   = in_desc_valid_r && !in_desc_drop;
+assign in_desc_ready_n = in_desc_taken || in_desc_dupl_r || !in_desc_valid_r;
+assign in_desc_valid   = in_desc_valid_r && !in_desc_dupl_r;
 assign in_desc         = in_desc_r;
 
 /////////////////////////////////////////////////////////////////////

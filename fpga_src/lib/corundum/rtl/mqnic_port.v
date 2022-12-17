@@ -1091,6 +1091,12 @@ if (TX_SCHEDULER == "TDMA_RR") begin
         .tdma_timeslot_active(tdma_timeslot_active)
     );
 
+end else begin
+    assign tdma_locked          = 1'b0;
+    assign tdma_error           = 1'b0;
+    assign tx_sched_ctrl_queue  = 0;
+    assign tx_sched_ctrl_enable = 1'b0;
+    assign tx_sched_ctrl_valid  = 1'b0;
 end
 
 endgenerate
@@ -1369,6 +1375,7 @@ rx_engine_inst (
     /*
      * Receive request status output
      */
+    .m_axis_rx_req_status_len(),
     .m_axis_rx_req_status_tag(rx_req_status_tag),
     .m_axis_rx_req_status_valid(rx_req_status_valid),
 
@@ -1919,6 +1926,7 @@ dma_client_axis_source_inst (
      * DMA read descriptor status output
      */
     .m_axis_read_desc_status_tag(dma_tx_desc_status_tag),
+    .m_axis_read_desc_status_error(),
     .m_axis_read_desc_status_valid(dma_tx_desc_status_valid),
 
     /*
@@ -2027,6 +2035,7 @@ dma_client_axis_sink_inst (
     .m_axis_write_desc_status_id(),
     .m_axis_write_desc_status_dest(),
     .m_axis_write_desc_status_user(dma_rx_desc_status_user),
+    .m_axis_write_desc_status_error(),
     .m_axis_write_desc_status_valid(dma_rx_desc_status_valid),
 
     /*

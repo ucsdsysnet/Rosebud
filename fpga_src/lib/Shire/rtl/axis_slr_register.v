@@ -30,7 +30,7 @@ THE SOFTWARE.
 `default_nettype none
 
 // Based on axis_srl_fifo but without din_ready
-module simple_axis_slr_fifo #(
+module simple_axis_srl_fifo #(
   parameter WIDTH = 8,
   parameter DEPTH = 16
 ) (
@@ -49,7 +49,6 @@ module simple_axis_slr_fifo #(
 
   reg [WIDTH-1:0] data_reg[DEPTH-1:0];
   reg [$clog2(DEPTH+1)-1:0] ptr_reg = 0;
-  reg full_reg = 1'b0, full_next;
   reg empty_reg = 1'b1, empty_next;
 
   wire ptr_empty  = ptr_reg == 0;
@@ -72,7 +71,6 @@ module simple_axis_slr_fifo #(
     shift = 1'b0;
     inc = 1'b0;
     dec = 1'b0;
-    full_next = full_reg;
     empty_next = empty_reg;
 
     if (dout_ready && din_valid) begin
@@ -81,12 +79,10 @@ module simple_axis_slr_fifo #(
       empty_next = 1'b0;
     end else if (dout_ready && dout_valid) begin
       dec = 1'b1;
-      full_next = 1'b0;
       empty_next = ptr_empty1;
     end else if (din_valid) begin
       shift = 1'b1;
       inc = 1'b1;
-      full_next = ptr_full1;
       empty_next = 1'b0;
     end
   end
@@ -99,7 +95,6 @@ module simple_axis_slr_fifo #(
     else
       ptr_reg <= ptr_reg;
 
-    full_reg <= full_next;
     empty_reg <= empty_next;
 
     if (shift) begin
@@ -110,7 +105,6 @@ module simple_axis_slr_fifo #(
 
     if (rst) begin
       ptr_reg <= 0;
-      full_reg <= 1'b0;
       empty_reg <= 1'b1;
     end
   end
@@ -193,7 +187,7 @@ module axis_slr_register_dest #(
 
   wire dout_ready_n;
 
-  simple_axis_slr_fifo #(
+  simple_axis_srl_fifo #(
     .WIDTH (WIDTH),
     .DEPTH (DEPTH)
   ) srl_fifo (

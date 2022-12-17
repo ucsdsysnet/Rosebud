@@ -398,6 +398,7 @@ dma_client_axis_source_inst (
      * DMA read descriptor status output
      */
     .m_axis_read_desc_status_tag(dma_read_desc_status_tag),
+    .m_axis_read_desc_status_error(),
     .m_axis_read_desc_status_valid(dma_read_desc_status_valid),
 
     /*

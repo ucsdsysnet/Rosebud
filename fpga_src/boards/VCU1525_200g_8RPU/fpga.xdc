@@ -335,7 +335,7 @@ set_property IS_SOFT FALSE [get_pblocks RPU_8]
 # Interconnect PBlocks
 create_pblock Intercon_1
 add_cells_to_pblock [get_pblocks Intercon_1] [get_cells -quiet [list {core_inst/rpus[0].rpu_intercon_inst} \
-  {core_inst/data_in_sw/grow.axis_switch_2lvl_grow_inst/output_registers[0].output_register/slr_dest/slr_fifo}]]
+  core_inst/data_in_sw/grow.axis_switch_2lvl_grow_inst/output_registers[0].output_register/slr_dest/srl_fifo]]
 resize_pblock [get_pblocks Intercon_1] -add {SLICE_X13Y120:SLICE_X83Y134}
 resize_pblock [get_pblocks Intercon_1] -add {DSP48E2_X1Y48:DSP48E2_X9Y53}
 resize_pblock [get_pblocks Intercon_1] -add {RAMB18_X1Y48:RAMB18_X5Y53}
@@ -343,7 +343,7 @@ resize_pblock [get_pblocks Intercon_1] -add {RAMB36_X1Y24:RAMB36_X5Y26}
 set_property IS_SOFT TRUE [get_pblocks Intercon_1]
 create_pblock Intercon_2
 add_cells_to_pblock [get_pblocks Intercon_2] [get_cells -quiet [list {core_inst/rpus[1].rpu_intercon_inst} \
-  {core_inst/data_in_sw/grow.axis_switch_2lvl_grow_inst/output_registers[1].output_register/slr_dest/slr_fifo}]]
+  core_inst/data_in_sw/grow.axis_switch_2lvl_grow_inst/output_registers[1].output_register/slr_dest/srl_fifo]]
 resize_pblock [get_pblocks Intercon_2] -add {SLICE_X88Y120:SLICE_X159Y134}
 resize_pblock [get_pblocks Intercon_2] -add {DSP48E2_X11Y48:DSP48E2_X17Y53}
 resize_pblock [get_pblocks Intercon_2] -add {RAMB18_X7Y48:RAMB18_X10Y53}
@@ -351,7 +351,7 @@ resize_pblock [get_pblocks Intercon_2] -add {RAMB36_X7Y24:RAMB36_X10Y26}
 set_property IS_SOFT TRUE [get_pblocks Intercon_2]
 create_pblock Intercon_3
 add_cells_to_pblock [get_pblocks Intercon_3] [get_cells -quiet [list {core_inst/rpus[2].rpu_intercon_inst} \
-  {core_inst/data_in_sw/grow.axis_switch_2lvl_grow_inst/output_registers[2].output_register/slr_dest/slr_fifo}]]
+  core_inst/data_in_sw/grow.axis_switch_2lvl_grow_inst/output_registers[2].output_register/slr_dest/srl_fifo]]
 resize_pblock [get_pblocks Intercon_3] -add {SLICE_X13Y270:SLICE_X83Y284}
 resize_pblock [get_pblocks Intercon_3] -add {DSP48E2_X1Y108:DSP48E2_X9Y113}
 resize_pblock [get_pblocks Intercon_3] -add {RAMB18_X1Y108:RAMB18_X5Y113}
@@ -359,7 +359,7 @@ resize_pblock [get_pblocks Intercon_3] -add {RAMB36_X1Y54:RAMB36_X5Y56}
 set_property IS_SOFT TRUE [get_pblocks Intercon_3]
 create_pblock Intercon_4
 add_cells_to_pblock [get_pblocks Intercon_4] [get_cells -quiet [list {core_inst/rpus[3].rpu_intercon_inst} \
-  {core_inst/data_in_sw/grow.axis_switch_2lvl_grow_inst/output_registers[3].output_register/slr_dest/slr_fifo}]]
+  core_inst/data_in_sw/grow.axis_switch_2lvl_grow_inst/output_registers[3].output_register/slr_dest/srl_fifo]]
 resize_pblock [get_pblocks Intercon_4] -add {SLICE_X88Y270:SLICE_X159Y284}
 resize_pblock [get_pblocks Intercon_4] -add {DSP48E2_X11Y108:DSP48E2_X17Y113}
 resize_pblock [get_pblocks Intercon_4] -add {RAMB18_X7Y108:RAMB18_X10Y113}
@@ -367,7 +367,7 @@ resize_pblock [get_pblocks Intercon_4] -add {RAMB36_X7Y54:RAMB36_X10Y56}
 set_property IS_SOFT TRUE [get_pblocks Intercon_4]
 create_pblock Intercon_5
 add_cells_to_pblock [get_pblocks Intercon_5] [get_cells -quiet [list {core_inst/rpus[4].rpu_intercon_inst} \
-  {core_inst/data_in_sw/grow.axis_switch_2lvl_grow_inst/output_registers[4].output_register/slr_dest/slr_fifo}]]
+  core_inst/data_in_sw/grow.axis_switch_2lvl_grow_inst/output_registers[4].output_register/slr_dest/srl_fifo]]
 resize_pblock [get_pblocks Intercon_5] -add {SLICE_X21Y615:SLICE_X87Y629}
 resize_pblock [get_pblocks Intercon_5] -add {DSP48E2_X2Y246:DSP48E2_X10Y251}
 resize_pblock [get_pblocks Intercon_5] -add {RAMB18_X2Y246:RAMB18_X6Y251}
@@ -375,7 +375,7 @@ resize_pblock [get_pblocks Intercon_5] -add {RAMB36_X2Y123:RAMB36_X6Y125}
 set_property IS_SOFT TRUE [get_pblocks Intercon_5]
 create_pblock Intercon_6
 add_cells_to_pblock [get_pblocks Intercon_6] [get_cells -quiet [list {core_inst/rpus[5].rpu_intercon_inst} \
-  {core_inst/data_in_sw/grow.axis_switch_2lvl_grow_inst/output_registers[5].output_register/slr_dest/slr_fifo}]]
+  core_inst/data_in_sw/grow.axis_switch_2lvl_grow_inst/output_registers[5].output_register/slr_dest/srl_fifo]]
 resize_pblock [get_pblocks Intercon_6] -add {SLICE_X92Y615:SLICE_X160Y629}
 resize_pblock [get_pblocks Intercon_6] -add {DSP48E2_X11Y246:DSP48E2_X17Y251}
 resize_pblock [get_pblocks Intercon_6] -add {RAMB18_X7Y246:RAMB18_X11Y251}
@@ -383,7 +383,7 @@ resize_pblock [get_pblocks Intercon_6] -add {RAMB36_X7Y123:RAMB36_X11Y125}
 set_property IS_SOFT TRUE [get_pblocks Intercon_6]
 create_pblock Intercon_7
 add_cells_to_pblock [get_pblocks Intercon_7] [get_cells -quiet [list {core_inst/rpus[6].rpu_intercon_inst} \
-  {core_inst/data_in_sw/grow.axis_switch_2lvl_grow_inst/output_registers[6].output_register/slr_dest/slr_fifo}]]
+  core_inst/data_in_sw/grow.axis_switch_2lvl_grow_inst/output_registers[6].output_register/slr_dest/srl_fifo]]
 resize_pblock [get_pblocks Intercon_7] -add {SLICE_X21Y765:SLICE_X87Y779}
 resize_pblock [get_pblocks Intercon_7] -add {DSP48E2_X2Y306:DSP48E2_X10Y311}
 resize_pblock [get_pblocks Intercon_7] -add {RAMB18_X2Y306:RAMB18_X6Y311}
@@ -391,7 +391,7 @@ resize_pblock [get_pblocks Intercon_7] -add {RAMB36_X2Y153:RAMB36_X6Y155}
 set_property IS_SOFT TRUE [get_pblocks Intercon_7]
 create_pblock Intercon_8
 add_cells_to_pblock [get_pblocks Intercon_8] [get_cells -quiet [list {core_inst/rpus[7].rpu_intercon_inst} \
-  {core_inst/data_in_sw/grow.axis_switch_2lvl_grow_inst/output_registers[7].output_register/slr_dest/slr_fifo}]]
+  core_inst/data_in_sw/grow.axis_switch_2lvl_grow_inst/output_registers[7].output_register/slr_dest/srl_fifo]]
 resize_pblock [get_pblocks Intercon_8] -add {SLICE_X92Y765:SLICE_X160Y779}
 resize_pblock [get_pblocks Intercon_8] -add {DSP48E2_X11Y306:DSP48E2_X17Y311}
 resize_pblock [get_pblocks Intercon_8] -add {RAMB18_X7Y306:RAMB18_X11Y311}

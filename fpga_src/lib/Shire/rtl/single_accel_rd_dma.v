@@ -93,8 +93,8 @@ assign req_rd_final_empty = (remainder_bytes == 0) ? {MASK_BITS{1'b0}} :
 
 // Register to keep current state
 localparam DESC_MEM_WIDTH = LINE_ADDR_WIDTH+LINE_CNT_WIDTH+MASK_BITS+MASK_BITS+1;
-(* ram_style = "distributed" *) reg [DESC_MEM_WIDTH-1:0] act_mem;
-reg act_mem_v;
+reg [DESC_MEM_WIDTH-1:0] act_mem;
+reg                      act_mem_v;
 
 wire [LINE_ADDR_WIDTH-1:0] act_rd_addr;
 wire [LINE_CNT_WIDTH-1:0]  act_rd_count;

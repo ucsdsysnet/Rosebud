@@ -345,6 +345,7 @@ dma_client_axis_sink_inst (
     .m_axis_write_desc_status_id(),
     .m_axis_write_desc_status_dest(),
     .m_axis_write_desc_status_user(),
+    .m_axis_write_desc_status_error(),
     .m_axis_write_desc_status_valid(dma_write_desc_status_valid),
 
     /*
