@@ -77,7 +77,8 @@ module lb_hash_dropping # (
   output reg  [CORE_COUNT-1:0]              slots_flush,
   input  wire [CORE_COUNT*SLOT_WIDTH-1:0]   slot_counts,
   input  wire [CORE_COUNT-1:0]              slot_valids,
-  input  wire [CORE_COUNT-1:0]              slots_busy,
+  input  wire [CORE_COUNT-1:0]              slot_busys,
+  input  wire [CORE_COUNT-1:0]              slot_ins_errs,
 
   // Request and response to lb_controller
   // selecting target core and asserting pop, and ready desc
@@ -328,7 +329,7 @@ module lb_hash_dropping # (
   always @ (posedge clk) begin
     if (rst)
       drop_count <= {IF_COUNT*ID_TAG_WIDTH{1'b0}};
-    else if (selected_port_v_r && !slots_busy[selected_core] &&
+    else if (selected_port_v_r && !slot_busys[selected_core] &&
              !desc_avail[selected_core] && s_axis_almost_full[selected_port_enc_r])
       drop_count[selected_port_enc_r*32 +: 32] <=
         drop_count[selected_port_enc_r*32 +: 32] + 1;
@@ -421,7 +422,7 @@ module lb_hash_dropping # (
     rx_hash_ready_f  = {IF_COUNT{1'b0}};
     hash_n_dest_in_v = {IF_COUNT{1'b0}};
 
-    if (selected_port_v_r && !slots_busy[selected_core])
+    if (selected_port_v_r && !slot_busys[selected_core])
       if (desc_avail[selected_core]) begin
         desc_pop         = 1'b1;
         rx_hash_ready_f  = selected_port_r;

@@ -136,7 +136,8 @@ module lb_PR (
 
   wire [CORE_COUNT*SLOT_WIDTH-1:0] slot_counts;
   wire [CORE_COUNT-1:0]            slot_valids;
-  wire [CORE_COUNT-1:0]            slots_busy;
+  wire [CORE_COUNT-1:0]            slot_busys;
+  wire [CORE_COUNT-1:0]            slot_ins_errs;
 
   wire [CORE_ID_WIDTH-1:0]         selected_core;
   wire                             desc_pop;
@@ -173,7 +174,8 @@ module lb_PR (
     // Slots status readbacks
     .slot_counts   (slot_counts),
     .slot_valids   (slot_valids),
-    .slots_busy    (slots_busy),
+    .slot_busys    (slot_busys),
+    .slot_ins_errs (slot_ins_errs),
 
     // Core select, and its pop signal assert and descriptor readback
     .selected_core (selected_core),
@@ -233,7 +235,8 @@ module lb_PR (
     .slots_flush(slots_flush),
     .slot_counts(slot_counts),
     .slot_valids(slot_valids),
-    .slots_busy(slots_busy),
+    .slot_busys(slot_busys),
+    .slot_ins_errs(slot_ins_errs),
 
     // Request and response to lb_controller
     .selected_core(selected_core),

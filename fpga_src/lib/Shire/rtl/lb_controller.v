@@ -60,7 +60,8 @@ module lb_controller  # (
   // Slots status readbacks
   output wire [CORE_COUNT*SLOT_WIDTH-1:0] slot_counts,
   output wire [CORE_COUNT-1:0]            slot_valids,
-  output wire [CORE_COUNT-1:0]            slots_busy,
+  output wire [CORE_COUNT-1:0]            slot_busys,
+  output wire [CORE_COUNT-1:0]            slot_ins_errs,
 
   // Core select, and its pop signal assert and descriptor readback
   input  wire [CORE_ID_WIDTH-1:0]         selected_core,
@@ -190,20 +191,13 @@ module lb_controller  # (
   always @ (posedge clk)
     input_slot <= ctrl_s_axis_tdata[16 +: SLOT_WIDTH];
 
-  wire [CORE_COUNT-1:0] core_slot_err;
-  reg  slot_insert_err;
-
-  always @ (posedge clk) begin
-    slot_insert_err <= | core_slot_err;
-  end
-
-  assign slots_busy = pkt_to_core_valid & arb_to_core_ready;
+  assign slot_busys = pkt_to_core_valid & arb_to_core_ready;
 
   genvar i;
   generate
     for (i=0;i<CORE_COUNT;i=i+1) begin
       assign next_slot_pop[i]    = (desc_pop && (selected_core==i)) ||
-                                   (slots_busy [i] && enabled_cores[i]);
+                                   (slot_busys [i] && enabled_cores[i]);
 
       // Register valid for better timing closure
       always @ (posedge clk)
@@ -233,7 +227,7 @@ module lb_controller  # (
         .slot_out_pop(next_slot_pop[i]),
 
         .slot_count(slot_counts[i*SLOT_WIDTH +: SLOT_WIDTH]),
-        .enq_err(core_slot_err[i])
+        .enq_err(slot_ins_errs[i])
       );
 
     end

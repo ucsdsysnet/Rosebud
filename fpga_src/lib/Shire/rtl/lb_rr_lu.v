@@ -75,7 +75,8 @@ module lb_rr_lu # (
   output reg  [CORE_COUNT-1:0]              slots_flush,
   input  wire [CORE_COUNT*SLOT_WIDTH-1:0]   slot_counts,
   input  wire [CORE_COUNT-1:0]              slot_valids,
-  input  wire [CORE_COUNT-1:0]              slots_busy,
+  input  wire [CORE_COUNT-1:0]              slot_busys,
+  input  wire [CORE_COUNT-1:0]              slot_ins_errs,
 
   // Request and response to lb_controller
   // selecting target core and asserting pop, and ready desc
@@ -181,7 +182,7 @@ module lb_rr_lu # (
 
   wire [CLUSTER_COUNT-1:0] cluster_max_valid;
   wire [CLUSTER_CORE_WIDTH-1:0] selected_cluster_core [0:CLUSTER_COUNT-1];
-  wire [CORE_COUNT-1:0] masks = income_cores & ~slots_busy;
+  wire [CORE_COUNT-1:0] masks = income_cores & ~slot_busys;
 
   genvar k;
   generate
@@ -328,8 +329,9 @@ module lb_rr_lu # (
 
   genvar j;
   generate
-    for (j=0; j<IF_COUNT;j=j+1)
+    for (j=0; j<IF_COUNT;j=j+1) begin
       assign m_axis_tuser[j*PORT_WIDTH +: PORT_WIDTH] = j;
+    end
   endgenerate
 
   axis_dropper # (

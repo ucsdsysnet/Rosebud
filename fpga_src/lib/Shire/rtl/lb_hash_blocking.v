@@ -77,7 +77,8 @@ module lb_hash_blocking # (
   output reg  [CORE_COUNT-1:0]              slots_flush,
   input  wire [CORE_COUNT*SLOT_WIDTH-1:0]   slot_counts,
   input  wire [CORE_COUNT-1:0]              slot_valids,
-  input  wire [CORE_COUNT-1:0]              slots_busy,
+  input  wire [CORE_COUNT-1:0]              slot_busys,
+  input  wire [CORE_COUNT-1:0]              slot_ins_errs,
 
   // Request and response to lb_controller
   // selecting target core and asserting pop, and ready desc
@@ -372,7 +373,7 @@ module lb_hash_blocking # (
 
   // Checking for slot availability, collision with intercore desc request and
   // if core is allowed to receive packets from interfaces
-  wire [CORE_COUNT-1:0]  desc_avail = slot_valids & income_cores & (~slots_busy);
+  wire [CORE_COUNT-1:0]  desc_avail = slot_valids & income_cores & (~slot_busys);
 
   assign hash_n_dest_in = {IF_COUNT{rx_hash_f[selected_port_enc_r*32 +: 32], desc_data}};
 
