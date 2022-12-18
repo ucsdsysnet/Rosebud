@@ -251,30 +251,22 @@ parameter BOARD_ID  = {16'h10ee, 16'h95f5};
 parameter BOARD_VER = {16'd0, 16'd1};
 parameter FPGA_ID   = 32'h4B31093;
 
-// Separating reset per block and keeping it in sync with rest of the system
-(* KEEP = "TRUE" *) reg [CORE_COUNT-1:0] block_reset;
-(* KEEP = "TRUE" *) reg core_rst_r;
-(* KEEP = "TRUE" *) reg sys_rst_r;
+// Reset tree for different parts of the system and each RPU and its interconnect
+(* KEEP = "TRUE" *) reg stat_rst_r, int_rst_r, sys_rst_r, core_rst_r;
+(* KEEP = "TRUE" *) reg [CORE_COUNT-1:0] rpu_rst;
+
+always @ (posedge sys_clk) begin
+  sys_rst_r  <= sys_rst;
+  stat_rst_r <= sys_rst;
+  int_rst_r  <= sys_rst;
+end
 
 integer j;
 always @ (posedge core_clk) begin
-  core_rst_r      <= core_rst;
-  sys_rst_r       <= sys_rst;
+  core_rst_r <= core_rst;
   for (j=0; j<CORE_COUNT; j=j+1)
-    block_reset[j] <= core_rst;
+    rpu_rst[j] <= core_rst;
 end
-
-wire stat_rst_r, int_rst_r;
-sync_reset sync_sys_rst_inst (
-  .clk(sys_clk),
-  .rst(sys_rst_r),
-  .out(stat_rst_r)
-);
-sync_reset sync_int_rst_inst (
-  .clk(sys_clk),
-  .rst(sys_rst_r),
-  .out(int_rst_r)
-);
 
 // Unused outputs
 assign led = 3'd0;
@@ -1707,7 +1699,7 @@ generate
             .DRAM_M_REG_TYPE(2)
         ) rpu_intercon_inst (
             .clk(core_clk),
-            .rst(block_reset[i]),
+            .rst(rpu_rst[i]),
 
             .core_id(core_id),
             // ---------------- DATA CHANNEL --------------- //
@@ -1813,7 +1805,7 @@ generate
 
         rpu_PR rpu_PR_inst (
             .clk(core_clk),
-            .rst(block_reset[i]),
+            .rst(rpu_rst[i]),
             .core_reset(core_reset),
 
             .dma_cmd_wr_en(dma_cmd_wr_en),
