@@ -198,7 +198,7 @@ parameter LVL2_DRAM_WIDTH  = 32; //DON'T CHANGE
 parameter RX_ASYNC_DEPTH   = 2048;
 parameter RX_FIFO_DEPTH    = 8*32768;
 parameter RX_LINES_WIDTH   = $clog2(RX_FIFO_DEPTH/AXIS_ETH_KEEP_WIDTH)+1;
-parameter RX_FIFO_PIPE     = 2;
+parameter RX_FIFO_PIPE     = 3;
 parameter TX_FIFO_DEPTH    = 32768;
 parameter RX_STG_F_DEPTH   = 8*32768;
 parameter TX_STG_F_DEPTH   = 2*32768;
@@ -1548,7 +1548,7 @@ cmd_stat_sys # (
   .RX_LINES_WIDTH(RX_LINES_WIDTH),
   .CORE_WIDTH(CORE_WIDTH),
   .PORT_WIDTH(PORT_WIDTH),
-  .CMD_PIPE_LEN(2)
+  .CMD_PIPE_LEN(1)
 ) cmd_stat_sys_inst (
   .core_clk(core_clk),
   .core_rst(core_rst_r),
