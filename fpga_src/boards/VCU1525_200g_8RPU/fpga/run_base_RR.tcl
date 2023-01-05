@@ -66,11 +66,16 @@ create_pr_configuration -name base_RR_config -partitions [list \
 
 if {[llength [get_runs "impl_base_RR"]]!=0} then {delete_run impl_base_RR}
 create_run impl_base_RR -parent_run impl_1 -flow {Vivado Implementation 2021} -pr_config base_RR_config
+set_property AUTO_INCREMENTAL_CHECKPOINT 1 [get_runs impl_base_RR]
+
 set_property strategy Performance_ExtraTimingOpt [get_runs impl_base_RR]
-set_property STEPS.POST_ROUTE_PHYS_OPT_DESIGN.IS_ENABLED true [get_runs impl_base_RR]
-set_property STEPS.POST_ROUTE_PHYS_OPT_DESIGN.ARGS.DIRECTIVE Explore [get_runs impl_base_RR]
 set_property -name {STEPS.OPT_DESIGN.ARGS.MORE OPTIONS} -value {-retarget -propconst -sweep -bufg_opt -shift_register_opt -aggressive_remap} -objects [get_runs impl_base_RR]
 # set_property STEPS.PLACE_DESIGN.ARGS.DIRECTIVE Explore [get_runs impl_base_RR]
+set_property STEPS.PHYS_OPT_DESIGN.IS_ENABLED true [get_runs impl_base_RR]
+set_property STEPS.PHYS_OPT_DESIGN.ARGS.DIRECTIVE Explore [get_runs impl_base_RR]
+# set_property STEPS.ROUTE_DESIGN.ARGS.DIRECTIVE Explore [get_runs impl_base_RR]
+set_property STEPS.POST_ROUTE_PHYS_OPT_DESIGN.IS_ENABLED true [get_runs impl_base_RR]
+set_property STEPS.POST_ROUTE_PHYS_OPT_DESIGN.ARGS.DIRECTIVE AggressiveExplore [get_runs impl_base_RR]
 
 update_compile_order -fileset LB_RR
 update_compile_order -fileset sources_1
@@ -78,10 +83,6 @@ update_compile_order -fileset sources_1
 reset_run LB_RR_synth_1
 launch_runs LB_RR_synth_1 -jobs 12
 wait_on_run LB_RR_synth_1
-
-# add_files -fileset utils_1 -norecurse fpga.runs/impl_PIG_HASH/fpga_postroute_physopt.dcp
-# set_property incremental_checkpoint fpga.runs/impl_PIG_HASH/fpga_postroute_physopt.dcp [get_runs impl_base_RR]
-# set_property incremental_checkpoint.directive TimingClosure [get_runs impl_base_RR]
 
 set_property IS_ENABLED false [get_report_config -of_object [get_runs impl_base_RR] impl_base_RR_route_report_drc_0]
 set_property IS_ENABLED false [get_report_config -of_object [get_runs impl_base_RR] impl_base_RR_route_report_power_0]

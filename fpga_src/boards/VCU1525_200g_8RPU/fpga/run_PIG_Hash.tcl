@@ -60,7 +60,7 @@ add_files -norecurse {
   ../accel/pigasus_sme/rtl/rule_unit.sv
   ../accel/pigasus_sme/rtl/port_group.sv
   ../accel/pigasus_sme/rtl/pkt_almost_full.sv
-  ../accel/pigasus_sme/rtl/reduction_2t1.sv
+  ../accel/pigasus_sme/rtl/reduction_2t1_2.sv
   ../accel/pigasus_sme/rtl/unified_fifo.sv
   ../accel/pigasus_sme/rtl/unified_pkt_fifo.sv
   ../accel/pigasus_sme/rtl/rule_depacker_64_32.sv
@@ -89,12 +89,16 @@ create_pr_configuration -name PIG_HASH_config -partitions [list \
 
 if {[llength [get_runs "impl_PIG_HASH"]]!=0} then {delete_run impl_PIG_HASH}
 create_run impl_PIG_HASH -parent_run impl_1 -flow {Vivado Implementation 2021} -pr_config PIG_HASH_config
-set_property strategy Performance_ExtraTimingOpt [get_runs impl_PIG_HASH]
-set_property STEPS.POST_ROUTE_PHYS_OPT_DESIGN.IS_ENABLED true [get_runs impl_PIG_HASH]
-set_property STEPS.POST_ROUTE_PHYS_OPT_DESIGN.ARGS.DIRECTIVE Explore [get_runs impl_PIG_HASH]
-set_property -name {STEPS.OPT_DESIGN.ARGS.MORE OPTIONS} -value {-retarget -propconst -sweep -bufg_opt -shift_register_opt} -objects [get_runs impl_PIG_HASH]
-set_property STEPS.PLACE_DESIGN.ARGS.DIRECTIVE Explore [get_runs impl_PIG_HASH]
 set_property AUTO_INCREMENTAL_CHECKPOINT 1 [get_runs impl_PIG_HASH]
+
+set_property strategy Performance_ExtraTimingOpt [get_runs impl_PIG_HASH]
+set_property -name {STEPS.OPT_DESIGN.ARGS.MORE OPTIONS} -value {-retarget -propconst -sweep -bufg_opt -shift_register_opt -aggressive_remap} -objects [get_runs impl_PIG_HASH]
+set_property STEPS.PLACE_DESIGN.ARGS.DIRECTIVE Explore [get_runs impl_PIG_HASH]
+set_property STEPS.PHYS_OPT_DESIGN.IS_ENABLED true [get_runs impl_PIG_HASH]
+set_property STEPS.PHYS_OPT_DESIGN.ARGS.DIRECTIVE Explore [get_runs impl_PIG_HASH]
+set_property STEPS.ROUTE_DESIGN.ARGS.DIRECTIVE Explore [get_runs impl_PIG_HASH]
+set_property STEPS.POST_ROUTE_PHYS_OPT_DESIGN.IS_ENABLED true [get_runs impl_PIG_HASH]
+set_property STEPS.POST_ROUTE_PHYS_OPT_DESIGN.ARGS.DIRECTIVE AggressiveExplore [get_runs impl_PIG_HASH]
 
 update_compile_order -fileset RPU_PIG
 update_compile_order -fileset sources_1

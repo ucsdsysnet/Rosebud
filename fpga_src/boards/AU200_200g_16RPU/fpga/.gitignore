@@ -4,6 +4,4 @@
 *.pyc
 *.csv
 fpga*
-defines.v
-create_project.tcl
 hd_visual

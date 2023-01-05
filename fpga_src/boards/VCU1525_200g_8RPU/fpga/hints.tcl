@@ -1,0 +1,3 @@
+set_property MAX_FANOUT_MODE SLR [get_nets {pcie4_uscale_plus_inst/inst/user_reset}]
+set_property FORCE_MAX_FANOUT 1205 [get_nets {pcie4_uscale_plus_inst/inst/user_reset}]
+set_property CLOCK_DELAY_GROUP GroupedClkOpt [get_nets { pcie4_uscale_plus_inst/inst/pcie4_uscale_plus_0_gt_top_i/diablo_gt.diablo_gt_phy_wrapper/phy_clk_i/CLK_CORECLK pcie4_uscale_plus_inst/inst/pcie4_uscale_plus_0_gt_top_i/diablo_gt.diablo_gt_phy_wrapper/phy_clk_i/CLK_PCLK2_GT pcie4_uscale_plus_inst/inst/pcie4_uscale_plus_0_gt_top_i/diablo_gt.diablo_gt_phy_wrapper/phy_clk_i/CLK_USERCLK }]
