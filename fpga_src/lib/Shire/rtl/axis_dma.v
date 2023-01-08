@@ -525,7 +525,7 @@ module axis_dma # (
   assign mem_rd_addr       = aligned_rd_addr;
   assign mem_rd_last       = (rd_req_word_count == 1);
 
-  assign m_axis_tdata  = {read_reg_1,read_reg_2} >> {rd_offset,3'd0};
+  assign m_axis_tdata  = {read_reg_1, read_reg_2} >> {rd_offset, 3'd0};
   assign m_axis_tvalid = read_reg_2_v;
   assign m_axis_tlast  = (data_left == 2'd1);
   assign m_axis_tkeep  = m_axis_tlast ? rd_final_tkeep : {STRB_WIDTH{1'b1}};

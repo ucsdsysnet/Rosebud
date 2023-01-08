@@ -79,7 +79,7 @@ module test_SME # (
   wire [15:0] src_port_f, dst_port_f;
   wire        meta_data_valid, meta_data_ready;
 
-  simple_fifo # (
+  basic_fifo # (
     .ADDR_WIDTH(10),
     .DATA_WIDTH(64+32)
   ) meta_data_fifo (

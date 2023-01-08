@@ -1,6 +1,6 @@
 /*
 
-Copyright (c) 2019-2021 Moein Khazraee
+Copyright (c) 2019-2023 Moein Khazraee
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -28,66 +28,11 @@ THE SOFTWARE.
 `timescale 1ns / 1ps
 `default_nettype none
 
-module simple_sync_fifo # (
-  parameter DEPTH      = 32,
-  parameter DATA_WIDTH = 64
-)(
-  input  wire                  clk,
-  input  wire                  rst,
-
-  input  wire                  din_valid,
-  input  wire [DATA_WIDTH-1:0] din,
-  output wire                  din_ready,
-
-  output wire                  dout_valid,
-  output wire [DATA_WIDTH-1:0] dout,
-  input  wire                  dout_ready
-);
-
-  axis_fifo # (
-    .DEPTH(DEPTH),
-    .DATA_WIDTH(DATA_WIDTH),
-    .KEEP_ENABLE(0),
-    .KEEP_WIDTH(1),
-    .LAST_ENABLE(0),
-    .ID_ENABLE(0),
-    .DEST_ENABLE(0),
-    .USER_ENABLE(0),
-    .RAM_PIPELINE(2),
-    .FRAME_FIFO(0)
-  ) sync_fifo_inst (
-    .clk(clk),
-    .rst(rst),
-
-    .s_axis_tdata(din),
-    .s_axis_tkeep(1'b0),
-    .s_axis_tvalid(din_valid),
-    .s_axis_tready(din_ready),
-    .s_axis_tlast(1'b1),
-    .s_axis_tid(8'd0),
-    .s_axis_tdest(8'd0),
-    .s_axis_tuser(1'b0),
-
-    .m_axis_tdata(dout),
-    .m_axis_tkeep(),
-    .m_axis_tvalid(dout_valid),
-    .m_axis_tready(dout_ready),
-    .m_axis_tlast(),
-    .m_axis_tid(),
-    .m_axis_tdest(),
-    .m_axis_tuser(),
-
-    .status_overflow(),
-    .status_bad_frame(),
-    .status_good_frame()
-  );
-
-endmodule
-
-module simple_fifo # (
-  parameter ADDR_WIDTH = 5,
+module basic_fifo # (
+  parameter DEPTH      = 5,
   parameter DATA_WIDTH = 32,
-  parameter INIT_ZERO  = 0
+  parameter INIT_ZERO  = 0,
+  parameter ADDR_WIDTH = $clog2(DEPTH)
 )(
   input  wire                  clk,
   input  wire                  rst,
@@ -130,15 +75,19 @@ always @ (posedge clk)
 assign dout = mem[rptr];
 
 // Latching last transaction to know FIFO is full or empty
-reg full_r, empty_r;
+// Using not version of them to make din_ready and dout_valid registered
+reg n_full, n_empty;
 
 always @ (posedge clk)
   if (rst || clear) begin
-    full_r  <= 1'b0;
-    empty_r <= 1'b1;
+    // Eventhough din_ready is asserted during rst due to n_full, enque is 0
+    n_full  <= 1'b0;
+    n_empty <= 1'b0;
+  end else if (!n_full && !n_empty) begin // Detecting cycle after rst or clear
+    n_full  <= 1'b1;
   end else if (enque ^ deque) begin
-    full_r  <= ((wptr + {{(ADDR_WIDTH-1){1'b0}},1'b1}) == rptr) && enque;
-    empty_r <= ((rptr + {{(ADDR_WIDTH-1){1'b0}},1'b1}) == wptr) && deque;
+    n_full  <= !(((wptr + {{(ADDR_WIDTH-1){1'b0}},1'b1}) == rptr) && enque);
+    n_empty <= !(((rptr + {{(ADDR_WIDTH-1){1'b0}},1'b1}) == wptr) && deque);
   end
 
 always @ (posedge clk)
@@ -150,11 +99,12 @@ always @ (posedge clk)
     else if (!enque && deque)
       item_count_r <= item_count_r - {{(ADDR_WIDTH){1'b0}},1'b1};
 
-assign empty = empty_r;
-assign full  = full_r;
+assign din_ready  = n_full;
+assign dout_valid = n_empty;
 
-assign din_ready  = ~full_r & ~rst & ~clear;
-assign dout_valid = ~empty_r;
+// Status outputs, so a not is fine
+assign empty = !n_empty;
+assign full  = !n_full;
 
 assign item_count = item_count_r;
 
@@ -164,58 +114,6 @@ initial begin
     for (i=0; i<2**ADDR_WIDTH; i=i+1)
       mem[i] <= {DATA_WIDTH{1'b0}};
 end
-
-endmodule
-
-module simple_pipe_reg # (
-  parameter DATA_WIDTH = 64,
-  parameter REG_TYPE   = 2,
-  parameter REG_LENGTH = 1
-) (
-  input  wire                  clk,
-  input  wire                  rst,
-
-  input  wire [DATA_WIDTH-1:0] s_data,
-  input  wire                  s_valid,
-  output wire                  s_ready,
-
-  output wire [DATA_WIDTH-1:0] m_data,
-  output wire                  m_valid,
-  input  wire                  m_ready
-);
-
-axis_pipeline_register # (
-  .DATA_WIDTH(DATA_WIDTH),
-  .KEEP_ENABLE(0),
-  .KEEP_WIDTH(1),
-  .LAST_ENABLE(0),
-  .DEST_ENABLE(0),
-  .USER_ENABLE(0),
-  .ID_ENABLE(0),
-  .REG_TYPE(REG_TYPE),
-  .LENGTH(REG_LENGTH)
-) simple_reg (
-  .clk(clk),
-  .rst(rst),
-
-  .s_axis_tdata(s_data),
-  .s_axis_tkeep(1'b0),
-  .s_axis_tvalid(s_valid),
-  .s_axis_tready(s_ready),
-  .s_axis_tlast(1'b0),
-  .s_axis_tid(8'd0),
-  .s_axis_tdest(8'd0),
-  .s_axis_tuser(1'b0),
-
-  .m_axis_tdata(m_data),
-  .m_axis_tkeep(),
-  .m_axis_tvalid(m_valid),
-  .m_axis_tready(m_ready),
-  .m_axis_tlast(),
-  .m_axis_tid(),
-  .m_axis_tdest(),
-  .m_axis_tuser()
-);
 
 endmodule
 

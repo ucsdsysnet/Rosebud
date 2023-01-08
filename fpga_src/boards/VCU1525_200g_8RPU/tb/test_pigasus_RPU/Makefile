@@ -23,7 +23,8 @@ COMPILE_ARGS += -I $(ACC_DIR)
 VERILOG_SOURCES  = $(SHIRE)/../tb/common/test_rpu.v
 VERILOG_SOURCES += $(RTL_DIR)/rpu_PR_pig.v
 
-VERILOG_SOURCES += $(SHIRE)/simple_fifo.v
+VERILOG_SOURCES += $(SHIRE)/basic_fifo.v
+VERILOG_SOURCES += $(SHIRE)/axis_register.v
 VERILOG_SOURCES += $(SHIRE)/mem_modules.v
 VERILOG_SOURCES += $(SHIRE)/axis_dma.v
 VERILOG_SOURCES += $(SHIRE)/VexRiscv.v
@@ -69,7 +70,6 @@ VERILOG_SOURCES += $(AXIS_LIB)/axis_fifo.v
 VERILOG_SOURCES += $(AXIS_LIB)/arbiter.v
 VERILOG_SOURCES += $(AXIS_LIB)/priority_encoder.v
 VERILOG_SOURCES += $(AXIS_LIB)/sync_reset.v
-VERILOG_SOURCES += $(AXIS_LIB)/axis_register.v
 VERILOG_SOURCES += $(AXIS_LIB)/axis_pipeline_register.v
 
 PLUSARGS+=-fst

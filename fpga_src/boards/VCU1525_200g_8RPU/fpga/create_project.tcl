@@ -14,10 +14,11 @@ add_files -fileset sources_1 -norecurse {
   ../lib/Shire/rtl/accel_wrap.v
   ../lib/Shire/rtl/VexRiscv.v
   ../lib/Shire/rtl/mem_modules.v
+  ../lib/Shire/rtl/axis_register.v
   ../lib/Shire/rtl/slot_keeper.v
   ../lib/Shire/rtl/lb_controller.v
   ../lib/Shire/rtl/lb_hash_dropping.v
-  ../lib/Shire/rtl/simple_fifo.v
+  ../lib/Shire/rtl/basic_fifo.v
   ../lib/Shire/rtl/simple_arbiter.v
   ../lib/Shire/rtl/axis_dma.v
   ../lib/Shire/rtl/axis_stat.v
@@ -32,8 +33,8 @@ add_files -fileset sources_1 -norecurse {
   ../lib/Shire/rtl/axis_slr_register.v
   ../lib/Shire/rtl/axis_switch_2lvl.v
   ../lib/Shire/rtl/loopback_msg_fifo.v
-  ../lib/Shire/rtl//bc_msg_merger.v
-  ../lib/Shire/rtl//cmd_stat_sys.v
+  ../lib/Shire/rtl/bc_msg_merger.v
+  ../lib/Shire/rtl/cmd_stat_sys.v
   ../lib/Shire/rtl/header.v
   ../lib/Shire/rtl/pcie_controller.v
   ../lib/Shire/rtl/pcie_cont_read.v
@@ -46,7 +47,6 @@ add_files -fileset sources_1 -norecurse {
   ../lib/axis/rtl/sync_reset.v
   ../lib/axis/rtl/axis_fifo.v
   ../lib/axis/rtl/axis_fifo_adapter.v
-  ../lib/axis/rtl/axis_register.v
   ../lib/axis/rtl/axis_pipeline_register.v
   ../lib/axis/rtl/arbiter.v
   ../lib/axis/rtl/priority_encoder.v

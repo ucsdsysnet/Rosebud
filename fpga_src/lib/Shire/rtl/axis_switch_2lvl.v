@@ -420,7 +420,7 @@ module axis_simple_sw_shrink # (
     genvar k;
     generate
       for (k=0; k<S_COUNT; k=k+1) begin: input_registers
-        axis_pipeline_register # (
+        axis_register # (
               .DATA_WIDTH(S_DATA_WIDTH),
               .KEEP_ENABLE(S_KEEP_ENABLE),
               .KEEP_WIDTH(S_KEEP_WIDTH),
@@ -430,8 +430,7 @@ module axis_simple_sw_shrink # (
               .USER_WIDTH(USER_WIDTH),
               .ID_ENABLE(ID_ENABLE),
               .ID_WIDTH(ID_WIDTH),
-              .REG_TYPE(S_REG_TYPE),
-              .LENGTH(1)
+              .REG_TYPE(S_REG_TYPE)
         ) input_register (
           .clk(s_clk),
           .rst(s_rst),
@@ -548,7 +547,7 @@ module axis_simple_sw_shrink # (
 
                 );
 
-                axis_pipeline_register #
+                axis_register #
                 (
                     .DATA_WIDTH(S_DATA_WIDTH),
                     .KEEP_ENABLE(S_KEEP_ENABLE),
@@ -559,8 +558,7 @@ module axis_simple_sw_shrink # (
                     .USER_WIDTH(USER_WIDTH),
                     .ID_ENABLE(ID_ENABLE),
                     .ID_WIDTH(ID_WIDTH),
-                    .REG_TYPE(M_REG_TYPE),
-                    .LENGTH(1)
+                    .REG_TYPE(M_REG_TYPE)
                 ) sw_lvl1_register (
                     .clk(s_clk),
                     .rst(s_rst),
@@ -752,7 +750,7 @@ module axis_simple_sw_shrink # (
 
         );
 
-        axis_pipeline_register # (
+        axis_register # (
             .DATA_WIDTH(M_DATA_WIDTH),
             .KEEP_WIDTH(M_KEEP_WIDTH),
             .KEEP_ENABLE(M_KEEP_ENABLE),
@@ -762,8 +760,7 @@ module axis_simple_sw_shrink # (
             .USER_WIDTH(USER_WIDTH),
             .ID_ENABLE(ID_ENABLE),
             .ID_WIDTH(ID_WIDTH),
-            .REG_TYPE(S_REG_TYPE),
-            .LENGTH(1)
+            .REG_TYPE(S_REG_TYPE)
         ) output_pipeline_register (
             .clk(select_m_clk),
             .rst(select_m_rst),
@@ -889,7 +886,7 @@ module axis_simple_arb_2lvl # (
     genvar k;
     generate
       for (k=0; k<S_COUNT; k=k+1) begin: input_registers
-        axis_pipeline_register # (
+        axis_register # (
               .DATA_WIDTH(DATA_WIDTH),
               .KEEP_ENABLE(0),
               .KEEP_WIDTH(1),
@@ -897,8 +894,7 @@ module axis_simple_arb_2lvl # (
               .USER_ENABLE(USER_ENABLE),
               .USER_WIDTH(USER_WIDTH),
               .ID_ENABLE(0),
-              .REG_TYPE(2),
-              .LENGTH(1)
+              .REG_TYPE(2)
         ) input_register (
           .clk(clk),
           .rst(rst_r),
@@ -997,8 +993,8 @@ module axis_simple_arb_2lvl # (
 
                 if (STAGE_FIFO_ENABLE) begin: fifos
 
-                    simple_fifo # (
-                      .ADDR_WIDTH($clog2(STAGE_FIFO_DEPTH)),
+                    basic_fifo # (
+                      .DEPTH(STAGE_FIFO_DEPTH),
                       .DATA_WIDTH(DATA_WIDTH+USER_WIDTH)
                     ) stage_fifo (
                       .clk(clk),
@@ -1077,7 +1073,7 @@ module axis_simple_arb_2lvl # (
         .m_axis_tuser(m_axis_tuser_n)
     );
 
-    axis_pipeline_register # (
+    axis_register # (
         .DATA_WIDTH(DATA_WIDTH),
         .KEEP_WIDTH(1),
         .KEEP_ENABLE(0),
@@ -1085,8 +1081,7 @@ module axis_simple_arb_2lvl # (
         .USER_ENABLE(USER_ENABLE),
         .USER_WIDTH(USER_WIDTH),
         .ID_ENABLE(0),
-        .REG_TYPE(2),
-        .LENGTH(1)
+        .REG_TYPE(2)
     ) output_pipeline_register (
         .clk(clk),
         .rst(rst_r),
@@ -1345,7 +1340,7 @@ module axis_ram_sw_shrink # (
                 );
             end else begin: no_fifo
 
-                axis_pipeline_register # (
+                axis_register # (
                     .DATA_WIDTH(M_DATA_WIDTH),
                     .KEEP_WIDTH(M_KEEP_WIDTH),
                     .KEEP_ENABLE(M_KEEP_ENABLE),
@@ -1355,8 +1350,7 @@ module axis_ram_sw_shrink # (
                     .USER_WIDTH(USER_WIDTH),
                     .ID_ENABLE(ID_ENABLE),
                     .ID_WIDTH(ID_WIDTH),
-                    .REG_TYPE(0),
-                    .LENGTH(1)
+                    .REG_TYPE(0)
                 ) middle_pipeline_register (
                     .clk(select_m_clk),
                     .rst(select_m_rst),
@@ -1443,7 +1437,7 @@ module axis_ram_sw_shrink # (
 
         );
 
-        axis_pipeline_register # (
+        axis_register # (
             .DATA_WIDTH(M_DATA_WIDTH),
             .KEEP_WIDTH(M_KEEP_WIDTH),
             .KEEP_ENABLE(M_KEEP_ENABLE),
@@ -1453,8 +1447,7 @@ module axis_ram_sw_shrink # (
             .USER_WIDTH(USER_WIDTH),
             .ID_ENABLE(ID_ENABLE),
             .ID_WIDTH(ID_WIDTH),
-            .REG_TYPE(S_REG_TYPE),
-            .LENGTH(1)
+            .REG_TYPE(S_REG_TYPE)
         ) output_pipeline_register (
             .clk(select_m_clk),
             .rst(select_m_rst),
@@ -2036,7 +2029,7 @@ module axis_ram_sw_grow # (
 
             end else begin: no_fifo
 
-                axis_pipeline_register # (
+                axis_register # (
                     .DATA_WIDTH(S_DATA_WIDTH),
                     .KEEP_ENABLE(S_KEEP_ENABLE),
                     .KEEP_WIDTH(S_KEEP_WIDTH),
@@ -2046,8 +2039,7 @@ module axis_ram_sw_grow # (
                     .USER_WIDTH(USER_WIDTH),
                     .ID_ENABLE(ID_ENABLE),
                     .ID_WIDTH(ID_WIDTH),
-                    .REG_TYPE(0),
-                    .LENGTH(1)
+                    .REG_TYPE(0)
                 ) middle_pipeline_register (
                     .clk(select_m_clk),
                     .rst(select_m_rst),

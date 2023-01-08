@@ -79,7 +79,7 @@ generate
 
 endgenerate
 
-    simple_fifo # (
+    basic_fifo # (
       .ADDR_WIDTH($clog2(FIFO_DEPTH)),
       .DATA_WIDTH((SYMBOLS_PER_BEAT*BITS_PER_SYMBOL)+$clog2(SYMBOLS_PER_BEAT)+2),
       .INIT_ZERO(1)

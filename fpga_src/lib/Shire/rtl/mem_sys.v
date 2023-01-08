@@ -262,8 +262,8 @@ module mem_sys # (
   wire [DATA_WIDTH-1:0]      dma_imem_wr_data;
   wire                       dma_imem_wr_en_r;
 
-  simple_fifo # (
-    .ADDR_WIDTH(2),
+  basic_fifo # (
+    .DEPTH(4),
     .DATA_WIDTH(DATA_WIDTH+IMEM_ADDR_WIDTH+STRB_WIDTH)
   ) dma_imem_wr_fifo (
     .clk(clk),
@@ -285,8 +285,8 @@ module mem_sys # (
 
   generate
     if (ACC_ROM_EN) begin: acc_ROM_fifo
-      simple_fifo # (
-        .ADDR_WIDTH(2),
+      basic_fifo # (
+        .DEPTH(4),
         .DATA_WIDTH(AROM_DATA_WIDTH+AROM_ADDR_WIDTH)
       ) dma_arom_wr_fifo (
         .clk(clk),
@@ -325,8 +325,8 @@ module mem_sys # (
 
   wire [24:0] dma_dmem_wr_addr = dma_cmd_hdr_wr_en ? dma_cmd_hdr_wr_addr : dma_cmd_wr_addr;
 
-  simple_fifo # (
-    .ADDR_WIDTH(2),
+  basic_fifo # (
+    .DEPTH(4),
     .DATA_WIDTH(DATA_WIDTH+DMEM_ADDR_WIDTH+STRB_WIDTH)
   ) dma_dmem_wr_fifo (
     .clk(clk),
@@ -357,8 +357,8 @@ module mem_sys # (
   reg                        dma_pmem_wr_b2_gnt;
   wire                       dma_pmem_wr_en_r;
 
-  simple_fifo # (
-    .ADDR_WIDTH(2),
+  basic_fifo # (
+    .DEPTH(4),
     .DATA_WIDTH(DATA_WIDTH+PMEM_ADDR_WIDTH+STRB_WIDTH)
   ) dma_pmem_wr_fifo (
     .clk(clk),
@@ -389,8 +389,8 @@ module mem_sys # (
   reg                        dma_dmem_rd_b2_gnt;
   wire                       dma_dmem_rd_en_r;
 
-  simple_fifo # (
-    .ADDR_WIDTH(2),
+  basic_fifo # (
+    .DEPTH(4),
     .DATA_WIDTH(DMEM_ADDR_WIDTH)
   ) dma_dmem_rd_fifo (
     .clk(clk),
@@ -417,8 +417,8 @@ module mem_sys # (
   reg                        dma_pmem_rd_b2_gnt;
   wire                       dma_pmem_rd_en_r;
 
-  simple_fifo # (
-    .ADDR_WIDTH(2),
+  basic_fifo # (
+    .DEPTH(4),
     .DATA_WIDTH(PMEM_ADDR_WIDTH)
   ) dma_pmem_rd_fifo (
     .clk(clk),
@@ -877,8 +877,8 @@ module mem_sys # (
   wire                  dma_pmem_fifo_valid;
   wire [DATA_WIDTH-1:0] dma_pmem_fifo_rd_data;
 
-  simple_fifo # (
-    .ADDR_WIDTH(3),
+  basic_fifo # (
+    .DEPTH(8),
     .DATA_WIDTH(DATA_WIDTH)
   ) dma_dmem_rd_resp_fifo (
     .clk(clk),
@@ -902,8 +902,8 @@ module mem_sys # (
     .empty()
   );
 
-  simple_fifo # (
-    .ADDR_WIDTH(4),
+  basic_fifo # (
+    .DEPTH(16),
     .DATA_WIDTH(DATA_WIDTH)
   ) dma_pmem_rd_resp_fifo (
     .clk(clk),

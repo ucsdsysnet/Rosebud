@@ -31,14 +31,14 @@ create_reconfig_module -name RPU_PIG -partition_def [get_partition_defs pr_riscv
 add_files -norecurse {
   ../lib/axis/rtl/arbiter.v
   ../lib/axis/rtl/priority_encoder.v
-  ../lib/axis/rtl/axis_register.v
   ../lib/axis/rtl/axis_pipeline_register.v
   ../lib/axis/rtl/axis_fifo.v
+  ../lib/Shire/rtl/axis_register.v
   ../lib/Shire/rtl/mem_modules.v
   ../lib/Shire/rtl/VexRiscv.v
   ../lib/Shire/rtl/simple_sync_sig.v
   ../lib/Shire/rtl/riscvcore.v
-  ../lib/Shire/rtl/simple_fifo.v
+  ../lib/Shire/rtl/basic_fifo.v
   ../lib/Shire/rtl/mem_sys.v
   ../lib/Shire/rtl/rpu.v
   ../lib/Shire/rtl/rpu_controller.v

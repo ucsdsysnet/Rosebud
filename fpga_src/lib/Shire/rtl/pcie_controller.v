@@ -561,7 +561,7 @@ wire                       cores_ctrl_m_axis_tlast_n;
 wire                       cores_ctrl_m_axis_tready_n;
 
 if(CORE_REQ_PCIE_CLK) begin: cores_ctrl_fifos
-    axis_pipeline_register # (
+    axis_register # (
         .DATA_WIDTH(CORE_DESC_WIDTH),
         .KEEP_ENABLE(0),
         .KEEP_WIDTH(1),
@@ -570,8 +570,7 @@ if(CORE_REQ_PCIE_CLK) begin: cores_ctrl_fifos
         .DEST_ENABLE(0),
         .USER_ENABLE(1),
         .USER_WIDTH(CORE_WIDTH),
-        .REG_TYPE(2),
-        .LENGTH(1)
+        .REG_TYPE(2)
     ) cores_ctrl_s_axis_reg (
         .clk(sys_clk),
         .rst(sys_rst_r),
@@ -674,7 +673,7 @@ if(CORE_REQ_PCIE_CLK) begin: cores_ctrl_fifos
         .status_good_frame()
     );
 
-    axis_pipeline_register # (
+    axis_register # (
         .DATA_WIDTH(CORE_DESC_WIDTH),
         .KEEP_ENABLE(0),
         .KEEP_WIDTH(1),
@@ -683,8 +682,7 @@ if(CORE_REQ_PCIE_CLK) begin: cores_ctrl_fifos
         .DEST_ENABLE(1),
         .DEST_WIDTH(CORE_WIDTH),
         .USER_ENABLE(0),
-        .REG_TYPE(2),
-        .LENGTH(1)
+        .REG_TYPE(2)
     ) cores_ctrl_m_axis_reg (
         .clk(sys_clk),
         .rst(sys_rst_r),
@@ -707,7 +705,7 @@ if(CORE_REQ_PCIE_CLK) begin: cores_ctrl_fifos
         .m_axis_tuser ()
     );
 end else begin: cores_ctrl_async_fifos
-    axis_pipeline_register # (
+    axis_register # (
         .DATA_WIDTH(CORE_DESC_WIDTH),
         .KEEP_ENABLE(0),
         .KEEP_WIDTH(1),
@@ -716,8 +714,7 @@ end else begin: cores_ctrl_async_fifos
         .DEST_ENABLE(0),
         .USER_ENABLE(1),
         .USER_WIDTH(CORE_WIDTH),
-        .REG_TYPE(2),
-        .LENGTH(1)
+        .REG_TYPE(2)
     ) cores_ctrl_s_axis_reg (
         .clk(sys_clk),
         .rst(sys_rst_r),
@@ -828,7 +825,7 @@ end else begin: cores_ctrl_async_fifos
         .m_status_good_frame()
     );
 
-    axis_pipeline_register # (
+    axis_register # (
         .DATA_WIDTH(CORE_DESC_WIDTH),
         .KEEP_ENABLE(0),
         .KEEP_WIDTH(1),
@@ -837,8 +834,7 @@ end else begin: cores_ctrl_async_fifos
         .DEST_ENABLE(1),
         .DEST_WIDTH(CORE_WIDTH),
         .USER_ENABLE(0),
-        .REG_TYPE(2),
-        .LENGTH(1)
+        .REG_TYPE(2)
     ) cores_ctrl_m_axis_reg (
         .clk(sys_clk),
         .rst(sys_rst_r),

@@ -335,7 +335,7 @@ wire [DMA_ADDR_WIDTH-1:0] cmd_addr_reg_f;
 wire [LEN_WIDTH-1:0]      cmd_len_reg_f;
 wire                      cmd_valid_reg_f;
 
-simple_fifo # (
+basic_fifo # (
   .ADDR_WIDTH($clog2(SLOT_COUNT)),
   .DATA_WIDTH(LEN_WIDTH+DMA_ADDR_WIDTH)
 ) desc_fifo (
@@ -360,7 +360,7 @@ wire        meta_data_valid, meta_data_ready;
 wire [63:0] preamble_state;
 wire [15:0] src_port, dst_port;
 
-simple_fifo # (
+basic_fifo # (
   .ADDR_WIDTH($clog2(SLOT_COUNT)),
   .DATA_WIDTH(64+32)
 ) meta_data_fifo (
@@ -381,7 +381,7 @@ simple_fifo # (
   .empty()
 );
 
-simple_fifo # (
+basic_fifo # (
   .ADDR_WIDTH($clog2(SLOT_COUNT)),
   .DATA_WIDTH(8)
 ) cmd_slot_fifo (
@@ -564,7 +564,7 @@ pigasus_sme_wrapper fast_pattern_sme_inst (
 );
 
 // FIFO for output state
-simple_fifo # (
+basic_fifo # (
   .ADDR_WIDTH($clog2(SLOT_COUNT)),
   .DATA_WIDTH(64)
 ) state_out_fifo (

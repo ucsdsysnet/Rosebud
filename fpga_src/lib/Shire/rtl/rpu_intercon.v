@@ -737,8 +737,8 @@ wire        in_desc_valid_n;
 wire [63:0] in_desc_n;
 wire        in_desc_ready_n;
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(RECV_DESC_DEPTH)),
+basic_fifo # (
+  .DEPTH(RECV_DESC_DEPTH),
   .DATA_WIDTH(64)
 ) recvd_data_fifo (
   .clk(clk),
@@ -813,8 +813,8 @@ wire core_data_wr_ready;
 wire core_data_wr_valid_f, core_data_wr_ready_f;
 wire [63:0] core_data_wr_desc_f;
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(SEND_DESC_DEPTH)),
+basic_fifo # (
+  .DEPTH(SEND_DESC_DEPTH),
   .DATA_WIDTH(64)
 ) send_data_fifo (
   .clk(clk),
@@ -840,8 +840,8 @@ wire core_ctrl_wr_ready;
 wire core_ctrl_wr_valid_f, core_ctrl_wr_ready_f;
 wire [63:0] core_ctrl_wr_desc_f;
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(SEND_DESC_DEPTH)),
+basic_fifo # (
+  .DEPTH(SEND_DESC_DEPTH),
   .DATA_WIDTH(64)
 ) send_ctrl_fifo (
   .clk(clk),
@@ -877,8 +877,8 @@ wire core_dram_wr_ready;
 wire core_dram_wr_valid_f, core_dram_wr_ready_f;
 wire [127:0] core_dram_wr_desc_f;
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(DRAM_DESC_DEPTH)),
+basic_fifo # (
+  .DEPTH(DRAM_DESC_DEPTH),
   .DATA_WIDTH(128)
 ) dram_send_fifo (
   .clk(clk),
@@ -903,8 +903,8 @@ wire core_dram_rd_ready;
 wire core_dram_rd_valid_f, core_dram_rd_ready_f;
 wire [127:0] core_dram_rd_desc_f;
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(DRAM_DESC_DEPTH)),
+basic_fifo # (
+  .DEPTH(DRAM_DESC_DEPTH),
   .DATA_WIDTH(128)
 ) send_dram_ctrl_fifo (
   .clk(clk),
@@ -951,8 +951,8 @@ wire [ID_TAG_WIDTH+64:0] parsed_ctrl_desc = (ctrl_cmd==4'd1) ?
 
 // A desc FIFO for send data based on LB message
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(RECV_DESC_DEPTH)),
+basic_fifo # (
+  .DEPTH(RECV_DESC_DEPTH),
   .DATA_WIDTH(64+ID_TAG_WIDTH+1)
 ) recvd_ctrl_fifo (
   .clk(clk),
@@ -989,8 +989,8 @@ wire pkt_sent_is_dram = (latched_send_desc[PORT_WIDTH+23:24]==dram_port);
 wire pkt_sent_valid_f, pkt_sent_ready_f;
 wire [63:0] pkt_sent_desc_f;
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(SEND_DESC_DEPTH)),
+basic_fifo # (
+  .DEPTH(SEND_DESC_DEPTH),
   .DATA_WIDTH(64)
 ) pkt_sent_fifo (
   .clk(clk),
@@ -1019,8 +1019,8 @@ reg [31:0] dram_req_3, dram_req_2, dram_req_1, dram_req_0;
 wire dram_in_valid, dram_in_ready;
 wire [127:0] dram_in_desc;
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(DRAM_DESC_DEPTH)),
+basic_fifo # (
+  .DEPTH(DRAM_DESC_DEPTH),
   .DATA_WIDTH(128)
 ) recvd_dram_rd_fifo (
   .clk(clk),
@@ -1267,8 +1267,8 @@ always @ (posedge clk) begin
     bc_msg_in_valid <= 1'b0;
 end
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(MSG_FIFO_DEPTH)),
+basic_fifo # (
+  .DEPTH(MSG_FIFO_DEPTH),
   .DATA_WIDTH(MSG_WIDTH)
 ) core_msg_out_fifo (
   .clk(clk),

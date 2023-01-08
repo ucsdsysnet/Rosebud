@@ -397,8 +397,8 @@ dma_client_axis_sink_inst (
 assign axis_write_desc_status_tag = axis_write_desc_status_tag_t[PCIE_SLOT_WIDTH-1:0];
 
 // Descriptor FIFO
-simple_fifo # (
-  .ADDR_WIDTH(PCIE_SLOT_WIDTH),
+basic_fifo # (
+  .DEPTH(1<<PCIE_SLOT_WIDTH),
   .DATA_WIDTH(PCIE_ADDR_WIDTH+RAM_ADDR_WIDTH+
               PCIE_DMA_LEN_WIDTH+PCIE_DMA_TAG_WIDTH)
 ) pcie_dma_write_desc_fifo (

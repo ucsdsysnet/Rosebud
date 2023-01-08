@@ -141,12 +141,13 @@ module lb_hash_blocking # (
         .m_axis_hash_valid(rx_hash_valid[p])
       );
 
-      simple_sync_fifo # (
+      basic_fifo # (
         .DEPTH(HASH_FIFO_DEPTH),
         .DATA_WIDTH(32+4)
       ) rx_hash_fifo (
         .clk(clk),
         .rst(rst),
+        .clear(1'b0),
 
         .din_valid(rx_hash_valid[p]),
         .din({rx_hash_type[p*4 +: 4], rx_hash[p*32 +: 32]}),
@@ -155,7 +156,11 @@ module lb_hash_blocking # (
 
         .dout_valid(rx_hash_valid_f[p]),
         .dout({rx_hash_type_f[p*4 +: 4], rx_hash_f[p*32 +: 32]}),
-        .dout_ready(rx_hash_ready_f[p])
+        .dout_ready(rx_hash_ready_f[p]),
+
+        .item_count(),
+        .full(),
+        .empty()
       );
 
       // integrate hash_type?
@@ -205,12 +210,13 @@ module lb_hash_blocking # (
 
       /// *** FIFO FOR HASH AND ALLOCATED DESC, WAITING TO BE SENT OUT *** ///
 
-      simple_sync_fifo # (
+      basic_fifo # (
         .DEPTH(HASH_FIFO_DEPTH),
         .DATA_WIDTH(HASH_N_DESC)
       ) rx_hash_n_desc_fifo (
         .clk(clk),
         .rst(rst),
+        .clear(1'b0),
 
         .din_valid(hash_n_dest_in_v[p]),
         .din(hash_n_dest_in[p*HASH_N_DESC +: HASH_N_DESC]),
@@ -218,7 +224,11 @@ module lb_hash_blocking # (
 
         .dout_valid(hash_n_dest_out_v[p]),
         .dout({hash_out[p*32 +: 32], dest_out[p*ID_TAG_WIDTH +: ID_TAG_WIDTH]}),
-        .dout_ready(hash_n_dest_out_ready[p])
+        .dout_ready(hash_n_dest_out_ready[p]),
+
+        .item_count(),
+        .full(),
+        .empty()
       );
 
       wire [PORT_WIDTH-1:0] port_num = p;

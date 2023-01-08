@@ -31,14 +31,14 @@ create_reconfig_module -name LB_RR -partition_def [get_partition_defs pr_load_ba
 add_files -norecurse {
   ../lib/axis/rtl/arbiter.v
   ../lib/axis/rtl/axis_arb_mux.v
-  ../lib/axis/rtl/axis_register.v
   ../lib/axis/rtl/axis_pipeline_register.v
   ../lib/axis/rtl/priority_encoder.v
   ../lib/axis/rtl/sync_reset.v
   ../lib/axis/rtl/axis_fifo.v
   ../lib/corundum/rtl/rx_hash.v
+  ../lib/Shire/rtl/axis_register.v
   ../lib/Shire/rtl/simple_arbiter.v
-  ../lib/Shire/rtl/simple_fifo.v
+  ../lib/Shire/rtl/basic_fifo.v
   ../lib/Shire/rtl/header.v
   ../lib/Shire/rtl/axis_dropper.v
   ../lib/Shire/rtl/slot_keeper.v

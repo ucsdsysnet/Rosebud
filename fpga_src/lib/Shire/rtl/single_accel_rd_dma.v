@@ -304,8 +304,8 @@ end
 // Gets simplified to single bit for FIFO_LINES power of 2
 assign accel_fifo_ready = (counter < FIFO_LINES);
 
-simple_fifo # (
-  .ADDR_WIDTH($clog2(FIFO_LINES)),
+basic_fifo # (
+  .DEPTH(FIFO_LINES),
   .DATA_WIDTH(2+MASK_BITS+DATA_WIDTH)
 ) accel_fifo (
   .clk(clk),

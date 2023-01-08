@@ -90,8 +90,8 @@ module lb_controller  # (
 
   wire loopback_ready;
 
-  simple_fifo # (
-    .ADDR_WIDTH(3),
+  basic_fifo # (
+    .DEPTH(8),
     .DATA_WIDTH(CORE_ID_WIDTH+DESC_WIDTH)
   ) pkt_done_fifo (
     .clk(clk),
@@ -115,8 +115,8 @@ module lb_controller  # (
   generate
     for (m=0;m<CORE_COUNT;m=m+1) begin
       wire [CORE_ID_WIDTH-1:0] dest_core = ctrl_s_axis_tdata[24+:CORE_ID_WIDTH];
-      simple_fifo # (
-        .ADDR_WIDTH($clog2(SLOT_COUNT)),
+      basic_fifo # (
+        .DEPTH(SLOT_COUNT),
         .DATA_WIDTH(CORE_ID_WIDTH+DESC_WIDTH)
       ) pkt_to_core_fifo (
         .clk(clk),

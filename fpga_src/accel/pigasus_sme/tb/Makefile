@@ -22,7 +22,7 @@ VERILOG_SOURCES  = ./$(MODULE).v
 VERILOG_SOURCES += $(AXIS_DIR)/axis_async_fifo.v
 VERILOG_SOURCES += $(AXIS_DIR)/arbiter.v
 VERILOG_SOURCES += $(AXIS_DIR)/priority_encoder.v
-VERILOG_SOURCES += $(MYLIB_DIR)/simple_fifo.v
+VERILOG_SOURCES += $(MYLIB_DIR)/basic_fifo.v
 
 VERILOG_SOURCES += $(RTL_DIR)/backend.sv
 VERILOG_SOURCES += $(RTL_DIR)/first_filter.sv

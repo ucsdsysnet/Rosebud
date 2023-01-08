@@ -93,8 +93,6 @@ module rpu_PR (
   parameter CORE_ID_WIDTH   = 4;
   parameter SLOT_COUNT      = 16;
 
-  parameter REG_TYPE        = 2;
-  parameter REG_LENGTH      = 1;
   parameter ADD_PMEM_RD_REG = 0;
 
   ///////////////////////////////////////////////////////////////////////////////

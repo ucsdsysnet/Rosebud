@@ -62,7 +62,7 @@ module bc_msg_merger # (
   genvar n;
   generate
     for (n=0; n<CORE_COUNT; n=n+1) begin: bc_msg_out_regs
-      axis_pipeline_register # (
+      axis_register # (
         .DATA_WIDTH(CORE_MSG_WIDTH),
         .KEEP_ENABLE(0),
         .KEEP_WIDTH(1),
@@ -71,8 +71,7 @@ module bc_msg_merger # (
         .USER_ENABLE(1),
         .USER_WIDTH(CORE_WIDTH),
         .ID_ENABLE(0),
-        .REG_TYPE(REG_TYPE),
-        .LENGTH(1)
+        .REG_TYPE(REG_TYPE)
       ) bc_msg_out_register (
         .clk(clk),
         .rst(rst),

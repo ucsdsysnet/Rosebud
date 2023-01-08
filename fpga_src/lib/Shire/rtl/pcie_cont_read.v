@@ -240,8 +240,8 @@ wire [CORE_ADDR_WIDTH-1:0]    axis_read_desc_user;
 wire                          axis_read_desc_valid;
 wire                          axis_read_desc_ready;
 
-simple_fifo # (
-  .ADDR_WIDTH(PCIE_SLOT_WIDTH),
+basic_fifo # (
+  .DEPTH(1<<PCIE_SLOT_WIDTH),
   .DATA_WIDTH(RAM_ADDR_WIDTH+PCIE_DMA_LEN_WIDTH+PCIE_SLOT_WIDTH+
               AXIS_TAG_WIDTH+CORE_ADDR_WIDTH)
 ) axis_read_desc_fifo (
@@ -385,8 +385,8 @@ dma_client_axis_source_inst (
 assign axis_read_desc_status_tag = axis_read_desc_status_tag_t[PCIE_SLOT_WIDTH-1:0];
 
 // Descriptor FIFO
-simple_fifo # (
-  .ADDR_WIDTH(PCIE_SLOT_WIDTH),
+basic_fifo # (
+  .DEPTH(1<<PCIE_SLOT_WIDTH),
   .DATA_WIDTH(PCIE_ADDR_WIDTH+RAM_ADDR_WIDTH+
               PCIE_DMA_LEN_WIDTH+PCIE_DMA_TAG_WIDTH)
 ) pcie_dma_read_desc_fifo (

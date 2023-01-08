@@ -531,8 +531,8 @@ module riscvcore #(
       bc_msg_in_valid_r <= 1'b0;
   end
 
-  simple_fifo # (
-    .ADDR_WIDTH(4),
+  basic_fifo # (
+    .DEPTH(16),
     .DATA_WIDTH(DMEM_ADDR_WIDTH)
   ) bc_interrupt_fifo (
     .clk(clk),

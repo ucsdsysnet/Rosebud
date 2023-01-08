@@ -30,12 +30,13 @@ VERILOG_SOURCES += $(RTL_DIR)/lb_rr_lu_PR.v
 VERILOG_SOURCES += $(RTL_DIR)/pcie_config.v
 VERILOG_SOURCES += $(RTL_DIR)/sync_signal.v
 
-VERILOG_SOURCES += $(SHIRE)/simple_fifo.v
+VERILOG_SOURCES += $(SHIRE)/basic_fifo.v
 VERILOG_SOURCES += $(SHIRE)/max_finder_tree.v
 VERILOG_SOURCES += $(SHIRE)/slot_keeper.v
 VERILOG_SOURCES += $(SHIRE)/lb_controller.v
 VERILOG_SOURCES += $(SHIRE)/lb_hash_dropping.v
 VERILOG_SOURCES += $(SHIRE)/lb_rr_lu.v
+VERILOG_SOURCES += $(SHIRE)/axis_register.v
 VERILOG_SOURCES += $(SHIRE)/mem_modules.v
 VERILOG_SOURCES += $(SHIRE)/axis_dma.v
 VERILOG_SOURCES += $(SHIRE)/VexRiscv.v
@@ -75,7 +76,6 @@ VERILOG_SOURCES += $(AXIS_LIB)/axis_async_fifo.v
 VERILOG_SOURCES += $(AXIS_LIB)/axis_async_fifo_adapter.v
 VERILOG_SOURCES += $(AXIS_LIB)/axis_fifo.v
 VERILOG_SOURCES += $(AXIS_LIB)/axis_fifo_adapter.v
-VERILOG_SOURCES += $(AXIS_LIB)/axis_register.v
 VERILOG_SOURCES += $(AXIS_LIB)/axis_pipeline_register.v
 
 VERILOG_SOURCES += $(AXI_LIB)/axil_interconnect.v
