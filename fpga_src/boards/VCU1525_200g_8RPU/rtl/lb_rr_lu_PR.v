@@ -92,8 +92,8 @@ module lb_PR (
   parameter CLUSTER_COUNT   = 2;
   parameter RX_LINES_WIDTH  = 13;
 
-  parameter DATA_S_RLEN     = 2;
-  parameter DATA_M_RLEN     = 1;
+  parameter DATA_S_RLEN     = 1;
+  parameter DATA_M_RLEN     = 2;
   parameter RX_RLEN         = 2;
   parameter TX_RLEN         = 1;
 

@@ -209,7 +209,7 @@ parameter CLUSTER_COUNT    = 4;
 parameter STAT_CLUSTERS    = 2;
 parameter BC_MSG_CLUSTERS  = 4;
 parameter DATA_SW_PIPE     = 3;
-parameter DRAM_SW_PIPE     = 2;
+parameter DRAM_SW_PIPE     = 3;
 
 // PCIe parameters
 parameter PCIE_SLOT_COUNT     = 16;

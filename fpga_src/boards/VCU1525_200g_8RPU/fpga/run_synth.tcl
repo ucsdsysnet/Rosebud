@@ -35,7 +35,7 @@ update_compile_order -fileset LB_Hash
 update_compile_order -fileset RPU_base
 update_compile_order -fileset sources_1
 
-set_property STEPS.SYNTH_DESIGN.ARGS.FLATTEN_HIERARCHY none [get_runs synth_1]
+# set_property STEPS.SYNTH_DESIGN.ARGS.FLATTEN_HIERARCHY none [get_runs synth_1]
 
 reset_run synth_1
 launch_runs synth_1 -jobs 12

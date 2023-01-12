@@ -1548,7 +1548,7 @@ cmd_stat_sys # (
   .RX_LINES_WIDTH(RX_LINES_WIDTH),
   .CORE_WIDTH(CORE_WIDTH),
   .PORT_WIDTH(PORT_WIDTH),
-  .CMD_PIPE_LEN(1)
+  .CMD_PIPE_LEN(2)
 ) cmd_stat_sys_inst (
   .core_clk(core_clk),
   .core_rst(core_rst_r),
