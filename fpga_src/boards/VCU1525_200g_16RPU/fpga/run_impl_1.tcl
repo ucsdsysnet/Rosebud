@@ -19,7 +19,7 @@
 # THE SOFTWARE.
 
 open_project fpga.xpr
-set_property AUTO_INCREMENTAL_CHECKPOINT 1 [get_runs impl_1]
+# set_property AUTO_INCREMENTAL_CHECKPOINT 1 [get_runs impl_1]
 set_property PR_FLOW 1 [current_project]
 
 if {[llength [get_pr_configurations config_1]]==0} then {

@@ -75,12 +75,16 @@ create_pr_configuration -name Hash_RR_config -partitions [list \
 
 if {[llength [get_runs "impl_Hash_RR"]]!=0} then {delete_run impl_Hash_RR}
 create_run impl_Hash_RR -parent_run impl_1 -flow {Vivado Implementation 2021} -pr_config Hash_RR_config
+# set_property AUTO_INCREMENTAL_CHECKPOINT 1 [get_runs impl_Hash_RR]
+
 set_property strategy Performance_ExtraTimingOpt [get_runs impl_Hash_RR]
-set_property STEPS.POST_ROUTE_PHYS_OPT_DESIGN.IS_ENABLED true [get_runs impl_Hash_RR]
-set_property STEPS.POST_ROUTE_PHYS_OPT_DESIGN.ARGS.DIRECTIVE Explore [get_runs impl_Hash_RR]
 set_property -name {STEPS.OPT_DESIGN.ARGS.MORE OPTIONS} -value {-retarget -propconst -sweep -bufg_opt -shift_register_opt -aggressive_remap} -objects [get_runs impl_Hash_RR]
 # set_property STEPS.PLACE_DESIGN.ARGS.DIRECTIVE Explore [get_runs impl_Hash_RR]
-set_property AUTO_INCREMENTAL_CHECKPOINT 1 [get_runs impl_Hash_RR]
+set_property STEPS.PHYS_OPT_DESIGN.IS_ENABLED true [get_runs impl_Hash_RR]
+set_property STEPS.PHYS_OPT_DESIGN.ARGS.DIRECTIVE Explore [get_runs impl_Hash_RR]
+# set_property STEPS.ROUTE_DESIGN.ARGS.DIRECTIVE Explore [get_runs impl_Hash_RR]
+set_property STEPS.POST_ROUTE_PHYS_OPT_DESIGN.IS_ENABLED true [get_runs impl_Hash_RR]
+set_property STEPS.POST_ROUTE_PHYS_OPT_DESIGN.ARGS.DIRECTIVE AggressiveExplore [get_runs impl_Hash_RR]
 
 update_compile_order -fileset RPU_Hash
 update_compile_order -fileset sources_1
