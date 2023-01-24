@@ -74,12 +74,12 @@ def calc_remain (vals, maxs, tots):
 # Naming of Modules and number of them for averaging
 # Since a module could be set of different sub-modules we cannot
 # just use occurences
-Shire_mods = {"RPU": (RPUs, RPU_count),
-              "LB": (LB_module, 1),
-              "Interconnects": (Interconnects, RPU_count),
-              "MAC": (MAC_modules, 1),
-              "PCIEe": (PCIe_modules, 1),
-              "Switch and Debug": (SW_n_stat_modules, 1)}
+Rosebud_mods = {"RPU": (RPUs, RPU_count),
+                "LB": (LB_module, 1),
+                "Interconnects": (Interconnects, RPU_count),
+                "MAC": (MAC_modules, 1),
+                "PCIe": (PCIe_modules, 1),
+                "Switch and Debug": (SW_n_stat_modules, 1)}
 
 RPU_mods   = {"mem modules": (mem_modules, RPU_count),
               "riscv": (riscv_modules, RPU_count),
@@ -90,18 +90,18 @@ RPU_mods   = {"mem modules": (mem_modules, RPU_count),
 printcsv("Module, LUT, Logic, LUTRAM, SRL, Register, RAMB36, RAMB18, \
 URAM, DSP, LUTs (%), Registers(%), BRAMs(%), URAMs(%), DSPs(%)\n")
 
-printcsv ("Shire stats:")
+printcsv ("Rosebud stats:")
 
 acc_util = [0]*9
 last_avg = []
 last_tot = []
 last_mod = ""
 
-for mod in Shire_mods:
+for mod in Rosebud_mods:
   if (mod == "LB"):
-    (avg, tot, _, _) = extract(full_fpga_acc_rep, Shire_mods[mod][0], Shire_mods[mod][1])
+    (avg, tot, _, _) = extract(full_fpga_acc_rep, Rosebud_mods[mod][0], Rosebud_mods[mod][1])
   else:
-    (avg, tot, _, _) = extract(full_fpga_raw_rep, Shire_mods[mod][0], Shire_mods[mod][1])
+    (avg, tot, _, _) = extract(full_fpga_raw_rep, Rosebud_mods[mod][0], Rosebud_mods[mod][1])
   line = calc(avg, FPGA_tot_resources)
   acc_util = [a + b for a, b in zip(acc_util, tot)]
   printcsv(mod + ", " + ", ".join(line))

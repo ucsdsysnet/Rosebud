@@ -40,7 +40,7 @@ from cocotb.triggers import RisingEdge, Timer, ClockCycles
 
 from cocotbext.axi.utils import hexdump_str
 
-from Shire_API import TB
+from Rosebud_API import TB
 import mqnic
 
 # print actual port numbers

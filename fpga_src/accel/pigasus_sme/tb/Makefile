@@ -6,7 +6,7 @@ export COCOTB_REDUCED_LOG_FMT=1
 
 CWD = .
 RTL_DIR = ../rtl
-MYLIB_DIR = ../../../lib/Shire/rtl
+MYLIB_DIR = ../../../lib/Rosebud/rtl
 AXIS_DIR = ../../../lib/axis/rtl
 
 MODULE = test_SME

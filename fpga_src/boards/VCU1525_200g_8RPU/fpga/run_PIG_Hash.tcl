@@ -33,16 +33,16 @@ add_files -norecurse {
   ../lib/axis/rtl/priority_encoder.v
   ../lib/axis/rtl/axis_pipeline_register.v
   ../lib/axis/rtl/axis_fifo.v
-  ../lib/Shire/rtl/axis_register.v
-  ../lib/Shire/rtl/mem_modules.v
-  ../lib/Shire/rtl/VexRiscv.v
-  ../lib/Shire/rtl/simple_sync_sig.v
-  ../lib/Shire/rtl/riscvcore.v
-  ../lib/Shire/rtl/basic_fifo.v
-  ../lib/Shire/rtl/mem_sys.v
-  ../lib/Shire/rtl/rpu.v
-  ../lib/Shire/rtl/rpu_controller.v
-  ../lib/Shire/rtl/single_accel_rd_dma.v
+  ../lib/Rosebud/rtl/axis_register.v
+  ../lib/Rosebud/rtl/mem_modules.v
+  ../lib/Rosebud/rtl/VexRiscv.v
+  ../lib/Rosebud/rtl/simple_sync_sig.v
+  ../lib/Rosebud/rtl/riscvcore.v
+  ../lib/Rosebud/rtl/basic_fifo.v
+  ../lib/Rosebud/rtl/mem_sys.v
+  ../lib/Rosebud/rtl/rpu.v
+  ../lib/Rosebud/rtl/rpu_controller.v
+  ../lib/Rosebud/rtl/single_accel_rd_dma.v
   ../accel/pigasus_sme/rtl/backend.sv
   ../accel/pigasus_sme/rtl/first_filter.sv
   ../accel/pigasus_sme/rtl/frontend.sv
@@ -69,10 +69,10 @@ add_files -norecurse {
   ../accel/pigasus_sme/rtl/accel_wrap_pigasus.v
   ../accel/pigasus_sme/rtl/ip_match.v
   ../rtl/rpu_PR_pig.v
-  ../lib/Shire/syn/vivado/simple_sync_sig.tcl
+  ../lib/Rosebud/syn/vivado/simple_sync_sig.tcl
 } -of_objects [get_reconfig_modules RPU_PIG]
 
-set_property include_dirs [list "../lib/Shire/rtl/" "../accel/pigasus_sme/rtl/"] [current_fileset]
+set_property include_dirs [list "../lib/Rosebud/rtl/" "../accel/pigasus_sme/rtl/"] [current_fileset]
 
 if {[llength [get_pr_configurations PIG_HASH_config]]!=0} then {
   delete_pr_configurations PIG_HASH_config}

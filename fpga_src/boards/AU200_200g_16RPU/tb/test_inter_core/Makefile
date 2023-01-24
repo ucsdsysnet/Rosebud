@@ -12,7 +12,7 @@ MODULE=test_$(DUT)
 TOPLEVEL=$(MODULE)
 
 RTL_DIR = $(CWD)/../../rtl
-SHIRE = $(CWD)/../../lib/Shire/rtl
+SHIRE = $(CWD)/../../lib/Rosebud/rtl
 AXIS_LIB = $(CWD)/../../lib/axis/rtl
 AXI_LIB = $(CWD)/../../lib/axi/rtl
 PCIE_LIB = $(CWD)/../../lib/pcie/rtl

@@ -1,6 +1,6 @@
-# Shire, 200 Gbps middlebox framework for FPGAs
+# Rosebud, 200 Gbps middlebox framework for FPGAs
 
-Shire is a new approach to designing FPGA-accelerated middleboxes that simplifies development, debugging, and performance tuning by decoupling the tasks of hardware accelerator implementation and software application programming. Shire is a framework that links hardware accelerators to a high-performance packet processing pipeline through a standardized hardware/software interface. This separation of concerns allows hardware developers to focus on optimizing custom accelerators while freeing software programmers to reuse, configure, and debug accelerators in a fashion akin to software libraries. We show the benefits of Shire framework can be seen through two examples: a firewall based on a large blacklist, and porting the Pigasus IDS pattern-matching accelerator, together in less than a month. Our experiments demonstrate Rosebud delivers high performance, serving ∼200 Gbps of traffic while adding only 0.7–7 microseconds of latency.
+Rosebud is a new approach to designing FPGA-accelerated middleboxes that simplifies development, debugging, and performance tuning by decoupling the tasks of hardware accelerator implementation and software application programming. Rosebud is a framework that links hardware accelerators to a high-performance packet processing pipeline through a standardized hardware/software interface. This separation of concerns allows hardware developers to focus on optimizing custom accelerators while freeing software programmers to reuse, configure, and debug accelerators in a fashion akin to software libraries. We show the benefits of Rosebud framework can be seen through two examples: a firewall based on a large blacklist, and porting the Pigasus IDS pattern-matching accelerator, together in less than a month. Our experiments demonstrate Rosebud delivers high performance, serving ∼200 Gbps of traffic while adding only 0.7–7 microseconds of latency.
 
 More information can be found in our paper: https://arxiv.org/abs/2201.08978
 
@@ -25,7 +25,7 @@ sudo make -j 32
 Then add */opt/riscv/bin* to the *PATH*. You can change the path by changing the prefix option during compile. (sudo in the last line is if you don’t have write permission to /opt)
 
 To do Partial Reconfiguration from Linux, we need *MCAP* driver, in addition to the provided driver in the repo. It can be acquired from: 
-```https://github.com/ucsdsysnet/Shire/tree/master/host_utils/runtime/mcap```
+```https://github.com/ucsdsysnet/Rosebud/tree/master/host_utils/runtime/mcap```
 
 For running the python based simulation infrastructure, in addition to Python 3 we need two additional software. For connecting Python to RTL simulator we used Cocotb which can be installed by:
 ```pip install cocotb```
@@ -87,13 +87,13 @@ To synthesize and then place and route them for FPGA, you can use the tcl script
 
 ## Changing the load balancer
 
-The default load balancer (LB) is round robin for 16 RSU designs, and hash-based LB for 8 RSU designs. (currently 16 RSU design is used for firewall and there is no difference between RSUs, the 8 RSU design is used for intrusion detection and we need flow state). If any different LB is desired, you can change/add a new one similar to the 3 examples found in *fpga_src/lib/Shire/rtl/* for Round Robin (*lb_rr_lu.v*), hash-based that blocks input interfaces when RPUs cannot receive (*lb_hash_blocking.v*), and hash-based that drops based on specific destination core within the LB (*lb_hash_dropping.v*). 
+The default load balancer (LB) is round robin for 16 RSU designs, and hash-based LB for 8 RSU designs. (currently 16 RSU design is used for firewall and there is no difference between RSUs, the 8 RSU design is used for intrusion detection and we need flow state). If any different LB is desired, you can change/add a new one similar to the 3 examples found in *fpga_src/lib/Rosebud/rtl/* for Round Robin (*lb_rr_lu.v*), hash-based that blocks input interfaces when RPUs cannot receive (*lb_hash_blocking.v*), and hash-based that drops based on specific destination core within the LB (*lb_hash_dropping.v*). 
 
 * The LB module is designed in a manner to abstract away the policy for load balancing into a separate module. In other words, the input data per interface and status of slots per core is given to this module as an input, and it has to decide which RPU a packet needs to go. Then it can ask for a descriptor for the destination RPU and use it to stamp the packet. There is also an interface to host to enable LB configuration and status readback. The provided *lb_controller* module handles the slot status and controls the control channel between the LB and RPU interconnects.
 
 * If you're adding a new LB, change the Verilog file name in the <ins>create_project.tcl</ins> script accordingly, and similarly for PR run scripts. 
 
-* Unfortunately, top level Verilog file for a reconfigurable module cannot be parametrized in Vivado. Therefore, the LB top level files are placed in the rtl directory per board, where the parameters are defined within the module, right after the ports decleration. Then the parameterized LB policy module, as well as the lb_controller, are instantiated. Also there is a need for a set of PR registers on the boundaries of the module, which are added through use of an include file (*fpga_src/lib/Shire/rtl/rpu_PR_regs.v*). Note that RPUs also use a similar method where module parameters and PR registers are defined in the rtl directory per board.
+* Unfortunately, top level Verilog file for a reconfigurable module cannot be parametrized in Vivado. Therefore, the LB top level files are placed in the rtl directory per board, where the parameters are defined within the module, right after the ports decleration. Then the parameterized LB policy module, as well as the lb_controller, are instantiated. Also there is a need for a set of PR registers on the boundaries of the module, which are added through use of an include file (*fpga_src/lib/Rosebud/rtl/rpu_PR_regs.v*). Note that RPUs also use a similar method where module parameters and PR registers are defined in the rtl directory per board.
 
 ## Programing FPGA and loading the driver:
 There is a micro-usb header on the supported cards, that provides the JTAG interface for programming the bitfile. You can fire up a Vivado and make sure the connection is good to go and select the top bitfile for programming. Another method is to use the host_utils/runtime/loadbit.sh, to get the list of devices, program them and get their status either by target_index or the target ID:
@@ -105,7 +105,7 @@ There is a micro-usb header on the supported cards, that provides the JTAG inter
 
 After programming the FPGA, a restart is required for the PCIe IP to properly be recognized. 
 
-Shire also provides a driver to be able to talk to the card, where it can be seen as a normal NIC and all the future communications, even reconfiguration of RSUs, are done over PCIe which is much faster than JTAG. We use the corundum module to provide the NIC interface. Note that the corundum hardware used is older than the current version available in the corundum repo, and the newer driver is not compatible. We added some ioctl memory ranges to directly access RCU memory to Corundum’s driver.
+Rosebud also provides a driver to be able to talk to the card, where it can be seen as a normal NIC and all the future communications, even reconfiguration of RSUs, are done over PCIe which is much faster than JTAG. We use the corundum module to provide the NIC interface. Note that the corundum hardware used is older than the current version available in the corundum repo, and the newer driver is not compatible. We added some ioctl memory ranges to directly access RCU memory to Corundum’s driver.
 
 To build the driver, go to host-utils/driver and do
 
@@ -130,7 +130,7 @@ Files to compile a C program can be found in riscv_code directory:
 *	<ins>core.h</ins> is the header file for functions to talk to the RPU interconnect.
 *	<ins>int_handler</ins> is a default interrupt handler if user does not want to specify their own. 
 *	<ins>startup.S</ins> has the required boot process for the core to initialize stack and prepare the interrupts, and jump to start of the code.
-*	<ins>link_option.ld</ins> provide the mapping of segments based on the Shire addressing. 
+*	<ins>link_option.ld</ins> provide the mapping of segments based on the Rosebud addressing. 
 *	<ins>hex_gen.py</ins> script converts the output binary files based on the required format of RISCV cores.
 *	<ins>Makefile</ins> generates the proper outputs for the desired C code (set by NAME), with separate files for instruction memory and data memory that can be directly loaded.
 
@@ -155,22 +155,22 @@ File to load RISCV programs and example C code to monitor the state are in host-
 *	<ins>timespec.c/h</ins> is for Linux’s timespec structure 
 *	<ins>Makefile</ins> generates the binaries for this files. (Just do Make)
 
-<ins>Perf.c</ins> monitors the state of the RPUs during run, and </ins>dump.c dumps the state of the RPUs. For example they print out how many packets and bytes were communicated per core and in the scheduler, or if some debug bits were set or core sent some debug messages. Note that a full-fledged debugging infra between the cores and scheduler and host is baked into Shire’s design. For example you can interrupt the cores in case of hang and send them 64-bit messages in case the data channel is stuck. The <ins>pr_reload</ins> code also uses the evict interrupt as an example. 
+<ins>Perf.c</ins> monitors the state of the RPUs during run, and </ins>dump.c dumps the state of the RPUs. For example they print out how many packets and bytes were communicated per core and in the scheduler, or if some debug bits were set or core sent some debug messages. Note that a full-fledged debugging infra between the cores and scheduler and host is baked into Rosebud’s design. For example you can interrupt the cores in case of hang and send them 64-bit messages in case the data channel is stuck. The <ins>pr_reload</ins> code also uses the evict interrupt as an example. 
 
 The Makefile can used to run other tests, and it gets parameters for how many cores to be enabled and programmed (*ENABLE*), and how many cores to receive packets (*RECV*). *ENABLE* and *RECV* are in one-hot representation. *DEBUG* sets which debug register to be monitored, *DEV* sets the desired card (e.g., if more than one is used), and *TEST* sets the program to be loaded. *OUT_FILE* sets the name of output csv log file. As an example and to run our tests, ```make do``` runs the scripts in order: compile the program, firmware load, and start the monitoring process. Finally, The *run_latency* script is used for our latency measurement which uses tcpdump and runs the code for different packet sizes.
 
 You can do Make do for the the default code, which is a forwarder between the two ports, so if you feed the ports from the 100G NICs, you should see bytes/packets in the output.
 
 ## Customizing RISCV:
-The generated RISCV Verilog code is placed at fpga_src/lib/Shire/rtl/VexRiscv.v. If you want to configure it differently, go to fpga_src/VexRiscv and do make edit to open the tailored configuration file. After updating the configuration file, doing make in fpga_src/VexRiscv  builds the riscv, and doing make copy copies it to the proper place (fpga_src/lib/Shire/rtl/VexRiscv.v). 
+The generated RISCV Verilog code is placed at fpga_src/lib/Rosebud/rtl/VexRiscv.v. If you want to configure it differently, go to fpga_src/VexRiscv and do make edit to open the tailored configuration file. After updating the configuration file, doing make in fpga_src/VexRiscv  builds the riscv, and doing make copy copies it to the proper place (fpga_src/lib/Rosebud/rtl/VexRiscv.v). 
 
 Note that the connection to memory are optimized to enable single cycle read, and complicating the memory path can result in lower maximum frequency, i.e. less than 250 MHz. Also the next version of code in VexRiscv did not meet timing for 250 MHz either. Using a larger riscv, specially if not designed for FPGAs and 64-bit, might make it even harder to meet timing. 
 
-The ultimate goal of Shire is to have these RISCV cores to be hard logic not to get into this challenge. Even though that limits adding new instructions, a more capable RISCV core with higher frequency, alongside accelerators that can be accessed within a same cycle can improve overall system performance even without the customized instructions.
+The ultimate goal of Rosebud is to have these RISCV cores to be hard logic not to get into this challenge. Even though that limits adding new instructions, a more capable RISCV core with higher frequency, alongside accelerators that can be accessed within a same cycle can improve overall system performance even without the customized instructions.
 
 ## Running simulations:
-Alongside the code for each  board, there is a simulation framework to be able to test the Verilog and C-code alongside each other. Scripts and examples for single RSU and full Shire tests are available. As an example, in fpga_src/boards/VCU1525_200g_16RPU/tb there are these directories:
-*	<ins>common</ins> has the top level test module for full Shire, as well as common.py which has the same functions as the functions that host can use to communicate with the FPGA (just in python instead of C).
+Alongside the code for each  board, there is a simulation framework to be able to test the Verilog and C-code alongside each other. Scripts and examples for single RSU and full Rosebud tests are available. As an example, in fpga_src/boards/VCU1525_200g_16RPU/tb there are these directories:
+*	<ins>common</ins> has the top level test module for full Rosebud, as well as common.py which has the same functions as the functions that host can use to communicate with the FPGA (just in python instead of C).
 *	<ins>test_firewall_sg</ins> is a testbench for firewall accelerator that is integrated within an RSU, and the C-code can be tested. test_rpu.v is the top level test module for single RSU, and test_rpu.py is the python testbench. The testbench file loads the RSU memories, similar to the scripts in host_utils, and runs the desired tests.
 *	<ins>test_ins_load</ins> tests load of instruction memories, or communication to host DRAM, alongside a C-code that simply forwards the packets, as well as write and reads to DRAM.
 *	<ins>test_corundum</ins> test the functionality of corundum, alongside a C-code that simply forwards packets to the host.
@@ -183,9 +183,9 @@ Note that the python script would look for the binary of the program, so the bin
 <pre>
 ├──fpga_src
 │   ├── VexRiscv: Copy of the VexRiscv repo with specific commit, and the added configuration for the tailored RISCV core we used. 
-│   ├── accel:    Used accelerators for Shire. The archive directory has our older accelerators which are depreciated.
+│   ├── accel:    Used accelerators for Rosebud. The archive directory has our older accelerators which are depreciated.
 │   ├── boards:   Currently supporting VCU1515 (8 or 16 RPUs) and AU200 (16 RPUs). 
-│   └── lib:      The libraries we used in our design, Shire specifically for this project, and axi/axis/corundum/pcie/ethernet as imported libraries developed by Alex Forencich.
+│   └── lib:      The libraries we used in our design, Rosebud specifically for this project, and axi/axis/corundum/pcie/ethernet as imported libraries developed by Alex Forencich.
 ├──host_utils
 │   ├── driver:   mqnic is based on the corundum driver. The bump driver is for internal use and depreciated.
 │   └──runtime:   Contains the host side libraries and scripts to talk to the FPGA and perform test during runtime. 

@@ -33,24 +33,24 @@ add_files -norecurse {
   ../lib/axis/rtl/priority_encoder.v
   ../lib/axis/rtl/axis_fifo.v
   ../lib/axis/rtl/axis_pipeline_register.v
-  ../lib/Shire/rtl/axis_register.v
-  ../lib/Shire/rtl/mem_modules.v
-  ../lib/Shire/rtl/VexRiscv.v
-  ../lib/Shire/rtl/simple_sync_sig.v
-  ../lib/Shire/rtl/riscvcore.v
-  ../lib/Shire/rtl/basic_fifo.v
-  ../lib/Shire/rtl/mem_sys.v
-  ../lib/Shire/rtl/rpu.v
-  ../lib/Shire/rtl/rpu_controller.v
-  ../lib/Shire/rtl/accel_rd_dma_sp.v
+  ../lib/Rosebud/rtl/axis_register.v
+  ../lib/Rosebud/rtl/mem_modules.v
+  ../lib/Rosebud/rtl/VexRiscv.v
+  ../lib/Rosebud/rtl/simple_sync_sig.v
+  ../lib/Rosebud/rtl/riscvcore.v
+  ../lib/Rosebud/rtl/basic_fifo.v
+  ../lib/Rosebud/rtl/mem_sys.v
+  ../lib/Rosebud/rtl/rpu.v
+  ../lib/Rosebud/rtl/rpu_controller.v
+  ../lib/Rosebud/rtl/accel_rd_dma_sp.v
   ../accel/merged/rtl/hash_acc.v
   ../accel/merged/rtl/re_sql.v
   ../accel/merged/rtl/accel_wrap_merged.v
   ../rtl/rpu_PR_fw.v
-  ../lib/Shire/syn/vivado/simple_sync_sig.tcl
+  ../lib/Rosebud/syn/vivado/simple_sync_sig.tcl
 } -of_objects [get_reconfig_modules RPU_Hash]
 
-set_property include_dirs [list "../lib/Shire/rtl/"] [current_fileset]
+set_property include_dirs [list "../lib/Rosebud/rtl/"] [current_fileset]
 
 if {[llength [get_pr_configurations Hash_RR_config]]!=0} then {
   delete_pr_configurations Hash_RR_config}

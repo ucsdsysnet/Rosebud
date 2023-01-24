@@ -34,7 +34,7 @@ THE SOFTWARE.
 `timescale 1ns / 1ps
 
 /*
- * RPU interconnect between RPUs and rest of Shire
+ * RPU interconnect between RPUs and rest of the system
  */
 module rpu_intercon # (
     parameter DATA_WIDTH       = 64,

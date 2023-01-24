@@ -9,39 +9,39 @@ add_files -fileset sources_1 -norecurse {
   ../rtl/debounce_switch.v
   ../rtl/sync_signal.v
 
-  ../lib/Shire/rtl/riscvcore.v
-  ../lib/Shire/rtl/rpu.v
-  ../lib/Shire/rtl/accel_wrap.v
-  ../lib/Shire/rtl/VexRiscv.v
-  ../lib/Shire/rtl/mem_modules.v
-  ../lib/Shire/rtl/axis_register.v
-  ../lib/Shire/rtl/slot_keeper.v
-  ../lib/Shire/rtl/lb_controller.v
-  ../lib/Shire/rtl/lb_hash_dropping.v
-  ../lib/Shire/rtl/basic_fifo.v
-  ../lib/Shire/rtl/simple_arbiter.v
-  ../lib/Shire/rtl/axis_dma.v
-  ../lib/Shire/rtl/axis_stat.v
-  ../lib/Shire/rtl/stat_reader.v
-  ../lib/Shire/rtl/mem_sys.v
-  ../lib/Shire/rtl/rpu_controller.v
-  ../lib/Shire/rtl/rpu_intercon.v
-  ../lib/Shire/rtl/pipe_reg.v
-  ../lib/Shire/rtl/simple_sync_sig.v
-  ../lib/Shire/rtl/simple_axis_switch.v
-  ../lib/Shire/rtl/axis_ram_switch.v
-  ../lib/Shire/rtl/axis_slr_register.v
-  ../lib/Shire/rtl/axis_switch_2lvl.v
-  ../lib/Shire/rtl/loopback_msg_fifo.v
-  ../lib/Shire/rtl/bc_msg_merger.v
-  ../lib/Shire/rtl/cmd_stat_sys.v
-  ../lib/Shire/rtl/header.v
-  ../lib/Shire/rtl/pcie_controller.v
-  ../lib/Shire/rtl/pcie_cont_read.v
-  ../lib/Shire/rtl/pcie_cont_write.v
-  ../lib/Shire/rtl/corundum.v
-  ../lib/Shire/rtl/axis_fifo_w_count.v
-  ../lib/Shire/rtl/axis_stopper.v
+  ../lib/Rosebud/rtl/riscvcore.v
+  ../lib/Rosebud/rtl/rpu.v
+  ../lib/Rosebud/rtl/accel_wrap.v
+  ../lib/Rosebud/rtl/VexRiscv.v
+  ../lib/Rosebud/rtl/mem_modules.v
+  ../lib/Rosebud/rtl/axis_register.v
+  ../lib/Rosebud/rtl/slot_keeper.v
+  ../lib/Rosebud/rtl/lb_controller.v
+  ../lib/Rosebud/rtl/lb_hash_dropping.v
+  ../lib/Rosebud/rtl/basic_fifo.v
+  ../lib/Rosebud/rtl/simple_arbiter.v
+  ../lib/Rosebud/rtl/axis_dma.v
+  ../lib/Rosebud/rtl/axis_stat.v
+  ../lib/Rosebud/rtl/stat_reader.v
+  ../lib/Rosebud/rtl/mem_sys.v
+  ../lib/Rosebud/rtl/rpu_controller.v
+  ../lib/Rosebud/rtl/rpu_intercon.v
+  ../lib/Rosebud/rtl/pipe_reg.v
+  ../lib/Rosebud/rtl/simple_sync_sig.v
+  ../lib/Rosebud/rtl/simple_axis_switch.v
+  ../lib/Rosebud/rtl/axis_ram_switch.v
+  ../lib/Rosebud/rtl/axis_slr_register.v
+  ../lib/Rosebud/rtl/axis_switch_2lvl.v
+  ../lib/Rosebud/rtl/loopback_msg_fifo.v
+  ../lib/Rosebud/rtl/bc_msg_merger.v
+  ../lib/Rosebud/rtl/cmd_stat_sys.v
+  ../lib/Rosebud/rtl/header.v
+  ../lib/Rosebud/rtl/pcie_controller.v
+  ../lib/Rosebud/rtl/pcie_cont_read.v
+  ../lib/Rosebud/rtl/pcie_cont_write.v
+  ../lib/Rosebud/rtl/corundum.v
+  ../lib/Rosebud/rtl/axis_fifo_w_count.v
+  ../lib/Rosebud/rtl/axis_stopper.v
 
   ../lib/axis/rtl/axis_arb_mux.v
   ../lib/axis/rtl/sync_reset.v
@@ -91,13 +91,13 @@ add_files -fileset sources_1 -norecurse {
   ../lib/corundum/rtl/event_mux.v
 }
 
-set_property include_dirs  "../lib/Shire/rtl" [current_fileset]
+set_property include_dirs  "../lib/Rosebud/rtl" [current_fileset]
 
 add_files -fileset constrs_1 {
 	../fpga.xdc
 	../lib/axis/syn/vivado/axis_async_fifo.tcl
 	../lib/axis/syn/vivado/sync_reset.tcl
-	../lib/Shire/syn/vivado/simple_sync_sig.tcl
+	../lib/Rosebud/syn/vivado/simple_sync_sig.tcl
 }
 
 source ../ip/pcie4_uscale_plus_0.tcl

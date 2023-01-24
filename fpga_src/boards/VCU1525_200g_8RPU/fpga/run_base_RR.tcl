@@ -36,20 +36,20 @@ add_files -norecurse {
   ../lib/axis/rtl/sync_reset.v
   ../lib/axis/rtl/axis_fifo.v
   ../lib/corundum/rtl/rx_hash.v
-  ../lib/Shire/rtl/axis_register.v
-  ../lib/Shire/rtl/simple_arbiter.v
-  ../lib/Shire/rtl/basic_fifo.v
-  ../lib/Shire/rtl/header.v
-  ../lib/Shire/rtl/axis_dropper.v
-  ../lib/Shire/rtl/slot_keeper.v
-  ../lib/Shire/rtl/lb_controller.v
-  ../lib/Shire/rtl/lb_rr_lu.v
-  ../lib/Shire/rtl/max_finder_tree.v
+  ../lib/Rosebud/rtl/axis_register.v
+  ../lib/Rosebud/rtl/simple_arbiter.v
+  ../lib/Rosebud/rtl/basic_fifo.v
+  ../lib/Rosebud/rtl/header.v
+  ../lib/Rosebud/rtl/axis_dropper.v
+  ../lib/Rosebud/rtl/slot_keeper.v
+  ../lib/Rosebud/rtl/lb_controller.v
+  ../lib/Rosebud/rtl/lb_rr_lu.v
+  ../lib/Rosebud/rtl/max_finder_tree.v
   ../rtl/lb_rr_lu_PR.v
   ../lib/axis/syn/vivado/sync_reset.tcl
 } -of_objects [get_reconfig_modules LB_RR]
 
-set_property include_dirs [list "../lib/Shire/rtl/"] [current_fileset]
+set_property include_dirs [list "../lib/Rosebud/rtl/"] [current_fileset]
 
 if {[llength [get_pr_configurations base_RR_config]]!=0} then {
   delete_pr_configurations base_RR_config}

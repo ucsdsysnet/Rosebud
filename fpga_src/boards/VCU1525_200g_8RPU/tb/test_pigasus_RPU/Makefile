@@ -12,7 +12,7 @@ TOPLEVEL=$(MODULE)
 
 RTL_DIR = $(CWD)/../../rtl
 ACC_DIR = $(CWD)/../../accel/pigasus_sme/rtl
-SHIRE = $(CWD)/../../lib/Shire/rtl
+SHIRE = $(CWD)/../../lib/Rosebud/rtl
 AXIS_LIB = $(CWD)/../../lib/axis/rtl
 
 COMPILE_ARGS += -P $(TOPLEVEL).SLOT_COUNT=32
