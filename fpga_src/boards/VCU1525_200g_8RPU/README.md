@@ -1,4 +1,4 @@
-# Corundum mqnic for VCU1525
+# Rosebud for VCU1525, with 8 RPUs
 
 ## Introduction
 
@@ -10,16 +10,21 @@ This design targets the Xilinx VCU1525 FPGA board.
 
 ## How to build
 
-Run make to build.  Ensure that the Xilinx Vivado toolchain components are
-in PATH.
+Run ```make``` to build the FPGA image. It will first generate the base Rosebud
+framework design (```make base_0```), and then build the Pigasus case study
+for the RPUs. To do so, it first builds RPUs with Pigasus (```make
+PIG_Hash_1```), then uses the base design and just replaces the
+loadbalancer with a Round Robin one (```make base_RR_2```), and finally
+merges the results of the previous two (```make PIG_RR_3```).
 
-Run make to build the driver.  Ensure the headers for the running kernel are
-installed, otherwise the driver cannot be compiled.
+(Vivado can build PR runs from the base run, hence the merging speeds up the process.)
 
-## How to test
+Ensure that the Xilinx Vivado toolchain components are in PATH.
 
-Run make program to program the VCU1525 board with Vivado.  Then load the
-driver with insmod mqnic.ko.  Check dmesg for output from driver
-initialization.
+## Generate utilization reports
 
+```make csv``` generates the required resource utilization reports, and parses
+them into a csv file.
 
+(```make parselog``` and its variations are for debugging purposes to parse the
+Vivado output log file.)
