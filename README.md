@@ -107,7 +107,7 @@ After programming the FPGA, a restart is required for the PCIe IP to properly be
 
 Rosebud also provides a driver to be able to talk to the card, where it can be seen as a normal NIC and all the future communications, even reconfiguration of RSUs, are done over PCIe which is much faster than JTAG. We use the corundum module to provide the NIC interface. Note that the corundum hardware used is older than the current version available in the corundum repo, and the newer driver is not compatible. We added some ioctl memory ranges to directly access RCU memory to Corundum’s driver.
 
-To build the driver, go to host-utils/driver and do
+To build the driver, go to host-utils/driver/mqnic and do
 
 ```make```
 

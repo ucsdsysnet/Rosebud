@@ -7,7 +7,7 @@
 
 ## Scripts
 
-* pcap_gen.py: Reads the rule files and generates an attack traffic.
-* safe_gen.py: Generates some safe traffic as background traffic (used in the Snort on Xeon CPU comparison test).
+* pcap_gen.py: Reads the rule files and generates an attack traffic. Makefile has examples of how to use it and set the reordering percentage.
+* safe_gen.py: Generates some safe traffic as background traffic (used in the Snort on Xeon CPU comparison test). You can set the min and max message size to the same value, and the output pcap can be used for the Makefile in the pcaps directory.
 * rule_cleaner.py: Simplifies some of the rules, so the checks performed are the same as the checks done by the hardware acclerator (used in the Snort on Xeon CPU comparison test).
 * hls_gen.py: Used to convert the rules into C code and then use Vivado HLS to generate the accelerator. <ins>final_mapping.txt</ins> is used by this script, which was output of the <ins>pcap_gen.py</ins> script as it did the parsing of the rules. This effort was forwent as Vitis HLS was very slow, but we kept the scripts for future use.
