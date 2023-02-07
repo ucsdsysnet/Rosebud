@@ -12,32 +12,32 @@ TOPLEVEL=$(MODULE)
 
 RTL_DIR = $(CWD)/../../rtl
 ACC_DIR = $(CWD)/../../accel/ip_matcher/rtl
-SHIRE = $(CWD)/../../lib/Rosebud/rtl
+ROSEBUD = $(CWD)/../../lib/Rosebud/rtl
 AXIS_LIB = $(CWD)/../../lib/axis/rtl
 
 COMPILE_ARGS += -P $(TOPLEVEL).SLOT_COUNT=16
 COMPILE_ARGS += -P $(TOPLEVEL).INIT_ROMS=1
-COMPILE_ARGS += -I $(SHIRE)
+COMPILE_ARGS += -I $(ROSEBUD)
 
-VERILOG_SOURCES  = $(SHIRE)/../tb/common/test_rpu.v
+VERILOG_SOURCES  = $(ROSEBUD)/../tb/common/test_rpu.v
 VERILOG_SOURCES += $(RTL_DIR)/rpu_PR_fw.v
 
-VERILOG_SOURCES += $(SHIRE)/basic_fifo.v
-VERILOG_SOURCES += $(SHIRE)/axis_register.v
-VERILOG_SOURCES += $(SHIRE)/mem_modules.v
-VERILOG_SOURCES += $(SHIRE)/axis_dma.v
-VERILOG_SOURCES += $(SHIRE)/VexRiscv.v
-VERILOG_SOURCES += $(SHIRE)/riscvcore.v
-VERILOG_SOURCES += $(SHIRE)/rpu.v
-VERILOG_SOURCES += $(SHIRE)/rpu_controller.v
-VERILOG_SOURCES += $(SHIRE)/rpu_intercon.v
-VERILOG_SOURCES += $(SHIRE)/mem_sys.v
-VERILOG_SOURCES += $(SHIRE)/simple_arbiter.v
-VERILOG_SOURCES += $(SHIRE)/simple_sync_sig.v
-VERILOG_SOURCES += $(SHIRE)/axis_stat.v
-VERILOG_SOURCES += $(SHIRE)/header.v
-VERILOG_SOURCES += $(SHIRE)/accel_rd_dma_sp.v
-VERILOG_SOURCES += $(SHIRE)/spaced_2lvl_penc.v
+VERILOG_SOURCES += $(ROSEBUD)/basic_fifo.v
+VERILOG_SOURCES += $(ROSEBUD)/axis_register.v
+VERILOG_SOURCES += $(ROSEBUD)/mem_modules.v
+VERILOG_SOURCES += $(ROSEBUD)/axis_dma.v
+VERILOG_SOURCES += $(ROSEBUD)/VexRiscv.v
+VERILOG_SOURCES += $(ROSEBUD)/riscvcore.v
+VERILOG_SOURCES += $(ROSEBUD)/rpu.v
+VERILOG_SOURCES += $(ROSEBUD)/rpu_controller.v
+VERILOG_SOURCES += $(ROSEBUD)/rpu_intercon.v
+VERILOG_SOURCES += $(ROSEBUD)/mem_sys.v
+VERILOG_SOURCES += $(ROSEBUD)/simple_arbiter.v
+VERILOG_SOURCES += $(ROSEBUD)/simple_sync_sig.v
+VERILOG_SOURCES += $(ROSEBUD)/axis_stat.v
+VERILOG_SOURCES += $(ROSEBUD)/header.v
+VERILOG_SOURCES += $(ROSEBUD)/accel_rd_dma_sp.v
+VERILOG_SOURCES += $(ROSEBUD)/spaced_2lvl_penc.v
 
 VERILOG_SOURCES += $(ACC_DIR)/accel_wrap_firewall.v
 VERILOG_SOURCES += $(ACC_DIR)/firewall.v
