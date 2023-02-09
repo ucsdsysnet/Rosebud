@@ -60,7 +60,7 @@ clean:
 
 .PHONY: all install clean
 
-do:
+do: $(BIN)
 	make -C $(DEST_DIR) NAME=$(TEST) DEFINES="-DPKT_SIZE=$(PKT_SIZE)"
 	sudo ./rvfw -d /dev/$(DEV) -i $(INS_BIN_FILE) $(DMAP_FLAG) -e $(ENABLE) -r $(RECV)
 	sudo ./perf -d /dev/$(DEV) -o $(OUT_FILE) -g $(DEBUG)
