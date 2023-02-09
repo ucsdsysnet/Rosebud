@@ -11,6 +11,8 @@ You can program the FPGA by the runtime/loadbit.sh script, and also get the list
 
 After programming the FPGA, a system reboot is required for the PCIe IP to properly be recognized.
 
+* If there are multiple cards in a single machine, sometime the <ins>loadbit.sh</ins> script can only program the first card. In that situation you need to run Vivado to program the boards.
+
 ## Loading the driver
 
 To build the driver, go to driver/mqnic and do
@@ -20,6 +22,8 @@ To build the driver, go to driver/mqnic and do
 Then you can load the driver with
 
 ```sudo insmod mqnic.ko```
+
+* If this operation fails, with errors such as ```mqnic: Unknown symbol ptp_clock_index (err 0)```, do ```modprobe ptp```
 
 Now we need to reset the PCIe card to let the driver be properly loaded. To do so run the pcie_hot_reset.sh from runtime directory based on the device PCIe address, found in ```lspci``` output. For example:
 
