@@ -186,19 +186,19 @@ void print_lb_status(struct mqnic *dev){
         printf("interface %d has reserved a desc from core %d in the schecduler\n",
                 i, (read_interface_desc (dev, i) >> 8) & 0xFF);
 
-    for (int i=0; i< RPU_COUNT; i++)
+    for (int i=0; i< MAX_RPU_COUNT; i++)
         printf("Core %d has %d slots in the load balancer.\n",
                 i, read_core_slots (dev, i));
     return;
 }
 
-void reset_all_cores(struct mqnic *dev, int evict){
+void reset_all_cores(struct mqnic *dev, int evict, int rpu_count){
     printf("Disabling cores in LB...\n");
     set_enable_cores(dev, 0);
     set_receive_cores(dev,0);
 
     if (evict==1)
-        for (int i=0; i< RPU_COUNT; i++)
+        for (int i=0; i< rpu_count; i++)
             if (core_rd_cmd(dev, i, 0xA) !=0){
                 printf("Core %d has slots stuck: %X\n", i, core_rd_cmd(dev, i, 0xA));
                 evict_core(dev, i);
@@ -210,11 +210,11 @@ void reset_all_cores(struct mqnic *dev, int evict){
     printf("Flushing LB...\n");
 
     release_interface_desc(dev, (1<<MAX_ETH_IF_COUNT)-1);
-    release_core_slots(dev, (1<<RPU_COUNT)-1);
+    release_core_slots(dev, (1<<rpu_count)-1);
     usleep(100);
 
     printf("Placing cores in reset...\n");
-    for (int i=0; i< RPU_COUNT; i++){
+    for (int i=0; i< rpu_count; i++){
         core_wr_cmd(dev, i, 0xF, 1);
         usleep(1000);
         printf(".");

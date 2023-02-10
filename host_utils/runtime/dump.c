@@ -33,6 +33,7 @@ static void usage(char *name)
 {
     fprintf(stderr,
         "usage: %s [options]\n"
+        " -c int     RPU count\n"
         " -d name    device to open (/sys/bus/pci/devices/.../resource0)\n",
         name);
 }
@@ -48,13 +49,17 @@ int main(int argc, char *argv[])
 
     name = strrchr(argv[0], '/');
     name = name ? 1+name : argv[0];
+    uint32_t rpu_count = MAX_RPU_COUNT;
 
-    while ((opt = getopt(argc, argv, "d:h?")) != EOF)
+    while ((opt = getopt(argc, argv, "d:c:h?")) != EOF)
     {
         switch (opt)
         {
         case 'd':
             device = optarg;
+            break;
+        case 'c':
+            rpu_count = strtoul(optarg, NULL, 0);
             break;
         case 'h':
         case '?':
@@ -92,12 +97,11 @@ int main(int argc, char *argv[])
     printf("IF stride: 0x%08x\n", dev->if_stride);
     printf("IF CSR offset: 0x%08x\n", dev->if_csr_offset);
 
-    int core_count = RPU_COUNT;
     int if_count = MAX_TOT_IF_COUNT;
 
     printf("DMA enable: %u\n", mqnic_reg_read32(dev->regs, 0x000400));
 
-    for (int k=0; k<core_count; k++)
+    for (int k=0; k<rpu_count; k++)
     {
         mqnic_reg_write32(dev->regs, 0x000410, k);
         printf("core %d slots: %u\n",     k, read_core_slots(dev, k));

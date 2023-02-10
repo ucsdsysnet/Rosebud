@@ -38,6 +38,8 @@ static void usage(char *name)
         " -d name    device to open (/sys/bus/pci/devices/.../resource0)\n"
         " -i file    instruction memory binary\n"
         " -m file    memory map for data memory binary(ies)\n"
+        " -c int     RPU count\n"
+        " -b mask    block interface\n"
         " -e mask    core enable\n"
         " -r mask    core rx enable\n",
         name);
@@ -52,21 +54,23 @@ int main(int argc, char *argv[])
     char *device = NULL;
     struct mqnic *dev;
 
-    char *instr_bin = NULL;
-    char *data_map = NULL;
+    char *instr_bin  = NULL;
+    char *data_map   = NULL;
     FILE *write_file = NULL;
-    FILE *map_file = NULL;
+    FILE *map_file   = NULL;
 
     char action_write = 0;
     char load_dmem    = 0;
 
-    uint32_t core_enable = 0xffffffff;
-    uint32_t core_rx_enable = 0xffffffff;
+    uint32_t core_enable    = (1<<MAX_RPU_COUNT)-1;
+    uint32_t core_rx_enable = (1<<MAX_RPU_COUNT)-1;
+    uint32_t rpu_count      = MAX_RPU_COUNT;
+    uint32_t int_rx_enable  = (1<<MAX_ETH_IF_COUNT)-1;
 
     name = strrchr(argv[0], '/');
     name = name ? 1+name : argv[0];
 
-    while ((opt = getopt(argc, argv, "d:i:m:e:r:h?")) != EOF)
+    while ((opt = getopt(argc, argv, "d:i:m:c:b:e:r:h?")) != EOF)
     {
         switch (opt)
         {
@@ -81,6 +85,12 @@ int main(int argc, char *argv[])
             action_write = 1;
             load_dmem    = 1;
             data_map = optarg;
+            break;
+        case 'c':
+            rpu_count = strtoul(optarg, NULL, 0);
+            break;
+        case 'b':
+            int_rx_enable = ~strtoul(optarg, NULL, 0);
             break;
         case 'e':
             core_enable = strtoul(optarg, NULL, 0);
@@ -122,7 +132,6 @@ int main(int argc, char *argv[])
     printf("Board ID: 0x%08x\n", dev->board_id);
     printf("Board version: %d.%d\n", dev->board_ver >> 16, dev->board_ver & 0xffff);
 
-    int core_count = RPU_COUNT;
     int test_pcie = 0;
 
     int segment_size = 512*1024;
@@ -177,10 +186,10 @@ int main(int argc, char *argv[])
             }
         }
 
-        reset_all_cores(dev, 1);
+        reset_all_cores(dev, 1, rpu_count);
 
         printf("Write core instruction memories...\n");
-        for (int k=0; k<core_count; k++)
+        for (int k=0; k<rpu_count; k++)
         {
             uint32_t core_rx_bytes_raw  = core_rd_cmd(dev, k, 0);
             uint32_t core_rx_frames_raw = core_rd_cmd(dev, k, 1);
@@ -268,7 +277,7 @@ int main(int argc, char *argv[])
                 fclose(write_file);
 
                 printf("Writing to address %s\n", addr);
-                for (int k=0; k<core_count; k++){
+                for (int k=0; k<rpu_count; k++){
                     uint32_t core_rx_bytes_raw  = core_rd_cmd(dev, k, 0);
                     uint32_t core_rx_frames_raw = core_rd_cmd(dev, k, 1);
                     int bytes = 0;
@@ -317,7 +326,7 @@ int main(int argc, char *argv[])
 
         printf("Release core resets...\n");
         usleep(100000);
-        for (int k=0; k<core_count; k++)
+        for (int k=0; k<rpu_count; k++)
         {
             if (core_enable & (1 << k)){
                 core_wr_cmd(dev, k, 0xf, 0);
@@ -332,7 +341,7 @@ int main(int argc, char *argv[])
         usleep(1000000);
 
         printf("Core stats after taking out of reset\n");
-        for (int k=0; k<core_count; k++){
+        for (int k=0; k<rpu_count; k++){
             printf("core %d status: %08x\n", k, core_rd_cmd(dev, k, 8));
         }
 
@@ -350,7 +359,7 @@ int main(int argc, char *argv[])
 
         // Disable in LB early drops
         set_interface_rx_threshold(dev, RX_FIFO_LINES+1);
-        set_enable_interfaces(dev, (1<<MAX_ETH_IF_COUNT)-1);
+        set_enable_interfaces(dev, int_rx_enable);
 
         printf("Done!\n");
 

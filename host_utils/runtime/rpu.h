@@ -30,10 +30,7 @@ THE SOFTWARE.
 
 #include "mqnic.h"
 
-#ifndef RPU_COUNT
-	#define RPU_COUNT   16
-#endif
-
+#define MAX_RPU_COUNT    16
 #define MAX_ETH_IF_COUNT 3
 #define MAX_TOT_IF_COUNT 5
 #define SLOTS            16
@@ -100,5 +97,5 @@ void set_interface_rx_threshold(struct mqnic *dev, uint32_t limit);
 // Load balancer status and evict and reset functions
 void print_lb_status(struct mqnic *dev);
 void evict_core(struct mqnic *dev, uint32_t core);
-void reset_all_cores(struct mqnic *dev, int evict);
+void reset_all_cores(struct mqnic *dev, int evict, int rpu_count);
 void reset_single_core(struct mqnic *dev, uint32_t core, uint32_t num_slots, int evict);

@@ -44,6 +44,7 @@ static void usage(char *name)
     fprintf(stderr,
         "usage: %s [options]\n"
         " -d name    device to open (/sys/bus/pci/devices/.../resource0)\n"
+        " -c int     RPU count\n"
         " -o file    output CSV file name (output.csv)\n"
         " -g reg     debug register number (8)\n",
         name);
@@ -60,6 +61,7 @@ int main(int argc, char *argv[])
 
     char *output_file_name = NULL;
     FILE *output_file = NULL;
+    uint32_t rpu_count = MAX_RPU_COUNT;
 
     int debug_reg = 0x0;
 
@@ -68,7 +70,7 @@ int main(int argc, char *argv[])
 
     signal(SIGINT, sig_handler);
 
-    while ((opt = getopt(argc, argv, "d:o:g:h?")) != EOF)
+    while ((opt = getopt(argc, argv, "d:o:c:g:h?")) != EOF)
     {
         switch (opt)
         {
@@ -77,6 +79,9 @@ int main(int argc, char *argv[])
             break;
         case 'o':
             output_file_name = optarg;
+            break;
+        case 'c':
+            rpu_count = strtoul(optarg, NULL, 0);
             break;
         case 'g':
             debug_reg = atoi(optarg);
@@ -111,37 +116,36 @@ int main(int argc, char *argv[])
     printf("Board ID: 0x%08x\n", dev->board_id);
     printf("Board version: %d.%d\n", dev->board_ver >> 16, dev->board_ver & 0xffff);
 
-    int core_count = RPU_COUNT;
     int if_count = MAX_ETH_IF_COUNT; // To be updated
 
     char need_comma;
 
-    uint64_t core_slots[RPU_COUNT];
+    uint64_t core_slots[MAX_RPU_COUNT];
     bool extra_slot_count = false;
 
     uint32_t temp, temp2;
     uint32_t updates = 0;
 
-    uint64_t core_rx_bytes [RPU_COUNT];
-    uint64_t core_rx_frames[RPU_COUNT];
-    uint64_t core_rx_stalls[RPU_COUNT];
-    uint64_t core_tx_bytes [RPU_COUNT];
-    uint64_t core_tx_frames[RPU_COUNT];
-    uint64_t core_tx_stalls[RPU_COUNT];
+    uint64_t core_rx_bytes [MAX_RPU_COUNT];
+    uint64_t core_rx_frames[MAX_RPU_COUNT];
+    uint64_t core_rx_stalls[MAX_RPU_COUNT];
+    uint64_t core_tx_bytes [MAX_RPU_COUNT];
+    uint64_t core_tx_frames[MAX_RPU_COUNT];
+    uint64_t core_tx_stalls[MAX_RPU_COUNT];
 
-    uint64_t total_core_rx_bytes [RPU_COUNT];
-    uint64_t total_core_rx_frames[RPU_COUNT];
-    uint64_t total_core_rx_stalls[RPU_COUNT];
-    uint64_t total_core_tx_bytes [RPU_COUNT];
-    uint64_t total_core_tx_frames[RPU_COUNT];
-    uint64_t total_core_tx_stalls[RPU_COUNT];
+    uint64_t total_core_rx_bytes [MAX_RPU_COUNT];
+    uint64_t total_core_rx_frames[MAX_RPU_COUNT];
+    uint64_t total_core_rx_stalls[MAX_RPU_COUNT];
+    uint64_t total_core_tx_bytes [MAX_RPU_COUNT];
+    uint64_t total_core_tx_frames[MAX_RPU_COUNT];
+    uint64_t total_core_tx_stalls[MAX_RPU_COUNT];
 
-    uint32_t core_rx_bytes_raw [RPU_COUNT];
-    uint32_t core_rx_frames_raw[RPU_COUNT];
-    uint32_t core_rx_stalls_raw[RPU_COUNT];
-    uint32_t core_tx_bytes_raw [RPU_COUNT];
-    uint32_t core_tx_frames_raw[RPU_COUNT];
-    uint32_t core_tx_stalls_raw[RPU_COUNT];
+    uint32_t core_rx_bytes_raw [MAX_RPU_COUNT];
+    uint32_t core_rx_frames_raw[MAX_RPU_COUNT];
+    uint32_t core_rx_stalls_raw[MAX_RPU_COUNT];
+    uint32_t core_tx_bytes_raw [MAX_RPU_COUNT];
+    uint32_t core_tx_frames_raw[MAX_RPU_COUNT];
+    uint32_t core_tx_stalls_raw[MAX_RPU_COUNT];
 
     uint64_t if_rx_bytes [MAX_TOT_IF_COUNT];
     uint64_t if_rx_frames[MAX_TOT_IF_COUNT];
@@ -193,7 +197,7 @@ int main(int argc, char *argv[])
 
         need_comma = 0;
 
-        for (int k=0; k<core_count; k++)
+        for (int k=0; k<rpu_count; k++)
         {
             if (need_comma)
                 fprintf(output_file, ",");
@@ -215,7 +219,7 @@ int main(int argc, char *argv[])
 
     clock_gettime(CLOCK_MONOTONIC, &desired_time);
 
-    for (int k=0; k<core_count; k++)
+    for (int k=0; k<rpu_count; k++)
     {
         core_rx_bytes [k]       = 0;
         core_rx_frames[k]       = 0;
@@ -266,7 +270,7 @@ int main(int argc, char *argv[])
 
     while (keep_running)
     {
-        for (int k=0; k<core_count; k++)
+        for (int k=0; k<rpu_count; k++)
         {
             core_rx_bytes [k] = 0;
             core_rx_frames[k] = 0;
@@ -297,7 +301,7 @@ int main(int argc, char *argv[])
             sleep_time = timespec_sub(desired_time, current_time);
             nanosleep(&sleep_time, NULL);
 
-            for (int k=0; k<core_count; k++)
+            for (int k=0; k<rpu_count; k++)
             {
                 temp = core_rd_cmd(dev, k, 0);
                 core_rx_bytes[k] += temp - core_rx_bytes_raw[k];
@@ -376,13 +380,13 @@ int main(int argc, char *argv[])
 
         // read core status
         if (debug_reg>=8) {
-            for (int k=0; k<core_count; k++) {
+            for (int k=0; k<rpu_count; k++) {
                 temp  = core_rd_cmd(dev, k, debug_reg);
                 if (temp!=0)
                   printf("core %d status: %08x \n", k, temp);
             }
         } else if ((debug_reg==6) || (debug_reg==7)){
-            for (int k=0; k<core_count; k++) {
+            for (int k=0; k<rpu_count; k++) {
                 temp  = core_rd_cmd(dev, k, 6);
                 temp2 = core_rd_cmd(dev, k, 7);
                 if ((temp!=0)||(temp2!=0))
@@ -403,7 +407,7 @@ int main(int argc, char *argv[])
         total_tx_frames = 0;
         total_tx_stalls = 0;
 
-        for (int k=0; k<core_count; k++)
+        for (int k=0; k<rpu_count; k++)
         {
             printf("core %2d  %12ld  %12ld  %12ld  %12ld                 %12ld   %12ld   %12ld\n", k, core_rx_bytes[k], core_tx_bytes[k], core_rx_frames[k], core_tx_frames[k], core_rx_stalls[k], core_tx_stalls[k], core_slots[k]);
             total_core_rx_bytes [k] += core_rx_bytes [k];
@@ -454,7 +458,7 @@ int main(int argc, char *argv[])
         {
             need_comma = 0;
 
-            for (int k=0; k<core_count; k++)
+            for (int k=0; k<rpu_count; k++)
             {
                 if (need_comma)
                     fprintf(output_file, ",");
@@ -486,7 +490,7 @@ int main(int argc, char *argv[])
     total_rx_frames = 0;
     total_tx_frames = 0;
 
-    for (int k=0; k<core_count; k++)
+    for (int k=0; k<rpu_count; k++)
     {
         printf("core %2d  %12ld  %12ld  %12ld  %12ld\n", k, total_core_rx_bytes[k], total_core_tx_bytes[k], total_core_rx_frames[k], total_core_tx_frames[k]);
         total_rx_bytes  += total_core_rx_bytes [k];
@@ -526,7 +530,7 @@ int main(int argc, char *argv[])
     total_tx_bytes  = 0;
     total_tx_frames = 0;
 
-    for (int k=0; k<core_count; k++)
+    for (int k=0; k<rpu_count; k++)
     {
         printf("core %2d  %12ld  %12ld  %12ld  %12ld\n", k, total_core_rx_bytes[k]/updates, total_core_tx_bytes[k]/updates, total_core_rx_frames[k]/updates, total_core_tx_frames[k]/updates);
         total_rx_bytes  += total_core_rx_bytes [k];

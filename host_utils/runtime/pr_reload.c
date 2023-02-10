@@ -42,6 +42,7 @@ static void usage(char *name)
         " -d name    device to open (/sys/bus/pci/devices/.../resource0)\n"
         " -i file    instruction memory binary\n"
         " -m file    memory map for data memory binary(ies)\n"
+        " -c int     RPU count\n"
         " -e mask    core enable\n"
         " -r mask    core rx enable\n"
         " -p path    partial bitstream directory\n",
@@ -115,15 +116,16 @@ int main(int argc, char *argv[])
     char action_write = 0;
     char load_dmem    = 0;
 
-    uint32_t core_enable = 0xffffffff;
-    uint32_t core_rx_enable = 0xffffffff;
+    uint32_t core_enable    = (1<<MAX_RPU_COUNT)-1;
+    uint32_t core_rx_enable = (1<<MAX_RPU_COUNT)-1;
+    uint32_t rpu_count      = MAX_RPU_COUNT;
 
     unsigned long long pr_time = 0;
 
     name = strrchr(argv[0], '/');
     name = name ? 1+name : argv[0];
 
-    while ((opt = getopt(argc, argv, "d:i:m:p:e:r:h?")) != EOF)
+    while ((opt = getopt(argc, argv, "d:i:m:p:c:e:r:h?")) != EOF)
     {
         switch (opt)
         {
@@ -141,6 +143,9 @@ int main(int argc, char *argv[])
             break;
         case 'p':
             PR_bitfiles = optarg;
+            break;
+        case 'c':
+            rpu_count = strtoul(optarg, NULL, 0);
             break;
         case 'e':
             core_enable = strtoul(optarg, NULL, 0);
@@ -182,7 +187,6 @@ int main(int argc, char *argv[])
     printf("Board ID: 0x%08x\n", dev->board_id);
     printf("Board version: %d.%d\n", dev->board_ver >> 16, dev->board_ver & 0xffff);
 
-    int core_count = RPU_COUNT;
     int segment_size = 512*1024;
 
     if (action_write)
@@ -236,7 +240,7 @@ int main(int argc, char *argv[])
         }
 
         for (int o=0; o<20; o++){
-        for (int k=0; k<core_count; k++)
+        for (int k=0; k<rpu_count; k++)
         {
             printf("Putting core %d into reset.\n", k);
             reset_single_core(dev, k, SLOTS, 1);
