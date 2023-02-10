@@ -28,7 +28,7 @@ To do Partial Reconfiguration from Linux, we need *MCAP* driver, in addition to 
 ```https://github.com/ucsdsysnet/Rosebud/tree/master/host_utils/runtime/mcap```
 
 For running the python based simulation infrastructure, in addition to Python 3 we need two additional software. For connecting Python to RTL simulator we used Cocotb which can be installed by:
-```pip3 install cocotb==1.7.1 cocotb-test cocotbext-axi cocotbext-pcie==0.1.22 scapy pyelftools dpkt```
+```pip3 install cocotb==1.7.1 cocotb-test cocotbext-axi cocotbext-pcie==0.1.22 scapy pyelftools dpkt idstools```
 (There was a change in cocotbext-pcie from version 0.2.0 that requires modifications to the test bench. Also cocotb 1.7.2 adds new library requirements. Generally you can rollback the version, e.g., by doing ```pip3 install --force-reinstall -v cocotb==1.7.1```.
 
 For RTL simulation, Synopsys VCS, Intel Questa, and Icarus Verilog are supported by cocotb. Icarus Verilog is free and can be obtained from
@@ -42,6 +42,9 @@ sh ./autoconf.sh
 make
 sudo make install
 ```
+
+For debugging and run of the tests, you also need tcpdump and tcpreplay:
+```sudo apt-get install tcpdump tcpreplay```
 
 ## Building FPGA image:
 The method to generate the image is to go to fpga_src/boards/ and there go the directory with desired number of Reconfigurable packet processors (RSUs). In current implementation, we want 256 packets to be stored in slots as buffer, so we have 16 slots for 16 RSU, and 32 slots for 8 RSU variant. In each of these directories, there are separate make rules for base design and then swapping PR regions with the desired accelerator.
