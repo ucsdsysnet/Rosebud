@@ -111,37 +111,37 @@ int main(int argc, char *argv[])
     printf("Board ID: 0x%08x\n", dev->board_id);
     printf("Board version: %d.%d\n", dev->board_ver >> 16, dev->board_ver & 0xffff);
 
-    int core_count = MAX_CORE_COUNT;
+    int core_count = RPU_COUNT;
     int if_count = MAX_ETH_IF_COUNT; // To be updated
 
     char need_comma;
 
-    uint64_t core_slots[MAX_CORE_COUNT];
+    uint64_t core_slots[RPU_COUNT];
     bool extra_slot_count = false;
 
     uint32_t temp, temp2;
     uint32_t updates = 0;
 
-    uint64_t core_rx_bytes [MAX_CORE_COUNT];
-    uint64_t core_rx_frames[MAX_CORE_COUNT];
-    uint64_t core_rx_stalls[MAX_CORE_COUNT];
-    uint64_t core_tx_bytes [MAX_CORE_COUNT];
-    uint64_t core_tx_frames[MAX_CORE_COUNT];
-    uint64_t core_tx_stalls[MAX_CORE_COUNT];
+    uint64_t core_rx_bytes [RPU_COUNT];
+    uint64_t core_rx_frames[RPU_COUNT];
+    uint64_t core_rx_stalls[RPU_COUNT];
+    uint64_t core_tx_bytes [RPU_COUNT];
+    uint64_t core_tx_frames[RPU_COUNT];
+    uint64_t core_tx_stalls[RPU_COUNT];
 
-    uint64_t total_core_rx_bytes [MAX_CORE_COUNT];
-    uint64_t total_core_rx_frames[MAX_CORE_COUNT];
-    uint64_t total_core_rx_stalls[MAX_CORE_COUNT];
-    uint64_t total_core_tx_bytes [MAX_CORE_COUNT];
-    uint64_t total_core_tx_frames[MAX_CORE_COUNT];
-    uint64_t total_core_tx_stalls[MAX_CORE_COUNT];
+    uint64_t total_core_rx_bytes [RPU_COUNT];
+    uint64_t total_core_rx_frames[RPU_COUNT];
+    uint64_t total_core_rx_stalls[RPU_COUNT];
+    uint64_t total_core_tx_bytes [RPU_COUNT];
+    uint64_t total_core_tx_frames[RPU_COUNT];
+    uint64_t total_core_tx_stalls[RPU_COUNT];
 
-    uint32_t core_rx_bytes_raw [MAX_CORE_COUNT];
-    uint32_t core_rx_frames_raw[MAX_CORE_COUNT];
-    uint32_t core_rx_stalls_raw[MAX_CORE_COUNT];
-    uint32_t core_tx_bytes_raw [MAX_CORE_COUNT];
-    uint32_t core_tx_frames_raw[MAX_CORE_COUNT];
-    uint32_t core_tx_stalls_raw[MAX_CORE_COUNT];
+    uint32_t core_rx_bytes_raw [RPU_COUNT];
+    uint32_t core_rx_frames_raw[RPU_COUNT];
+    uint32_t core_rx_stalls_raw[RPU_COUNT];
+    uint32_t core_tx_bytes_raw [RPU_COUNT];
+    uint32_t core_tx_frames_raw[RPU_COUNT];
+    uint32_t core_tx_stalls_raw[RPU_COUNT];
 
     uint64_t if_rx_bytes [MAX_TOT_IF_COUNT];
     uint64_t if_rx_frames[MAX_TOT_IF_COUNT];

@@ -2,6 +2,7 @@ TEST=basic_fw
 # TEST=pkt_gen
 PKT_SIZE=9000
 DEST_DIR=../../riscv_code/
+RPU_COUNT=16
 # DEST_DIR=../accel/ip_matcher/c/
 INS_BIN_FILE=$(DEST_DIR)/$(TEST)_ins.bin
 DATA_MAP_FILE=$(INS_BIN_FILE:%_ins.bin=%.map)
@@ -11,6 +12,7 @@ ENABLE=0xffff
 RECV=0xffff
 DEBUG=8
 PR_FILES=bitstreams
+PCI_ID=$(subst ../,,$(shell readlink /sys/class/misc/$(DEV)/device))
 ifneq ("$(wildcard $(DATA_MAP_FILE))","")
 	DMAP_FLAG = -m $(DATA_MAP_FILE)
 else
@@ -20,7 +22,7 @@ endif
 DMAP=0
 
 CC = gcc
-CFLAGS = -O3 -Wall -I../driver/mqnic -I./mcap
+CFLAGS = -O3 -Wall -I../driver/mqnic -I./mcap -DRPU_COUNT=$(RPU_COUNT)
 
 MCAPLIB = mcap/libmcap.a
 
@@ -71,10 +73,8 @@ status:
 pr_test:
 	sudo ./pr_reload -d /dev/$(DEV) -i $(INS_BIN_FILE) $(DMAP_FLAG) -e $(ENABLE) -r $(RECV) -p $(PR_FILES)
 
-reset:
+reset_all:
 	sudo sh -c "lspci -d 1234:1001 | cut -d ' ' -f 1 | xargs -L 1 ./pcie_hot_reset.sh"
 
-reset0:
-	sudo ./pcie_hot_reset.sh 81:00.0
-reset1:
-	sudo ./pcie_hot_reset.sh 01:00.0
+reset_dev:
+	sudo ./pcie_hot_reset.sh $(PCI_ID)

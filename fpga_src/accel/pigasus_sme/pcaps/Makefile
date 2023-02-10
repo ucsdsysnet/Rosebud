@@ -12,8 +12,10 @@ MAX_RATE_9000 = 1995
 
 SIZE = 1024
 RATE = $(MAX_RATE_$(SIZE))
-INT  = eth0
+DEV  = mqnic0
+INT  = $(shell ls /sys/class/misc/$(DEV)/device/net | head -1)
 MTU  = 4096
+
 safe:
 	sudo tcpreplay -i $(INT) -K --mbps $(RATE) --loop 1000000 safe_pcap_no_ooo_$(SIZE).pcap
 

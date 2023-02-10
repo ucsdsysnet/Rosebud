@@ -182,7 +182,7 @@ int main(int argc, char *argv[])
     printf("Board ID: 0x%08x\n", dev->board_id);
     printf("Board version: %d.%d\n", dev->board_ver >> 16, dev->board_ver & 0xffff);
 
-    int core_count = MAX_CORE_COUNT;
+    int core_count = RPU_COUNT;
     int segment_size = 512*1024;
 
     if (action_write)

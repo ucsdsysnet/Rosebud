@@ -30,7 +30,10 @@ THE SOFTWARE.
 
 #include "mqnic.h"
 
-#define MAX_CORE_COUNT   16
+#ifndef RPU_COUNT
+	#define RPU_COUNT   16
+#endif
+
 #define MAX_ETH_IF_COUNT 3
 #define MAX_TOT_IF_COUNT 5
 #define SLOTS            16

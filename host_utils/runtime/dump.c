@@ -92,7 +92,7 @@ int main(int argc, char *argv[])
     printf("IF stride: 0x%08x\n", dev->if_stride);
     printf("IF CSR offset: 0x%08x\n", dev->if_csr_offset);
 
-    int core_count = MAX_CORE_COUNT;
+    int core_count = RPU_COUNT;
     int if_count = MAX_TOT_IF_COUNT;
 
     printf("DMA enable: %u\n", mqnic_reg_read32(dev->regs, 0x000400));
