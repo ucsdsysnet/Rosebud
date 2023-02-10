@@ -12,7 +12,7 @@ mkdir -p ${out_dir}_cong
 
 # non-congested test
 for i in 64 65 128 256 512 1024 1500 2048 4096 9000; do
-	make -C ../../riscv_code/ NAME=latency TARGET=latency_$i SRC=latency.c DEFINES="-DPKT_SIZE=$i -DCONGESTION=0"
+  make -C ../../riscv_code/ NAME=latency TARGET=latency_$i SRC=latency.c DEFINES="-DPKT_SIZE=$i -DCONGESTION=0"
   sudo ./pcie_hot_reset.sh $pci_id
   sleep 1s
   sudo ip link set dev $eth up
@@ -25,7 +25,7 @@ done
 
 # congested test
 for i in 64 65 128 256 512 1024 1500 2048 4096 9000; do
-	make -C ../../riscv_code/ NAME=latency TARGET=latency_$i SRC=latency.c DEFINES="-DPKT_SIZE=$i -DCONGESTION=1"
+  make -C ../../riscv_code/ NAME=latency TARGET=latency_$i SRC=latency.c DEFINES="-DPKT_SIZE=$i -DCONGESTION=1"
   sudo ./pcie_hot_reset.sh $pci_id
   sleep 1s
   sudo ip link set dev $eth up

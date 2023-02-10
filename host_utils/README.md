@@ -71,6 +71,8 @@ and
 make do TEST=basic_fw RECV=0xffff ENABLE=0xffff DEV=mqnic1
 ```
 
+It's better to first run the basic_fw so the FPGA is ready to receive the packets, and then start the pkt_gen.
+
 If we want to see perfomance of 8 RPUs instead of 16 RPUs, we don't need to reload the FPGA with the 8RPU image, instead we can change the forwarder to do:
 
 ```

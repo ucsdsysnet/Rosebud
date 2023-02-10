@@ -28,7 +28,9 @@ To do Partial Reconfiguration from Linux, we need *MCAP* driver, in addition to 
 ```https://github.com/ucsdsysnet/Rosebud/tree/master/host_utils/runtime/mcap```
 
 For running the python based simulation infrastructure, in addition to Python 3 we need two additional software. For connecting Python to RTL simulator we used Cocotb which can be installed by:
-```pip install cocotb```
+```pip3 install cocotb==1.7.1 cocotb-test cocotbext-axi cocotbext-pcie==0.1.22 scapy pyelftools dpkt```
+(There was a change in cocotbext-pcie from version 0.2.0 that requires modifications to the test bench. Also cocotb 1.7.2 adds new library requirements. Generally you can rollback the version, e.g., by doing ```pip3 install --force-reinstall -v cocotb==1.7.1```.
+
 For RTL simulation, Synopsys VCS, Intel Questa, and Icarus Verilog are supported by cocotb. Icarus Verilog is free and can be obtained from
 ```https://github.com/steveicarus/iverilog``` 
 To install Icarus Verilog, follow the instructions from the git repository, or simply:
