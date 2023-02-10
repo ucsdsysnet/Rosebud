@@ -1,9 +1,10 @@
 #!/bin/bash
 
-dev=mqnic0
+dev=${1:-mqnic0}
+out_dir=latency_res_${2:-2l}
+
 eth=$(ls /sys/class/misc/$dev/device/net | head -1)
 pci_id=$(basename $(readlink /sys/class/misc/$dev/device))
-out_dir=latency_res_2l
 
 # for loopback through another card (_2l) do -e 0xffff -r 0xaaaa
 
