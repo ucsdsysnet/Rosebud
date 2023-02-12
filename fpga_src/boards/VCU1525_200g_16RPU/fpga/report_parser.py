@@ -29,24 +29,27 @@ from math import ceil
 from glob import glob
 
 csv_file           = "parsed_utilization_16G.csv"
-RPU_pblock_pat     = "fpga_utilization_RPU_*_FW_RR.rpt"
-lb_pblock_rep      = "fpga_utilization_LB_FW_RR.rpt"
+lb_pblock_rep      = "fpga_utilization_lb_raw.rpt"
 full_fpga_raw_rep  = "fpga_utilization_hierarchy_placed_raw.rpt"
+lb_pr_pblock_rep   = "fpga_utilization_LB_FW_RR.rpt"
+RPU_pblock_pat     = "fpga_utilization_RPU_*_FW_RR.rpt"
 full_fpga_acc_rep  = "fpga_utilization_hierarchy_placed_FW_RR.rpt"
 RPU_count          = 16
 FPGA_tot_resources = [1182240, 2364480, 2160, 960, 6840]
 
 # LUTS, Registers, BRAM, URAM, DSP
-RPU_pblock_rep    = sorted(glob(RPU_pblock_pat), key=natural_keys)
-RPU_tot_resources = [available (x) for x in RPU_pblock_rep]
-LB_tot_resources  = available (lb_pblock_rep)
-RPU_avg_resources = \
+RPU_pblock_rep      = sorted(glob(RPU_pblock_pat), key=natural_keys)
+RPU_tot_resources   = [available (x) for x in RPU_pblock_rep]
+LB_tot_resources    = available (lb_pblock_rep)
+LB_PR_tot_resources = available (lb_pr_pblock_rep)
+RPU_avg_resources   = \
     [ceil(sum(col)/float(len(col))) for col in zip(*RPU_tot_resources)]
 
 print ("Available Resources:")
 print ("Block       \tLUTS\tRegs\tBRAM\tURAM\tDSP")
 print ("Avg RPU:  \t"  +"\t".join([str(x) for x in RPU_avg_resources]))
 print ("LB:\t"  +"\t".join([str(x) for x in LB_tot_resources]))
+print ("LB_PR:\t"  +"\t".join([str(x) for x in LB_PR_tot_resources]))
 print ("Full FPGA:\t"  +"\t".join([str(x) for x in FPGA_tot_resources]))
 
 out_file = open(csv_file, 'w')
@@ -98,10 +101,7 @@ last_tot = []
 last_mod = ""
 
 for mod in Rosebud_mods:
-  if (mod == "LB"):
-    (avg, tot, _, _) = extract(full_fpga_acc_rep, Rosebud_mods[mod][0], Rosebud_mods[mod][1])
-  else:
-    (avg, tot, _, _) = extract(full_fpga_raw_rep, Rosebud_mods[mod][0], Rosebud_mods[mod][1])
+  (avg, tot, _, _) = extract(full_fpga_raw_rep, Rosebud_mods[mod][0], Rosebud_mods[mod][1])
   line = calc(avg, FPGA_tot_resources)
   acc_util = [a + b for a, b in zip(acc_util, tot)]
   printcsv(mod + ", " + ", ".join(line))
@@ -141,11 +141,18 @@ rest = [ceil(x/RPU_count) for x in rest]
 line = calc(rest, RPU_avg_resources)
 printcsv("Rest" + ", " + ", ".join(line))
 rest = [a + b for a, b in zip(rest, last_avg)]
-line = calc(rest, FPGA_tot_resources)
+line = calc(rest, RPU_avg_resources)
 printcsv(last_mod+"+, " + ", ".join(line))
 line = calc(avg, RPU_avg_resources)
 printcsv("Full" + ", " + ", ".join(line))
 line = calc_remain(avg, RPU_avg_resources, RPU_avg_resources)
 printcsv("Remaining" + ", " + ", ".join(line))
+
+(avg, tot, _, _) = extract(full_fpga_acc_rep, LB_module, 1)
+line = calc(avg, FPGA_tot_resources)
+printcsv("LB_PR" + ", " + ", ".join(line))
+line = calc_remain(tot, LB_PR_tot_resources, FPGA_tot_resources)
+printcsv("Remaining LB_PR" + ", " + ", ".join(line))
+printcsv("RPU" + ", " + 9*"-, " + ", ".join([str(x) for x in RPU_avg_resources]))
 
 out_file.close()

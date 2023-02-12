@@ -19,11 +19,18 @@
 # THE SOFTWARE.
 
 open_project fpga.xpr
-open_run impl_PIG_HASH
-report_utilization -force -hierarchical -hierarchical_percentage -file fpga_utilization_hierarchy_placed_PIG_HASH.rpt
-# report_utilization -force -pblocks [get_pblocks -regexp {RPU_([1-8])}] -file fpga_utilization_RPU_IDS_RR.rpt
+open_run impl_base_RR
+report_utilization -force -hierarchical -hierarchical_percentage -file fpga_utilization_hierarchy_placed_base_RR.rpt
+# report_utilization -force -pblocks [get_pblocks -regexp {RPU_([1-8])}] -file fpga_utilization_RPU_PIG_RR.rpt
 foreach RPU [get_pblocks -regexp {RPU_([1-8])}] {
-    report_utilization -force -pblocks $RPU -file fpga_utilization_${RPU}_PIG_HASH.rpt
+    report_utilization -force -pblocks $RPU -file fpga_utilization_${RPU}_base_RR.rpt
 }
-report_utilization -force -pblocks [get_pblocks User_LB] -file fpga_utilization_LB_PIG_HASH.rpt
+report_utilization -force -pblocks [get_pblocks User_LB] -file fpga_utilization_LB_base_RR.rpt
+open_run impl_PIG_HASH
+report_utilization -force -hierarchical -hierarchical_percentage -file fpga_utilization_hierarchy_placed_PIG_Hash.rpt
+# report_utilization -force -pblocks [get_pblocks -regexp {RPU_([1-8])}] -file fpga_utilization_RPU_PIG_Hash.rpt
+foreach RPU [get_pblocks -regexp {RPU_([1-8])}] {
+    report_utilization -force -pblocks $RPU -file fpga_utilization_${RPU}_PIG_Hash.rpt
+}
+report_utilization -force -pblocks [get_pblocks User_LB] -file fpga_utilization_LB_PIG_Hash.rpt
 exit
