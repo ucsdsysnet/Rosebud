@@ -17,9 +17,12 @@ PIG_Hash_1```), then uses the base design and just replaces the
 loadbalancer with a Round Robin one (```make base_RR_2```), and finally
 merges the results of the previous two (```make PIG_RR_3```).
 
-(Vivado can build PR runs from the base run, hence the merging speeds up the process.)
-
 Ensure that the Xilinx Vivado toolchain components are in PATH.
+
+* We can go directly from base to using round robin LB and RSUs with Pigasus, but it takes longer and might fail as it might get to challenging for the heuristic algorithms. <ins>run_PIG_RR.tcl</ins> uses this method, but during development iterations sometimes it met timing and sometimes it failed. 
+
+* Vivado does not support use of child runs (PR runs) in another child run, only you can reuse the PR modules from the parent run (here the base run with static regions).If it is only merging the PR regions from the child runs, we can use the non-project mode and add an in_memory project to get around this issue. For example, <ins>run_PIG_RR_merge.tcl</ins> does this and picks the RSUs from *PIG_Hash_1* run and the LB from *base_RR_2* run. However, if we want to only change some of the PR runs relative to another child run, and let the place and route run, things get more complicated. Using some hacky method that within the run changes some file contents from Linux shell, <ins>run_PIG_RR_inc.tcl</ins> can use RSUs from *PIG_Hash_1* and then build the round robin LB and attach them. That being said, using an extra child with only the LB changed and then merging them is faster and not hacky, and hence that script is just as archive. 
+
 
 ## Generate utilization reports
 

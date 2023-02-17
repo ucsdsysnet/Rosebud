@@ -2,17 +2,18 @@
 
 ## Library files and how to build a binary
 
-<ins>core.h</ins> is the main library files based on the interaction with RPU Interconenct.
-<ins>riscv_encoding.h</ins> is RISCV specific header, such as bit locations.
-<ins>startup.S</ins> is the startup assembly file that reads regions sizes from RPU and sets up interrupts and the stack.
-<ins>link_option.ld</ins> is a linker script to allocate different parts of the memory subsystem.
+*	<ins>core.h</ins> is the header file for functions to talk to the RPU interconnect.
+*	<ins>riscv_encoding.h</ins> has the defines for the VexRiscv. 
+*	<ins>startup.S</ins> has the required boot process for the core to initialize stack and prepare the interrupts, and jump to start of the code.
+*	<ins>link_option.ld</ins> provide the mapping of segments based on the Rosebud addressing. 
 <ins>packet_headers.h</ins> is a set of structs for TCP/UDP packets.
-<ins>int_handler.c</ins> is a default interrupt handler based on the location of interrupts and exceptions, with some example code to handle evict interrupt. It can be used as a based for users desired interrupt handling.
+*	<ins>int_handler</ins> is a default interrupt handler if user does not want to specify their own. 
+*	<ins>hex_gen.py</ins> script converts the output binary files based on the required format of RISCV cores.
 
 To build a C file you can run ```make NAME=basic_fw```, where NAME is the name of the c file. You can also pass parameters using DEFINES, for example:
 ```make NAME=pkt_gen DEFINES="-DPKT_SIZE=1500"```
 
-The make rule will also output the assembly output for verification, and ELF output to be used in the Python testbenches.
+The make rule will also output the assembly output for verification, and ELF output to be used in the Python testbenches. It also generates separate files for instruction memory and data memory that can be directly loaded.
 
 <ins>table_gen.py</ins> generates supplemntary binary files to initialize the data and packet memories with 0, namely <ins>empty_dmem.bin</ins>, <ins>empty_half_pmem.bin</ins> and <ins>empty_pmem.bin</ins>. It also produces two example binaries, <ins>table.bin</ins> and <ins>table_qtr1.bin</ins>, which can be used as initializing part of the packet memory as a lookup table for the RISCV code.
 
