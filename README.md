@@ -1,6 +1,6 @@
 # Rosebud, 200 Gbps middlebox framework for FPGAs
 
-Rosebud is a new approach to designing FPGA-accelerated middleboxes that simplifies development, debugging, and performance tuning by decoupling the tasks of hardware accelerator implementation and software application programming. Rosebud is a framework that links hardware accelerators to a high-performance packet processing pipeline through a standardized hardware/software interface. This separation of concerns allows hardware developers to focus on optimizing custom accelerators while freeing software programmers to reuse, configure, and debug accelerators in a fashion akin to software libraries. We show the benefits of Rosebud framework can be seen through two examples: a firewall based on a large blacklist, and porting the Pigasus IDS pattern-matching accelerator, together in less than a month. Our experiments demonstrate Rosebud delivers high performance, serving ∼200 Gbps of traffic while adding only 0.7–7 microseconds of latency.
+Rosebud is a new approach to designing FPGA-accelerated middleboxes that simplifies development, debugging, and performance tuning by decoupling the tasks of hardware accelerator implementation and software application programming. Rosebud is a framework that links hardware accelerators to a high-performance packet processing pipeline through a standardized hardware/software interface. This separation of concerns allows hardware developers to focus on optimizing custom accelerators while freeing software programmers to reuse, configure, and debug accelerators in a fashion akin to software libraries. We show the benefits of Rosebud framework can be seen through two examples: a firewall based on a large blacklist, and porting the Pigasus IDS pattern-matching accelerator, together in less than a month. Our experiments demonstrate Rosebud delivers high performance, serving 200 Gbps of traffic while adding only 0.7-7 microseconds of latency.
 
 More information can be found in our paper: https://arxiv.org/abs/2201.08978
 
@@ -22,7 +22,7 @@ cd riscv-gnu-toolchain/
 ./configure --prefix=/opt/riscv --enable-multilib
 sudo make -j 32
 ```
-Then add */opt/riscv/bin* to the *PATH*. You can change the path by changing the prefix option during compile. (sudo in the last line is if you don’t have write permission to /opt)
+Then add */opt/riscv/bin* to the *PATH*. You can change the path by changing the prefix option during compile. (sudo in the last line is if you do not have write permission to /opt)
 
 To do Partial Reconfiguration from Linux, we need *MCAP* driver, in addition to the provided driver in the repo. It can be acquired from: 
 ```https://github.com/ucsdsysnet/Rosebud/tree/master/host_utils/runtime/mcap```
@@ -82,7 +82,7 @@ Some example accelerators can be found in fpga_src/accel:
 *	<ins>pigasus_sme</ins>: Ported Pigasus string matcher accelerator
 *	<ins>hash</ins>: a hash accelerator for TCP/UDP headers
 *	<ins>ip_matcher</ins>: from-scratch firewall accelerator 
-*	The <ins>archive</ins> directory has our older accelerators such as string matcher based on Aho–Corasick algorithm.
+*	The <ins>archive</ins> directory has our older accelerators such as string matcher based on Aho-Corasick algorithm.
 
 Note that each of these directories have the rtl for the Verilog code, c for the program code, tb for simulations, and python if there are some scripts to generate the Verilog code. 
 
@@ -110,7 +110,7 @@ There is a micro-usb header on the supported cards, that provides the JTAG inter
 
 After programming the FPGA, a restart is required for the PCIe IP to properly be recognized. 
 
-Rosebud also provides a driver to be able to talk to the card, where it can be seen as a normal NIC and all the future communications, even reconfiguration of RSUs, are done over PCIe which is much faster than JTAG. We use the corundum module to provide the NIC interface. Note that the corundum hardware used is older than the current version available in the corundum repo, and the newer driver is not compatible. We added some ioctl memory ranges to directly access RCU memory to Corundum’s driver.
+Rosebud also provides a driver to be able to talk to the card, where it can be seen as a normal NIC and all the future communications, even reconfiguration of RSUs, are done over PCIe which is much faster than JTAG. We use the corundum module to provide the NIC interface. Note that the corundum hardware used is older than the current version available in the corundum repo, and the newer driver is not compatible. We added some ioctl memory ranges to directly access RCU memory to Corundum's driver.
 
 To build the driver, go to host-utils/driver/mqnic and do
 
@@ -157,10 +157,10 @@ File to load RISCV programs and example C code to monitor the state are in host-
 *	<ins>rvfw.c/h</ins> is used to program memory of RPUs (similar to a firmware loader)
 *	<ins>rpu.c/h</ins> has functions to talk to each RPU during runtime
 *	<ins>pr_reload.c</ins> has the functionality to use MCAP and reload a RPU. 
-*	<ins>timespec.c/h</ins> is for Linux’s timespec structure 
+*	<ins>timespec.c/h</ins> is for Linux's timespec structure 
 *	<ins>Makefile</ins> generates the binaries for this files. (Just do Make)
 
-<ins>Perf.c</ins> monitors the state of the RPUs during run, and </ins>dump.c dumps the state of the RPUs. For example they print out how many packets and bytes were communicated per core and in the scheduler, or if some debug bits were set or core sent some debug messages. Note that a full-fledged debugging infra between the cores and scheduler and host is baked into Rosebud’s design. For example you can interrupt the cores in case of hang and send them 64-bit messages in case the data channel is stuck. The <ins>pr_reload</ins> code also uses the evict interrupt as an example. 
+<ins>Perf.c</ins> monitors the state of the RPUs during run, and </ins>dump.c dumps the state of the RPUs. For example they print out how many packets and bytes were communicated per core and in the scheduler, or if some debug bits were set or core sent some debug messages. Note that a full-fledged debugging infra between the cores and scheduler and host is baked into Rosebud's design. For example you can interrupt the cores in case of hang and send them 64-bit messages in case the data channel is stuck. The <ins>pr_reload</ins> code also uses the evict interrupt as an example. 
 
 The Makefile can used to run other tests, and it gets parameters for how many cores to be enabled and programmed (*ENABLE*), and how many cores to receive packets (*RECV*). *ENABLE* and *RECV* are in one-hot representation. *DEBUG* sets which debug register to be monitored, *DEV* sets the desired card (e.g., if more than one is used), and *TEST* sets the program to be loaded. *OUT_FILE* sets the name of output csv log file. As an example and to run our tests, ```make do``` runs the scripts in order: compile the program, firmware load, and start the monitoring process. Finally, The *run_latency* script is used for our latency measurement which uses tcpdump and runs the code for different packet sizes.
 
