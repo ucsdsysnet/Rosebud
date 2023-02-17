@@ -1,6 +1,6 @@
 # Rosebud, 200 Gbps middlebox framework for FPGAs
 
-Rosebud is a new approach to designing FPGA-accelerated middleboxes that simplifies development, debugging, and performance tuning by decoupling the tasks of hardware accelerator implementation and software application programming. Rosebud is a framework that links hardware accelerators to a high-performance packet processing pipeline through a standardized hardware/software interface. This separation of concerns allows hardware developers to focus on optimizing custom accelerators while freeing software programmers to reuse, configure, and debug accelerators in a fashion akin to software libraries. We show the benefits of Rosebud framework can be seen through two examples: a firewall based on a large blacklist, and porting the Pigasus IDS pattern-matching accelerator, together in less than a month. Our experiments demonstrate Rosebud delivers high performance, serving 200 Gbps of traffic while adding only 0.7-7 microseconds of latency.
+Rosebud is a new approach to designing FPGA-accelerated middleboxes that simplifies development, debugging, and performance tuning by decoupling the tasks of hardware-accelerator implementation and software-application programming. Rosebud is a framework that links hardware accelerators to a high-performance packet processing pipeline through a standardized hardware/software interface. This separation of concerns allows hardware developers to focus on optimizing custom accelerators while freeing software programmers to reuse, configure, and debug accelerators in a fashion akin to software libraries. We show the benefits of the Rosebud framework can be seen through two examples: a firewall based on a large blacklist, and porting the Pigasus IDS pattern-matching accelerator, together in less than a month. Our experiments demonstrate that Rosebud delivers high performance, serving 200 Gbps of traffic while adding only 0.7-7 microseconds of latency.
 
 More information can be found in our paper: https://arxiv.org/abs/2201.08978
 
@@ -185,3 +185,9 @@ Note that the python script would look for the binary of the program, so the bin
 └──riscv_code:    Required libraries and file to build RISCV programs.
 └──bitfiles:      Bitfiles to program the FPGAs without modifications to the accelerators or the load balancer.
 </pre>
+
+## What is Rosebud?
+
+"Rosebud" is the trade name of a cheap little sled on which Kane was playing on the day he was taken away from his home and his mother. In his subconscious it represented the **simplicity, the comfort, above all the lack of responsibility** in his home, and also it stood for his mother's love which Kane never lost.
+
+From [Rosebud meaning in 'Citizen Kane' as given by Orson Welles](https://www.wellesnet.com/orson-welles-the-meaning-of-rosebud-in-citizen-kane/), January 15, 1941.
